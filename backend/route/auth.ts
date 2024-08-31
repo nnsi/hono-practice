@@ -15,7 +15,7 @@ const loginRequestSchema = z.object({
   password: z.string(),
 });
 
-type LoginRequestSchema = z.infer<typeof loginRequestSchema>;
+type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 const loginHandler = factory.createHandlers(
   zValidator("json", loginRequestSchema, async (result, c) => {
@@ -24,7 +24,7 @@ const loginHandler = factory.createHandlers(
     }
   }),
   async (c) => {
-    const { login_id, password }: LoginRequestSchema = await c.req.json();
+    const { login_id, password }: LoginRequest = await c.req.json();
 
     const prisma = new PrismaClient();
     const user = await prisma.user.findFirst({
@@ -59,22 +59,22 @@ const validateHandler = factory.createHandlers(async (c) => {
   return c.json({ message: "mada", cookie });
 });
 
-const createUserSchema = z.object({
+const createUserRequestSchema = z.object({
   name: z.string().optional(),
   login_id: z.string(),
   password: z.string(),
 });
 
-type CreateUserSchema = z.infer<typeof createUserSchema>;
+type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
 
 const createUserHandler = factory.createHandlers(
-  zValidator("json", createUserSchema, (result, c) => {
+  zValidator("json", createUserRequestSchema, (result, c) => {
     if (!result.success) {
       return c.json({ message: "invalid request" }, 400);
     }
   }),
   async (c) => {
-    const { name, login_id, password }: CreateUserSchema = await c.req.json();
+    const { name, login_id, password }: CreateUserRequest = await c.req.json();
 
     const cryptedPassword = await bcrypt.hashSync(password, 10);
 
