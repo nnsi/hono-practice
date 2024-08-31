@@ -31,6 +31,10 @@ const loginHandler = factory.createHandlers(
       where: {
         login_id,
       },
+      select:{
+        id:true,
+        password:true
+      }
     });
 
     if (!user) {
@@ -43,7 +47,7 @@ const loginHandler = factory.createHandlers(
     }
 
     const token = await sign(
-      { user, exp: Math.floor(Date.now() / 1000) + 60 * 60 },
+      { id:user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
       "secret123"
     );
 

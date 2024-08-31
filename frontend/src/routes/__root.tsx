@@ -12,7 +12,9 @@ export const Route = createRootRoute({
         </Link>
       </div>
       <hr />
-      <Outlet />
+      <div className="m-5">
+        <Outlet />
+      </div>
     </>
   ),
 });

@@ -1,9 +1,11 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { helloRoute, hogeRoute, authRoute } from "./route";
+import { helloRoute, authRoute } from "./route";
 import { cors } from "hono/cors";
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
+import { PrismaClient } from "@prisma/client";
+import { type User } from "@/types/prisma"
 
 const app = new Hono();
 
@@ -15,8 +17,9 @@ app.use("/users/*", async (c, next) => {
     return c.json({ message: "unauthorized" }, 401);
   }
   try {
-    await verify(jwt, "secret123");
-    console.log("verified");
+    const payload = await verify(jwt, "secret123");
+    c.set("jwtPayload", payload);
+
   } catch (e) {
     return c.json({ message: "unauthorized" }, 401);
   }
@@ -26,8 +29,21 @@ app.use("/users/*", async (c, next) => {
 
 const routes = app
   .route("/", helloRoute)
-  .route("/hoge", hogeRoute)
-  .route("/auth", authRoute);
+  .route("/auth", authRoute)
+  .get("/users/me", async (c) => {
+    const payload = c.get("jwtPayload") as { user: User };
+    const prisma = new PrismaClient();
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: payload.user.id,
+      },
+    });
+
+    const { password, ...userWithoutPassword } = user || {};
+
+    return c.json({ ...userWithoutPassword }, 200);
+  })
 
 const port = 3456;
 console.log(`Server is running on port ${port}`);

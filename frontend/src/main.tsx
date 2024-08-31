@@ -4,6 +4,7 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import "../main.css";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,7 +14,10 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createRouter({ routeTree: routeTree });
+const router = createRouter({
+  routeTree: routeTree,
+  context: { auth: undefined! },
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -21,10 +25,15 @@ declare module "@tanstack/react-router" {
   }
 }
 
+const RouterProviderWithAuth: React.FC = () => {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+};
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <RouterProviderWithAuth />
     </QueryClientProvider>
   </StrictMode>
 );
