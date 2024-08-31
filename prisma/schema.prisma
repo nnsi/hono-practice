@@ -8,7 +8,36 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator zod {
+  provider                  = "npx zod-prisma-types"
+  output                    = "../types/prisma"
+  createRelationValuesTypes = true
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @unique @default(uuid())
+  login_id String
+  name     String?
+  password String
+  todos    Task[]
+
+  @@map("user")
+}
+
+model Task {
+  id        String   @id @unique @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("task")
 }
