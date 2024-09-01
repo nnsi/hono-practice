@@ -1,9 +1,16 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import { PrismaClient } from "@prisma/client";
-import { CreateTaskRequest } from "@/types/request/CreateTaskRequest";
-import { UpdateTaskRequest } from "@/types/request/UpdateTaskRequest";
+import {
+  CreateTaskRequest,
+  createTaskRequestSchema,
+} from "@/types/request/CreateTaskRequest";
+import {
+  UpdateTaskRequest,
+  updateTaskRequestSchema,
+} from "@/types/request/UpdateTaskRequest";
 import { JwtEnv } from "../middleware/authMiddleware";
+import { zValidator } from "@hono/zod-validator";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
@@ -54,41 +61,47 @@ const findHandler = factory.createHandlers(async (c) => {
   return c.json(task, 200);
 });
 
-const createHandler = factory.createHandlers(async (c) => {
-  const prisma = new PrismaClient();
-  const json = await c.req.json<CreateTaskRequest>();
+const createHandler = factory.createHandlers(
+  zValidator("json", createTaskRequestSchema),
+  async (c) => {
+    const prisma = new PrismaClient();
+    const json = await c.req.json<CreateTaskRequest>();
 
-  const task = await prisma.task.create({
-    data: {
-      title: json.title,
-      userId: c.get("jwtPayload").id,
-    },
-  });
+    const task = await prisma.task.create({
+      data: {
+        title: json.title,
+        userId: c.get("jwtPayload").id,
+      },
+    });
 
-  return c.json(task, 200);
-});
-
-const updateHandler = factory.createHandlers(async (c) => {
-  const id = c.req.param("id");
-  const prisma = new PrismaClient();
-  const json = await c.req.json<UpdateTaskRequest>();
-
-  const task = await prisma.task.update({
-    where: {
-      id,
-      userId: c.get("jwtPayload").id,
-    },
-    data: {
-      ...json,
-    },
-  });
-
-  if (!task) {
-    return c.json({ message: "task not found" }, 404);
+    return c.json(task, 200);
   }
+);
 
-  return c.json(task, 200);
-});
+const updateHandler = factory.createHandlers(
+  zValidator("json", updateTaskRequestSchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const prisma = new PrismaClient();
+    const json = await c.req.json<UpdateTaskRequest>();
+
+    const task = await prisma.task.update({
+      where: {
+        id,
+        userId: c.get("jwtPayload").id,
+      },
+      data: {
+        ...json,
+      },
+    });
+
+    if (!task) {
+      return c.json({ message: "task not found" }, 404);
+    }
+
+    return c.json(task, 200);
+  }
+);
 
 const deleteHandler = factory.createHandlers(async (c) => {
   const id = c.req.param("id");
