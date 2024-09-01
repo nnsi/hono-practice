@@ -21,3 +21,14 @@ export async function authMiddleware(
 
   await next();
 }
+
+export type JwtPayload = {
+  id: string;
+  exp: number;
+};
+
+export type JwtEnv = {
+  Variables: {
+    jwtPayload: JwtPayload;
+  };
+};

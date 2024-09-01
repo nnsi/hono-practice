@@ -3,13 +3,10 @@ import { createFactory } from "hono/factory";
 import { PrismaClient } from "@prisma/client";
 import { CreateTaskRequest } from "@/types/request/CreateTaskRequest";
 import { UpdateTaskRequest } from "@/types/request/UpdateTaskRequest";
+import { JwtEnv } from "../middleware/authMiddleware";
 
-const factory = createFactory();
-const app = new Hono<{
-  Variables: {
-    id: string;
-  };
-}>();
+const factory = createFactory<JwtEnv>();
+const app = new Hono();
 
 const getHandler = factory.createHandlers(async (c) => {
   const prisma = new PrismaClient();
@@ -24,7 +21,11 @@ const getHandler = factory.createHandlers(async (c) => {
     where: {
       userId: c.get("jwtPayload").id,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
+
   return c.json(tasks, 200);
 });
 
@@ -46,6 +47,10 @@ const findHandler = factory.createHandlers(async (c) => {
     },
   });
 
+  if (!task) {
+    return c.json({ message: "task not found" }, 404);
+  }
+
   return c.json(task, 200);
 });
 
@@ -64,7 +69,7 @@ const createHandler = factory.createHandlers(async (c) => {
 });
 
 const updateHandler = factory.createHandlers(async (c) => {
-  const { id } = c.req.param();
+  const id = c.req.param("id");
   const prisma = new PrismaClient();
   const json = await c.req.json<UpdateTaskRequest>();
 
@@ -78,11 +83,15 @@ const updateHandler = factory.createHandlers(async (c) => {
     },
   });
 
+  if (!task) {
+    return c.json({ message: "task not found" }, 404);
+  }
+
   return c.json(task, 200);
 });
 
 const deleteHandler = factory.createHandlers(async (c) => {
-  const { id } = c.req.param();
+  const id = c.req.param("id");
   const prisma = new PrismaClient();
 
   await prisma.task.delete({

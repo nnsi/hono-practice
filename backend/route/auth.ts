@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
+import { setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
 import { zValidator } from "@hono/zod-validator";
 import { PrismaClient } from "@prisma/client";
@@ -10,6 +10,7 @@ import {
   createUserRequestSchema,
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
+import { JwtPayload } from "../middleware/authMiddleware";
 
 const factory = createFactory();
 const app = new Hono();
@@ -44,10 +45,12 @@ const loginHandler = factory.createHandlers(
       return c.json({ message: "ログインに失敗しました" }, 401);
     }
 
-    const token = await sign(
-      { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
-      "secret123"
-    );
+    const payload: JwtPayload = {
+      id: user.id,
+      exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60,
+    };
+
+    const token = await sign(payload, "secret123");
     setCookie(c, "auth", token, {
       httpOnly: true,
     });
@@ -56,11 +59,6 @@ const loginHandler = factory.createHandlers(
     return c.json({ ...userWithoutPassword });
   }
 );
-
-const validateHandler = factory.createHandlers(async (c) => {
-  const cookie = getCookie(c, "auth");
-  return c.json({ message: "mada", cookie });
-});
 
 const createUserHandler = factory.createHandlers(
   zValidator("json", createUserRequestSchema, (result, c) => {
@@ -104,5 +102,4 @@ const logoutHandler = factory.createHandlers(async (c) => {
 export const authRoute = app
   .post("/login", ...loginHandler)
   .post("/create-user", ...createUserHandler)
-  .post("/validate", ...validateHandler)
   .get("/logout", ...logoutHandler);

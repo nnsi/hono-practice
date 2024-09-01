@@ -9,9 +9,10 @@ generator client {
 }
 
 generator zod {
-  provider                  = "npx zod-prisma-types"
-  output                    = "../types/prisma"
-  createRelationValuesTypes = true
+  provider           = "npx zod-prisma-types"
+  output             = "../types/prisma"
+  createPartialTypes = true
+  coerceDate         = false
 }
 
 datasource db {
@@ -21,10 +22,10 @@ datasource db {
 
 model User {
   id       String  @id @unique @default(uuid())
-  login_id String
+  loginId  String  @map("login_id")
   name     String?
   password String
-  todos    Task[]
+  tasks    Task[]
 
   @@map("user")
 }
