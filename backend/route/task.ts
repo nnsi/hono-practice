@@ -12,7 +12,6 @@ const app = new Hono<{
 }>();
 
 const getHandler = factory.createHandlers(async (c) => {
-  console.log(c.get("jwtPayload"));
   const prisma = new PrismaClient();
   const tasks = await prisma.task.findMany({
     select: {
@@ -82,8 +81,23 @@ const updateHandler = factory.createHandlers(async (c) => {
   return c.json(task, 200);
 });
 
+const deleteHandler = factory.createHandlers(async (c) => {
+  const { id } = c.req.param();
+  const prisma = new PrismaClient();
+
+  await prisma.task.delete({
+    where: {
+      id,
+      userId: c.get("jwtPayload").id,
+    },
+  });
+
+  return c.json({ message: "success" }, 200);
+});
+
 export const taskRoute = app
   .get("/", ...getHandler)
   .post("/", ...createHandler)
   .get("/:id", ...findHandler)
-  .put("/:id", ...updateHandler);
+  .put("/:id", ...updateHandler)
+  .delete("/:id", ...deleteHandler);
