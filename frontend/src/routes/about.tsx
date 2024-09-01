@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/frontend/src/hooks/api";
+import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 
 const About: React.FC = () => {
   const api = useApiClient();

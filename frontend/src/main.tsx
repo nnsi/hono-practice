@@ -5,6 +5,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import "../main.css";
 import { useAuth } from "./hooks/useAuth";
+import { AuthProvider } from "./providers/AuthProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +34,9 @@ const RouterProviderWithAuth: React.FC = () => {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProviderWithAuth />
+      <AuthProvider>
+        <RouterProviderWithAuth />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
 );

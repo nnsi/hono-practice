@@ -6,16 +6,10 @@ import { zValidator } from "@hono/zod-validator";
 import { PrismaClient } from "@prisma/client";
 import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
+import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
 
 const factory = createFactory();
 const app = new Hono();
-
-const loginRequestSchema = z.object({
-  login_id: z.string(),
-  password: z.string(),
-});
-
-type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 const loginHandler = factory.createHandlers(
   zValidator("json", loginRequestSchema, async (result, c) => {
@@ -31,10 +25,11 @@ const loginHandler = factory.createHandlers(
       where: {
         login_id,
       },
-      select:{
-        id:true,
-        password:true
-      }
+      select: {
+        id: true,
+        password: true,
+        name: true,
+      },
     });
 
     if (!user) {
@@ -47,14 +42,15 @@ const loginHandler = factory.createHandlers(
     }
 
     const token = await sign(
-      { id:user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
+      { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
       "secret123"
     );
-
     setCookie(c, "auth", token, {
       httpOnly: true,
     });
-    return c.json({ message: "ログインに成功しました" });
+
+    const { password: _, ...userWithoutPassword } = user;
+    return c.json({ ...userWithoutPassword });
   }
 );
 
@@ -95,7 +91,15 @@ const createUserHandler = factory.createHandlers(
   }
 );
 
+const logoutHandler = factory.createHandlers(async (c) => {
+  setCookie(c, "auth", "", {
+    httpOnly: true,
+  });
+  return c.json({ message: "logged out" });
+});
+
 export const authRoute = app
   .post("/login", ...loginHandler)
   .post("/create-user", ...createUserHandler)
-  .post("/validate", ...validateHandler);
+  .post("/validate", ...validateHandler)
+  .get("/logout", ...logoutHandler);
