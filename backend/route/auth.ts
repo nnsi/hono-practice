@@ -1,12 +1,15 @@
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
-import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { PrismaClient } from "@prisma/client";
 import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
+import {
+  createUserRequestSchema,
+  CreateUserRequest,
+} from "@/types/request/CreateUserRequest";
 
 const factory = createFactory();
 const app = new Hono();
@@ -59,14 +62,6 @@ const validateHandler = factory.createHandlers(async (c) => {
   return c.json({ message: "mada", cookie });
 });
 
-const createUserRequestSchema = z.object({
-  name: z.string().optional(),
-  login_id: z.string(),
-  password: z.string(),
-});
-
-type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
-
 const createUserHandler = factory.createHandlers(
   zValidator("json", createUserRequestSchema, (result, c) => {
     if (!result.success) {
@@ -79,12 +74,20 @@ const createUserHandler = factory.createHandlers(
     const cryptedPassword = await bcrypt.hashSync(password, 10);
 
     const prisma = new PrismaClient();
-    await prisma.user.create({
+    const createUser = await prisma.user.create({
       data: {
         name,
         login_id,
         password: cryptedPassword,
       },
+    });
+
+    const token = await sign(
+      { id: createUser.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
+      "secret123"
+    );
+    setCookie(c, "auth", token, {
+      httpOnly: true,
     });
 
     return c.json({ message: "user created" });

@@ -17,9 +17,9 @@ const About: React.FC = () => {
       }
     },
   });
-  return <div>{query.data?.id}</div>;
+  return <div>My ID: {query.data?.id}</div>;
 };
 
-export const Route = createFileRoute("/about")({
+export const Route = createFileRoute("/profile")({
   component: About,
 });

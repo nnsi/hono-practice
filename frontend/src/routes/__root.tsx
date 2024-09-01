@@ -1,7 +1,8 @@
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
-import { useAuth } from "../hooks/useAuth";
 import { useEffect, useState } from "react";
+import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { useAuth } from "@/frontend/src/hooks/useAuth";
 import { LoginForm } from "@/frontend/src/components/root/LoginForm";
+import { CreateUserForm } from "@/frontend/src/components/root/CreateUserForm";
 
 // ログイン済みユーザー向けのルートコンポーネント
 const AuthenticatedHome: React.FC = () => {
@@ -21,8 +22,11 @@ const AuthenticatedHome: React.FC = () => {
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>
-        <Link to="/about" className="[&.active]:font-bold">
-          About
+        <Link to="/task" className="[&.active]:font-bold">
+          Task
+        </Link>
+        <Link to="/profile" className="[&.active]:font-bold">
+          Profile
         </Link>
         <span onClick={handleLogout}>Logout</span>
       </div>
@@ -49,7 +53,19 @@ const RootComponent: React.FC = () => {
 
   if (!isTriedAuthentication) return <div>Loading...</div>;
 
-  return <>{user ? <AuthenticatedHome /> : <LoginForm />}</>;
+  return (
+    <>
+      {user ? (
+        <AuthenticatedHome />
+      ) : (
+        <div className="h-svh flex items-center justify-center gap-5">
+          <LoginForm />
+          <p> or </p>
+          <CreateUserForm />
+        </div>
+      )}
+    </>
+  );
 };
 
 export const Route = createRootRoute({
