@@ -74,6 +74,10 @@ const createHandler = factory.createHandlers(
       },
     });
 
+    if (!task) {
+      return c.json({ message: "failed to create task" }, 500);
+    }
+
     return c.json(task, 200);
   }
 );
