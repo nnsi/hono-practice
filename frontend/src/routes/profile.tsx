@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 
-const About: React.FC = () => {
+const ProfilePage: React.FC = () => {
   const api = useApiClient();
   const query = useQuery({
-    queryKey: ["hello"],
+    queryKey: ["profile"],
     queryFn: async () => {
       const res = await api.users.me.$get();
       if (res.status === 200) {
@@ -17,9 +17,12 @@ const About: React.FC = () => {
       }
     },
   });
-  return <div>My ID: {query.data?.id}</div>;
+
+  const data = query.data;
+
+  return <>{data && <div>MyName: {data.name || "Anonymous"}</div>}</>;
 };
 
 export const Route = createFileRoute("/profile")({
-  component: About,
+  component: ProfilePage,
 });

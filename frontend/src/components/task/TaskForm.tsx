@@ -10,10 +10,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../ui/input";
 import { useApiClient } from "../../hooks/useApiClient";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "../ui/use-toast";
 
 export const TaskForm: React.FC = () => {
   const api = useApiClient();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const form = useForm<CreateTaskRequest>({
     resolver: zodResolver(createTaskRequestSchema),
@@ -24,6 +26,10 @@ export const TaskForm: React.FC = () => {
       const res = await api.users.tasks.$post({ json: data });
       if (res.status === 200) {
         await res.json();
+        toast({
+          title: "Task Created",
+          description: "Task has been created successfully",
+        });
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
       } else {
         const json = await res.json();

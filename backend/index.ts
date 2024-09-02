@@ -6,14 +6,19 @@ import { PrismaClient } from "@prisma/client";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { config } from "./config";
 
-const app = new Hono();
+const app = new Hono<{ Variables: { prisma: PrismaClient } }>();
+const prisma = new PrismaClient();
 
 app.use(
   "*",
   cors({
     origin: config.APP_URL,
     credentials: true,
-  })
+  }),
+  async (c, next) => {
+    c.set("prisma", prisma);
+    await next();
+  }
 );
 app.use("/users/*", authMiddleware);
 
@@ -23,7 +28,7 @@ const routes = app
   .route("/users/tasks", taskRoute)
   .get("/users/me", async (c) => {
     const payload = c.get("jwtPayload");
-    const prisma = new PrismaClient();
+    const prisma = c.get("prisma");
 
     if (!payload.id) {
       return c.json({ message: "unauthorized" }, 401);

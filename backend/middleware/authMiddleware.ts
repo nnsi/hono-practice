@@ -1,10 +1,9 @@
 import { Context, Next } from "hono";
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
-import { BlankEnv } from "hono/types";
 
 export async function authMiddleware(
-  c: Context<BlankEnv, "/users/*", {}>,
+  c: Context<{}, "/users/*", {}>,
   next: Next
 ) {
   const jwt = getCookie(c, "auth");

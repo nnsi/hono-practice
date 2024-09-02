@@ -12,11 +12,13 @@ import {
 import { JwtEnv } from "../middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
-const factory = createFactory<JwtEnv>();
+const factory = createFactory<
+  JwtEnv & { Variables: { prisma: PrismaClient } }
+>();
 const app = new Hono();
 
 const getHandler = factory.createHandlers(async (c) => {
-  const prisma = new PrismaClient();
+  const prisma = c.get("prisma");
   const tasks = await prisma.task.findMany({
     select: {
       id: true,
@@ -38,7 +40,7 @@ const getHandler = factory.createHandlers(async (c) => {
 
 const findHandler = factory.createHandlers(async (c) => {
   const { id } = c.req.param();
-  const prisma = new PrismaClient();
+  const prisma = c.get("prisma");
 
   const task = await prisma.task.findFirst({
     select: {
@@ -64,7 +66,7 @@ const findHandler = factory.createHandlers(async (c) => {
 const createHandler = factory.createHandlers(
   zValidator("json", createTaskRequestSchema),
   async (c) => {
-    const prisma = new PrismaClient();
+    const prisma = c.get("prisma");
     const json = await c.req.json<CreateTaskRequest>();
 
     const task = await prisma.task.create({
@@ -86,7 +88,7 @@ const updateHandler = factory.createHandlers(
   zValidator("json", updateTaskRequestSchema),
   async (c) => {
     const id = c.req.param("id");
-    const prisma = new PrismaClient();
+    const prisma = c.get("prisma");
     const json = await c.req.json<UpdateTaskRequest>();
 
     const task = await prisma.task.update({
@@ -109,7 +111,7 @@ const updateHandler = factory.createHandlers(
 
 const deleteHandler = factory.createHandlers(async (c) => {
   const id = c.req.param("id");
-  const prisma = new PrismaClient();
+  const prisma = c.get("prisma");
 
   await prisma.task.delete({
     where: {

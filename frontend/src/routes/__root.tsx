@@ -3,7 +3,8 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/frontend/src/hooks/useAuth";
 import { LoginForm } from "@/frontend/src/components/root/LoginForm";
 import { CreateUserForm } from "@/frontend/src/components/root/CreateUserForm";
-import { Button } from "../components/ui/button";
+import { Button } from "@/frontend/src/components/ui/button";
+import { Toaster } from "@/frontend/src/components/ui/toaster";
 
 // ログイン済みユーザー向けのルートコンポーネント
 const AuthenticatedHome: React.FC = () => {
@@ -37,6 +38,7 @@ const AuthenticatedHome: React.FC = () => {
       <div className="m-5">
         <Outlet />
       </div>
+      <Toaster />
     </>
   );
 };
