@@ -12,7 +12,11 @@ import { useApiClient } from "../../hooks/useApiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../ui/use-toast";
 
-export const TaskForm: React.FC = () => {
+type TaskFormProps = {
+  className?: string;
+};
+
+export const TaskForm: React.FC<TaskFormProps> = ({ className }) => {
   const api = useApiClient();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -43,8 +47,8 @@ export const TaskForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card className="w-80">
-          <CardHeader>
+        <Card className={className}>
+          <CardHeader className="h-24">
             <FormField
               control={form.control}
               name="title"
