@@ -47,6 +47,7 @@ const findHandler = factory.createHandlers(async (c) => {
       id: true,
       title: true,
       done: true,
+      memo: true,
       createdAt: true,
       updatedAt: true,
     },

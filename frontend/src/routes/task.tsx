@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
@@ -59,6 +59,7 @@ const TaskPage: React.FC = () => {
           </CSSTransition>
         ))}
       </TransitionGroup>
+      <Outlet />
     </>
   );
 };

@@ -13,6 +13,7 @@ import {
 } from "@/types/request/UpdateTaskRequest";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormMessage } from "../ui/form";
+import { Link } from "@tanstack/react-router";
 
 type Tasks = ApiRouteBase["/users/tasks"]["$get"];
 
@@ -115,7 +116,9 @@ export const TaskCard: React.FC<{ task: Tasks[0] }> = ({ task }) => {
         ) : (
           <CardTitle>
             <div className="flex">
-              <h2 className="flex-1 line-clamp-2">{task.title}</h2>
+              <Link to="/task/$id" params={{ id: task.id.toString() }}>
+                <h2 className="flex-1 line-clamp-2">{task.title}</h2>
+              </Link>
               <Pencil2Icon
                 className="ml-auto cursor-pointer hover:text-blue-500"
                 onClick={() => setIsTitleEdit(true)}
