@@ -10,17 +10,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { Label } from "../../components/ui/label";
-import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { useApiClient } from "../../hooks/useApiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Textarea } from "../../components/ui/textarea";
+import { useState } from "react";
+import { useToast } from "../../components/ui/use-toast";
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams({ from: "/task/$id" });
   const navigate = useNavigate();
   const api = useApiClient();
+  const [memo, setMemo] = useState<string>("");
+  const { toast } = useToast();
+
   const query = useQuery({
     queryKey: ["task", id],
     queryFn: async () => {
@@ -43,6 +46,28 @@ const TaskDetail: React.FC = () => {
     navigate({ to: "/task" });
   };
 
+  const handleSubmit = async () => {
+    if (!memo) return handleClose();
+    const res = await api.users.tasks[":id"].$put({
+      param: { id },
+      json: { memo },
+    });
+    if (res.status === 200) {
+      await res.json();
+      toast({
+        title: "Success",
+        description: "Task has been updated successfully",
+      });
+      navigate({ to: "/task" });
+    } else {
+      const json = await res.json();
+      toast({
+        title: "Error",
+        description: json.message,
+      });
+    }
+  };
+
   if (!task)
     return (
       <Dialog
@@ -60,31 +85,22 @@ const TaskDetail: React.FC = () => {
         if (!open) handleClose();
       }}
     >
-      <DialogContent className="w-96 max-w-full h-1/2 max-h-full min-w-96">
-        <DialogHeader>
+      <DialogContent className="flex flex-col w-[50%] max-w-full h-1/2 max-h-full min-w-96">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{task.title}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              タスク名
-            </Label>
-            <Input id="name" defaultValue={task.title} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              メモ
-            </Label>
-            <Textarea
-              rows={3}
-              id="username"
-              defaultValue={task.memo}
-              className="col-span-3"
-            />
-          </div>
+        <div className="flex-grow overflow-y-auto">
+          <Textarea
+            id="username"
+            defaultValue={task.memo || ""}
+            className="h-full"
+            onChange={(e) => setMemo(e.target.value)}
+          />
         </div>
-        <DialogFooter>
-          <Button type="submit">Save changes</Button>
+        <DialogFooter className="flex-shrink-0">
+          <Button type="submit" onClick={handleSubmit}>
+            Save changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

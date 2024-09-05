@@ -3,7 +3,7 @@ import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 import { User } from "@prisma/client";
 import { LoginRequest } from "@/types/request/LoginRequest";
 
-type UserState = Omit<User, "password" | "login_id"> | null;
+type UserState = Omit<User, "password" | "loginId"> | null;
 
 type AuthState =
   | {

@@ -27,7 +27,7 @@ const loginHandler = factory.createHandlers(
     const prisma = c.get("prisma");
     const user = await prisma.user.findFirst({
       where: {
-        login_id,
+        loginId: login_id,
       },
       select: {
         id: true,
@@ -75,7 +75,7 @@ const createUserHandler = factory.createHandlers(
     const createUser = await prisma.user.create({
       data: {
         name,
-        login_id,
+        loginId: login_id,
         password: cryptedPassword,
       },
     });

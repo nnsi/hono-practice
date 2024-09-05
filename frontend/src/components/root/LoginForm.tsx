@@ -28,7 +28,6 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginRequest) => {
     try {
       await login(data);
-      console.log("done");
     } catch (e) {
       console.error(e);
     }

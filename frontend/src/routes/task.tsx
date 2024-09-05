@@ -6,6 +6,7 @@ import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 import { TaskForm } from "../components/task/TaskForm";
 import { TaskCard } from "../components/task/TaskCard";
 import { Button } from "../components/ui/button";
+import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
 
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =
@@ -14,14 +15,21 @@ const TaskPage: React.FC = () => {
   const query = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
+      console.log("fetching...");
       const res = await api.users.tasks.$get();
+      console.log("fetched");
       if (res.status === 200) {
-        return await res.json();
+        const json = await res.json();
+        console.log(json);
+        const parsedJson = GetTasksResponseSchema.safeParse(json);
+        console.log(parsedJson);
+        return parsedJson.data;
+      } else {
+        console.log("error?");
+        const json = (await res.json()) as unknown as { message: string };
+        console.log(json.message);
+        return;
       }
-
-      const json = (await res.json()) as unknown as { message: string };
-      console.log(json.message);
-      return;
     },
   });
 
@@ -47,15 +55,17 @@ const TaskPage: React.FC = () => {
         {taskList.map((task) => (
           <CSSTransition
             key={task.id}
-            timeout={300}
+            timeout={200}
             classNames={{
-              enter: "opacity-0",
-              enterActive: "opacity-100 transition-all duration-300 ease-in",
-              exit: "opacity-100 overflow-hidden",
-              exitActive: "w-0 opacity-0 transition-all duration-300 ease-in",
+              enter: "w-0 opacity-0",
+              enterActive: "w-80 opacity-100",
+              exit: "w-80 opacity-100",
+              exitActive: "w-1 opacity-0",
             }}
           >
-            <TaskCard key={task.id} task={task} />
+            <div className="transition-all duration-200 ease-in-out overflow-hidden">
+              <TaskCard key={task.id} task={task} className="w-80" />
+            </div>
           </CSSTransition>
         ))}
       </TransitionGroup>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApiRouteBase, useApiClient } from "../../hooks/useApiClient";
+import { useApiClient } from "../../hooks/useApiClient";
 import { Card, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
@@ -14,10 +14,14 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormMessage } from "../ui/form";
 import { Link } from "@tanstack/react-router";
+import { GetTasksResponse } from "@/types/response/GetTasksResponse";
 
-type Tasks = ApiRouteBase["/users/tasks"]["$get"];
+type TaskCardProps = {
+  task: GetTasksResponse[0];
+  className?: string;
+};
 
-export const TaskCard: React.FC<{ task: Tasks[0] }> = ({ task }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
   const api = useApiClient();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -90,7 +94,7 @@ export const TaskCard: React.FC<{ task: Tasks[0] }> = ({ task }) => {
   };
 
   return (
-    <Card className={`w-80 ${task.done ? "bg-gray-300" : ""}`}>
+    <Card className={`${task.done ? "bg-gray-300" : ""} ${className}`}>
       <CardHeader className="h-24">
         {isTitleEdit ? (
           <div className="flex gap-5">
@@ -120,7 +124,7 @@ export const TaskCard: React.FC<{ task: Tasks[0] }> = ({ task }) => {
                 <h2 className="flex-1 line-clamp-2">{task.title}</h2>
               </Link>
               <Pencil2Icon
-                className="ml-auto cursor-pointer hover:text-blue-500"
+                className="ml-auto cursor-pointer hover:text-blue-500 w-9"
                 onClick={() => setIsTitleEdit(true)}
               />
             </div>

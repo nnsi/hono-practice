@@ -11,6 +11,7 @@ import {
 } from "@/types/request/UpdateTaskRequest";
 import { JwtEnv } from "../middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
+import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
 
 const factory = createFactory<
   JwtEnv & { Variables: { prisma: PrismaClient } }
@@ -35,7 +36,16 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
-  return c.json(tasks, 200);
+  const convertTasks = tasks.map((task) => ({
+    ...task,
+    createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString(),
+  }));
+
+  const parsedTasks = GetTasksResponseSchema.safeParse(convertTasks);
+  console.log(parsedTasks);
+
+  return c.json(parsedTasks.data, 200);
 });
 
 const findHandler = factory.createHandlers(async (c) => {

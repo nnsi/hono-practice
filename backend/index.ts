@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { helloRoute, authRoute, taskRoute } from "./route";
+import { authRoute, taskRoute } from "./route";
 import { cors } from "hono/cors";
 import { PrismaClient } from "@prisma/client";
 import { authMiddleware } from "./middleware/authMiddleware";
@@ -23,7 +23,9 @@ app.use(
 app.use("/users/*", authMiddleware);
 
 const routes = app
-  .route("/", helloRoute)
+  .get("/", async (c) => {
+    return c.json({ message: "Hello" }, 200);
+  })
   .route("/auth", authRoute)
   .route("/users/tasks", taskRoute)
   .get("/users/me", async (c) => {
@@ -44,7 +46,7 @@ const routes = app
       return c.json({ message: "unauthorized" }, 401);
     }
 
-    const { password, login_id, ...userWithoutPassword } = user;
+    const { password, loginId, ...userWithoutPassword } = user;
 
     return c.json({ ...userWithoutPassword }, 200);
   });

@@ -51,7 +51,6 @@ const RootComponent: React.FC = () => {
   useEffect(() => {
     (async () => {
       await getUser();
-      console.log("done");
       setIsTrieduthentication(true);
     })();
   }, []);
