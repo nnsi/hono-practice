@@ -12,9 +12,9 @@ import {
 } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { useApiClient } from "../../hooks/useApiClient";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "../../components/ui/textarea";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "../../components/ui/use-toast";
 
 const TaskDetail: React.FC = () => {
@@ -23,6 +23,13 @@ const TaskDetail: React.FC = () => {
   const api = useApiClient();
   const [memo, setMemo] = useState<string>("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({ queryKey: ["task", id] });
+    };
+  }, []);
 
   const query = useQuery({
     queryKey: ["task", id],
