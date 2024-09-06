@@ -53,6 +53,7 @@ const loginHandler = factory.createHandlers(
     const token = await sign(payload, "secret123");
     setCookie(c, "auth", token, {
       httpOnly: true,
+      expires: new Date(payload.exp * 1000),
     });
 
     const { password: _, ...userWithoutPassword } = user;

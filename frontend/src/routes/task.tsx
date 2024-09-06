@@ -7,26 +7,31 @@ import { TaskForm } from "../components/task/TaskForm";
 import { TaskCard } from "../components/task/TaskCard";
 import { Button } from "../components/ui/button";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+import { useToast } from "../components/ui/use-toast";
 
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =
     useState(false);
   const api = useApiClient();
+  const { toast } = useToast();
   const query = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
-      console.log("fetching...");
       const res = await api.users.tasks.$get();
-      console.log("fetched");
       if (res.status === 200) {
         const json = await res.json();
-        console.log(json);
         const parsedJson = GetTasksResponseSchema.safeParse(json);
-        console.log(parsedJson);
+        if (!parsedJson.success) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch tasks",
+            variant: "destructive",
+          });
+          return;
+        }
         return parsedJson.data;
       } else {
-        console.log("error?");
-        const json = (await res.json()) as unknown as { message: string };
+        const json = await res.json();
         console.log(json.message);
         return;
       }

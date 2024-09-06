@@ -9,10 +9,9 @@ generator client {
 }
 
 generator zod {
-  provider           = "npx zod-prisma-types"
-  output             = "../types/prisma"
-  createPartialTypes = true
-  coerceDate         = false
+  provider   = "npx zod-prisma-types"
+  output     = "../types/prisma"
+  coerceDate = true
 }
 
 datasource db {
@@ -36,8 +35,8 @@ model Task {
   title     String
   done      Boolean  @default(false)
   memo      String?  @default("")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id])
 

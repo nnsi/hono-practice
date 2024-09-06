@@ -36,14 +36,14 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
-  const convertTasks = tasks.map((task) => ({
-    ...task,
-    createdAt: task.createdAt.toISOString(),
-    updatedAt: task.updatedAt.toISOString(),
-  }));
+  console.log(new Date().getTimezoneOffset());
+  console.log(tasks.map((task) => task.updatedAt));
 
-  const parsedTasks = GetTasksResponseSchema.safeParse(convertTasks);
-  console.log(parsedTasks);
+  const parsedTasks = GetTasksResponseSchema.safeParse(tasks);
+  if (!parsedTasks.success) {
+    return c.json({ message: "failed to parse tasks" }, 500);
+  }
+  console.log(parsedTasks.data[0].updatedAt);
 
   return c.json(parsedTasks.data, 200);
 });
