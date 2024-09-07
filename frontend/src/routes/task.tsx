@@ -32,7 +32,11 @@ const TaskPage: React.FC = () => {
         return parsedJson.data;
       } else {
         const json = await res.json();
-        console.log(json.message);
+        toast({
+          title: "Error",
+          description: json.message,
+          variant: "destructive",
+        });
         return;
       }
     },
@@ -60,12 +64,12 @@ const TaskPage: React.FC = () => {
         {taskList.map((task) => (
           <CSSTransition
             key={task.id}
-            timeout={200}
+            timeout={190}
             classNames={{
               enter: "w-0 opacity-0",
               enterActive: "w-80 opacity-100",
               exit: "w-80 opacity-100",
-              exitActive: "w-1 opacity-0",
+              exitActive: "w-2 opacity-0",
             }}
           >
             <div className="transition-all duration-200 ease-in-out overflow-hidden">

@@ -36,14 +36,10 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
-  console.log(new Date().getTimezoneOffset());
-  console.log(tasks.map((task) => task.updatedAt));
-
   const parsedTasks = GetTasksResponseSchema.safeParse(tasks);
   if (!parsedTasks.success) {
     return c.json({ message: "failed to parse tasks" }, 500);
   }
-  console.log(parsedTasks.data[0].updatedAt);
 
   return c.json(parsedTasks.data, 200);
 });
@@ -134,9 +130,23 @@ const deleteHandler = factory.createHandlers(async (c) => {
   return c.json({ message: "success" }, 200);
 });
 
+const bulkDeleteDoneTaskHandler = factory.createHandlers(async (c) => {
+  const prisma = c.get("prisma");
+
+  await prisma.task.deleteMany({
+    where: {
+      done: true,
+      userId: c.get("jwtPayload").id,
+    },
+  });
+
+  return c.json({ message: "success" }, 200);
+});
+
 export const taskRoute = app
   .get("/", ...getHandler)
   .post("/", ...createHandler)
   .get("/:id", ...findHandler)
   .put("/:id", ...updateHandler)
-  .delete("/:id", ...deleteHandler);
+  .delete("/:id", ...deleteHandler)
+  .delete("/bulkDelete", ...bulkDeleteDoneTaskHandler);

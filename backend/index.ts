@@ -6,8 +6,16 @@ import { PrismaClient } from "@prisma/client";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { config } from "./config";
 
-const app = new Hono<{ Variables: { prisma: PrismaClient } }>();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+  query: {
+    $allOperations({ model, operation, args, query }) {
+      console.log("model:" + model, "operation:" + operation);
+      console.log(args);
+      return query(args);
+    },
+  },
+});
+const app = new Hono<{ Variables: { prisma: typeof prisma } }>();
 
 app.use(
   "*",
