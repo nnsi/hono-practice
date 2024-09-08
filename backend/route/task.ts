@@ -11,7 +11,7 @@ import {
 import { JwtEnv } from "../middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
-import { prisma } from "@/backend/libs/prisma";
+import { prisma } from "@/backend/lib/prisma";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();

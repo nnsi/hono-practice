@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { authRoute, taskRoute } from "./route";
+import { activityRoute, authRoute, taskRoute } from "./route";
 import { cors } from "hono/cors";
-import { prisma } from "./libs/prisma";
+import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { config } from "./config";
 
@@ -23,6 +23,7 @@ const routes = app
   })
   .route("/auth", authRoute)
   .route("/users/tasks", taskRoute)
+  .route("/users/activities", activityRoute)
   .get("/users/me", async (c) => {
     const payload = c.get("jwtPayload");
 

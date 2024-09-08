@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
 import { zValidator } from "@hono/zod-validator";
-import { prisma } from "@/backend/libs/prisma";
+import { prisma } from "@/backend/lib/prisma";
 import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
