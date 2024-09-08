@@ -32,6 +32,10 @@ const routes = app
     }
 
     const user = await prisma.user.findFirst({
+      select: {
+        id: true,
+        name: true,
+      },
       where: {
         id: payload.id,
       },
@@ -41,9 +45,7 @@ const routes = app
       return c.json({ message: "unauthorized" }, 401);
     }
 
-    const { password, loginId, ...userWithoutPassword } = user;
-
-    return c.json({ ...userWithoutPassword }, 200);
+    return c.json({ ...user }, 200);
   });
 
 const port = 3456;

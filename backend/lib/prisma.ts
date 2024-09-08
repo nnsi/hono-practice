@@ -104,21 +104,30 @@ function createPrisma() {
       },
     },
     query: {
-      $allOperations({ model, args, query }) {
+      $allOperations({ model, operation, args, query }) {
+        if (operation === "create") {
+          return query(args);
+        }
         const dataModel = Prisma.dmmf.datamodel.models.find(
           (m) => m.name === model
         );
+        if (!dataModel) return query(args);
+        const existDeletedAtColumn = dataModel.fields.some(
+          (field) => field.name === "deletedAt"
+        );
+        if (!existDeletedAtColumn) return query(args);
+
         if (args["withTrashed"]) {
-          delete args["where"]["deletedAt"];
+          delete args?.["where"]?.["deletedAt"];
           delete args["withTrashed"];
-        } else if (dataModel) {
-          const existDeletedAtColumn = dataModel.fields.some(
-            (field) => field.name === "deletedAt"
-          );
-          if (existDeletedAtColumn) {
-            args["select"]["deletedAt"] = true;
-            args["where"]["deletedAt"] = true;
+          if (args["select"]) {
+            Object.assign(args["select"], { deletedAt: true });
           }
+        } else if (dataModel) {
+          if (!args["where"]) {
+            args["where"] = {};
+          }
+          args["where"]["deletedAt"] = null;
         }
         return query(args);
       },
