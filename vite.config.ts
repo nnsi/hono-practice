@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./"),
+      "@ui": path.resolve(__dirname, "./frontend/src/components/ui"),
     },
   },
   plugins: [TanStackRouterVite(), react()],

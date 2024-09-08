@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 import { TaskForm } from "../components/task/TaskForm";
 import { TaskCard } from "../components/task/TaskCard";
-import { Button } from "../components/ui/button";
+import { Button } from "@ui/button";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
-import { useToast } from "../components/ui/use-toast";
+import { useToast } from "@ui/use-toast";
 
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =

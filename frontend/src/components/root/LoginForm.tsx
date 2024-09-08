@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/frontend/src/components/ui/button";
+import { Button } from "@ui/button";
 import {
   Form,
   FormControl,
@@ -7,11 +7,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/frontend/src/components/ui/form";
-import { Input } from "@/frontend/src/components/ui/input";
+} from "@ui/form";
+import { Input } from "@ui/input";
 import { useForm } from "react-hook-form";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
-import { Card, CardContent, CardHeader } from "../ui/card";
+import { Card, CardContent, CardHeader } from "@ui/card";
 import { useAuth } from "../../hooks/useAuth";
 
 export const LoginForm: React.FC = () => {

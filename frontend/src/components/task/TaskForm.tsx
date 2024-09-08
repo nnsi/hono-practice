@@ -2,15 +2,15 @@ import {
   CreateTaskRequest,
   createTaskRequestSchema,
 } from "@/types/request/CreateTaskRequest";
-import { Button } from "../ui/button";
-import { Card, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Form, FormField, FormMessage } from "../ui/form";
+import { Button } from "@ui/button";
+import { Card, CardFooter, CardHeader, CardTitle } from "@ui/card";
+import { Form, FormField, FormMessage } from "@ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "../ui/input";
+import { Input } from "@ui/input";
 import { useApiClient } from "../../hooks/useApiClient";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "../ui/use-toast";
+import { useToast } from "@ui/use-toast";
 
 type TaskFormProps = {
   className?: string;

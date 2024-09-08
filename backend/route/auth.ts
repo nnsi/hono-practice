@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
 import { zValidator } from "@hono/zod-validator";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/backend/libs/prisma";
 import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
@@ -12,7 +12,7 @@ import {
 } from "@/types/request/CreateUserRequest";
 import { JwtPayload } from "../middleware/authMiddleware";
 
-const factory = createFactory<{ Variables: { prisma: PrismaClient } }>();
+const factory = createFactory();
 const app = new Hono();
 
 const loginHandler = factory.createHandlers(
@@ -24,7 +24,6 @@ const loginHandler = factory.createHandlers(
   async (c) => {
     const { login_id, password }: LoginRequest = await c.req.json();
 
-    const prisma = c.get("prisma");
     const user = await prisma.user.findFirst({
       where: {
         loginId: login_id,
@@ -69,10 +68,8 @@ const createUserHandler = factory.createHandlers(
   }),
   async (c) => {
     const { name, login_id, password }: CreateUserRequest = await c.req.json();
-
     const cryptedPassword = await bcrypt.hashSync(password, 10);
 
-    const prisma = c.get("prisma");
     const createUser = await prisma.user.create({
       data: {
         name,

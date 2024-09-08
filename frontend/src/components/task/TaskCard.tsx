@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../../hooks/useApiClient";
-import { Card, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { useToast } from "../ui/use-toast";
+import { Card, CardFooter, CardHeader, CardTitle } from "@ui/card";
+import { Button } from "@ui/button";
+import { useToast } from "@ui/use-toast";
 import { Pencil2Icon } from "@radix-ui/react-icons";
-import { Input } from "../ui/input";
+import { Input } from "@ui/input";
 import { useForm } from "react-hook-form";
 import {
   UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormMessage } from "../ui/form";
+import { Form, FormField, FormMessage } from "@ui/form";
 import { Link } from "@tanstack/react-router";
 import { GetTasksResponse } from "@/types/response/GetTasksResponse";
 
@@ -41,12 +41,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
       json: { done: !task.done },
     });
     if (res.status === 200) {
-      await res.json();
+      const json = await res.json();
       toast({
         title: "Task Updated",
         description: "Task has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.setQueryData(["tasks"], (data: GetTasksResponse) => {
+        return data.map((t) => {
+          if (t.id === task.id) {
+            return { ...t, done: json.done };
+          }
+          return t;
+        });
+      });
     } else {
       const json = await res.json();
       console.log(json.message);

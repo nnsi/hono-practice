@@ -2,31 +2,18 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { authRoute, taskRoute } from "./route";
 import { cors } from "hono/cors";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./libs/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { config } from "./config";
 
-const prisma = new PrismaClient().$extends({
-  query: {
-    $allOperations({ model, operation, args, query }) {
-      console.log("model:" + model, "operation:" + operation);
-      console.log(args);
-      return query(args);
-    },
-  },
-});
-const app = new Hono<{ Variables: { prisma: typeof prisma } }>();
+const app = new Hono();
 
 app.use(
   "*",
   cors({
     origin: config.APP_URL,
     credentials: true,
-  }),
-  async (c, next) => {
-    c.set("prisma", prisma);
-    await next();
-  }
+  })
 );
 app.use("/users/*", authMiddleware);
 
@@ -38,7 +25,6 @@ const routes = app
   .route("/users/tasks", taskRoute)
   .get("/users/me", async (c) => {
     const payload = c.get("jwtPayload");
-    const prisma = c.get("prisma");
 
     if (!payload.id) {
       return c.json({ message: "unauthorized" }, 401);

@@ -20,25 +20,73 @@ datasource db {
 }
 
 model User {
-  id       String  @id @unique @default(uuid())
-  loginId  String  @map("login_id")
-  name     String?
-  password String
-  tasks    Task[]
+  id         String     @id @unique @default(uuid())
+  loginId    String     @map("login_id")
+  name       String?
+  password   String
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?  @map("deleted_at") @db.Timestamptz(3)
+  tasks      Task[]
+  activities Activity[]
 
   @@map("user")
 }
 
 model Task {
-  id        String   @id @unique @default(uuid())
-  userId    String   @map("user_id")
+  id        String    @id @unique @default(uuid())
+  userId    String    @map("user_id")
   title     String
-  done      Boolean  @default(false)
-  memo      String?  @default("")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  done      Boolean   @default(false)
+  memo      String?   @default("")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id])
 
   @@map("task")
+}
+
+model Activity {
+  id          String                    @id @unique @default(uuid())
+  userId      String                    @map("user_id")
+  name        String
+  description String                    @default("")
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?                 @map("deleted_at") @db.Timestamptz(3)
+  logs        ActivityLog[]
+  options     ActicityQuantityOptions[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("activity")
+}
+
+model ActicityQuantityOptions {
+  id         String    @id @unique @default(uuid())
+  activityId String    @map("activity_id")
+  quantity   Float
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@map("acticity_quantity_options")
+}
+
+model ActivityLog {
+  id         String    @id @unique @default(uuid())
+  activityId String    @map("activity_id")
+  quantity   Float?
+  memo       String    @default("")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@map("activity_log")
 }

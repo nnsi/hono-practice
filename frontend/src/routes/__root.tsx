@@ -3,8 +3,8 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/frontend/src/hooks/useAuth";
 import { LoginForm } from "@/frontend/src/components/root/LoginForm";
 import { CreateUserForm } from "@/frontend/src/components/root/CreateUserForm";
-import { Button } from "@/frontend/src/components/ui/button";
-import { Toaster } from "@/frontend/src/components/ui/toaster";
+import { Button } from "@ui/button";
+import { Toaster } from "@ui/toaster";
 
 // ログイン済みユーザー向けのルートコンポーネント
 const AuthenticatedHome: React.FC = () => {
