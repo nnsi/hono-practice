@@ -1,7 +1,11 @@
 import { z } from "zod";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const envVariables = z.object({
   APP_URL: z.string(),
+  JWT_SECRET: z.string().min(32),
 });
 
 declare global {
@@ -10,13 +14,4 @@ declare global {
   }
 }
 
-if (process.env.NODE_ENV === "production") {
-  envVariables.parse(process.env);
-}
-
-export const config = {
-  APP_URL:
-    process.env.NODE_ENV === "production"
-      ? process.env.APP_URL
-      : "http://localhost:5173",
-};
+export const config = envVariables.parse(process.env);

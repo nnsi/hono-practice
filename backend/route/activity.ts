@@ -19,6 +19,7 @@ const getHandler = factory.createHandlers(async (c) => {
     select: {
       id: true,
       name: true,
+      quantityLabel: true,
       description: true,
       options: true,
     },

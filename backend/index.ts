@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { config } from "./config";
+import { activityDateLogRoute } from "./route/activityDateLog";
 
 const app = new Hono();
 
@@ -24,6 +25,7 @@ const routes = app
   .route("/auth", authRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", activityRoute)
+  .route("/users/activity-logs", activityDateLogRoute)
   .get("/users/me", async (c) => {
     const payload = c.get("jwtPayload");
 

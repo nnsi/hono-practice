@@ -49,15 +49,16 @@ model Task {
 }
 
 model Activity {
-  id          String                   @id @unique @default(uuid())
-  userId      String                   @map("user_id")
-  name        String
-  description String                   @default("")
-  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt   DateTime?                @map("deleted_at") @db.Timestamptz(3)
-  logs        ActivityLog[]
-  options     ActivityQuantityOption[]
+  id            String                   @id @unique @default(uuid())
+  userId        String                   @map("user_id")
+  name          String
+  description   String                   @default("")
+  quantityLabel String                   @default("") @map("quantity_label")
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?                @map("deleted_at") @db.Timestamptz(3)
+  logs          ActivityLog[]
+  options       ActivityQuantityOption[]
 
   user User @relation(fields: [userId], references: [id])
 
@@ -82,7 +83,7 @@ model ActivityLog {
   activityId String    @map("activity_id")
   quantity   Float?
   memo       String    @default("")
-  date       DateTime  @db.Timestamptz(3)
+  date       DateTime  @db.Date
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)

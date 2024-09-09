@@ -1,5 +1,9 @@
 {
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
-  }
+  },
+  "exportall.config.folderListener": [
+    "/frontend/src/components",
+    "/frontend/src/components/ui"
+  ]
 }

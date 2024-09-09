@@ -4,6 +4,7 @@ export const GetActivitySchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  quantityLabel: z.string(),
   options: z.array(
     z.object({
       id: z.string(),

@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as TaskImport } from './routes/task'
 import { Route as ProfileImport } from './routes/profile'
+import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
 import { Route as TaskIdImport } from './routes/task/$id'
 
@@ -25,6 +26,11 @@ const TaskRoute = TaskImport.update({
 
 const ProfileRoute = ProfileImport.update({
   path: '/profile',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ActivityRoute = ActivityImport.update({
+  path: '/activity',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -47,6 +53,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityImport
       parentRoute: typeof rootRoute
     }
     '/profile': {
@@ -77,6 +90,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren({
   IndexRoute,
+  ActivityRoute,
   ProfileRoute,
   TaskRoute: TaskRoute.addChildren({ TaskIdRoute }),
 })
@@ -90,12 +104,16 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/activity",
         "/profile",
         "/task"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/activity": {
+      "filePath": "activity.tsx"
     },
     "/profile": {
       "filePath": "profile.tsx"

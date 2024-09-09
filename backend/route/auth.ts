@@ -11,6 +11,7 @@ import {
   createUserRequestSchema,
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
+import { config } from "../config";
 
 const factory = createFactory();
 const app = new Hono();
@@ -49,7 +50,7 @@ const loginHandler = factory.createHandlers(
       exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60,
     };
 
-    const token = await sign(payload, "secret123");
+    const token = await sign(payload, config.JWT_SECRET);
     setCookie(c, "auth", token, {
       httpOnly: true,
       expires: new Date(payload.exp * 1000),

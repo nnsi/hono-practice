@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
-import { TaskForm } from "../components/task/TaskForm";
-import { TaskCard } from "../components/task/TaskCard";
-import { Button } from "@ui/button";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+import { TaskForm, TaskCard } from "../components";
+import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
 
 const TaskPage: React.FC = () => {
