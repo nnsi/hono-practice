@@ -1,9 +1,11 @@
 import { ReactNode, createContext, useState } from "react";
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
-import { User } from "@prisma/client";
 import { LoginRequest } from "@/types/request/LoginRequest";
 
-type UserState = Omit<User, "password" | "loginId"> | null;
+type UserState = {
+  id: string;
+  name: string | null;
+} | null;
 
 type AuthState =
   | {

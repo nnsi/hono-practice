@@ -71,13 +71,32 @@ const createUserHandler = factory.createHandlers(
     const { name, login_id, password }: CreateUserRequest = await c.req.json();
     const cryptedPassword = await bcrypt.hashSync(password, 10);
 
-    const createUser = await prisma.user.create({
-      data: {
-        name,
-        loginId: login_id,
-        password: cryptedPassword,
-      },
-    });
+
+    try{
+      const loginIdExists = await prisma.user.findFirst({
+        where: {
+          loginId: login_id,
+        },
+      });
+      if(loginIdExists){
+        return c.json({ message: "別のログインIDを指定してください" }, 500);
+      }
+    }catch(e){
+      return c.json({ message: "ユーザー作成に失敗しました" }, 500);
+    }
+
+    let createUser;
+    try {
+      createUser = await prisma.user.create({
+        data: {
+          name,
+          loginId: login_id,
+          password: cryptedPassword,
+        },
+      });
+    } catch (e:any) {
+      return c.json({ message: "ユーザー作成に失敗しました" }, 500);
+    }
 
     const token = await sign(
       { id: createUser.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
