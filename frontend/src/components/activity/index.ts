@@ -1,1 +1,2 @@
-export * from "./ActivityTabs";
+export * from './ActivitySettings';
+export * from './ActivityTabs';

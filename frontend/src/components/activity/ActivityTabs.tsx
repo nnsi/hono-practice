@@ -1,14 +1,12 @@
 import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
+import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
+
 import {
   Card,
   CardHeader,
-  Label,
   CardTitle,
-  CardDescription,
   CardContent,
   CardFooter,
-  Input,
-  Button,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -18,9 +16,9 @@ import {
 type ActivityTabsProps = {
   mode: "daily" | "monthly";
   changeMode: (mode: "daily" | "monthly") => void;
-  activities: GetActivitiesResponse;
-  dailyActivityLogs: GetActivityLogsResponse;
-  monthlyActivityLogs: GetActivityLogsResponse;
+  activities?: GetActivitiesResponse;
+  dailyActivityLogs?: GetActivityLogsResponse;
+  monthlyActivityLogs?: GetActivityLogsResponse;
 };
 
 export const ActivityTabs: React.FC<ActivityTabsProps> = ({
@@ -31,55 +29,49 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   monthlyActivityLogs,
 }) => {
   return (
-    <Tabs defaultValue="account">
+    <Tabs defaultValue={mode} value={mode}>
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="account">Account</TabsTrigger>
-        <TabsTrigger value="password">Password</TabsTrigger>
+        <TabsTrigger value="daily" onClick={() => changeMode("daily")}>
+          Daily
+        </TabsTrigger>
+        <TabsTrigger value="monthly" onClick={() => changeMode("monthly")}>
+          Monthly
+        </TabsTrigger>
       </TabsList>
-      <TabsContent value="account">
+      <TabsContent value="daily">
         <Card>
           <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>
-              Make changes to your account here. Click save when you're done.
-            </CardDescription>
+            <CardTitle>Daily Activities</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" defaultValue="Pedro Duarte" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" defaultValue="@peduarte" />
-            </div>
+            {activities?.map((activity) => (
+              <div key={activity.id} className="space-y-1">
+                <p>{activity.name}</p>
+              </div>
+            ))}
+            <hr />
+            {dailyActivityLogs?.map((log) => (
+              <div key={log.id} className="space-y-1">
+                <p>{log.activity.name}</p>
+              </div>
+            ))}
           </CardContent>
-          <CardFooter>
-            <Button>Save changes</Button>
-          </CardFooter>
+          <CardFooter></CardFooter>
         </Card>
       </TabsContent>
-      <TabsContent value="password">
+      <TabsContent value="monthly">
         <Card>
           <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>
-              Change your password here. After saving, you'll be logged out.
-            </CardDescription>
+            <CardTitle>Monthly Activities</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="space-y-1">
-              <Label htmlFor="current">Current password</Label>
-              <Input id="current" type="password" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="new">New password</Label>
-              <Input id="new" type="password" />
-            </div>
+            {monthlyActivityLogs?.map((log) => (
+              <div key={log.id} className="space-y-1">
+                <p>{log.activity.name}</p>
+              </div>
+            ))}
           </CardContent>
-          <CardFooter>
-            <Button>Save password</Button>
-          </CardFooter>
+          <CardFooter></CardFooter>
         </Card>
       </TabsContent>
     </Tabs>

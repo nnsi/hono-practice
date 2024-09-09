@@ -63,12 +63,12 @@ const TaskPage: React.FC = () => {
         {taskList.map((task) => (
           <CSSTransition
             key={task.id}
-            timeout={190}
+            timeout={200}
             classNames={{
               enter: "w-0 opacity-0",
               enterActive: "w-80 opacity-100",
               exit: "w-80 opacity-100",
-              exitActive: "w-2 opacity-0",
+              exitActive: "w-1 opacity-0",
             }}
           >
             <div className="transition-all duration-200 ease-in-out overflow-hidden">

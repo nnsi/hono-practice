@@ -8,7 +8,7 @@ import {
   CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@/types/request/CreateActivityRequest";
-import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
+import { GetActivitiesResponseSchema, GetActivityResponseSchema } from "@/types/response/GetActivitiesResponse";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
@@ -43,20 +43,19 @@ const createHandler = factory.createHandlers(
   zValidator("json", CreateActivityRequestSchema),
   async (c) => {
     const userId = c.get("jwtPayload").id;
-    const { name, description, quantityOption } =
+    const { quantityOption, ...json } =
       await c.req.json<CreateActivityRequest>();
 
     const activity = await prisma.activity.create({
       data: {
-        name,
-        description,
+        ...json,
         userId,
       },
     });
 
     const activityWithOptions = {
       ...activity,
-      quantityOptions: [] as unknown as { id: string; quantity: number }[],
+      options: [] as unknown as { id: string; quantity: number }[],
     };
 
     if (quantityOption) {
@@ -77,10 +76,16 @@ const createHandler = factory.createHandlers(
         },
       });
 
-      activityWithOptions.quantityOptions.push(...options);
+      activityWithOptions.options.push(...options);
+    }
+    console.log(activityWithOptions);
+    const parsedJson = GetActivityResponseSchema.safeParse(activityWithOptions);
+    if(!parsedJson.success) {
+      console.log(parsedJson.error);
+      return c.json({ message: "エラーが発生しました" }, 500);
     }
 
-    return c.json(activityWithOptions, 200);
+    return c.json(parsedJson.data, 200);
   }
 );
 

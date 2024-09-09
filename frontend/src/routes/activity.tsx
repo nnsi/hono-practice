@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@ui/use-toast";
 import { Calendar } from "@ui/calendar";
 import dayjs from "dayjs";
-import { ActivityTabs } from "../components";
+import { ActivitySettings, ActivityTabs } from "../components";
+import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
+import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
 
 const ActivityPage: React.FC = () => {
   const api = useApiClient();
@@ -27,7 +29,18 @@ const ActivityPage: React.FC = () => {
         return;
       }
       const json = await res.json();
-      return json;
+      const parsedJson = GetActivitiesResponseSchema.safeParse(json);
+      if (!parsedJson.success) {
+        console.log(parsedJson.error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      return parsedJson.data;
     },
   });
 
@@ -49,7 +62,16 @@ const ActivityPage: React.FC = () => {
         return;
       }
       const json = await res.json();
-      return json;
+      const parsedJson = GetActivityLogsResponseSchema.safeParse(json);
+      if (!parsedJson.success) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+      return parsedJson.data;
     },
   });
 
@@ -71,7 +93,16 @@ const ActivityPage: React.FC = () => {
         return;
       }
       const json = await res.json();
-      return json;
+      const parsedJson = GetActivityLogsResponseSchema.safeParse(json);
+      if (!parsedJson.success) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+      return parsedJson.data;
     },
   });
 
@@ -92,7 +123,7 @@ const ActivityPage: React.FC = () => {
   return (
     <>
       <div className="grid grid-cols-12">
-        <div className="col-span-4">
+        <div className="col-span-3">
           <div className="flex flex-shrink justify-center">
             <Calendar
               mode="single"
@@ -103,8 +134,11 @@ const ActivityPage: React.FC = () => {
               className="rounded-md border shadow"
             />
           </div>
+          <div className="mt-5">
+            <ActivitySettings activities={activitiesQuery.data} />
+          </div>
         </div>
-        <div className="col-span-8">
+        <div className="col-span-9">
           <ActivityTabs
             mode={mode}
             changeMode={changeMode}

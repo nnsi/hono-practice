@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const GetActivitySchema = z.object({
+export const GetActivityResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
@@ -13,8 +13,8 @@ export const GetActivitySchema = z.object({
   ),
 });
 
-export const GetActivitiesResponseSchema = z.array(GetActivitySchema);
+export const GetActivitiesResponseSchema = z.array(GetActivityResponseSchema);
 
-export type GetActivityResponse = z.infer<typeof GetActivitySchema>;
+export type GetActivityResponse = z.infer<typeof GetActivityResponseSchema>;
 
 export type GetActivitiesResponse = z.infer<typeof GetActivitiesResponseSchema>;

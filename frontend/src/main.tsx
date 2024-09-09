@@ -31,6 +31,8 @@ const RouterProviderWithAuth: React.FC = () => {
   return <RouterProvider router={router} context={{ auth }} />;
 };
 
+// TODO: https://tanstack.com/query/v4/docs/framework/react/plugins/createAsyncStoragePersister
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
