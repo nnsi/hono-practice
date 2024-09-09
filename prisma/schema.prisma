@@ -49,22 +49,22 @@ model Task {
 }
 
 model Activity {
-  id          String                    @id @unique @default(uuid())
-  userId      String                    @map("user_id")
+  id          String                   @id @unique @default(uuid())
+  userId      String                   @map("user_id")
   name        String
-  description String                    @default("")
-  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt   DateTime?                 @map("deleted_at") @db.Timestamptz(3)
+  description String                   @default("")
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?                @map("deleted_at") @db.Timestamptz(3)
   logs        ActivityLog[]
-  options     ActicityQuantityOptions[]
+  options     ActivityQuantityOption[]
 
   user User @relation(fields: [userId], references: [id])
 
   @@map("activity")
 }
 
-model ActicityQuantityOptions {
+model ActivityQuantityOption {
   id         String    @id @unique @default(uuid())
   activityId String    @map("activity_id")
   quantity   Float
@@ -74,7 +74,7 @@ model ActicityQuantityOptions {
 
   activity Activity @relation(fields: [activityId], references: [id])
 
-  @@map("acticity_quantity_options")
+  @@map("activity_quantity_options")
 }
 
 model ActivityLog {
@@ -82,6 +82,7 @@ model ActivityLog {
   activityId String    @map("activity_id")
   quantity   Float?
   memo       String    @default("")
+  date       DateTime  @db.Timestamptz(3)
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)

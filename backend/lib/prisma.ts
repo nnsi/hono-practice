@@ -105,7 +105,7 @@ function createPrisma() {
     },
     query: {
       $allOperations({ model, operation, args, query }) {
-        if (operation === "create") {
+        if (operation === "create" || operation === "createMany") {
           return query(args);
         }
         const dataModel = Prisma.dmmf.datamodel.models.find(
@@ -120,9 +120,6 @@ function createPrisma() {
         if (args["withTrashed"]) {
           delete args?.["where"]?.["deletedAt"];
           delete args["withTrashed"];
-          if (args["select"]) {
-            Object.assign(args["select"], { deletedAt: true });
-          }
         } else if (dataModel) {
           if (!args["where"]) {
             args["where"] = {};

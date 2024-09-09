@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
+import { sign } from "hono/jwt";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@/backend/lib/prisma";
-import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
+import { JwtPayload } from "../middleware/authMiddleware";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
 import {
   createUserRequestSchema,
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
-import { JwtPayload } from "../middleware/authMiddleware";
 
 const factory = createFactory();
 const app = new Hono();
