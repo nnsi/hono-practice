@@ -1,20 +1,26 @@
-import { z} from 'zod';
+import { z } from "zod";
 
 export const GetActivityLogResponseSchema = z.object({
-    id: z.string(),
-    date: z.string(),
-    quantity: z.number().nullable(),
-    activity: z.object({
-        name: z.string(),
-        description: z.string(),
-    }),
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
-    memo: z.string(),
+  id: z.string(),
+  date: z.string(),
+  quantity: z.number().nullable(),
+  activity: z.object({
+    name: z.string(),
+    quantityLabel: z.string(),
+  }),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  memo: z.string(),
 });
 
-export type GetActivityLogResponse = z.infer<typeof GetActivityLogResponseSchema>;
+export type GetActivityLogResponse = z.infer<
+  typeof GetActivityLogResponseSchema
+>;
 
-export const GetActivityLogsResponseSchema = z.array(GetActivityLogResponseSchema);
+export const GetActivityLogsResponseSchema = z.array(
+  GetActivityLogResponseSchema
+);
 
-export type GetActivityLogsResponse = z.infer<typeof GetActivityLogsResponseSchema>;
+export type GetActivityLogsResponse = z.infer<
+  typeof GetActivityLogsResponseSchema
+>;

@@ -76,15 +76,29 @@ const createHandler = factory.createHandlers(
       userId: c.get("jwtPayload").id,
     });
 
-    const json = await c.req.json<CreateActivityLogRequest>();
-    const parsedJson = CreateActivityLogRequestSchema.safeParse(json);
-    if (!parsedJson.success) {
+    const request = await c.req.json<CreateActivityLogRequest>();
+    const parsedrequest = CreateActivityLogRequestSchema.safeParse(request);
+    if (!parsedrequest.success) {
       return c.json({ message: "failed to parse json" }, 500);
     }
 
     const activityLog = await prisma.activityLog.create({
+      select: {
+        id: true,
+        quantity: true,
+        memo: true,
+        date: true,
+        createdAt: true,
+        updatedAt: true,
+        activity: {
+          select: {
+            name: true,
+            quantityLabel: true,
+          },
+        },
+      },
       data: {
-        ...parsedJson.data,
+        ...parsedrequest.data,
         activityId,
       },
     });

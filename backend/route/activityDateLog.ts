@@ -31,7 +31,7 @@ const getHandler = factory.createHandlers(async (c) => {
       activity: {
         select: {
           name: true,
-          description: true,
+          quantityLabel: true,
         },
       },
     },

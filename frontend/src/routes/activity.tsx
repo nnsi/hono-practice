@@ -122,7 +122,7 @@ const ActivityPage: React.FC = () => {
 
   return (
     <>
-      <div className="grid grid-cols-12">
+      <div className="grid grid-cols-12 gap-5">
         <div className="col-span-3">
           <div className="flex flex-shrink justify-center">
             <Calendar
@@ -141,6 +141,8 @@ const ActivityPage: React.FC = () => {
         <div className="col-span-9">
           <ActivityTabs
             mode={mode}
+            date={date}
+            month={month}
             changeMode={changeMode}
             activities={activitiesQuery.data}
             dailyActivityLogs={dailyActivityLogsQuery.data}
