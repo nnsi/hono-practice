@@ -88,19 +88,21 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
     );
   };
 
-  const transformedMonthlyActivityLogs = monthlyActivityLogs?.reduce(
-    (acc, log) => {
-      const logDate = dayjs(log.date).format("YYYY-MM-DD");
-      const existingDate = acc.find((item) => item.date === logDate);
-      if (existingDate) {
-        existingDate.activities.push(log);
-      } else {
-        acc.push({ date: logDate, activities: [log] });
-      }
-      return acc;
-    },
-    [] as { date: string; activities: GetActivityLogsResponse }[]
-  );
+  const transformedMonthlyActivityLogs = monthlyActivityLogs
+    ?.reduce(
+      (acc, log) => {
+        const logDate = dayjs(log.date).format("YYYY-MM-DD");
+        const existingDate = acc.find((item) => item.date === logDate);
+        if (existingDate) {
+          existingDate.activities.push(log);
+        } else {
+          acc.push({ date: logDate, activities: [log] });
+        }
+        return acc;
+      },
+      [] as { date: string; activities: GetActivityLogsResponse }[]
+    )
+    .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
 
   return (
     <Tabs defaultValue={mode} value={mode}>
@@ -115,9 +117,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
       <TabsContent value="daily">
         <Card>
           <CardHeader>
-            <CardTitle>
-              Daily Activities : {dayjs(date).format("YYYY-MM-DD")}
-            </CardTitle>
+            <CardTitle>{dayjs(date).format("YYYY-MM-DD")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex gap-5">
@@ -147,9 +147,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
       <TabsContent value="monthly">
         <Card>
           <CardHeader>
-            <CardTitle>
-              Monthly Activities: {dayjs(month).format("YYYY-MM")}
-            </CardTitle>
+            <CardTitle>{dayjs(month).format("YYYY-MM")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {transformedMonthlyActivityLogs?.map((log) => (

@@ -18,9 +18,11 @@ import {
   CardTitle,
   CardFooter,
   CardContent,
+  buttonVariants,
 } from "../ui";
 import { useApiClient } from "../../hooks/useApiClient";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/frontend/utils";
 
 type ActivitySettingsProps = {
   activities?: GetActivitiesResponse;
@@ -96,7 +98,18 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
           </Card>
         </form>
       </Form>
-      <pre>{JSON.stringify(activities, null, 2)}</pre>
+      {activities && (
+        <ul className="mt-5 border-t border-solid pt-5">
+          {activities.map((activity) => (
+            <li
+              className={cn(buttonVariants({ variant: "ghost" }), "w-full")}
+              style={{ justifyContent: "left" }}
+            >
+              {activity.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 };

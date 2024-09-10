@@ -122,8 +122,8 @@ const ActivityPage: React.FC = () => {
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-3">
+      <div className="flex gap-5 max-w-5xl mx-auto">
+        <div className="max-w-sm">
           <div className="flex flex-shrink justify-center">
             <Calendar
               mode="single"
@@ -138,7 +138,7 @@ const ActivityPage: React.FC = () => {
             <ActivitySettings activities={activitiesQuery.data} />
           </div>
         </div>
-        <div className="col-span-9">
+        <div className="flex-1">
           <ActivityTabs
             mode={mode}
             date={date}
