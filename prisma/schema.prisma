@@ -21,7 +21,7 @@ datasource db {
 
 model User {
   id         String     @id @unique @default(uuid())
-  loginId    String     @map("login_id") @unique
+  loginId    String     @unique @map("login_id")
   name       String?
   password   String
   createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -60,7 +60,8 @@ model Activity {
   logs          ActivityLog[]
   options       ActivityQuantityOption[]
 
-  user User @relation(fields: [userId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  ActivityKind ActivityKind[]
 
   @@map("activity")
 }
@@ -79,16 +80,32 @@ model ActivityQuantityOption {
 }
 
 model ActivityLog {
-  id         String    @id @unique @default(uuid())
-  activityId String    @map("activity_id")
-  quantity   Float?
-  memo       String    @default("")
-  date       DateTime  @db.Date
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+  id             String    @id @unique @default(uuid())
+  activityId     String    @map("activity_id")
+  activityKindId String?   @map("activity_kind_id")
+  quantity       Float?
+  memo           String    @default("")
+  date           DateTime  @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  activity Activity @relation(fields: [activityId], references: [id])
+  activity     Activity      @relation(fields: [activityId], references: [id])
+  activityKind ActivityKind? @relation(fields: [activityKindId], references: [id])
 
   @@map("activity_log")
+}
+
+model ActivityKind {
+  id         String    @id @unique @default(uuid())
+  activityId String    @map("activity_id")
+  name       String
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  logs     ActivityLog[]
+  activity Activity      @relation(fields: [activityId], references: [id])
+
+  @@map("activity_kind")
 }

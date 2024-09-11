@@ -1,8 +1,5 @@
 import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
-import {
-  GetActivityLogResponseSchema,
-  GetActivityLogsResponse,
-} from "@/types/response/GetActivityLogsResponse";
+import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
 
 import {
   Card,
@@ -14,13 +11,10 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  Button,
-  useToast,
 } from "../ui";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
 dayjs.extend(utc);
 
 type ActivityTabsProps = {
@@ -42,52 +36,6 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   dailyActivityLogs,
   monthlyActivityLogs,
 }) => {
-  const api = useApiClient();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const handleCreateActivityButtonClick = async (activityId: string) => {
-    const utcDate = dayjs(date).toDate();
-
-    if (!date) {
-      return toast({
-        title: "Error",
-        description: "Failed to create activity log",
-        variant: "destructive",
-      });
-    }
-    const res = await api.users.activities[":id"].logs.$post({
-      param: {
-        id: activityId,
-      },
-      json: {
-        date: utcDate,
-      },
-    });
-    if (res.status !== 200) {
-      toast({
-        title: "Error",
-        description: "Failed to create activity log",
-        variant: "destructive",
-      });
-      return;
-    }
-    const json = await res.json();
-    const parsedJson = GetActivityLogResponseSchema.safeParse(json);
-    queryClient.setQueryData(
-      ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      }
-    );
-    queryClient.setQueryData(
-      ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      }
-    );
-  };
-
   const transformedMonthlyActivityLogs = monthlyActivityLogs
     ?.reduce(
       (acc, log) => {
@@ -122,12 +70,11 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
           <CardContent className="space-y-2">
             <div className="flex gap-5">
               {activities?.map((activity) => (
-                <Button
+                <ActivityLogCreateForm
                   key={activity.id}
-                  onClick={() => handleCreateActivityButtonClick(activity.id)}
-                >
-                  {activity.name}
-                </Button>
+                  activity={activity}
+                  date={date}
+                />
               ))}
             </div>
             <hr />
