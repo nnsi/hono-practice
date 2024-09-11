@@ -1,6 +1,7 @@
+import dayjs from "dayjs";
+
 import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
-
 import {
   Card,
   CardHeader,
@@ -12,10 +13,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "../ui";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
-dayjs.extend(utc);
+import { ActivityDaily } from "./ActivityDaily";
 
 type ActivityTabsProps = {
   mode: "daily" | "monthly";
@@ -63,33 +61,11 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="daily">
-        <Card>
-          <CardHeader>
-            <CardTitle>{dayjs(date).format("YYYY-MM-DD")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex gap-5">
-              {activities?.map((activity) => (
-                <ActivityLogCreateForm
-                  key={activity.id}
-                  activity={activity}
-                  date={date}
-                />
-              ))}
-            </div>
-            <hr />
-            {dailyActivityLogs?.map((log) => (
-              <div key={log.id} className="space-y-1">
-                <p>
-                  {log.activity.name}{" "}
-                  {log.quantity &&
-                    `${log.quantity} ${log.activity.quantityLabel}`}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-          <CardFooter></CardFooter>
-        </Card>
+        <ActivityDaily
+          activities={activities}
+          dailyActivityLogs={dailyActivityLogs}
+          date={date}
+        />
       </TabsContent>
       <TabsContent value="monthly">
         <Card>
