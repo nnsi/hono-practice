@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 import { JwtEnv } from "../middleware/authMiddleware";
 import { prisma } from "@/backend/lib/prisma";
 import dayjs from "@/backend/lib/dayjs";
+import { GetActivityLogsResponseSchema } from "@/types/response";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
@@ -20,7 +21,7 @@ const getHandler = factory.createHandlers(async (c) => {
           lt: dayjs(month).endOf("month").toDate(),
         };
 
-  const activitiyLogs = await prisma.activityLog.findMany({
+  const activityLogs = await prisma.activityLog.findMany({
     select: {
       id: true,
       quantity: true,
@@ -30,6 +31,7 @@ const getHandler = factory.createHandlers(async (c) => {
       updatedAt: true,
       activity: {
         select: {
+          id: true,
           name: true,
           quantityLabel: true,
         },
@@ -43,7 +45,14 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
-  return c.json(activitiyLogs, 200);
+  const parsedActivityLogs =
+    GetActivityLogsResponseSchema.safeParse(activityLogs);
+  if (!parsedActivityLogs.success) {
+    console.log(JSON.stringify(parsedActivityLogs.error));
+    return c.json({ error: "Failed to fetch activity logs" }, 500);
+  }
+
+  return c.json(parsedActivityLogs.data, 200);
 });
 
 export const activityDateLogRoute = app

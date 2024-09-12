@@ -2,9 +2,10 @@ import { z } from "zod";
 
 export const GetActivityLogResponseSchema = z.object({
   id: z.string(),
-  date: z.string(),
+  date: z.coerce.string(),
   quantity: z.number().nullable(),
   activity: z.object({
+    id: z.string(),
     name: z.string(),
     quantityLabel: z.string(),
   }),

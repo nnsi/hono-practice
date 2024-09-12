@@ -59,8 +59,6 @@ function createPrisma() {
             return (context as any).$parent[context.$name as any].delete(
               restArgs
             );
-          } else {
-            console.log("soft delete");
           }
           const result = await (context as any).update({
             ...restArgs,
@@ -89,8 +87,6 @@ function createPrisma() {
             return (context as any).$parent[context.$name as any].delete(
               restArgs
             );
-          } else {
-            console.log("soft delete");
           }
           const result = await (context as any).updateMany({
             ...restArgs,
