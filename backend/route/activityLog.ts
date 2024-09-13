@@ -92,6 +92,7 @@ const createHandler = factory.createHandlers(
         updatedAt: true,
         activity: {
           select: {
+            id: true,
             name: true,
             quantityLabel: true,
           },

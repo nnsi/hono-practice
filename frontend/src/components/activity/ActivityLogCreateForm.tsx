@@ -23,6 +23,7 @@ import {
   CreateActivityLogRequestSchema,
 } from "@/types/request/CreateActivityLogRequest";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 type ActivityLogCreateFormProps = {
   activity: {
@@ -40,6 +41,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   const api = useApiClient();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [timer, setTimer] = useState(0);
 
   const form = useForm({
     resolver: zodResolver(CreateActivityLogRequestSchema),
@@ -75,6 +77,15 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     }
     const json = await res.json();
     const parsedJson = GetActivityLogResponseSchema.safeParse(json);
+    if (!parsedJson.success) {
+      toast({
+        title: "Error",
+        description: "Failed to create activity log",
+        variant: "destructive",
+      });
+      return;
+    }
+
     queryClient.setQueryData(
       ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
       (prev: GetActivityLogsResponse) => {
@@ -89,10 +100,27 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     );
   };
 
+  const handleMouseDown = () => {
+    setTimer(performance.now() + 300);
+  };
+
   return (
     <Popover key={activity.id}>
       <PopoverTrigger asChild>
-        <Button variant="outline">{activity.name}</Button>
+        <Button
+          variant="outline"
+          onMouseDown={handleMouseDown}
+          onClick={(e) => {
+            if (performance.now() - timer > 0) {
+              e.preventDefault();
+              form.handleSubmit(onSubmit);
+            }
+            setTimer(0);
+          }}
+          className={`${timer > 0 && performance.now() - timer > 0 ? "bg-red-500" : ""}`}
+        >
+          {activity.name}
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 mt-[-0.5rem]">
         <Form {...form}>
