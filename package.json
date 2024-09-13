@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev": "tsx watch backend/index.ts",
-    "client-dev": "vite"
+    "client-dev": "vite --host"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.2.2",

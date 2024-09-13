@@ -69,7 +69,10 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
         </div>
         <hr />
         {dailyActivityLogs?.map((log) => (
-          <Card className="relative group hover:bg-slate-50 cursor-pointer">
+          <Card
+            key={log.id}
+            className="relative group hover:bg-slate-50 cursor-pointer"
+          >
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <TrashIcon
                 onClick={() => handleDelete(log.activity.id, log.id)}
@@ -78,9 +81,11 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
             <CardHeader>
               <CardTitle className="text-lg">{log.activity.name}</CardTitle>
             </CardHeader>
-            <CardContent>
-              {log.quantity} {log.activity.quantityLabel}
-            </CardContent>
+            {log.quantity && (
+              <CardContent>
+                {log.quantity} {log.activity.quantityLabel}
+              </CardContent>
+            )}
           </Card>
         ))}
       </CardContent>

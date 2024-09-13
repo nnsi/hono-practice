@@ -2,8 +2,13 @@ import { hc } from "hono/client";
 import { AppType } from "@/backend/index";
 import { Hono } from "hono";
 
+const API_URL =
+  import.meta.env.MODE === "development"
+    ? `http://${document.domain}:3456/`
+    : import.meta.env.VITE_API_URL;
+
 export function useApiClient() {
-  return hc<AppType>("http://localhost:3456/", {
+  return hc<AppType>(API_URL, {
     init: {
       mode: "cors",
       credentials: "include",

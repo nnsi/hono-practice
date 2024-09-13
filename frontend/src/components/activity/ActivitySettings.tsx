@@ -102,6 +102,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
         <ul className="mt-5 border-t border-solid pt-5">
           {activities.map((activity) => (
             <li
+              key={activity.id}
               className={cn(buttonVariants({ variant: "ghost" }), "w-full")}
               style={{ justifyContent: "left" }}
             >
