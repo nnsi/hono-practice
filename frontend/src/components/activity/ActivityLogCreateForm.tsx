@@ -46,14 +46,15 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   const form = useForm({
     resolver: zodResolver(CreateActivityLogRequestSchema),
     defaultValues: {
-      date,
+      date: dayjs(date).format("YYYY-MM-DD"),
       quantity: undefined,
     },
   });
 
-  form.setValue("date", date);
+  form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
 
   const onSubmit = async (data: CreateActivityLogRequest) => {
+    CreateActivityLogRequestSchema.parse(data);
     if (!date) {
       return toast({
         title: "Error",

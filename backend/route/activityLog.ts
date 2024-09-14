@@ -100,6 +100,7 @@ const createHandler = factory.createHandlers(
       },
       data: {
         ...parsedrequest.data,
+        date: new Date(parsedrequest.data.date),
         activityId,
       },
     });

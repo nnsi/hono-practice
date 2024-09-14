@@ -41,7 +41,7 @@ const getHandler = factory.createHandlers(async (c) => {
       date: dateQuery,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: "asc",
     },
   });
 
