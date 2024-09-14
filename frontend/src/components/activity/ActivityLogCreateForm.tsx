@@ -46,10 +46,12 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   const form = useForm({
     resolver: zodResolver(CreateActivityLogRequestSchema),
     defaultValues: {
-      date: dayjs(date).toDate(),
+      date,
       quantity: undefined,
     },
   });
+
+  form.setValue("date", date);
 
   const onSubmit = async (data: CreateActivityLogRequest) => {
     if (!date) {
@@ -101,7 +103,8 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   };
 
   const handleMouseDown = () => {
-    setTimer(performance.now() + 300);
+    const LONG_PRESSED_TIME = 300;
+    setTimer(performance.now() + LONG_PRESSED_TIME);
   };
 
   return (
@@ -113,11 +116,10 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
           onClick={(e) => {
             if (performance.now() - timer > 0) {
               e.preventDefault();
-              form.handleSubmit(onSubmit);
+              onSubmit(form.getValues());
             }
             setTimer(0);
           }}
-          className={`${timer > 0 && performance.now() - timer > 0 ? "bg-red-500" : ""}`}
         >
           {activity.name}
         </Button>
