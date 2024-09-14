@@ -16,6 +16,8 @@ import { Route as ProfileImport } from './routes/profile'
 import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
 import { Route as TaskIdImport } from './routes/task/$id'
+import { Route as ActivityNewImport } from './routes/activity/new'
+import { Route as ActivityIdImport } from './routes/activity/$id'
 
 // Create/Update Routes
 
@@ -42,6 +44,16 @@ const IndexRoute = IndexImport.update({
 const TaskIdRoute = TaskIdImport.update({
   path: '/$id',
   getParentRoute: () => TaskRoute,
+} as any)
+
+const ActivityNewRoute = ActivityNewImport.update({
+  path: '/new',
+  getParentRoute: () => ActivityRoute,
+} as any)
+
+const ActivityIdRoute = ActivityIdImport.update({
+  path: '/$id',
+  getParentRoute: () => ActivityRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -76,6 +88,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TaskImport
       parentRoute: typeof rootRoute
     }
+    '/activity/$id': {
+      id: '/activity/$id'
+      path: '/$id'
+      fullPath: '/activity/$id'
+      preLoaderRoute: typeof ActivityIdImport
+      parentRoute: typeof ActivityImport
+    }
+    '/activity/new': {
+      id: '/activity/new'
+      path: '/new'
+      fullPath: '/activity/new'
+      preLoaderRoute: typeof ActivityNewImport
+      parentRoute: typeof ActivityImport
+    }
     '/task/$id': {
       id: '/task/$id'
       path: '/$id'
@@ -90,7 +116,10 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren({
   IndexRoute,
-  ActivityRoute,
+  ActivityRoute: ActivityRoute.addChildren({
+    ActivityIdRoute,
+    ActivityNewRoute,
+  }),
   ProfileRoute,
   TaskRoute: TaskRoute.addChildren({ TaskIdRoute }),
 })
@@ -113,7 +142,11 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "index.tsx"
     },
     "/activity": {
-      "filePath": "activity.tsx"
+      "filePath": "activity.tsx",
+      "children": [
+        "/activity/$id",
+        "/activity/new"
+      ]
     },
     "/profile": {
       "filePath": "profile.tsx"
@@ -123,6 +156,14 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/task/$id"
       ]
+    },
+    "/activity/$id": {
+      "filePath": "activity/$id.tsx",
+      "parent": "/activity"
+    },
+    "/activity/new": {
+      "filePath": "activity/new.tsx",
+      "parent": "/activity"
     },
     "/task/$id": {
       "filePath": "task/$id.tsx",

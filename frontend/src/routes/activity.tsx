@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useApiClient } from "../hooks/useApiClient";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@ui/use-toast";
 import { Calendar } from "@ui/calendar";
 import dayjs from "dayjs";
-import { ActivitySettings, ActivityTabs } from "../components";
+import { ActivityTabs, Button } from "../components";
 import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
 
@@ -15,6 +15,7 @@ const ActivityPage: React.FC = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<"daily" | "monthly">("daily");
+  const navigate = useNavigate();
 
   const activitiesQuery = useQuery({
     queryKey: ["activity"],
@@ -122,11 +123,8 @@ const ActivityPage: React.FC = () => {
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-5 max-w-7xl mx-auto">
-        <div className="col-span-4">
-          <ActivitySettings activities={activitiesQuery.data} />
-        </div>
-        <div className="max-w-sm col-span-3">
+      <div className="grid grid-cols-5 gap-5 max-w-3xl mx-auto">
+        <div className="max-w-sm col-span-2">
           <div className="flex flex-shrink justify-center">
             <Calendar
               mode="single"
@@ -137,8 +135,15 @@ const ActivityPage: React.FC = () => {
               className="rounded-md border shadow"
             />
           </div>
+          <Button
+            onClick={() => navigate({ to: "/activity/new" })}
+            variant="secondary"
+            className="my-5 w-full"
+          >
+            New Activity
+          </Button>
         </div>
-        <div className="col-span-5">
+        <div className="col-span-3">
           <ActivityTabs
             mode={mode}
             date={date}
@@ -148,6 +153,7 @@ const ActivityPage: React.FC = () => {
             dailyActivityLogs={dailyActivityLogsQuery.data}
             monthlyActivityLogs={monthlyActivityLogsQuery.data}
           />
+          <Outlet />
         </div>
       </div>
     </>
