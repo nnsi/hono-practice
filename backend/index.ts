@@ -59,3 +59,5 @@ serve({
 });
 
 export type AppType = typeof routes;
+
+export default app;
