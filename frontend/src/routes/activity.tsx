@@ -136,11 +136,11 @@ const ActivityPage: React.FC = () => {
             />
           </div>
           <Button
-            onClick={() => navigate({ to: "/activity/new" })}
+            onClick={() => navigate({ to: "/activity/setting" })}
             variant="secondary"
             className="my-5 w-full"
           >
-            New Activity
+            Setting
           </Button>
         </div>
         <div className="col-span-3">

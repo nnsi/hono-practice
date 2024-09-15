@@ -13,6 +13,7 @@ import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsRespons
 import { TrashIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../../hooks/useApiClient";
+import { Link } from "@tanstack/react-router";
 
 type ActivityDailyProps = {
   activities?: GetActivitiesResponse;
@@ -73,19 +74,27 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
             key={log.id}
             className="relative group hover:bg-slate-50 cursor-pointer"
           >
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <TrashIcon
-                onClick={() => handleDelete(log.activity.id, log.id)}
-              />
-            </div>{" "}
-            <CardHeader>
-              <CardTitle className="text-lg">{log.activity.name}</CardTitle>
-            </CardHeader>
-            {log.quantity && (
-              <CardContent>
-                {log.quantity} {log.activity.quantityLabel}
-              </CardContent>
-            )}
+            <Link to={`/activity/${log.id}`}>
+              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <TrashIcon
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(log.activity.id, log.id);
+                  }}
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  {log.activity.name}
+                  {log.activityKind && ` [${log.activityKind.name}]`}
+                </CardTitle>
+              </CardHeader>
+              {log.quantity && (
+                <CardContent>
+                  {log.quantity} {log.activity.quantityLabel}
+                </CardContent>
+              )}
+            </Link>
           </Card>
         ))}
       </CardContent>

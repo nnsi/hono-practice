@@ -36,6 +36,12 @@ const getHandler = factory.createHandlers(async (c) => {
           quantityLabel: true,
         },
       },
+      activityKind: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     where: {
       date: dateQuery,
@@ -45,6 +51,7 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
+  console.log(activityLogs);
   const parsedActivityLogs =
     GetActivityLogsResponseSchema.safeParse(activityLogs);
   if (!parsedActivityLogs.success) {
@@ -55,7 +62,47 @@ const getHandler = factory.createHandlers(async (c) => {
   return c.json(parsedActivityLogs.data, 200);
 });
 
+const findHandler = factory.createHandlers(async (c) => {
+  const { id } = c.req.param();
+
+  const activityLog = await prisma.activityLog.findUnique({
+    select: {
+      id: true,
+      quantity: true,
+      memo: true,
+      date: true,
+      createdAt: true,
+      updatedAt: true,
+      activity: {
+        select: {
+          id: true,
+          name: true,
+          quantityLabel: true,
+        },
+      },
+      activityKind: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    where: {
+      id,
+      activity: {
+        userId: c.get("jwtPayload").id,
+      },
+    },
+  });
+
+  if (!activityLog) {
+    return c.json({ message: "Activity log not found" }, 404);
+  }
+
+  return c.json(activityLog, 200);
+});
+
 export const activityDateLogRoute = app
   .get("/", ...getHandler)
+  .get("/single/:id", ...findHandler)
   .get("/daily/:date", ...getHandler)
   .get("/monthly/:month", ...getHandler);

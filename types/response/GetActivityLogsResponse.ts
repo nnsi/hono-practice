@@ -9,6 +9,12 @@ export const GetActivityLogResponseSchema = z.object({
     name: z.string(),
     quantityLabel: z.string(),
   }),
+  activityKind: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   memo: z.string(),

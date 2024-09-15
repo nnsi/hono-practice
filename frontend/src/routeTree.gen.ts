@@ -16,7 +16,7 @@ import { Route as ProfileImport } from './routes/profile'
 import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
 import { Route as TaskIdImport } from './routes/task/$id'
-import { Route as ActivityNewImport } from './routes/activity/new'
+import { Route as ActivitySettingImport } from './routes/activity/setting'
 import { Route as ActivityIdImport } from './routes/activity/$id'
 
 // Create/Update Routes
@@ -46,8 +46,8 @@ const TaskIdRoute = TaskIdImport.update({
   getParentRoute: () => TaskRoute,
 } as any)
 
-const ActivityNewRoute = ActivityNewImport.update({
-  path: '/new',
+const ActivitySettingRoute = ActivitySettingImport.update({
+  path: '/setting',
   getParentRoute: () => ActivityRoute,
 } as any)
 
@@ -95,11 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivityIdImport
       parentRoute: typeof ActivityImport
     }
-    '/activity/new': {
-      id: '/activity/new'
-      path: '/new'
-      fullPath: '/activity/new'
-      preLoaderRoute: typeof ActivityNewImport
+    '/activity/setting': {
+      id: '/activity/setting'
+      path: '/setting'
+      fullPath: '/activity/setting'
+      preLoaderRoute: typeof ActivitySettingImport
       parentRoute: typeof ActivityImport
     }
     '/task/$id': {
@@ -118,7 +118,7 @@ export const routeTree = rootRoute.addChildren({
   IndexRoute,
   ActivityRoute: ActivityRoute.addChildren({
     ActivityIdRoute,
-    ActivityNewRoute,
+    ActivitySettingRoute,
   }),
   ProfileRoute,
   TaskRoute: TaskRoute.addChildren({ TaskIdRoute }),
@@ -145,7 +145,7 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "activity.tsx",
       "children": [
         "/activity/$id",
-        "/activity/new"
+        "/activity/setting"
       ]
     },
     "/profile": {
@@ -161,8 +161,8 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "activity/$id.tsx",
       "parent": "/activity"
     },
-    "/activity/new": {
-      "filePath": "activity/new.tsx",
+    "/activity/setting": {
+      "filePath": "activity/setting.tsx",
       "parent": "/activity"
     },
     "/task/$id": {

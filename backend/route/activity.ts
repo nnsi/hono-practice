@@ -8,7 +8,14 @@ import {
   CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@/types/request/CreateActivityRequest";
-import { GetActivitiesResponseSchema, GetActivityResponseSchema } from "@/types/response/GetActivitiesResponse";
+import {
+  GetActivitiesResponseSchema,
+  GetActivityResponseSchema,
+} from "@/types/response/GetActivitiesResponse";
+import {
+  UpdateActivityRequest,
+  UpdateActivityRequestSchema,
+} from "@/types/request/UpdateActivityRequest";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
@@ -22,6 +29,7 @@ const getHandler = factory.createHandlers(async (c) => {
       quantityLabel: true,
       description: true,
       options: true,
+      kinds: true,
     },
     where: {
       userId,
@@ -80,7 +88,7 @@ const createHandler = factory.createHandlers(
     }
     console.log(activityWithOptions);
     const parsedJson = GetActivityResponseSchema.safeParse(activityWithOptions);
-    if(!parsedJson.success) {
+    if (!parsedJson.success) {
       console.log(parsedJson.error);
       return c.json({ message: "エラーが発生しました" }, 500);
     }
@@ -89,9 +97,109 @@ const createHandler = factory.createHandlers(
   }
 );
 
-const updateHandler = factory.createHandlers(async (c) => {
-  c.json({ message: "Hello" }, 200);
-});
+const updateHandler = factory.createHandlers(
+  zValidator("json", UpdateActivityRequestSchema),
+  async (c) => {
+    const userId = c.get("jwtPayload").id;
+    const { id: activityId } = c.req.param();
+    const { activity, options, kinds } =
+      await c.req.json<UpdateActivityRequest>();
+
+    const { updateOptions, insertOptions } = options.reduce(
+      (acc, option) => {
+        if (option.id) {
+          acc.updateOptions.push({ id: option.id, quantity: option.quantity });
+        } else {
+          acc.insertOptions.push(option);
+        }
+        return acc;
+      },
+      {
+        updateOptions: [] as { id: string; quantity: number }[],
+        insertOptions: [] as { quantity: number }[],
+      }
+    );
+
+    const { updateKinds, insertKinds } = kinds.reduce(
+      (acc, kind) => {
+        if (kind.id) {
+          acc.updateKinds.push({ id: kind.id, name: kind.name });
+        } else {
+          acc.insertKinds.push(kind);
+        }
+        return acc;
+      },
+      {
+        updateKinds: [] as { id: string; name: string }[],
+        insertKinds: [] as { name: string }[],
+      }
+    );
+
+    // TODO : prisma.$transaction
+    await Promise.all([
+      ...updateOptions.map((option) =>
+        prisma.activityQuantityOption.update({
+          where: {
+            id: option.id,
+          },
+          data: {
+            quantity: option.quantity,
+          },
+        })
+      ),
+      ...updateKinds.map((kind) =>
+        prisma.activityKind.update({
+          where: {
+            id: kind.id,
+          },
+          data: {
+            name: kind.name,
+          },
+        })
+      ),
+      insertOptions.length > 0 &&
+        prisma.activityQuantityOption.createMany({
+          data: insertOptions.map((option) => ({
+            quantity: option.quantity,
+            activityId: activityId,
+          })),
+        }),
+      insertKinds.length > 0 &&
+        prisma.activityKind.createMany({
+          data: insertKinds.map((kind) => ({
+            name: kind.name,
+            activityId: activityId,
+          })),
+        }),
+    ]);
+
+    const updatedActivity = await prisma.activity.update({
+      select: {
+        id: true,
+        name: true,
+        quantityLabel: true,
+        description: true,
+        options: true,
+        kinds: true,
+      },
+      where: {
+        id: activityId,
+        userId: userId,
+      },
+      data: {
+        ...activity,
+      },
+    });
+
+    const parsedJson = GetActivityResponseSchema.safeParse(updatedActivity);
+    console.log(parsedJson);
+    if (!parsedJson.success) {
+      return c.json({ message: "エラーが発生しました" }, 500);
+    }
+
+    return c.json(parsedJson.data, 200);
+  }
+);
 
 const deleteHandler = factory.createHandlers(async (c) => {
   c.json({ message: "Hello" }, 200);

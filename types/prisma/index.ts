@@ -201,8 +201,8 @@ export const TaskSelectSchema: z.ZodType<Prisma.TaskSelect> = z.object({
 export const ActivityIncludeSchema: z.ZodType<Prisma.ActivityInclude> = z.object({
   logs: z.union([z.boolean(),z.lazy(() => ActivityLogFindManyArgsSchema)]).optional(),
   options: z.union([z.boolean(),z.lazy(() => ActivityQuantityOptionFindManyArgsSchema)]).optional(),
+  kinds: z.union([z.boolean(),z.lazy(() => ActivityKindFindManyArgsSchema)]).optional(),
   user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
-  ActivityKind: z.union([z.boolean(),z.lazy(() => ActivityKindFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => ActivityCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
@@ -218,7 +218,7 @@ export const ActivityCountOutputTypeArgsSchema: z.ZodType<Prisma.ActivityCountOu
 export const ActivityCountOutputTypeSelectSchema: z.ZodType<Prisma.ActivityCountOutputTypeSelect> = z.object({
   logs: z.boolean().optional(),
   options: z.boolean().optional(),
-  ActivityKind: z.boolean().optional(),
+  kinds: z.boolean().optional(),
 }).strict();
 
 export const ActivitySelectSchema: z.ZodType<Prisma.ActivitySelect> = z.object({
@@ -232,8 +232,8 @@ export const ActivitySelectSchema: z.ZodType<Prisma.ActivitySelect> = z.object({
   deletedAt: z.boolean().optional(),
   logs: z.union([z.boolean(),z.lazy(() => ActivityLogFindManyArgsSchema)]).optional(),
   options: z.union([z.boolean(),z.lazy(() => ActivityQuantityOptionFindManyArgsSchema)]).optional(),
+  kinds: z.union([z.boolean(),z.lazy(() => ActivityKindFindManyArgsSchema)]).optional(),
   user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
-  ActivityKind: z.union([z.boolean(),z.lazy(() => ActivityKindFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => ActivityCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
@@ -492,8 +492,8 @@ export const ActivityWhereInputSchema: z.ZodType<Prisma.ActivityWhereInput> = z.
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogListRelationFilterSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionListRelationFilterSchema).optional(),
+  kinds: z.lazy(() => ActivityKindListRelationFilterSchema).optional(),
   user: z.union([ z.lazy(() => UserRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
-  ActivityKind: z.lazy(() => ActivityKindListRelationFilterSchema).optional()
 }).strict();
 
 export const ActivityOrderByWithRelationInputSchema: z.ZodType<Prisma.ActivityOrderByWithRelationInput> = z.object({
@@ -507,8 +507,8 @@ export const ActivityOrderByWithRelationInputSchema: z.ZodType<Prisma.ActivityOr
   deletedAt: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   logs: z.lazy(() => ActivityLogOrderByRelationAggregateInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionOrderByRelationAggregateInputSchema).optional(),
-  user: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindOrderByRelationAggregateInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindOrderByRelationAggregateInputSchema).optional(),
+  user: z.lazy(() => UserOrderByWithRelationInputSchema).optional()
 }).strict();
 
 export const ActivityWhereUniqueInputSchema: z.ZodType<Prisma.ActivityWhereUniqueInput> = z.object({
@@ -528,8 +528,8 @@ export const ActivityWhereUniqueInputSchema: z.ZodType<Prisma.ActivityWhereUniqu
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogListRelationFilterSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionListRelationFilterSchema).optional(),
+  kinds: z.lazy(() => ActivityKindListRelationFilterSchema).optional(),
   user: z.union([ z.lazy(() => UserRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
-  ActivityKind: z.lazy(() => ActivityKindListRelationFilterSchema).optional()
 }).strict());
 
 export const ActivityOrderByWithAggregationInputSchema: z.ZodType<Prisma.ActivityOrderByWithAggregationInput> = z.object({
@@ -938,8 +938,8 @@ export const ActivityCreateInputSchema: z.ZodType<Prisma.ActivityCreateInput> = 
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogCreateNestedManyWithoutActivityInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionCreateNestedManyWithoutActivityInputSchema).optional(),
-  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema),
-  ActivityKind: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema)
 }).strict();
 
 export const ActivityUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateInput> = z.object({
@@ -953,7 +953,7 @@ export const ActivityUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityUnchec
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
 export const ActivityUpdateInputSchema: z.ZodType<Prisma.ActivityUpdateInput> = z.object({
@@ -966,8 +966,8 @@ export const ActivityUpdateInputSchema: z.ZodType<Prisma.ActivityUpdateInput> = 
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUpdateManyWithoutActivityNestedInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUpdateManyWithoutActivityNestedInputSchema).optional(),
-  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional(),
+  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedUpdateInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateInput> = z.object({
@@ -981,7 +981,7 @@ export const ActivityUncheckedUpdateInputSchema: z.ZodType<Prisma.ActivityUnchec
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
 }).strict();
 
 export const ActivityCreateManyInputSchema: z.ZodType<Prisma.ActivityCreateManyInput> = z.object({
@@ -1167,7 +1167,7 @@ export const ActivityKindCreateInputSchema: z.ZodType<Prisma.ActivityKindCreateI
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogCreateNestedManyWithoutActivityKindInputSchema).optional(),
-  activity: z.lazy(() => ActivityCreateNestedOneWithoutActivityKindInputSchema)
+  activity: z.lazy(() => ActivityCreateNestedOneWithoutKindsInputSchema)
 }).strict();
 
 export const ActivityKindUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityKindUncheckedCreateInput> = z.object({
@@ -1187,7 +1187,7 @@ export const ActivityKindUpdateInputSchema: z.ZodType<Prisma.ActivityKindUpdateI
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUpdateManyWithoutActivityKindNestedInputSchema).optional(),
-  activity: z.lazy(() => ActivityUpdateOneRequiredWithoutActivityKindNestedInputSchema).optional()
+  activity: z.lazy(() => ActivityUpdateOneRequiredWithoutKindsNestedInputSchema).optional()
 }).strict();
 
 export const ActivityKindUncheckedUpdateInputSchema: z.ZodType<Prisma.ActivityKindUncheckedUpdateInput> = z.object({
@@ -1813,17 +1813,17 @@ export const ActivityQuantityOptionCreateNestedManyWithoutActivityInputSchema: z
   connect: z.union([ z.lazy(() => ActivityQuantityOptionWhereUniqueInputSchema),z.lazy(() => ActivityQuantityOptionWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
-export const UserCreateNestedOneWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateNestedOneWithoutActivitiesInput> = z.object({
-  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutActivitiesInputSchema).optional(),
-  connect: z.lazy(() => UserWhereUniqueInputSchema).optional()
-}).strict();
-
 export const ActivityKindCreateNestedManyWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindCreateNestedManyWithoutActivityInput> = z.object({
   create: z.union([ z.lazy(() => ActivityKindCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindCreateWithoutActivityInputSchema).array(),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => ActivityKindCreateOrConnectWithoutActivityInputSchema),z.lazy(() => ActivityKindCreateOrConnectWithoutActivityInputSchema).array() ]).optional(),
   createMany: z.lazy(() => ActivityKindCreateManyActivityInputEnvelopeSchema).optional(),
   connect: z.union([ z.lazy(() => ActivityKindWhereUniqueInputSchema),z.lazy(() => ActivityKindWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const UserCreateNestedOneWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateNestedOneWithoutActivitiesInput> = z.object({
+  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutActivitiesInputSchema).optional(),
+  connect: z.lazy(() => UserWhereUniqueInputSchema).optional()
 }).strict();
 
 export const ActivityLogUncheckedCreateNestedManyWithoutActivityInputSchema: z.ZodType<Prisma.ActivityLogUncheckedCreateNestedManyWithoutActivityInput> = z.object({
@@ -1875,14 +1875,6 @@ export const ActivityQuantityOptionUpdateManyWithoutActivityNestedInputSchema: z
   deleteMany: z.union([ z.lazy(() => ActivityQuantityOptionScalarWhereInputSchema),z.lazy(() => ActivityQuantityOptionScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const UserUpdateOneRequiredWithoutActivitiesNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutActivitiesNestedInput> = z.object({
-  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutActivitiesInputSchema).optional(),
-  upsert: z.lazy(() => UserUpsertWithoutActivitiesInputSchema).optional(),
-  connect: z.lazy(() => UserWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => UserUpdateToOneWithWhereWithoutActivitiesInputSchema),z.lazy(() => UserUpdateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedUpdateWithoutActivitiesInputSchema) ]).optional(),
-}).strict();
-
 export const ActivityKindUpdateManyWithoutActivityNestedInputSchema: z.ZodType<Prisma.ActivityKindUpdateManyWithoutActivityNestedInput> = z.object({
   create: z.union([ z.lazy(() => ActivityKindCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindCreateWithoutActivityInputSchema).array(),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => ActivityKindCreateOrConnectWithoutActivityInputSchema),z.lazy(() => ActivityKindCreateOrConnectWithoutActivityInputSchema).array() ]).optional(),
@@ -1895,6 +1887,14 @@ export const ActivityKindUpdateManyWithoutActivityNestedInputSchema: z.ZodType<P
   update: z.union([ z.lazy(() => ActivityKindUpdateWithWhereUniqueWithoutActivityInputSchema),z.lazy(() => ActivityKindUpdateWithWhereUniqueWithoutActivityInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => ActivityKindUpdateManyWithWhereWithoutActivityInputSchema),z.lazy(() => ActivityKindUpdateManyWithWhereWithoutActivityInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => ActivityKindScalarWhereInputSchema),z.lazy(() => ActivityKindScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const UserUpdateOneRequiredWithoutActivitiesNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutActivitiesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutActivitiesInputSchema).optional(),
+  upsert: z.lazy(() => UserUpsertWithoutActivitiesInputSchema).optional(),
+  connect: z.lazy(() => UserWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => UserUpdateToOneWithWhereWithoutActivitiesInputSchema),z.lazy(() => UserUpdateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedUpdateWithoutActivitiesInputSchema) ]).optional(),
 }).strict();
 
 export const ActivityLogUncheckedUpdateManyWithoutActivityNestedInputSchema: z.ZodType<Prisma.ActivityLogUncheckedUpdateManyWithoutActivityNestedInput> = z.object({
@@ -2006,9 +2006,9 @@ export const ActivityLogCreateNestedManyWithoutActivityKindInputSchema: z.ZodTyp
   connect: z.union([ z.lazy(() => ActivityLogWhereUniqueInputSchema),z.lazy(() => ActivityLogWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
-export const ActivityCreateNestedOneWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityCreateNestedOneWithoutActivityKindInput> = z.object({
-  create: z.union([ z.lazy(() => ActivityCreateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutActivityKindInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => ActivityCreateOrConnectWithoutActivityKindInputSchema).optional(),
+export const ActivityCreateNestedOneWithoutKindsInputSchema: z.ZodType<Prisma.ActivityCreateNestedOneWithoutKindsInput> = z.object({
+  create: z.union([ z.lazy(() => ActivityCreateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutKindsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => ActivityCreateOrConnectWithoutKindsInputSchema).optional(),
   connect: z.lazy(() => ActivityWhereUniqueInputSchema).optional()
 }).strict();
 
@@ -2033,12 +2033,12 @@ export const ActivityLogUpdateManyWithoutActivityKindNestedInputSchema: z.ZodTyp
   deleteMany: z.union([ z.lazy(() => ActivityLogScalarWhereInputSchema),z.lazy(() => ActivityLogScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const ActivityUpdateOneRequiredWithoutActivityKindNestedInputSchema: z.ZodType<Prisma.ActivityUpdateOneRequiredWithoutActivityKindNestedInput> = z.object({
-  create: z.union([ z.lazy(() => ActivityCreateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutActivityKindInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => ActivityCreateOrConnectWithoutActivityKindInputSchema).optional(),
-  upsert: z.lazy(() => ActivityUpsertWithoutActivityKindInputSchema).optional(),
+export const ActivityUpdateOneRequiredWithoutKindsNestedInputSchema: z.ZodType<Prisma.ActivityUpdateOneRequiredWithoutKindsNestedInput> = z.object({
+  create: z.union([ z.lazy(() => ActivityCreateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutKindsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => ActivityCreateOrConnectWithoutKindsInputSchema).optional(),
+  upsert: z.lazy(() => ActivityUpsertWithoutKindsInputSchema).optional(),
   connect: z.lazy(() => ActivityWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => ActivityUpdateToOneWithWhereWithoutActivityKindInputSchema),z.lazy(() => ActivityUpdateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutActivityKindInputSchema) ]).optional(),
+  update: z.union([ z.lazy(() => ActivityUpdateToOneWithWhereWithoutKindsInputSchema),z.lazy(() => ActivityUpdateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutKindsInputSchema) ]).optional(),
 }).strict();
 
 export const ActivityLogUncheckedUpdateManyWithoutActivityKindNestedInputSchema: z.ZodType<Prisma.ActivityLogUncheckedUpdateManyWithoutActivityKindNestedInput> = z.object({
@@ -2296,7 +2296,7 @@ export const ActivityCreateWithoutUserInputSchema: z.ZodType<Prisma.ActivityCrea
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogCreateNestedManyWithoutActivityInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionCreateNestedManyWithoutActivityInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedCreateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutUserInput> = z.object({
@@ -2309,7 +2309,7 @@ export const ActivityUncheckedCreateWithoutUserInputSchema: z.ZodType<Prisma.Act
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
 export const ActivityCreateOrConnectWithoutUserInputSchema: z.ZodType<Prisma.ActivityCreateOrConnectWithoutUserInput> = z.object({
@@ -2500,33 +2500,6 @@ export const ActivityQuantityOptionCreateManyActivityInputEnvelopeSchema: z.ZodT
   skipDuplicates: z.boolean().optional()
 }).strict();
 
-export const UserCreateWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateWithoutActivitiesInput> = z.object({
-  id: z.string().optional(),
-  loginId: z.string(),
-  name: z.string().optional().nullable(),
-  password: z.string(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional().nullable(),
-  deletedAt: z.coerce.date().optional().nullable(),
-  tasks: z.lazy(() => TaskCreateNestedManyWithoutUserInputSchema).optional()
-}).strict();
-
-export const UserUncheckedCreateWithoutActivitiesInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutActivitiesInput> = z.object({
-  id: z.string().optional(),
-  loginId: z.string(),
-  name: z.string().optional().nullable(),
-  password: z.string(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional().nullable(),
-  deletedAt: z.coerce.date().optional().nullable(),
-  tasks: z.lazy(() => TaskUncheckedCreateNestedManyWithoutUserInputSchema).optional()
-}).strict();
-
-export const UserCreateOrConnectWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutActivitiesInput> = z.object({
-  where: z.lazy(() => UserWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]),
-}).strict();
-
 export const ActivityKindCreateWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindCreateWithoutActivityInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -2553,6 +2526,33 @@ export const ActivityKindCreateOrConnectWithoutActivityInputSchema: z.ZodType<Pr
 export const ActivityKindCreateManyActivityInputEnvelopeSchema: z.ZodType<Prisma.ActivityKindCreateManyActivityInputEnvelope> = z.object({
   data: z.union([ z.lazy(() => ActivityKindCreateManyActivityInputSchema),z.lazy(() => ActivityKindCreateManyActivityInputSchema).array() ]),
   skipDuplicates: z.boolean().optional()
+}).strict();
+
+export const UserCreateWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateWithoutActivitiesInput> = z.object({
+  id: z.string().optional(),
+  loginId: z.string(),
+  name: z.string().optional().nullable(),
+  password: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional().nullable(),
+  deletedAt: z.coerce.date().optional().nullable(),
+  tasks: z.lazy(() => TaskCreateNestedManyWithoutUserInputSchema).optional()
+}).strict();
+
+export const UserUncheckedCreateWithoutActivitiesInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutActivitiesInput> = z.object({
+  id: z.string().optional(),
+  loginId: z.string(),
+  name: z.string().optional().nullable(),
+  password: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional().nullable(),
+  deletedAt: z.coerce.date().optional().nullable(),
+  tasks: z.lazy(() => TaskUncheckedCreateNestedManyWithoutUserInputSchema).optional()
+}).strict();
+
+export const UserCreateOrConnectWithoutActivitiesInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutActivitiesInput> = z.object({
+  where: z.lazy(() => UserWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]),
 }).strict();
 
 export const ActivityLogUpsertWithWhereUniqueWithoutActivityInputSchema: z.ZodType<Prisma.ActivityLogUpsertWithWhereUniqueWithoutActivityInput> = z.object({
@@ -2614,6 +2614,34 @@ export const ActivityQuantityOptionScalarWhereInputSchema: z.ZodType<Prisma.Acti
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
 }).strict();
 
+export const ActivityKindUpsertWithWhereUniqueWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpsertWithWhereUniqueWithoutActivityInput> = z.object({
+  where: z.lazy(() => ActivityKindWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => ActivityKindUpdateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedUpdateWithoutActivityInputSchema) ]),
+  create: z.union([ z.lazy(() => ActivityKindCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema) ]),
+}).strict();
+
+export const ActivityKindUpdateWithWhereUniqueWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpdateWithWhereUniqueWithoutActivityInput> = z.object({
+  where: z.lazy(() => ActivityKindWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => ActivityKindUpdateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedUpdateWithoutActivityInputSchema) ]),
+}).strict();
+
+export const ActivityKindUpdateManyWithWhereWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpdateManyWithWhereWithoutActivityInput> = z.object({
+  where: z.lazy(() => ActivityKindScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => ActivityKindUpdateManyMutationInputSchema),z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityInputSchema) ]),
+}).strict();
+
+export const ActivityKindScalarWhereInputSchema: z.ZodType<Prisma.ActivityKindScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => ActivityKindScalarWhereInputSchema),z.lazy(() => ActivityKindScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ActivityKindScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ActivityKindScalarWhereInputSchema),z.lazy(() => ActivityKindScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  activityId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
+  deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
+}).strict();
+
 export const UserUpsertWithoutActivitiesInputSchema: z.ZodType<Prisma.UserUpsertWithoutActivitiesInput> = z.object({
   update: z.union([ z.lazy(() => UserUpdateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedUpdateWithoutActivitiesInputSchema) ]),
   create: z.union([ z.lazy(() => UserCreateWithoutActivitiesInputSchema),z.lazy(() => UserUncheckedCreateWithoutActivitiesInputSchema) ]),
@@ -2647,34 +2675,6 @@ export const UserUncheckedUpdateWithoutActivitiesInputSchema: z.ZodType<Prisma.U
   tasks: z.lazy(() => TaskUncheckedUpdateManyWithoutUserNestedInputSchema).optional()
 }).strict();
 
-export const ActivityKindUpsertWithWhereUniqueWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpsertWithWhereUniqueWithoutActivityInput> = z.object({
-  where: z.lazy(() => ActivityKindWhereUniqueInputSchema),
-  update: z.union([ z.lazy(() => ActivityKindUpdateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedUpdateWithoutActivityInputSchema) ]),
-  create: z.union([ z.lazy(() => ActivityKindCreateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedCreateWithoutActivityInputSchema) ]),
-}).strict();
-
-export const ActivityKindUpdateWithWhereUniqueWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpdateWithWhereUniqueWithoutActivityInput> = z.object({
-  where: z.lazy(() => ActivityKindWhereUniqueInputSchema),
-  data: z.union([ z.lazy(() => ActivityKindUpdateWithoutActivityInputSchema),z.lazy(() => ActivityKindUncheckedUpdateWithoutActivityInputSchema) ]),
-}).strict();
-
-export const ActivityKindUpdateManyWithWhereWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpdateManyWithWhereWithoutActivityInput> = z.object({
-  where: z.lazy(() => ActivityKindScalarWhereInputSchema),
-  data: z.union([ z.lazy(() => ActivityKindUpdateManyMutationInputSchema),z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityInputSchema) ]),
-}).strict();
-
-export const ActivityKindScalarWhereInputSchema: z.ZodType<Prisma.ActivityKindScalarWhereInput> = z.object({
-  AND: z.union([ z.lazy(() => ActivityKindScalarWhereInputSchema),z.lazy(() => ActivityKindScalarWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => ActivityKindScalarWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => ActivityKindScalarWhereInputSchema),z.lazy(() => ActivityKindScalarWhereInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  activityId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  updatedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
-  deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
-}).strict();
-
 export const ActivityCreateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutOptionsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -2684,8 +2684,8 @@ export const ActivityCreateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityC
   updatedAt: z.coerce.date().optional(),
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogCreateNestedManyWithoutActivityInputSchema).optional(),
-  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema),
-  ActivityKind: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema)
 }).strict();
 
 export const ActivityUncheckedCreateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutOptionsInput> = z.object({
@@ -2698,7 +2698,7 @@ export const ActivityUncheckedCreateWithoutOptionsInputSchema: z.ZodType<Prisma.
   updatedAt: z.coerce.date().optional(),
   deletedAt: z.coerce.date().optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
 export const ActivityCreateOrConnectWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityCreateOrConnectWithoutOptionsInput> = z.object({
@@ -2726,8 +2726,8 @@ export const ActivityUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityU
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUpdateManyWithoutActivityNestedInputSchema).optional(),
-  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional(),
+  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutOptionsInput> = z.object({
@@ -2740,7 +2740,7 @@ export const ActivityUncheckedUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
 }).strict();
 
 export const ActivityCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutLogsInput> = z.object({
@@ -2752,8 +2752,8 @@ export const ActivityCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityCrea
   updatedAt: z.coerce.date().optional(),
   deletedAt: z.coerce.date().optional().nullable(),
   options: z.lazy(() => ActivityQuantityOptionCreateNestedManyWithoutActivityInputSchema).optional(),
-  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema),
-  ActivityKind: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindCreateNestedManyWithoutActivityInputSchema).optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema)
 }).strict();
 
 export const ActivityUncheckedCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutLogsInput> = z.object({
@@ -2766,7 +2766,7 @@ export const ActivityUncheckedCreateWithoutLogsInputSchema: z.ZodType<Prisma.Act
   updatedAt: z.coerce.date().optional(),
   deletedAt: z.coerce.date().optional().nullable(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedCreateNestedManyWithoutActivityInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
 export const ActivityCreateOrConnectWithoutLogsInputSchema: z.ZodType<Prisma.ActivityCreateOrConnectWithoutLogsInput> = z.object({
@@ -2780,7 +2780,7 @@ export const ActivityKindCreateWithoutLogsInputSchema: z.ZodType<Prisma.Activity
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
-  activity: z.lazy(() => ActivityCreateNestedOneWithoutActivityKindInputSchema)
+  activity: z.lazy(() => ActivityCreateNestedOneWithoutKindsInputSchema)
 }).strict();
 
 export const ActivityKindUncheckedCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityKindUncheckedCreateWithoutLogsInput> = z.object({
@@ -2817,8 +2817,8 @@ export const ActivityUpdateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityUpda
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   options: z.lazy(() => ActivityQuantityOptionUpdateManyWithoutActivityNestedInputSchema).optional(),
-  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional(),
+  user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedUpdateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutLogsInput> = z.object({
@@ -2831,7 +2831,7 @@ export const ActivityUncheckedUpdateWithoutLogsInputSchema: z.ZodType<Prisma.Act
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
 }).strict();
 
 export const ActivityKindUpsertWithoutLogsInputSchema: z.ZodType<Prisma.ActivityKindUpsertWithoutLogsInput> = z.object({
@@ -2851,7 +2851,7 @@ export const ActivityKindUpdateWithoutLogsInputSchema: z.ZodType<Prisma.Activity
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  activity: z.lazy(() => ActivityUpdateOneRequiredWithoutActivityKindNestedInputSchema).optional()
+  activity: z.lazy(() => ActivityUpdateOneRequiredWithoutKindsNestedInputSchema).optional()
 }).strict();
 
 export const ActivityKindUncheckedUpdateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityKindUncheckedUpdateWithoutLogsInput> = z.object({
@@ -2895,7 +2895,7 @@ export const ActivityLogCreateManyActivityKindInputEnvelopeSchema: z.ZodType<Pri
   skipDuplicates: z.boolean().optional()
 }).strict();
 
-export const ActivityCreateWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityCreateWithoutActivityKindInput> = z.object({
+export const ActivityCreateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutKindsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
@@ -2908,7 +2908,7 @@ export const ActivityCreateWithoutActivityKindInputSchema: z.ZodType<Prisma.Acti
   user: z.lazy(() => UserCreateNestedOneWithoutActivitiesInputSchema)
 }).strict();
 
-export const ActivityUncheckedCreateWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutActivityKindInput> = z.object({
+export const ActivityUncheckedCreateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutKindsInput> = z.object({
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
@@ -2921,9 +2921,9 @@ export const ActivityUncheckedCreateWithoutActivityKindInputSchema: z.ZodType<Pr
   options: z.lazy(() => ActivityQuantityOptionUncheckedCreateNestedManyWithoutActivityInputSchema).optional()
 }).strict();
 
-export const ActivityCreateOrConnectWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityCreateOrConnectWithoutActivityKindInput> = z.object({
+export const ActivityCreateOrConnectWithoutKindsInputSchema: z.ZodType<Prisma.ActivityCreateOrConnectWithoutKindsInput> = z.object({
   where: z.lazy(() => ActivityWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => ActivityCreateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutActivityKindInputSchema) ]),
+  create: z.union([ z.lazy(() => ActivityCreateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutKindsInputSchema) ]),
 }).strict();
 
 export const ActivityLogUpsertWithWhereUniqueWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityLogUpsertWithWhereUniqueWithoutActivityKindInput> = z.object({
@@ -2942,18 +2942,18 @@ export const ActivityLogUpdateManyWithWhereWithoutActivityKindInputSchema: z.Zod
   data: z.union([ z.lazy(() => ActivityLogUpdateManyMutationInputSchema),z.lazy(() => ActivityLogUncheckedUpdateManyWithoutActivityKindInputSchema) ]),
 }).strict();
 
-export const ActivityUpsertWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityUpsertWithoutActivityKindInput> = z.object({
-  update: z.union([ z.lazy(() => ActivityUpdateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutActivityKindInputSchema) ]),
-  create: z.union([ z.lazy(() => ActivityCreateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutActivityKindInputSchema) ]),
+export const ActivityUpsertWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUpsertWithoutKindsInput> = z.object({
+  update: z.union([ z.lazy(() => ActivityUpdateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutKindsInputSchema) ]),
+  create: z.union([ z.lazy(() => ActivityCreateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedCreateWithoutKindsInputSchema) ]),
   where: z.lazy(() => ActivityWhereInputSchema).optional()
 }).strict();
 
-export const ActivityUpdateToOneWithWhereWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityUpdateToOneWithWhereWithoutActivityKindInput> = z.object({
+export const ActivityUpdateToOneWithWhereWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUpdateToOneWithWhereWithoutKindsInput> = z.object({
   where: z.lazy(() => ActivityWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => ActivityUpdateWithoutActivityKindInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutActivityKindInputSchema) ]),
+  data: z.union([ z.lazy(() => ActivityUpdateWithoutKindsInputSchema),z.lazy(() => ActivityUncheckedUpdateWithoutKindsInputSchema) ]),
 }).strict();
 
-export const ActivityUpdateWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutActivityKindInput> = z.object({
+export const ActivityUpdateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutKindsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -2966,7 +2966,7 @@ export const ActivityUpdateWithoutActivityKindInputSchema: z.ZodType<Prisma.Acti
   user: z.lazy(() => UserUpdateOneRequiredWithoutActivitiesNestedInputSchema).optional()
 }).strict();
 
-export const ActivityUncheckedUpdateWithoutActivityKindInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutActivityKindInput> = z.object({
+export const ActivityUncheckedUpdateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutKindsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3039,7 +3039,7 @@ export const ActivityUpdateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUpda
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUpdateManyWithoutActivityNestedInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUpdateManyWithoutActivityNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUpdateManyWithoutActivityNestedInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutUserInput> = z.object({
@@ -3052,7 +3052,7 @@ export const ActivityUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.Act
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   logs: z.lazy(() => ActivityLogUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
   options: z.lazy(() => ActivityQuantityOptionUncheckedUpdateManyWithoutActivityNestedInputSchema).optional(),
-  ActivityKind: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
+  kinds: z.lazy(() => ActivityKindUncheckedUpdateManyWithoutActivityNestedInputSchema).optional()
 }).strict();
 
 export const ActivityUncheckedUpdateManyWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateManyWithoutUserInput> = z.object({

@@ -11,6 +11,12 @@ export const GetActivityResponseSchema = z.object({
       quantity: z.number(),
     })
   ),
+  kinds: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    })
+  ),
 });
 
 export const GetActivitiesResponseSchema = z.array(GetActivityResponseSchema);
