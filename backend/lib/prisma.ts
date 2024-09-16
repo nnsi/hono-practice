@@ -135,3 +135,5 @@ declare const globalThis: {
 } & typeof global;
 
 export const prisma = globalThis.prismaGlobal ?? createPrisma();
+
+globalThis.prismaGlobal = prisma;

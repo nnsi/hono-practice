@@ -1,6 +1,7 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
+
+import { zValidator } from "@hono/zod-validator";
 
 import { prisma } from "@/backend/lib/prisma";
 import {

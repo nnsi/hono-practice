@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
+
 import { zValidator } from "@hono/zod-validator";
-import { JwtEnv } from "../middleware/authMiddleware";
+
 import { prisma } from "@/backend/lib/prisma";
 import {
   CreateActivityLogRequest,
@@ -11,6 +12,8 @@ import {
   UpdateActivityLogRequest,
   UpdateActivityLogRequestSchema,
 } from "@/types/request/UpdateActivityLogRequest";
+
+import { JwtEnv } from "../middleware/authMiddleware";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();

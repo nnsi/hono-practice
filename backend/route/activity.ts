@@ -1,21 +1,25 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
+
 import { zValidator } from "@hono/zod-validator";
-import { JwtEnv } from "../middleware/authMiddleware";
+
 import { prisma } from "@/backend/lib/prisma";
-import { activityLogRoute } from "./activityLog";
 import {
   CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@/types/request/CreateActivityRequest";
 import {
-  GetActivitiesResponseSchema,
-  GetActivityResponseSchema,
-} from "@/types/response/GetActivitiesResponse";
-import {
   UpdateActivityRequest,
   UpdateActivityRequestSchema,
 } from "@/types/request/UpdateActivityRequest";
+import {
+  GetActivitiesResponseSchema,
+  GetActivityResponseSchema,
+} from "@/types/response/GetActivitiesResponse";
+
+import { JwtEnv } from "../middleware/authMiddleware";
+
+import { activityLogRoute } from "./activityLog";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
