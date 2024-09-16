@@ -1,22 +1,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@ui/button";
+import { useForm } from "react-hook-form";
+
 import {
+  createUserRequestSchema,
+  CreateUserRequest,
+} from "@/types/request/CreateUserRequest";
+
+import { useApiClient } from "@hooks/useApiClient";
+import { useAuth } from "@hooks/useAuth";
+
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@ui/form";
-import { Input } from "@ui/input";
-import { useForm } from "react-hook-form";
-import {
-  createUserRequestSchema,
-  CreateUserRequest,
-} from "@/types/request/CreateUserRequest";
-import { Card, CardContent, CardHeader } from "@ui/card";
-import { useAuth } from "../../hooks/useAuth";
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+  Input,
+} from "@components/ui";
 
 export const CreateUserForm: React.FC = () => {
   const api = useApiClient();

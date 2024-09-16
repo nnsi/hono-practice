@@ -1,3 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { TrashIcon } from "@radix-ui/react-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { useForm, useFieldArray } from "react-hook-form";
+
 import {
   UpdateActivityRequest,
   UpdateActivityRequestSchema,
@@ -7,12 +12,10 @@ import {
   GetActivityResponse,
   GetActivityResponseSchema,
 } from "@/types/response";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { TrashIcon } from "@radix-ui/react-icons";
-import { useForm, useFieldArray } from "react-hook-form";
-import { Form, Button, FormField, Input } from "../ui";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useQueryClient } from "@tanstack/react-query";
+
+import { useApiClient } from "@hooks/useApiClient";
+
+import { Form, Button, FormField, Input } from "@components/ui";
 
 type ActivityEditFormProps = {
   activity: GetActivityResponse;

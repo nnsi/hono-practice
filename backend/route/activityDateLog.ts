@@ -51,7 +51,6 @@ const getHandler = factory.createHandlers(async (c) => {
     },
   });
 
-  console.log(activityLogs);
   const parsedActivityLogs =
     GetActivityLogsResponseSchema.safeParse(activityLogs);
   if (!parsedActivityLogs.success) {
@@ -82,6 +81,7 @@ const findHandler = factory.createHandlers(async (c) => {
       },
       activityKind: {
         select: {
+          id: true,
           name: true,
         },
       },

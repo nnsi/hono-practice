@@ -7,6 +7,7 @@ export * from "./form";
 export * from "./input";
 export * from "./label";
 export * from "./popover";
+export * from "./select";
 export * from "./sheet";
 export * from "./tabs";
 export * from "./textarea";

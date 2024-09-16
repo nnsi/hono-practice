@@ -1,11 +1,14 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
+
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
+
 import "../main.css";
-import { useAuth } from "./hooks/useAuth";
+import { useAuth } from "@hooks/useAuth";
+
 import { AuthProvider } from "./providers/AuthProvider";
+import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
   defaultOptions: {

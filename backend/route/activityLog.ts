@@ -97,6 +97,12 @@ const createHandler = factory.createHandlers(
             quantityLabel: true,
           },
         },
+        activityKind: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       data: {
         ...parsedrequest.data,

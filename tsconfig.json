@@ -17,7 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["*"],
-      "@ui/*": ["frontend/src/components/ui/*"]
+      "@hooks/*": ["frontend/src/hooks/*"],
+      "@components/*": ["frontend/src/components/*"]
     }
   }
 }

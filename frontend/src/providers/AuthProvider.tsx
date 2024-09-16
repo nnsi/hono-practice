@@ -1,4 +1,5 @@
 import { ReactNode, createContext, useState } from "react";
+
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 import { LoginRequest } from "@/types/request/LoginRequest";
 
@@ -37,6 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
       }
     } catch (e) {
+      console.log(e);
       setUser(null);
     }
   };

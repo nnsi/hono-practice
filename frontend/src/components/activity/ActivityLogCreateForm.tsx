@@ -1,36 +1,44 @@
+import { useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PopoverClose } from "@radix-ui/react-popover";
+import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useForm } from "react-hook-form";
+
+import {
+  CreateActivityLogRequest,
+  CreateActivityLogRequestSchema,
+} from "@/types/request/CreateActivityLogRequest";
+import { GetActivityResponse } from "@/types/response";
 import {
   GetActivityLogResponseSchema,
   GetActivityLogsResponse,
 } from "@/types/response/GetActivityLogsResponse";
-import { PopoverClose } from "@radix-ui/react-popover";
-import { useQueryClient } from "@tanstack/react-query";
+
+import { useApiClient } from "@hooks/useApiClient";
+
 import {
   Button,
   Form,
+  FormControl,
   FormField,
+  FormItem,
   Input,
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   useToast,
-} from "@ui/.";
-import dayjs from "dayjs";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useForm } from "react-hook-form";
-import {
-  CreateActivityLogRequest,
-  CreateActivityLogRequestSchema,
-} from "@/types/request/CreateActivityLogRequest";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+} from "@components/ui";
 
 type ActivityLogCreateFormProps = {
-  activity: {
-    id: string;
-    name: string;
-    quantityLabel: string;
-  };
+  activity: GetActivityResponse;
   date?: Date;
 };
 
@@ -48,6 +56,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     defaultValues: {
       date: dayjs(date).format("YYYY-MM-DD"),
       quantity: undefined,
+      activityKindId: undefined,
     },
   });
 
@@ -56,6 +65,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   const onSubmit = async (data: CreateActivityLogRequest) => {
     CreateActivityLogRequestSchema.parse(data);
     if (!date) {
+      console.log("koko?");
       return toast({
         title: "Error",
         description: "Failed to create activity log",
@@ -81,6 +91,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     const json = await res.json();
     const parsedJson = GetActivityLogResponseSchema.safeParse(json);
     if (!parsedJson.success) {
+      console.log(JSON.stringify(parsedJson.error));
       toast({
         title: "Error",
         description: "Failed to create activity log",
@@ -129,13 +140,42 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <p className="mb-3 font-bold">[{activity.name}]を記録する</p>
-            <div className="grid grid-cols-3 gap-5 items-center">
+            <div className="grid grid-cols-3 gap-3 items-center">
               <FormField
                 control={form.control}
                 name="quantity"
                 render={({ field }) => <Input {...field} />}
               />
               <Label className="col-span-1">{activity.quantityLabel}</Label>
+              {activity.kinds.length > 0 && (
+                <div className="col-span-3">
+                  <FormField
+                    control={form.control}
+                    name="activityKindId"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-3">
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="サブカテゴリを選択" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {activity.kinds.map((kind) => (
+                              <SelectItem key={kind.id} value={kind.id}>
+                                {kind.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
               <div className="col-span-3 text-center">
                 <PopoverClose asChild>
                   <Button type="submit" variant="secondary" className="w-full">

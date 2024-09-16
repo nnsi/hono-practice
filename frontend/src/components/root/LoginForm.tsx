@@ -1,18 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@ui/button";
+import { useForm } from "react-hook-form";
+
+import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
+
+import { useAuth } from "@hooks/useAuth";
+
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@ui/form";
-import { Input } from "@ui/input";
-import { useForm } from "react-hook-form";
-import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
-import { Card, CardContent, CardHeader } from "@ui/card";
-import { useAuth } from "../../hooks/useAuth";
+  Input,
+} from "@components/ui";
 
 export const LoginForm: React.FC = () => {
   const { login } = useAuth();

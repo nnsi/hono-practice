@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
 
 const ProfilePage: React.FC = () => {

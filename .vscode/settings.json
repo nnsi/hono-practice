@@ -1,6 +1,9 @@
 {
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
   },
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
@@ -8,5 +11,8 @@
   "exportall.config.folderListener": [
     "/frontend/src/components",
     "/frontend/src/components/ui"
-  ]
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
 }

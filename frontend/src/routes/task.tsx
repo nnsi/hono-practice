@@ -1,12 +1,15 @@
 import { useState } from "react";
+
+import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
-import { useQuery } from "@tanstack/react-query";
-import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+
 import { useApiClient } from "@/frontend/src/hooks/useApiClient";
-import { TaskForm, TaskCard } from "../components";
-import { Button } from "@ui/button";
-import { useToast } from "@ui/use-toast";
+import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+
+import { useToast, Button } from "@components/ui";
+
+import { TaskForm, TaskCard } from "@components/task";
 
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =

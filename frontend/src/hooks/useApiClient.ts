@@ -1,6 +1,7 @@
-import { hc } from "hono/client";
-import { AppType } from "@/backend/index";
 import { Hono } from "hono";
+import { hc } from "hono/client";
+
+import { AppType } from "@/backend/index";
 
 const API_URL =
   import.meta.env.MODE === "development"

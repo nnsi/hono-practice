@@ -1,21 +1,24 @@
+import { useEffect, useState } from "react";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
+
+import { useApiClient } from "@hooks/useApiClient";
+
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../components/ui/dialog";
-import { Button } from "../../components/ui/button";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Textarea } from "../../components/ui/textarea";
-import { useEffect, useState } from "react";
-import { useToast } from "../../components/ui/use-toast";
+  Textarea,
+  useToast,
+} from "@components/ui";
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams({ from: "/task/$id" });

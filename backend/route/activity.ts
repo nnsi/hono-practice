@@ -86,7 +86,6 @@ const createHandler = factory.createHandlers(
 
       activityWithOptions.options.push(...options);
     }
-    console.log(activityWithOptions);
     const parsedJson = GetActivityResponseSchema.safeParse(activityWithOptions);
     if (!parsedJson.success) {
       console.log(parsedJson.error);
@@ -192,7 +191,6 @@ const updateHandler = factory.createHandlers(
     });
 
     const parsedJson = GetActivityResponseSchema.safeParse(updatedActivity);
-    console.log(parsedJson);
     if (!parsedJson.success) {
       return c.json({ message: "エラーが発生しました" }, 500);
     }

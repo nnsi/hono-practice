@@ -1,9 +1,8 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
-import { zValidator } from "@hono/zod-validator";
-import { prisma } from "@/backend/lib/prisma";
-import { JwtEnv } from "../middleware/authMiddleware";
 
+import { prisma } from "@/backend/lib/prisma";
 import {
   CreateTaskRequest,
   createTaskRequestSchema,
@@ -13,6 +12,8 @@ import {
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+
+import { JwtEnv } from "../middleware/authMiddleware";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
@@ -81,6 +82,7 @@ const createHandler = factory.createHandlers(
       });
       return c.json(task, 200);
     } catch (e) {
+      console.log(e);
       return c.json({ message: "failed to create task" }, 500);
     }
   }
@@ -104,7 +106,8 @@ const updateHandler = factory.createHandlers(
       });
 
       return c.json(task, 200);
-    } catch (e: any) {
+    } catch (e) {
+      console.log(e);
       return c.json({ message: "task not found" }, 404);
     }
   }
@@ -122,7 +125,8 @@ const deleteHandler = factory.createHandlers(async (c) => {
       forceDelete: false,
     });
     return c.json({ message: "success" }, 200);
-  } catch (e: any) {
+  } catch (e) {
+    console.log(e);
     return c.json({ message: "task not found" }, 404);
   }
 });

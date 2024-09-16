@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 
 import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
+
 import {
   Card,
   CardHeader,
@@ -12,7 +13,8 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "../ui";
+} from "@components/ui";
+
 import { ActivityDaily } from "./ActivityDaily";
 
 type ActivityTabsProps = {

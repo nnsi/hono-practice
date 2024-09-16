@@ -1,3 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+
 import {
   CreateActivityRequest,
   CreateActivityRequestSchema,
@@ -6,8 +10,9 @@ import {
   GetActivitiesResponse,
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+
+import { useApiClient } from "@hooks/useApiClient";
+
 import {
   Button,
   Form,
@@ -23,9 +28,8 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-} from "@ui/.";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useQueryClient } from "@tanstack/react-query";
+} from "@components/ui";
+
 import { ActivityEditForm } from "./ActivityEditForm";
 
 type ActivitySettingsProps = {

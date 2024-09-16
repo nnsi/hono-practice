@@ -1,8 +1,20 @@
+import { useEffect, useState } from "react";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
+import dayjs from "dayjs";
+
+import {
+  GetActivitiesResponse,
+  GetActivityLogResponseSchema,
+} from "@/types/response";
+
+import { useApiClient } from "@hooks/useApiClient";
+
 import {
   Button,
   Dialog,
@@ -13,19 +25,9 @@ import {
   Textarea,
   Input,
   DialogDescription,
-} from "@ui/.";
-import { useApiClient } from "../../hooks/useApiClient";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  GetActivitiesResponse,
-  GetActivityLogResponseSchema,
-} from "@/types/response";
-import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+} from "@components/ui";
 
-type ActivityModalProps = {};
-
-const ActivityModal: React.FC<ActivityModalProps> = () => {
+const ActivityModal: React.FC = () => {
   const api = useApiClient();
   const { id } = useParams({ from: "/activity/$id" });
   const navigate = useNavigate();
@@ -81,7 +83,6 @@ const ActivityModal: React.FC<ActivityModalProps> = () => {
   ) => {
     e.preventDefault();
     if (!query.data || !activity) {
-      console.log("return", query.data, activity);
       return handleClose();
     }
     await api.users.activities[":id"].logs[":logId"].$put({

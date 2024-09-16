@@ -1,17 +1,19 @@
+import { zValidator } from "@hono/zod-validator";
+import bcrypt from "bcrypt";
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { createFactory } from "hono/factory";
 import { sign } from "hono/jwt";
-import { zValidator } from "@hono/zod-validator";
+
 import { prisma } from "@/backend/lib/prisma";
-import bcrypt from "bcrypt";
-import { JwtPayload } from "../middleware/authMiddleware";
-import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
 import {
   createUserRequestSchema,
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
+import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
+
 import { config } from "../config";
+import { JwtPayload } from "../middleware/authMiddleware";
 
 const factory = createFactory();
 const app = new Hono();
@@ -56,6 +58,7 @@ const loginHandler = factory.createHandlers(
       expires: new Date(payload.exp * 1000),
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return c.json({ ...userWithoutPassword });
   }
@@ -81,6 +84,7 @@ const createUserHandler = factory.createHandlers(
         return c.json({ message: "別のログインIDを指定してください" }, 500);
       }
     } catch (e) {
+      console.log(e);
       return c.json({ message: "ユーザー作成に失敗しました" }, 500);
     }
 
@@ -93,7 +97,8 @@ const createUserHandler = factory.createHandlers(
           password: cryptedPassword,
         },
       });
-    } catch (e: any) {
+    } catch (e) {
+      console.log(e);
       return c.json({ message: "ユーザー作成に失敗しました" }, 500);
     }
 

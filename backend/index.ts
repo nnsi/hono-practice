@@ -1,10 +1,11 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { activityRoute, authRoute, taskRoute } from "./route";
 import { cors } from "hono/cors";
+
+import { config } from "./config";
 import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { config } from "./config";
+import { activityRoute, authRoute, taskRoute } from "./route";
 import { activityDateLogRoute } from "./route/activityDateLog";
 
 const app = new Hono();
@@ -18,6 +19,7 @@ app.use(
 );
 app.use("/users/*", authMiddleware);
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
   .get("/", async (c) => {
     return c.json({ message: "Hello" }, 200);

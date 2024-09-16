@@ -1,16 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { Sheet, SheetContent } from "@ui/.";
-import { ActivitySettings } from "../../components";
-import { useQuery } from "@tanstack/react-query";
+
 import { GetActivitiesResponse } from "@/types/response";
 
-type NewActivityPageProps = {};
+import { Sheet, SheetContent } from "@components/ui";
 
-const NewActivityPage: React.FC<NewActivityPageProps> = () => {
+import { ActivitySettings } from "@components/activity";
+
+const NewActivityPage: React.FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
   const activities = useQuery<GetActivitiesResponse>({

@@ -1,6 +1,7 @@
 import { Context, Next } from "hono";
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
+
 import { config } from "../config";
 
 export async function authMiddleware(
@@ -16,6 +17,7 @@ export async function authMiddleware(
     const payload = await verify(jwt, config.JWT_SECRET);
     c.set("jwtPayload", payload);
   } catch (e) {
+    console.log(e);
     return c.json({ message: "unauthorized" }, 401);
   }
 

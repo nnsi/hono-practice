@@ -1,13 +1,17 @@
 import { useState } from "react";
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useApiClient } from "../hooks/useApiClient";
+
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@ui/use-toast";
-import { Calendar } from "@ui/calendar";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
-import { ActivityTabs, Button } from "../components";
+
 import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
+
+import { useApiClient } from "@hooks/useApiClient";
+
+import { Calendar, useToast, Button } from "@components/ui";
+
+import { ActivityTabs } from "@components/activity";
 
 const ActivityPage: React.FC = () => {
   const api = useApiClient();

@@ -1,20 +1,31 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useApiClient } from "../../hooks/useApiClient";
-import { Card, CardFooter, CardHeader, CardTitle } from "@ui/card";
-import { Button } from "@ui/button";
-import { useToast } from "@ui/use-toast";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil2Icon } from "@radix-ui/react-icons";
-import { Input } from "@ui/input";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+
 import {
   UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormMessage } from "@ui/form";
-import { Link } from "@tanstack/react-router";
 import { GetTasksResponse } from "@/types/response/GetTasksResponse";
+
+import { useApiClient } from "@hooks/useApiClient";
+
+import {
+  Button,
+  Card,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Form,
+  FormField,
+  FormMessage,
+  Input,
+  useToast,
+} from "@components/ui";
 
 type TaskCardProps = {
   task: GetTasksResponse[0];

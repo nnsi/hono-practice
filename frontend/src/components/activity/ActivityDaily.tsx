@@ -1,4 +1,15 @@
+import { TrashIcon } from "@radix-ui/react-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
+
+import {
+  GetActivitiesResponse,
+  GetActivityLogsResponse,
+} from "@/types/response";
+
+import { useApiClient } from "@hooks/useApiClient";
+
 import {
   Card,
   CardContent,
@@ -6,14 +17,9 @@ import {
   CardHeader,
   CardTitle,
   useToast,
-} from "../ui";
+} from "@components/ui";
+
 import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
-import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
-import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
-import { TrashIcon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { useApiClient } from "../../hooks/useApiClient";
-import { Link } from "@tanstack/react-router";
 
 type ActivityDailyProps = {
   activities?: GetActivitiesResponse;
@@ -89,11 +95,13 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
                   {log.activityKind && ` [${log.activityKind.name}]`}
                 </CardTitle>
               </CardHeader>
-              {log.quantity && (
-                <CardContent>
-                  {log.quantity} {log.activity.quantityLabel}
-                </CardContent>
-              )}
+              <CardContent>
+                {log.quantity && (
+                  <>
+                    {log.quantity} {log.activity.quantityLabel}
+                  </>
+                )}
+              </CardContent>
             </Link>
           </Card>
         ))}
