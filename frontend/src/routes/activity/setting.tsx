@@ -30,7 +30,7 @@ const NewActivityPage: React.FC = () => {
       open={routerState.location.pathname === "/activity/setting"}
       onOpenChange={handleOpenChange}
     >
-      <SheetContent>
+      <SheetContent className="overflow-auto">
         <ActivitySettings activities={activities?.data} />
       </SheetContent>
     </Sheet>

@@ -12,7 +12,10 @@ import {
   UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
-import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
+import {
+  GetTasksResponse,
+  GetTasksResponseSchema,
+} from "@/types/response/GetTasksResponse";
 
 import { JwtEnv } from "../middleware/authMiddleware";
 
@@ -20,7 +23,7 @@ const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
 const getHandler = factory.createHandlers(async (c) => {
-  const tasks = await prisma.task.findMany({
+  const tasks: GetTasksResponse = await prisma.task.findMany({
     select: {
       id: true,
       title: true,

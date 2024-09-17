@@ -14,6 +14,7 @@ import {
 } from "@/types/request/UpdateActivityRequest";
 import {
   GetActivitiesResponseSchema,
+  GetActivityResponse,
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
@@ -65,9 +66,10 @@ const createHandler = factory.createHandlers(
       },
     });
 
-    const activityWithOptions = {
+    const responseJson: GetActivityResponse = {
       ...activity,
       options: [] as unknown as { id: string; quantity: number }[],
+      kinds: [] as unknown as { id: string; name: string }[],
     };
 
     if (quantityOption) {
@@ -88,9 +90,9 @@ const createHandler = factory.createHandlers(
         },
       });
 
-      activityWithOptions.options.push(...options);
+      responseJson.options.push(...options);
     }
-    const parsedJson = GetActivityResponseSchema.safeParse(activityWithOptions);
+    const parsedJson = GetActivityResponseSchema.safeParse(responseJson);
     if (!parsedJson.success) {
       console.log(parsedJson.error);
       return c.json({ message: "エラーが発生しました" }, 500);

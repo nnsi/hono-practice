@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CreateActivityLogRequestSchema = z.object({
-  quantity: z.coerce.number().optional(),
+  quantity: z.coerce.number(),
   memo: z.string().optional(),
   date: z.string(),
   activityKindId: z.string().optional(),

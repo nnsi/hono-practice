@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -44,6 +46,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
   const form = useForm<CreateActivityRequest>({
     resolver: zodResolver(CreateActivityRequestSchema),
   });
+  const [accordionValue, setAccordionValue] = useState<string>("");
 
   const onSubmit = async (data: CreateActivityRequest) => {
     const res = await api.users.activities.$post({ json: data });
@@ -109,12 +112,20 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
         </form>
       </Form>
       {activities && (
-        <Accordion type="single" collapsible>
+        <Accordion
+          type="single"
+          collapsible
+          value={accordionValue}
+          onValueChange={setAccordionValue}
+        >
           {activities.map((activity) => (
             <AccordionItem value={activity.id} key={activity.id}>
               <AccordionTrigger>{activity.name}</AccordionTrigger>
               <AccordionContent className="relative group">
-                <ActivityEditForm activity={activity} />
+                <ActivityEditForm
+                  activity={activity}
+                  handleClose={() => setAccordionValue("")}
+                />
               </AccordionContent>
             </AccordionItem>
           ))}

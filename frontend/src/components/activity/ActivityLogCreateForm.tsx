@@ -55,7 +55,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     resolver: zodResolver(CreateActivityLogRequestSchema),
     defaultValues: {
       date: dayjs(date).format("YYYY-MM-DD"),
-      quantity: undefined,
+      quantity: 0,
       activityKindId: undefined,
     },
   });
@@ -65,7 +65,6 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   const onSubmit = async (data: CreateActivityLogRequest) => {
     CreateActivityLogRequestSchema.parse(data);
     if (!date) {
-      console.log("koko?");
       return toast({
         title: "Error",
         description: "Failed to create activity log",
@@ -99,7 +98,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
       });
       return;
     }
-
+    form.reset();
     queryClient.setQueryData(
       ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
       (prev: GetActivityLogsResponse) => {

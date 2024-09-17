@@ -19,10 +19,12 @@ import { Form, Button, FormField, Input } from "@components/ui";
 
 type ActivityEditFormProps = {
   activity: GetActivityResponse;
+  handleClose: () => void;
 };
 
 export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
   activity,
+  handleClose,
 }) => {
   const api = useApiClient();
   const queryClient = useQueryClient();
@@ -82,6 +84,7 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
         return activity;
       });
     });
+    handleClose();
   };
 
   return (
