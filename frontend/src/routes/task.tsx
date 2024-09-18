@@ -18,8 +18,8 @@ const TaskPage: React.FC = () => {
     useState(false);
   const { toast } = useToast();
   const { data, error } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: queryFnFunc(
+    ...queryFnFunc(
+      ["tasks"],
       () => apiClient.users.tasks.$get(),
       GetTasksResponseSchema
     ),

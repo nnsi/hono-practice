@@ -30,16 +30,9 @@ const TaskDetail: React.FC = () => {
   const [memo, setMemo] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    return () => {
-      queryClient.removeQueries({ queryKey: ["task", id] });
-    };
-  }, []);
-
   const { data, error } = useQuery({
-    queryKey: ["task", id],
-    queryFn: queryFnFunc(
+    ...queryFnFunc(
+      ["task", id],
       () =>
         api.$get({
           param: { id },
@@ -47,6 +40,12 @@ const TaskDetail: React.FC = () => {
       GetTaskResponseSchema
     ),
   });
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({ queryKey: ["task", id] });
+    };
+  }, []);
 
   if (error) {
     toast({

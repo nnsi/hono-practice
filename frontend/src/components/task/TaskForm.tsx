@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
@@ -21,36 +21,38 @@ import {
   useToast,
 } from "@components/ui";
 
+import { mutationFnFunc } from "../../utils";
+
 type TaskFormProps = {
   className?: string;
 };
 
 export const TaskForm: React.FC<TaskFormProps> = ({ className }) => {
   const api = apiClient;
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const form = useForm<CreateTaskRequest>({
     resolver: zodResolver(createTaskRequestSchema),
   });
 
+  const { mutate, isError } = useMutation({
+    ...mutationFnFunc(
+      ["tasks"],
+      (data: CreateTaskRequest) => api.users.tasks.$post({ json: data }),
+      createTaskRequestSchema
+    ),
+  });
+
+  if (isError) {
+    toast({
+      title: "Error",
+      description: "Failed to create task",
+      variant: "destructive",
+    });
+  }
+
   const onSubmit = async (data: CreateTaskRequest) => {
-    try {
-      const res = await api.users.tasks.$post({ json: data });
-      if (res.status === 200) {
-        await res.json();
-        toast({
-          title: "Task Created",
-          description: "Task has been created successfully",
-        });
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      } else {
-        const json = await res.json();
-        console.log(json.message);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    mutate(data);
   };
 
   return (
