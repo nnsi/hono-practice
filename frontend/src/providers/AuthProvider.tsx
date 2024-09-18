@@ -1,6 +1,6 @@
 import { ReactNode, createContext, useState } from "react";
 
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import { LoginRequest } from "@/types/request/LoginRequest";
 
 type UserState = {
@@ -24,7 +24,7 @@ type AuthProviderProps = {
 export const AuthContext = createContext<AuthState>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const api = useApiClient();
+  const api = apiClient;
 
   const [user, setUser] = useState<UserState>(null);
 

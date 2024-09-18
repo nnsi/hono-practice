@@ -10,7 +10,8 @@
   },
   "exportall.config.folderListener": [
     "/frontend/src/components",
-    "/frontend/src/components/ui"
+    "/frontend/src/components/ui",
+    "/frontend/src/utils"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

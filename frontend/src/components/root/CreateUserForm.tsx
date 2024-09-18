@@ -6,7 +6,7 @@ import {
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import { useAuth } from "@hooks/useAuth";
 
 import {
@@ -24,7 +24,7 @@ import {
 } from "@components/ui";
 
 export const CreateUserForm: React.FC = () => {
-  const api = useApiClient();
+  const api = apiClient;
   const { getUser } = useAuth();
 
   const form = useForm<CreateUserRequest>({

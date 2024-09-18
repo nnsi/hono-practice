@@ -4,17 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
-
-import { useApiClient } from "@hooks/useApiClient";
 
 import { Calendar, useToast, Button } from "@components/ui";
 
 import { ActivityTabs } from "@components/activity";
 
 const ActivityPage: React.FC = () => {
-  const api = useApiClient();
+  const api = apiClient;
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date | undefined>(new Date());

@@ -7,9 +7,8 @@ import {
   useParams,
 } from "@tanstack/react-router";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import { GetTaskResponseSchema } from "@/types/response";
-
-import { useApiClient } from "@hooks/useApiClient";
 
 import {
   Button,
@@ -27,7 +26,7 @@ import { queryFnFunc } from "../../utils/queryFnFunc";
 const TaskDetail: React.FC = () => {
   const { id } = useParams({ from: "/task/$id" });
   const navigate = useNavigate();
-  const api = useApiClient();
+  const api = apiClient.users.tasks[":id"];
   const [memo, setMemo] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,7 +41,7 @@ const TaskDetail: React.FC = () => {
     queryKey: ["task", id],
     queryFn: queryFnFunc(
       () =>
-        api.users.tasks[":id"].$get({
+        api.$get({
           param: { id },
         }),
       GetTaskResponseSchema
@@ -62,7 +61,7 @@ const TaskDetail: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!memo) return handleClose();
-    const res = await api.users.tasks[":id"].$put({
+    const res = await api.$put({
       param: { id },
       json: { memo },
     });

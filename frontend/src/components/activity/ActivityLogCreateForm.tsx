@@ -16,7 +16,7 @@ import {
   GetActivityLogsResponse,
 } from "@/types/response/GetActivityLogsResponse";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -46,7 +46,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   activity,
   date,
 }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [timer, setTimer] = useState(0);

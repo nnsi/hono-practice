@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   CreateTaskRequest,
   createTaskRequestSchema,
@@ -26,7 +26,7 @@ type TaskFormProps = {
 };
 
 export const TaskForm: React.FC<TaskFormProps> = ({ className }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 

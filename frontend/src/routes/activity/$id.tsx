@@ -13,7 +13,7 @@ import {
   GetActivityLogResponseSchema,
 } from "@/types/response";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -28,7 +28,7 @@ import {
 } from "@components/ui";
 
 const ActivityModal: React.FC = () => {
-  const api = useApiClient();
+  const api = apiClient;
   const { id } = useParams({ from: "/activity/$id" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();

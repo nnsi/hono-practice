@@ -8,7 +8,7 @@ import {
   GetActivityLogsResponse,
 } from "@/types/response";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Card,
@@ -32,7 +32,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
   dailyActivityLogs,
   date,
 }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

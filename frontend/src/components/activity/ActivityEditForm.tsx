@@ -13,7 +13,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import { Form, Button, FormField, Input } from "@components/ui";
 
@@ -26,7 +26,7 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
   activity,
   handleClose,
 }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const queryClient = useQueryClient();
   const form = useForm<UpdateActivityRequest>({
     resolver: zodResolver(UpdateActivityRequestSchema),

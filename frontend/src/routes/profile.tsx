@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 const ProfilePage: React.FC = () => {
-  const api = useApiClient();
+  const api = apiClient;
   const query = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {

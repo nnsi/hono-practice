@@ -12,7 +12,7 @@ import {
 } from "@/types/request/UpdateTaskRequest";
 import { GetTasksResponse } from "@/types/response/GetTasksResponse";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -33,7 +33,7 @@ type TaskCardProps = {
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isTitleEdit, setIsTitleEdit] = useState(false);

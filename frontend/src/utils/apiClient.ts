@@ -8,14 +8,12 @@ const API_URL =
     ? `http://${document.domain}:3456/`
     : import.meta.env.VITE_API_URL;
 
-export function useApiClient() {
-  return hc<AppType>(API_URL, {
-    init: {
-      mode: "cors",
-      credentials: "include",
-    },
-  });
-}
+export const apiClient = hc<AppType>(API_URL, {
+  init: {
+    mode: "cors",
+    credentials: "include",
+  },
+});
 
 type Routes = AppType extends Hono<any, infer R, any> ? R : never;
 

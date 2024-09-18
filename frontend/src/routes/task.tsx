@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 
-import { useApiClient } from "@/frontend/src/hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
 
 import { useToast, Button } from "@components/ui";
@@ -16,11 +16,13 @@ import { queryFnFunc } from "../utils/queryFnFunc";
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =
     useState(false);
-  const api = useApiClient();
   const { toast } = useToast();
   const { data, error } = useQuery({
     queryKey: ["tasks"],
-    queryFn: queryFnFunc(() => api.users.tasks.$get(), GetTasksResponseSchema),
+    queryFn: queryFnFunc(
+      () => apiClient.users.tasks.$get(),
+      GetTasksResponseSchema
+    ),
   });
 
   if (error) {

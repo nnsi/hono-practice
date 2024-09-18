@@ -13,7 +13,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
-import { useApiClient } from "@hooks/useApiClient";
+import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -41,7 +41,7 @@ type ActivitySettingsProps = {
 export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
   activities,
 }) => {
-  const api = useApiClient();
+  const api = apiClient;
   const queryClient = useQueryClient();
   const form = useForm<CreateActivityRequest>({
     resolver: zodResolver(CreateActivityRequestSchema),
