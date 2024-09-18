@@ -8,12 +8,11 @@ import {
 } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   GetActivitiesResponse,
   GetActivityLogResponseSchema,
 } from "@/types/response";
-
-import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,

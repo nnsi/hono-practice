@@ -5,18 +5,20 @@ import {
 } from "@tanstack/react-query";
 import { ZodSchema } from "zod";
 
-export function mutationFnFunc<TRequest, TResponse>(
+type MaybeUndefined<T> = T extends void ? void : T | undefined;
+
+export function mutationFnFunc<TRequest = void, TResponse = unknown>(
   queryKey: QueryKey,
   requestFn: (data: TRequest) => Promise<Response>,
-  schema: ZodSchema<TResponse>
+  schema?: ZodSchema<TResponse>
 ): {
-  mutationFn: MutationFunction<TResponse, TRequest>;
+  mutationFn: MutationFunction<TResponse, MaybeUndefined<TRequest>>;
   onSuccess: () => void;
 } {
   const queryClient = useQueryClient();
   return {
-    mutationFn: async (data: TRequest) => {
-      const res = await requestFn(data);
+    mutationFn: async (data: MaybeUndefined<TRequest>) => {
+      const res = await requestFn(data as TRequest);
 
       if (res.status !== 200) {
         const json = await res.json().catch(() => null);
@@ -25,6 +27,10 @@ export function mutationFnFunc<TRequest, TResponse>(
       }
 
       const json = await res.json();
+      if (!schema) {
+        return json;
+      }
+
       const parsedResult = schema.safeParse(json);
       if (!parsedResult.success) {
         throw parsedResult.error;

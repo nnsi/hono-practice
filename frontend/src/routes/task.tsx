@@ -59,7 +59,7 @@ const TaskPage: React.FC = () => {
               enter: "w-0 opacity-0",
               enterActive: "w-80 opacity-100",
               exit: "w-80 opacity-100",
-              exitActive: "w-1 opacity-0",
+              exitActive: "w-[1px] opacity-0",
             }}
           >
             <div className="transition-all duration-200 ease-in-out overflow-hidden">

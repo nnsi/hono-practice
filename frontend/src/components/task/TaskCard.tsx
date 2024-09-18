@@ -2,17 +2,16 @@ import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil2Icon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
 import { GetTasksResponse } from "@/types/response/GetTasksResponse";
-
-import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -27,14 +26,14 @@ import {
   useToast,
 } from "@components/ui";
 
+import { mutationFnFunc } from "../../utils";
+
 type TaskCardProps = {
   task: GetTasksResponse[0];
   className?: string;
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
-  const api = apiClient;
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isTitleEdit, setIsTitleEdit] = useState(false);
 
@@ -46,69 +45,50 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
     },
   });
 
-  const handleDone = async () => {
-    const res = await api.users.tasks[":id"].$put({
-      param: { id: task.id },
-      json: { done: !task.done },
+  const { mutate, isError } = useMutation({
+    ...mutationFnFunc(
+      ["tasks"],
+      (data: UpdateTaskRequest) =>
+        apiClient.users.tasks[":id"].$put({
+          param: { id: task.id },
+          json: data,
+        }),
+      updateTaskRequestSchema
+    ),
+  });
+
+  const { mutate: mutateDelete, isError: isErrorDelete } = useMutation({
+    ...mutationFnFunc(["tasks"], () =>
+      apiClient.users.tasks[":id"].$delete({ param: { id: task.id } })
+    ),
+  });
+
+  if (isError) {
+    toast({
+      title: "Error",
+      description: "Failed to update task",
+      variant: "destructive",
     });
-    if (res.status === 200) {
-      const json = await res.json();
-      toast({
-        title: "Task Updated",
-        description: "Task has been updated successfully",
-      });
-      queryClient.setQueryData(["tasks"], (data: GetTasksResponse) => {
-        return data.map((t) => {
-          if (t.id === task.id) {
-            return { ...t, done: json.done };
-          }
-          return t;
-        });
-      });
-    } else {
-      const json = await res.json();
-      console.log(json.message);
-    }
+  }
+
+  if (isErrorDelete) {
+    toast({
+      title: "Error",
+      description: "Failed to delete task",
+      variant: "destructive",
+    });
+  }
+
+  const handleDone = async () => {
+    mutate({ done: !task.done });
   };
 
   const handleDelete = async () => {
-    const res = await api.users.tasks[":id"].$delete({
-      param: { id: task.id },
-    });
-    if (res.status === 200) {
-      await res.json();
-      toast({
-        title: "Task Deleted",
-        description: "Task has been deleted successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } else {
-      const json = await res.json();
-      console.log(json.message);
-    }
+    mutateDelete();
   };
 
   const onSubmit = async (data: UpdateTaskRequest) => {
-    if (data.title === task.title) {
-      setIsTitleEdit(false);
-      return;
-    }
-    const res = await api.users.tasks[":id"].$put({
-      param: { id: task.id },
-      json: data,
-    });
-    if (res.status === 200) {
-      await res.json();
-      toast({
-        title: "Task Updated",
-        description: "Task has been updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      setIsTitleEdit(false);
-    } else {
-      const json = await res.json();
-      console.log(json.message);
-    }
+    mutate(data);
   };
 
   return (
