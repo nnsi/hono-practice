@@ -7,6 +7,8 @@ import {
   useParams,
 } from "@tanstack/react-router";
 
+import { GetTaskResponseSchema } from "@/types/response";
+
 import { useApiClient } from "@hooks/useApiClient";
 
 import {
@@ -19,6 +21,8 @@ import {
   Textarea,
   useToast,
 } from "@components/ui";
+
+import { queryFnFunc } from "../../utils/queryFnFunc";
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams({ from: "/task/$id" });
@@ -34,23 +38,23 @@ const TaskDetail: React.FC = () => {
     };
   }, []);
 
-  const query = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["task", id],
-    queryFn: async () => {
-      const res = await api.users.tasks[":id"].$get({
-        param: { id },
-      });
-      if (res.status === 200) {
-        return await res.json();
-      }
-
-      const json = await res.json();
-      console.log(json.message);
-      return;
-    },
+    queryFn: queryFnFunc(
+      () =>
+        api.users.tasks[":id"].$get({
+          param: { id },
+        }),
+      GetTaskResponseSchema
+    ),
   });
 
-  const task = query.data;
+  if (error) {
+    toast({
+      title: "Error",
+      description: error.message,
+    });
+  }
 
   const handleClose = () => {
     navigate({ to: "/task" });
@@ -78,7 +82,7 @@ const TaskDetail: React.FC = () => {
     }
   };
 
-  if (!task)
+  if (!data)
     return (
       <Dialog
         open={true}
@@ -97,12 +101,12 @@ const TaskDetail: React.FC = () => {
     >
       <DialogContent className="flex flex-col w-[50%] max-w-full h-1/2 max-h-full min-w-96">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{task.title}</DialogTitle>
+          <DialogTitle>{data.title}</DialogTitle>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto">
           <Textarea
             id="username"
-            defaultValue={task.memo || ""}
+            defaultValue={data.memo || ""}
             className="h-full"
             onChange={(e) => setMemo(e.target.value)}
           />

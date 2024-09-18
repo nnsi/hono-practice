@@ -11,41 +11,27 @@ import { useToast, Button } from "@components/ui";
 
 import { TaskForm, TaskCard } from "@components/task";
 
+import { queryFnFunc } from "../utils/queryFnFunc";
+
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =
     useState(false);
   const api = useApiClient();
   const { toast } = useToast();
-  const query = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["tasks"],
-    queryFn: async () => {
-      const res = await api.users.tasks.$get();
-      if (res.status === 200) {
-        const json = await res.json();
-        const parsedJson = GetTasksResponseSchema.safeParse(json);
-        if (!parsedJson.success) {
-          toast({
-            title: "Error",
-            description: "Failed to fetch tasks",
-            variant: "destructive",
-          });
-          return;
-        }
-        return parsedJson.data;
-      } else {
-        const json = await res.json();
-        toast({
-          title: "Error",
-          description: json.message,
-          variant: "destructive",
-        });
-        return;
-      }
-    },
+    queryFn: queryFnFunc(() => api.users.tasks.$get(), GetTasksResponseSchema),
   });
 
+  if (error) {
+    toast({
+      title: "Error",
+      description: error.message,
+    });
+  }
+
   const taskList =
-    query.data?.filter((task) => {
+    data?.filter((task) => {
       if (isFilteringCompletedTask && task.done) return false;
       return true;
     }) ?? [];

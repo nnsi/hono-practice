@@ -17,23 +17,15 @@ export function useApiClient() {
   });
 }
 
-export type ApiRouteBase = {
-  [Path in keyof (AppType extends Hono<any, infer R, any> ? R : never)]: {
-    [Method in
-      | "$get"
-      | "$post"
-      | "$put"
-      | "$delete"
-      | "$patch"]: Method extends keyof (AppType extends Hono<any, infer R, any>
-      ? R
-      : never)[Path]
-      ? (AppType extends Hono<any, infer R, any>
-          ? R
-          : never)[Path][Method] extends { input: any; output: any }
-        ? (AppType extends Hono<any, infer R, any>
-            ? R
-            : never)[Path][Method]["output"]
-        : (AppType extends Hono<any, infer R, any> ? R : never)[Path][Method]
-      : never;
+type Routes = AppType extends Hono<any, infer R, any> ? R : never;
+
+export type ApiRoutes = {
+  [Path in keyof Routes]: {
+    [Method in keyof Routes[Path]]: Routes[Path][Method] extends {
+      input: any;
+      output: any;
+    }
+      ? Routes[Path][Method]
+      : Routes[Path][Method];
   };
 };
