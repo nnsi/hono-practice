@@ -178,7 +178,7 @@ const updateHandler = factory.createHandlers(
         }),
     ]);
 
-    const updatedActivity = await prisma.activity.update({
+    const updatedActivity: GetActivityResponse = await prisma.activity.update({
       select: {
         id: true,
         name: true,

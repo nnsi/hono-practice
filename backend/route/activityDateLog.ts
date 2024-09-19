@@ -3,7 +3,11 @@ import { createFactory } from "hono/factory";
 
 import dayjs from "@/backend/lib/dayjs";
 import { prisma } from "@/backend/lib/prisma";
-import { GetActivityLogsResponseSchema } from "@/types/response";
+import {
+  GetActivityLogResponse,
+  GetActivityLogsResponse,
+  GetActivityLogsResponseSchema,
+} from "@/types/response";
 
 import { JwtEnv } from "../middleware/authMiddleware";
 
@@ -23,35 +27,36 @@ const getHandler = factory.createHandlers(async (c) => {
           lt: dayjs(month).endOf("month").toDate(),
         };
 
-  const activityLogs = await prisma.activityLog.findMany({
-    select: {
-      id: true,
-      quantity: true,
-      memo: true,
-      date: true,
-      createdAt: true,
-      updatedAt: true,
-      activity: {
-        select: {
-          id: true,
-          name: true,
-          quantityLabel: true,
+  const activityLogs: GetActivityLogsResponse =
+    await prisma.activityLog.findMany({
+      select: {
+        id: true,
+        quantity: true,
+        memo: true,
+        date: true,
+        createdAt: true,
+        updatedAt: true,
+        activity: {
+          select: {
+            id: true,
+            name: true,
+            quantityLabel: true,
+          },
+        },
+        activityKind: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-      activityKind: {
-        select: {
-          id: true,
-          name: true,
-        },
+      where: {
+        date: dateQuery,
       },
-    },
-    where: {
-      date: dateQuery,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
 
   const parsedActivityLogs =
     GetActivityLogsResponseSchema.safeParse(activityLogs);
@@ -66,35 +71,36 @@ const getHandler = factory.createHandlers(async (c) => {
 const findHandler = factory.createHandlers(async (c) => {
   const { id } = c.req.param();
 
-  const activityLog = await prisma.activityLog.findUnique({
-    select: {
-      id: true,
-      quantity: true,
-      memo: true,
-      date: true,
-      createdAt: true,
-      updatedAt: true,
-      activity: {
-        select: {
-          id: true,
-          name: true,
-          quantityLabel: true,
+  const activityLog: GetActivityLogResponse | null =
+    await prisma.activityLog.findUnique({
+      select: {
+        id: true,
+        quantity: true,
+        memo: true,
+        date: true,
+        createdAt: true,
+        updatedAt: true,
+        activity: {
+          select: {
+            id: true,
+            name: true,
+            quantityLabel: true,
+          },
+        },
+        activityKind: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-      activityKind: {
-        select: {
-          id: true,
-          name: true,
+      where: {
+        id,
+        activity: {
+          userId: c.get("jwtPayload").id,
         },
       },
-    },
-    where: {
-      id,
-      activity: {
-        userId: c.get("jwtPayload").id,
-      },
-    },
-  });
+    });
 
   if (!activityLog) {
     return c.json({ message: "Activity log not found" }, 404);

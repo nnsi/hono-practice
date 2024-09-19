@@ -12,6 +12,11 @@ import {
   UpdateActivityLogRequest,
   UpdateActivityLogRequestSchema,
 } from "@/types/request/UpdateActivityLogRequest";
+import {
+  GetActivityLogResponse,
+  GetActivityLogsResponse,
+  GetActivityLogsResponseSchema,
+} from "@/types/response";
 
 import { JwtEnv } from "../middleware/authMiddleware";
 
@@ -49,43 +54,8 @@ const getHandler = factory.createHandlers(async (c) => {
     userId: c.get("jwtPayload").id,
   });
 
-  const activitiyLogs = await prisma.activityLog.findMany({
-    select: {
-      id: true,
-      quantity: true,
-      memo: true,
-      date: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    where: {
-      activityId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  return c.json(activitiyLogs, 200);
-});
-
-const createHandler = factory.createHandlers(
-  zValidator("json", CreateActivityLogRequestSchema),
-  async (c) => {
-    const { id: activityId } = c.req.param();
-
-    checkActivityLogOwner({
-      activityId,
-      userId: c.get("jwtPayload").id,
-    });
-
-    const request = await c.req.json<CreateActivityLogRequest>();
-    const parsedrequest = CreateActivityLogRequestSchema.safeParse(request);
-    if (!parsedrequest.success) {
-      return c.json({ message: "failed to parse json" }, 500);
-    }
-
-    const activityLog = await prisma.activityLog.create({
+  const activitiyLogs: GetActivityLogsResponse =
+    await prisma.activityLog.findMany({
       select: {
         id: true,
         quantity: true,
@@ -107,14 +77,71 @@ const createHandler = factory.createHandlers(
           },
         },
       },
-      data: {
-        ...parsedrequest.data,
-        date: new Date(parsedrequest.data.date),
+      where: {
         activityId,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    return c.json(activityLog, 200);
+  const parsedJson = GetActivityLogsResponseSchema.safeParse(activitiyLogs);
+  if (!parsedJson.success) {
+    return c.json({ message: "failed to parse json" }, 500);
+  }
+
+  return c.json(parsedJson.data, 200);
+});
+
+const createHandler = factory.createHandlers(
+  zValidator("json", CreateActivityLogRequestSchema),
+  async (c) => {
+    const { id: activityId } = c.req.param();
+
+    checkActivityLogOwner({
+      activityId,
+      userId: c.get("jwtPayload").id,
+    });
+
+    const request = await c.req.json<CreateActivityLogRequest>();
+
+    const activityLog: GetActivityLogResponse = await prisma.activityLog.create(
+      {
+        select: {
+          id: true,
+          quantity: true,
+          memo: true,
+          date: true,
+          createdAt: true,
+          updatedAt: true,
+          activity: {
+            select: {
+              id: true,
+              name: true,
+              quantityLabel: true,
+            },
+          },
+          activityKind: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        data: {
+          ...request,
+          date: new Date(request.date),
+          activityId,
+        },
+      }
+    );
+
+    const parsedJson = GetActivityLogsResponseSchema.safeParse(activityLog);
+    if (!parsedJson.success) {
+      return c.json({ message: "failed to parse json" }, 500);
+    }
+
+    return c.json(parsedJson.data, 200);
   }
 );
 

@@ -13,6 +13,8 @@ import {
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
 import {
+  GetTaskResponse,
+  GetTaskResponseSchema,
   GetTasksResponse,
   GetTasksResponseSchema,
 } from "@/types/response/GetTasksResponse";
@@ -50,7 +52,7 @@ const getHandler = factory.createHandlers(async (c) => {
 const findHandler = factory.createHandlers(async (c) => {
   const { id } = c.req.param();
 
-  const task = await prisma.task.findFirst({
+  const task: GetTaskResponse | null = await prisma.task.findFirst({
     select: {
       id: true,
       title: true,
@@ -78,13 +80,19 @@ const createHandler = factory.createHandlers(
     const json = await c.req.json<CreateTaskRequest>();
 
     try {
-      const task = await prisma.task.create({
+      const task: GetTaskResponse = await prisma.task.create({
         data: {
           title: json.title,
           userId: c.get("jwtPayload").id,
         },
       });
-      return c.json(task, 200);
+
+      const parsedJson = GetTaskResponseSchema.safeParse(task);
+      if (!parsedJson.success) {
+        return c.json({ message: "failed to parse task" }, 500);
+      }
+
+      return c.json(parsedJson.data, 200);
     } catch (e) {
       console.log(e);
       return c.json({ message: "failed to create task" }, 500);

@@ -7,6 +7,7 @@ import { zValidator } from "@hono/zod-validator";
 import bcrypt from "bcrypt";
 
 import { prisma } from "@/backend/lib/prisma";
+import { User } from "@/types/prisma";
 import {
   createUserRequestSchema,
   CreateUserRequest,
@@ -89,7 +90,7 @@ const createUserHandler = factory.createHandlers(
       return c.json({ message: "ユーザー作成に失敗しました" }, 500);
     }
 
-    let createUser;
+    let createUser: User;
     try {
       createUser = await prisma.user.create({
         data: {
