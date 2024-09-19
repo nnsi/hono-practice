@@ -21,7 +21,7 @@ import {
   useToast,
 } from "@components/ui";
 
-import { mutationFnFunc } from "../../utils";
+import { mp } from "../../utils";
 
 type TaskFormProps = {
   className?: string;
@@ -36,11 +36,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({ className }) => {
   });
 
   const { mutate, isError } = useMutation({
-    ...mutationFnFunc(
-      ["tasks"],
-      (data: CreateTaskRequest) => api.users.tasks.$post({ json: data }),
-      createTaskRequestSchema
-    ),
+    ...mp({
+      queryKey: ["tasks"],
+      mutationFn: (data: CreateTaskRequest) =>
+        api.users.tasks.$post({ json: data }),
+      requestSchema: createTaskRequestSchema,
+    }),
   });
 
   if (isError) {

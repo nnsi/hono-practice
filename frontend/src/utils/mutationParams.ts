@@ -7,18 +7,29 @@ import { ZodSchema } from "zod";
 
 type MaybeUndefined<T> = T extends void ? void : T | undefined;
 
-export function mutationFnFunc<TRequest = void, TResponse = unknown>(
-  queryKey: QueryKey,
-  requestFn: (data: TRequest) => Promise<Response>,
-  schema?: ZodSchema<TResponse>
-): {
+type MutationPropsParamsFunc<TRequest = void, TResponse = unknown> = {
+  queryKey: QueryKey;
+  mutationFn: (data: TRequest) => Promise<Response>;
+  requestSchema?: ZodSchema<TResponse>;
+  responseSchema?: ZodSchema<TResponse>;
+};
+
+export function mp<TRequest = void, TResponse = unknown>({
+  queryKey,
+  mutationFn,
+  requestSchema,
+  responseSchema,
+}: MutationPropsParamsFunc<TRequest, TResponse>): {
   mutationFn: MutationFunction<TResponse, MaybeUndefined<TRequest>>;
   onSuccess: () => void;
 } {
   const queryClient = useQueryClient();
   return {
     mutationFn: async (data: MaybeUndefined<TRequest>) => {
-      const res = await requestFn(data as TRequest);
+      if (requestSchema) {
+        requestSchema.parse(data);
+      }
+      const res = await mutationFn(data as TRequest);
 
       if (res.status !== 200) {
         const json = await res.json().catch(() => null);
@@ -27,11 +38,11 @@ export function mutationFnFunc<TRequest = void, TResponse = unknown>(
       }
 
       const json = await res.json();
-      if (!schema) {
+      if (!responseSchema) {
         return json;
       }
 
-      const parsedResult = schema.safeParse(json);
+      const parsedResult = responseSchema.safeParse(json);
       if (!parsedResult.success) {
         throw parsedResult.error;
       }

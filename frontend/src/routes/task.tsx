@@ -11,18 +11,18 @@ import { useToast, Button } from "@components/ui";
 
 import { TaskForm, TaskCard } from "@components/task";
 
-import { queryFnFunc } from "../utils/queryFnFunc";
+import { qp } from "../utils/queryParams";
 
 const TaskPage: React.FC = () => {
   const [isFilteringCompletedTask, setIsFilteringCompletedTask] =
     useState(false);
   const { toast } = useToast();
   const { data, error } = useQuery({
-    ...queryFnFunc(
-      ["tasks"],
-      () => apiClient.users.tasks.$get(),
-      GetTasksResponseSchema
-    ),
+    ...qp({
+      queryKey: ["tasks"],
+      queryFn: () => apiClient.users.tasks.$get(),
+      schema: GetTasksResponseSchema,
+    }),
   });
 
   if (error) {

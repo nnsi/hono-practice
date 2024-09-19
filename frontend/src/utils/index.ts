@@ -1,3 +1,3 @@
 export * from "./apiClient";
-export * from "./mutationFnFunc";
-export * from "./queryFnFunc";
+export * from "./mutationParams";
+export * from "./queryParams";

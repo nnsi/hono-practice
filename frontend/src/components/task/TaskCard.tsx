@@ -26,7 +26,7 @@ import {
   useToast,
 } from "@components/ui";
 
-import { mutationFnFunc } from "../../utils";
+import { mp } from "../../utils";
 
 type TaskCardProps = {
   task: GetTasksResponse[0];
@@ -46,21 +46,23 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, className }) => {
   });
 
   const { mutate, isError } = useMutation({
-    ...mutationFnFunc(
-      ["tasks"],
-      (data: UpdateTaskRequest) =>
+    ...mp({
+      queryKey: ["tasks"],
+      mutationFn: (data: UpdateTaskRequest) =>
         apiClient.users.tasks[":id"].$put({
           param: { id: task.id },
           json: data,
         }),
-      updateTaskRequestSchema
-    ),
+      requestSchema: updateTaskRequestSchema,
+    }),
   });
 
   const { mutate: mutateDelete, isError: isErrorDelete } = useMutation({
-    ...mutationFnFunc(["tasks"], () =>
-      apiClient.users.tasks[":id"].$delete({ param: { id: task.id } })
-    ),
+    ...mp({
+      queryKey: ["tasks"],
+      mutationFn: () =>
+        apiClient.users.tasks[":id"].$delete({ param: { id: task.id } }),
+    }),
   });
 
   if (isError) {

@@ -21,7 +21,7 @@ import {
   useToast,
 } from "@components/ui";
 
-import { queryFnFunc } from "../../utils/queryFnFunc";
+import { qp } from "../../utils/queryParams";
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams({ from: "/task/$id" });
@@ -31,14 +31,14 @@ const TaskDetail: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data, error } = useQuery({
-    ...queryFnFunc(
-      ["task", id],
-      () =>
+    ...qp({
+      queryKey: ["task", id],
+      queryFn: () =>
         api.$get({
           param: { id },
         }),
-      GetTaskResponseSchema
-    ),
+      schema: GetTaskResponseSchema,
+    }),
   });
 
   useEffect(() => {

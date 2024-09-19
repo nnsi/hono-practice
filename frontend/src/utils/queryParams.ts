@@ -1,15 +1,20 @@
 import { QueryFunction, QueryKey } from "@tanstack/react-query";
 import { ZodSchema } from "zod";
 
-export function queryFnFunc<T>(
-  queryKey: QueryKey,
-  requestFn: () => Promise<Response>,
-  schema: ZodSchema<T>
-): { queryKey: QueryKey; queryFn: QueryFunction<T> } {
+type queryPropsParamsFunc<T> = {
+  queryKey: QueryKey;
+  queryFn: () => Promise<Response>;
+  schema: ZodSchema<T>;
+};
+
+export function qp<T>({ queryKey, queryFn, schema }: queryPropsParamsFunc<T>): {
+  queryKey: QueryKey;
+  queryFn: QueryFunction<T>;
+} {
   return {
     queryKey,
     queryFn: async () => {
-      const res = await requestFn();
+      const res = await queryFn();
 
       if (res.status !== 200) {
         const json = await res.json().catch(() => null);
