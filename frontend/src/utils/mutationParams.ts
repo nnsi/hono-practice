@@ -11,7 +11,7 @@ type MutationPropsParamsFunc<TRequest = void, TResponse = unknown> = {
   queryKey: QueryKey;
   mutationFn: (data: TRequest) => Promise<Response>;
   requestSchema?: ZodSchema<TResponse>;
-  responseSchema?: ZodSchema<TResponse>;
+  responseSchema?: ZodSchema;
 };
 
 export function mp<TRequest = void, TResponse = unknown>({

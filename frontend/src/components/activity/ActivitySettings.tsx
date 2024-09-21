@@ -1,9 +1,10 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   CreateActivityRequest,
   CreateActivityRequestSchema,
@@ -12,8 +13,6 @@ import {
   GetActivitiesResponse,
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
-
-import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,
@@ -32,6 +31,8 @@ import {
   AccordionItem,
 } from "@components/ui";
 
+import { mp } from "../../utils";
+
 import { ActivityEditForm } from "./ActivityEditForm";
 
 type ActivitySettingsProps = {
@@ -42,23 +43,24 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
   activities,
 }) => {
   const api = apiClient;
-  const queryClient = useQueryClient();
   const form = useForm<CreateActivityRequest>({
     resolver: zodResolver(CreateActivityRequestSchema),
   });
   const [accordionValue, setAccordionValue] = useState<string>("");
+  const { mutate } = useMutation({
+    ...mp({
+      queryKey: ["activity"],
+      mutationFn: (data: CreateActivityRequest) =>
+        api.users.activities.$post({
+          json: data,
+        }),
+      requestSchema: CreateActivityRequestSchema,
+      responseSchema: GetActivityResponseSchema,
+    }),
+  });
 
   const onSubmit = async (data: CreateActivityRequest) => {
-    const res = await api.users.activities.$post({ json: data });
-    const json = await res.json();
-    const parsedJson = GetActivityResponseSchema.safeParse(json);
-    if (!parsedJson.success) {
-      console.log(parsedJson.error);
-      return;
-    }
-    queryClient.setQueryData(["activity"], (prev: GetActivitiesResponse) => {
-      return [parsedJson.data, ...prev];
-    });
+    mutate(data);
   };
 
   return (

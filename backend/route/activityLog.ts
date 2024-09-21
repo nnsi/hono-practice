@@ -14,6 +14,7 @@ import {
 } from "@/types/request/UpdateActivityLogRequest";
 import {
   GetActivityLogResponse,
+  GetActivityLogResponseSchema,
   GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
 } from "@/types/response";
@@ -136,8 +137,9 @@ const createHandler = factory.createHandlers(
       }
     );
 
-    const parsedJson = GetActivityLogsResponseSchema.safeParse(activityLog);
+    const parsedJson = GetActivityLogResponseSchema.safeParse(activityLog);
     if (!parsedJson.success) {
+      console.log(JSON.stringify(parsedJson.error));
       return c.json({ message: "failed to parse json" }, 500);
     }
 

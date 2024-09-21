@@ -206,7 +206,17 @@ const updateHandler = factory.createHandlers(
 );
 
 const deleteHandler = factory.createHandlers(async (c) => {
-  c.json({ message: "Hello" }, 200);
+  const { id } = c.req.param();
+  const userId = c.get("jwtPayload").id;
+
+  await prisma.activity.delete({
+    where: {
+      id,
+      userId,
+    },
+  });
+
+  return c.json({ message: "success" }, 200);
 });
 
 export const activityRoute = app

@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   CreateActivityLogRequest,
   CreateActivityLogRequestSchema,
@@ -15,8 +16,6 @@ import {
   GetActivityLogResponseSchema,
   GetActivityLogsResponse,
 } from "@/types/response/GetActivityLogsResponse";
-
-import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Button,

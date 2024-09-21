@@ -1,21 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   UpdateActivityRequest,
   UpdateActivityRequestSchema,
 } from "@/types/request/UpdateActivityRequest";
 import {
-  GetActivitiesResponse,
   GetActivityResponse,
   GetActivityResponseSchema,
 } from "@/types/response";
 
-import { apiClient } from "@/frontend/src/utils/apiClient";
-
 import { Form, Button, FormField, Input } from "@components/ui";
+
+import { mp } from "../../utils";
 
 type ActivityEditFormProps = {
   activity: GetActivityResponse;
@@ -65,25 +65,37 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
     name: "kinds",
   });
 
+  const { mutate } = useMutation({
+    ...mp({
+      queryKey: ["activity"],
+      mutationFn: (data: UpdateActivityRequest) =>
+        api.users.activities[":id"].$put({
+          param: { id: activity.id },
+          json: data,
+        }),
+      requestSchema: UpdateActivityRequestSchema,
+      responseSchema: GetActivityResponseSchema,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+      handleClose();
+    },
+  });
+
   const onSubmit = async (data: UpdateActivityRequest) => {
-    const res = await api.users.activities[":id"].$put({
-      param: { id: activity.id },
-      json: data,
+    mutate(data);
+  };
+
+  const handleDelete = async (id: string) => {
+    console.log(id);
+    const res = await api.users.activities[":id"].$delete({
+      param: { id },
     });
-    const json = await res.json();
-    const parsedJson = GetActivityResponseSchema.safeParse(json);
-    if (!parsedJson.success) {
-      console.log(parsedJson.error);
+    if (res.status !== 200) {
+      console.log("failed to delete activity");
       return;
     }
-    queryClient.setQueryData(["activity"], (prev: GetActivitiesResponse) => {
-      return prev.map((activity) => {
-        if (activity.id === parsedJson.data.id) {
-          return parsedJson.data;
-        }
-        return activity;
-      });
-    });
+    queryClient.invalidateQueries({ queryKey: ["activity"] });
     handleClose();
   };
 
@@ -93,6 +105,7 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
         <TrashIcon
           onClick={(e) => {
             e.preventDefault();
+            handleDelete(activity.id);
           }}
         />
       </div>
