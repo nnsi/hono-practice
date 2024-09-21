@@ -20,4 +20,14 @@ export const UpdateActivityRequestSchema = z.object({
   ),
 });
 
+export const UpdateActivityOrderRequestSchema = z.object({
+  prev: z.string().optional(),
+  next: z.string().optional(),
+  current: z.string(),
+});
+
 export type UpdateActivityRequest = z.infer<typeof UpdateActivityRequestSchema>;
+
+export type UpdateActivityOrderRequest = z.infer<
+  typeof UpdateActivityOrderRequestSchema
+>;

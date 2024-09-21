@@ -9,6 +9,8 @@ import {
   CreateActivityRequestSchema,
 } from "@/types/request/CreateActivityRequest";
 import {
+  UpdateActivityOrderRequest,
+  UpdateActivityOrderRequestSchema,
   UpdateActivityRequest,
   UpdateActivityRequestSchema,
 } from "@/types/request/UpdateActivityRequest";
@@ -18,6 +20,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
+import { generateNextOrder, generateOrder } from "../lib/lexicalOrder";
 import { JwtEnv } from "../middleware/authMiddleware";
 
 import { activityLogRoute } from "./activityLog";
@@ -40,7 +43,7 @@ const getHandler = factory.createHandlers(async (c) => {
       userId,
     },
     orderBy: {
-      createdAt: "desc",
+      orderIndex: "asc",
     },
   });
 
@@ -59,10 +62,25 @@ const createHandler = factory.createHandlers(
     const { quantityOption, ...json } =
       await c.req.json<CreateActivityRequest>();
 
+    const lastOrderActivity = await prisma.activity.findFirst({
+      select: {
+        orderIndex: true,
+      },
+      where: {
+        userId,
+      },
+      orderBy: {
+        orderIndex: "desc",
+      },
+    });
+
+    const orderIndex = generateNextOrder(lastOrderActivity?.orderIndex ?? "");
+
     const activity = await prisma.activity.create({
       data: {
         ...json,
         userId,
+        orderIndex,
       },
     });
 
@@ -219,9 +237,64 @@ const deleteHandler = factory.createHandlers(async (c) => {
   return c.json({ message: "success" }, 200);
 });
 
+const updateOrderHandler = factory.createHandlers(
+  zValidator("json", UpdateActivityOrderRequestSchema),
+  async (c) => {
+    const { id } = c.req.param();
+    const userId = c.get("jwtPayload").id;
+    const { prev, next } = await c.req.json<UpdateActivityOrderRequest>();
+
+    const ids = [prev, next].filter((id) => id !== undefined);
+
+    if (ids.length === 0) {
+      return c.json({ message: "エラーが発生しました" }, 500);
+    }
+
+    const activities = await prisma.activity.findMany({
+      select: {
+        id: true,
+        orderIndex: true,
+      },
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+      orderBy: {
+        orderIndex: "asc",
+      },
+    });
+
+    if (activities.length === 0) {
+      return c.json({ message: "エラーが発生しました" }, 500);
+    }
+
+    const prevActivity = activities.find((a) => a.id === prev);
+    const nextActivity = activities.find((a) => a.id === next);
+
+    const orderIndex = generateOrder(
+      prevActivity?.orderIndex,
+      nextActivity?.orderIndex
+    );
+
+    await prisma.activity.update({
+      where: {
+        id,
+        userId,
+      },
+      data: {
+        orderIndex,
+      },
+    });
+
+    return c.json({ message: "success" }, 200);
+  }
+);
+
 export const activityRoute = app
   .get("/", ...getHandler)
   .post("/", ...createHandler)
   .put("/:id", ...updateHandler)
+  .put("/:id/order", ...updateOrderHandler)
   .delete("/:id", ...deleteHandler)
   .route("/:id/logs", activityLogRoute);
