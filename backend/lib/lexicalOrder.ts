@@ -1,14 +1,3 @@
-const ALPHABET = "abcdefghijklmnopqrstuvwxyz";
-
-// 8桁のランダム文字列を生成する
-function generateRandomAlphabet(len: number) {
-  let str = "";
-  for (let i = 0; i < len; i++) {
-    str += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-  }
-  return str;
-}
-
 export function generateNextOrder(order: string) {
   const lastCharAt = order.slice(-1).charCodeAt(0);
   return lastCharAt === 96
@@ -32,26 +21,28 @@ export function generateOrder(
 
   if (prev >= next) throw new Error("prev must be less than next");
 
-  let order = "";
-  for (let i = 0; i < prev.length; i++) {
-    if (prev[i] === next[i]) {
-      order += prev[i];
+  let order = prev;
+  // 'z' 以外の場合は 'a' を追加
+  if (prev[prev.length - 1] !== "z") {
+    order += "a";
+  } else {
+    // 'z' の場合は、末尾の 'z' を除去して、その前の文字をインクリメント
+    let i = prev.length - 1;
+    while (i >= 0 && prev[i] === "z") {
+      i--;
+    }
+    if (i < 0) {
+      // すべて 'z' の場合
+      order = "a";
     } else {
-      order += ALPHABET[ALPHABET.indexOf(prev[i]) + 1];
-      break;
+      const charCode = prev.charCodeAt(i) + 1;
+      order = prev.substring(0, i) + String.fromCharCode(charCode);
     }
   }
 
-  if (order.length >= prev.length) {
-    const nextCharCode = prev.charCodeAt(order.length) - 1;
-    order += nextCharCode === 96 ? "aa" : String.fromCharCode(nextCharCode - 1);
-  } else if (order.length <= next.length) {
-    const nextCharCode = next.charCodeAt(order.length) - 1;
-    order += nextCharCode === 96 ? "aa" : String.fromCharCode(nextCharCode);
-  }
-
-  while (order.length < Math.min(prev.length, next.length)) {
-    order += generateRandomAlphabet(1);
+  // order が next よりも大きくなるまで 'a' を追加
+  while (order >= next) {
+    order += "a";
   }
 
   return order;

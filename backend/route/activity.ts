@@ -254,6 +254,7 @@ const updateOrderHandler = factory.createHandlers(
       select: {
         id: true,
         orderIndex: true,
+        name: true,
       },
       where: {
         id: {

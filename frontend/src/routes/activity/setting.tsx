@@ -1,11 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-
-import { GetActivitiesResponse } from "@/types/response";
 
 import { Sheet, SheetContent } from "@components/ui";
 
@@ -14,10 +11,6 @@ import { ActivitySettings } from "@components/activity";
 const NewActivityPage: React.FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
-  const activities = useQuery<GetActivitiesResponse>({
-    queryKey: ["activity"],
-    enabled: false,
-  });
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -31,7 +24,7 @@ const NewActivityPage: React.FC = () => {
       onOpenChange={handleOpenChange}
     >
       <SheetContent className="overflow-auto">
-        <ActivitySettings activities={activities?.data} />
+        <ActivitySettings />
       </SheetContent>
     </Sheet>
   );

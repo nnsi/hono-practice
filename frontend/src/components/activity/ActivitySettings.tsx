@@ -8,7 +8,7 @@ import {
 } from "@hello-pangea/dnd";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragHandleVerticalIcon } from "@radix-ui/react-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
@@ -44,18 +44,20 @@ import { mp } from "../../utils";
 
 import { ActivityEditForm } from "./ActivityEditForm";
 
-type ActivitySettingsProps = {
-  activities?: GetActivitiesResponse;
-};
+type ActivitySettingsProps = {};
 
-export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
-  activities,
-}) => {
+export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
   const api = apiClient;
   const form = useForm<CreateActivityRequest>({
     resolver: zodResolver(CreateActivityRequestSchema),
   });
   const [accordionValue, setAccordionValue] = useState<string>("");
+
+  const { data: activities } = useQuery<GetActivitiesResponse>({
+    queryKey: ["activity"],
+    enabled: false,
+  });
+
   const queryClient = useQueryClient();
   const { mutate } = useMutation({
     ...mp({
@@ -92,6 +94,9 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
         return newActivities;
       });
     },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
   });
 
   const onSubmit = async (data: CreateActivityRequest) => {
@@ -106,16 +111,18 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = ({
     )
       return;
 
+    const newActivities = Array.from(activities);
+    const [reorderedActivity] = newActivities.splice(result.source.index, 1);
+    newActivities.splice(result.destination.index, 0, reorderedActivity);
+
+    const prev = newActivities[result.destination.index - 1]?.id;
+    const next = newActivities[result.destination.index + 1]?.id;
+
     const newOrder: UpdateActivityOrderRequest = {
-      prev: activities[result.destination.index]?.id,
-      next: activities[result.destination.index + 1]?.id,
+      prev,
+      next,
       current: result.draggableId,
     };
-
-    if (result.destination.index === 0) {
-      newOrder.next = newOrder.prev;
-      newOrder.prev = undefined;
-    }
 
     mutateOrder(newOrder);
   };
