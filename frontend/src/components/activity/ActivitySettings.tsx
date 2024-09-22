@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   DragDropContext,
@@ -57,6 +57,15 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
     queryKey: ["activity"],
     enabled: false,
   });
+
+  const [localActivities, setLocalActivities] = useState<
+    GetActivitiesResponse | undefined
+  >([]);
+  useEffect(() => {
+    if (activities) {
+      setLocalActivities(activities);
+    }
+  }, [activities]);
 
   const queryClient = useQueryClient();
   const { mutate } = useMutation({
@@ -118,6 +127,8 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
     const prev = newActivities[result.destination.index - 1]?.id;
     const next = newActivities[result.destination.index + 1]?.id;
 
+    setLocalActivities(newActivities);
+
     const newOrder: UpdateActivityOrderRequest = {
       prev,
       next,
@@ -178,7 +189,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
           </SheetHeader>
         </form>
       </Form>
-      {activities && (
+      {localActivities && (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="dnd-accordion">
             {(provided) => (
@@ -190,7 +201,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                 ref={provided.innerRef}
                 {...provided.droppableProps}
               >
-                {activities.map((activity, index) => (
+                {localActivities.map((activity, index) => (
                   <Draggable
                     key={activity.id}
                     draggableId={activity.id}
@@ -200,7 +211,10 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                       <div ref={provided.innerRef} {...provided.draggableProps}>
                         <AccordionItem value={activity.id}>
                           <div className="flex items-center gap-3">
-                            <span {...provided.dragHandleProps}>
+                            <span
+                              {...provided.dragHandleProps}
+                              className="cursor-grab"
+                            >
                               <DragHandleVerticalIcon />
                             </span>
                             <div className="flex-1 w-full">

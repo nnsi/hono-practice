@@ -2,8 +2,7 @@
   "scripts": {
     "dev": "tsx watch backend/index.ts",
     "client-dev": "vite --host",
-    "build": "vite build --mode server",
-    "build-client": "vite build"
+    "build": "vite build --mode server & vite build"
   },
   "type": "module",
   "dependencies": {

@@ -20,7 +20,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
-import { generateNextOrder, generateOrder } from "../lib/lexicalOrder";
+import { generateOrder, generatePrevOrder } from "../lib/lexicalOrder";
 import { JwtEnv } from "../middleware/authMiddleware";
 
 import { activityLogRoute } from "./activityLog";
@@ -37,7 +37,15 @@ const getHandler = factory.createHandlers(async (c) => {
       quantityLabel: true,
       description: true,
       options: true,
-      kinds: true,
+      kinds: {
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          deletedAt: null,
+        },
+      },
     },
     where: {
       userId,
@@ -74,7 +82,7 @@ const createHandler = factory.createHandlers(
       },
     });
 
-    const orderIndex = generateNextOrder(lastOrderActivity?.orderIndex ?? "");
+    const orderIndex = generatePrevOrder(lastOrderActivity?.orderIndex ?? "");
 
     const activity = await prisma.activity.create({
       data: {
@@ -158,6 +166,20 @@ const updateHandler = factory.createHandlers(
       }
     );
 
+    const currentKinds = await prisma.activityKind.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      where: {
+        activityId,
+      },
+    });
+
+    const deleteKinds = currentKinds
+      .filter((kind) => !kinds.some((k) => k.id === kind.id))
+      .map((kind) => kind.id);
+
     // TODO : prisma.$transaction
     await Promise.all([
       ...updateOptions.map((option) =>
@@ -203,7 +225,15 @@ const updateHandler = factory.createHandlers(
         quantityLabel: true,
         description: true,
         options: true,
-        kinds: true,
+        kinds: {
+          select: {
+            id: true,
+            name: true,
+          },
+          where: {
+            deletedAt: null,
+          },
+        },
       },
       where: {
         id: activityId,
@@ -211,6 +241,14 @@ const updateHandler = factory.createHandlers(
       },
       data: {
         ...activity,
+      },
+    });
+
+    await prisma.activityKind.deleteMany({
+      where: {
+        id: {
+          in: deleteKinds,
+        },
       },
     });
 
