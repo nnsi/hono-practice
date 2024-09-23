@@ -15,6 +15,7 @@ import {
   UpdateActivityRequestSchema,
 } from "@/types/request/UpdateActivityRequest";
 import {
+  GetActivitiesResponse,
   GetActivitiesResponseSchema,
   GetActivityResponse,
   GetActivityResponseSchema,
@@ -28,25 +29,27 @@ import { activityLogRoute } from "./activityLog";
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
-const getHandler = factory.createHandlers(async (c) => {
-  const userId = c.get("jwtPayload").id;
-  const activities = await prisma.activity.findMany({
+const SELECT_ACTIVITY_FIELDS = {
+  id: true,
+  name: true,
+  quantityLabel: true,
+  description: true,
+  options: true,
+  kinds: {
     select: {
       id: true,
       name: true,
-      quantityLabel: true,
-      description: true,
-      options: true,
-      kinds: {
-        select: {
-          id: true,
-          name: true,
-        },
-        where: {
-          deletedAt: null,
-        },
-      },
     },
+    where: {
+      deletedAt: null,
+    },
+  },
+};
+
+const getHandler = factory.createHandlers(async (c) => {
+  const userId = c.get("jwtPayload").id;
+  const activities: GetActivitiesResponse = await prisma.activity.findMany({
+    select: SELECT_ACTIVITY_FIELDS,
     where: {
       userId,
     },
@@ -85,6 +88,7 @@ const createHandler = factory.createHandlers(
     const orderIndex = generatePrevOrder(lastOrderActivity?.orderIndex ?? "");
 
     const activity = await prisma.activity.create({
+      select: SELECT_ACTIVITY_FIELDS,
       data: {
         ...json,
         userId,
@@ -219,22 +223,7 @@ const updateHandler = factory.createHandlers(
     ]);
 
     const updatedActivity: GetActivityResponse = await prisma.activity.update({
-      select: {
-        id: true,
-        name: true,
-        quantityLabel: true,
-        description: true,
-        options: true,
-        kinds: {
-          select: {
-            id: true,
-            name: true,
-          },
-          where: {
-            deletedAt: null,
-          },
-        },
-      },
+      select: SELECT_ACTIVITY_FIELDS,
       where: {
         id: activityId,
         userId: userId,
