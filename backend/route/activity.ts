@@ -21,7 +21,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
-import { generateOrder, generatePrevOrder } from "../lib/lexicalOrder";
+import { generateOrder } from "../lib/lexicalOrder";
 import { JwtEnv } from "../middleware/authMiddleware";
 
 import { activityLogRoute } from "./activityLog";
@@ -85,7 +85,7 @@ const createHandler = factory.createHandlers(
       },
     });
 
-    const orderIndex = generatePrevOrder(lastOrderActivity?.orderIndex ?? "");
+    const orderIndex = generateOrder(lastOrderActivity?.orderIndex ?? "", null);
 
     const activity = await prisma.activity.create({
       select: SELECT_ACTIVITY_FIELDS,
