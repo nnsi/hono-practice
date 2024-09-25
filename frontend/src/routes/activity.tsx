@@ -17,7 +17,7 @@ const ActivityPage: React.FC = () => {
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date | undefined>(new Date());
-  const [mode, setMode] = useState<"daily" | "monthly">("daily");
+  const [mode, setMode] = useState<"daily" | "statistics">("daily");
   const navigate = useNavigate();
 
   const activitiesQuery = useQuery({
@@ -110,7 +110,7 @@ const ActivityPage: React.FC = () => {
     },
   });
 
-  const changeMode = (mode: "daily" | "monthly") => {
+  const changeMode = (mode: "daily" | "statistics") => {
     setMode(mode);
   };
 
@@ -121,7 +121,7 @@ const ActivityPage: React.FC = () => {
 
   const handleMonthChange = (newMonth?: Date) => {
     setMonth(newMonth);
-    changeMode("monthly");
+    changeMode("statistics");
   };
 
   return (

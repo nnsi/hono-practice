@@ -18,13 +18,28 @@ import {
 import { ActivityDaily } from "./ActivityDaily";
 
 type ActivityTabsProps = {
-  mode: "daily" | "monthly";
+  mode: "daily" | "statistics";
   date?: Date;
   month?: Date;
-  changeMode: (mode: "daily" | "monthly") => void;
+  changeMode: (mode: "daily" | "statistics") => void;
   activities?: GetActivitiesResponse;
   dailyActivityLogs?: GetActivityLogsResponse;
   monthlyActivityLogs?: GetActivityLogsResponse;
+};
+
+type Stats = {
+  id: string;
+  name: string;
+  total: number;
+  kinds: {
+    id: string | null;
+    name: string;
+    total: number;
+    logs: {
+      date: string | Date;
+      quantity: number;
+    }[];
+  }[];
 };
 
 export const ActivityTabs: React.FC<ActivityTabsProps> = ({
@@ -36,21 +51,49 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   dailyActivityLogs,
   monthlyActivityLogs,
 }) => {
-  const transformedMonthlyActivityLogs = monthlyActivityLogs
-    ?.reduce(
-      (acc, log) => {
-        const logDate = dayjs(log.date).format("YYYY-MM-DD");
-        const existingDate = acc.find((item) => item.date === logDate);
-        if (existingDate) {
-          existingDate.activities.push(log);
-        } else {
-          acc.push({ date: logDate, activities: [log] });
-        }
-        return acc;
-      },
-      [] as { date: string; activities: GetActivityLogsResponse }[]
-    )
-    .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
+  const stats =
+    monthlyActivityLogs?.reduce((acc, log) => {
+      const activity = log.activity;
+      const kind = log.activityKind;
+
+      const targetIndex = acc.findIndex((s) => s.id === activity.id);
+      if (targetIndex === -1) {
+        acc.push({
+          id: activity.id,
+          name: activity.name,
+          total: log.quantity ?? 0,
+          kinds: [],
+        });
+      } else {
+        acc[targetIndex].total += log.quantity ?? 0;
+      }
+
+      const target = acc[targetIndex !== -1 ? targetIndex : acc.length - 1];
+      const kid = kind ? kind.id : null;
+      const kindIndex = target.kinds.findIndex((k) => k.id === kid);
+      if (kindIndex === -1) {
+        target.kinds.push({
+          id: kid,
+          name: kind ? kind.name : "未指定",
+          total: log.quantity ?? 0,
+          logs: [
+            {
+              date: log.date,
+              quantity: log.quantity ?? 0,
+            },
+          ],
+        });
+      } else {
+        target.kinds[kindIndex].total += log.quantity ?? 0;
+        target.kinds[kindIndex].logs.push({
+          date: log.date,
+          quantity: log.quantity ?? 0,
+        });
+      }
+
+      return acc;
+    }, [] as Stats[]) ?? [];
+  console.log(stats);
 
   return (
     <Tabs defaultValue={mode} value={mode}>
@@ -58,8 +101,11 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
         <TabsTrigger value="daily" onClick={() => changeMode("daily")}>
           Daily
         </TabsTrigger>
-        <TabsTrigger value="monthly" onClick={() => changeMode("monthly")}>
-          Monthly
+        <TabsTrigger
+          value="statistics"
+          onClick={() => changeMode("statistics")}
+        >
+          Statistics
         </TabsTrigger>
       </TabsList>
       <TabsContent value="daily">
@@ -69,25 +115,38 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
           date={date}
         />
       </TabsContent>
-      <TabsContent value="monthly">
+      <TabsContent value="statistics">
         <Card>
           <CardHeader>
             <CardTitle>{dayjs(month).format("YYYY-MM")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {transformedMonthlyActivityLogs?.map((log) => (
-              <div key={log.date} className="space-y-1">
-                <p>{log.date} : </p>
-                <ul>
-                  {log.activities.map((activityLog) => (
-                    <li key={activityLog.id}>
-                      {activityLog.activity.name}{" "}
-                      {activityLog.quantity &&
-                        `${activityLog.quantity} ${activityLog.activity.quantityLabel}`}
-                    </li>
+            {stats.map((s) => (
+              <Card key={s.id}>
+                <CardHeader>
+                  <CardTitle>{s.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Total: {s.total}</p>
+                  {s.kinds.map((k) => (
+                    <Card key={k.id}>
+                      <CardHeader>
+                        <CardTitle>{k.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p>Total: {k.total}</p>
+                        <ul>
+                          {k.logs.map((l) => (
+                            <li key={l.date.toString()}>
+                              {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
                   ))}
-                </ul>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </CardContent>
           <CardFooter></CardFooter>
