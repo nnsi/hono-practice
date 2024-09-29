@@ -136,8 +136,8 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
                       <CardContent>
                         <p>Total: {k.total}</p>
                         <ul>
-                          {k.logs.map((l) => (
-                            <li key={l.date.toString()}>
+                          {k.logs.map((l, i) => (
+                            <li key={i}>
                               {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}
                             </li>
                           ))}

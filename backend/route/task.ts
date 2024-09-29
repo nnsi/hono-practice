@@ -2,9 +2,9 @@ import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/backend/lib/prisma";
+import { TaskSelectSchema } from "@/types/prisma";
 import {
   CreateTaskRequest,
   createTaskRequestSchema,
@@ -26,13 +26,9 @@ import { JwtEnv } from "../middleware/authMiddleware";
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
-const getSelect: Prisma.TaskSelect = zodSchemaToSelector(
-  GetTasksResponseSchema
-);
+const getSelect = zodSchemaToSelector(GetTasksResponseSchema);
 
-const findSelect: Prisma.TaskSelect = zodSchemaToSelector(
-  GetTaskResponseSchema
-);
+const findSelect = zodSchemaToSelector(GetTaskResponseSchema, TaskSelectSchema);
 
 const getHandler = factory.createHandlers(async (c) => {
   const tasks: GetTasksResponse = await prisma.task.findMany({
