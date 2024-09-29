@@ -4,6 +4,7 @@ import { createFactory } from "hono/factory";
 import { zValidator } from "@hono/zod-validator";
 
 import { prisma } from "@/backend/lib/prisma";
+import { ActivitySelectSchema } from "@/types/prisma";
 import {
   CreateActivityLogRequest,
   CreateActivityLogRequestSchema,
@@ -19,10 +20,17 @@ import {
   GetActivityLogsResponseSchema,
 } from "@/types/response";
 
+import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
 import { JwtEnv } from "../middleware/authMiddleware";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
+
+const select = zodSchemaToSelector(
+  GetActivityLogResponseSchema,
+  ActivitySelectSchema
+);
+console.log(select);
 
 async function checkActivityLogOwner({
   activityId: id,
@@ -57,27 +65,7 @@ const getHandler = factory.createHandlers(async (c) => {
 
   const activitiyLogs: GetActivityLogsResponse =
     await prisma.activityLog.findMany({
-      select: {
-        id: true,
-        quantity: true,
-        memo: true,
-        date: true,
-        createdAt: true,
-        updatedAt: true,
-        activity: {
-          select: {
-            id: true,
-            name: true,
-            quantityLabel: true,
-          },
-        },
-        activityKind: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      select: select,
       where: {
         activityId,
       },
@@ -108,27 +96,7 @@ const createHandler = factory.createHandlers(
 
     const activityLog: GetActivityLogResponse = await prisma.activityLog.create(
       {
-        select: {
-          id: true,
-          quantity: true,
-          memo: true,
-          date: true,
-          createdAt: true,
-          updatedAt: true,
-          activity: {
-            select: {
-              id: true,
-              name: true,
-              quantityLabel: true,
-            },
-          },
-          activityKind: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
+        select: select,
         data: {
           ...request,
           date: new Date(request.date),
@@ -165,6 +133,7 @@ const updateHandler = factory.createHandlers(
     }
 
     const activityLog = await prisma.activityLog.update({
+      select,
       where: {
         id: logId,
         activityId: activityId,

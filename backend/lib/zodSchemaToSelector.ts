@@ -18,6 +18,28 @@ type UnwrapZodType<T extends z.ZodTypeAny> =
                 ? UnwrapZodType<U[number]>
                 : T;
 
+// unwrapZodType関数の定義
+function unwrapZodType(schema: z.ZodTypeAny): z.ZodTypeAny {
+  if (
+    schema instanceof z.ZodOptional ||
+    schema instanceof z.ZodNullable ||
+    schema instanceof z.ZodDefault
+  ) {
+    return unwrapZodType(schema._def.innerType);
+  } else if (schema instanceof z.ZodEffects) {
+    return unwrapZodType(schema._def.schema);
+  } else if (schema instanceof z.ZodLazy) {
+    return unwrapZodType(schema._def.getter());
+  } else if (schema instanceof z.ZodBranded) {
+    return unwrapZodType(schema._def.type);
+  } else if (schema instanceof z.ZodUnion) {
+    // ユニオン型の最初のオプションをアンラップ
+    return unwrapZodType(schema._def.options[0]);
+  } else {
+    return schema;
+  }
+}
+
 // ZodSchemaToSelectorユーティリティ型の定義
 type ZodSchemaToSelector<
   ResponseSchema extends z.ZodTypeAny,
@@ -33,33 +55,33 @@ type ZodSchemaToSelector<
                 keyof SelectShape]: ZodSchemaToSelector<
                 ResponseShape[K],
                 SelectShape[K]
-              >;
+              > extends infer R
+                ? R extends true
+                  ? true
+                  : { select: R }
+                : never;
             }
           : {
-              [K in keyof ResponseShape]: true;
+              [K in keyof ResponseShape]: ZodSchemaToSelector<
+                ResponseShape[K],
+                undefined
+              > extends infer R
+                ? R extends true
+                  ? true
+                  : { select: R }
+                : never;
             }
         : {
-            [K in keyof ResponseShape]: true;
+            [K in keyof ResponseShape]: ZodSchemaToSelector<
+              ResponseShape[K],
+              undefined
+            > extends infer R
+              ? R extends true
+                ? true
+                : { select: R }
+              : never;
           }
       : true;
-
-// ラッパー型をアンラップする関数
-function unwrapZodType<T extends z.ZodTypeAny>(schema: T): z.ZodTypeAny {
-  if (
-    schema instanceof z.ZodOptional ||
-    schema instanceof z.ZodNullable ||
-    schema instanceof z.ZodDefault ||
-    schema instanceof z.ZodLazy ||
-    schema instanceof z.ZodEffects
-  ) {
-    return unwrapZodType(schema._def.innerType);
-  } else if (schema instanceof z.ZodUnion) {
-    // ユニオン型の最初のオプションを使用（必要に応じて変更）
-    return unwrapZodType(schema._def.options[0]);
-  } else {
-    return schema;
-  }
-}
 
 // zodSchemaToSelector関数の定義
 export function zodSchemaToSelector<
@@ -77,7 +99,7 @@ export function zodSchemaToSelector<
   if (unwrappedResponseSchema instanceof z.ZodArray) {
     return zodSchemaToSelector(
       unwrappedResponseSchema.element,
-      selectSchema
+      unwrappedSelectSchema
     ) as any;
   } else if (unwrappedResponseSchema instanceof z.ZodObject) {
     const responseShape = unwrappedResponseSchema.shape;
@@ -88,20 +110,15 @@ export function zodSchemaToSelector<
 
     const selector: any = {};
     for (const key in responseShape) {
-      if (selectShape) {
-        if (key in selectShape) {
-          selector[key] = zodSchemaToSelector(
-            responseShape[key],
-            selectShape[key]
-          );
-        } else {
-          // SelectSchemaに存在しないキーを含めるかどうかを決定
-          // 今回は含めないようにしています
-          // 必要に応じて以下の行をコメント解除
-          // selector[key] = true;
-        }
-      } else {
+      const responseField = responseShape[key];
+      const selectField = selectShape ? selectShape[key] : undefined;
+
+      const result = zodSchemaToSelector(responseField, selectField);
+
+      if (result === true) {
         selector[key] = true;
+      } else {
+        selector[key] = { select: result };
       }
     }
     return selector;
