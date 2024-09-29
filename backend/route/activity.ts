@@ -184,64 +184,69 @@ const updateHandler = factory.createHandlers(
       .filter((kind) => !kinds.some((k) => k.id === kind.id))
       .map((kind) => kind.id);
 
-    // TODO : prisma.$transaction
-    await Promise.all([
-      ...updateOptions.map((option) =>
-        prisma.activityQuantityOption.update({
+    const response = await prisma.$transaction(async () => {
+      await Promise.all([
+        ...updateOptions.map((option) =>
+          prisma.activityQuantityOption.update({
+            where: {
+              id: option.id,
+            },
+            data: {
+              quantity: option.quantity,
+            },
+          })
+        ),
+        ...updateKinds.map((kind) =>
+          prisma.activityKind.update({
+            where: {
+              id: kind.id,
+            },
+            data: {
+              name: kind.name,
+            },
+          })
+        ),
+        insertOptions.length > 0 &&
+          prisma.activityQuantityOption.createMany({
+            data: insertOptions.map((option) => ({
+              quantity: option.quantity,
+              activityId: activityId,
+            })),
+          }),
+        insertKinds.length > 0 &&
+          prisma.activityKind.createMany({
+            data: insertKinds.map((kind) => ({
+              name: kind.name,
+              activityId: activityId,
+            })),
+          }),
+      ]);
+
+      const updatedActivity: GetActivityResponse = await prisma.activity.update(
+        {
+          select: SELECT_ACTIVITY_FIELDS,
           where: {
-            id: option.id,
+            id: activityId,
+            userId: userId,
           },
           data: {
-            quantity: option.quantity,
+            ...activity,
           },
-        })
-      ),
-      ...updateKinds.map((kind) =>
-        prisma.activityKind.update({
-          where: {
-            id: kind.id,
-          },
-          data: {
-            name: kind.name,
-          },
-        })
-      ),
-      insertOptions.length > 0 &&
-        prisma.activityQuantityOption.createMany({
-          data: insertOptions.map((option) => ({
-            quantity: option.quantity,
-            activityId: activityId,
-          })),
-        }),
-      insertKinds.length > 0 &&
-        prisma.activityKind.createMany({
-          data: insertKinds.map((kind) => ({
-            name: kind.name,
-            activityId: activityId,
-          })),
-        }),
-    ]);
+        }
+      );
 
-    const updatedActivity: GetActivityResponse = await prisma.activity.update({
-      select: SELECT_ACTIVITY_FIELDS,
-      where: {
-        id: activityId,
-        userId: userId,
-      },
-      data: {
-        ...activity,
-      },
-    });
-
-    await prisma.activityKind.deleteMany({
-      where: {
-        id: {
-          in: deleteKinds,
+      await prisma.activityKind.deleteMany({
+        where: {
+          id: {
+            in: deleteKinds,
+          },
         },
-      },
+      });
+
+      return updatedActivity;
     });
 
-    const parsedJson = GetActivityResponseSchema.safeParse(updatedActivity);
+    const parsedJson = GetActivityResponseSchema.safeParse(response);
     if (!parsedJson.success) {
       return c.json({ message: "エラーが発生しました" }, 500);
     }

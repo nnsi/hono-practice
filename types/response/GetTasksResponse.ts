@@ -1,14 +1,13 @@
 import { z } from "zod";
 
-import { TaskSchema } from "../prisma/index";
-
-export const GetTaskResponseSchema = TaskSchema.pick({
-  id: true,
-  title: true,
-  done: true,
-  memo: true,
-  createdAt: true,
-  updatedAt: true,
+export const GetTaskResponseSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string(),
+  done: z.boolean(),
+  memo: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date().nullable(),
 });
 
 export const GetTasksResponseSchema = z.array(

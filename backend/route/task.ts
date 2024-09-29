@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/backend/lib/prisma";
 import {
@@ -19,20 +20,23 @@ import {
   GetTasksResponseSchema,
 } from "@/types/response/GetTasksResponse";
 
+import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
 import { JwtEnv } from "../middleware/authMiddleware";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
+const getSelect: Prisma.TaskSelect = zodSchemaToSelector(
+  GetTasksResponseSchema
+);
+
+const findSelect: Prisma.TaskSelect = zodSchemaToSelector(
+  GetTaskResponseSchema
+);
+
 const getHandler = factory.createHandlers(async (c) => {
   const tasks: GetTasksResponse = await prisma.task.findMany({
-    select: {
-      id: true,
-      title: true,
-      done: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: getSelect,
     where: {
       userId: c.get("jwtPayload").id,
     },
@@ -53,14 +57,7 @@ const findHandler = factory.createHandlers(async (c) => {
   const { id } = c.req.param();
 
   const task: GetTaskResponse | null = await prisma.task.findFirst({
-    select: {
-      id: true,
-      title: true,
-      done: true,
-      memo: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: findSelect,
     where: {
       id,
       userId: c.get("jwtPayload").id,
@@ -108,6 +105,7 @@ const updateHandler = factory.createHandlers(
 
     try {
       const task = await prisma.task.update({
+        select: findSelect,
         where: {
           id,
           userId: c.get("jwtPayload").id,
