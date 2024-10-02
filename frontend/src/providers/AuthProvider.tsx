@@ -24,13 +24,11 @@ type AuthProviderProps = {
 export const AuthContext = createContext<AuthState>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const api = apiClient;
-
   const [user, setUser] = useState<UserState>(null);
 
   const getUser = async () => {
     try {
-      const res = await api.users.me.$get();
+      const res = await apiClient.users.me.$get();
       if (res.status === 200) {
         const json = await res.json();
         setUser(json);
@@ -45,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async ({ login_id, password }: LoginRequest) => {
     try {
-      const res = await api.auth.login.$post({
+      const res = await apiClient.auth.login.$post({
         json: {
           login_id,
           password,
@@ -65,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.auth.logout.$get();
+      await apiClient.auth.logout.$get();
       setUser(null);
     } catch (e) {
       return Promise.reject(e);

@@ -52,6 +52,8 @@ model Activity {
   id            String                   @id @default(uuid())
   userId        String                   @map("user_id")
   name          String
+  label         String                   @default("")
+  emoji         String                   @default("")
   description   String                   @default("")
   quantityLabel String                   @default("") @map("quantity_label")
   orderIndex    String                   @default("") @map("order_index")
@@ -101,6 +103,7 @@ model ActivityKind {
   id         String    @id @default(uuid())
   activityId String    @map("activity_id")
   name       String
+  orderIndex String    @default("") @map("order_index")
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)

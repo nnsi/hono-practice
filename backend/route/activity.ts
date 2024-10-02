@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/backend/lib/prisma";
 import {
@@ -29,12 +30,13 @@ import { activityLogRoute } from "./activityLog";
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
-const SELECT_ACTIVITY_FIELDS = {
+const SELECT_ACTIVITY_FIELDS:Prisma.ActivitySelect = {
   id: true,
   name: true,
   quantityLabel: true,
   description: true,
   options: true,
+  emoji: true,
   kinds: {
     select: {
       id: true,
@@ -42,6 +44,9 @@ const SELECT_ACTIVITY_FIELDS = {
     },
     where: {
       deletedAt: null,
+    },
+    orderBy: {
+      orderIndex: "asc",
     },
   },
 };

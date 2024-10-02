@@ -3,12 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   GetActivitiesResponse,
   GetActivityLogsResponse,
 } from "@/types/response";
-
-import { apiClient } from "@/frontend/src/utils/apiClient";
 
 import {
   Card,

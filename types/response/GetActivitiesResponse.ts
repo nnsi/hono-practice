@@ -3,6 +3,7 @@ import { z } from "zod";
 export const GetActivityResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string(),
   options: z.array(

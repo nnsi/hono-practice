@@ -16,13 +16,13 @@ export const UserScalarFieldEnumSchema = z.enum(['id','loginId','name','password
 
 export const TaskScalarFieldEnumSchema = z.enum(['id','userId','title','done','memo','createdAt','updatedAt','deletedAt']);
 
-export const ActivityScalarFieldEnumSchema = z.enum(['id','userId','name','description','quantityLabel','orderIndex','createdAt','updatedAt','deletedAt']);
+export const ActivityScalarFieldEnumSchema = z.enum(['id','userId','name','label','emoji','description','quantityLabel','orderIndex','createdAt','updatedAt','deletedAt']);
 
 export const ActivityQuantityOptionScalarFieldEnumSchema = z.enum(['id','activityId','quantity','createdAt','updatedAt','deletedAt']);
 
 export const ActivityLogScalarFieldEnumSchema = z.enum(['id','activityId','activityKindId','quantity','memo','date','createdAt','updatedAt','deletedAt']);
 
-export const ActivityKindScalarFieldEnumSchema = z.enum(['id','activityId','name','createdAt','updatedAt','deletedAt']);
+export const ActivityKindScalarFieldEnumSchema = z.enum(['id','activityId','name','orderIndex','createdAt','updatedAt','deletedAt']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -74,6 +74,8 @@ export const ActivitySchema = z.object({
   id: z.string(),
   userId: z.string(),
   name: z.string(),
+  label: z.string(),
+  emoji: z.string(),
   description: z.string(),
   quantityLabel: z.string(),
   orderIndex: z.string(),
@@ -125,6 +127,7 @@ export const ActivityKindSchema = z.object({
   id: z.string(),
   activityId: z.string(),
   name: z.string(),
+  orderIndex: z.string(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date().nullable(),
   deletedAt: z.coerce.date().nullable(),
@@ -226,6 +229,8 @@ export const ActivitySelectSchema: z.ZodType<Prisma.ActivitySelect> = z.object({
   id: z.boolean().optional(),
   userId: z.boolean().optional(),
   name: z.boolean().optional(),
+  label: z.boolean().optional(),
+  emoji: z.boolean().optional(),
   description: z.boolean().optional(),
   quantityLabel: z.boolean().optional(),
   orderIndex: z.boolean().optional(),
@@ -314,6 +319,7 @@ export const ActivityKindSelectSchema: z.ZodType<Prisma.ActivityKindSelect> = z.
   id: z.boolean().optional(),
   activityId: z.boolean().optional(),
   name: z.boolean().optional(),
+  orderIndex: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
   deletedAt: z.boolean().optional(),
@@ -487,6 +493,8 @@ export const ActivityWhereInputSchema: z.ZodType<Prisma.ActivityWhereInput> = z.
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  label: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  emoji: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   quantityLabel: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
@@ -503,6 +511,8 @@ export const ActivityOrderByWithRelationInputSchema: z.ZodType<Prisma.ActivityOr
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  label: z.lazy(() => SortOrderSchema).optional(),
+  emoji: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   quantityLabel: z.lazy(() => SortOrderSchema).optional(),
   orderIndex: z.lazy(() => SortOrderSchema).optional(),
@@ -525,6 +535,8 @@ export const ActivityWhereUniqueInputSchema: z.ZodType<Prisma.ActivityWhereUniqu
   NOT: z.union([ z.lazy(() => ActivityWhereInputSchema),z.lazy(() => ActivityWhereInputSchema).array() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  label: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  emoji: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   quantityLabel: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
@@ -541,6 +553,8 @@ export const ActivityOrderByWithAggregationInputSchema: z.ZodType<Prisma.Activit
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  label: z.lazy(() => SortOrderSchema).optional(),
+  emoji: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   quantityLabel: z.lazy(() => SortOrderSchema).optional(),
   orderIndex: z.lazy(() => SortOrderSchema).optional(),
@@ -559,6 +573,8 @@ export const ActivityScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Acti
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  label: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  emoji: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   quantityLabel: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   orderIndex: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
@@ -722,6 +738,7 @@ export const ActivityKindWhereInputSchema: z.ZodType<Prisma.ActivityKindWhereInp
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   activityId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
@@ -733,6 +750,7 @@ export const ActivityKindOrderByWithRelationInputSchema: z.ZodType<Prisma.Activi
   id: z.lazy(() => SortOrderSchema).optional(),
   activityId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  orderIndex: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   deletedAt: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
@@ -750,6 +768,7 @@ export const ActivityKindWhereUniqueInputSchema: z.ZodType<Prisma.ActivityKindWh
   NOT: z.union([ z.lazy(() => ActivityKindWhereInputSchema),z.lazy(() => ActivityKindWhereInputSchema).array() ]).optional(),
   activityId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
@@ -761,6 +780,7 @@ export const ActivityKindOrderByWithAggregationInputSchema: z.ZodType<Prisma.Act
   id: z.lazy(() => SortOrderSchema).optional(),
   activityId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  orderIndex: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   deletedAt: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
@@ -776,6 +796,7 @@ export const ActivityKindScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   activityId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  orderIndex: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeNullableWithAggregatesFilterSchema),z.coerce.date() ]).optional().nullable(),
   deletedAt: z.union([ z.lazy(() => DateTimeNullableWithAggregatesFilterSchema),z.coerce.date() ]).optional().nullable(),
@@ -938,6 +959,8 @@ export const TaskUncheckedUpdateManyInputSchema: z.ZodType<Prisma.TaskUncheckedU
 export const ActivityCreateInputSchema: z.ZodType<Prisma.ActivityCreateInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -954,6 +977,8 @@ export const ActivityUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityUnchec
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -968,6 +993,8 @@ export const ActivityUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityUnchec
 export const ActivityUpdateInputSchema: z.ZodType<Prisma.ActivityUpdateInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -984,6 +1011,8 @@ export const ActivityUncheckedUpdateInputSchema: z.ZodType<Prisma.ActivityUnchec
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -999,6 +1028,8 @@ export const ActivityCreateManyInputSchema: z.ZodType<Prisma.ActivityCreateManyI
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -1010,6 +1041,8 @@ export const ActivityCreateManyInputSchema: z.ZodType<Prisma.ActivityCreateManyI
 export const ActivityUpdateManyMutationInputSchema: z.ZodType<Prisma.ActivityUpdateManyMutationInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -1022,6 +1055,8 @@ export const ActivityUncheckedUpdateManyInputSchema: z.ZodType<Prisma.ActivityUn
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -1177,6 +1212,7 @@ export const ActivityLogUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Activit
 export const ActivityKindCreateInputSchema: z.ZodType<Prisma.ActivityKindCreateInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
@@ -1188,6 +1224,7 @@ export const ActivityKindUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityKi
   id: z.string().optional(),
   activityId: z.string(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
@@ -1197,6 +1234,7 @@ export const ActivityKindUncheckedCreateInputSchema: z.ZodType<Prisma.ActivityKi
 export const ActivityKindUpdateInputSchema: z.ZodType<Prisma.ActivityKindUpdateInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1208,6 +1246,7 @@ export const ActivityKindUncheckedUpdateInputSchema: z.ZodType<Prisma.ActivityKi
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   activityId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1218,6 +1257,7 @@ export const ActivityKindCreateManyInputSchema: z.ZodType<Prisma.ActivityKindCre
   id: z.string().optional(),
   activityId: z.string(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable()
@@ -1226,6 +1266,7 @@ export const ActivityKindCreateManyInputSchema: z.ZodType<Prisma.ActivityKindCre
 export const ActivityKindUpdateManyMutationInputSchema: z.ZodType<Prisma.ActivityKindUpdateManyMutationInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1235,6 +1276,7 @@ export const ActivityKindUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Activi
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   activityId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1496,6 +1538,8 @@ export const ActivityCountOrderByAggregateInputSchema: z.ZodType<Prisma.Activity
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  label: z.lazy(() => SortOrderSchema).optional(),
+  emoji: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   quantityLabel: z.lazy(() => SortOrderSchema).optional(),
   orderIndex: z.lazy(() => SortOrderSchema).optional(),
@@ -1508,6 +1552,8 @@ export const ActivityMaxOrderByAggregateInputSchema: z.ZodType<Prisma.ActivityMa
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  label: z.lazy(() => SortOrderSchema).optional(),
+  emoji: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   quantityLabel: z.lazy(() => SortOrderSchema).optional(),
   orderIndex: z.lazy(() => SortOrderSchema).optional(),
@@ -1520,6 +1566,8 @@ export const ActivityMinOrderByAggregateInputSchema: z.ZodType<Prisma.ActivityMi
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  label: z.lazy(() => SortOrderSchema).optional(),
+  emoji: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   quantityLabel: z.lazy(() => SortOrderSchema).optional(),
   orderIndex: z.lazy(() => SortOrderSchema).optional(),
@@ -1675,6 +1723,7 @@ export const ActivityKindCountOrderByAggregateInputSchema: z.ZodType<Prisma.Acti
   id: z.lazy(() => SortOrderSchema).optional(),
   activityId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  orderIndex: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   deletedAt: z.lazy(() => SortOrderSchema).optional()
@@ -1684,6 +1733,7 @@ export const ActivityKindMaxOrderByAggregateInputSchema: z.ZodType<Prisma.Activi
   id: z.lazy(() => SortOrderSchema).optional(),
   activityId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  orderIndex: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   deletedAt: z.lazy(() => SortOrderSchema).optional()
@@ -1693,6 +1743,7 @@ export const ActivityKindMinOrderByAggregateInputSchema: z.ZodType<Prisma.Activi
   id: z.lazy(() => SortOrderSchema).optional(),
   activityId: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  orderIndex: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   deletedAt: z.lazy(() => SortOrderSchema).optional()
@@ -2306,6 +2357,8 @@ export const TaskCreateManyUserInputEnvelopeSchema: z.ZodType<Prisma.TaskCreateM
 export const ActivityCreateWithoutUserInputSchema: z.ZodType<Prisma.ActivityCreateWithoutUserInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2320,6 +2373,8 @@ export const ActivityCreateWithoutUserInputSchema: z.ZodType<Prisma.ActivityCrea
 export const ActivityUncheckedCreateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedCreateWithoutUserInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2394,6 +2449,8 @@ export const ActivityScalarWhereInputSchema: z.ZodType<Prisma.ActivityScalarWher
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  label: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  emoji: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   quantityLabel: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
@@ -2523,6 +2580,7 @@ export const ActivityQuantityOptionCreateManyActivityInputEnvelopeSchema: z.ZodT
 export const ActivityKindCreateWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindCreateWithoutActivityInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
@@ -2532,6 +2590,7 @@ export const ActivityKindCreateWithoutActivityInputSchema: z.ZodType<Prisma.Acti
 export const ActivityKindUncheckedCreateWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUncheckedCreateWithoutActivityInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
@@ -2657,6 +2716,7 @@ export const ActivityKindScalarWhereInputSchema: z.ZodType<Prisma.ActivityKindSc
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   activityId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  orderIndex: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
   deletedAt: z.union([ z.lazy(() => DateTimeNullableFilterSchema),z.coerce.date() ]).optional().nullable(),
@@ -2698,6 +2758,8 @@ export const UserUncheckedUpdateWithoutActivitiesInputSchema: z.ZodType<Prisma.U
 export const ActivityCreateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutOptionsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2713,6 +2775,8 @@ export const ActivityUncheckedCreateWithoutOptionsInputSchema: z.ZodType<Prisma.
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2742,6 +2806,8 @@ export const ActivityUpdateToOneWithWhereWithoutOptionsInputSchema: z.ZodType<Pr
 export const ActivityUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutOptionsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -2757,6 +2823,8 @@ export const ActivityUncheckedUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -2770,6 +2838,8 @@ export const ActivityUncheckedUpdateWithoutOptionsInputSchema: z.ZodType<Prisma.
 export const ActivityCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutLogsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2785,6 +2855,8 @@ export const ActivityUncheckedCreateWithoutLogsInputSchema: z.ZodType<Prisma.Act
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2803,6 +2875,7 @@ export const ActivityCreateOrConnectWithoutLogsInputSchema: z.ZodType<Prisma.Act
 export const ActivityKindCreateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityKindCreateWithoutLogsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable(),
@@ -2813,6 +2886,7 @@ export const ActivityKindUncheckedCreateWithoutLogsInputSchema: z.ZodType<Prisma
   id: z.string().optional(),
   activityId: z.string(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable()
@@ -2837,6 +2911,8 @@ export const ActivityUpdateToOneWithWhereWithoutLogsInputSchema: z.ZodType<Prism
 export const ActivityUpdateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutLogsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -2852,6 +2928,8 @@ export const ActivityUncheckedUpdateWithoutLogsInputSchema: z.ZodType<Prisma.Act
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -2876,6 +2954,7 @@ export const ActivityKindUpdateToOneWithWhereWithoutLogsInputSchema: z.ZodType<P
 export const ActivityKindUpdateWithoutLogsInputSchema: z.ZodType<Prisma.ActivityKindUpdateWithoutLogsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -2886,6 +2965,7 @@ export const ActivityKindUncheckedUpdateWithoutLogsInputSchema: z.ZodType<Prisma
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   activityId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -2926,6 +3006,8 @@ export const ActivityLogCreateManyActivityKindInputEnvelopeSchema: z.ZodType<Pri
 export const ActivityCreateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityCreateWithoutKindsInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2941,6 +3023,8 @@ export const ActivityUncheckedCreateWithoutKindsInputSchema: z.ZodType<Prisma.Ac
   id: z.string().optional(),
   userId: z.string(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -2986,6 +3070,8 @@ export const ActivityUpdateToOneWithWhereWithoutKindsInputSchema: z.ZodType<Pris
 export const ActivityUpdateWithoutKindsInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutKindsInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3001,6 +3087,8 @@ export const ActivityUncheckedUpdateWithoutKindsInputSchema: z.ZodType<Prisma.Ac
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3024,6 +3112,8 @@ export const TaskCreateManyUserInputSchema: z.ZodType<Prisma.TaskCreateManyUserI
 export const ActivityCreateManyUserInputSchema: z.ZodType<Prisma.ActivityCreateManyUserInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  label: z.string().optional(),
+  emoji: z.string().optional(),
   description: z.string().optional(),
   quantityLabel: z.string().optional(),
   orderIndex: z.string().optional(),
@@ -3065,6 +3155,8 @@ export const TaskUncheckedUpdateManyWithoutUserInputSchema: z.ZodType<Prisma.Tas
 export const ActivityUpdateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUpdateWithoutUserInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3079,6 +3171,8 @@ export const ActivityUpdateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUpda
 export const ActivityUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateWithoutUserInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3093,6 +3187,8 @@ export const ActivityUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.Act
 export const ActivityUncheckedUpdateManyWithoutUserInputSchema: z.ZodType<Prisma.ActivityUncheckedUpdateManyWithoutUserInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  label: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  emoji: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   quantityLabel: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -3123,6 +3219,7 @@ export const ActivityQuantityOptionCreateManyActivityInputSchema: z.ZodType<Pris
 export const ActivityKindCreateManyActivityInputSchema: z.ZodType<Prisma.ActivityKindCreateManyActivityInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
+  orderIndex: z.string().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional().nullable(),
   deletedAt: z.coerce.date().optional().nullable()
@@ -3188,6 +3285,7 @@ export const ActivityQuantityOptionUncheckedUpdateManyWithoutActivityInputSchema
 export const ActivityKindUpdateWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUpdateWithoutActivityInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -3197,6 +3295,7 @@ export const ActivityKindUpdateWithoutActivityInputSchema: z.ZodType<Prisma.Acti
 export const ActivityKindUncheckedUpdateWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUncheckedUpdateWithoutActivityInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -3206,6 +3305,7 @@ export const ActivityKindUncheckedUpdateWithoutActivityInputSchema: z.ZodType<Pr
 export const ActivityKindUncheckedUpdateManyWithoutActivityInputSchema: z.ZodType<Prisma.ActivityKindUncheckedUpdateManyWithoutActivityInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  orderIndex: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   deletedAt: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),

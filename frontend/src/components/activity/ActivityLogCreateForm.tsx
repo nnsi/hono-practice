@@ -130,8 +130,10 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
             }
             setTimer(0);
           }}
+          className="flex flex-wrap h-16 px-1"
         >
-          {activity.name}
+          <span className="text-xl w-full">{activity.emoji}</span>
+          <span className="text-xs w-full">{activity.name}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 mt-[-0.5rem]">
