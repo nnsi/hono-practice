@@ -87,7 +87,6 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    console.log(id);
     const res = await api.users.activities[":id"].$delete({
       param: { id },
     });

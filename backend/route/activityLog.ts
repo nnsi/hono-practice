@@ -30,7 +30,6 @@ const select = zodSchemaToSelector(
   GetActivityLogResponseSchema,
   ActivitySelectSchema
 );
-console.log(select);
 
 async function checkActivityLogOwner({
   activityId: id,

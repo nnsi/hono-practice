@@ -27,7 +27,6 @@ const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
 const getSelect = zodSchemaToSelector(GetTasksResponseSchema);
-
 const findSelect = zodSchemaToSelector(GetTaskResponseSchema, TaskSelectSchema);
 
 const getHandler = factory.createHandlers(async (c) => {
