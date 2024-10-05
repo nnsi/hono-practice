@@ -5,6 +5,7 @@ export const UpdateActivityRequestSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
     quantityLabel: z.string(),
+    emoji: z.string().optional(),
   }),
   options: z.array(
     z.object({

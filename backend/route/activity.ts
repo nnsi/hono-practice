@@ -30,7 +30,7 @@ import { activityLogRoute } from "./activityLog";
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
-const SELECT_ACTIVITY_FIELDS:Prisma.ActivitySelect = {
+const SELECT_ACTIVITY_FIELDS: Prisma.ActivitySelect = {
   id: true,
   name: true,
   quantityLabel: true,
@@ -247,7 +247,6 @@ const updateHandler = factory.createHandlers(
           },
         },
       });
-
       return updatedActivity;
     });
 

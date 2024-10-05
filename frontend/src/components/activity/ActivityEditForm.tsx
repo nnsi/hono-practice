@@ -35,6 +35,7 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
         name: activity.name,
         description: activity.description,
         quantityLabel: activity.quantityLabel,
+        emoji: activity.emoji,
       },
       options: activity.options.map((option) => ({
         id: option.id,
@@ -46,16 +47,6 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
       })),
     },
   });
-  /*
-  const {
-    fields: optionFields,
-    append: optiponAppend,
-    remove: optionRemove,
-  } = useFieldArray({
-    control: form.control,
-    name: "options",
-  });
-*/
   const {
     fields: kindFields,
     append: kindAppend,
@@ -113,11 +104,21 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-wrap gap-3 p-2"
         >
-          <FormField
-            control={form.control}
-            name="activity.name"
-            render={({ field }) => <Input {...field} />}
-          />
+          <div className="flex w-full gap-3">
+            <FormField
+              control={form.control}
+              name="activity.name"
+              render={({ field }) => <Input {...field} className="flex-grow" />}
+            />
+
+            <FormField
+              control={form.control}
+              name="activity.emoji"
+              render={({ field }) => (
+                <Input {...field} className="text-center" />
+              )}
+            />
+          </div>
 
           {kindFields.map((field, index) => (
             <div key={field.id} className="flex w-full gap-3">
