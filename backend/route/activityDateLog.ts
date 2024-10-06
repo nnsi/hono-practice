@@ -10,6 +10,7 @@ import {
   GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
 } from "@/types/response";
+import { GetActivityStatsResponse } from "@/types/response/GetActivityStatsResponse";
 
 import { JwtEnv } from "../middleware/authMiddleware";
 
@@ -111,21 +112,6 @@ const findHandler = factory.createHandlers(async (c) => {
   return c.json(activityLog, 200);
 });
 
-type Stats = {
-  id: string;
-  name: string;
-  total: number;
-  kinds: {
-    id: string | null;
-    name: string;
-    total: number;
-    logs: {
-      date: string | Date;
-      quantity: number;
-    }[];
-  }[];
-};
-
 const statsHandler = factory.createHandlers(async (c) => {
   const { month } = c.req.param();
 
@@ -137,7 +123,7 @@ const statsHandler = factory.createHandlers(async (c) => {
     )
   );
 
-  const stats: Stats[] = result.reduce((acc, row) => {
+  const stats: GetActivityStatsResponse[] = result.reduce((acc, row) => {
     const activity = acc.find((a) => a.id === row.activity_id);
     if (!activity) {
       acc.push({
@@ -164,7 +150,7 @@ const statsHandler = factory.createHandlers(async (c) => {
     });
 
     return acc;
-  }, [] as Stats[]);
+  }, [] as GetActivityStatsResponse[]);
 
   return c.json(stats, 200);
 });
