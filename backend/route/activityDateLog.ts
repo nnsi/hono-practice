@@ -1,8 +1,10 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 
+import { activityStats } from "@prisma/client/sql";
+
 import dayjs from "@/backend/lib/dayjs";
-import { prisma } from "@/backend/lib/prisma";
+import { defaultPrisma, prisma } from "@/backend/lib/prisma";
 import {
   GetActivityLogResponse,
   GetActivityLogsResponse,
@@ -109,8 +111,67 @@ const findHandler = factory.createHandlers(async (c) => {
   return c.json(activityLog, 200);
 });
 
+type Stats = {
+  id: string;
+  name: string;
+  total: number;
+  kinds: {
+    id: string | null;
+    name: string;
+    total: number;
+    logs: {
+      date: string | Date;
+      quantity: number;
+    }[];
+  }[];
+};
+
+const statsHandler = factory.createHandlers(async (c) => {
+  const { month } = c.req.param();
+
+  const result = await defaultPrisma.$queryRawTyped(
+    activityStats(
+      c.get("jwtPayload").id,
+      dayjs(month).startOf("month").toDate(),
+      dayjs(month).endOf("month").toDate()
+    )
+  );
+
+  const stats: Stats[] = result.reduce((acc, row) => {
+    const activity = acc.find((a) => a.id === row.activity_id);
+    if (!activity) {
+      acc.push({
+        id: row.activity_id,
+        name: row.activity_name,
+        total: row.total_quantity ?? 0,
+        kinds: [
+          {
+            id: row.activity_kind_id,
+            name: row.kind_name ?? "",
+            total: row.total_quantity ?? 0,
+            logs: [row.logs as any], // FIXME: any
+          },
+        ],
+      });
+      return acc;
+    }
+    activity.total += row.total_quantity ?? activity.total;
+    activity.kinds.push({
+      id: row.activity_kind_id,
+      name: row.kind_name ?? "",
+      total: row.total_quantity ?? 0,
+      logs: [row.logs as any], // FIXME: any
+    });
+
+    return acc;
+  }, [] as Stats[]);
+
+  return c.json(stats, 200);
+});
+
 export const activityDateLogRoute = app
   .get("/", ...getHandler)
   .get("/single/:id", ...findHandler)
   .get("/daily/:date", ...getHandler)
-  .get("/monthly/:month", ...getHandler);
+  .get("/monthly/:month", ...getHandler)
+  .get("/stats/:month", ...statsHandler);
