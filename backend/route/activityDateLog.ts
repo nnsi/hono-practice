@@ -56,9 +56,16 @@ const getHandler = factory.createHandlers(async (c) => {
       where: {
         date: dateQuery,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: [
+        {
+          activity: {
+            orderIndex: "asc",
+          },
+        },
+        {
+          date: "asc",
+        },
+      ],
     });
 
   const parsedActivityLogs =

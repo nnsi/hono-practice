@@ -30,6 +30,7 @@ type ActivityTabsProps = {
 type Stats = {
   id: string;
   name: string;
+  quantityLabel: string;
   total: number;
   kinds: {
     id: string | null;
@@ -61,6 +62,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
         acc.push({
           id: activity.id,
           name: activity.name,
+          quantityLabel: activity.quantityLabel,
           total: log.quantity ?? 0,
           kinds: [],
         });
@@ -120,25 +122,29 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
           <CardHeader>
             <CardTitle>{dayjs(month).format("YYYY-MM")}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="grid gap-5">
             {stats.map((s) => (
               <Card key={s.id}>
-                <CardHeader>
-                  <CardTitle>{s.name}</CardTitle>
+                <CardHeader className="spacing-y-0 p-3">
+                  <CardTitle className="text-xl">
+                    {s.name} [{s.total} {s.quantityLabel}]
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p>Total: {s.total}</p>
+                <CardContent className="grid gap-3">
                   {s.kinds.map((k) => (
                     <Card key={k.id}>
                       <CardHeader>
                         <CardTitle>{k.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p>Total: {k.total}</p>
+                        <p>
+                          Total: {k.total} {s.quantityLabel}
+                        </p>
                         <ul>
                           {k.logs.map((l, i) => (
                             <li key={i}>
-                              {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}
+                              {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}{" "}
+                              {s.quantityLabel}
                             </li>
                           ))}
                         </ul>

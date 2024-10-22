@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import { GetTasksResponseSchema } from "@/types/response/GetTasksResponse";
@@ -49,25 +48,12 @@ const TaskPage: React.FC = () => {
           {isFilteringCompletedTask ? "ON" : "OFF"}
         </Button>
       </div>
-      <TransitionGroup className="flex gap-5 flex-wrap">
+      <div className="flex gap-5 flex-wrap">
         <TaskForm className="w-80" />
         {taskList.map((task) => (
-          <CSSTransition
-            key={task.id}
-            timeout={200}
-            classNames={{
-              enter: "w-0 opacity-0",
-              enterActive: "w-80 opacity-100",
-              exit: "w-80 opacity-100",
-              exitActive: "w-[1px] opacity-0",
-            }}
-          >
-            <div className="transition-all duration-200 ease-in-out overflow-hidden">
-              <TaskCard key={task.id} task={task} className="w-80" />
-            </div>
-          </CSSTransition>
+          <TaskCard key={task.id} task={task} className="w-80" />
         ))}
-      </TransitionGroup>
+      </div>
       <Outlet />
     </>
   );

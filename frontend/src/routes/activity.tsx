@@ -126,6 +126,7 @@ const ActivityPage: React.FC = () => {
 
   return (
     <>
+      <title>App / Activity</title>
       <div className="grid grid-cols-5 gap-5 max-w-3xl mx-auto">
         <div className="max-w-sm col-span-2">
           <div className="flex flex-shrink justify-center">
