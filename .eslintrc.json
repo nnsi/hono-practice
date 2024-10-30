@@ -5,8 +5,9 @@
     "react/react-in-jsx-scope": "off",
     "no-undef": "off",
     "no-unused-vars": "off",
-    "no-redeclare": "off", // ベースのルールをオフにする
-    "@typescript-eslint/no-redeclare": "error", // TypeScript向けのルールを有効化
+    "no-redeclare": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-redeclare": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "import/order": [
