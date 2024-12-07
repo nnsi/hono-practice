@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "@hello-pangea/dnd";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DragHandleVerticalIcon } from "@radix-ui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
@@ -80,6 +73,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
     }),
   });
 
+  // @ts-expect-error いずれ再びD&D出来るようにする
   const { mutate: mutateOrder } = useMutation({
     ...mp({
       queryKey: ["activity"],
@@ -110,32 +104,6 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
 
   const onSubmit = async (data: CreateActivityRequest) => {
     mutate(data);
-  };
-
-  const onDragEnd = (result: DropResult) => {
-    if (
-      !activities ||
-      !result.destination ||
-      result.source.index === result.destination?.index
-    )
-      return;
-
-    const newActivities = Array.from(activities);
-    const [reorderedActivity] = newActivities.splice(result.source.index, 1);
-    newActivities.splice(result.destination.index, 0, reorderedActivity);
-
-    const prev = newActivities[result.destination.index - 1]?.id;
-    const next = newActivities[result.destination.index + 1]?.id;
-
-    setLocalActivities(newActivities);
-
-    const newOrder: UpdateActivityOrderRequest = {
-      prev,
-      next,
-      current: result.draggableId,
-    };
-
-    mutateOrder(newOrder);
   };
 
   return (
@@ -190,55 +158,30 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
         </form>
       </Form>
       {localActivities && (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="dnd-accordion">
-            {(provided) => (
-              <Accordion
-                type="single"
-                collapsible
-                value={accordionValue}
-                onValueChange={setAccordionValue}
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {localActivities.map((activity, index) => (
-                  <Draggable
-                    key={activity.id}
-                    draggableId={activity.id}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps}>
-                        <AccordionItem value={activity.id}>
-                          <div className="flex items-center gap-3">
-                            <span
-                              {...provided.dragHandleProps}
-                              className="cursor-grab"
-                            >
-                              <DragHandleVerticalIcon />
-                            </span>
-                            <div className="flex-1 w-full">
-                              <AccordionTrigger id={activity.id}>
-                                {activity.name}
-                              </AccordionTrigger>
-                            </div>
-                          </div>
-                          <AccordionContent className="relative group">
-                            <ActivityEditForm
-                              activity={activity}
-                              handleClose={() => setAccordionValue("")}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </Accordion>
-            )}
-          </Droppable>
-        </DragDropContext>
+        <Accordion
+          type="single"
+          collapsible
+          value={accordionValue}
+          onValueChange={setAccordionValue}
+        >
+          {localActivities.map((activity) => (
+            <AccordionItem value={activity.id}>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 w-full">
+                  <AccordionTrigger id={activity.id}>
+                    {activity.name}
+                  </AccordionTrigger>
+                </div>
+              </div>
+              <AccordionContent className="relative group">
+                <ActivityEditForm
+                  activity={activity}
+                  handleClose={() => setAccordionValue("")}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       )}
     </>
   );
