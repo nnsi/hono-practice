@@ -143,4 +143,5 @@ declare const globalThis: {
 export const [defaultPrisma, prisma] =
   globalThis.prismaGlobal ?? createPrisma();
 
-globalThis.prismaGlobal = [defaultPrisma, prisma];
+if (process.env.NODE_ENV !== "production")
+  globalThis.prismaGlobal = [defaultPrisma, prisma];

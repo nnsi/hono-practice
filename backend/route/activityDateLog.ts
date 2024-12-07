@@ -27,7 +27,7 @@ const getHandler = factory.createHandlers(async (c) => {
         }
       : {
           gte: dayjs(month).startOf("month").toDate(),
-          lt: dayjs(month).endOf("month").toDate(),
+          lte: dayjs(month).endOf("month").toDate(),
         };
 
   const activityLogs: GetActivityLogsResponse =
