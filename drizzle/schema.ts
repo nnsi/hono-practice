@@ -26,10 +26,14 @@ export const tasks = pgTable("task", {
     .notNull()
     .references(() => users.id, { onUpdate: "cascade", onDelete: "restrict" }),
   title: text("title").notNull(),
-  done: boolean("done").default(false),
+  done: boolean("done").notNull().default(false),
   memo: text("memo").default(""),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -45,8 +49,12 @@ export const activities = pgTable("activity", {
   description: text("description").default(""),
   quantityLabel: text("quantity_label").default(""),
   orderIndex: text("order_index").default(""),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -60,8 +68,12 @@ export const activityQuantityOptions = pgTable("activity_quantity_options", {
       onDelete: "restrict",
     }),
   quantity: real("quantity").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -78,8 +90,12 @@ export const activityLogs = pgTable("activity_log", {
   quantity: real("quantity"),
   memo: text("memo").default(""),
   date: date("date").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -94,7 +110,11 @@ export const activityKinds = pgTable("activity_kind", {
     }),
   name: text("name").notNull(),
   orderIndex: text("order_index").default(""),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });

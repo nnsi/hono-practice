@@ -16,29 +16,20 @@ import {
 import {
   GetTaskResponse,
   GetTaskResponseSchema,
-  GetTasksResponse,
   GetTasksResponseSchema,
 } from "@/types/response/GetTasksResponse";
 
 import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
 import { JwtEnv } from "../middleware/authMiddleware";
+import { getTasks } from "../repository/drizzle/task";
 
 const factory = createFactory<JwtEnv>();
 const app = new Hono();
 
-const getSelect = zodSchemaToSelector(GetTasksResponseSchema);
 const findSelect = zodSchemaToSelector(GetTaskResponseSchema, TaskSelectSchema);
 
 const getHandler = factory.createHandlers(async (c) => {
-  const tasks: GetTasksResponse = await prisma.task.findMany({
-    select: getSelect,
-    where: {
-      userId: c.get("jwtPayload").id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const tasks = await getTasks(c.get("jwtPayload").id);
 
   const parsedTasks = GetTasksResponseSchema.safeParse(tasks);
   if (!parsedTasks.success) {
