@@ -21,6 +21,8 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@tanstack/react-query": "^5.53.1",
     "@tanstack/react-router": "^1.51.6",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -31,18 +33,14 @@
     "hono": "^4.6.5",
     "lucide-react": "^0.436.0",
     "prisma": "^5.20.0",
-    "react": "19.0.0-rc-b8ae38f8-20241018",
+    "react": "^19.0.0",
     "react-day-picker": "^8.10.1",
-    "react-dom": "19.0.0-rc-b8ae38f8-20241018",
+    "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.17.0",
     "zod": "^3.23.8"
-  },
-  "overrides": {
-    "@types/react": "npm:types-react@rc",
-    "@types/react-dom": "npm:types-react-dom@rc"
   },
   "devDependencies": {
     "@hono/node-server": "^1.12.1",
