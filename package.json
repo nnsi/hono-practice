@@ -29,6 +29,8 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
+    "drizzle-kit": "^0.29.1",
+    "drizzle-orm": "^0.37.0",
     "eslint": "^8.57.0",
     "hono": "^4.6.5",
     "lucide-react": "^0.436.0",
