@@ -11,7 +11,7 @@ type User = {
 
 export type UserRepository = {
   createUser: (params: CreateUserRequest) => Promise<User>;
-  getUserById: (userId: string) => Promise<User>;
+  getUserById: (userId: string) => Promise<User | undefined>;
 };
 
 export function newUserRepository(): UserRepository {
@@ -41,5 +41,5 @@ async function getUserById(userId: string) {
     .where(and(eq(users.id, userId)))
     .execute();
 
-  return result[0];
+  return result.length > 0 ? result[0] : undefined;
 }

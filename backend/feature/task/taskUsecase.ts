@@ -1,3 +1,4 @@
+import { AppError } from "@/backend/error";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
@@ -38,7 +39,10 @@ function getTasks(repo: TaskRepository) {
 
 function getTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
-    return await repo.getTask(userId, taskId);
+    const task = await repo.getTask(userId, taskId);
+    if (!task) throw new AppError("task not found", 404);
+
+    return task;
   };
 }
 
@@ -50,13 +54,19 @@ function createTask(repo: TaskRepository) {
 
 function updateTask(repo: TaskRepository) {
   return async (userId: string, taskId: string, params: UpdateTaskRequest) => {
-    return await repo.updateTask(userId, taskId, params);
+    const task = await repo.updateTask(userId, taskId, params);
+    if (!task) throw new AppError("task not found", 404);
+
+    return task;
   };
 }
 
 function deleteTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
-    return await repo.deleteTask(userId, taskId);
+    const deletedTask = await repo.deleteTask(userId, taskId);
+    if (!deletedTask) throw new AppError("task not found", 404);
+
+    return;
   };
 }
 

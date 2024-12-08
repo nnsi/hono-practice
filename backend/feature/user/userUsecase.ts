@@ -2,6 +2,7 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
+import { AppError } from "@/backend/error";
 import { CreateUserRequest } from "@/types/request";
 
 import { config } from "../../config";
@@ -38,6 +39,9 @@ function createUser(repo: UserRepository) {
 
 function getUserById(repo: UserRepository) {
   return async function (userId: string) {
-    return await repo.getUserById(userId);
+    const user = await repo.getUserById(userId);
+    if (!user) throw new AppError("user not found", 404);
+
+    return user;
   };
 }

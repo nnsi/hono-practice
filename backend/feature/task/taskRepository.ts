@@ -7,7 +7,10 @@ import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
 export type TaskRepository = {
   getTasks: (userId: string) => Promise<GetTasksResponse>;
-  getTask: (userId: string, taskId: string) => Promise<GetTaskResponse | null>;
+  getTask: (
+    userId: string,
+    taskId: string
+  ) => Promise<GetTaskResponse | undefined>;
   createTask: (
     userId: string,
     params: CreateTaskRequest
@@ -16,8 +19,11 @@ export type TaskRepository = {
     userId: string,
     taskId: string,
     params: UpdateTaskRequest
-  ) => Promise<GetTaskResponse>;
-  deleteTask: (userId: string, taskId: string) => Promise<void>;
+  ) => Promise<GetTaskResponse | undefined>;
+  deleteTask: (
+    userId: string,
+    taskId: string
+  ) => Promise<GetTaskResponse | undefined>;
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
 };
 
@@ -64,7 +70,7 @@ async function getTask(userId: string, taskId: string) {
     .from(tasks)
     .where(and(eq(tasks.userId, userId), eq(tasks.id, taskId)))
     .execute();
-  return result?.[0] ?? null;
+  return result.length > 0 ? result[0] : undefined;
 }
 
 async function createTask(userId: string, params: CreateTaskRequest) {
@@ -89,19 +95,23 @@ async function updateTask(
     .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
     .returning();
 
-  return result[0];
+  return result.length > 0 ? result[0] : undefined;
 }
 
 async function deleteTask(userId: string, taskId: string) {
-  await drizzle
-    .delete(tasks)
+  const result = await drizzle
+    .update(tasks)
+    .set({ deletedAt: new Date() })
     .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-    .execute();
+    .returning();
+
+  return result.length > 0 ? result[0] : undefined;
 }
 
 async function bulkDeleteDoneTask(userId: string) {
   await drizzle
-    .delete(tasks)
+    .update(tasks)
+    .set({ deletedAt: new Date() })
     .where(and(eq(tasks.userId, userId), eq(tasks.done, true)))
     .execute();
 }
