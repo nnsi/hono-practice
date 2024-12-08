@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   createUserRequestSchema,
   CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
 
-import { apiClient } from "@/frontend/src/utils/apiClient";
 import { useAuth } from "@hooks/useAuth";
 
 import {
@@ -31,14 +31,14 @@ export const CreateUserForm: React.FC = () => {
     resolver: zodResolver(createUserRequestSchema),
     defaultValues: {
       name: "",
-      login_id: "",
+      loginId: "",
       password: "",
     },
   });
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      await api.auth["create-user"].$post({ json: data });
+      await api.user.$post({ json: data });
       await getUser();
     } catch (e) {
       console.error(e);
@@ -70,7 +70,7 @@ export const CreateUserForm: React.FC = () => {
               />
               <FormField
                 control={form.control}
-                name="login_id"
+                name="loginId"
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>ログインID</FormLabel>

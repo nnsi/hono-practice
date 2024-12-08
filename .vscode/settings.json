@@ -13,7 +13,13 @@
     "/frontend/src/components/ui",
     "/frontend/src/utils",
     "/backend/route",
-    "/backend/error"
+    "/backend/error",
+    "/backend/usecase",
+    "/backend/repository",
+    "/backend/repository/drizzle",
+    "/types/response",
+    "/types/request",
+    "/backend/handler"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

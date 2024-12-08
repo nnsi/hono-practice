@@ -11,7 +11,7 @@ import {
   UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
-import { GetTasksResponse } from "@/types/response/GetTasksResponse";
+import { GetTaskResponse } from "@/types/response";
 
 import {
   Button,
@@ -29,7 +29,7 @@ import {
 import { mp } from "../../utils";
 
 type TaskCardProps = {
-  task: GetTasksResponse[0];
+  task: GetTaskResponse;
   className?: string;
 };
 

@@ -3,10 +3,25 @@ import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
+import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
-import { TaskRepository } from "./repositories";
+export type TaskRepository = {
+  getTasks: (userId: string) => Promise<GetTasksResponse>;
+  getTask: (userId: string, taskId: string) => Promise<GetTaskResponse | null>;
+  createTask: (
+    userId: string,
+    params: CreateTaskRequest
+  ) => Promise<GetTaskResponse>;
+  updateTask: (
+    userId: string,
+    taskId: string,
+    params: UpdateTaskRequest
+  ) => Promise<GetTaskResponse>;
+  deleteTask: (userId: string, taskId: string) => Promise<void>;
+  bulkDeleteDoneTask: (userId: string) => Promise<void>;
+};
 
-export function createTaskRepository(): TaskRepository {
+export function newTaskRepository(): TaskRepository {
   return {
     getTasks,
     getTask,

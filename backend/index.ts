@@ -7,7 +7,7 @@ import { config } from "./config";
 import { AppError } from "./error";
 import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { activityRoute, authRoute, taskHandler } from "./route";
+import { activityRoute, authRoute, taskRoute, userRoute } from "./route";
 import { activityDateLogRoute } from "./route/activityDateLog";
 
 const app = new Hono();
@@ -36,7 +36,8 @@ const routes = app
     return c.json({ message: "Hello" }, 200);
   })
   .route("/auth", authRoute)
-  .route("/users/tasks", taskHandler)
+  .route("/user", userRoute)
+  .route("/users/tasks", taskRoute)
   .route("/users/activities", activityRoute)
   .route("/users/activity-logs", activityDateLogRoute)
   .get("/users/me", async (c) => {

@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getUser = async () => {
     try {
-      const res = await apiClient.users.me.$get();
+      const res = await apiClient.user.me.$get();
       if (res.status === 200) {
         const json = await res.json();
         setUser(json);

@@ -7,11 +7,6 @@ import { zValidator } from "@hono/zod-validator";
 import bcrypt from "bcrypt";
 
 import { prisma } from "@/backend/lib/prisma";
-import { User } from "@/types/prisma";
-import {
-  createUserRequestSchema,
-  CreateUserRequest,
-} from "@/types/request/CreateUserRequest";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
 
 import { config } from "../config";
@@ -66,56 +61,6 @@ const loginHandler = factory.createHandlers(
   }
 );
 
-const createUserHandler = factory.createHandlers(
-  zValidator("json", createUserRequestSchema, (result, c) => {
-    if (!result.success) {
-      return c.json({ message: "invalid request" }, 400);
-    }
-  }),
-  async (c) => {
-    const { name, login_id, password }: CreateUserRequest = await c.req.json();
-    const cryptedPassword = bcrypt.hashSync(password, 10);
-
-    try {
-      const loginIdExists = await prisma.user.findFirst({
-        where: {
-          loginId: login_id,
-        },
-      });
-      if (loginIdExists) {
-        return c.json({ message: "別のログインIDを指定してください" }, 500);
-      }
-    } catch (e) {
-      console.log(e);
-      return c.json({ message: "ユーザー作成に失敗しました" }, 500);
-    }
-
-    let createUser: User;
-    try {
-      createUser = await prisma.user.create({
-        data: {
-          name,
-          loginId: login_id,
-          password: cryptedPassword,
-        },
-      });
-    } catch (e) {
-      console.log(e);
-      return c.json({ message: "ユーザー作成に失敗しました" }, 500);
-    }
-
-    const token = await sign(
-      { id: createUser.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
-      config.JWT_SECRET
-    );
-    setCookie(c, "auth", token, {
-      httpOnly: true,
-    });
-
-    return c.json({ message: "user created" });
-  }
-);
-
 const logoutHandler = factory.createHandlers(async (c) => {
   setCookie(c, "auth", "", {
     httpOnly: true,
@@ -125,5 +70,4 @@ const logoutHandler = factory.createHandlers(async (c) => {
 
 export const authRoute = app
   .post("/login", ...loginHandler)
-  .post("/create-user", ...createUserHandler)
   .get("/logout", ...logoutHandler);

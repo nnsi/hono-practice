@@ -6,7 +6,7 @@ import {
 } from "@/types/response";
 
 import { AppError } from "../error";
-import { TaskUsecase } from "../usecase/usecases";
+import { TaskUsecase } from "../usecase";
 
 export function newTaskHandler(uc: TaskUsecase) {
   return {

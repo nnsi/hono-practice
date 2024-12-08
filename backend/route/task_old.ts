@@ -147,7 +147,8 @@ const bulkDeleteDoneTaskHandler = factory.createHandlers(async (c) => {
   return c.json({ message: "success" }, 200);
 });
 
-export const taskRoute = app
+//const taskRoute = app
+app
   .get("/", ...getHandler)
   .post("/", ...createHandler)
   .get("/:id", ...findHandler)
