@@ -1,29 +1,20 @@
 import { eq, and, desc } from "drizzle-orm";
 
+import { Task } from "@/backend/domain/model/task";
 import { drizzle } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
-import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
 export type TaskRepository = {
-  getTasks: (userId: string) => Promise<GetTasksResponse>;
-  getTask: (
-    userId: string,
-    taskId: string
-  ) => Promise<GetTaskResponse | undefined>;
-  createTask: (
-    userId: string,
-    params: CreateTaskRequest
-  ) => Promise<GetTaskResponse>;
+  getTasks: (userId: string) => Promise<Task[]>;
+  getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
+  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
     params: UpdateTaskRequest
-  ) => Promise<GetTaskResponse | undefined>;
-  deleteTask: (
-    userId: string,
-    taskId: string
-  ) => Promise<GetTaskResponse | undefined>;
+  ) => Promise<Task | undefined>;
+  deleteTask: (userId: string, taskId: string) => Promise<Task | undefined>;
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
 };
 

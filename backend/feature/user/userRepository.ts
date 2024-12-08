@@ -1,13 +1,9 @@
 import { eq, and } from "drizzle-orm";
 
+import { User } from "@/backend/domain/model/user";
 import { drizzle } from "@/backend/lib/drizzle";
 import { users } from "@/drizzle/schema";
 import { CreateUserRequest } from "@/types/request";
-
-type User = {
-  id: string;
-  name: string | null;
-};
 
 export type UserRepository = {
   createUser: (params: CreateUserRequest) => Promise<User>;

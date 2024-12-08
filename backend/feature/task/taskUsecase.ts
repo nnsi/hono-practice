@@ -1,21 +1,18 @@
+import { Task } from "@/backend/domain/model/task";
 import { AppError } from "@/backend/error";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
-import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
 import { TaskRepository } from ".";
 
 export type TaskUsecase = {
-  getTasks: (userId: string) => Promise<GetTasksResponse>;
-  getTask: (userId: string, taskId: string) => Promise<GetTaskResponse | null>;
-  createTask: (
-    userId: string,
-    params: CreateTaskRequest
-  ) => Promise<GetTaskResponse>;
+  getTasks: (userId: string) => Promise<Task[]>;
+  getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
+  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
     params: UpdateTaskRequest
-  ) => Promise<GetTaskResponse>;
+  ) => Promise<Task>;
   deleteTask: (userId: string, taskId: string) => Promise<void>;
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
 };

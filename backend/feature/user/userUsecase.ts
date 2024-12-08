@@ -2,6 +2,7 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
+import { User } from "@/backend/domain/model/user";
 import { AppError } from "@/backend/error";
 import { CreateUserRequest } from "@/types/request";
 
@@ -11,7 +12,7 @@ import { UserRepository } from ".";
 
 export type UserUsecase = {
   createUser: (params: CreateUserRequest) => Promise<string>;
-  getUserById: (userId: string) => Promise<{ id: string; name: string | null }>;
+  getUserById: (userId: string) => Promise<User>;
 };
 
 export function newUserUsecase(repo: UserRepository): UserUsecase {
