@@ -4,8 +4,9 @@ import bcrypt from "bcrypt";
 
 import { CreateUserRequest } from "@/types/request";
 
-import { config } from "../config";
-import { UserRepository } from "../repository";
+import { config } from "../../config";
+
+import { UserRepository } from "./userRepository";
 
 export type UserUsecase = {
   createUser: (params: CreateUserRequest) => Promise<string>;

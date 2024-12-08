@@ -8,10 +8,11 @@ import {
   updateTaskRequestSchema,
 } from "@/types/request";
 
-import { AppContext } from "../context";
+import { AppContext } from "../../context";
 import { newTaskHandler } from "../handler/taskHandler";
-import { newTaskRepository } from "../repository/drizzle/taskRepository";
-import { newTaskUsecase } from "../usecase/taskUsecase";
+
+import { newTaskRepository } from "./taskRepository";
+import { newTaskUsecase } from "./taskUsecase";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();

@@ -9,17 +9,20 @@
     "editor.defaultFormatter": "Prisma.prisma"
   },
   "exportall.config.folderListener": [
-    "/frontend/src/components",
-    "/frontend/src/components/ui",
-    "/frontend/src/utils",
     "/backend/route",
     "/backend/error",
     "/backend/usecase",
     "/backend/repository",
     "/backend/repository/drizzle",
+    "/backend/handler",
+    "/backend/feature/task",
+    "/backend/feature/user",
     "/types/response",
     "/types/request",
-    "/backend/handler"
+    "/frontend/src/components",
+    "/frontend/src/components/ui",
+    "/frontend/src/utils",
+    "/backend/feature"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
