@@ -1,24 +1,24 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 import { drizzle } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
-import {
-  CreateTaskRequest,
-  createTaskRequestSchema,
-} from "@/types/request/CreateTaskRequest";
-import {
-  UpdateTaskRequest,
-  updateTaskRequestSchema,
-} from "@/types/request/UpdateTaskRequest";
-import {
-  GetTaskResponse,
-  GetTaskResponseSchema,
-  GetTasksResponse,
-  GetTasksResponseSchema,
-} from "@/types/response/GetTasksResponse";
+import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
-export const getTasks = async (userId: string) => {
-  const result: GetTasksResponse = await drizzle
+import { TaskRepository } from "./repositories";
+
+export function createTaskRepository(): TaskRepository {
+  return {
+    getTasks,
+    getTask,
+    createTask,
+    updateTask,
+    deleteTask,
+    bulkDeleteDoneTask,
+  };
+}
+
+async function getTasks(userId: string) {
+  const result = await drizzle
     .select({
       id: tasks.id,
       userId: tasks.userId,
@@ -33,9 +33,9 @@ export const getTasks = async (userId: string) => {
     .orderBy(desc(tasks.createdAt))
     .execute();
   return result;
-};
+}
 
-export const getTask = async (id: string): Promise<GetTaskResponse> => {
+async function getTask(userId: string, taskId: string) {
   const result = await drizzle
     .select({
       id: tasks.id,
@@ -47,7 +47,46 @@ export const getTask = async (id: string): Promise<GetTaskResponse> => {
       updatedAt: tasks.updatedAt,
     })
     .from(tasks)
-    .where(eq(tasks.id, id))
+    .where(and(eq(tasks.userId, userId), eq(tasks.id, taskId)))
     .execute();
+  return result?.[0] ?? null;
+}
+
+async function createTask(userId: string, params: CreateTaskRequest) {
+  const result = await drizzle
+    .insert(tasks)
+    .values({
+      userId,
+      title: params.title,
+    })
+    .returning();
   return result[0];
-};
+}
+
+async function updateTask(
+  userId: string,
+  taskId: string,
+  params: UpdateTaskRequest
+) {
+  const result = await drizzle
+    .update(tasks)
+    .set(params)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning();
+
+  return result[0];
+}
+
+async function deleteTask(userId: string, taskId: string) {
+  await drizzle
+    .delete(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .execute();
+}
+
+async function bulkDeleteDoneTask(userId: string) {
+  await drizzle
+    .delete(tasks)
+    .where(and(eq(tasks.userId, userId), eq(tasks.done, true)))
+    .execute();
+}

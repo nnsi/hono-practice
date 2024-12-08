@@ -4,12 +4,22 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 
 import { config } from "./config";
+import { AppError } from "./error";
 import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { activityRoute, authRoute, taskRoute } from "./route";
+import { activityRoute, authRoute, taskHandler } from "./route";
 import { activityDateLogRoute } from "./route/activityDateLog";
 
 const app = new Hono();
+app.onError((err, c) => {
+  if (err instanceof AppError) {
+    console.error(err.stack);
+    return c.json({ message: err.message }, err.status);
+  }
+
+  console.error(err.stack);
+  return c.json({ message: "internal server error" }, 500);
+});
 
 app.use(
   "*",
@@ -26,7 +36,7 @@ const routes = app
     return c.json({ message: "Hello" }, 200);
   })
   .route("/auth", authRoute)
-  .route("/users/tasks", taskRoute)
+  .route("/users/tasks", taskHandler)
   .route("/users/activities", activityRoute)
   .route("/users/activity-logs", activityDateLogRoute)
   .get("/users/me", async (c) => {

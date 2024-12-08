@@ -6,6 +6,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@electric-sql/pglite": "^0.2.14",
     "@hono/zod-validator": "^0.2.2",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.20.0",

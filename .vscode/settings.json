@@ -11,7 +11,9 @@
   "exportall.config.folderListener": [
     "/frontend/src/components",
     "/frontend/src/components/ui",
-    "/frontend/src/utils"
+    "/frontend/src/utils",
+    "/backend/route",
+    "/backend/error"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
