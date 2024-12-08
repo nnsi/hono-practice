@@ -6,11 +6,9 @@ import { zValidator } from "@hono/zod-validator";
 import { createUserRequestSchema } from "@/types/request";
 
 import { AppContext } from "../../context";
-import { newUserHandler } from "../../handler";
 import { authMiddleware } from "../../middleware/authMiddleware";
 
-import { newUserRepository } from "./userRepository";
-import { newUserUsecase } from "./userUsecase";
+import { newUserHandler, newUserUsecase, newUserRepository } from ".";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();

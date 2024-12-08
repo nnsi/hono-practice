@@ -9,10 +9,8 @@ import {
 } from "@/types/request";
 
 import { AppContext } from "../../context";
-import { newTaskHandler } from "../handler/taskHandler";
 
-import { newTaskRepository } from "./taskRepository";
-import { newTaskUsecase } from "./taskUsecase";
+import { newTaskHandler, newTaskUsecase, newTaskRepository } from ".";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();

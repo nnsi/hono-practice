@@ -11,18 +11,14 @@
   "exportall.config.folderListener": [
     "/backend/route",
     "/backend/error",
-    "/backend/usecase",
-    "/backend/repository",
-    "/backend/repository/drizzle",
-    "/backend/handler",
+    "/backend/feature",
     "/backend/feature/task",
     "/backend/feature/user",
     "/types/response",
     "/types/request",
     "/frontend/src/components",
     "/frontend/src/components/ui",
-    "/frontend/src/utils",
-    "/backend/feature"
+    "/frontend/src/utils"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

@@ -6,7 +6,7 @@ import { CreateUserRequest } from "@/types/request";
 
 import { config } from "../../config";
 
-import { UserRepository } from "./userRepository";
+import { UserRepository } from ".";
 
 export type UserUsecase = {
   createUser: (params: CreateUserRequest) => Promise<string>;

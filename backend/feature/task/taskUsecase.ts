@@ -1,7 +1,7 @@
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 import { GetTaskResponse, GetTasksResponse } from "@/types/response";
 
-import { TaskRepository } from "../repository/drizzle";
+import { TaskRepository } from ".";
 
 export type TaskUsecase = {
   getTasks: (userId: string) => Promise<GetTasksResponse>;

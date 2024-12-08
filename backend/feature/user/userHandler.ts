@@ -5,7 +5,8 @@ import { GetUserResponseSchema } from "@/types/response/";
 
 import { HonoContext } from "../../context";
 import { AppError } from "../../error";
-import { UserUsecase } from "../../usecase";
+
+import { UserUsecase } from ".";
 
 export function newUserHandler(uc: UserUsecase) {
   return {
