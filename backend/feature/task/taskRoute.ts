@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { drizzle } from "@/backend/lib/drizzle";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
@@ -15,7 +16,7 @@ import { newTaskHandler, newTaskUsecase, newTaskRepository } from ".";
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
-const uc = newTaskUsecase(newTaskRepository());
+const uc = newTaskUsecase(newTaskRepository(drizzle));
 const h = newTaskHandler(uc);
 
 export const taskRoute = app
