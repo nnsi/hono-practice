@@ -1,7 +1,7 @@
 import { eq, and, desc } from "drizzle-orm";
 
 import { Task } from "@/backend/domain/model/task";
-import { DBClient } from "@/backend/lib/drizzle";
+import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
@@ -18,20 +18,19 @@ export type TaskRepository = {
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
 };
 
-// NOTE: NodePgDatabaseは具体的すぎるが、ORMを利用しているので許容する
-export function newTaskRepository(db: DBClient): TaskRepository {
+export function newTaskRepository(db: DrizzleClient): TaskRepository {
   return {
-    getTasks:getTasks(db),
-    getTask:getTask(db),
-    createTask:createTask(db),
-    updateTask:updateTask(db),
-    deleteTask:deleteTask(db),
-    bulkDeleteDoneTask:bulkDeleteDoneTask(db),
+    getTasks: getTasks(db),
+    getTask: getTask(db),
+    createTask: createTask(db),
+    updateTask: updateTask(db),
+    deleteTask: deleteTask(db),
+    bulkDeleteDoneTask: bulkDeleteDoneTask(db),
   };
 }
 
-function getTasks(db: DBClient) {
-  return async function(userId: string) {
+function getTasks(db: DrizzleClient) {
+  return async function (userId: string) {
     const result = await db
       .select({
         id: tasks.id,
@@ -47,10 +46,10 @@ function getTasks(db: DBClient) {
       .orderBy(desc(tasks.createdAt))
       .execute();
     return result;
-  }
+  };
 }
 
-function getTask(db: DBClient) {
+function getTask(db: DrizzleClient) {
   return async function (userId: string, taskId: string) {
     const result = await db
       .select({
@@ -66,10 +65,10 @@ function getTask(db: DBClient) {
       .where(and(eq(tasks.userId, userId), eq(tasks.id, taskId)))
       .execute();
     return result.length > 0 ? result[0] : undefined;
-  }
+  };
 }
 
-function createTask(db: DBClient) {
+function createTask(db: DrizzleClient) {
   return async function createTask(userId: string, params: CreateTaskRequest) {
     const result = await db
       .insert(tasks)
@@ -79,10 +78,10 @@ function createTask(db: DBClient) {
       })
       .returning();
     return result[0];
-  }
+  };
 }
 
-function updateTask(db: DBClient) {
+function updateTask(db: DrizzleClient) {
   return async function updateTask(
     userId: string,
     taskId: string,
@@ -94,10 +93,10 @@ function updateTask(db: DBClient) {
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning();
     return result.length > 0 ? result[0] : undefined;
-  }
+  };
 }
 
-function deleteTask(db: DBClient) {
+function deleteTask(db: DrizzleClient) {
   return async function deleteTask(userId: string, taskId: string) {
     const result = await db
       .update(tasks)
@@ -105,15 +104,15 @@ function deleteTask(db: DBClient) {
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning();
     return result.length > 0 ? result[0] : undefined;
-  }
+  };
 }
 
-function bulkDeleteDoneTask(db: DBClient) {
+function bulkDeleteDoneTask(db: DrizzleClient) {
   return async function bulkDeleteDoneTask(userId: string) {
     await db
       .update(tasks)
       .set({ deletedAt: new Date() })
       .where(and(eq(tasks.userId, userId), eq(tasks.done, true)))
       .execute();
-  }
+  };
 }

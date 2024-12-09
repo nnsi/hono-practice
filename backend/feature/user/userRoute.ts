@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { drizzle } from "@/backend/lib/drizzle";
 import { createUserRequestSchema } from "@/types/request";
 
 import { AppContext } from "../../context";
@@ -13,7 +14,8 @@ import { newUserHandler, newUserUsecase, newUserRepository } from ".";
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
-const uc = newUserUsecase(newUserRepository());
+const repo = newUserRepository(drizzle);
+const uc = newUserUsecase(repo);
 const h = newUserHandler(uc);
 
 export const userRoute = app

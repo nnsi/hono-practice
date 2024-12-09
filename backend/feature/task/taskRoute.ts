@@ -16,7 +16,8 @@ import { newTaskHandler, newTaskUsecase, newTaskRepository } from ".";
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
-const uc = newTaskUsecase(newTaskRepository(drizzle));
+const repo = newTaskRepository(drizzle);
+const uc = newTaskUsecase(repo);
 const h = newTaskHandler(uc);
 
 export const taskRoute = app
