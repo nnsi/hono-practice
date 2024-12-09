@@ -5,11 +5,10 @@ import { serve } from "@hono/node-server";
 
 import { config } from "./config";
 import { AppError } from "./error";
-import { taskRoute, userRoute } from "./feature";
+import { authRoute, taskRoute, userRoute } from "./feature";
 import { prisma } from "./lib/prisma";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { activityRoute, authRoute } from "./route";
-import { activityDateLogRoute } from "./route/activityDateLog";
+import { activityRoute, activityDateLogRoute } from "./route";
 
 const app = new Hono();
 app.onError((err, c) => {

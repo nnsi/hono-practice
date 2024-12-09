@@ -3,3 +3,4 @@ export * from "./GetActivityLogsResponse";
 export * from "./GetActivityStatsResponse";
 export * from "./GetTasksResponse";
 export * from "./GetUserResponse";
+export * from "./LoginResponse";
