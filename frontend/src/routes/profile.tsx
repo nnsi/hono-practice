@@ -8,11 +8,11 @@ const ProfilePage: React.FC = () => {
   const query = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const res = await api.users.me.$get();
+      const res = await api.user.me.$get();
       if (res.status === 200) {
         return await res.json();
       } else {
-        const json = (await res.json()) as { message: string };
+        const json = (await res.json()) as any;
         console.log(json.message);
         return;
       }

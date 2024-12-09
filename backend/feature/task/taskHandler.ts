@@ -1,5 +1,5 @@
 import { HonoContext } from "@/backend/context";
-import { CreateTaskRequest } from "@/types/request";
+import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 import {
   GetTaskResponseSchema,
   GetTasksResponseSchema,
@@ -7,7 +7,7 @@ import {
 
 import { AppError } from "../../error";
 
-import { TaskUsecase } from ".";
+import { TaskCreateSchema, TaskUpdateSchema, TaskUsecase } from ".";
 
 export function newTaskHandler(uc: TaskUsecase) {
   return {
@@ -58,7 +58,12 @@ function createTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const json = await c.req.json<CreateTaskRequest>();
 
-    const task = await uc.createTask(c.get("jwtPayload").id, json);
+    const params = TaskCreateSchema.safeParse(json);
+    if (!params.success) {
+      throw new AppError("failed to parse request", 400);
+    }
+
+    const task = await uc.createTask(c.get("jwtPayload").id, params.data);
 
     const parsedTask = GetTaskResponseSchema.safeParse(task);
     if (!parsedTask.success) {
@@ -73,9 +78,14 @@ function updateTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const userId = c.get("jwtPayload").id;
     const taskId = c.req.param("id");
-    const json = await c.req.json<CreateTaskRequest>();
+    const json = await c.req.json<UpdateTaskRequest>();
 
-    const task = await uc.updateTask(userId, taskId, json);
+    const params = TaskUpdateSchema.safeParse(json);
+    if (!params.success) {
+      throw new AppError("failed to parse request", 400);
+    }
+
+    const task = await uc.updateTask(userId, taskId, params.data);
 
     const parsedTask = GetTaskResponseSchema.safeParse(task);
     if (!parsedTask.success) {

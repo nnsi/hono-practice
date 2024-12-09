@@ -3,10 +3,11 @@ import { eq, and } from "drizzle-orm";
 import { User } from "@/backend/domain/model/user";
 import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { users } from "@/drizzle/schema";
-import { CreateUserRequest } from "@/types/request";
+
+import { UserCreateParams } from ".";
 
 export type UserRepository = {
-  createUser: (params: CreateUserRequest) => Promise<User>;
+  createUser: (params: UserCreateParams) => Promise<User>;
   getUserById: (userId: string) => Promise<User | undefined>;
 };
 
@@ -18,7 +19,7 @@ export function newUserRepository(db: DrizzleClient): UserRepository {
 }
 
 function createUser(db: DrizzleClient) {
-  return async function (params: CreateUserRequest) {
+  return async function (params: UserCreateParams) {
     const result = await db
       .insert(users)
       .values({

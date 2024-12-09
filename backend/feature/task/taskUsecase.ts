@@ -1,17 +1,16 @@
 import { Task } from "@/backend/domain/model/task";
 import { AppError } from "@/backend/error";
-import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
-import { TaskRepository } from ".";
+import { TaskRepository, TaskCreateParams, TaskUpdateParams } from ".";
 
 export type TaskUsecase = {
   getTasks: (userId: string) => Promise<Task[]>;
   getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
-  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
+  createTask: (userId: string, params: TaskCreateParams) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
-    params: UpdateTaskRequest
+    params: TaskUpdateParams
   ) => Promise<Task>;
   deleteTask: (userId: string, taskId: string) => Promise<void>;
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
@@ -44,13 +43,13 @@ function getTask(repo: TaskRepository) {
 }
 
 function createTask(repo: TaskRepository) {
-  return async (userId: string, params: CreateTaskRequest) => {
+  return async (userId: string, params: TaskCreateParams) => {
     return await repo.createTask(userId, params);
   };
 }
 
 function updateTask(repo: TaskRepository) {
-  return async (userId: string, taskId: string, params: UpdateTaskRequest) => {
+  return async (userId: string, taskId: string, params: TaskUpdateParams) => {
     const task = await repo.updateTask(userId, taskId, params);
     if (!task) throw new AppError("task not found", 404);
 

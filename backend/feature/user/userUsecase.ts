@@ -4,14 +4,13 @@ import bcrypt from "bcrypt";
 
 import { User } from "@/backend/domain/model/user";
 import { AppError } from "@/backend/error";
-import { CreateUserRequest } from "@/types/request";
 
 import { config } from "../../config";
 
-import { UserRepository } from ".";
+import { UserCreateParams, UserRepository } from ".";
 
 export type UserUsecase = {
-  createUser: (params: CreateUserRequest) => Promise<string>;
+  createUser: (params: UserCreateParams) => Promise<string>;
   getUserById: (userId: string) => Promise<User>;
 };
 
@@ -23,7 +22,7 @@ export function newUserUsecase(repo: UserRepository): UserUsecase {
 }
 
 function createUser(repo: UserRepository) {
-  return async function (params: CreateUserRequest) {
+  return async function (params: UserCreateParams) {
     const cryptedPassword = bcrypt.hashSync(params.password, 10);
     params.password = cryptedPassword;
 
