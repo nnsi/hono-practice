@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 import { config } from "@/backend/config";
 import { HonoContext, JwtPayload } from "@/backend/context";
-import { AppError } from "@/backend/error";
+import { AppError, AuthError } from "@/backend/error";
 import { LoginRequest } from "@/types/request";
 import { LoginResponseSchema } from "@/types/response";
 
@@ -26,7 +26,7 @@ function login(userUsecase: UserUsecase) {
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      return c.json({ message: "ログインに失敗しました" }, 401);
+      return new AuthError("invalid login id or password");
     }
 
     const payload: JwtPayload = {

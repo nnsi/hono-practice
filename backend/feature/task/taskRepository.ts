@@ -3,16 +3,17 @@ import { eq, and, desc } from "drizzle-orm";
 import { Task } from "@/backend/domain/model/task";
 import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
-import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
+
+import { TaskCreateParams, TaskUpdateParams } from "./taskValidator";
 
 export type TaskRepository = {
   getTasks: (userId: string) => Promise<Task[]>;
   getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
-  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
+  createTask: (userId: string, params: TaskCreateParams) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
-    params: UpdateTaskRequest
+    params: TaskUpdateParams
   ) => Promise<Task | undefined>;
   deleteTask: (userId: string, taskId: string) => Promise<Task | undefined>;
   bulkDeleteDoneTask: (userId: string) => Promise<void>;
@@ -69,7 +70,7 @@ function getTask(db: DrizzleClient) {
 }
 
 function createTask(db: DrizzleClient) {
-  return async function createTask(userId: string, params: CreateTaskRequest) {
+  return async function createTask(userId: string, params: TaskCreateParams) {
     const result = await db
       .insert(tasks)
       .values({
@@ -85,7 +86,7 @@ function updateTask(db: DrizzleClient) {
   return async function updateTask(
     userId: string,
     taskId: string,
-    params: UpdateTaskRequest
+    params: TaskUpdateParams
   ) {
     const result = await db
       .update(tasks)

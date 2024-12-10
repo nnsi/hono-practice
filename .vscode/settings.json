@@ -19,7 +19,9 @@
     "/frontend/src/components",
     "/frontend/src/components/ui",
     "/frontend/src/utils",
-    "/backend/feature/auth"
+    "/backend/feature/auth",
+    "/backend/domain/value",
+    "/backend/domain/model"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
