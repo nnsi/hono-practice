@@ -4,19 +4,29 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 
 import { config } from "./config";
-import { AppError } from "./error";
+import {
+  AppError,
+  AuthError,
+  ResourceNotFoundError,
+  SqlExecutionError,
+} from "./error";
 import { authRoute, taskRoute, userRoute } from "./feature";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { activityRoute, activityDateLogRoute } from "./route";
 
 const app = new Hono();
 app.onError((err, c) => {
-  if (err instanceof AppError) {
-    console.error(err.stack);
+  console.error(err.stack);
+
+  if (
+    err instanceof AppError ||
+    err instanceof AuthError ||
+    err instanceof ResourceNotFoundError ||
+    err instanceof SqlExecutionError
+  ) {
     return c.json({ message: err.message }, err.status);
   }
 
-  console.error(err.stack);
   return c.json({ message: "internal server error" }, 500);
 });
 
@@ -38,7 +48,7 @@ const routes = app
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", activityRoute)
-  .route("/users/activity-logs", activityDateLogRoute)
+  .route("/users/activity-logs", activityDateLogRoute);
 
 const port = 3456;
 console.log(`Server is running on port ${port}`);

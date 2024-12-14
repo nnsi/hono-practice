@@ -1,12 +1,12 @@
 import { Task, TaskId, UserId } from "@/backend/domain";
-import { AppError } from "@/backend/error";
+import { ResourceNotFoundError } from "@/backend/error";
 import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
 import { TaskRepository } from ".";
 
 export type TaskUsecase = {
   getTasks: (userId: string) => Promise<Task[]>;
-  getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
+  getTask: (userId: string, taskId: string) => Promise<Task>;
   createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
   updateTask: (
     userId: string,
@@ -35,7 +35,7 @@ function getTasks(repo: TaskRepository) {
 function getTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
-    if (!task) throw new AppError("task not found", 404);
+    if (!task) throw new ResourceNotFoundError("task not found");
 
     return task;
   };
@@ -57,14 +57,12 @@ function createTask(repo: TaskRepository) {
 function updateTask(repo: TaskRepository) {
   return async (userId: string, taskId: string, params: UpdateTaskRequest) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
-    if (!task) throw new AppError("task not found", 404);
+    if (!task) throw new ResourceNotFoundError("task not found");
 
-    task.title = params.title ?? task.title;
-    task.done = params.done ?? task.done;
-    task.memo = params.memo ?? task.memo;
+    const newTask: Task = { ...task, ...params };
 
-    const updateTask = await repo.updateTask(task);
-    if (!updateTask) throw new AppError("failed to update task", 500);
+    const updateTask = await repo.updateTask(newTask);
+    if (!updateTask) throw new ResourceNotFoundError("task not found");
 
     return updateTask;
   };
@@ -73,7 +71,7 @@ function updateTask(repo: TaskRepository) {
 function deleteTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
-    if (!task) throw new AppError("task not found", 404);
+    if (!task) throw new ResourceNotFoundError("task not found");
 
     await repo.deleteTask(task);
 

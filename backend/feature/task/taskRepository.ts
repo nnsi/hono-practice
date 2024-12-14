@@ -1,7 +1,7 @@
 import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { Task, TaskId, UserId } from "@/backend/domain";
-import { AppError } from "@/backend/error";
+import { ResourceNotFoundError } from "@/backend/error";
 import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 
@@ -154,7 +154,7 @@ function deleteTask(db: DrizzleClient) {
     console.log(result);
 
     if (result.length === 0) {
-      throw new AppError("task not found", 404);
+      throw new ResourceNotFoundError("task not found");
     }
   };
 }
