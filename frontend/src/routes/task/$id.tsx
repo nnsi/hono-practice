@@ -72,7 +72,8 @@ const TaskDetail: React.FC = () => {
       });
       navigate({ to: "/task" });
     } else {
-      const json = await res.json();
+      const json = (await res.json()) as any;
+
       toast({
         title: "Error",
         description: json.message,

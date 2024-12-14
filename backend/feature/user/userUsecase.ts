@@ -2,7 +2,7 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { User } from "@/backend/domain/model/user";
+import { User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 
 import { config } from "../../config";

@@ -1,37 +1,33 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 
-import { Task } from "@/backend/domain/model/task";
+import { Task, TaskId, UserId } from "@/backend/domain";
+import { AppError } from "@/backend/error";
 import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 
-import { TaskCreateParams, TaskUpdateParams } from "./taskValidator";
-
 export type TaskRepository = {
-  getTasks: (userId: string) => Promise<Task[]>;
-  getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
-  createTask: (userId: string, params: TaskCreateParams) => Promise<Task>;
-  updateTask: (
+  getTaskAll: (userId: string) => Promise<Task[]>;
+  getTaskByUserIdAndTaskId: (
     userId: string,
-    taskId: string,
-    params: TaskUpdateParams
+    taskId: string
   ) => Promise<Task | undefined>;
-  deleteTask: (userId: string, taskId: string) => Promise<Task | undefined>;
-  bulkDeleteDoneTask: (userId: string) => Promise<void>;
+  createTask: (task: Task) => Promise<Task>;
+  updateTask: (task: Task) => Promise<Task | undefined>;
+  deleteTask: (task: Task) => Promise<void>;
 };
 
 export function newTaskRepository(db: DrizzleClient): TaskRepository {
   return {
-    getTasks: getTasks(db),
-    getTask: getTask(db),
+    getTaskAll: getTaskAll(db),
+    getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
-    bulkDeleteDoneTask: bulkDeleteDoneTask(db),
   };
 }
 
-function getTasks(db: DrizzleClient) {
-  return async function (userId: string) {
+function getTaskAll(db: DrizzleClient) {
+  return async function (userId: string): Promise<Task[]> {
     const result = await db
       .select({
         id: tasks.id,
@@ -43,15 +39,27 @@ function getTasks(db: DrizzleClient) {
         updatedAt: tasks.updatedAt,
       })
       .from(tasks)
-      .where(eq(tasks.userId, userId))
+      .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
       .orderBy(desc(tasks.createdAt))
       .execute();
-    return result;
+
+    return result.map((r) => ({
+      id: TaskId.create(r.id),
+      userId: UserId.create(r.userId),
+      title: r.title,
+      done: r.done,
+      memo: r.memo,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
   };
 }
 
-function getTask(db: DrizzleClient) {
-  return async function (userId: string, taskId: string) {
+function getTaskByUserIdAndTaskId(db: DrizzleClient) {
+  return async function (
+    userId: string,
+    taskId: string
+  ): Promise<Task | undefined> {
     const result = await db
       .select({
         id: tasks.id,
@@ -63,57 +71,90 @@ function getTask(db: DrizzleClient) {
         updatedAt: tasks.updatedAt,
       })
       .from(tasks)
-      .where(and(eq(tasks.userId, userId), eq(tasks.id, taskId)))
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.id, taskId),
+          isNull(tasks.deletedAt)
+        )
+      )
       .execute();
-    return result.length > 0 ? result[0] : undefined;
+
+    if (result.length === 0) {
+      return undefined;
+    }
+
+    return {
+      id: TaskId.create(result[0].id),
+      userId: UserId.create(result[0].userId),
+      title: result[0].title,
+      done: result[0].done,
+      memo: result[0].memo,
+      createdAt: result[0].createdAt,
+      updatedAt: result[0].updatedAt,
+    };
   };
 }
 
 function createTask(db: DrizzleClient) {
-  return async function createTask(userId: string, params: TaskCreateParams) {
-    const result = await db
-      .insert(tasks)
-      .values({
-        userId,
-        title: params.title,
-      })
-      .returning();
-    return result[0];
+  return async function createTask(task: Task): Promise<Task> {
+    const setParams = {
+      id: task.id.value,
+      userId: task.userId.value,
+      title: task.title,
+      done: task.done,
+      memo: task.memo,
+    };
+
+    const result = await db.insert(tasks).values(setParams).returning();
+
+    return {
+      ...task,
+      createdAt: result[0].createdAt,
+      updatedAt: result[0].updatedAt,
+    };
   };
 }
 
 function updateTask(db: DrizzleClient) {
-  return async function updateTask(
-    userId: string,
-    taskId: string,
-    params: TaskUpdateParams
-  ) {
+  return async function updateTask(task: Task) {
     const result = await db
       .update(tasks)
-      .set(params)
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .set({
+        title: task.title,
+        done: task.done,
+        memo: task.memo,
+      })
+      .where(
+        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId.value))
+      )
       .returning();
-    return result.length > 0 ? result[0] : undefined;
+
+    if (result.length === 0) {
+      return undefined;
+    }
+
+    return {
+      ...task,
+      updatedAt: result[0].updatedAt,
+    };
   };
 }
 
 function deleteTask(db: DrizzleClient) {
-  return async function deleteTask(userId: string, taskId: string) {
+  return async function deleteTask(task: Task) {
     const result = await db
       .update(tasks)
       .set({ deletedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .where(
+        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId.value))
+      )
       .returning();
-    return result.length > 0 ? result[0] : undefined;
-  };
-}
 
-function bulkDeleteDoneTask(db: DrizzleClient) {
-  return async function bulkDeleteDoneTask(userId: string) {
-    await db
-      .update(tasks)
-      .set({ deletedAt: new Date() })
-      .where(and(eq(tasks.userId, userId), eq(tasks.done, true)))
-      .execute();
+    console.log(result);
+
+    if (result.length === 0) {
+      throw new AppError("task not found", 404);
+    }
   };
 }

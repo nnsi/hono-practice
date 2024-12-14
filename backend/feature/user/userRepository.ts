@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 
-import { User } from "@/backend/domain/model/user";
+import { User } from "@/backend/domain";
 import { type DrizzleClient } from "@/backend/lib/drizzle";
 import { users } from "@/drizzle/schema";
 

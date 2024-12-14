@@ -1,5 +1,10 @@
 import { HonoContext } from "@/backend/context";
-import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
+import {
+  CreateTaskRequest,
+  createTaskRequestSchema,
+  UpdateTaskRequest,
+  updateTaskRequestSchema,
+} from "@/types/request";
 import {
   GetTaskResponseSchema,
   GetTasksResponseSchema,
@@ -7,7 +12,7 @@ import {
 
 import { AppError } from "../../error";
 
-import { TaskCreateSchema, TaskUpdateSchema, TaskUsecase } from ".";
+import { TaskUsecase } from ".";
 
 export function newTaskHandler(uc: TaskUsecase) {
   return {
@@ -16,7 +21,6 @@ export function newTaskHandler(uc: TaskUsecase) {
     createTask: createTask(uc),
     updateTask: updateTask(uc),
     deleteTask: deleteTask(uc),
-    bulkDeleteDoneTask: bulkDeleteDoneTask(uc),
   };
 }
 
@@ -25,7 +29,13 @@ function getTasks(uc: TaskUsecase) {
     const userId = c.get("jwtPayload").id;
     const tasks = await uc.getTasks(userId);
 
-    const parsedTasks = GetTasksResponseSchema.safeParse(tasks);
+    const resposeneTasks = tasks.map((task) => ({
+      ...task,
+      id: task.id.value,
+      userId: task.userId.value,
+    }));
+
+    const parsedTasks = GetTasksResponseSchema.safeParse(resposeneTasks);
     if (!parsedTasks.success) {
       throw new AppError("failed to parse tasks", 500);
     }
@@ -45,7 +55,13 @@ function getTask(uc: TaskUsecase) {
       throw new AppError("task not found", 404);
     }
 
-    const parsedTask = GetTaskResponseSchema.safeParse(task);
+    const resposeneTask = {
+      ...task,
+      id: task.id.value,
+      userId: task.userId.value,
+    };
+
+    const parsedTask = GetTaskResponseSchema.safeParse(resposeneTask);
     if (!parsedTask.success) {
       throw new AppError("failed to parse task", 500);
     }
@@ -58,14 +74,20 @@ function createTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const json = await c.req.json<CreateTaskRequest>();
 
-    const params = TaskCreateSchema.safeParse(json);
+    const params = createTaskRequestSchema.safeParse(json);
     if (!params.success) {
       throw new AppError("failed to parse request", 400);
     }
 
     const task = await uc.createTask(c.get("jwtPayload").id, params.data);
 
-    const parsedTask = GetTaskResponseSchema.safeParse(task);
+    const resposeneTask = {
+      ...task,
+      id: task.id.value,
+      userId: task.userId.value,
+    };
+
+    const parsedTask = GetTaskResponseSchema.safeParse(resposeneTask);
     if (!parsedTask.success) {
       throw new AppError("failed to parse task", 500);
     }
@@ -80,14 +102,20 @@ function updateTask(uc: TaskUsecase) {
     const taskId = c.req.param("id");
     const json = await c.req.json<UpdateTaskRequest>();
 
-    const params = TaskUpdateSchema.safeParse(json);
+    const params = updateTaskRequestSchema.safeParse(json);
     if (!params.success) {
       throw new AppError("failed to parse request", 400);
     }
 
     const task = await uc.updateTask(userId, taskId, params.data);
 
-    const parsedTask = GetTaskResponseSchema.safeParse(task);
+    const resposeneTask = {
+      ...task,
+      id: task.id.value,
+      userId: task.userId.value,
+    };
+
+    const parsedTask = GetTaskResponseSchema.safeParse(resposeneTask);
     if (!parsedTask.success) {
       throw new AppError("failed to parse task", 500);
     }
@@ -99,14 +127,6 @@ function updateTask(uc: TaskUsecase) {
 function deleteTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     await uc.deleteTask(c.get("jwtPayload").id, c.req.param("id"));
-
-    return c.json({}, 200);
-  };
-}
-
-function bulkDeleteDoneTask(uc: TaskUsecase) {
-  return async (c: HonoContext) => {
-    await uc.bulkDeleteDoneTask(c.get("jwtPayload").id);
 
     return c.json({}, 200);
   };

@@ -10,9 +10,7 @@ export const GetTaskResponseSchema = z.object({
   updatedAt: z.coerce.date().nullable(),
 });
 
-export const GetTasksResponseSchema = z.array(
-  GetTaskResponseSchema.omit({ memo: true })
-);
+export const GetTasksResponseSchema = z.array(GetTaskResponseSchema);
 
 export type GetTaskResponse = z.infer<typeof GetTaskResponseSchema>;
 

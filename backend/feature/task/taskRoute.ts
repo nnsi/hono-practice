@@ -37,5 +37,4 @@ export const taskRoute = app
       (c) => h.updateTask(c)
     )
   )
-  .delete("/:id", ...factory.createHandlers(h.deleteTask))
-  .delete("/bulkDelete", ...factory.createHandlers(h.bulkDeleteDoneTask));
+  .delete("/:id", ...factory.createHandlers(h.deleteTask));

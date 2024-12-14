@@ -1,19 +1,19 @@
-import { Task } from "@/backend/domain/model/task";
+import { Task, TaskId, UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
+import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
-import { TaskRepository, TaskCreateParams, TaskUpdateParams } from ".";
+import { TaskRepository } from ".";
 
 export type TaskUsecase = {
   getTasks: (userId: string) => Promise<Task[]>;
   getTask: (userId: string, taskId: string) => Promise<Task | undefined>;
-  createTask: (userId: string, params: TaskCreateParams) => Promise<Task>;
+  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
-    params: TaskUpdateParams
+    params: UpdateTaskRequest
   ) => Promise<Task>;
   deleteTask: (userId: string, taskId: string) => Promise<void>;
-  bulkDeleteDoneTask: (userId: string) => Promise<void>;
 };
 
 export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
@@ -23,19 +23,18 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
     createTask: createTask(repo),
     updateTask: updateTask(repo),
     deleteTask: deleteTask(repo),
-    bulkDeleteDoneTask: bulkDeleteDoneTask(repo),
   };
 }
 
 function getTasks(repo: TaskRepository) {
   return async (userId: string) => {
-    return await repo.getTasks(userId);
+    return await repo.getTaskAll(userId);
   };
 }
 
 function getTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
-    const task = await repo.getTask(userId, taskId);
+    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new AppError("task not found", 404);
 
     return task;
@@ -43,31 +42,41 @@ function getTask(repo: TaskRepository) {
 }
 
 function createTask(repo: TaskRepository) {
-  return async (userId: string, params: TaskCreateParams) => {
-    return await repo.createTask(userId, params);
+  return async (userId: string, params: CreateTaskRequest) => {
+    const task: Task = {
+      id: TaskId.create(),
+      userId: UserId.create(userId),
+      title: params.title,
+      done: false,
+      memo: null,
+    };
+    return await repo.createTask(task);
   };
 }
 
 function updateTask(repo: TaskRepository) {
-  return async (userId: string, taskId: string, params: TaskUpdateParams) => {
-    const task = await repo.updateTask(userId, taskId, params);
+  return async (userId: string, taskId: string, params: UpdateTaskRequest) => {
+    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new AppError("task not found", 404);
 
-    return task;
+    task.title = params.title ?? task.title;
+    task.done = params.done ?? task.done;
+    task.memo = params.memo ?? task.memo;
+
+    const updateTask = await repo.updateTask(task);
+    if (!updateTask) throw new AppError("failed to update task", 500);
+
+    return updateTask;
   };
 }
 
 function deleteTask(repo: TaskRepository) {
   return async (userId: string, taskId: string) => {
-    const deletedTask = await repo.deleteTask(userId, taskId);
-    if (!deletedTask) throw new AppError("task not found", 404);
+    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
+    if (!task) throw new AppError("task not found", 404);
+
+    await repo.deleteTask(task);
 
     return;
-  };
-}
-
-function bulkDeleteDoneTask(repo: TaskRepository) {
-  return async (userId: string) => {
-    return await repo.bulkDeleteDoneTask(userId);
   };
 }
