@@ -1,5 +1,7 @@
 import { Context } from "hono";
 
+import { UserId } from "../domain";
+
 export type JwtPayload = {
   id: string;
   exp: number;
@@ -8,6 +10,7 @@ export type JwtPayload = {
 export type AppContext = {
   Variables: {
     jwtPayload: JwtPayload;
+    userId: UserId;
   };
 };
 

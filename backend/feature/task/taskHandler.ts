@@ -21,8 +21,7 @@ export function newTaskHandler(uc: TaskUsecase) {
 
 function getTasks(uc: TaskUsecase) {
   return async (c: HonoContext) => {
-    const userId = c.get("jwtPayload").id;
-    const tasks = await uc.getTasks(userId);
+    const tasks = await uc.getTasks(c.get("userId").value);
 
     const responseTasks = tasks.map((task) => ({
       ...task,
@@ -42,9 +41,8 @@ function getTasks(uc: TaskUsecase) {
 function getTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const { id } = c.req.param();
-    const userId = c.get("jwtPayload").id;
 
-    const task = await uc.getTask(userId, id);
+    const task = await uc.getTask(c.get("userId").value, id);
 
     const responseTask = {
       ...task,
@@ -65,7 +63,7 @@ function createTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const json = await c.req.json<CreateTaskRequest>();
 
-    const task = await uc.createTask(c.get("jwtPayload").id, json);
+    const task = await uc.createTask(c.get("userId").value, json);
 
     const responseTask = {
       ...task,
@@ -84,11 +82,10 @@ function createTask(uc: TaskUsecase) {
 
 function updateTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
-    const userId = c.get("jwtPayload").id;
     const taskId = c.req.param("id");
     const json = await c.req.json<UpdateTaskRequest>();
 
-    const task = await uc.updateTask(userId, taskId, json);
+    const task = await uc.updateTask(c.get("userId").value, taskId, json);
 
     const responseTask = {
       ...task,
