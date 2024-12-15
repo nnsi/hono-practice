@@ -10,17 +10,25 @@ const API_URL =
 
 const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const res = await fetch(input, init);
-
-  // statusCode が 204 のときに res.json() を実行するとエラーになるため
   if (res.status === 204) return Response.json({});
 
-  const jsonData = await res.json();
+  const json = await res.json();
 
-  if (res.status >= 400) {
-    throw Error(jsonData.message ?? "エラーです");
+  if (res.status === 401) {
+    window.dispatchEvent(
+      new CustomEvent("unauthorized", { detail: json.message })
+    );
+    throw Error(json.message);
   }
 
-  return Response.json(jsonData);
+  if (res.status === 400 || res.status > 401) {
+    window.dispatchEvent(
+      new CustomEvent("api-error", { detail: json.message })
+    );
+    throw Error(json.message);
+  }
+
+  return Response.json(json);
 };
 
 export const apiClient = hc<AppType>(API_URL, {

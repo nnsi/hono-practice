@@ -29,6 +29,13 @@ declare module "@tanstack/react-router" {
   }
 }
 
+declare global {
+  interface WindowEventMap {
+    "api-error": CustomEvent<string>;
+    unauthorized: CustomEvent<string>;
+  }
+}
+
 const RouterProviderWithAuth: React.FC = () => {
   const auth = useAuth();
   return <RouterProvider router={router} context={{ auth }} />;

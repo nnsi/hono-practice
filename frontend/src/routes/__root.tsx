@@ -1,20 +1,29 @@
 import { useEffect, useState } from "react";
 
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Link,
+  Outlet,
+  useNavigate,
+} from "@tanstack/react-router";
 
 import { CreateUserForm } from "@/frontend/src/components/root/CreateUserForm";
 import { LoginForm } from "@/frontend/src/components/root/LoginForm";
 import { useAuth } from "@/frontend/src/hooks/useAuth";
 
-import { Button, Toaster } from "@components/ui";
+import { Button, Toaster, useToast } from "@components/ui";
 
 // ログイン済みユーザー向けのルートコンポーネント
 const AuthenticatedHome: React.FC = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logout();
+      navigate({
+        to: "/",
+      });
     } catch (e) {
       console.error(e);
     }
@@ -50,11 +59,33 @@ const RootComponent: React.FC = () => {
 
   const [isTriedAuthentication, setIsTrieduthentication] = useState(false);
 
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   useEffect(() => {
+    function handleApiError(e: CustomEvent<string>) {
+      toast({
+        title: "Error",
+        description: e.detail,
+        variant: "destructive",
+      });
+    }
+    function handleUnauthorized() {
+      navigate({
+        to: "/",
+      });
+    }
+    window.addEventListener("api-error", handleApiError);
+    window.addEventListener("unauthorized", handleUnauthorized);
     (async () => {
       await getUser();
       setIsTrieduthentication(true);
     })();
+
+    return () => {
+      window.removeEventListener("api-error", handleApiError);
+      window.removeEventListener("unauthorized", handleUnauthorized);
+    };
   }, []);
 
   if (!isTriedAuthentication) return <div>Loading...</div>;
@@ -64,11 +95,14 @@ const RootComponent: React.FC = () => {
       {user ? (
         <AuthenticatedHome />
       ) : (
-        <div className="h-svh flex items-center justify-center gap-5">
-          <LoginForm />
-          <p> or </p>
-          <CreateUserForm />
-        </div>
+        <>
+          <div className="h-svh flex items-center justify-center gap-5">
+            <LoginForm />
+            <p> or </p>
+            <CreateUserForm />
+          </div>
+          <Toaster />
+        </>
       )}
     </>
   );
