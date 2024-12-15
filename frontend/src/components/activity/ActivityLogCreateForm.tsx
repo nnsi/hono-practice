@@ -79,11 +79,6 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
       },
     });
     if (res.status !== 200) {
-      toast({
-        title: "Error",
-        description: "Failed to create activity log",
-        variant: "destructive",
-      });
       return;
     }
     const json = await res.json();

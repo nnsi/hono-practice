@@ -31,12 +31,6 @@ export function mp<TRequest = void, TResponse = unknown>({
       }
       const res = await mutationFn(data as TRequest);
 
-      if (res.status !== 200) {
-        const json = await res.json().catch(() => null);
-        const message = json?.message || res.statusText;
-        throw new Error(message);
-      }
-
       const json = await res.json();
       if (!responseSchema) {
         return json;

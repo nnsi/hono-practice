@@ -24,14 +24,7 @@ const ActivityPage: React.FC = () => {
     queryKey: ["activity"],
     queryFn: async () => {
       const res = await api.users.activities.$get();
-      if (res.status !== 200) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch tasks",
-          variant: "destructive",
-        });
-        return;
-      }
+
       const json = await res.json();
       const parsedJson = GetActivitiesResponseSchema.safeParse(json);
       if (!parsedJson.success) {
@@ -88,14 +81,7 @@ const ActivityPage: React.FC = () => {
           month: monthStr,
         },
       });
-      if (res.status !== 200) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch tasks",
-          variant: "destructive",
-        });
-        return;
-      }
+
       const json = await res.json();
       const parsedJson = GetActivityLogsResponseSchema.safeParse(json);
       if (!parsedJson.success) {

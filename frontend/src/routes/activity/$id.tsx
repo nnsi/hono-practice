@@ -44,11 +44,6 @@ const ActivityModal: React.FC = () => {
       const res = await api.users["activity-logs"].single[":id"].$get({
         param: { id },
       });
-      if (res.status !== 200) {
-        const json = await res.json();
-        console.log(json.message);
-        return;
-      }
 
       const json = await res.json();
       const parsedJson = GetActivityLogResponseSchema.safeParse(json);

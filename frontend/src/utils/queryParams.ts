@@ -16,13 +16,6 @@ export function qp<T>({ queryKey, queryFn, schema }: queryPropsParamsFunc<T>): {
     queryFn: async () => {
       const res = await queryFn();
 
-      if (res.status !== 200) {
-        const json = await res.json().catch(() => null);
-        const message = json?.message || res.statusText;
-        console.error(`Error ${res.status}: ${message}`);
-        throw new Error(message);
-      }
-
       const json = await res.json();
       const parsedResult = schema.safeParse(json);
       if (!parsedResult.success) {

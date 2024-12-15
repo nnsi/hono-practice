@@ -15,7 +15,6 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  useToast,
 } from "@components/ui";
 
 import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
@@ -32,7 +31,6 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
   date,
 }) => {
   const api = apiClient;
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleDelete = async (activityId: string, logId: string) => {
@@ -42,14 +40,11 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
         logId: logId,
       },
     });
+
     if (res.status !== 200) {
-      toast({
-        title: "Error",
-        description: "Failed to delete activity log",
-        variant: "destructive",
-      });
       return;
     }
+
     queryClient.invalidateQueries({
       queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
     });
