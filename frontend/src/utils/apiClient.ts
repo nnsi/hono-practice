@@ -18,6 +18,13 @@ const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     window.dispatchEvent(
       new CustomEvent("unauthorized", { detail: json.message })
     );
+
+    if (!input.toString().includes("me")) {
+      window.dispatchEvent(
+        new CustomEvent("api-error", { detail: json.message })
+      );
+    }
+
     throw Error(json.message);
   }
 

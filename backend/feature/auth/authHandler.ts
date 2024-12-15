@@ -23,6 +23,9 @@ function login(userUsecase: UserUsecase) {
     const { login_id, password }: LoginRequest = await c.req.json();
 
     const user = await userUsecase.getUserByLoginId(login_id);
+    if (!user) {
+      throw new AuthError("invalid login id or password");
+    }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {

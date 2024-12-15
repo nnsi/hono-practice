@@ -12,7 +12,7 @@ import { UserCreateParams, UserRepository } from ".";
 export type UserUsecase = {
   createUser: (params: UserCreateParams) => Promise<string>;
   getUserById: (userId: string) => Promise<User>;
-  getUserByLoginId: (loginId: string) => Promise<User>;
+  getUserByLoginId: (loginId: string) => Promise<User | undefined>;
 };
 
 export function newUserUsecase(repo: UserRepository): UserUsecase {
@@ -50,9 +50,6 @@ function getUserById(repo: UserRepository) {
 
 function getUserByLoginId(repo: UserRepository) {
   return async function (loginId: string) {
-    const user = await repo.getUserByLoginId(loginId);
-    if (!user) throw new AppError("user not found", 404);
-
-    return user;
+    return await repo.getUserByLoginId(loginId);
   };
 }
