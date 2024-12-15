@@ -1,17 +1,27 @@
 import { Task, TaskId, UserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
-import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 
 import { TaskRepository } from ".";
+
+type InputParams = {
+  Create: {
+    title: string;
+  };
+  Update: {
+    title?: string;
+    done?: boolean;
+    memo?: string | null;
+  };
+};
 
 export type TaskUsecase = {
   getTasks: (userId: string) => Promise<Task[]>;
   getTask: (userId: string, taskId: string) => Promise<Task>;
-  createTask: (userId: string, params: CreateTaskRequest) => Promise<Task>;
+  createTask: (userId: string, params: InputParams["Create"]) => Promise<Task>;
   updateTask: (
     userId: string,
     taskId: string,
-    params: UpdateTaskRequest
+    params: InputParams["Update"]
   ) => Promise<Task>;
   deleteTask: (userId: string, taskId: string) => Promise<void>;
 };
@@ -42,7 +52,7 @@ function getTask(repo: TaskRepository) {
 }
 
 function createTask(repo: TaskRepository) {
-  return async (userId: string, params: CreateTaskRequest) => {
+  return async (userId: string, params: InputParams["Create"]) => {
     const task: Task = {
       id: TaskId.create(),
       userId: UserId.create(userId),
@@ -55,7 +65,11 @@ function createTask(repo: TaskRepository) {
 }
 
 function updateTask(repo: TaskRepository) {
-  return async (userId: string, taskId: string, params: UpdateTaskRequest) => {
+  return async (
+    userId: string,
+    taskId: string,
+    params: InputParams["Update"]
+  ) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new ResourceNotFoundError("task not found");
 

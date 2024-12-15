@@ -26,7 +26,7 @@ function login(userUsecase: UserUsecase) {
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      new AuthError("invalid login id or password");
+      throw new AuthError("invalid login id or password");
     }
 
     const payload: JwtPayload = {
