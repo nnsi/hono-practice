@@ -2,10 +2,12 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { User } from "@/backend/domain";
+import { Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
+import { TransactionPort } from "@/backend/infra/transactionPort";
 
 import { config } from "../../config";
+import { TaskRepository } from "../task";
 
 import { UserCreateParams, UserRepository } from ".";
 
@@ -13,13 +15,19 @@ export type UserUsecase = {
   createUser: (params: UserCreateParams) => Promise<string>;
   getUserById: (userId: string) => Promise<User>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
+  getDashboardById: (userId: string) => Promise<{ user: User; tasks: Task[] }>;
 };
 
-export function newUserUsecase(repo: UserRepository): UserUsecase {
+export function newUserUsecase(
+  repo: UserRepository,
+  taskRepo: TaskRepository,
+  tx: TransactionPort
+): UserUsecase {
   return {
     createUser: createUser(repo),
     getUserById: getUserById(repo),
     getUserByLoginId: getUserByLoginId(repo),
+    getDashboardById: getDashboardById(repo, taskRepo, tx),
   };
 }
 
@@ -51,5 +59,22 @@ function getUserById(repo: UserRepository) {
 function getUserByLoginId(repo: UserRepository) {
   return async function (loginId: string) {
     return await repo.getUserByLoginId(loginId);
+  };
+}
+
+function getDashboardById(
+  repo: UserRepository,
+  taskRepo: TaskRepository,
+  tx: TransactionPort
+) {
+  return async function (userId: string) {
+    return await tx.transaction(async () => {
+      const user = await repo.getUserById(userId);
+      if (!user) throw new AppError("user not found", 404);
+
+      const tasks = await taskRepo.getDoneTasksByUserId(userId);
+
+      return { user, tasks };
+    });
   };
 }

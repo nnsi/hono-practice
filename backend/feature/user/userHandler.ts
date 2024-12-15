@@ -1,7 +1,10 @@
 import { setCookie } from "hono/cookie";
 
 import { CreateUserRequest } from "@/types/request";
-import { GetUserResponseSchema } from "@/types/response/";
+import {
+  GetTasksResponseSchema,
+  GetUserResponseSchema,
+} from "@/types/response/";
 
 import { HonoContext } from "../../context";
 import { AppError } from "../../error";
@@ -12,6 +15,7 @@ export function newUserHandler(uc: UserUsecase) {
   return {
     createUser: createUser(uc),
     getMe: getMe(uc),
+    getDashboard: getDashboard(uc),
   };
 }
 
@@ -45,5 +49,30 @@ function getMe(uc: UserUsecase) {
     }
 
     return c.json(parsedUser.data, 200);
+  };
+}
+
+function getDashboard(uc: UserUsecase) {
+  return async (c: HonoContext) => {
+    const userId = c.get("jwtPayload").id;
+    const { user, tasks } = await uc.getDashboardById(userId);
+
+    const parsedUser = GetUserResponseSchema.safeParse(user);
+    if (!parsedUser.success) {
+      throw new AppError("failed to parse user", 500);
+    }
+
+    const responseTasks = tasks.map((task) => ({
+      ...task,
+      id: task.id.value,
+      userId: task.userId.value,
+    }));
+
+    const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);
+    if (!parsedTasks.success) {
+      throw new AppError("failed to parse tasks", 500);
+    }
+
+    return c.json({ user: parsedUser.data, tasks: parsedTasks.data }, 200);
   };
 }

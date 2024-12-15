@@ -11,6 +11,7 @@ export type TaskRepository = {
     userId: string,
     taskId: string
   ) => Promise<Task | undefined>;
+  getDoneTasksByUserId: (userId: string) => Promise<Task[]>;
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
@@ -20,6 +21,7 @@ export function newTaskRepository(db: DrizzleClient): TaskRepository {
   return {
     getTaskAll: getTaskAll(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
+    getDoneTasksByUserId: getDoneTasksByUserId(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
@@ -156,5 +158,40 @@ function deleteTask(db: DrizzleClient) {
     if (result.length === 0) {
       throw new ResourceNotFoundError("task not found");
     }
+  };
+}
+
+function getDoneTasksByUserId(db: DrizzleClient) {
+  return async function (userId: string): Promise<Task[]> {
+    const result = await db
+      .select({
+        id: tasks.id,
+        userId: tasks.userId,
+        title: tasks.title,
+        done: tasks.done,
+        memo: tasks.memo,
+        createdAt: tasks.createdAt,
+        updatedAt: tasks.updatedAt,
+      })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.done, true),
+          isNull(tasks.deletedAt)
+        )
+      )
+      .orderBy(desc(tasks.createdAt))
+      .execute();
+
+    return result.map((r) => ({
+      id: TaskId.create(r.id),
+      userId: UserId.create(r.userId),
+      title: r.title,
+      done: r.done,
+      memo: r.memo,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
   };
 }
