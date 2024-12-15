@@ -21,9 +21,8 @@ import {
 } from "@/types/response/GetTasksResponse";
 
 import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
-import { JwtEnv } from "../middleware/authMiddleware";
 
-const factory = createFactory<JwtEnv>();
+const factory = createFactory();
 const app = new Hono();
 
 const getSelect = zodSchemaToSelector(GetTasksResponseSchema, TaskSelectSchema);

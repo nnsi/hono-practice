@@ -23,11 +23,10 @@ import {
 } from "@/types/response/GetActivitiesResponse";
 
 import { generateOrder } from "../lib/lexicalOrder";
-import { JwtEnv } from "../middleware/authMiddleware";
 
 import { activityLogRoute } from "./activityLog";
 
-const factory = createFactory<JwtEnv>();
+const factory = createFactory();
 const app = new Hono();
 
 const SELECT_ACTIVITY_FIELDS: Prisma.ActivitySelect = {

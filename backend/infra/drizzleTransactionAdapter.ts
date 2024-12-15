@@ -1,9 +1,9 @@
-import { type DrizzleClient } from "../lib/drizzle";
+import { type DrizzleInstance } from "../lib/drizzle";
 
 import { TransactionPort } from "./transactionPort";
 
 export function newDrizzleTransactionAdapter(
-  db: DrizzleClient
+  db: DrizzleInstance
 ): TransactionPort {
   return {
     transaction: async (fn) => {

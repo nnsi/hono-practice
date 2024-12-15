@@ -18,4 +18,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export { drizzleInstance as drizzle };
-export type DrizzleClient = typeof drizzleInstance;
+export type DrizzleInstance = typeof drizzleInstance;

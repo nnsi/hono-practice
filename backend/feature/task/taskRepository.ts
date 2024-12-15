@@ -2,7 +2,7 @@ import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { Task, TaskId, UserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
-import { type DrizzleClient } from "@/backend/lib/drizzle";
+import { type DrizzleInstance } from "@/backend/lib/drizzle";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {
@@ -17,7 +17,7 @@ export type TaskRepository = {
   deleteTask: (task: Task) => Promise<void>;
 };
 
-export function newTaskRepository(db: DrizzleClient): TaskRepository {
+export function newTaskRepository(db: DrizzleInstance): TaskRepository {
   return {
     getTaskAll: getTaskAll(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
@@ -28,7 +28,7 @@ export function newTaskRepository(db: DrizzleClient): TaskRepository {
   };
 }
 
-function getTaskAll(db: DrizzleClient) {
+function getTaskAll(db: DrizzleInstance) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db
       .select({
@@ -57,7 +57,7 @@ function getTaskAll(db: DrizzleClient) {
   };
 }
 
-function getTaskByUserIdAndTaskId(db: DrizzleClient) {
+function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
   return async function (
     userId: string,
     taskId: string
@@ -98,7 +98,7 @@ function getTaskByUserIdAndTaskId(db: DrizzleClient) {
   };
 }
 
-function createTask(db: DrizzleClient) {
+function createTask(db: DrizzleInstance) {
   return async function createTask(task: Task): Promise<Task> {
     const setParams = {
       id: task.id.value,
@@ -118,7 +118,7 @@ function createTask(db: DrizzleClient) {
   };
 }
 
-function updateTask(db: DrizzleClient) {
+function updateTask(db: DrizzleInstance) {
   return async function updateTask(task: Task) {
     const result = await db
       .update(tasks)
@@ -143,7 +143,7 @@ function updateTask(db: DrizzleClient) {
   };
 }
 
-function deleteTask(db: DrizzleClient) {
+function deleteTask(db: DrizzleInstance) {
   return async function deleteTask(task: Task) {
     const result = await db
       .update(tasks)
@@ -161,7 +161,7 @@ function deleteTask(db: DrizzleClient) {
   };
 }
 
-function getDoneTasksByUserId(db: DrizzleClient) {
+function getDoneTasksByUserId(db: DrizzleInstance) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db
       .select({

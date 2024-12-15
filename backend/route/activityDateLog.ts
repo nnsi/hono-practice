@@ -12,9 +12,7 @@ import {
 } from "@/types/response";
 import { GetActivityStatsResponse } from "@/types/response/GetActivityStatsResponse";
 
-import { JwtEnv } from "../middleware/authMiddleware";
-
-const factory = createFactory<JwtEnv>();
+const factory = createFactory();
 const app = new Hono();
 
 const getHandler = factory.createHandlers(async (c) => {

@@ -1,7 +1,10 @@
 import { setCookie } from "hono/cookie";
 
+import dayjs from "dayjs";
+
 import { CreateUserRequest } from "@/types/request";
 import {
+  GetActivityStatsResponse,
   GetTasksResponseSchema,
   GetUserResponseSchema,
 } from "@/types/response/";
@@ -55,7 +58,19 @@ function getMe(uc: UserUsecase) {
 function getDashboard(uc: UserUsecase) {
   return async (c: HonoContext) => {
     const userId = c.get("jwtPayload").id;
-    const { user, tasks } = await uc.getDashboardById(userId);
+
+    const startDate = new Date(
+      c.req.query("startDate") ?? dayjs().startOf("month").toDate()
+    );
+    const endDate = new Date(
+      c.req.query("endDate") ?? dayjs().endOf("month").toDate()
+    );
+
+    const { user, tasks, activityStats } = await uc.getDashboardById(
+      userId,
+      startDate,
+      endDate
+    );
 
     const parsedUser = GetUserResponseSchema.safeParse(user);
     if (!parsedUser.success) {
@@ -73,6 +88,41 @@ function getDashboard(uc: UserUsecase) {
       throw new AppError("failed to parse tasks", 500);
     }
 
-    return c.json({ user: parsedUser.data, tasks: parsedTasks.data }, 200);
+    const stats: GetActivityStatsResponse[] = activityStats.reduce(
+      (acc, row) => {
+        const activity = acc.find((a) => a.id === row.activity_id);
+        if (!activity) {
+          acc.push({
+            id: row.activity_id,
+            name: row.activity_name,
+            total: row.total_quantity ?? 0,
+            kinds: [
+              {
+                id: row.activity_kind_id,
+                name: row.kind_name ?? "",
+                total: row.total_quantity ?? 0,
+                logs: [row.logs as any], // FIXME: any
+              },
+            ],
+          });
+          return acc;
+        }
+        activity.total += row.total_quantity ?? activity.total;
+        activity.kinds.push({
+          id: row.activity_kind_id,
+          name: row.kind_name ?? "",
+          total: row.total_quantity ?? 0,
+          logs: [row.logs as any], // FIXME: any
+        });
+
+        return acc;
+      },
+      [] as GetActivityStatsResponse[]
+    );
+
+    return c.json(
+      { user: parsedUser.data, tasks: parsedTasks.data, activityStats: stats },
+      200
+    );
   };
 }

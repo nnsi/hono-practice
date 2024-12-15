@@ -1,15 +1,42 @@
 import { sql } from "drizzle-orm";
 
-import { GetActivityStatsResponse } from "@/types/response/GetActivityStatsResponse";
+import { type DrizzleInstance } from "../lib/drizzle";
 
-import { drizzle } from "../lib/drizzle";
+export type ActivityStats = {
+  activity_id: string;
+  activity_kind_id: string;
+  activity_name: string;
+  kind_name: string;
+  total_quantity: number;
+  logs: { date: Date; quantity: number }[];
+};
 
-export async function activityStatsQuery(
-  userId: string,
-  startDate: Date,
-  endDate: Date
-) {
-  const result = await drizzle.execute<GetActivityStatsResponse>(sql`
+export type ActivityQueryService = {
+  activityStatsQuery: (
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ) => Promise<ActivityStats[]>;
+};
+
+export function newActivityQueryService(
+  db: DrizzleInstance
+): ActivityQueryService {
+  return {
+    activityStatsQuery: activityStatsQuery(db),
+  };
+}
+
+function activityStatsQuery(db: DrizzleInstance) {
+  return async function (userId: string, startDate: Date, endDate: Date) {
+    const result = await db.execute<{
+      activity_id: string;
+      activity_kind_id: string;
+      activity_name: string;
+      kind_name: string;
+      total_quantity: number;
+      logs: { date: Date; quantity: number }[];
+    }>(sql`
 SELECT
   a.id as activity_id,
   ak.id as activity_kind_id,
@@ -37,5 +64,6 @@ ORDER BY
   a.order_index asc,ak.order_index asc
 ;`);
 
-  return result;
+    return result.rows;
+  };
 }

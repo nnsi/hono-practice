@@ -21,9 +21,8 @@ import {
 } from "@/types/response";
 
 import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
-import { JwtEnv } from "../middleware/authMiddleware";
 
-const factory = createFactory<JwtEnv>();
+const factory = createFactory();
 const app = new Hono();
 
 const select = zodSchemaToSelector(
