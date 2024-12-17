@@ -12,7 +12,7 @@ import {
 import { HonoContext } from "../../context";
 import { AppError } from "../../error";
 
-import { UserCreateSchema, UserUsecase } from ".";
+import { UserUsecase } from ".";
 
 export function newUserHandler(uc: UserUsecase) {
   return {
@@ -25,11 +25,6 @@ export function newUserHandler(uc: UserUsecase) {
 function createUser(uc: UserUsecase) {
   return async (c: HonoContext) => {
     const json = await c.req.json<CreateUserRequest>();
-
-    const parsedJson = UserCreateSchema.safeParse(json);
-    if (!parsedJson.success) {
-      throw new AppError("failed to parse request", 400);
-    }
 
     const token = await uc.createUser(json);
 
