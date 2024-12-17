@@ -2,7 +2,7 @@ import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { Task, TaskId, UserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
-import { type DrizzleInstance } from "@/backend/lib/drizzle";
+import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {
@@ -99,7 +99,7 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
 }
 
 function createTask(db: DrizzleInstance) {
-  return async function createTask(task: Task): Promise<Task> {
+  return async function (task: Task): Promise<Task> {
     const setParams = {
       id: task.id.value,
       userId: task.userId.value,
@@ -119,7 +119,7 @@ function createTask(db: DrizzleInstance) {
 }
 
 function updateTask(db: DrizzleInstance) {
-  return async function updateTask(task: Task) {
+  return async function (task: Task) {
     const result = await db
       .update(tasks)
       .set({
@@ -144,7 +144,7 @@ function updateTask(db: DrizzleInstance) {
 }
 
 function deleteTask(db: DrizzleInstance) {
-  return async function deleteTask(task: Task) {
+  return async function (task: Task) {
     const result = await db
       .update(tasks)
       .set({ deletedAt: new Date() })

@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import { type DrizzleInstance } from "../lib/drizzle";
+import { type DrizzleInstance } from "../infra/drizzle/drizzleInstance";
 
 export type ActivityStats = {
   activity_id: string;

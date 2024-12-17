@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 
 import { User } from "@/backend/domain";
-import { type DrizzleInstance } from "@/backend/lib/drizzle";
+import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { users } from "@/drizzle/schema";
 
 import { UserCreateParams } from ".";

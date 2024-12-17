@@ -3,25 +3,19 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { newDrizzleTransactionAdapter } from "@/backend/infra/drizzleTransactionAdapter";
-import { drizzle } from "@/backend/lib/drizzle";
-import { newActivityQueryService } from "@/backend/query/activityStats";
+import { drizzle, newAppGateway } from "@/backend/infra/drizzle";
 import { createUserRequestSchema } from "@/types/request";
 
 import { AppContext } from "../../context";
 import { authMiddleware } from "../../middleware/authMiddleware";
-import { newTaskRepository } from "../task";
 
-import { newUserHandler, newUserUsecase, newUserRepository } from ".";
+import { newUserHandler, newUserUsecase } from ".";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
-const transaction = newDrizzleTransactionAdapter(drizzle);
-const repo = newUserRepository(drizzle);
-const taskRepo = newTaskRepository(drizzle);
-const activityQuery = newActivityQueryService(drizzle);
-const uc = newUserUsecase(repo, taskRepo, activityQuery, transaction);
+const gateway = newAppGateway(drizzle);
+const uc = newUserUsecase(gateway);
 const h = newUserHandler(uc);
 
 export const userRoute = app

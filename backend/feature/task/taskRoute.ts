@@ -3,7 +3,7 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { drizzle } from "@/backend/lib/drizzle";
+import { drizzle } from "@/backend/infra/drizzle/drizzleInstance";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,

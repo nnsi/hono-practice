@@ -15,7 +15,10 @@ export const users = pgTable("user", {
   name: text("name"),
   password: text("password").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -33,7 +36,8 @@ export const tasks = pgTable("task", {
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow(),
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -54,7 +58,8 @@ export const activities = pgTable("activity", {
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow(),
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -73,7 +78,8 @@ export const activityQuantityOptions = pgTable("activity_quantity_options", {
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow(),
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -95,7 +101,8 @@ export const activityLogs = pgTable("activity_log", {
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow(),
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -115,6 +122,7 @@ export const activityKinds = pgTable("activity_kind", {
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow(),
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
