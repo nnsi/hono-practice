@@ -4,10 +4,8 @@ import { User } from "@/backend/domain";
 import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { users } from "@/drizzle/schema";
 
-import { UserCreateParams } from ".";
-
 export type UserRepository = {
-  createUser: (params: UserCreateParams) => Promise<User>;
+  createUser: (user: User) => Promise<User>;
   getUserById: (userId: string) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
 };
@@ -21,13 +19,13 @@ export function newUserRepository(db: DrizzleInstance): UserRepository {
 }
 
 function createUser(db: DrizzleInstance) {
-  return async function (params: UserCreateParams) {
+  return async function (user: User) {
     const result = await db
       .insert(users)
       .values({
-        loginId: params.loginId,
-        name: params.name,
-        password: params.password,
+        loginId: user.loginId,
+        name: user.name,
+        password: user.password,
       })
       .returning();
 

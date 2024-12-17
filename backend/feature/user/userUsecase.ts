@@ -2,17 +2,23 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { Task, User } from "@/backend/domain";
+import { Task, User, UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
-import { AppGateway } from "@/backend/infra/drizzleGateway";
+import { AppGateway } from "@/backend/infra/drizzle";
 import { ActivityStats } from "@/backend/query/activityStats";
 
 import { config } from "../../config";
 
-import { UserCreateParams } from ".";
+type InputParams = {
+  Create: {
+    loginId: string;
+    password: string;
+    name?: string;
+  };
+};
 
 export type UserUsecase = {
-  createUser: (params: UserCreateParams) => Promise<string>;
+  createUser: (params: InputParams["Create"]) => Promise<string>;
   getUserById: (userId: string) => Promise<User>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
   getDashboardById: (
@@ -32,11 +38,18 @@ export function newUserUsecase(gateway: AppGateway): UserUsecase {
 }
 
 function createUser(gateway: AppGateway) {
-  return async function (params: UserCreateParams) {
+  return async function (params: InputParams["Create"]) {
     const cryptedPassword = bcrypt.hashSync(params.password, 10);
     params.password = cryptedPassword;
+    const userId = UserId.create();
+    const newUser = {
+      id: userId.value,
+      loginId: params.loginId,
+      password: params.password,
+      name: params.name,
+    };
 
-    const user = await gateway.createUser(params);
+    const user = await gateway.createUser(newUser);
 
     const token = await sign(
       { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
