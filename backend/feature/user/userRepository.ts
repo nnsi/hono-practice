@@ -1,12 +1,12 @@
 import { eq, and } from "drizzle-orm";
 
-import { User } from "@/backend/domain";
+import { User, UserId } from "@/backend/domain";
 import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { users } from "@/drizzle/schema";
 
 export type UserRepository = {
   createUser: (user: User) => Promise<User>;
-  getUserById: (userId: string) => Promise<User | undefined>;
+  getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
 };
 
@@ -23,13 +23,16 @@ function createUser(db: DrizzleInstance) {
     const result = await db
       .insert(users)
       .values({
+        id: user.id,
         loginId: user.loginId,
         name: user.name,
         password: user.password,
       })
       .returning();
+    
+    const persistedUser = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
 
-    return result[0];
+    return persistedUser;
   };
 }
 
@@ -41,7 +44,13 @@ function getUserById(db: DrizzleInstance) {
       .where(and(eq(users.id, userId)))
       .execute();
 
-    return result.length > 0 ? result[0] : undefined;
+    if(result.length === 0) {
+      return undefined;
+    }
+
+    const user = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
+
+    return user;
   };
 }
 
@@ -52,7 +61,13 @@ function getUserByLoginId(db: DrizzleInstance) {
       .from(users)
       .where(and(eq(users.loginId, loginId)))
       .execute();
+    
+    if(result.length === 0) {
+      return undefined;
+    }
 
-    return result.length > 0 ? result[0] : undefined;
+    const user = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
+
+    return user;
   };
 }

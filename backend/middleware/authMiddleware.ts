@@ -4,7 +4,7 @@ import { verify } from "hono/jwt";
 
 import { config } from "../config";
 import { HonoContext } from "../context";
-import { UserId } from "../domain";
+import { createUserId } from "../domain";
 
 export async function authMiddleware(c: HonoContext, next: Next) {
   const jwt = getCookie(c, "auth");
@@ -15,7 +15,7 @@ export async function authMiddleware(c: HonoContext, next: Next) {
   try {
     const payload = await verify(jwt, config.JWT_SECRET);
     c.set("jwtPayload", payload);
-    c.set("userId", UserId.create(payload.id as string));
+    c.set("userId", createUserId(payload.id as string));
   } catch (e) {
     console.log(e);
     return c.json({ message: "unauthorized" }, 401);

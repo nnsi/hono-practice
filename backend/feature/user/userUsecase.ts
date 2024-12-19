@@ -2,7 +2,7 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { Task, User, UserId } from "@/backend/domain";
+import { createUserId, Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import { AppGateway } from "@/backend/infra/drizzle";
 import { ActivityStats } from "@/backend/query/activityStats";
@@ -41,9 +41,9 @@ function createUser(gateway: AppGateway) {
   return async function (params: InputParams["Create"]) {
     const cryptedPassword = bcrypt.hashSync(params.password, 10);
     params.password = cryptedPassword;
-    const userId = UserId.create();
+    const userId = createUserId();
     const newUser = {
-      id: userId.value,
+      id: userId,
       loginId: params.loginId,
       password: params.password,
       name: params.name,
@@ -62,7 +62,9 @@ function createUser(gateway: AppGateway) {
 
 function getUserById(gateway: AppGateway) {
   return async function (userId: string) {
-    const user = await gateway.getUserById(userId);
+    const id = createUserId(userId);
+
+    const user = await gateway.getUserById(id);
     if (!user) throw new AppError("user not found", 404);
 
     return user;
@@ -78,7 +80,9 @@ function getUserByLoginId(gateway: AppGateway) {
 function getDashboardById(gateway: AppGateway) {
   return async function (userId: string, startDate: Date, endDate: Date) {
     return await gateway.runInTx(async (gateway) => {
-      const user = await gateway.getUserById(userId);
+      const id = createUserId(userId);
+
+      const user = await gateway.getUserById(id);
       if (!user) throw new AppError("user not found", 404);
 
       const tasks = await gateway.getDoneTasksByUserId(userId);

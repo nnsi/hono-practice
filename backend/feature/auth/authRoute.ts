@@ -3,19 +3,20 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { newAppGateway } from "@/backend/infra/drizzle";
 import { drizzle } from "@/backend/infra/drizzle/drizzleInstance";
 import { loginRequestSchema } from "@/types/request";
 
 import { AppContext } from "../../context";
-import { newUserRepository, newUserUsecase } from "../user";
+import { newUserUsecase } from "../user";
 
 import { newAuthHandler } from ".";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
-const userRepo = newUserRepository(drizzle);
-const userUsecase = newUserUsecase(userRepo);
+const gateway = newAppGateway(drizzle);
+const userUsecase = newUserUsecase(gateway);
 
 const h = newAuthHandler(userUsecase);
 

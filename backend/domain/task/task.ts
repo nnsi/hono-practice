@@ -1,4 +1,4 @@
-import { UserId } from "../user/userId";
+import { UserId } from "../user";
 
 import { TaskId } from "./taskId";
 

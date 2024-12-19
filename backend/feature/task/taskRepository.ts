@@ -1,6 +1,6 @@
 import { eq, and, desc, isNull } from "drizzle-orm";
 
-import { Task, TaskId, UserId } from "@/backend/domain";
+import { createUserId, Task, TaskId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { tasks } from "@/drizzle/schema";
@@ -47,7 +47,7 @@ function getTaskAll(db: DrizzleInstance) {
 
     return result.map((r) => ({
       id: TaskId.create(r.id),
-      userId: UserId.create(r.userId),
+      userId: createUserId(r.userId),
       title: r.title,
       done: r.done,
       memo: r.memo,
@@ -88,7 +88,7 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
 
     return {
       id: TaskId.create(result[0].id),
-      userId: UserId.create(result[0].userId),
+      userId: createUserId(result[0].userId),
       title: result[0].title,
       done: result[0].done,
       memo: result[0].memo,
@@ -102,7 +102,7 @@ function createTask(db: DrizzleInstance) {
   return async function (task: Task): Promise<Task> {
     const setParams = {
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
       title: task.title,
       done: task.done,
       memo: task.memo,
@@ -128,7 +128,7 @@ function updateTask(db: DrizzleInstance) {
         memo: task.memo,
       })
       .where(
-        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId.value))
+        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId))
       )
       .returning();
 
@@ -149,7 +149,7 @@ function deleteTask(db: DrizzleInstance) {
       .update(tasks)
       .set({ deletedAt: new Date() })
       .where(
-        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId.value))
+        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId))
       )
       .returning();
 
@@ -186,7 +186,7 @@ function getDoneTasksByUserId(db: DrizzleInstance) {
 
     return result.map((r) => ({
       id: TaskId.create(r.id),
-      userId: UserId.create(r.userId),
+      userId: createUserId(r.userId),
       title: r.title,
       done: r.done,
       memo: r.memo,

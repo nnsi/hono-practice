@@ -1,4 +1,4 @@
-import { Task, TaskId, UserId } from "@/backend/domain";
+import { createUserId, Task, TaskId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 
 import { TaskRepository } from ".";
@@ -55,7 +55,7 @@ function createTask(repo: TaskRepository) {
   return async (userId: string, params: InputParams["Create"]) => {
     const task: Task = {
       id: TaskId.create(),
-      userId: UserId.create(userId),
+      userId: createUserId(userId),
       title: params.title,
       done: false,
       memo: null,

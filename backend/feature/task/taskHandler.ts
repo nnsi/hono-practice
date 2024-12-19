@@ -21,12 +21,12 @@ export function newTaskHandler(uc: TaskUsecase) {
 
 function getTasks(uc: TaskUsecase) {
   return async (c: HonoContext) => {
-    const tasks = await uc.getTasks(c.get("userId").value);
+    const tasks = await uc.getTasks(c.get("userId"));
 
     const responseTasks = tasks.map((task) => ({
       ...task,
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
     }));
 
     const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);
@@ -42,12 +42,12 @@ function getTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const { id } = c.req.param();
 
-    const task = await uc.getTask(c.get("userId").value, id);
+    const task = await uc.getTask(c.get("userId"), id);
 
     const responseTask = {
       ...task,
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
     };
 
     const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
@@ -63,12 +63,12 @@ function createTask(uc: TaskUsecase) {
   return async (c: HonoContext) => {
     const json = await c.req.json<CreateTaskRequest>();
 
-    const task = await uc.createTask(c.get("userId").value, json);
+    const task = await uc.createTask(c.get("userId"), json);
 
     const responseTask = {
       ...task,
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
     };
 
     const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
@@ -85,12 +85,12 @@ function updateTask(uc: TaskUsecase) {
     const taskId = c.req.param("id");
     const json = await c.req.json<UpdateTaskRequest>();
 
-    const task = await uc.updateTask(c.get("userId").value, taskId, json);
+    const task = await uc.updateTask(c.get("userId"), taskId, json);
 
     const responseTask = {
       ...task,
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
     };
 
     const parsedTask = GetTaskResponseSchema.safeParse(responseTask);

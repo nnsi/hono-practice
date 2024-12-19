@@ -75,7 +75,7 @@ function getDashboard(uc: UserUsecase) {
     const responseTasks = tasks.map((task) => ({
       ...task,
       id: task.id.value,
-      userId: task.userId.value,
+      userId: task.userId,
     }));
 
     const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);

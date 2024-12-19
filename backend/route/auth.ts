@@ -10,7 +10,7 @@ import { prisma } from "@/backend/lib/prisma";
 import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
 
 import { config } from "../config";
-import { JwtPayload } from "../middleware/authMiddleware";
+import { JwtPayload } from "../context";
 
 const factory = createFactory();
 const app = new Hono();
