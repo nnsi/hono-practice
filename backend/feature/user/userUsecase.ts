@@ -9,16 +9,14 @@ import { ActivityStats } from "@/backend/query/activityQueryService";
 
 import { config } from "../../config";
 
-type InputParams = {
-  Create: {
-    loginId: string;
-    password: string;
-    name?: string;
-  };
+export type CreateUserInputParams = {
+  loginId: string;
+  password: string;
+  name?: string;
 };
 
 export type UserUsecase = {
-  createUser: (params: InputParams["Create"]) => Promise<string>;
+  createUser: (params: CreateUserInputParams) => Promise<string>;
   getUserById: (userId: string) => Promise<User>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
   getDashboardById: (
@@ -38,16 +36,10 @@ export function newUserUsecase(gateway: AppGateway): UserUsecase {
 }
 
 function createUser(gateway: AppGateway) {
-  return async function (params: InputParams["Create"]) {
+  return async function (params: CreateUserInputParams) {
     const cryptedPassword = bcrypt.hashSync(params.password, 10);
     params.password = cryptedPassword;
-    const userId = createUserId();
-    const newUser = {
-      id: userId,
-      loginId: params.loginId,
-      password: params.password,
-      name: params.name,
-    };
+    const newUser = User.create({ ...params });
 
     const user = await gateway.createUser(newUser);
 

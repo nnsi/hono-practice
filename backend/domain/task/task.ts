@@ -36,6 +36,17 @@ function createTask(params: {
   };
 }
 
+function updateTask(
+  task: Task,
+  params: Partial<Omit<BaseTask, "id" | "userId">>
+): Task {
+  return {
+    ...task,
+    ...params,
+  };
+}
+
 export const Task = {
   create: createTask,
+  update: updateTask,
 };

@@ -15,7 +15,7 @@ type PersistedUser = BaseUser & {
 export type User = BaseUser | PersistedUser;
 
 function createUser(params: {
-  id: string | UserId;
+  id?: string | UserId;
   loginId: string;
   name?: string | null;
   password: string;

@@ -92,29 +92,13 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
       return undefined;
     }
 
-    return Task.create({
-      id: result[0].id,
-      userId: result[0].userId,
-      title: result[0].title,
-      done: result[0].done,
-      memo: result[0].memo,
-      createdAt: result[0].createdAt,
-      updatedAt: result[0].updatedAt,
-    });
+    return Task.create(result[0]);
   };
 }
 
 function createTask(db: DrizzleInstance) {
   return async function (task: Task): Promise<Task> {
-    const setParams = {
-      id: task.id,
-      userId: task.userId,
-      title: task.title,
-      done: task.done,
-      memo: task.memo,
-    };
-
-    const result = await db.insert(tasks).values(setParams).returning();
+    const result = await db.insert(tasks).values(task).returning();
 
     return Task.create({
       ...task,
@@ -184,16 +168,6 @@ function getDoneTasksByUserId(db: DrizzleInstance) {
       .orderBy(desc(tasks.createdAt))
       .execute();
 
-    return result.map((r) =>
-      Task.create({
-        id: r.id,
-        userId: r.userId,
-        title: r.title,
-        done: r.done,
-        memo: r.memo,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      })
-    );
+    return result.map((r) => Task.create(r));
   };
 }
