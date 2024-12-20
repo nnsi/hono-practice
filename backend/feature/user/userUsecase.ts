@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { createUserId, Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import { AppGateway } from "@/backend/infra/drizzle";
-import { ActivityStats } from "@/backend/query/activityStats";
+import { ActivityStats } from "@/backend/query/activityQueryService";
 
 import { config } from "../../config";
 

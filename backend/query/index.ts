@@ -1,1 +1,1 @@
-export * from "./activityStats";
+export * from "./activityQueryService";

@@ -1,23 +1,30 @@
 import { createUserId, UserId } from "./userId";
 
-export type User = {
+type BaseUser = {
   id: UserId;
+  name?: string | null;
   loginId: string;
   password: string;
-  name?: string | null;
 };
 
-function createUser(
-  id: string | UserId,
-  loginId: string,
-  password: string,
-  name?: string | null
-): User {
+type PersistedUser = BaseUser & {
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type User = BaseUser | PersistedUser;
+
+function createUser(params: {
+  id: string | UserId;
+  loginId: string;
+  name?: string | null;
+  password: string;
+}): User {
+  const id = createUserId(params.id);
+
   return {
-    id: createUserId(id),
-    loginId,
-    password,
-    name,
+    ...params,
+    id,
   };
 }
 

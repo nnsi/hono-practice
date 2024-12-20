@@ -29,8 +29,8 @@ function createUser(db: DrizzleInstance) {
         password: user.password,
       })
       .returning();
-    
-    const persistedUser = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
+
+    const persistedUser = User.create(result[0]);
 
     return persistedUser;
   };
@@ -44,11 +44,11 @@ function getUserById(db: DrizzleInstance) {
       .where(and(eq(users.id, userId)))
       .execute();
 
-    if(result.length === 0) {
+    if (result.length === 0) {
       return undefined;
     }
 
-    const user = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
+    const user = User.create(result[0]);
 
     return user;
   };
@@ -61,12 +61,12 @@ function getUserByLoginId(db: DrizzleInstance) {
       .from(users)
       .where(and(eq(users.loginId, loginId)))
       .execute();
-    
-    if(result.length === 0) {
+
+    if (result.length === 0) {
       return undefined;
     }
 
-    const user = User.create(result[0].id, result[0].loginId, result[0].password, result[0].name);
+    const user = User.create(result[0]);
 
     return user;
   };

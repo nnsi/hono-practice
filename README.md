@@ -1,7 +1,11 @@
 # Hono-practice
 
-- Hono / Prisma+Drizzle / React / Vite + Tanstack Router
-  - TODO: Prismaやめたい
+- backend Hono / Prisma + Drizzle
+- frontend React / Tanstack Router
+- drizzle
+- types
+  - request
+  - response
 
 ## Backend
 
@@ -13,9 +17,9 @@ Clean Arhitectureライク
   - context
     - context.ts
   - domain
-    - baseVo.ts
-    - (yet) baseModel.ts
-    - {feature}
+    - {model}
+      - domain.ts
+      - {vo}.ts
   - feature
     - {feature}
       - route.ts
@@ -23,11 +27,15 @@ Clean Arhitectureライク
       - usecase.ts
       - repository.ts
   - infra
-    - xxxPort.ts
-    - xxxAdapter.ts
-  - lib
-  - middleware
+    - {orm}
+      - Gateway.ts
+      - Instance.ts
   - query
     - {feature}QueryService.ts
+
+```txt
+handler -> usecase -> entities <- repository
+                   -> query
+```
 
 ## Frontend
