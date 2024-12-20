@@ -25,7 +25,7 @@ function getTasks(uc: TaskUsecase) {
 
     const responseTasks = tasks.map((task) => ({
       ...task,
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
     }));
 
@@ -46,7 +46,7 @@ function getTask(uc: TaskUsecase) {
 
     const responseTask = {
       ...task,
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
     };
 
@@ -67,7 +67,7 @@ function createTask(uc: TaskUsecase) {
 
     const responseTask = {
       ...task,
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
     };
 
@@ -89,7 +89,7 @@ function updateTask(uc: TaskUsecase) {
 
     const responseTask = {
       ...task,
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
     };
 

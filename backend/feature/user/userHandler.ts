@@ -74,7 +74,7 @@ function getDashboard(uc: UserUsecase) {
 
     const responseTasks = tasks.map((task) => ({
       ...task,
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
     }));
 

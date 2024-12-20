@@ -1,7 +1,7 @@
 import { eq, and, desc, isNull } from "drizzle-orm";
 
-import { createUserId, Task, TaskId } from "@/backend/domain";
-import { ResourceNotFoundError } from "@/backend/error";
+import { Task } from "@/backend/domain";
+import { AppError, ResourceNotFoundError } from "@/backend/error";
 import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
 import { tasks } from "@/drizzle/schema";
 
@@ -45,15 +45,21 @@ function getTaskAll(db: DrizzleInstance) {
       .orderBy(desc(tasks.createdAt))
       .execute();
 
-    return result.map((r) => ({
-      id: TaskId.create(r.id),
-      userId: createUserId(r.userId),
-      title: r.title,
-      done: r.done,
-      memo: r.memo,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    }));
+    try {
+      return result.map((r) =>
+        Task.create({
+          id: r.id,
+          userId: r.userId,
+          title: r.title,
+          done: r.done,
+          memo: r.memo,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        })
+      );
+    } catch (e) {
+      throw new AppError("failed to parse tasks");
+    }
   };
 }
 
@@ -86,22 +92,22 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
       return undefined;
     }
 
-    return {
-      id: TaskId.create(result[0].id),
-      userId: createUserId(result[0].userId),
+    return Task.create({
+      id: result[0].id,
+      userId: result[0].userId,
       title: result[0].title,
       done: result[0].done,
       memo: result[0].memo,
       createdAt: result[0].createdAt,
       updatedAt: result[0].updatedAt,
-    };
+    });
   };
 }
 
 function createTask(db: DrizzleInstance) {
   return async function (task: Task): Promise<Task> {
     const setParams = {
-      id: task.id.value,
+      id: task.id,
       userId: task.userId,
       title: task.title,
       done: task.done,
@@ -110,11 +116,11 @@ function createTask(db: DrizzleInstance) {
 
     const result = await db.insert(tasks).values(setParams).returning();
 
-    return {
+    return Task.create({
       ...task,
       createdAt: result[0].createdAt,
       updatedAt: result[0].updatedAt,
-    };
+    });
   };
 }
 
@@ -127,19 +133,17 @@ function updateTask(db: DrizzleInstance) {
         done: task.done,
         memo: task.memo,
       })
-      .where(
-        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId))
-      )
+      .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
       .returning();
 
     if (result.length === 0) {
       return undefined;
     }
 
-    return {
+    return Task.create({
       ...task,
       updatedAt: result[0].updatedAt,
-    };
+    });
   };
 }
 
@@ -148,12 +152,8 @@ function deleteTask(db: DrizzleInstance) {
     const result = await db
       .update(tasks)
       .set({ deletedAt: new Date() })
-      .where(
-        and(eq(tasks.id, task.id.value), eq(tasks.userId, task.userId))
-      )
+      .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
       .returning();
-
-    console.log(result);
 
     if (result.length === 0) {
       throw new ResourceNotFoundError("task not found");
@@ -184,14 +184,16 @@ function getDoneTasksByUserId(db: DrizzleInstance) {
       .orderBy(desc(tasks.createdAt))
       .execute();
 
-    return result.map((r) => ({
-      id: TaskId.create(r.id),
-      userId: createUserId(r.userId),
-      title: r.title,
-      done: r.done,
-      memo: r.memo,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    }));
+    return result.map((r) =>
+      Task.create({
+        id: r.id,
+        userId: r.userId,
+        title: r.title,
+        done: r.done,
+        memo: r.memo,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      })
+    );
   };
 }
