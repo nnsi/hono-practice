@@ -1,24 +1,27 @@
 import { setCookie } from "hono/cookie";
-import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { config } from "@/backend/config";
-import { HonoContext, JwtPayload } from "@/backend/context";
+import { HonoContext } from "@/backend/context";
 import { AppError, AuthError } from "@/backend/error";
 import { LoginRequest } from "@/types/request";
 import { LoginResponseSchema } from "@/types/response";
 
 import { UserUsecase } from "../user";
 
-export function newAuthHandler(userUsecase: UserUsecase) {
+import { AuthUsecase } from ".";
+
+export function newAuthHandler(
+  authUsecase: AuthUsecase,
+  userUsecase: UserUsecase
+) {
   return {
-    login: login(userUsecase),
+    login: login(authUsecase, userUsecase),
     logout: logout(),
   };
 }
 
-function login(userUsecase: UserUsecase) {
+function login(authUsecase: AuthUsecase, userUsecase: UserUsecase) {
   return async (c: HonoContext) => {
     const { login_id, password }: LoginRequest = await c.req.json();
 
@@ -32,12 +35,8 @@ function login(userUsecase: UserUsecase) {
       throw new AuthError("invalid login id or password");
     }
 
-    const payload: JwtPayload = {
-      id: user.id,
-      exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60,
-    };
+    const { token, payload } = await authUsecase.getToken(user);
 
-    const token = await sign(payload, config.JWT_SECRET);
     setCookie(c, "auth", token, {
       httpOnly: true,
       expires: new Date(payload.exp * 1000),

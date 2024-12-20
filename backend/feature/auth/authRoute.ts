@@ -10,15 +10,16 @@ import { loginRequestSchema } from "@/types/request";
 import { AppContext } from "../../context";
 import { newUserUsecase } from "../user";
 
-import { newAuthHandler } from ".";
+import { newAuthHandler, newAuthUsecase } from ".";
 
 const factory = createFactory<AppContext>();
 const app = new Hono();
 
 const gateway = newAppGateway(drizzle);
+const authUsecase = newAuthUsecase();
 const userUsecase = newUserUsecase(gateway);
 
-const h = newAuthHandler(userUsecase);
+const h = newAuthHandler(authUsecase, userUsecase);
 
 export const authRoute = app
   .post(
