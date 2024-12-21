@@ -31,19 +31,11 @@ export function newTaskRepository(db: DrizzleInstance): TaskRepository {
 function getTaskAll(db: DrizzleInstance) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db
-      .select({
-        id: tasks.id,
-        userId: tasks.userId,
-        title: tasks.title,
-        done: tasks.done,
-        memo: tasks.memo,
-        createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
-      })
-      .from(tasks)
-      .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
-      .orderBy(desc(tasks.createdAt))
-      .execute();
+      .query.tasks
+      .findMany({
+        where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
+        orderBy: desc(tasks.createdAt),
+      });
 
     try {
       return result.map((r) =>
@@ -69,30 +61,22 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
     taskId: string
   ): Promise<Task | undefined> {
     const result = await db
-      .select({
-        id: tasks.id,
-        userId: tasks.userId,
-        title: tasks.title,
-        done: tasks.done,
-        memo: tasks.memo,
-        createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
-      })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          eq(tasks.id, taskId),
-          isNull(tasks.deletedAt)
-        )
-      )
-      .execute();
+      .query
+      .tasks
+      .findFirst({
+        where: 
+          and(
+            eq(tasks.id, taskId),
+            eq(tasks.userId, userId),
+            isNull(tasks.deletedAt)
+          ),
+        })
 
-    if (result.length === 0) {
+    if (!result) {
       return undefined;
     }
 
-    return Task.create(result[0]);
+    return Task.create(result);
   };
 }
 
@@ -148,25 +132,12 @@ function deleteTask(db: DrizzleInstance) {
 function getDoneTasksByUserId(db: DrizzleInstance) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db
-      .select({
-        id: tasks.id,
-        userId: tasks.userId,
-        title: tasks.title,
-        done: tasks.done,
-        memo: tasks.memo,
-        createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
-      })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          eq(tasks.done, true),
-          isNull(tasks.deletedAt)
-        )
-      )
-      .orderBy(desc(tasks.createdAt))
-      .execute();
+      .query
+      .tasks
+      .findMany({
+        where: and(eq(tasks.userId, userId), eq(tasks.done, true), isNull(tasks.deletedAt)),
+        orderBy: desc(tasks.createdAt),
+      });
 
     return result.map((r) => Task.create(r));
   };
