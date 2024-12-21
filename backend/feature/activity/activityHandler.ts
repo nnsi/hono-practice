@@ -22,9 +22,8 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
-import { generateOrder } from "../lib/lexicalOrder";
-
-import { activityLogRoute } from "./activityLog";
+import { generateOrder } from "../../lib/lexicalOrder";
+import { activityLogRoute } from "../activityLog";
 
 const factory = createFactory();
 const app = new Hono();

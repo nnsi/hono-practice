@@ -20,7 +20,7 @@ import {
   GetActivityLogsResponseSchema,
 } from "@/types/response";
 
-import { zodSchemaToSelector } from "../lib/zodSchemaToSelector";
+import { zodSchemaToSelector } from "../../lib/zodSchemaToSelector";
 
 const factory = createFactory();
 const app = new Hono();

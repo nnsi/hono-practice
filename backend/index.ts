@@ -10,9 +10,14 @@ import {
   ResourceNotFoundError,
   SqlExecutionError,
 } from "./error";
-import { authRoute, taskRoute, userRoute } from "./feature";
+import {
+  authRoute,
+  taskRoute,
+  userRoute,
+  activityRoute,
+  activityDateLogRoute,
+} from "./feature";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { activityRoute, activityDateLogRoute } from "./route";
 
 const app = new Hono();
 app.onError((err, c) => {
