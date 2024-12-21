@@ -31,7 +31,8 @@ export function newTaskRepository(db: DrizzleInstance): TaskRepository {
 function getTaskAll(db: DrizzleInstance) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db
-      .query.tasks
+      .query
+      .tasks
       .findMany({
         where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
         orderBy: desc(tasks.createdAt),
@@ -64,7 +65,7 @@ function getTaskByUserIdAndTaskId(db: DrizzleInstance) {
       .query
       .tasks
       .findFirst({
-        where: 
+        where:
           and(
             eq(tasks.id, taskId),
             eq(tasks.userId, userId),

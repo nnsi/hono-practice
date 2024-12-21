@@ -5,7 +5,7 @@ import * as schema from "@/drizzle/schema";
 
 const { Pool } = pg;
 
-function createInstance() { 
+function createInstance() {
   return drizzle(pool, { schema });
 }
 
