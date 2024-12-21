@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import { type DrizzleInstance } from "../infra/drizzle/drizzleInstance";
+import { type QueryExecutor } from "../infra/drizzle/drizzleInstance";
 
 export type ActivityStats = {
   activity_id: string;
@@ -20,14 +20,14 @@ export type ActivityQueryService = {
 };
 
 export function newActivityQueryService(
-  db: DrizzleInstance
+  db: QueryExecutor
 ): ActivityQueryService {
   return {
     activityStatsQuery: activityStatsQuery(db),
   };
 }
 
-function activityStatsQuery(db: DrizzleInstance) {
+function activityStatsQuery(db: QueryExecutor) {
   return async function (userId: string, startDate: Date, endDate: Date) {
     const result = await db.execute<{
       activity_id: string;

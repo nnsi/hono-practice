@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 
 import { User, UserId } from "@/backend/domain";
-import { type DrizzleInstance } from "@/backend/infra/drizzle/drizzleInstance";
+import { type QueryExecutor } from "@/backend/infra/drizzle/drizzleInstance";
 import { users } from "@/drizzle/schema";
 
 export type UserRepository = {
@@ -10,7 +10,7 @@ export type UserRepository = {
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
 };
 
-export function newUserRepository(db: DrizzleInstance): UserRepository {
+export function newUserRepository(db: QueryExecutor): UserRepository {
   return {
     createUser: createUser(db),
     getUserById: getUserById(db),
@@ -18,7 +18,7 @@ export function newUserRepository(db: DrizzleInstance): UserRepository {
   };
 }
 
-function createUser(db: DrizzleInstance) {
+function createUser(db: QueryExecutor) {
   return async function (user: User) {
     const result = await db
       .insert(users)
@@ -36,7 +36,7 @@ function createUser(db: DrizzleInstance) {
   };
 }
 
-function getUserById(db: DrizzleInstance) {
+function getUserById(db: QueryExecutor) {
   return async function (userId: string) {
     const result = await db
       .select()
@@ -54,7 +54,7 @@ function getUserById(db: DrizzleInstance) {
   };
 }
 
-function getUserByLoginId(db: DrizzleInstance) {
+function getUserByLoginId(db: QueryExecutor) {
   return async function (loginId: string) {
     const result = await db
       .select()
