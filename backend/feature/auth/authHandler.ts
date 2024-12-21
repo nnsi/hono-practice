@@ -1,39 +1,26 @@
 import { setCookie } from "hono/cookie";
 
-import bcrypt from "bcrypt";
-
 import { HonoContext } from "@/backend/context";
-import { AppError, AuthError } from "@/backend/error";
+import { AppError } from "@/backend/error";
 import { LoginRequest } from "@/types/request";
 import { LoginResponseSchema } from "@/types/response";
-
-import { UserUsecase } from "../user";
 
 import { AuthUsecase } from ".";
 
 export function newAuthHandler(
   authUsecase: AuthUsecase,
-  userUsecase: UserUsecase
 ) {
   return {
-    login: login(authUsecase, userUsecase),
+    login: login(authUsecase),
     logout: logout(),
   };
 }
 
-function login(authUsecase: AuthUsecase, userUsecase: UserUsecase) {
-  return async (c: HonoContext) => {
-    const { login_id, password }: LoginRequest = await c.req.json();
+function login(authUsecase: AuthUsecase) {
+  return async (c: HonoContext, params: LoginRequest) => {
+    const { login_id, password } = params;
 
-    const user = await userUsecase.getUserByLoginId(login_id);
-    if (!user) {
-      throw new AuthError("invalid login id or password");
-    }
-
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      throw new AuthError("invalid login id or password");
-    }
+    const user = await authUsecase.login(login_id, password);
 
     const { token, payload } = await authUsecase.getToken(user);
 

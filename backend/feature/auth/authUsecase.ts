@@ -1,16 +1,39 @@
 import { sign } from "hono/jwt";
 
+import bcrypt from "bcrypt";
+
 import { config } from "@/backend/config";
 import { JwtPayload } from "@/backend/context";
 import { User } from "@/backend/domain";
+import { AuthError } from "@/backend/error";
+
+import { UserRepository } from "../user";
 
 export type AuthUsecase = {
+  login: (login_id: string, password: string) => Promise<User>;
   getToken: (user: User) => Promise<{ token: string; payload: JwtPayload }>;
 };
 
-export function newAuthUsecase(): AuthUsecase {
+export function newAuthUsecase(repo:UserRepository): AuthUsecase {
   return {
+    login: login(repo),
     getToken: getToken(),
+  };
+}
+
+function login(repo:UserRepository) {
+  return async (login_id: string, password: string) => {
+    const user = await repo.getUserByLoginId(login_id);
+    if (!user) {
+      throw new AuthError("invalid login id or password");
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      throw new AuthError("invalid login id or password");
+    }
+
+    return user;
   };
 }
 
