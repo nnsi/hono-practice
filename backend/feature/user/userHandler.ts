@@ -1,10 +1,8 @@
 import { setCookie } from "hono/cookie";
 
-import dayjs from "dayjs";
-
+import dayjs from "@/backend/lib/dayjs";
 import { CreateUserRequest } from "@/types/request";
 import {
-  GetActivityStatsResponse,
   GetTasksResponseSchema,
   GetUserResponseSchema,
 } from "@/types/response/";
@@ -60,6 +58,7 @@ function getDashboard(uc: UserUsecase) {
     const endDate = new Date(
       c.req.query("endDate") ?? dayjs().endOf("month").toDate()
     );
+    console.log(startDate, endDate);
 
     const { user, tasks, activityStats } = await uc.getDashboardById(
       userId,
@@ -83,40 +82,8 @@ function getDashboard(uc: UserUsecase) {
       throw new AppError("failed to parse tasks", 500);
     }
 
-    const stats: GetActivityStatsResponse[] = activityStats.reduce(
-      (acc, row) => {
-        const activity = acc.find((a) => a.id === row.activity_id);
-        if (!activity) {
-          acc.push({
-            id: row.activity_id,
-            name: row.activity_name,
-            total: row.total_quantity ?? 0,
-            kinds: [
-              {
-                id: row.activity_kind_id,
-                name: row.kind_name ?? "",
-                total: row.total_quantity ?? 0,
-                logs: [row.logs as any], // FIXME: any
-              },
-            ],
-          });
-          return acc;
-        }
-        activity.total += row.total_quantity ?? activity.total;
-        activity.kinds.push({
-          id: row.activity_kind_id,
-          name: row.kind_name ?? "",
-          total: row.total_quantity ?? 0,
-          logs: [row.logs as any], // FIXME: any
-        });
-
-        return acc;
-      },
-      [] as GetActivityStatsResponse[]
-    );
-
     return c.json(
-      { user: parsedUser.data, tasks: parsedTasks.data, activityStats: stats },
+      { user: parsedUser.data, tasks: parsedTasks.data, activityStats },
       200
     );
   };

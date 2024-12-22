@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { createUserId, Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import { AppGateway } from "@/backend/infra/drizzle";
-import { ActivityStats } from "@/backend/query/activityQueryService";
+import { GetActivityStatsResponse } from "@/types/response";
 
 import { config } from "../../config";
 
@@ -24,7 +24,11 @@ export type UserUsecase = {
     userId: string,
     startDate: Date,
     endDate: Date
-  ) => Promise<{ user: User; tasks: Task[]; activityStats: ActivityStats[] }>;
+  ) => Promise<{
+    user: User;
+    tasks: Task[];
+    activityStats: GetActivityStatsResponse[];
+  }>;
 };
 
 export function newUserUsecase(gw: AppGateway): UserUsecase {
