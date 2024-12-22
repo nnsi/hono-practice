@@ -58,7 +58,6 @@ function getDashboard(uc: UserUsecase) {
     const endDate = new Date(
       c.req.query("endDate") ?? dayjs().endOf("month").toDate()
     );
-    console.log(startDate, endDate);
 
     const { user, tasks, activityStats } = await uc.getDashboardById(
       userId,

@@ -100,7 +100,6 @@ function transform(
       activity.total += row.quantity || 0;
 
       const activityKindIndex = acc.activityKindMap.get(row.kindid || row.id)!;
-      if (!row.kindid) console.log(activityKindIndex);
 
       if (activityKindIndex === undefined) {
         acc.activityKindMap.set(row.kindid || row.id, activity.kinds.length);
