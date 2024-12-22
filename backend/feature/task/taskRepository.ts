@@ -2,11 +2,11 @@ import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { Task } from "@/backend/domain";
 import { AppError, ResourceNotFoundError } from "@/backend/error";
-import { type QueryExecutor } from "@/backend/infra/drizzle/drizzleInstance";
+import { type QueryExecutor } from "@/backend/infra/db";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {
-  getTaskAll: (userId: string) => Promise<Task[]>;
+  getTaskAllByUserId: (userId: string) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: string,
     taskId: string
@@ -19,7 +19,7 @@ export type TaskRepository = {
 
 export function newTaskRepository(db: QueryExecutor): TaskRepository {
   return {
-    getTaskAll: getTaskAll(db),
+    getTaskAllByUserId: getTaskAllByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
     getDoneTasksByUserId: getDoneTasksByUserId(db),
     createTask: createTask(db),
@@ -28,7 +28,7 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
   };
 }
 
-function getTaskAll(db: QueryExecutor) {
+function getTaskAllByUserId(db: QueryExecutor) {
   return async function (userId: string): Promise<Task[]> {
     const result = await db.query.tasks.findMany({
       where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),

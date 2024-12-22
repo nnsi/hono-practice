@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 
 import { User, UserId } from "@/backend/domain";
-import { type QueryExecutor } from "@/backend/infra/drizzle/drizzleInstance";
+import { type QueryExecutor } from "@/backend/infra/db";
 import { users } from "@/drizzle/schema";
 
 export type UserRepository = {

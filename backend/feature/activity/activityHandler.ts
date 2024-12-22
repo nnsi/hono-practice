@@ -4,6 +4,8 @@ import { createFactory } from "hono/factory";
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
 
+import { HonoContext } from "@/backend/context";
+import { AppError } from "@/backend/error";
 import { prisma } from "@/backend/lib/prisma";
 import {
   CreateActivityRequest,
@@ -24,6 +26,8 @@ import {
 
 import { generateOrder } from "../../lib/lexicalOrder";
 import { activityLogRoute } from "../activityLog";
+
+import { ActivityUsecase } from ".";
 
 const factory = createFactory();
 const app = new Hono();
@@ -333,3 +337,73 @@ export const activityRoute = app
   .put("/:id/order", ...updateOrderHandler)
   .delete("/:id", ...deleteHandler)
   .route("/:id/logs", activityLogRoute);
+
+/* --- */
+
+export function newActivityHandler(uc: ActivityUsecase) {
+  return {
+    getActivities: getActivities(uc),
+    getActivity: getActivity(uc),
+    createActivity: createActivity(uc),
+    updateActivity: updateActivity(uc),
+    deleteActivity: deleteActivity(uc),
+    //    updateActivityOrder: updateActivityOrder(uc),
+  };
+}
+
+function getActivities(uc: ActivityUsecase) {
+  return async (c: HonoContext) => {
+    const activities = await uc.getActivities(c.get("userId"));
+    const parsedActivities = GetActivitiesResponseSchema.safeParse(activities);
+    if (!parsedActivities.success) {
+      throw new AppError("failed to parse activities", 500);
+    }
+    return c.json(parsedActivities.data);
+  };
+}
+
+function getActivity(uc: ActivityUsecase) {
+  return async (c: HonoContext, id: string) => {
+    const activity = await uc.getActivity(c.get("userId"), id);
+
+    const parsedActivity = GetActivityResponseSchema.safeParse(activity);
+    if (!parsedActivity.success) {
+      throw new AppError("failed to parse activity", 500);
+    }
+
+    return c.json(parsedActivity.data);
+  };
+}
+
+function createActivity(uc: ActivityUsecase) {
+  return async (c: HonoContext, json: CreateActivityRequest) => {
+    const activity = await uc.createActivity(c.get("userId"), json);
+
+    const parsedActivity = GetActivityResponseSchema.safeParse(activity);
+    if (!parsedActivity.success) {
+      throw new AppError("failed to parse activity", 500);
+    }
+
+    return c.json(parsedActivity.data);
+  };
+}
+
+function updateActivity(uc: ActivityUsecase) {
+  return async (c: HonoContext, id: string, json: UpdateActivityRequest) => {
+    const activity = await uc.updateActivity(c.get("userId"), id, json);
+
+    const parsedActivity = GetActivityResponseSchema.safeParse(activity);
+    if (!parsedActivity.success) {
+      throw new AppError("failed to parse activity", 500);
+    }
+    return c.json(parsedActivity.data);
+  };
+}
+
+function deleteActivity(uc: ActivityUsecase) {
+  return async (c: HonoContext, id: string) => {
+    await uc.deleteActivity(c.get("userId"), id);
+
+    return c.json({ message: "success" });
+  };
+}

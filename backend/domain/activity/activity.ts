@@ -1,23 +1,28 @@
 import { createUserId, UserId } from "../user";
 
-import { createActivityId, ActivityId, ActivityKindId } from ".";
+import {
+  createActivityId,
+  ActivityId,
+  ActivityKindId,
+  createActivityKindId,
+} from ".";
 
 export type ActivityKind = {
   id: ActivityKindId;
   name: string;
-  orderIndex?: string;
+  orderIndex?: string | null;
 };
 
 type BaseActivity = {
   id: ActivityId;
   userId: UserId;
   name: string;
-  label: string;
-  emoji: string;
+  label?: string | null;
+  emoji?: string | null;
   description?: string | null;
-  quantityLabel: string;
-  orderIndex: string;
-  activityKind?: ActivityKind;
+  quantityLabel: string | null;
+  orderIndex: string | null;
+  activityKind?: ActivityKind[];
 };
 
 type PersistedActivity = BaseActivity & {
@@ -27,18 +32,25 @@ type PersistedActivity = BaseActivity & {
 
 export type Activity = BaseActivity | PersistedActivity;
 
-function createActivity(params: {
-  id?: string | ActivityId;
-  userId: string | UserId;
-  name: string;
-  label: string;
-  emoji: string;
-  description?: string;
-  quantityLabel: string;
-  orderIndex: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}): Activity {
+function createActivity(
+  params: {
+    id?: string | ActivityId;
+    userId: string | UserId;
+    name: string;
+    label?: string | null;
+    emoji?: string | null;
+    description?: string | null;
+    quantityLabel: string | null;
+    orderIndex: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+  },
+  kinds?: {
+    id: string | ActivityKindId;
+    name: string;
+    orderIndex?: string | null;
+  }[]
+): Activity {
   const id = createActivityId(params.id);
   const userId = createUserId(params.userId);
 
@@ -46,16 +58,21 @@ function createActivity(params: {
     ...params,
     id,
     userId,
+    activityKind: kinds
+      ? kinds.map((kind) => ({ ...kind, id: createActivityKindId(kind.id) }))
+      : [],
   };
 }
 
 function updateActivity(
   activity: Activity,
-  params: Partial<Omit<BaseActivity, "id" | "userId">>
+  params: {
+    activity: Partial<Omit<BaseActivity, "id" | "userId">>;
+  }
 ): Activity {
   return {
     ...activity,
-    ...params,
+    ...params.activity,
     updatedAt: new Date(),
   };
 }

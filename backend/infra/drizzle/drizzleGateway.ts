@@ -6,7 +6,9 @@ import {
 } from "@/backend/feature";
 import { ActivityQueryService, newActivityQueryService } from "@/backend/query";
 
-import { DrizzleInstance, QueryExecutor } from "./drizzleInstance";
+import { QueryExecutor } from "../db";
+
+import { DrizzleInstance } from "./drizzleInstance";
 
 export type Repositories = TaskRepository & UserRepository;
 

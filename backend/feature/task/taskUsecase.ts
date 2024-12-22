@@ -37,7 +37,7 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
 
 function getTasks(repo: TaskRepository) {
   return async (userId: string) => {
-    return await repo.getTaskAll(userId);
+    return await repo.getTaskAllByUserId(userId);
   };
 }
 
