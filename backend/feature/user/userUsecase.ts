@@ -4,10 +4,11 @@ import bcrypt from "bcrypt";
 
 import { createUserId, Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
-import { AppGateway } from "@/backend/infra/drizzle";
+import { ActivityQueryService } from "@/backend/query";
 import { GetActivityStatsResponse } from "@/types/response";
 
 import { config } from "../../config";
+import { TaskRepository } from "../task";
 
 import { UserRepository } from "./userRepository";
 
@@ -23,7 +24,10 @@ export type UserUsecase = {
   getDashboardById: (
     userId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    userRepo: UserRepository,
+    taskRepo: TaskRepository,
+    activityQS: ActivityQueryService
   ) => Promise<{
     user: User;
     tasks: Task[];
@@ -31,11 +35,11 @@ export type UserUsecase = {
   }>;
 };
 
-export function newUserUsecase(gw: AppGateway): UserUsecase {
+export function newUserUsecase(repo: UserRepository): UserUsecase {
   return {
-    createUser: createUser(gw),
-    getUserById: getUserById(gw),
-    getDashboardById: getDashboardById(gw),
+    createUser: createUser(repo),
+    getUserById: getUserById(repo),
+    getDashboardById: getDashboardById(),
   };
 }
 
@@ -67,23 +71,28 @@ function getUserById(repo: UserRepository) {
   };
 }
 
-function getDashboardById(gw: AppGateway) {
-  return async function (userId: string, startDate: Date, endDate: Date) {
-    return await gw.runInTx(async (tx) => {
-      const id = createUserId(userId);
+function getDashboardById() {
+  return async function (
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    userRepo: UserRepository,
+    taskRepo: TaskRepository,
+    activityQS: ActivityQueryService
+  ) {
+    const id = createUserId(userId);
 
-      const user = await tx.getUserById(id);
-      if (!user) throw new AppError("user not found", 404);
+    const user = await userRepo.getUserById(id);
+    if (!user) throw new AppError("user not found", 404);
 
-      const tasks = await tx.getDoneTasksByUserId(userId);
+    const tasks = await taskRepo.getDoneTasksByUserId(userId);
 
-      const activityStats = await tx.activityStatsQuery(
-        userId,
-        startDate,
-        endDate
-      );
+    const activityStats = await activityQS.activityStatsQuery(
+      userId,
+      startDate,
+      endDate
+    );
 
-      return { user, tasks, activityStats };
-    });
+    return { user, tasks, activityStats };
   };
 }
