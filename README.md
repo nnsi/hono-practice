@@ -28,8 +28,8 @@ Clean Arhitectureライク
       - repository.ts
   - infra
     - {orm}
-      - Gateway.ts
       - Instance.ts
+      - Transaction.ts
   - query
     - {feature}QueryService.ts
 

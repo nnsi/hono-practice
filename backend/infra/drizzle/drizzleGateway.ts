@@ -1,4 +1,6 @@
 import {
+  ActivityRepository,
+  newActivityRepository,
   newTaskRepository,
   newUserRepository,
   TaskRepository,
@@ -10,7 +12,7 @@ import { QueryExecutor } from "../db";
 
 import { DrizzleInstance } from "./drizzleInstance";
 
-export type Repositories = TaskRepository & UserRepository;
+export type Repositories = TaskRepository & UserRepository & ActivityRepository;
 
 export type QueryServices = ActivityQueryService;
 
@@ -23,6 +25,7 @@ function repositoryInstances(qe: QueryExecutor) {
   return {
     ...newTaskRepository(qe),
     ...newUserRepository(qe),
+    ...newActivityRepository(qe),
     ...newActivityQueryService(qe),
   };
 }

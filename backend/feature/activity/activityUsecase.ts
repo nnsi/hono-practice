@@ -1,9 +1,10 @@
 import { Activity, createActivityId, createUserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
+import { TransactionScope } from "@/backend/infra/db";
 import { generateOrder } from "@/backend/lib/lexicalOrder";
 import { CreateActivityRequest, UpdateActivityRequest } from "@/types/request";
 
-import { ActivityRepository } from ".";
+import { ActivityRepository, newActivityRepository } from ".";
 
 export type ActivityUsecase = {
   getActivities(userId: string): Promise<Activity[]>;
@@ -17,12 +18,15 @@ export type ActivityUsecase = {
   deleteActivity(userId: string, id: string): Promise<void>;
 };
 
-export function newActivityUsecase(repo: ActivityRepository): ActivityUsecase {
+export function newActivityUsecase(
+  repo: ActivityRepository,
+  runInTx: TransactionScope
+): ActivityUsecase {
   return {
     getActivities: getActivities(repo),
     getActivity: getActivity(repo),
     createActivity: createActivity(repo),
-    updateActivity: updateActivity(repo),
+    updateActivity: updateActivity(repo, runInTx),
     deleteActivity: deleteActivity(repo),
   };
 }
@@ -70,7 +74,7 @@ function createActivity(repo: ActivityRepository) {
   };
 }
 
-function updateActivity(repo: ActivityRepository) {
+function updateActivity(repo: ActivityRepository, runInTx: TransactionScope) {
   return async (userId: string, id: string, params: UpdateActivityRequest) => {
     const typedUserId = createUserId(userId);
     const typedId = createActivityId(id);
@@ -80,7 +84,11 @@ function updateActivity(repo: ActivityRepository) {
 
     const newActivity = Activity.update(activity, params);
 
-    return await repo.updateActivity(newActivity);
+    return await runInTx(async (txDb) => {
+      const txRepo = newActivityRepository(txDb);
+
+      return await txRepo.updateActivity(newActivity);
+    });
   };
 }
 

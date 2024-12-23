@@ -2,7 +2,7 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { drizzle } from "@/backend/infra/drizzle/drizzleInstance";
+import { drizzle, runInTx } from "@/backend/infra/drizzle";
 import {
   CreateActivityRequestSchema,
   UpdateActivityRequestSchema,
@@ -12,14 +12,14 @@ import { AppContext } from "../../context";
 
 import {
   newActivityHandler,
-  newActivityUsecase,
   newActivityRepository,
+  newActivityUsecase,
 } from ".";
 
 const app = new Hono<AppContext>();
 
 const repo = newActivityRepository(drizzle);
-const uc = newActivityUsecase(repo);
+const uc = newActivityUsecase(repo, runInTx);
 const h = newActivityHandler(uc);
 
 export const newActivityRoute = app

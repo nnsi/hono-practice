@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 
 import { Activity, ActivityId, UserId } from "@/backend/domain";
 import { QueryExecutor } from "@/backend/infra/db";
@@ -136,12 +136,57 @@ function createActivity(db: QueryExecutor) {
 
 function updateActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<Activity> {
+    const { activityKind, ..._activity } = activity;
+
+    await db
+      .update(activities)
+      .set({
+        ..._activity,
+      })
+      .where(and(eq(activities.id, activity.id), isNull(activities.deletedAt)));
+
+    await db
+      .update(activityKinds)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(
+        and(eq(activityKinds.id, activity.id), isNull(activityKinds.deletedAt))
+      );
+
+    if (activityKind && activityKind.length > 0) {
+      await db
+        .insert(activityKinds)
+        .values(
+          activityKind.map((kind) => ({
+            activityId: activity.id,
+            name: kind.name,
+            orderIndex: kind.orderIndex || null,
+          }))
+        )
+        .onConflictDoUpdate({
+          target: activityKinds.id,
+          set: {
+            name: sql`excluded.title`,
+            orderIndex: sql`excluded.order_index`,
+            deletedAt: sql`null`,
+          },
+        });
+    }
+
     return activity;
   };
 }
 
 function deleteActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<void> {
+    await db
+      .update(activities)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(eq(activities.id, activity.id));
+
     return;
   };
 }
