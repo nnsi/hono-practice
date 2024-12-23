@@ -18,7 +18,7 @@ const repo = newUserRepository(drizzle);
 const uc = newUserUsecase(repo);
 const h = newUserHandler(uc);
 
-export type WithTransactionRepositoryContext = Context<
+export type WithTxDashboardRepositoriesContext = Context<
   AppContext & {
     Variables: {
       txUserRepo: ReturnType<typeof newUserRepository>;
@@ -38,20 +38,17 @@ export const userRoute = app
   .get(
     "/dashboard",
     authMiddleware,
-    async (c: WithTransactionRepositoryContext) => {
-      const [txUserRepo, txTaskRepo, txActivityQS] = await runInTx(
-        async (txDb) => {
-          return [
-            newUserRepository(txDb),
-            newTaskRepository(txDb),
-            newActivityQueryService(txDb),
-          ];
-        }
-      );
-      c.set("txUserRepo", txUserRepo);
-      c.set("txTaskRepo", txTaskRepo);
-      c.set("txActivityQS", txActivityQS);
+    async (c: WithTxDashboardRepositoriesContext) => {
+      return await runInTx(async (txDb) => {
+        const txUserRepo = newUserRepository(txDb);
+        const txTaskRepo = newTaskRepository(txDb);
+        const txActivityQS = newActivityQueryService(txDb);
 
-      return h.getDashboard(c);
+        c.set("txUserRepo", txUserRepo);
+        c.set("txTaskRepo", txTaskRepo);
+        c.set("txActivityQS", txActivityQS);
+
+        return h.getDashboard(c);
+      });
     }
   );

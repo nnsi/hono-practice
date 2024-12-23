@@ -27,7 +27,7 @@ import {
 import { generateOrder } from "../../lib/lexicalOrder";
 import { activityLogRoute } from "../activityLog";
 
-import { ActivityUsecase } from ".";
+import { ActivityUsecase, WithTxActivityRepoContext } from ".";
 
 const factory = createFactory();
 const app = new Hono();
@@ -376,8 +376,10 @@ function getActivity(uc: ActivityUsecase) {
 }
 
 function createActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, json: CreateActivityRequest) => {
-    const activity = await uc.createActivity(c.get("userId"), json);
+  return async (c: WithTxActivityRepoContext, json: CreateActivityRequest) => {
+    const txRepo = c.get("txActivityRepo")!;
+
+    const activity = await uc.createActivity(c.get("userId"), json, txRepo);
 
     const parsedActivity = GetActivityResponseSchema.safeParse(activity);
     if (!parsedActivity.success) {
@@ -389,8 +391,13 @@ function createActivity(uc: ActivityUsecase) {
 }
 
 function updateActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, id: string, json: UpdateActivityRequest) => {
-    const activity = await uc.updateActivity(c.get("userId"), id, json);
+  return async (
+    c: WithTxActivityRepoContext,
+    id: string,
+    json: UpdateActivityRequest
+  ) => {
+    const txRepo = c.get("txActivityRepo")!;
+    const activity = await uc.updateActivity(c.get("userId"), id, json, txRepo);
 
     const parsedActivity = GetActivityResponseSchema.safeParse(activity);
     if (!parsedActivity.success) {

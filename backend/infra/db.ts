@@ -6,7 +6,3 @@ export type QueryExecutor = Pick<
   NodePgDatabase<typeof schema>,
   "query" | "select" | "insert" | "update" | "delete" | "transaction"
 >;
-
-export type TransactionScope = <T>(
-  operation: (txDb: any) => Promise<T>
-) => Promise<T>;

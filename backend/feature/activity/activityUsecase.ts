@@ -1,32 +1,33 @@
 import { Activity, createActivityId, createUserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
-import { TransactionScope } from "@/backend/infra/db";
 import { generateOrder } from "@/backend/lib/lexicalOrder";
 import { CreateActivityRequest, UpdateActivityRequest } from "@/types/request";
 
-import { ActivityRepository, newActivityRepository } from ".";
+import { ActivityRepository } from ".";
 
 export type ActivityUsecase = {
   getActivities(userId: string): Promise<Activity[]>;
   getActivity(userId: string, id: string): Promise<Activity>;
-  createActivity(userId: string, req: CreateActivityRequest): Promise<Activity>;
+  createActivity(
+    userId: string,
+    req: CreateActivityRequest,
+    txRepo: ActivityRepository
+  ): Promise<Activity>;
   updateActivity(
     userId: string,
     id: string,
-    req: UpdateActivityRequest
+    req: UpdateActivityRequest,
+    txRepo: ActivityRepository
   ): Promise<Activity>;
   deleteActivity(userId: string, id: string): Promise<void>;
 };
 
-export function newActivityUsecase(
-  repo: ActivityRepository,
-  runInTx: TransactionScope
-): ActivityUsecase {
+export function newActivityUsecase(repo: ActivityRepository): ActivityUsecase {
   return {
     getActivities: getActivities(repo),
     getActivity: getActivity(repo),
-    createActivity: createActivity(repo),
-    updateActivity: updateActivity(repo, runInTx),
+    createActivity: createActivity(),
+    updateActivity: updateActivity(),
     deleteActivity: deleteActivity(repo),
   };
 }
@@ -53,10 +54,14 @@ function getActivity(repo: ActivityRepository) {
   };
 }
 
-function createActivity(repo: ActivityRepository) {
-  return async (userId: string, params: CreateActivityRequest) => {
+function createActivity() {
+  return async (
+    userId: string,
+    params: CreateActivityRequest,
+    txRepo: ActivityRepository
+  ) => {
     const typedUserId = createUserId(userId);
-    const lastOrderIndex = await repo.getLastOrderIndexByUserId(typedUserId);
+    const lastOrderIndex = await txRepo.getLastOrderIndexByUserId(typedUserId);
 
     const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
@@ -70,25 +75,29 @@ function createActivity(repo: ActivityRepository) {
       orderIndex: orderIndex,
     });
 
-    return await repo.createActivity(activity);
+    return await txRepo.createActivity(activity);
   };
 }
 
-function updateActivity(repo: ActivityRepository, runInTx: TransactionScope) {
-  return async (userId: string, id: string, params: UpdateActivityRequest) => {
+function updateActivity() {
+  return async (
+    userId: string,
+    id: string,
+    params: UpdateActivityRequest,
+    txRepo: ActivityRepository
+  ) => {
     const typedUserId = createUserId(userId);
     const typedId = createActivityId(id);
 
-    const activity = await repo.getActivityByIdAndUserId(typedUserId, typedId);
+    const activity = await txRepo.getActivityByIdAndUserId(
+      typedUserId,
+      typedId
+    );
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
     const newActivity = Activity.update(activity, params);
 
-    return await runInTx(async (txDb) => {
-      const txRepo = newActivityRepository(txDb);
-
-      return await txRepo.updateActivity(newActivity);
-    });
+    return await txRepo.updateActivity(newActivity);
   };
 }
 

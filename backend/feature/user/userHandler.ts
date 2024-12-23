@@ -10,7 +10,7 @@ import {
 import { HonoContext } from "../../context";
 import { AppError } from "../../error";
 
-import { UserUsecase, WithTransactionRepositoryContext } from ".";
+import { UserUsecase, WithTxDashboardRepositoriesContext } from ".";
 
 export function newUserHandler(uc: UserUsecase) {
   return {
@@ -49,7 +49,7 @@ function getMe(uc: UserUsecase) {
 }
 
 function getDashboard(uc: UserUsecase) {
-  return async (c: WithTransactionRepositoryContext) => {
+  return async (c: WithTxDashboardRepositoriesContext) => {
     const userId = c.get("jwtPayload").id;
 
     const startDate = new Date(
