@@ -21,8 +21,9 @@ type BaseActivity = {
   emoji?: string | null;
   description?: string | null;
   quantityLabel: string | null;
+  options: [];
   orderIndex: string | null;
-  activityKind?: ActivityKind[];
+  kinds?: ActivityKind[];
 };
 
 type PersistedActivity = BaseActivity & {
@@ -56,9 +57,10 @@ function createActivity(
 
   return {
     ...params,
+    options: [],
     id,
     userId,
-    activityKind: kinds
+    kinds: kinds
       ? kinds.map((kind) => ({ ...kind, id: createActivityKindId(kind.id) }))
       : [],
   };

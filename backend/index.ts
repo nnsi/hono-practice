@@ -16,6 +16,7 @@ import {
   userRoute,
   activityRoute,
   activityDateLogRoute,
+  newActivityRoute,
 } from "./feature";
 import { authMiddleware } from "./middleware/authMiddleware";
 
@@ -53,6 +54,7 @@ const routes = app
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", activityRoute)
+  .route("/users/new-activities", newActivityRoute)
   .route("/users/activity-logs", activityDateLogRoute);
 
 const port = 3456;

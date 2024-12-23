@@ -105,7 +105,7 @@ function getLastOrderIndexByUserId(db: QueryExecutor) {
 
 function createActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<Activity> {
-    const { activityKind, ..._activity } = activity;
+    const { kinds, ..._activity } = activity;
 
     const row = await db
       .insert(activities)
@@ -115,14 +115,14 @@ function createActivity(db: QueryExecutor) {
       })
       .returning();
 
-    if (!activityKind || activityKind.length === 0) {
+    if (!kinds || kinds.length === 0) {
       return Activity.create(row[0]);
     }
 
     const rows = await db
       .insert(activityKinds)
       .values(
-        activityKind.map((kind) => ({
+        kinds.map((kind) => ({
           activityId: row[0].id,
           name: kind.name,
           orderIndex: kind.orderIndex || null,
@@ -136,7 +136,7 @@ function createActivity(db: QueryExecutor) {
 
 function updateActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<Activity> {
-    const { activityKind, ..._activity } = activity;
+    const { kinds, ..._activity } = activity;
 
     await db
       .update(activities)
@@ -154,11 +154,11 @@ function updateActivity(db: QueryExecutor) {
         and(eq(activityKinds.id, activity.id), isNull(activityKinds.deletedAt))
       );
 
-    if (activityKind && activityKind.length > 0) {
+    if (kinds && kinds.length > 0) {
       await db
         .insert(activityKinds)
         .values(
-          activityKind.map((kind) => ({
+          kinds.map((kind) => ({
             activityId: activity.id,
             name: kind.name,
             orderIndex: kind.orderIndex || null,

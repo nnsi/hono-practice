@@ -140,7 +140,7 @@ export const activityLogs = pgTable(
   ]
 );
 
-export const activityRelations = relations(activities, ({ many }) => ({
+export const activitiesRelations = relations(activities, ({ many }) => ({
   kinds: many(activityKinds),
 }));
 
@@ -168,3 +168,10 @@ export const activityKinds = pgTable(
   },
   (t) => [index("activity_id_idx").on(t.activityId)]
 );
+
+export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
+  author: one(activities, {
+    fields: [activityKinds.activityId],
+    references: [activities.id],
+  }),
+}));
