@@ -10,6 +10,7 @@ export type ActivityQueryService = {
     startDate: Date,
     endDate: Date
   ) => Promise<GetActivityStatsResponse[]>;
+  withTx: (tx: QueryExecutor) => ActivityQueryService;
 };
 
 export function newActivityQueryService(
@@ -17,6 +18,7 @@ export function newActivityQueryService(
 ): ActivityQueryService {
   return {
     activityStatsQuery: activityStatsQuery(db),
+    withTx: (tx) => newActivityQueryService(tx),
   };
 }
 

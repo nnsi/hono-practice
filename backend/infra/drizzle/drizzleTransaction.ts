@@ -1,14 +1,6 @@
-import { TransactionRunner } from "../db";
+import { type TransactionRunner } from "../db";
 
-import { drizzle, QueryExecutor } from "./drizzleInstance";
-
-export async function runInTx<T>(
-  operation: (txDb: QueryExecutor) => Promise<T>
-): Promise<T> {
-  return drizzle.transaction(async (txDb) => {
-    return operation(txDb);
-  });
-}
+import { type QueryExecutor } from "./drizzleInstance";
 
 export function newDrizzleTransactionRunner(
   db: QueryExecutor
@@ -16,16 +8,10 @@ export function newDrizzleTransactionRunner(
   return {
     async run(repositories, operation) {
       return db.transaction(async (txDb) => {
-        const txRepoArray = repositories.map((repo) => {
-          const cloned = { ...repo };
-          if ((cloned as any).db) {
-            (cloned as any).db = txDb;
-          }
-          return cloned;
-        });
+        const txRepoArray = repositories.map((repo) => repo.withTx(txDb));
         const mergedTxRepos = Object.assign({}, ...txRepoArray);
 
-        return operation(mergedTxRepos);
+        return await operation(mergedTxRepos);
       });
     },
   };

@@ -14,6 +14,7 @@ export type ActivityRepository = {
   createActivity(activity: Activity): Promise<Activity>;
   updateActivity(activity: Activity): Promise<Activity>;
   deleteActivity(activity: Activity): Promise<void>;
+  withTx(tx: QueryExecutor): ActivityRepository;
 };
 
 export function newActivityRepository(db: QueryExecutor): ActivityRepository {
@@ -24,6 +25,7 @@ export function newActivityRepository(db: QueryExecutor): ActivityRepository {
     createActivity: createActivity(db),
     updateActivity: updateActivity(db),
     deleteActivity: deleteActivity(db),
+    withTx: (tx) => newActivityRepository(tx),
   };
 }
 

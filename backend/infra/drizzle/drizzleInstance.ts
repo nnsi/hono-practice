@@ -6,16 +6,16 @@ import * as schema from "@/drizzle/schema";
 const { Pool } = pg;
 
 function createInstance() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   return drizzle(pool, { schema });
 }
 
 declare const globalThis: {
   drizzleGlobal: ReturnType<typeof createInstance>;
 } & typeof global;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 const drizzleInstance = globalThis.drizzleGlobal ?? createInstance();
 

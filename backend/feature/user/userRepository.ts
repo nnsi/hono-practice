@@ -8,6 +8,7 @@ export type UserRepository = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
+  withTx: (tx: QueryExecutor) => UserRepository;
 };
 
 export function newUserRepository(db: QueryExecutor): UserRepository {
@@ -15,6 +16,7 @@ export function newUserRepository(db: QueryExecutor): UserRepository {
     createUser: createUser(db),
     getUserById: getUserById(db),
     getUserByLoginId: getUserByLoginId(db),
+    withTx: (tx) => newUserRepository(tx),
   };
 }
 

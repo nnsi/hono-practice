@@ -7,5 +7,8 @@ services:
       POSTGRES_DB: todoapp
     volumes:
       - ./db-data:/var/lib/postgresql/data
+      - ./pg.conf:/etc/postgresql/config/pg.conf
+    command: >
+      postgres -c log_statement=all
     ports:
       - 5435:5432

@@ -15,6 +15,7 @@ export type TaskRepository = {
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
+  withTx: (tx: QueryExecutor) => TaskRepository;
 };
 
 export function newTaskRepository(db: QueryExecutor): TaskRepository {
@@ -25,6 +26,7 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
+    withTx: (tx) => newTaskRepository(tx),
   };
 }
 
