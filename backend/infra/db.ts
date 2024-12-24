@@ -1,8 +1,12 @@
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
+export type UnionToIntersection<U> = (
+  U extends any ? (k: U) => void : never
+) extends (k: infer I) => void
+  ? I
+  : never;
 
-import * as schema from "@/drizzle/schema";
-
-export type QueryExecutor = Pick<
-  NodePgDatabase<typeof schema>,
-  "query" | "select" | "insert" | "update" | "delete" | "transaction"
->;
+export type TransactionRunner = {
+  run<T, R extends any[]>(
+    repositories: R,
+    operation: (txRepos: UnionToIntersection<R[number]>) => Promise<T>
+  ): Promise<T>;
+};

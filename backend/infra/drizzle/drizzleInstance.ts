@@ -26,3 +26,8 @@ if (process.env.NODE_ENV !== "production") {
 export type DrizzleInstance = ReturnType<typeof createInstance>;
 
 export { drizzleInstance as drizzle };
+
+export type QueryExecutor = Pick<
+  DrizzleInstance,
+  "query" | "select" | "insert" | "update" | "delete" | "transaction"
+>;

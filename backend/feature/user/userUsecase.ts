@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 
 import { createUserId, Task, User } from "@/backend/domain";
 import { AppError } from "@/backend/error";
+import { TransactionRunner } from "@/backend/infra/db";
 import { ActivityQueryService } from "@/backend/query";
 import { GetActivityStatsResponse } from "@/types/response";
 
@@ -24,10 +25,7 @@ export type UserUsecase = {
   getDashboardById: (
     userId: string,
     startDate: Date,
-    endDate: Date,
-    userRepo: UserRepository,
-    taskRepo: TaskRepository,
-    activityQS: ActivityQueryService
+    endDate: Date
   ) => Promise<{
     user: User;
     tasks: Task[];
@@ -35,11 +33,16 @@ export type UserUsecase = {
   }>;
 };
 
-export function newUserUsecase(repo: UserRepository): UserUsecase {
+export function newUserUsecase(
+  tx: TransactionRunner,
+  repo: UserRepository,
+  TaskRepo: TaskRepository,
+  ActivityQS: ActivityQueryService
+): UserUsecase {
   return {
     createUser: createUser(repo),
     getUserById: getUserById(repo),
-    getDashboardById: getDashboardById(),
+    getDashboardById: getDashboardById(repo, TaskRepo, ActivityQS, tx),
   };
 }
 
@@ -71,28 +74,34 @@ function getUserById(repo: UserRepository) {
   };
 }
 
-function getDashboardById() {
-  return async function (
-    userId: string,
-    startDate: Date,
-    endDate: Date,
-    userRepo: UserRepository,
-    taskRepo: TaskRepository,
-    activityQS: ActivityQueryService
-  ) {
+function getDashboardById(
+  repo: UserRepository,
+  taskRepo: TaskRepository,
+  activityQS: ActivityQueryService,
+  tx: TransactionRunner
+) {
+  return async function (userId: string, startDate: Date, endDate: Date) {
     const id = createUserId(userId);
 
-    const user = await userRepo.getUserById(id);
-    if (!user) throw new AppError("user not found", 404);
+    return await tx.run([repo, taskRepo, activityQS], async (txRepos) => {
+      try {
+        await txRepos.getUserById(id);
+      } catch (e) {
+        console.log(e);
+        throw new AppError("user not found", 404);
+      }
+      const user = await txRepos.getUserById(id);
+      if (!user) throw new AppError("user not found", 404);
 
-    const tasks = await taskRepo.getDoneTasksByUserId(userId);
+      const tasks = await txRepos.getDoneTasksByUserId(userId);
 
-    const activityStats = await activityQS.activityStatsQuery(
-      userId,
-      startDate,
-      endDate
-    );
+      const activityStats = await txRepos.activityStatsQuery(
+        userId,
+        startDate,
+        endDate
+      );
 
-    return { user, tasks, activityStats };
+      return { user, tasks, activityStats };
+    });
   };
 }

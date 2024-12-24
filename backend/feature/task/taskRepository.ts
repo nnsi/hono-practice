@@ -2,7 +2,7 @@ import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { Task } from "@/backend/domain";
 import { AppError, ResourceNotFoundError } from "@/backend/error";
-import { type QueryExecutor } from "@/backend/infra/db";
+import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {

@@ -14,15 +14,15 @@ import { AppContext } from "../../context";
 import { newTaskHandler, newTaskUsecase, newTaskRepository } from ".";
 
 const factory = createFactory<AppContext>();
-const app = new Hono();
+const app = new Hono<AppContext>();
 
 const repo = newTaskRepository(drizzle);
 const uc = newTaskUsecase(repo);
 const h = newTaskHandler(uc);
 
 export const taskRoute = app
-  .get("/", ...factory.createHandlers(h.getTasks))
-  .get("/:id", ...factory.createHandlers(h.getTask))
+  .get("/", (c) => h.getTasks(c))
+  .get("/:id", (c) => h.getTask(c))
   .post(
     "/",
     ...factory.createHandlers(
@@ -37,4 +37,4 @@ export const taskRoute = app
       (c) => h.updateTask(c)
     )
   )
-  .delete("/:id", ...factory.createHandlers(h.deleteTask));
+  .delete("/:id", (c) => h.deleteTask(c));

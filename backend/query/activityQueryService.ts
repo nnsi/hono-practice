@@ -1,6 +1,6 @@
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
-import { type QueryExecutor } from "@/backend/infra/db";
+import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds, activityLogs } from "@/drizzle/schema";
 import { GetActivityStatsResponse } from "@/types/response";
 

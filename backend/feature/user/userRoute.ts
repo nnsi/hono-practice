@@ -2,7 +2,7 @@ import { Context, Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { drizzle, runInTx } from "@/backend/infra/drizzle";
+import { drizzle, newDrizzleTransactionRunner } from "@/backend/infra/drizzle";
 import { newActivityQueryService } from "@/backend/query";
 import { createUserRequestSchema } from "@/types/request";
 
@@ -14,8 +14,11 @@ import { newUserHandler, newUserRepository, newUserUsecase } from ".";
 
 const app = new Hono<AppContext>();
 
+const tx = newDrizzleTransactionRunner(drizzle);
 const repo = newUserRepository(drizzle);
-const uc = newUserUsecase(repo);
+const taskRepo = newTaskRepository(drizzle);
+const activityQS = newActivityQueryService(drizzle);
+const uc = newUserUsecase(tx, repo, taskRepo, activityQS);
 const h = newUserHandler(uc);
 
 export type WithTxDashboardRepositoriesContext = Context<
@@ -35,20 +38,4 @@ export const userRoute = app
     h.createUser(c)
   )
   .get("/me", authMiddleware, (c) => h.getMe(c))
-  .get(
-    "/dashboard",
-    authMiddleware,
-    async (c: WithTxDashboardRepositoriesContext) => {
-      return await runInTx(async (txDb) => {
-        const txUserRepo = newUserRepository(txDb);
-        const txTaskRepo = newTaskRepository(txDb);
-        const txActivityQS = newActivityQueryService(txDb);
-
-        c.set("txUserRepo", txUserRepo);
-        c.set("txTaskRepo", txTaskRepo);
-        c.set("txActivityQS", txActivityQS);
-
-        return h.getDashboard(c);
-      });
-    }
-  );
+  .get("/dashboard", authMiddleware, async (c) => h.getDashboard(c));

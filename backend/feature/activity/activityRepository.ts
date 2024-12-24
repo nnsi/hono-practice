@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 
 import { Activity, ActivityId, UserId } from "@/backend/domain";
-import { QueryExecutor } from "@/backend/infra/db";
+import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds } from "@/drizzle/schema";
 
 export type ActivityRepository = {
