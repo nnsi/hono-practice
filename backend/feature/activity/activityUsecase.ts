@@ -1,8 +1,17 @@
-import { Activity, createActivityId, createUserId } from "@/backend/domain";
+import {
+  Activity,
+  ActivityId,
+  createActivityId,
+  createUserId,
+} from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 import { TransactionRunner } from "@/backend/infra/db";
 import { generateOrder } from "@/backend/lib/lexicalOrder";
-import { CreateActivityRequest, UpdateActivityRequest } from "@/types/request";
+import {
+  CreateActivityRequest,
+  UpdateActivityOrderRequest,
+  UpdateActivityRequest,
+} from "@/types/request";
 
 import { ActivityRepository } from ".";
 
@@ -14,6 +23,11 @@ export type ActivityUsecase = {
     userId: string,
     id: string,
     req: UpdateActivityRequest
+  ): Promise<Activity>;
+  updateActivityOrder(
+    userId: string,
+    id: string,
+    orderIndexes: UpdateActivityOrderRequest
   ): Promise<Activity>;
   deleteActivity(userId: string, id: string): Promise<void>;
 };
@@ -27,6 +41,7 @@ export function newActivityUsecase(
     getActivity: getActivity(repo),
     createActivity: createActivity(repo, tx),
     updateActivity: updateActivity(repo, tx),
+    updateActivityOrder: updateActivityOrder(repo, tx),
     deleteActivity: deleteActivity(repo),
   };
 }
@@ -94,6 +109,45 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
       console.log(newActivity);
 
       return await txRepo.updateActivity(newActivity);
+    });
+  };
+}
+
+function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
+  return async (
+    userId: string,
+    id: string,
+    params: UpdateActivityOrderRequest
+  ) => {
+    const typedUserId = createUserId(userId);
+    const typedId = createActivityId(id);
+    const typedPrevId = params.prev ? createActivityId(params.prev) : undefined;
+    const typedNextId = params.next ? createActivityId(params.next) : undefined;
+
+    const ids = [typedId, typedPrevId, typedNextId].filter(
+      Boolean
+    ) as ActivityId[];
+
+    return tx.run([repo], async (txRepo) => {
+      const activities = await txRepo.getActivitiesByIdsAndUserId(
+        typedUserId,
+        ids
+      );
+
+      const activity = activities.find((a) => a.id === typedId);
+      if (!activity) throw new ResourceNotFoundError("activity not found");
+
+      const prevActivity = activities.find((a) => a.id === typedPrevId);
+      const nextActivity = activities.find((a) => a.id === typedNextId);
+
+      const orderIndex = generateOrder(
+        prevActivity?.orderIndex,
+        nextActivity?.orderIndex
+      );
+
+      activity.orderIndex = orderIndex;
+
+      return await txRepo.updateActivity(activity);
     });
   };
 }

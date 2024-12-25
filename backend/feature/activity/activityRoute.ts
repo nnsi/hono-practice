@@ -5,10 +5,12 @@ import { zValidator } from "@hono/zod-validator";
 import { drizzle, newDrizzleTransactionRunner } from "@/backend/infra/drizzle";
 import {
   CreateActivityRequestSchema,
+  UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@/types/request";
 
 import { AppContext } from "../../context";
+import { activityLogRoute } from "../activityLog";
 
 import {
   newActivityHandler,
@@ -33,4 +35,14 @@ export const newActivityRoute = app
     const { id } = c.req.param();
     return h.updateActivity(c, id, c.req.valid("json"));
   })
-  .delete("/:id", (c) => h.deleteActivity(c, c.req.param("id")));
+  .put(
+    "/:id/order",
+    zValidator("json", UpdateActivityOrderRequestSchema),
+    async (c) => {
+      const { id } = c.req.param();
+
+      h.updateActivityOrder(c, id, c.req.valid("json"));
+    }
+  )
+  .delete("/:id", (c) => h.deleteActivity(c, c.req.param("id")))
+  .route("/:id/logs", activityLogRoute); // TODO: ActivityLogの実装終わったら消す

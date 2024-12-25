@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { Activity, ActivityId, UserId } from "@/backend/domain";
 import { type QueryExecutor } from "@/backend/infra/drizzle";
@@ -6,6 +6,10 @@ import { activities, activityKinds } from "@/drizzle/schema";
 
 export type ActivityRepository = {
   getActivitiesByUserId(userId: UserId): Promise<Activity[]>;
+  getActivitiesByIdsAndUserId(
+    userId: UserId,
+    ids: ActivityId[]
+  ): Promise<Activity[]>;
   getActivityByIdAndUserId(
     userId: UserId,
     id: ActivityId
@@ -20,6 +24,7 @@ export type ActivityRepository = {
 export function newActivityRepository(db: QueryExecutor): ActivityRepository {
   return {
     getActivitiesByUserId: getActivitiesByUserId(db),
+    getActivitiesByIdsAndUserId: getActivitiesByIdsAndUserId(db),
     getActivityByIdAndUserId: getActivityByIdAndUserId(db),
     getLastOrderIndexByUserId: getLastOrderIndexByUserId(db),
     createActivity: createActivity(db),
@@ -36,6 +41,43 @@ function getActivitiesByUserId(db: QueryExecutor) {
         kinds: true,
       },
       where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
+      orderBy: asc(activities.orderIndex),
+    });
+
+    return rows.map((r) => {
+      return Activity.create(
+        {
+          id: r.id,
+          userId: r.userId,
+          name: r.name,
+          label: r.label || "",
+          emoji: r.emoji || "",
+          description: r.description || "",
+          quantityLabel: r.quantityLabel || "",
+          orderIndex: r.orderIndex || "",
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        },
+        r.kinds
+      );
+    });
+  };
+}
+
+function getActivitiesByIdsAndUserId(db: QueryExecutor) {
+  return async function (
+    userId: UserId,
+    ids: ActivityId[]
+  ): Promise<Activity[]> {
+    const rows = await db.query.activities.findMany({
+      with: {
+        kinds: true,
+      },
+      where: and(
+        eq(activities.userId, userId),
+        inArray(activities.id, ids),
+        isNull(activities.deletedAt)
+      ),
       orderBy: asc(activities.orderIndex),
     });
 
