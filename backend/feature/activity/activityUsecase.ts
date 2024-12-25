@@ -91,6 +91,8 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
       const newActivity = Activity.update(activity, params);
 
+      console.log(newActivity);
+
       return await txRepo.updateActivity(newActivity);
     });
   };

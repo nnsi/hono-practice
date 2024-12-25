@@ -1,4 +1,4 @@
-import { Context, Hono } from "hono";
+import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
@@ -20,18 +20,6 @@ const taskRepo = newTaskRepository(drizzle);
 const activityQS = newActivityQueryService(drizzle);
 const uc = newUserUsecase(tx, repo, taskRepo, activityQS);
 const h = newUserHandler(uc);
-
-export type WithTxDashboardRepositoriesContext = Context<
-  AppContext & {
-    Variables: {
-      txUserRepo: ReturnType<typeof newUserRepository>;
-      txTaskRepo: ReturnType<typeof newTaskRepository>;
-      txActivityQS: ReturnType<typeof newActivityQueryService>;
-    };
-  },
-  any,
-  {}
->;
 
 export const userRoute = app
   .post("/", zValidator("json", createUserRequestSchema), (c) =>

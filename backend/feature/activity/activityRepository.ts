@@ -139,6 +139,7 @@ function createActivity(db: QueryExecutor) {
 function updateActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<Activity> {
     const { kinds, ..._activity } = activity;
+    console.log(kinds);
 
     await db
       .update(activities)
@@ -161,6 +162,7 @@ function updateActivity(db: QueryExecutor) {
         .insert(activityKinds)
         .values(
           kinds.map((kind) => ({
+            id: kind.id || undefined,
             activityId: activity.id,
             name: kind.name,
             orderIndex: kind.orderIndex || null,
@@ -169,11 +171,13 @@ function updateActivity(db: QueryExecutor) {
         .onConflictDoUpdate({
           target: activityKinds.id,
           set: {
-            name: sql`excluded.title`,
+            name: sql`excluded.name`,
             orderIndex: sql`excluded.order_index`,
             deletedAt: sql`null`,
           },
-        });
+        })
+        .returning();
+      activity.kinds = kinds;
     }
 
     return activity;

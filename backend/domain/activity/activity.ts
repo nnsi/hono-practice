@@ -70,11 +70,18 @@ function updateActivity(
   activity: Activity,
   params: {
     activity: Partial<Omit<BaseActivity, "id" | "userId">>;
+    kinds?: { id?: string; name: string }[];
   }
 ): Activity {
   return {
     ...activity,
     ...params.activity,
+    kinds: params.kinds
+      ? params.kinds.map((kind) => ({
+          ...kind,
+          id: createActivityKindId(kind.id),
+        }))
+      : activity.kinds,
     updatedAt: new Date(),
   };
 }
