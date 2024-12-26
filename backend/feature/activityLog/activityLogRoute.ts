@@ -1,50 +1,51 @@
 import { Hono } from "hono";
-const app = new Hono();
+
+import { zValidator } from "@hono/zod-validator";
+
+import { AppContext } from "@/backend/context";
+import { drizzle } from "@/backend/infra/drizzle";
+import { newActivityQueryService } from "@/backend/query";
+import { CreateActivityLogRequestSchema } from "@/types/request";
+
+import {
+  newActivityLogHandler,
+  newActivityLogRepository,
+  newActivityLogUsecase,
+} from ".";
+
+const app = new Hono<AppContext>();
 
 /*
   endpoint: /activity-logs
   GET /{logID} : 単一ログ取得
   GET ?date=YYYY-MM-DD : 日付別ログ一覧
-  GET ?month=YYYY-MM : 月別ログ一覧
-  GET /stats?month=YYYY-MM : 月別統計取得
+  GET ?date=YYYY-MM : 月別ログ一覧
+  GET /stats?date=YYYY-MM : 月別統計取得
 */
 
+const repo = newActivityLogRepository(drizzle);
+const qs = newActivityQueryService(drizzle);
+const uc = newActivityLogUsecase(repo, qs);
+const h = newActivityLogHandler(uc);
+
 export const newActivityLogRoute = app
-  .get("/", (c) => {
-    const { date, month } = c.req.query();
-
-    if (date) {
-      // 日付別ログ一覧
-    }
-
-    if (month) {
-      // 月別ログ一覧
-    }
-
-    return c.json({ message: "success" }, 200);
-  })
+  .get("/", (c) => h.getActivityLogs(c))
   .get("/:id", (c) => {
     const { id } = c.req.param();
 
-    return c.json({ message: id }, 200);
+    return h.getActivityLog(c, id);
   })
-  .post("/:id", (c) => {
-    const { id } = c.req.param();
-
-    return c.json({ message: id }, 200);
-  })
+  .post("/", zValidator("json", CreateActivityLogRequestSchema), (c) =>
+    h.createActivityLog(c)
+  )
   .put("/:id", (c) => {
     const { id } = c.req.param();
 
-    return c.json({ message: id }, 200);
+    return h.updateActivityLog(c, id);
   })
   .delete("/:id", (c) => {
     const { id } = c.req.param();
 
-    return c.json({ message: id }, 200);
+    return h.deleteActivityLog(c, id);
   })
-  .get("/stats", (c) => {
-    const { month } = c.req.query();
-
-    return c.json({ message: month }, 200);
-  });
+  .get("/stats", (c) => h.getStats(c));
