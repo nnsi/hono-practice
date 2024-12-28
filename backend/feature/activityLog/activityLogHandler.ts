@@ -30,10 +30,7 @@ export function newActivityLogHandler(uc: ActivityLogUsecase) {
 
 function GetActivityLogs(uc: ActivityLogUsecase) {
   return async (c: HonoContext) => {
-    const { date } = c.req.query();
-    if (!date) {
-      throw new AppError("invalid query");
-    }
+    const date = c.req.query("date") || dayjs().format("YYYY-MM-DD");
 
     const dayOrDate = date.split("-").length === 2 ? "month" : "day";
     const from = dayjs(date).startOf(dayOrDate).toDate();
