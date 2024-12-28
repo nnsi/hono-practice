@@ -1,8 +1,8 @@
-import { HonoContext } from "@/backend/context";
 import {
   createActivityId,
   createActivityKindId,
   createActivityLogId,
+  UserId,
 } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import dayjs from "@/backend/lib/dayjs";
@@ -29,8 +29,8 @@ export function newActivityLogHandler(uc: ActivityLogUsecase) {
 }
 
 function GetActivityLogs(uc: ActivityLogUsecase) {
-  return async (c: HonoContext) => {
-    const date = c.req.query("date") || dayjs().format("YYYY-MM-DD");
+  return async (userId: UserId, query: { date?: string }) => {
+    const date = query.date || dayjs().format("YYYY-MM-DD");
 
     const dayOrDate = date.split("-").length === 2 ? "month" : "day";
     const from = dayjs(date).startOf(dayOrDate).toDate();
@@ -38,7 +38,7 @@ function GetActivityLogs(uc: ActivityLogUsecase) {
 
     const params: GetActivityLogsParams = { from, to };
 
-    const logs = await uc.getActivityLogs(c.get("userId"), params);
+    const logs = await uc.getActivityLogs(userId, params);
 
     const parsedLogs = GetActivityLogsResponseSchema.safeParse(logs);
     if (!parsedLogs.success) {
@@ -46,33 +46,32 @@ function GetActivityLogs(uc: ActivityLogUsecase) {
       throw new AppError("Invalid parse");
     }
 
-    return c.json(parsedLogs.data);
+    return parsedLogs.data;
   };
 }
 
 function getActivityLog(uc: ActivityLogUsecase) {
-  return async (c: HonoContext, id: string) => {
+  return async (userId: UserId, id: string) => {
     const activityLogId = createActivityLogId(id);
 
-    const log = await uc.getActivityLog(c.get("userId"), activityLogId);
+    const log = await uc.getActivityLog(userId, activityLogId);
 
     const parsedLog = GetActivityLogResponseSchema.safeParse(log);
     if (!parsedLog.success) {
       throw new AppError("Invalid parse");
     }
 
-    return c.json(parsedLog.data);
+    return parsedLog.data;
   };
 }
 
 function createActivityLog(uc: ActivityLogUsecase) {
-  return async (c: HonoContext) => {
-    const params = await c.req.json<CreateActivityLogRequest>();
+  return async (userId: UserId, params: CreateActivityLogRequest) => {
     const activityId = createActivityId(params.activityId);
     const activityKindId = createActivityKindId(params.activityKindId);
 
     const log = await uc.createActivityLog(
-      c.get("userId"),
+      userId,
       activityId,
       activityKindId,
       params
@@ -83,41 +82,41 @@ function createActivityLog(uc: ActivityLogUsecase) {
       throw new AppError("Invalid parse");
     }
 
-    return c.json(parsedLog.data);
+    return parsedLog.data;
   };
 }
 
 function updateActivityLog(uc: ActivityLogUsecase) {
-  return async (c: HonoContext, id: string) => {
+  return async (
+    userId: UserId,
+    id: string,
+    params: UpdateActivityLogRequest
+  ) => {
     const activityLogId = createActivityLogId(id);
-    const params = await c.req.json<UpdateActivityLogRequest>();
 
-    const log = await uc.updateActivityLog(
-      c.get("userId"),
-      activityLogId,
-      params
-    );
+    const log = await uc.updateActivityLog(userId, activityLogId, params);
 
     const parsedLog = GetActivityLogResponseSchema.safeParse(log);
     if (!parsedLog.success) {
       throw new AppError("Invalid parse");
     }
 
-    return c.json(parsedLog.data, 200);
+    return parsedLog.data;
   };
 }
 
 function deleteActivityLog(uc: ActivityLogUsecase) {
-  return async (c: HonoContext, id: string) => {
+  return async (userId: UserId, id: string) => {
     const activityLogId = createActivityLogId(id);
-    await uc.deleteActivityLog(c.get("userId"), activityLogId);
-    return c.json({ message: "success" }, 200);
+    await uc.deleteActivityLog(userId, activityLogId);
+
+    return { message: "success" };
   };
 }
 
 function getStats(uc: ActivityLogUsecase) {
-  return async (c: HonoContext) => {
-    const { date } = c.req.query();
+  return async (userId: UserId, query: { date?: string }) => {
+    const { date } = query;
     if (!date) {
       throw new AppError("invalid query");
     }
@@ -126,8 +125,8 @@ function getStats(uc: ActivityLogUsecase) {
     const from = dayjs(date).startOf(dayOrDate).toDate();
     const to = dayjs(date).endOf(dayOrDate).toDate();
 
-    const stats = await uc.getStats(c.get("userId"), { from, to });
+    const stats = await uc.getStats(userId, { from, to });
 
-    return c.json(stats, 200);
+    return stats;
   };
 }

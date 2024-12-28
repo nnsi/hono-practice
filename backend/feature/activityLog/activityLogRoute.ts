@@ -35,23 +35,38 @@ const uc = newActivityLogUsecase(repo, acRepo, qs);
 const h = newActivityLogHandler(uc);
 
 export const newActivityLogRoute = app
-  .get("/", (c) => h.getActivityLogs(c))
-  .get("/stats", (c) => h.getStats(c))
+  .get("/", (c) => {
+    const res = h.getActivityLogs(c.get("userId"), c.req.query());
+
+    return c.json(res);
+  })
+  .get("/stats", (c) => {
+    const res = h.getStats(c.get("userId"), c.req.query());
+
+    return c.json(res);
+  })
   .get("/:id", (c) => {
     const { id } = c.req.param();
 
-    return h.getActivityLog(c, id);
+    const res = h.getActivityLog(c.get("userId"), id);
+    return c.json(res);
   })
-  .post("/", zValidator("json", CreateActivityLogRequestSchema), (c) =>
-    h.createActivityLog(c)
-  )
+  .post("/", zValidator("json", CreateActivityLogRequestSchema), (c) => {
+    const res = h.createActivityLog(c.get("userId"), c.req.valid("json"));
+
+    return c.json(res);
+  })
   .put("/:id", zValidator("json", UpdateActivityLogRequestSchema), (c) => {
     const { id } = c.req.param();
 
-    return h.updateActivityLog(c, id);
+    const res = h.updateActivityLog(c.get("userId"), id, c.req.valid("json"));
+
+    return c.json(res);
   })
   .delete("/:id", (c) => {
     const { id } = c.req.param();
 
-    return h.deleteActivityLog(c, id);
+    const res = h.deleteActivityLog(c.get("userId"), id);
+
+    return c.json(res);
   });
