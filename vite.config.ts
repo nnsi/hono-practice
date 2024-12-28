@@ -18,6 +18,9 @@ const resolve = {
 export default defineConfig(({ mode }) => {
   if (mode === "server") {
     return {
+      test: {
+        setupFiles: ["./backend/test.setup.ts"],
+      },
       resolve,
       plugins: [
         build({

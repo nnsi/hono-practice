@@ -3,33 +3,39 @@ import { setCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { drizzle } from "@/backend/infra/drizzle";
+import { drizzle, DrizzleInstance } from "@/backend/infra/drizzle";
 import { createUserRequestSchema } from "@/types/request";
 
 import { AppContext } from "../../context";
 import { authMiddleware } from "../../middleware/authMiddleware";
 
-import { newUserHandler, newUserRepository, newUserUsecase } from ".";
+import { newUserHandler } from "./userHandler";
+import { newUserRepository } from "./userRepository";
+import { newUserUsecase } from "./userUsecase";
 
-const app = new Hono<AppContext>();
+export function createUserRoute(db: DrizzleInstance) {
+  const app = new Hono<AppContext>();
 
-const repo = newUserRepository(drizzle);
-const uc = newUserUsecase(repo);
-const h = newUserHandler(uc);
+  const repo = newUserRepository(db);
+  const uc = newUserUsecase(repo);
+  const h = newUserHandler(uc);
 
-export const userRoute = app
-  .post("/", zValidator("json", createUserRequestSchema), async (c) => {
-    const token = await h.createUser(c.req.valid("json"));
+  return app
+    .post("/", zValidator("json", createUserRequestSchema), async (c) => {
+      const token = await h.createUser(c.req.valid("json"));
 
-    setCookie(c, "auth", token, {
-      httpOnly: true,
+      setCookie(c, "auth", token, {
+        httpOnly: true,
+      });
+
+      return c.body(null, 204);
+    })
+    .get("/me", authMiddleware, async (c) => {
+      const id = c.get("userId");
+      const res = await h.getMe(id);
+
+      return c.json(res);
     });
+}
 
-    return c.body(null, 204);
-  })
-  .get("/me", authMiddleware, async (c) => {
-    const id = c.get("userId");
-    const res = await h.getMe(id);
-
-    return c.json(res);
-  });
+export const userRoute = createUserRoute(drizzle);

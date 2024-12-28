@@ -1,4 +1,5 @@
 import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle as pglite } from "drizzle-orm/pglite";
 import pg from "pg";
 
 import * as schema from "@/drizzle/schema";
@@ -23,7 +24,9 @@ if (process.env.NODE_ENV !== "production") {
   globalThis.drizzleGlobal = drizzleInstance;
 }
 
-export type DrizzleInstance = ReturnType<typeof createInstance>;
+export type DrizzleInstance =
+  | ReturnType<typeof drizzle<typeof schema>>
+  | ReturnType<typeof pglite<typeof schema>>; // テスト用
 
 export { drizzleInstance as drizzle };
 
