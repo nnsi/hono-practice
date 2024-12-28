@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { createActivityId } from "@/backend/domain";
 import { drizzle, newDrizzleTransactionRunner } from "@/backend/infra/drizzle";
 import {
   CreateActivityRequestSchema,
@@ -25,22 +26,56 @@ const uc = newActivityUsecase(repo, tx);
 const h = newActivityHandler(uc);
 
 export const newActivityRoute = app
-  .get("/", (c) => h.getActivities(c))
-  .get("/:id", (c) => h.getActivity(c, c.req.param("id")))
-  .post("/", zValidator("json", CreateActivityRequestSchema), async (c) =>
-    h.createActivity(c, c.req.valid("json"))
-  )
-  .put("/:id", zValidator("json", UpdateActivityRequestSchema), async (c) => {
+  .get("/", async (c) => {
+    const userId = c.get("userId");
+
+    const res = await h.getActivities(userId);
+    return c.json(res);
+  })
+  .get("/:id", async (c) => {
+    const userId = c.get("userId");
     const { id } = c.req.param();
-    return h.updateActivity(c, id, c.req.valid("json"));
+    const activityId = createActivityId(id);
+
+    const res = await h.getActivity(userId, activityId);
+    return c.json(res);
+  })
+  .post("/", zValidator("json", CreateActivityRequestSchema), async (c) => {
+    const userId = c.get("userId");
+    const params = c.req.valid("json");
+
+    const res = await h.createActivity(userId, params);
+    return c.json(res);
+  })
+  .put("/:id", zValidator("json", UpdateActivityRequestSchema), async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    const activityId = createActivityId(id);
+
+    const res = await h.updateActivity(userId, activityId, c.req.valid("json"));
+    return c.json(res);
   })
   .put(
     "/:id/order",
     zValidator("json", UpdateActivityOrderRequestSchema),
     async (c) => {
+      const userId = c.get("userId");
       const { id } = c.req.param();
+      const activityId = createActivityId(id);
 
-      h.updateActivityOrder(c, id, c.req.valid("json"));
+      const res = await h.updateActivityOrder(
+        userId,
+        activityId,
+        c.req.valid("json")
+      );
+      return c.json(res);
     }
   )
-  .delete("/:id", (c) => h.deleteActivity(c, c.req.param("id")));
+  .delete("/:id", async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    const activityId = createActivityId(id);
+
+    const res = await h.deleteActivity(userId, activityId);
+    return c.json(res);
+  });

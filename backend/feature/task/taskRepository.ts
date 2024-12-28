@@ -1,17 +1,17 @@
 import { eq, and, desc, isNull } from "drizzle-orm";
 
-import { Task } from "@/backend/domain";
+import { Task, TaskId, UserId } from "@/backend/domain";
 import { AppError, ResourceNotFoundError } from "@/backend/error";
 import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {
-  getTaskAllByUserId: (userId: string) => Promise<Task[]>;
+  getTaskAllByUserId: (userId: UserId) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
-    userId: string,
-    taskId: string
+    userId: UserId,
+    taskId: TaskId
   ) => Promise<Task | undefined>;
-  getDoneTasksByUserId: (userId: string) => Promise<Task[]>;
+  getDoneTasksByUserId: (userId: UserId) => Promise<Task[]>;
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
@@ -31,7 +31,7 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
 }
 
 function getTaskAllByUserId(db: QueryExecutor) {
-  return async function (userId: string): Promise<Task[]> {
+  return async function (userId: UserId): Promise<Task[]> {
     const result = await db.query.tasks.findMany({
       where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
       orderBy: desc(tasks.createdAt),
@@ -57,8 +57,8 @@ function getTaskAllByUserId(db: QueryExecutor) {
 
 function getTaskByUserIdAndTaskId(db: QueryExecutor) {
   return async function (
-    userId: string,
-    taskId: string
+    userId: UserId,
+    taskId: TaskId
   ): Promise<Task | undefined> {
     const result = await db.query.tasks.findFirst({
       where: and(
@@ -126,7 +126,7 @@ function deleteTask(db: QueryExecutor) {
 }
 
 function getDoneTasksByUserId(db: QueryExecutor) {
-  return async function (userId: string): Promise<Task[]> {
+  return async function (userId: UserId): Promise<Task[]> {
     const result = await db.query.tasks.findMany({
       where: and(
         eq(tasks.userId, userId),

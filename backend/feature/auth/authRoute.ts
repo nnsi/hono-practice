@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { setCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
 
@@ -17,11 +18,22 @@ const uc = newAuthUsecase(repo);
 const h = newAuthHandler(uc);
 
 export const authRoute = app
-  .post(
-    "/login",
-    zValidator("json", loginRequestSchema),
-     (c) =>{
-      const params = c.req.valid("json");
-      return h.login(c, params);
-    })
-  .get("/logout", (c)=> h.logout(c));
+  .post("/login", zValidator("json", loginRequestSchema), async (c) => {
+    const params = c.req.valid("json");
+
+    const { token, payload, res } = await h.login(params);
+
+    setCookie(c, "auth", token, {
+      httpOnly: true,
+      expires: new Date(payload.exp * 1000),
+    });
+
+    return c.json(res);
+  })
+  .get("/logout", async (c) => {
+    setCookie(c, "auth", "", {
+      httpOnly: true,
+    });
+
+    return c.json({ message: "success" });
+  });

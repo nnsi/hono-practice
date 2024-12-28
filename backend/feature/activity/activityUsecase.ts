@@ -2,7 +2,7 @@ import {
   Activity,
   ActivityId,
   createActivityId,
-  createUserId,
+  UserId,
 } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 import { TransactionRunner } from "@/backend/infra/db";
@@ -16,20 +16,20 @@ import {
 import { ActivityRepository } from ".";
 
 export type ActivityUsecase = {
-  getActivities(userId: string): Promise<Activity[]>;
-  getActivity(userId: string, id: string): Promise<Activity>;
-  createActivity(userId: string, req: CreateActivityRequest): Promise<Activity>;
+  getActivities(userId: UserId): Promise<Activity[]>;
+  getActivity(userId: UserId, activityId: ActivityId): Promise<Activity>;
+  createActivity(userId: UserId, req: CreateActivityRequest): Promise<Activity>;
   updateActivity(
-    userId: string,
-    id: string,
+    userId: UserId,
+    activityId: ActivityId,
     req: UpdateActivityRequest
   ): Promise<Activity>;
   updateActivityOrder(
-    userId: string,
-    id: string,
+    userId: UserId,
+    activityId: ActivityId,
     orderIndexes: UpdateActivityOrderRequest
   ): Promise<Activity>;
-  deleteActivity(userId: string, id: string): Promise<void>;
+  deleteActivity(userId: UserId, activityId: ActivityId): Promise<void>;
 };
 
 export function newActivityUsecase(
@@ -47,9 +47,8 @@ export function newActivityUsecase(
 }
 
 function getActivities(repo: ActivityRepository) {
-  return async (userId: string) => {
-    const typedUserId = createUserId(userId);
-    const activity = await repo.getActivitiesByUserId(typedUserId);
+  return async (userId: UserId) => {
+    const activity = await repo.getActivitiesByUserId(userId);
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return activity;
@@ -57,11 +56,8 @@ function getActivities(repo: ActivityRepository) {
 }
 
 function getActivity(repo: ActivityRepository) {
-  return async (userId: string, id: string) => {
-    const typedUserId = createUserId(userId);
-    const typedId = createActivityId(id);
-
-    const activity = await repo.getActivityByIdAndUserId(typedUserId, typedId);
+  return async (userId: UserId, activityId: ActivityId) => {
+    const activity = await repo.getActivityByIdAndUserId(userId, activityId);
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return activity;
@@ -69,11 +65,9 @@ function getActivity(repo: ActivityRepository) {
 }
 
 function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
-  return async (userId: string, params: CreateActivityRequest) => {
-    const typedUserId = createUserId(userId);
+  return async (userId: UserId, params: CreateActivityRequest) => {
     return tx.run([repo], async (txRepo) => {
-      const lastOrderIndex =
-        await txRepo.getLastOrderIndexByUserId(typedUserId);
+      const lastOrderIndex = await txRepo.getLastOrderIndexByUserId(userId);
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
@@ -93,14 +87,15 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
 }
 
 function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
-  return async (userId: string, id: string, params: UpdateActivityRequest) => {
-    const typedUserId = createUserId(userId);
-    const typedId = createActivityId(id);
-
+  return async (
+    userId: UserId,
+    activityId: ActivityId,
+    params: UpdateActivityRequest
+  ) => {
     return tx.run([repo], async (txRepo) => {
       const activity = await txRepo.getActivityByIdAndUserId(
-        typedUserId,
-        typedId
+        userId,
+        activityId
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
@@ -113,26 +108,21 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
 function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
   return async (
-    userId: string,
-    id: string,
+    userId: UserId,
+    activityId: ActivityId,
     params: UpdateActivityOrderRequest
   ) => {
-    const typedUserId = createUserId(userId);
-    const typedId = createActivityId(id);
     const typedPrevId = params.prev ? createActivityId(params.prev) : undefined;
     const typedNextId = params.next ? createActivityId(params.next) : undefined;
 
-    const ids = [typedId, typedPrevId, typedNextId].filter(
+    const ids = [activityId, typedPrevId, typedNextId].filter(
       Boolean
     ) as ActivityId[];
 
     return tx.run([repo], async (txRepo) => {
-      const activities = await txRepo.getActivitiesByIdsAndUserId(
-        typedUserId,
-        ids
-      );
+      const activities = await txRepo.getActivitiesByIdsAndUserId(userId, ids);
 
-      const activity = activities.find((a) => a.id === typedId);
+      const activity = activities.find((a) => a.id === activityId);
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
       const prevActivity = activities.find((a) => a.id === typedPrevId);
@@ -151,11 +141,8 @@ function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
 }
 
 function deleteActivity(repo: ActivityRepository) {
-  return async (userId: string, id: string) => {
-    const typedUserId = createUserId(userId);
-    const typedId = createActivityId(id);
-
-    const activity = await repo.getActivityByIdAndUserId(typedUserId, typedId);
+  return async (userId: UserId, activityId: ActivityId) => {
+    const activity = await repo.getActivityByIdAndUserId(userId, activityId);
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return await repo.deleteActivity(activity);

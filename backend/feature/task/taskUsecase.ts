@@ -1,4 +1,4 @@
-import { Task } from "@/backend/domain";
+import { Task, TaskId, UserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 
 import { TaskRepository } from ".";
@@ -14,15 +14,15 @@ export type UpdateTaskInputParams = {
 };
 
 export type TaskUsecase = {
-  getTasks: (userId: string) => Promise<Task[]>;
-  getTask: (userId: string, taskId: string) => Promise<Task>;
-  createTask: (userId: string, params: CreateTaskInputParams) => Promise<Task>;
+  getTasks: (userId: UserId) => Promise<Task[]>;
+  getTask: (userId: UserId, taskId: TaskId) => Promise<Task>;
+  createTask: (userId: UserId, params: CreateTaskInputParams) => Promise<Task>;
   updateTask: (
-    userId: string,
-    taskId: string,
+    userId: UserId,
+    taskId: TaskId,
     params: UpdateTaskInputParams
   ) => Promise<Task>;
-  deleteTask: (userId: string, taskId: string) => Promise<void>;
+  deleteTask: (userId: UserId, taskId: TaskId) => Promise<void>;
 };
 
 export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
@@ -36,13 +36,13 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
 }
 
 function getTasks(repo: TaskRepository) {
-  return async (userId: string) => {
+  return async (userId: UserId) => {
     return await repo.getTaskAllByUserId(userId);
   };
 }
 
 function getTask(repo: TaskRepository) {
-  return async (userId: string, taskId: string) => {
+  return async (userId: UserId, taskId: TaskId) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new ResourceNotFoundError("task not found");
 
@@ -51,7 +51,7 @@ function getTask(repo: TaskRepository) {
 }
 
 function createTask(repo: TaskRepository) {
-  return async (userId: string, params: CreateTaskInputParams) => {
+  return async (userId: UserId, params: CreateTaskInputParams) => {
     const task = Task.create({
       userId: userId,
       title: params.title,
@@ -64,8 +64,8 @@ function createTask(repo: TaskRepository) {
 
 function updateTask(repo: TaskRepository) {
   return async (
-    userId: string,
-    taskId: string,
+    userId: UserId,
+    taskId: TaskId,
     params: UpdateTaskInputParams
   ) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
@@ -81,7 +81,7 @@ function updateTask(repo: TaskRepository) {
 }
 
 function deleteTask(repo: TaskRepository) {
-  return async (userId: string, taskId: string) => {
+  return async (userId: UserId, taskId: TaskId) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new ResourceNotFoundError("task not found");
 

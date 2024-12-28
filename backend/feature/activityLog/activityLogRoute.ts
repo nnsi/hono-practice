@@ -35,38 +35,46 @@ const uc = newActivityLogUsecase(repo, acRepo, qs);
 const h = newActivityLogHandler(uc);
 
 export const newActivityLogRoute = app
-  .get("/", (c) => {
-    const res = h.getActivityLogs(c.get("userId"), c.req.query());
+  .get("/", async (c) => {
+    const res = await h.getActivityLogs(c.get("userId"), c.req.query());
 
     return c.json(res);
   })
-  .get("/stats", (c) => {
-    const res = h.getStats(c.get("userId"), c.req.query());
+  .get("/stats", async (c) => {
+    const res = await h.getStats(c.get("userId"), c.req.query());
 
     return c.json(res);
   })
-  .get("/:id", (c) => {
+  .get("/:id", async (c) => {
     const { id } = c.req.param();
 
-    const res = h.getActivityLog(c.get("userId"), id);
+    const res = await h.getActivityLog(c.get("userId"), id);
     return c.json(res);
   })
-  .post("/", zValidator("json", CreateActivityLogRequestSchema), (c) => {
-    const res = h.createActivityLog(c.get("userId"), c.req.valid("json"));
+  .post("/", zValidator("json", CreateActivityLogRequestSchema), async (c) => {
+    const res = await h.createActivityLog(c.get("userId"), c.req.valid("json"));
 
     return c.json(res);
   })
-  .put("/:id", zValidator("json", UpdateActivityLogRequestSchema), (c) => {
+  .put(
+    "/:id",
+    zValidator("json", UpdateActivityLogRequestSchema),
+    async (c) => {
+      const { id } = c.req.param();
+
+      const res = await h.updateActivityLog(
+        c.get("userId"),
+        id,
+        c.req.valid("json")
+      );
+
+      return c.json(res);
+    }
+  )
+  .delete("/:id", async (c) => {
     const { id } = c.req.param();
 
-    const res = h.updateActivityLog(c.get("userId"), id, c.req.valid("json"));
-
-    return c.json(res);
-  })
-  .delete("/:id", (c) => {
-    const { id } = c.req.param();
-
-    const res = h.deleteActivityLog(c.get("userId"), id);
+    const res = await h.deleteActivityLog(c.get("userId"), id);
 
     return c.json(res);
   });

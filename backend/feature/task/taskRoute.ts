@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { createTaskId } from "@/backend/domain";
 import { drizzle } from "@/backend/infra/drizzle/drizzleInstance";
 import {
   createTaskRequestSchema,
@@ -21,20 +22,50 @@ const uc = newTaskUsecase(repo);
 const h = newTaskHandler(uc);
 
 export const taskRoute = app
-  .get("/", (c) => h.getTasks(c))
-  .get("/:id", (c) => h.getTask(c))
-  .post(
-    "/",
-    ...factory.createHandlers(
-      zValidator("json", createTaskRequestSchema),
-      (c) => h.createTask(c)
-    )
-  )
+  .get("/", async (c) => {
+    const id = c.get("userId");
+    const res = await h.getTasks(id);
+
+    return c.json(res);
+  })
+  .get("/:id", async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    const taskId = createTaskId(id);
+
+    const res = await h.getTask(userId, taskId);
+
+    return c.json(res);
+  })
+  .post("/", zValidator("json", createTaskRequestSchema), async (c) => {
+    const id = c.get("userId");
+    const params = c.req.valid("json");
+    const res = await h.createTask(id, params);
+
+    return c.json(res);
+  })
   .put(
     "/:id",
     ...factory.createHandlers(
       zValidator("json", updateTaskRequestSchema),
-      (c) => h.updateTask(c)
+      async (c) => {
+        const userId = c.get("userId");
+        const { id } = c.req.param();
+        const taskId = createTaskId(id);
+        const params = c.req.valid("json");
+
+        const res = await h.updateTask(userId, taskId, params);
+
+        return c.json(res);
+      }
     )
   )
-  .delete("/:id", (c) => h.deleteTask(c));
+  .delete("/:id", async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    const taskId = createTaskId(id);
+
+    const res = await h.deleteTask(userId, taskId);
+
+    return c.json(res);
+  });

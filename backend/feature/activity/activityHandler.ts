@@ -1,4 +1,4 @@
-import { HonoContext } from "@/backend/context";
+import { ActivityId, UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import { CreateActivityRequest } from "@/types/request/CreateActivityRequest";
 import {
@@ -24,70 +24,76 @@ export function newActivityHandler(uc: ActivityUsecase) {
 }
 
 function getActivities(uc: ActivityUsecase) {
-  return async (c: HonoContext) => {
-    const activities = await uc.getActivities(c.get("userId"));
+  return async (userId: UserId) => {
+    const activities = await uc.getActivities(userId);
+
     const parsedActivities = GetActivitiesResponseSchema.safeParse(activities);
     if (!parsedActivities.success) {
       throw new AppError("failed to parse activities", 500);
     }
-    return c.json(parsedActivities.data);
+
+    return parsedActivities.data;
   };
 }
 
 function getActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, id: string) => {
-    const activity = await uc.getActivity(c.get("userId"), id);
+  return async (userId: UserId, id: ActivityId) => {
+    const activity = await uc.getActivity(userId, id);
 
     const parsedActivity = GetActivityResponseSchema.safeParse(activity);
     if (!parsedActivity.success) {
       throw new AppError("failed to parse activity", 500);
     }
 
-    return c.json(parsedActivity.data);
+    return parsedActivity.data;
   };
 }
 
 function createActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, json: CreateActivityRequest) => {
-    const activity = await uc.createActivity(c.get("userId"), json);
+  return async (userId: UserId, params: CreateActivityRequest) => {
+    const activity = await uc.createActivity(userId, params);
 
     const parsedActivity = GetActivityResponseSchema.safeParse(activity);
     if (!parsedActivity.success) {
       throw new AppError("failed to parse activity", 500);
     }
 
-    return c.json(parsedActivity.data);
+    return parsedActivity.data;
   };
 }
 
 function updateActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, id: string, json: UpdateActivityRequest) => {
-    const activity = await uc.updateActivity(c.get("userId"), id, json);
+  return async (
+    userId: UserId,
+    activityId: ActivityId,
+    json: UpdateActivityRequest
+  ) => {
+    const activity = await uc.updateActivity(userId, activityId, json);
 
     const parsedActivity = GetActivityResponseSchema.safeParse(activity);
     if (!parsedActivity.success) {
       throw new AppError("failed to parse activity", 500);
     }
-    return c.json(parsedActivity.data);
+    return parsedActivity.data;
   };
 }
 
 function deleteActivity(uc: ActivityUsecase) {
-  return async (c: HonoContext, id: string) => {
-    await uc.deleteActivity(c.get("userId"), id);
+  return async (userId: UserId, activityId: ActivityId) => {
+    await uc.deleteActivity(userId, activityId);
 
-    return c.json({ message: "success" });
+    return { message: "success" };
   };
 }
 
 function updateActivityOrder(uc: ActivityUsecase) {
   return async (
-    c: HonoContext,
-    id: string,
-    json: UpdateActivityOrderRequest
+    userId: UserId,
+    activityId: ActivityId,
+    params: UpdateActivityOrderRequest
   ) => {
-    await uc.updateActivityOrder(c.get("userId"), id, json);
+    await uc.updateActivityOrder(userId, activityId, params);
 
-    return c.json({ message: "success" });
+    return { message: "success" };
   };
 }
