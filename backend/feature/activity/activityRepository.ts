@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
-import { Activity, ActivityId, UserId } from "@/backend/domain";
+import { Activity, ActivityId, ActivityKindId, UserId } from "@/backend/domain";
 import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds } from "@/drizzle/schema";
 
@@ -14,6 +14,10 @@ export type ActivityRepository = {
     userId: UserId,
     id: ActivityId
   ): Promise<Activity | undefined>;
+  getActivityByUserIdAndActivityKindId(
+    userId: UserId,
+    activityKindId: ActivityKindId
+  ): Promise<Activity | undefined>;
   getLastOrderIndexByUserId(userId: UserId): Promise<string | undefined>;
   createActivity(activity: Activity): Promise<Activity>;
   updateActivity(activity: Activity): Promise<Activity>;
@@ -26,6 +30,8 @@ export function newActivityRepository(db: QueryExecutor): ActivityRepository {
     getActivitiesByUserId: getActivitiesByUserId(db),
     getActivitiesByIdsAndUserId: getActivitiesByIdsAndUserId(db),
     getActivityByIdAndUserId: getActivityByIdAndUserId(db),
+    getActivityByUserIdAndActivityKindId:
+      getActivityByUserIdAndActivityKindId(db),
     getLastOrderIndexByUserId: getLastOrderIndexByUserId(db),
     createActivity: createActivity(db),
     updateActivity: updateActivity(db),
@@ -116,6 +122,39 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
         isNull(activities.deletedAt)
       ),
     });
+    if (!row) return row;
+
+    return Activity.create(
+      {
+        id: row.id,
+        userId: row.userId,
+        name: row.name,
+        label: row.label || "",
+        emoji: row.emoji || "",
+        description: row.description || "",
+        quantityLabel: row.quantityLabel || "",
+        orderIndex: row.orderIndex || "",
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      },
+      row.kinds
+    );
+  };
+}
+
+function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
+  return async function (userId: UserId, activityKindId: ActivityKindId) {
+    const row = await db.query.activities.findFirst({
+      with: {
+        kinds: true,
+      },
+      where: and(
+        eq(activities.userId, userId),
+        eq(activityKinds.id, activityKindId),
+        isNull(activities.deletedAt)
+      ),
+    });
+
     if (!row) return row;
 
     return Activity.create(

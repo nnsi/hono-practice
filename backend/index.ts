@@ -16,6 +16,7 @@ import {
   userRoute,
   activityDateLogRoute,
   newActivityRoute,
+  newActivityLogRoute,
 } from "./feature";
 import { authMiddleware } from "./middleware/authMiddleware";
 
@@ -53,7 +54,8 @@ const routes = app
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", newActivityRoute)
-  .route("/users/activity-logs", activityDateLogRoute);
+  .route("/users/activity-logs", activityDateLogRoute)
+  .route("/users/new-activity-logs", newActivityLogRoute);
 
 const port = 3456;
 console.log(`Server is running on port ${port}`);

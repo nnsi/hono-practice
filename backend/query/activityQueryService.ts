@@ -4,6 +4,8 @@ import { type QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds, activityLogs } from "@/drizzle/schema";
 import { GetActivityStatsResponse } from "@/types/response";
 
+import dayjs from "../lib/dayjs";
+
 export type ActivityQueryService = {
   activityStatsQuery: (
     userId: string,
@@ -24,10 +26,7 @@ export function newActivityQueryService(
 
 function activityStatsQuery(db: QueryExecutor) {
   return async function (userId: string, startDate: Date, endDate: Date) {
-    const startDateStr = startDate.toISOString().split("T")[0];
-    const endDateStr = endDate.toISOString().split("T")[0];
-
-    const json = await db
+    const rows = await db
       .select({
         id: activities.id,
         name: activities.name,
@@ -46,31 +45,31 @@ function activityStatsQuery(db: QueryExecutor) {
       .where(
         and(
           eq(activities.userId, userId),
-          between(activityLogs.date, startDateStr, endDateStr),
+          between(activityLogs.date, startDate, endDate),
           isNull(activityLogs.deletedAt)
         )
       )
       .orderBy(asc(activities.orderIndex))
       .execute();
 
-    const result = transform(json);
+    const result = transform(rows);
 
     return result;
   };
 }
 
 function transform(
-  json: {
+  rows: {
     id: string;
     name: string;
     kindid: string | null;
     kindname: string | null;
     logid: string;
-    date: string;
+    date: Date;
     quantity: number | null;
   }[]
 ) {
-  const { stats } = json.reduce(
+  const { stats } = rows.reduce(
     (acc, row) => {
       if (!acc.activityMap.has(row.id)) {
         acc.activityMap.set(row.id, acc.stats.length);
@@ -86,7 +85,7 @@ function transform(
               total: row.quantity || 0,
               logs: [
                 {
-                  date: row.date,
+                  date: dayjs(row.date).format("YYYY-MM-DD"),
                   quantity: row.quantity || 0,
                 },
               ],

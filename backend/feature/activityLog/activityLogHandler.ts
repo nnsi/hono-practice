@@ -1,8 +1,15 @@
 import { HonoContext } from "@/backend/context";
-import { createActivityLogId } from "@/backend/domain";
+import {
+  createActivityId,
+  createActivityKindId,
+  createActivityLogId,
+} from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import dayjs from "@/backend/lib/dayjs";
-import { CreateActivityLogRequest } from "@/types/request";
+import {
+  CreateActivityLogRequest,
+  UpdateActivityLogRequest,
+} from "@/types/request";
 import {
   GetActivityLogResponseSchema,
   GetActivityLogsResponseSchema,
@@ -34,10 +41,11 @@ function GetActivityLogs(uc: ActivityLogUsecase) {
 
     const params: GetActivityLogsParams = { from, to };
 
-    const logs = await uc.getActivitiyLogs(c.get("userId"), params);
+    const logs = await uc.getActivityLogs(c.get("userId"), params);
 
     const parsedLogs = GetActivityLogsResponseSchema.safeParse(logs);
     if (!parsedLogs.success) {
+      console.log(logs);
       throw new AppError("Invalid parse");
     }
 
@@ -63,28 +71,42 @@ function getActivityLog(uc: ActivityLogUsecase) {
 function createActivityLog(uc: ActivityLogUsecase) {
   return async (c: HonoContext) => {
     const params = await c.req.json<CreateActivityLogRequest>();
-    const log = await uc.createActivityLog(c.get("userId"), params);
+    const activityId = createActivityId(params.activityId);
+    const activityKindId = createActivityKindId(params.activityKindId);
+
+    const log = await uc.createActivityLog(
+      c.get("userId"),
+      activityId,
+      activityKindId,
+      params
+    );
 
     const parsedLog = GetActivityLogResponseSchema.safeParse(log);
     if (!parsedLog.success) {
       throw new AppError("Invalid parse");
     }
 
-    return c.json(parsedLog);
+    return c.json(parsedLog.data);
   };
 }
 
 function updateActivityLog(uc: ActivityLogUsecase) {
   return async (c: HonoContext, id: string) => {
     const activityLogId = createActivityLogId(id);
-    const params = await c.req.json<CreateActivityLogRequest>();
+    const params = await c.req.json<UpdateActivityLogRequest>();
 
     const log = await uc.updateActivityLog(
       c.get("userId"),
       activityLogId,
       params
     );
-    return c.json({ log }, 200);
+
+    const parsedLog = GetActivityLogResponseSchema.safeParse(log);
+    if (!parsedLog.success) {
+      throw new AppError("Invalid parse");
+    }
+
+    return c.json(parsedLog.data, 200);
   };
 }
 

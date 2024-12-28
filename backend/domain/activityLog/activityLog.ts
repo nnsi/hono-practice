@@ -5,12 +5,12 @@ import { createActivityLogId, ActivityLogId } from "./activityLogId";
 
 type BaseActivityLog = {
   id: ActivityLogId;
-  userId: UserId; // Activityが論理削除されてもどのユーザーに属するか判別可能
+  userId: UserId;
   activity: Activity;
-  activityKind: ActivityKind;
+  activityKind: ActivityKind | null;
   quantity: number | null;
-  memo?: string;
-  date: Date;
+  memo?: string | null;
+  date: string; // YYYY-MM-DD
 };
 
 type PersistedActivityLog = BaseActivityLog & {
@@ -25,10 +25,10 @@ function createActivityLog(params: {
   id?: string | ActivityLogId;
   userId: string | UserId;
   activity: Activity;
-  activityKind: ActivityKind;
+  activityKind: ActivityKind | null;
   quantity: number | null;
   memo?: string;
-  date: Date;
+  date: string | Date;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -38,6 +38,10 @@ function createActivityLog(params: {
 
   return {
     ...params,
+    date:
+      typeof params.date === "string"
+        ? params.date
+        : new Date(params.date).toISOString().split("T")[0],
     id,
     userId,
   };
@@ -45,12 +49,22 @@ function createActivityLog(params: {
 
 function updateActivityLog(
   log: ActivityLog,
-  params: Partial<Omit<BaseActivityLog, "id" | "userId" | "activityId">>
+  params: Partial<
+    Omit<BaseActivityLog, "id" | "userId" | "activityId" | "date"> & {
+      date: string | Date;
+    }
+  >
 ): ActivityLog {
+  const date = params.date
+    ? typeof params.date === "string"
+      ? params.date
+      : new Date(params.date).toISOString().split("T")[0]
+    : log.date;
+
   return {
     ...log,
     ...params,
-    updatedAt: new Date(),
+    date,
   };
 }
 

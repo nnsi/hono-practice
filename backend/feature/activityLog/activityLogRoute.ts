@@ -7,6 +7,8 @@ import { drizzle } from "@/backend/infra/drizzle";
 import { newActivityQueryService } from "@/backend/query";
 import { CreateActivityLogRequestSchema } from "@/types/request";
 
+import { newActivityRepository } from "../activity";
+
 import {
   newActivityLogHandler,
   newActivityLogRepository,
@@ -17,19 +19,21 @@ const app = new Hono<AppContext>();
 
 /*
   endpoint: /activity-logs
-  GET /{logID} : 単一ログ取得
+  GET /:id : 単一ログ取得
   GET ?date=YYYY-MM-DD : 日付別ログ一覧
   GET ?date=YYYY-MM : 月別ログ一覧
   GET /stats?date=YYYY-MM : 月別統計取得
 */
 
 const repo = newActivityLogRepository(drizzle);
+const acRepo = newActivityRepository(drizzle);
 const qs = newActivityQueryService(drizzle);
-const uc = newActivityLogUsecase(repo, qs);
+const uc = newActivityLogUsecase(repo, acRepo, qs);
 const h = newActivityLogHandler(uc);
 
 export const newActivityLogRoute = app
   .get("/", (c) => h.getActivityLogs(c))
+  .get("/stats", (c) => h.getStats(c))
   .get("/:id", (c) => {
     const { id } = c.req.param();
 
@@ -47,5 +51,4 @@ export const newActivityLogRoute = app
     const { id } = c.req.param();
 
     return h.deleteActivityLog(c, id);
-  })
-  .get("/stats", (c) => h.getStats(c));
+  });

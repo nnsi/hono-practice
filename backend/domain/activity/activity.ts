@@ -21,7 +21,7 @@ type BaseActivity = {
   emoji?: string | null;
   description?: string | null;
   quantityLabel: string | null;
-  options: [];
+  options?: [];
   orderIndex: string | null;
   kinds?: ActivityKind[];
 };
@@ -89,4 +89,10 @@ function updateActivity(
 export const Activity = {
   create: createActivity,
   update: updateActivity,
+  kind: {
+    create: (params: { id?: string; name?: string }) => ({
+      id: createActivityKindId(params.id),
+      name: params.name || "",
+    }),
+  },
 };

@@ -4,6 +4,7 @@ export const CreateActivityLogRequestSchema = z.object({
   quantity: z.coerce.number(),
   memo: z.string().optional(),
   date: z.string(),
+  activityId: z.string().optional(),
   activityKindId: z.string().optional(),
 });
 

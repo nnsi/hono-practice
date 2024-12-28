@@ -25,7 +25,7 @@ export const users = pgTable(
       .$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("login_id_idx").on(t.loginId)]
+  (t) => [index("user_login_id_idx").on(t.loginId)]
 );
 
 // Task テーブル
@@ -52,8 +52,8 @@ export const tasks = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
-    index("user_id_idx").on(t.userId),
-    index("created_at_idx").on(t.createdAt),
+    index("task_user_id_idx").on(t.userId),
+    index("task_created_at_idx").on(t.createdAt),
   ]
 );
 
@@ -84,36 +84,27 @@ export const activities = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
-    index("user_id_idx").on(t.userId),
-    index("created_at_idx").on(t.createdAt),
+    index("activity_user_id_idx").on(t.userId),
+    index("activity_created_at_idx").on(t.createdAt),
   ]
 );
 
-// ActivityQuantityOption テーブル
-export const activityQuantityOptions = pgTable("activity_quantity_options", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  activityId: uuid("activity_id")
-    .notNull()
-    .references(() => activities.id, {
-      onUpdate: "cascade",
-      onDelete: "restrict",
-    }),
-  quantity: real("quantity").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-});
+export const activitiesRelations = relations(activities, ({ many }) => ({
+  kinds: many(activityKinds),
+  activityLogs: many(activityLogs),
+}));
 
 // ActivityLog テーブル
 export const activityLogs = pgTable(
   "activity_log",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, {
+        onUpdate: "cascade",
+        onDelete: "restrict",
+      }),
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activities.id, {
@@ -123,7 +114,7 @@ export const activityLogs = pgTable(
     activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
     quantity: real("quantity"),
     memo: text("memo").default(""),
-    date: date("date").notNull(),
+    date: date("date", { mode: "date" }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -134,14 +125,21 @@ export const activityLogs = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
-    index("activity_id_idx").on(t.activityId),
-    index("activity_kind_id_idx").on(t.activityKindId),
-    index("date_idx").on(t.date),
+    index("activity_log_activity_id_idx").on(t.activityId),
+    index("activity_log_activity_kind_id_idx").on(t.activityKindId),
+    index("activity_log_date_idx").on(t.date),
   ]
 );
 
-export const activitiesRelations = relations(activities, ({ many }) => ({
-  kinds: many(activityKinds),
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  activity: one(activities, {
+    fields: [activityLogs.activityId],
+    references: [activities.id],
+  }),
+  activityKind: one(activityKinds, {
+    fields: [activityLogs.activityKindId],
+    references: [activityKinds.id],
+  }),
 }));
 
 // ActivityKind テーブル
@@ -166,12 +164,33 @@ export const activityKinds = pgTable(
       .$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("activity_id_idx").on(t.activityId)]
+  (t) => [index("activity_kind_activity_id_idx").on(t.activityId)]
 );
 
 export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
-  author: one(activities, {
+  activity: one(activities, {
     fields: [activityKinds.activityId],
     references: [activities.id],
   }),
 }));
+
+// TODO: delete
+// ActivityQuantityOption テーブル
+export const activityQuantityOptions = pgTable("activity_quantity_options", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  activityId: uuid("activity_id")
+    .notNull()
+    .references(() => activities.id, {
+      onUpdate: "cascade",
+      onDelete: "restrict",
+    }),
+  quantity: real("quantity").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});

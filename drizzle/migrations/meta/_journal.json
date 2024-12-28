@@ -8,6 +8,13 @@
       "when": 1733581199698,
       "tag": "0000_free_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1735363531105,
+      "tag": "0001_clever_miracleman",
+      "breakpoints": true
     }
   ]
 }
