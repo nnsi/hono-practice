@@ -5,9 +5,6 @@
       "source.fixAll.eslint": "explicit"
     }
   },
-  "[prisma]": {
-    "editor.defaultFormatter": "Prisma.prisma"
-  },
   "exportall.config.folderListener": [
     "/backend/domain",
     "/backend/route",

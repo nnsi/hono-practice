@@ -5,7 +5,10 @@ import { zValidator } from "@hono/zod-validator";
 import { AppContext } from "@/backend/context";
 import { drizzle } from "@/backend/infra/drizzle";
 import { newActivityQueryService } from "@/backend/query";
-import { CreateActivityLogRequestSchema } from "@/types/request";
+import {
+  CreateActivityLogRequestSchema,
+  UpdateActivityLogRequestSchema,
+} from "@/types/request";
 
 import { newActivityRepository } from "../activity";
 
@@ -42,7 +45,7 @@ export const newActivityLogRoute = app
   .post("/", zValidator("json", CreateActivityLogRequestSchema), (c) =>
     h.createActivityLog(c)
   )
-  .put("/:id", (c) => {
+  .put("/:id", zValidator("json", UpdateActivityLogRequestSchema), (c) => {
     const { id } = c.req.param();
 
     return h.updateActivityLog(c, id);

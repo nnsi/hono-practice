@@ -1,12 +1,5 @@
 # Hono-practice
 
-- backend Hono / Prisma + Drizzle
-- frontend React / Tanstack Router
-- drizzle
-- types
-  - request
-  - response
-
 ## Backend
 
 ### Architecture
@@ -18,7 +11,7 @@ Clean Arhitectureライク
     - context.ts
   - domain
     - {model}
-      - domain.ts
+      - {model}.ts
       - {vo}.ts
   - feature
     - {feature}

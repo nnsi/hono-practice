@@ -33,11 +33,10 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
   const api = apiClient;
   const queryClient = useQueryClient();
 
-  const handleDelete = async (activityId: string, logId: string) => {
-    const res = await api.users["activities"][":id"].logs[":logId"].$delete({
+  const handleDelete = async (logId: string) => {
+    const res = await api.users["activity-logs"][":id"].$delete({
       param: {
-        id: activityId,
-        logId: logId,
+        id: logId,
       },
     });
 
@@ -79,7 +78,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
                 <TrashIcon
                   onClick={(e) => {
                     e.preventDefault();
-                    handleDelete(log.activity.id, log.id);
+                    handleDelete(log.id);
                   }}
                 />
               </div>

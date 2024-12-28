@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 
+import { GetActivityStatsResponse } from "@/types/response";
 import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
 
@@ -24,23 +25,7 @@ type ActivityTabsProps = {
   changeMode: (mode: "daily" | "statistics") => void;
   activities?: GetActivitiesResponse;
   dailyActivityLogs?: GetActivityLogsResponse;
-  monthlyActivityLogs?: GetActivityLogsResponse;
-};
-
-type Stats = {
-  id: string;
-  name: string;
-  quantityLabel: string;
-  total: number;
-  kinds: {
-    id: string | null;
-    name: string;
-    total: number;
-    logs: {
-      date: string | Date;
-      quantity: number;
-    }[];
-  }[];
+  monthlyActivityLogs?: GetActivityStatsResponse;
 };
 
 export const ActivityTabs: React.FC<ActivityTabsProps> = ({
@@ -52,51 +37,6 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   dailyActivityLogs,
   monthlyActivityLogs,
 }) => {
-  const stats =
-    monthlyActivityLogs?.reduce((acc, log) => {
-      const activity = log.activity;
-      const kind = log.activityKind;
-
-      const targetIndex = acc.findIndex((s) => s.id === activity.id);
-      if (targetIndex === -1) {
-        acc.push({
-          id: activity.id,
-          name: activity.name,
-          quantityLabel: activity.quantityLabel,
-          total: log.quantity ?? 0,
-          kinds: [],
-        });
-      } else {
-        acc[targetIndex].total += log.quantity ?? 0;
-      }
-
-      const target = acc[targetIndex !== -1 ? targetIndex : acc.length - 1];
-      const kid = kind ? kind.id : null;
-      const kindIndex = target.kinds.findIndex((k) => k.id === kid);
-      if (kindIndex === -1) {
-        target.kinds.push({
-          id: kid,
-          name: kind ? kind.name : "未指定",
-          total: log.quantity ?? 0,
-          logs: [
-            {
-              date: log.date,
-              quantity: log.quantity ?? 0,
-            },
-          ],
-        });
-      } else {
-        target.kinds[kindIndex].total += log.quantity ?? 0;
-        target.kinds[kindIndex].logs.push({
-          date: log.date,
-          quantity: log.quantity ?? 0,
-        });
-      }
-
-      return acc;
-    }, [] as Stats[]) ?? [];
-  console.log(stats);
-
   return (
     <Tabs defaultValue={mode} value={mode}>
       <TabsList className="grid w-full grid-cols-2">
@@ -123,7 +63,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
             <CardTitle>{dayjs(month).format("YYYY-MM")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-5">
-            {stats.map((s) => (
+            {monthlyActivityLogs?.map((s) => (
               <Card key={s.id}>
                 <CardHeader className="spacing-y-0 p-3">
                   <CardTitle className="text-xl">

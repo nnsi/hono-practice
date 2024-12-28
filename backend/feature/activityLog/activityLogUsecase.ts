@@ -62,7 +62,7 @@ export type ActivityLogUsecase = {
   getStats: (
     userId: UserId,
     params: GetStatsParams
-  ) => Promise<GetActivityStatsResponse[]>;
+  ) => Promise<GetActivityStatsResponse>;
 };
 
 export function newActivityLogUsecase(

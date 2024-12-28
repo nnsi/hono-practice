@@ -70,12 +70,10 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
         variant: "destructive",
       });
     }
-    const res = await api.users.activities[":id"].logs.$post({
-      param: {
-        id: activity.id,
-      },
+    const res = await api.users["activity-logs"].$post({
       json: {
         ...data,
+        activityId: activity.id,
       },
     });
     if (res.status !== 200) {

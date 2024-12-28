@@ -41,7 +41,7 @@ const ActivityModal: React.FC = () => {
   const query = useQuery({
     queryKey: ["activityDetail", id],
     queryFn: async () => {
-      const res = await api.users["activity-logs"].single[":id"].$get({
+      const res = await api.users["activity-logs"][":id"].$get({
         param: { id },
       });
 
@@ -79,8 +79,8 @@ const ActivityModal: React.FC = () => {
     if (!query.data || !activity) {
       return handleClose();
     }
-    await api.users.activities[":id"].logs[":logId"].$put({
-      param: { logId: id, id: activity.id },
+    await api.users["activity-logs"][":id"].$put({
+      param: { id: id },
       json: { memo, quantity: quantity ?? undefined },
     });
     queryClient.invalidateQueries({

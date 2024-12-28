@@ -11,7 +11,7 @@ export type ActivityQueryService = {
     userId: string,
     startDate: Date,
     endDate: Date
-  ) => Promise<GetActivityStatsResponse[]>;
+  ) => Promise<GetActivityStatsResponse>;
   withTx: (tx: QueryExecutor) => ActivityQueryService;
 };
 
@@ -35,6 +35,7 @@ function activityStatsQuery(db: QueryExecutor) {
         logid: activityLogs.id,
         date: activityLogs.date,
         quantity: activityLogs.quantity,
+        quantityLabel: activities.quantityLabel,
       })
       .from(activityLogs)
       .innerJoin(activities, eq(activityLogs.activityId, activities.id))
@@ -49,7 +50,7 @@ function activityStatsQuery(db: QueryExecutor) {
           isNull(activityLogs.deletedAt)
         )
       )
-      .orderBy(asc(activities.orderIndex))
+      .orderBy(asc(activities.orderIndex), asc(activityLogs.date))
       .execute();
 
     const result = transform(rows);
@@ -67,6 +68,7 @@ function transform(
     logid: string;
     date: Date;
     quantity: number | null;
+    quantityLabel: string | null;
   }[]
 ) {
   const { stats } = rows.reduce(
@@ -77,6 +79,7 @@ function transform(
         acc.stats.push({
           id: row.id,
           name: row.name,
+          quantityLabel: row.quantityLabel || "",
           total: row.quantity || 0,
           kinds: [
             {
@@ -128,7 +131,7 @@ function transform(
       return acc;
     },
     {
-      stats: [] as GetActivityStatsResponse[],
+      stats: [] as GetActivityStatsResponse,
       activityMap: new Map<string, number>(),
       activityKindMap: new Map<string, number>(),
     }

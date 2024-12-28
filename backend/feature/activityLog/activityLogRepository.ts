@@ -1,4 +1,4 @@
-import { and, between, eq } from "drizzle-orm";
+import { and, between, eq, isNull } from "drizzle-orm";
 
 import { ActivityLog, UserId, ActivityLogId, Activity } from "@/backend/domain";
 import { QueryExecutor } from "@/backend/infra/drizzle";
@@ -41,11 +41,10 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
       },
       where: and(
         eq(activities.userId, userId),
+        isNull(activityLogs.deletedAt),
         between(activityLogs.date, from, to)
       ),
     });
-
-    console.log(rows);
 
     return rows.map((r) => {
       const activity = Activity.create(
@@ -72,8 +71,9 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
         activityKind: true,
       },
       where: and(
-        eq(activities.userId, userId),
-        eq(activityLogs.id, activityLogId)
+        eq(activityLogs.userId, userId),
+        eq(activityLogs.id, activityLogId),
+        isNull(activityLogs.deletedAt)
       ),
     });
 

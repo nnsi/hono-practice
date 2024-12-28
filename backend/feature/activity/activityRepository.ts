@@ -220,7 +220,6 @@ function createActivity(db: QueryExecutor) {
 function updateActivity(db: QueryExecutor) {
   return async function (activity: Activity): Promise<Activity> {
     const { kinds, ..._activity } = activity;
-    console.log(kinds);
 
     await db
       .update(activities)

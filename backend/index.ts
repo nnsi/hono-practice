@@ -14,7 +14,6 @@ import {
   authRoute,
   taskRoute,
   userRoute,
-  activityDateLogRoute,
   newActivityRoute,
   newActivityLogRoute,
 } from "./feature";
@@ -54,8 +53,7 @@ const routes = app
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", newActivityRoute)
-  .route("/users/activity-logs", activityDateLogRoute)
-  .route("/users/new-activity-logs", newActivityLogRoute);
+  .route("/users/activity-logs", newActivityLogRoute);
 
 const port = 3456;
 console.log(`Server is running on port ${port}`);

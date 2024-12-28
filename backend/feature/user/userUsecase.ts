@@ -29,7 +29,7 @@ export type UserUsecase = {
   ) => Promise<{
     user: User;
     tasks: Task[];
-    activityStats: GetActivityStatsResponse[];
+    activityStats: GetActivityStatsResponse;
   }>;
 };
 

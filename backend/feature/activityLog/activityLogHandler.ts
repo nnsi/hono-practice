@@ -131,6 +131,6 @@ function getStats(uc: ActivityLogUsecase) {
 
     const stats = await uc.getStats(c.get("userId"), { from, to });
 
-    return c.json({ stats }, 200);
+    return c.json(stats, 200);
   };
 }

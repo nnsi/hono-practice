@@ -10,7 +10,6 @@ import {
 } from "@/types/request";
 
 import { AppContext } from "../../context";
-import { activityLogRoute } from "../activityLog";
 
 import {
   newActivityHandler,
@@ -44,5 +43,4 @@ export const newActivityRoute = app
       h.updateActivityOrder(c, id, c.req.valid("json"));
     }
   )
-  .delete("/:id", (c) => h.deleteActivity(c, c.req.param("id")))
-  .route("/:id/logs", activityLogRoute); // TODO: ActivityLogの実装終わったら消す
+  .delete("/:id", (c) => h.deleteActivity(c, c.req.param("id")));

@@ -5,6 +5,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
+import { GetActivityStatsResponseSchema } from "@/types/response";
 import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
 
@@ -45,8 +46,8 @@ const ActivityPage: React.FC = () => {
     queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
     queryFn: async () => {
       const dateStr = dayjs(date).format("YYYY-MM-DD");
-      const res = await api.users["activity-logs"].daily[":date"].$get({
-        param: {
+      const res = await api.users["activity-logs"].$get({
+        query: {
           date: dateStr,
         },
       });
@@ -73,21 +74,21 @@ const ActivityPage: React.FC = () => {
   });
 
   const monthlyActivityLogsQuery = useQuery({
-    queryKey: ["activity-logs-monthly", dayjs(month).format("YYYY-MM")],
+    queryKey: ["activity-stats-monthly", dayjs(month).format("YYYY-MM")],
     queryFn: async () => {
       const monthStr = dayjs(month).format("YYYY-MM");
-      const res = await api.users["activity-logs"].monthly[":month"].$get({
-        param: {
-          month: monthStr,
+      const res = await api.users["activity-logs"].stats.$get({
+        query: {
+          date: monthStr,
         },
       });
 
       const json = await res.json();
-      const parsedJson = GetActivityLogsResponseSchema.safeParse(json);
+      const parsedJson = GetActivityStatsResponseSchema.safeParse(json);
       if (!parsedJson.success) {
         toast({
           title: "Error",
-          description: "Failed to fetch tasks",
+          description: "Failed to parse stats",
           variant: "destructive",
         });
         return;

@@ -58,7 +58,7 @@
   },
   "overrides": [
     {
-      "files": ["frontend/src/components/ui/**", "types/prisma/index.ts"],
+      "files": ["frontend/src/components/ui/**"],
       "rules": {
         "import/order": "off"
       }
