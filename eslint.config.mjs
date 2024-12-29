@@ -2,6 +2,7 @@ import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(...tseslint.configs.recommended, {
+  ignores: ["**/*.gen.ts"],
   files: ["**/*.{ts,tsx}"],
   extends: [importPlugin.flatConfigs.recommended],
   rules: {
