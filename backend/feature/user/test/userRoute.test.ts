@@ -1,6 +1,6 @@
 import { testClient } from "hono/testing";
 
-import { test, expect } from "vitest";
+import { expect, test } from "vitest";
 
 import { testDB } from "@/backend/test.setup";
 
@@ -20,3 +20,5 @@ test("POST user / success", async () => {
 
   expect(res.status).toEqual(204);
 });
+
+// /meへのテストはauthRoute.test.tsにあるので省略
