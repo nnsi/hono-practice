@@ -1,9 +1,9 @@
-import { StatusCode } from "hono/utils/http-status";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 export class AuthError extends Error {
-  public status: StatusCode;
+  public status: ContentfulStatusCode;
 
-  constructor(message: string, status: StatusCode = 401) {
+  constructor(message: string, status: ContentfulStatusCode = 401) {
     super(message);
     this.status = status;
   }

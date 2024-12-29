@@ -1,9 +1,9 @@
-import { StatusCode } from "hono/utils/http-status";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 export class ResourceNotFoundError extends Error {
-  public status: StatusCode;
+  public status: ContentfulStatusCode;
 
-  constructor(message: string, status: StatusCode = 404) {
+  constructor(message: string, status: ContentfulStatusCode = 404) {
     super(message);
     this.status = status;
   }
