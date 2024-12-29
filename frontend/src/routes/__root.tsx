@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 import {
-  createRootRoute,
   Link,
   Outlet,
+  createRootRoute,
   useNavigate,
 } from "@tanstack/react-router";
 
@@ -62,6 +62,7 @@ const RootComponent: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     function handleApiError(e: CustomEvent<string>) {
       toast({

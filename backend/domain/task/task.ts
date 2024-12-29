@@ -1,6 +1,6 @@
-import { createUserId, UserId } from "../user";
+import { createUserId, type UserId } from "../user";
 
-import { createTaskId, TaskId } from "./taskId";
+import { createTaskId, type TaskId } from "./taskId";
 
 type BaseTask = {
   id: TaskId;
@@ -38,7 +38,7 @@ function createTask(params: {
 
 function updateTask(
   task: Task,
-  params: Partial<Omit<BaseTask, "id" | "userId">>
+  params: Partial<Omit<BaseTask, "id" | "userId">>,
 ): Task {
   return {
     ...task,

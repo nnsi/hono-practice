@@ -1,7 +1,7 @@
-import { ReactNode, createContext, useState } from "react";
+import { type ReactNode, createContext, useState } from "react";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
-import { LoginRequest } from "@/types/request/LoginRequest";
+import type { LoginRequest } from "@/types/request/LoginRequest";
 
 type UserState = {
   id: string;

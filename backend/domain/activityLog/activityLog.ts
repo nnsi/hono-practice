@@ -1,7 +1,8 @@
-import { Activity, ActivityKind } from "../activity";
-import { createUserId, UserId } from "../user";
+import { createUserId, type UserId } from "../user";
 
-import { createActivityLogId, ActivityLogId } from "./activityLogId";
+import { createActivityLogId, type ActivityLogId } from "./activityLogId";
+
+import type { Activity, ActivityKind } from "../activity";
 
 type BaseActivityLog = {
   id: ActivityLogId;
@@ -53,7 +54,7 @@ function updateActivityLog(
     Omit<BaseActivityLog, "id" | "userId" | "activityId" | "date"> & {
       date: string | Date;
     }
-  >
+  >,
 ): ActivityLog {
   const date = params.date
     ? typeof params.date === "string"

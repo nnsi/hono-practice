@@ -4,16 +4,17 @@ import { setCookie } from "hono/cookie";
 import { zValidator } from "@hono/zod-validator";
 
 import {
+  type DrizzleInstance,
   drizzle,
-  DrizzleInstance,
 } from "@/backend/infra/drizzle/drizzleInstance";
 import { loginRequestSchema } from "@/types/request";
 
-import { AppContext } from "../../context";
 import { newUserRepository } from "../user";
 
 import { newAuthHandler } from "./authHandler";
 import { newAuthUsecase } from "./authUsecase";
+
+import type { AppContext } from "../../context";
 
 export function createAuthRoute(db: DrizzleInstance) {
   const app = new Hono<AppContext>();

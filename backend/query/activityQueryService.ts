@@ -1,8 +1,8 @@
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
-import { type QueryExecutor } from "@/backend/infra/drizzle";
+import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds, activityLogs } from "@/drizzle/schema";
-import { GetActivityStatsResponse } from "@/types/response";
+import type { GetActivityStatsResponse } from "@/types/response";
 
 import dayjs from "../lib/dayjs";
 
@@ -10,13 +10,13 @@ export type ActivityQueryService = {
   activityStatsQuery: (
     userId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ) => Promise<GetActivityStatsResponse>;
   withTx: (tx: QueryExecutor) => ActivityQueryService;
 };
 
 export function newActivityQueryService(
-  db: QueryExecutor
+  db: QueryExecutor,
 ): ActivityQueryService {
   return {
     activityStatsQuery: activityStatsQuery(db),
@@ -25,7 +25,7 @@ export function newActivityQueryService(
 }
 
 function activityStatsQuery(db: QueryExecutor) {
-  return async function (userId: string, startDate: Date, endDate: Date) {
+  return async (userId: string, startDate: Date, endDate: Date) => {
     const rows = await db
       .select({
         id: activities.id,
@@ -41,14 +41,14 @@ function activityStatsQuery(db: QueryExecutor) {
       .innerJoin(activities, eq(activityLogs.activityId, activities.id))
       .leftJoin(
         activityKinds,
-        eq(activityLogs.activityKindId, activityKinds.id)
+        eq(activityLogs.activityKindId, activityKinds.id),
       )
       .where(
         and(
           eq(activities.userId, userId),
           between(activityLogs.date, startDate, endDate),
-          isNull(activityLogs.deletedAt)
-        )
+          isNull(activityLogs.deletedAt),
+        ),
       )
       .orderBy(asc(activities.orderIndex), asc(activityLogs.date))
       .execute();
@@ -69,7 +69,7 @@ function transform(
     date: Date;
     quantity: number | null;
     quantityLabel: string | null;
-  }[]
+  }[],
 ) {
   const { stats } = rows.reduce(
     (acc, row) => {
@@ -134,7 +134,7 @@ function transform(
       stats: [] as GetActivityStatsResponse,
       activityMap: new Map<string, number>(),
       activityKindMap: new Map<string, number>(),
-    }
+    },
   );
 
   return stats;

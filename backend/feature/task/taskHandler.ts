@@ -1,5 +1,5 @@
-import { TaskId, UserId } from "@/backend/domain";
-import { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
+import type { TaskId, UserId } from "@/backend/domain";
+import type { CreateTaskRequest, UpdateTaskRequest } from "@/types/request";
 import {
   GetTaskResponseSchema,
   GetTasksResponseSchema,
@@ -7,7 +7,7 @@ import {
 
 import { AppError } from "../../error";
 
-import { TaskUsecase } from ".";
+import type { TaskUsecase } from ".";
 
 export function newTaskHandler(uc: TaskUsecase) {
   return {

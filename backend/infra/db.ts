@@ -4,7 +4,7 @@ type Repository = {
 };
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I
+  k: infer I,
 ) => void
   ? I
   : never;
@@ -12,6 +12,6 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 export type TransactionRunner = {
   run<T, R extends Repository[]>(
     repositories: R,
-    operation: (txRepos: UnionToIntersection<R[number]>) => Promise<T>
+    operation: (txRepos: UnionToIntersection<R[number]>) => Promise<T>,
   ): Promise<T>;
 };

@@ -1,7 +1,12 @@
 import { and, between, eq, isNull } from "drizzle-orm";
 
-import { ActivityLog, UserId, ActivityLogId, Activity } from "@/backend/domain";
-import { QueryExecutor } from "@/backend/infra/drizzle";
+import {
+  ActivityLog,
+  type UserId,
+  type ActivityLogId,
+  Activity,
+} from "@/backend/domain";
+import type { QueryExecutor } from "@/backend/infra/drizzle";
 import dayjs from "@/backend/lib/dayjs";
 import { activities, activityLogs } from "@/drizzle/schema";
 
@@ -9,11 +14,11 @@ export type ActivityLogRepository = {
   getActivityLogsByUserIdAndDate: (
     userId: UserId,
     from: Date,
-    to: Date
+    to: Date,
   ) => Promise<ActivityLog[]>;
   getActivityLogByIdAndUserId: (
     userId: UserId,
-    activityLogId: ActivityLogId
+    activityLogId: ActivityLogId,
   ) => Promise<ActivityLog>;
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
@@ -21,7 +26,7 @@ export type ActivityLogRepository = {
 };
 
 export function newActivityLogRepository(
-  db: QueryExecutor
+  db: QueryExecutor,
 ): ActivityLogRepository {
   return {
     getActivityLogsByUserIdAndDate: getActivityLogsByUserIdAndDate(db),
@@ -33,7 +38,7 @@ export function newActivityLogRepository(
 }
 
 function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
-  return async function (userId: UserId, from: Date, to: Date) {
+  return async (userId: UserId, from: Date, to: Date) => {
     const rows = await db.query.activityLogs.findMany({
       with: {
         activity: true,
@@ -42,14 +47,14 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
       where: and(
         eq(activities.userId, userId),
         isNull(activityLogs.deletedAt),
-        between(activityLogs.date, from, to)
+        between(activityLogs.date, from, to),
       ),
     });
 
     return rows.map((r) => {
       const activity = Activity.create(
         r.activity,
-        r.activityKind ? [r.activityKind] : undefined
+        r.activityKind ? [r.activityKind] : undefined,
       );
 
       return ActivityLog.create({
@@ -64,7 +69,7 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
 }
 
 function getActivityLogByIdAndUserId(db: QueryExecutor) {
-  return async function (userId: UserId, activityLogId: ActivityLogId) {
+  return async (userId: UserId, activityLogId: ActivityLogId) => {
     const row = await db.query.activityLogs.findFirst({
       with: {
         activity: true,
@@ -73,7 +78,7 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       where: and(
         eq(activityLogs.userId, userId),
         eq(activityLogs.id, activityLogId),
-        isNull(activityLogs.deletedAt)
+        isNull(activityLogs.deletedAt),
       ),
     });
 
@@ -83,7 +88,7 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
 
     const activity = Activity.create(
       row.activity,
-      row.activityKind ? [row.activityKind] : undefined
+      row.activityKind ? [row.activityKind] : undefined,
     );
 
     return ActivityLog.create({
@@ -97,7 +102,7 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
 }
 
 function createActivityLog(db: QueryExecutor) {
-  return async function (activityLog: ActivityLog) {
+  return async (activityLog: ActivityLog) => {
     const [row] = await db
       .insert(activityLogs)
       .values({
@@ -116,7 +121,7 @@ function createActivityLog(db: QueryExecutor) {
 }
 
 function updateActivityLog(db: QueryExecutor) {
-  return async function (activityLog: ActivityLog) {
+  return async (activityLog: ActivityLog) => {
     const [row] = await db
       .update(activityLogs)
       .set({
@@ -135,7 +140,7 @@ function updateActivityLog(db: QueryExecutor) {
 }
 
 function deleteActivityLog(db: QueryExecutor) {
-  return async function (activityLog: ActivityLog) {
+  return async (activityLog: ActivityLog) => {
     await db
       .update(activityLogs)
       .set({

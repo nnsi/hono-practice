@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
   createUserRequestSchema,
-  CreateUserRequest,
+  type CreateUserRequest,
 } from "@/types/request/CreateUserRequest";
 
 import { useAuth } from "@hooks/useAuth";

@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
-import {
+import type {
   GetActivitiesResponse,
   GetActivityLogsResponse,
 } from "@/types/response";
@@ -73,7 +73,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
             key={log.id}
             className="relative group hover:bg-slate-50 cursor-pointer"
           >
-            <Link to={`/activity/${log.id}`}>
+            <Link to={"/activity/$id"} params={{ id: log.id }}>
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <TrashIcon
                   onClick={(e) => {
@@ -99,7 +99,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
           </Card>
         ))}
       </CardContent>
-      <CardFooter></CardFooter>
+      <CardFooter />
     </Card>
   );
 };

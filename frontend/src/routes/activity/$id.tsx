@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  GetActivitiesResponse,
+  type GetActivitiesResponse,
   GetActivityLogResponseSchema,
 } from "@/types/response";
 
@@ -59,7 +59,7 @@ const ActivityModal: React.FC = () => {
   });
 
   const activity = activities.data?.find(
-    (activity) => activity.id === query.data?.activity.id
+    (activity) => activity.id === query.data?.activity.id,
   );
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const ActivityModal: React.FC = () => {
   };
 
   const handleSubmit = async (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     e.preventDefault();
     if (!query.data || !activity) {
@@ -112,7 +112,7 @@ const ActivityModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <Input
               defaultValue={quantity ?? ""}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
+              onChange={(e) => setQuantity(Number.parseInt(e.target.value))}
               className="w-14"
               inputMode="numeric"
             />

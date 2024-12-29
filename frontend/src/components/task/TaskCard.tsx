@@ -8,10 +8,10 @@ import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  UpdateTaskRequest,
+  type UpdateTaskRequest,
   updateTaskRequestSchema,
 } from "@/types/request/UpdateTaskRequest";
-import { GetTaskResponse } from "@/types/response";
+import type { GetTaskResponse } from "@/types/response";
 
 import {
   Button,

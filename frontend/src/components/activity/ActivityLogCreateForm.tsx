@@ -8,13 +8,13 @@ import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  CreateActivityLogRequest,
+  type CreateActivityLogRequest,
   CreateActivityLogRequestSchema,
 } from "@/types/request/CreateActivityLogRequest";
-import { GetActivityResponse } from "@/types/response";
+import type { GetActivityResponse } from "@/types/response";
 import {
   GetActivityLogResponseSchema,
-  GetActivityLogsResponse,
+  type GetActivityLogsResponse,
 } from "@/types/response/GetActivityLogsResponse";
 
 import {
@@ -95,13 +95,13 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
       ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
       (prev: GetActivityLogsResponse) => {
         return [...(prev ?? []), parsedJson.data];
-      }
+      },
     );
     queryClient.setQueryData(
       ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
       (prev: GetActivityLogsResponse) => {
         return [...(prev ?? []), parsedJson.data];
-      }
+      },
     );
   };
 

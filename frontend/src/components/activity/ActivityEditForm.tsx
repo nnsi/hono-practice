@@ -5,11 +5,11 @@ import { useForm, useFieldArray } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  UpdateActivityRequest,
+  type UpdateActivityRequest,
   UpdateActivityRequestSchema,
 } from "@/types/request/UpdateActivityRequest";
 import {
-  GetActivityResponse,
+  type GetActivityResponse,
   GetActivityResponseSchema,
 } from "@/types/response";
 

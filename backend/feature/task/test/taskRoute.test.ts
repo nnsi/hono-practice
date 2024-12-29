@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { testClient } from "hono/testing";
 
-import { test, expect } from "vitest";
+import { expect, test } from "vitest";
 
 import { ResourceNotFoundError } from "@/backend/error";
 import { mockAuthMiddleware } from "@/backend/middleware/mockAuthMiddleware";
@@ -62,7 +62,7 @@ test("PUT tasks/:id / success", async () => {
     },
     json: {
       title: "update",
-      memo:"update",
+      memo: "update",
       done: true,
     },
   });
@@ -86,7 +86,8 @@ test("DELETE tasks/:id / success", async () => {
     },
   });
 
-  app.onError((err, c) => { // TODO: ここでキャッチしなくても良いようにしたい
+  app.onError((err, c) => {
+    // TODO: ここでキャッチしなくても良いようにしたい
     if (err instanceof ResourceNotFoundError) {
       return c.json({ message: err.message }, err.status);
     }

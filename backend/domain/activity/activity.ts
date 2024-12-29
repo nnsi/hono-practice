@@ -1,9 +1,9 @@
-import { createUserId, UserId } from "../user";
+import { createUserId, type UserId } from "../user";
 
 import {
   createActivityId,
-  ActivityId,
-  ActivityKindId,
+  type ActivityId,
+  type ActivityKindId,
   createActivityKindId,
 } from ".";
 
@@ -50,7 +50,7 @@ function createActivity(
     id: string | ActivityKindId;
     name: string;
     orderIndex?: string | null;
-  }[]
+  }[],
 ): Activity {
   const id = createActivityId(params.id);
   const userId = createUserId(params.userId);
@@ -71,7 +71,7 @@ function updateActivity(
   params: {
     activity: Partial<Omit<BaseActivity, "id" | "userId">>;
     kinds?: { id?: string; name: string }[];
-  }
+  },
 ): Activity {
   return {
     ...activity,

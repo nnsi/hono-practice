@@ -1,11 +1,12 @@
-import { Next } from "hono";
+import type { Next } from "hono";
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 
 import { config } from "../config";
-import { HonoContext } from "../context";
 import { createUserId } from "../domain";
 import { AuthError } from "../error";
+
+import type { HonoContext } from "../context";
 
 export async function authMiddleware(c: HonoContext, next: Next) {
   const jwt = getCookie(c, "auth");

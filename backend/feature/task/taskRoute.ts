@@ -5,18 +5,18 @@ import { zValidator } from "@hono/zod-validator";
 import { createTaskId } from "@/backend/domain";
 import {
   drizzle,
-  DrizzleInstance,
+  type DrizzleInstance,
 } from "@/backend/infra/drizzle/drizzleInstance";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@/types/request";
 
-import { AppContext } from "../../context";
-
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";
 import { newTaskUsecase } from "./taskUsecase";
+
+import type { AppContext } from "../../context";
 
 export function createTaskRoute(db: DrizzleInstance) {
   const app = new Hono<AppContext>();

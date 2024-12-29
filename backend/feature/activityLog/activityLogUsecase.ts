@@ -1,16 +1,15 @@
 import {
-  ActivityId,
-  ActivityKindId,
+  type ActivityId,
+  type ActivityKindId,
   ActivityLog,
-  ActivityLogId,
-  UserId,
+  type ActivityLogId,
+  type UserId,
 } from "@/backend/domain";
-import { ActivityQueryService } from "@/backend/query";
-import { GetActivityStatsResponse } from "@/types/response";
+import type { ActivityQueryService } from "@/backend/query";
+import type { GetActivityStatsResponse } from "@/types/response";
 
-import { ActivityRepository } from "../activity/activityRepository";
-
-import { ActivityLogRepository } from "./activityLogRepository";
+import type { ActivityLogRepository } from "./activityLogRepository";
+import type { ActivityRepository } from "../activity/activityRepository";
 
 export type GetActivityLogsParams = {
   from: Date;
@@ -38,37 +37,37 @@ type UpdateActivityParams = {
 export type ActivityLogUsecase = {
   getActivityLogs: (
     userId: UserId,
-    params: GetActivityLogsParams
+    params: GetActivityLogsParams,
   ) => Promise<ActivityLog[]>;
   getActivityLog: (
     userId: UserId,
-    activityLogId: ActivityLogId
+    activityLogId: ActivityLogId,
   ) => Promise<ActivityLog>;
   createActivityLog: (
     userId: UserId,
     activityId: ActivityId,
     activityKindId: ActivityKindId,
-    params: CreateActivityParams
+    params: CreateActivityParams,
   ) => Promise<ActivityLog>;
   updateActivityLog: (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: UpdateActivityParams
+    params: UpdateActivityParams,
   ) => Promise<ActivityLog>;
   deleteActivityLog: (
     userId: UserId,
-    activityLogId: ActivityLogId
+    activityLogId: ActivityLogId,
   ) => Promise<void>;
   getStats: (
     userId: UserId,
-    params: GetStatsParams
+    params: GetStatsParams,
   ) => Promise<GetActivityStatsResponse>;
 };
 
 export function newActivityLogUsecase(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
-  qs: ActivityQueryService
+  qs: ActivityQueryService,
 ): ActivityLogUsecase {
   return {
     getActivityLogs: getActivityLogs(repo),
@@ -96,13 +95,13 @@ function getActivityLog(repo: ActivityLogRepository) {
 
 function createActivityLog(
   repo: ActivityLogRepository,
-  acRepo: ActivityRepository
+  acRepo: ActivityRepository,
 ) {
   return async (
     userId: UserId,
     activityId: ActivityId,
     activityKindId: ActivityKindId,
-    params: CreateActivityParams
+    params: CreateActivityParams,
   ) => {
     const activity = await acRepo.getActivityByIdAndUserId(userId, activityId);
     if (!activity) {
@@ -132,11 +131,11 @@ function updateActivityLog(repo: ActivityLogRepository) {
   return async (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: UpdateActivityParams
+    params: UpdateActivityParams,
   ) => {
     const activityLog = await repo.getActivityLogByIdAndUserId(
       userId,
-      activityLogId
+      activityLogId,
     );
 
     const newActivityLog = ActivityLog.update(activityLog, params);
@@ -149,7 +148,7 @@ function deleteActivityLog(repo: ActivityLogRepository) {
   return async (userId: UserId, activityLogId: ActivityLogId) => {
     const activityLog = await repo.getActivityLogByIdAndUserId(
       userId,
-      activityLogId
+      activityLogId,
     );
 
     return repo.deleteActivityLog(activityLog);

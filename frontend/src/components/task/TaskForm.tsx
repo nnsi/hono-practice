@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  CreateTaskRequest,
+  type CreateTaskRequest,
   createTaskRequestSchema,
 } from "@/types/request/CreateTaskRequest";
 

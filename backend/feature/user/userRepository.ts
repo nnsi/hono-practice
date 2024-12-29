@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 
-import { User, UserId } from "@/backend/domain";
-import { type QueryExecutor } from "@/backend/infra/drizzle";
+import { User, type UserId } from "@/backend/domain";
+import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { users } from "@/drizzle/schema";
 
 export type UserRepository = {
@@ -21,7 +21,7 @@ export function newUserRepository(db: QueryExecutor): UserRepository {
 }
 
 function createUser(db: QueryExecutor) {
-  return async function (user: User) {
+  return async (user: User) => {
     const result = await db
       .insert(users)
       .values({
@@ -39,7 +39,7 @@ function createUser(db: QueryExecutor) {
 }
 
 function getUserById(db: QueryExecutor) {
-  return async function (userId: string) {
+  return async (userId: string) => {
     const result = await db
       .select()
       .from(users)
@@ -57,7 +57,7 @@ function getUserById(db: QueryExecutor) {
 }
 
 function getUserByLoginId(db: QueryExecutor) {
-  return async function (loginId: string) {
+  return async (loginId: string) => {
     const result = await db
       .select()
       .from(users)

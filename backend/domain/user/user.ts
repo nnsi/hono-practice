@@ -1,4 +1,4 @@
-import { createUserId, UserId } from "./userId";
+import { createUserId, type UserId } from "./userId";
 
 type BaseUser = {
   id: UserId;

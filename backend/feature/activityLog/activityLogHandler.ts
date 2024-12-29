@@ -2,11 +2,11 @@ import {
   createActivityId,
   createActivityKindId,
   createActivityLogId,
-  UserId,
+  type UserId,
 } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import dayjs from "@/backend/lib/dayjs";
-import {
+import type {
   CreateActivityLogRequest,
   UpdateActivityLogRequest,
 } from "@/types/request";
@@ -15,7 +15,7 @@ import {
   GetActivityLogsResponseSchema,
 } from "@/types/response";
 
-import { ActivityLogUsecase, GetActivityLogsParams } from ".";
+import type { ActivityLogUsecase, GetActivityLogsParams } from ".";
 
 export function newActivityLogHandler(uc: ActivityLogUsecase) {
   return {
@@ -74,7 +74,7 @@ function createActivityLog(uc: ActivityLogUsecase) {
       userId,
       activityId,
       activityKindId,
-      params
+      params,
     );
 
     const parsedLog = GetActivityLogResponseSchema.safeParse(log);
@@ -90,7 +90,7 @@ function updateActivityLog(uc: ActivityLogUsecase) {
   return async (
     userId: UserId,
     id: string,
-    params: UpdateActivityLogRequest
+    params: UpdateActivityLogRequest,
   ) => {
     const activityLogId = createActivityLogId(id);
 

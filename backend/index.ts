@@ -40,11 +40,10 @@ app.use(
   cors({
     origin: config.APP_URL,
     credentials: true,
-  })
+  }),
 );
 app.use("/users/*", authMiddleware);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
   .get("/", async (c) => {
     return c.json({ message: "Hello" }, 200);

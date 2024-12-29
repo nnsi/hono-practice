@@ -1,7 +1,7 @@
-import { ActivityId, UserId } from "@/backend/domain";
+import type { ActivityId, UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
-import { CreateActivityRequest } from "@/types/request/CreateActivityRequest";
-import {
+import type { CreateActivityRequest } from "@/types/request/CreateActivityRequest";
+import type {
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
 } from "@/types/request/UpdateActivityRequest";
@@ -10,7 +10,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
-import { ActivityUsecase } from ".";
+import type { ActivityUsecase } from ".";
 
 export function newActivityHandler(uc: ActivityUsecase) {
   return {
@@ -66,7 +66,7 @@ function updateActivity(uc: ActivityUsecase) {
   return async (
     userId: UserId,
     activityId: ActivityId,
-    json: UpdateActivityRequest
+    json: UpdateActivityRequest,
   ) => {
     const activity = await uc.updateActivity(userId, activityId, json);
 
@@ -90,7 +90,7 @@ function updateActivityOrder(uc: ActivityUsecase) {
   return async (
     userId: UserId,
     activityId: ActivityId,
-    params: UpdateActivityOrderRequest
+    params: UpdateActivityOrderRequest,
   ) => {
     await uc.updateActivityOrder(userId, activityId, params);
 

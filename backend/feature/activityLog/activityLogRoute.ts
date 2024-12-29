@@ -2,8 +2,8 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { AppContext } from "@/backend/context";
-import { drizzle, DrizzleInstance } from "@/backend/infra/drizzle";
+import type { AppContext } from "@/backend/context";
+import { drizzle, type DrizzleInstance } from "@/backend/infra/drizzle";
 import { newActivityQueryService } from "@/backend/query";
 import {
   CreateActivityLogRequestSchema,
@@ -48,11 +48,11 @@ export function createActivityLogRoute(db: DrizzleInstance) {
       async (c) => {
         const res = await h.createActivityLog(
           c.get("userId"),
-          c.req.valid("json")
+          c.req.valid("json"),
         );
 
         return c.json(res);
-      }
+      },
     )
     .put(
       "/:id",
@@ -63,11 +63,11 @@ export function createActivityLogRoute(db: DrizzleInstance) {
         const res = await h.updateActivityLog(
           c.get("userId"),
           id,
-          c.req.valid("json")
+          c.req.valid("json"),
         );
 
         return c.json(res);
-      }
+      },
     )
     .delete("/:id", async (c) => {
       const { id } = c.req.param();

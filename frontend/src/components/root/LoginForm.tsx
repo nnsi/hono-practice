@@ -1,7 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { loginRequestSchema, LoginRequest } from "@/types/request/LoginRequest";
+import {
+  loginRequestSchema,
+  type LoginRequest,
+} from "@/types/request/LoginRequest";
 
 import { useAuth } from "@hooks/useAuth";
 

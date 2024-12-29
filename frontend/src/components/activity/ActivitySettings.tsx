@@ -6,12 +6,12 @@ import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
-  CreateActivityRequest,
+  type CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@/types/request/CreateActivityRequest";
-import { UpdateActivityOrderRequest } from "@/types/request/UpdateActivityRequest";
+import type { UpdateActivityOrderRequest } from "@/types/request/UpdateActivityRequest";
 import {
-  GetActivitiesResponse,
+  type GetActivitiesResponse,
   GetActivityResponseSchema,
 } from "@/types/response/GetActivitiesResponse";
 
@@ -87,7 +87,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
       queryClient.setQueryData(["activity"], (prev: GetActivitiesResponse) => {
         const newActivities = [...prev];
         const currentIndex = newActivities.findIndex(
-          (a) => a.id === newOrder.current
+          (a) => a.id === newOrder.current,
         );
         const [reorderedActivity] = newActivities.splice(currentIndex, 1);
         const destinationIndex = newOrder.prev

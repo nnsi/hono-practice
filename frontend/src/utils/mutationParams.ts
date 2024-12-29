@@ -1,9 +1,10 @@
 import {
-  MutationFunction,
-  QueryKey,
+  type MutationFunction,
+  type QueryKey,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ZodSchema } from "zod";
+
+import type { ZodSchema } from "zod";
 
 type MaybeUndefined<T> = T extends void ? void : T | undefined;
 

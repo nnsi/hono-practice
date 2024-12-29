@@ -1,6 +1,6 @@
-import { Context } from "hono";
+import type { Context } from "hono";
 
-import { UserId } from "../domain";
+import type { UserId } from "../domain";
 
 export type JwtPayload = {
   id: string;

@@ -11,7 +11,7 @@ function generateRandomAlphabet(len: number) {
 
 export function generateOrder(
   prev: string | null | undefined,
-  next: string | null | undefined
+  next: string | null | undefined,
 ) {
   if (!prev) {
     if (!next) return generateRandomAlphabet(8);

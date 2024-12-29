@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { createActivityId } from "@/backend/domain";
 import {
   drizzle,
-  DrizzleInstance,
+  type DrizzleInstance,
   newDrizzleTransactionRunner,
 } from "@/backend/infra/drizzle";
 import {
@@ -14,11 +14,11 @@ import {
   UpdateActivityRequestSchema,
 } from "@/types/request";
 
-import { AppContext } from "../../context";
-
 import { newActivityHandler } from "./activityHandler";
 import { newActivityRepository } from "./activityRepository";
 import { newActivityUsecase } from "./activityUsecase";
+
+import type { AppContext } from "../../context";
 
 export function createActivityRoute(db: DrizzleInstance) {
   const app = new Hono<AppContext>();
@@ -58,7 +58,7 @@ export function createActivityRoute(db: DrizzleInstance) {
       const res = await h.updateActivity(
         userId,
         activityId,
-        c.req.valid("json")
+        c.req.valid("json"),
       );
       return c.json(res);
     })
@@ -73,10 +73,10 @@ export function createActivityRoute(db: DrizzleInstance) {
         const res = await h.updateActivityOrder(
           userId,
           activityId,
-          c.req.valid("json")
+          c.req.valid("json"),
         );
         return c.json(res);
-      }
+      },
     )
     .delete("/:id", async (c) => {
       const userId = c.get("userId");

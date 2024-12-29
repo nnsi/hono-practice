@@ -1,22 +1,27 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
-import { Activity, ActivityId, ActivityKindId, UserId } from "@/backend/domain";
-import { type QueryExecutor } from "@/backend/infra/drizzle";
+import {
+  Activity,
+  type ActivityId,
+  type ActivityKindId,
+  type UserId,
+} from "@/backend/domain";
+import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { activities, activityKinds } from "@/drizzle/schema";
 
 export type ActivityRepository = {
   getActivitiesByUserId(userId: UserId): Promise<Activity[]>;
   getActivitiesByIdsAndUserId(
     userId: UserId,
-    ids: ActivityId[]
+    ids: ActivityId[],
   ): Promise<Activity[]>;
   getActivityByIdAndUserId(
     userId: UserId,
-    id: ActivityId
+    id: ActivityId,
   ): Promise<Activity | undefined>;
   getActivityByUserIdAndActivityKindId(
     userId: UserId,
-    activityKindId: ActivityKindId
+    activityKindId: ActivityKindId,
   ): Promise<Activity | undefined>;
   getLastOrderIndexByUserId(userId: UserId): Promise<string | undefined>;
   createActivity(activity: Activity): Promise<Activity>;
@@ -41,7 +46,7 @@ export function newActivityRepository(db: QueryExecutor): ActivityRepository {
 }
 
 function getActivitiesByUserId(db: QueryExecutor) {
-  return async function (userId: UserId): Promise<Activity[]> {
+  return async (userId: UserId): Promise<Activity[]> => {
     const rows = await db.query.activities.findMany({
       with: {
         kinds: true,
@@ -64,17 +69,14 @@ function getActivitiesByUserId(db: QueryExecutor) {
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
         },
-        r.kinds
+        r.kinds,
       );
     });
   };
 }
 
 function getActivitiesByIdsAndUserId(db: QueryExecutor) {
-  return async function (
-    userId: UserId,
-    ids: ActivityId[]
-  ): Promise<Activity[]> {
+  return async (userId: UserId, ids: ActivityId[]): Promise<Activity[]> => {
     const rows = await db.query.activities.findMany({
       with: {
         kinds: true,
@@ -82,7 +84,7 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
       where: and(
         eq(activities.userId, userId),
         inArray(activities.id, ids),
-        isNull(activities.deletedAt)
+        isNull(activities.deletedAt),
       ),
       orderBy: asc(activities.orderIndex),
     });
@@ -101,17 +103,17 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
         },
-        r.kinds
+        r.kinds,
       );
     });
   };
 }
 
 function getActivityByIdAndUserId(db: QueryExecutor) {
-  return async function (
+  return async (
     userId: UserId,
-    id: ActivityId
-  ): Promise<Activity | undefined> {
+    id: ActivityId,
+  ): Promise<Activity | undefined> => {
     const row = await db.query.activities.findFirst({
       with: {
         kinds: true,
@@ -119,7 +121,7 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
       where: and(
         eq(activities.userId, userId),
         eq(activities.id, id),
-        isNull(activities.deletedAt)
+        isNull(activities.deletedAt),
       ),
     });
     if (!row) return row;
@@ -137,13 +139,13 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       },
-      row.kinds
+      row.kinds,
     );
   };
 }
 
 function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
-  return async function (userId: UserId, activityKindId: ActivityKindId) {
+  return async (userId: UserId, activityKindId: ActivityKindId) => {
     const row = await db.query.activities.findFirst({
       with: {
         kinds: true,
@@ -151,7 +153,7 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
       where: and(
         eq(activities.userId, userId),
         eq(activityKinds.id, activityKindId),
-        isNull(activities.deletedAt)
+        isNull(activities.deletedAt),
       ),
     });
 
@@ -170,13 +172,13 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       },
-      row.kinds
+      row.kinds,
     );
   };
 }
 
 function getLastOrderIndexByUserId(db: QueryExecutor) {
-  return async function (userId: UserId): Promise<string | undefined> {
+  return async (userId: UserId): Promise<string | undefined> => {
     const row = await db.query.activities.findFirst({
       where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
       orderBy: desc(activities.orderIndex),
@@ -187,7 +189,7 @@ function getLastOrderIndexByUserId(db: QueryExecutor) {
 }
 
 function createActivity(db: QueryExecutor) {
-  return async function (activity: Activity): Promise<Activity> {
+  return async (activity: Activity): Promise<Activity> => {
     const { kinds, ..._activity } = activity;
 
     const row = await db
@@ -209,7 +211,7 @@ function createActivity(db: QueryExecutor) {
           activityId: row[0].id,
           name: kind.name,
           orderIndex: kind.orderIndex || null,
-        }))
+        })),
       )
       .returning();
 
@@ -218,7 +220,7 @@ function createActivity(db: QueryExecutor) {
 }
 
 function updateActivity(db: QueryExecutor) {
-  return async function (activity: Activity): Promise<Activity> {
+  return async (activity: Activity): Promise<Activity> => {
     const { kinds, ..._activity } = activity;
 
     await db
@@ -234,7 +236,7 @@ function updateActivity(db: QueryExecutor) {
         deletedAt: new Date(),
       })
       .where(
-        and(eq(activityKinds.id, activity.id), isNull(activityKinds.deletedAt))
+        and(eq(activityKinds.id, activity.id), isNull(activityKinds.deletedAt)),
       );
 
     if (kinds && kinds.length > 0) {
@@ -246,7 +248,7 @@ function updateActivity(db: QueryExecutor) {
             activityId: activity.id,
             name: kind.name,
             orderIndex: kind.orderIndex || null,
-          }))
+          })),
         )
         .onConflictDoUpdate({
           target: activityKinds.id,
@@ -265,7 +267,7 @@ function updateActivity(db: QueryExecutor) {
 }
 
 function deleteActivity(db: QueryExecutor) {
-  return async function (activity: Activity): Promise<void> {
+  return async (activity: Activity): Promise<void> => {
     await db
       .update(activities)
       .set({

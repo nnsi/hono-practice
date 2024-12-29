@@ -3,25 +3,25 @@ import { sign } from "hono/jwt";
 import bcrypt from "bcrypt";
 
 import { config } from "@/backend/config";
-import { JwtPayload } from "@/backend/context";
-import { User } from "@/backend/domain";
+import type { JwtPayload } from "@/backend/context";
+import type { User } from "@/backend/domain";
 import { AuthError } from "@/backend/error";
 
-import { UserRepository } from "../user";
+import type { UserRepository } from "../user";
 
 export type AuthUsecase = {
   login: (login_id: string, password: string) => Promise<User>;
   getToken: (user: User) => Promise<{ token: string; payload: JwtPayload }>;
 };
 
-export function newAuthUsecase(repo:UserRepository): AuthUsecase {
+export function newAuthUsecase(repo: UserRepository): AuthUsecase {
   return {
     login: login(repo),
     getToken: getToken(),
   };
 }
 
-function login(repo:UserRepository) {
+function login(repo: UserRepository) {
   return async (login_id: string, password: string) => {
     const user = await repo.getUserByLoginId(login_id);
     if (!user) {

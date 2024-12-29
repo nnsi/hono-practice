@@ -1,4 +1,4 @@
-import { ContentfulStatusCode } from "hono/utils/http-status";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 export class SqlExecutionError extends Error {
   public status: ContentfulStatusCode;

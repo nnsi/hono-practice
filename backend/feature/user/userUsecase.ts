@@ -2,12 +2,12 @@ import { sign } from "hono/jwt";
 
 import bcrypt from "bcrypt";
 
-import { User, UserId } from "@/backend/domain";
+import { User, type UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 
 import { config } from "../../config";
 
-import { UserRepository } from "./userRepository";
+import type { UserRepository } from "./userRepository";
 
 export type CreateUserInputParams = {
   loginId: string;
@@ -28,7 +28,7 @@ export function newUserUsecase(repo: UserRepository): UserUsecase {
 }
 
 function createUser(repo: UserRepository) {
-  return async function (params: CreateUserInputParams) {
+  return async (params: CreateUserInputParams) => {
     const cryptedPassword = bcrypt.hashSync(params.password, 10);
     params.password = cryptedPassword;
     const newUser = User.create({ ...params });
@@ -37,7 +37,7 @@ function createUser(repo: UserRepository) {
 
     const token = await sign(
       { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
-      config.JWT_SECRET
+      config.JWT_SECRET,
     );
 
     return token;
@@ -45,7 +45,7 @@ function createUser(repo: UserRepository) {
 }
 
 function getUserById(repo: UserRepository) {
-  return async function (userId: UserId) {
+  return async (userId: UserId) => {
     const user = await repo.getUserById(userId);
     if (!user) throw new AppError("user not found", 404);
 

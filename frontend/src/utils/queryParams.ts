@@ -1,5 +1,5 @@
-import { QueryFunction, QueryKey } from "@tanstack/react-query";
-import { ZodSchema } from "zod";
+import type { QueryFunction, QueryKey } from "@tanstack/react-query";
+import type { ZodSchema } from "zod";
 
 type queryPropsParamsFunc<T> = {
   queryKey: QueryKey;

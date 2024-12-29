@@ -1,7 +1,7 @@
-import { Hono } from "hono";
+import type { Hono } from "hono";
 import { hc } from "hono/client";
 
-import { AppType } from "@/backend/index";
+import type { AppType } from "@/backend/index";
 
 const API_URL =
   import.meta.env.MODE === "development"
@@ -16,12 +16,12 @@ const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (res.status === 401) {
     window.dispatchEvent(
-      new CustomEvent("unauthorized", { detail: json.message })
+      new CustomEvent("unauthorized", { detail: json.message }),
     );
 
     if (!input.toString().includes("me")) {
       window.dispatchEvent(
-        new CustomEvent("api-error", { detail: json.message })
+        new CustomEvent("api-error", { detail: json.message }),
       );
     }
 
@@ -30,7 +30,7 @@ const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (res.status === 400 || res.status > 401) {
     window.dispatchEvent(
-      new CustomEvent("api-error", { detail: json.message })
+      new CustomEvent("api-error", { detail: json.message }),
     );
     throw Error(json.message);
   }

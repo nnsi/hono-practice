@@ -1,15 +1,15 @@
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
-import { Task, TaskId, UserId } from "@/backend/domain";
-import { AppError, ResourceNotFoundError } from "@/backend/error";
-import { type QueryExecutor } from "@/backend/infra/drizzle";
+import { Task, type TaskId, type UserId } from "@/backend/domain";
+import { ResourceNotFoundError } from "@/backend/error";
+import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { tasks } from "@/drizzle/schema";
 
 export type TaskRepository = {
   getTaskAllByUserId: (userId: UserId) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,
-    taskId: TaskId
+    taskId: TaskId,
   ) => Promise<Task | undefined>;
   getDoneTasksByUserId: (userId: UserId) => Promise<Task[]>;
   createTask: (task: Task) => Promise<Task>;
@@ -31,40 +31,33 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
 }
 
 function getTaskAllByUserId(db: QueryExecutor) {
-  return async function (userId: UserId): Promise<Task[]> {
+  return async (userId: UserId): Promise<Task[]> => {
     const result = await db.query.tasks.findMany({
       where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
       orderBy: desc(tasks.createdAt),
     });
 
-    try {
-      return result.map((r) =>
-        Task.create({
-          id: r.id,
-          userId: r.userId,
-          title: r.title,
-          done: r.done,
-          memo: r.memo,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        })
-      );
-    } catch (e) {
-      throw new AppError("failed to parse tasks");
-    }
+    return result.map((r) =>
+      Task.create({
+        id: r.id,
+        userId: r.userId,
+        title: r.title,
+        done: r.done,
+        memo: r.memo,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      }),
+    );
   };
 }
 
 function getTaskByUserIdAndTaskId(db: QueryExecutor) {
-  return async function (
-    userId: UserId,
-    taskId: TaskId
-  ): Promise<Task | undefined> {
+  return async (userId: UserId, taskId: TaskId): Promise<Task | undefined> => {
     const result = await db.query.tasks.findFirst({
       where: and(
         eq(tasks.id, taskId),
         eq(tasks.userId, userId),
-        isNull(tasks.deletedAt)
+        isNull(tasks.deletedAt),
       ),
     });
 
@@ -77,7 +70,7 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
 }
 
 function createTask(db: QueryExecutor) {
-  return async function (task: Task): Promise<Task> {
+  return async (task: Task): Promise<Task> => {
     const result = await db.insert(tasks).values(task).returning();
 
     return Task.create({
@@ -89,7 +82,7 @@ function createTask(db: QueryExecutor) {
 }
 
 function updateTask(db: QueryExecutor) {
-  return async function (task: Task) {
+  return async (task: Task) => {
     const result = await db
       .update(tasks)
       .set({
@@ -112,7 +105,7 @@ function updateTask(db: QueryExecutor) {
 }
 
 function deleteTask(db: QueryExecutor) {
-  return async function (task: Task) {
+  return async (task: Task) => {
     const result = await db
       .update(tasks)
       .set({ deletedAt: new Date() })
@@ -126,12 +119,12 @@ function deleteTask(db: QueryExecutor) {
 }
 
 function getDoneTasksByUserId(db: QueryExecutor) {
-  return async function (userId: UserId): Promise<Task[]> {
+  return async (userId: UserId): Promise<Task[]> => {
     const result = await db.query.tasks.findMany({
       where: and(
         eq(tasks.userId, userId),
         eq(tasks.done, true),
-        isNull(tasks.deletedAt)
+        isNull(tasks.deletedAt),
       ),
       orderBy: desc(tasks.createdAt),
     });

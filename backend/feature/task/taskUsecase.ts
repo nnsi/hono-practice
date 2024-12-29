@@ -1,7 +1,7 @@
-import { Task, TaskId, UserId } from "@/backend/domain";
+import { Task, type TaskId, type UserId } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 
-import { TaskRepository } from ".";
+import type { TaskRepository } from ".";
 
 export type CreateTaskInputParams = {
   title: string;
@@ -20,7 +20,7 @@ export type TaskUsecase = {
   updateTask: (
     userId: UserId,
     taskId: TaskId,
-    params: UpdateTaskInputParams
+    params: UpdateTaskInputParams,
   ) => Promise<Task>;
   deleteTask: (userId: UserId, taskId: TaskId) => Promise<void>;
 };
@@ -66,7 +66,7 @@ function updateTask(repo: TaskRepository) {
   return async (
     userId: UserId,
     taskId: TaskId,
-    params: UpdateTaskInputParams
+    params: UpdateTaskInputParams,
   ) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new ResourceNotFoundError("task not found");

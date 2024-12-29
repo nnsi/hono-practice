@@ -1,19 +1,19 @@
 import {
   Activity,
-  ActivityId,
+  type ActivityId,
   createActivityId,
-  UserId,
+  type UserId,
 } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
-import { TransactionRunner } from "@/backend/infra/db";
+import type { TransactionRunner } from "@/backend/infra/db";
 import { generateOrder } from "@/backend/lib/lexicalOrder";
-import {
+import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
 } from "@/types/request";
 
-import { ActivityRepository } from ".";
+import type { ActivityRepository } from ".";
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;
@@ -22,19 +22,19 @@ export type ActivityUsecase = {
   updateActivity(
     userId: UserId,
     activityId: ActivityId,
-    req: UpdateActivityRequest
+    req: UpdateActivityRequest,
   ): Promise<Activity>;
   updateActivityOrder(
     userId: UserId,
     activityId: ActivityId,
-    orderIndexes: UpdateActivityOrderRequest
+    orderIndexes: UpdateActivityOrderRequest,
   ): Promise<Activity>;
   deleteActivity(userId: UserId, activityId: ActivityId): Promise<void>;
 };
 
 export function newActivityUsecase(
   repo: ActivityRepository,
-  tx: TransactionRunner
+  tx: TransactionRunner,
 ): ActivityUsecase {
   return {
     getActivities: getActivities(repo),
@@ -90,12 +90,12 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
   return async (
     userId: UserId,
     activityId: ActivityId,
-    params: UpdateActivityRequest
+    params: UpdateActivityRequest,
   ) => {
     return tx.run([repo], async (txRepo) => {
       const activity = await txRepo.getActivityByIdAndUserId(
         userId,
-        activityId
+        activityId,
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
@@ -110,13 +110,13 @@ function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
   return async (
     userId: UserId,
     activityId: ActivityId,
-    params: UpdateActivityOrderRequest
+    params: UpdateActivityOrderRequest,
   ) => {
     const typedPrevId = params.prev ? createActivityId(params.prev) : undefined;
     const typedNextId = params.next ? createActivityId(params.next) : undefined;
 
     const ids = [activityId, typedPrevId, typedNextId].filter(
-      Boolean
+      Boolean,
     ) as ActivityId[];
 
     return tx.run([repo], async (txRepo) => {
@@ -130,7 +130,7 @@ function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
 
       const orderIndex = generateOrder(
         prevActivity?.orderIndex,
-        nextActivity?.orderIndex
+        nextActivity?.orderIndex,
       );
 
       activity.orderIndex = orderIndex;

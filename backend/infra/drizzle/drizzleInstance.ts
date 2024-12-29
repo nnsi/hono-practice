@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { drizzle as pglite } from "drizzle-orm/pglite";
 import pg from "pg";
 
 import * as schema from "@/drizzle/schema";
+
+import type { drizzle as pglite } from "drizzle-orm/pglite";
 
 const { Pool } = pg;
 

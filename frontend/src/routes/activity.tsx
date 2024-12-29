@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
@@ -9,7 +9,7 @@ import { GetActivityStatsResponseSchema } from "@/types/response";
 import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
 import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
 
-import { Calendar, useToast, Button } from "@components/ui";
+import { Button, Calendar, useToast } from "@components/ui";
 
 import { ActivityTabs } from "@components/activity";
 

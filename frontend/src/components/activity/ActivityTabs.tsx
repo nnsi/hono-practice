@@ -1,8 +1,8 @@
 import dayjs from "dayjs";
 
-import { GetActivityStatsResponse } from "@/types/response";
-import { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
-import { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
+import type { GetActivityStatsResponse } from "@/types/response";
+import type { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
+import type { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
 
 import {
   Card,

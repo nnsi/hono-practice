@@ -1,8 +1,8 @@
 import { AppError } from "@/backend/error";
-import { LoginRequest } from "@/types/request";
+import type { LoginRequest } from "@/types/request";
 import { LoginResponseSchema } from "@/types/response";
 
-import { AuthUsecase } from ".";
+import type { AuthUsecase } from ".";
 
 export function newAuthHandler(authUsecase: AuthUsecase) {
   return {
