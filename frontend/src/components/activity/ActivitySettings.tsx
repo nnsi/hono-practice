@@ -16,21 +16,21 @@ import {
 } from "@/types/response/GetActivitiesResponse";
 
 import {
-  Button,
-  Form,
-  Card,
-  Input,
-  CardHeader,
-  FormField,
-  CardTitle,
-  CardContent,
-  SheetHeader,
-  SheetTitle,
-  AccordionTrigger,
   Accordion,
   AccordionContent,
   AccordionItem,
+  AccordionTrigger,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Form,
+  FormField,
+  Input,
   SheetDescription,
+  SheetHeader,
+  SheetTitle,
 } from "@components/ui";
 
 import { mp } from "../../utils";
@@ -165,7 +165,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
           onValueChange={setAccordionValue}
         >
           {localActivities.map((activity) => (
-            <AccordionItem value={activity.id}>
+            <AccordionItem value={activity.id} key={activity.id}>
               <div className="flex items-center gap-3">
                 <div className="flex-1 w-full">
                   <AccordionTrigger id={activity.id}>

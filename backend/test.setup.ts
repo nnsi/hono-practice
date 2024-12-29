@@ -22,7 +22,7 @@ afterEach(async () => {
   await testDB.execute(sql`drop schema if exists public cascade`);
   await testDB.execute(sql`create schema public`);
   await testDB.execute(sql`drop schema if exists drizzle cascade`);
-  await migrate(testDB!, { migrationsFolder: "drizzle/migrations" });
+  await migrate(testDB, { migrationsFolder: "drizzle/migrations" });
   await seed();
 });
 

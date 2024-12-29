@@ -22,7 +22,7 @@ export function generateOrder(
   }
   if (!next) {
     const lastPrevChar = prev.slice(-1).charCodeAt(0);
-    if (lastPrevChar === CHAR_CODE_Z) return prev + "a";
+    if (lastPrevChar === CHAR_CODE_Z) return `${prev}a`;
     return prev.slice(0, -1) + String.fromCharCode(lastPrevChar + 1);
   }
 
@@ -42,9 +42,8 @@ export function generateOrder(
     if (lastNextChar === CHAR_CODE_A) {
       if (next.length - prev.length === 1) {
         throw new Error("cannot generate: next is already the last order");
-      } else {
-        return next.slice(0, -1);
       }
+      return next.slice(0, -1);
     }
     return (
       next.slice(0, -1) +
@@ -58,16 +57,15 @@ export function generateOrder(
   if (nextCharCode - prevCharCode > 1) {
     const midCharCode = Math.floor((prevCharCode + nextCharCode) / 2);
     return prev.slice(0, i) + String.fromCharCode(midCharCode);
-  } else {
-    const prevLastCode = prev.charCodeAt(prev.length - 1);
-    if (prev.length > next.length) {
-      if (prevLastCode === CHAR_CODE_Z) {
-        return prev + "a";
-      }
-    }
-    return (
-      prev.slice(0, i + 1) +
-      String.fromCharCode(Math.floor(prevLastCode + CHAR_CODE_Z) / 2)
-    );
   }
+  const prevLastCode = prev.charCodeAt(prev.length - 1);
+  if (prev.length > next.length) {
+    if (prevLastCode === CHAR_CODE_Z) {
+      return `${prev}a`;
+    }
+  }
+  return (
+    prev.slice(0, i + 1) +
+    String.fromCharCode(Math.floor(prevLastCode + CHAR_CODE_Z) / 2)
+  );
 }

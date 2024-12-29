@@ -6,14 +6,14 @@ import type { GetActivityLogsResponse } from "@/types/response/GetActivityLogsRe
 
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   CardFooter,
+  CardHeader,
+  CardTitle,
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
-  TabsContent,
 } from "@components/ui";
 
 import { ActivityDaily } from "./ActivityDaily";
@@ -82,7 +82,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
                         </p>
                         <ul>
                           {k.logs.map((l, i) => (
-                            <li key={i}>
+                            <li key={`${i}-${l.date}`}>
                               {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}{" "}
                               {s.quantityLabel}
                             </li>
@@ -95,7 +95,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
               </Card>
             ))}
           </CardContent>
-          <CardFooter></CardFooter>
+          <CardFooter />
         </Card>
       </TabsContent>
     </Tabs>

@@ -15,6 +15,7 @@ function createInstance() {
   return drizzle(pool, { schema });
 }
 
+// biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>
 declare const globalThis: {
   drizzleGlobal: ReturnType<typeof createInstance>;
 } & typeof global;
