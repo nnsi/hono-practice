@@ -3,7 +3,7 @@
     "dev": "tsx watch backend/index.ts",
     "client-dev": "vite --host",
     "build": "vite build --mode server & vite build",
-    "test": "vitest --show-logs"
+    "test": "vitest --disable-console-intercept"
   },
   "type": "module",
   "dependencies": {
