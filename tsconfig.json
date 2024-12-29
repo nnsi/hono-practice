@@ -20,5 +20,6 @@
       "@hooks/*": ["frontend/src/hooks/*"],
       "@components/*": ["frontend/src/components/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist"]
 }

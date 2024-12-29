@@ -1,10 +1,11 @@
 {
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit",
+    "source.fixAll.eslint": "explicit"
   },
+  "editor.formatOnSave": true,
   "exportall.config.folderListener": [
     "/backend/domain",
     "/backend/route",
@@ -16,8 +17,5 @@
     "/frontend/src/components",
     "/frontend/src/components/ui",
     "/frontend/src/utils"
-  ],
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  }
+  ]
 }
