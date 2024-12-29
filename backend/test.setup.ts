@@ -54,4 +54,35 @@ async function seed() {
       done: true,
     },
   ]);
+
+  await testDB.insert(schema.activities).values([
+    {
+      id: "00000000-0000-4000-8000-000000000001",
+      userId: TEST_USER_ID,
+      name: "test",
+      label: "test",
+      orderIndex: "a",
+      quantityLabel: "回",
+    },
+  ]);
+
+  await testDB.insert(schema.activityKinds).values([
+    {
+      id: "00000000-0000-4000-8000-000000000001",
+      activityId: "00000000-0000-4000-8000-000000000001",
+      name: "test-sub",
+      orderIndex: "a",
+    },
+  ]);
+
+  await testDB.insert(schema.activityLogs).values([
+    {
+      id: "00000000-0000-4000-8000-000000000001",
+      userId: TEST_USER_ID,
+      activityId: "00000000-0000-4000-8000-000000000001",
+      activityKindId: "00000000-0000-4000-8000-000000000001",
+      date: "2021-01-01",
+      quantity: 1,
+    },
+  ]);
 }

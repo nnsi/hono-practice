@@ -1,13 +1,13 @@
 import { relations } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  timestamp,
   boolean,
-  uuid,
-  real,
   date,
   index,
+  pgTable,
+  real,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 // User テーブル
@@ -25,7 +25,7 @@ export const users = pgTable(
       .$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("user_login_id_idx").on(t.loginId)]
+  (t) => [index("user_login_id_idx").on(t.loginId)],
 );
 
 // Task テーブル
@@ -54,7 +54,7 @@ export const tasks = pgTable(
   (t) => [
     index("task_user_id_idx").on(t.userId),
     index("task_created_at_idx").on(t.createdAt),
-  ]
+  ],
 );
 
 // Activity テーブル
@@ -86,7 +86,7 @@ export const activities = pgTable(
   (t) => [
     index("activity_user_id_idx").on(t.userId),
     index("activity_created_at_idx").on(t.createdAt),
-  ]
+  ],
 );
 
 export const activitiesRelations = relations(activities, ({ many }) => ({
@@ -114,7 +114,7 @@ export const activityLogs = pgTable(
     activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
     quantity: real("quantity"),
     memo: text("memo").default(""),
-    date: date("date", { mode: "date" }).notNull(),
+    date: date("date").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -128,7 +128,7 @@ export const activityLogs = pgTable(
     index("activity_log_activity_id_idx").on(t.activityId),
     index("activity_log_activity_kind_id_idx").on(t.activityKindId),
     index("activity_log_date_idx").on(t.date),
-  ]
+  ],
 );
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
@@ -164,7 +164,7 @@ export const activityKinds = pgTable(
       .$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("activity_kind_activity_id_idx").on(t.activityId)]
+  (t) => [index("activity_kind_activity_id_idx").on(t.activityId)],
 );
 
 export const activityKindsRelations = relations(activityKinds, ({ one }) => ({

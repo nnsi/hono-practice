@@ -1,10 +1,10 @@
 import { and, between, eq, isNull } from "drizzle-orm";
 
 import {
-  ActivityLog,
-  type UserId,
-  type ActivityLogId,
   Activity,
+  ActivityLog,
+  type ActivityLogId,
+  type UserId,
 } from "@/backend/domain";
 import type { QueryExecutor } from "@/backend/infra/drizzle";
 import dayjs from "@/backend/lib/dayjs";
@@ -39,6 +39,9 @@ export function newActivityLogRepository(
 
 function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
   return async (userId: UserId, from: Date, to: Date) => {
+    const fromStr = dayjs(from).format("YYYY-MM-DD");
+    const toStr = dayjs(to).format("YYYY-MM-DD");
+
     const rows = await db.query.activityLogs.findMany({
       with: {
         activity: true,
@@ -47,7 +50,7 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
       where: and(
         eq(activities.userId, userId),
         isNull(activityLogs.deletedAt),
-        between(activityLogs.date, from, to),
+        between(activityLogs.date, fromStr, toStr),
       ),
     });
 
@@ -112,7 +115,7 @@ function createActivityLog(db: QueryExecutor) {
         activityKindId: activityLog.activityKind?.id,
         quantity: activityLog.quantity,
         memo: activityLog.memo,
-        date: dayjs(activityLog.date).toDate(),
+        date: activityLog.date,
       })
       .returning();
 
@@ -127,7 +130,7 @@ function updateActivityLog(db: QueryExecutor) {
       .set({
         quantity: activityLog.quantity,
         memo: activityLog.memo,
-        date: dayjs(activityLog.date).toDate(),
+        date: activityLog.date,
       })
       .where(eq(activityLogs.id, activityLog.id))
       .returning();

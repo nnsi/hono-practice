@@ -26,6 +26,9 @@ export function newActivityQueryService(
 
 function activityStatsQuery(db: QueryExecutor) {
   return async (userId: string, startDate: Date, endDate: Date) => {
+    const startDateStr = dayjs(startDate).format("YYYY-MM-DD");
+    const endDateStr = dayjs(endDate).format("YYYY-MM-DD");
+
     const rows = await db
       .select({
         id: activities.id,
@@ -46,7 +49,7 @@ function activityStatsQuery(db: QueryExecutor) {
       .where(
         and(
           eq(activities.userId, userId),
-          between(activityLogs.date, startDate, endDate),
+          between(activityLogs.date, startDateStr, endDateStr),
           isNull(activityLogs.deletedAt),
         ),
       )
@@ -66,7 +69,7 @@ function transform(
     kindid: string | null;
     kindname: string | null;
     logid: string;
-    date: Date;
+    date: string;
     quantity: number | null;
     quantityLabel: string | null;
   }[],

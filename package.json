@@ -3,7 +3,8 @@
     "dev": "tsx watch backend/index.ts",
     "client-dev": "vite --host",
     "build": "vite build --mode server & vite build",
-    "test": "vitest --disable-console-intercept"
+    "test": "vitest --disable-console-intercept",
+    "lint": "biome lint && eslint"
   },
   "type": "module",
   "dependencies": {
