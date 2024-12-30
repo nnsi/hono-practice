@@ -10,6 +10,7 @@ import type { GetActivityStatsResponse } from "@/types/response";
 
 import type { ActivityLogRepository } from "./activityLogRepository";
 import type { ActivityRepository } from "../activity/activityRepository";
+import { ResourceNotFoundError } from "@/backend/error";
 
 export type GetActivityLogsParams = {
   from: Date;
@@ -89,7 +90,12 @@ function getActivityLogs(repo: ActivityLogRepository) {
 
 function getActivityLog(repo: ActivityLogRepository) {
   return async (userId: UserId, activityLogId: ActivityLogId) => {
-    return repo.getActivityLogByIdAndUserId(userId, activityLogId);
+    const aLog = await repo.getActivityLogByIdAndUserId(userId, activityLogId);
+    if (!aLog) {
+      throw new ResourceNotFoundError("activity log not found");
+    }
+
+    return aLog;
   };
 }
 
@@ -137,6 +143,9 @@ function updateActivityLog(repo: ActivityLogRepository) {
       userId,
       activityLogId,
     );
+    if (!activityLog) {
+      throw new ResourceNotFoundError("activity log not found");
+    }
 
     const newActivityLog = ActivityLog.update(activityLog, params);
 
@@ -150,6 +159,9 @@ function deleteActivityLog(repo: ActivityLogRepository) {
       userId,
       activityLogId,
     );
+    if(!activityLog) {
+      throw new ResourceNotFoundError("activity log not found");
+    }
 
     return repo.deleteActivityLog(activityLog);
   };

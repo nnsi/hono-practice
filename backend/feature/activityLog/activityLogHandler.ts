@@ -19,7 +19,7 @@ import type { ActivityLogUsecase, GetActivityLogsParams } from ".";
 
 export function newActivityLogHandler(uc: ActivityLogUsecase) {
   return {
-    getActivityLogs: GetActivityLogs(uc),
+    getActivityLogs: getActivityLogs(uc),
     getActivityLog: getActivityLog(uc),
     createActivityLog: createActivityLog(uc),
     updateActivityLog: updateActivityLog(uc),
@@ -28,7 +28,7 @@ export function newActivityLogHandler(uc: ActivityLogUsecase) {
   };
 }
 
-function GetActivityLogs(uc: ActivityLogUsecase) {
+function getActivityLogs(uc: ActivityLogUsecase) {
   return async (userId: UserId, query: { date?: string }) => {
     const date = query.date || dayjs().format("YYYY-MM-DD");
 
@@ -108,6 +108,7 @@ function updateActivityLog(uc: ActivityLogUsecase) {
 function deleteActivityLog(uc: ActivityLogUsecase) {
   return async (userId: UserId, id: string) => {
     const activityLogId = createActivityLogId(id);
+    
     await uc.deleteActivityLog(userId, activityLogId);
 
     return { message: "success" };

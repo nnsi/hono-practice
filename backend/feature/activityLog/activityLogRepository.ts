@@ -19,7 +19,7 @@ export type ActivityLogRepository = {
   getActivityLogByIdAndUserId: (
     userId: UserId,
     activityLogId: ActivityLogId,
-  ) => Promise<ActivityLog>;
+  ) => Promise<ActivityLog | undefined>;
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   deleteActivityLog: (activityLog: ActivityLog) => Promise<void>;
@@ -86,7 +86,7 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
     });
 
     if (!row) {
-      throw new Error("activity log not found");
+      return undefined;
     }
 
     const activity = Activity.create(
