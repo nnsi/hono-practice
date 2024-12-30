@@ -1,39 +1,19 @@
-import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { serve } from "@hono/node-server";
 
 import { config } from "./config";
 import {
-  AppError,
-  AuthError,
-  ResourceNotFoundError,
-  SqlExecutionError,
-} from "./error";
-import {
   authRoute,
+  newActivityLogRoute,
+  newActivityRoute,
   taskRoute,
   userRoute,
-  newActivityRoute,
-  newActivityLogRoute,
 } from "./feature";
+import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
 
-const app = new Hono();
-app.onError((err, c) => {
-  console.error(err.stack);
-
-  if (
-    err instanceof AppError ||
-    err instanceof AuthError ||
-    err instanceof ResourceNotFoundError ||
-    err instanceof SqlExecutionError
-  ) {
-    return c.json({ message: err.message }, err.status);
-  }
-
-  return c.json({ message: "internal server error" }, 500);
-});
+const app = newHonoWithErrorHandling();
 
 app.use(
   "*",

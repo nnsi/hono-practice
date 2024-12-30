@@ -3,7 +3,7 @@ import { testClient } from "hono/testing";
 
 import { expect, test } from "vitest";
 
-import { ResourceNotFoundError } from "@/backend/error";
+import { newHonoWithErrorHandling } from "@/backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@/backend/middleware/mockAuthMiddleware";
 import { testDB } from "@/backend/test.setup";
 
@@ -77,21 +77,15 @@ test("PUT tasks/:id / success", async () => {
 
 test("DELETE tasks/:id / success", async () => {
   const route = createTaskRoute(testDB);
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app);
 
   const res = await client[":id"].$delete({
     param: {
       id: "00000000-0000-4000-8000-000000000001",
     },
-  });
-
-  app.onError((err, c) => {
-    // TODO: ここでキャッチしなくても良いようにしたい
-    if (err instanceof ResourceNotFoundError) {
-      return c.json({ message: err.message }, err.status);
-    }
-    return c.json({ message: "internal server error" }, 500);
   });
 
   const checkRes = await client[":id"].$get({
