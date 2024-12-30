@@ -1,0 +1,9 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{ts,tsx}"
+      run: npx biome lint
+    test:
+      glob: "*.{ts,tsx}"
+      run: npm run test
