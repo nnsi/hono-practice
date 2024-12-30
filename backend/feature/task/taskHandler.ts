@@ -61,13 +61,7 @@ function createTask(uc: TaskUsecase) {
   return async (userId: UserId, params: CreateTaskRequest) => {
     const task = await uc.createTask(userId, params);
 
-    const responseTask = {
-      ...task,
-      id: task.id,
-      userId: task.userId,
-    };
-
-    const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
+    const parsedTask = GetTaskResponseSchema.safeParse(task);
     if (!parsedTask.success) {
       throw new AppError("failed to parse task", 500);
     }

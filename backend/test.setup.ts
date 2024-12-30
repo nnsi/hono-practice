@@ -51,6 +51,7 @@ async function seed() {
       id: "00000000-0000-4000-8000-000000000002",
       userId: TEST_USER_ID,
       title: "test",
+      memo: "test",
       done: true,
     },
   ]);

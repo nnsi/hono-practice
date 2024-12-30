@@ -11,7 +11,6 @@ export type TaskRepository = {
     userId: UserId,
     taskId: TaskId,
   ) => Promise<Task | undefined>;
-  getDoneTasksByUserId: (userId: UserId) => Promise<Task[]>;
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
@@ -22,7 +21,6 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
   return {
     getTaskAllByUserId: getTaskAllByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
-    getDoneTasksByUserId: getDoneTasksByUserId(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
@@ -31,7 +29,7 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
 }
 
 function getTaskAllByUserId(db: QueryExecutor) {
-  return async (userId: UserId): Promise<Task[]> => {
+  return async (userId: UserId) => {
     const result = await db.query.tasks.findMany({
       where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
       orderBy: desc(tasks.createdAt),
@@ -52,7 +50,7 @@ function getTaskAllByUserId(db: QueryExecutor) {
 }
 
 function getTaskByUserIdAndTaskId(db: QueryExecutor) {
-  return async (userId: UserId, taskId: TaskId): Promise<Task | undefined> => {
+  return async (userId: UserId, taskId: TaskId) => {
     const result = await db.query.tasks.findFirst({
       where: and(
         eq(tasks.id, taskId),
@@ -70,20 +68,20 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
 }
 
 function createTask(db: QueryExecutor) {
-  return async (task: Task): Promise<Task> => {
-    const result = await db.insert(tasks).values(task).returning();
+  return async (task: Task) => {
+    const [result] = await db.insert(tasks).values(task).returning();
 
     return Task.create({
       ...task,
-      createdAt: result[0].createdAt,
-      updatedAt: result[0].updatedAt,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     });
   };
 }
 
 function updateTask(db: QueryExecutor) {
   return async (task: Task) => {
-    const result = await db
+    const [result] = await db
       .update(tasks)
       .set({
         title: task.title,
@@ -93,42 +91,27 @@ function updateTask(db: QueryExecutor) {
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
       .returning();
 
-    if (result.length === 0) {
+    if (!result) {
       return undefined;
     }
 
     return Task.create({
       ...task,
-      updatedAt: result[0].updatedAt,
+      updatedAt: result.updatedAt,
     });
   };
 }
 
 function deleteTask(db: QueryExecutor) {
   return async (task: Task) => {
-    const result = await db
+    const [result] = await db
       .update(tasks)
       .set({ deletedAt: new Date() })
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
       .returning();
 
-    if (result.length === 0) {
+    if (!result) {
       throw new ResourceNotFoundError("task not found");
     }
-  };
-}
-
-function getDoneTasksByUserId(db: QueryExecutor) {
-  return async (userId: UserId): Promise<Task[]> => {
-    const result = await db.query.tasks.findMany({
-      where: and(
-        eq(tasks.userId, userId),
-        eq(tasks.done, true),
-        isNull(tasks.deletedAt),
-      ),
-      orderBy: desc(tasks.createdAt),
-    });
-
-    return result.map((r) => Task.create(r));
   };
 }
