@@ -1,8 +1,9 @@
 import {
-  Activity,
+  type Activity,
+  ActivityFactory,
   type ActivityId,
-  createActivityId,
   type UserId,
+  createActivityId,
 } from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 import type { TransactionRunner } from "@/backend/infra/db";
@@ -71,7 +72,7 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
-      const activity = Activity.create({
+      const activity = ActivityFactory.create({
         userId: userId,
         name: params.name,
         label: params.label,
@@ -99,7 +100,7 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
-      const newActivity = Activity.update(activity, params);
+      const newActivity = ActivityFactory.update(activity, params);
 
       return await txRepo.updateActivity(newActivity);
     });

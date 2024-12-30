@@ -1,6 +1,6 @@
-import { createUserId, type UserId } from "../user";
+import { type UserId, createUserId } from "../user";
 
-import { createActivityLogId, type ActivityLogId } from "./activityLogId";
+import { type ActivityLogId, createActivityLogId } from "./activityLogId";
 
 import type { Activity, ActivityKind } from "../activity";
 
@@ -69,7 +69,7 @@ function updateActivityLog(
   };
 }
 
-export const ActivityLog = {
+export const ActivityLogFactory = {
   create: createActivityLog,
   update: updateActivityLog,
 };

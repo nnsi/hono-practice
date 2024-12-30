@@ -1,6 +1,11 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 
-import { Task, type TaskId, type UserId } from "@/backend/domain";
+import {
+  type Task,
+  TaskFactory,
+  type TaskId,
+  type UserId,
+} from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { tasks } from "@/drizzle/schema";
@@ -36,7 +41,7 @@ function getTaskAllByUserId(db: QueryExecutor) {
     });
 
     return result.map((r) =>
-      Task.create({
+      TaskFactory.create({
         id: r.id,
         userId: r.userId,
         title: r.title,
@@ -63,7 +68,7 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
       return undefined;
     }
 
-    return Task.create(result);
+    return TaskFactory.create(result);
   };
 }
 
@@ -71,7 +76,7 @@ function createTask(db: QueryExecutor) {
   return async (task: Task) => {
     const [result] = await db.insert(tasks).values(task).returning();
 
-    return Task.create({
+    return TaskFactory.create({
       ...task,
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
@@ -95,7 +100,7 @@ function updateTask(db: QueryExecutor) {
       return undefined;
     }
 
-    return Task.create({
+    return TaskFactory.create({
       ...task,
       updatedAt: result.updatedAt,
     });

@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import { User, type UserId } from "@/backend/domain";
+import { type User, UserFactory, type UserId } from "@/backend/domain";
 import type { QueryExecutor } from "@/backend/infra/drizzle";
 import { users } from "@/drizzle/schema";
 
@@ -32,7 +32,7 @@ function createUser(db: QueryExecutor) {
       })
       .returning();
 
-    const persistedUser = User.create(result[0]);
+    const persistedUser = UserFactory.create(result[0]);
 
     return persistedUser;
   };
@@ -50,7 +50,7 @@ function getUserById(db: QueryExecutor) {
       return undefined;
     }
 
-    const user = User.create(result[0]);
+    const user = UserFactory.create(result[0]);
 
     return user;
   };
@@ -68,7 +68,7 @@ function getUserByLoginId(db: QueryExecutor) {
       return undefined;
     }
 
-    const user = User.create(result[0]);
+    const user = UserFactory.create(result[0]);
 
     return user;
   };

@@ -1,4 +1,9 @@
-import { Task, type TaskId, type UserId } from "@/backend/domain";
+import {
+  type Task,
+  TaskFactory,
+  type TaskId,
+  type UserId,
+} from "@/backend/domain";
 import { ResourceNotFoundError } from "@/backend/error";
 
 import type { TaskRepository } from ".";
@@ -52,7 +57,7 @@ function getTask(repo: TaskRepository) {
 
 function createTask(repo: TaskRepository) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
-    const task = Task.create({
+    const task = TaskFactory.create({
       userId: userId,
       title: params.title,
       done: false,
@@ -71,7 +76,7 @@ function updateTask(repo: TaskRepository) {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
     if (!task) throw new ResourceNotFoundError("task not found");
 
-    const newTask = Task.update(task, params);
+    const newTask = TaskFactory.update(task, params);
 
     const updateTask = await repo.updateTask(newTask);
     if (!updateTask) throw new ResourceNotFoundError("task not found");

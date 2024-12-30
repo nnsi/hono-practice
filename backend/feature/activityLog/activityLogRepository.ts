@@ -1,8 +1,9 @@
 import { and, between, eq, isNull } from "drizzle-orm";
 
 import {
-  Activity,
-  ActivityLog,
+  ActivityFactory,
+  type ActivityLog,
+  ActivityLogFactory,
   type ActivityLogId,
   type UserId,
 } from "@/backend/domain";
@@ -55,12 +56,12 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      const activity = Activity.create(
+      const activity = ActivityFactory.create(
         r.activity,
         r.activityKind ? [r.activityKind] : undefined,
       );
 
-      return ActivityLog.create({
+      return ActivityLogFactory.create({
         ...r,
         date: dayjs(r.date).format("YYYY-MM-DD"),
         memo: r.memo || "",
@@ -89,12 +90,12 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       return undefined;
     }
 
-    const activity = Activity.create(
+    const activity = ActivityFactory.create(
       row.activity,
       row.activityKind ? [row.activityKind] : undefined,
     );
 
-    return ActivityLog.create({
+    return ActivityLogFactory.create({
       ...row,
       date: dayjs(row.date).format("YYYY-MM-DD"),
       memo: row.memo || "",
@@ -119,7 +120,7 @@ function createActivityLog(db: QueryExecutor) {
       })
       .returning();
 
-    return ActivityLog.update(activityLog, row);
+    return ActivityLogFactory.update(activityLog, row);
   };
 }
 
@@ -135,7 +136,7 @@ function updateActivityLog(db: QueryExecutor) {
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
 
-    return ActivityLog.update(activityLog, {
+    return ActivityLogFactory.update(activityLog, {
       ...row,
       date: dayjs(row.date).format("YYYY-MM-DD"),
     });

@@ -1,4 +1,4 @@
-import { createUserId, type UserId } from "./userId";
+import { type UserId, createUserId } from "./userId";
 
 type BaseUser = {
   id: UserId;
@@ -28,6 +28,6 @@ function createUser(params: {
   };
 }
 
-export const User = {
+export const UserFactory = {
   create: createUser,
 };

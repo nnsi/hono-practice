@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import {
-  Activity,
+  type Activity,
+  ActivityFactory,
   type ActivityId,
   type ActivityKindId,
   type UserId,
@@ -56,7 +57,7 @@ function getActivitiesByUserId(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      return Activity.create(
+      return ActivityFactory.create(
         {
           id: r.id,
           userId: r.userId,
@@ -90,7 +91,7 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      return Activity.create(
+      return ActivityFactory.create(
         {
           id: r.id,
           userId: r.userId,
@@ -126,7 +127,7 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
     });
     if (!row) return row;
 
-    return Activity.create(
+    return ActivityFactory.create(
       {
         id: row.id,
         userId: row.userId,
@@ -159,7 +160,7 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
 
     if (!row) return row;
 
-    return Activity.create(
+    return ActivityFactory.create(
       {
         id: row.id,
         userId: row.userId,
@@ -201,7 +202,7 @@ function createActivity(db: QueryExecutor) {
       .returning();
 
     if (!kinds || kinds.length === 0) {
-      return Activity.create(row[0]);
+      return ActivityFactory.create(row[0]);
     }
 
     const rows = await db
@@ -215,7 +216,7 @@ function createActivity(db: QueryExecutor) {
       )
       .returning();
 
-    return Activity.create(row[0], rows);
+    return ActivityFactory.create(row[0], rows);
   };
 }
 

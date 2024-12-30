@@ -1,6 +1,6 @@
-import { createUserId, type UserId } from "../user";
+import { type UserId, createUserId } from "../user";
 
-import { createTaskId, type TaskId } from "./taskId";
+import { type TaskId, createTaskId } from "./taskId";
 
 type BaseTask = {
   id: TaskId;
@@ -46,7 +46,7 @@ function updateTask(
   };
 }
 
-export const Task = {
+export const TaskFactory = {
   create: createTask,
   update: updateTask,
 };
