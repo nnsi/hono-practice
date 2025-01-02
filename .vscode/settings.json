@@ -5,17 +5,5 @@
     "source.organizeImports.biome": "explicit",
     "source.fixAll.eslint": "explicit"
   },
-  "editor.formatOnSave": true,
-  "exportall.config.folderListener": [
-    "/backend/domain",
-    "/backend/route",
-    "/backend/error",
-    "/backend/feature",
-    "/backend/query",
-    "/types/response",
-    "/types/request",
-    "/frontend/src/components",
-    "/frontend/src/components/ui",
-    "/frontend/src/utils"
-  ]
+  "editor.formatOnSave": true
 }

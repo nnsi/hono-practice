@@ -9,12 +9,13 @@ import * as schema from "@/drizzle/schema";
 let pglite: PGlite;
 export let testDB: ReturnType<typeof drizzle<typeof schema>>;
 export const TEST_USER_ID = "00000000-0000-4000-8000-000000000000";
+const migrationsFolder = "drizzle/migrations";
 
 beforeAll(async () => {
   pglite = new PGlite();
   testDB = drizzle(pglite, { schema });
 
-  await migrate(testDB, { migrationsFolder: "drizzle/migrations" });
+  await migrate(testDB, { migrationsFolder });
   await seed();
 });
 
@@ -22,7 +23,8 @@ afterEach(async () => {
   await testDB.execute(sql`drop schema if exists public cascade`);
   await testDB.execute(sql`create schema public`);
   await testDB.execute(sql`drop schema if exists drizzle cascade`);
-  await migrate(testDB, { migrationsFolder: "drizzle/migrations" });
+  await testDB.execute(sql`create schema drizzle`);
+  await migrate(testDB, { migrationsFolder });
   await seed();
 });
 

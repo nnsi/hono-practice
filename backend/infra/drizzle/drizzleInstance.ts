@@ -5,10 +5,8 @@ import * as schema from "@/drizzle/schema";
 
 import type { drizzle as pglite } from "drizzle-orm/pglite";
 
-const { Pool } = pg;
-
 function createInstance() {
-  const pool = new Pool({
+  const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
   });
 

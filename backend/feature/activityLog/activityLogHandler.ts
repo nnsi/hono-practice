@@ -1,8 +1,8 @@
 import {
+  type UserId,
   createActivityId,
   createActivityKindId,
   createActivityLogId,
-  type UserId,
 } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 import dayjs from "@/backend/lib/dayjs";
@@ -42,7 +42,6 @@ function getActivityLogs(uc: ActivityLogUsecase) {
 
     const parsedLogs = GetActivityLogsResponseSchema.safeParse(logs);
     if (!parsedLogs.success) {
-      console.log(logs);
       throw new AppError("Invalid parse");
     }
 
@@ -108,7 +107,7 @@ function updateActivityLog(uc: ActivityLogUsecase) {
 function deleteActivityLog(uc: ActivityLogUsecase) {
   return async (userId: UserId, id: string) => {
     const activityLogId = createActivityLogId(id);
-    
+
     await uc.deleteActivityLog(userId, activityLogId);
 
     return { message: "success" };
