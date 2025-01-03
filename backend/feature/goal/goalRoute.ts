@@ -1,11 +1,9 @@
 import { Hono } from "hono";
 
-// import { zValidator } from "@hono/zod-validator";
+import { zValidator } from "@hono/zod-validator";
 
 import { type DrizzleInstance, drizzle } from "@/backend/infra/drizzle";
-// import { createGoalRequestSchema } from "@/types/request";
-
-import { authMiddleware } from "../../middleware/authMiddleware";
+import { CreateGoalRequestSchema } from "@/types/request";
 
 import { newGoalHandler } from "./goalHandler";
 import { newGoalRepository } from "./goalRepository";
@@ -20,14 +18,36 @@ export function createGoalRoute(db: DrizzleInstance) {
   const uc = newGoalUsecase(repo);
   const h = newGoalHandler(uc);
 
-  console.log(h);
+  return app
+    .get("/", async (c) => {
+      const res = await h.getGoals(c.get("userId"));
 
-  return app.get("/", authMiddleware, async (c) => {
-    //    const res = await h.getGoals(c.get("userId"), c.req.query());
-    const res = { message: "getGoals" };
+      return c.json(res);
+    })
+    .get("/:id", async (c) => {
+      const { id } = c.req.param();
 
-    return c.json(res);
-  });
+      const res = await h.getGoal(id, c.get("userId"));
+
+      return c.json(res);
+    })
+    .post("/", zValidator("json", CreateGoalRequestSchema), async (c) => {
+      const res = await h.createGoal(c.get("userId"), c.req.valid("json"));
+
+      return c.json(res);
+    })
+    .put("/:id", async (c) => {
+      const { id } = c.req.param();
+      const res = await h.updateGoal(id, c.get("userId"), c.req.json());
+
+      return c.json(res);
+    })
+    .delete("/:id", async (c) => {
+      const { id } = c.req.param();
+      await h.deleteGoal(id, c.get("userId"));
+
+      return c.status(204);
+    });
 }
 
 export const goalRoute = createGoalRoute(drizzle);

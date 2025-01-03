@@ -1,14 +1,32 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  customType,
   date,
   index,
-  numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+function customTypeNumeric(columnName: string) {
+  return customType<{
+    data: number;
+    driverData: number;
+  }>({
+    dataType() {
+      return "numeric";
+    },
+    toDriver(value) {
+      return value;
+    },
+    fromDriver(value) {
+      return Number(value);
+    },
+  })(columnName);
+}
 
 // User テーブル
 export const users = pgTable(
@@ -100,7 +118,7 @@ export const activityLogs = pgTable(
       .notNull()
       .references(() => activities.id),
     activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
-    quantity: numeric("quantity").$type<number>(),
+    quantity: customTypeNumeric("quantity"),
     memo: text("memo").default(""),
     date: date("date").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -174,8 +192,8 @@ export const goals = pgTable(
     ),
     title: text("title").notNull(),
     unit: text("unit"),
-    quantity: numeric("quantity"),
-    currentQuantity: numeric("current_quantity"),
+    quantity: customTypeNumeric("quantity"),
+    currentQuantity: customTypeNumeric("current_quantity"),
     emoji: text("emoji"),
     startDate: date("start_date"),
     dueDate: date("due_date"),
@@ -192,5 +210,39 @@ export const goals = pgTable(
     index("goal_user_id_idx").on(t.userId),
     index("goal_parent_goal_id_idx").on(t.parentGoalId),
     index("goal_created_at_idx").on(t.createdAt),
+  ],
+);
+
+export const goals_tasks = pgTable(
+  "goals_tasks",
+  {
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => goals.id),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id),
+  },
+  (t) => [
+    primaryKey({ columns: [t.goalId, t.taskId] }),
+    index("goals_tasks_goal_id_idx").on(t.goalId),
+    index("goals_tasks_task_id_idx").on(t.taskId),
+  ],
+);
+
+export const goals_activities = pgTable(
+  "goals_activities",
+  {
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => goals.id),
+    activityId: uuid("activity_id")
+      .notNull()
+      .references(() => activities.id),
+  },
+  (t) => [
+    primaryKey({ columns: [t.goalId, t.activityId] }),
+    index("goals_activities_goal_id_idx").on(t.goalId),
+    index("goals_activities_activity_id_idx").on(t.activityId),
   ],
 );

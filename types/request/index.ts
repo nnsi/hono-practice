@@ -1,5 +1,6 @@
 export * from "./CreateActivityLogRequest";
 export * from "./CreateActivityRequest";
+export * from "./CreateGoalRequestSchema";
 export * from "./CreateTaskRequest";
 export * from "./CreateUserRequest";
 export * from "./LoginRequest";
