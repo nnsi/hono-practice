@@ -1,5 +1,13 @@
 import { type UserId, createGoalId } from "@/backend/domain";
-import type { GetGoalResponse, GetGoalsResponse } from "@/types/response";
+import { AppError } from "@/backend/error";
+import type { CreateGoalRequest } from "@/types/request";
+import type { UpdateGoalRequest } from "@/types/request/UpdateGoalRequest";
+import {
+  type GetGoalResponse,
+  GetGoalResponseSchema,
+  type GetGoalsResponse,
+  GetGoalsResponseSchema,
+} from "@/types/response";
 
 import type { GoalUsecase } from "./goalUsecase";
 
@@ -8,14 +16,12 @@ export type GoalHandler = {
   getGoal: (GoalId: string, UserId: UserId) => Promise<GetGoalResponse>;
   createGoal: (
     userId: UserId,
-    params: any,
-    // params: CreateGoalRequest,
+    params: CreateGoalRequest,
   ) => Promise<GetGoalResponse>;
   updateGoal: (
     goalId: string,
     userId: UserId,
-    params: any,
-    // params: UpdateGoalRequest,
+    params: UpdateGoalRequest,
   ) => Promise<GetGoalResponse>;
   deleteGoal: (goalId: string, userId: UserId) => Promise<void>;
 };
@@ -34,7 +40,12 @@ function getGoals(uc: GoalUsecase) {
   return async (userId: UserId) => {
     const goals = await uc.getGoals(userId);
 
-    return goals;
+    const parsedGoals = GetGoalsResponseSchema.safeParse(goals);
+    if (!parsedGoals.success) {
+      throw new AppError("failed to parse goals", 500);
+    }
+
+    return parsedGoals.data;
   };
 }
 
@@ -44,7 +55,12 @@ function getGoal(uc: GoalUsecase) {
 
     const goal = await uc.getGoal(typedGoalId, userId);
 
-    return { goal };
+    const parsedGoal = GetGoalResponseSchema.safeParse(goal);
+    if (!parsedGoal.success) {
+      throw new AppError("failed to parse goals", 500);
+    }
+
+    return parsedGoal.data;
   };
 }
 
@@ -52,7 +68,13 @@ function createGoal(uc: GoalUsecase) {
   return async (userId: UserId, params: any) => {
     const goal = await uc.createGoal(userId, params);
 
-    return goal;
+    const parsedGoal = GetGoalResponseSchema.safeParse(goal);
+    if (!parsedGoal.success) {
+      console.log(parsedGoal.error);
+      throw new AppError("failed to parse goals", 500);
+    }
+
+    return parsedGoal.data;
   };
 }
 
@@ -61,7 +83,12 @@ function updateGoal(uc: GoalUsecase) {
     const typedGoalId = createGoalId(goalId);
     const goal = await uc.updateGoal(typedGoalId, userId, params);
 
-    return goal;
+    const parsedGoal = GetGoalResponseSchema.safeParse(goal);
+    if (!parsedGoal.success) {
+      throw new AppError("failed to parse goals", 500);
+    }
+
+    return parsedGoal.data;
   };
 }
 

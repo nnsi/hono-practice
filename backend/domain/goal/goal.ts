@@ -1,4 +1,5 @@
 import { DomainValidateError } from "@/backend/error";
+import dayjs from "@/backend/lib/dayjs";
 
 import { type GoalId, createGoalId } from "./goalId";
 
@@ -201,9 +202,10 @@ export const GoalFactory = {
     quantity: number | null,
     currentQuantity: number | null,
   ): GoalStatus => {
-    if (currentQuantity && currentQuantity === quantity) return "completed";
+    if (quantity && currentQuantity && quantity <= currentQuantity)
+      return "completed";
 
-    if (!startDate || startDate > new Date()) return "before";
+    if (startDate && dayjs(startDate) > dayjs()) return "before";
 
     if (startDate && !dueDate) return "progress";
 

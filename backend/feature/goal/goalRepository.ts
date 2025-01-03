@@ -20,7 +20,6 @@ export type GoalRepository = {
 };
 
 export function newGoalRepository(db: QueryExecutor): GoalRepository {
-  console.log(db);
   return {
     getGoalsByUserId: getGoalsByUserId(db),
     getGoalByIdAndUserId: getGoalByIdAndUserId(db),

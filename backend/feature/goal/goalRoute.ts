@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 
 import { type DrizzleInstance, drizzle } from "@/backend/infra/drizzle";
 import { CreateGoalRequestSchema } from "@/types/request";
+import { UpdateGoalRequestSchema } from "@/types/request/UpdateGoalRequest";
 
 import { newGoalHandler } from "./goalHandler";
 import { newGoalRepository } from "./goalRepository";
@@ -36,9 +37,9 @@ export function createGoalRoute(db: DrizzleInstance) {
 
       return c.json(res);
     })
-    .put("/:id", async (c) => {
+    .put("/:id", zValidator("json", UpdateGoalRequestSchema), async (c) => {
       const { id } = c.req.param();
-      const res = await h.updateGoal(id, c.get("userId"), c.req.json());
+      const res = await h.updateGoal(id, c.get("userId"), c.req.valid("json"));
 
       return c.json(res);
     })
@@ -46,7 +47,7 @@ export function createGoalRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       await h.deleteGoal(id, c.get("userId"));
 
-      return c.status(204);
+      return c.body(null, 204);
     });
 }
 
