@@ -38,7 +38,7 @@ function activityStatsQuery(db: QueryExecutor) {
         logid: activityLogs.id,
         date: activityLogs.date,
         quantity: activityLogs.quantity,
-        quantityLabel: activities.quantityLabel,
+        quantityUnit: activities.quantityUnit,
       })
       .from(activityLogs)
       .innerJoin(activities, eq(activityLogs.activityId, activities.id))
@@ -71,7 +71,7 @@ function transform(
     logid: string;
     date: string;
     quantity: number | null;
-    quantityLabel: string | null;
+    quantityUnit: string | null;
   }[],
 ) {
   const { stats } = rows.reduce(
@@ -82,7 +82,7 @@ function transform(
         acc.stats.push({
           id: row.id,
           name: row.name,
-          quantityLabel: row.quantityLabel || "",
+          quantityUnit: row.quantityUnit || "",
           total: row.quantity || 0,
           kinds: [
             {

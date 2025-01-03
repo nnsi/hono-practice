@@ -5,7 +5,7 @@ export const CreateActivityRequestSchema = z.object({
   description: z.string().optional(),
   label: z.string().min(1, "ラベルは必須です"),
   emoji: z.string().optional(),
-  quantityLabel: z.string().min(1, "量ラベルは必須です"),
+  quantityUnit: z.string().min(1, "量ラベルは必須です"),
   quantityOption: z.array(z.number()).optional(),
 });
 

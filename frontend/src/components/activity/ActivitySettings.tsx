@@ -133,7 +133,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="quantityLabel"
+                    name="quantityUnit"
                     render={({ field }) => (
                       <Input type="text" placeholder="Label" {...field} />
                     )}

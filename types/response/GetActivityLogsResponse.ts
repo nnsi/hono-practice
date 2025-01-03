@@ -3,11 +3,11 @@ import { z } from "zod";
 export const GetActivityLogResponseSchema = z.object({
   id: z.string(),
   date: z.union([z.coerce.string(), z.date()]),
-  quantity: z.number().nullable(),
+  quantity: z.coerce.number().nullable(),
   activity: z.object({
     id: z.string(),
     name: z.string(),
-    quantityLabel: z.string(),
+    quantityUnit: z.string(),
   }),
   activityKind: z
     .object({
@@ -25,7 +25,7 @@ export type GetActivityLogResponse = z.infer<
 >;
 
 export const GetActivityLogsResponseSchema = z.array(
-  GetActivityLogResponseSchema
+  GetActivityLogResponseSchema,
 );
 
 export type GetActivityLogsResponse = z.infer<

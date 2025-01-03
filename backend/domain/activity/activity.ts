@@ -20,7 +20,7 @@ type BaseActivity = {
   label?: string | null;
   emoji?: string | null;
   description?: string | null;
-  quantityLabel: string | null;
+  quantityUnit: string | null;
   options?: [];
   orderIndex: string | null;
   kinds?: ActivityKind[];
@@ -41,7 +41,7 @@ function createActivity(
     label?: string | null;
     emoji?: string | null;
     description?: string | null;
-    quantityLabel: string | null;
+    quantityUnit: string | null;
     orderIndex: string | null;
     createdAt?: Date;
     updatedAt?: Date;

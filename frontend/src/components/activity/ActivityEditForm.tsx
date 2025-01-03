@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
 import {
@@ -13,7 +13,7 @@ import {
   GetActivityResponseSchema,
 } from "@/types/response";
 
-import { Form, Button, FormField, Input } from "@components/ui";
+import { Button, Form, FormField, Input } from "@components/ui";
 
 import { mp } from "../../utils";
 
@@ -34,7 +34,7 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
       activity: {
         name: activity.name,
         description: activity.description,
-        quantityLabel: activity.quantityLabel,
+        quantityUnit: activity.quantityUnit,
         emoji: activity.emoji,
       },
       options: activity.options.map((option) => ({

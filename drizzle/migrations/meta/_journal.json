@@ -15,6 +15,13 @@
       "when": 1735363531105,
       "tag": "0001_clever_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735878063015,
+      "tag": "0002_burly_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

@@ -67,7 +67,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
               <Card key={s.id}>
                 <CardHeader className="spacing-y-0 p-3">
                   <CardTitle className="text-xl">
-                    {s.name} [{s.total} {s.quantityLabel}]
+                    {s.name} [{s.total} {s.quantityUnit}]
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3">
@@ -78,13 +78,13 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
                       </CardHeader>
                       <CardContent>
                         <p>
-                          Total: {k.total} {s.quantityLabel}
+                          Total: {k.total} {s.quantityUnit}
                         </p>
                         <ul>
                           {k.logs.map((l, i) => (
                             <li key={`${i}-${l.date}`}>
                               {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}{" "}
-                              {s.quantityLabel}
+                              {s.quantityUnit}
                             </li>
                           ))}
                         </ul>

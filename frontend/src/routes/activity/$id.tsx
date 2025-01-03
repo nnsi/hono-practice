@@ -18,12 +18,12 @@ import {
   Button,
   Dialog,
   DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogFooter,
-  Textarea,
-  Input,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Textarea,
 } from "@components/ui";
 
 const ActivityModal: React.FC = () => {
@@ -116,7 +116,7 @@ const ActivityModal: React.FC = () => {
               className="w-14"
               inputMode="numeric"
             />
-            {query.data?.activity.quantityLabel}
+            {query.data?.activity.quantityUnit}
           </div>
         </div>
         <Textarea

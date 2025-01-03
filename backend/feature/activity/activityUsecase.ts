@@ -78,7 +78,7 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         label: params.label,
         emoji: params.emoji,
         description: params.description,
-        quantityLabel: params.quantityLabel,
+        quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
       });
 

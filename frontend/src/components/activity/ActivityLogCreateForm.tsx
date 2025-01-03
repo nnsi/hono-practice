@@ -139,7 +139,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
                 name="quantity"
                 render={({ field }) => <Input {...field} />}
               />
-              <Label className="col-span-1">{activity.quantityLabel}</Label>
+              <Label className="col-span-1">{activity.quantityUnit}</Label>
               {activity.kinds.length > 0 && (
                 <div className="col-span-3">
                   <FormField

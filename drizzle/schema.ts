@@ -3,8 +3,8 @@ import {
   boolean,
   date,
   index,
+  numeric,
   pgTable,
-  real,
   text,
   timestamp,
   uuid,
@@ -35,10 +35,7 @@ export const tasks = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => users.id, {
-        onUpdate: "cascade",
-        onDelete: "restrict",
-      }),
+      .references(() => users.id),
     title: text("title").notNull(),
     done: boolean("done").notNull().default(false),
     memo: text("memo").default(""),
@@ -64,15 +61,12 @@ export const activities = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => users.id, {
-        onUpdate: "cascade",
-        onDelete: "restrict",
-      }),
+      .references(() => users.id),
     name: text("name").notNull(),
     label: text("label").default(""),
     emoji: text("emoji").default(""),
     description: text("description").default(""),
-    quantityLabel: text("quantity_label").default(""),
+    quantityUnit: text("quantity_unit").default(""),
     orderIndex: text("order_index").default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -101,18 +95,12 @@ export const activityLogs = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => users.id, {
-        onUpdate: "cascade",
-        onDelete: "restrict",
-      }),
+      .references(() => users.id),
     activityId: uuid("activity_id")
       .notNull()
-      .references(() => activities.id, {
-        onUpdate: "cascade",
-        onDelete: "restrict",
-      }),
+      .references(() => activities.id),
     activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
-    quantity: real("quantity"),
+    quantity: numeric("quantity").$type<number>(),
     memo: text("memo").default(""),
     date: date("date").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -149,10 +137,7 @@ export const activityKinds = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     activityId: uuid("activity_id")
       .notNull()
-      .references(() => activities.id, {
-        onUpdate: "cascade",
-        onDelete: "restrict",
-      }),
+      .references(() => activities.id),
     name: text("name").notNull(),
     orderIndex: text("order_index").default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -174,23 +159,38 @@ export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
   }),
 }));
 
-// TODO: delete
-// ActivityQuantityOption テーブル
-export const activityQuantityOptions = pgTable("activity_quantity_options", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  activityId: uuid("activity_id")
-    .notNull()
-    .references(() => activities.id, {
-      onUpdate: "cascade",
-      onDelete: "restrict",
-    }),
-  quantity: real("quantity").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-});
+const parentGoalIdReferenceToSelf = () => goals.id;
+
+// Goal テーブル
+export const goals = pgTable(
+  "goal",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    parentGoalId: uuid("parent_goal_id").references(
+      parentGoalIdReferenceToSelf,
+    ),
+    title: text("title").notNull(),
+    unit: text("unit"),
+    quantity: numeric("quantity"),
+    currentQuantity: numeric("current_quantity"),
+    emoji: text("emoji"),
+    startDate: date("start_date"),
+    dueDate: date("due_date"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("goal_user_id_idx").on(t.userId),
+    index("goal_parent_goal_id_idx").on(t.parentGoalId),
+    index("goal_created_at_idx").on(t.createdAt),
+  ],
+);

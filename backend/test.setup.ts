@@ -65,7 +65,7 @@ async function seed() {
       name: "test",
       label: "test",
       orderIndex: "gae",
-      quantityLabel: "回",
+      quantityUnit: "回",
     },
     {
       id: "00000000-0000-4000-8000-000000000002",
@@ -73,7 +73,7 @@ async function seed() {
       name: "test2",
       label: "test2",
       orderIndex: "zzz",
-      quantityLabel: "回",
+      quantityUnit: "回",
     },
     {
       id: "00000000-0000-4000-8000-000000000003",
@@ -81,7 +81,7 @@ async function seed() {
       name: "test3",
       label: "test3",
       orderIndex: "qqq",
-      quantityLabel: "回",
+      quantityUnit: "回",
     },
   ]);
 

@@ -48,7 +48,7 @@ test("POST activities / success", async () => {
     json: {
       name: "test",
       label: "test",
-      quantityLabel: "回",
+      quantityUnit: "回",
     },
   });
 
@@ -67,7 +67,7 @@ test("PUT activities/:id / success", async () => {
     json: {
       activity: {
         name: "test",
-        quantityLabel: "回",
+        quantityUnit: "回",
       },
       options: [],
       kinds: [],

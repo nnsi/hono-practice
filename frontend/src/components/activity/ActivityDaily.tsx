@@ -91,7 +91,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
               <CardContent>
                 {log.quantity && (
                   <>
-                    {log.quantity} {log.activity.quantityLabel}
+                    {log.quantity} {log.activity.quantityUnit}
                   </>
                 )}
               </CardContent>
