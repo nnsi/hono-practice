@@ -17,6 +17,7 @@ export type GoalRepository = {
   createGoal: (goal: Goal) => Promise<Goal>;
   updateGoal: (goal: Goal) => Promise<Goal>;
   deleteGoal: (goal: Goal) => Promise<void>;
+  withTx: (tx: QueryExecutor) => GoalRepository;
 };
 
 export function newGoalRepository(db: QueryExecutor): GoalRepository {
@@ -26,6 +27,7 @@ export function newGoalRepository(db: QueryExecutor): GoalRepository {
     createGoal: createGoal(db),
     updateGoal: updateGoal(db),
     deleteGoal: deleteGoal(db),
+    withTx: (tx) => newGoalRepository(tx),
   };
 }
 

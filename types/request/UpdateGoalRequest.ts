@@ -7,6 +7,9 @@ export const UpdateGoalRequestSchema = z.object({
   currentQuantity: z.number().optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
+  taskIds: z.array(z.string()).optional(),
+  activityIds: z.array(z.string()).optional(),
+  goalIds: z.array(z.string()).optional(),
 });
 
 export type UpdateGoalRequest = z.infer<typeof UpdateGoalRequestSchema>;

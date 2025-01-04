@@ -24,6 +24,7 @@ export type ActivityLogRepository = {
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   deleteActivityLog: (activityLog: ActivityLog) => Promise<void>;
+  withTx: (tx: QueryExecutor) => ActivityLogRepository;
 };
 
 export function newActivityLogRepository(
@@ -35,6 +36,7 @@ export function newActivityLogRepository(
     createActivityLog: createActivityLog(db),
     updateActivityLog: updateActivityLog(db),
     deleteActivityLog: deleteActivityLog(db),
+    withTx: (tx) => newActivityLogRepository(tx),
   };
 }
 
