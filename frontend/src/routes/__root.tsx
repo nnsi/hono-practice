@@ -41,6 +41,9 @@ const AuthenticatedHome: React.FC = () => {
         <Link to="/activity" className="[&.active]:font-bold">
           Activity
         </Link>
+        <Link to="/goal" className="[&.active]:font-bold">
+          Goal
+        </Link>
         <Button onClick={handleLogout} className="ml-auto">
           Logout
         </Button>

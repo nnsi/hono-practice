@@ -1,13 +1,15 @@
 import { useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 import { apiClient } from "@/frontend/src/utils/apiClient";
-import { GetActivityStatsResponseSchema } from "@/types/response";
-import { GetActivitiesResponseSchema } from "@/types/response/GetActivitiesResponse";
-import { GetActivityLogsResponseSchema } from "@/types/response/GetActivityLogsResponse";
+import {
+  GetActivitiesResponseSchema,
+  GetActivityLogsResponseSchema,
+  GetActivityStatsResponseSchema,
+} from "@/types/response";
 
 import { Button, Calendar, useToast } from "@components/ui";
 
@@ -15,6 +17,7 @@ import { ActivityTabs } from "@components/activity";
 
 const ActivityPage: React.FC = () => {
   const api = apiClient;
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date | undefined>(new Date());
@@ -98,8 +101,14 @@ const ActivityPage: React.FC = () => {
     },
   });
 
-  const changeMode = (mode: "daily" | "statistics") => {
-    setMode(mode);
+  const changeMode = (newMode: "daily" | "statistics") => {
+    if (mode === newMode) return;
+    setMode(newMode);
+    if (newMode === "statistics") {
+      queryClient.invalidateQueries({
+        queryKey: ["activity-stats-monthly", dayjs(month).format("YYYY-MM")],
+      });
+    }
   };
 
   const handleDateChange = (newDate?: Date) => {
@@ -143,7 +152,7 @@ const ActivityPage: React.FC = () => {
             changeMode={changeMode}
             activities={activitiesQuery.data}
             dailyActivityLogs={dailyActivityLogsQuery.data}
-            monthlyActivityLogs={monthlyActivityLogsQuery.data}
+            activityStats={monthlyActivityLogsQuery.data}
           />
           <Outlet />
         </div>

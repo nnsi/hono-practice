@@ -1,22 +1,10 @@
-import dayjs from "dayjs";
-
 import type { GetActivityStatsResponse } from "@/types/response";
 import type { GetActivitiesResponse } from "@/types/response/GetActivitiesResponse";
 import type { GetActivityLogsResponse } from "@/types/response/GetActivityLogsResponse";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui";
 
-import { ActivityDaily } from "./ActivityDaily";
+import { ActivityDaily, ActivityStats } from ".";
 
 type ActivityTabsProps = {
   mode: "daily" | "statistics";
@@ -25,7 +13,7 @@ type ActivityTabsProps = {
   changeMode: (mode: "daily" | "statistics") => void;
   activities?: GetActivitiesResponse;
   dailyActivityLogs?: GetActivityLogsResponse;
-  monthlyActivityLogs?: GetActivityStatsResponse;
+  activityStats?: GetActivityStatsResponse;
 };
 
 export const ActivityTabs: React.FC<ActivityTabsProps> = ({
@@ -35,7 +23,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   changeMode,
   activities,
   dailyActivityLogs,
-  monthlyActivityLogs,
+  activityStats,
 }) => {
   return (
     <Tabs defaultValue={mode} value={mode}>
@@ -58,45 +46,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
         />
       </TabsContent>
       <TabsContent value="statistics">
-        <Card>
-          <CardHeader>
-            <CardTitle>{dayjs(month).format("YYYY-MM")}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-5">
-            {monthlyActivityLogs?.map((s) => (
-              <Card key={s.id}>
-                <CardHeader className="spacing-y-0 p-3">
-                  <CardTitle className="text-xl">
-                    {s.name} [{s.total} {s.quantityUnit}]
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  {s.kinds.map((k) => (
-                    <Card key={k.id}>
-                      <CardHeader>
-                        <CardTitle>{k.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p>
-                          Total: {k.total} {s.quantityUnit}
-                        </p>
-                        <ul>
-                          {k.logs.map((l, i) => (
-                            <li key={`${i}-${l.date}`}>
-                              {dayjs(l.date).format("YYYY-MM-DD")}: {l.quantity}{" "}
-                              {s.quantityUnit}
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-          <CardFooter />
-        </Card>
+        <ActivityStats activityStats={activityStats} month={month} />
       </TabsContent>
     </Tabs>
   );
