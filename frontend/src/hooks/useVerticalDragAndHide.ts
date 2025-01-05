@@ -8,7 +8,7 @@ export const useDragHide = (
   const [startY, setStartY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const targetRef = useRef(null);
-  const isVisible = useRef(false);
+  const isVisible = useRef(true);
 
   const setMenuHeight = (visible: boolean) => {
     if (!targetRef.current) return;
@@ -41,7 +41,7 @@ export const useDragHide = (
     },
   };
 
-  const styles = "touch-none transition-all duration-300 ";
+  const styles = "touch-none transition-all duration-300";
 
   return { targetRef, dragHandlers, styles };
 };

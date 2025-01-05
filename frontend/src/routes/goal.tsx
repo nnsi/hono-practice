@@ -3,13 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useDragHide } from "../hooks/useVerticalDragAndHide";
 
 const GoalPage: React.FC = () => {
-  const { targetRef, dragHandlers, styles } = useDragHide();
+  const fullHeight = 200;
+  const { targetRef, dragHandlers, styles } = useDragHide(fullHeight);
 
   return (
     <div>
       <div
         ref={targetRef}
-        className={` bg-black text-white ${styles}`}
+        className={` bg-black text-white h-[${fullHeight}px] ${styles}`}
         {...dragHandlers}
       >
         menu

@@ -32,7 +32,26 @@ const routes = app
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
   .route("/users/activities", newActivityRoute)
-  .route("/users/activity-logs", newActivityLogRoute);
+  .route("/users/activity-logs", newActivityLogRoute)
+  .post("/batch", async (c) => {
+    const requests = await c.req.json<{ path: string }[]>();
+
+    const results = await Promise.all(
+      requests.map((req) => {
+        return app.request(req.path, {
+          headers: {
+            cookie: c.req.raw.headers.get("cookie") ?? "",
+          },
+        });
+      }),
+    );
+
+    const responses = await Promise.all(
+      results.map(async (result) => await result.json()),
+    );
+
+    return c.json(responses, 200);
+  });
 
 const port = 3456;
 console.log(`Server is running on port ${port}`);
