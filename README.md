@@ -1,34 +1,5 @@
-# Hono-practice
+# 5/6
 
-## Backend
+## アーキテクチャ
 
-### Architecture
-
-Clean Arhitectureライク
-
-- index.ts
-  - context
-    - context.ts
-  - domain
-    - {model}
-      - {model}.ts
-      - {vo}.ts
-  - feature
-    - {feature}
-      - route.ts
-      - handler.ts
-      - usecase.ts
-      - repository.ts
-  - infra
-    - {orm}
-      - Instance.ts
-      - Transaction.ts
-  - query
-    - {feature}QueryService.ts
-
-```txt
-handler -> usecase -> entities <- repository
-                   -> query
-```
-
-## Frontend
+クリーンアーキテクチャの練習。ドメインロジックをFE/BEで共通化して、その外側にBE/FEが存在している感じにすると良さそう
