@@ -29,7 +29,7 @@ export function newUserUsecase(repo: UserRepository): UserUsecase {
 
 function createUser(repo: UserRepository) {
   return async (params: CreateUserInputParams) => {
-    const cryptedPassword = bcrypt.hashSync(params.password, 10);
+    const cryptedPassword = bcrypt.hashSync(params.password, 12);
     params.password = cryptedPassword;
     const newUser = UserFactory.create({ ...params });
 

@@ -31,6 +31,7 @@ export function createAuthRoute(db: DrizzleInstance) {
 
       setCookie(c, "auth", token, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
         expires: new Date(payload.exp * 1000),
       });
 
