@@ -171,12 +171,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
               )}
               <div className="col-span-3 text-center">
                 <PopoverClose asChild>
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => console.log("clicked", date)}
-                  >
+                  <Button type="submit" variant="secondary" className="w-full">
                     Record it!
                   </Button>
                 </PopoverClose>
