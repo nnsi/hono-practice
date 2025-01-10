@@ -1,0 +1,11 @@
+name = "56-backend"
+main = "dist-backend/index.js"
+account_id = "$CF_ACCOUNT_ID"
+zone_id = "$CF_ZONE_ID"
+workers_dev = false
+
+[env.staging]
+route = "$CF_STAGING_ROUTE"
+
+[env.production]
+route = "$CF_PRODUCTION_ROUTE"

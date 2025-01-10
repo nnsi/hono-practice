@@ -1,13 +1,14 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 
+import { config } from "@/backend/config";
 import * as schema from "@/drizzle/schema";
 
 import type { drizzle as pglite } from "drizzle-orm/pglite";
 
 function createInstance() {
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: config.DATABASE_URL,
   });
 
   return drizzle(pool, { schema });
@@ -20,7 +21,7 @@ declare const globalThis: {
 
 const drizzleInstance = globalThis.drizzleGlobal ?? createInstance();
 
-if (process.env.NODE_ENV !== "production") {
+if (config.NODE_ENV !== "production") {
   globalThis.drizzleGlobal = drizzleInstance;
 }
 

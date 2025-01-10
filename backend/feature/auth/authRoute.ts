@@ -3,6 +3,7 @@ import { setCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
 
+import { config } from "@/backend/config";
 import {
   type DrizzleInstance,
   drizzle,
@@ -31,7 +32,7 @@ export function createAuthRoute(db: DrizzleInstance) {
 
       setCookie(c, "auth", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: config.NODE_ENV === "production",
         expires: new Date(payload.exp * 1000),
       });
 

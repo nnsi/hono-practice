@@ -6,6 +6,8 @@ dotenv.config();
 const envVariables = z.object({
   APP_URL: z.string(),
   JWT_SECRET: z.string().min(32),
+  NODE_ENV: z.enum(["local", "stg", "production"]),
+  DATABASE_URL: z.string(),
 });
 
 declare global {

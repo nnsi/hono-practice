@@ -53,13 +53,15 @@ const routes = app
     return c.json(responses, 200);
   });
 
-const port = 3456;
-console.log(`Server is running on port ${port}`);
+if (config.NODE_ENV === "local") {
+  const port = 3456;
+  console.log(`Server is running on port ${port} / ${config.NODE_ENV}`);
 
-serve({
-  fetch: app.fetch,
-  port,
-});
+  serve({
+    fetch: app.fetch,
+    port,
+  });
+}
 
 export type AppType = typeof routes;
 

@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
     // biome-ignore lint/style/noUselessElse: <explanation>
   } else {
     return {
+      publicDir: "frontend/public",
       plugins: [tsconfigPaths(), TanStackRouterVite(), react()],
       build: {
         outDir: "dist-frontend",
