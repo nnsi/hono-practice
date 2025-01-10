@@ -1,5 +1,6 @@
 node_modules
 .env
 db-data
+package-lock.json
 dist-backend
 dist-frontend
