@@ -28,15 +28,15 @@ jobs:
         run: npm run ci-check
 
       - name: Build (for stg)
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'master'
         run: npm run build-client --mode=stg
 
       - name: Build (for release)
         if: github.ref_name == 'release'
         run: npm run build-client
-      
+
       # - name: Deploy to Cloudflare Workers (stg)
-      #   if: github.ref_name == 'main'
+      #   if: github.ref_name == 'master'
       #   run: npm run deploy:stg
       #   env:
       #     CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}

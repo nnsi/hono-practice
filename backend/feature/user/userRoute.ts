@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { env } from "hono/adapter";
 import { setCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
@@ -24,7 +23,8 @@ export function createUserRoute(db: DrizzleInstance) {
 
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
-      const { JWT_SECRET, NODE_ENV } = env(c);
+      const { JWT_SECRET, NODE_ENV } = c.env;
+      console.log(JWT_SECRET, NODE_ENV);
 
       const token = await h.createUser(c.req.valid("json"), JWT_SECRET);
 

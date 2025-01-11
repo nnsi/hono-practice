@@ -1,6 +1,6 @@
 import { testClient } from "hono/testing";
 
-import { test, expect } from "vitest";
+import { expect, test } from "vitest";
 
 import { TEST_USER_ID, testDB } from "@/backend/test.setup";
 
@@ -9,7 +9,10 @@ import { createUserRoute } from "../../user";
 
 test("POST login / success -> getMe", async () => {
   const route = createAuthRoute(testDB);
-  const client = testClient(route);
+  const client = testClient(route, {
+    JWT_SECRET: "test",
+    NODE_ENV: "test",
+  });
 
   const res = await client.login.$post({
     json: {
@@ -23,11 +26,18 @@ test("POST login / success -> getMe", async () => {
   const authCookie = res.headers.get("set-cookie");
   const userRoute = createUserRoute(testDB);
 
-  const userRes = await userRoute.request("/me", {
-    headers: {
-      cookie: authCookie!,
+  const userRes = await userRoute.request(
+    "/me",
+    {
+      headers: {
+        cookie: authCookie!,
+      },
     },
-  });
+    {
+      JWT_SECRET: "test",
+      NODE_ENV: "test",
+    },
+  );
   const json = await userRes.json();
 
   expect(json).toEqual({

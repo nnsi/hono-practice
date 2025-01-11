@@ -8,7 +8,10 @@ import { createUserRoute } from "..";
 
 test("POST user / success", async () => {
   const route = createUserRoute(testDB);
-  const client = testClient(route);
+  const client = testClient(route, {
+    JWT_SECRET: "test",
+    NODE_ENV: "test",
+  });
 
   const res = await client.index.$post({
     json: {
