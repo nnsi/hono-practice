@@ -12,23 +12,27 @@ export default defineConfig(({ mode }) => {
       plugins: [
         tsconfigPaths(),
         build({
-          entry: "./backend/index.ts",
+          entry: "./backend/server.cf.ts",
           outputDir: "./dist-backend",
         }),
       ],
       test: {
         setupFiles: ["./backend/test.setup.ts"],
-      },
-    };
-    // biome-ignore lint/style/noUselessElse: <explanation>
-  } else {
-    return {
-      publicDir: "frontend/public",
-      plugins: [tsconfigPaths(), TanStackRouterVite(), react()],
-      build: {
-        outDir: "dist-frontend",
-        emptyOutDir: true,
+        env: {
+          NODE_ENV: "test",
+          JWT_SECRET: "test-jwt",
+        },
       },
     };
   }
+
+  // frontend
+  return {
+    publicDir: "frontend/public",
+    plugins: [tsconfigPaths(), TanStackRouterVite(), react()],
+    build: {
+      outDir: "dist-frontend",
+      emptyOutDir: true,
+    },
+  };
 });

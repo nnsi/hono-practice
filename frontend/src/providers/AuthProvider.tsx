@@ -27,25 +27,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserState>(null);
 
   const getUser = async () => {
-    try{
-      const _apiClient = apiClient;
-      console.log(typeof _apiClient);
-    }catch(e){
-      console.log("API Client Not Found",e);
-    }
-
     try {
       const res = await apiClient.user.me.$get();
       if (res.status === 200) {
         const json = await res.json();
-        setUser(json);
-      } else {
-        setUser(null);
+        return setUser(json);
       }
     } catch (e) {
       console.log("AuthProvider",e);
-      setUser(null);
     }
+
+    return setUser(null);
   };
 
   const login = async ({ login_id, password }: LoginRequest) => {

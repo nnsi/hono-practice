@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 
+import type { SafeEnvs } from "../config";
 import type { UserId } from "../domain";
 
 export type JwtPayload = {
@@ -12,6 +13,7 @@ export type AppContext = {
     jwtPayload: JwtPayload;
     userId: UserId;
   };
+  Bindings: SafeEnvs;
 };
 
 export type HonoContext = Context<AppContext>;

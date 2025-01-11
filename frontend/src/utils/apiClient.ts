@@ -1,4 +1,3 @@
-import type { Hono } from "hono";
 import { hc } from "hono/client";
 
 import type { AppType } from "@/backend/index";
@@ -45,16 +44,3 @@ export const apiClient = hc<AppType>(API_URL, {
   },
   fetch: customFetch,
 });
-
-type Routes = AppType extends Hono<any, infer R, any> ? R : never;
-
-export type ApiRoutes = {
-  [Path in keyof Routes]: {
-    [Method in keyof Routes[Path]]: Routes[Path][Method] extends {
-      input: any;
-      output: any;
-    }
-      ? Routes[Path][Method]
-      : Routes[Path][Method];
-  };
-};

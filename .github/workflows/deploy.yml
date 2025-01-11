@@ -1,0 +1,61 @@
+name: Cloudflare Pages
+
+on: 
+  push:
+    branches:
+      - main
+      - release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+      
+      - name: test
+        run: npm run ci-check
+
+      - name: Build (for stg)
+        if: github.ref_name == 'main'
+        run: npm run build-client --mode=stg
+
+      - name: Build (for release)
+        if: github.ref_name == 'release'
+        run: npm run build-client
+      
+      # - name: Deploy to Cloudflare Workers (stg)
+      #   if: github.ref_name == 'main'
+      #   run: npm run deploy:stg
+      #   env:
+      #     CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+      #     CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+
+      # - name: Deploy to Cloudflare Workers (release)
+      #   if: github.ref_name == 'release'
+      #   run: npm run deploy:stg
+      #   env:
+      #     CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+      #     CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@1
+        with:
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CF_PAGES_TOKEN }}
+          projectName: ${{ vars.CF_PAGES_PJ_NAME }}
+          directory: ./dist-frontend
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

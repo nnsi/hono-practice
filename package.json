@@ -1,13 +1,17 @@
 {
   "scripts": {
-    "dev": "tsx watch backend/index.ts",
+    "dev": "tsx watch backend/server.node.ts",
     "client-dev": "vite --host",
     "build": "vite build --mode server & vite build",
+    "build-client-stg": "vite build --mode stg",
     "build-client": "vite build",
     "build-server": "vite build --mode server",
     "test": "vitest --disable-console-intercept",
+    "ci-check": "vitest run & biome lint && eslint",
     "tsc": "tsc --noEmit",
-    "lint": "biome lint && eslint"
+    "lint": "biome lint && eslint",
+    "deploy:stg": "wrangler publish --env stg",
+    "deploy:prod": "wrangler publish --env prod"
   },
   "type": "module",
   "dependencies": {

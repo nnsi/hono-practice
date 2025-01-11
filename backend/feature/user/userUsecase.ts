@@ -5,8 +5,6 @@ import bcrypt from "bcrypt";
 import { type User, UserFactory, type UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";
 
-import { config } from "../../config";
-
 import type { UserRepository } from "./userRepository";
 
 export type CreateUserInputParams = {
@@ -16,7 +14,10 @@ export type CreateUserInputParams = {
 };
 
 export type UserUsecase = {
-  createUser: (params: CreateUserInputParams) => Promise<string>;
+  createUser: (
+    params: CreateUserInputParams,
+    secret: string,
+  ) => Promise<string>;
   getUserById: (userId: UserId) => Promise<User>;
 };
 
@@ -28,7 +29,7 @@ export function newUserUsecase(repo: UserRepository): UserUsecase {
 }
 
 function createUser(repo: UserRepository) {
-  return async (params: CreateUserInputParams) => {
+  return async (params: CreateUserInputParams, secret: string) => {
     const cryptedPassword = bcrypt.hashSync(params.password, 12);
     params.password = cryptedPassword;
     const newUser = UserFactory.create({ ...params });
@@ -37,7 +38,7 @@ function createUser(repo: UserRepository) {
 
     const token = await sign(
       { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
-      config.JWT_SECRET,
+      secret,
     );
 
     return token;

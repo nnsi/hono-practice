@@ -11,12 +11,12 @@ export function newAuthHandler(authUsecase: AuthUsecase) {
 }
 
 function login(authUsecase: AuthUsecase) {
-  return async (params: LoginRequest) => {
+  return async (params: LoginRequest, secret: string) => {
     const { login_id, password } = params;
 
     const user = await authUsecase.login(login_id, password);
 
-    const { token, payload } = await authUsecase.getToken(user);
+    const { token, payload } = await authUsecase.getToken(user, secret);
 
     const res = LoginResponseSchema.safeParse(user);
     if (!res.success) {

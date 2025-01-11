@@ -14,8 +14,8 @@ export function newUserHandler(uc: UserUsecase) {
 }
 
 function createUser(uc: UserUsecase) {
-  return async (params: CreateUserRequest) => {
-    const token = await uc.createUser(params);
+  return async (params: CreateUserRequest, secret: string) => {
+    const token = await uc.createUser(params, secret);
 
     return token;
   };

@@ -1,8 +1,8 @@
 import type { Next } from "hono";
+import { env } from "hono/adapter";
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 
-import { config } from "../config";
 import { createUserId } from "../domain";
 import { AuthError } from "../error";
 
@@ -15,7 +15,8 @@ export async function authMiddleware(c: HonoContext, next: Next) {
     throw new AuthError("unauthorized");
   }
   try {
-    const payload = await verify(jwt, config.JWT_SECRET);
+    const { JWT_SECRET } = env(c);
+    const payload = await verify(jwt, JWT_SECRET);
     c.set("jwtPayload", payload);
     c.set("userId", createUserId(payload.id as string));
   } catch (e) {
