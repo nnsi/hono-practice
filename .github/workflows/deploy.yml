@@ -1,9 +1,9 @@
-name: Cloudflare Pages
+name: Deploy Cloudflare
 
 on: 
   push:
     branches:
-      - main
+      - master
       - release
 
 jobs:
