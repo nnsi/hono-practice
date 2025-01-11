@@ -24,6 +24,7 @@ import {
   DialogTitle,
   Input,
   Textarea,
+  useToast,
 } from "@components/ui";
 
 const ActivityModal: React.FC = () => {
@@ -31,6 +32,7 @@ const ActivityModal: React.FC = () => {
   const { id } = useParams({ from: "/activity/$id" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [memo, setMemo] = useState<string>("");
   const [quantity, setQuantity] = useState<number | null>(null);
   const activities = useQuery<GetActivitiesResponse>({
@@ -48,7 +50,11 @@ const ActivityModal: React.FC = () => {
       const json = await res.json();
       const parsedJson = GetActivityLogResponseSchema.safeParse(json);
       if (!parsedJson.success) {
-        console.log(JSON.stringify(parsedJson.error));
+        toast({
+          title: "Error",
+          description: "Failed to fetch tasks",
+          variant: "destructive",
+        });
         return;
       }
 

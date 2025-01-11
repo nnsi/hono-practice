@@ -32,7 +32,6 @@ const ActivityPage: React.FC = () => {
       const json = await res.json();
       const parsedJson = GetActivitiesResponseSchema.safeParse(json);
       if (!parsedJson.success) {
-        console.log(parsedJson.error);
         toast({
           title: "Error",
           description: "Failed to fetch tasks",
@@ -89,7 +88,6 @@ const ActivityPage: React.FC = () => {
       const json = await res.json();
       const parsedJson = GetActivityStatsResponseSchema.safeParse(json);
       if (!parsedJson.success) {
-        console.log(parsedJson.error);
         toast({
           title: "Error",
           description: "Failed to parse stats",

@@ -37,7 +37,7 @@ export const LoginForm: React.FC = () => {
     try {
       await login(data);
     } catch (e) {
-      console.error(e);
+      console.error("LoginForm:",e);
     }
   };
 

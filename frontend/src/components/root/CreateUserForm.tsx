@@ -41,7 +41,7 @@ export const CreateUserForm: React.FC = () => {
       await api.user.$post({ json: data });
       await getUser();
     } catch (e) {
-      console.error(e);
+      console.error("CreateUserForm",e);
     }
   };
 

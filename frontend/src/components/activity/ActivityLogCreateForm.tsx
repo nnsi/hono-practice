@@ -82,7 +82,6 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
     const json = await res.json();
     const parsedJson = GetActivityLogResponseSchema.safeParse(json);
     if (!parsedJson.success) {
-      console.log(JSON.stringify(parsedJson.error));
       toast({
         title: "Error",
         description: "Failed to create activity log",

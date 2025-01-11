@@ -25,7 +25,7 @@ const AuthenticatedHome: React.FC = () => {
         to: "/",
       });
     } catch (e) {
-      console.error(e);
+      console.error("Root",e);
     }
   };
 
