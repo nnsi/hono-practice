@@ -24,7 +24,7 @@ export function createAuthRoute() {
   >();
 
   app.use("*", async (c, next) => {
-    const db = c.get("db");
+    const db = c.env.DB;
 
     const repo = newUserRepository(db);
     const uc = newAuthUsecase(repo);

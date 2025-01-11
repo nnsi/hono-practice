@@ -10,9 +10,11 @@ import { testDB } from "@/backend/test.setup";
 import { createActivityLogRoute } from "..";
 
 test("GET activityLogs / success", async () => {
-  const route = createActivityLogRoute(testDB);
+  const route = createActivityLogRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client.index.$get();
 
@@ -20,9 +22,11 @@ test("GET activityLogs / success", async () => {
 });
 
 test("GET activityLogs/:id / success", async () => {
-  const route = createActivityLogRoute(testDB);
+  const route = createActivityLogRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$get({
     param: {
@@ -37,9 +41,11 @@ test("GET activityLogs/:id / success", async () => {
 });
 
 test("POST activityLogs / success", async () => {
-  const route = createActivityLogRoute(testDB);
+  const route = createActivityLogRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client.index.$post({
     json: {
@@ -53,9 +59,11 @@ test("POST activityLogs / success", async () => {
 });
 
 test("PUT activityLogs/:id / success", async () => {
-  const route = createActivityLogRoute(testDB);
+  const route = createActivityLogRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$put({
     param: {
@@ -70,11 +78,13 @@ test("PUT activityLogs/:id / success", async () => {
 });
 
 test("DELETE activityLogs/:id / success", async () => {
-  const route = createActivityLogRoute(testDB);
+  const route = createActivityLogRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$delete({
     param: {

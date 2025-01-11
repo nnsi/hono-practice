@@ -7,10 +7,11 @@ import { testDB } from "@/backend/test.setup";
 import { createUserRoute } from "..";
 
 test("POST user / success", async () => {
-  const route = createUserRoute(testDB);
+  const route = createUserRoute();
   const client = testClient(route, {
     JWT_SECRET: "test",
     NODE_ENV: "test",
+    DB: testDB,
   });
 
   const res = await client.index.$post({

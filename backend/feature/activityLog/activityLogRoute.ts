@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 
 import type { AppContext } from "@/backend/context";
-import { drizzle, type DrizzleInstance } from "@/backend/infra/drizzle";
 import { newActivityQueryService } from "@/backend/query";
 import {
   CreateActivityLogRequestSchema,
@@ -16,37 +15,59 @@ import { newActivityLogHandler } from "./activityLogHandler";
 import { newActivityLogRepository } from "./activityLogRepository";
 import { newActivityLogUsecase } from "./activityLogUsecase";
 
-export function createActivityLogRoute(db: DrizzleInstance) {
-  const app = new Hono<AppContext>();
+export function createActivityLogRoute() {
+  const app = new Hono<
+    AppContext & {
+      Variables: {
+        repo: ReturnType<typeof newActivityLogRepository>;
+        acRepo: ReturnType<typeof newActivityRepository>;
+        qs: ReturnType<typeof newActivityQueryService>;
+        uc: ReturnType<typeof newActivityLogUsecase>;
+        h: ReturnType<typeof newActivityLogHandler>;
+      };
+    }
+  >();
 
-  const repo = newActivityLogRepository(db);
-  const acRepo = newActivityRepository(db);
-  const qs = newActivityQueryService(db);
-  const uc = newActivityLogUsecase(repo, acRepo, qs);
-  const h = newActivityLogHandler(uc);
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+
+    const repo = newActivityLogRepository(db);
+    const acRepo = newActivityRepository(db);
+    const qs = newActivityQueryService(db);
+    const uc = newActivityLogUsecase(repo, acRepo, qs);
+    const h = newActivityLogHandler(uc);
+
+    c.set("repo", repo);
+    c.set("acRepo", acRepo);
+    c.set("qs", qs);
+    c.set("uc", uc);
+    c.set("h", h);
+
+    return next();
+  });
 
   return app
     .get("/", async (c) => {
-      const res = await h.getActivityLogs(c.get("userId"), c.req.query());
+      const res = await c.var.h.getActivityLogs(c.get("userId"), c.req.query());
 
       return c.json(res);
     })
     .get("/stats", async (c) => {
-      const res = await h.getStats(c.get("userId"), c.req.query());
+      const res = await c.var.h.getStats(c.get("userId"), c.req.query());
 
       return c.json(res);
     })
     .get("/:id", async (c) => {
       const { id } = c.req.param();
 
-      const res = await h.getActivityLog(c.get("userId"), id);
+      const res = await c.var.h.getActivityLog(c.get("userId"), id);
       return c.json(res);
     })
     .post(
       "/",
       zValidator("json", CreateActivityLogRequestSchema),
       async (c) => {
-        const res = await h.createActivityLog(
+        const res = await c.var.h.createActivityLog(
           c.get("userId"),
           c.req.valid("json"),
         );
@@ -60,7 +81,7 @@ export function createActivityLogRoute(db: DrizzleInstance) {
       async (c) => {
         const { id } = c.req.param();
 
-        const res = await h.updateActivityLog(
+        const res = await c.var.h.updateActivityLog(
           c.get("userId"),
           id,
           c.req.valid("json"),
@@ -72,10 +93,10 @@ export function createActivityLogRoute(db: DrizzleInstance) {
     .delete("/:id", async (c) => {
       const { id } = c.req.param();
 
-      const res = await h.deleteActivityLog(c.get("userId"), id);
+      const res = await c.var.h.deleteActivityLog(c.get("userId"), id);
 
       return c.json(res);
     });
 }
 
-export const newActivityLogRoute = createActivityLogRoute(drizzle);
+export const newActivityLogRoute = createActivityLogRoute();

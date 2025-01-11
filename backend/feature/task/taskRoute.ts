@@ -4,10 +4,6 @@ import { zValidator } from "@hono/zod-validator";
 
 import { createTaskId } from "@/backend/domain";
 import {
-  drizzle,
-  type DrizzleInstance,
-} from "@/backend/infra/drizzle/drizzleInstance";
-import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@/types/request";
@@ -18,17 +14,35 @@ import { newTaskUsecase } from "./taskUsecase";
 
 import type { AppContext } from "../../context";
 
-export function createTaskRoute(db: DrizzleInstance) {
-  const app = new Hono<AppContext>();
+export function createTaskRoute() {
+  const app = new Hono<
+    AppContext & {
+      Variables: {
+        repo: ReturnType<typeof newTaskRepository>;
+        uc: ReturnType<typeof newTaskUsecase>;
+        h: ReturnType<typeof newTaskHandler>;
+      };
+    }
+  >();
 
-  const repo = newTaskRepository(db);
-  const uc = newTaskUsecase(repo);
-  const h = newTaskHandler(uc);
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+
+    const repo = newTaskRepository(db);
+    const uc = newTaskUsecase(repo);
+    const h = newTaskHandler(uc);
+
+    c.set("repo", repo);
+    c.set("uc", uc);
+    c.set("h", h);
+
+    return next();
+  });
 
   return app
     .get("/", async (c) => {
       const id = c.get("userId");
-      const res = await h.getTasks(id);
+      const res = await c.var.h.getTasks(id);
 
       return c.json(res);
     })
@@ -37,14 +51,15 @@ export function createTaskRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       const taskId = createTaskId(id);
 
-      const res = await h.getTask(userId, taskId);
+      const res = await c.var.h.getTask(userId, taskId);
 
       return c.json(res);
     })
     .post("/", zValidator("json", createTaskRequestSchema), async (c) => {
       const id = c.get("userId");
       const params = c.req.valid("json");
-      const res = await h.createTask(id, params);
+
+      const res = await c.var.h.createTask(id, params);
 
       return c.json(res);
     })
@@ -54,7 +69,7 @@ export function createTaskRoute(db: DrizzleInstance) {
       const taskId = createTaskId(id);
       const params = c.req.valid("json");
 
-      const res = await h.updateTask(userId, taskId, params);
+      const res = await c.var.h.updateTask(userId, taskId, params);
 
       return c.json(res);
     })
@@ -63,10 +78,10 @@ export function createTaskRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       const taskId = createTaskId(id);
 
-      const res = await h.deleteTask(userId, taskId);
+      const res = await c.var.h.deleteTask(userId, taskId);
 
       return c.json(res);
     });
 }
 
-export const taskRoute = createTaskRoute(drizzle);
+export const taskRoute = createTaskRoute();

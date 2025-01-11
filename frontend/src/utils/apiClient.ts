@@ -1,6 +1,6 @@
 import { hc } from "hono/client";
 
-import type { AppType } from "@/backend/index";
+import type { AppType } from "@/backend/app";
 
 const API_URL =
   import.meta.env.MODE === "development"

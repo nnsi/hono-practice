@@ -13,9 +13,10 @@ export type AppContext = {
   Variables: {
     jwtPayload: JwtPayload;
     userId: UserId;
-    db: QueryExecutor;
   };
-  Bindings: SafeEnvs;
+  Bindings: SafeEnvs & {
+    DB: QueryExecutor;
+  };
 };
 
 export type HonoContext = Context<AppContext>;

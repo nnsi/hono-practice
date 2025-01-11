@@ -3,7 +3,6 @@ import { setCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { type DrizzleInstance, drizzle } from "@/backend/infra/drizzle";
 import { createUserRequestSchema } from "@/types/request";
 
 import { authMiddleware } from "../../middleware/authMiddleware";
@@ -14,19 +13,36 @@ import { newUserUsecase } from "./userUsecase";
 
 import type { AppContext } from "../../context";
 
-export function createUserRoute(db: DrizzleInstance) {
-  const app = new Hono<AppContext>();
+export function createUserRoute() {
+  const app = new Hono<
+    AppContext & {
+      Variables: {
+        repo: ReturnType<typeof newUserRepository>;
+        uc: ReturnType<typeof newUserUsecase>;
+        h: ReturnType<typeof newUserHandler>;
+      };
+    }
+  >();
 
-  const repo = newUserRepository(db);
-  const uc = newUserUsecase(repo);
-  const h = newUserHandler(uc);
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+
+    const repo = newUserRepository(db);
+    const uc = newUserUsecase(repo);
+    const h = newUserHandler(uc);
+
+    c.set("repo", repo);
+    c.set("uc", uc);
+    c.set("h", h);
+
+    return next();
+  });
 
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
       const { JWT_SECRET, NODE_ENV } = c.env;
-      console.log(JWT_SECRET, NODE_ENV);
 
-      const token = await h.createUser(c.req.valid("json"), JWT_SECRET);
+      const token = await c.var.h.createUser(c.req.valid("json"), JWT_SECRET);
 
       setCookie(c, "auth", token, {
         httpOnly: true,
@@ -37,10 +53,10 @@ export function createUserRoute(db: DrizzleInstance) {
     })
     .get("/me", authMiddleware, async (c) => {
       const id = c.get("userId");
-      const res = await h.getMe(id);
+      const res = await c.var.h.getMe(id);
 
       return c.json(res);
     });
 }
 
-export const userRoute = createUserRoute(drizzle);
+export const userRoute = createUserRoute();

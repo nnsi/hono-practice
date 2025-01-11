@@ -3,11 +3,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 
 import { createActivityId } from "@/backend/domain";
-import {
-  drizzle,
-  type DrizzleInstance,
-  newDrizzleTransactionRunner,
-} from "@/backend/infra/drizzle";
+import type { TransactionRunner } from "@/backend/infra/db";
+import { newDrizzleTransactionRunner } from "@/backend/infra/drizzle";
 import {
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
@@ -20,19 +17,38 @@ import { newActivityUsecase } from "./activityUsecase";
 
 import type { AppContext } from "../../context";
 
-export function createActivityRoute(db: DrizzleInstance) {
-  const app = new Hono<AppContext>();
+export function createActivityRoute() {
+  const app = new Hono<
+    AppContext & {
+      Variables: {
+        repo: ReturnType<typeof newActivityRepository>;
+        tx: TransactionRunner;
+        uc: ReturnType<typeof newActivityUsecase>;
+        h: ReturnType<typeof newActivityHandler>;
+      };
+    }
+  >();
 
-  const repo = newActivityRepository(db);
-  const tx = newDrizzleTransactionRunner(db);
-  const uc = newActivityUsecase(repo, tx);
-  const h = newActivityHandler(uc);
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+    const repo = newActivityRepository(db);
+    const tx = newDrizzleTransactionRunner(db);
+    const uc = newActivityUsecase(repo, tx);
+    const h = newActivityHandler(uc);
+
+    c.set("repo", repo);
+    c.set("tx", tx);
+    c.set("uc", uc);
+    c.set("h", h);
+
+    return next();
+  });
 
   return app
     .get("/", async (c) => {
       const userId = c.get("userId");
 
-      const res = await h.getActivities(userId);
+      const res = await c.var.h.getActivities(userId);
       return c.json(res);
     })
     .get("/:id", async (c) => {
@@ -40,14 +56,14 @@ export function createActivityRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      const res = await h.getActivity(userId, activityId);
+      const res = await c.var.h.getActivity(userId, activityId);
       return c.json(res);
     })
     .post("/", zValidator("json", CreateActivityRequestSchema), async (c) => {
       const userId = c.get("userId");
       const params = c.req.valid("json");
 
-      const res = await h.createActivity(userId, params);
+      const res = await c.var.h.createActivity(userId, params);
       return c.json(res);
     })
     .put("/:id", zValidator("json", UpdateActivityRequestSchema), async (c) => {
@@ -55,7 +71,7 @@ export function createActivityRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      const res = await h.updateActivity(
+      const res = await c.var.h.updateActivity(
         userId,
         activityId,
         c.req.valid("json"),
@@ -70,7 +86,7 @@ export function createActivityRoute(db: DrizzleInstance) {
         const { id } = c.req.param();
         const activityId = createActivityId(id);
 
-        const res = await h.updateActivityOrder(
+        const res = await c.var.h.updateActivityOrder(
           userId,
           activityId,
           c.req.valid("json"),
@@ -83,9 +99,9 @@ export function createActivityRoute(db: DrizzleInstance) {
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      const res = await h.deleteActivity(userId, activityId);
+      const res = await c.var.h.deleteActivity(userId, activityId);
       return c.json(res);
     });
 }
 
-export const newActivityRoute = createActivityRoute(drizzle);
+export const newActivityRoute = createActivityRoute();

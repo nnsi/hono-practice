@@ -10,9 +10,11 @@ import { testDB } from "@/backend/test.setup";
 import { createTaskRoute } from "..";
 
 test("GET tasks / success", async () => {
-  const route = createTaskRoute(testDB);
+  const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client.index.$get();
 
@@ -20,9 +22,11 @@ test("GET tasks / success", async () => {
 });
 
 test("GET tasks/:id / success", async () => {
-  const route = createTaskRoute(testDB);
+  const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$get({
     param: {
@@ -38,9 +42,11 @@ test("GET tasks/:id / success", async () => {
 });
 
 test("POST tasks / success", async () => {
-  const route = createTaskRoute(testDB);
+  const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client.index.$post({
     json: {
@@ -52,9 +58,11 @@ test("POST tasks / success", async () => {
 });
 
 test("PUT tasks/:id / success", async () => {
-  const route = createTaskRoute(testDB);
+  const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$put({
     param: {
@@ -76,11 +84,13 @@ test("PUT tasks/:id / success", async () => {
 });
 
 test("DELETE tasks/:id / success", async () => {
-  const route = createTaskRoute(testDB);
+  const route = createTaskRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/", route);
-  const client = testClient(app);
+  const client = testClient(app, {
+    DB: testDB,
+  });
 
   const res = await client[":id"].$delete({
     param: {
