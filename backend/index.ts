@@ -7,6 +7,7 @@ import {
   taskRoute,
   userRoute,
 } from "./feature";
+import { drizzle } from "./infra/drizzle";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
 
@@ -17,6 +18,9 @@ app.use("*", async (c, next) => {
     origin: c.env.APP_URL,
     credentials: true,
   });
+
+  c.set("db", drizzle);
+
   return middleware(c, next);
 });
 app.use("/users/*", authMiddleware);

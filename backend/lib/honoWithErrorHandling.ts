@@ -2,10 +2,10 @@ import { Hono } from "hono";
 
 import { AppError, DomainValidateError } from "../error";
 
-import type { SafeEnvs } from "../config";
+import type { AppContext } from "../context";
 
-export function newHonoWithErrorHandling(): Hono<{ Bindings: SafeEnvs }> {
-  const app = new Hono<{ Bindings: SafeEnvs }>();
+export function newHonoWithErrorHandling(): Hono<AppContext> {
+  const app = new Hono<AppContext>();
 
   app.onError((err, c) => {
     console.error(err.stack);

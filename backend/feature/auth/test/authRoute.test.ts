@@ -1,20 +1,29 @@
+import { Hono } from "hono";
 import { testClient } from "hono/testing";
 
 import { expect, test } from "vitest";
 
+import type { AppContext } from "@/backend/context";
 import { TEST_USER_ID, testDB } from "@/backend/test.setup";
 
 import { createAuthRoute } from "..";
 import { createUserRoute } from "../../user";
 
 test("POST login / success -> getMe", async () => {
-  const route = createAuthRoute(testDB);
+  const app = new Hono<AppContext>();
+  app.use("*", async (c, next) => {
+    c.set("db", testDB);
+    return next();
+  });
+
+  const route = app.route("/auth", createAuthRoute());
+
   const client = testClient(route, {
     JWT_SECRET: "test",
     NODE_ENV: "test",
   });
 
-  const res = await client.login.$post({
+  const res = await client.auth.login.$post({
     json: {
       login_id: "test-user",
       password: "password",
@@ -47,7 +56,7 @@ test("POST login / success -> getMe", async () => {
 });
 
 test("logout / success", async () => {
-  const route = createAuthRoute(testDB);
+  const route = createAuthRoute();
   const client = testClient(route);
 
   const res = await client.logout.$get();
