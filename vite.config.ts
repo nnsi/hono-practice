@@ -1,4 +1,4 @@
-import build from "@hono/vite-build/node";
+import build from "@hono/vite-build/cloudflare-workers";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
         build({
           entry: "./backend/server.cf.ts",
           outputDir: "./dist-backend",
+          external: ["**/*.test.ts", "**/test.*.ts"],
         }),
       ],
       test: {
@@ -22,6 +23,20 @@ export default defineConfig(({ mode }) => {
           NODE_ENV: "test",
           JWT_SECRET: "test-jwt",
         },
+      },
+      build: {
+        rollupOptions: {
+          external: [
+            /.*\.test.ts$/,
+            /test\..*\.ts$/,
+            "mock-aws-s3",
+            "aws-sdk",
+            "nock",
+          ],
+        },
+      },
+      ssr: {
+        target: "webworker",
       },
     };
   }

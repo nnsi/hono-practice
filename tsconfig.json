@@ -3,7 +3,9 @@
     "target": "ESNext",
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -16,10 +18,18 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["*"],
-      "@hooks/*": ["frontend/src/hooks/*"],
-      "@components/*": ["frontend/src/components/*"]
-    }
+      "@/*": [
+        "*"
+      ],
+      "@hooks/*": [
+        "frontend/src/hooks/*"
+      ],
+      "@components/*": [
+        "frontend/src/components/*"
+      ]
+    },
   },
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+  ]
 }
