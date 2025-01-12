@@ -1,6 +1,5 @@
 name = "56-backend"
 main = "dist-backend/index.js"
-zone_id = "$CF_ZONE_ID"
 
 [env.stg.vars]
 NODE_ENV = "stg"

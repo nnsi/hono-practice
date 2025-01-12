@@ -10,8 +10,8 @@
     "ci-check": "vitest run && biome lint && eslint",
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
-    "deploy:stg": "wrangler publish --env stg",
-    "deploy:prod": "wrangler publish --env production",
+    "deploy:stg": "wrangler deploy --env stg",
+    "deploy:prod": "wrangler deploy --env production",
     "migrate": "drizzle-kit push"
   },
   "type": "module",

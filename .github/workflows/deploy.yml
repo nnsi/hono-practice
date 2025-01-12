@@ -35,6 +35,9 @@ jobs:
         if: github.ref_name == 'release'
         run: npm run build-client
 
+      - name: Build API
+        run: npm run build-server
+
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master'
         run: npm run migrate
