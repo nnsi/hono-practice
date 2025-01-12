@@ -11,7 +11,8 @@
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
     "deploy:stg": "wrangler publish --env stg",
-    "deploy:prod": "wrangler publish --env prod"
+    "deploy:prod": "wrangler publish --env prod",
+    "migrate": "drizzle-kit push"
   },
   "type": "module",
   "dependencies": {

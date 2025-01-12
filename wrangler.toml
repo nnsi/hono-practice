@@ -1,9 +1,15 @@
 name = "56-backend"
 main = "dist-backend/index.js"
-account_id = ""
 zone_id = "$CF_ZONE_ID"
-workers_dev = false
 
 [env.stg]
+vars = {
+  DATABASE_URL = "$DATABASE_URL"
+  NODE_ENV = "stg"
+}
 
 [env.production]
+vars = {
+  DATABASE_URL = "$DATABASE_URL"
+  NODE_ENV = "production"
+}
