@@ -5,7 +5,9 @@ import pg from "pg";
 import * as schema from "@/drizzle/schema";
 
 import { app } from "./app";
-import { config } from "./config";
+import { configSchema } from "./config";
+
+const config = configSchema.parse(process.env);
 
 function createInstance() {
   const pool = new pg.Pool({

@@ -1,12 +1,10 @@
-interface DbCredentials {
-  url: string;
-}
-
 interface DrizzleConfig {
   schema: string;
   out: string;
   dialect: string;
-  dbCredentials: DbCredentials;
+  dbCredentials: {
+    url?: string;
+  };
 }
 
 const config: DrizzleConfig = {
@@ -14,7 +12,7 @@ const config: DrizzleConfig = {
   out: "./drizzle/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL!,
   },
 };
 

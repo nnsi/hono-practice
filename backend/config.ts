@@ -3,21 +3,12 @@ import { z } from "zod";
 
 dotenv.config();
 
-const envVariables = z.object({
+export const configSchema = z.object({
   APP_URL: z.string(),
   JWT_SECRET: z.string().min(32),
   NODE_ENV: z.enum(["local", "stg", "production", "test"]),
   DATABASE_URL: z.string(),
-  API_PORT: z.coerce.number(),
+  API_PORT: z.coerce.number().optional(),
 });
 
-export type SafeEnvs = z.infer<typeof envVariables>;
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface ProcessEnv extends z.infer<typeof envVariables> {}
-  }
-}
-
-export const config = envVariables.parse(process.env);
+export type Config = z.infer<typeof configSchema>;

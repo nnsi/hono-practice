@@ -13,8 +13,12 @@ import { authMiddleware } from "./middleware/authMiddleware";
 export const app = newHonoWithErrorHandling();
 
 app.use("*", async (c, next) => {
+  const origin = c.req.header("Origin")?.includes(c.env.APP_URL)
+    ? c.req.header("Origin")!
+    : c.env.APP_URL;
+
   const middleware = cors({
-    origin: c.env.APP_URL,
+    origin,
     credentials: true,
   });
 
