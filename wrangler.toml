@@ -2,12 +2,8 @@ name = "56-backend"
 main = "dist-backend/index.js"
 zone_id = "$CF_ZONE_ID"
 
-[env.stg]
-vars = {
-  NODE_ENV = "stg"
-}
+[env.stg.vars]
+NODE_ENV = "stg"
 
-[env.production]
-vars = {
-  NODE_ENV = "production"
-}
+[env.production.vars]
+NODE_ENV = "production"
