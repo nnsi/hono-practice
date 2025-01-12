@@ -6,4 +6,5 @@ export * from "./CreateUserRequest";
 export * from "./LoginRequest";
 export * from "./UpdateActivityLogRequest";
 export * from "./UpdateActivityRequest";
+export * from "./UpdateGoalRequest";
 export * from "./UpdateTaskRequest";

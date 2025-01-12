@@ -1,6 +1,6 @@
 name: Deploy Cloudflare
 
-on: 
+on:
   push:
     branches:
       - master
@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-      
+
       - name: test
         run: npm run ci-check
 
@@ -50,38 +50,38 @@ jobs:
       - name: Set DATABASE_URL secret in Cloudflare (stg)
         if: github.ref_name == 'master'
         run: |
-          npx wrangler secret put DATABASE_URL --env stg --input ${{ secrets.DATABASE_URL_STG }}
-          npx wrangler secret put JWT_SECRET --env stg --input ${{ secrets.JWT_SECRET }}
-          npx wrangler secret put NODE_ENV --env stg --input stg
-          npx wrangler secret put APP_URL --env stg --input ${{ vars.APP_URL_STG }}
+          echo "${{ secrets.DATABASE_URL_STG }}" | npx wrangler secret put DATABASE_URL --env stg
+          echo "${{ secrets.JWT_SECRET }}"       | npx wrangler secret put JWT_SECRET --env stg
+          echo "stg"                             | npx wrangler secret put NODE_ENV --env stg
+          echo "${{ vars.APP_URL_STG }}"         | npx wrangler secret put APP_URL --env stg
         env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Set DATABASE_URL secret in Cloudflare (prod)
         if: github.ref_name == 'release'
         run: |
-          npx wrangler secret put DATABASE_URL --env production --input ${{ secrets.DATABASE_URL_PROD }}
-          npx wrangler secret put JWT_SECRET --env production --input ${{ secrets.JWT_SECRET }}
-          npx wrangler secret put NODE_ENV --env production --input production
-          npx wrangler secret put APP_URL --env production --input ${{ vars.APP_URL_PROD }}
+          echo "${{ secrets.DATABASE_URL_PROD }}" | npx wrangler secret put DATABASE_URL --env production
+          echo "${{ secrets.JWT_SECRET }}"       | npx wrangler secret put JWT_SECRET --env production
+          echo "production"                             | npx wrangler secret put NODE_ENV --env production
+          echo "${{ vars.APP_URL_PROD }}"         | npx wrangler secret put APP_URL --env production
         env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (stg)
         if: github.ref_name == 'master'
         run: npm run deploy:stg
         env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (release)
         if: github.ref_name == 'release'
         run: npm run deploy:prod
         env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@1
