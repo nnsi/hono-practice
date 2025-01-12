@@ -1,6 +1,6 @@
 import { sign } from "hono/jwt";
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 import { type User, UserFactory, type UserId } from "@/backend/domain";
 import { AppError } from "@/backend/error";

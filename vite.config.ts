@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       build: {
+        target: "esnext",
         rollupOptions: {
           external: [
             /.*\.test.ts$/,

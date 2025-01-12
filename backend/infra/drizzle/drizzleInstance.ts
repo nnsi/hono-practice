@@ -1,11 +1,8 @@
 import type * as schema from "@/drizzle/schema";
 
-import type { drizzle } from "drizzle-orm/node-postgres";
-import type { drizzle as pglite } from "drizzle-orm/pglite";
+import type { drizzle } from "drizzle-orm/pglite";
 
-export type DrizzleInstance =
-  | ReturnType<typeof drizzle<typeof schema>>
-  | ReturnType<typeof pglite<typeof schema>>; // テスト用
+export type DrizzleInstance = ReturnType<typeof drizzle<typeof schema>>;
 
 export type QueryExecutor = Pick<
   DrizzleInstance,

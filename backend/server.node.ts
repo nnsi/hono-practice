@@ -1,6 +1,5 @@
 import { serve } from "@hono/node-server";
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
 
 import * as schema from "@/drizzle/schema";
 
@@ -10,11 +9,7 @@ import { configSchema } from "./config";
 const config = configSchema.parse(process.env);
 
 function createInstance() {
-  const pool = new pg.Pool({
-    connectionString: config.DATABASE_URL,
-  });
-
-  return drizzle(pool, { schema });
+  return drizzle(config.DATABASE_URL, { schema });
 }
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>
