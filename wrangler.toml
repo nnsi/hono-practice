@@ -1,5 +1,6 @@
 name = "56-backend"
 main = "dist-backend/index.js"
+compatibility_date = "2025-01-12"
 
 [env.stg.vars]
 NODE_ENV = "stg"
