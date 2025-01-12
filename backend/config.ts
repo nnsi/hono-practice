@@ -1,7 +1,4 @@
-// import dotenv from "dotenv";
 import { z } from "zod";
-
-// dotenv.config();
 
 export const configSchema = z.object({
   APP_URL: z.string(),

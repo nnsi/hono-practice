@@ -1,10 +1,13 @@
 import { serve } from "@hono/node-server";
+import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 
 import * as schema from "@/drizzle/schema";
 
 import { app } from "./app";
 import { configSchema } from "./config";
+
+dotenv.config();
 
 const config = configSchema.parse(process.env);
 
