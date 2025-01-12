@@ -4,12 +4,10 @@ zone_id = "$CF_ZONE_ID"
 
 [env.stg]
 vars = {
-  DATABASE_URL = "$DATABASE_URL"
   NODE_ENV = "stg"
 }
 
 [env.production]
 vars = {
-  DATABASE_URL = "$DATABASE_URL"
   NODE_ENV = "production"
 }
