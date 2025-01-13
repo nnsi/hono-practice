@@ -24,18 +24,6 @@ export default defineConfig(({ mode }) => {
           JWT_SECRET: "test-jwt",
         },
       },
-      build: {
-        target: "esnext",
-        rollupOptions: {
-          external: [
-            /.*\.test.ts$/,
-            /test\..*\.ts$/,
-            "mock-aws-s3",
-            "aws-sdk",
-            "nock",
-          ],
-        },
-      },
       ssr: {
         target: "webworker",
       },
