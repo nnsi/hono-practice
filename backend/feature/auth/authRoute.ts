@@ -46,7 +46,7 @@ export function createAuthRoute() {
 
       setCookie(c, "auth", token, {
         httpOnly: true,
-        secure: NODE_ENV === "production",
+        secure: NODE_ENV !== "development",
         expires: new Date(payload.exp * 1000),
       });
 

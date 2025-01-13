@@ -22,7 +22,7 @@ declare const globalThis: {
 
 const drizzleInstance = globalThis.drizzleGlobal ?? createInstance();
 
-if (config.NODE_ENV !== "production") {
+if (config.NODE_ENV === "development") {
   globalThis.drizzleGlobal = drizzleInstance;
 }
 

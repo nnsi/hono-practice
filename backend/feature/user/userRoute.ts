@@ -46,7 +46,7 @@ export function createUserRoute() {
 
       setCookie(c, "auth", token, {
         httpOnly: true,
-        secure: NODE_ENV === "production",
+        secure: NODE_ENV !== "development",
       });
 
       return c.body(null, 204);
