@@ -1,23 +1,15 @@
-import type { ExecutionContext } from "hono";
-
-import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+
+import * as schema from "@/drizzle/schema";
 
 import { app } from "./app";
 
-import type { Config } from "./config";
+app.use("*", async (c, next) => {
+  const db = drizzle(c.env.DATABASE_URL, { schema });
 
-export default {
-  fetch: (req: Request, env: Config, ctx: ExecutionContext) => {
-    try {
-      const sql = neon(env.DATABASE_URL);
-      const db = drizzle({ client: sql });
+  c.env.DB = db;
 
-      const envWithDB = { ...env, DB: db };
-      return app.fetch(req, envWithDB, ctx);
-    } catch (e) {
-      console.error("Worker initialization error:", e);
-      return new Response(e.message);
-    }
-  },
-};
+  return next();
+});
+
+export default app;
