@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
         }),
       ],
       test: {
-        setupFiles: ["./backend/test.setup.ts"],
+        setupFiles: ["./backend/setup.test.ts"],
         env: {
           NODE_ENV: "test",
           JWT_SECRET: "test-jwt",

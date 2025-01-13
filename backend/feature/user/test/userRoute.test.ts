@@ -2,7 +2,7 @@ import { testClient } from "hono/testing";
 
 import { expect, test } from "vitest";
 
-import { testDB } from "@/backend/test.setup";
+import { testDB } from "@/backend/setup.test";
 
 import { createUserRoute } from "..";
 

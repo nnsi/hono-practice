@@ -5,7 +5,7 @@ import { expect, test } from "vitest";
 
 import { newHonoWithErrorHandling } from "@/backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@/backend/middleware/mockAuthMiddleware";
-import { testDB } from "@/backend/test.setup";
+import { testDB } from "@/backend/setup.test";
 
 import { createTaskRoute } from "..";
 

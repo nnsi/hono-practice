@@ -4,7 +4,7 @@ import { testClient } from "hono/testing";
 import { expect, test } from "vitest";
 
 import { mockAuthMiddleware } from "@/backend/middleware/mockAuthMiddleware";
-import { testDB } from "@/backend/test.setup";
+import { testDB } from "@/backend/setup.test";
 
 import { createGoalRoute } from "..";
 

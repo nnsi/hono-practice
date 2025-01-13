@@ -1,7 +1,7 @@
 import type { Next } from "hono";
 
 import { createUserId } from "../domain";
-import { TEST_USER_ID } from "../test.setup";
+import { TEST_USER_ID } from "../setup.test";
 
 import type { HonoContext } from "../context";
 
