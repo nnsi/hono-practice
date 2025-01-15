@@ -1,5 +1,5 @@
 name = "56-backend"
-main = "dist-backend/index.js"
+main = "backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 
 [env.stg.vars]

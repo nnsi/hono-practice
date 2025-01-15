@@ -14,7 +14,8 @@ export const app = newHonoWithErrorHandling();
 
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";
-  const origin = c.req.header("Origin")?.includes(c.env.APP_URL)
+
+  const origin = headerOrigin.includes(c.env.APP_URL)
     ? headerOrigin
     : c.env.APP_URL;
 

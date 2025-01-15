@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import type { ExecutionContext } from "hono";
 
 import { drizzle } from "drizzle-orm/neon-http";
 
@@ -6,18 +6,12 @@ import * as schema from "@/drizzle/schema";
 
 import { app } from "./app";
 
-import type { AppContext } from "./context";
+import type { Config } from "./config";
 
-const wApp = new Hono<AppContext>();
+export default {
+  async fetch(req: Request, env: Config, ctx: ExecutionContext) {
+    const db = drizzle(env.DATABASE_URL, { schema });
 
-wApp.use("*", async (c, next) => {
-  const db = drizzle(c.env.DATABASE_URL, { schema });
-
-  c.env.DB = db;
-
-  return next();
-});
-
-wApp.route("/", app);
-
-export default wApp;
+    return app.fetch(req, { ...env, DB: db }, ctx);
+  },
+};

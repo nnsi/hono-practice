@@ -5,7 +5,6 @@
     "build": "vite build --mode server & vite build",
     "build-client-stg": "vite build --mode stg",
     "build-client": "vite build",
-    "build-server": "vite build --mode server",
     "test": "vitest --disable-console-intercept",
     "ci-check": "vitest run && biome lint && eslint",
     "tsc": "tsc --noEmit",
