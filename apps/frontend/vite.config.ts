@@ -11,7 +11,7 @@ export default defineConfig(() => {
     publicDir: "./public",
     plugins: [tsconfigPaths(), TanStackRouterVite(), react()],
     build: {
-      outDir: "../dist-frontend",
+      outDir: "../../dist-frontend",
       emptyOutDir: true,
       rollupOptions: {
         plugins: [visualizer()],
