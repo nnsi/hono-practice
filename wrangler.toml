@@ -1,5 +1,5 @@
 name = "56-backend"
-main = "backend/server.cf.ts"
+main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 
 [env.stg.vars]
