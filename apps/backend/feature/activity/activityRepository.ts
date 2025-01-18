@@ -8,7 +8,6 @@ import {
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
-
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type ActivityRepository = {
@@ -51,11 +50,18 @@ function getActivitiesByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<Activity[]> => {
     const rows = await db.query.activities.findMany({
       with: {
-        kinds: true,
+        kinds: {
+          where: isNull(activityKinds.deletedAt),
+        },
       },
-      where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
+      where: and(
+        eq(activities.userId, userId),
+        isNull(activities.deletedAt),
+        isNull(activityKinds.deletedAt),
+      ),
       orderBy: asc(activities.orderIndex),
     });
+    console.log(rows);
 
     return rows.map((r) => {
       return ActivityFactory.create(
@@ -81,7 +87,9 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
   return async (userId: UserId, ids: ActivityId[]): Promise<Activity[]> => {
     const rows = await db.query.activities.findMany({
       with: {
-        kinds: true,
+        kinds: {
+          where: isNull(activityKinds.deletedAt),
+        },
       },
       where: and(
         eq(activities.userId, userId),
@@ -238,7 +246,10 @@ function updateActivity(db: QueryExecutor) {
         deletedAt: new Date(),
       })
       .where(
-        and(eq(activityKinds.id, activity.id), isNull(activityKinds.deletedAt)),
+        and(
+          eq(activityKinds.activityId, activity.id),
+          isNull(activityKinds.deletedAt),
+        ),
       );
 
     if (kinds && kinds.length > 0) {
