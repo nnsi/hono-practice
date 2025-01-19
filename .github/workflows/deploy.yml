@@ -51,7 +51,7 @@ jobs:
         if: github.ref_name == 'master'
         run: |
           echo "${{ secrets.DATABASE_URL_STG }}" | npx wrangler secret put DATABASE_URL --env stg
-          echo "${{ secrets.JWT_SECRET }}"       | npx wrangler secret put JWT_SECRET --env stg
+          echo "${{ secrets.JWT_SECRET_STG }}"       | npx wrangler secret put JWT_SECRET --env stg
           echo "${{ vars.APP_URL_STG }}"         | npx wrangler secret put APP_URL --env stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
         if: github.ref_name == 'release'
         run: |
           echo "${{ secrets.DATABASE_URL_PROD }}" | npx wrangler secret put DATABASE_URL --env production
-          echo "${{ secrets.JWT_SECRET }}"       | npx wrangler secret put JWT_SECRET --env production
+          echo "${{ secrets.JWT_SECRET_PROD }}"       | npx wrangler secret put JWT_SECRET --env production
           echo "${{ vars.APP_URL_PROD }}"         | npx wrangler secret put APP_URL --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
