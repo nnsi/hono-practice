@@ -4,3 +4,4 @@ db-data
 dist-backend
 dist-frontend
 .husky
+stats.html
