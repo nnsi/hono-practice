@@ -10,7 +10,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
-
 import { Button, Calendar, useToast } from "@components/ui";
 
 import { ActivityTabs } from "@components/activity";
@@ -122,9 +121,9 @@ const ActivityPage: React.FC = () => {
   return (
     <>
       <title>App / Activity</title>
-      <div className="grid grid-cols-5 gap-5 max-w-3xl mx-auto">
-        <div className="max-w-sm col-span-2">
-          <div className="flex flex-shrink justify-center">
+      <div className="grid gap-3 max-w-3xl grid-cols-3 md:grid-cols-5">
+        <div className="flex gap-5 md:flex-col col-span-3 md:col-span-2">
+          <div className="flex justify-center">
             <Calendar
               mode="single"
               selected={date}
@@ -137,7 +136,7 @@ const ActivityPage: React.FC = () => {
           <Button
             onClick={() => navigate({ to: "/activity/setting" })}
             variant="secondary"
-            className="my-5 w-full"
+            className="w-full"
           >
             Setting
           </Button>

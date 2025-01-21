@@ -124,24 +124,27 @@ const RootComponent: React.FC = () => {
   // 未ログインの場合はログインor新規登録フォーム
 
   return (
-    <div className="h-svh w-full flex justify-center mt-5">
-      <Tabs defaultValue="login" className="w-80">
-        <TabsList className="w-full mb-4">
-          <TabsTrigger value="login" className="w-1/2">
-            Login
-          </TabsTrigger>
-          <TabsTrigger value="create" className="w-1/2">
-            New
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="login">
-          <LoginForm />
-        </TabsContent>
-        <TabsContent value="create">
-          <CreateUserForm />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <>
+      <div className="w-full flex justify-center p-5">
+        <Tabs defaultValue="login" className="w-80">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="login" className="w-1/2">
+              Login
+            </TabsTrigger>
+            <TabsTrigger value="create" className="w-1/2">
+              New
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="login">
+            <LoginForm />
+          </TabsContent>
+          <TabsContent value="create">
+            <CreateUserForm />
+          </TabsContent>
+        </Tabs>
+      </div>
+      <Toaster />
+    </>
   );
 };
 
