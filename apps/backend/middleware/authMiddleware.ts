@@ -7,6 +7,10 @@ import { AuthError } from "../error";
 
 import type { HonoContext } from "../context";
 
+export function verifyToken(jwt: string, secret: string) {
+  return verify(jwt, secret);
+}
+
 export async function authMiddleware(c: HonoContext, next: Next) {
   const jwt = getCookie(c, "auth");
 
@@ -15,7 +19,7 @@ export async function authMiddleware(c: HonoContext, next: Next) {
   }
   try {
     const { JWT_SECRET } = c.env;
-    const payload = await verify(jwt, JWT_SECRET);
+    const payload = await verifyToken(jwt, JWT_SECRET);
     c.set("jwtPayload", payload);
     c.set("userId", createUserId(payload.id as string));
   } catch (e) {

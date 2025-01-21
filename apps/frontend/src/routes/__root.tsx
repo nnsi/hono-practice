@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 
-
 import { CreateUserForm } from "@frontend/components/root/CreateUserForm";
 import { LoginForm } from "@frontend/components/root/LoginForm";
 import { useAuth } from "@frontend/hooks/useAuth";
+import {
+  ArchiveIcon,
+  FileTextIcon,
+  HomeIcon,
+  RocketIcon,
+} from "@radix-ui/react-icons";
 import {
   Link,
   Outlet,
@@ -11,46 +16,63 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import { Button, Toaster, useToast } from "@components/ui";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Toaster,
+  useToast,
+} from "@components/ui";
 
 // ログイン済みユーザー向けのルートコンポーネント
 const AuthenticatedHome: React.FC = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate({
-        to: "/",
-      });
-    } catch (e) {
-      console.error("Root", e);
-    }
-  };
-
   return (
     <>
-      <div className="p-2 flex items-center gap-2">
-        <Link to="/" className="[&.active]:font-bold">
-          Home
-        </Link>
-        <Link to="/task" className="[&.active]:font-bold">
-          Task
-        </Link>
-        <Link to="/activity" className="[&.active]:font-bold">
-          Activity
-        </Link>
-        <Link to="/goal" className="[&.active]:font-bold">
-          Goal
-        </Link>
-        <Button onClick={handleLogout} className="ml-auto">
-          Logout
-        </Button>
-      </div>
-      <hr />
-      <div className="m-5">
-        <Outlet />
+      <div className="h-screen w-full max-w-3xl mx-auto flex flex-col">
+        <main className="flex-1 p-4 overflow-y-auto">
+          <Outlet />
+        </main>
+        <footer className="w-full bg-gray-50 shadow-lg">
+          <nav className="flex justify-around items-center p-4">
+            <Link
+              to="/"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <HomeIcon />
+                <span className="text-xs mt-1">Home</span>
+              </button>
+            </Link>
+            <Link
+              to="/task"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <FileTextIcon />
+                <span className="text-xs mt-1">Task</span>
+              </button>
+            </Link>
+            <Link
+              to="/activity"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <ArchiveIcon />
+                <span className="text-xs mt-1">Activity</span>
+              </button>
+            </Link>
+            <Link
+              to="/goal"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <RocketIcon />
+                <span className="text-xs mt-1">Goal</span>
+              </button>
+            </Link>
+          </nav>
+        </footer>
       </div>
       <Toaster />
     </>
@@ -91,23 +113,35 @@ const RootComponent: React.FC = () => {
     };
   }, []);
 
+  // 認証情報取得中
   if (!isTriedAuthentication) return <div>Loading...</div>;
 
+  // ログイン済み
+  if (user) {
+    return <AuthenticatedHome />;
+  }
+
+  // 未ログインの場合はログインor新規登録フォーム
+
   return (
-    <>
-      {user ? (
-        <AuthenticatedHome />
-      ) : (
-        <>
-          <div className="h-svh flex items-center justify-center gap-5">
-            <LoginForm />
-            <p> or </p>
-            <CreateUserForm />
-          </div>
-          <Toaster />
-        </>
-      )}
-    </>
+    <div className="h-svh w-full flex justify-center mt-5">
+      <Tabs defaultValue="login" className="w-80">
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="login" className="w-1/2">
+            Login
+          </TabsTrigger>
+          <TabsTrigger value="create" className="w-1/2">
+            New
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="login">
+          <LoginForm />
+        </TabsContent>
+        <TabsContent value="create">
+          <CreateUserForm />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

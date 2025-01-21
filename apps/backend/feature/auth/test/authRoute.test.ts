@@ -1,8 +1,7 @@
 import { testClient } from "hono/testing";
 
-import { TEST_USER_ID, testDB } from "@backend/setup.test";
+import { testDB } from "@backend/setup.test";
 import { expect, test } from "vitest";
-
 
 import { createAuthRoute } from "..";
 import { createUserRoute } from "../../user";
@@ -40,12 +39,7 @@ test("POST login / success -> getMe", async () => {
       DB: testDB,
     },
   );
-  const json = await userRes.json();
-
-  expect(json).toEqual({
-    id: TEST_USER_ID,
-    name: "test",
-  });
+  expect(userRes.status).toEqual(204);
 });
 
 test("logout / success", async () => {

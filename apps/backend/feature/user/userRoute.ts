@@ -1,11 +1,9 @@
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
+import { getCookie, setCookie } from "hono/cookie";
 
+import { verifyToken } from "@backend/middleware/authMiddleware";
 import { createUserRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
-
-
-import { authMiddleware } from "../../middleware/authMiddleware";
 
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
@@ -51,11 +49,14 @@ export function createUserRoute() {
 
       return c.body(null, 204);
     })
-    .get("/me", authMiddleware, async (c) => {
-      const id = c.get("userId");
-      const res = await c.var.h.getMe(id);
+    .get("/me", async (c) => {
+      try {
+        await verifyToken(getCookie(c, "auth") ?? "", c.env.JWT_SECRET);
+      } catch (e) {
+        return c.body("unauthorized", 401);
+      }
 
-      return c.json(res);
+      return c.body(null, 204);
     });
 }
 
