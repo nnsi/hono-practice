@@ -5,8 +5,7 @@ import { apiClient } from "@frontend/utils/apiClient";
 import type { LoginRequest } from "@dtos/request/LoginRequest";
 
 type UserState = {
-  id: string;
-  name: string | null;
+  token: string | null;
 } | null;
 
 type AuthState =
@@ -25,14 +24,14 @@ type AuthProviderProps = {
 export const AuthContext = createContext<AuthState>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<UserState>(null);
+  const token = localStorage.getItem("token");
+  const [user, setUser] = useState<UserState>({ token });
 
   const getUser = async () => {
     try {
       const res = await apiClient.user.me.$get();
-      if (res.status === 200) {
-        const json = await res.json();
-        return setUser(json);
+      if (res.status === 204) {
+        return setUser({ token });
       }
     } catch (e) {
       console.log("AuthProvider", e);
@@ -51,6 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       if (res.status === 200) {
         const json = await res.json();
+        localStorage.setItem("token", json.token);
         setUser(json);
       } else {
         return Promise.reject("Login failed");

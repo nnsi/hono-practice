@@ -1,10 +1,12 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui";
 
-import { ActivityDaily, ActivityStats } from ".";
 
 import type { GetActivityStatsResponse } from "@dtos/response";
 import type { GetActivitiesResponse } from "@dtos/response/GetActivitiesResponse";
 import type { GetActivityLogsResponse } from "@dtos/response/GetActivityLogsResponse";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui";
+
+import { ActivityDaily, ActivityStats } from ".";
 
 
 

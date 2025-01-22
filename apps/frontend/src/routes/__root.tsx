@@ -33,7 +33,7 @@ const AuthenticatedHome: React.FC = () => {
         <main className="flex-1 p-4 overflow-y-auto">
           <Outlet />
         </main>
-        <footer className="w-full bg-gray-50 shadow-lg">
+        <footer className="w-full bg-gray-50 shadow-lg sticky bottom-0 left-0">
           <nav className="flex justify-around items-center p-4">
             <Link
               to="/"
@@ -111,6 +111,7 @@ const RootComponent: React.FC = () => {
       passive: false,
     });
     (async () => {
+      if (user?.token) return;
       await getUser();
       setIsTrieduthentication(true);
     })();
@@ -123,10 +124,10 @@ const RootComponent: React.FC = () => {
   }, []);
 
   // 認証情報取得中
-  if (!isTriedAuthentication) return <div>Loading...</div>;
+  if (!user?.token && !isTriedAuthentication) return <div>Loading...</div>;
 
   // ログイン済み
-  if (user) {
+  if (user?.token) {
     return <AuthenticatedHome />;
   }
 

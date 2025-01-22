@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { GetTaskResponseSchema } from "@dtos/response";
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,6 +7,8 @@ import {
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
+
+import { GetTaskResponseSchema } from "@dtos/response";
 
 
 import {

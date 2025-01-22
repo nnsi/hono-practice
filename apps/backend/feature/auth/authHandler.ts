@@ -1,8 +1,9 @@
 import { AppError } from "@backend/error";
+
+import type { LoginRequest } from "@dtos/request";
 import { LoginResponseSchema } from "@dtos/response";
 
-import type { AuthUsecase } from ".";
-import type { LoginRequest } from "@dtos/request";
+import type { AuthUsecase } from "./";
 
 export function newAuthHandler(authUsecase: AuthUsecase) {
   return {
@@ -23,6 +24,6 @@ function login(authUsecase: AuthUsecase) {
       throw new AppError("failed to parse user", 500);
     }
 
-    return { token, payload, res: res.data };
+    return { token, payload, res: { token } };
   };
 }

@@ -3,7 +3,6 @@ import type { ExecutionContext } from "hono";
 import * as schema from "@infra/drizzle/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 
-
 import { app } from "./app";
 
 import type { Config } from "./config";

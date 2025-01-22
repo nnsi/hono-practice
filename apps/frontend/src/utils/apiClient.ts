@@ -8,7 +8,14 @@ const API_URL =
     : import.meta.env.VITE_API_URL;
 
 const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  const res = await fetch(input, init);
+  const res = await fetch(input, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
   if (res.status === 204) return Response.json({});
 
   const json = await res.json();

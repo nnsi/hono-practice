@@ -12,7 +12,8 @@ export function verifyToken(jwt: string, secret: string) {
 }
 
 export async function authMiddleware(c: HonoContext, next: Next) {
-  const jwt = getCookie(c, "auth");
+  const jwt =
+    getCookie(c, "auth") ?? c.req.header("Authorization")?.split(" ")[1];
 
   if (!jwt) {
     throw new AuthError("unauthorized");

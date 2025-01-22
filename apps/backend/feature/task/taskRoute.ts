@@ -2,11 +2,12 @@ import { Hono } from "hono";
 
 
 import { createTaskId } from "@backend/domain";
+import { zValidator } from "@hono/zod-validator";
+
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@dtos/request";
-import { zValidator } from "@hono/zod-validator";
 
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";

@@ -6,16 +6,17 @@ import {
 } from "@backend/domain";
 import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
+
+import type {
+  CreateActivityLogRequest,
+  UpdateActivityLogRequest,
+} from "@dtos/request";
 import {
   GetActivityLogResponseSchema,
   GetActivityLogsResponseSchema,
 } from "@dtos/response";
 
 import type { ActivityLogUsecase, GetActivityLogsParams } from ".";
-import type {
-  CreateActivityLogRequest,
-  UpdateActivityLogRequest,
-} from "@dtos/request";
 
 export function newActivityLogHandler(uc: ActivityLogUsecase) {
   return {

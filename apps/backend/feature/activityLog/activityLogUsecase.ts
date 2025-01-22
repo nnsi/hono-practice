@@ -8,10 +8,11 @@ import {
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 
+import type { GetActivityStatsResponse } from "@dtos/response";
+
 import type { ActivityRepository } from "../activity";
 import type { ActivityLogRepository } from "./activityLogRepository";
 import type { ActivityQueryService } from "@backend/query";
-import type { GetActivityStatsResponse } from "@dtos/response";
 
 
 export type GetActivityLogsParams = {

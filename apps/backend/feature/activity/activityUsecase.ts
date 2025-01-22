@@ -8,13 +8,14 @@ import {
 import { ResourceNotFoundError } from "@backend/error";
 import { generateOrder } from "@backend/lib/lexicalOrder";
 
-import type { ActivityRepository } from ".";
-import type { TransactionRunner } from "@backend/infra/db";
 import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
 } from "@dtos/request";
+
+import type { ActivityRepository } from ".";
+import type { TransactionRunner } from "@backend/infra/db";
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;

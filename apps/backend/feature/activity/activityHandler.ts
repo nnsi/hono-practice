@@ -1,4 +1,10 @@
 import { AppError } from "@backend/error";
+
+import type { CreateActivityRequest } from "@dtos/request/CreateActivityRequest";
+import type {
+  UpdateActivityOrderRequest,
+  UpdateActivityRequest,
+} from "@dtos/request/UpdateActivityRequest";
 import {
   GetActivitiesResponseSchema,
   GetActivityResponseSchema,
@@ -6,11 +12,6 @@ import {
 
 import type { ActivityUsecase } from ".";
 import type { ActivityId, UserId } from "@backend/domain";
-import type { CreateActivityRequest } from "@dtos/request/CreateActivityRequest";
-import type {
-  UpdateActivityOrderRequest,
-  UpdateActivityRequest,
-} from "@dtos/request/UpdateActivityRequest";
 
 
 

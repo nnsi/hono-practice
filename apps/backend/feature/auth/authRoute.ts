@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
-import { loginRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
+
+import { loginRequestSchema } from "@dtos/request";
 
 import { newUserRepository } from "../user";
 

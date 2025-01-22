@@ -1,5 +1,8 @@
 import { type UserId, createGoalId } from "@backend/domain";
 import { AppError } from "@backend/error";
+
+import type { CreateGoalRequest } from "@dtos/request";
+import type { UpdateGoalRequest } from "@dtos/request/UpdateGoalRequest";
 import {
   type GetGoalResponse,
   GetGoalResponseSchema,
@@ -8,8 +11,6 @@ import {
 } from "@dtos/response";
 
 import type { GoalUsecase } from "./goalUsecase";
-import type { CreateGoalRequest } from "@dtos/request";
-import type { UpdateGoalRequest } from "@dtos/request/UpdateGoalRequest";
 
 
 export type GoalHandler = {
