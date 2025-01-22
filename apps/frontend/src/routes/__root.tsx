@@ -33,7 +33,7 @@ const AuthenticatedHome: React.FC = () => {
         <main className="flex-1 p-4 overflow-y-auto">
           <Outlet />
         </main>
-        <footer className="w-full bg-gray-50 shadow-lg sticky bottom-0 left-0">
+        <footer className="w-full bg-gray-50 shadow-lg sticky bottom-0 left-0 select-none">
           <nav className="flex justify-around items-center p-4">
             <Link
               to="/"

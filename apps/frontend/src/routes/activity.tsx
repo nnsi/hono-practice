@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { WeeklyBar } from "@frontend/components/activity/WeeklyBar";
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -11,7 +12,7 @@ import {
   GetActivityStatsResponseSchema,
 } from "@dtos/response";
 
-import { Button, Calendar, useToast } from "@components/ui";
+import { Button, useToast } from "@components/ui";
 
 import { ActivityTabs } from "@components/activity";
 
@@ -122,16 +123,14 @@ const ActivityPage: React.FC = () => {
   return (
     <>
       <title>App / Activity</title>
-      <div className="grid gap-3 max-w-3xl grid-cols-3 md:grid-cols-5">
-        <div className="flex gap-5 md:flex-col col-span-3 md:col-span-2">
+      <div className="grid gap-3 max-w-3xl grid-cols-3 md:grid-cols-7">
+        <div className="flex gap-5 flex-col col-span-3">
           <div className="flex justify-center">
-            <Calendar
-              mode="single"
+            <WeeklyBar
               selected={date}
               onSelect={handleDateChange}
-              month={month}
               onMonthChange={handleMonthChange}
-              className="rounded-md border shadow"
+              className="w-full"
             />
           </div>
           <Button
@@ -142,7 +141,7 @@ const ActivityPage: React.FC = () => {
             Setting
           </Button>
         </div>
-        <div className="col-span-3">
+        <div className="col-span-4">
           <ActivityTabs
             mode={mode}
             date={date}
