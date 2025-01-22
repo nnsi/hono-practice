@@ -29,7 +29,7 @@ import {
 const AuthenticatedHome: React.FC = () => {
   return (
     <>
-      <div className="h-screen w-full max-w-3xl mx-auto flex flex-col">
+      <div className="h-svh w-full max-w-3xl mx-auto flex flex-col">
         <main className="flex-1 p-4 overflow-y-auto">
           <Outlet />
         </main>
@@ -100,8 +100,16 @@ const RootComponent: React.FC = () => {
         to: "/",
       });
     }
+    function handleDisablePinchZoom(e: TouchEvent) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }
     window.addEventListener("api-error", handleApiError);
     window.addEventListener("unauthorized", handleUnauthorized);
+    window.addEventListener("touchstart", handleDisablePinchZoom, {
+      passive: false,
+    });
     (async () => {
       await getUser();
       setIsTrieduthentication(true);
@@ -110,6 +118,7 @@ const RootComponent: React.FC = () => {
     return () => {
       window.removeEventListener("api-error", handleApiError);
       window.removeEventListener("unauthorized", handleUnauthorized);
+      window.removeEventListener("touchstart", handleDisablePinchZoom);
     };
   }, []);
 
