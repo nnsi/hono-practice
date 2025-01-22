@@ -45,6 +45,7 @@ export function createUserRoute() {
       setCookie(c, "auth", token, {
         httpOnly: true,
         secure: NODE_ENV !== "development",
+        sameSite: "None",
       });
 
       return c.body(null, 204);
@@ -53,7 +54,7 @@ export function createUserRoute() {
       try {
         await verifyToken(getCookie(c, "auth") ?? "", c.env.JWT_SECRET);
       } catch (e) {
-        return c.body("unauthorized", 401);
+        return c.json({ message: "unauthorized" }, 401);
       }
 
       return c.body(null, 204);

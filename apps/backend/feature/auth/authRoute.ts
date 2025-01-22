@@ -4,7 +4,6 @@ import { setCookie } from "hono/cookie";
 import { loginRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
 
-
 import { newUserRepository } from "../user";
 
 import { newAuthHandler } from "./authHandler";
@@ -48,6 +47,7 @@ export function createAuthRoute() {
         httpOnly: true,
         secure: NODE_ENV !== "development",
         expires: new Date(payload.exp * 1000),
+        sameSite: "None",
       });
 
       return c.json(res);
