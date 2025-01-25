@@ -3,14 +3,12 @@ import * as schema from "@infra/drizzle/schema";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { afterAll, afterEach, beforeAll, expect, test } from "vitest";
+import { afterAll, afterEach, beforeAll } from "vitest";
 
 let pglite: PGlite;
 
-// biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export let testDB: ReturnType<typeof drizzle<typeof schema>>;
 
-// biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export const TEST_USER_ID = "00000000-0000-4000-8000-000000000000";
 const migrationsFolder = "./infra/drizzle/migrations";
 
@@ -133,7 +131,3 @@ async function seed() {
     },
   ]);
 }
-
-test("connected test db", () => {
-  expect(testDB).toBeDefined();
-});

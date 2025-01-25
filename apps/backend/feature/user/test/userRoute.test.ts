@@ -1,6 +1,6 @@
 import { testClient } from "hono/testing";
 
-import { testDB } from "@backend/setup.test";
+import { testDB } from "@backend/test.setup";
 import { expect, test } from "vitest";
 
 import { createUserRoute } from "..";

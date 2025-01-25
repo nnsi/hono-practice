@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 import { testClient } from "hono/testing";
 
-
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
-import { testDB } from "@backend/setup.test";
+import { testDB } from "@backend/test.setup";
 import { expect, test } from "vitest";
 
 import { createTaskRoute } from "..";
