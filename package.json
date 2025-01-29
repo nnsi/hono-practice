@@ -5,6 +5,7 @@
     "build-client-stg": "npm run build-stg -w 56-frontend",
     "build-client": "npm run build -w 56-frontend",
     "test": "vitest --disable-console-intercept",
+    "test-once": "vitest run",
     "ci-check": "vitest run && biome lint && eslint",
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
@@ -12,10 +13,7 @@
     "deploy:prod": "wrangler deploy --env production",
     "migrate": "drizzle-kit push --config=infra/drizzle/drizzle.config.ts"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "type": "module",
   "dependencies": {
     "dayjs": "^1.11.13",

@@ -51,7 +51,6 @@ export function newActivityUsecase(
 function getActivities(repo: ActivityRepository) {
   return async (userId: UserId) => {
     const activity = await repo.getActivitiesByUserId(userId);
-    if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return activity;
   };
