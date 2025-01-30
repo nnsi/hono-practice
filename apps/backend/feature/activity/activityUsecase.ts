@@ -8,13 +8,14 @@ import {
 import { ResourceNotFoundError } from "@backend/error";
 import { generateOrder } from "@backend/lib/lexicalOrder";
 
-import type { ActivityRepository } from ".";
-import type { TransactionRunner } from "@backend/infra/db";
 import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
 } from "@dtos/request";
+
+import type { ActivityRepository } from ".";
+import type { TransactionRunner } from "@backend/infra/db";
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;
@@ -50,7 +51,6 @@ export function newActivityUsecase(
 function getActivities(repo: ActivityRepository) {
   return async (userId: UserId) => {
     const activity = await repo.getActivitiesByUserId(userId);
-    if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return activity;
   };

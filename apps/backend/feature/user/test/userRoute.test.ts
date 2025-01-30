@@ -1,8 +1,7 @@
 import { testClient } from "hono/testing";
 
-import { testDB } from "@backend/setup.test";
+import { testDB } from "@backend/test.setup";
 import { expect, test } from "vitest";
-
 
 import { createUserRoute } from "..";
 
@@ -22,7 +21,7 @@ test("POST user / success", async () => {
     },
   });
 
-  expect(res.status).toEqual(204);
+  expect(res.status).toEqual(200);
 });
 
 // /meへのテストはauthRoute.test.tsにあるので省略

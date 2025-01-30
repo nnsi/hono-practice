@@ -40,6 +40,16 @@ export default tseslint.config(
               position: "after",
             },
             {
+              pattern: "@frontend/**,@backend/**,@infra/**",
+              group: "internal",
+              position: "after",
+            },
+            {
+              pattern: "@dtos/**",
+              group: "internal",
+              position: "after",
+            },
+            {
               pattern: "@hooks/**",
               group: "internal",
               position: "after",

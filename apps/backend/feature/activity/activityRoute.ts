@@ -3,12 +3,13 @@ import { Hono } from "hono";
 
 import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/drizzle";
+import { zValidator } from "@hono/zod-validator";
+
 import {
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@dtos/request";
-import { zValidator } from "@hono/zod-validator";
 
 import { newActivityHandler } from "./activityHandler";
 import { newActivityRepository } from "./activityRepository";

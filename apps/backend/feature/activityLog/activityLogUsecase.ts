@@ -8,11 +8,11 @@ import {
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 
+import type { GetActivityStatsResponse } from "@dtos/response";
+
 import type { ActivityRepository } from "../activity";
 import type { ActivityLogRepository } from "./activityLogRepository";
 import type { ActivityQueryService } from "@backend/query";
-import type { GetActivityStatsResponse } from "@dtos/response";
-
 
 export type GetActivityLogsParams = {
   from: Date;
@@ -24,7 +24,7 @@ export type GetStatsParams = {
   to: Date;
 };
 
-type CreateActivityParams = {
+type CreateActivityLogParams = {
   date: string;
   quantity: number;
   memo?: string;
@@ -32,7 +32,7 @@ type CreateActivityParams = {
   activityKindId?: string;
 };
 
-type UpdateActivityParams = {
+type UpdateActivityLogParams = {
   quantity?: number;
   memo?: string;
 };
@@ -50,12 +50,12 @@ export type ActivityLogUsecase = {
     userId: UserId,
     activityId: ActivityId,
     activityKindId: ActivityKindId,
-    params: CreateActivityParams,
+    params: CreateActivityLogParams,
   ) => Promise<ActivityLog>;
   updateActivityLog: (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: UpdateActivityParams,
+    params: UpdateActivityLogParams,
   ) => Promise<ActivityLog>;
   deleteActivityLog: (
     userId: UserId,
@@ -109,7 +109,7 @@ function createActivityLog(
     userId: UserId,
     activityId: ActivityId,
     activityKindId: ActivityKindId,
-    params: CreateActivityParams,
+    params: CreateActivityLogParams,
   ) => {
     const activity = await acRepo.getActivityByIdAndUserId(userId, activityId);
     if (!activity) {
@@ -139,7 +139,7 @@ function updateActivityLog(repo: ActivityLogRepository) {
   return async (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: UpdateActivityParams,
+    params: UpdateActivityLogParams,
   ) => {
     const activityLog = await repo.getActivityLogByIdAndUserId(
       userId,

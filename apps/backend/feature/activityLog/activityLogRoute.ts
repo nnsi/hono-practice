@@ -2,11 +2,12 @@ import { Hono } from "hono";
 
 
 import { newActivityQueryService } from "@backend/query";
+import { zValidator } from "@hono/zod-validator";
+
 import {
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
 } from "@dtos/request";
-import { zValidator } from "@hono/zod-validator";
 
 import { newActivityRepository } from "../activity";
 

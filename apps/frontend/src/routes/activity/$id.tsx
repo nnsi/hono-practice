@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
 
-import {
-  type GetActivitiesResponse,
-  GetActivityLogResponseSchema,
-} from "@dtos/response";
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,6 +8,11 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import dayjs from "dayjs";
+
+import {
+  type GetActivitiesResponse,
+  GetActivityLogResponseSchema,
+} from "@dtos/response";
 
 
 import {

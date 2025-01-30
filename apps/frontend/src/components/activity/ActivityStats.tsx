@@ -1,8 +1,9 @@
 import dayjs from "dayjs";
 
+import type { GetActivityStatsResponse } from "@dtos/response";
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui";
 
-import type { GetActivityStatsResponse } from "@dtos/response";
 
 
 type ActivityStatsProps = {

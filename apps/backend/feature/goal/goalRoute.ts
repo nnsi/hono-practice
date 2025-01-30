@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 
 
+import { zValidator } from "@hono/zod-validator";
+
 import { CreateGoalRequestSchema } from "@dtos/request";
 import { UpdateGoalRequestSchema } from "@dtos/request/UpdateGoalRequest";
-import { zValidator } from "@hono/zod-validator";
 
 import { newGoalHandler } from "./goalHandler";
 import { newGoalRepository } from "./goalRepository";

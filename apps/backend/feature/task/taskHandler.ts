@@ -1,10 +1,10 @@
+import type { CreateTaskRequest, UpdateTaskRequest } from "@dtos/request";
 import { GetTaskResponseSchema, GetTasksResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";
 
 import type { TaskUsecase } from ".";
 import type { TaskId, UserId } from "@backend/domain";
-import type { CreateTaskRequest, UpdateTaskRequest } from "@dtos/request";
 
 export function newTaskHandler(uc: TaskUsecase) {
   return {

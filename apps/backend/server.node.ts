@@ -3,7 +3,6 @@ import * as schema from "@infra/drizzle/schema";
 import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 
-
 import { app } from "./app";
 import { configSchema } from "./config";
 

@@ -2,10 +2,11 @@ import { activities, activityKinds, activityLogs } from "@infra/drizzle/schema";
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
 
+import type { GetActivityStatsResponse } from "@dtos/response";
+
 import dayjs from "../lib/dayjs";
 
 import type { QueryExecutor } from "@backend/infra/drizzle";
-import type { GetActivityStatsResponse } from "@dtos/response";
 
 export type ActivityQueryService = {
   activityStatsQuery: (

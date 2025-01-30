@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 
+import { apiClient } from "@frontend/utils/apiClient";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 
 import {
   type CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@dtos/request/CreateActivityRequest";
+import type { UpdateActivityOrderRequest } from "@dtos/request/UpdateActivityRequest";
 import {
   type GetActivitiesResponse,
   GetActivityResponseSchema,
 } from "@dtos/response/GetActivitiesResponse";
-import { apiClient } from "@frontend/utils/apiClient";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 
 import {
   Accordion,
@@ -35,8 +36,6 @@ import {
 import { mp } from "../../utils";
 
 import { ActivityEditForm } from "./ActivityEditForm";
-
-import type { UpdateActivityOrderRequest } from "@dtos/request/UpdateActivityRequest";
 
 type ActivitySettingsProps = {};
 
@@ -104,6 +103,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
   });
 
   const onSubmit = async (data: CreateActivityRequest) => {
+    console.log(data);
     mutate(data);
   };
 
@@ -126,7 +126,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                     render={({ field }) => (
                       <Input
                         type="text"
-                        className="col-span-3"
+                        className="col-span-4"
                         placeholder="Activity Name"
                         {...field}
                       />
@@ -136,17 +136,22 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                     control={form.control}
                     name="quantityUnit"
                     render={({ field }) => (
-                      <Input type="text" placeholder="Label" {...field} />
+                      <Input
+                        type="text"
+                        className="col-span-2"
+                        placeholder="unit"
+                        {...field}
+                      />
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="emoji"
                     render={({ field }) => (
                       <Input
-                        className="col-span-3"
+                        className="col-span-1"
                         type="text"
-                        placeholder="Description"
+                        placeholder="emoji"
                         {...field}
                       />
                     )}

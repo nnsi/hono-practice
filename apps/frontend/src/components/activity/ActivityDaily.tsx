@@ -5,6 +5,11 @@ import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 
+import type {
+  GetActivitiesResponse,
+  GetActivityLogsResponse,
+} from "@dtos/response";
+
 import {
   Card,
   CardContent,
@@ -15,10 +20,6 @@ import {
 
 import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
 
-import type {
-  GetActivitiesResponse,
-  GetActivityLogsResponse,
-} from "@dtos/response";
 
 type ActivityDailyProps = {
   activities?: GetActivitiesResponse;

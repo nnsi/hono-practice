@@ -7,7 +7,7 @@ export default defineConfig(() => {
   return {
     plugins: [tsconfigPaths()],
     test: {
-      setupFiles: ["./apps/backend/setup.test.ts"],
+      setupFiles: ["./apps/backend/test.setup.ts"],
       env: {
         NODE_ENV: "test",
         JWT_SECRET: "test-jwt",

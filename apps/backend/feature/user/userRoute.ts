@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 
 import { verifyToken } from "@backend/middleware/authMiddleware";
-import { createUserRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
+
+import { createUserRequestSchema } from "@dtos/request";
 
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
@@ -45,15 +46,21 @@ export function createUserRoute() {
       setCookie(c, "auth", token, {
         httpOnly: true,
         secure: NODE_ENV !== "development",
+        sameSite: "None",
       });
 
-      return c.body(null, 204);
+      return c.json({ token });
     })
     .get("/me", async (c) => {
       try {
-        await verifyToken(getCookie(c, "auth") ?? "", c.env.JWT_SECRET);
+        await verifyToken(
+          getCookie(c, "auth") ??
+            c.req.header("Authorization")?.split(" ")[1] ??
+            "",
+          c.env.JWT_SECRET,
+        );
       } catch (e) {
-        return c.body("unauthorized", 401);
+        return c.json({ message: "unauthorized" }, 401);
       }
 
       return c.body(null, 204);

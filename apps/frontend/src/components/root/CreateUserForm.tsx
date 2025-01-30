@@ -1,10 +1,11 @@
+import { apiClient } from "@frontend/utils/apiClient";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import {
   type CreateUserRequest,
   createUserRequestSchema,
 } from "@dtos/request/CreateUserRequest";
-import { apiClient } from "@frontend/utils/apiClient";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 
 import { useAuth } from "@hooks/useAuth";
 
@@ -37,7 +38,10 @@ export const CreateUserForm: React.FC = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      await api.user.$post({ json: data });
+      const res = await api.user.$post({ json: data });
+      const json = await res.json();
+      localStorage.setItem("token", json.token);
+
       await getUser();
     } catch (e) {
       console.error("CreateUserForm", e);
