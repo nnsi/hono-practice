@@ -156,9 +156,7 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
                       />
                     )}
                   />
-                  <Button type="submit" onClick={() => console.log("click")}>
-                    Create
-                  </Button>
+                  <Button type="submit">Create</Button>
                 </div>
               </CardContent>
             </Card>

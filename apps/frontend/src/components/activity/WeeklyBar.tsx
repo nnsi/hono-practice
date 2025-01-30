@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 import dayjs, { type Dayjs } from "dayjs";
@@ -35,6 +35,7 @@ export const WeeklyBar: React.FC<WeeklyBarProps> = ({
   const handleDaySelect = (day: Dayjs) => {
     setCurrentDate(day.toDate());
     onSelect(day.toDate());
+    console.log("handleDaySelect");
   };
 
   const handleWeekChange = (cursor: "prev" | "next") => {
@@ -48,6 +49,21 @@ export const WeeklyBar: React.FC<WeeklyBarProps> = ({
       onMonthChange(newDate.toDate());
     }
   };
+
+  useEffect(() => {
+    function visibilityChange() {
+      if (document.visibilityState === "visible") {
+        const now = dayjs();
+        handleDaySelect(now);
+        setCurrentWeekStart(now.startOf("week"));
+      }
+    }
+
+    document.addEventListener("visibilitychange", visibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", visibilityChange);
+    };
+  }, []);
 
   return (
     <>
