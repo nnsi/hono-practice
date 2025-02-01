@@ -18,7 +18,13 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
       return c.json({ message: err.message }, err.status);
     }
 
-    return c.json({ message: "internal server error", stack: err.stack }, 500);
+    return c.json(
+      {
+        message: "internal server error",
+        stack: c.env.NODE_ENV !== "production" ? err.stack : undefined,
+      },
+      500,
+    );
   });
 
   return app;

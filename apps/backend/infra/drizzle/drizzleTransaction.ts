@@ -4,7 +4,7 @@ import type { QueryExecutor } from "./drizzleInstance";
 export function newDrizzleTransactionRunner(
   db: QueryExecutor,
 ): TransactionRunner {
-  try {
+  if (db.transaction) {
     return {
       async run(repositories, operation) {
         return db.transaction(async (txDb) => {
@@ -15,17 +15,17 @@ export function newDrizzleTransactionRunner(
         });
       },
     };
-  } catch (e) {
-    // NOTE:db.transactionがサポートされてない場合は非トランザクションで実行
-    return {
-      async run(repositories, operation) {
-        return (async () => {
-          const dbRepoArray = repositories.map((repo) => repo.withTx(db));
-          const mergedTxRepos = Object.assign({}, ...dbRepoArray);
-
-          return await operation(mergedTxRepos);
-        })();
-      },
-    };
   }
+
+  // NOTE:db.transactionがサポートされてない場合は非トランザクションで実行
+  return {
+    async run(repositories, operation) {
+      return (async () => {
+        const repoArray = repositories.map((repo) => repo.withTx(db));
+        const mergedRepos = Object.assign({}, ...repoArray);
+
+        return await operation(mergedRepos);
+      })();
+    },
+  };
 }
