@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PopoverClose } from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
@@ -19,15 +18,16 @@ import {
 
 import {
   Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTrigger,
   Form,
   FormControl,
   FormField,
   FormItem,
   Input,
   Label,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -35,8 +35,6 @@ import {
   SelectValue,
   useToast,
 } from "@components/ui";
-
-
 
 type ActivityLogCreateFormProps = {
   activity: GetActivityResponse;
@@ -112,8 +110,8 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
   };
 
   return (
-    <Popover key={activity.id}>
-      <PopoverTrigger asChild>
+    <Dialog key={activity.id}>
+      <DialogTrigger asChild>
         <Button
           variant="outline"
           onMouseDown={handleMouseDown}
@@ -129,11 +127,11 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
           <span className="text-xl w-full">{activity.emoji}</span>
           <span className="text-xs w-full">{activity.name}</span>
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 mt-[-0.5rem]">
+      </DialogTrigger>
+      <DialogContent className="w-80 mt-[-0.5rem]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <p className="mb-3 font-bold">[{activity.name}]を記録する</p>
+            <p className="mb-3 font-bold">Record [{activity.name}]</p>
             <div className="grid grid-cols-3 gap-3 items-center">
               <FormField
                 control={form.control}
@@ -171,16 +169,21 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
                 </div>
               )}
               <div className="col-span-3 text-center">
-                <PopoverClose asChild>
-                  <Button type="submit" variant="secondary" className="w-full">
+                <DialogClose>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {}}
+                  >
                     Record it!
                   </Button>
-                </PopoverClose>
+                </DialogClose>
               </div>
             </div>
           </form>
         </Form>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 };
