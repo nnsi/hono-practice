@@ -14,7 +14,6 @@ import {
   GetActivityLogResponseSchema,
 } from "@dtos/response";
 
-
 import {
   Button,
   Dialog,
@@ -110,17 +109,23 @@ const ActivityModal: React.FC = () => {
       <DialogContent className="flex flex-col w-1/2 max-w-full h-1/2 max-h-full min-w-96">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
-            {dayjs(query.data?.date).format("YYYY-MM-DD")} -
-            {query.data?.activity.name}
+            {dayjs(query.data?.date).format("YYYY-MM-DD")}
           </DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription>
+            <span>{query.data?.activity.name ?? ""}</span>
+            {query.data && (
+              <span className="pl-2">
+                {query.data.activityKind?.name ?? "未指定"}
+              </span>
+            )}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
             <Input
               defaultValue={quantity ?? ""}
               onChange={(e) => setQuantity(Number.parseInt(e.target.value))}
-              className="w-14"
+              className="w-20"
               inputMode="numeric"
             />
             {query.data?.activity.quantityUnit}
