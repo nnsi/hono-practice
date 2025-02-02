@@ -1,21 +1,17 @@
-
-
-import type { GetActivityStatsResponse } from "@dtos/response";
-import type { GetActivitiesResponse } from "@dtos/response/GetActivitiesResponse";
-import type { GetActivityLogsResponse } from "@dtos/response/GetActivityLogsResponse";
+import type {
+  GetActivityStatsResponse,
+  GetActivityLogsResponse,
+} from "@dtos/response";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui";
 
 import { ActivityDaily, ActivityStats } from ".";
-
-
 
 type ActivityTabsProps = {
   mode: "daily" | "statistics";
   date?: Date;
   month?: Date;
   changeMode: (mode: "daily" | "statistics") => void;
-  activities?: GetActivitiesResponse;
   dailyActivityLogs?: GetActivityLogsResponse;
   activityStats?: GetActivityStatsResponse;
 };
@@ -25,7 +21,6 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
   date,
   month,
   changeMode,
-  activities,
   dailyActivityLogs,
   activityStats,
 }) => {
@@ -43,11 +38,7 @@ export const ActivityTabs: React.FC<ActivityTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="daily">
-        <ActivityDaily
-          activities={activities}
-          dailyActivityLogs={dailyActivityLogs}
-          date={date}
-        />
+        <ActivityDaily dailyActivityLogs={dailyActivityLogs} date={date} />
       </TabsContent>
       <TabsContent value="statistics">
         <ActivityStats activityStats={activityStats} month={month} />

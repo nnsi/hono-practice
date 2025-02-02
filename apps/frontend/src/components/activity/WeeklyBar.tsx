@@ -32,10 +32,13 @@ export const WeeklyBar: React.FC<WeeklyBarProps> = ({
     return day.isSame(dayjs(currentDate), "day");
   };
 
+  const isToday = (day: Dayjs) => {
+    return day.isSame(dayjs(), "day");
+  };
+
   const handleDaySelect = (day: Dayjs) => {
     setCurrentDate(day.toDate());
     onSelect(day.toDate());
-    console.log("handleDaySelect");
   };
 
   const handleWeekChange = (cursor: "prev" | "next") => {
@@ -78,7 +81,9 @@ export const WeeklyBar: React.FC<WeeklyBarProps> = ({
                 key={day.unix()}
                 type="button"
                 onClick={() => handleDaySelect(day)}
-                className={`p-1 text-center rounded-md ${isCurrentDate(day) ? "text-blue-500 font-bold" : ""}`}
+                className={`p-1 text-center rounded-md 
+                  ${isToday(day) ? "bg-gray-100" : ""}
+                  ${isCurrentDate(day) ? "text-blue-600 font-bold" : ""}`}
               >
                 {weekDays[i]}
                 <br />

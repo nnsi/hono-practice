@@ -12,7 +12,6 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as TaskImport } from './routes/task'
-import { Route as ProfileImport } from './routes/profile'
 import { Route as GoalImport } from './routes/goal'
 import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
@@ -25,12 +24,6 @@ import { Route as ActivityIdImport } from './routes/activity/$id'
 const TaskRoute = TaskImport.update({
   id: '/task',
   path: '/task',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ProfileRoute = ProfileImport.update({
-  id: '/profile',
-  path: '/profile',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -95,13 +88,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalImport
       parentRoute: typeof rootRoute
     }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileImport
-      parentRoute: typeof rootRoute
-    }
     '/task': {
       id: '/task'
       path: '/task'
@@ -163,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
   '/goal': typeof GoalRoute
-  '/profile': typeof ProfileRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -174,7 +159,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
   '/goal': typeof GoalRoute
-  '/profile': typeof ProfileRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -186,7 +170,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
   '/goal': typeof GoalRoute
-  '/profile': typeof ProfileRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -199,7 +182,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/goal'
-    | '/profile'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -209,7 +191,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/goal'
-    | '/profile'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -219,7 +200,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/goal'
-    | '/profile'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -231,7 +211,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRouteWithChildren
   GoalRoute: typeof GoalRoute
-  ProfileRoute: typeof ProfileRoute
   TaskRoute: typeof TaskRouteWithChildren
 }
 
@@ -239,7 +218,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRouteWithChildren,
   GoalRoute: GoalRoute,
-  ProfileRoute: ProfileRoute,
   TaskRoute: TaskRouteWithChildren,
 }
 
@@ -256,7 +234,6 @@ export const routeTree = rootRoute
         "/",
         "/activity",
         "/goal",
-        "/profile",
         "/task"
       ]
     },
@@ -272,9 +249,6 @@ export const routeTree = rootRoute
     },
     "/goal": {
       "filePath": "goal.tsx"
-    },
-    "/profile": {
-      "filePath": "profile.tsx"
     },
     "/task": {
       "filePath": "task.tsx",

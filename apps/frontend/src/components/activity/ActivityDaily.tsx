@@ -4,11 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
-
-import type {
-  GetActivitiesResponse,
-  GetActivityLogsResponse,
-} from "@dtos/response";
+import type { GetActivityLogsResponse } from "@dtos/response";
 
 import {
   Card,
@@ -18,17 +14,12 @@ import {
   CardTitle,
 } from "@components/ui";
 
-import { ActivityLogCreateForm } from "./ActivityLogCreateForm";
-
-
 type ActivityDailyProps = {
-  activities?: GetActivitiesResponse;
   dailyActivityLogs?: GetActivityLogsResponse;
   date?: Date;
 };
 
 export const ActivityDaily: React.FC<ActivityDailyProps> = ({
-  activities,
   dailyActivityLogs,
   date,
 }) => {
@@ -60,16 +51,6 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
         <CardTitle>{dayjs(date).format("YYYY-MM-DD")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-          {activities?.map((activity) => (
-            <ActivityLogCreateForm
-              key={activity.id}
-              activity={activity}
-              date={date}
-            />
-          ))}
-        </div>
-        <hr />
         {dailyActivityLogs?.map((log) => (
           <Card
             key={log.id}
@@ -100,8 +81,9 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({
             </Link>
           </Card>
         ))}
+        {dailyActivityLogs?.length === 0 && <p>No Activity</p>}
       </CardContent>
-      <CardFooter />
+      <CardFooter className="hidden" />
     </Card>
   );
 };

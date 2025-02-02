@@ -14,7 +14,7 @@ import {
 
 import { Button, useToast } from "@components/ui";
 
-import { ActivityTabs } from "@components/activity";
+import { ActivityList, ActivityTabs } from "@components/activity";
 
 const ActivityPage: React.FC = () => {
   const api = apiClient;
@@ -25,7 +25,7 @@ const ActivityPage: React.FC = () => {
   const [mode, setMode] = useState<"daily" | "statistics">("daily");
   const navigate = useNavigate();
 
-  const activitiesQuery = useQuery({
+  useQuery({
     queryKey: ["activity"],
     queryFn: async () => {
       const res = await api.users.activities.$get();
@@ -100,8 +100,8 @@ const ActivityPage: React.FC = () => {
     },
   });
 
-  const changeMode = (newMode: "daily" | "statistics") => {
-    if (mode === newMode) return;
+  const changeMode = (newMode: "daily" | "statistics", newDate?: Date) => {
+    if (mode === newMode && date === newDate) return;
     setMode(newMode);
     if (newMode === "statistics") {
       queryClient.invalidateQueries({
@@ -112,7 +112,7 @@ const ActivityPage: React.FC = () => {
 
   const handleDateChange = (newDate?: Date) => {
     setDate(newDate);
-    changeMode("daily");
+    changeMode("daily", newDate);
   };
 
   const handleMonthChange = (newMonth?: Date) => {
@@ -140,6 +140,7 @@ const ActivityPage: React.FC = () => {
           >
             Setting
           </Button>
+          <ActivityList date={date} />
         </div>
         <div className="col-span-4">
           <ActivityTabs
@@ -147,7 +148,6 @@ const ActivityPage: React.FC = () => {
             date={date}
             month={month}
             changeMode={changeMode}
-            activities={activitiesQuery.data}
             dailyActivityLogs={dailyActivityLogsQuery.data}
             activityStats={monthlyActivityLogsQuery.data}
           />
