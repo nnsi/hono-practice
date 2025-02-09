@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await apiClient.auth.logout.$get();
       setUser(null);
+      localStorage.removeItem("token");
     } catch (e) {
       return Promise.reject(e);
     }

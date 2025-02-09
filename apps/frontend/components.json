@@ -4,14 +4,16 @@
   "rsc": false,
   "tsx": true,
   "tailwind": {
-    "config": "tailwind.config.js",
-    "css": "frontend/main.css",
+    "config": "./tailwind.config.js",
+    "css": "./main.css",
     "baseColor": "slate",
     "cssVariables": true,
     "prefix": ""
   },
   "aliases": {
-    "components": "@frontend/components",
-    "utils": "@frontend/utils/utils"
+    "components": "@components",
+    "utils": "@frontend/utils",
+    "ui": "@components/ui",
+    "lib": "@frontend/utils"
   }
 }

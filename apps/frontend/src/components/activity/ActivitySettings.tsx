@@ -103,7 +103,6 @@ export const ActivitySettings: React.FC<ActivitySettingsProps> = () => {
   });
 
   const onSubmit = async (data: CreateActivityRequest) => {
-    console.log(data);
     mutate(data);
   };
 

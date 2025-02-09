@@ -7,6 +7,7 @@ import {
   pgTable,
   primaryKey,
   text,
+  time,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -57,6 +58,7 @@ export const tasks = pgTable(
     title: text("title").notNull(),
     done: boolean("done").notNull().default(false),
     memo: text("memo").default(""),
+    due: date("due"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -121,6 +123,7 @@ export const activityLogs = pgTable(
     quantity: customTypeNumeric("quantity"),
     memo: text("memo").default(""),
     date: date("date").notNull(),
+    time: time("done_hour"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
