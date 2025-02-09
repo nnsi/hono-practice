@@ -26,13 +26,11 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  RadioGroup,
+  RadioGroupItem,
   useToast,
 } from "@components/ui";
 
@@ -146,23 +144,27 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
                     name="activityKindId"
                     render={({ field }) => (
                       <FormItem className="flex items-center gap-3">
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="サブカテゴリを選択" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
                             {activity.kinds.map((kind) => (
-                              <SelectItem key={kind.id} value={kind.id}>
-                                {kind.name}
-                              </SelectItem>
+                              <FormItem
+                                key={kind.id}
+                                className="flex items-center space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <RadioGroupItem value={kind.id} />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {kind.name}
+                                </FormLabel>
+                              </FormItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </RadioGroup>
+                        </FormControl>
                       </FormItem>
                     )}
                   />

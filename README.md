@@ -1,5 +1,8 @@
-# 5/6
+# hono-practice
 
-## アーキテクチャ
+## DB migration
 
-クリーンアーキテクチャの練習。ドメインロジックをFE/BEで共通化して、その外側にBE/FEが存在している感じにすると良さそう
+```sh
+npm run db-generate
+npm run db-migrate
+```

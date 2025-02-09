@@ -12,7 +12,6 @@ import {
 
 import type { GoalUsecase } from "./goalUsecase";
 
-
 export type GoalHandler = {
   getGoals: (userId: UserId) => Promise<GetGoalsResponse>;
   getGoal: (GoalId: string, UserId: UserId) => Promise<GetGoalResponse>;
@@ -72,7 +71,6 @@ function createGoal(uc: GoalUsecase) {
 
     const parsedGoal = GetGoalResponseSchema.safeParse(goal);
     if (!parsedGoal.success) {
-      console.log(parsedGoal.error);
       throw new AppError("failed to parse goals", 500);
     }
 

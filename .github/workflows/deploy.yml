@@ -37,13 +37,13 @@ jobs:
 
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master'
-        run: npm run migrate
+        run: npm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
 
       - name: Migrate Neon DB (prod)
         if: github.ref_name == 'release'
-        run: npm run migrate
+        run: npm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 

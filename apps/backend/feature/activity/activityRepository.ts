@@ -61,7 +61,6 @@ function getActivitiesByUserId(db: QueryExecutor) {
       ),
       orderBy: asc(activities.orderIndex),
     });
-    console.log(rows);
 
     return rows.map((r) => {
       return ActivityFactory.create(
