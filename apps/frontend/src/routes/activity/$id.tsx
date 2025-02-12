@@ -23,6 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  RadioGroup,
+  RadioGroupItem,
   Textarea,
   useToast,
 } from "@components/ui";
@@ -35,6 +37,7 @@ const ActivityModal: React.FC = () => {
   const { toast } = useToast();
   const [memo, setMemo] = useState<string>("");
   const [quantity, setQuantity] = useState<number | null>(null);
+  const [activityKindId, setActivityKindId] = useState<string>("");
   const activities = useQuery<GetActivitiesResponse>({
     queryKey: ["activity"],
     enabled: false,
@@ -60,6 +63,7 @@ const ActivityModal: React.FC = () => {
 
       setMemo(parsedJson.data.memo);
       setQuantity(parsedJson.data.quantity);
+      setActivityKindId(parsedJson.data.activityKind?.id ?? "");
       return parsedJson.data;
     },
   });
@@ -87,7 +91,7 @@ const ActivityModal: React.FC = () => {
     }
     await api.users["activity-logs"][":id"].$put({
       param: { id: id },
-      json: { memo, quantity: quantity ?? undefined },
+      json: { memo, quantity: quantity ?? undefined, activityKindId },
     });
     queryClient.invalidateQueries({
       queryKey: [
@@ -120,7 +124,7 @@ const ActivityModal: React.FC = () => {
             )}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-between">
+        <div className="flex justify-start gap-3">
           <div className="flex items-center gap-2">
             <Input
               defaultValue={quantity ?? ""}
@@ -130,6 +134,27 @@ const ActivityModal: React.FC = () => {
             />
             {query.data?.activity.quantityUnit}
           </div>
+          {activity?.kinds && (
+            <RadioGroup
+              className="flex"
+              defaultValue={query.data?.activityKind?.id}
+              onValueChange={(v) => setActivityKindId(v)}
+            >
+              <div className="flex items-center space-y-0 gap-1">
+                <RadioGroupItem value={""} />
+                未指定
+              </div>
+              {activity.kinds.map((kind) => (
+                <div
+                  key={kind.id}
+                  className="flex items-center space-y-0 gap-1"
+                >
+                  <RadioGroupItem value={kind.id} />
+                  {kind.name}
+                </div>
+              ))}
+            </RadioGroup>
+          )}
         </div>
         <Textarea
           defaultValue={query.data?.memo || ""}

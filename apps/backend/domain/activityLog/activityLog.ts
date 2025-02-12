@@ -1,8 +1,11 @@
+import {
+  createActivityKindId,
+  type Activity,
+  type ActivityKind,
+} from "../activity";
 import { type UserId, createUserId } from "../user";
 
 import { type ActivityLogId, createActivityLogId } from "./activityLogId";
-
-import type { Activity, ActivityKind } from "../activity";
 
 type BaseActivityLog = {
   id: ActivityLogId;
@@ -53,6 +56,7 @@ function updateActivityLog(
   params: Partial<
     Omit<BaseActivityLog, "id" | "userId" | "activityId" | "date"> & {
       date: string | Date;
+      activityKindId: string | null;
     }
   >,
 ): ActivityLog {
@@ -62,9 +66,14 @@ function updateActivityLog(
       : new Date(params.date).toISOString().split("T")[0]
     : log.date;
 
+  const activityKind = params.activityKindId
+    ? { id: createActivityKindId(params.activityKindId), name: "" }
+    : log.activityKind;
+
   return {
     ...log,
     ...params,
+    activityKind,
     date,
   };
 }

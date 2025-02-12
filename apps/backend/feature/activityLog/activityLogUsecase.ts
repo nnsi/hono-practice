@@ -35,6 +35,7 @@ type CreateActivityLogParams = {
 type UpdateActivityLogParams = {
   quantity?: number;
   memo?: string;
+  activityKindId?: string;
 };
 
 export type ActivityLogUsecase = {
@@ -150,6 +151,7 @@ function updateActivityLog(repo: ActivityLogRepository) {
     }
 
     const newActivityLog = ActivityLogFactory.update(activityLog, params);
+    console.log(newActivityLog);
 
     return repo.updateActivityLog(newActivityLog);
   };

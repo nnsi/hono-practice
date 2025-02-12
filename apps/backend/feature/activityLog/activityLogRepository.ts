@@ -9,7 +9,6 @@ import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
 import { and, between, eq, isNull } from "drizzle-orm";
 
-
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type ActivityLogRepository = {
@@ -135,6 +134,7 @@ function updateActivityLog(db: QueryExecutor) {
         quantity: activityLog.quantity,
         memo: activityLog.memo,
         date: activityLog.date,
+        activityKindId: activityLog.activityKind?.id,
       })
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
