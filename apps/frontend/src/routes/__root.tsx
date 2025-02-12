@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { CreateUserForm } from "@frontend/components/root/CreateUserForm";
 import { LoginForm } from "@frontend/components/root/LoginForm";
@@ -80,9 +80,8 @@ const AuthenticatedHome: React.FC = () => {
 };
 
 const RootComponent: React.FC = () => {
-  const { user, getUser } = useAuth();
-
-  const [isTriedAuthentication, setIsTrieduthentication] = useState(false);
+  const { user, getUser, requestStatus } = useAuth();
+  console.log(user);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -113,7 +112,6 @@ const RootComponent: React.FC = () => {
     (async () => {
       if (user?.token) return;
       await getUser();
-      setIsTrieduthentication(true);
     })();
 
     return () => {
@@ -124,7 +122,7 @@ const RootComponent: React.FC = () => {
   }, []);
 
   // 認証情報取得中
-  if (!user?.token && !isTriedAuthentication) return <div>Loading...</div>;
+  if (!user?.token && requestStatus === "loading") return <div>Loading...</div>;
 
   // ログイン済み
   if (user?.token) {

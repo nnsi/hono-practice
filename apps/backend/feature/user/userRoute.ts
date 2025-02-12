@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
+import { setCookie } from "hono/cookie";
 
 import { verifyToken } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
@@ -54,9 +54,7 @@ export function createUserRoute() {
     .get("/me", async (c) => {
       try {
         await verifyToken(
-          getCookie(c, "auth") ??
-            c.req.header("Authorization")?.split(" ")[1] ??
-            "",
+          c.req.header("Authorization")?.split(" ")[1] ?? "",
           c.env.JWT_SECRET,
         );
       } catch (e) {
