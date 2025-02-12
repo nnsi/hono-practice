@@ -23,14 +23,14 @@ test("POST login / success -> getMe", async () => {
 
   expect(res.status).toEqual(200);
 
-  const authCookie = res.headers.get("set-cookie");
+  const token = (await res.json()).token;
   const userRoute = createUserRoute();
 
   const userRes = await userRoute.request(
     "/me",
     {
       headers: {
-        cookie: authCookie!,
+        Authorization: `Bearer ${token}`,
       },
     },
     {

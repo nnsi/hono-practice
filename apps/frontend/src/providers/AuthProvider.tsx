@@ -8,12 +8,15 @@ type UserState = {
   token: string | null;
 } | null;
 
+type RequestStatus = "idle" | "loading";
+
 type AuthState =
   | {
       user: UserState;
       getUser: () => Promise<void>;
       login: ({ login_id, password }: LoginRequest) => Promise<void>;
       logout: () => Promise<void>;
+      requestStatus: RequestStatus;
     }
   | undefined;
 
@@ -26,16 +29,21 @@ export const AuthContext = createContext<AuthState>(undefined);
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const token = localStorage.getItem("token");
   const [user, setUser] = useState<UserState>({ token });
+  const [requestStatus, setRequestStatus] = useState<RequestStatus>("loading");
 
   const getUser = async () => {
     try {
+      setRequestStatus("loading");
       const res = await apiClient.user.me.$get();
-      if (res.status === 204) {
-        return setUser({ token });
+      console.log(res.status);
+      if (res.status > 300) {
+        setRequestStatus("idle");
+        return setUser({ token: localStorage.getItem("token") });
       }
     } catch (e) {
       console.log("AuthProvider", e);
     }
+    setRequestStatus("idle");
 
     return setUser(null);
   };
@@ -65,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await apiClient.auth.logout.$get();
       setUser(null);
+      setRequestStatus("idle");
       localStorage.removeItem("token");
     } catch (e) {
       return Promise.reject(e);
@@ -72,7 +81,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, getUser, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, getUser, login, logout, requestStatus }}
+    >
       {children}
     </AuthContext.Provider>
   );
