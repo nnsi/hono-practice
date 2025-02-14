@@ -122,7 +122,10 @@ function createActivityLog(db: QueryExecutor) {
       })
       .returning();
 
-    return ActivityLogFactory.update(activityLog, row);
+    //FIXME: ドメインモデルをZodでバリデーションするまでの暫定処理
+    const { activityKindId, ...rest } = row;
+
+    return ActivityLogFactory.update(activityLog, rest);
   };
 }
 
