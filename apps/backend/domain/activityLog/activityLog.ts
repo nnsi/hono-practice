@@ -68,7 +68,9 @@ function updateActivityLog(
 
   const activityKind = params.activityKindId
     ? { id: createActivityKindId(params.activityKindId), name: "" }
-    : log.activityKind;
+    : params.activityKindId != null
+      ? null
+      : log.activityKind;
 
   return {
     ...log,

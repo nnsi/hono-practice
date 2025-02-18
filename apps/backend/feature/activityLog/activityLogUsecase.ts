@@ -151,7 +151,6 @@ function updateActivityLog(repo: ActivityLogRepository) {
     }
 
     const newActivityLog = ActivityLogFactory.update(activityLog, params);
-    console.log(newActivityLog);
 
     return repo.updateActivityLog(newActivityLog);
   };

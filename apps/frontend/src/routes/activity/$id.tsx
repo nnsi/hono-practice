@@ -137,11 +137,11 @@ const ActivityModal: React.FC = () => {
           {activity?.kinds && (
             <RadioGroup
               className="flex"
-              defaultValue={query.data?.activityKind?.id}
+              defaultValue={query.data?.activityKind?.id ?? ""}
               onValueChange={(v) => setActivityKindId(v)}
             >
               <div className="flex items-center space-y-0 gap-1">
-                <RadioGroupItem value={""} />
+                <RadioGroupItem value="" />
                 未指定
               </div>
               {activity.kinds.map((kind) => (

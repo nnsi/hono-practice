@@ -137,7 +137,7 @@ function updateActivityLog(db: QueryExecutor) {
         quantity: activityLog.quantity,
         memo: activityLog.memo,
         date: activityLog.date,
-        activityKindId: activityLog.activityKind?.id,
+        activityKindId: activityLog.activityKind?.id ?? null,
       })
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
