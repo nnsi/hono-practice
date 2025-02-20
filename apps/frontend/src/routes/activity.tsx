@@ -45,7 +45,7 @@ const ActivityPage: React.FC = () => {
     },
   });
 
-  const dailyActivityLogsQuery = useQuery({
+  useQuery({
     queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
     queryFn: async () => {
       const dateStr = dayjs(date).format("YYYY-MM-DD");
@@ -76,7 +76,7 @@ const ActivityPage: React.FC = () => {
     },
   });
 
-  const monthlyActivityLogsQuery = useQuery({
+  useQuery({
     queryKey: ["activity-stats-monthly", dayjs(month).format("YYYY-MM")],
     queryFn: async () => {
       const monthStr = dayjs(month).format("YYYY-MM");
@@ -148,8 +148,6 @@ const ActivityPage: React.FC = () => {
             date={date}
             month={month}
             changeMode={changeMode}
-            dailyActivityLogs={dailyActivityLogsQuery.data}
-            activityStats={monthlyActivityLogsQuery.data}
           />
           <Outlet />
         </div>

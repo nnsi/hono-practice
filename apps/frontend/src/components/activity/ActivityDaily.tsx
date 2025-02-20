@@ -1,6 +1,6 @@
 import { apiClient } from "@frontend/utils/apiClient";
 import { TrashIcon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
@@ -15,16 +15,16 @@ import {
 } from "@components/ui";
 
 type ActivityDailyProps = {
-  dailyActivityLogs?: GetActivityLogsResponse;
   date?: Date;
 };
 
-export const ActivityDaily: React.FC<ActivityDailyProps> = ({
-  dailyActivityLogs,
-  date,
-}) => {
+export const ActivityDaily: React.FC<ActivityDailyProps> = ({ date }) => {
   const api = apiClient;
   const queryClient = useQueryClient();
+  const { data: dailyActivityLogs } = useQuery<GetActivityLogsResponse>({
+    queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+    enabled: false,
+  });
 
   const handleDelete = async (logId: string) => {
     const res = await api.users["activity-logs"][":id"].$delete({
