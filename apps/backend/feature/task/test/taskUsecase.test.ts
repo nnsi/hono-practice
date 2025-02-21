@@ -44,7 +44,7 @@ describe("TaskUsecase", () => {
             title: "dummy1",
             done: false,
             memo: null,
-            status: "new",
+            type: "new",
           },
           {
             id: taskId2,
@@ -52,7 +52,7 @@ describe("TaskUsecase", () => {
             title: "dummy2",
             done: true,
             memo: "test",
-            status: "new",
+            type: "new",
           },
         ],
         expectError: false,
@@ -107,7 +107,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
-          status: "new",
+          type: "new",
         },
       },
       {
@@ -181,7 +181,7 @@ describe("TaskUsecase", () => {
           title: "new task",
           done: false,
           memo: null,
-          status: "new",
+          type: "new",
         },
         expectError: false,
       },
@@ -245,7 +245,7 @@ describe("TaskUsecase", () => {
           due: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: "persisted",
+          type: "persisted",
         },
         updateParams: { done: true },
         updatedTask: {
@@ -257,7 +257,7 @@ describe("TaskUsecase", () => {
           due: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: "persisted",
+          type: "persisted",
         },
       },
       {
@@ -295,7 +295,7 @@ describe("TaskUsecase", () => {
           due: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: "persisted",
+          type: "persisted",
         },
         updateParams: { done: true },
         updatedTask: {
@@ -307,7 +307,7 @@ describe("TaskUsecase", () => {
           due: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: "persisted",
+          type: "persisted",
         },
         expectError: {
           updateTask: new Error(),
@@ -397,7 +397,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
-          status: "new",
+          type: "new",
         },
       },
       {
@@ -419,7 +419,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
-          status: "new",
+          type: "new",
         },
         expectError: {
           deleteTask: new Error(),

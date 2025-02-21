@@ -41,7 +41,7 @@ function getTasksByUserId(db: QueryExecutor) {
     });
 
     return result.map((r) => {
-      const task = TaskSchema.safeParse({ ...r, status: "persisted" });
+      const task = TaskSchema.safeParse({ ...r, type: "persisted" });
       if (task.error) {
         throw new DomainValidateError("getTasksByUserId: failed to parse task");
       }
@@ -65,7 +65,7 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
       return undefined;
     }
 
-    const task = TaskSchema.safeParse({ ...result, status: "persisted" });
+    const task = TaskSchema.safeParse({ ...result, type: "persisted" });
     if (task.error) {
       throw new DomainValidateError(
         "getTaskByUserIdAndTaskId: failed to parse task",
@@ -82,7 +82,7 @@ function createTask(db: QueryExecutor) {
 
     const persistedTask = TaskSchema.safeParse({
       ...result,
-      status: "persisted",
+      type: "persisted",
     });
     if (persistedTask.error) {
       throw new DomainValidateError("createTask: failed to parse task");
@@ -108,7 +108,7 @@ function updateTask(db: QueryExecutor) {
       return undefined;
     }
 
-    const updateTask = TaskSchema.safeParse({ ...result, status: "persisted" });
+    const updateTask = TaskSchema.safeParse({ ...result, type: "persisted" });
     if (updateTask.error) {
       throw new DomainValidateError("updateTask: failed to parse task");
     }

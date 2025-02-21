@@ -59,7 +59,7 @@ function getTask(repo: TaskRepository) {
 function createTask(repo: TaskRepository) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
     const task = TaskSchema.safeParse({
-      status: "new",
+      type: "new",
       id: createTaskId(),
       userId: userId,
       title: params.title,
@@ -69,7 +69,6 @@ function createTask(repo: TaskRepository) {
     if (task.error) {
       throw new DomainValidateError("createTaskUsecase: failed to parse task");
     }
-    task.data.status = "new";
 
     return await repo.createTask(task.data);
   };

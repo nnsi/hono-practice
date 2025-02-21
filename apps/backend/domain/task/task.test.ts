@@ -7,7 +7,7 @@ import { createTaskId } from "./taskId";
 
 test("parse NewTask", async () => {
   const TestData = {
-    status: "new",
+    type: "new",
     id: createTaskId("00000000-0000-4000-8000-000000000001"),
     userId: createUserId("00000000-0000-4000-8000-000000000002"),
     title: "title",
@@ -18,7 +18,7 @@ test("parse NewTask", async () => {
   const res = TaskSchema.safeParse(TestData);
 
   expect(res.data).toEqual({
-    status: "new",
+    type: "new",
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
     title: "title",
@@ -29,7 +29,7 @@ test("parse NewTask", async () => {
 
 test("parse PersistedTask", async () => {
   const TestData = {
-    status: "persisted",
+    type: "persisted",
     id: createTaskId("00000000-0000-4000-8000-000000000001"),
     userId: createUserId("00000000-0000-4000-8000-000000000002"),
     title: "title",
@@ -45,7 +45,7 @@ test("parse PersistedTask", async () => {
   const res = TaskSchema.safeParse(TestData);
 
   expect(res.data).toEqual({
-    status: "persisted",
+    type: "persisted",
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
     title: "title",
