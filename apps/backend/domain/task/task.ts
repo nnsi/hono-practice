@@ -1,52 +1,31 @@
-import { type UserId, createUserId } from "../user";
+import { z } from "zod";
 
-import { type TaskId, createTaskId } from "./taskId";
+import { UserIdSchema } from "../user";
 
-type BaseTask = {
-  id: TaskId;
-  userId: UserId;
-  title: string;
-  done: boolean;
-  memo: string | null;
-};
+import { TaskIdSchema } from "./taskId";
 
-type PersistedTask = BaseTask & {
-  createdAt: Date;
-  updatedAt: Date;
-};
+export const NewTaskSchema = z.object({
+  status: z.literal("new"),
+  id: TaskIdSchema,
+  userId: UserIdSchema,
+  title: z.string(),
+  done: z.boolean(),
+  memo: z.string().nullable(),
+});
+export type NewTask = z.infer<typeof NewTaskSchema>;
 
-export type Task = BaseTask | PersistedTask;
+export const PersistedTaskSchema = z.object({
+  status: z.literal("persisted"),
+  id: TaskIdSchema,
+  userId: UserIdSchema,
+  title: z.string(),
+  done: z.boolean(),
+  memo: z.string().nullable(),
+  due: z.string().date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+export type PersistedTask = z.infer<typeof PersistedTaskSchema>;
 
-function createTask(params: {
-  id?: string | TaskId;
-  userId: string | UserId;
-  title: string;
-  done: boolean;
-  memo: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-}): Task {
-  const id = createTaskId(params.id);
-  const userId = createUserId(params.userId);
-
-  return {
-    ...params,
-    id,
-    userId,
-  };
-}
-
-function updateTask(
-  task: Task,
-  params: Partial<Omit<BaseTask, "id" | "userId">>,
-): Task {
-  return {
-    ...task,
-    ...params,
-  };
-}
-
-export const TaskFactory = {
-  create: createTask,
-  update: updateTask,
-};
+export const TaskSchema = z.union([NewTaskSchema, PersistedTaskSchema]);
+export type Task = z.infer<typeof TaskSchema>;

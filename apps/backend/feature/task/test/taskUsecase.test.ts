@@ -9,7 +9,6 @@ import { ResourceNotFoundError } from "@backend/error";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-
 import { type TaskRepository, newTaskUsecase } from "..";
 
 describe("TaskUsecase", () => {
@@ -45,6 +44,7 @@ describe("TaskUsecase", () => {
             title: "dummy1",
             done: false,
             memo: null,
+            status: "new",
           },
           {
             id: taskId2,
@@ -52,6 +52,7 @@ describe("TaskUsecase", () => {
             title: "dummy2",
             done: true,
             memo: "test",
+            status: "new",
           },
         ],
         expectError: false,
@@ -67,18 +68,18 @@ describe("TaskUsecase", () => {
     testCases.forEach(({ name, userId, mockReturn, expectError }) => {
       it(`${name}`, async () => {
         if (expectError) {
-          when(repo.getTaskAllByUserId(userId)).thenReject(new Error());
+          when(repo.getTasksByUserId(userId)).thenReject(new Error());
 
           await expect(usecase.getTasks(userId)).rejects.toThrow(Error);
-          return verify(repo.getTaskAllByUserId(userId)).once();
+          return verify(repo.getTasksByUserId(userId)).once();
         }
 
-        when(repo.getTaskAllByUserId(userId)).thenResolve(mockReturn!);
+        when(repo.getTasksByUserId(userId)).thenResolve(mockReturn!);
 
         const result = await usecase.getTasks(userId);
         expect(result).toEqual(mockReturn);
 
-        verify(repo.getTaskAllByUserId(userId)).once();
+        verify(repo.getTasksByUserId(userId)).once();
       });
     });
   });
@@ -106,6 +107,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
+          status: "new",
         },
       },
       {
@@ -179,6 +181,7 @@ describe("TaskUsecase", () => {
           title: "new task",
           done: false,
           memo: null,
+          status: "new",
         },
         expectError: false,
       },
@@ -239,6 +242,10 @@ describe("TaskUsecase", () => {
           title: "title",
           done: false,
           memo: null,
+          due: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: "persisted",
         },
         updateParams: { done: true },
         updatedTask: {
@@ -247,6 +254,10 @@ describe("TaskUsecase", () => {
           title: "title",
           done: true,
           memo: null,
+          due: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: "persisted",
         },
       },
       {
@@ -281,9 +292,23 @@ describe("TaskUsecase", () => {
           title: "title",
           done: false,
           memo: null,
+          due: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: "persisted",
         },
         updateParams: { done: true },
-        updatedTask: undefined,
+        updatedTask: {
+          id: taskId1,
+          userId: userId1,
+          title: "title",
+          done: true,
+          memo: null,
+          due: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: "persisted",
+        },
         expectError: {
           updateTask: new Error(),
         },
@@ -332,6 +357,7 @@ describe("TaskUsecase", () => {
             await expect(
               usecase.updateTask(userId, taskId, updateParams),
             ).rejects.toThrow(Error);
+
             return verify(repo.updateTask(anything())).once();
           }
 
@@ -371,6 +397,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
+          status: "new",
         },
       },
       {
@@ -392,6 +419,7 @@ describe("TaskUsecase", () => {
           title: "dummy",
           done: false,
           memo: null,
+          status: "new",
         },
         expectError: {
           deleteTask: new Error(),
