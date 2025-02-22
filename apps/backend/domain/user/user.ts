@@ -1,33 +1,30 @@
-import { type UserId, createUserId } from "./userId";
+import { z } from "zod";
 
-type BaseUser = {
-  id: UserId;
-  name?: string | null;
-  loginId: string;
-  password: string;
-};
+import { UserIdSchema } from "./userId";
 
-type PersistedUser = BaseUser & {
-  createdAt: Date;
-  updatedAt: Date;
-};
+const BaseUserSchema = z.object({
+  id: UserIdSchema,
+  name: z.string().nullable(),
+  loginId: z.string(),
+  password: z.string(),
+});
 
-export type User = BaseUser | PersistedUser;
+const NewUserSchema = BaseUserSchema.merge(
+  z.object({
+    type: z.literal("new"),
+  }),
+);
 
-function createUser(params: {
-  id?: string | UserId;
-  loginId: string;
-  name?: string | null;
-  password: string;
-}): User {
-  const id = createUserId(params.id);
+const PersistedUserSchema = BaseUserSchema.merge(
+  z.object({
+    type: z.literal("persisted"),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
 
-  return {
-    ...params,
-    id,
-  };
-}
-
-export const UserFactory = {
-  create: createUser,
-};
+export const UserSchema = z.discriminatedUnion("type", [
+  NewUserSchema,
+  PersistedUserSchema,
+]);
+export type User = z.infer<typeof UserSchema>;

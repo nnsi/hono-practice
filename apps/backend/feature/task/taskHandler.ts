@@ -28,7 +28,7 @@ function getTasks(uc: TaskUsecase) {
 
     const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);
     if (!parsedTasks.success) {
-      throw new AppError("failed to parse tasks", 500);
+      throw new AppError("getTasksHandler: failed to parse tasks", 500);
     }
 
     return parsedTasks.data;
@@ -47,7 +47,7 @@ function getTask(uc: TaskUsecase) {
 
     const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
     if (!parsedTask.success) {
-      throw new AppError("failed to parse task", 500);
+      throw new AppError("getTaskHandler: failed to parse task", 500);
     }
 
     return parsedTask.data;
@@ -60,7 +60,7 @@ function createTask(uc: TaskUsecase) {
 
     const parsedTask = GetTaskResponseSchema.safeParse(task);
     if (!parsedTask.success) {
-      throw new AppError("failed to parse task", 500);
+      throw new AppError("createTaskHandler: failed to parse task", 500);
     }
 
     return parsedTask.data;
@@ -79,7 +79,7 @@ function updateTask(uc: TaskUsecase) {
 
     const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
     if (!parsedTask.success) {
-      throw new AppError("failed to parse task", 500);
+      throw new AppError("updateTaskHandler: failed to parse task", 500);
     }
 
     return parsedTask.data;

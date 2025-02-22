@@ -1,18 +1,17 @@
 import {
   type Task,
-  TaskFactory,
   type TaskId,
+  TaskSchema,
   type UserId,
 } from "@backend/domain";
-import { ResourceNotFoundError } from "@backend/error";
+import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
 import { tasks } from "@infra/drizzle/schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
-
 
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type TaskRepository = {
-  getTaskAllByUserId: (userId: UserId) => Promise<Task[]>;
+  getTasksByUserId: (userId: UserId) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,
     taskId: TaskId,
@@ -25,7 +24,7 @@ export type TaskRepository = {
 
 export function newTaskRepository(db: QueryExecutor): TaskRepository {
   return {
-    getTaskAllByUserId: getTaskAllByUserId(db),
+    getTasksByUserId: getTasksByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
@@ -34,24 +33,21 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
   };
 }
 
-function getTaskAllByUserId(db: QueryExecutor) {
+function getTasksByUserId(db: QueryExecutor) {
   return async (userId: UserId) => {
     const result = await db.query.tasks.findMany({
       where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
       orderBy: desc(tasks.createdAt),
     });
 
-    return result.map((r) =>
-      TaskFactory.create({
-        id: r.id,
-        userId: r.userId,
-        title: r.title,
-        done: r.done,
-        memo: r.memo,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      }),
-    );
+    return result.map((r) => {
+      const task = TaskSchema.safeParse({ ...r, type: "persisted" });
+      if (task.error) {
+        throw new DomainValidateError("getTasksByUserId: failed to parse task");
+      }
+
+      return task.data;
+    });
   };
 }
 
@@ -69,7 +65,14 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
       return undefined;
     }
 
-    return TaskFactory.create(result);
+    const task = TaskSchema.safeParse({ ...result, type: "persisted" });
+    if (task.error) {
+      throw new DomainValidateError(
+        "getTaskByUserIdAndTaskId: failed to parse task",
+      );
+    }
+
+    return task.data;
   };
 }
 
@@ -77,11 +80,15 @@ function createTask(db: QueryExecutor) {
   return async (task: Task) => {
     const [result] = await db.insert(tasks).values(task).returning();
 
-    return TaskFactory.create({
-      ...task,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
+    const persistedTask = TaskSchema.safeParse({
+      ...result,
+      type: "persisted",
     });
+    if (persistedTask.error) {
+      throw new DomainValidateError("createTask: failed to parse task");
+    }
+
+    return persistedTask.data;
   };
 }
 
@@ -101,10 +108,12 @@ function updateTask(db: QueryExecutor) {
       return undefined;
     }
 
-    return TaskFactory.create({
-      ...task,
-      updatedAt: result.updatedAt,
-    });
+    const updateTask = TaskSchema.safeParse({ ...result, type: "persisted" });
+    if (updateTask.error) {
+      throw new DomainValidateError("updateTask: failed to parse task");
+    }
+
+    return updateTask.data;
   };
 }
 

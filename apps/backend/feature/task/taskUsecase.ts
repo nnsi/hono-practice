@@ -1,10 +1,11 @@
 import {
+  createTaskId,
+  TaskSchema,
   type Task,
-  TaskFactory,
   type TaskId,
   type UserId,
 } from "@backend/domain";
-import { ResourceNotFoundError } from "@backend/error";
+import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
 
 import type { TaskRepository } from ".";
 
@@ -42,7 +43,7 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
 
 function getTasks(repo: TaskRepository) {
   return async (userId: UserId) => {
-    return await repo.getTaskAllByUserId(userId);
+    return await repo.getTasksByUserId(userId);
   };
 }
 
@@ -57,13 +58,19 @@ function getTask(repo: TaskRepository) {
 
 function createTask(repo: TaskRepository) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
-    const task = TaskFactory.create({
+    const task = TaskSchema.safeParse({
+      type: "new",
+      id: createTaskId(),
       userId: userId,
       title: params.title,
       done: false,
       memo: null,
     });
-    return await repo.createTask(task);
+    if (task.error) {
+      throw new DomainValidateError("createTaskUsecase: failed to parse task");
+    }
+
+    return await repo.createTask(task.data);
   };
 }
 
@@ -74,12 +81,19 @@ function updateTask(repo: TaskRepository) {
     params: UpdateTaskInputParams,
   ) => {
     const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
-    if (!task) throw new ResourceNotFoundError("task not found");
+    if (!task)
+      throw new ResourceNotFoundError("updateTaskUsecase:task not found");
 
-    const newTask = TaskFactory.update(task, params);
+    const newTask = TaskSchema.safeParse({
+      ...task,
+      ...params,
+    });
+    if (newTask.error)
+      throw new DomainValidateError("updateTaskUsecase: failed to parse task");
 
-    const updateTask = await repo.updateTask(newTask);
-    if (!updateTask) throw new ResourceNotFoundError("task not found");
+    const updateTask = await repo.updateTask(newTask.data);
+    if (!updateTask)
+      throw new ResourceNotFoundError("updateTaskUsecasetask not found");
 
     return updateTask;
   };
