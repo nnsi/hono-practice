@@ -2,7 +2,7 @@ import { DomainValidateError } from "@backend/error";
 import { v7 } from "uuid";
 import { z } from "zod";
 
-const goalIdSchema = z.string().uuid();
+export const goalIdSchema = z.string().uuid().brand<"GoalId">();
 
 export type GoalId = z.infer<typeof goalIdSchema>;
 

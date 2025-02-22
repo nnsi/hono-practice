@@ -3,6 +3,7 @@ import {
   type ActivityId,
   type UserId,
   createActivityId,
+  createActivityKindId,
   createUserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
@@ -31,6 +32,13 @@ describe("ActivityUsecase", () => {
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
   const activityId2 = createActivityId("00000000-0000-4000-8000-000000000002");
 
+  const activityKindId1 = createActivityKindId(
+    "00000000-0000-4000-8000-000000000001",
+  );
+  const activityKindId2 = createActivityKindId(
+    "00000000-0000-4000-8000-000000000002",
+  );
+
   const mockActivity: Activity = {
     id: activityId1,
     userId: userId1,
@@ -38,6 +46,7 @@ describe("ActivityUsecase", () => {
     quantityUnit: "km",
     orderIndex: "a",
     kinds: [],
+    type: "new",
   };
 
   const mockActivity2: Activity = {
@@ -47,6 +56,7 @@ describe("ActivityUsecase", () => {
     quantityUnit: "m",
     orderIndex: "b",
     kinds: [],
+    type: "new",
   };
 
   describe("getActivities", () => {
@@ -139,7 +149,6 @@ describe("ActivityUsecase", () => {
         emoji?: string;
         description?: string;
         quantityUnit: string;
-        quantityOption?: number[];
       };
       mockLastOrderIndex: string | undefined;
       mockReturn: Activity;
@@ -171,7 +180,6 @@ describe("ActivityUsecase", () => {
           emoji: "🏊‍♂️",
           description: "Swimming practice",
           quantityUnit: "m",
-          quantityOption: [50, 100, 200],
         },
         mockLastOrderIndex: "a",
         mockReturn: {
@@ -230,7 +238,6 @@ describe("ActivityUsecase", () => {
           description?: string;
           emoji?: string;
         };
-        options: { id?: string; quantity: number }[];
         kinds: { id?: string; name: string }[];
       };
       existingActivity: Activity | undefined;
@@ -248,8 +255,10 @@ describe("ActivityUsecase", () => {
             name: "Sprint Running",
             quantityUnit: "km",
           },
-          options: [{ quantity: 5 }, { quantity: 10 }],
-          kinds: [{ name: "Sprint" }, { name: "Marathon" }],
+          kinds: [
+            { id: activityKindId1, name: "Sprint" },
+            { id: activityKindId2, name: "Marathon" },
+          ],
         },
         existingActivity: mockActivity,
         updatedActivity: {
@@ -267,7 +276,6 @@ describe("ActivityUsecase", () => {
             name: "Sprint Running",
             quantityUnit: "km",
           },
-          options: [],
           kinds: [],
         },
         existingActivity: undefined,

@@ -7,12 +7,6 @@ export const UpdateActivityRequestSchema = z.object({
     quantityUnit: z.string(),
     emoji: z.string().optional(),
   }),
-  options: z.array(
-    z.object({
-      id: z.string().optional(),
-      quantity: z.number(),
-    }),
-  ),
   kinds: z.array(
     z.object({
       id: z.string().optional(),

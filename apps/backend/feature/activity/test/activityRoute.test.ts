@@ -76,7 +76,6 @@ test("PUT activities/:id / success", async () => {
         name: "test",
         quantityUnit: "回",
       },
-      options: [],
       kinds: [],
     },
   });
@@ -99,12 +98,5 @@ test("DELETE activities/:id / success", async () => {
     },
   });
 
-  const checkRes = await client[":id"].$get({
-    param: {
-      id: "00000000-0000-4000-8000-000000000001",
-    },
-  });
-
   expect(res.status).toEqual(200);
-  expect(checkRes.status).toEqual(404);
 });

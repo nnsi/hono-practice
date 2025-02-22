@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import {
   createActivityKindId,
   type Activity,
@@ -20,7 +22,6 @@ type BaseActivityLog = {
 type PersistedActivityLog = BaseActivityLog & {
   createdAt: Date;
   updatedAt: Date;
-  deletedAt: Date | null;
 };
 
 export type ActivityLog = BaseActivityLog | PersistedActivityLog;
@@ -35,7 +36,6 @@ function createActivityLog(params: {
   date: string | Date;
   createdAt?: Date;
   updatedAt?: Date;
-  deletedAt?: Date | null;
 }): ActivityLog {
   const id = createActivityLogId(params.id);
   const userId = createUserId(params.userId);
@@ -84,3 +84,35 @@ export const ActivityLogFactory = {
   create: createActivityLog,
   update: updateActivityLog,
 };
+
+/* zod */
+
+const BaseActivityLogSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  activity: z.string(),
+  activityKind: z.string().nullable(),
+  quantity: z.number().nullable(),
+  memo: z.string().nullish(),
+  date: z.string().date(),
+});
+
+const NewActivityLogSchema = BaseActivityLogSchema.merge(
+  z.object({
+    type: z.literal("new"),
+  }),
+);
+
+const PersistedActivityLogSchema = BaseActivityLogSchema.merge(
+  z.object({
+    type: z.literal("persisted"),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }),
+);
+
+export const ActivityLogSchema = z.discriminatedUnion("type", [
+  NewActivityLogSchema,
+  PersistedActivityLogSchema,
+]);
+export type ZActivityLog = z.infer<typeof ActivityLogSchema>;

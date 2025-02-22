@@ -1,7 +1,7 @@
 import {
   type Activity,
-  ActivityFactory,
   type ActivityId,
+  ActivitySchema,
   type UserId,
   createActivityId,
 } from "@backend/domain";
@@ -72,7 +72,8 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
-      const activity = ActivityFactory.create({
+      const activity = ActivitySchema.parse({
+        id: createActivityId(),
         userId: userId,
         name: params.name,
         label: params.label,
@@ -80,6 +81,8 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         description: params.description,
         quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
+        kinds: [],
+        type: "new",
       });
 
       return await txRepo.createActivity(activity);
@@ -100,7 +103,13 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
-      const newActivity = ActivityFactory.update(activity, params);
+      const kinds = params.kinds.length > 0 ? params.kinds : activity.kinds;
+
+      const newActivity = ActivitySchema.parse({
+        ...activity,
+        ...params.activity,
+        kinds,
+      });
 
       return await txRepo.updateActivity(newActivity);
     });

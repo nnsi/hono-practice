@@ -1,8 +1,8 @@
 import {
-  ActivityFactory,
   type ActivityLog,
   ActivityLogFactory,
   type ActivityLogId,
+  ActivitySchema,
   type UserId,
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";
@@ -58,10 +58,11 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      const activity = ActivityFactory.create(
-        r.activity,
-        r.activityKind ? [r.activityKind] : undefined,
-      );
+      const activity = ActivitySchema.parse({
+        ...r.activity,
+        kinds: [r.activityKind],
+        type: "persisted",
+      });
 
       return ActivityLogFactory.create({
         ...r,
@@ -92,10 +93,11 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       return undefined;
     }
 
-    const activity = ActivityFactory.create(
-      row.activity,
-      row.activityKind ? [row.activityKind] : undefined,
-    );
+    const activity = ActivitySchema.parse({
+      ...row.activity,
+      kinds: [row.activityKind],
+      type: "persisted",
+    });
 
     return ActivityLogFactory.create({
       ...row,

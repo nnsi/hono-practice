@@ -13,8 +13,6 @@ import {
 import type { ActivityUsecase } from ".";
 import type { ActivityId, UserId } from "@backend/domain";
 
-
-
 export function newActivityHandler(uc: ActivityUsecase) {
   return {
     getActivities: getActivities(uc),
@@ -32,6 +30,7 @@ function getActivities(uc: ActivityUsecase) {
 
     const parsedActivities = GetActivitiesResponseSchema.safeParse(activities);
     if (!parsedActivities.success) {
+      console.log(parsedActivities.error);
       throw new AppError("failed to parse activities", 500);
     }
 

@@ -6,12 +6,6 @@ export const GetActivityResponseSchema = z.object({
   emoji: z.string().optional(),
   description: z.string().optional(),
   quantityUnit: z.string(),
-  options: z.array(
-    z.object({
-      id: z.string(),
-      quantity: z.number(),
-    }),
-  ),
   kinds: z.array(
     z.object({
       id: z.string(),
