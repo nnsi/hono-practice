@@ -70,6 +70,7 @@ test("PUT activityLogs/:id / success", async () => {
     },
     json: {
       quantity: 2,
+      activityKindId: "00000000-0000-4000-8000-000000000002",
     },
   });
 
