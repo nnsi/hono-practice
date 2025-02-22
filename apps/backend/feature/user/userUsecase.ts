@@ -1,7 +1,11 @@
 import { sign } from "hono/jwt";
 
-
-import { type User, UserFactory, type UserId } from "@backend/domain";
+import {
+  createUserId,
+  UserSchema,
+  type User,
+  type UserId,
+} from "@backend/domain";
 import { AppError } from "@backend/error";
 import bcrypt from "bcryptjs";
 
@@ -32,7 +36,11 @@ function createUser(repo: UserRepository) {
   return async (params: CreateUserInputParams, secret: string) => {
     const cryptedPassword = bcrypt.hashSync(params.password, 12);
     params.password = cryptedPassword;
-    const newUser = UserFactory.create({ ...params });
+    const newUser = UserSchema.parse({
+      type: "new",
+      id: createUserId(),
+      ...params,
+    });
 
     const user = await repo.createUser(newUser);
 

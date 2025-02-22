@@ -18,7 +18,6 @@ const NewTaskSchema = BaseTaskSchema.merge(
     type: z.literal("new"),
   }),
 );
-export type NewTask = z.infer<typeof NewTaskSchema>;
 
 const PersistedTaskSchema = BaseTaskSchema.merge(
   z.object({
@@ -27,7 +26,6 @@ const PersistedTaskSchema = BaseTaskSchema.merge(
     updatedAt: z.date(),
   }),
 );
-export type PersistedTask = z.infer<typeof PersistedTaskSchema>;
 
 export const TaskSchema = z.discriminatedUnion("type", [
   NewTaskSchema,

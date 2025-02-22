@@ -1,7 +1,6 @@
-import { type User, UserFactory, type UserId } from "@backend/domain";
+import { UserSchema, type User, type UserId } from "@backend/domain";
 import { users } from "@infra/drizzle/schema";
-import { and, eq } from "drizzle-orm";
-
+import { eq } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
@@ -23,7 +22,7 @@ export function newUserRepository(db: QueryExecutor): UserRepository {
 
 function createUser(db: QueryExecutor) {
   return async (user: User) => {
-    const result = await db
+    const [result] = await db
       .insert(users)
       .values({
         id: user.id,
@@ -33,7 +32,9 @@ function createUser(db: QueryExecutor) {
       })
       .returning();
 
-    const persistedUser = UserFactory.create(result[0]);
+    console.log(result);
+
+    const persistedUser = UserSchema.parse({ ...result, type: "persisted" });
 
     return persistedUser;
   };
@@ -41,17 +42,15 @@ function createUser(db: QueryExecutor) {
 
 function getUserById(db: QueryExecutor) {
   return async (userId: string) => {
-    const result = await db
-      .select()
-      .from(users)
-      .where(and(eq(users.id, userId)))
-      .execute();
+    const result = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
 
-    if (result.length === 0) {
+    if (!result) {
       return undefined;
     }
 
-    const user = UserFactory.create(result[0]);
+    const user = UserSchema.parse({ ...result, type: "persisted" });
 
     return user;
   };
@@ -59,17 +58,15 @@ function getUserById(db: QueryExecutor) {
 
 function getUserByLoginId(db: QueryExecutor) {
   return async (loginId: string) => {
-    const result = await db
-      .select()
-      .from(users)
-      .where(and(eq(users.loginId, loginId)))
-      .execute();
+    const result = await db.query.users.findFirst({
+      where: eq(users.loginId, loginId),
+    });
 
-    if (result.length === 0) {
+    if (!result) {
       return undefined;
     }
 
-    const user = UserFactory.create(result[0]);
+    const user = UserSchema.parse({ ...result, type: "persisted" });
 
     return user;
   };
