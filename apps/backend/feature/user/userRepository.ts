@@ -32,8 +32,6 @@ function createUser(db: QueryExecutor) {
       })
       .returning();
 
-    console.log(result);
-
     const persistedUser = UserSchema.parse({ ...result, type: "persisted" });
 
     return persistedUser;

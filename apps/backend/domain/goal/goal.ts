@@ -1,7 +1,8 @@
 import { DomainValidateError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
+import { z } from "zod";
 
-import { type GoalId, createGoalId } from "./goalId";
+import { type GoalId, createGoalId, goalIdSchema } from "./goalId";
 
 import type { ActivityId, TaskId, UserId } from "../";
 
@@ -214,3 +215,7 @@ export const GoalFactory = {
     return "progress";
   },
 };
+
+export const GoalSchema = z.object({
+  id: goalIdSchema,
+});

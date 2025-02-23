@@ -43,8 +43,6 @@ function getActivityLogs(uc: ActivityLogUsecase) {
 
     const parsedLogs = GetActivityLogsResponseSchema.safeParse(logs);
     if (!parsedLogs.success) {
-      console.log(logs);
-      console.log(parsedLogs.error);
       throw new AppError("Invalid parse");
     }
 

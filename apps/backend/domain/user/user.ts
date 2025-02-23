@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { UserIdSchema } from "./userId";
+import { userIdSchema } from "./userId";
 
 const BaseUserSchema = z.object({
-  id: UserIdSchema,
+  id: userIdSchema,
   name: z.string().nullable(),
   loginId: z.string(),
   password: z.string(),

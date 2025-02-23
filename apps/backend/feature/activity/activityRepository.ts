@@ -173,7 +173,6 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
       },
       where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
     });
-    console.log(row);
 
     if (!row) return row;
 

@@ -81,7 +81,6 @@ const AuthenticatedHome: React.FC = () => {
 
 const RootComponent: React.FC = () => {
   const { user, getUser, requestStatus } = useAuth();
-  console.log(user);
 
   const { toast } = useToast();
   const navigate = useNavigate();

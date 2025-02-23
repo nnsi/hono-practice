@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { UserIdSchema } from "../user";
+import { userIdSchema } from "../user";
 
-import { TaskIdSchema } from "./taskId";
+import { taskIdSchema } from "./taskId";
 
 const BaseTaskSchema = z.object({
-  id: TaskIdSchema,
-  userId: UserIdSchema,
+  id: taskIdSchema,
+  userId: userIdSchema,
   title: z.string(),
   done: z.boolean(),
   memo: z.string().nullable(),

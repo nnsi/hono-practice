@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 import { ActivityKindSchema, ActivitySchema } from "../activity";
-import { UserIdSchema } from "../user";
+import { userIdSchema } from "../user";
 
 import { activityLogIdSchema } from "./activityLogId";
 
 const BaseActivityLogSchema = z.object({
   id: activityLogIdSchema,
-  userId: UserIdSchema,
+  userId: userIdSchema,
   activity: ActivitySchema,
   activityKind: z.union([ActivityKindSchema, z.null().optional()]),
   quantity: z.number().nullable(),

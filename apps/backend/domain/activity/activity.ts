@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { UserIdSchema } from "../user";
+import { userIdSchema } from "../user";
 
-import { ActivityIdSchema } from "./activityId";
-import { ActivityKindIdSchema } from "./activityKindId";
+import { activityIdSchema } from "./activityId";
+import { activityKindIdSchema } from "./activityKindId";
 
 export const ActivityKindSchema = z.object({
-  id: ActivityKindIdSchema,
+  id: activityKindIdSchema,
   name: z.string(),
   orderIndex: z.string().nullish(),
 });
@@ -15,8 +15,8 @@ export type ActivityKind = z.infer<typeof ActivityKindSchema>;
 export const ActivityKindsSchema = z.array(ActivityKindSchema);
 
 const BaseActivitySchema = z.object({
-  id: ActivityIdSchema,
-  userId: UserIdSchema,
+  id: activityIdSchema,
+  userId: userIdSchema,
   name: z.string(),
   label: z.string().nullish(),
   emoji: z.string().nullish(),

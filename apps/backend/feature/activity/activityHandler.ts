@@ -30,7 +30,6 @@ function getActivities(uc: ActivityUsecase) {
 
     const parsedActivities = GetActivitiesResponseSchema.safeParse(activities);
     if (!parsedActivities.success) {
-      console.log(parsedActivities.error);
       throw new AppError("failed to parse activities", 500);
     }
 

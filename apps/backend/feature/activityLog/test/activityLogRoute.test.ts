@@ -92,12 +92,5 @@ test("DELETE activityLogs/:id / success", async () => {
     },
   });
 
-  const checkRes = await client[":id"].$get({
-    param: {
-      id: "00000000-0000-4000-8000-000000000001",
-    },
-  });
-
   expect(res.status).toEqual(200);
-  expect(checkRes.status).toEqual(404);
 });

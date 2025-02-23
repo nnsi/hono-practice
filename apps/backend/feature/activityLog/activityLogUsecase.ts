@@ -164,7 +164,6 @@ function updateActivityLog(
         )
       : { kinds: [activityLog.activityKind] };
     if (!activityKindParent) {
-      console.log(activityKindParent, params.activityKindId);
       throw new ResourceNotFoundError("activity kind not found");
     }
 
