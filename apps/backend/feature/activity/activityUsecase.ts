@@ -1,9 +1,10 @@
 import {
   type Activity,
-  ActivityFactory,
   type ActivityId,
+  createActivityEntity,
   type UserId,
   createActivityId,
+  createActivityKindId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 import { generateOrder } from "@backend/lib/lexicalOrder";
@@ -72,7 +73,8 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
-      const activity = ActivityFactory.create({
+      const activity = createActivityEntity({
+        id: createActivityId(),
         userId: userId,
         name: params.name,
         label: params.label,
@@ -80,6 +82,8 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         description: params.description,
         quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
+        kinds: [],
+        type: "new",
       });
 
       return await txRepo.createActivity(activity);
@@ -100,7 +104,20 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
-      const newActivity = ActivityFactory.update(activity, params);
+      const inputKinds = params.kinds.map((k) => {
+        return {
+          id: k.id ?? createActivityKindId(),
+          name: k.name,
+        };
+      });
+
+      const kinds = inputKinds.length > 0 ? inputKinds : activity.kinds;
+
+      const newActivity = createActivityEntity({
+        ...activity,
+        ...params.activity,
+        kinds,
+      });
 
       return await txRepo.updateActivity(newActivity);
     });

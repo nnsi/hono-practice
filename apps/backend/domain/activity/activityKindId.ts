@@ -1,15 +1,15 @@
 import { DomainValidateError } from "@backend/error";
-import { v7, validate } from "uuid";
+import { v7 } from "uuid";
+import { z } from "zod";
 
+export const activityKindIdSchema = z.string().uuid().brand<"ActivityKindId">();
 
-export type ActivityKindId = string & { readonly __brand: unique symbol };
+export type ActivityKindId = z.infer<typeof activityKindIdSchema>;
 
 export function createActivityKindId(id?: string): ActivityKindId {
-  if (id && !validate(id)) {
+  const parsedId = activityKindIdSchema.safeParse(id ?? v7());
+  if (!parsedId.success) {
     throw new DomainValidateError("createActivityKindId: Invalid id");
   }
-
-  const activityKindId = id ?? v7();
-
-  return activityKindId as ActivityKindId;
+  return parsedId.data;
 }

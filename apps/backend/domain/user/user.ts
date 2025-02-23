@@ -1,10 +1,11 @@
+import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
-import { UserIdSchema } from "./userId";
+import { userIdSchema } from "./userId";
 
 const BaseUserSchema = z.object({
-  id: UserIdSchema,
-  name: z.string().nullable(),
+  id: userIdSchema,
+  name: z.string().nullish(),
   loginId: z.string(),
   password: z.string(),
 });
@@ -28,3 +29,13 @@ export const UserSchema = z.discriminatedUnion("type", [
   PersistedUserSchema,
 ]);
 export type User = z.infer<typeof UserSchema>;
+export type UserInput = z.input<typeof UserSchema>;
+
+export function createUserEntity(params: UserInput): User {
+  const parsedEntity = UserSchema.safeParse(params);
+  if (parsedEntity.error) {
+    throw new DomainValidateError("createUserEntity: invalid params");
+  }
+
+  return parsedEntity.data;
+}

@@ -1,8 +1,8 @@
 import { sign } from "hono/jwt";
 
 import {
+  createUserEntity,
   createUserId,
-  UserSchema,
   type User,
   type UserId,
 } from "@backend/domain";
@@ -36,7 +36,7 @@ function createUser(repo: UserRepository) {
   return async (params: CreateUserInputParams, secret: string) => {
     const cryptedPassword = bcrypt.hashSync(params.password, 12);
     params.password = cryptedPassword;
-    const newUser = UserSchema.parse({
+    const newUser = createUserEntity({
       type: "new",
       id: createUserId(),
       ...params,

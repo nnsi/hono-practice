@@ -1,9 +1,9 @@
 import {
-  ActivityFactory,
   type ActivityLog,
-  ActivityLogFactory,
   type ActivityLogId,
+  createActivityEntity,
   type UserId,
+  createActivityLogEntity,
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
@@ -58,17 +58,17 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      const activity = ActivityFactory.create(
-        r.activity,
-        r.activityKind ? [r.activityKind] : undefined,
-      );
+      const activity = createActivityEntity({
+        ...r.activity,
+        kinds: r.activityKind ? [r.activityKind] : [],
+        type: "persisted",
+      });
 
-      return ActivityLogFactory.create({
+      return createActivityLogEntity({
         ...r,
-        date: dayjs(r.date).format("YYYY-MM-DD"),
-        memo: r.memo || "",
-        activity: activity,
-        activityKind: activity.kinds?.[0] || null,
+        activity,
+        activityKind: activity.kinds[0],
+        type: "persisted",
       });
     });
   };
@@ -92,17 +92,17 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       return undefined;
     }
 
-    const activity = ActivityFactory.create(
-      row.activity,
-      row.activityKind ? [row.activityKind] : undefined,
-    );
+    const activity = createActivityEntity({
+      ...row.activity,
+      kinds: row.activityKind ? [row.activityKind] : [],
+      type: "persisted",
+    });
 
-    return ActivityLogFactory.create({
+    return createActivityLogEntity({
       ...row,
-      date: dayjs(row.date).format("YYYY-MM-DD"),
-      memo: row.memo || "",
-      activity: activity,
-      activityKind: activity.kinds?.[0] || null,
+      activity,
+      activityKind: activity.kinds[0],
+      type: "persisted",
     });
   };
 }
@@ -122,10 +122,11 @@ function createActivityLog(db: QueryExecutor) {
       })
       .returning();
 
-    //FIXME: ドメインモデルをZodでバリデーションするまでの暫定処理
-    const { activityKindId, ...rest } = row;
-
-    return ActivityLogFactory.update(activityLog, rest);
+    return createActivityLogEntity({
+      ...activityLog,
+      ...row,
+      type: "persisted",
+    });
   };
 }
 
@@ -142,9 +143,10 @@ function updateActivityLog(db: QueryExecutor) {
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
 
-    return ActivityLogFactory.update(activityLog, {
+    return createActivityLogEntity({
+      ...activityLog,
       ...row,
-      date: dayjs(row.date).format("YYYY-MM-DD"),
+      type: "persisted",
     });
   };
 }

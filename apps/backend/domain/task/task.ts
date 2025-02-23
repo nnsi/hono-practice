@@ -1,16 +1,17 @@
+import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
-import { UserIdSchema } from "../user";
+import { userIdSchema } from "../user";
 
-import { TaskIdSchema } from "./taskId";
+import { taskIdSchema } from "./taskId";
 
 const BaseTaskSchema = z.object({
-  id: TaskIdSchema,
-  userId: UserIdSchema,
+  id: taskIdSchema,
+  userId: userIdSchema,
   title: z.string(),
   done: z.boolean(),
   memo: z.string().nullable(),
-  due: z.string().date().nullable().optional(),
+  due: z.string().date().nullish(),
 });
 
 const NewTaskSchema = BaseTaskSchema.merge(
@@ -32,3 +33,13 @@ export const TaskSchema = z.discriminatedUnion("type", [
   PersistedTaskSchema,
 ]);
 export type Task = z.infer<typeof TaskSchema>;
+type TaskInput = z.input<typeof TaskSchema>;
+
+export function createTaskEntity(params: TaskInput): Task {
+  const parsedEntity = TaskSchema.safeParse(params);
+  if (parsedEntity.error) {
+    throw new DomainValidateError("createTaskEntity: invalid params");
+  }
+
+  return parsedEntity.data;
+}

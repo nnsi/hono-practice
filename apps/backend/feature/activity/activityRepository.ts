@@ -1,6 +1,7 @@
 import {
+  ActivityKindsSchema,
+  createActivityEntity,
   type Activity,
-  ActivityFactory,
   type ActivityId,
   type ActivityKindId,
   type UserId,
@@ -63,21 +64,24 @@ function getActivitiesByUserId(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      return ActivityFactory.create(
-        {
-          id: r.id,
-          userId: r.userId,
-          name: r.name,
-          label: r.label || "",
-          emoji: r.emoji || "",
-          description: r.description || "",
-          quantityUnit: r.quantityUnit || "",
-          orderIndex: r.orderIndex || "",
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        },
-        r.kinds,
-      );
+      const kinds = ActivityKindsSchema.parse(r.kinds ?? []);
+
+      const activity = createActivityEntity({
+        id: r.id,
+        userId: r.userId,
+        name: r.name,
+        label: r.label || "",
+        emoji: r.emoji || "",
+        description: r.description || "",
+        quantityUnit: r.quantityUnit || "",
+        orderIndex: r.orderIndex || "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        kinds: kinds,
+        type: "persisted",
+      });
+
+      return activity;
     });
   };
 }
@@ -99,21 +103,24 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      return ActivityFactory.create(
-        {
-          id: r.id,
-          userId: r.userId,
-          name: r.name,
-          label: r.label || "",
-          emoji: r.emoji || "",
-          description: r.description || "",
-          quantityUnit: r.quantityUnit || "",
-          orderIndex: r.orderIndex || "",
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        },
-        r.kinds,
-      );
+      const kinds = ActivityKindsSchema.parse(r.kinds);
+
+      const activity = createActivityEntity({
+        id: r.id,
+        userId: r.userId,
+        name: r.name,
+        label: r.label || "",
+        emoji: r.emoji || "",
+        description: r.description || "",
+        quantityUnit: r.quantityUnit || "",
+        orderIndex: r.orderIndex || "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        kinds: kinds,
+        type: "persisted",
+      });
+
+      return activity;
     });
   };
 }
@@ -135,21 +142,24 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
     });
     if (!row) return row;
 
-    return ActivityFactory.create(
-      {
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        label: row.label || "",
-        emoji: row.emoji || "",
-        description: row.description || "",
-        quantityUnit: row.quantityUnit || "",
-        orderIndex: row.orderIndex || "",
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      },
-      row.kinds,
-    );
+    const kinds = ActivityKindsSchema.parse(row.kinds);
+
+    const activity = createActivityEntity({
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      label: row.label || "",
+      emoji: row.emoji || "",
+      description: row.description || "",
+      quantityUnit: row.quantityUnit || "",
+      orderIndex: row.orderIndex || "",
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      kinds: kinds,
+      type: "persisted",
+    });
+
+    return activity;
   };
 }
 
@@ -157,32 +167,33 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
   return async (userId: UserId, activityKindId: ActivityKindId) => {
     const row = await db.query.activities.findFirst({
       with: {
-        kinds: true,
+        kinds: {
+          where: eq(activityKinds.id, activityKindId),
+        },
       },
-      where: and(
-        eq(activities.userId, userId),
-        eq(activityKinds.id, activityKindId),
-        isNull(activities.deletedAt),
-      ),
+      where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
     });
 
     if (!row) return row;
 
-    return ActivityFactory.create(
-      {
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        label: row.label || "",
-        emoji: row.emoji || "",
-        description: row.description || "",
-        quantityUnit: row.quantityUnit || "",
-        orderIndex: row.orderIndex || "",
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      },
-      row.kinds,
-    );
+    const kinds = ActivityKindsSchema.parse(row.kinds);
+
+    const activity = createActivityEntity({
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      label: row.label || "",
+      emoji: row.emoji || "",
+      description: row.description || "",
+      quantityUnit: row.quantityUnit || "",
+      orderIndex: row.orderIndex || "",
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      kinds: kinds,
+      type: "persisted",
+    });
+
+    return activity;
   };
 }
 
@@ -201,7 +212,7 @@ function createActivity(db: QueryExecutor) {
   return async (activity: Activity): Promise<Activity> => {
     const { kinds, ..._activity } = activity;
 
-    const row = await db
+    const [result] = await db
       .insert(activities)
       .values({
         ..._activity,
@@ -210,21 +221,28 @@ function createActivity(db: QueryExecutor) {
       .returning();
 
     if (!kinds || kinds.length === 0) {
-      return ActivityFactory.create(row[0]);
+      return createActivityEntity({ ...result, kinds: [], type: "persisted" });
     }
 
-    const rows = await db
+    const activityKindResults = await db
       .insert(activityKinds)
       .values(
         kinds.map((kind) => ({
-          activityId: row[0].id,
+          id: kind.id,
+          activityId: result.id,
           name: kind.name,
           orderIndex: kind.orderIndex || null,
         })),
       )
       .returning();
 
-    return ActivityFactory.create(row[0], rows);
+    const parsedActivityKinds = ActivityKindsSchema.parse(activityKindResults);
+
+    return createActivityEntity({
+      ...result,
+      kinds: parsedActivityKinds,
+      type: "persisted",
+    });
   };
 }
 

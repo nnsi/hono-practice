@@ -1,98 +1,58 @@
-import { type UserId, createUserId } from "../user";
+import { DomainValidateError } from "@backend/error";
+import { z } from "zod";
 
-import {
-  type ActivityId,
-  type ActivityKindId,
-  createActivityId,
-  createActivityKindId,
-} from ".";
+import { userIdSchema } from "../user";
 
-export type ActivityKind = {
-  id: ActivityKindId;
-  name: string;
-  orderIndex?: string | null;
-};
+import { activityIdSchema } from "./activityId";
+import { activityKindIdSchema } from "./activityKindId";
 
-type BaseActivity = {
-  id: ActivityId;
-  userId: UserId;
-  name: string;
-  label?: string | null;
-  emoji?: string | null;
-  description?: string | null;
-  quantityUnit: string | null;
-  options?: [];
-  orderIndex: string | null;
-  kinds?: ActivityKind[];
-};
+export const ActivityKindSchema = z.object({
+  id: activityKindIdSchema,
+  name: z.string(),
+  orderIndex: z.string().nullish(),
+});
+export type ActivityKind = z.infer<typeof ActivityKindSchema>;
 
-type PersistedActivity = BaseActivity & {
-  createdAt: Date;
-  updatedAt: Date;
-};
+export const ActivityKindsSchema = z.array(ActivityKindSchema);
 
-export type Activity = BaseActivity | PersistedActivity;
+const BaseActivitySchema = z.object({
+  id: activityIdSchema,
+  userId: userIdSchema,
+  name: z.string(),
+  label: z.string().nullish(),
+  emoji: z.string().nullish(),
+  description: z.string().nullish(),
+  quantityUnit: z.string().nullable(),
+  orderIndex: z.string().nullish(),
+  kinds: z.array(ActivityKindSchema),
+});
 
-function createActivity(
-  params: {
-    id?: string | ActivityId;
-    userId: string | UserId;
-    name: string;
-    label?: string | null;
-    emoji?: string | null;
-    description?: string | null;
-    quantityUnit: string | null;
-    orderIndex: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
-  },
-  kinds?: {
-    id: string | ActivityKindId;
-    name: string;
-    orderIndex?: string | null;
-  }[],
-): Activity {
-  const id = createActivityId(params.id);
-  const userId = createUserId(params.userId);
+const NewActivitySchema = BaseActivitySchema.merge(
+  z.object({
+    type: z.literal("new"),
+  }),
+);
 
-  return {
-    ...params,
-    options: [],
-    id,
-    userId,
-    kinds: kinds
-      ? kinds.map((kind) => ({ ...kind, id: createActivityKindId(kind.id) }))
-      : [],
-  };
+const PersistedActivitySchema = BaseActivitySchema.merge(
+  z.object({
+    type: z.literal("persisted"),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export const ActivitySchema = z.discriminatedUnion("type", [
+  NewActivitySchema,
+  PersistedActivitySchema,
+]);
+export type Activity = z.infer<typeof ActivitySchema>;
+export type ActivityInput = z.input<typeof ActivitySchema>;
+
+export function createActivityEntity(params: ActivityInput): Activity {
+  const parsedEntity = ActivitySchema.safeParse(params);
+  if (parsedEntity.error) {
+    throw new DomainValidateError("createActivityEntity: invalid params");
+  }
+
+  return parsedEntity.data;
 }
-
-function updateActivity(
-  activity: Activity,
-  params: {
-    activity: Partial<Omit<BaseActivity, "id" | "userId">>;
-    kinds?: { id?: string; name: string }[];
-  },
-): Activity {
-  return {
-    ...activity,
-    ...params.activity,
-    kinds: params.kinds
-      ? params.kinds.map((kind) => ({
-          ...kind,
-          id: createActivityKindId(kind.id),
-        }))
-      : activity.kinds,
-    updatedAt: new Date(),
-  };
-}
-
-export const ActivityFactory = {
-  create: createActivity,
-  update: updateActivity,
-  kind: {
-    create: (params: { id?: string; name?: string }) => ({
-      id: createActivityKindId(params.id),
-      name: params.name || "",
-    }),
-  },
-};

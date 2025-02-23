@@ -93,6 +93,12 @@ async function seed() {
       name: "test-sub",
       orderIndex: "a",
     },
+    {
+      id: "00000000-0000-4000-8000-000000000002",
+      activityId: "00000000-0000-4000-8000-000000000001",
+      name: "test-sub-2",
+      orderIndex: "z",
+    },
   ]);
 
   await testDB.insert(schema.activityLogs).values([

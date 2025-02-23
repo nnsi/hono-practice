@@ -21,6 +21,7 @@
       "@dtos/*": ["packages/types/*"],
       "@hooks/*": ["apps/frontend/src/hooks/*"],
       "@infra/*": ["infra/*"],
+      "@domain/*": ["apps/backend/domain/*"],
       "@components/*": ["apps/frontend/src/components/*"]
     }
   },

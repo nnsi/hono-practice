@@ -13,8 +13,6 @@ import {
 import type { ActivityUsecase } from ".";
 import type { ActivityId, UserId } from "@backend/domain";
 
-
-
 export function newActivityHandler(uc: ActivityUsecase) {
   return {
     getActivities: getActivities(uc),

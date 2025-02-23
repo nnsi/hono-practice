@@ -13,7 +13,6 @@ import {
   GetActivityResponseSchema,
 } from "@dtos/response";
 
-
 import { Button, Form, FormField, Input } from "@components/ui";
 
 import { mp } from "../../utils";
@@ -38,10 +37,6 @@ export const ActivityEditForm: React.FC<ActivityEditFormProps> = ({
         quantityUnit: activity.quantityUnit,
         emoji: activity.emoji,
       },
-      options: activity.options.map((option) => ({
-        id: option.id,
-        quantity: option.quantity,
-      })),
       kinds: activity.kinds.map((kind) => ({
         id: kind.id,
         name: kind.name,
