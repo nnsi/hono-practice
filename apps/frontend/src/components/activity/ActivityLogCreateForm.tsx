@@ -135,7 +135,12 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
                 control={form.control}
                 name="quantity"
                 render={({ field }) => (
-                  <Input type="number" inputMode="numeric" {...field} />
+                  <Input
+                    type="number"
+                    className="col-span-2"
+                    inputMode="numeric"
+                    {...field}
+                  />
                 )}
               />
               <Label className="col-span-1">{activity.quantityUnit}</Label>
