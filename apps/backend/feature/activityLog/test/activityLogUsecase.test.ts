@@ -62,6 +62,7 @@ describe("ActivityLogUsecase", () => {
     quantityUnit: "km",
     orderIndex: "1",
     kinds: [mockActivityKind],
+    type: "new",
   };
 
   const mockActivityLog: ActivityLog = {
@@ -72,6 +73,7 @@ describe("ActivityLogUsecase", () => {
     memo: "Good run",
     activity: mockActivity,
     activityKind: mockActivity.kinds![0],
+    type: "new",
   };
 
   describe("getActivityLogs", () => {

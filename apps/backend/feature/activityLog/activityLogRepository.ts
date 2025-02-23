@@ -1,8 +1,8 @@
 import {
   type ActivityLog,
-  ActivityLogFactory,
   type ActivityLogId,
   ActivitySchema,
+  ActivityLogSchema,
   type UserId,
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";
@@ -60,16 +60,15 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
     return rows.map((r) => {
       const activity = ActivitySchema.parse({
         ...r.activity,
-        kinds: [r.activityKind],
+        kinds: r.activityKind ? [r.activityKind] : [],
         type: "persisted",
       });
 
-      return ActivityLogFactory.create({
+      return ActivityLogSchema.parse({
         ...r,
-        date: dayjs(r.date).format("YYYY-MM-DD"),
-        memo: r.memo || "",
-        activity: activity,
-        activityKind: activity.kinds?.[0] || null,
+        activity,
+        activityKind: activity.kinds[0],
+        type: "persisted",
       });
     });
   };
@@ -95,16 +94,15 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
 
     const activity = ActivitySchema.parse({
       ...row.activity,
-      kinds: [row.activityKind],
+      kinds: row.activityKind ? [row.activityKind] : [],
       type: "persisted",
     });
 
-    return ActivityLogFactory.create({
+    return ActivityLogSchema.parse({
       ...row,
-      date: dayjs(row.date).format("YYYY-MM-DD"),
-      memo: row.memo || "",
-      activity: activity,
-      activityKind: activity.kinds?.[0] || null,
+      activity,
+      activityKind: activity.kinds[0],
+      type: "persisted",
     });
   };
 }
@@ -124,10 +122,11 @@ function createActivityLog(db: QueryExecutor) {
       })
       .returning();
 
-    //FIXME: ドメインモデルをZodでバリデーションするまでの暫定処理
-    const { activityKindId, ...rest } = row;
-
-    return ActivityLogFactory.update(activityLog, rest);
+    return ActivityLogSchema.parse({
+      ...activityLog,
+      ...row,
+      type: "persisted",
+    });
   };
 }
 
@@ -144,9 +143,10 @@ function updateActivityLog(db: QueryExecutor) {
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
 
-    return ActivityLogFactory.update(activityLog, {
+    return ActivityLogSchema.parse({
+      ...activityLog,
       ...row,
-      date: dayjs(row.date).format("YYYY-MM-DD"),
+      type: "persisted",
     });
   };
 }

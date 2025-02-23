@@ -167,14 +167,13 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
   return async (userId: UserId, activityKindId: ActivityKindId) => {
     const row = await db.query.activities.findFirst({
       with: {
-        kinds: true,
+        kinds: {
+          where: eq(activityKinds.id, activityKindId),
+        },
       },
-      where: and(
-        eq(activities.userId, userId),
-        eq(activityKinds.id, activityKindId),
-        isNull(activities.deletedAt),
-      ),
+      where: and(eq(activities.userId, userId), isNull(activities.deletedAt)),
     });
+    console.log(row);
 
     if (!row) return row;
 

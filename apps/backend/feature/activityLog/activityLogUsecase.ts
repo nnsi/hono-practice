@@ -2,8 +2,10 @@ import {
   type ActivityId,
   type ActivityKindId,
   type ActivityLog,
-  ActivityLogFactory,
   type ActivityLogId,
+  ActivityLogSchema,
+  createActivityKindId,
+  createActivityLogId,
   type UserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
@@ -77,7 +79,7 @@ export function newActivityLogUsecase(
     getActivityLogs: getActivityLogs(repo),
     getActivityLog: getActivityLog(repo),
     createActivityLog: createActivityLog(repo, acRepo),
-    updateActivityLog: updateActivityLog(repo),
+    updateActivityLog: updateActivityLog(repo, acRepo),
     deleteActivityLog: deleteActivityLog(repo),
     getStats: getStats(qs),
   };
@@ -123,20 +125,25 @@ function createActivityLog(
     const activityKind =
       activity.kinds.find((kind) => kind.id === activityKindId) || null;
 
-    const activityLog = ActivityLogFactory.create({
+    const activityLog = ActivityLogSchema.parse({
+      id: createActivityLogId(),
       userId,
       date: new Date(params.date),
       quantity: params.quantity,
       memo: params.memo,
       activity: activity,
       activityKind: activityKind!,
+      type: "new",
     });
 
     return repo.createActivityLog(activityLog);
   };
 }
 
-function updateActivityLog(repo: ActivityLogRepository) {
+function updateActivityLog(
+  repo: ActivityLogRepository,
+  acRepo: ActivityRepository,
+) {
   return async (
     userId: UserId,
     activityLogId: ActivityLogId,
@@ -150,7 +157,26 @@ function updateActivityLog(repo: ActivityLogRepository) {
       throw new ResourceNotFoundError("activity log not found");
     }
 
-    const newActivityLog = ActivityLogFactory.update(activityLog, params);
+    const activityKindParent = params.activityKindId
+      ? await acRepo.getActivityByUserIdAndActivityKindId(
+          userId,
+          createActivityKindId(params.activityKindId),
+        )
+      : { kinds: [activityLog.activityKind] };
+    if (!activityKindParent) {
+      console.log(activityKindParent, params.activityKindId);
+      throw new ResourceNotFoundError("activity kind not found");
+    }
+
+    const activityKind =
+      activityKindParent.kinds.find((ak) => ak?.id === params.activityKindId) ||
+      null;
+
+    const newActivityLog = ActivityLogSchema.parse({
+      ...activityLog,
+      ...params,
+      activityKind,
+    });
 
     return repo.updateActivityLog(newActivityLog);
   };

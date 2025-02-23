@@ -14,7 +14,7 @@ export const GetActivityLogResponseSchema = z.object({
       id: z.string(),
       name: z.string(),
     })
-    .nullable(),
+    .nullish(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   memo: z.string(),
