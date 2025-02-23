@@ -37,7 +37,9 @@ export const users = pgTable(
     loginId: text("login_id").unique().notNull(),
     name: text("name"),
     password: text("password").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow()

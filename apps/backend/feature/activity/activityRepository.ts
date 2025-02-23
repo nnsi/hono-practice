@@ -1,6 +1,6 @@
 import {
   ActivityKindsSchema,
-  ActivitySchema,
+  createActivityEntity,
   type Activity,
   type ActivityId,
   type ActivityKindId,
@@ -66,7 +66,7 @@ function getActivitiesByUserId(db: QueryExecutor) {
     return rows.map((r) => {
       const kinds = ActivityKindsSchema.parse(r.kinds ?? []);
 
-      const activity = ActivitySchema.parse({
+      const activity = createActivityEntity({
         id: r.id,
         userId: r.userId,
         name: r.name,
@@ -105,7 +105,7 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
     return rows.map((r) => {
       const kinds = ActivityKindsSchema.parse(r.kinds);
 
-      const activity = ActivitySchema.parse({
+      const activity = createActivityEntity({
         id: r.id,
         userId: r.userId,
         name: r.name,
@@ -144,7 +144,7 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
 
     const kinds = ActivityKindsSchema.parse(row.kinds);
 
-    const activity = ActivitySchema.parse({
+    const activity = createActivityEntity({
       id: row.id,
       userId: row.userId,
       name: row.name,
@@ -178,7 +178,7 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
 
     const kinds = ActivityKindsSchema.parse(row.kinds);
 
-    const activity = ActivitySchema.parse({
+    const activity = createActivityEntity({
       id: row.id,
       userId: row.userId,
       name: row.name,
@@ -221,7 +221,7 @@ function createActivity(db: QueryExecutor) {
       .returning();
 
     if (!kinds || kinds.length === 0) {
-      return ActivitySchema.parse({ ...result, kinds: [], type: "persisted" });
+      return createActivityEntity({ ...result, kinds: [], type: "persisted" });
     }
 
     const activityKindResults = await db
@@ -238,7 +238,7 @@ function createActivity(db: QueryExecutor) {
 
     const parsedActivityKinds = ActivityKindsSchema.parse(activityKindResults);
 
-    return ActivitySchema.parse({
+    return createActivityEntity({
       ...result,
       kinds: parsedActivityKinds,
       type: "persisted",

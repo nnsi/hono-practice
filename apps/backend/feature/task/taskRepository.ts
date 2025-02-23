@@ -1,4 +1,5 @@
 import {
+  createTaskEntity,
   type Task,
   type TaskId,
   TaskSchema,
@@ -41,12 +42,9 @@ function getTasksByUserId(db: QueryExecutor) {
     });
 
     return result.map((r) => {
-      const task = TaskSchema.safeParse({ ...r, type: "persisted" });
-      if (task.error) {
-        throw new DomainValidateError("getTasksByUserId: failed to parse task");
-      }
+      const task = createTaskEntity({ ...r, type: "persisted" });
 
-      return task.data;
+      return task;
     });
   };
 }
@@ -65,14 +63,9 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
       return undefined;
     }
 
-    const task = TaskSchema.safeParse({ ...result, type: "persisted" });
-    if (task.error) {
-      throw new DomainValidateError(
-        "getTaskByUserIdAndTaskId: failed to parse task",
-      );
-    }
+    const task = createTaskEntity({ ...result, type: "persisted" });
 
-    return task.data;
+    return task;
   };
 }
 
@@ -108,12 +101,9 @@ function updateTask(db: QueryExecutor) {
       return undefined;
     }
 
-    const updateTask = TaskSchema.safeParse({ ...result, type: "persisted" });
-    if (updateTask.error) {
-      throw new DomainValidateError("updateTask: failed to parse task");
-    }
+    const updateTask = createTaskEntity({ ...result, type: "persisted" });
 
-    return updateTask.data;
+    return updateTask;
   };
 }
 

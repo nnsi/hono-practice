@@ -1,3 +1,4 @@
+import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
 import { userIdSchema } from "../user";
@@ -21,8 +22,8 @@ const BaseActivitySchema = z.object({
   label: z.string().nullish(),
   emoji: z.string().nullish(),
   description: z.string().nullish(),
-  quantityUnit: z.string(),
-  orderIndex: z.string().optional(),
+  quantityUnit: z.string().nullable(),
+  orderIndex: z.string().nullish(),
   kinds: z.array(ActivityKindSchema),
 });
 
@@ -45,3 +46,13 @@ export const ActivitySchema = z.discriminatedUnion("type", [
   PersistedActivitySchema,
 ]);
 export type Activity = z.infer<typeof ActivitySchema>;
+export type ActivityInput = z.input<typeof ActivitySchema>;
+
+export function createActivityEntity(params: ActivityInput): Activity {
+  const parsedEntity = ActivitySchema.safeParse(params);
+  if (parsedEntity.error) {
+    throw new DomainValidateError("createActivityEntity: invalid params");
+  }
+
+  return parsedEntity.data;
+}

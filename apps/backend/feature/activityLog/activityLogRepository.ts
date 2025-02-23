@@ -1,9 +1,9 @@
 import {
   type ActivityLog,
   type ActivityLogId,
-  ActivitySchema,
-  ActivityLogSchema,
+  createActivityEntity,
   type UserId,
+  createActivityLogEntity,
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
@@ -58,13 +58,13 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
     });
 
     return rows.map((r) => {
-      const activity = ActivitySchema.parse({
+      const activity = createActivityEntity({
         ...r.activity,
         kinds: r.activityKind ? [r.activityKind] : [],
         type: "persisted",
       });
 
-      return ActivityLogSchema.parse({
+      return createActivityLogEntity({
         ...r,
         activity,
         activityKind: activity.kinds[0],
@@ -92,13 +92,13 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       return undefined;
     }
 
-    const activity = ActivitySchema.parse({
+    const activity = createActivityEntity({
       ...row.activity,
       kinds: row.activityKind ? [row.activityKind] : [],
       type: "persisted",
     });
 
-    return ActivityLogSchema.parse({
+    return createActivityLogEntity({
       ...row,
       activity,
       activityKind: activity.kinds[0],
@@ -122,7 +122,7 @@ function createActivityLog(db: QueryExecutor) {
       })
       .returning();
 
-    return ActivityLogSchema.parse({
+    return createActivityLogEntity({
       ...activityLog,
       ...row,
       type: "persisted",
@@ -143,7 +143,7 @@ function updateActivityLog(db: QueryExecutor) {
       .where(eq(activityLogs.id, activityLog.id))
       .returning();
 
-    return ActivityLogSchema.parse({
+    return createActivityLogEntity({
       ...activityLog,
       ...row,
       type: "persisted",

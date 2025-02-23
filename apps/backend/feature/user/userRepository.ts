@@ -1,4 +1,4 @@
-import { UserSchema, type User, type UserId } from "@backend/domain";
+import { createUserEntity, type User, type UserId } from "@backend/domain";
 import { users } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -32,7 +32,7 @@ function createUser(db: QueryExecutor) {
       })
       .returning();
 
-    const persistedUser = UserSchema.parse({ ...result, type: "persisted" });
+    const persistedUser = createUserEntity({ ...result, type: "persisted" });
 
     return persistedUser;
   };
@@ -48,7 +48,7 @@ function getUserById(db: QueryExecutor) {
       return undefined;
     }
 
-    const user = UserSchema.parse({ ...result, type: "persisted" });
+    const user = createUserEntity({ ...result, type: "persisted" });
 
     return user;
   };
@@ -64,7 +64,7 @@ function getUserByLoginId(db: QueryExecutor) {
       return undefined;
     }
 
-    const user = UserSchema.parse({ ...result, type: "persisted" });
+    const user = createUserEntity({ ...result, type: "persisted" });
 
     return user;
   };

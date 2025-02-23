@@ -3,8 +3,8 @@ import {
   type ActivityKindId,
   type ActivityLog,
   type ActivityLogId,
-  ActivityLogSchema,
   createActivityKindId,
+  createActivityLogEntity,
   createActivityLogId,
   type UserId,
 } from "@backend/domain";
@@ -125,7 +125,7 @@ function createActivityLog(
     const activityKind =
       activity.kinds.find((kind) => kind.id === activityKindId) || null;
 
-    const activityLog = ActivityLogSchema.parse({
+    const activityLog = createActivityLogEntity({
       id: createActivityLogId(),
       userId,
       date: new Date(params.date),
@@ -171,7 +171,7 @@ function updateActivityLog(
       activityKindParent.kinds.find((ak) => ak?.id === params.activityKindId) ||
       null;
 
-    const newActivityLog = ActivityLogSchema.parse({
+    const newActivityLog = createActivityLogEntity({
       ...activityLog,
       ...params,
       activityKind,

@@ -1,3 +1,4 @@
+import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
 import { ActivityKindSchema, ActivitySchema } from "../activity";
@@ -38,3 +39,13 @@ export const ActivityLogSchema = z.discriminatedUnion("type", [
   PersistedActivityLogSchema,
 ]);
 export type ActivityLog = z.infer<typeof ActivityLogSchema>;
+export type ActivityLogInput = z.input<typeof ActivityLogSchema>;
+
+export function createActivityLogEntity(params: ActivityLogInput): ActivityLog {
+  const parsedEntity = ActivityLogSchema.safeParse(params);
+  if (parsedEntity.error) {
+    throw new DomainValidateError("createActivityLogEntity: invalid params");
+  }
+
+  return parsedEntity.data;
+}

@@ -1,11 +1,11 @@
 import {
+  createTaskEntity,
   createTaskId,
-  TaskSchema,
   type Task,
   type TaskId,
   type UserId,
 } from "@backend/domain";
-import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
+import { ResourceNotFoundError } from "@backend/error";
 
 import type { TaskRepository } from ".";
 
@@ -58,7 +58,7 @@ function getTask(repo: TaskRepository) {
 
 function createTask(repo: TaskRepository) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
-    const task = TaskSchema.safeParse({
+    const task = createTaskEntity({
       type: "new",
       id: createTaskId(),
       userId: userId,
@@ -66,11 +66,8 @@ function createTask(repo: TaskRepository) {
       done: false,
       memo: null,
     });
-    if (task.error) {
-      throw new DomainValidateError("createTaskUsecase: failed to parse task");
-    }
 
-    return await repo.createTask(task.data);
+    return await repo.createTask(task);
   };
 }
 
@@ -84,14 +81,12 @@ function updateTask(repo: TaskRepository) {
     if (!task)
       throw new ResourceNotFoundError("updateTaskUsecase:task not found");
 
-    const newTask = TaskSchema.safeParse({
+    const newTask = createTaskEntity({
       ...task,
       ...params,
     });
-    if (newTask.error)
-      throw new DomainValidateError("updateTaskUsecase: failed to parse task");
 
-    const updateTask = await repo.updateTask(newTask.data);
+    const updateTask = await repo.updateTask(newTask);
     if (!updateTask)
       throw new ResourceNotFoundError("updateTaskUsecasetask not found");
 
