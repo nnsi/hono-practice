@@ -1,29 +1,45 @@
-import { AppError } from "@backend/error";
+import { loginRequestSchema } from "@dtos/request";
 
-import type { LoginRequest } from "@dtos/request";
-import { LoginResponseSchema } from "@dtos/response";
+import type { AuthUsecase } from "./authUsecase";
 
-import type { AuthUsecase } from "./";
-
-export function newAuthHandler(authUsecase: AuthUsecase) {
-  return {
-    login: login(authUsecase),
-  };
+export interface AuthHandler {
+  login(params: { login_id: string; password: string }): Promise<{
+    token: string;
+    refreshToken: string;
+    payload: { userId: string; exp: number };
+    res: { token: string; refreshToken: string };
+  }>;
+  refreshToken(token: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }>;
+  logout(userId: string): Promise<{ message: string }>;
 }
 
-function login(authUsecase: AuthUsecase) {
-  return async (params: LoginRequest, secret: string) => {
-    const { login_id, password } = params;
+export function newAuthHandler(uc: AuthUsecase): AuthHandler {
+  return {
+    async login(params) {
+      const { login_id, password } = loginRequestSchema.parse(params);
+      const { accessToken, refreshToken } = await uc.login(login_id, password);
 
-    const user = await authUsecase.login(login_id, password);
+      return {
+        token: accessToken,
+        refreshToken,
+        payload: {
+          userId: login_id,
+          exp: Math.floor(Date.now() / 1000) + 15 * 60,
+        },
+        res: { token: accessToken, refreshToken },
+      };
+    },
 
-    const { token, payload } = await authUsecase.getToken(user, secret);
+    async refreshToken(token) {
+      return await uc.refreshToken(token);
+    },
 
-    const res = LoginResponseSchema.safeParse(user);
-    if (!res.success) {
-      throw new AppError("failed to parse user", 500);
-    }
-
-    return { token, payload, res: { token } };
+    async logout(userId) {
+      await uc.logout(userId);
+      return { message: "success" };
+    },
   };
 }

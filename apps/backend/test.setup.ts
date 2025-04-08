@@ -43,6 +43,17 @@ async function seed() {
     name: "test",
   });
 
+  await testDB.insert(schema.refreshTokens).values({
+    id: "00000000-0000-4000-8000-000000000001",
+    userId: TEST_USER_ID,
+    token: "test-refresh-token",
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    revokedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  });
+
   await testDB.insert(schema.tasks).values([
     {
       id: "00000000-0000-4000-8000-000000000001",
