@@ -216,10 +216,9 @@ describe("AuthRoute Integration Tests", () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as {
-        message: string;
+        token: string;
         refreshToken: string;
       };
-      expect(body.message).toBe("success");
       const newRefreshToken = body.refreshToken;
       expect(newRefreshToken).toEqual(expect.any(String));
       expect(newRefreshToken).not.toBe(validPlainRefreshToken);

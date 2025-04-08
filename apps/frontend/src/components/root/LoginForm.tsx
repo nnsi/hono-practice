@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
 import {
@@ -24,6 +25,7 @@ import {
 
 export const LoginForm: React.FC = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
@@ -36,6 +38,8 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginRequest) => {
     try {
       await login(data);
+      // ログイン成功時にホームページにリダイレクト
+      navigate({ to: "/" });
     } catch (e) {
       console.error("LoginForm:", e);
     }
@@ -70,7 +74,11 @@ export const LoginForm: React.FC = () => {
                 <FormItem className="w-full">
                   <FormLabel>パスワード</FormLabel>
                   <FormControl>
-                    <Input placeholder="パスワード" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="パスワード"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

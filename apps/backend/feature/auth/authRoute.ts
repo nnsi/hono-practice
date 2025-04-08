@@ -97,7 +97,7 @@ export function createAuthRoute() {
           sameSite: "None",
         });
 
-        return c.json({ message: "success", refreshToken });
+        return c.json({ token: accessToken, refreshToken });
       } catch (error) {
         if (
           error instanceof Error &&

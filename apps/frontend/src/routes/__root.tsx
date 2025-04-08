@@ -80,7 +80,7 @@ const AuthenticatedHome: React.FC = () => {
 };
 
 const RootComponent: React.FC = () => {
-  const { user, getUser, requestStatus } = useAuth();
+  const { user, getUser, requestStatus, refreshToken } = useAuth();
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -93,10 +93,16 @@ const RootComponent: React.FC = () => {
         variant: "destructive",
       });
     }
-    function handleUnauthorized() {
-      navigate({
-        to: "/",
-      });
+    async function handleUnauthorized() {
+      try {
+        // トークンリフレッシュを試みる
+        await refreshToken();
+      } catch (e) {
+        // リフレッシュに失敗した場合のみログインページにリダイレクト
+        navigate({
+          to: "/",
+        });
+      }
     }
     function handleDisablePinchZoom(e: TouchEvent) {
       if (e.touches.length > 1) {
