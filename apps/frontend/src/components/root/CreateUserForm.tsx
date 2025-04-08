@@ -1,5 +1,6 @@
 import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
 import {
@@ -26,6 +27,7 @@ import {
 export const CreateUserForm: React.FC = () => {
   const api = apiClient;
   const { getUser } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm<CreateUserRequest>({
     resolver: zodResolver(createUserRequestSchema),
@@ -43,6 +45,8 @@ export const CreateUserForm: React.FC = () => {
       localStorage.setItem("token", json.token);
 
       await getUser();
+      // ユーザー作成成功時にホームページにリダイレクト
+      navigate({ to: "/" });
     } catch (e) {
       console.error("CreateUserForm", e);
     }
@@ -90,7 +94,11 @@ export const CreateUserForm: React.FC = () => {
                 <FormItem className="w-full">
                   <FormLabel>パスワード</FormLabel>
                   <FormControl>
-                    <Input placeholder="パスワード" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="パスワード"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

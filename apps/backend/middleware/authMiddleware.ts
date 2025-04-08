@@ -19,8 +19,9 @@ export async function authMiddleware(c: HonoContext, next: Next) {
   try {
     const { JWT_SECRET } = c.env;
     const payload = await verifyToken(jwt, JWT_SECRET);
+
     c.set("jwtPayload", payload);
-    c.set("userId", createUserId(payload.id as string));
+    c.set("userId", createUserId(payload.userId as string));
   } catch (e) {
     throw new AuthError("unauthorized");
   }
