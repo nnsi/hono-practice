@@ -1,13 +1,15 @@
+import { DomainValidateError } from "@backend/error";
+import {
+  refreshTokenSchema,
+  type RefreshToken,
+  type RefreshTokenInput,
+} from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq, isNull } from "drizzle-orm";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
-import type {
-  RefreshToken,
-  RefreshTokenInput,
-} from "@domain/auth/refreshToken";
 
 export interface RefreshTokenRepository {
   create(input: RefreshTokenInput): Promise<RefreshToken>;
@@ -26,7 +28,7 @@ export function newRefreshTokenRepository(
       // トークンをハッシュ化
       const hashedToken = await bcrypt.hash(input.token, 10);
 
-      const [token] = await db
+      const [result] = await db
         .insert(refreshTokens)
         .values({
           id: crypto.randomUUID(),
@@ -40,19 +42,42 @@ export function newRefreshTokenRepository(
         })
         .returning();
 
-      return token;
+      // DBの結果をドメインスキーマでパース
+      const parsedToken = refreshTokenSchema.safeParse(result);
+      if (!parsedToken.success) {
+        console.error(
+          "Failed to parse refresh token from DB:",
+          parsedToken.error,
+        );
+        throw new DomainValidateError(
+          "RefreshTokenRepository.create: Failed to parse token from DB",
+        );
+      }
+
+      return parsedToken.data;
     },
 
     async findByToken(token: string): Promise<RefreshToken | null> {
-      const tokens = await db
+      const results = await db
         .select()
         .from(refreshTokens)
         .where(isNull(refreshTokens.deletedAt));
 
-      for (const storedToken of tokens) {
-        const isValid = await bcrypt.compare(token, storedToken.token);
-        if (isValid && storedToken.revokedAt === null) {
-          return storedToken;
+      for (const storedRawToken of results) {
+        const isValid = await bcrypt.compare(token, storedRawToken.token);
+        if (isValid && storedRawToken.revokedAt === null) {
+          // DBの結果をドメインスキーマでパース
+          const parsedToken = refreshTokenSchema.safeParse(storedRawToken);
+          if (!parsedToken.success) {
+            console.error(
+              "Failed to parse refresh token from DB:",
+              parsedToken.error,
+            );
+            // エラーが見つかってもループは継続し、他のトークンを試す
+            continue;
+          }
+          // 有効でパース成功したトークンを返す
+          return parsedToken.data;
         }
       }
 
