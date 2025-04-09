@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 
-
 import { newActivityQueryService } from "@backend/query";
 import { zValidator } from "@hono/zod-validator";
 
@@ -21,10 +20,6 @@ export function createActivityLogRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newActivityLogRepository>;
-        acRepo: ReturnType<typeof newActivityRepository>;
-        qs: ReturnType<typeof newActivityQueryService>;
-        uc: ReturnType<typeof newActivityLogUsecase>;
         h: ReturnType<typeof newActivityLogHandler>;
       };
     }
@@ -39,10 +34,6 @@ export function createActivityLogRoute() {
     const uc = newActivityLogUsecase(repo, acRepo, qs);
     const h = newActivityLogHandler(uc);
 
-    c.set("repo", repo);
-    c.set("acRepo", acRepo);
-    c.set("qs", qs);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();

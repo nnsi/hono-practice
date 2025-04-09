@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 
-
 import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/drizzle";
 import { zValidator } from "@hono/zod-validator";
@@ -16,15 +15,11 @@ import { newActivityRepository } from "./activityRepository";
 import { newActivityUsecase } from "./activityUsecase";
 
 import type { AppContext } from "../../context";
-import type { TransactionRunner } from "@backend/infra/db";
 
 export function createActivityRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newActivityRepository>;
-        tx: TransactionRunner;
-        uc: ReturnType<typeof newActivityUsecase>;
         h: ReturnType<typeof newActivityHandler>;
       };
     }
@@ -37,9 +32,6 @@ export function createActivityRoute() {
     const uc = newActivityUsecase(repo, tx);
     const h = newActivityHandler(uc);
 
-    c.set("repo", repo);
-    c.set("tx", tx);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();

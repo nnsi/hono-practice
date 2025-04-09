@@ -46,9 +46,6 @@ describe("AuthRoute Integration Tests", () => {
         );
         const h = newAuthHandler(uc);
 
-        c.set("repo", userRepo);
-        c.set("refreshTokenRepo", mockRefreshTokenRepo);
-        c.set("uc", uc);
         c.set("h", h);
 
         return next();

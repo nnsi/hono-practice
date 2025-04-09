@@ -19,9 +19,6 @@ export function createAuthRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newUserRepository>;
-        refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
-        uc: ReturnType<typeof newAuthUsecase>;
         h: ReturnType<typeof newAuthHandler>;
       };
     }
@@ -42,8 +39,6 @@ export function createAuthRoute() {
     );
     const h = newAuthHandler(uc);
 
-    c.set("repo", repo);
-    c.set("refreshTokenRepo", refreshTokenRepo);
     c.set("h", h);
 
     return next();
