@@ -275,15 +275,35 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リクエストボディが不正", async () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
-        { json: {} },
+        {
+          json: {} as any,
+        },
         {
           headers: { Authorization: `Bearer ${validJwtToken}` },
         },
       );
 
       expect(res.status).toBe(400);
-      const body = (await res.json()) as { message: string };
-      expect(body).toEqual({ message: "invalid request body" });
+      const body = await res.json();
+      expect(body).toHaveProperty("success", false);
+      expect(body).toHaveProperty("error");
+      if (
+        body &&
+        typeof body === "object" &&
+        "error" in body &&
+        body.error &&
+        typeof body.error === "object" &&
+        "issues" in body.error &&
+        Array.isArray((body.error as any).issues)
+      ) {
+        expect((body.error as any).issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ path: ["refreshToken"] }),
+          ]),
+        );
+      } else {
+        expect.fail("Response body did not match expected ZodError structure");
+      }
     });
   });
 

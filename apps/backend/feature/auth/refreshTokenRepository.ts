@@ -2,6 +2,7 @@ import { refreshTokens } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq, isNull } from "drizzle-orm";
 
+import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
 import type {
   RefreshToken,
@@ -12,7 +13,7 @@ export interface RefreshTokenRepository {
   create(input: RefreshTokenInput): Promise<RefreshToken>;
   findByToken(token: string): Promise<RefreshToken | null>;
   revoke(id: string): Promise<void>;
-  revokeAllByUserId(userId: string): Promise<void>;
+  revokeAllByUserId(userId: UserId): Promise<void>;
   deleteExpired(): Promise<void>;
   withTx(tx: QueryExecutor): RefreshTokenRepository;
 }
@@ -68,7 +69,7 @@ export function newRefreshTokenRepository(
         .where(eq(refreshTokens.id, id));
     },
 
-    async revokeAllByUserId(userId: string): Promise<void> {
+    async revokeAllByUserId(userId: UserId): Promise<void> {
       const now = new Date();
       await db
         .update(refreshTokens)

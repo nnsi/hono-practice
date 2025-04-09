@@ -12,3 +12,9 @@ export const loginRequestSchema = z.object({
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+export const refreshTokenRequestSchema = z.object({
+  refreshToken: z.string(),
+});
+
+export type RefreshTokenRequest = z.infer<typeof refreshTokenRequestSchema>;

@@ -8,17 +8,18 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { AuthError } from "../../../error";
 import { newAuthUsecase } from "../authUsecase";
 
-import type { RefreshTokenRepository } from "../../../infra/repository/refreshTokenRepository";
 import type { UserRepository } from "../../user/userRepository";
 import type { AuthUsecase } from "../authUsecase";
 import type { PasswordVerifier } from "../passwordVerifier";
+import type { UserId } from "@backend/domain";
 import type { RefreshToken } from "@backend/domain/auth/refreshToken";
+import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 
 // Restore the helper function
 const createMockRefreshToken = (
-  userId: string,
+  userId: UserId,
   hashedToken: string,
-  options: Partial<Omit<RefreshToken, "token">> = {},
+  options: Partial<Omit<RefreshToken, "token" | "userId">> = {},
 ): RefreshToken => ({
   id: options.id ?? crypto.randomUUID(),
   userId,
@@ -88,7 +89,10 @@ describe("AuthUsecase", () => {
         });
       });
 
-      const result = await usecase.login("test-user", "password123");
+      const result = await usecase.login({
+        loginId: "test-user",
+        password: "password123",
+      });
 
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
@@ -111,7 +115,10 @@ describe("AuthUsecase", () => {
         undefined,
       );
       await expect(
-        usecase.login("non-existent-user", "password123"),
+        usecase.login({
+          loginId: "non-existent-user",
+          password: "password123",
+        }),
       ).rejects.toThrow(new AuthError("invalid credentials"));
       // Verify password verifier was not called
       verify(passwordVerifier.compare(anything(), anything())).never();
@@ -127,7 +134,10 @@ describe("AuthUsecase", () => {
       );
 
       await expect(
-        usecase.login("test-user", "wrong-password"),
+        usecase.login({
+          loginId: "test-user",
+          password: "wrong-password",
+        }),
       ).rejects.toThrow(new AuthError("invalid credentials"));
 
       verify(userRepo.getUserByLoginId("test-user")).once();
@@ -152,6 +162,7 @@ describe("AuthUsecase", () => {
       when(refreshTokenRepo.findByToken(oldPlainToken)).thenResolve(
         validStoredToken,
       );
+      when(refreshTokenRepo.revoke(oldTokenId)).thenResolve();
       when(
         refreshTokenRepo.create(
           deepEqual({
@@ -166,7 +177,6 @@ describe("AuthUsecase", () => {
           id: "new-token-id",
         }),
       );
-      when(refreshTokenRepo.revoke(oldTokenId)).thenResolve();
 
       const result = await usecase.refreshToken(oldPlainToken);
 
@@ -193,7 +203,7 @@ describe("AuthUsecase", () => {
       );
       await expect(
         usecase.refreshToken("invalid-refresh-token"),
-      ).rejects.toThrow(new AuthError("invalid refresh token"));
+      ).rejects.toThrow(new Error("invalid refresh token"));
       verify(refreshTokenRepo.create(anything())).never();
       verify(refreshTokenRepo.revoke(anything())).never();
     });
@@ -213,7 +223,7 @@ describe("AuthUsecase", () => {
 
       await expect(
         usecase.refreshToken("revoked-refresh-token"),
-      ).rejects.toThrow(new AuthError("invalid refresh token"));
+      ).rejects.toThrow(new Error("invalid refresh token"));
 
       verify(refreshTokenRepo.findByToken("revoked-refresh-token")).once();
       verify(refreshTokenRepo.revoke(revokedTokenId)).once();
@@ -235,7 +245,7 @@ describe("AuthUsecase", () => {
 
       await expect(
         usecase.refreshToken("expired-refresh-token"),
-      ).rejects.toThrow(new AuthError("invalid refresh token"));
+      ).rejects.toThrow(new Error("invalid refresh token"));
 
       verify(refreshTokenRepo.findByToken("expired-refresh-token")).once();
       verify(refreshTokenRepo.revoke(expiredTokenId)).once();
