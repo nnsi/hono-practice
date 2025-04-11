@@ -25,7 +25,7 @@ export function newRefreshTokenRepository(
 ): RefreshTokenRepository {
   return {
     async create(input: RefreshTokenInput): Promise<RefreshToken> {
-      // トークンをハッシュ化
+      // トークン本体をハッシュ化
       const hashedToken = await bcrypt.hash(input.token, 10);
 
       const [result] = await db
@@ -33,6 +33,9 @@ export function newRefreshTokenRepository(
         .values({
           id: crypto.randomUUID(),
           userId: input.userId,
+          // selector を保存
+          selector: input.selector,
+          // ハッシュ化されたトークンを保存
           token: hashedToken,
           expiresAt: input.expiresAt,
           revokedAt: null,
@@ -57,31 +60,57 @@ export function newRefreshTokenRepository(
       return parsedToken.data;
     },
 
-    async findByToken(token: string): Promise<RefreshToken | null> {
-      const results = await db
+    async findByToken(combinedToken: string): Promise<RefreshToken | null> {
+      // combinedToken を selector と token に分割 (例: '.')
+      const parts = combinedToken.split(".");
+      if (parts.length !== 2) {
+        console.error("Invalid combined token format received:", combinedToken);
+        return null; // 不正な形式
+      }
+      const [selector, plainToken] = parts;
+
+      // selector でトークンを検索 (インデックスにより高速化)
+      const [storedRawToken] = await db
         .select()
         .from(refreshTokens)
-        .where(isNull(refreshTokens.deletedAt));
+        .where(eq(refreshTokens.selector, selector));
 
-      for (const storedRawToken of results) {
-        const isValid = await bcrypt.compare(token, storedRawToken.token);
-        if (isValid && storedRawToken.revokedAt === null) {
-          // DBの結果をドメインスキーマでパース
-          const parsedToken = refreshTokenSchema.safeParse(storedRawToken);
-          if (!parsedToken.success) {
-            console.error(
-              "Failed to parse refresh token from DB:",
-              parsedToken.error,
-            );
-            // エラーが見つかってもループは継続し、他のトークンを試す
-            continue;
-          }
-          // 有効でパース成功したトークンを返す
-          return parsedToken.data;
-        }
+      // トークンが見つからない、または失効している場合は null
+      if (
+        !storedRawToken ||
+        storedRawToken.revokedAt ||
+        storedRawToken.deletedAt
+      ) {
+        return null;
       }
 
-      return null;
+      // トークン本体のハッシュを比較
+      const isValid = await bcrypt.compare(plainToken, storedRawToken.token);
+      if (!isValid) {
+        return null; // ハッシュが一致しない
+      }
+
+      // DBの結果をドメインスキーマでパース
+      const parsedToken = refreshTokenSchema.safeParse(storedRawToken);
+      if (!parsedToken.success) {
+        console.error(
+          "Failed to parse refresh token from DB after validation:",
+          parsedToken.error,
+        );
+        // パースエラーは予期しない問題の可能性
+        throw new DomainValidateError(
+          "RefreshTokenRepository.findByToken: Failed to parse valid token from DB",
+        );
+      }
+
+      // 有効期限をチェック
+      if (parsedToken.data.expiresAt <= new Date()) {
+        // ここで期限切れトークンの削除や revoke 処理を非同期で行うことも検討できる
+        return null; // 期限切れ
+      }
+
+      // 有効なトークンを返す
+      return parsedToken.data;
     },
 
     async revoke(id: string): Promise<void> {

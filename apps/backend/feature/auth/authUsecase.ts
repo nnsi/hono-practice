@@ -52,17 +52,25 @@ export function newAuthUsecase(
   // --- ヘルパー関数: 新しいリフレッシュトークン生成・永続化 ---
   const generateAndStoreRefreshToken = async (
     userId: UserId,
+    // 既存の selector を受け取るオプション (再利用しない場合が多いが念のため)
+    existingSelector?: string,
   ): Promise<string> => {
+    // selector を生成 (または引数で受け取る)
+    const selector = existingSelector ?? crypto.randomUUID();
+    // トークン本体を生成
     const plainRefreshToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS);
 
-    // リポジトリには RefreshTokenInput を渡す
+    // リポジトリには selector と平文トークンを渡す
     await refreshTokenRepo.create({
       userId,
+      selector,
       token: plainRefreshToken,
       expiresAt,
     });
-    return plainRefreshToken;
+
+    // クライアントには selector と平文トークンを結合して返す
+    return `${selector}.${plainRefreshToken}`;
   };
 
   return {
@@ -84,42 +92,51 @@ export function newAuthUsecase(
       }
 
       const accessToken = await generateAccessToken(user.id);
-      const plainRefreshToken = await generateAndStoreRefreshToken(user.id);
+      // login 時は新しい selector と token を生成
+      const combinedRefreshToken = await generateAndStoreRefreshToken(user.id);
 
       return {
         accessToken,
-        refreshToken: plainRefreshToken,
+        // 結合されたトークンを返す
+        refreshToken: combinedRefreshToken,
       };
     },
 
-    async refreshToken(token: string): Promise<AuthOutput> {
-      // Repository から RefreshToken ドメインモデルを取得
-      const storedToken = await refreshTokenRepo.findByToken(token);
+    async refreshToken(combinedToken: string): Promise<AuthOutput> {
+      // Repository に結合済みトークンを渡して検証・取得
+      // findByToken 内で selector による検索、ハッシュ比較、有効期限チェックが行われる
+      const storedToken = await refreshTokenRepo.findByToken(combinedToken);
+
       if (!storedToken) {
-        throw new Error("invalid refresh token"); // エラーメッセージは検討の余地あり
+        // ここで詳細なエラーハンドリングを追加することも可能
+        // (例: ログ出力、不正アクセス試行の監視など)
+        throw new AuthError("invalid refresh token");
       }
 
-      // ドメイン層のバリデーション関数を使用
+      // ドメイン層のバリデーションは findByToken 内で実施済みの想定だが念のため残す
+      // (ただし、findByToken の実装によっては不要になる)
       if (!validateRefreshToken(storedToken)) {
-        // リポジトリの revoke メソッドを呼び出し (IDを渡す)
+        // revoke は findByToken 内で処理するか、ここで再度実行するか検討
         await refreshTokenRepo.revoke(storedToken.id);
-        throw new Error("invalid refresh token");
+        throw new AuthError("invalid refresh token (validation failed)");
       }
 
       // 新しいアクセストークンを生成
       const accessToken = await generateAccessToken(storedToken.userId);
 
       // 新しいリフレッシュトークンを生成・永続化
-      const newPlainRefreshToken = await generateAndStoreRefreshToken(
+      // 古いトークンは revoke するため、selector は再生成
+      const newCombinedRefreshToken = await generateAndStoreRefreshToken(
         storedToken.userId,
       );
 
-      // 古いリフレッシュトークンを無効化 (IDを渡す)
+      // 古いリフレッシュトークンを無効化 (IDで revoke)
+      // findByToken で既にチェックされているが、念のため revoke するのが安全
       await refreshTokenRepo.revoke(storedToken.id);
 
       return {
         accessToken,
-        refreshToken: newPlainRefreshToken,
+        refreshToken: newCombinedRefreshToken, // 新しい結合済みトークンを返す
       };
     },
 

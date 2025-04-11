@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import * as schema from "@infra/drizzle/schema";
+import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
@@ -43,10 +44,15 @@ async function seed() {
     name: "test",
   });
 
+  const seedSelector = "00000000-0000-4000-8000-selector0001";
+  const seedPlainToken = "test-refresh-token-plain";
+  const seedHashedToken = await bcrypt.hash(seedPlainToken, 10);
+
   await testDB.insert(schema.refreshTokens).values({
     id: "00000000-0000-4000-8000-000000000001",
     userId: TEST_USER_ID,
-    token: "test-refresh-token",
+    selector: seedSelector,
+    token: seedHashedToken,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     revokedAt: null,
     createdAt: new Date(),
