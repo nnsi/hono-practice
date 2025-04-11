@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 
-
 import { createTaskId } from "@backend/domain";
 import { zValidator } from "@hono/zod-validator";
 
@@ -19,8 +18,6 @@ export function createTaskRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newTaskRepository>;
-        uc: ReturnType<typeof newTaskUsecase>;
         h: ReturnType<typeof newTaskHandler>;
       };
     }
@@ -33,8 +30,6 @@ export function createTaskRoute() {
     const uc = newTaskUsecase(repo);
     const h = newTaskHandler(uc);
 
-    c.set("repo", repo);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();

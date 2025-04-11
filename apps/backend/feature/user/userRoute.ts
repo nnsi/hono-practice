@@ -16,8 +16,6 @@ export function createUserRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newUserRepository>;
-        uc: ReturnType<typeof newUserUsecase>;
         h: ReturnType<typeof newUserHandler>;
       };
     }
@@ -30,8 +28,6 @@ export function createUserRoute() {
     const uc = newUserUsecase(repo);
     const h = newUserHandler(uc);
 
-    c.set("repo", repo);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();

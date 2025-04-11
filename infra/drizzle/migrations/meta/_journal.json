@@ -36,6 +36,13 @@
       "when": 1744047106939,
       "tag": "0004_woozy_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1744378883476,
+      "tag": "0005_smiling_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

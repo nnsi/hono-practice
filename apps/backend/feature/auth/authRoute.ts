@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
-import { AuthError } from "@backend/error";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
-import { loginRequestSchema } from "@dtos/request";
+import { loginRequestSchema, refreshTokenRequestSchema } from "@dtos/request";
 
 import { newUserRepository } from "../user";
 
@@ -20,9 +19,6 @@ export function createAuthRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newUserRepository>;
-        refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
-        uc: ReturnType<typeof newAuthUsecase>;
         h: ReturnType<typeof newAuthHandler>;
       };
     }
@@ -43,9 +39,6 @@ export function createAuthRoute() {
     );
     const h = newAuthHandler(uc);
 
-    c.set("repo", repo);
-    c.set("refreshTokenRepo", refreshTokenRepo);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();
@@ -56,84 +49,59 @@ export function createAuthRoute() {
       const { NODE_ENV } = c.env;
       const body = c.req.valid("json");
 
-      try {
-        const { accessToken, refreshToken } = await c.var.uc.login(
-          body.login_id,
-          body.password,
-        );
+      const { token, refreshToken } = await c.var.h.login(body);
 
-        setCookie(c, "auth", accessToken, {
-          httpOnly: true,
-          secure: NODE_ENV !== "development",
-          expires: new Date(Date.now() + 15 * 60 * 1000),
-          sameSite: "None",
-        });
+      setCookie(c, "auth", token, {
+        httpOnly: true,
+        secure: NODE_ENV !== "development",
+        expires: new Date(Date.now() + 15 * 60 * 1000),
+        sameSite: "None",
+      });
 
-        return c.json({ token: accessToken, refreshToken });
-      } catch (error) {
-        if (error instanceof AuthError) {
-          return c.json({ message: "invalid credentials" }, 401);
-        }
-        throw error;
-      }
+      return c.json({ token, refreshToken });
     })
-    .post("/token", async (c) => {
-      const { NODE_ENV } = c.env;
-      const body = await c.req.json();
+    .post(
+      "/token",
+      zValidator("json", refreshTokenRequestSchema),
+      async (c) => {
+        const { NODE_ENV } = c.env;
+        const body = c.req.valid("json");
 
-      if (!body || !body.refreshToken) {
-        return c.json({ message: "invalid request body" }, 400);
-      }
-
-      try {
-        const { accessToken, refreshToken } = await c.var.uc.refreshToken(
+        const { token, refreshToken } = await c.var.h.refreshToken(
           body.refreshToken,
         );
 
-        setCookie(c, "auth", accessToken, {
+        setCookie(c, "auth", token, {
           httpOnly: true,
           secure: NODE_ENV !== "development",
           expires: new Date(Date.now() + 15 * 60 * 1000),
           sameSite: "None",
         });
 
-        return c.json({ token: accessToken, refreshToken });
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message === "invalid refresh token"
-        ) {
-          return c.json({ message: "invalid refresh token" }, 401);
-        }
-        throw error;
-      }
-    })
+        return c.json({ token, refreshToken });
+      },
+    )
     .get("/logout", authMiddleware, async (c) => {
-      try {
-        const userId = c.get("userId");
-        const result = await c.var.h.logout(userId);
+      const userId = c.get("userId");
+      const result = await c.var.h.logout(userId);
 
-        setCookie(c, "auth", "", {
-          httpOnly: true,
-          secure: c.env.NODE_ENV !== "development",
-          expires: new Date(0),
-          sameSite: "None",
-          path: "/",
-        });
+      setCookie(c, "auth", "", {
+        httpOnly: true,
+        secure: c.env.NODE_ENV !== "development",
+        expires: new Date(0),
+        sameSite: "None",
+        path: "/",
+      });
 
-        setCookie(c, "refresh_token", "", {
-          httpOnly: true,
-          secure: c.env.NODE_ENV !== "development",
-          expires: new Date(0),
-          sameSite: "None",
-          path: "/",
-        });
+      setCookie(c, "refresh_token", "", {
+        httpOnly: true,
+        secure: c.env.NODE_ENV !== "development",
+        expires: new Date(0),
+        sameSite: "None",
+        path: "/",
+      });
 
-        return c.json(result);
-      } catch (error) {
-        console.error("Logout error:", error);
-        return c.json({ message: "Internal server error" }, 500);
-      }
+      return c.json(result);
     });
 }
 

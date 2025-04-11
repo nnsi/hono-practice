@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 
-
 import { zValidator } from "@hono/zod-validator";
 
 import { CreateGoalRequestSchema } from "@dtos/request";
@@ -16,8 +15,6 @@ export function createGoalRoute() {
   const app = new Hono<
     AppContext & {
       Variables: {
-        repo: ReturnType<typeof newGoalRepository>;
-        uc: ReturnType<typeof newGoalUsecase>;
         h: ReturnType<typeof newGoalHandler>;
       };
     }
@@ -30,8 +27,6 @@ export function createGoalRoute() {
     const uc = newGoalUsecase(repo);
     const h = newGoalHandler(uc);
 
-    c.set("repo", repo);
-    c.set("uc", uc);
     c.set("h", h);
 
     return next();

@@ -5,3 +5,4 @@ export * from "./GetGoalsResponse";
 export * from "./GetTasksResponse";
 export * from "./GetUserResponse";
 export * from "./LoginResponse";
+export * from "./AuthResponse";

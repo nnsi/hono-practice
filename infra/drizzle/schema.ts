@@ -36,7 +36,7 @@ export const users = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     loginId: text("login_id").unique().notNull(),
     name: text("name"),
-    password: text("password").notNull(),
+    password: text("password"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -50,14 +50,13 @@ export const users = pgTable(
 );
 
 // UserProvider テーブル
-/*
 export const userProviders = pgTable("user_providers", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
   provider: text("provider").notNull(),
-  providerUserId: text("provider_user_id").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -67,7 +66,6 @@ export const userProviders = pgTable("user_providers", {
     .$onUpdate(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
-*/
 
 // RefreshToken テーブル
 export const refreshTokens = pgTable(
@@ -77,7 +75,8 @@ export const refreshTokens = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    token: text("token").notNull().unique(),
+    selector: text("selector").notNull().unique(),
+    token: text("token").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -89,7 +88,10 @@ export const refreshTokens = pgTable(
       .$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("refresh_token_user_id_idx").on(t.userId)],
+  (t) => [
+    index("refresh_token_user_id_idx").on(t.userId),
+    index("refresh_token_selector_idx").on(t.selector),
+  ],
 );
 
 // Task テーブル

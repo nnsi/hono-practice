@@ -1,9 +1,11 @@
+import { userIdSchema } from "@backend/domain";
 import { z } from "zod";
 
 // リフレッシュトークンのスキーマ定義
 export const refreshTokenSchema = z.object({
   id: z.string().uuid(),
-  userId: z.string().uuid(),
+  userId: userIdSchema,
+  selector: z.string().uuid(),
   token: z.string(),
   expiresAt: z.date(),
   revokedAt: z.date().nullable(),
@@ -14,7 +16,8 @@ export const refreshTokenSchema = z.object({
 
 // リフレッシュトークンの入力スキーマ
 export const refreshTokenInputSchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
+  selector: z.string().uuid(),
   token: z.string(),
   expiresAt: z.date(),
 });
@@ -35,6 +38,7 @@ export function createRefreshToken(input: RefreshTokenInput): RefreshToken {
   return {
     id: crypto.randomUUID(),
     userId: parsed.data.userId,
+    selector: parsed.data.selector,
     token: parsed.data.token,
     expiresAt: parsed.data.expiresAt,
     revokedAt: null,

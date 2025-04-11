@@ -46,9 +46,6 @@ describe("AuthRoute Integration Tests", () => {
         );
         const h = newAuthHandler(uc);
 
-        c.set("repo", userRepo);
-        c.set("refreshTokenRepo", mockRefreshTokenRepo);
-        c.set("uc", uc);
         c.set("h", h);
 
         return next();
@@ -171,6 +168,18 @@ describe("AuthRoute Integration Tests", () => {
         expect.fail("Response body did not match expected ZodError structure");
       }
     });
+
+    it("異常系：極端に長いログインID (バリデーション未実装)", async () => {
+      const client = createTestClient();
+      const longLoginId = "a".repeat(1000);
+      const res = await client.login.$post({
+        json: { login_id: longLoginId, password: testPassword },
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body).toHaveProperty("success", false);
+      expect(body).toHaveProperty("error");
+    });
   });
 
   describe("POST /token", () => {
@@ -240,7 +249,10 @@ describe("AuthRoute Integration Tests", () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
         {
-          json: { refreshToken: "invalid-token-does-not-exist" },
+          json: {
+            refreshToken:
+              "00000000-0000-0000-0000-000000000000.non-existent-token",
+          },
         },
         {
           headers: { Authorization: `Bearer ${validJwtToken}` },
@@ -252,16 +264,28 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：リフレッシュトークンが無効 (revoked)", async () => {
-      const storedToken = await refreshTokenRepo.findByToken(
-        validPlainRefreshToken,
-      );
-      if (!storedToken) throw new Error("Setup failed: token not found");
-      await refreshTokenRepo.revoke(storedToken.id);
+      const revokedSelector = "11111111-1111-1111-1111-111111111111";
+      const revokedPlainToken = "revoked-token-plain";
+      const revokedHashedToken = await bcrypt.hash(revokedPlainToken, 10);
+      const revokedExpiresAt = new Date(Date.now() + 1000 * 60 * 60);
+      const revokedAt = new Date(Date.now() - 1000 * 60);
+
+      await testDB.insert(refreshTokens).values({
+        id: crypto.randomUUID(),
+        userId: testUserId,
+        selector: revokedSelector,
+        token: revokedHashedToken,
+        expiresAt: revokedExpiresAt,
+        revokedAt: revokedAt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      });
 
       const client = createTestClient(true);
       const res = await client.token.$post(
         {
-          json: { refreshToken: validPlainRefreshToken },
+          json: { refreshToken: `${revokedSelector}.${revokedPlainToken}` },
         },
         {
           headers: { Authorization: `Bearer ${validJwtToken}` },
@@ -275,15 +299,35 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リクエストボディが不正", async () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
-        { json: {} },
+        {
+          json: {} as any,
+        },
         {
           headers: { Authorization: `Bearer ${validJwtToken}` },
         },
       );
 
       expect(res.status).toBe(400);
-      const body = (await res.json()) as { message: string };
-      expect(body).toEqual({ message: "invalid request body" });
+      const body = await res.json();
+      expect(body).toHaveProperty("success", false);
+      expect(body).toHaveProperty("error");
+      if (
+        body &&
+        typeof body === "object" &&
+        "error" in body &&
+        body.error &&
+        typeof body.error === "object" &&
+        "issues" in body.error &&
+        Array.isArray((body.error as any).issues)
+      ) {
+        expect((body.error as any).issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ path: ["refreshToken"] }),
+          ]),
+        );
+      } else {
+        expect.fail("Response body did not match expected ZodError structure");
+      }
     });
   });
 
@@ -434,28 +478,10 @@ describe("AuthRoute Integration Tests", () => {
       it("異常系：SQLインジェクション攻撃パターンのログインID", async () => {
         const client = createTestClient();
         const res = await client.login.$post({
-          json: {
-            login_id: "' OR '1'='1",
-            password: testPassword,
-          },
+          json: { login_id: "' OR '1'='1", password: "password" },
         });
-
         expect(res.status).toBe(401);
         expect(await res.json()).toEqual({ message: "invalid credentials" });
-      });
-
-      it("異常系：極端に長いログインID (バリデーション未実装)", async () => {
-        const client = createTestClient();
-        const res = await client.login.$post({
-          json: {
-            login_id: "a".repeat(1000),
-            password: testPassword,
-          },
-        });
-
-        expect(res.status).toBe(400);
-        const body = await res.json();
-        expect(body).toHaveProperty("success", false);
       });
 
       it("異常系：特殊文字を含むパスワード", async () => {
@@ -466,7 +492,6 @@ describe("AuthRoute Integration Tests", () => {
             password: "<script>alert('xss')</script>",
           },
         });
-
         expect(res.status).toBe(401);
         expect(await res.json()).toEqual({ message: "invalid credentials" });
       });
@@ -476,7 +501,6 @@ describe("AuthRoute Integration Tests", () => {
       it("異常系：リフレッシュトークンの再利用", async () => {
         const client = createTestClient(true);
 
-        // 最初のトークン更新
         const firstRes = await client.token.$post(
           {
             json: { refreshToken: validPlainRefreshToken },
@@ -487,7 +511,6 @@ describe("AuthRoute Integration Tests", () => {
         );
         expect(firstRes.status).toBe(200);
 
-        // 同じリフレッシュトークンでの2回目の更新試行
         const secondRes = await client.token.$post(
           {
             json: { refreshToken: validPlainRefreshToken },
