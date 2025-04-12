@@ -12,10 +12,12 @@
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
-    "db-migrate": "drizzle-kit push --config=infra/drizzle/drizzle.config.ts --force",
-    "db-migrate-local": "drizzle-kit push --config=infra/drizzle/drizzle.config.ts"
+    "db-migrate": "drizzle-kit push --config=infra/drizzle/drizzle.config.ts"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "type": "module",
   "dependencies": {
     "dayjs": "^1.11.13",

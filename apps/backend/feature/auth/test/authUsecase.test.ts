@@ -2,7 +2,7 @@ import { createUserEntity } from "@backend/domain/user/user";
 import { createUserId } from "@backend/domain/user/userId";
 // Use only ts-mockito imports for mocking repos and verifier
 import bcrypt from "bcryptjs"; // bcryptjs をインポート
-import { mock, instance, when, verify, deepEqual, anything } from "ts-mockito";
+import { mock, instance, when, verify, anything } from "ts-mockito";
 // Remove vitest mocking imports, keep test runner imports
 import { describe, it, expect, beforeEach } from "vitest";
 
@@ -15,6 +15,7 @@ import type { PasswordVerifier } from "../passwordVerifier";
 import type { UserId } from "@backend/domain";
 import type { RefreshToken } from "@backend/domain/auth/refreshToken";
 import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
+import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 
 // Restore the helper function and add selector
 const createMockRefreshToken = (
@@ -40,6 +41,7 @@ describe("AuthUsecase", () => {
   let usecase: AuthUsecase;
   let userRepo: UserRepository;
   let refreshTokenRepo: RefreshTokenRepository;
+  let userProviderRepo: UserProviderRepository;
   let passwordVerifier: PasswordVerifier; // Declare mock variable
   const JWT_SECRET = "test-secret";
 
@@ -47,10 +49,12 @@ describe("AuthUsecase", () => {
     // Setup ts-mockito mocks including PasswordVerifier
     userRepo = mock<UserRepository>();
     refreshTokenRepo = mock<RefreshTokenRepository>();
+    userProviderRepo = mock<UserProviderRepository>();
     passwordVerifier = mock<PasswordVerifier>(); // Create mock
     usecase = newAuthUsecase(
       instance(userRepo),
       instance(refreshTokenRepo),
+      instance(userProviderRepo),
       instance(passwordVerifier), // Inject mock instance
       JWT_SECRET,
     );
@@ -70,9 +74,9 @@ describe("AuthUsecase", () => {
 
     it("正常系：ログイン成功", async () => {
       when(userRepo.getUserByLoginId(user.loginId)).thenResolve(user);
-      when(passwordVerifier.compare(user.password, user.password)).thenResolve(
-        true,
-      );
+      when(
+        passwordVerifier.compare(user.password!, user.password!),
+      ).thenResolve(true);
 
       // create のモック設定を anything() で簡略化
       when(refreshTokenRepo.create(anything())).thenResolve(
@@ -81,7 +85,7 @@ describe("AuthUsecase", () => {
 
       const result = await usecase.login({
         loginId: user.loginId,
-        password: user.password,
+        password: user.password!,
       });
 
       expect(result.accessToken).toEqual(expect.any(String));
@@ -110,7 +114,7 @@ describe("AuthUsecase", () => {
       when(userRepo.getUserByLoginId("test-user")).thenResolve(user);
 
       // Mock passwordVerifier.compare using thenCall
-      when(passwordVerifier.compare("wrong-password", user.password)).thenCall(
+      when(passwordVerifier.compare("wrong-password", user.password!)).thenCall(
         async () => false,
       );
 
@@ -123,7 +127,7 @@ describe("AuthUsecase", () => {
 
       verify(userRepo.getUserByLoginId("test-user")).once();
       // Verify the mocked passwordVerifier was called
-      verify(passwordVerifier.compare("wrong-password", user.password)).once();
+      verify(passwordVerifier.compare("wrong-password", user.password!)).once();
       verify(refreshTokenRepo.create(anything())).never();
     });
   });

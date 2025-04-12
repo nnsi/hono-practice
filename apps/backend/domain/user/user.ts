@@ -7,7 +7,7 @@ const BaseUserSchema = z.object({
   id: userIdSchema,
   name: z.string().nullish(),
   loginId: z.string(),
-  password: z.string(),
+  password: z.string().nullable(),
 });
 
 const NewUserSchema = BaseUserSchema.merge(

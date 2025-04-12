@@ -1,7 +1,7 @@
-import type { LoginRequest } from "@dtos/request";
+import type { LoginRequest, GoogleLoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
-import { AppError, AuthError } from "../../error";
+import { AppError } from "../../error";
 
 import type { AuthUsecase } from "./authUsecase";
 import type { UserId } from "@backend/domain";
@@ -16,6 +16,13 @@ export interface AuthHandler {
     refreshToken: string;
   }>;
   logout(userId: UserId): Promise<{ message: string }>;
+  googleLogin(
+    params: GoogleLoginRequest,
+    clientId: string,
+  ): Promise<{
+    token: string;
+    refreshToken: string;
+  }>;
 }
 
 export function newAuthHandler(uc: AuthUsecase): AuthHandler {
@@ -39,39 +46,48 @@ export function newAuthHandler(uc: AuthUsecase): AuthHandler {
     },
 
     async refreshToken(token: string) {
-      try {
-        const result = await uc.refreshToken(token);
+      const result = await uc.refreshToken(token);
 
-        const parsedResponse = authResponseSchema.safeParse({
-          token: result.accessToken,
-          refreshToken: result.refreshToken,
-        });
+      const parsedResponse = authResponseSchema.safeParse({
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
 
-        if (!parsedResponse.success) {
-          throw new AppError(
-            "refreshTokenHandler: failed to parse response",
-            500,
-          );
-        }
-
-        return {
-          token: parsedResponse.data.token,
-          refreshToken: parsedResponse.data.refreshToken,
-        };
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message === "invalid refresh token"
-        ) {
-          throw new AuthError("invalid refresh token");
-        }
-        throw error;
+      if (!parsedResponse.success) {
+        throw new AppError(
+          "refreshTokenHandler: failed to parse response",
+          500,
+        );
       }
+
+      return {
+        token: parsedResponse.data.token,
+        refreshToken: parsedResponse.data.refreshToken,
+      };
     },
 
     async logout(userId: UserId) {
       await uc.logout(userId);
       return { message: "success" };
+    },
+
+    async googleLogin(params: GoogleLoginRequest, clientId: string) {
+      const result = await uc.loginWithProvider(
+        "google",
+        params.credential,
+        clientId,
+      );
+
+      const parsedResponse = authResponseSchema.safeParse({
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
+
+      if (!parsedResponse.success) {
+        throw new AppError("googleLoginHandler: failed to parse response", 500);
+      }
+
+      return parsedResponse.data;
     },
   };
 }

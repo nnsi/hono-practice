@@ -2,6 +2,7 @@ import { sign } from "hono/jwt";
 import { testClient } from "hono/testing";
 
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
+import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { testDB } from "@backend/test.setup";
@@ -37,10 +38,12 @@ describe("AuthRoute Integration Tests", () => {
     if (mockRefreshTokenRepo) {
       authRoutes.use("*", async (c, next) => {
         const userRepo = newUserRepository(testDB);
+        const userProviderRepo = newUserProviderRepository(testDB);
         const passwordVerifier = new BcryptPasswordVerifier();
         const uc = newAuthUsecase(
           userRepo,
           mockRefreshTokenRepo,
+          userProviderRepo,
           passwordVerifier,
           JWT_SECRET,
         );

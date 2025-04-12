@@ -6,7 +6,7 @@ import {
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";

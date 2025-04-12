@@ -6,7 +6,7 @@ export const configSchema = z.object({
   NODE_ENV: z.enum(["development", "stg", "production", "test"]),
   DATABASE_URL: z.string(),
   API_PORT: z.coerce.number().optional(),
-  GOOGLE_OAUTH_CLIENT_ID: z.string(),
+  GOOGLE_OAUTH_CLIENT_ID: z.string().default("dummy-string"),
 });
 
 export type Config = z.infer<typeof configSchema>;
