@@ -26,7 +26,7 @@ export function newRefreshTokenRepository(
   return {
     async create(input: RefreshTokenInput): Promise<RefreshToken> {
       // トークン本体をハッシュ化
-      const hashedToken = await bcrypt.hash(input.token, 10);
+      const hashedToken = bcrypt.hashSync(input.token, 8);
 
       const [result] = await db
         .insert(refreshTokens)
@@ -61,19 +61,18 @@ export function newRefreshTokenRepository(
     },
 
     async findByToken(combinedToken: string): Promise<RefreshToken | null> {
-      // combinedToken を selector と token に分割 (例: '.')
       const parts = combinedToken.split(".");
       if (parts.length !== 2) {
         console.error("Invalid combined token format received:", combinedToken);
-        return null; // 不正な形式
+        return null;
       }
       const [selector, plainToken] = parts;
 
-      // selector でトークンを検索 (インデックスにより高速化)
       const [storedRawToken] = await db
         .select()
         .from(refreshTokens)
-        .where(eq(refreshTokens.selector, selector));
+        .where(eq(refreshTokens.selector, selector))
+        .limit(1);
 
       // トークンが見つからない、または失効している場合は null
       if (
