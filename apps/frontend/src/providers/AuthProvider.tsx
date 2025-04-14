@@ -1,10 +1,4 @@
-import {
-  type ReactNode,
-  createContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import { type ReactNode, createContext, useState, useCallback } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
 
@@ -36,26 +30,6 @@ type AuthResponse = {
   token: string;
   refreshToken: string;
 };
-
-// JWTをデコードする関数
-const decodeJwt = (token: string): { exp?: number } | null => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .join(""),
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    return null;
-  }
-};
-
-// リフレッシュを行うまでの余裕時間（1分）
-const REFRESH_THRESHOLD = 60 * 1000;
 
 export const AuthContext = createContext<AuthState>(undefined);
 
@@ -127,51 +101,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw e;
     }
   }, []);
-
-  // トークンの有効期限を監視し、必要に応じて自動リフレッシュを行う
-  useEffect(() => {
-    let timeoutId: number;
-
-    const scheduleTokenRefresh = () => {
-      const currentToken = localStorage.getItem("token");
-      if (!currentToken) return;
-
-      const decoded = decodeJwt(currentToken);
-      if (!decoded || !decoded.exp) return;
-
-      const expiresAt = decoded.exp * 1000; // Unix timestamp（秒）をミリ秒に変換
-      const now = Date.now();
-      const timeUntilRefresh = expiresAt - now - REFRESH_THRESHOLD;
-
-      // 有効期限切れまでの時間が閾値を下回っている場合は即座にリフレッシュ
-      if (timeUntilRefresh <= 0) {
-        // 未ログイン状態でのリフレッシュ試行を防ぐ
-        if (user?.token) {
-          refreshToken().catch(console.error);
-        }
-        return;
-      }
-
-      // 次回のリフレッシュをスケジュール
-      timeoutId = window.setTimeout(() => {
-        // 未ログイン状態でのリフレッシュ試行を防ぐ
-        if (user?.token) {
-          refreshToken().catch(console.error);
-        }
-      }, timeUntilRefresh);
-    };
-
-    // トークンの状態が変更されたらリフレッシュのスケジュールを更新
-    if (user?.token) {
-      scheduleTokenRefresh();
-    }
-
-    return () => {
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [user?.token, refreshToken]);
 
   const login = async ({ login_id, password }: LoginRequest) => {
     try {
