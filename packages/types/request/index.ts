@@ -8,3 +8,4 @@ export * from "./UpdateActivityLogRequest";
 export * from "./UpdateActivityRequest";
 export * from "./UpdateGoalRequest";
 export * from "./UpdateTaskRequest";
+export * from "./GoogleLoginRequest";

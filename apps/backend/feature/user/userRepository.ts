@@ -25,9 +25,9 @@ function createUser(db: QueryExecutor) {
     const [result] = await db
       .insert(users)
       .values({
-        id: user.id,
-        loginId: user.loginId,
-        name: user.name,
+        id: user.id as string,
+        loginId: user.loginId ?? "",
+        name: user.name ?? "",
         password: user.password,
       })
       .returning();

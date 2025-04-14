@@ -4,14 +4,19 @@ import { setCookie } from "hono/cookie";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
-import { loginRequestSchema, refreshTokenRequestSchema } from "@dtos/request";
+import {
+  loginRequestSchema,
+  refreshTokenRequestSchema,
+  googleLoginRequestSchema,
+} from "@dtos/request";
 
 import { newUserRepository } from "../user";
 
 import { newAuthHandler } from "./authHandler";
 import { newAuthUsecase } from "./authUsecase";
-import { BcryptPasswordVerifier } from "./passwordVerifier";
+import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
+import { newUserProviderRepository } from "./userProviderRepository";
 
 import type { AppContext } from "../../context";
 
@@ -30,10 +35,12 @@ export function createAuthRoute() {
 
     const repo = newUserRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
-    const passwordVerifier = new BcryptPasswordVerifier();
+    const passwordVerifier = new MultiHashPasswordVerifier();
+    const userProviderRepo = newUserProviderRepository(db);
     const uc = newAuthUsecase(
       repo,
       refreshTokenRepo,
+      userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
     );
@@ -81,28 +88,48 @@ export function createAuthRoute() {
         return c.json({ token, refreshToken });
       },
     )
-    .get("/logout", authMiddleware, async (c) => {
-      const userId = c.get("userId");
-      const result = await c.var.h.logout(userId);
+    .post(
+      "/logout",
+      authMiddleware,
+      zValidator("json", refreshTokenRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const body = c.req.valid("json");
+        const result = await c.var.h.logout(userId, body.refreshToken);
 
-      setCookie(c, "auth", "", {
-        httpOnly: true,
-        secure: c.env.NODE_ENV !== "development",
-        expires: new Date(0),
-        sameSite: "None",
-        path: "/",
-      });
+        setCookie(c, "auth", "", {
+          httpOnly: true,
+          secure: c.env.NODE_ENV !== "development",
+          expires: new Date(0),
+          sameSite: "None",
+          path: "/",
+        });
 
-      setCookie(c, "refresh_token", "", {
-        httpOnly: true,
-        secure: c.env.NODE_ENV !== "development",
-        expires: new Date(0),
-        sameSite: "None",
-        path: "/",
-      });
+        return c.json(result);
+      },
+    )
+    .post(
+      "/google",
+      zValidator("json", googleLoginRequestSchema),
+      async (c) => {
+        const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID } = c.env;
+        const body = c.req.valid("json");
 
-      return c.json(result);
-    });
+        const { token, refreshToken } = await c.var.h.googleLogin(
+          body,
+          GOOGLE_OAUTH_CLIENT_ID,
+        );
+
+        setCookie(c, "auth", token, {
+          httpOnly: true,
+          secure: NODE_ENV !== "development",
+          expires: new Date(Date.now() + 15 * 60 * 1000),
+          sameSite: "None",
+        });
+
+        return c.json({ token, refreshToken });
+      },
+    );
 }
 
 export const authRoute = createAuthRoute();

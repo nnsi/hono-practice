@@ -4,5 +4,5 @@
 
 ```sh
 npm run db-generate
-npm run db-migrate-local
+npm run db-migrate
 ```

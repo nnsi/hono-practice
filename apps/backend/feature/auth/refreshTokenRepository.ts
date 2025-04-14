@@ -1,12 +1,13 @@
 import { DomainValidateError } from "@backend/error";
+import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   refreshTokenSchema,
   type RefreshToken,
   type RefreshTokenInput,
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
-import bcrypt from "bcryptjs";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { v7 } from "uuid";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
@@ -26,12 +27,12 @@ export function newRefreshTokenRepository(
   return {
     async create(input: RefreshTokenInput): Promise<RefreshToken> {
       // トークン本体をハッシュ化
-      const hashedToken = await bcrypt.hash(input.token, 10);
+      const hashedToken = await hashWithSHA256(input.token);
 
       const [result] = await db
         .insert(refreshTokens)
         .values({
-          id: crypto.randomUUID(),
+          id: v7(),
           userId: input.userId,
           // selector を保存
           selector: input.selector,
@@ -61,19 +62,18 @@ export function newRefreshTokenRepository(
     },
 
     async findByToken(combinedToken: string): Promise<RefreshToken | null> {
-      // combinedToken を selector と token に分割 (例: '.')
       const parts = combinedToken.split(".");
       if (parts.length !== 2) {
         console.error("Invalid combined token format received:", combinedToken);
-        return null; // 不正な形式
+        return null;
       }
       const [selector, plainToken] = parts;
 
-      // selector でトークンを検索 (インデックスにより高速化)
       const [storedRawToken] = await db
         .select()
         .from(refreshTokens)
-        .where(eq(refreshTokens.selector, selector));
+        .where(eq(refreshTokens.selector, selector))
+        .limit(1);
 
       // トークンが見つからない、または失効している場合は null
       if (
@@ -85,7 +85,8 @@ export function newRefreshTokenRepository(
       }
 
       // トークン本体のハッシュを比較
-      const isValid = await bcrypt.compare(plainToken, storedRawToken.token);
+      const hashedToken = await hashWithSHA256(plainToken);
+      const isValid = hashedToken === storedRawToken.token;
       if (!isValid) {
         return null; // ハッシュが一致しない
       }

@@ -57,6 +57,7 @@ export const userProviders = pgTable("user_providers", {
     .references(() => users.id),
   provider: text("provider").notNull(),
   providerAccountId: text("provider_account_id").notNull(),
+  providerRefreshToken: text("provider_refresh_token"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

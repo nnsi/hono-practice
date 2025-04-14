@@ -1,12 +1,21 @@
 import { sign } from "hono/jwt";
 
-import { AuthError } from "@backend/error";
+import {
+  type UserId,
+  createUserId,
+  createUserProviderEntity,
+  createUserProviderId,
+} from "@backend/domain";
+import { AuthError, AppError } from "@backend/error";
 import { validateRefreshToken } from "@domain/auth/refreshToken";
+import { jwtVerify, createRemoteJWKSet } from "jose";
+import { v7 } from "uuid";
 
-import type { UserRepository } from "../user";
 import type { PasswordVerifier } from "./passwordVerifier";
+import type { UserRepository } from "../user";
 import type { RefreshTokenRepository } from "./refreshTokenRepository";
-import type { UserId } from "@backend/domain"; // UserId をインポート
+import type { UserProviderRepository } from "./userProviderRepository";
+import type { Provider } from "@domain/auth/userProvider";
 
 // アクセストークンの有効期限を15分に設定
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
@@ -21,22 +30,32 @@ export type LoginInput = {
 
 export type AuthOutput = {
   accessToken: string;
-  refreshToken: string; // 平文のリフレッシュトークン
+  refreshToken: string;
 };
+
+// Google JWKSet URL
+const GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
 
 export interface AuthUsecase {
   login(input: LoginInput): Promise<AuthOutput>;
   refreshToken(token: string): Promise<AuthOutput>;
-  logout(userId: UserId): Promise<void>; // UserId 型を使用
+  logout(userId: UserId, refreshToken: string): Promise<void>;
+  loginWithProvider(
+    provider: Provider,
+    credential: string,
+    clientId: string,
+  ): Promise<AuthOutput>;
 }
 
 export function newAuthUsecase(
   userRepo: UserRepository,
   refreshTokenRepo: RefreshTokenRepository,
+  userProviderRepo: UserProviderRepository,
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
 ): AuthUsecase {
-  // --- ヘルパー関数: アクセストークン生成 ---
+  const GoogleJWKSet = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
+
   const generateAccessToken = async (userId: UserId): Promise<string> => {
     const now = Math.floor(Date.now() / 1000);
     return await sign(
@@ -49,19 +68,14 @@ export function newAuthUsecase(
     );
   };
 
-  // --- ヘルパー関数: 新しいリフレッシュトークン生成・永続化 ---
   const generateAndStoreRefreshToken = async (
     userId: UserId,
-    // 既存の selector を受け取るオプション (再利用しない場合が多いが念のため)
     existingSelector?: string,
   ): Promise<string> => {
-    // selector を生成 (または引数で受け取る)
-    const selector = existingSelector ?? crypto.randomUUID();
-    // トークン本体を生成
-    const plainRefreshToken = crypto.randomUUID();
+    const selector = existingSelector ?? v7();
+    const plainRefreshToken = v7();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS);
 
-    // リポジトリには selector と平文トークンを渡す
     await refreshTokenRepo.create({
       userId,
       selector,
@@ -69,7 +83,6 @@ export function newAuthUsecase(
       expiresAt,
     });
 
-    // クライアントには selector と平文トークンを結合して返す
     return `${selector}.${plainRefreshToken}`;
   };
 
@@ -82,6 +95,12 @@ export function newAuthUsecase(
         throw new AuthError("invalid credentials");
       }
 
+      if (!user.password) {
+        throw new AuthError(
+          "invalid credentials - password cannot be null for standard login",
+        );
+      }
+
       const isValidPassword = await passwordVerifier.compare(
         password,
         user.password,
@@ -92,58 +111,136 @@ export function newAuthUsecase(
       }
 
       const accessToken = await generateAccessToken(user.id);
-      // login 時は新しい selector と token を生成
       const combinedRefreshToken = await generateAndStoreRefreshToken(user.id);
 
       return {
         accessToken,
-        // 結合されたトークンを返す
         refreshToken: combinedRefreshToken,
       };
     },
 
     async refreshToken(combinedToken: string): Promise<AuthOutput> {
-      // Repository に結合済みトークンを渡して検証・取得
-      // findByToken 内で selector による検索、ハッシュ比較、有効期限チェックが行われる
       const storedToken = await refreshTokenRepo.findByToken(combinedToken);
 
       if (!storedToken) {
-        // ここで詳細なエラーハンドリングを追加することも可能
-        // (例: ログ出力、不正アクセス試行の監視など)
         throw new AuthError("invalid refresh token");
       }
 
-      // ドメイン層のバリデーションは findByToken 内で実施済みの想定だが念のため残す
-      // (ただし、findByToken の実装によっては不要になる)
       if (!validateRefreshToken(storedToken)) {
-        // revoke は findByToken 内で処理するか、ここで再度実行するか検討
         await refreshTokenRepo.revoke(storedToken.id);
         throw new AuthError("invalid refresh token (validation failed)");
       }
 
-      // 新しいアクセストークンを生成
       const accessToken = await generateAccessToken(storedToken.userId);
-
-      // 新しいリフレッシュトークンを生成・永続化
-      // 古いトークンは revoke するため、selector は再生成
       const newCombinedRefreshToken = await generateAndStoreRefreshToken(
         storedToken.userId,
       );
 
-      // 古いリフレッシュトークンを無効化 (IDで revoke)
-      // findByToken で既にチェックされているが、念のため revoke するのが安全
       await refreshTokenRepo.revoke(storedToken.id);
 
       return {
         accessToken,
-        refreshToken: newCombinedRefreshToken, // 新しい結合済みトークンを返す
+        refreshToken: newCombinedRefreshToken,
       };
     },
 
-    async logout(userId: UserId): Promise<void> {
-      // UserId を受け取る
-      // リポジトリの revokeAllByUserId を呼び出し (UserId を渡す)
-      await refreshTokenRepo.revokeAllByUserId(userId);
+    async logout(userId: UserId, refreshToken: string): Promise<void> {
+      const storedToken = await refreshTokenRepo.findByToken(refreshToken);
+
+      if (!storedToken) {
+        throw new AuthError("invalid refresh token");
+      }
+
+      if (storedToken.userId !== userId) {
+        throw new AuthError("unauthorized - token does not belong to user");
+      }
+
+      await refreshTokenRepo.revoke(storedToken.id);
+    },
+
+    async loginWithProvider(
+      provider: Provider,
+      credential: string,
+      clientId: string,
+    ): Promise<AuthOutput> {
+      if (provider !== "google") {
+        throw new AppError(`Unsupported provider: ${provider}`, 400);
+      }
+
+      let payload: {
+        sub?: string;
+        email?: string;
+        name?: string;
+        [key: string]: unknown;
+      };
+      try {
+        const { payload: verifiedPayload } = await jwtVerify(
+          credential,
+          GoogleJWKSet,
+          {
+            issuer: "https://accounts.google.com",
+            audience: clientId,
+          },
+        );
+        payload = verifiedPayload;
+
+        if (!payload.sub) {
+          throw new AuthError(
+            "Missing 'sub' (subject) in Google token payload",
+          );
+        }
+        if (!payload.email) {
+          throw new AuthError("Missing 'email' in Google token payload");
+        }
+      } catch (error: any) {
+        console.error("Google ID token verification failed:", error.message);
+        throw new AuthError(`Failed to verify Google token: ${error.message}`);
+      }
+
+      const googleUserId = payload.sub;
+      const name = payload.name ?? `User_${googleUserId.substring(0, 8)}`;
+
+      let userId: UserId | undefined = undefined;
+      const existingProvider =
+        await userProviderRepo.findUserProviderByIdAndProvider(
+          provider,
+          googleUserId,
+        );
+
+      if (existingProvider) {
+        userId = existingProvider.userId;
+      } else {
+        const newUserId = createUserId();
+        await userRepo.createUser({
+          id: newUserId,
+          loginId: `google|${googleUserId}`,
+          name: name,
+          password: null,
+          type: "new",
+        });
+        userId = newUserId;
+
+        const userProvider = createUserProviderEntity({
+          id: createUserProviderId(),
+          userId: newUserId,
+          provider,
+          providerId: googleUserId,
+          type: "new",
+        });
+        await userProviderRepo.createUserProvider(userProvider);
+      }
+
+      if (!userId) {
+        throw new AppError(
+          "Failed to determine user ID during provider login",
+          500,
+        );
+      }
+
+      const accessToken = await generateAccessToken(userId);
+      const refreshToken = await generateAndStoreRefreshToken(userId);
+
+      return { accessToken, refreshToken };
     },
   };
 }

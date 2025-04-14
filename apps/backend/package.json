@@ -10,6 +10,7 @@
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.38.3",
     "hono": "^4.6.15",
+    "jose": "^6.0.10",
     "postgres": "^3.4.5"
   },
   "devDependencies": {

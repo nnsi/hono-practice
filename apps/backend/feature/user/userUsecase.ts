@@ -7,7 +7,8 @@ import {
   type UserId,
 } from "@backend/domain";
 import { AppError } from "@backend/error";
-import bcrypt from "bcryptjs";
+
+import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 
 import type { UserRepository } from "./userRepository";
 
@@ -26,15 +27,20 @@ export type UserUsecase = {
 };
 
 export function newUserUsecase(repo: UserRepository): UserUsecase {
+  const passwordVerifier = new MultiHashPasswordVerifier();
+
   return {
-    createUser: createUser(repo),
+    createUser: createUser(repo, passwordVerifier),
     getUserById: getUserById(repo),
   };
 }
 
-function createUser(repo: UserRepository) {
+function createUser(
+  repo: UserRepository,
+  passwordVerifier: MultiHashPasswordVerifier,
+) {
   return async (params: CreateUserInputParams, secret: string) => {
-    const cryptedPassword = bcrypt.hashSync(params.password, 12);
+    const cryptedPassword = await passwordVerifier.hash(params.password);
     params.password = cryptedPassword;
     const newUser = createUserEntity({
       type: "new",
