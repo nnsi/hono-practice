@@ -23,7 +23,7 @@
   - [ ] authRoute.test.ts / `/auth/google` の統合テストを追加
 
 - [ ] **フロントエンドの設定**:
-  - [ ] @react-oauth/googleのインストール
+  - [x] @react-oauth/googleのインストール
   - [ ] ログインフォームやユーザーインターフェースにGoogle認証ボタンを追加
   - [ ] GoogleのOAuth 2.0フローを処理するためのロジックを実装
   - [ ] Google認証のステータスを表示するUIコンポーネントを作成

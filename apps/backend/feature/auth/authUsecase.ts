@@ -9,6 +9,7 @@ import {
 import { AuthError, AppError } from "@backend/error";
 import { validateRefreshToken } from "@domain/auth/refreshToken";
 import { jwtVerify, createRemoteJWKSet } from "jose";
+import { v7 } from "uuid";
 
 import type { PasswordVerifier } from "./passwordVerifier";
 import type { UserRepository } from "../user";
@@ -38,7 +39,7 @@ const GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
 export interface AuthUsecase {
   login(input: LoginInput): Promise<AuthOutput>;
   refreshToken(token: string): Promise<AuthOutput>;
-  logout(userId: UserId): Promise<void>;
+  logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,
     credential: string,
@@ -71,8 +72,8 @@ export function newAuthUsecase(
     userId: UserId,
     existingSelector?: string,
   ): Promise<string> => {
-    const selector = existingSelector ?? crypto.randomUUID();
-    const plainRefreshToken = crypto.randomUUID();
+    const selector = existingSelector ?? v7();
+    const plainRefreshToken = v7();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS);
 
     await refreshTokenRepo.create({
@@ -143,8 +144,18 @@ export function newAuthUsecase(
       };
     },
 
-    async logout(userId: UserId): Promise<void> {
-      await refreshTokenRepo.revokeAllByUserId(userId);
+    async logout(userId: UserId, refreshToken: string): Promise<void> {
+      const storedToken = await refreshTokenRepo.findByToken(refreshToken);
+
+      if (!storedToken) {
+        throw new AuthError("invalid refresh token");
+      }
+
+      if (storedToken.userId !== userId) {
+        throw new AuthError("unauthorized - token does not belong to user");
+      }
+
+      await refreshTokenRepo.revoke(storedToken.id);
     },
 
     async loginWithProvider(

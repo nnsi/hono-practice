@@ -15,7 +15,7 @@ export interface AuthHandler {
     token: string;
     refreshToken: string;
   }>;
-  logout(userId: UserId): Promise<{ message: string }>;
+  logout(userId: UserId, refreshToken: string): Promise<{ message: string }>;
   googleLogin(
     params: GoogleLoginRequest,
     clientId: string,
@@ -66,8 +66,8 @@ export function newAuthHandler(uc: AuthUsecase): AuthHandler {
       };
     },
 
-    async logout(userId: UserId) {
-      await uc.logout(userId);
+    async logout(userId: UserId, refreshToken: string) {
+      await uc.logout(userId, refreshToken);
       return { message: "success" };
     },
 

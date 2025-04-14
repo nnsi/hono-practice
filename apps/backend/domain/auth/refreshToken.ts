@@ -1,5 +1,8 @@
-import { userIdSchema } from "@backend/domain";
+import { DomainValidateError } from "@backend/error";
+import { v7 } from "uuid";
 import { z } from "zod";
+
+import { userIdSchema } from "../user/userId";
 
 // リフレッシュトークンのスキーマ定義
 export const refreshTokenSchema = z.object({
@@ -27,25 +30,21 @@ export type RefreshToken = z.infer<typeof refreshTokenSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenInputSchema>;
 
 // リフレッシュトークンのファクトリ関数
-export function createRefreshToken(input: RefreshTokenInput): RefreshToken {
-  const now = new Date();
-  const parsed = refreshTokenInputSchema.safeParse(input);
+export function createRefreshToken(params: RefreshTokenInput): RefreshToken {
+  const parsedToken = refreshTokenSchema.safeParse({
+    ...params,
+    id: v7(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    revokedAt: null,
+    deletedAt: null,
+  });
 
-  if (!parsed.success) {
-    throw new Error("Invalid refresh token input");
+  if (!parsedToken.success) {
+    throw new DomainValidateError("createRefreshToken: invalid params");
   }
 
-  return {
-    id: crypto.randomUUID(),
-    userId: parsed.data.userId,
-    selector: parsed.data.selector,
-    token: parsed.data.token,
-    expiresAt: parsed.data.expiresAt,
-    revokedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: null,
-  };
+  return parsedToken.data;
 }
 
 // リフレッシュトークンの検証関数

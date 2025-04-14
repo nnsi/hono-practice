@@ -200,13 +200,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await apiClient.auth.logout.$get();
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (refreshToken) {
+        await apiClient.auth.logout.$post({
+          json: {
+            refreshToken,
+          },
+        });
+      }
+    } catch (e) {
+      console.error("Logout failed:", e);
+    } finally {
       setUser(null);
       setRequestStatus("idle");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-    } catch (e) {
-      return Promise.reject(e);
     }
   };
 

@@ -1,12 +1,13 @@
 import { DomainValidateError } from "@backend/error";
+import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   refreshTokenSchema,
   type RefreshToken,
   type RefreshTokenInput,
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
-import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { v7 } from "uuid";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
@@ -26,12 +27,12 @@ export function newRefreshTokenRepository(
   return {
     async create(input: RefreshTokenInput): Promise<RefreshToken> {
       // トークン本体をハッシュ化
-      const hashedToken = bcrypt.hashSync(input.token, 8);
+      const hashedToken = await hashWithSHA256(input.token);
 
       const [result] = await db
         .insert(refreshTokens)
         .values({
-          id: crypto.randomUUID(),
+          id: v7(),
           userId: input.userId,
           // selector を保存
           selector: input.selector,
@@ -84,7 +85,8 @@ export function newRefreshTokenRepository(
       }
 
       // トークン本体のハッシュを比較
-      const isValid = await bcrypt.compare(plainToken, storedRawToken.token);
+      const hashedToken = await hashWithSHA256(plainToken);
+      const isValid = hashedToken === storedRawToken.token;
       if (!isValid) {
         return null; // ハッシュが一致しない
       }

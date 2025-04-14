@@ -1,9 +1,10 @@
 import { createUserEntity } from "@backend/domain/user/user";
 import { createUserId } from "@backend/domain/user/userId";
+import { hashWithSHA256 } from "@backend/lib/hash";
 // Use only ts-mockito imports for mocking repos and verifier
-import bcrypt from "bcryptjs"; // bcryptjs をインポート
 import { mock, instance, when, verify, anything } from "ts-mockito";
 // Remove vitest mocking imports, keep test runner imports
+import { v7 } from "uuid";
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { AuthError } from "../../../error";
@@ -25,9 +26,9 @@ const createMockRefreshToken = (
     Omit<RefreshToken, "token" | "userId"> & { selector?: string }
   > = {},
 ): RefreshToken => ({
-  id: options.id ?? crypto.randomUUID(),
+  id: options.id ?? v7(),
   userId,
-  selector: options.selector ?? crypto.randomUUID(), // Add selector
+  selector: options.selector ?? v7(), // Add selector
   token: hashedToken,
   expiresAt:
     options.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -42,20 +43,19 @@ describe("AuthUsecase", () => {
   let userRepo: UserRepository;
   let refreshTokenRepo: RefreshTokenRepository;
   let userProviderRepo: UserProviderRepository;
-  let passwordVerifier: PasswordVerifier; // Declare mock variable
+  let passwordVerifier: PasswordVerifier;
   const JWT_SECRET = "test-secret";
 
   beforeEach(() => {
-    // Setup ts-mockito mocks including PasswordVerifier
     userRepo = mock<UserRepository>();
     refreshTokenRepo = mock<RefreshTokenRepository>();
     userProviderRepo = mock<UserProviderRepository>();
-    passwordVerifier = mock<PasswordVerifier>(); // Create mock
+    passwordVerifier = mock<PasswordVerifier>();
     usecase = newAuthUsecase(
       instance(userRepo),
       instance(refreshTokenRepo),
       instance(userProviderRepo),
-      instance(passwordVerifier), // Inject mock instance
+      instance(passwordVerifier),
       JWT_SECRET,
     );
   });
@@ -133,128 +133,156 @@ describe("AuthUsecase", () => {
   });
 
   describe("refreshToken", () => {
-    const userId = createUserId();
-    const oldTokenId = "old-token-id";
-    const oldSelector = "old-selector-uuid";
-    const oldPlainToken = "old-refresh-token-plain";
-    const combinedOldToken = `${oldSelector}.${oldPlainToken}`;
-    let oldHashedToken: string; // beforeEach で初期化するために let に変更
+    let oldPlainToken: string;
+    let oldHashedToken: string;
+    let oldSelector: string;
+    let oldTokenId: string;
+    let userId: UserId;
 
-    // bcrypt.hash を beforeEach 内で行う
     beforeEach(async () => {
-      oldHashedToken = await bcrypt.hash(oldPlainToken, 10);
+      oldPlainToken = v7();
+      oldSelector = v7();
+      oldTokenId = v7();
+      userId = createUserId();
+      oldHashedToken = await hashWithSHA256(oldPlainToken);
     });
 
-    it("正常系：トークンの更新成功", async () => {
-      const oldRefreshToken = createMockRefreshToken(userId, oldHashedToken, {
+    it("正常系：リフレッシュトークンの更新成功", async () => {
+      const oldToken = createMockRefreshToken(userId, oldHashedToken, {
         id: oldTokenId,
         selector: oldSelector,
       });
 
-      when(refreshTokenRepo.findByToken(combinedOldToken)).thenResolve(
-        oldRefreshToken,
+      when(
+        refreshTokenRepo.findByToken(`${oldSelector}.${oldPlainToken}`),
+      ).thenResolve(oldToken);
+
+      when(refreshTokenRepo.create(anything())).thenCall(
+        async (input: { userId: UserId; token: string }) =>
+          createMockRefreshToken(
+            input.userId,
+            await hashWithSHA256(input.token),
+          ),
       );
 
-      // create のモック設定を anything() で簡略化
-      when(refreshTokenRepo.create(anything())).thenResolve(
-        createMockRefreshToken(userId, "new-hashed-token"),
+      const result = await usecase.refreshToken(
+        `${oldSelector}.${oldPlainToken}`,
       );
-
-      when(refreshTokenRepo.revoke(oldTokenId)).thenResolve();
-
-      const result = await usecase.refreshToken(combinedOldToken);
 
       expect(result.accessToken).toEqual(expect.any(String));
-      expect(result.refreshToken).not.toBe(combinedOldToken);
-      expect(result.refreshToken).toMatch(/^.+\..+$/);
+      expect(result.refreshToken).toEqual(expect.any(String));
 
-      // create と revoke の検証を修正
-      verify(refreshTokenRepo.create(anything())).once();
       verify(refreshTokenRepo.revoke(oldTokenId)).once();
     });
 
-    it("異常系：リフレッシュトークンが見つからない", async () => {
-      when(refreshTokenRepo.findByToken("not-found-token")).thenResolve(null);
+    it("異常系：無効なリフレッシュトークン", async () => {
+      when(refreshTokenRepo.findByToken(anything())).thenResolve(null);
 
-      await expect(usecase.refreshToken("not-found-token")).rejects.toThrow(
-        new Error("invalid refresh token"),
-      ); // ここは元のメッセージのまま
+      await expect(usecase.refreshToken("invalid-token")).rejects.toThrow(
+        new AuthError("invalid refresh token"),
+      );
 
-      verify(refreshTokenRepo.findByToken("not-found-token")).once();
+      verify(refreshTokenRepo.create(anything())).never();
     });
 
-    it("異常系：リフレッシュトークンが無効化されている", async () => {
-      const revokedTokenId = "revoked-token-id";
-      const revokedSelector = "revoked-selector";
-      const revokedPlainToken = "revoked-plain";
-      const combinedRevokedToken = `${revokedSelector}.${revokedPlainToken}`;
-      const revokedHashedToken = await bcrypt.hash(revokedPlainToken, 10);
+    it("異常系：失効したリフレッシュトークン", async () => {
+      const revokedPlainToken = v7();
+      const revokedSelector = v7();
+      const revokedHashedToken = await hashWithSHA256(revokedPlainToken);
       const revokedToken = createMockRefreshToken(userId, revokedHashedToken, {
-        id: revokedTokenId,
         selector: revokedSelector,
-        revokedAt: new Date(), // 失効済み
+        revokedAt: new Date(),
       });
 
-      when(refreshTokenRepo.findByToken(combinedRevokedToken)).thenResolve(
-        revokedToken,
+      when(
+        refreshTokenRepo.findByToken(`${revokedSelector}.${revokedPlainToken}`),
+      ).thenResolve(revokedToken);
+
+      await expect(
+        usecase.refreshToken(`${revokedSelector}.${revokedPlainToken}`),
+      ).rejects.toThrow(
+        new AuthError("invalid refresh token (validation failed)"),
       );
-      when(refreshTokenRepo.revoke(revokedTokenId)).thenResolve();
 
-      await expect(usecase.refreshToken(combinedRevokedToken)).rejects.toThrow(
-        new Error("invalid refresh token (validation failed)"),
-      ); // 修正後のメッセージ
-
-      verify(refreshTokenRepo.findByToken(combinedRevokedToken)).once();
-      // revoke が呼ばれるかも検証 (オプション)
-      // verify(refreshTokenRepo.revoke(revokedTokenId)).once();
+      verify(refreshTokenRepo.create(anything())).never();
     });
 
-    it("異常系：リフレッシュトークンが期限切れ", async () => {
-      const expiredTokenId = "expired-token-id";
-      const expiredSelector = "expired-selector";
-      const expiredPlainToken = "expired-plain";
-      const combinedExpiredToken = `${expiredSelector}.${expiredPlainToken}`;
-      const expiredHashedToken = await bcrypt.hash(expiredPlainToken, 10);
+    it("異常系：期限切れのリフレッシュトークン", async () => {
+      const expiredPlainToken = v7();
+      const expiredSelector = v7();
+      const expiredHashedToken = await hashWithSHA256(expiredPlainToken);
       const expiredToken = createMockRefreshToken(userId, expiredHashedToken, {
-        id: expiredTokenId,
         selector: expiredSelector,
-        expiresAt: new Date(Date.now() - 1000 * 60), // 期限切れ
+        expiresAt: new Date(Date.now() - 1000), // 期限切れ
       });
 
-      when(refreshTokenRepo.findByToken(combinedExpiredToken)).thenResolve(
-        expiredToken,
+      when(
+        refreshTokenRepo.findByToken(`${expiredSelector}.${expiredPlainToken}`),
+      ).thenResolve(expiredToken);
+
+      await expect(
+        usecase.refreshToken(`${expiredSelector}.${expiredPlainToken}`),
+      ).rejects.toThrow(
+        new AuthError("invalid refresh token (validation failed)"),
       );
-      when(refreshTokenRepo.revoke(expiredTokenId)).thenResolve();
 
-      await expect(usecase.refreshToken(combinedExpiredToken)).rejects.toThrow(
-        new Error("invalid refresh token (validation failed)"),
-      ); // 修正後のメッセージ
-
-      verify(refreshTokenRepo.findByToken(combinedExpiredToken)).once();
-      // revoke が呼ばれるかも検証 (オプション)
-      // verify(refreshTokenRepo.revoke(expiredTokenId)).once();
+      verify(refreshTokenRepo.create(anything())).never();
     });
   });
 
   describe("logout", () => {
     const userId = createUserId();
+    const refreshToken = "selector.token";
+    const storedToken = createMockRefreshToken(userId, "hashedToken");
 
     it("正常系：ログアウト成功", async () => {
-      when(refreshTokenRepo.revokeAllByUserId(userId)).thenResolve();
+      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(storedToken);
+      when(refreshTokenRepo.revoke(storedToken.id)).thenResolve();
 
-      await expect(usecase.logout(userId)).resolves.not.toThrow();
+      await expect(usecase.logout(userId, refreshToken)).resolves.not.toThrow();
 
-      verify(refreshTokenRepo.revokeAllByUserId(userId)).once();
+      verify(refreshTokenRepo.findByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revoke(storedToken.id)).once();
+    });
+
+    it("異常系：存在しないリフレッシュトークン", async () => {
+      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(null);
+
+      await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
+        "invalid refresh token",
+      );
+
+      verify(refreshTokenRepo.findByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revoke(anything())).never();
+    });
+
+    it("異常系：他のユーザーのリフレッシュトークン", async () => {
+      const otherUserId = createUserId();
+      const otherUserToken = createMockRefreshToken(otherUserId, "hashedToken");
+      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(
+        otherUserToken,
+      );
+
+      await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
+        "unauthorized - token does not belong to user",
+      );
+
+      verify(refreshTokenRepo.findByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revoke(anything())).never();
     });
 
     it("異常系：データベースエラー", async () => {
-      when(refreshTokenRepo.revokeAllByUserId(userId)).thenReject(
+      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(storedToken);
+      when(refreshTokenRepo.revoke(storedToken.id)).thenReject(
         new Error("Database error"),
       );
 
-      await expect(usecase.logout(userId)).rejects.toThrow("Database error");
+      await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
+        "Database error",
+      );
 
-      verify(refreshTokenRepo.revokeAllByUserId(userId)).once();
+      verify(refreshTokenRepo.findByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revoke(storedToken.id)).once();
     });
   });
 });

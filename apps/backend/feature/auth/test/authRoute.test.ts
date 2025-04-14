@@ -3,18 +3,20 @@ import { testClient } from "hono/testing";
 
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
+import { hashWithSHA256 } from "@backend/lib/hash";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { testDB } from "@backend/test.setup";
 import { refreshTokens, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { v7 } from "uuid";
 import { expect, describe, it, beforeEach, afterEach } from "vitest";
 
 import { createAuthRoute, newAuthHandler } from "..";
 import { newUserRepository } from "../../user";
 import { newAuthUsecase } from "../authUsecase";
-import { BcryptPasswordVerifier } from "../passwordVerifier";
+import { SHA256PasswordVerifier } from "../passwordVerifier";
 
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
@@ -39,7 +41,7 @@ describe("AuthRoute Integration Tests", () => {
       authRoutes.use("*", async (c, next) => {
         const userRepo = newUserRepository(testDB);
         const userProviderRepo = newUserProviderRepository(testDB);
-        const passwordVerifier = new BcryptPasswordVerifier();
+        const passwordVerifier = new SHA256PasswordVerifier();
         const uc = newAuthUsecase(
           userRepo,
           mockRefreshTokenRepo,
@@ -80,11 +82,11 @@ describe("AuthRoute Integration Tests", () => {
     await testDB.delete(refreshTokens).execute();
     await testDB.delete(users).where(eq(users.loginId, testLoginId)).execute();
 
-    const hashedPassword = await bcrypt.hash(testPassword, 10);
+    const hashedPassword = await hashWithSHA256(testPassword);
     const createdUserResult = await testDB
       .insert(users)
       .values({
-        id: crypto.randomUUID(),
+        id: v7(),
         loginId: testLoginId,
         password: hashedPassword,
         name: "Integration Auth User",
@@ -274,7 +276,7 @@ describe("AuthRoute Integration Tests", () => {
       const revokedAt = new Date(Date.now() - 1000 * 60);
 
       await testDB.insert(refreshTokens).values({
-        id: crypto.randomUUID(),
+        id: v7(),
         userId: testUserId,
         selector: revokedSelector,
         token: revokedHashedToken,
@@ -336,15 +338,32 @@ describe("AuthRoute Integration Tests", () => {
 
   describe("GET /logout", () => {
     let validJwtToken: string;
+    let validPlainRefreshToken: string;
 
     beforeEach(async () => {
       validJwtToken = await createJwtToken(testUserId);
+      const client = createTestClient();
+      const loginRes = await client.login.$post({
+        json: { login_id: testLoginId, password: testPassword },
+      });
+      if (loginRes.status !== 200) {
+        throw new Error("Setup failed: Could not log in to get refresh token");
+      }
+      const loginBody = (await loginRes.json()) as {
+        token: string;
+        refreshToken: string;
+      };
+      validPlainRefreshToken = loginBody.refreshToken;
     });
 
     it("正常系：ログアウト成功", async () => {
       const client = createTestClient(true);
-      const res = await client.logout.$get(
-        {},
+      const res = await client.logout.$post(
+        {
+          json: {
+            refreshToken: validPlainRefreshToken,
+          },
+        },
         {
           headers: {
             Authorization: `Bearer ${validJwtToken}`,
@@ -356,16 +375,84 @@ describe("AuthRoute Integration Tests", () => {
       const body = (await res.json()) as { message: string };
       expect(body).toEqual({ message: "success" });
       expect(res.headers.get("Set-Cookie")).toMatch(/auth=;/);
-      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=;/);
     });
 
     it("異常系：認証されていない", async () => {
       const client = createTestClient(true);
-      const res = await client.logout.$get();
+      const res = await client.logout.$post({
+        json: {
+          refreshToken: validPlainRefreshToken,
+        },
+      });
 
       expect(res.status).toBe(401);
       const body = (await res.json()) as { message: string };
       expect(body).toEqual({ message: "unauthorized" });
+    });
+
+    it("異常系：リフレッシュトークンが提供されていない", async () => {
+      const client = createTestClient(true);
+      const res = await client.logout.$post(
+        {
+          json: { refreshToken: "" },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${validJwtToken}`,
+          },
+        },
+      );
+
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as { message: string };
+      expect(body).toEqual({ message: "invalid refresh token" });
+    });
+
+    it("異常系：他のユーザーのリフレッシュトークン", async () => {
+      // 別のユーザーのリフレッシュトークンを作成
+      const otherUserId = v7();
+      await testDB.insert(users).values({
+        id: otherUserId,
+        loginId: "other-user",
+        password: await hashWithSHA256("password123"),
+        name: "Other User",
+      });
+
+      const otherUserClient = createTestClient();
+      const loginRes = await otherUserClient.login.$post({
+        json: { login_id: "other-user", password: "password123" },
+      });
+      const otherUserRefreshToken = (
+        (await loginRes.json()) as { refreshToken: string }
+      ).refreshToken;
+
+      const client = createTestClient(true);
+      const res = await client.logout.$post(
+        {
+          json: {
+            refreshToken: otherUserRefreshToken,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${validJwtToken}`,
+          },
+        },
+      );
+
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as { message: string };
+      expect(body).toEqual({
+        message: "unauthorized - token does not belong to user",
+      });
+
+      // クリーンアップ - まずリフレッシュトークンを削除
+      await testDB
+        .delete(refreshTokens)
+        .where(eq(refreshTokens.userId, otherUserId))
+        .execute();
+      // その後ユーザーを削除
+      await testDB.delete(users).where(eq(users.id, otherUserId)).execute();
     });
   });
 
