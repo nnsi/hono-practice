@@ -1,5 +1,19 @@
 # バックエンドの構造について
 
+## paths
+
+```ts
+    "paths": {
+      "@backend/*": ["apps/backend/*"],
+      "@frontend/*": ["apps/frontend/src/*"],
+      "@dtos/*": ["packages/types/*"],
+      "@hooks/*": ["apps/frontend/src/hooks/*"],
+      "@infra/*": ["infra/*"],
+      "@domain/*": ["apps/backend/domain/*"],
+      "@components/*": ["apps/frontend/src/components/*"]
+    }
+```
+
 ## アーキテクチャ概要
 
 本プロジェクトのバックエンドは、クリーンアーキテクチャの原則に基づいて設計されています。主に以下の4つのレイヤーで構成されています：
@@ -63,3 +77,147 @@ HTTP Request → Route (DI, Validation) → Handler (Transform, Validation) → 
 - 外部サービスのクライアントライブラリ (例: `google-auth-library`) の初期化や設定値 (Client IDなど) の管理は、主に **Usecase層** で行います。
 - 必要な設定値 (Client IDなど) は、環境変数などから取得し、Route層のDIコンテナ設定時にUsecaseのファクトリ関数 (`newAuthUsecase` など) に注入します。
 - Usecase層は、注入された設定値や内部で初期化したクライアントインスタンスを使用して、外部サービスとの通信を行います。
+
+## 新規機能実装時のガイドライン・サンプル
+
+このプロジェクトで新たな機能（エンドポイントやユースケース）を追加する際は、以下のルール・スタイルに従ってください。
+
+### 1. 型定義は `type` を使う
+
+- 全ての型定義（Usecase/Repository/Handlerの型など）は `type` で統一してください。
+- `interface` は使わず、`type` で関数型やオブジェクト型を定義します。
+
+```ts
+// 例: Usecase型
+export type TaskUsecase = {
+  getTasks: (userId: UserId) => Promise<Task[]>;
+  // ...他メソッド
+};
+```
+
+### 2. ファクトリ関数で依存注入・集約
+
+- 各レイヤー（Usecase/Handler/Repository）は `newXXXUsecase` や `newXXXHandler` のようなファクトリ関数で生成し、依存を引数で受け取って集約します。
+- 直接オブジェクトリテラルでメソッドを定義せず、個別関数を定義し、ファクトリ関数でまとめて返す形にしてください。
+
+```ts
+// 例: Usecaseファクトリ
+export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
+  return {
+    getTasks: getTasks(repo),
+    // ...他メソッド
+  };
+}
+```
+
+### 3. エラーハンドリングはtry-catchを使わず例外スロー
+
+- エラーは `throw` で例外をスローし、try-catchで囲わないでください。
+- エラーの捕捉・レスポンス変換はRouteやグローバルエラーハンドラで行います。
+
+```ts
+// 例: Usecase内
+if (!task) throw new ResourceNotFoundError("task not found");
+```
+
+### 4. Repositoryも同様にtype＋ファクトリ＋関数分割
+
+```ts
+export type TaskRepository = {
+  getTasksByUserId: (userId: UserId) => Promise<Task[]>;
+  // ...他メソッド
+  withTx: (tx: QueryExecutor) => TaskRepository;
+};
+
+export function newTaskRepository(db: QueryExecutor): TaskRepository {
+  return {
+    getTasksByUserId: getTasksByUserId(db),
+    // ...他メソッド
+    withTx: (tx) => newTaskRepository(tx),
+  };
+}
+```
+
+### 5. Handlerも同様にtype＋ファクトリ＋関数分割
+
+```ts
+export type TaskHandler = {
+  getTasks: (userId: UserId) => Promise<GetTasksResponse>;
+  // ...他メソッド
+};
+
+function getTasks(uc: TaskUsecase) {
+  return async (userId: UserId) => {
+    const tasks = await uc.getTasks(userId);
+    // ...レスポンス変換・バリデーション
+    return tasks;
+  };
+}
+
+export function newTaskHandler(uc: TaskUsecase): TaskHandler {
+  return {
+    getTasks: getTasks(uc),
+    // ...他メソッド
+  };
+}
+```
+
+### 6. Route層では依存注入＋バリデーション＋Handler呼び出し
+
+```ts
+export function createTaskRoute() {
+  const app = new Hono();
+
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+    const repo = newTaskRepository(db);
+    const uc = newTaskUsecase(repo);
+    const h = newTaskHandler(uc);
+    c.set("h", h);
+    return next();
+  });
+
+  app.get("/", async (c) => {
+    const userId = c.get("userId");
+    const res = await c.var.h.getTasks(userId);
+    return c.json(res);
+  });
+  // ...他エンドポイント
+  return app;
+}
+```
+
+### 7. サンプル構成
+
+```txt
+feature/
+  ├─ task/
+  │    ├─ taskRoute.ts
+  │    ├─ taskHandler.ts
+  │    ├─ taskUsecase.ts
+  │    ├─ taskRepository.ts
+  │    └─ index.ts
+```
+
+### 8. テストもtype＋ファクトリ＋依存注入を前提に記述
+
+```ts
+import { newTaskUsecase } from "..";
+import { mock, instance } from "ts-mockito";
+import { describe, it, expect } from "vitest";
+
+describe("TaskUsecase", () => {
+  it("getTasks: success", async () => {
+    const repo = mock<TaskRepository>();
+    const usecase = newTaskUsecase(instance(repo));
+    // ...テスト本体
+  });
+});
+```
+
+---
+
+このガイドラインに従うことで、既存コードベースと一貫した実装ができます。  
+サンプルは `feature/task/` ディレクトリの各ファイルを参照してください。
+
+必要に応じて、`auth`や`activity`など他のfeatureディレクトリの実装も参考にしてください。
