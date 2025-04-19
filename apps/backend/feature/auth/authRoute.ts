@@ -14,13 +14,15 @@ import { newUserRepository } from "../user";
 
 import { newAuthHandler } from "./authHandler";
 import { newAuthUsecase } from "./authUsecase";
+import { googleVerify } from "./googleVerify";
 import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
+import type { OAuthVerify } from "./oauthVerify";
 import type { AppContext } from "../../context";
 
-export function createAuthRoute() {
+export function createAuthRoute(oauthVerify: OAuthVerify = googleVerify) {
   const app = new Hono<
     AppContext & {
       Variables: {
@@ -43,6 +45,7 @@ export function createAuthRoute() {
       userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
+      oauthVerify,
     );
     const h = newAuthHandler(uc);
 

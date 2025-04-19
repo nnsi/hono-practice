@@ -8,14 +8,15 @@ import {
 } from "@backend/domain";
 import { AuthError, AppError } from "@backend/error";
 import { validateRefreshToken } from "@domain/auth/refreshToken";
-import { jwtVerify, createRemoteJWKSet } from "jose";
 import { v7 } from "uuid";
 
 import type { PasswordVerifier } from "./passwordVerifier";
 import type { UserRepository } from "../user";
+import type { OAuthVerify, OIDCPayload } from "./oauthVerify";
 import type { RefreshTokenRepository } from "./refreshTokenRepository";
 import type { UserProviderRepository } from "./userProviderRepository";
 import type { Provider } from "@domain/auth/userProvider";
+import type { jwtVerify as defaultJwtVerify, createRemoteJWKSet } from "jose";
 
 // アクセストークンの有効期限を15分に設定
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
@@ -33,8 +34,12 @@ export type AuthOutput = {
   refreshToken: string;
 };
 
-// Google JWKSet URL
-const GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+// jwtVerifyの型定義
+export type JwtVerifyFn = (
+  jwt: string,
+  jwks: ReturnType<typeof createRemoteJWKSet>,
+  options: Parameters<typeof defaultJwtVerify>[2],
+) => ReturnType<typeof defaultJwtVerify>;
 
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;
@@ -51,6 +56,29 @@ export type AuthUsecase = {
     clientId: string,
   ): Promise<void>;
 };
+
+export function newAuthUsecase(
+  userRepo: UserRepository,
+  refreshTokenRepo: RefreshTokenRepository,
+  userProviderRepo: UserProviderRepository,
+  passwordVerifier: PasswordVerifier,
+  jwtSecret: string,
+  oauthVerify: OAuthVerify,
+): AuthUsecase {
+  return {
+    login: login(userRepo, refreshTokenRepo, passwordVerifier, jwtSecret),
+    refreshToken: refreshToken(refreshTokenRepo, jwtSecret),
+    logout: logout(refreshTokenRepo),
+    loginWithProvider: loginWithProvider(
+      userRepo,
+      refreshTokenRepo,
+      userProviderRepo,
+      jwtSecret,
+      oauthVerify,
+    ),
+    linkGoogleAccount: linkGoogleAccount(userProviderRepo, oauthVerify),
+  };
+}
 
 // 各メソッドを個別関数化
 function login(
@@ -87,11 +115,13 @@ function refreshToken(
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
     const storedToken = await refreshTokenRepo.findByToken(combinedToken);
+
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (!validateRefreshToken(storedToken)) {
       await refreshTokenRepo.revoke(storedToken.id);
       throw new AuthError("invalid refresh token (validation failed)");
     }
+
     const accessToken = await generateAccessToken(
       jwtSecret,
       storedToken.userId,
@@ -120,51 +150,36 @@ function loginWithProvider(
   refreshTokenRepo: RefreshTokenRepository,
   userProviderRepo: UserProviderRepository,
   jwtSecret: string,
+  oauthVerify: OAuthVerify,
 ) {
-  const GoogleJWKSet = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
   return async (
     provider: Provider,
     credential: string,
     clientId: string,
   ): Promise<AuthOutput> => {
-    if (provider !== "google")
-      throw new AppError(`Unsupported provider: ${provider}`, 400);
-    let payload: {
-      sub?: string;
-      email?: string;
-      name?: string;
-      [key: string]: unknown;
-    };
-    try {
-      const { payload: verifiedPayload } = await jwtVerify(
-        credential,
-        GoogleJWKSet,
-        { issuer: "https://accounts.google.com", audience: clientId },
-      );
-      payload = verifiedPayload;
-      if (!payload.sub)
-        throw new AuthError("Missing 'sub' (subject) in Google token payload");
-      if (!payload.email)
-        throw new AuthError("Missing 'email' in Google token payload");
-    } catch (error: any) {
-      console.error("Google ID token verification failed:", error.message);
-      throw new AuthError(`Failed to verify Google token: ${error.message}`);
-    }
-    const googleUserId = payload.sub;
-    const name = payload.name ?? `User_${googleUserId.substring(0, 8)}`;
+    const payload: OIDCPayload = await oauthVerify(credential, clientId);
+
+    if (!payload.sub) throw new AuthError("Missing 'sub' in token payload");
+    if (!payload.email) throw new AuthError("Missing 'email' in token payload");
+
+    const providerUserId = payload.sub;
+    const name = payload.name ?? `User_${providerUserId.substring(0, 8)}`;
+
     let userId: UserId | undefined = undefined;
+
     const existingProvider =
       await userProviderRepo.findUserProviderByIdAndProvider(
         provider,
-        googleUserId,
+        providerUserId,
       );
+
     if (existingProvider) {
       userId = existingProvider.userId;
     } else {
       const newUserId = createUserId();
       await userRepo.createUser({
         id: newUserId,
-        loginId: `google|${googleUserId}`,
+        loginId: `${provider}|${providerUserId}`,
         name: name,
         password: null,
         type: "new",
@@ -174,57 +189,43 @@ function loginWithProvider(
         id: createUserProviderId(),
         userId: newUserId,
         provider,
-        providerId: googleUserId,
+        providerId: providerUserId,
         type: "new",
       });
       await userProviderRepo.createUserProvider(userProvider);
     }
+
     if (!userId)
       throw new AppError(
         "Failed to determine user ID during provider login",
         500,
       );
+
     const accessToken = await generateAccessToken(jwtSecret, userId);
     const refreshToken = await generateAndStoreRefreshToken(
       refreshTokenRepo,
       userId,
     );
+
     return { accessToken, refreshToken };
   };
 }
 
 function linkGoogleAccount(
-  userRepo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  oauthVerify: OAuthVerify,
 ) {
-  const GoogleJWKSet = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
   return async (
     userId: UserId,
     credential: string,
     clientId: string,
   ): Promise<void> => {
     // Googleトークン検証
-    let payload: {
-      sub?: string;
-      email?: string;
-      name?: string;
-      [key: string]: unknown;
-    };
-    try {
-      const { payload: verifiedPayload } = await jwtVerify(
-        credential,
-        GoogleJWKSet,
-        { issuer: "https://accounts.google.com", audience: clientId },
-      );
-      payload = verifiedPayload;
-      if (!payload.sub)
-        throw new AuthError("Missing 'sub' (subject) in Google token payload");
-      if (!payload.email)
-        throw new AuthError("Missing 'email' in Google token payload");
-    } catch (error: any) {
-      console.error("Google ID token verification failed:", error.message);
-      throw new AuthError(`Failed to verify Google token: ${error.message}`);
-    }
+    const payload: OIDCPayload = await oauthVerify(credential, clientId);
+    if (!payload.sub)
+      throw new AuthError("Missing 'sub' (subject) in Google token payload");
+    if (!payload.email)
+      throw new AuthError("Missing 'email' in Google token payload");
     const googleUserId = payload.sub;
     // 既に他ユーザーに紐付いていないかチェック
     const existingProvider =
@@ -276,26 +277,4 @@ function generateAndStoreRefreshToken(
   return refreshTokenRepo
     .create({ userId, selector, token: plainRefreshToken, expiresAt })
     .then(() => `${selector}.${plainRefreshToken}`);
-}
-
-// newAuthUsecaseで集約
-export function newAuthUsecase(
-  userRepo: UserRepository,
-  refreshTokenRepo: RefreshTokenRepository,
-  userProviderRepo: UserProviderRepository,
-  passwordVerifier: PasswordVerifier,
-  jwtSecret: string,
-): AuthUsecase {
-  return {
-    login: login(userRepo, refreshTokenRepo, passwordVerifier, jwtSecret),
-    refreshToken: refreshToken(refreshTokenRepo, jwtSecret),
-    logout: logout(refreshTokenRepo),
-    loginWithProvider: loginWithProvider(
-      userRepo,
-      refreshTokenRepo,
-      userProviderRepo,
-      jwtSecret,
-    ),
-    linkGoogleAccount: linkGoogleAccount(userRepo, userProviderRepo),
-  };
 }

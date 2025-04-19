@@ -1,6 +1,11 @@
 import { Hono } from "hono";
 
-import { AppError, AuthError, DomainValidateError } from "../error";
+import {
+  AppError,
+  AuthError,
+  DomainValidateError,
+  UnauthorizedError,
+} from "../error";
 
 import type { AppContext } from "../context";
 
@@ -8,6 +13,11 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();
 
   app.onError((err, c) => {
+    // アクセストークンの認証エラーはconsole.errorを出力しない
+    if (err instanceof UnauthorizedError) {
+      return c.json({ message: err.message }, 401);
+    }
+
     console.error(err.stack);
 
     if (err instanceof AppError) {
