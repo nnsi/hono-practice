@@ -30,10 +30,14 @@ jobs:
       - name: Build (for stg)
         if: github.ref_name == 'master'
         run: npm run build-client-stg
+        env:
+          VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
 
       - name: Build (for release)
         if: github.ref_name == 'release'
         run: npm run build-client
+        env:
+          VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
 
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master'
