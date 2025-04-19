@@ -1,5 +1,5 @@
 import type { CreateUserRequest } from "@dtos/request";
-import { GetUserResponseSchema } from "@dtos/response";
+import { type GetUserResponse, GetUserResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";
 
@@ -22,14 +22,12 @@ function createUser(uc: UserUsecase) {
 }
 
 function getMe(uc: UserUsecase) {
-  return async (userId: UserId) => {
+  return async (userId: UserId): Promise<GetUserResponse> => {
     const user = await uc.getUserById(userId);
-
     const parsedUser = GetUserResponseSchema.safeParse(user);
     if (!parsedUser.success) {
       throw new AppError("failed to parse user", 500);
     }
-
     return parsedUser.data;
   };
 }

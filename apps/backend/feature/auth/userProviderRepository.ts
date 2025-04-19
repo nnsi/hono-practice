@@ -8,22 +8,14 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
-export interface UserProviderRepository {
+export type UserProviderRepository = {
   findUserProviderByIdAndProvider(
     provider: Provider,
     providerId: string,
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
-}
-
-export function newUserProviderRepository(
-  db: QueryExecutor,
-): UserProviderRepository {
-  return {
-    findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
-    createUserProvider: createUserProvider(db),
-  };
-}
+  getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
+};
 
 function findUserProviderByIdAndProvider(db: QueryExecutor) {
   return async (
@@ -87,5 +79,37 @@ function createUserProvider(db: QueryExecutor) {
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     });
+  };
+}
+
+function getUserProvidersByUserId(db: QueryExecutor) {
+  return async (userId: string): Promise<UserProvider[]> => {
+    const results = await db.query.userProviders.findMany({
+      where: and(
+        eq(userProviders.userId, userId),
+        isNull(userProviders.deletedAt),
+      ),
+    });
+    return results.map((result) =>
+      createUserProviderEntity({
+        id: result.id,
+        userId: result.userId,
+        provider: result.provider as Provider,
+        providerId: result.providerAccountId,
+        type: "persisted",
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      }),
+    );
+  };
+}
+
+export function newUserProviderRepository(
+  db: QueryExecutor,
+): UserProviderRepository {
+  return {
+    findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
+    createUserProvider: createUserProvider(db),
+    getUserProvidersByUserId: getUserProvidersByUserId(db),
   };
 }

@@ -1,10 +1,10 @@
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { compare, hash } from "bcryptjs";
 
-export interface PasswordVerifier {
+export type PasswordVerifier = {
   compare(password: string, hash: string): Promise<boolean>;
   hash(password: string): Promise<string>;
-}
+};
 
 export class SHA256PasswordVerifier implements PasswordVerifier {
   async compare(password: string, hash: string): Promise<boolean> {

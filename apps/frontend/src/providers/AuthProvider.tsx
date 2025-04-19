@@ -19,6 +19,7 @@ type AuthState =
       logout: () => Promise<void>;
       refreshToken: () => Promise<void>;
       requestStatus: RequestStatus;
+      loginWithToken: (accessToken: string, refreshToken: string) => void;
     }
   | undefined;
 
@@ -147,9 +148,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithToken = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+    setUser({
+      token: accessToken,
+      refreshToken,
+    });
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, getUser, login, logout, refreshToken, requestStatus }}
+      value={{
+        user,
+        getUser,
+        login,
+        logout,
+        refreshToken,
+        requestStatus,
+        loginWithToken,
+      }}
     >
       {children}
     </AuthContext.Provider>

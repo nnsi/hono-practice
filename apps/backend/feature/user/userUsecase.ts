@@ -11,6 +11,7 @@ import { AppError } from "@backend/error";
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 
 import type { UserRepository } from "./userRepository";
+import type { UserProviderRepository } from "../auth/userProviderRepository";
 
 export type CreateUserInputParams = {
   loginId: string;
@@ -18,20 +19,25 @@ export type CreateUserInputParams = {
   name?: string;
 };
 
+export type UserWithProviders = User & { providers: string[] };
+
 export type UserUsecase = {
   createUser: (
     params: CreateUserInputParams,
     secret: string,
   ) => Promise<string>;
-  getUserById: (userId: UserId) => Promise<User>;
+  getUserById: (userId: UserId) => Promise<UserWithProviders>;
 };
 
-export function newUserUsecase(repo: UserRepository): UserUsecase {
+export function newUserUsecase(
+  repo: UserRepository,
+  userProviderRepo: UserProviderRepository,
+): UserUsecase {
   const passwordVerifier = new MultiHashPasswordVerifier();
 
   return {
     createUser: createUser(repo, passwordVerifier),
-    getUserById: getUserById(repo),
+    getUserById: getUserById(repo, userProviderRepo),
   };
 }
 
@@ -59,11 +65,16 @@ function createUser(
   };
 }
 
-function getUserById(repo: UserRepository) {
-  return async (userId: UserId) => {
+function getUserById(
+  repo: UserRepository,
+  userProviderRepo: UserProviderRepository,
+) {
+  return async (userId: UserId): Promise<UserWithProviders> => {
     const user = await repo.getUserById(userId);
     if (!user) throw new AppError("user not found", 404);
-
-    return user;
+    const providers = (
+      await userProviderRepo.getUserProvidersByUserId(userId)
+    ).map((p) => p.provider);
+    return { ...user, providers };
   };
 }

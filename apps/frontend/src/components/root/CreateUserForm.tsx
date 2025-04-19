@@ -1,5 +1,6 @@
 import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
@@ -109,6 +110,36 @@ export const CreateUserForm: React.FC = () => {
             </Button>
           </form>
         </Form>
+        <div className="flex flex-col items-center mt-4">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (!credentialResponse.credential) {
+                console.error("Google認証: credentialが取得できませんでした");
+                return;
+              }
+              try {
+                const res = await apiClient.auth.google.$post({
+                  json: { credential: credentialResponse.credential },
+                });
+                if (res.status === 200) {
+                  const json = await res.json();
+                  localStorage.setItem("token", json.token);
+                  localStorage.setItem("refreshToken", json.refreshToken);
+                  await getUser();
+                  navigate({ to: "/" });
+                } else {
+                  const error = await res.json();
+                  console.error("Googleアカウントでユーザー作成失敗", error);
+                }
+              } catch (e) {
+                console.error("Googleアカウントでユーザー作成失敗", e);
+              }
+            }}
+            onError={() => {
+              console.error("Googleアカウントでユーザー作成失敗");
+            }}
+          />
+        </div>
       </CardContent>
     </Card>
   );
