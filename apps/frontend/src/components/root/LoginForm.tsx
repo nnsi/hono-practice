@@ -1,4 +1,6 @@
+import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
@@ -24,7 +26,7 @@ import {
 } from "@components/ui";
 
 export const LoginForm: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithToken } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm<LoginRequest>({
@@ -89,6 +91,37 @@ export const LoginForm: React.FC = () => {
             </Button>
           </form>
         </Form>
+        <div className="flex flex-col items-center mt-4">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (!credentialResponse.credential) {
+                console.error("Google認証: credentialが取得できませんでした");
+                return;
+              }
+              try {
+                const res = await apiClient.auth.google.$post({
+                  json: { credential: credentialResponse.credential },
+                });
+                if (res.status === 200) {
+                  const json = await res.json();
+                  loginWithToken(json.token, json.refreshToken);
+                  setTimeout(() => {
+                    navigate({ to: "/" });
+                  }, 0);
+                } else {
+                  const error = await res.json();
+                  console.error("Google認証失敗", error);
+                }
+              } catch (e) {
+                console.error("Google認証失敗", e);
+              }
+            }}
+            onError={() => {
+              console.error("Google認証失敗");
+            }}
+            useOneTap
+          />
+        </div>
       </CardContent>
     </Card>
   );
