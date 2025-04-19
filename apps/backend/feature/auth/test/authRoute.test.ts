@@ -19,7 +19,53 @@ import { newUserRepository } from "../../user";
 import { newAuthUsecase } from "../authUsecase";
 import { SHA256PasswordVerifier } from "../passwordVerifier";
 
-import type { OAuthVerify, OIDCPayload } from "../oauthVerify";
+import type { OAuthVerifierMap } from "../authUsecase";
+import type { OIDCPayload } from "../oauthVerify";
+
+const mockGoogleToken = "mock-google-id-token";
+const mockGoogleSub = "google-user-id-123";
+const mockGoogleEmail = "testuser@example.com";
+const mockGoogleName = "Googleユーザー";
+const mockClientId = "test-google-client-id";
+
+// OAuthVerifierMap型でモックを定義
+const mockGoogleVerifiers: OAuthVerifierMap = {
+  google: async (credential: string, clientId: string) => {
+    if (credential === "invalid-token") {
+      throw new AuthError("Invalid token");
+    }
+    if (credential === "no-sub-token") {
+      return {
+        iss: "https://accounts.google.com",
+        sub: undefined as any,
+        aud: clientId,
+        exp: Date.now() / 1000 + 600,
+        iat: Date.now() / 1000,
+        email: mockGoogleEmail,
+        name: mockGoogleName,
+      };
+    }
+    if (credential === "no-email-token") {
+      return {
+        iss: "https://accounts.google.com",
+        sub: mockGoogleSub,
+        aud: clientId,
+        exp: Date.now() / 1000 + 600,
+        iat: Date.now() / 1000,
+        name: mockGoogleName,
+      } as OIDCPayload;
+    }
+    return {
+      iss: "https://accounts.google.com",
+      sub: mockGoogleSub,
+      aud: clientId,
+      exp: Date.now() / 1000 + 600,
+      iat: Date.now() / 1000,
+      email: mockGoogleEmail,
+      name: mockGoogleName,
+    };
+  },
+};
 
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
@@ -32,10 +78,10 @@ describe("AuthRoute Integration Tests", () => {
   const createTestApp = (
     useAuth = false,
     mockRefreshTokenRepo?: ReturnType<typeof newRefreshTokenRepository>,
-    oauthVerify?: OAuthVerify,
+    oauthVerifiers: OAuthVerifierMap = mockGoogleVerifiers,
   ) => {
     const app = newHonoWithErrorHandling();
-    const authRoutes = createAuthRoute(oauthVerify);
+    const authRoutes = createAuthRoute(oauthVerifiers);
 
     if (useAuth) {
       app.use("*", authMiddleware);
@@ -52,7 +98,7 @@ describe("AuthRoute Integration Tests", () => {
           userProviderRepo,
           passwordVerifier,
           JWT_SECRET,
-          oauthVerify!,
+          oauthVerifiers,
         );
         const h = newAuthHandler(uc);
 
@@ -68,9 +114,9 @@ describe("AuthRoute Integration Tests", () => {
   const createTestClient = (
     useAuth = false,
     mockRefreshTokenRepo?: ReturnType<typeof newRefreshTokenRepository>,
-    oauthVerify?: OAuthVerify,
+    oauthVerifiers: OAuthVerifierMap = mockGoogleVerifiers,
   ) => {
-    const app = createTestApp(useAuth, mockRefreshTokenRepo, oauthVerify);
+    const app = createTestApp(useAuth, mockRefreshTokenRepo, oauthVerifiers);
     return testClient(app, {
       DB: testDB,
       JWT_SECRET,
@@ -625,54 +671,8 @@ describe("AuthRoute Integration Tests", () => {
   });
 
   describe("POST /google", () => {
-    const mockGoogleToken = "mock-google-id-token";
-    const mockGoogleSub = "google-user-id-123";
-    const mockGoogleEmail = "testuser@example.com";
-    const mockGoogleName = "Googleユーザー";
-    const mockClientId = "test-google-client-id";
-
-    // OAuthVerifyのモック
-    const mockGoogleVerify: OAuthVerify = async (
-      credential: string,
-      clientId: string,
-    ) => {
-      if (credential === "invalid-token") {
-        throw new AuthError("Invalid token");
-      }
-      if (credential === "no-sub-token") {
-        return {
-          iss: "https://accounts.google.com",
-          sub: undefined as any,
-          aud: clientId,
-          exp: Date.now() / 1000 + 600,
-          iat: Date.now() / 1000,
-          email: mockGoogleEmail,
-          name: mockGoogleName,
-        };
-      }
-      if (credential === "no-email-token") {
-        return {
-          iss: "https://accounts.google.com",
-          sub: mockGoogleSub,
-          aud: clientId,
-          exp: Date.now() / 1000 + 600,
-          iat: Date.now() / 1000,
-          name: mockGoogleName,
-        } as OIDCPayload;
-      }
-      return {
-        iss: "https://accounts.google.com",
-        sub: mockGoogleSub,
-        aud: clientId,
-        exp: Date.now() / 1000 + 600,
-        iat: Date.now() / 1000,
-        email: mockGoogleEmail,
-        name: mockGoogleName,
-      };
-    };
-
     it("正常系：Google認証で新規ユーザー作成", async () => {
-      const client = createTestClient(false, undefined, mockGoogleVerify);
+      const client = createTestClient();
       const res = await client.google.$post(
         { json: { credential: mockGoogleToken } },
         { headers: { "x-client-id": mockClientId } },
@@ -685,7 +685,7 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：不正なGoogleトークン", async () => {
-      const client = createTestClient(false, undefined, mockGoogleVerify);
+      const client = createTestClient();
       const res = await client.google.$post(
         { json: { credential: "invalid-token" } },
         { headers: { "x-client-id": mockClientId } },
@@ -696,7 +696,7 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：subがないトークン", async () => {
-      const client = createTestClient(false, undefined, mockGoogleVerify);
+      const client = createTestClient();
       const res = await client.google.$post(
         { json: { credential: "no-sub-token" } },
         { headers: { "x-client-id": mockClientId } },
@@ -707,7 +707,7 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：emailがないトークン", async () => {
-      const client = createTestClient(false, undefined, mockGoogleVerify);
+      const client = createTestClient();
       const res = await client.google.$post(
         { json: { credential: "no-email-token" } },
         { headers: { "x-client-id": mockClientId } },

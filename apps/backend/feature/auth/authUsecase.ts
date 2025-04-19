@@ -50,12 +50,15 @@ export type AuthUsecase = {
     credential: string,
     clientId: string,
   ): Promise<AuthOutput>;
-  linkGoogleAccount(
+  linkProvider(
     userId: UserId,
+    provider: Provider,
     credential: string,
     clientId: string,
   ): Promise<void>;
 };
+
+export type OAuthVerifierMap = Record<Provider, OAuthVerify>;
 
 export function newAuthUsecase(
   userRepo: UserRepository,
@@ -63,7 +66,7 @@ export function newAuthUsecase(
   userProviderRepo: UserProviderRepository,
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
-  oauthVerify: OAuthVerify,
+  oauthVerifiers: OAuthVerifierMap,
 ): AuthUsecase {
   return {
     login: login(userRepo, refreshTokenRepo, passwordVerifier, jwtSecret),
@@ -74,9 +77,9 @@ export function newAuthUsecase(
       refreshTokenRepo,
       userProviderRepo,
       jwtSecret,
-      oauthVerify,
+      oauthVerifiers,
     ),
-    linkGoogleAccount: linkGoogleAccount(userProviderRepo, oauthVerify),
+    linkProvider: linkProvider(userProviderRepo, oauthVerifiers),
   };
 }
 
@@ -101,10 +104,14 @@ function login(
     );
     if (!isValidPassword) throw new AuthError("invalid credentials");
     const accessToken = await generateAccessToken(jwtSecret, user.id);
-    const combinedRefreshToken = await generateAndStoreRefreshToken(
-      refreshTokenRepo,
-      user.id,
-    );
+    const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+    await refreshTokenRepo.create({
+      userId: user.id,
+      selector,
+      token: plainRefreshToken,
+      expiresAt,
+    });
+    const combinedRefreshToken = `${selector}.${plainRefreshToken}`;
     return { accessToken, refreshToken: combinedRefreshToken };
   };
 }
@@ -126,10 +133,14 @@ function refreshToken(
       jwtSecret,
       storedToken.userId,
     );
-    const newCombinedRefreshToken = await generateAndStoreRefreshToken(
-      refreshTokenRepo,
-      storedToken.userId,
-    );
+    const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+    await refreshTokenRepo.create({
+      userId: storedToken.userId,
+      selector,
+      token: plainRefreshToken,
+      expiresAt,
+    });
+    const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
     await refreshTokenRepo.revoke(storedToken.id);
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
@@ -150,14 +161,16 @@ function loginWithProvider(
   refreshTokenRepo: RefreshTokenRepository,
   userProviderRepo: UserProviderRepository,
   jwtSecret: string,
-  oauthVerify: OAuthVerify,
+  oauthVerifiers: OAuthVerifierMap,
 ) {
   return async (
     provider: Provider,
     credential: string,
     clientId: string,
   ): Promise<AuthOutput> => {
-    const payload: OIDCPayload = await oauthVerify(credential, clientId);
+    const verifier = oauthVerifiers[provider];
+    if (!verifier) throw new AppError("未対応のプロバイダーです", 400);
+    const payload: OIDCPayload = await verifier(credential, clientId);
 
     if (!payload.sub) throw new AuthError("Missing 'sub' in token payload");
     if (!payload.email) throw new AuthError("Missing 'email' in token payload");
@@ -202,43 +215,48 @@ function loginWithProvider(
       );
 
     const accessToken = await generateAccessToken(jwtSecret, userId);
-    const refreshToken = await generateAndStoreRefreshToken(
-      refreshTokenRepo,
+    const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+    await refreshTokenRepo.create({
       userId,
-    );
+      selector,
+      token: plainRefreshToken,
+      expiresAt,
+    });
+    const refreshToken = `${selector}.${plainRefreshToken}`;
 
     return { accessToken, refreshToken };
   };
 }
 
-function linkGoogleAccount(
+function linkProvider(
   userProviderRepo: UserProviderRepository,
-  oauthVerify: OAuthVerify,
+  oauthVerifiers: OAuthVerifierMap,
 ) {
   return async (
     userId: UserId,
+    provider: Provider,
     credential: string,
     clientId: string,
   ): Promise<void> => {
-    // Googleトークン検証
-    const payload: OIDCPayload = await oauthVerify(credential, clientId);
+    const verifier = oauthVerifiers[provider];
+    if (!verifier) throw new AppError("未対応のプロバイダーです", 400);
+    const payload: OIDCPayload = await verifier(credential, clientId);
     if (!payload.sub)
-      throw new AuthError("Missing 'sub' (subject) in Google token payload");
-    if (!payload.email)
-      throw new AuthError("Missing 'email' in Google token payload");
-    const googleUserId = payload.sub;
+      throw new AuthError("Missing 'sub' (subject) in token payload");
+    if (!payload.email) throw new AuthError("Missing 'email' in token payload");
+    const providerUserId = payload.sub;
     // 既に他ユーザーに紐付いていないかチェック
     const existingProvider =
       await userProviderRepo.findUserProviderByIdAndProvider(
-        "google",
-        googleUserId,
+        provider,
+        providerUserId,
       );
     if (existingProvider) {
       if (existingProvider.userId === userId) {
-        throw new AppError("すでにこのGoogleアカウントは紐付け済みです", 400);
+        throw new AppError("すでにこのアカウントは紐付け済みです", 400);
       }
       throw new AppError(
-        "このGoogleアカウントは他のユーザーに紐付けられています",
+        "このアカウントは他のユーザーに紐付けられています",
         400,
       );
     }
@@ -246,8 +264,8 @@ function linkGoogleAccount(
     const userProvider = createUserProviderEntity({
       id: createUserProviderId(),
       userId,
-      provider: "google",
-      providerId: googleUserId,
+      provider,
+      providerId: providerUserId,
       type: "new",
     });
     await userProviderRepo.createUserProvider(userProvider);
@@ -266,15 +284,14 @@ function generateAccessToken(
     "HS256",
   );
 }
-function generateAndStoreRefreshToken(
-  refreshTokenRepo: RefreshTokenRepository,
-  userId: UserId,
-  existingSelector?: string,
-): Promise<string> {
+
+function generateRefreshToken(existingSelector?: string): {
+  selector: string;
+  plainRefreshToken: string;
+  expiresAt: Date;
+} {
   const selector = existingSelector ?? v7();
   const plainRefreshToken = v7();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS);
-  return refreshTokenRepo
-    .create({ userId, selector, token: plainRefreshToken, expiresAt })
-    .then(() => `${selector}.${plainRefreshToken}`);
+  return { selector, plainRefreshToken, expiresAt };
 }

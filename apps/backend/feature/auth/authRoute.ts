@@ -19,10 +19,10 @@ import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
-import type { OAuthVerify } from "./oauthVerify";
+import type { OAuthVerifierMap } from "./authUsecase";
 import type { AppContext } from "../../context";
 
-export function createAuthRoute(oauthVerify: OAuthVerify = googleVerify) {
+export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   const app = new Hono<
     AppContext & {
       Variables: {
@@ -45,7 +45,7 @@ export function createAuthRoute(oauthVerify: OAuthVerify = googleVerify) {
       userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
-      oauthVerify,
+      oauthVerifiers,
     );
     const h = newAuthHandler(uc);
 
@@ -141,10 +141,15 @@ export function createAuthRoute(oauthVerify: OAuthVerify = googleVerify) {
         const userId = c.get("userId");
         const { GOOGLE_OAUTH_CLIENT_ID } = c.env;
         const body = c.req.valid("json");
-        await c.var.h.linkGoogleAccount(userId, body, GOOGLE_OAUTH_CLIENT_ID);
-        return c.json({ message: "Googleアカウントを紐付けました" });
+        await c.var.h.linkProvider(
+          userId,
+          "google",
+          body,
+          GOOGLE_OAUTH_CLIENT_ID,
+        );
+        return c.json({ message: "アカウントを紐付けました" });
       },
     );
 }
 
-export const authRoute = createAuthRoute();
+export const authRoute = createAuthRoute({ google: googleVerify });
