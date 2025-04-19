@@ -14,7 +14,10 @@ type RequestStatus = "idle" | "loading";
 type AuthState =
   | {
       user: UserState;
-      getUser: () => Promise<void>;
+      getUser: ({
+        token,
+        refreshToken,
+      }: { token?: string; refreshToken?: string }) => Promise<void>;
       login: ({ login_id, password }: LoginRequest) => Promise<void>;
       logout: () => Promise<void>;
       refreshToken: () => Promise<void>;
@@ -48,25 +51,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
 
   const getUser = async () => {
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
     try {
       setRequestStatus("loading");
       // トークンが存在しない場合は未ログイン状態として扱う
-      if (!user?.token) {
+      if (!user?.token && (!token || !refreshToken)) {
         setRequestStatus("idle");
         return setUser(null);
       }
 
       const res = await apiClient.user.me.$get();
+
       if (res.status > 300) {
         setRequestStatus("idle");
         return setUser(null);
       }
     } catch (e) {
-      console.log("AuthProvider", e);
       setRequestStatus("idle");
       return setUser(null);
     }
     setRequestStatus("idle");
+    setUser({
+      token,
+      refreshToken,
+    });
   };
 
   const refreshToken = useCallback(async () => {

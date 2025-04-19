@@ -1,9 +1,9 @@
-import { Button } from "@frontend/components/ui";
+import { Button, useToast } from "@frontend/components/ui";
 import { useAuth } from "@frontend/hooks/useAuth";
 import { apiClient } from "@frontend/utils/apiClient";
 import { qp } from "@frontend/utils/queryParams";
 import { GoogleLogin } from "@react-oauth/google";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import {
@@ -14,6 +14,8 @@ import {
 export const HomePage: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<GetUserResponse>({
     ...qp({
@@ -39,7 +41,11 @@ export const HomePage: React.FC = () => {
   // Googleアカウント紐付け処理
   const handleGoogleLink = async (credentialResponse: any) => {
     if (!credentialResponse.credential) {
-      alert("Google認証に失敗しました");
+      toast({
+        title: "Error",
+        description: "Failed to link Google account",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -47,12 +53,23 @@ export const HomePage: React.FC = () => {
         json: { credential: credentialResponse.credential },
       });
       if (res.status === 200) {
-        alert("Googleアカウントの紐付けに成功しました");
+        toast({
+          title: "Success",
+          description: "Successfully linked Google account",
+        });
+        queryClient.invalidateQueries({ queryKey: ["user", "me"] });
       } else {
-        alert("紐付けに失敗しました");
+        toast({
+          title: "Error",
+          description: "Failed to link Google account",
+        });
       }
     } catch (e) {
-      alert("紐付けに失敗しました");
+      toast({
+        title: "Error",
+        description: "Failed to link Google account",
+        variant: "destructive",
+      });
     }
   };
 

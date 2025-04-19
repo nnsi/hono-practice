@@ -22,6 +22,10 @@ test("POST user / success", async () => {
   });
 
   expect(res.status).toEqual(200);
+
+  const body = await res.json();
+  expect(body.token).toBeDefined();
+  expect(body.refreshToken).toBeDefined();
 });
 
 // /meへのテストはauthRoute.test.tsにあるので省略

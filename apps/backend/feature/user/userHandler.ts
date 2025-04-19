@@ -4,20 +4,24 @@ import { type GetUserResponse, GetUserResponseSchema } from "@dtos/response";
 import { AppError } from "../../error";
 
 import type { UserUsecase } from ".";
+import type { AuthHandler } from "../auth/authHandler";
 import type { UserId } from "@backend/domain";
 
-export function newUserHandler(uc: UserUsecase) {
+export function newUserHandler(uc: UserUsecase, authH: AuthHandler) {
   return {
-    createUser: createUser(uc),
+    createUser: createUser(uc, authH),
     getMe: getMe(uc),
   };
 }
 
-function createUser(uc: UserUsecase) {
+function createUser(uc: UserUsecase, authH: AuthHandler) {
   return async (params: CreateUserRequest, secret: string) => {
-    const token = await uc.createUser(params, secret);
-
-    return token;
+    await uc.createUser(params, secret);
+    const loginResult = await authH.login({
+      login_id: params.loginId,
+      password: params.password,
+    });
+    return loginResult;
   };
 }
 

@@ -47,11 +47,12 @@ function createUser(
 ) {
   return async (params: CreateUserInputParams, secret: string) => {
     const cryptedPassword = await passwordVerifier.hash(params.password);
-    params.password = cryptedPassword;
     const newUser = createUserEntity({
       type: "new",
       id: createUserId(),
-      ...params,
+      name: params.name,
+      loginId: params.loginId,
+      password: cryptedPassword,
     });
 
     const user = await repo.createUser(newUser);
