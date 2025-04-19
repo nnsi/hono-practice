@@ -23,6 +23,11 @@ export type AuthHandler = {
     token: string;
     refreshToken: string;
   }>;
+  linkGoogleAccount(
+    userId: UserId,
+    params: GoogleLoginRequest,
+    clientId: string,
+  ): Promise<void>;
 };
 
 function login(uc: AuthUsecase) {
@@ -84,11 +89,22 @@ function googleLogin(uc: AuthUsecase) {
   };
 }
 
+function linkGoogleAccount(uc: AuthUsecase) {
+  return async (
+    userId: UserId,
+    params: GoogleLoginRequest,
+    clientId: string,
+  ) => {
+    await uc.linkGoogleAccount(userId, params.credential, clientId);
+  };
+}
+
 export function newAuthHandler(uc: AuthUsecase): AuthHandler {
   return {
     login: login(uc),
     refreshToken: refreshToken(uc),
     logout: logout(uc),
     googleLogin: googleLogin(uc),
+    linkGoogleAccount: linkGoogleAccount(uc),
   };
 }

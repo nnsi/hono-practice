@@ -129,6 +129,18 @@ export function createAuthRoute() {
 
         return c.json({ token, refreshToken });
       },
+    )
+    .post(
+      "/google/link",
+      authMiddleware,
+      zValidator("json", googleLoginRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const { GOOGLE_OAUTH_CLIENT_ID } = c.env;
+        const body = c.req.valid("json");
+        await c.var.h.linkGoogleAccount(userId, body, GOOGLE_OAUTH_CLIENT_ID);
+        return c.json({ message: "Googleアカウントを紐付けました" });
+      },
     );
 }
 

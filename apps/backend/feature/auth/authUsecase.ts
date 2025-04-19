@@ -45,6 +45,11 @@ export type AuthUsecase = {
     credential: string,
     clientId: string,
   ): Promise<AuthOutput>;
+  linkGoogleAccount(
+    userId: UserId,
+    credential: string,
+    clientId: string,
+  ): Promise<void>;
 };
 
 // 各メソッドを個別関数化
@@ -188,6 +193,66 @@ function loginWithProvider(
   };
 }
 
+function linkGoogleAccount(
+  userRepo: UserRepository,
+  userProviderRepo: UserProviderRepository,
+) {
+  const GoogleJWKSet = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
+  return async (
+    userId: UserId,
+    credential: string,
+    clientId: string,
+  ): Promise<void> => {
+    // Googleトークン検証
+    let payload: {
+      sub?: string;
+      email?: string;
+      name?: string;
+      [key: string]: unknown;
+    };
+    try {
+      const { payload: verifiedPayload } = await jwtVerify(
+        credential,
+        GoogleJWKSet,
+        { issuer: "https://accounts.google.com", audience: clientId },
+      );
+      payload = verifiedPayload;
+      if (!payload.sub)
+        throw new AuthError("Missing 'sub' (subject) in Google token payload");
+      if (!payload.email)
+        throw new AuthError("Missing 'email' in Google token payload");
+    } catch (error: any) {
+      console.error("Google ID token verification failed:", error.message);
+      throw new AuthError(`Failed to verify Google token: ${error.message}`);
+    }
+    const googleUserId = payload.sub;
+    // 既に他ユーザーに紐付いていないかチェック
+    const existingProvider =
+      await userProviderRepo.findUserProviderByIdAndProvider(
+        "google",
+        googleUserId,
+      );
+    if (existingProvider) {
+      if (existingProvider.userId === userId) {
+        throw new AppError("すでにこのGoogleアカウントは紐付け済みです", 400);
+      }
+      throw new AppError(
+        "このGoogleアカウントは他のユーザーに紐付けられています",
+        400,
+      );
+    }
+    // 紐付けレコード作成
+    const userProvider = createUserProviderEntity({
+      id: createUserProviderId(),
+      userId,
+      provider: "google",
+      providerId: googleUserId,
+      type: "new",
+    });
+    await userProviderRepo.createUserProvider(userProvider);
+  };
+}
+
 // トークン生成関数を外出し
 function generateAccessToken(
   jwtSecret: string,
@@ -231,5 +296,6 @@ export function newAuthUsecase(
       userProviderRepo,
       jwtSecret,
     ),
+    linkGoogleAccount: linkGoogleAccount(userRepo, userProviderRepo),
   };
 }
