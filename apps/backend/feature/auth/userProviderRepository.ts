@@ -14,6 +14,7 @@ export type UserProviderRepository = {
     providerId: string,
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
+  getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
 };
 
 function findUserProviderByIdAndProvider(db: QueryExecutor) {
@@ -81,11 +82,34 @@ function createUserProvider(db: QueryExecutor) {
   };
 }
 
+function getUserProvidersByUserId(db: QueryExecutor) {
+  return async (userId: string): Promise<UserProvider[]> => {
+    const results = await db.query.userProviders.findMany({
+      where: and(
+        eq(userProviders.userId, userId),
+        isNull(userProviders.deletedAt),
+      ),
+    });
+    return results.map((result) =>
+      createUserProviderEntity({
+        id: result.id,
+        userId: result.userId,
+        provider: result.provider as Provider,
+        providerId: result.providerAccountId,
+        type: "persisted",
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      }),
+    );
+  };
+}
+
 export function newUserProviderRepository(
   db: QueryExecutor,
 ): UserProviderRepository {
   return {
     findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
     createUserProvider: createUserProvider(db),
+    getUserProvidersByUserId: getUserProvidersByUserId(db),
   };
 }

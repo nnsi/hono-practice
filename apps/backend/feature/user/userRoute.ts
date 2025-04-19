@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
+import { createUserId } from "@backend/domain/user/userId";
 import { verifyToken } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
 import { createUserRequestSchema } from "@dtos/request";
+
+import { newUserProviderRepository } from "../auth/userProviderRepository";
 
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
@@ -25,7 +28,8 @@ export function createUserRoute() {
     const db = c.env.DB;
 
     const repo = newUserRepository(db);
-    const uc = newUserUsecase(repo);
+    const userProviderRepo = newUserProviderRepository(db);
+    const uc = newUserUsecase(repo, userProviderRepo);
     const h = newUserHandler(uc);
 
     c.set("h", h);
@@ -49,15 +53,14 @@ export function createUserRoute() {
     })
     .get("/me", async (c) => {
       try {
-        await verifyToken(
-          c.req.header("Authorization")?.split(" ")[1] ?? "",
-          c.env.JWT_SECRET,
-        );
+        const token = c.req.header("Authorization")?.split(" ")[1] ?? "";
+        const payload = await verifyToken(token, c.env.JWT_SECRET);
+        const userId = createUserId(String(payload.userId || payload.id));
+        const user = await c.var.h.getMe(userId);
+        return c.json(user);
       } catch (e) {
         return c.json({ message: "unauthorized" }, 401);
       }
-
-      return c.body(null, 204);
     });
 }
 
