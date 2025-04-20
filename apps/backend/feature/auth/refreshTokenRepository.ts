@@ -13,28 +13,29 @@ import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type RefreshTokenRepository = {
-  create(input: RefreshTokenInput): Promise<RefreshToken>;
-  findByToken(token: string): Promise<RefreshToken | null>;
-  revoke(id: string): Promise<void>;
-  revokeAllByUserId(userId: UserId): Promise<void>;
-  deleteExpired(): Promise<void>;
-  withTx(tx: QueryExecutor): RefreshTokenRepository;
+  createRefreshToken(input: RefreshTokenInput): Promise<RefreshToken>;
+  getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
+  revokeRefreshToken(id: string): Promise<void>;
+  revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
+  deleteRefreshTokensPastExpiry(): Promise<void>;
 };
 
 export function newRefreshTokenRepository(
   db: QueryExecutor,
-): RefreshTokenRepository {
+): RefreshTokenRepository & {
+  withTx: (tx: QueryExecutor) => RefreshTokenRepository;
+} {
   return {
-    create: create(db),
-    findByToken: findByToken(db),
-    revoke: revoke(db),
-    revokeAllByUserId: revokeAllByUserId(db),
-    deleteExpired: deleteExpired(db),
+    createRefreshToken: createRefreshToken(db),
+    getRefreshTokenByToken: getRefreshTokenByToken(db),
+    revokeRefreshToken: revokeRefreshToken(db),
+    revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
+    deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
     withTx: (tx) => newRefreshTokenRepository(tx),
   };
 }
 
-function create(db: QueryExecutor) {
+function createRefreshToken(db: QueryExecutor) {
   return async (input: RefreshTokenInput): Promise<RefreshToken> => {
     const hashedToken = await hashWithSHA256(input.token);
     const [result] = await db
@@ -65,7 +66,7 @@ function create(db: QueryExecutor) {
   };
 }
 
-function findByToken(db: QueryExecutor) {
+function getRefreshTokenByToken(db: QueryExecutor) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
     const parts = combinedToken.split(".");
     if (parts.length !== 2) {
@@ -107,7 +108,7 @@ function findByToken(db: QueryExecutor) {
   };
 }
 
-function revoke(db: QueryExecutor) {
+function revokeRefreshToken(db: QueryExecutor) {
   return async (id: string): Promise<void> => {
     await db
       .update(refreshTokens)
@@ -119,7 +120,7 @@ function revoke(db: QueryExecutor) {
   };
 }
 
-function revokeAllByUserId(db: QueryExecutor) {
+function revokeRefreshTokenAllByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<void> => {
     const now = new Date();
     await db
@@ -132,7 +133,7 @@ function revokeAllByUserId(db: QueryExecutor) {
   };
 }
 
-function deleteExpired(db: QueryExecutor) {
+function deleteRefreshTokensPastExpiry(db: QueryExecutor) {
   return async (): Promise<void> => {
     const now = new Date();
     await db

@@ -105,7 +105,7 @@ function login(
     if (!isValidPassword) throw new AuthError("invalid credentials");
     const accessToken = await generateAccessToken(jwtSecret, user.id);
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    await refreshTokenRepo.createRefreshToken({
       userId: user.id,
       selector,
       token: plainRefreshToken,
@@ -121,11 +121,12 @@ function refreshToken(
   jwtSecret: string,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
-    const storedToken = await refreshTokenRepo.findByToken(combinedToken);
+    const storedToken =
+      await refreshTokenRepo.getRefreshTokenByToken(combinedToken);
 
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (!validateRefreshToken(storedToken)) {
-      await refreshTokenRepo.revoke(storedToken.id);
+      await refreshTokenRepo.revokeRefreshToken(storedToken.id);
       throw new AuthError("invalid refresh token (validation failed)");
     }
 
@@ -134,25 +135,26 @@ function refreshToken(
       storedToken.userId,
     );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    await refreshTokenRepo.createRefreshToken({
       userId: storedToken.userId,
       selector,
       token: plainRefreshToken,
       expiresAt,
     });
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
-    await refreshTokenRepo.revoke(storedToken.id);
+    await refreshTokenRepo.revokeRefreshToken(storedToken.id);
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
 }
 
 function logout(refreshTokenRepo: RefreshTokenRepository) {
   return async (userId: UserId, refreshToken: string): Promise<void> => {
-    const storedToken = await refreshTokenRepo.findByToken(refreshToken);
+    const storedToken =
+      await refreshTokenRepo.getRefreshTokenByToken(refreshToken);
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (storedToken.userId !== userId)
       throw new AuthError("unauthorized - token does not belong to user");
-    await refreshTokenRepo.revoke(storedToken.id);
+    await refreshTokenRepo.revokeRefreshToken(storedToken.id);
   };
 }
 
@@ -216,7 +218,7 @@ function loginWithProvider(
 
     const accessToken = await generateAccessToken(jwtSecret, userId);
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    await refreshTokenRepo.createRefreshToken({
       userId,
       selector,
       token: plainRefreshToken,

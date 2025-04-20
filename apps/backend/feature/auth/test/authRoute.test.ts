@@ -176,7 +176,9 @@ describe("AuthRoute Integration Tests", () => {
       expect(body.refreshToken).toEqual(expect.any(String));
       expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
 
-      const storedToken = await refreshTokenRepo.findByToken(body.refreshToken);
+      const storedToken = await refreshTokenRepo.getRefreshTokenByToken(
+        body.refreshToken,
+      );
       expect(storedToken).not.toBeNull();
       expect(storedToken?.userId).toBe(testUserId);
     });
@@ -262,7 +264,9 @@ describe("AuthRoute Integration Tests", () => {
       validPlainRefreshToken = loginBody.refreshToken;
       validJwtToken = await createJwtToken(testUserId);
 
-      const stored = await refreshTokenRepo.findByToken(validPlainRefreshToken);
+      const stored = await refreshTokenRepo.getRefreshTokenByToken(
+        validPlainRefreshToken,
+      );
       if (!stored)
         throw new Error(
           "Setup failed: refresh token not found in DB after login",
@@ -290,13 +294,13 @@ describe("AuthRoute Integration Tests", () => {
       expect(newRefreshToken).not.toBe(validPlainRefreshToken);
       expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
 
-      const oldStoredToken = await refreshTokenRepo.findByToken(
+      const oldStoredToken = await refreshTokenRepo.getRefreshTokenByToken(
         validPlainRefreshToken,
       );
       expect(oldStoredToken).toBeNull();
 
       const newStoredToken =
-        await refreshTokenRepo.findByToken(newRefreshToken);
+        await refreshTokenRepo.getRefreshTokenByToken(newRefreshToken);
       expect(newStoredToken).not.toBeNull();
       expect(newStoredToken?.userId).toBe(testUserId);
       expect(newStoredToken?.revokedAt).toBeNull();

@@ -12,6 +12,7 @@ import { newAuthUsecase } from "../authUsecase";
 
 import type { UserRepository } from "../../user/userRepository";
 import type { AuthUsecase } from "../authUsecase";
+import type { OAuthVerify } from "../oauthVerify";
 import type { PasswordVerifier } from "../passwordVerifier";
 import type { UserId } from "@backend/domain";
 import type { RefreshToken } from "@backend/domain/auth/refreshToken";
@@ -44,6 +45,7 @@ describe("AuthUsecase", () => {
   let refreshTokenRepo: RefreshTokenRepository;
   let userProviderRepo: UserProviderRepository;
   let passwordVerifier: PasswordVerifier;
+  let mockVerifier: OAuthVerify;
   const JWT_SECRET = "test-secret";
 
   beforeEach(() => {
@@ -51,12 +53,14 @@ describe("AuthUsecase", () => {
     refreshTokenRepo = mock<RefreshTokenRepository>();
     userProviderRepo = mock<UserProviderRepository>();
     passwordVerifier = mock<PasswordVerifier>();
+    mockVerifier = mock<OAuthVerify>();
     usecase = newAuthUsecase(
       instance(userRepo),
       instance(refreshTokenRepo),
       instance(userProviderRepo),
       instance(passwordVerifier),
       JWT_SECRET,
+      { google: mockVerifier },
     );
   });
 
@@ -79,7 +83,7 @@ describe("AuthUsecase", () => {
       ).thenResolve(true);
 
       // create のモック設定を anything() で簡略化
-      when(refreshTokenRepo.create(anything())).thenResolve(
+      when(refreshTokenRepo.createRefreshToken(anything())).thenResolve(
         createMockRefreshToken(user.id, "hashed-refresh-token"),
       );
 
@@ -92,7 +96,7 @@ describe("AuthUsecase", () => {
       expect(result.refreshToken).toMatch(/^.+\..+$/);
 
       // create の検証を修正
-      verify(refreshTokenRepo.create(anything())).once();
+      verify(refreshTokenRepo.createRefreshToken(anything())).once();
     });
 
     it("異常系：ユーザーが見つからない", async () => {
@@ -107,7 +111,7 @@ describe("AuthUsecase", () => {
       ).rejects.toThrow(new AuthError("invalid credentials"));
       // Verify password verifier was not called
       verify(passwordVerifier.compare(anything(), anything())).never();
-      verify(refreshTokenRepo.create(anything())).never();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 
     it("異常系：パスワードが間違っている", async () => {
@@ -128,7 +132,7 @@ describe("AuthUsecase", () => {
       verify(userRepo.getUserByLoginId("test-user")).once();
       // Verify the mocked passwordVerifier was called
       verify(passwordVerifier.compare("wrong-password", user.password!)).once();
-      verify(refreshTokenRepo.create(anything())).never();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
   });
 
@@ -154,10 +158,12 @@ describe("AuthUsecase", () => {
       });
 
       when(
-        refreshTokenRepo.findByToken(`${oldSelector}.${oldPlainToken}`),
+        refreshTokenRepo.getRefreshTokenByToken(
+          `${oldSelector}.${oldPlainToken}`,
+        ),
       ).thenResolve(oldToken);
 
-      when(refreshTokenRepo.create(anything())).thenCall(
+      when(refreshTokenRepo.createRefreshToken(anything())).thenCall(
         async (input: { userId: UserId; token: string }) =>
           createMockRefreshToken(
             input.userId,
@@ -172,17 +178,19 @@ describe("AuthUsecase", () => {
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
 
-      verify(refreshTokenRepo.revoke(oldTokenId)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(oldTokenId)).once();
     });
 
     it("異常系：無効なリフレッシュトークン", async () => {
-      when(refreshTokenRepo.findByToken(anything())).thenResolve(null);
+      when(refreshTokenRepo.getRefreshTokenByToken(anything())).thenResolve(
+        null,
+      );
 
       await expect(usecase.refreshToken("invalid-token")).rejects.toThrow(
         new AuthError("invalid refresh token"),
       );
 
-      verify(refreshTokenRepo.create(anything())).never();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 
     it("異常系：失効したリフレッシュトークン", async () => {
@@ -195,7 +203,9 @@ describe("AuthUsecase", () => {
       });
 
       when(
-        refreshTokenRepo.findByToken(`${revokedSelector}.${revokedPlainToken}`),
+        refreshTokenRepo.getRefreshTokenByToken(
+          `${revokedSelector}.${revokedPlainToken}`,
+        ),
       ).thenResolve(revokedToken);
 
       await expect(
@@ -204,7 +214,7 @@ describe("AuthUsecase", () => {
         new AuthError("invalid refresh token (validation failed)"),
       );
 
-      verify(refreshTokenRepo.create(anything())).never();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 
     it("異常系：期限切れのリフレッシュトークン", async () => {
@@ -217,7 +227,9 @@ describe("AuthUsecase", () => {
       });
 
       when(
-        refreshTokenRepo.findByToken(`${expiredSelector}.${expiredPlainToken}`),
+        refreshTokenRepo.getRefreshTokenByToken(
+          `${expiredSelector}.${expiredPlainToken}`,
+        ),
       ).thenResolve(expiredToken);
 
       await expect(
@@ -226,7 +238,7 @@ describe("AuthUsecase", () => {
         new AuthError("invalid refresh token (validation failed)"),
       );
 
-      verify(refreshTokenRepo.create(anything())).never();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
   });
 
@@ -236,30 +248,34 @@ describe("AuthUsecase", () => {
     const storedToken = createMockRefreshToken(userId, "hashedToken");
 
     it("正常系：ログアウト成功", async () => {
-      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(storedToken);
-      when(refreshTokenRepo.revoke(storedToken.id)).thenResolve();
+      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
+        storedToken,
+      );
+      when(refreshTokenRepo.revokeRefreshToken(storedToken.id)).thenResolve();
 
       await expect(usecase.logout(userId, refreshToken)).resolves.not.toThrow();
 
-      verify(refreshTokenRepo.findByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revoke(storedToken.id)).once();
+      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(storedToken.id)).once();
     });
 
     it("異常系：存在しないリフレッシュトークン", async () => {
-      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(null);
+      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
+        null,
+      );
 
       await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
         "invalid refresh token",
       );
 
-      verify(refreshTokenRepo.findByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revoke(anything())).never();
+      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(anything())).never();
     });
 
     it("異常系：他のユーザーのリフレッシュトークン", async () => {
       const otherUserId = createUserId();
       const otherUserToken = createMockRefreshToken(otherUserId, "hashedToken");
-      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(
+      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
         otherUserToken,
       );
 
@@ -267,13 +283,15 @@ describe("AuthUsecase", () => {
         "unauthorized - token does not belong to user",
       );
 
-      verify(refreshTokenRepo.findByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revoke(anything())).never();
+      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(anything())).never();
     });
 
     it("異常系：データベースエラー", async () => {
-      when(refreshTokenRepo.findByToken(refreshToken)).thenResolve(storedToken);
-      when(refreshTokenRepo.revoke(storedToken.id)).thenReject(
+      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
+        storedToken,
+      );
+      when(refreshTokenRepo.revokeRefreshToken(storedToken.id)).thenReject(
         new Error("Database error"),
       );
 
@@ -281,8 +299,8 @@ describe("AuthUsecase", () => {
         "Database error",
       );
 
-      verify(refreshTokenRepo.findByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revoke(storedToken.id)).once();
+      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(storedToken.id)).once();
     });
   });
 });

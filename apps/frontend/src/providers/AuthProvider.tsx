@@ -14,10 +14,7 @@ type RequestStatus = "idle" | "loading";
 type AuthState =
   | {
       user: UserState;
-      getUser: ({
-        token,
-        refreshToken,
-      }: { token?: string; refreshToken?: string }) => Promise<void>;
+      getUser: () => Promise<void>;
       login: ({ login_id, password }: LoginRequest) => Promise<void>;
       logout: () => Promise<void>;
       refreshToken: () => Promise<void>;
