@@ -3,19 +3,17 @@ import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   refreshTokenSchema,
   type RefreshToken,
-  type RefreshTokenInput,
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { v7 } from "uuid";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type RefreshTokenRepository = {
-  createRefreshToken(input: RefreshTokenInput): Promise<RefreshToken>;
+  createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
   getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
-  revokeRefreshToken(id: string): Promise<void>;
+  revokeRefreshToken(token: RefreshToken): Promise<void>;
   revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
   deleteRefreshTokensPastExpiry(): Promise<void>;
 };
@@ -36,20 +34,19 @@ export function newRefreshTokenRepository(
 }
 
 function createRefreshToken(db: QueryExecutor) {
-  return async (input: RefreshTokenInput): Promise<RefreshToken> => {
-    const hashedToken = await hashWithSHA256(input.token);
+  return async (token: RefreshToken): Promise<RefreshToken> => {
     const [result] = await db
       .insert(refreshTokens)
       .values({
-        id: v7(),
-        userId: input.userId,
-        selector: input.selector,
-        token: hashedToken,
-        expiresAt: input.expiresAt,
-        revokedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
+        id: token.id,
+        userId: token.userId,
+        selector: token.selector,
+        token: token.token,
+        expiresAt: token.expiresAt,
+        revokedAt: token.revokedAt,
+        createdAt: token.createdAt,
+        updatedAt: token.updatedAt,
+        deletedAt: token.deletedAt,
       })
       .returning();
     const parsedToken = refreshTokenSchema.safeParse(result);
@@ -109,14 +106,14 @@ function getRefreshTokenByToken(db: QueryExecutor) {
 }
 
 function revokeRefreshToken(db: QueryExecutor) {
-  return async (id: string): Promise<void> => {
+  return async (token: RefreshToken): Promise<void> => {
     await db
       .update(refreshTokens)
       .set({
         revokedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(refreshTokens.id, id));
+      .where(eq(refreshTokens.id, token.id));
   };
 }
 

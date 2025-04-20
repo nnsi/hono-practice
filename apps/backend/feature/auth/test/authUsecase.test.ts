@@ -164,11 +164,7 @@ describe("AuthUsecase", () => {
       ).thenResolve(oldToken);
 
       when(refreshTokenRepo.createRefreshToken(anything())).thenCall(
-        async (input: { userId: UserId; token: string }) =>
-          createMockRefreshToken(
-            input.userId,
-            await hashWithSHA256(input.token),
-          ),
+        async (token: RefreshToken) => token,
       );
 
       const result = await usecase.refreshToken(
@@ -178,7 +174,7 @@ describe("AuthUsecase", () => {
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
 
-      verify(refreshTokenRepo.revokeRefreshToken(oldTokenId)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(oldToken)).once();
     });
 
     it("異常系：無効なリフレッシュトークン", async () => {
@@ -251,12 +247,12 @@ describe("AuthUsecase", () => {
       when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
         storedToken,
       );
-      when(refreshTokenRepo.revokeRefreshToken(storedToken.id)).thenResolve();
+      when(refreshTokenRepo.revokeRefreshToken(storedToken)).thenResolve();
 
       await expect(usecase.logout(userId, refreshToken)).resolves.not.toThrow();
 
       verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revokeRefreshToken(storedToken.id)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(storedToken)).once();
     });
 
     it("異常系：存在しないリフレッシュトークン", async () => {
@@ -291,7 +287,7 @@ describe("AuthUsecase", () => {
       when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
         storedToken,
       );
-      when(refreshTokenRepo.revokeRefreshToken(storedToken.id)).thenReject(
+      when(refreshTokenRepo.revokeRefreshToken(storedToken)).thenReject(
         new Error("Database error"),
       );
 
@@ -300,7 +296,7 @@ describe("AuthUsecase", () => {
       );
 
       verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
-      verify(refreshTokenRepo.revokeRefreshToken(storedToken.id)).once();
+      verify(refreshTokenRepo.revokeRefreshToken(storedToken)).once();
     });
   });
 });
