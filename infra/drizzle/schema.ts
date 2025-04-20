@@ -5,7 +5,6 @@ import {
   date,
   index,
   pgTable,
-  primaryKey,
   text,
   time,
   timestamp,
@@ -227,73 +226,3 @@ export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
     references: [activities.id],
   }),
 }));
-
-const parentGoalIdReferenceToSelf = () => goals.id;
-
-// Goal テーブル
-export const goals = pgTable(
-  "goal",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-    parentGoalId: uuid("parent_goal_id").references(
-      parentGoalIdReferenceToSelf,
-    ),
-    title: text("title").notNull(),
-    unit: text("unit"),
-    quantity: customTypeNumeric("quantity"),
-    currentQuantity: customTypeNumeric("current_quantity"),
-    emoji: text("emoji"),
-    startDate: date("start_date"),
-    dueDate: date("due_date"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  },
-  (t) => [
-    index("goal_user_id_idx").on(t.userId),
-    index("goal_parent_goal_id_idx").on(t.parentGoalId),
-    index("goal_created_at_idx").on(t.createdAt),
-  ],
-);
-
-export const goals_tasks = pgTable(
-  "goals_tasks",
-  {
-    goalId: uuid("goal_id")
-      .notNull()
-      .references(() => goals.id),
-    taskId: uuid("task_id")
-      .notNull()
-      .references(() => tasks.id),
-  },
-  (t) => [
-    primaryKey({ columns: [t.goalId, t.taskId] }),
-    index("goals_tasks_goal_id_idx").on(t.goalId),
-    index("goals_tasks_task_id_idx").on(t.taskId),
-  ],
-);
-
-export const goals_activities = pgTable(
-  "goals_activities",
-  {
-    goalId: uuid("goal_id")
-      .notNull()
-      .references(() => goals.id),
-    activityId: uuid("activity_id")
-      .notNull()
-      .references(() => activities.id),
-  },
-  (t) => [
-    primaryKey({ columns: [t.goalId, t.activityId] }),
-    index("goals_activities_goal_id_idx").on(t.goalId),
-    index("goals_activities_activity_id_idx").on(t.activityId),
-  ],
-);

@@ -1,9 +1,4 @@
-import {
-  HomeIcon,
-  FileTextIcon,
-  ArchiveIcon,
-  RocketIcon,
-} from "@radix-ui/react-icons";
+import { HomeIcon, FileTextIcon, ArchiveIcon } from "@radix-ui/react-icons";
 import { Outlet, Link } from "@tanstack/react-router";
 
 import { Toaster } from "../ui";
@@ -42,15 +37,6 @@ export const AuthenticatedLayout: React.FC = () => {
               <button type="button" className="flex flex-col items-center">
                 <ArchiveIcon />
                 <span className="text-xs mt-1">Activity</span>
-              </button>
-            </Link>
-            <Link
-              to="/goal"
-              className="[&.active]:font-bold [&.active]:text-blue-600"
-            >
-              <button type="button" className="flex flex-col items-center">
-                <RocketIcon />
-                <span className="text-xs mt-1">Goal</span>
               </button>
             </Link>
           </nav>
