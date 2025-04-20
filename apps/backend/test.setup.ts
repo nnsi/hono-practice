@@ -128,29 +128,4 @@ async function seed() {
       quantity: 1,
     },
   ]);
-
-  await testDB.insert(schema.goals).values([
-    {
-      id: "00000000-0000-4000-8000-000000000001",
-      userId: TEST_USER_ID,
-      title: "test",
-      unit: "回",
-      quantity: 10,
-      currentQuantity: 0,
-      emoji: "🍣",
-      startDate: "2021-01-01",
-      dueDate: "2031-01-10",
-    },
-    {
-      id: "00000000-0000-4000-8000-000000000002",
-      userId: TEST_USER_ID,
-      title: "test2",
-      unit: "回",
-      quantity: 10,
-      currentQuantity: 11,
-      emoji: "🍣",
-      startDate: "2021-01-01",
-      dueDate: "2031-01-10",
-    },
-  ]);
 }

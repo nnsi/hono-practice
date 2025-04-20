@@ -1,6 +1,7 @@
 import { sign } from "hono/jwt";
 import { testClient } from "hono/testing";
 
+import { AuthError } from "@backend/error";
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { hashWithSHA256 } from "@backend/lib/hash";
@@ -18,6 +19,54 @@ import { newUserRepository } from "../../user";
 import { newAuthUsecase } from "../authUsecase";
 import { SHA256PasswordVerifier } from "../passwordVerifier";
 
+import type { OAuthVerifierMap } from "../authUsecase";
+import type { OIDCPayload } from "../oauthVerify";
+
+const mockGoogleToken = "mock-google-id-token";
+const mockGoogleSub = "google-user-id-123";
+const mockGoogleEmail = "testuser@example.com";
+const mockGoogleName = "Googleユーザー";
+const mockClientId = "test-google-client-id";
+
+// OAuthVerifierMap型でモックを定義
+const mockGoogleVerifiers: OAuthVerifierMap = {
+  google: async (credential: string, clientId: string) => {
+    if (credential === "invalid-token") {
+      throw new AuthError("Invalid token");
+    }
+    if (credential === "no-sub-token") {
+      return {
+        iss: "https://accounts.google.com",
+        sub: undefined as any,
+        aud: clientId,
+        exp: Date.now() / 1000 + 600,
+        iat: Date.now() / 1000,
+        email: mockGoogleEmail,
+        name: mockGoogleName,
+      };
+    }
+    if (credential === "no-email-token") {
+      return {
+        iss: "https://accounts.google.com",
+        sub: mockGoogleSub,
+        aud: clientId,
+        exp: Date.now() / 1000 + 600,
+        iat: Date.now() / 1000,
+        name: mockGoogleName,
+      } as OIDCPayload;
+    }
+    return {
+      iss: "https://accounts.google.com",
+      sub: mockGoogleSub,
+      aud: clientId,
+      exp: Date.now() / 1000 + 600,
+      iat: Date.now() / 1000,
+      email: mockGoogleEmail,
+      name: mockGoogleName,
+    };
+  },
+};
+
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
   let refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
@@ -29,9 +78,10 @@ describe("AuthRoute Integration Tests", () => {
   const createTestApp = (
     useAuth = false,
     mockRefreshTokenRepo?: ReturnType<typeof newRefreshTokenRepository>,
+    oauthVerifiers: OAuthVerifierMap = mockGoogleVerifiers,
   ) => {
     const app = newHonoWithErrorHandling();
-    const authRoutes = createAuthRoute();
+    const authRoutes = createAuthRoute(oauthVerifiers);
 
     if (useAuth) {
       app.use("*", authMiddleware);
@@ -48,6 +98,7 @@ describe("AuthRoute Integration Tests", () => {
           userProviderRepo,
           passwordVerifier,
           JWT_SECRET,
+          oauthVerifiers,
         );
         const h = newAuthHandler(uc);
 
@@ -63,8 +114,9 @@ describe("AuthRoute Integration Tests", () => {
   const createTestClient = (
     useAuth = false,
     mockRefreshTokenRepo?: ReturnType<typeof newRefreshTokenRepository>,
+    oauthVerifiers: OAuthVerifierMap = mockGoogleVerifiers,
   ) => {
-    const app = createTestApp(useAuth, mockRefreshTokenRepo);
+    const app = createTestApp(useAuth, mockRefreshTokenRepo, oauthVerifiers);
     return testClient(app, {
       DB: testDB,
       JWT_SECRET,
@@ -615,6 +667,54 @@ describe("AuthRoute Integration Tests", () => {
           message: "invalid refresh token",
         });
       });
+    });
+  });
+
+  describe("POST /google", () => {
+    it("正常系：Google認証で新規ユーザー作成", async () => {
+      const client = createTestClient();
+      const res = await client.google.$post(
+        { json: { credential: mockGoogleToken } },
+        { headers: { "x-client-id": mockClientId } },
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.token).toEqual(expect.any(String));
+      expect(body.refreshToken).toEqual(expect.any(String));
+      expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
+    });
+
+    it("異常系：不正なGoogleトークン", async () => {
+      const client = createTestClient();
+      const res = await client.google.$post(
+        { json: { credential: "invalid-token" } },
+        { headers: { "x-client-id": mockClientId } },
+      );
+      expect(res.status).toBe(401);
+      const body: any = await res.json();
+      expect(body.message).toMatch(/Invalid token/);
+    });
+
+    it("異常系：subがないトークン", async () => {
+      const client = createTestClient();
+      const res = await client.google.$post(
+        { json: { credential: "no-sub-token" } },
+        { headers: { "x-client-id": mockClientId } },
+      );
+      expect(res.status).toBe(401);
+      const body: any = await res.json();
+      expect(body.message).toMatch(/Missing 'sub'/);
+    });
+
+    it("異常系：emailがないトークン", async () => {
+      const client = createTestClient();
+      const res = await client.google.$post(
+        { json: { credential: "no-email-token" } },
+        { headers: { "x-client-id": mockClientId } },
+      );
+      expect(res.status).toBe(401);
+      const body: any = await res.json();
+      expect(body.message).toMatch(/Missing 'email'/);
     });
   });
 });

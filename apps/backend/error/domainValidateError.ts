@@ -1,10 +1,8 @@
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 export class DomainValidateError extends Error {
-  public status: ContentfulStatusCode;
+  public status: 400;
 
-  constructor(message: string, status: ContentfulStatusCode = 400) {
+  constructor(message: string) {
     super(message);
-    this.status = status;
+    this.status = 400;
   }
 }

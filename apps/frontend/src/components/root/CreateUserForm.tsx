@@ -44,8 +44,8 @@ export const CreateUserForm: React.FC = () => {
       const res = await api.user.$post({ json: data });
       const json = await res.json();
       localStorage.setItem("token", json.token);
-
-      await getUser();
+      localStorage.setItem("refreshToken", json.refreshToken);
+      await getUser(json);
       // ユーザー作成成功時にホームページにリダイレクト
       navigate({ to: "/" });
     } catch (e) {

@@ -4,7 +4,7 @@ import { authResponseSchema } from "@dtos/response";
 import { AppError } from "../../error";
 
 import type { AuthUsecase } from "./authUsecase";
-import type { UserId } from "@backend/domain";
+import type { Provider, UserId } from "@backend/domain";
 
 export type AuthHandler = {
   login(params: LoginRequest): Promise<{
@@ -23,8 +23,9 @@ export type AuthHandler = {
     token: string;
     refreshToken: string;
   }>;
-  linkGoogleAccount(
+  linkProvider(
     userId: UserId,
+    provider: string,
     params: GoogleLoginRequest,
     clientId: string,
   ): Promise<void>;
@@ -89,13 +90,14 @@ function googleLogin(uc: AuthUsecase) {
   };
 }
 
-function linkGoogleAccount(uc: AuthUsecase) {
+function linkProvider(uc: AuthUsecase) {
   return async (
     userId: UserId,
+    provider: Provider,
     params: GoogleLoginRequest,
     clientId: string,
   ) => {
-    await uc.linkGoogleAccount(userId, params.credential, clientId);
+    await uc.linkProvider(userId, provider, params.credential, clientId);
   };
 }
 
@@ -105,6 +107,6 @@ export function newAuthHandler(uc: AuthUsecase): AuthHandler {
     refreshToken: refreshToken(uc),
     logout: logout(uc),
     googleLogin: googleLogin(uc),
-    linkGoogleAccount: linkGoogleAccount(uc),
+    linkProvider: linkProvider(uc),
   };
 }
