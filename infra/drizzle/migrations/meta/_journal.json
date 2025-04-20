@@ -57,6 +57,13 @@
       "when": 1745112825653,
       "tag": "0007_purple_wendell_vaughn",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1745150605093,
+      "tag": "0008_worthless_kid_colt",
+      "breakpoints": true
     }
   ]
 }

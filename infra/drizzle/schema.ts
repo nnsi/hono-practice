@@ -49,7 +49,7 @@ export const users = pgTable(
 );
 
 // UserProvider テーブル
-export const userProviders = pgTable("user_providers", {
+export const userProviders = pgTable("user_provider", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
     .notNull()
@@ -69,7 +69,7 @@ export const userProviders = pgTable("user_providers", {
 
 // RefreshToken テーブル
 export const refreshTokens = pgTable(
-  "refresh_tokens",
+  "refresh_token",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
