@@ -9,6 +9,7 @@ import { createUserRequestSchema } from "@dtos/request";
 
 import { newAuthHandler } from "../auth/authHandler";
 import { newAuthUsecase } from "../auth/authUsecase";
+import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
 
@@ -44,6 +45,7 @@ export function createUserRoute() {
       userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
+      { google: googleVerify },
     );
     const authH = newAuthHandler(authUc);
     const uc = newUserUsecase(repo, userProviderRepo);

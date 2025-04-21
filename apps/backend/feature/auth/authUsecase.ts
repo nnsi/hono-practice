@@ -7,7 +7,11 @@ import {
   createUserProviderId,
 } from "@backend/domain";
 import { AuthError, AppError } from "@backend/error";
-import { validateRefreshToken } from "@domain/auth/refreshToken";
+import { hashWithSHA256 } from "@backend/lib/hash";
+import {
+  validateRefreshToken,
+  createRefreshToken,
+} from "@domain/auth/refreshToken";
 import { v7 } from "uuid";
 
 import type { PasswordVerifier } from "./passwordVerifier";
@@ -105,12 +109,13 @@ function login(
     if (!isValidPassword) throw new AuthError("invalid credentials");
     const accessToken = await generateAccessToken(jwtSecret, user.id);
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    const refreshTokenEntity = createRefreshToken({
       userId: user.id,
       selector,
-      token: plainRefreshToken,
+      token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
+    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const combinedRefreshToken = `${selector}.${plainRefreshToken}`;
     return { accessToken, refreshToken: combinedRefreshToken };
   };
@@ -121,11 +126,12 @@ function refreshToken(
   jwtSecret: string,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
-    const storedToken = await refreshTokenRepo.findByToken(combinedToken);
+    const storedToken =
+      await refreshTokenRepo.getRefreshTokenByToken(combinedToken);
 
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (!validateRefreshToken(storedToken)) {
-      await refreshTokenRepo.revoke(storedToken.id);
+      await refreshTokenRepo.revokeRefreshToken(storedToken);
       throw new AuthError("invalid refresh token (validation failed)");
     }
 
@@ -134,25 +140,27 @@ function refreshToken(
       storedToken.userId,
     );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    const refreshTokenEntity = createRefreshToken({
       userId: storedToken.userId,
       selector,
-      token: plainRefreshToken,
+      token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
+    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
-    await refreshTokenRepo.revoke(storedToken.id);
+    await refreshTokenRepo.revokeRefreshToken(storedToken);
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
 }
 
 function logout(refreshTokenRepo: RefreshTokenRepository) {
   return async (userId: UserId, refreshToken: string): Promise<void> => {
-    const storedToken = await refreshTokenRepo.findByToken(refreshToken);
+    const storedToken =
+      await refreshTokenRepo.getRefreshTokenByToken(refreshToken);
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (storedToken.userId !== userId)
       throw new AuthError("unauthorized - token does not belong to user");
-    await refreshTokenRepo.revoke(storedToken.id);
+    await refreshTokenRepo.revokeRefreshToken(storedToken);
   };
 }
 
@@ -216,12 +224,13 @@ function loginWithProvider(
 
     const accessToken = await generateAccessToken(jwtSecret, userId);
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    await refreshTokenRepo.create({
+    const refreshTokenEntity = createRefreshToken({
       userId,
       selector,
-      token: plainRefreshToken,
+      token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
+    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const refreshToken = `${selector}.${plainRefreshToken}`;
 
     return { accessToken, refreshToken };

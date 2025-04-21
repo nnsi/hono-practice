@@ -3,52 +3,50 @@ import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   refreshTokenSchema,
   type RefreshToken,
-  type RefreshTokenInput,
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { v7 } from "uuid";
 
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type RefreshTokenRepository = {
-  create(input: RefreshTokenInput): Promise<RefreshToken>;
-  findByToken(token: string): Promise<RefreshToken | null>;
-  revoke(id: string): Promise<void>;
-  revokeAllByUserId(userId: UserId): Promise<void>;
-  deleteExpired(): Promise<void>;
-  withTx(tx: QueryExecutor): RefreshTokenRepository;
+  createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
+  getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
+  revokeRefreshToken(token: RefreshToken): Promise<void>;
+  revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
+  deleteRefreshTokensPastExpiry(): Promise<void>;
 };
 
 export function newRefreshTokenRepository(
   db: QueryExecutor,
-): RefreshTokenRepository {
+): RefreshTokenRepository & {
+  withTx: (tx: QueryExecutor) => RefreshTokenRepository;
+} {
   return {
-    create: create(db),
-    findByToken: findByToken(db),
-    revoke: revoke(db),
-    revokeAllByUserId: revokeAllByUserId(db),
-    deleteExpired: deleteExpired(db),
+    createRefreshToken: createRefreshToken(db),
+    getRefreshTokenByToken: getRefreshTokenByToken(db),
+    revokeRefreshToken: revokeRefreshToken(db),
+    revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
+    deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
     withTx: (tx) => newRefreshTokenRepository(tx),
   };
 }
 
-function create(db: QueryExecutor) {
-  return async (input: RefreshTokenInput): Promise<RefreshToken> => {
-    const hashedToken = await hashWithSHA256(input.token);
+function createRefreshToken(db: QueryExecutor) {
+  return async (token: RefreshToken): Promise<RefreshToken> => {
     const [result] = await db
       .insert(refreshTokens)
       .values({
-        id: v7(),
-        userId: input.userId,
-        selector: input.selector,
-        token: hashedToken,
-        expiresAt: input.expiresAt,
-        revokedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
+        id: token.id,
+        userId: token.userId,
+        selector: token.selector,
+        token: token.token,
+        expiresAt: token.expiresAt,
+        revokedAt: token.revokedAt,
+        createdAt: token.createdAt,
+        updatedAt: token.updatedAt,
+        deletedAt: token.deletedAt,
       })
       .returning();
     const parsedToken = refreshTokenSchema.safeParse(result);
@@ -65,7 +63,7 @@ function create(db: QueryExecutor) {
   };
 }
 
-function findByToken(db: QueryExecutor) {
+function getRefreshTokenByToken(db: QueryExecutor) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
     const parts = combinedToken.split(".");
     if (parts.length !== 2) {
@@ -107,19 +105,19 @@ function findByToken(db: QueryExecutor) {
   };
 }
 
-function revoke(db: QueryExecutor) {
-  return async (id: string): Promise<void> => {
+function revokeRefreshToken(db: QueryExecutor) {
+  return async (token: RefreshToken): Promise<void> => {
     await db
       .update(refreshTokens)
       .set({
         revokedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(refreshTokens.id, id));
+      .where(eq(refreshTokens.id, token.id));
   };
 }
 
-function revokeAllByUserId(db: QueryExecutor) {
+function revokeRefreshTokenAllByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<void> => {
     const now = new Date();
     await db
@@ -132,7 +130,7 @@ function revokeAllByUserId(db: QueryExecutor) {
   };
 }
 
-function deleteExpired(db: QueryExecutor) {
+function deleteRefreshTokensPastExpiry(db: QueryExecutor) {
   return async (): Promise<void> => {
     const now = new Date();
     await db
