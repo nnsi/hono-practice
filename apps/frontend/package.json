@@ -1,5 +1,5 @@
 {
-  "name": "56-frontend",
+  "name": "actiko-frontend",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",

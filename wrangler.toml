@@ -1,6 +1,7 @@
-name = "56-backend"
+name = "actiko-backend"
 main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
+compatibility_flags = ["nodejs_compat"]
 
 [env.stg.vars]
 NODE_ENV = "stg"

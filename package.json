@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "dev": "npm run dev -w 56-backend",
-    "client-dev": "npm run dev -w 56-frontend",
-    "build-client-stg": "npm run build-stg -w 56-frontend",
-    "build-client": "npm run build -w 56-frontend",
+    "dev": "npm run dev -w actiko-backend",
+    "client-dev": "npm run dev -w actiko-frontend",
+    "build-client-stg": "npm run build-stg -w actiko-frontend",
+    "build-client": "npm run build -w actiko-frontend",
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "ci-check": "vitest run && biome lint && eslint",
@@ -14,10 +14,7 @@
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
     "db-migrate": "drizzle-kit push --config=infra/drizzle/drizzle.config.ts"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "type": "module",
   "dependencies": {
     "dayjs": "^1.11.13",
