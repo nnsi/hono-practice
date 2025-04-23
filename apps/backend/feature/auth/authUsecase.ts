@@ -36,6 +36,7 @@ export type LoginInput = {
 export type AuthOutput = {
   accessToken: string;
   refreshToken: string;
+  userId?: string;
 };
 
 // jwtVerifyの型定義
@@ -233,7 +234,7 @@ function loginWithProvider(
     await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const refreshToken = `${selector}.${plainRefreshToken}`;
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, userId };
   };
 }
 

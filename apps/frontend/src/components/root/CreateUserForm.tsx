@@ -41,10 +41,7 @@ export const CreateUserForm: React.FC = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      const res = await api.user.$post({ json: data });
-      const json = await res.json();
-      localStorage.setItem("token", json.token);
-      localStorage.setItem("refreshToken", json.refreshToken);
+      await api.user.$post({ json: data });
       await getUser();
       // ユーザー作成成功時にホームページにリダイレクト
       navigate({ to: "/" });
@@ -122,9 +119,6 @@ export const CreateUserForm: React.FC = () => {
                   json: { credential: credentialResponse.credential },
                 });
                 if (res.status === 200) {
-                  const json = await res.json();
-                  localStorage.setItem("token", json.token);
-                  localStorage.setItem("refreshToken", json.refreshToken);
                   await getUser();
                   navigate({ to: "/" });
                 } else {

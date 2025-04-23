@@ -66,10 +66,9 @@ KPI: 1日1記録以上出来ていること
 
 - Frontend: Cloudflare Pages / React
 - Backend: Cloudflare Workers / Hono / Drizzle
-- DB: Neon
+- DB: Neon / Hyperdrive
 - CI/CD: Github Actions / wrangler
-- Logging: (TODO)
-- Monitoring: (TODO)
+- Logging: Cloudflare Logs
 
 ### 4.2 ユーザーフロー／主要ユースケース
 

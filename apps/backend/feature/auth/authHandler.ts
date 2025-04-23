@@ -1,3 +1,5 @@
+import { createUserId } from "@backend/domain/user/userId";
+
 import type { LoginRequest, GoogleLoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
@@ -22,6 +24,7 @@ export type AuthHandler = {
   ): Promise<{
     token: string;
     refreshToken: string;
+    userId: UserId;
   }>;
   linkProvider(
     userId: UserId,
@@ -79,14 +82,15 @@ function googleLogin(uc: AuthUsecase) {
       params.credential,
       clientId,
     );
-    const parsedResponse = authResponseSchema.safeParse({
+    const userId = result.userId ? createUserId(result.userId) : undefined;
+    if (!userId) {
+      throw new AppError("googleLoginHandler: userId not found", 500);
+    }
+    return {
       token: result.accessToken,
       refreshToken: result.refreshToken,
-    });
-    if (!parsedResponse.success) {
-      throw new AppError("googleLoginHandler: failed to parse response", 500);
-    }
-    return parsedResponse.data;
+      userId,
+    };
   };
 }
 

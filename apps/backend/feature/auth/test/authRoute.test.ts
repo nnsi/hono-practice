@@ -276,11 +276,11 @@ describe("AuthRoute Integration Tests", () => {
     it("正常系：トークンの更新成功", async () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
+        {},
         {
-          json: { refreshToken: validPlainRefreshToken },
-        },
-        {
-          headers: { Authorization: `Bearer ${validJwtToken}` },
+          headers: {
+            Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+          },
         },
       );
 
@@ -309,14 +309,11 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リフレッシュトークンが無効 (not found)", async () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
+        {},
         {
-          json: {
-            refreshToken:
-              "00000000-0000-0000-0000-000000000000.non-existent-token",
+          headers: {
+            Cookie: `auth=${validJwtToken}; refresh_token=00000000-0000-0000-0000-000000000000.non-existent-token`,
           },
-        },
-        {
-          headers: { Authorization: `Bearer ${validJwtToken}` },
         },
       );
 
@@ -345,11 +342,11 @@ describe("AuthRoute Integration Tests", () => {
 
       const client = createTestClient(true);
       const res = await client.token.$post(
+        {},
         {
-          json: { refreshToken: `${revokedSelector}.${revokedPlainToken}` },
-        },
-        {
-          headers: { Authorization: `Bearer ${validJwtToken}` },
+          headers: {
+            Cookie: `auth=${validJwtToken}; refresh_token=${revokedSelector}.${revokedPlainToken}`,
+          },
         },
       );
 
@@ -360,35 +357,13 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リクエストボディが不正", async () => {
       const client = createTestClient(true);
       const res = await client.token.$post(
+        {},
         {
-          json: {} as any,
-        },
-        {
-          headers: { Authorization: `Bearer ${validJwtToken}` },
+          headers: { Cookie: `auth=${validJwtToken}` },
         },
       );
-
-      expect(res.status).toBe(400);
-      const body = await res.json();
-      expect(body).toHaveProperty("success", false);
-      expect(body).toHaveProperty("error");
-      if (
-        body &&
-        typeof body === "object" &&
-        "error" in body &&
-        body.error &&
-        typeof body.error === "object" &&
-        "issues" in body.error &&
-        Array.isArray((body.error as any).issues)
-      ) {
-        expect((body.error as any).issues).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ path: ["refreshToken"] }),
-          ]),
-        );
-      } else {
-        expect.fail("Response body did not match expected ZodError structure");
-      }
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ message: "refresh token not found" });
     });
   });
 
@@ -415,14 +390,10 @@ describe("AuthRoute Integration Tests", () => {
     it("正常系：ログアウト成功", async () => {
       const client = createTestClient(true);
       const res = await client.logout.$post(
-        {
-          json: {
-            refreshToken: validPlainRefreshToken,
-          },
-        },
+        {},
         {
           headers: {
-            Authorization: `Bearer ${validJwtToken}`,
+            Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
           },
         },
       );
@@ -449,19 +420,14 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リフレッシュトークンが提供されていない", async () => {
       const client = createTestClient(true);
       const res = await client.logout.$post(
+        {},
         {
-          json: { refreshToken: "" },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${validJwtToken}`,
-          },
+          headers: { Cookie: `auth=${validJwtToken}` },
         },
       );
-
       expect(res.status).toBe(401);
       const body = (await res.json()) as { message: string };
-      expect(body).toEqual({ message: "invalid refresh token" });
+      expect(body).toEqual({ message: "refresh token not found" });
     });
 
     it("異常系：他のユーザーのリフレッシュトークン", async () => {
@@ -484,14 +450,10 @@ describe("AuthRoute Integration Tests", () => {
 
       const client = createTestClient(true);
       const res = await client.logout.$post(
-        {
-          json: {
-            refreshToken: otherUserRefreshToken,
-          },
-        },
+        {},
         {
           headers: {
-            Authorization: `Bearer ${validJwtToken}`,
+            Cookie: `auth=${validJwtToken}; refresh_token=${otherUserRefreshToken}`,
           },
         },
       );
@@ -538,11 +500,11 @@ describe("AuthRoute Integration Tests", () => {
         const tamperedToken = `${validJwtToken.slice(0, -5)}tamper`;
 
         const res = await client.token.$post(
+          {},
           {
-            json: { refreshToken: validPlainRefreshToken },
-          },
-          {
-            headers: { Authorization: `Bearer ${tamperedToken}` },
+            headers: {
+              Cookie: `auth=${tamperedToken}; refresh_token=${validPlainRefreshToken}`,
+            },
           },
         );
 
@@ -555,11 +517,11 @@ describe("AuthRoute Integration Tests", () => {
         const invalidToken = await sign({ userId: testUserId }, "wrong-secret");
 
         const res = await client.token.$post(
+          {},
           {
-            json: { refreshToken: validPlainRefreshToken },
-          },
-          {
-            headers: { Authorization: `Bearer ${invalidToken}` },
+            headers: {
+              Cookie: `auth=${invalidToken}; refresh_token=${validPlainRefreshToken}`,
+            },
           },
         );
 
@@ -578,11 +540,11 @@ describe("AuthRoute Integration Tests", () => {
         );
 
         const res = await client.token.$post(
+          {},
           {
-            json: { refreshToken: validPlainRefreshToken },
-          },
-          {
-            headers: { Authorization: `Bearer ${expiredToken}` },
+            headers: {
+              Cookie: `auth=${expiredToken}; refresh_token=${validPlainRefreshToken}`,
+            },
           },
         );
 
@@ -648,21 +610,21 @@ describe("AuthRoute Integration Tests", () => {
         const client = createTestClient(true);
 
         const firstRes = await client.token.$post(
+          {},
           {
-            json: { refreshToken: validPlainRefreshToken },
-          },
-          {
-            headers: { Authorization: `Bearer ${validJwtToken}` },
+            headers: {
+              Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+            },
           },
         );
         expect(firstRes.status).toBe(200);
 
         const secondRes = await client.token.$post(
+          {},
           {
-            json: { refreshToken: validPlainRefreshToken },
-          },
-          {
-            headers: { Authorization: `Bearer ${validJwtToken}` },
+            headers: {
+              Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+            },
           },
         );
 
@@ -683,8 +645,7 @@ describe("AuthRoute Integration Tests", () => {
       );
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.token).toEqual(expect.any(String));
-      expect(body.refreshToken).toEqual(expect.any(String));
+      expect(body.user).toEqual(expect.any(Object));
       expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
     });
 

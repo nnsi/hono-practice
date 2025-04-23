@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
+import { setCookie, getCookie } from "hono/cookie";
 
 import { createUserId } from "@backend/domain/user/userId";
 import { verifyToken } from "@backend/middleware/authMiddleware";
@@ -76,7 +76,7 @@ export function createUserRoute() {
     })
     .get("/me", async (c) => {
       try {
-        const token = c.req.header("Authorization")?.split(" ")[1] ?? "";
+        const token = getCookie(c, "auth") ?? "";
         const payload = await verifyToken(token, c.env.JWT_SECRET);
         const userId = createUserId(String(payload.userId || payload.id));
         const user = await c.var.h.getMe(userId);

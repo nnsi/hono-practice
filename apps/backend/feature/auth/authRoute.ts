@@ -1,16 +1,13 @@
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
+import { setCookie, getCookie } from "hono/cookie";
 
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
-import {
-  loginRequestSchema,
-  refreshTokenRequestSchema,
-  googleLoginRequestSchema,
-} from "@dtos/request";
+import { loginRequestSchema, googleLoginRequestSchema } from "@dtos/request";
 
 import { newUserRepository } from "../user";
+import { newUserUsecase } from "../user/userUsecase";
 
 import { newAuthHandler } from "./authHandler";
 import { newAuthUsecase } from "./authUsecase";
@@ -61,56 +58,73 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
 
       const { token, refreshToken } = await c.var.h.login(body);
 
+      const isDev = NODE_ENV === "development";
       setCookie(c, "auth", token, {
         httpOnly: true,
-        secure: NODE_ENV !== "development",
+        secure: !isDev,
         expires: new Date(Date.now() + 15 * 60 * 1000),
-        sameSite: "None",
+        ...(isDev ? {} : { sameSite: "None" }),
+      });
+      setCookie(c, "refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: !isDev,
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        ...(isDev ? {} : { sameSite: "None" }),
       });
 
       return c.json({ token, refreshToken });
     })
-    .post(
-      "/token",
-      zValidator("json", refreshTokenRequestSchema),
-      async (c) => {
-        const { NODE_ENV } = c.env;
-        const body = c.req.valid("json");
+    .post("/token", async (c) => {
+      const { NODE_ENV } = c.env;
+      const refreshTokenCookie = getCookie(c, "refresh_token");
+      if (!refreshTokenCookie) {
+        return c.json({ message: "refresh token not found" }, 401);
+      }
+      const { token, refreshToken } =
+        await c.var.h.refreshToken(refreshTokenCookie);
 
-        const { token, refreshToken } = await c.var.h.refreshToken(
-          body.refreshToken,
-        );
+      const isDev = NODE_ENV === "development";
+      setCookie(c, "auth", token, {
+        httpOnly: true,
+        secure: !isDev,
+        expires: new Date(Date.now() + 15 * 60 * 1000),
+        ...(isDev ? {} : { sameSite: "None" }),
+      });
+      setCookie(c, "refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: !isDev,
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        ...(isDev ? {} : { sameSite: "None" }),
+      });
 
-        setCookie(c, "auth", token, {
-          httpOnly: true,
-          secure: NODE_ENV !== "development",
-          expires: new Date(Date.now() + 15 * 60 * 1000),
-          sameSite: "None",
-        });
+      return c.json({ token, refreshToken });
+    })
+    .post("/logout", authMiddleware, async (c) => {
+      const userId = c.get("userId");
+      const refreshTokenCookie = getCookie(c, "refresh_token");
+      if (!refreshTokenCookie) {
+        return c.json({ message: "refresh token not found" }, 401);
+      }
+      const result = await c.var.h.logout(userId, refreshTokenCookie);
 
-        return c.json({ token, refreshToken });
-      },
-    )
-    .post(
-      "/logout",
-      authMiddleware,
-      zValidator("json", refreshTokenRequestSchema),
-      async (c) => {
-        const userId = c.get("userId");
-        const body = c.req.valid("json");
-        const result = await c.var.h.logout(userId, body.refreshToken);
+      const isDev = c.env.NODE_ENV === "development";
+      setCookie(c, "auth", "", {
+        httpOnly: true,
+        secure: !isDev,
+        expires: new Date(0),
+        ...(isDev ? {} : { sameSite: "None" }),
+        path: "/",
+      });
+      setCookie(c, "refresh_token", "", {
+        httpOnly: true,
+        secure: !isDev,
+        expires: new Date(0),
+        ...(isDev ? {} : { sameSite: "None" }),
+        path: "/",
+      });
 
-        setCookie(c, "auth", "", {
-          httpOnly: true,
-          secure: c.env.NODE_ENV !== "development",
-          expires: new Date(0),
-          sameSite: "None",
-          path: "/",
-        });
-
-        return c.json(result);
-      },
-    )
+      return c.json(result);
+    })
     .post(
       "/google",
       zValidator("json", googleLoginRequestSchema),
@@ -118,19 +132,33 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID } = c.env;
         const body = c.req.valid("json");
 
-        const { token, refreshToken } = await c.var.h.googleLogin(
+        const { token, refreshToken, userId } = await c.var.h.googleLogin(
           body,
           GOOGLE_OAUTH_CLIENT_ID,
         );
 
+        // user情報を取得
+        const db = c.env.DB;
+        const repo = newUserRepository(db);
+        const userProviderRepo = newUserProviderRepository(db);
+        const userUsecase = newUserUsecase(repo, userProviderRepo);
+        const user = await userUsecase.getUserById(userId);
+
+        const isDev = NODE_ENV === "development";
         setCookie(c, "auth", token, {
           httpOnly: true,
-          secure: NODE_ENV !== "development",
+          secure: !isDev,
           expires: new Date(Date.now() + 15 * 60 * 1000),
-          sameSite: "None",
+          ...(isDev ? {} : { sameSite: "None" }),
+        });
+        setCookie(c, "refresh_token", refreshToken, {
+          httpOnly: true,
+          secure: !isDev,
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          ...(isDev ? {} : { sameSite: "None" }),
         });
 
-        return c.json({ token, refreshToken });
+        return c.json({ user });
       },
     )
     .post(
