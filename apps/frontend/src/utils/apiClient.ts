@@ -12,15 +12,14 @@ let isRefreshing = false;
 // 保留中のリクエストのキュー
 let failedRequestsQueue: Array<() => void> = [];
 
-const processQueue = (error: Error | null = null) => {
+const processQueue = (error: Error | null = null, isTokenRefresh = false) => {
   failedRequestsQueue.forEach((callback) => {
-    if (error) {
-      // リフレッシュに失敗した場合、全てのリクエストをエラーとして処理
+    if (error && isTokenRefresh) {
+      // リフレッシュに失敗した場合のみunauthorizedを発火
       window.dispatchEvent(
         new CustomEvent("unauthorized", { detail: error.message }),
       );
     } else {
-      // リフレッシュに成功した場合、保留中のリクエストを再試行
       callback();
     }
   });
@@ -28,39 +27,25 @@ const processQueue = (error: Error | null = null) => {
 };
 
 const refreshAccessToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
-    }
+  const response = await fetch(`${API_URL}auth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
 
-    const response = await fetch(`${API_URL}auth/token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to refresh token");
-    }
-
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    return data.token;
-  } catch (error) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    throw error;
+  if (!response.ok) {
+    throw new Error("Failed to refresh token");
   }
+
+  return;
 };
 
 const customFetch = async (
   input: RequestInfo | URL,
   init?: RequestInit,
+  isRetry?: boolean,
 ): Promise<Response> => {
   try {
     const res = await fetch(input, {
@@ -68,8 +53,8 @@ const customFetch = async (
       headers: {
         ...init?.headers,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
+      credentials: "include",
     });
 
     if (res.status === 204) return new Response(null, { status: 204 });
@@ -77,19 +62,22 @@ const customFetch = async (
     const json = await res.json();
 
     if (res.status === 401) {
+      if (isRetry) {
+        return new Response(JSON.stringify(json), { status: 401 });
+      }
       if (!isRefreshing) {
         isRefreshing = true;
         try {
           // アクセストークンの更新を試みる
           await refreshAccessToken();
           isRefreshing = false;
-          processQueue();
+          processQueue(undefined, true); // トークンリフレッシュ成功時
 
-          // 更新されたトークンで元のリクエストを再試行
-          return await customFetch(input, init);
+          // 1回だけリトライ
+          return await customFetch(input, init, true);
         } catch (error) {
           isRefreshing = false;
-          processQueue(error as Error);
+          processQueue(error as Error, true); // トークンリフレッシュ失敗時のみunauthorized発火
           throw error;
         }
       } else {
@@ -97,7 +85,7 @@ const customFetch = async (
         return new Promise((resolve) => {
           failedRequestsQueue.push(async () => {
             try {
-              const result = await customFetch(input, init);
+              const result = await customFetch(input, init, true);
               resolve(result);
             } catch (error) {
               resolve(new Response(JSON.stringify(json), { status: 401 }));
@@ -120,7 +108,18 @@ const customFetch = async (
         "Content-Type": "application/json",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    // 401や未認証系のエラーはapi-errorを発火しない
+    const msg = error?.message || "";
+    if (
+      msg.includes("401") ||
+      msg.includes("unauthorized") ||
+      msg.includes("refresh token not found") ||
+      msg.includes("invalid refresh token") ||
+      msg.includes("Failed to refresh token")
+    ) {
+      throw error;
+    }
     if (error instanceof Error) {
       window.dispatchEvent(
         new CustomEvent("api-error", { detail: error.message }),

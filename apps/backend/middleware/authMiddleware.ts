@@ -1,4 +1,5 @@
 import type { Next } from "hono";
+import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 
 import { createUserId } from "../domain";
@@ -11,7 +12,7 @@ export function verifyToken(jwt: string, secret: string) {
 }
 
 export async function authMiddleware(c: HonoContext, next: Next) {
-  const jwt = c.req.header("Authorization")?.split(" ")[1];
+  const jwt = getCookie(c, "auth");
 
   if (!jwt) {
     throw new UnauthorizedError("unauthorized");

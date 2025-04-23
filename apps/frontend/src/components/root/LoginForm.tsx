@@ -23,11 +23,13 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  useToast,
 } from "@components/ui";
 
 export const LoginForm: React.FC = () => {
-  const { login, loginWithToken } = useAuth();
+  const { login, setUser } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
@@ -43,7 +45,10 @@ export const LoginForm: React.FC = () => {
       // ログイン成功時にホームページにリダイレクト
       navigate({ to: "/" });
     } catch (e) {
-      console.error("LoginForm:", e);
+      toast({
+        description: "ログインIDまたはパスワードが間違っています",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,8 +108,8 @@ export const LoginForm: React.FC = () => {
                   json: { credential: credentialResponse.credential },
                 });
                 if (res.status === 200) {
-                  const json = await res.json();
-                  loginWithToken(json.token, json.refreshToken);
+                  const { user } = await res.json();
+                  setUser({ ...user, name: user.name ?? null });
                   setTimeout(() => {
                     navigate({ to: "/" });
                   }, 0);

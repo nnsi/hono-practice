@@ -1,13 +1,17 @@
-import { type ReactNode, createContext, useState, useCallback } from "react";
+import {
+  type ReactNode,
+  createContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
 
 import type { LoginRequest } from "@dtos/request/LoginRequest";
+import type { GetUserResponse } from "@dtos/response/GetUserResponse";
 
-type UserState = {
-  token: string | null;
-  refreshToken: string | null;
-} | null;
+type UserState = GetUserResponse | null;
 
 type RequestStatus = "idle" | "loading";
 
@@ -19,7 +23,7 @@ type AuthState =
       logout: () => Promise<void>;
       refreshToken: () => Promise<void>;
       requestStatus: RequestStatus;
-      loginWithToken: (accessToken: string, refreshToken: string) => void;
+      setUser: (user: UserState) => void;
     }
   | undefined;
 
@@ -27,87 +31,68 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
-type AuthResponse = {
-  token: string;
-  refreshToken: string;
-};
-
 export const AuthContext = createContext<AuthState>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const token = localStorage.getItem("token");
-  const storedRefreshToken = localStorage.getItem("refreshToken");
-  const [user, setUser] = useState<UserState>(
-    token && storedRefreshToken
-      ? {
-          token,
-          refreshToken: storedRefreshToken,
-        }
-      : null,
-  );
+  const [user, setUser] = useState<UserState>(null);
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGettingUser, setIsGettingUser] = useState(false);
 
   const getUser = async () => {
-    const token = localStorage.getItem("token");
-    const refreshToken = localStorage.getItem("refreshToken");
+    if (isGettingUser || requestStatus === "loading") return;
+    setIsGettingUser(true);
     try {
       setRequestStatus("loading");
-      // トークンが存在しない場合は未ログイン状態として扱う
-      if (!user?.token && (!token || !refreshToken)) {
-        setRequestStatus("idle");
-        return setUser(null);
-      }
-
       const res = await apiClient.user.me.$get();
-
       if (res.status > 300) {
         setRequestStatus("idle");
-        return setUser(null);
+        setUser(null);
+        setIsGettingUser(false);
+        return;
       }
+      const userInfo = await res.json();
+      if ("message" in userInfo) {
+        setUser(null);
+        setIsGettingUser(false);
+        return;
+      }
+      setUser(userInfo);
     } catch (e) {
       setRequestStatus("idle");
-      return setUser(null);
+      setUser(null);
+      setIsGettingUser(false);
+      return;
     }
     setRequestStatus("idle");
-    setUser({
-      token,
-      refreshToken,
-    });
+    setIsGettingUser(false);
   };
 
   const refreshToken = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
     try {
-      const currentRefreshToken = localStorage.getItem("refreshToken");
-      // 未ログイン状態ではリフレッシュトークンが不要なので、エラーを投げずに早期リターン
-      if (!currentRefreshToken) {
-        return;
-      }
-
-      const res = await apiClient.auth.token.$post({
-        json: { refreshToken: currentRefreshToken },
-      });
-
-      if (res.status === 200) {
-        const json = (await res.json()) as AuthResponse;
-        localStorage.setItem("token", json.token);
-        localStorage.setItem("refreshToken", json.refreshToken);
-        setUser({
-          token: json.token,
-          refreshToken: json.refreshToken,
-        });
-      } else {
+      const res = await apiClient.auth.token.$post({});
+      if (res.status !== 200) {
+        const body: any = await res.json().catch(() => ({}));
+        if (
+          res.status === 401 &&
+          body &&
+          (body.message === "refresh token not found" ||
+            body.message === "invalid refresh token")
+        ) {
+          setUser(null);
+          setIsRefreshing(false);
+          return;
+        }
         throw new Error("Failed to refresh token");
       }
     } catch (e) {
-      // リフレッシュトークンが無効な場合のみクリーンアップを実行
-      if (e instanceof Error && e.message === "Failed to refresh token") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        setUser(null);
-      }
+      setIsRefreshing(false);
       throw e;
     }
-  }, []);
+    setIsRefreshing(false);
+  }, [isRefreshing]);
 
   const login = async ({ login_id, password }: LoginRequest) => {
     try {
@@ -117,17 +102,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           password,
         },
       });
-      if (res.status === 200) {
-        const json = (await res.json()) as AuthResponse;
-        localStorage.setItem("token", json.token);
-        localStorage.setItem("refreshToken", json.refreshToken);
-        setUser({
-          token: json.token,
-          refreshToken: json.refreshToken,
-        });
-      } else {
+      if (res.status !== 200) {
         return Promise.reject("Login failed");
       }
+      await getUser();
     } catch (e) {
       return Promise.reject(e);
     }
@@ -136,32 +114,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken) {
-        await apiClient.auth.logout.$post({
-          json: {
-            refreshToken,
-          },
-        });
-      }
+      await apiClient.auth.logout.$post({});
     } catch (e) {
       console.error("Logout failed:", e);
     } finally {
       setUser(null);
       setRequestStatus("idle");
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
     }
   };
 
-  const loginWithToken = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("token", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    setUser({
-      token: accessToken,
-      refreshToken,
-    });
-  };
+  useEffect(() => {
+    getUser();
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -172,7 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         refreshToken,
         requestStatus,
-        loginWithToken,
+        setUser,
       }}
     >
       {children}

@@ -16,7 +16,7 @@ import {
 } from "@components/ui";
 
 const RootComponent: React.FC = () => {
-  const { user, getUser, requestStatus, refreshToken } = useAuth();
+  const { user, requestStatus, refreshToken } = useAuth();
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -30,6 +30,8 @@ const RootComponent: React.FC = () => {
       });
     }
     async function handleUnauthorized() {
+      // すでに未認証状態なら何もしない
+      if (!user) return;
       try {
         // トークンリフレッシュを試みる
         await refreshToken();
@@ -50,10 +52,6 @@ const RootComponent: React.FC = () => {
     window.addEventListener("touchstart", handleDisablePinchZoom, {
       passive: false,
     });
-    (async () => {
-      if (user?.token) return;
-      await getUser();
-    })();
 
     return () => {
       window.removeEventListener("api-error", handleApiError);
@@ -63,10 +61,10 @@ const RootComponent: React.FC = () => {
   }, []);
 
   // 認証情報取得中
-  if (!user?.token && requestStatus === "loading") return <div>Loading...</div>;
+  if (!user && requestStatus === "loading") return <div>Loading...</div>;
 
   // ログイン済み
-  if (user?.token) {
+  if (user) {
     return <AuthenticatedLayout />;
   }
 

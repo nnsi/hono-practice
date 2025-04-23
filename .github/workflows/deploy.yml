@@ -32,12 +32,14 @@ jobs:
         run: npm run build-client-stg
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
+          VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
 
       - name: Build (for release)
         if: github.ref_name == 'release'
         run: npm run build-client
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
+          VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
 
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master'
