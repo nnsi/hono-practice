@@ -11,7 +11,7 @@ import {
   type GetUserResponse,
 } from "@dtos/response/GetUserResponse";
 
-export const HomePage: React.FC = () => {
+export const Setting: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
