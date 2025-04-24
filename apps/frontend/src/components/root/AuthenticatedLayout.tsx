@@ -1,8 +1,10 @@
+import { DateProvider } from "@frontend/providers/DateProvider";
 import {
   FileTextIcon,
   ArchiveIcon,
   GearIcon,
   CardStackPlusIcon,
+  BarChartIcon,
 } from "@radix-ui/react-icons";
 import { Outlet, Link } from "@tanstack/react-router";
 
@@ -13,7 +15,9 @@ export const AuthenticatedLayout: React.FC = () => {
     <>
       <div className="h-svh w-full max-w-3xl mx-auto flex flex-col">
         <main className="flex-1 p-4 overflow-y-auto">
-          <Outlet />
+          <DateProvider>
+            <Outlet />
+          </DateProvider>
         </main>
         <footer className="w-full bg-gray-50 shadow-lg sticky bottom-0 left-0 select-none">
           <nav className="flex justify-around items-center p-4">
@@ -24,6 +28,15 @@ export const AuthenticatedLayout: React.FC = () => {
               <button type="button" className="flex flex-col items-center">
                 <CardStackPlusIcon />
                 <span className="text-xs mt-1">Actiko</span>
+              </button>
+            </Link>
+            <Link
+              to="/stats"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <BarChartIcon />
+                <span className="text-xs mt-1">Stats</span>
               </button>
             </Link>
             <Link
