@@ -1,5 +1,6 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
+import { ActivityLogCreateFormBody } from "@frontend/components/activity/ActivityLogCreateForm";
 import {
   Card,
   CardContent,
@@ -10,20 +11,36 @@ import {
 } from "@frontend/components/ui";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { apiClient, qp } from "@frontend/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
 } from "@radix-ui/react-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useForm } from "react-hook-form";
 
+import {
+  CreateActivityLogRequestSchema,
+  type CreateActivityLogRequest,
+} from "@dtos/request/CreateActivityLogRequest";
 import {
   GetActivitiesResponseSchema,
   type GetActivityResponse,
 } from "@dtos/response";
+import {
+  GetActivityLogResponseSchema,
+  type GetActivityLogsResponse,
+} from "@dtos/response/GetActivityLogsResponse";
+
+import { useToast } from "@components/ui";
 
 export const ActivityRegistPage: React.FC = () => {
   const { date, setDate } = useContext(DateContext);
+  const [open, setOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] =
+    useState<GetActivityResponse | null>(null);
 
   const { data: activities, error: _activitiesError } = useQuery({
     ...qp({
@@ -49,11 +66,12 @@ export const ActivityRegistPage: React.FC = () => {
   */
 
   const handleActivityClick = (activity: GetActivityResponse) => {
-    console.log(activity);
+    setSelectedActivity(activity);
+    setOpen(true);
   };
 
   const handleNewActivityClick = () => {
-    console.log("new activity");
+    setOpen(true);
   };
 
   return (
@@ -91,6 +109,21 @@ export const ActivityRegistPage: React.FC = () => {
           </div>
         </ActivityCard>
       </div>
+      <NewActivityDialog
+        open={open && !selectedActivity}
+        onOpenChange={setOpen}
+      />
+      {selectedActivity && (
+        <ActivityLogCreateDialog
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setSelectedActivity(null);
+          }}
+          activity={selectedActivity}
+          date={date}
+        />
+      )}
     </>
   );
 };
@@ -111,13 +144,103 @@ function ActivityCard({
   );
 }
 
-function NewActivityDialog() {
+function NewActivityDialog({
+  open,
+  onOpenChange,
+}: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New Activity</DialogTitle>
         </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ActivityLogCreateDialog({
+  open,
+  onOpenChange,
+  activity,
+  date,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  activity: GetActivityResponse;
+  date: Date;
+}) {
+  const form = useForm<CreateActivityLogRequest>({
+    resolver: zodResolver(CreateActivityLogRequestSchema),
+    defaultValues: {
+      date: dayjs(date).format("YYYY-MM-DD"),
+      quantity: 0,
+      activityKindId: undefined,
+    },
+  });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
+
+  const onSubmit = async (data: CreateActivityLogRequest) => {
+    CreateActivityLogRequestSchema.parse(data);
+    if (!date) {
+      toast({
+        title: "Error",
+        description: "Failed to create activity log",
+        variant: "destructive",
+      });
+      return;
+    }
+    const res = await apiClient.users["activity-logs"].$post({
+      json: {
+        ...data,
+        activityId: activity.id,
+      },
+    });
+    if (res.status !== 200) {
+      return;
+    }
+    const json = await res.json();
+    const parsedJson = GetActivityLogResponseSchema.safeParse(json);
+    if (!parsedJson.success) {
+      toast({
+        title: "Error",
+        description: "Failed to create activity log",
+        variant: "destructive",
+      });
+      return;
+    }
+    form.reset();
+    queryClient.setQueryData(
+      ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+      (prev: GetActivityLogsResponse) => {
+        return [...(prev ?? []), parsedJson.data];
+      },
+    );
+    queryClient.setQueryData(
+      ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
+      (prev: GetActivityLogsResponse) => {
+        return [...(prev ?? []), parsedJson.data];
+      },
+    );
+    toast({
+      title: "登録完了",
+      description: "アクティビティを記録しました",
+      variant: "default",
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-80 mt-[-0.5rem]">
+        <ActivityLogCreateFormBody
+          form={form}
+          activity={activity}
+          onSubmit={onSubmit}
+        />
       </DialogContent>
     </Dialog>
   );
