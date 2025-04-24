@@ -1,46 +1,58 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 
-import { ActivityLogCreateFormBody } from "@frontend/components/activity/ActivityLogCreateForm";
-import {
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogHeader,
-  DialogContent,
-} from "@frontend/components/ui";
+import { Card, CardContent } from "@frontend/components/ui";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { apiClient, qp } from "@frontend/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
 } from "@radix-ui/react-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 
-import {
-  CreateActivityLogRequestSchema,
-  type CreateActivityLogRequest,
-} from "@dtos/request/CreateActivityLogRequest";
 import {
   GetActivitiesResponseSchema,
   type GetActivityResponse,
 } from "@dtos/response";
-import {
-  GetActivityLogResponseSchema,
-  type GetActivityLogsResponse,
-} from "@dtos/response/GetActivityLogsResponse";
 
-import { useToast } from "@components/ui";
+import { ActivityLogCreateDialog } from "./ActivityLogCreateDialog";
+import { NewActivityDialog } from "./NewActivityDialog";
+
+// ダミーのActivityEditModal
+const ActivityEditModal = ({
+  open,
+  onClose,
+  activity,
+}: {
+  open: boolean;
+  onClose: () => void;
+  activity: GetActivityResponse | null;
+}) =>
+  open ? (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded shadow">
+        <h2 className="text-lg font-bold mb-4">Activity Edit Modal</h2>
+        <p>（ここに編集UIを実装予定）</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+  ) : null;
 
 export const ActivityRegistPage: React.FC = () => {
   const { date, setDate } = useContext(DateContext);
   const [open, setOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] =
     useState<GetActivityResponse | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTargetActivity, setEditTargetActivity] =
+    useState<GetActivityResponse | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const { data: activities, error: _activitiesError } = useQuery({
     ...qp({
@@ -74,6 +86,19 @@ export const ActivityRegistPage: React.FC = () => {
     setOpen(true);
   };
 
+  const handleActivityCardPointerDown = (activity: GetActivityResponse) => {
+    longPressTimer.current = setTimeout(() => {
+      setEditTargetActivity(activity);
+      setEditModalOpen(true);
+    }, 700);
+  };
+  const handleActivityCardPointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   return (
     <>
       <p className="flex items-center justify-center gap-2 mb-3">
@@ -96,6 +121,9 @@ export const ActivityRegistPage: React.FC = () => {
           <ActivityCard
             key={activity.id}
             onClick={() => handleActivityClick(activity)}
+            onPointerDown={() => handleActivityCardPointerDown(activity)}
+            onPointerUp={handleActivityCardPointerUp}
+            onPointerLeave={handleActivityCardPointerUp}
           >
             <div className="text-5xl mb-2">{activity.emoji}</div>
             <div className="text-sm text-gray-800 font-medium">
@@ -124,6 +152,11 @@ export const ActivityRegistPage: React.FC = () => {
           date={date}
         />
       )}
+      <ActivityEditModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        activity={editTargetActivity}
+      />
     </>
   );
 };
@@ -131,117 +164,27 @@ export const ActivityRegistPage: React.FC = () => {
 function ActivityCard({
   children,
   onClick,
-}: { children: React.ReactNode; onClick: () => void }) {
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
+  onPointerLeave?: () => void;
+}) {
   return (
     <Card
       className="flex items-center justify-center py-6 shadow-md rounded-3xl cursor-pointer hover:bg-gray-100 select-none"
       onClick={onClick}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerLeave}
     >
       <CardContent className="flex flex-col items-center justify-center py-0">
         {children}
       </CardContent>
     </Card>
-  );
-}
-
-function NewActivityDialog({
-  open,
-  onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New Activity</DialogTitle>
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ActivityLogCreateDialog({
-  open,
-  onOpenChange,
-  activity,
-  date,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  activity: GetActivityResponse;
-  date: Date;
-}) {
-  const form = useForm<CreateActivityLogRequest>({
-    resolver: zodResolver(CreateActivityLogRequestSchema),
-    defaultValues: {
-      date: dayjs(date).format("YYYY-MM-DD"),
-      quantity: 0,
-      activityKindId: undefined,
-    },
-  });
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
-
-  const onSubmit = async (data: CreateActivityLogRequest) => {
-    CreateActivityLogRequestSchema.parse(data);
-    if (!date) {
-      toast({
-        title: "Error",
-        description: "Failed to create activity log",
-        variant: "destructive",
-      });
-      return;
-    }
-    const res = await apiClient.users["activity-logs"].$post({
-      json: {
-        ...data,
-        activityId: activity.id,
-      },
-    });
-    if (res.status !== 200) {
-      return;
-    }
-    const json = await res.json();
-    const parsedJson = GetActivityLogResponseSchema.safeParse(json);
-    if (!parsedJson.success) {
-      toast({
-        title: "Error",
-        description: "Failed to create activity log",
-        variant: "destructive",
-      });
-      return;
-    }
-    form.reset();
-    queryClient.setQueryData(
-      ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
-    queryClient.setQueryData(
-      ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
-    toast({
-      title: "登録完了",
-      description: "アクティビティを記録しました",
-      variant: "default",
-    });
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-80 mt-[-0.5rem]">
-        <ActivityLogCreateFormBody
-          form={form}
-          activity={activity}
-          onSubmit={onSubmit}
-        />
-      </DialogContent>
-    </Dialog>
   );
 }
