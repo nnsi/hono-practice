@@ -12,6 +12,9 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as TaskImport } from './routes/task'
+import { Route as StatsImport } from './routes/stats'
+import { Route as SettingImport } from './routes/setting'
+import { Route as AddImport } from './routes/add'
 import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
 import { Route as TaskIdImport } from './routes/task/$id'
@@ -23,6 +26,24 @@ import { Route as ActivityIdImport } from './routes/activity/$id'
 const TaskRoute = TaskImport.update({
   id: '/task',
   path: '/task',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const StatsRoute = StatsImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SettingRoute = SettingImport.update({
+  id: '/setting',
+  path: '/setting',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AddRoute = AddImport.update({
+  id: '/add',
+  path: '/add',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -72,6 +93,27 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityImport
+      parentRoute: typeof rootRoute
+    }
+    '/add': {
+      id: '/add'
+      path: '/add'
+      fullPath: '/add'
+      preLoaderRoute: typeof AddImport
+      parentRoute: typeof rootRoute
+    }
+    '/setting': {
+      id: '/setting'
+      path: '/setting'
+      fullPath: '/setting'
+      preLoaderRoute: typeof SettingImport
+      parentRoute: typeof rootRoute
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsImport
       parentRoute: typeof rootRoute
     }
     '/task': {
@@ -134,6 +176,9 @@ const TaskRouteWithChildren = TaskRoute._addFileChildren(TaskRouteChildren)
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
+  '/add': typeof AddRoute
+  '/setting': typeof SettingRoute
+  '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -143,6 +188,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
+  '/add': typeof AddRoute
+  '/setting': typeof SettingRoute
+  '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -153,6 +201,9 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
+  '/add': typeof AddRoute
+  '/setting': typeof SettingRoute
+  '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
   '/activity/$id': typeof ActivityIdRoute
   '/activity/setting': typeof ActivitySettingRoute
@@ -164,6 +215,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activity'
+    | '/add'
+    | '/setting'
+    | '/stats'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -172,6 +226,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activity'
+    | '/add'
+    | '/setting'
+    | '/stats'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -180,6 +237,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activity'
+    | '/add'
+    | '/setting'
+    | '/stats'
     | '/task'
     | '/activity/$id'
     | '/activity/setting'
@@ -190,12 +250,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRouteWithChildren
+  AddRoute: typeof AddRoute
+  SettingRoute: typeof SettingRoute
+  StatsRoute: typeof StatsRoute
   TaskRoute: typeof TaskRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRouteWithChildren,
+  AddRoute: AddRoute,
+  SettingRoute: SettingRoute,
+  StatsRoute: StatsRoute,
   TaskRoute: TaskRouteWithChildren,
 }
 
@@ -211,6 +277,9 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/activity",
+        "/add",
+        "/setting",
+        "/stats",
         "/task"
       ]
     },
@@ -223,6 +292,15 @@ export const routeTree = rootRoute
         "/activity/$id",
         "/activity/setting"
       ]
+    },
+    "/add": {
+      "filePath": "add.tsx"
+    },
+    "/setting": {
+      "filePath": "setting.tsx"
+    },
+    "/stats": {
+      "filePath": "stats.tsx"
     },
     "/task": {
       "filePath": "task.tsx",
