@@ -14,7 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as TaskImport } from './routes/task'
 import { Route as StatsImport } from './routes/stats'
 import { Route as SettingImport } from './routes/setting'
-import { Route as AddImport } from './routes/add'
+import { Route as ListImport } from './routes/list'
 import { Route as ActivityImport } from './routes/activity'
 import { Route as IndexImport } from './routes/index'
 import { Route as TaskIdImport } from './routes/task/$id'
@@ -41,9 +41,9 @@ const SettingRoute = SettingImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AddRoute = AddImport.update({
-  id: '/add',
-  path: '/add',
+const ListRoute = ListImport.update({
+  id: '/list',
+  path: '/list',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -95,11 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivityImport
       parentRoute: typeof rootRoute
     }
-    '/add': {
-      id: '/add'
-      path: '/add'
-      fullPath: '/add'
-      preLoaderRoute: typeof AddImport
+    '/list': {
+      id: '/list'
+      path: '/list'
+      fullPath: '/list'
+      preLoaderRoute: typeof ListImport
       parentRoute: typeof rootRoute
     }
     '/setting': {
@@ -176,7 +176,7 @@ const TaskRouteWithChildren = TaskRoute._addFileChildren(TaskRouteChildren)
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
-  '/add': typeof AddRoute
+  '/list': typeof ListRoute
   '/setting': typeof SettingRoute
   '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
@@ -188,7 +188,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
-  '/add': typeof AddRoute
+  '/list': typeof ListRoute
   '/setting': typeof SettingRoute
   '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
@@ -201,7 +201,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/activity': typeof ActivityRouteWithChildren
-  '/add': typeof AddRoute
+  '/list': typeof ListRoute
   '/setting': typeof SettingRoute
   '/stats': typeof StatsRoute
   '/task': typeof TaskRouteWithChildren
@@ -215,7 +215,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activity'
-    | '/add'
+    | '/list'
     | '/setting'
     | '/stats'
     | '/task'
@@ -226,7 +226,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activity'
-    | '/add'
+    | '/list'
     | '/setting'
     | '/stats'
     | '/task'
@@ -237,7 +237,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activity'
-    | '/add'
+    | '/list'
     | '/setting'
     | '/stats'
     | '/task'
@@ -250,7 +250,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRouteWithChildren
-  AddRoute: typeof AddRoute
+  ListRoute: typeof ListRoute
   SettingRoute: typeof SettingRoute
   StatsRoute: typeof StatsRoute
   TaskRoute: typeof TaskRouteWithChildren
@@ -259,7 +259,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRouteWithChildren,
-  AddRoute: AddRoute,
+  ListRoute: ListRoute,
   SettingRoute: SettingRoute,
   StatsRoute: StatsRoute,
   TaskRoute: TaskRouteWithChildren,
@@ -277,7 +277,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/activity",
-        "/add",
+        "/list",
         "/setting",
         "/stats",
         "/task"
@@ -293,8 +293,8 @@ export const routeTree = rootRoute
         "/activity/setting"
       ]
     },
-    "/add": {
-      "filePath": "add.tsx"
+    "/list": {
+      "filePath": "list.tsx"
     },
     "/setting": {
       "filePath": "setting.tsx"
