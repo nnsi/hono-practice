@@ -2,7 +2,7 @@ import { ActivityLogCreateFormBody } from "@frontend/components/activity/Activit
 import { Dialog, DialogContent } from "@frontend/components/ui";
 import { apiClient } from "@frontend/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 

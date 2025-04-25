@@ -44,7 +44,7 @@ const ActivityEditModal = ({
     </div>
   ) : null;
 
-export const ActivityRegistPage: React.FC = () => {
+export const NewActivityRegistPage: React.FC = () => {
   const { date, setDate } = useContext(DateContext);
   const [open, setOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] =
