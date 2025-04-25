@@ -1,4 +1,4 @@
-import { NewActivityRegistPage } from "@frontend/components/newActivity/NewActivityRegistPage";
+import { NewActivityRegistPage } from "@frontend/components";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({

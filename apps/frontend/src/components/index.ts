@@ -1,5 +1,6 @@
 export * from "./activity";
-export * from "./setting";
+export * from "./newActivity";
 export * from "./root";
+export * from "./setting";
 export * from "./task";
 export * from "./ui";

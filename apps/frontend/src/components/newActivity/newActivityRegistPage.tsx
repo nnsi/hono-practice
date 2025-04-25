@@ -15,8 +15,7 @@ import {
   type GetActivityResponse,
 } from "@dtos/response";
 
-import { ActivityLogCreateDialog } from "./ActivityLogCreateDialog";
-import { NewActivityDialog } from "./NewActivityDialog";
+import { ActivityLogCreateDialog, NewActivityDialog } from ".";
 
 // ダミーのActivityEditModal
 const ActivityEditModal = ({
