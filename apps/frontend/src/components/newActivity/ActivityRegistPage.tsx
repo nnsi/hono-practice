@@ -1,19 +1,17 @@
-import { useContext, useState, useRef } from "react";
+import { useState, useRef } from "react";
 
 import { Card, CardContent } from "@frontend/components/ui";
-import { DateContext } from "@frontend/providers/DateProvider";
+import { useGlobalDate } from "@frontend/hooks";
 import { apiClient, qp } from "@frontend/utils";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusIcon,
-} from "@radix-ui/react-icons";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 
 import {
   GetActivitiesResponseSchema,
   type GetActivityResponse,
 } from "@dtos/response";
+
+import { ActivityDateHeader } from "./ActivityDateHeader";
 
 import {
   ActivityEditModal,
@@ -22,14 +20,14 @@ import {
 } from ".";
 
 export const ActivityRegistPage: React.FC = () => {
-  const { date, setDate } = useContext(DateContext);
+  const { date, setDate } = useGlobalDate();
   const [open, setOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] =
     useState<GetActivityResponse | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTargetActivity, setEditTargetActivity] =
     useState<GetActivityResponse | null>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<number | null>(null);
 
   const { data: activities, error: _activitiesError } = useQuery({
     ...qp({
@@ -64,7 +62,7 @@ export const ActivityRegistPage: React.FC = () => {
   };
 
   const handleActivityCardPointerDown = (activity: GetActivityResponse) => {
-    longPressTimer.current = setTimeout(() => {
+    longPressTimer.current = window.setTimeout(() => {
       setEditTargetActivity(activity);
       setEditModalOpen(true);
     }, 700);
@@ -72,28 +70,15 @@ export const ActivityRegistPage: React.FC = () => {
 
   const handleActivityCardPointerUp = () => {
     if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
+      window.clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
   };
 
   return (
     <>
-      <p className="flex items-center justify-center gap-2 mb-3">
-        <button
-          type="button"
-          onClick={() => setDate(new Date(date.setDate(date.getDate() - 1)))}
-        >
-          <ChevronLeftIcon />
-        </button>
-        {date.toLocaleDateString()}
-        <button
-          type="button"
-          onClick={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
-        >
-          <ChevronRightIcon />
-        </button>
-      </p>
+      <ActivityDateHeader date={date} setDate={setDate} />
+      <hr className="my-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5 items-center justify-center">
         {activities?.map((activity) => (
           <ActivityCard

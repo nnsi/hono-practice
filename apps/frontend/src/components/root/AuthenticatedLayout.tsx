@@ -5,6 +5,7 @@ import {
   GearIcon,
   CardStackPlusIcon,
   BarChartIcon,
+  CalendarIcon,
 } from "@radix-ui/react-icons";
 import { Outlet, Link } from "@tanstack/react-router";
 
@@ -28,6 +29,15 @@ export const AuthenticatedLayout: React.FC = () => {
               <button type="button" className="flex flex-col items-center">
                 <CardStackPlusIcon />
                 <span className="text-xs mt-1">Actiko</span>
+              </button>
+            </Link>
+            <Link
+              to="/activity/daily"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <CalendarIcon />
+                <span className="text-xs mt-1">daily</span>
               </button>
             </Link>
             <Link

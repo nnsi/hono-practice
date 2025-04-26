@@ -8,6 +8,7 @@ export const GetActivityLogResponseSchema = z.object({
     id: z.string(),
     name: z.string(),
     quantityUnit: z.string(),
+    emoji: z.string().optional(),
   }),
   activityKind: z
     .object({
