@@ -134,7 +134,7 @@ const ActivityPage: React.FC = () => {
             />
           </div>
           <Button
-            onClick={() => navigate({ to: "/activity/setting" })}
+            onClick={() => navigate({ to: "/activity-old/setting" })}
             variant="secondary"
             className="w-full"
           >
@@ -156,6 +156,6 @@ const ActivityPage: React.FC = () => {
   );
 };
 
-export const Route = createFileRoute("/activity")({
+export const Route = createFileRoute("/activity-old")({
   component: ActivityPage,
 });

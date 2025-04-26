@@ -14,13 +14,15 @@ const NewActivityPage: React.FC = () => {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      navigate({ to: "/activity" });
+      navigate({ to: "/activity-old" });
     }
   };
 
+  console.log("test");
+
   return (
     <Sheet
-      open={routerState.location.pathname === "/activity/setting"}
+      open={routerState.location.pathname === "/activity-old/setting"}
       onOpenChange={handleOpenChange}
     >
       <SheetContent className="overflow-auto">
@@ -30,6 +32,6 @@ const NewActivityPage: React.FC = () => {
   );
 };
 
-export const Route = createFileRoute("/activity/setting")({
+export const Route = createFileRoute("/activity-old/setting")({
   component: NewActivityPage,
 });

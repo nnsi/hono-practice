@@ -31,7 +31,7 @@ import {
 
 const ActivityModal: React.FC = () => {
   const api = apiClient;
-  const { id } = useParams({ from: "/activity/$id" });
+  const { id } = useParams({ from: "/activity-old/$id" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -79,7 +79,7 @@ const ActivityModal: React.FC = () => {
   }, []);
 
   const handleClose = () => {
-    navigate({ to: "/activity" });
+    navigate({ to: "/activity-old" });
   };
 
   const handleSubmit = async (
@@ -171,6 +171,6 @@ const ActivityModal: React.FC = () => {
   );
 };
 
-export const Route = createFileRoute("/activity/$id")({
+export const Route = createFileRoute("/activity-old/$id")({
   component: ActivityModal,
 });
