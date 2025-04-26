@@ -62,7 +62,7 @@ export const StatsPage: React.FC = () => {
         return (
           <div key={stat.id}>
             <h2 className="text-lg font-bold mb-2">
-              {stat.name}（単位: {stat.quantityUnit}）
+              {stat.name}（合計: {stat.total} {stat.quantityUnit}）
             </h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart

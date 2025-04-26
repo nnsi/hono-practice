@@ -1,13 +1,9 @@
-import { useContext, useState, useRef } from "react";
+import { useState, useRef } from "react";
 
 import { Card, CardContent } from "@frontend/components/ui";
-import { DateContext } from "@frontend/providers/DateProvider";
+import { useGlobalDate } from "@frontend/hooks";
 import { apiClient, qp } from "@frontend/utils";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusIcon,
-} from "@radix-ui/react-icons";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -15,43 +11,23 @@ import {
   type GetActivityResponse,
 } from "@dtos/response";
 
-import { ActivityLogCreateDialog, NewActivityDialog } from ".";
+import { ActivityDateHeader } from "./ActivityDateHeader";
 
-// ダミーのActivityEditModal
-const ActivityEditModal = ({
-  open,
-  onClose,
-  activity,
-}: {
-  open: boolean;
-  onClose: () => void;
-  activity: GetActivityResponse | null;
-}) =>
-  open ? (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded shadow">
-        <h2 className="text-lg font-bold mb-4">Activity Edit Modal</h2>
-        <p>（ここに編集UIを実装予定）{activity?.name}</p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-        >
-          閉じる
-        </button>
-      </div>
-    </div>
-  ) : null;
+import {
+  ActivityEditModal,
+  ActivityLogCreateDialog,
+  NewActivityDialog,
+} from ".";
 
-export const NewActivityRegistPage: React.FC = () => {
-  const { date, setDate } = useContext(DateContext);
+export const ActivityRegistPage: React.FC = () => {
+  const { date, setDate } = useGlobalDate();
   const [open, setOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] =
     useState<GetActivityResponse | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTargetActivity, setEditTargetActivity] =
     useState<GetActivityResponse | null>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<number | null>(null);
 
   const { data: activities, error: _activitiesError } = useQuery({
     ...qp({
@@ -86,35 +62,23 @@ export const NewActivityRegistPage: React.FC = () => {
   };
 
   const handleActivityCardPointerDown = (activity: GetActivityResponse) => {
-    longPressTimer.current = setTimeout(() => {
+    longPressTimer.current = window.setTimeout(() => {
       setEditTargetActivity(activity);
       setEditModalOpen(true);
     }, 700);
   };
+
   const handleActivityCardPointerUp = () => {
     if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
+      window.clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
   };
 
   return (
     <>
-      <p className="flex items-center justify-center gap-2 mb-3">
-        <button
-          type="button"
-          onClick={() => setDate(new Date(date.setDate(date.getDate() - 1)))}
-        >
-          <ChevronLeftIcon />
-        </button>
-        {date.toLocaleDateString()}
-        <button
-          type="button"
-          onClick={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
-        >
-          <ChevronRightIcon />
-        </button>
-      </p>
+      <ActivityDateHeader date={date} setDate={setDate} />
+      <hr className="my-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5 items-center justify-center">
         {activities?.map((activity) => (
           <ActivityCard
