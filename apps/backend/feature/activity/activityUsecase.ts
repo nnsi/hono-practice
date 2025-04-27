@@ -82,6 +82,7 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         description: params.description,
         quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
+        showCombinedStats: params.showCombinedStats ?? true,
         kinds: [],
         type: "new",
       });
@@ -116,6 +117,8 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
       const newActivity = createActivityEntity({
         ...activity,
         ...params.activity,
+        showCombinedStats:
+          params.activity.showCombinedStats ?? activity.showCombinedStats,
         kinds,
       });
 

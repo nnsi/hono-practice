@@ -47,6 +47,7 @@ describe("ActivityUsecase", () => {
     orderIndex: "a",
     kinds: [],
     type: "new",
+    showCombinedStats: true,
   };
 
   const mockActivity2: Activity = {
@@ -57,6 +58,7 @@ describe("ActivityUsecase", () => {
     orderIndex: "b",
     kinds: [],
     type: "new",
+    showCombinedStats: true,
   };
 
   describe("getActivities", () => {
@@ -264,6 +266,7 @@ describe("ActivityUsecase", () => {
         updatedActivity: {
           ...mockActivity,
           name: "Sprint Running",
+          showCombinedStats: true,
         },
         expectError: false,
       },
@@ -354,6 +357,7 @@ describe("ActivityUsecase", () => {
         updatedActivity: {
           ...mockActivity,
           orderIndex: "ab",
+          showCombinedStats: true,
         },
         expectError: false,
       },
@@ -369,6 +373,7 @@ describe("ActivityUsecase", () => {
         updatedActivity: {
           ...mockActivity2,
           orderIndex: "0",
+          showCombinedStats: true,
         },
         expectError: false,
       },

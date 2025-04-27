@@ -12,6 +12,7 @@ export const GetActivityResponseSchema = z.object({
       name: z.string(),
     }),
   ),
+  showCombinedStats: z.boolean(),
 });
 
 export const GetActivitiesResponseSchema = z.array(GetActivityResponseSchema);

@@ -6,6 +6,7 @@ export const UpdateActivityRequestSchema = z.object({
     description: z.string().optional(),
     quantityUnit: z.string(),
     emoji: z.string().optional(),
+    showCombinedStats: z.boolean().optional(),
   }),
   kinds: z.array(
     z.object({

@@ -4,8 +4,9 @@ export const GetActivityStatsResponseSchema = z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-    total: z.number(),
+    total: z.number().nullable(),
     quantityUnit: z.string(),
+    showCombinedStats: z.boolean(),
     kinds: z.array(
       z.object({
         id: z.string().nullable(),

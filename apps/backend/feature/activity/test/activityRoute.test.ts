@@ -54,6 +54,7 @@ test("POST activities / success", async () => {
       name: "test",
       label: "test",
       quantityUnit: "回",
+      showCombinedStats: true,
     },
   });
 
@@ -75,6 +76,7 @@ test("PUT activities/:id / success", async () => {
       activity: {
         name: "test",
         quantityUnit: "回",
+        showCombinedStats: true,
       },
       kinds: [],
     },

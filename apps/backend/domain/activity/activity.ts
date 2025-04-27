@@ -25,6 +25,7 @@ const BaseActivitySchema = z.object({
   quantityUnit: z.string().nullable(),
   orderIndex: z.string().nullish(),
   kinds: z.array(ActivityKindSchema),
+  showCombinedStats: z.boolean(),
 });
 
 const NewActivitySchema = BaseActivitySchema.merge(
