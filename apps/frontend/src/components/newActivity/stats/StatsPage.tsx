@@ -16,7 +16,7 @@ import {
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
-export const StatsPage: React.FC = () => {
+export const ActivityStatsPage: React.FC = () => {
   const { date } = useContext(DateContext);
 
   const month = dayjs(date).format("YYYY-MM");
@@ -75,7 +75,7 @@ export const StatsPage: React.FC = () => {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  {stat.kinds.length > 1 && <Legend />}
+                  {stat.kinds[0].name !== "未指定" && <Legend />}
                   {stat.kinds.map((kind, idx) => (
                     <Bar
                       key={kind.id || kind.name}

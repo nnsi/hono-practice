@@ -9,7 +9,7 @@ import { Card, CardContent } from "@components/ui/card";
 
 import { ActivityDateHeader } from "../ActivityDateHeader";
 
-export const DailyPage: React.FC = () => {
+export const ActivityDailyPage: React.FC = () => {
   const { date, setDate } = useGlobalDate();
 
   const { data: activityLogs, error: _activityLogsError } = useQuery({
