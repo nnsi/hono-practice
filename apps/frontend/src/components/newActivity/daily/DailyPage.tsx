@@ -1,16 +1,27 @@
+import { useState } from "react";
+
 import { useGlobalDate } from "@frontend/hooks";
 import { apiClient, qp } from "@frontend/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
-import { GetActivityLogsResponseSchema } from "@dtos/response";
+import {
+  GetActivityLogsResponseSchema,
+  type GetActivityLogResponse,
+  GetActivitiesResponseSchema,
+} from "@dtos/response";
 
-import { Card, CardContent } from "@components/ui/card";
+import { Card, CardContent } from "@components/ui";
 
 import { ActivityDateHeader } from "../ActivityDateHeader";
 
+import { ActivityLogEditDialog } from "./ActivityLogEditDialog";
+
 export const ActivityDailyPage: React.FC = () => {
   const { date, setDate } = useGlobalDate();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTargetLog, setEditTargetLog] =
+    useState<GetActivityLogResponse | null>(null);
 
   const { data: activityLogs, error: _activityLogsError } = useQuery({
     ...qp({
@@ -25,6 +36,18 @@ export const ActivityDailyPage: React.FC = () => {
     }),
   });
 
+  const queryClient = useQueryClient();
+  const cachedActivities = queryClient.getQueryData(["activity"]);
+
+  useQuery({
+    ...qp({
+      queryKey: ["activity"],
+      schema: GetActivitiesResponseSchema,
+      queryFn: () => apiClient.users.activities.$get(),
+    }),
+    enabled: !cachedActivities,
+  });
+
   return (
     <div>
       <ActivityDateHeader date={date} setDate={setDate} />
@@ -32,7 +55,14 @@ export const ActivityDailyPage: React.FC = () => {
       <div className="flex-1 flex flex-col gap-4 px-4 mt-2">
         {activityLogs && activityLogs.length > 0 ? (
           activityLogs.map((log) => (
-            <Card key={log.id}>
+            <Card
+              key={log.id}
+              onClick={() => {
+                setEditTargetLog(log);
+                setEditDialogOpen(true);
+              }}
+              className="cursor-pointer"
+            >
               <CardContent className="flex items-center gap-4 py-4">
                 <span className="text-4xl">{log.activity.emoji}</span>
                 <div>
@@ -58,6 +88,11 @@ export const ActivityDailyPage: React.FC = () => {
           </div>
         )}
       </div>
+      <ActivityLogEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        log={editTargetLog}
+      />
       <hr className="my-6" />
     </div>
   );

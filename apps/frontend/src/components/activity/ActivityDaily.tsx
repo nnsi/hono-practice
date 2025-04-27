@@ -56,7 +56,7 @@ export const ActivityDaily: React.FC<ActivityDailyProps> = ({ date }) => {
             key={log.id}
             className="relative group hover:bg-slate-50 cursor-pointer"
           >
-            <Link to={"/activity/$id"} params={{ id: log.id }}>
+            <Link to={"/activity-old/$id"} params={{ id: log.id }}>
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <TrashIcon
                   onClick={(e) => {
