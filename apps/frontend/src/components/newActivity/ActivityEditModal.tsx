@@ -95,6 +95,18 @@ export const ActivityEditModal = ({
     },
   });
 
+  const handleDelete = async () => {
+    if (!activity) return;
+    const res = await api.users.activities[":id"].$delete({
+      param: { id: activity.id },
+    });
+    if (res.status !== 200) {
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["activity"] });
+    onClose();
+  };
+
   const onSubmit = (data: UpdateActivityRequest) => {
     mutate(data);
   };
@@ -175,14 +187,24 @@ export const ActivityEditModal = ({
               </Button>
             </div>
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  閉じる
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                保存
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                className="ml-auto w-20"
+              >
+                削除
               </Button>
+              <div className="flex gap-4 my-6 w-full">
+                <Button className="w-full" type="submit" disabled={isPending}>
+                  保存
+                </Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" className="w-24">
+                    閉じる
+                  </Button>
+                </DialogClose>
+              </div>
             </DialogFooter>
           </form>
         </Form>
