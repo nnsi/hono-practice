@@ -1,0 +1,1 @@
+ALTER TABLE "activity" ADD COLUMN "show_combined_stats" boolean DEFAULT true NOT NULL;

@@ -75,6 +75,7 @@ function getActivitiesByUserId(db: QueryExecutor) {
         description: r.description || "",
         quantityUnit: r.quantityUnit || "",
         orderIndex: r.orderIndex || "",
+        showCombinedStats: r.showCombinedStats,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         kinds: kinds,
@@ -114,6 +115,7 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
         description: r.description || "",
         quantityUnit: r.quantityUnit || "",
         orderIndex: r.orderIndex || "",
+        showCombinedStats: r.showCombinedStats,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         kinds: kinds,
@@ -153,6 +155,7 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
       description: row.description || "",
       quantityUnit: row.quantityUnit || "",
       orderIndex: row.orderIndex || "",
+      showCombinedStats: row.showCombinedStats,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       kinds: kinds,
@@ -189,6 +192,7 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
       description: row.description || "",
       quantityUnit: row.quantityUnit || "",
       orderIndex: row.orderIndex || "",
+      showCombinedStats: row.showCombinedStats,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       kinds: kinds,
@@ -219,6 +223,7 @@ function createActivity(db: QueryExecutor) {
       .values({
         ..._activity,
         userId: activity.userId,
+        showCombinedStats: activity.showCombinedStats,
       })
       .returning();
 
@@ -256,6 +261,7 @@ function updateActivity(db: QueryExecutor) {
       .update(activities)
       .set({
         ..._activity,
+        showCombinedStats: activity.showCombinedStats,
       })
       .where(and(eq(activities.id, activity.id), isNull(activities.deletedAt)));
 

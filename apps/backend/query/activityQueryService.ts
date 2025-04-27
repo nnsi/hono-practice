@@ -1,7 +1,6 @@
 import { activities, activityKinds, activityLogs } from "@infra/drizzle/schema";
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
-
 import type { GetActivityStatsResponse } from "@dtos/response";
 
 import dayjs from "../lib/dayjs";
@@ -41,6 +40,7 @@ function activityStatsQuery(db: QueryExecutor) {
         date: activityLogs.date,
         quantity: activityLogs.quantity,
         quantityUnit: activities.quantityUnit,
+        showCombinedStats: activities.showCombinedStats,
       })
       .from(activityLogs)
       .innerJoin(activities, eq(activityLogs.activityId, activities.id))
@@ -74,6 +74,7 @@ function transform(
     date: string;
     quantity: number | null;
     quantityUnit: string | null;
+    showCombinedStats: boolean;
   }[],
 ) {
   const { stats } = rows.reduce(
@@ -86,6 +87,7 @@ function transform(
           name: row.name,
           quantityUnit: row.quantityUnit || "",
           total: row.quantity || 0,
+          showCombinedStats: row.showCombinedStats,
           kinds: [
             {
               id: row.kindid || null,
@@ -105,7 +107,9 @@ function transform(
       }
 
       const activity = acc.stats[acc.activityMap.get(row.id)!];
-      activity.total += row.quantity || 0;
+      // NOTE:GetActivityStatsResponseのtotalはnullableなので型エラー回避でこうやっている
+      // 本来はactivity.total += row.quantity || 0;としたい
+      activity.total = (activity.total || 0) + (row.quantity || 0) || 0;
 
       const activityKindIndex = acc.activityKindMap.get(row.kindid || row.id)!;
 
@@ -142,5 +146,12 @@ function transform(
     },
   );
 
-  return stats;
+  const showCombinedStats = stats.map((stat) => {
+    return {
+      ...stat,
+      total: stat.showCombinedStats ? stat.total : null,
+    };
+  });
+
+  return showCombinedStats;
 }

@@ -63,6 +63,7 @@ describe("ActivityLogUsecase", () => {
     orderIndex: "1",
     kinds: [mockActivityKind],
     type: "new",
+    showCombinedStats: true,
   };
 
   const mockActivityLog: ActivityLog = {

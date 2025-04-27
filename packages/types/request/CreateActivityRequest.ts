@@ -7,6 +7,7 @@ export const CreateActivityRequestSchema = z.object({
   emoji: z.string().optional(),
   quantityUnit: z.string().min(1, "単位名は必須です"),
   quantityOption: z.array(z.number()).optional(),
+  showCombinedStats: z.boolean().optional(),
 });
 
 export type CreateActivityRequest = z.infer<typeof CreateActivityRequestSchema>;
