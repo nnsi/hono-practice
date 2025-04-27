@@ -16,7 +16,7 @@ import {
 import { ActivityDateHeader } from "./ActivityDateHeader";
 
 import {
-  ActivityEditModal,
+  ActivityEditDialog,
   ActivityLogCreateDialog,
   NewActivityDialog,
 } from ".";
@@ -122,7 +122,7 @@ export const ActivityRegistPage: React.FC = () => {
           date={date}
         />
       )}
-      <ActivityEditModal
+      <ActivityEditDialog
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         activity={editTargetActivity}

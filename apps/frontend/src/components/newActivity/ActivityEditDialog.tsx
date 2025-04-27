@@ -24,7 +24,7 @@ import {
   DialogClose,
 } from "@components/ui";
 
-export const ActivityEditModal = ({
+export const ActivityEditDialog = ({
   open,
   onClose,
   activity,
