@@ -73,6 +73,12 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
+      const kinds = (params.kinds ?? []).map((k) => ({
+        id: createActivityKindId(),
+        name: k.name,
+        orderIndex: null,
+      }));
+
       const activity = createActivityEntity({
         id: createActivityId(),
         userId: userId,
@@ -83,7 +89,7 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
         showCombinedStats: params.showCombinedStats ?? true,
-        kinds: [],
+        kinds,
         type: "new",
       });
 

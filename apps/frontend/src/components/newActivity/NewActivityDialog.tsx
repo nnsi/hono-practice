@@ -1,13 +1,12 @@
-import { apiClient, mp } from "@frontend/utils";
+import { apiClient } from "@frontend/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 
 import {
   type CreateActivityRequest,
   CreateActivityRequestSchema,
 } from "@dtos/request/CreateActivityRequest";
-import { GetActivityResponseSchema } from "@dtos/response/GetActivitiesResponse";
 
 import {
   Dialog,
@@ -19,27 +18,42 @@ import {
   Input,
   Button,
   useToast,
+  DialogFooter,
+  DialogClose,
 } from "@components/ui";
 
 export function NewActivityDialog({
   open,
   onOpenChange,
 }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const form = useForm<CreateActivityRequest>({
+  const form = useForm<CreateActivityRequest & { kinds: { name: string }[] }>({
     resolver: zodResolver(CreateActivityRequestSchema),
+    defaultValues: {
+      name: "",
+      quantityUnit: "",
+      emoji: "",
+      showCombinedStats: false,
+      kinds: [],
+    },
+  });
+  const {
+    fields: kindFields,
+    append: kindAppend,
+    remove: kindRemove,
+  } = useFieldArray({
+    control: form.control,
+    name: "kinds",
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { mutate, isPending } = useMutation({
-    ...mp({
-      queryKey: [],
-      mutationFn: (data: CreateActivityRequest) =>
-        apiClient.users.activities.$post({
-          json: data,
-        }),
-      requestSchema: CreateActivityRequestSchema,
-      responseSchema: GetActivityResponseSchema,
-    }),
+    mutationFn: async (
+      data: CreateActivityRequest & { kinds: { name: string }[] },
+    ) => {
+      return apiClient.users.activities.$post({
+        json: data,
+      });
+    },
     onSuccess: () => {
       toast({
         title: "登録完了",
@@ -48,7 +62,7 @@ export function NewActivityDialog({
       });
       onOpenChange(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
     onError: () => {
       toast({
@@ -58,58 +72,94 @@ export function NewActivityDialog({
       });
     },
   });
-  const onSubmit = (data: CreateActivityRequest) => {
+  const onSubmit = (
+    data: CreateActivityRequest & { kinds: { name: string }[] },
+  ) => {
     mutate(data);
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Activity</DialogTitle>
+          <DialogTitle>アクティビティ新規作成</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-4 gap-3">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <Input
-                    type="text"
-                    className="col-span-4"
-                    placeholder="Activity Name"
-                    {...field}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => <Input {...field} placeholder="名前" />}
+            />
+            <FormField
+              control={form.control}
+              name="quantityUnit"
+              render={({ field }) => (
+                <Input {...field} placeholder="単位（例: 回, 分, km など）" />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emoji"
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder="絵文字"
+                  className="w-20 text-center"
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="showCombinedStats"
+              render={({ field }) => (
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
                   />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="quantityUnit"
-                render={({ field }) => (
-                  <Input
-                    type="text"
-                    className="col-span-2"
-                    placeholder="unit"
-                    {...field}
+                  合算統計を表示
+                </label>
+              )}
+            />
+            <div>
+              <div className="mb-2 font-semibold">種類（kinds）</div>
+              {kindFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 mb-2 items-center">
+                  <FormField
+                    control={form.control}
+                    name={`kinds.${index}.name`}
+                    render={({ field }) => (
+                      <Input {...field} placeholder="種類名" />
+                    )}
                   />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="emoji"
-                render={({ field }) => (
-                  <Input
-                    className="col-span-1"
-                    type="text"
-                    placeholder="emoji"
-                    {...field}
-                  />
-                )}
-              />
-              <Button type="submit" disabled={isPending}>
-                Create
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => kindRemove(index)}
+                  >
+                    -
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => kindAppend({ name: "" })}
+              >
+                + 種類を追加
               </Button>
             </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  閉じる
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isPending}>
+                登録
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

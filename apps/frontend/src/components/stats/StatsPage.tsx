@@ -75,7 +75,7 @@ export const StatsPage: React.FC = () => {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Legend />
+                  {stat.kinds.length > 1 && <Legend />}
                   {stat.kinds.map((kind, idx) => (
                     <Bar
                       key={kind.id || kind.name}
@@ -85,7 +85,7 @@ export const StatsPage: React.FC = () => {
                           idx % 5
                         ]
                       }
-                      name={kind.name}
+                      name={kind.name !== "未指定" ? kind.name : stat.name}
                       stackId="a"
                     />
                   ))}
