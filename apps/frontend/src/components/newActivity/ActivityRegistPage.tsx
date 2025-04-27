@@ -31,7 +31,7 @@ export const ActivityRegistPage: React.FC = () => {
 
   const { data: activities, error: _activitiesError } = useQuery({
     ...qp({
-      queryKey: ["tasks"],
+      queryKey: ["activity"],
       queryFn: () => apiClient.users.activities.$get(),
       schema: GetActivitiesResponseSchema,
     }),
