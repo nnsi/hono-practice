@@ -23,7 +23,11 @@ export const ActivityDailyPage: React.FC = () => {
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);
 
-  const { data: activityLogs, error: _activityLogsError } = useQuery({
+  const {
+    data: activityLogs,
+    error: _activityLogsError,
+    isLoading,
+  } = useQuery({
     ...qp({
       queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
       queryFn: () =>
@@ -84,7 +88,7 @@ export const ActivityDailyPage: React.FC = () => {
           ))
         ) : (
           <div className="text-center text-gray-400 py-8">
-            アクティビティはありません
+            {isLoading ? "Loading..." : "アクティビティはありません"}
           </div>
         )}
       </div>
