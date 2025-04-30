@@ -103,13 +103,16 @@ function login(
       throw new AuthError(
         "invalid credentials - password cannot be null for standard login",
       );
+
     const isValidPassword = await passwordVerifier.compare(
       password,
       user.password,
     );
     if (!isValidPassword) throw new AuthError("invalid credentials");
+
     const accessToken = await generateAccessToken(jwtSecret, user.id);
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+
     const refreshTokenEntity = createRefreshToken({
       userId: user.id,
       selector,
@@ -118,6 +121,7 @@ function login(
     });
     await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const combinedRefreshToken = `${selector}.${plainRefreshToken}`;
+
     return { accessToken, refreshToken: combinedRefreshToken };
   };
 }
@@ -129,7 +133,6 @@ function refreshToken(
   return async (combinedToken: string): Promise<AuthOutput> => {
     const storedToken =
       await refreshTokenRepo.getRefreshTokenByToken(combinedToken);
-
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (!validateRefreshToken(storedToken)) {
       await refreshTokenRepo.revokeRefreshToken(storedToken);
@@ -141,6 +144,7 @@ function refreshToken(
       storedToken.userId,
     );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+
     const refreshTokenEntity = createRefreshToken({
       userId: storedToken.userId,
       selector,
@@ -150,6 +154,7 @@ function refreshToken(
     await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
     await refreshTokenRepo.revokeRefreshToken(storedToken);
+
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
 }
@@ -161,6 +166,7 @@ function logout(refreshTokenRepo: RefreshTokenRepository) {
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (storedToken.userId !== userId)
       throw new AuthError("unauthorized - token does not belong to user");
+
     await refreshTokenRepo.revokeRefreshToken(storedToken);
   };
 }
@@ -254,8 +260,8 @@ function linkProvider(
     if (!payload.sub)
       throw new AuthError("Missing 'sub' (subject) in token payload");
     if (!payload.email) throw new AuthError("Missing 'email' in token payload");
+
     const providerUserId = payload.sub;
-    // 既に他ユーザーに紐付いていないかチェック
     const existingProvider =
       await userProviderRepo.findUserProviderByIdAndProvider(
         provider,
@@ -270,7 +276,7 @@ function linkProvider(
         400,
       );
     }
-    // 紐付けレコード作成
+
     const userProvider = createUserProviderEntity({
       id: createUserProviderId(),
       userId,
@@ -278,11 +284,11 @@ function linkProvider(
       providerId: providerUserId,
       type: "new",
     });
+
     await userProviderRepo.createUserProvider(userProvider);
   };
 }
 
-// トークン生成関数を外出し
 function generateAccessToken(
   jwtSecret: string,
   userId: UserId,

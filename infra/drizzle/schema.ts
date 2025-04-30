@@ -105,7 +105,8 @@ export const tasks = pgTable(
     title: text("title").notNull(),
     done: boolean("done").notNull().default(false),
     memo: text("memo").default(""),
-    due: date("due"),
+    startDate: date("start_date"),
+    dueDate: date("due_date"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

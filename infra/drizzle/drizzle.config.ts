@@ -5,6 +5,10 @@ interface DrizzleConfig {
   dbCredentials: {
     url?: string;
   };
+  migrations: {
+    table: string;
+    schema: string;
+  };
 }
 
 const config: DrizzleConfig = {
@@ -13,6 +17,10 @@ const config: DrizzleConfig = {
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
+  },
+  migrations: {
+    table: "__drizzle_migrations",
+    schema: "public",
   },
 };
 
