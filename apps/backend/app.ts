@@ -42,11 +42,16 @@ const routes = app
 
     const results = await Promise.all(
       requests.map((req) => {
-        return app.request(req.path, {
-          headers: {
-            cookie: c.req.raw.headers.get("cookie") ?? "",
+        return app.request(
+          req.path,
+          {
+            method: "GET",
+            headers: c.req.raw.headers,
           },
-        });
+          {
+            ...c.env,
+          },
+        );
       }),
     );
 
