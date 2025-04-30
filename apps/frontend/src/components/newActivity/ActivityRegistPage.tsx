@@ -2,15 +2,16 @@ import { useState, useRef } from "react";
 
 import { Card, CardContent } from "@frontend/components/ui";
 import { useGlobalDate } from "@frontend/hooks";
-import { apiClient, qp } from "@frontend/utils";
+import { apiClient } from "@frontend/utils";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import {
   GetActivitiesResponseSchema,
   GetActivityLogsResponseSchema,
   type GetActivityResponse,
+  type GetActivityLogsResponse,
 } from "@dtos/response";
 
 import { ActivityDateHeader } from "./ActivityDateHeader";
@@ -30,27 +31,54 @@ export const ActivityRegistPage: React.FC = () => {
   const [editTargetActivity, setEditTargetActivity] =
     useState<GetActivityResponse | null>(null);
   const longPressTimer = useRef<number | null>(null);
+  const queryClient = useQueryClient();
 
-  const { data: activities, error: _activitiesError } = useQuery({
-    ...qp({
-      queryKey: ["activity"],
-      queryFn: () => apiClient.users.activities.$get(),
-      schema: GetActivitiesResponseSchema,
-    }),
-  });
-
-  const { data: activityLogs, error: _activityLogsError } = useQuery({
-    ...qp({
-      queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      queryFn: () =>
-        apiClient.users["activity-logs"].$get({
-          query: {
-            date: dayjs(date).format("YYYY-MM-DD"),
+  const { data, error } = useQuery<{
+    activities: GetActivityResponse[];
+    activityLogs: GetActivityLogsResponse;
+  }>({
+    queryKey: [
+      "activity",
+      "activity-logs-daily",
+      dayjs(date).format("YYYY-MM-DD"),
+    ],
+    queryFn: async () => {
+      const res = await apiClient.batch.$post({
+        json: [
+          {
+            path: "/users/activities",
           },
-        }),
-      schema: GetActivityLogsResponseSchema,
-    }),
+          {
+            path: `/users/activity-logs?date=${dayjs(date).format("YYYY-MM-DD")}`,
+          },
+        ],
+      });
+      const json = await res.json();
+
+      const activities = GetActivitiesResponseSchema.safeParse(json[0]);
+      if (!activities.success) {
+        throw new Error("Failed to parse activities");
+      }
+      const activityLogs = GetActivityLogsResponseSchema.safeParse(json[1]);
+      if (!activityLogs.success) {
+        throw new Error("Failed to parse activity logs");
+      }
+
+      queryClient.setQueryData(["activity"], activities);
+      queryClient.setQueryData(
+        ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+        activityLogs,
+      );
+      return { activities: activities.data, activityLogs: activityLogs.data };
+    },
   });
+
+  if (error) {
+    console.error(error);
+  }
+
+  const activities = data?.activities ?? [];
+  const activityLogs = data?.activityLogs ?? [];
 
   const handleActivityClick = (activity: GetActivityResponse) => {
     setSelectedActivity(activity);
@@ -80,9 +108,10 @@ export const ActivityRegistPage: React.FC = () => {
       <ActivityDateHeader date={date} setDate={setDate} />
       <hr className="my-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5 items-center justify-center">
-        {activities?.map((activity) => {
-          const hasActivityLogs = activityLogs?.some(
-            (log) => log.activity.id === activity.id,
+        {activities.map((activity: GetActivityResponse) => {
+          const hasActivityLogs = activityLogs.some(
+            (log: GetActivityLogsResponse[number]) =>
+              log.activity.id === activity.id,
           );
 
           return (

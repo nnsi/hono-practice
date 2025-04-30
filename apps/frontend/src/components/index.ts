@@ -1,4 +1,3 @@
-export * from "./activity";
 export * from "./newActivity";
 export * from "./root";
 export * from "./setting";
