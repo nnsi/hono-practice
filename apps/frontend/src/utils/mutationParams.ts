@@ -1,3 +1,5 @@
+import type { ClientResponse } from "hono/client";
+
 import {
   type MutationFunction,
   type QueryKey,
@@ -10,7 +12,7 @@ type MaybeUndefined<T> = T extends void ? void : T | undefined;
 
 type MutationPropsParamsFunc<TRequest = void, TResponse = unknown> = {
   queryKey: QueryKey;
-  mutationFn: (data: TRequest) => Promise<Response>;
+  mutationFn: (data: TRequest) => Promise<ClientResponse<unknown, any, any>>;
   requestSchema?: ZodSchema<TResponse>;
   responseSchema?: ZodSchema;
 };

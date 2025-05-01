@@ -6,7 +6,6 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { GetTasksResponseSchema } from "@dtos/response/GetTasksResponse";
 
-
 import { useToast, Button } from "@components/ui";
 
 import { TaskForm, TaskCard } from "@components/task";
