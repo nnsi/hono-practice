@@ -1,4 +1,4 @@
-import { ActivityLogCreateFormBody } from "@frontend/components/newActivity/ActivityLogCreateForm";
+import { ActivityLogCreateFormBody } from "@frontend/components/activity/ActivityLogCreateForm";
 import { Dialog, DialogContent } from "@frontend/components/ui";
 import { apiClient } from "@frontend/utils";
 import { zodResolver } from "@hookform/resolvers/zod";

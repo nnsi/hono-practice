@@ -8,7 +8,7 @@ import { GetTasksResponseSchema } from "@dtos/response/GetTasksResponse";
 
 import { useToast, Button } from "@components/ui";
 
-import { TaskForm, TaskCard } from "@components/task";
+import { TaskForm, TaskCard } from "@frontend/components/task-old";
 
 import { qp } from "../utils/queryParams";
 

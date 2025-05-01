@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ActivityRegistPage } from "@components/newActivity";
+import { ActivityRegistPage } from "@components/activity";
 
 export const Route = createFileRoute("/")({
   component: ActivityRegistPage,

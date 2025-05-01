@@ -13,7 +13,7 @@ import {
 
 import { Card, CardContent } from "@components/ui";
 
-import { ActivityDateHeader } from "@components/newActivity/ActivityDateHeader";
+import { ActivityDateHeader } from "@components/activity/ActivityDateHeader";
 
 import { ActivityLogEditDialog } from "./ActivityLogEditDialog";
 
