@@ -1,15 +1,13 @@
 import { useState } from "react";
 
+import { TaskForm, TaskCard } from "@frontend/components/task-old";
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { GetTasksResponseSchema } from "@dtos/response/GetTasksResponse";
 
-
 import { useToast, Button } from "@components/ui";
-
-import { TaskForm, TaskCard } from "@components/task";
 
 import { qp } from "../utils/queryParams";
 

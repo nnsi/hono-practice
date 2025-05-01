@@ -31,7 +31,7 @@ export const AuthenticatedLayout: React.FC = () => {
               </button>
             </Link>
             <Link
-              to="/activity/daily"
+              to="/daily"
               className="[&.active]:font-bold [&.active]:text-blue-600"
             >
               <button type="button" className="flex flex-col items-center">
