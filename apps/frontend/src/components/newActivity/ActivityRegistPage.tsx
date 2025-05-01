@@ -64,10 +64,10 @@ export const ActivityRegistPage: React.FC = () => {
         throw new Error("Failed to parse activity logs");
       }
 
-      queryClient.setQueryData(["activity"], activities);
+      queryClient.setQueryData(["activity"], activities.data);
       queryClient.setQueryData(
         ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-        activityLogs,
+        activityLogs.data,
       );
       return { activities: activities.data, activityLogs: activityLogs.data };
     },
