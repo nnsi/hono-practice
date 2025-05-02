@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircledIcon,
   CircleIcon,
+  CrossCircledIcon,
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
@@ -89,9 +90,10 @@ export const TaskList: React.FC<TaskListProps> = ({
             tasks.map((task: GetTaskResponse) => (
               <Card key={task.id} className="cursor-default">
                 <CardContent className="flex items-center gap-4 py-4">
-                  <button
+                  <Button
                     type="button"
-                    className="text-4xl cursor-pointer bg-transparent border-none p-0 m-0"
+                    variant="ghost"
+                    className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
                     onClick={() =>
                       mutateTaskDone({ id: task.id, done: !task.done })
                     }
@@ -101,7 +103,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     ) : (
                       <CircleIcon className="text-gray-400 w-8 h-8" />
                     )}
-                  </button>
+                  </Button>
                   <div className="flex-1">
                     <div className="text-lg font-semibold">{task.title}</div>
                     {task.memo && (
@@ -110,8 +112,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                       </div>
                     )}
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     className="ml-2 text-gray-400 hover:text-red-500 bg-transparent border-none p-0 m-0"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -121,7 +124,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     aria-label="タスク削除"
                   >
                     <TrashIcon className="w-6 h-6" />
-                  </button>
+                  </Button>
                 </CardContent>
               </Card>
             ))
@@ -152,8 +155,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                   type="button"
                   variant="ghost"
                   onClick={() => setAddFormOpen(false)}
+                  className="p-1"
                 >
-                  キャンセル
+                  <CrossCircledIcon className="text-gray-400 w-8 h-8" />
                 </Button>
               </form>
             </CardContent>
@@ -164,7 +168,9 @@ export const TaskList: React.FC<TaskListProps> = ({
             onClick={() => setAddFormOpen(true)}
           >
             <CardContent className="flex items-center gap-4 py-4">
-              <PlusCircledIcon className="text-gray-400 w-8 h-8" />
+              <span className="flex items-center justify-center w-10 h-10 text-3xl">
+                <PlusCircledIcon className="text-gray-400 w-8 h-8" />
+              </span>
               <div className="text-lg text-gray-500">新しいタスクを追加</div>
             </CardContent>
           </Card>
