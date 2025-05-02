@@ -83,7 +83,9 @@ export const ActivityDailyPage: React.FC = () => {
                 className="cursor-pointer"
               >
                 <CardContent className="flex items-center gap-4 py-4">
-                  <span className="text-4xl">{log.activity.emoji}</span>
+                  <span className="flex items-center justify-center w-10 h-10 text-3xl">
+                    {log.activity.emoji}
+                  </span>
                   <div>
                     <div className="text-lg font-semibold">
                       {log.activity.name}
