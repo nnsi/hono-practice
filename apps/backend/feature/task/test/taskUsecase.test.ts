@@ -42,7 +42,7 @@ describe("TaskUsecase", () => {
             id: taskId1,
             userId: userId1,
             title: "dummy1",
-            done: false,
+            doneAt: null,
             memo: null,
             type: "new",
           },
@@ -50,7 +50,7 @@ describe("TaskUsecase", () => {
             id: taskId2,
             userId: userId1,
             title: "dummy2",
-            done: true,
+            doneAt: "2021-01-01",
             memo: "test",
             type: "new",
           },
@@ -68,18 +68,22 @@ describe("TaskUsecase", () => {
     testCases.forEach(({ name, userId, mockReturn, expectError }) => {
       it(`${name}`, async () => {
         if (expectError) {
-          when(repo.getTasksByUserId(userId)).thenReject(new Error());
+          when(repo.getTasksByUserId(userId, undefined)).thenReject(
+            new Error(),
+          );
 
-          await expect(usecase.getTasks(userId)).rejects.toThrow(Error);
-          return verify(repo.getTasksByUserId(userId)).once();
+          await expect(usecase.getTasks(userId, undefined)).rejects.toThrow(
+            Error,
+          );
+          return verify(repo.getTasksByUserId(userId, undefined)).once();
         }
 
-        when(repo.getTasksByUserId(userId)).thenResolve(mockReturn!);
+        when(repo.getTasksByUserId(userId, undefined)).thenResolve(mockReturn!);
 
-        const result = await usecase.getTasks(userId);
+        const result = await usecase.getTasks(userId, undefined);
         expect(result).toEqual(mockReturn);
 
-        verify(repo.getTasksByUserId(userId)).once();
+        verify(repo.getTasksByUserId(userId, undefined)).once();
       });
     });
   });
@@ -105,7 +109,7 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "dummy",
-          done: false,
+          doneAt: null,
           memo: null,
           type: "new",
         },
@@ -179,7 +183,7 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "new task",
-          done: false,
+          doneAt: null,
           memo: null,
           type: "new",
         },
@@ -222,7 +226,11 @@ describe("TaskUsecase", () => {
       userId: UserId;
       taskId: TaskId;
       existingTask: Task | undefined;
-      updateParams: { title?: string; done?: boolean; memo?: string | null };
+      updateParams: {
+        title?: string;
+        doneAt?: string | null;
+        memo?: string | null;
+      };
       updatedTask: Task | undefined;
       expectError?: {
         getTask?: Error;
@@ -240,19 +248,19 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "title",
-          done: false,
+          doneAt: null,
           memo: null,
           dueAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           type: "persisted",
         },
-        updateParams: { done: true },
+        updateParams: { doneAt: "2021-01-01" },
         updatedTask: {
           id: taskId1,
           userId: userId1,
           title: "title",
-          done: true,
+          doneAt: "2021-01-01",
           memo: null,
           dueAt: null,
           createdAt: new Date(),
@@ -265,7 +273,7 @@ describe("TaskUsecase", () => {
         userId: userId1,
         taskId: taskId2,
         existingTask: undefined,
-        updateParams: { done: true },
+        updateParams: { doneAt: "2021-01-01" },
         updatedTask: undefined,
         expectError: {
           taskNotFound: new ResourceNotFoundError("task not found"),
@@ -276,7 +284,7 @@ describe("TaskUsecase", () => {
         userId: userId1,
         taskId: taskId1,
         existingTask: undefined,
-        updateParams: { done: true },
+        updateParams: { doneAt: "2021-01-01" },
         updatedTask: undefined,
         expectError: {
           getTask: new Error(),
@@ -290,19 +298,19 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "title",
-          done: false,
+          doneAt: null,
           memo: null,
           dueAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           type: "persisted",
         },
-        updateParams: { done: true },
+        updateParams: { doneAt: "2021-01-01" },
         updatedTask: {
           id: taskId1,
           userId: userId1,
           title: "title",
-          done: true,
+          doneAt: "2021-01-01",
           memo: null,
           dueAt: null,
           createdAt: new Date(),
@@ -395,7 +403,7 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "dummy",
-          done: false,
+          doneAt: null,
           memo: null,
           type: "new",
         },
@@ -417,7 +425,7 @@ describe("TaskUsecase", () => {
           id: taskId1,
           userId: userId1,
           title: "dummy",
-          done: false,
+          doneAt: null,
           memo: null,
           type: "new",
         },

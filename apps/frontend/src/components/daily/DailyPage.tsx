@@ -60,8 +60,13 @@ export const ActivityDailyPage: React.FC = () => {
     isLoading: isTasksLoading,
   } = useQuery({
     ...qp({
-      queryKey: ["tasks"],
-      queryFn: () => apiClient.users.tasks.$get(),
+      queryKey: ["tasks", dayjs(date).format("YYYY-MM-DD")],
+      queryFn: () =>
+        apiClient.users.tasks.$get({
+          query: {
+            date: dayjs(date).format("YYYY-MM-DD"),
+          },
+        }),
       schema: GetTasksResponseSchema,
     }),
   });
@@ -114,7 +119,7 @@ export const ActivityDailyPage: React.FC = () => {
           )}
         </div>
         <hr className="my-6" />
-        <TaskList tasks={tasks} isTasksLoading={isTasksLoading} />
+        <TaskList tasks={tasks} isTasksLoading={isTasksLoading} date={date} />
       </div>
       <ActivityLogEditDialog
         open={editDialogOpen}

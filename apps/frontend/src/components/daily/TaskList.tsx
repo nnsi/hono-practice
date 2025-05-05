@@ -12,6 +12,7 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
 import {
@@ -25,24 +26,25 @@ import { Card, CardContent, Input, Button } from "@components/ui";
 interface TaskListProps {
   tasks: GetTaskResponse[] | undefined;
   isTasksLoading: boolean;
+  date: Date;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
   isTasksLoading,
+  date,
 }) => {
-  // タスク追加フォームの表示状態
   const [addFormOpen, setAddFormOpen] = useState(false);
   const queryClient = useQueryClient();
+  const dateStr = dayjs(date).format("YYYY-MM-DD");
 
-  // タスク完了/未完了切り替え
   const { mutate: mutateTaskDone } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: ({ id, done }: { id: string; done: boolean }) =>
         apiClient.users.tasks[":id"].$put({
           param: { id },
-          json: { done },
+          json: { doneAt: done ? dayjs().format("YYYY-MM-DD") : null },
         }),
     }),
     onSuccess: () => {
@@ -53,7 +55,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   // タスク削除
   const { mutate: mutateDeleteTask, isPending: isDeletingTask } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: (id: string) =>
         apiClient.users.tasks[":id"].$delete({ param: { id } }),
     }),
@@ -69,7 +71,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   });
   const { mutate: mutateAddTask, isPending: isAddingTask } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: (data: CreateTaskRequest) =>
         apiClient.users.tasks.$post({ json: data }),
       requestSchema: createTaskRequestSchema,
@@ -95,10 +97,10 @@ export const TaskList: React.FC<TaskListProps> = ({
                     variant="ghost"
                     className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
                     onClick={() =>
-                      mutateTaskDone({ id: task.id, done: !task.done })
+                      mutateTaskDone({ id: task.id, done: !task.doneAt })
                     }
                   >
-                    {task.done ? (
+                    {task.doneAt ? (
                       <CheckCircledIcon className="text-green-500 w-8 h-8" />
                     ) : (
                       <CircleIcon className="text-gray-400 w-8 h-8" />

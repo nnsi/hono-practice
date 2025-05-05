@@ -7,12 +7,12 @@ import {
 } from "@backend/domain";
 import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
 import { tasks } from "@infra/drizzle/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, or, lte, gte, not } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/drizzle";
 
 export type TaskRepository = {
-  getTasksByUserId: (userId: UserId) => Promise<Task[]>;
+  getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,
     taskId: TaskId,
@@ -35,15 +35,41 @@ export function newTaskRepository(db: QueryExecutor): TaskRepository {
 }
 
 function getTasksByUserId(db: QueryExecutor) {
-  return async (userId: UserId) => {
+  return async (userId: UserId, date?: string) => {
+    let whereClause: any;
+    if (date) {
+      whereClause = and(
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+        // 完了済み: 完了日と一致
+        or(
+          and(
+            // doneAtがnullでない場合
+            not(isNull(tasks.doneAt)),
+            eq(tasks.doneAt, date),
+          ),
+          // 未完了: 期間内 or 期間指定なし
+          and(
+            isNull(tasks.doneAt),
+            or(
+              // startDate/dueDateがnullなら全日表示
+              isNull(tasks.startDate),
+              isNull(tasks.dueDate),
+              and(lte(tasks.startDate, date), gte(tasks.dueDate, date)),
+            ),
+          ),
+        ),
+      );
+    } else {
+      whereClause = and(eq(tasks.userId, userId), isNull(tasks.deletedAt));
+    }
     const result = await db.query.tasks.findMany({
-      where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
+      where: whereClause,
       orderBy: desc(tasks.createdAt),
     });
 
     return result.map((r) => {
       const task = createTaskEntity({ ...r, type: "persisted" });
-
       return task;
     });
   };
@@ -91,7 +117,7 @@ function updateTask(db: QueryExecutor) {
       .update(tasks)
       .set({
         title: task.title,
-        done: task.done,
+        doneAt: task.doneAt,
         memo: task.memo,
       })
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
