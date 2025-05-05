@@ -9,10 +9,10 @@ const BaseTaskSchema = z.object({
   id: taskIdSchema,
   userId: userIdSchema,
   title: z.string(),
-  done: z.boolean(),
   memo: z.string().nullable(),
   startAt: z.string().date().nullish(),
   dueAt: z.string().date().nullish(),
+  doneAt: z.string().date().nullish(),
 });
 
 const NewTaskSchema = BaseTaskSchema.merge(

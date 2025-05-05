@@ -1,6 +1,5 @@
 import { DateProvider } from "@frontend/providers/DateProvider";
 import {
-  FileTextIcon,
   GearIcon,
   CardStackPlusIcon,
   BarChartIcon,
@@ -55,15 +54,6 @@ export const AuthenticatedLayout: React.FC = () => {
               <button type="button" className="flex flex-col items-center">
                 <GearIcon />
                 <span className="text-xs mt-1">Setting</span>
-              </button>
-            </Link>
-            <Link
-              to="/task"
-              className="[&.active]:font-bold [&.active]:text-blue-600"
-            >
-              <button type="button" className="flex flex-col items-center">
-                <FileTextIcon />
-                <span className="text-xs mt-1">old-t</span>
               </button>
             </Link>
           </nav>

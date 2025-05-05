@@ -15,7 +15,7 @@ export type CreateTaskInputParams = {
 
 export type UpdateTaskInputParams = {
   title?: string;
-  done?: boolean;
+  doneAt?: string | null;
   memo?: string | null;
 };
 
@@ -63,7 +63,7 @@ function createTask(repo: TaskRepository) {
       id: createTaskId(),
       userId: userId,
       title: params.title,
-      done: false,
+      doneAt: null,
       memo: null,
     });
 

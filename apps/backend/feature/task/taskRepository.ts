@@ -91,7 +91,7 @@ function updateTask(db: QueryExecutor) {
       .update(tasks)
       .set({
         title: task.title,
-        done: task.done,
+        doneAt: task.doneAt,
         memo: task.memo,
       })
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))

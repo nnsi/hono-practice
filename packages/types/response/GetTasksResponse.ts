@@ -4,7 +4,7 @@ export const GetTaskResponseSchema = z.object({
   id: z.string(),
   userId: z.string(),
   title: z.string(),
-  done: z.boolean(),
+  doneAt: z.coerce.date().nullable(),
   memo: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date().nullable(),

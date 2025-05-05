@@ -12,6 +12,7 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
 import {
@@ -42,7 +43,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       mutationFn: ({ id, done }: { id: string; done: boolean }) =>
         apiClient.users.tasks[":id"].$put({
           param: { id },
-          json: { done },
+          json: { doneAt: done ? dayjs().format("YYYY-MM-DD") : null },
         }),
     }),
     onSuccess: () => {
@@ -95,10 +96,10 @@ export const TaskList: React.FC<TaskListProps> = ({
                     variant="ghost"
                     className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
                     onClick={() =>
-                      mutateTaskDone({ id: task.id, done: !task.done })
+                      mutateTaskDone({ id: task.id, done: !task.doneAt })
                     }
                   >
-                    {task.done ? (
+                    {task.doneAt ? (
                       <CheckCircledIcon className="text-green-500 w-8 h-8" />
                     ) : (
                       <CircleIcon className="text-gray-400 w-8 h-8" />
