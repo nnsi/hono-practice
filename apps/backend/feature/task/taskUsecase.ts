@@ -20,7 +20,7 @@ export type UpdateTaskInputParams = {
 };
 
 export type TaskUsecase = {
-  getTasks: (userId: UserId) => Promise<Task[]>;
+  getTasks: (userId: UserId, date?: string) => Promise<Task[]>;
   getTask: (userId: UserId, taskId: TaskId) => Promise<Task>;
   createTask: (userId: UserId, params: CreateTaskInputParams) => Promise<Task>;
   updateTask: (
@@ -42,8 +42,8 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
 }
 
 function getTasks(repo: TaskRepository) {
-  return async (userId: UserId) => {
-    return await repo.getTasksByUserId(userId);
+  return async (userId: UserId, date?: string) => {
+    return await repo.getTasksByUserId(userId, date);
   };
 }
 

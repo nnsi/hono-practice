@@ -7,6 +7,7 @@ import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@dtos/request";
+import { getTasksRequestSchema } from "@dtos/request/GetTasksRequest";
 
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";
@@ -36,10 +37,10 @@ export function createTaskRoute() {
   });
 
   return app
-    .get("/", async (c) => {
+    .get("/", zValidator("query", getTasksRequestSchema), async (c) => {
       const id = c.get("userId");
-      const res = await c.var.h.getTasks(id);
-
+      const { date } = c.req.valid("query");
+      const res = await c.var.h.getTasks(id, date);
       return c.json(res);
     })
     .get("/:id", async (c) => {

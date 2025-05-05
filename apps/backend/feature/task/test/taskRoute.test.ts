@@ -15,7 +15,7 @@ test("GET tasks / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.index.$get();
+  const res = await client.index.$get({ query: {} });
 
   expect(res.status).toEqual(200);
 });
@@ -98,4 +98,26 @@ test("DELETE tasks/:id / success", async () => {
   });
 
   expect(res.status).toEqual(200);
+});
+
+test("GET tasks / with valid date query", async () => {
+  const route = createTaskRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$get({ query: { date: "2021-01-01" } });
+  expect(res.status).toEqual(200);
+});
+
+test("GET tasks / with invalid date query", async () => {
+  const route = createTaskRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$get({ query: { date: "invalid-date" } });
+  expect(res.status).toEqual(400);
 });

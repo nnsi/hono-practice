@@ -17,8 +17,8 @@ export function newTaskHandler(uc: TaskUsecase) {
 }
 
 function getTasks(uc: TaskUsecase) {
-  return async (userId: UserId) => {
-    const tasks = await uc.getTasks(userId);
+  return async (userId: UserId, date?: string) => {
+    const tasks = await uc.getTasks(userId, date);
 
     const responseTasks = tasks.map((task) => ({
       ...task,

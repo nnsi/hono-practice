@@ -68,18 +68,22 @@ describe("TaskUsecase", () => {
     testCases.forEach(({ name, userId, mockReturn, expectError }) => {
       it(`${name}`, async () => {
         if (expectError) {
-          when(repo.getTasksByUserId(userId)).thenReject(new Error());
+          when(repo.getTasksByUserId(userId, undefined)).thenReject(
+            new Error(),
+          );
 
-          await expect(usecase.getTasks(userId)).rejects.toThrow(Error);
-          return verify(repo.getTasksByUserId(userId)).once();
+          await expect(usecase.getTasks(userId, undefined)).rejects.toThrow(
+            Error,
+          );
+          return verify(repo.getTasksByUserId(userId, undefined)).once();
         }
 
-        when(repo.getTasksByUserId(userId)).thenResolve(mockReturn!);
+        when(repo.getTasksByUserId(userId, undefined)).thenResolve(mockReturn!);
 
-        const result = await usecase.getTasks(userId);
+        const result = await usecase.getTasks(userId, undefined);
         expect(result).toEqual(mockReturn);
 
-        verify(repo.getTasksByUserId(userId)).once();
+        verify(repo.getTasksByUserId(userId, undefined)).once();
       });
     });
   });

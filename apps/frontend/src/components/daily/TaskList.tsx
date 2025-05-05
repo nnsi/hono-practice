@@ -26,20 +26,21 @@ import { Card, CardContent, Input, Button } from "@components/ui";
 interface TaskListProps {
   tasks: GetTaskResponse[] | undefined;
   isTasksLoading: boolean;
+  date: Date;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
   isTasksLoading,
+  date,
 }) => {
-  // タスク追加フォームの表示状態
   const [addFormOpen, setAddFormOpen] = useState(false);
   const queryClient = useQueryClient();
+  const dateStr = dayjs(date).format("YYYY-MM-DD");
 
-  // タスク完了/未完了切り替え
   const { mutate: mutateTaskDone } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: ({ id, done }: { id: string; done: boolean }) =>
         apiClient.users.tasks[":id"].$put({
           param: { id },
@@ -54,7 +55,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   // タスク削除
   const { mutate: mutateDeleteTask, isPending: isDeletingTask } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: (id: string) =>
         apiClient.users.tasks[":id"].$delete({ param: { id } }),
     }),
@@ -70,7 +71,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   });
   const { mutate: mutateAddTask, isPending: isAddingTask } = useMutation({
     ...mp({
-      queryKey: ["tasks"],
+      queryKey: ["tasks", dateStr],
       mutationFn: (data: CreateTaskRequest) =>
         apiClient.users.tasks.$post({ json: data }),
       requestSchema: createTaskRequestSchema,
