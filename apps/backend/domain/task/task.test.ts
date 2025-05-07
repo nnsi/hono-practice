@@ -11,7 +11,7 @@ test("parse NewTask", async () => {
     id: createTaskId("00000000-0000-4000-8000-000000000001"),
     userId: createUserId("00000000-0000-4000-8000-000000000002"),
     title: "title",
-    doneAt: null,
+    doneDate: null,
     memo: null,
   };
 
@@ -22,7 +22,7 @@ test("parse NewTask", async () => {
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
     title: "title",
-    doneAt: null,
+    doneDate: null,
     memo: null,
   });
 });
@@ -33,10 +33,10 @@ test("parse PersistedTask", async () => {
     id: createTaskId("00000000-0000-4000-8000-000000000001"),
     userId: createUserId("00000000-0000-4000-8000-000000000002"),
     title: "title",
-    doneAt: "2021-01-01",
+    doneDate: "2021-01-01",
     memo: "memo",
-    startAt: null,
-    dueAt: null,
+    startDate: null,
+    dueDate: null,
     createdAt: new Date("2021-01-01"),
     updatedAt: new Date("2021-01-01"),
     foo: "bar",
@@ -50,10 +50,10 @@ test("parse PersistedTask", async () => {
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
     title: "title",
-    doneAt: "2021-01-01",
+    doneDate: "2021-01-01",
     memo: "memo",
-    startAt: null,
-    dueAt: null,
+    startDate: null,
+    dueDate: null,
     createdAt: new Date("2021-01-01"),
     updatedAt: new Date("2021-01-01"),
   });

@@ -21,12 +21,20 @@ jobs:
       packages: ${{ steps.filter.outputs.packages }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - id: filter
         run: |
-          echo "backend=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^apps/backend/' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "frontend=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^apps/frontend/' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "schema=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^infra/drizzle/schema\.ts$' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "packages=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            PREVIOUS_SHA="HEAD^"
+          else
+            PREVIOUS_SHA="${{ github.event.before }}"
+          fi
+
+          echo "backend=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^apps/backend/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "frontend=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^apps/frontend/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "schema=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^infra/drizzle/schema\.ts$' && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "packages=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
 
   backend:
     needs: detect-changes

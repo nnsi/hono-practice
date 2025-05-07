@@ -44,7 +44,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       mutationFn: ({ id, done }: { id: string; done: boolean }) =>
         apiClient.users.tasks[":id"].$put({
           param: { id },
-          json: { doneAt: done ? dayjs().format("YYYY-MM-DD") : null },
+          json: { doneDate: done ? dateStr : null },
         }),
     }),
     onSuccess: () => {
@@ -67,7 +67,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   // タスク追加
   const form = useForm<CreateTaskRequest>({
     resolver: zodResolver(createTaskRequestSchema),
-    defaultValues: { title: "" },
+    defaultValues: { title: "", startDate: dateStr },
   });
   const { mutate: mutateAddTask, isPending: isAddingTask } = useMutation({
     ...mp({
@@ -82,7 +82,9 @@ export const TaskList: React.FC<TaskListProps> = ({
       form.reset();
     },
   });
-  const handleAddTask = form.handleSubmit((data) => mutateAddTask(data));
+  const handleAddTask = form.handleSubmit((data) =>
+    mutateAddTask({ ...data, startDate: dateStr })
+  );
 
   return (
     <>
@@ -97,10 +99,10 @@ export const TaskList: React.FC<TaskListProps> = ({
                     variant="ghost"
                     className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
                     onClick={() =>
-                      mutateTaskDone({ id: task.id, done: !task.doneAt })
+                      mutateTaskDone({ id: task.id, done: !task.doneDate })
                     }
                   >
-                    {task.doneAt ? (
+                    {task.doneDate ? (
                       <CheckCircledIcon className="text-green-500 w-8 h-8" />
                     ) : (
                       <CircleIcon className="text-gray-400 w-8 h-8" />

@@ -11,11 +11,12 @@ import type { TaskRepository } from ".";
 
 export type CreateTaskInputParams = {
   title: string;
+  startDate?: string;
 };
 
 export type UpdateTaskInputParams = {
   title?: string;
-  doneAt?: string | null;
+  doneDate?: string | null;
   memo?: string | null;
 };
 
@@ -63,7 +64,8 @@ function createTask(repo: TaskRepository) {
       id: createTaskId(),
       userId: userId,
       title: params.title,
-      doneAt: null,
+      startDate: params.startDate,
+      doneDate: null,
       memo: null,
     });
 

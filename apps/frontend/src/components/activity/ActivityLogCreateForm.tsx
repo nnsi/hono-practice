@@ -13,7 +13,6 @@ import {
 import type { GetActivityResponse } from "@dtos/response";
 import {
   GetActivityLogResponseSchema,
-  type GetActivityLogsResponse,
 } from "@dtos/response/GetActivityLogsResponse";
 
 import {
@@ -90,18 +89,13 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
       return;
     }
     form.reset();
-    queryClient.setQueryData(
-      ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
-    queryClient.setQueryData(
-      ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
+    await queryClient.invalidateQueries({
+      queryKey: [
+        "activity",
+        "activity-logs-daily",
+        dayjs(date).format("YYYY-MM-DD"),
+      ],
+    });
   };
 
   const handleMouseDown = () => {
