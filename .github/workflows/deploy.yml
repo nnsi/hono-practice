@@ -57,18 +57,18 @@ jobs:
         if: github.ref_name == 'master'
         run: |
           cat << EOF >> wrangler.toml
-          
+
           [env.stg]
           [[env.stg.hyperdrive]]
           binding = "HYPERDRIVE"
           id = "${{ secrets.HYPERDRIVE_ID_STG }}"
           EOF
-      
+
       - name: Configure Hyperdrive for production
         if: github.ref_name == 'release'
         run: |
           cat << EOF >> wrangler.toml
-          
+
           [env.production]
           [[env.production.hyperdrive]]
           binding = "HYPERDRIVE"

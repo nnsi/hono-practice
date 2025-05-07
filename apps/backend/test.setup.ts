@@ -65,14 +65,14 @@ async function seed() {
       id: "00000000-0000-4000-8000-000000000001",
       userId: TEST_USER_ID,
       title: "test",
-      doneAt: null,
+      doneDate: null,
     },
     {
       id: "00000000-0000-4000-8000-000000000002",
       userId: TEST_USER_ID,
       title: "test",
       memo: "test",
-      doneAt: "2021-01-01",
+      doneDate: "2021-01-01",
     },
   ]);
 

@@ -44,17 +44,21 @@ function getTasksByUserId(db: QueryExecutor) {
         // 完了済み: 完了日と一致
         or(
           and(
-            // doneAtがnullでない場合
-            not(isNull(tasks.doneAt)),
-            eq(tasks.doneAt, date),
+            // doneDateがnullでない場合
+            not(isNull(tasks.doneDate)),
+            eq(tasks.doneDate, date),
           ),
           // 未完了: 期間内 or 期間指定なし
           and(
-            isNull(tasks.doneAt),
+            isNull(tasks.doneDate),
             or(
               // startDate/dueDateがnullなら全日表示
-              isNull(tasks.startDate),
-              isNull(tasks.dueDate),
+              and(isNull(tasks.startDate), isNull(tasks.dueDate)),
+              // startDateのみnull
+              and(isNull(tasks.startDate), gte(tasks.dueDate, date)),
+              // dueDateのみnull
+              and(lte(tasks.startDate, date), isNull(tasks.dueDate)),
+              // 両方設定あり
               and(lte(tasks.startDate, date), gte(tasks.dueDate, date)),
             ),
           ),
@@ -117,7 +121,7 @@ function updateTask(db: QueryExecutor) {
       .update(tasks)
       .set({
         title: task.title,
-        doneAt: task.doneAt,
+        doneDate: task.doneDate,
         memo: task.memo,
       })
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))

@@ -1,0 +1,1 @@
+ALTER TABLE "task" RENAME COLUMN "done_at" TO "done_date";

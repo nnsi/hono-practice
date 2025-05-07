@@ -37,10 +37,10 @@ test("GET tasks/:id / success", async () => {
 
   expect(res.status).toEqual(200);
   expect(resJson.title).toEqual("test");
-  expect(resJson.doneAt).toEqual(null);
+  expect(resJson.doneDate).toEqual(null);
 });
 
-test("POST tasks / success", async () => {
+test("POST task / success", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
   const client = testClient(app, {
@@ -50,6 +50,7 @@ test("POST tasks / success", async () => {
   const res = await client.index.$post({
     json: {
       title: "test",
+      startDate: "2021-01-01",
     },
   });
 
@@ -70,7 +71,7 @@ test("PUT tasks/:id / success", async () => {
     json: {
       title: "update",
       memo: "update",
-      doneAt: "2021-01-01",
+      doneDate: "2021-01-01",
     },
   });
 
@@ -79,7 +80,7 @@ test("PUT tasks/:id / success", async () => {
   expect(res.status).toEqual(200);
   expect(resJson.title).toEqual("update");
   expect(resJson.memo).toEqual("update");
-  expect(resJson.doneAt).toEqual("2021-01-01T00:00:00.000Z");
+  expect(resJson.doneDate).toEqual("2021-01-01T00:00:00.000Z");
 });
 
 test("DELETE tasks/:id / success", async () => {

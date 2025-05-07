@@ -143,9 +143,18 @@ export const ActivityRegistPage: React.FC = () => {
       {selectedActivity && (
         <ActivityLogCreateDialog
           open={open}
-          onOpenChange={(o) => {
+          onOpenChange={async (o) => {
             setOpen(o);
-            if (!o) setSelectedActivity(null);
+            if (!o) {
+              setSelectedActivity(null);
+              await queryClient.invalidateQueries({
+                queryKey: [
+                  "activity",
+                  "activity-logs-daily",
+                  dayjs(date).format("YYYY-MM-DD"),
+                ],
+              });
+            }
           }}
           activity={selectedActivity}
           date={date}

@@ -7,6 +7,10 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     extends: [importPlugin.flatConfigs.recommended],
+    settings: {
+      "import/core-modules": ["react-native"],
+      "import/ignore": ["react-native"],
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-object-type": "off",

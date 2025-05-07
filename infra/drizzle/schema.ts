@@ -103,7 +103,7 @@ export const tasks = pgTable(
       .notNull()
       .references(() => users.id),
     title: text("title").notNull(),
-    doneAt: date("done_at"),
+    doneDate: date("done_date"),
     memo: text("memo").default(""),
     startDate: date("start_date"),
     dueDate: date("due_date"),
