@@ -5,40 +5,9 @@ on:
     branches:
       - master
       - release
-    paths:
-      - 'apps/backend/**'
-      - 'apps/frontend/**'
-      - 'infra/drizzle/schema.ts'
-      - 'packages/**'
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      schema: ${{ steps.filter.outputs.schema }}
-      packages: ${{ steps.filter.outputs.packages }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - id: filter
-        run: |
-          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-            PREVIOUS_SHA="HEAD^"
-          else
-            PREVIOUS_SHA="${{ github.event.before }}"
-          fi
-
-          echo "backend=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^apps/backend/' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "frontend=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^apps/frontend/' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "schema=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^infra/drizzle/schema\.ts$' && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "packages=$(git diff --name-only $PREVIOUS_SHA ${{ github.sha }} | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
-
-  backend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.packages == 'true'
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,26 +15,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 22
+
       - name: Install dependencies
         run: npm install
+
       - name: test
         run: npm run ci-check
+
       - name: Build (for stg)
         if: github.ref_name == 'master'
         run: npm run build-client-stg
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
+
       - name: Build (for release)
         if: github.ref_name == 'release'
         run: npm run build-client
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
+
+      - name: Migrate Neon DB (stg)
+        if: github.ref_name == 'master'
+        run: npm run db-migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+
+      - name: Migrate Neon DB (prod)
+        if: github.ref_name == 'release'
+        run: npm run db-migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
       - name: Configure Hyperdrive for staging
         if: github.ref_name == 'master'
         run: |
@@ -76,6 +63,7 @@ jobs:
           binding = "HYPERDRIVE"
           id = "${{ secrets.HYPERDRIVE_ID_STG }}"
           EOF
+
       - name: Configure Hyperdrive for production
         if: github.ref_name == 'release'
         run: |
@@ -86,6 +74,7 @@ jobs:
           binding = "HYPERDRIVE"
           id = "${{ secrets.HYPERDRIVE_ID_PROD }}"
           EOF
+
       - name: Set DATABASE_URL secret in Cloudflare (stg)
         if: github.ref_name == 'master'
         run: |
@@ -95,6 +84,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
       - name: Set DATABASE_URL secret in Cloudflare (prod)
         if: github.ref_name == 'release'
         run: |
@@ -104,12 +94,14 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Workers (stg)
         if: github.ref_name == 'master'
         run: npm run deploy:stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Workers (release)
         if: github.ref_name == 'release'
         run: npm run deploy:prod
@@ -117,13 +109,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
-  frontend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.packages == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@1
         with:
@@ -132,27 +117,3 @@ jobs:
           projectName: ${{ vars.CF_PAGES_PJ_NAME }}
           directory: ./dist-frontend
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-  migrate:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.schema == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22
-      - name: Install dependencies
-        run: npm install
-      - name: Migrate Neon DB (stg)
-        if: github.ref_name == 'master'
-        run: npm run db-migrate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
-      - name: Migrate Neon DB (prod)
-        if: github.ref_name == 'release'
-        run: npm run db-migrate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
