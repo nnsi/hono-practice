@@ -50,7 +50,7 @@ test("parse PersistedTask", async () => {
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
     title: "title",
-    doneDate: "2021-01-01",
+    doneDate: new Date("2021-01-01"),
     memo: "memo",
     startDate: null,
     dueDate: null,

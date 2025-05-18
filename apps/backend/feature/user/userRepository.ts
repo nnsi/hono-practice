@@ -2,7 +2,7 @@ import { createUserEntity, type User, type UserId } from "@backend/domain";
 import { users } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type UserRepository = {
   createUser: (user: User) => Promise<User>;

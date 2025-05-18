@@ -17,7 +17,7 @@ const BaseActivityLogSchema = z.object({
     if ((arg as Date).toISOString)
       return (arg as Date).toISOString().split("T")[0];
     return arg;
-  }, z.string().date()),
+  }, z.coerce.date()),
 });
 
 const NewActivityLogSchema = BaseActivityLogSchema.merge(

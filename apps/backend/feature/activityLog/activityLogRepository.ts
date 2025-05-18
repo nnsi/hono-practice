@@ -9,7 +9,7 @@ import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
 import { and, between, eq, isNull } from "drizzle-orm";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityLogRepository = {
   getActivityLogsByUserIdAndDate: (

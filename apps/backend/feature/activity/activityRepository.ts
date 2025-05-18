@@ -9,7 +9,7 @@ import {
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityRepository = {
   getActivitiesByUserId(userId: UserId): Promise<Activity[]>;
