@@ -16,7 +16,7 @@ import type {
 } from "@dtos/request";
 
 import type { ActivityRepository } from ".";
-import type { TransactionRunner } from "@backend/infra/db";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;

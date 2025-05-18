@@ -15,9 +15,9 @@ test("parse NewTask", async () => {
     memo: null,
   };
 
-  const res = TaskSchema.safeParse(TestData);
+  const res = TaskSchema.parse(TestData);
 
-  expect(res.data).toEqual({
+  expect(res).toEqual({
     type: "new",
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",
@@ -43,9 +43,9 @@ test("parse PersistedTask", async () => {
     baz: "qux",
   };
 
-  const res = TaskSchema.safeParse(TestData);
+  const res = TaskSchema.parse(TestData);
 
-  expect(res.data).toEqual({
+  expect(res).toEqual({
     type: "persisted",
     id: "00000000-0000-4000-8000-000000000001",
     userId: "00000000-0000-4000-8000-000000000002",

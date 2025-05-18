@@ -6,7 +6,7 @@ import {
 import { userProviders } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type UserProviderRepository = {
   findUserProviderByIdAndProvider(

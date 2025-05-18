@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { newActivityUsecase } from "..";
 
 import type { ActivityRepository } from "..";
-import type { TransactionRunner } from "@backend/infra/db";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 
 describe("ActivityUsecase", () => {
   let repo: ActivityRepository;

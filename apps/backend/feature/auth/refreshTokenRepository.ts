@@ -8,7 +8,7 @@ import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 import type { UserId } from "@backend/domain";
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type RefreshTokenRepository = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;

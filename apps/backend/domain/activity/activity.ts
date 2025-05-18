@@ -51,7 +51,7 @@ export type ActivityInput = z.input<typeof ActivitySchema>;
 
 export function createActivityEntity(params: ActivityInput): Activity {
   const parsedEntity = ActivitySchema.safeParse(params);
-  if (parsedEntity.error) {
+  if (!parsedEntity.success) {
     throw new DomainValidateError("createActivityEntity: invalid params");
   }
 

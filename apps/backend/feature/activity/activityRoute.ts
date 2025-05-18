@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { createActivityId } from "@backend/domain";
-import { newDrizzleTransactionRunner } from "@backend/infra/drizzle";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { zValidator } from "@hono/zod-validator";
 
 import {

@@ -5,7 +5,7 @@ import type { GetActivityStatsResponse } from "@dtos/response";
 
 import dayjs from "../lib/dayjs";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityQueryService = {
   activityStatsQuery: (

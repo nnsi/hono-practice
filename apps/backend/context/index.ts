@@ -2,7 +2,7 @@ import type { Context } from "hono";
 
 import type { Config } from "../config";
 import type { UserId } from "../domain";
-import type { QueryExecutor } from "../infra/drizzle";
+import type { QueryExecutor } from "../infra/rdb/drizzle";
 
 export type JwtPayload = {
   id: string;

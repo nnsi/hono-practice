@@ -9,7 +9,7 @@ import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
 import { tasks } from "@infra/drizzle/schema";
 import { and, desc, eq, isNull, or, lte, gte, not } from "drizzle-orm";
 
-import type { QueryExecutor } from "@backend/infra/drizzle";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type TaskRepository = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
@@ -107,7 +107,7 @@ function createTask(db: QueryExecutor) {
       ...result,
       type: "persisted",
     });
-    if (persistedTask.error) {
+    if (!persistedTask.success) {
       throw new DomainValidateError("createTask: failed to parse task");
     }
 

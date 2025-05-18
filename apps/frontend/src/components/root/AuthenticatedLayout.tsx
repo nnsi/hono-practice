@@ -35,7 +35,7 @@ export const AuthenticatedLayout: React.FC = () => {
             >
               <button type="button" className="flex flex-col items-center">
                 <CalendarIcon />
-                <span className="text-xs mt-1">daily</span>
+                <span className="text-xs mt-1">Daily</span>
               </button>
             </Link>
             <Link
