@@ -107,7 +107,7 @@ function createTask(db: QueryExecutor) {
       ...result,
       type: "persisted",
     });
-    if (persistedTask.error) {
+    if (!persistedTask.success) {
       throw new DomainValidateError("createTask: failed to parse task");
     }
 

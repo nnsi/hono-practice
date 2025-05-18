@@ -17,7 +17,7 @@ const BaseActivityLogSchema = z.object({
     if ((arg as Date).toISOString)
       return (arg as Date).toISOString().split("T")[0];
     return arg;
-  }, z.coerce.date()),
+  }, z.string()),
 });
 
 const NewActivityLogSchema = BaseActivityLogSchema.merge(
@@ -43,7 +43,7 @@ export type ActivityLogInput = z.input<typeof ActivityLogSchema>;
 
 export function createActivityLogEntity(params: ActivityLogInput): ActivityLog {
   const parsedEntity = ActivityLogSchema.safeParse(params);
-  if (parsedEntity.error) {
+  if (!parsedEntity.success) {
     throw new DomainValidateError("createActivityLogEntity: invalid params");
   }
 

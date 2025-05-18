@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const getTasksRequestSchema = z.object({
-  date: z.coerce.date().optional(),
+  date: z.string().optional(),
 });
 
 export type GetTasksRequest = z.infer<typeof getTasksRequestSchema>;

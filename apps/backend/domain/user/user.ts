@@ -33,7 +33,7 @@ export type UserInput = z.input<typeof UserSchema>;
 
 export function createUserEntity(params: UserInput): User {
   const parsedEntity = UserSchema.safeParse(params);
-  if (parsedEntity.error) {
+  if (!parsedEntity.success) {
     throw new DomainValidateError("createUserEntity: invalid params");
   }
 

@@ -10,7 +10,7 @@ export function createUserProviderId(id?: string): UserProviderId {
   const userProviderId = id ?? v7();
 
   const parsedId = userProviderIdSchema.safeParse(userProviderId);
-  if (parsedId.error) {
+  if (!parsedId.success) {
     throw new DomainValidateError("createUserProviderId: Invalid id");
   }
 

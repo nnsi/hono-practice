@@ -10,7 +10,7 @@ export function createTaskId(id?: string): TaskId {
   const taskId = id ?? v7();
 
   const parsedId = taskIdSchema.safeParse(taskId);
-  if (parsedId.error) {
+  if (!parsedId.success) {
     throw new DomainValidateError("createTaskId: Invalid id");
   }
 

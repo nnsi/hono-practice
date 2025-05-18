@@ -10,9 +10,9 @@ const BaseTaskSchema = z.object({
   userId: userIdSchema,
   title: z.string(),
   memo: z.string().nullable(),
-  startDate: z.coerce.date().nullish(),
-  dueDate: z.coerce.date().nullish(),
-  doneDate: z.coerce.date().nullish(),
+  startDate: z.string().nullish(),
+  dueDate: z.string().nullish(),
+  doneDate: z.string().nullish(),
 });
 
 const NewTaskSchema = BaseTaskSchema.merge(
@@ -38,7 +38,7 @@ type TaskInput = z.input<typeof TaskSchema>;
 
 export function createTaskEntity(params: TaskInput): Task {
   const parsedEntity = TaskSchema.safeParse(params);
-  if (parsedEntity.error) {
+  if (!parsedEntity.success) {
     throw new DomainValidateError("createTaskEntity: invalid params");
   }
 
