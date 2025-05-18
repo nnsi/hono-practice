@@ -70,13 +70,16 @@ export const ActivityStatsPage: React.FC = () => {
           const data = allDates.map((date) => {
             const kindsData: Record<string, number> = {};
             stat.kinds.forEach((kind) => {
-              const log = kind.logs.find(
+              const log = kind.logs.filter(
                 (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
               );
-              kindsData[kind.name] = log ? log.quantity : 0;
+              kindsData[kind.name] = log
+                ? (kindsData[kind.name] ?? 0) +
+                  log.reduce((sum, l) => sum + l.quantity, 0)
+                : 0;
             });
             return {
-              date: dayjs(date).format("D"), // 横軸を日付（1,2,3...）で表示
+              date: dayjs(date).format("D日"), // 横軸を日付（1,2,3...）で表示
               ...kindsData,
             };
           });
@@ -122,12 +125,14 @@ export const ActivityStatsPage: React.FC = () => {
                   {stat.kinds.map((kind, idx) => {
                     // kindごとにデータを抽出
                     const kindData = allDates.map((date) => {
-                      const log = kind.logs.find(
+                      const log = kind.logs.filter(
                         (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
                       );
                       return {
-                        date: dayjs(date).format("D"),
-                        [kind.name]: log ? log.quantity : 0,
+                        date: dayjs(date).format("D日"),
+                        [kind.name]: log
+                          ? log.reduce((sum, l) => sum + l.quantity, 0)
+                          : 0,
                       };
                     });
                     return (
