@@ -11,7 +11,7 @@ import { and, desc, eq, isNull, or, lte, gte, not } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type TaskRepository = {
+export type TaskRepository<T> = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,
@@ -20,10 +20,12 @@ export type TaskRepository = {
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
-  withTx: (tx: QueryExecutor) => TaskRepository;
+  withTx: (tx: V) => TaskRepository<T>;
 };
 
-export function newTaskRepository(db: QueryExecutor): TaskRepository {
+export function newTaskRepository(
+  db: QueryExecutor,
+): TaskRepository<QueryExecutor> {
   return {
     getTasksByUserId: getTasksByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
