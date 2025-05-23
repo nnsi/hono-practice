@@ -17,6 +17,34 @@ import {
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
+// kind名から固定的な色を取得する関数
+const getColorForKind = (kindName: string): string => {
+  const colors = [
+    "#8884d8",
+    "#82ca9d",
+    "#ffc658",
+    "#ff8042",
+    "#8dd1e1",
+    "#d084d0",
+    "#ffb366",
+    "#67b7dc",
+    "#a4de6c",
+    "#ff9999",
+  ];
+
+  // 文字列のハッシュ値を計算
+  let hash = 0;
+  for (let i = 0; i < kindName.length; i++) {
+    const char = kindName.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // 32bit整数に変換
+  }
+
+  // ハッシュ値を色配列のインデックスにマッピング
+  const colorIndex = Math.abs(hash) % colors.length;
+  return colors[colorIndex];
+};
+
 export const ActivityStatsPage: React.FC = () => {
   const { date, setDate } = useContext(DateContext);
 
@@ -94,7 +122,7 @@ export const ActivityStatsPage: React.FC = () => {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">各種類別の集計</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {stat.kinds.map((kind, idx) => (
+                  {stat.kinds.map((kind) => (
                     <div
                       key={kind.id || kind.name}
                       className="bg-white rounded-lg p-3 border shadow-sm"
@@ -105,13 +133,7 @@ export const ActivityStatsPage: React.FC = () => {
                       <div
                         className="text-xl font-bold"
                         style={{
-                          color: [
-                            "#8884d8",
-                            "#82ca9d",
-                            "#ffc658",
-                            "#ff8042",
-                            "#8dd1e1",
-                          ][idx % 5],
+                          color: getColorForKind(kind.name),
                         }}
                       >
                         {kind.total}
@@ -135,19 +157,11 @@ export const ActivityStatsPage: React.FC = () => {
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip />
                       {stat.kinds[0].name !== "未指定" && <Legend />}
-                      {stat.kinds.map((kind, idx) => (
+                      {stat.kinds.map((kind) => (
                         <Bar
                           key={kind.id || kind.name}
                           dataKey={kind.name}
-                          fill={
-                            [
-                              "#8884d8",
-                              "#82ca9d",
-                              "#ffc658",
-                              "#ff8042",
-                              "#8dd1e1",
-                            ][idx % 5]
-                          }
+                          fill={getColorForKind(kind.name)}
                           name={kind.name !== "未指定" ? kind.name : stat.name}
                           stackId="a"
                         />
@@ -156,7 +170,7 @@ export const ActivityStatsPage: React.FC = () => {
                   </ResponsiveContainer>
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
-                    {stat.kinds.map((kind, idx) => {
+                    {stat.kinds.map((kind) => {
                       // kindごとにデータを抽出
                       const kindData = allDates.map((date) => {
                         const log = kind.logs.filter(
@@ -192,15 +206,7 @@ export const ActivityStatsPage: React.FC = () => {
                               <Tooltip />
                               <Bar
                                 dataKey={kind.name}
-                                fill={
-                                  [
-                                    "#8884d8",
-                                    "#82ca9d",
-                                    "#ffc658",
-                                    "#ff8042",
-                                    "#8dd1e1",
-                                  ][idx % 5]
-                                }
+                                fill={getColorForKind(kind.name)}
                                 name={kind.name}
                               />
                             </BarChart>
