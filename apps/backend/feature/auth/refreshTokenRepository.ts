@@ -10,19 +10,18 @@ import { eq } from "drizzle-orm";
 import type { UserId } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type RefreshTokenRepository = {
+export type RefreshTokenRepository<T> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
   getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
   revokeRefreshToken(token: RefreshToken): Promise<void>;
   revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
   deleteRefreshTokensPastExpiry(): Promise<void>;
+  withTx: (tx: V) => RefreshTokenRepository<T>;
 };
 
 export function newRefreshTokenRepository(
   db: QueryExecutor,
-): RefreshTokenRepository & {
-  withTx: (tx: QueryExecutor) => RefreshTokenRepository;
-} {
+): RefreshTokenRepository<QueryExecutor> {
   return {
     createRefreshToken: createRefreshToken(db),
     getRefreshTokenByToken: getRefreshTokenByToken(db),

@@ -5,5 +5,7 @@
     //    "source.organizeImports.biome": "explicit",
     "source.fixAll.eslint": "explicit"
   },
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "typescript.tsserver.maxTsServerMemory": 4096
 }

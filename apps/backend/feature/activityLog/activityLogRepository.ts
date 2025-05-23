@@ -11,7 +11,7 @@ import { and, between, eq, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type ActivityLogRepository = {
+export type ActivityLogRepository<T> = {
   getActivityLogsByUserIdAndDate: (
     userId: UserId,
     from: Date,
@@ -24,12 +24,12 @@ export type ActivityLogRepository = {
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   deleteActivityLog: (activityLog: ActivityLog) => Promise<void>;
-  withTx: (tx: QueryExecutor) => ActivityLogRepository;
+  withTx: (tx: V) => ActivityLogRepository<T>;
 };
 
 export function newActivityLogRepository(
   db: QueryExecutor,
-): ActivityLogRepository {
+): ActivityLogRepository<QueryExecutor> {
   return {
     getActivityLogsByUserIdAndDate: getActivityLogsByUserIdAndDate(db),
     getActivityLogByIdAndUserId: getActivityLogByIdAndUserId(db),

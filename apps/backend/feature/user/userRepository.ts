@@ -4,14 +4,16 @@ import { eq } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type UserRepository = {
+export type UserRepository<T> = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
-  withTx: (tx: QueryExecutor) => UserRepository;
+  withTx: (tx: V) => UserRepository<T>;
 };
 
-export function newUserRepository(db: QueryExecutor): UserRepository {
+export function newUserRepository(
+  db: QueryExecutor,
+): UserRepository<QueryExecutor> {
   return {
     createUser: createUser(db),
     getUserById: getUserById(db),
