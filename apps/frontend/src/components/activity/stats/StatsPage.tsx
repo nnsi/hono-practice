@@ -17,19 +17,20 @@ import {
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
-// kind名から固定的な色を取得する関数
+// kind名から固定的な色を取得する関数（色覚バリアフリー対応）
 const getColorForKind = (kindName: string): string => {
+  // 色覚バリアフリーに配慮した色パレット
   const colors = [
-    "#8884d8",
-    "#82ca9d",
-    "#ffc658",
-    "#ff8042",
-    "#8dd1e1",
-    "#d084d0",
-    "#ffb366",
-    "#67b7dc",
-    "#a4de6c",
-    "#ff9999",
+    "#0173B2", // 濃い青
+    "#DE8F05", // オレンジ
+    "#029E73", // 緑
+    "#D55E00", // 赤
+    "#CC79A7", // ピンク
+    "#F0E442", // 黄色
+    "#56B4E9", // 明るい青
+    "#999999", // グレー
+    "#7570B3", // 紫
+    "#1B9E77", // 濃い緑
   ];
 
   // 文字列のハッシュ値を計算
