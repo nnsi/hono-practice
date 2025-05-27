@@ -9,7 +9,7 @@
     "ci-check": "vitest run && biome lint && eslint",
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
-    "fix": "biome format --write && eslint --fix",
+    "fix": "eslint --fix",
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",

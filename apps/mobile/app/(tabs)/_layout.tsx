@@ -1,11 +1,16 @@
+import React from "react";
+
+import { Platform } from "react-native";
+
+import { Redirect, Tabs } from "expo-router";
+
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Redirect, Tabs } from "expo-router";
-import React from "react";
-import { Platform } from "react-native";
+
+
 import { useAuth } from "../../providers/AuthProvider";
 
 export default function TabLayout() {

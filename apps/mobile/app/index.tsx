@@ -1,6 +1,9 @@
-import { Redirect } from "expo-router";
 import React from "react";
+
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+
+import { Redirect } from "expo-router";
+
 import { LoginScreen } from "../components/auth/LoginScreen";
 import { useAuth } from "../providers/AuthProvider";
 

@@ -1,5 +1,7 @@
 import React from "react";
+
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { useDate } from "../../providers/DateProvider";
 
 export const DateHeader = () => {

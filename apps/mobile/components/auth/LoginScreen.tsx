@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   Alert,
   KeyboardAvoidingView,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { useAuth } from "../../providers/AuthProvider";
 
 export const LoginScreen = () => {

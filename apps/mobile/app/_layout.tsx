@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+
 import { AuthProvider } from "../providers/AuthProvider";
 import { DateProvider } from "../providers/DateProvider";
 import { QueryProvider } from "../providers/QueryProvider";

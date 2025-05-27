@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   Alert,
   ScrollView,
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { useAuth } from "../../providers/AuthProvider";
 
 export const SettingsScreen = () => {
