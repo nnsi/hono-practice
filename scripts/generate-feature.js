@@ -31,415 +31,511 @@ function createDirectories() {
 
 // Feature templates
 function generateRoute() {
-  const content = `import { zValidator } from '@hono/zod-validator';
-import { createApp } from '@backend/lib/honoWithErrorHandling';
-import { ${entityName}Handler } from './${entityName}Handler';
-import { create${EntityName}RequestSchema } from '@dtos/request';
-import { ${entityName}IdSchema } from '@dtos/response';
+  const content = `import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 
-export const ${entityName}Route = () => {
-  const app = createApp();
+import { create${EntityName}Id } from "@backend/domain";
+import {
+  create${EntityName}RequestSchema,
+  update${EntityName}RequestSchema,
+} from "@dtos/request";
 
-  app.use('*', async (c, next) => {
-    c.set('${entityName}Handler', ${entityName}Handler());
-    await next();
-  });
+import { new${EntityName}Handler } from "./${entityName}Handler";
+import { new${EntityName}Repository } from "./${entityName}Repository";
+import { new${EntityName}Usecase } from "./${entityName}Usecase";
 
-  app.get('/', async (c) => {
-    const handler = c.get('${entityName}Handler');
-    const response = await handler.get${EntityName}s();
-    return c.json(response);
-  });
+import type { AppContext } from "../../context";
 
-  app.get('/:id', zValidator('param', ${entityName}IdSchema), async (c) => {
-    const handler = c.get('${entityName}Handler');
-    const { id } = c.req.valid('param');
-    const response = await handler.get${EntityName}(id);
-    return c.json(response);
-  });
-
-  app.post('/', zValidator('json', create${EntityName}RequestSchema), async (c) => {
-    const handler = c.get('${entityName}Handler');
-    const request = c.req.valid('json');
-    const response = await handler.create${EntityName}(request);
-    return c.json(response, 201);
-  });
-
-  app.put('/:id', 
-    zValidator('param', ${entityName}IdSchema),
-    zValidator('json', create${EntityName}RequestSchema), 
-    async (c) => {
-      const handler = c.get('${entityName}Handler');
-      const { id } = c.req.valid('param');
-      const request = c.req.valid('json');
-      const response = await handler.update${EntityName}(id, request);
-      return c.json(response);
+export function create${EntityName}Route() {
+  const app = new Hono<
+    AppContext & {
+      Variables: {
+        h: ReturnType<typeof new${EntityName}Handler>;
+      };
     }
-  );
+  >();
 
-  app.delete('/:id', zValidator('param', ${entityName}IdSchema), async (c) => {
-    const handler = c.get('${entityName}Handler');
-    const { id } = c.req.valid('param');
-    await handler.delete${EntityName}(id);
-    return c.json({ success: true });
+  app.use("*", async (c, next) => {
+    const db = c.env.DB;
+
+    const repo = new${EntityName}Repository(db);
+    const uc = new${EntityName}Usecase(repo);
+    const h = new${EntityName}Handler(uc);
+
+    c.set("h", h);
+
+    return next();
   });
 
-  return app;
-};
+  return app
+    .get("/", async (c) => {
+      const userId = c.get("userId");
+      const res = await c.var.h.get${EntityName}s(userId);
+      return c.json(res);
+    })
+    .get("/:id", async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const ${entityName}Id = create${EntityName}Id(id);
+
+      const res = await c.var.h.get${EntityName}(userId, ${entityName}Id);
+
+      return c.json(res);
+    })
+    .post("/", zValidator("json", create${EntityName}RequestSchema), async (c) => {
+      const userId = c.get("userId");
+      const params = c.req.valid("json");
+
+      const res = await c.var.h.create${EntityName}(userId, params);
+
+      return c.json(res);
+    })
+    .put("/:id", zValidator("json", update${EntityName}RequestSchema), async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const ${entityName}Id = create${EntityName}Id(id);
+      const params = c.req.valid("json");
+
+      const res = await c.var.h.update${EntityName}(userId, ${entityName}Id, params);
+
+      return c.json(res);
+    })
+    .delete("/:id", async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const ${entityName}Id = create${EntityName}Id(id);
+
+      const res = await c.var.h.delete${EntityName}(userId, ${entityName}Id);
+
+      return c.json(res);
+    });
+}
+
+export const ${entityName}Route = create${EntityName}Route();
 `;
   fs.writeFileSync(path.join(featurePath, `${entityName}Route.ts`), content);
 }
 
 function generateHandler() {
-  const content = `import { AppError } from '@backend/error';
-import { ${entityName}UseCase } from './${entityName}Usecase';
-import { ${entityName}Repository } from './${entityName}Repository';
-import { 
-  ${entityName}ResponseSchema,
-  ${entityName}sResponseSchema,
-  type ${EntityName}Response,
-  type ${EntityName}sResponse,
-  type Create${EntityName}Request,
-} from '@dtos/response';
-import type { ${EntityName}Id } from '@backend/domain';
+  const content = `import type { Create${EntityName}Request, Update${EntityName}Request } from "@dtos/request";
+import { Get${EntityName}ResponseSchema, Get${EntityName}sResponseSchema } from "@dtos/response";
 
-export const ${entityName}Handler = () => {
-  const repository = ${entityName}Repository();
-  const useCase = ${entityName}UseCase({ ${entityName}Repository: repository });
+import { AppError } from "../../error";
 
+import type { ${EntityName}Usecase } from ".";
+import type { ${EntityName}Id, UserId } from "@backend/domain";
+
+export function new${EntityName}Handler(uc: ${EntityName}Usecase) {
   return {
-    get${EntityName}s: async (): Promise<${EntityName}sResponse> => {
-      const ${entityName}s = await useCase.get${EntityName}s();
-      const response = { ${entityName}s };
-      const result = ${entityName}sResponseSchema.safeParse(response);
-      if (!result.success) {
-        throw new AppError(\`Invalid response: \${result.error.message}\`);
-      }
-      return result.data;
-    },
-
-    get${EntityName}: async (id: ${EntityName}Id): Promise<${EntityName}Response> => {
-      const ${entityName} = await useCase.get${EntityName}({ id });
-      const result = ${entityName}ResponseSchema.safeParse(${entityName});
-      if (!result.success) {
-        throw new AppError(\`Invalid response: \${result.error.message}\`);
-      }
-      return result.data;
-    },
-
-    create${EntityName}: async (request: Create${EntityName}Request): Promise<${EntityName}Response> => {
-      const ${entityName} = await useCase.create${EntityName}(request);
-      const result = ${entityName}ResponseSchema.safeParse(${entityName});
-      if (!result.success) {
-        throw new AppError(\`Invalid response: \${result.error.message}\`);
-      }
-      return result.data;
-    },
-
-    update${EntityName}: async (id: ${EntityName}Id, request: Create${EntityName}Request): Promise<${EntityName}Response> => {
-      const ${entityName} = await useCase.update${EntityName}({ id, ...request });
-      const result = ${entityName}ResponseSchema.safeParse(${entityName});
-      if (!result.success) {
-        throw new AppError(\`Invalid response: \${result.error.message}\`);
-      }
-      return result.data;
-    },
-
-    delete${EntityName}: async (id: ${EntityName}Id): Promise<void> => {
-      await useCase.delete${EntityName}({ id });
-    },
+    get${EntityName}s: get${EntityName}s(uc),
+    get${EntityName}: get${EntityName}(uc),
+    create${EntityName}: create${EntityName}(uc),
+    update${EntityName}: update${EntityName}(uc),
+    delete${EntityName}: delete${EntityName}(uc),
   };
-};
+}
+
+function get${EntityName}s(uc: ${EntityName}Usecase) {
+  return async (userId: UserId) => {
+    const ${entityName}s = await uc.get${EntityName}s(userId);
+
+    const response${EntityName}s = ${entityName}s.map((${entityName}) => ({
+      ...${entityName},
+      id: ${entityName}.id,
+      userId: ${entityName}.userId,
+    }));
+
+    const parsed${EntityName}s = Get${EntityName}sResponseSchema.safeParse(response${EntityName}s);
+    if (!parsed${EntityName}s.success) {
+      throw new AppError("get${EntityName}sHandler: failed to parse ${entityName}s", 500);
+    }
+
+    return parsed${EntityName}s.data;
+  };
+}
+
+function get${EntityName}(uc: ${EntityName}Usecase) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id) => {
+    const ${entityName} = await uc.get${EntityName}(userId, ${entityName}Id);
+
+    const response${EntityName} = {
+      ...${entityName},
+      id: ${entityName}.id,
+      userId: ${entityName}.userId,
+    };
+
+    const parsed${EntityName} = Get${EntityName}ResponseSchema.safeParse(response${EntityName});
+    if (!parsed${EntityName}.success) {
+      throw new AppError("get${EntityName}Handler: failed to parse ${entityName}", 500);
+    }
+
+    return parsed${EntityName}.data;
+  };
+}
+
+function create${EntityName}(uc: ${EntityName}Usecase) {
+  return async (userId: UserId, params: Create${EntityName}Request) => {
+    const ${entityName} = await uc.create${EntityName}(userId, params);
+
+    const parsed${EntityName} = Get${EntityName}ResponseSchema.safeParse(${entityName});
+    if (!parsed${EntityName}.success) {
+      throw new AppError("create${EntityName}Handler: failed to parse ${entityName}", 500);
+    }
+
+    return parsed${EntityName}.data;
+  };
+}
+
+function update${EntityName}(uc: ${EntityName}Usecase) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id, params: Update${EntityName}Request) => {
+    const ${entityName} = await uc.update${EntityName}(userId, ${entityName}Id, params);
+
+    const response${EntityName} = {
+      ...${entityName},
+      id: ${entityName}.id,
+      userId: ${entityName}.userId,
+    };
+
+    const parsed${EntityName} = Get${EntityName}ResponseSchema.safeParse(response${EntityName});
+    if (!parsed${EntityName}.success) {
+      throw new AppError("update${EntityName}Handler: failed to parse ${entityName}", 500);
+    }
+
+    return parsed${EntityName}.data;
+  };
+}
+
+function delete${EntityName}(uc: ${EntityName}Usecase) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id) => {
+    await uc.delete${EntityName}(userId, ${entityName}Id);
+
+    return { message: "success" };
+  };
+}
 `;
   fs.writeFileSync(path.join(featurePath, `${entityName}Handler.ts`), content);
 }
 
 function generateUsecase() {
-  const content = `import { ResourceNotFoundError } from '@backend/error';
-import type { ${EntityName}, ${EntityName}Id } from '@backend/domain';
-import type { ${EntityName}Repository } from './${entityName}Repository';
+  const content = `import {
+  create${EntityName}Entity,
+  create${EntityName}Id,
+  type ${EntityName},
+  type ${EntityName}Id,
+  type UserId,
+} from "@backend/domain";
+import { ResourceNotFoundError } from "@backend/error";
 
-type Get${EntityName}sInput = void;
-type Get${EntityName}sOutput = ${EntityName}[];
+import type { ${EntityName}Repository } from ".";
 
-type Get${EntityName}Input = {
-  id: ${EntityName}Id;
-};
-type Get${EntityName}Output = ${EntityName};
-
-type Create${EntityName}Input = {
+export type Create${EntityName}InputParams = {
   name: string;
   // Add more fields as needed
 };
-type Create${EntityName}Output = ${EntityName};
 
-type Update${EntityName}Input = {
-  id: ${EntityName}Id;
-  name: string;
+export type Update${EntityName}InputParams = {
+  name?: string;
   // Add more fields as needed
 };
-type Update${EntityName}Output = ${EntityName};
 
-type Delete${EntityName}Input = {
-  id: ${EntityName}Id;
-};
-type Delete${EntityName}Output = void;
-
-export type ${EntityName}UseCase = {
-  get${EntityName}s: (input?: Get${EntityName}sInput) => Promise<Get${EntityName}sOutput>;
-  get${EntityName}: (input: Get${EntityName}Input) => Promise<Get${EntityName}Output>;
-  create${EntityName}: (input: Create${EntityName}Input) => Promise<Create${EntityName}Output>;
-  update${EntityName}: (input: Update${EntityName}Input) => Promise<Update${EntityName}Output>;
-  delete${EntityName}: (input: Delete${EntityName}Input) => Promise<Delete${EntityName}Output>;
+export type ${EntityName}Usecase = {
+  get${EntityName}s: (userId: UserId) => Promise<${EntityName}[]>;
+  get${EntityName}: (userId: UserId, ${entityName}Id: ${EntityName}Id) => Promise<${EntityName}>;
+  create${EntityName}: (userId: UserId, params: Create${EntityName}InputParams) => Promise<${EntityName}>;
+  update${EntityName}: (
+    userId: UserId,
+    ${entityName}Id: ${EntityName}Id,
+    params: Update${EntityName}InputParams,
+  ) => Promise<${EntityName}>;
+  delete${EntityName}: (userId: UserId, ${entityName}Id: ${EntityName}Id) => Promise<void>;
 };
 
-type Deps = {
-  ${entityName}Repository: ${EntityName}Repository;
-};
+export function new${EntityName}Usecase(repo: ${EntityName}Repository): ${EntityName}Usecase {
+  return {
+    get${EntityName}s: get${EntityName}s(repo),
+    get${EntityName}: get${EntityName}(repo),
+    create${EntityName}: create${EntityName}(repo),
+    update${EntityName}: update${EntityName}(repo),
+    delete${EntityName}: delete${EntityName}(repo),
+  };
+}
 
-export const ${entityName}UseCase = ({ ${entityName}Repository }: Deps): ${EntityName}UseCase => ({
-  get${EntityName}s: async () => {
-    return await ${entityName}Repository.findAll();
-  },
+function get${EntityName}s(repo: ${EntityName}Repository) {
+  return async (userId: UserId) => {
+    return await repo.get${EntityName}sByUserId(userId);
+  };
+}
 
-  get${EntityName}: async ({ id }) => {
-    const ${entityName} = await ${entityName}Repository.findById(id);
-    if (!${entityName}) {
-      throw new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`);
-    }
+function get${EntityName}(repo: ${EntityName}Repository) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id) => {
+    const ${entityName} = await repo.get${EntityName}ByUserIdAnd${EntityName}Id(userId, ${entityName}Id);
+    if (!${entityName}) throw new ResourceNotFoundError("${entityName} not found");
+
     return ${entityName};
-  },
+  };
+}
 
-  create${EntityName}: async ({ name }) => {
-    const new${EntityName}: ${EntityName} = {
-      status: 'new',
-      name,
-    };
-    return await ${entityName}Repository.save(new${EntityName});
-  },
+function create${EntityName}(repo: ${EntityName}Repository) {
+  return async (userId: UserId, params: Create${EntityName}InputParams) => {
+    const ${entityName} = create${EntityName}Entity({
+      type: "new",
+      id: create${EntityName}Id(),
+      userId: userId,
+      name: params.name,
+      // Add more fields as needed
+    });
 
-  update${EntityName}: async ({ id, name }) => {
-    const existing = await ${entityName}Repository.findById(id);
-    if (!existing) {
-      throw new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`);
-    }
-    const updated${EntityName}: ${EntityName} = {
-      ...existing,
-      name,
-    };
-    return await ${entityName}Repository.save(updated${EntityName});
-  },
+    return await repo.create${EntityName}(${entityName});
+  };
+}
 
-  delete${EntityName}: async ({ id }) => {
-    const existing = await ${entityName}Repository.findById(id);
-    if (!existing) {
-      throw new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`);
-    }
-    await ${entityName}Repository.delete(id);
-  },
-});
+function update${EntityName}(repo: ${EntityName}Repository) {
+  return async (
+    userId: UserId,
+    ${entityName}Id: ${EntityName}Id,
+    params: Update${EntityName}InputParams,
+  ) => {
+    const ${entityName} = await repo.get${EntityName}ByUserIdAnd${EntityName}Id(userId, ${entityName}Id);
+    if (!${entityName})
+      throw new ResourceNotFoundError("update${EntityName}Usecase:${entityName} not found");
+
+    const new${EntityName} = create${EntityName}Entity({
+      ...${entityName},
+      ...params,
+    });
+
+    const update${EntityName} = await repo.update${EntityName}(new${EntityName});
+    if (!update${EntityName})
+      throw new ResourceNotFoundError("update${EntityName}Usecase${entityName} not found");
+
+    return update${EntityName};
+  };
+}
+
+function delete${EntityName}(repo: ${EntityName}Repository) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id) => {
+    const ${entityName} = await repo.get${EntityName}ByUserIdAnd${EntityName}Id(userId, ${entityName}Id);
+    if (!${entityName}) throw new ResourceNotFoundError("${entityName} not found");
+
+    await repo.delete${EntityName}(${entityName});
+
+    return;
+  };
+}
 `;
   fs.writeFileSync(path.join(featurePath, `${entityName}Usecase.ts`), content);
 }
 
 function generateRepository() {
-  const content = `import { create${EntityName}, create${EntityName}Id, type ${EntityName}, type ${EntityName}Id } from '@backend/domain';
-import { SqlExecutionError } from '@backend/error';
-import { drizzleInstance, type DrizzleTransaction } from '@backend/infra/rdb/drizzle';
-import { ${entityName}s } from '@infra/drizzle/schema';
-import { eq } from 'drizzle-orm';
+  const content = `import {
+  create${EntityName}Entity,
+  type ${EntityName},
+  type ${EntityName}Id,
+  ${EntityName}Schema,
+  type UserId,
+} from "@backend/domain";
+import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
+import { ${entityName}s } from "@infra/drizzle/schema";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
-export type ${EntityName}Repository = {
-  withTransaction: (tx: DrizzleTransaction) => ${EntityName}Repository;
-  findAll: () => Promise<${EntityName}[]>;
-  findById: (id: ${EntityName}Id) => Promise<${EntityName} | undefined>;
-  save: (${entityName}: ${EntityName}) => Promise<${EntityName}>;
-  delete: (id: ${EntityName}Id) => Promise<void>;
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+
+export type ${EntityName}Repository<T> = {
+  get${EntityName}sByUserId: (userId: UserId) => Promise<${EntityName}[]>;
+  get${EntityName}ByUserIdAnd${EntityName}Id: (
+    userId: UserId,
+    ${entityName}Id: ${EntityName}Id,
+  ) => Promise<${EntityName} | undefined>;
+  create${EntityName}: (${entityName}: ${EntityName}) => Promise<${EntityName}>;
+  update${EntityName}: (${entityName}: ${EntityName}) => Promise<${EntityName} | undefined>;
+  delete${EntityName}: (${entityName}: ${EntityName}) => Promise<void>;
+  withTx: (tx: T) => ${EntityName}Repository<T>;
 };
 
-export const ${entityName}Repository = (): ${EntityName}Repository => {
-  const repository = (db = drizzleInstance()): ${EntityName}Repository => ({
-    withTransaction: (tx: DrizzleTransaction) => repository(tx),
+export function new${EntityName}Repository(
+  db: QueryExecutor,
+): ${EntityName}Repository<QueryExecutor> {
+  return {
+    get${EntityName}sByUserId: get${EntityName}sByUserId(db),
+    get${EntityName}ByUserIdAnd${EntityName}Id: get${EntityName}ByUserIdAnd${EntityName}Id(db),
+    create${EntityName}: create${EntityName}(db),
+    update${EntityName}: update${EntityName}(db),
+    delete${EntityName}: delete${EntityName}(db),
+    withTx: (tx) => new${EntityName}Repository(tx),
+  };
+}
 
-    findAll: async () => {
-      try {
-        const results = await db.select().from(${entityName}s);
-        return results.map((row) =>
-          create${EntityName}({
-            status: 'persisted',
-            id: row.id as ${EntityName}Id,
-            name: row.name,
-            createdAt: row.createdAt,
-            updatedAt: row.updatedAt,
-          })
-        );
-      } catch (error) {
-        throw new SqlExecutionError(\`Failed to find all ${entityName}s\`, error as Error);
-      }
-    },
+function get${EntityName}sByUserId(db: QueryExecutor) {
+  return async (userId: UserId) => {
+    const result = await db.query.${entityName}s.findMany({
+      where: and(eq(${entityName}s.userId, userId), isNull(${entityName}s.deletedAt)),
+      orderBy: desc(${entityName}s.createdAt),
+    });
 
-    findById: async (id: ${EntityName}Id) => {
-      try {
-        const results = await db.select().from(${entityName}s).where(eq(${entityName}s.id, id));
-        if (results.length === 0) {
-          return undefined;
-        }
-        const row = results[0];
-        return create${EntityName}({
-          status: 'persisted',
-          id: row.id as ${EntityName}Id,
-          name: row.name,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        });
-      } catch (error) {
-        throw new SqlExecutionError(\`Failed to find ${entityName} by id: \${id}\`, error as Error);
-      }
-    },
+    return result.map((r) => {
+      const ${entityName} = create${EntityName}Entity({ ...r, type: "persisted" });
+      return ${entityName};
+    });
+  };
+}
 
-    save: async (${entityName}: ${EntityName}) => {
-      try {
-        const now = new Date();
-        if (${entityName}.status === 'new') {
-          const id = create${EntityName}Id();
-          const [inserted] = await db
-            .insert(${entityName}s)
-            .values({
-              id,
-              name: ${entityName}.name,
-              createdAt: now,
-              updatedAt: now,
-            })
-            .returning();
-          return create${EntityName}({
-            status: 'persisted',
-            id: inserted.id as ${EntityName}Id,
-            name: inserted.name,
-            createdAt: inserted.createdAt,
-            updatedAt: inserted.updatedAt,
-          });
-        } else {
-          const [updated] = await db
-            .update(${entityName}s)
-            .set({
-              name: ${entityName}.name,
-              updatedAt: now,
-            })
-            .where(eq(${entityName}s.id, ${entityName}.id))
-            .returning();
-          return create${EntityName}({
-            status: 'persisted',
-            id: updated.id as ${EntityName}Id,
-            name: updated.name,
-            createdAt: updated.createdAt,
-            updatedAt: updated.updatedAt,
-          });
-        }
-      } catch (error) {
-        throw new SqlExecutionError(\`Failed to save ${entityName}\`, error as Error);
-      }
-    },
+function get${EntityName}ByUserIdAnd${EntityName}Id(db: QueryExecutor) {
+  return async (userId: UserId, ${entityName}Id: ${EntityName}Id) => {
+    const result = await db.query.${entityName}s.findFirst({
+      where: and(
+        eq(${entityName}s.id, ${entityName}Id),
+        eq(${entityName}s.userId, userId),
+        isNull(${entityName}s.deletedAt),
+      ),
+    });
 
-    delete: async (id: ${EntityName}Id) => {
-      try {
-        await db.delete(${entityName}s).where(eq(${entityName}s.id, id));
-      } catch (error) {
-        throw new SqlExecutionError(\`Failed to delete ${entityName} with id: \${id}\`, error as Error);
-      }
-    },
-  });
+    if (!result) {
+      return undefined;
+    }
 
-  return repository();
-};
+    const ${entityName} = create${EntityName}Entity({ ...result, type: "persisted" });
+
+    return ${entityName};
+  };
+}
+
+function create${EntityName}(db: QueryExecutor) {
+  return async (${entityName}: ${EntityName}) => {
+    const [result] = await db.insert(${entityName}s).values(${entityName}).returning();
+
+    const persisted${EntityName} = ${EntityName}Schema.safeParse({
+      ...result,
+      type: "persisted",
+    });
+    if (!persisted${EntityName}.success) {
+      throw new DomainValidateError("create${EntityName}: failed to parse ${entityName}");
+    }
+
+    return persisted${EntityName}.data;
+  };
+}
+
+function update${EntityName}(db: QueryExecutor) {
+  return async (${entityName}: ${EntityName}) => {
+    const [result] = await db
+      .update(${entityName}s)
+      .set({
+        name: ${entityName}.name,
+        // Add more fields as needed
+      })
+      .where(and(eq(${entityName}s.id, ${entityName}.id), eq(${entityName}s.userId, ${entityName}.userId)))
+      .returning();
+
+    if (!result) {
+      return undefined;
+    }
+
+    const update${EntityName} = create${EntityName}Entity({ ...result, type: "persisted" });
+
+    return update${EntityName};
+  };
+}
+
+function delete${EntityName}(db: QueryExecutor) {
+  return async (${entityName}: ${EntityName}) => {
+    const [result] = await db
+      .update(${entityName}s)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(${entityName}s.id, ${entityName}.id), eq(${entityName}s.userId, ${entityName}.userId)))
+      .returning();
+
+    if (!result) {
+      throw new ResourceNotFoundError("${entityName} not found");
+    }
+  };
+}
 `;
   fs.writeFileSync(path.join(featurePath, `${entityName}Repository.ts`), content);
 }
 
 function generateFeatureIndex() {
-  const content = `export * from './${entityName}Route';
-export * from './${entityName}Handler';
-export * from './${entityName}Usecase';
-export * from './${entityName}Repository';
+  const content = `export * from "./${entityName}Handler";
+export * from "./${entityName}Repository";
+export * from "./${entityName}Route";
+export * from "./${entityName}Usecase";
 `;
   fs.writeFileSync(path.join(featurePath, 'index.ts'), content);
 }
 
 // Test templates
 function generateRouteTest() {
-  const content = `import { testClient } from 'hono/testing';
-import { describe, expect, it } from 'vitest';
-import { mockAuth } from '@backend/middleware/mockAuthMiddleware';
-import { ${entityName}Route } from '../${entityName}Route';
+  const content = `import { testClient } from "hono/testing";
+import { describe, expect, it, vi } from "vitest";
+import { mockAuth } from "@backend/middleware/mockAuthMiddleware";
+import { create${EntityName}Route } from "../${entityName}Route";
+import { drizzleInstance } from "@backend/infra/rdb/drizzle";
 
-describe('${entityName}Route', () => {
-  const client = testClient(mockAuth(${entityName}Route()));
+describe("${entityName}Route", () => {
+  const mockDB = drizzleInstance();
+  const app = mockAuth(create${EntityName}Route());
+  const client = testClient(app, {
+    DB: mockDB,
+  });
 
-  describe('GET /${entityName}s', () => {
-    it('should return empty array when no ${entityName}s exist', async () => {
+  describe("GET /", () => {
+    it("should return empty array when no ${entityName}s exist", async () => {
       const response = await client.api.v1.${entityName}s.$get();
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body).toEqual({ ${entityName}s: [] });
+      expect(body).toEqual([]);
     });
   });
 
-  describe('POST /${entityName}s', () => {
-    it('should create a new ${entityName}', async () => {
+  describe("POST /", () => {
+    it("should create a new ${entityName}", async () => {
       const response = await client.api.v1.${entityName}s.$post({
         json: {
-          name: 'Test ${EntityName}',
+          name: "Test ${EntityName}",
         },
       });
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       const body = await response.json();
       expect(body).toMatchObject({
-        name: 'Test ${EntityName}',
+        name: "Test ${EntityName}",
       });
       expect(body.id).toBeDefined();
     });
 
-    it('should return 400 for invalid request', async () => {
+    it("should return 400 for invalid request", async () => {
       const response = await client.api.v1.${entityName}s.$post({
         json: {
-          name: '',
+          name: "",
         },
       });
       expect(response.status).toBe(400);
     });
   });
 
-  describe('GET /${entityName}s/:id', () => {
-    it('should return 404 for non-existent ${entityName}', async () => {
-      const response = await client.api.v1.${entityName}s[':id'].$get({
-        param: { id: '01234567-89ab-cdef-0123-456789abcdef' },
+  describe("GET /:id", () => {
+    it("should return 404 for non-existent ${entityName}", async () => {
+      const response = await client.api.v1.${entityName}s[":id"].$get({
+        param: { id: "01234567-89ab-cdef-0123-456789abcdef" },
       });
       expect(response.status).toBe(404);
     });
-
-    it('should return 400 for invalid id format', async () => {
-      const response = await client.api.v1.${entityName}s[':id'].$get({
-        param: { id: 'invalid-id' },
-      });
-      expect(response.status).toBe(400);
-    });
   });
 
-  describe('PUT /${entityName}s/:id', () => {
-    it('should return 404 for non-existent ${entityName}', async () => {
-      const response = await client.api.v1.${entityName}s[':id'].$put({
-        param: { id: '01234567-89ab-cdef-0123-456789abcdef' },
+  describe("PUT /:id", () => {
+    it("should return 404 for non-existent ${entityName}", async () => {
+      const response = await client.api.v1.${entityName}s[":id"].$put({
+        param: { id: "01234567-89ab-cdef-0123-456789abcdef" },
         json: {
-          name: 'Updated ${EntityName}',
+          name: "Updated ${EntityName}",
         },
       });
       expect(response.status).toBe(404);
     });
   });
 
-  describe('DELETE /${entityName}s/:id', () => {
-    it('should return 404 for non-existent ${entityName}', async () => {
-      const response = await client.api.v1.${entityName}s[':id'].$delete({
-        param: { id: '01234567-89ab-cdef-0123-456789abcdef' },
+  describe("DELETE /:id", () => {
+    it("should return 404 for non-existent ${entityName}", async () => {
+      const response = await client.api.v1.${entityName}s[":id"].$delete({
+        param: { id: "01234567-89ab-cdef-0123-456789abcdef" },
       });
       expect(response.status).toBe(404);
     });
@@ -450,169 +546,178 @@ describe('${entityName}Route', () => {
 }
 
 function generateUsecaseTest() {
-  const content = `import { describe, expect, it } from 'vitest';
-import { when, instance, mock, verify, anything } from 'ts-mockito';
-import { ${entityName}UseCase } from '../${entityName}Usecase';
-import type { ${EntityName}Repository } from '../${entityName}Repository';
-import type { ${EntityName}, ${EntityName}Id } from '@backend/domain';
-import { ResourceNotFoundError } from '@backend/error';
+  const content = `import { describe, expect, it } from "vitest";
+import { when, instance, mock, verify, anything } from "ts-mockito";
+import { new${EntityName}Usecase } from "../${entityName}Usecase";
+import type { ${EntityName}Repository } from "../${entityName}Repository";
+import type { ${EntityName}, ${EntityName}Id, UserId } from "@backend/domain";
+import { ResourceNotFoundError } from "@backend/error";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-describe('${entityName}UseCase', () => {
+describe("${entityName}Usecase", () => {
   const setup = () => {
-    const repository = mock<${EntityName}Repository>();
-    const useCase = ${entityName}UseCase({ ${entityName}Repository: instance(repository) });
+    const repository = mock<${EntityName}Repository<QueryExecutor>>();
+    const useCase = new${EntityName}Usecase(instance(repository));
     return { repository, useCase };
   };
 
-  describe('get${EntityName}s', () => {
-    it('should return all ${entityName}s', async () => {
+  const userId = "test-user-id" as UserId;
+
+  describe("get${EntityName}s", () => {
+    it("should return all ${entityName}s", async () => {
       const { repository, useCase } = setup();
       const expected${EntityName}s: ${EntityName}[] = [
         {
-          status: 'persisted',
-          id: 'test-id-1' as ${EntityName}Id,
-          name: 'Test ${EntityName} 1',
+          type: "persisted",
+          id: "test-id-1" as ${EntityName}Id,
+          userId,
+          name: "Test ${EntityName} 1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          status: 'persisted',
-          id: 'test-id-2' as ${EntityName}Id,
-          name: 'Test ${EntityName} 2',
+          type: "persisted",
+          id: "test-id-2" as ${EntityName}Id,
+          userId,
+          name: "Test ${EntityName} 2",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
       ];
 
-      when(repository.findAll()).thenResolve(expected${EntityName}s);
+      when(repository.get${EntityName}sByUserId(userId)).thenResolve(expected${EntityName}s);
 
-      const result = await useCase.get${EntityName}s();
+      const result = await useCase.get${EntityName}s(userId);
 
       expect(result).toEqual(expected${EntityName}s);
-      verify(repository.findAll()).once();
+      verify(repository.get${EntityName}sByUserId(userId)).once();
     });
   });
 
-  describe('get${EntityName}', () => {
-    it('should return ${entityName} when it exists', async () => {
+  describe("get${EntityName}", () => {
+    it("should return ${entityName} when it exists", async () => {
       const { repository, useCase } = setup();
-      const id = 'test-id' as ${EntityName}Id;
+      const id = "test-id" as ${EntityName}Id;
       const expected${EntityName}: ${EntityName} = {
-        status: 'persisted',
+        type: "persisted",
         id,
-        name: 'Test ${EntityName}',
+        userId,
+        name: "Test ${EntityName}",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      when(repository.findById(id)).thenResolve(expected${EntityName});
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(expected${EntityName});
 
-      const result = await useCase.get${EntityName}({ id });
+      const result = await useCase.get${EntityName}(userId, id);
 
       expect(result).toEqual(expected${EntityName});
-      verify(repository.findById(id)).once();
+      verify(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).once();
     });
 
-    it('should throw ResourceNotFoundError when ${entityName} does not exist', async () => {
+    it("should throw ResourceNotFoundError when ${entityName} does not exist", async () => {
       const { repository, useCase } = setup();
-      const id = 'non-existent-id' as ${EntityName}Id;
+      const id = "non-existent-id" as ${EntityName}Id;
 
-      when(repository.findById(id)).thenResolve(undefined);
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(undefined);
 
-      await expect(useCase.get${EntityName}({ id })).rejects.toThrow(
-        new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`)
+      await expect(useCase.get${EntityName}(userId, id)).rejects.toThrow(
+        new ResourceNotFoundError("${entityName} not found")
       );
     });
   });
 
-  describe('create${EntityName}', () => {
-    it('should create and return new ${entityName}', async () => {
+  describe("create${EntityName}", () => {
+    it("should create and return new ${entityName}", async () => {
       const { repository, useCase } = setup();
-      const input = { name: 'New ${EntityName}' };
+      const input = { name: "New ${EntityName}" };
       const expected${EntityName}: ${EntityName} = {
-        status: 'persisted',
-        id: 'new-id' as ${EntityName}Id,
+        type: "persisted",
+        id: "new-id" as ${EntityName}Id,
+        userId,
         name: input.name,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      when(repository.save(anything())).thenResolve(expected${EntityName});
+      when(repository.create${EntityName}(anything())).thenResolve(expected${EntityName});
 
-      const result = await useCase.create${EntityName}(input);
+      const result = await useCase.create${EntityName}(userId, input);
 
       expect(result).toEqual(expected${EntityName});
-      verify(repository.save(anything())).once();
+      verify(repository.create${EntityName}(anything())).once();
     });
   });
 
-  describe('update${EntityName}', () => {
-    it('should update and return ${entityName} when it exists', async () => {
+  describe("update${EntityName}", () => {
+    it("should update and return ${entityName} when it exists", async () => {
       const { repository, useCase } = setup();
-      const id = 'test-id' as ${EntityName}Id;
+      const id = "test-id" as ${EntityName}Id;
       const existing${EntityName}: ${EntityName} = {
-        status: 'persisted',
+        type: "persisted",
         id,
-        name: 'Old Name',
+        userId,
+        name: "Old Name",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       const updated${EntityName}: ${EntityName} = {
         ...existing${EntityName},
-        name: 'Updated Name',
+        name: "Updated Name",
       };
 
-      when(repository.findById(id)).thenResolve(existing${EntityName});
-      when(repository.save(anything())).thenResolve(updated${EntityName});
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(existing${EntityName});
+      when(repository.update${EntityName}(anything())).thenResolve(updated${EntityName});
 
-      const result = await useCase.update${EntityName}({ id, name: 'Updated Name' });
+      const result = await useCase.update${EntityName}(userId, id, { name: "Updated Name" });
 
       expect(result).toEqual(updated${EntityName});
-      verify(repository.findById(id)).once();
-      verify(repository.save(anything())).once();
+      verify(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).once();
+      verify(repository.update${EntityName}(anything())).once();
     });
 
-    it('should throw ResourceNotFoundError when ${entityName} does not exist', async () => {
+    it("should throw ResourceNotFoundError when ${entityName} does not exist", async () => {
       const { repository, useCase } = setup();
-      const id = 'non-existent-id' as ${EntityName}Id;
+      const id = "non-existent-id" as ${EntityName}Id;
 
-      when(repository.findById(id)).thenResolve(undefined);
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(undefined);
 
       await expect(
-        useCase.update${EntityName}({ id, name: 'Updated Name' })
-      ).rejects.toThrow(new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`));
+        useCase.update${EntityName}(userId, id, { name: "Updated Name" })
+      ).rejects.toThrow(new ResourceNotFoundError("update${EntityName}Usecase:${entityName} not found"));
     });
   });
 
-  describe('delete${EntityName}', () => {
-    it('should delete ${entityName} when it exists', async () => {
+  describe("delete${EntityName}", () => {
+    it("should delete ${entityName} when it exists", async () => {
       const { repository, useCase } = setup();
-      const id = 'test-id' as ${EntityName}Id;
+      const id = "test-id" as ${EntityName}Id;
       const existing${EntityName}: ${EntityName} = {
-        status: 'persisted',
+        type: "persisted",
         id,
-        name: 'Test ${EntityName}',
+        userId,
+        name: "Test ${EntityName}",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      when(repository.findById(id)).thenResolve(existing${EntityName});
-      when(repository.delete(id)).thenResolve();
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(existing${EntityName});
+      when(repository.delete${EntityName}(existing${EntityName})).thenResolve();
 
-      await useCase.delete${EntityName}({ id });
+      await useCase.delete${EntityName}(userId, id);
 
-      verify(repository.findById(id)).once();
-      verify(repository.delete(id)).once();
+      verify(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).once();
+      verify(repository.delete${EntityName}(existing${EntityName})).once();
     });
 
-    it('should throw ResourceNotFoundError when ${entityName} does not exist', async () => {
+    it("should throw ResourceNotFoundError when ${entityName} does not exist", async () => {
       const { repository, useCase } = setup();
-      const id = 'non-existent-id' as ${EntityName}Id;
+      const id = "non-existent-id" as ${EntityName}Id;
 
-      when(repository.findById(id)).thenResolve(undefined);
+      when(repository.get${EntityName}ByUserIdAnd${EntityName}Id(userId, id)).thenResolve(undefined);
 
-      await expect(useCase.delete${EntityName}({ id })).rejects.toThrow(
-        new ResourceNotFoundError(\`${EntityName} with id \${id} not found\`)
+      await expect(useCase.delete${EntityName}(userId, id)).rejects.toThrow(
+        new ResourceNotFoundError("${entityName} not found")
       );
     });
   });
@@ -667,11 +772,13 @@ Feature files created:
 - feature/${entityName}/test/${entityName}Usecase.test.ts
 
 Next steps:
-1. Add the ${entityName} table to /infra/drizzle/schema.ts
-2. Add DTOs to packages/dtos (request and response schemas)
-3. Add the route to the main app.ts
-4. Run migrations: npm run db-generate && npm run db-migrate
-5. Implement your business logic in the usecase
+1. Add the ${entityName} domain entities in /apps/backend/domain/${entityName}/
+2. Add the ${entityName} table to /infra/drizzle/schema.ts
+3. Add DTOs to packages/dtos (request and response schemas)
+4. Add the route to the main app.ts: app.route('/${entityName}s', ${entityName}Route)
+5. Run migrations: npm run db-generate && npm run db-migrate
+6. Update the repository with actual field mappings
+7. Implement your business logic in the usecase
 `);
 }
 
