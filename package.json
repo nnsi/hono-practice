@@ -13,7 +13,8 @@
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
-    "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts"
+    "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
+    "gen-be": "node scripts/gen-be.js"
   },
   "workspaces": ["apps/*", "packages/*"],
   "type": "module",
