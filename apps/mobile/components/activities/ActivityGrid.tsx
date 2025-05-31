@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import {
   Alert,
   FlatList,
   Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

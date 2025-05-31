@@ -1,5 +1,3 @@
-import React from "react";
-
 import { StyleSheet, View } from "react-native";
 
 import { SettingsScreen } from "../../components/settings/SettingsScreen";
