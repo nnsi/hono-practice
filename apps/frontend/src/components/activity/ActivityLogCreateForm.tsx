@@ -11,9 +11,7 @@ import {
   CreateActivityLogRequestSchema,
 } from "@dtos/request/CreateActivityLogRequest";
 import type { GetActivityResponse } from "@dtos/response";
-import {
-  GetActivityLogResponseSchema,
-} from "@dtos/response/GetActivityLogsResponse";
+import { GetActivityLogResponseSchema } from "@dtos/response/GetActivityLogsResponse";
 
 import {
   Button,
@@ -195,16 +193,16 @@ export function ActivityLogCreateFormBody({
   activity,
   onSubmit,
 }: {
-  form: UseFormReturn<CreateActivityLogRequest, any, undefined>;
+  form: UseFormReturn<CreateActivityLogRequest, any, CreateActivityLogRequest>;
   activity: GetActivityResponse;
   onSubmit: (data: CreateActivityLogRequest) => Promise<void>;
 }) {
   return (
-    <Form<CreateActivityLogRequest> {...form}>
+    <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <p className="mb-3 font-bold">Record [{activity.name}]</p>
         <div className="grid grid-cols-3 gap-3 items-center">
-          <FormField<CreateActivityLogRequest>
+          <FormField
             control={form.control}
             name="quantity"
             render={({ field }) => (
@@ -219,7 +217,7 @@ export function ActivityLogCreateFormBody({
           <Label className="col-span-1">{activity.quantityUnit}</Label>
           {activity.kinds.length > 0 && (
             <div className="col-span-3">
-              <FormField<CreateActivityLogRequest>
+              <FormField
                 control={form.control}
                 name="activityKindId"
                 render={({ field }) => (
