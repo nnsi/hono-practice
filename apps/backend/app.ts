@@ -37,7 +37,7 @@ const routes = app
   .route("/users/tasks", taskRoute)
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
-  .post("/batch", async (c) => {
+  .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 
     const results = await Promise.all(
