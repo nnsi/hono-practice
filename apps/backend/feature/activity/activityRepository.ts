@@ -11,7 +11,7 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type ActivityRepository<T> = {
+export type ActivityRepository = {
   getActivitiesByUserId(userId: UserId): Promise<Activity[]>;
   getActivitiesByIdsAndUserId(
     userId: UserId,
@@ -29,12 +29,10 @@ export type ActivityRepository<T> = {
   createActivity(activity: Activity): Promise<Activity>;
   updateActivity(activity: Activity): Promise<Activity>;
   deleteActivity(activity: Activity): Promise<void>;
-  withTx(tx: V): ActivityRepository<T>;
+  withTx(tx: any): ActivityRepository;
 };
 
-export function newActivityRepository(
-  db: QueryExecutor,
-): ActivityRepository<QueryExecutor> {
+export function newActivityRepository(db: QueryExecutor): ActivityRepository {
   return {
     getActivitiesByUserId: getActivitiesByUserId(db),
     getActivitiesByIdsAndUserId: getActivitiesByIdsAndUserId(db),

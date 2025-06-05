@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run ios:*)",
+      "Bash(find:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_install",
+      "Bash(docker-compose up:*)",
+      "Bash(npm run dev:*)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(npx tsc:*)",
+      "Bash(npm run test-once:*)"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": false
+}

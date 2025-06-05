@@ -4,12 +4,15 @@ import {
   useState,
   useCallback,
   useEffect,
+  useContext,
 } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
 
 import type { LoginRequest } from "@dtos/request/LoginRequest";
 import type { GetUserResponse } from "@dtos/response/GetUserResponse";
+
+import { TokenContext } from "./TokenProvider";
 
 type UserState = GetUserResponse | null;
 
@@ -24,6 +27,8 @@ type AuthState =
       refreshToken: () => Promise<void>;
       requestStatus: RequestStatus;
       setUser: (user: UserState) => void;
+      setAccessToken: (token: string | null) => void;
+      scheduleTokenRefresh: (expiresIn?: number) => void;
     }
   | undefined;
 
@@ -34,6 +39,12 @@ type AuthProviderProps = {
 export const AuthContext = createContext<AuthState>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const tokenContext = useContext(TokenContext);
+  if (!tokenContext) {
+    throw new Error("AuthProvider must be used within TokenProvider");
+  }
+  const { setAccessToken, clearTokens, scheduleTokenRefresh } = tokenContext;
+
   const [user, setUser] = useState<UserState>(null);
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -82,17 +93,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             body.message === "invalid refresh token")
         ) {
           setUser(null);
+          clearTokens();
           setIsRefreshing(false);
           return;
         }
         throw new Error("Failed to refresh token");
       }
+      const data = await res.json();
+      setAccessToken(data.token);
+      scheduleTokenRefresh();
     } catch (e) {
       setIsRefreshing(false);
       throw e;
     }
     setIsRefreshing(false);
-  }, [isRefreshing]);
+  }, [isRefreshing, setAccessToken, clearTokens, scheduleTokenRefresh]);
 
   const login = async ({ login_id, password }: LoginRequest) => {
     try {
@@ -105,6 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (res.status !== 200) {
         return Promise.reject("Login failed");
       }
+      const data = await res.json();
+      setAccessToken(data.token);
+      scheduleTokenRefresh();
       await getUser();
     } catch (e) {
       return Promise.reject(e);
@@ -119,13 +137,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Logout failed:", e);
     } finally {
       setUser(null);
+      clearTokens();
       setRequestStatus("idle");
     }
   };
 
+  // Fetch token on mount
   useEffect(() => {
-    getUser();
-  }, []);
+    const fetchInitialToken = async () => {
+      try {
+        const res = await apiClient.auth.token.$post({});
+        if (res.status === 200) {
+          const data = await res.json();
+          setAccessToken(data.token);
+          scheduleTokenRefresh();
+          await getUser();
+        }
+      } catch (e) {
+        // User is not logged in
+        console.log("No valid session");
+      }
+    };
+
+    fetchInitialToken();
+  }, [setAccessToken, scheduleTokenRefresh]);
+
+  // Listen for token refresh events
+  useEffect(() => {
+    const handleTokenRefresh = () => {
+      refreshToken();
+    };
+
+    const handleTokenRefreshed = (event: CustomEvent<string>) => {
+      setAccessToken(event.detail);
+      scheduleTokenRefresh();
+    };
+
+    window.addEventListener("token-refresh-needed", handleTokenRefresh);
+    window.addEventListener("token-refreshed", handleTokenRefreshed);
+
+    return () => {
+      window.removeEventListener("token-refresh-needed", handleTokenRefresh);
+      window.removeEventListener("token-refreshed", handleTokenRefreshed);
+    };
+  }, [refreshToken, setAccessToken, scheduleTokenRefresh]);
 
   return (
     <AuthContext.Provider
@@ -137,6 +192,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         refreshToken,
         requestStatus,
         setUser,
+        setAccessToken,
+        scheduleTokenRefresh,
       }}
     >
       {children}

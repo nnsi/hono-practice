@@ -9,6 +9,7 @@ import "../main.css";
 import { useAuth } from "@hooks/useAuth";
 
 import { AuthProvider } from "./providers/AuthProvider";
+import { TokenProvider } from "./providers/TokenProvider";
 import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -34,6 +35,8 @@ declare global {
   interface WindowEventMap {
     "api-error": CustomEvent<string>;
     unauthorized: CustomEvent<string>;
+    "token-refreshed": CustomEvent<string>;
+    "token-refresh-needed": Event;
   }
 }
 
@@ -48,9 +51,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProviderWithAuth />
-        </AuthProvider>
+        <TokenProvider>
+          <AuthProvider>
+            <RouterProviderWithAuth />
+          </AuthProvider>
+        </TokenProvider>
       </QueryClientProvider>
     </GoogleOAuthProvider>
   </StrictMode>,

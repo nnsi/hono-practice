@@ -1,5 +1,4 @@
 import type { Next } from "hono";
-import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 
 import { createUserId } from "../domain";
@@ -12,11 +11,19 @@ export function verifyToken(jwt: string, secret: string) {
 }
 
 export async function authMiddleware(c: HonoContext, next: Next) {
-  const jwt = getCookie(c, "auth");
+  // Get token from Authorization header
+  const authHeader = c.req.header("Authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new UnauthorizedError("unauthorized");
+  }
+
+  const jwt = authHeader.slice(7); // Remove "Bearer " prefix
 
   if (!jwt) {
     throw new UnauthorizedError("unauthorized");
   }
+
   try {
     const { JWT_SECRET } = c.env;
     const payload = await verifyToken(jwt, JWT_SECRET);

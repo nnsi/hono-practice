@@ -8,15 +8,26 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type UserProviderRepository<T> = {
+export type UserProviderRepository = {
   findUserProviderByIdAndProvider(
     provider: Provider,
     providerId: string,
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
   getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
-  withTx(tx: T): UserProviderRepository<T>;
+  withTx(tx: any): UserProviderRepository;
 };
+
+export function newUserProviderRepository(
+  db: QueryExecutor,
+): UserProviderRepository {
+  return {
+    findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
+    createUserProvider: createUserProvider(db),
+    getUserProvidersByUserId: getUserProvidersByUserId(db),
+    withTx: (tx) => newUserProviderRepository(tx),
+  };
+}
 
 function findUserProviderByIdAndProvider(db: QueryExecutor) {
   return async (
@@ -102,16 +113,5 @@ function getUserProvidersByUserId(db: QueryExecutor) {
         updatedAt: result.updatedAt,
       }),
     );
-  };
-}
-
-export function newUserProviderRepository(
-  db: QueryExecutor,
-): UserProviderRepository<QueryExecutor> {
-  return {
-    findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
-    createUserProvider: createUserProvider(db),
-    getUserProvidersByUserId: getUserProvidersByUserId(db),
-    withTx: (tx) => newUserProviderRepository(tx),
   };
 }

@@ -1,13 +1,11 @@
 import { StyleSheet, View } from "react-native";
 
-import { ActivityGrid } from "../../components/activities/ActivityGrid";
-import { DateHeader } from "../../components/common/DateHeader";
+import { SettingsScreen } from "../../components/settings/SettingsScreen";
 
-export default function HomeScreen() {
+export default function Settings() {
   return (
     <View style={styles.container}>
-      <DateHeader />
-      <ActivityGrid />
+      <SettingsScreen />
     </View>
   );
 }
