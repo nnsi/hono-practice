@@ -66,6 +66,6 @@ export function generateOrder(
   }
   return (
     prev.slice(0, i + 1) +
-    String.fromCharCode(Math.floor(prevLastCode + CHAR_CODE_Z) / 2)
+    String.fromCharCode(Math.floor((prevLastCode + CHAR_CODE_Z) / 2))
   );
 }
