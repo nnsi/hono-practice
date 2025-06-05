@@ -1,8 +1,7 @@
 import { Hono } from "hono";
-import { setCookie, getCookie } from "hono/cookie";
+import { setCookie } from "hono/cookie";
 
-import { createUserId } from "@backend/domain/user/userId";
-import { verifyToken } from "@backend/middleware/authMiddleware";
+import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
 import { createUserRequestSchema } from "@dtos/request";
@@ -74,11 +73,9 @@ export function createUserRoute() {
 
       return c.json({ token, refreshToken });
     })
-    .get("/me", async (c) => {
+    .get("/me", authMiddleware, async (c) => {
       try {
-        const token = getCookie(c, "auth") ?? "";
-        const payload = await verifyToken(token, c.env.JWT_SECRET);
-        const userId = createUserId(String(payload.userId || payload.id));
+        const userId = c.get("userId");
         const user = await c.var.h.getMe(userId);
         return c.json(user);
       } catch (e) {

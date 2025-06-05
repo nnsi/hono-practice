@@ -27,7 +27,7 @@ import {
 
 export const CreateUserForm: React.FC = () => {
   const api = apiClient;
-  const { getUser } = useAuth();
+  const { getUser, setAccessToken, scheduleTokenRefresh } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm<CreateUserRequest>({
@@ -119,6 +119,9 @@ export const CreateUserForm: React.FC = () => {
                   json: { credential: credentialResponse.credential },
                 });
                 if (res.status === 200) {
+                  const { token } = await res.json();
+                  setAccessToken(token);
+                  scheduleTokenRefresh();
                   await getUser();
                   navigate({ to: "/" });
                 } else {

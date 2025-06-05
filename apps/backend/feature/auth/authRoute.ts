@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { setCookie, getCookie } from "hono/cookie";
 
+import { UnauthorizedError } from "@backend/error";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
@@ -59,12 +60,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       const { token, refreshToken } = await c.var.h.login(body);
 
       const isDev = NODE_ENV === "development";
-      setCookie(c, "auth", token, {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(Date.now() + 15 * 60 * 1000),
-        ...(isDev ? {} : { sameSite: "None" }),
-      });
+      // Only set refresh token cookie, access token is returned in response body
       setCookie(c, "refresh_token", refreshToken, {
         httpOnly: true,
         secure: !isDev,
@@ -75,29 +71,31 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       return c.json({ token, refreshToken });
     })
     .post("/token", async (c) => {
+      console.log("===authRoute.token===");
       const { NODE_ENV } = c.env;
       const refreshTokenCookie = getCookie(c, "refresh_token");
       if (!refreshTokenCookie) {
         return c.json({ message: "refresh token not found" }, 401);
       }
-      const { token, refreshToken } =
-        await c.var.h.refreshToken(refreshTokenCookie);
 
-      const isDev = NODE_ENV === "development";
-      setCookie(c, "auth", token, {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(Date.now() + 15 * 60 * 1000),
-        ...(isDev ? {} : { sameSite: "None" }),
-      });
-      setCookie(c, "refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        ...(isDev ? {} : { sameSite: "None" }),
-      });
+      try {
+        const { token, refreshToken } =
+          await c.var.h.refreshToken(refreshTokenCookie);
 
-      return c.json({ token, refreshToken });
+        const isDev = NODE_ENV === "development";
+        // Only set refresh token cookie, access token is returned in response body
+        setCookie(c, "refresh_token", refreshToken, {
+          httpOnly: true,
+          secure: !isDev,
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          ...(isDev ? {} : { sameSite: "None" }),
+        });
+
+        return c.json({ token, refreshToken });
+      } catch (error) {
+        // Let the error bubble up to be handled by the global error handler
+        throw new UnauthorizedError("invalid refresh token");
+      }
     })
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
@@ -108,13 +106,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       const result = await c.var.h.logout(userId, refreshTokenCookie);
 
       const isDev = c.env.NODE_ENV === "development";
-      setCookie(c, "auth", "", {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(0),
-        ...(isDev ? {} : { sameSite: "None" }),
-        path: "/",
-      });
+      // Only clear refresh token cookie since access token is now in memory
       setCookie(c, "refresh_token", "", {
         httpOnly: true,
         secure: !isDev,
@@ -145,12 +137,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const user = await userUsecase.getUserById(userId);
 
         const isDev = NODE_ENV === "development";
-        setCookie(c, "auth", token, {
-          httpOnly: true,
-          secure: !isDev,
-          expires: new Date(Date.now() + 15 * 60 * 1000),
-          ...(isDev ? {} : { sameSite: "None" }),
-        });
+        // Only set refresh token cookie, access token is returned in response body
         setCookie(c, "refresh_token", refreshToken, {
           httpOnly: true,
           secure: !isDev,
@@ -158,7 +145,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           ...(isDev ? {} : { sameSite: "None" }),
         });
 
-        return c.json({ user });
+        return c.json({ user, token });
       },
     )
     .post(

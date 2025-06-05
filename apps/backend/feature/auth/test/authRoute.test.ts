@@ -174,7 +174,8 @@ describe("AuthRoute Integration Tests", () => {
       };
       expect(body.token).toEqual(expect.any(String));
       expect(body.refreshToken).toEqual(expect.any(String));
-      expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
+      // Auth cookie is no longer set, only refresh token cookie
+      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
 
       const storedToken = await refreshTokenRepo.getRefreshTokenByToken(
         body.refreshToken,
@@ -243,7 +244,6 @@ describe("AuthRoute Integration Tests", () => {
 
   describe("POST /token", () => {
     let validPlainRefreshToken: string;
-    let validJwtToken: string;
 
     beforeEach(async () => {
       const client = createTestClient();
@@ -262,7 +262,6 @@ describe("AuthRoute Integration Tests", () => {
         refreshToken: string;
       };
       validPlainRefreshToken = loginBody.refreshToken;
-      validJwtToken = await createJwtToken(testUserId);
 
       const stored = await refreshTokenRepo.getRefreshTokenByToken(
         validPlainRefreshToken,
@@ -274,12 +273,12 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("正常系：トークンの更新成功", async () => {
-      const client = createTestClient(true);
+      const client = createTestClient(false);
       const res = await client.token.$post(
         {},
         {
           headers: {
-            Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+            Cookie: `refresh_token=${validPlainRefreshToken}`,
           },
         },
       );
@@ -292,7 +291,8 @@ describe("AuthRoute Integration Tests", () => {
       const newRefreshToken = body.refreshToken;
       expect(newRefreshToken).toEqual(expect.any(String));
       expect(newRefreshToken).not.toBe(validPlainRefreshToken);
-      expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
+      // Auth cookie is no longer set, only refresh token cookie
+      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
 
       const oldStoredToken = await refreshTokenRepo.getRefreshTokenByToken(
         validPlainRefreshToken,
@@ -307,12 +307,13 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：リフレッシュトークンが無効 (not found)", async () => {
-      const client = createTestClient(true);
+      const client = createTestClient(false);
       const res = await client.token.$post(
         {},
         {
           headers: {
-            Cookie: `auth=${validJwtToken}; refresh_token=00000000-0000-0000-0000-000000000000.non-existent-token`,
+            Cookie:
+              "refresh_token=00000000-0000-0000-0000-000000000000.non-existent-token",
           },
         },
       );
@@ -340,12 +341,12 @@ describe("AuthRoute Integration Tests", () => {
         deletedAt: null,
       });
 
-      const client = createTestClient(true);
+      const client = createTestClient(false);
       const res = await client.token.$post(
         {},
         {
           headers: {
-            Cookie: `auth=${validJwtToken}; refresh_token=${revokedSelector}.${revokedPlainToken}`,
+            Cookie: `refresh_token=${revokedSelector}.${revokedPlainToken}`,
           },
         },
       );
@@ -355,11 +356,11 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("異常系：リクエストボディが不正", async () => {
-      const client = createTestClient(true);
+      const client = createTestClient(false);
       const res = await client.token.$post(
         {},
         {
-          headers: { Cookie: `auth=${validJwtToken}` },
+          headers: { Cookie: "" }, // No refresh token cookie
         },
       );
       expect(res.status).toBe(401);
@@ -393,7 +394,8 @@ describe("AuthRoute Integration Tests", () => {
         {},
         {
           headers: {
-            Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+            Authorization: `Bearer ${validJwtToken}`,
+            Cookie: `refresh_token=${validPlainRefreshToken}`,
           },
         },
       );
@@ -401,7 +403,8 @@ describe("AuthRoute Integration Tests", () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as { message: string };
       expect(body).toEqual({ message: "success" });
-      expect(res.headers.get("Set-Cookie")).toMatch(/auth=;/);
+      // Only refresh token cookie is cleared
+      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=;/);
     });
 
     it("異常系：認証されていない", async () => {
@@ -422,7 +425,10 @@ describe("AuthRoute Integration Tests", () => {
       const res = await client.logout.$post(
         {},
         {
-          headers: { Cookie: `auth=${validJwtToken}` },
+          headers: {
+            Authorization: `Bearer ${validJwtToken}`,
+            Cookie: "", // No refresh token
+          },
         },
       );
       expect(res.status).toBe(401);
@@ -453,7 +459,8 @@ describe("AuthRoute Integration Tests", () => {
         {},
         {
           headers: {
-            Cookie: `auth=${validJwtToken}; refresh_token=${otherUserRefreshToken}`,
+            Authorization: `Bearer ${validJwtToken}`,
+            Cookie: `refresh_token=${otherUserRefreshToken}`,
           },
         },
       );
@@ -607,13 +614,13 @@ describe("AuthRoute Integration Tests", () => {
 
     describe("Refresh Token Security", () => {
       it("異常系：リフレッシュトークンの再利用", async () => {
-        const client = createTestClient(true);
+        const client = createTestClient(false);
 
         const firstRes = await client.token.$post(
           {},
           {
             headers: {
-              Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+              Cookie: `refresh_token=${validPlainRefreshToken}`,
             },
           },
         );
@@ -623,7 +630,7 @@ describe("AuthRoute Integration Tests", () => {
           {},
           {
             headers: {
-              Cookie: `auth=${validJwtToken}; refresh_token=${validPlainRefreshToken}`,
+              Cookie: `refresh_token=${validPlainRefreshToken}`,
             },
           },
         );
@@ -646,7 +653,9 @@ describe("AuthRoute Integration Tests", () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.user).toEqual(expect.any(Object));
-      expect(res.headers.get("Set-Cookie")).toMatch(/auth=/);
+      expect(body.token).toEqual(expect.any(String));
+      // Auth cookie is no longer set, only refresh token cookie
+      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
     });
 
     it("異常系：不正なGoogleトークン", async () => {

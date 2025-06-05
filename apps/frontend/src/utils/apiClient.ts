@@ -1,5 +1,7 @@
 import { hc } from "hono/client";
 
+import { tokenStore } from "./tokenStore";
+
 import type { AppType } from "@backend/app";
 
 const API_URL =
@@ -32,12 +34,20 @@ const refreshAccessToken = async () => {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    credentials: "include", // Keep credentials for refresh token cookie
   });
 
   if (!response.ok) {
     throw new Error("Failed to refresh token");
   }
+
+  const data = await response.json();
+  tokenStore.setToken(data.token);
+
+  // Dispatch token refresh event
+  window.dispatchEvent(
+    new CustomEvent("token-refreshed", { detail: data.token }),
+  );
 
   return;
 };
@@ -48,13 +58,24 @@ const customFetch = async (
   isRetry?: boolean,
 ): Promise<Response> => {
   try {
+    const token = tokenStore.getToken();
+    const headers: Record<string, string> = {
+      ...(init?.headers as Record<string, string>),
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Only include credentials for auth endpoints (for refresh token cookie)
+    const url = typeof input === "string" ? input : input.toString();
+    const includeCredentials = url.includes("/auth/");
+
     const res = await fetch(input, {
       ...init,
-      headers: {
-        ...init?.headers,
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
+      headers,
+      credentials: includeCredentials ? "include" : "omit",
     });
 
     if (res.status === 204) return new Response(null, { status: 204 });
@@ -132,7 +153,6 @@ const customFetch = async (
 export const apiClient = hc<AppType>(API_URL, {
   init: {
     mode: "cors",
-    credentials: "include",
   },
   fetch: customFetch,
 });

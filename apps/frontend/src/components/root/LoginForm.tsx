@@ -27,7 +27,7 @@ import {
 } from "@components/ui";
 
 export const LoginForm: React.FC = () => {
-  const { login, setUser } = useAuth();
+  const { login, setUser, setAccessToken, scheduleTokenRefresh } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -108,7 +108,9 @@ export const LoginForm: React.FC = () => {
                   json: { credential: credentialResponse.credential },
                 });
                 if (res.status === 200) {
-                  const { user } = await res.json();
+                  const { user, token } = await res.json();
+                  setAccessToken(token);
+                  scheduleTokenRefresh();
                   setUser({ ...user, name: user.name ?? null });
                   setTimeout(() => {
                     navigate({ to: "/" });
