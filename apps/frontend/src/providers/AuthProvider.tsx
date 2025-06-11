@@ -29,6 +29,7 @@ type AuthState =
       setUser: (user: UserState) => void;
       setAccessToken: (token: string | null) => void;
       scheduleTokenRefresh: (expiresIn?: number) => void;
+      isInitialized: boolean;
     }
   | undefined;
 
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isGettingUser, setIsGettingUser] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const getUser = async () => {
     if (isGettingUser || requestStatus === "loading") return;
@@ -156,6 +158,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (e) {
         // User is not logged in
         console.log("No valid session");
+      } finally {
+        // Mark as initialized after the initial token check
+        setIsInitialized(true);
       }
     };
 
@@ -194,6 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser,
         setAccessToken,
         scheduleTokenRefresh,
+        isInitialized,
       }}
     >
       {children}
