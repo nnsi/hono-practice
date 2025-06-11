@@ -3,6 +3,8 @@ import {
   type ActivityId,
   type ActivityDebtId,
   type ActivityGoalId,
+  type DebtBalance,
+  type GoalProgress,
   createUserId,
   createActivityId,
   createActivityDebtId,
@@ -11,7 +13,7 @@ import {
   createActivityGoalEntity,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
-import { anything, instance, mock, reset, verify, when } from "ts-mockito";
+import { anything, deepEqual, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { newGoalUsecase } from "../goalUsecase";
@@ -24,6 +26,8 @@ import type {
   GoalFilters,
   CreateDebtGoalRequest,
   CreateMonthlyGoalRequest,
+  UpdateDebtGoalRequest,
+  UpdateMonthlyGoalRequest,
   Goal,
   DebtGoal,
   MonthlyTargetGoal,
@@ -42,23 +46,46 @@ describe("GoalUsecase", () => {
     activityDebtService = mock<ActivityDebtService>();
     activityGoalService = mock<ActivityGoalService>();
 
+    reset(activityDebtRepo);
+    reset(activityGoalRepo);
+    reset(activityDebtService);
+    reset(activityGoalService);
+
     usecase = newGoalUsecase(
       instance(activityDebtRepo),
       instance(activityGoalRepo),
       instance(activityDebtService),
       instance(activityGoalService),
     );
-
-    reset(activityDebtRepo);
-    reset(activityGoalRepo);
-    reset(activityDebtService);
-    reset(activityGoalService);
   });
 
+  // Test data constants
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
   const debtId1 = createActivityDebtId("00000000-0000-4000-8000-000000000002");
   const goalId1 = createActivityGoalId("00000000-0000-4000-8000-000000000003");
+
+  // Helper functions for creating mock data
+  const createMockDebtBalance = (overrides: Partial<DebtBalance> = {}): DebtBalance => ({
+    currentBalance: 0,
+    totalDebt: 0,
+    totalActual: 0,
+    dailyTarget: 10,
+    daysActive: 0,
+    lastCalculatedDate: "2024-01-01",
+    ...overrides,
+  });
+
+  const createMockGoalProgress = (overrides: Partial<GoalProgress> = {}): GoalProgress => ({
+    currentQuantity: 0,
+    progressRate: 0,
+    isAchieved: false,
+    targetQuantity: 300,
+    remainingQuantity: 300,
+    remainingDays: 30,
+    dailyPaceRequired: 10,
+    ...overrides,
+  });
 
   const mockDebtEntity = createActivityDebtEntity({
     type: "persisted",
@@ -93,18 +120,13 @@ describe("GoalUsecase", () => {
       filters?: GoalFilters;
       mockDebts: any[];
       mockGoals: any[];
-      mockDebtBalances: {
-        currentBalance: number;
-        totalDebt: number;
-        totalActual: number;
-      }[];
-      mockGoalProgresses: {
-        currentQuantity: number;
-        progressRate: number;
-        isAchieved: boolean;
-      }[];
+      mockDebtBalances: DebtBalance[];
+      mockGoalProgresses: GoalProgress[];
       expectedGoalsCount: number;
-      expectError: boolean;
+      expectError?: {
+        repositoryError?: Error;
+        serviceError?: Error;
+      };
     };
 
     const testCases: GetGoalsTestCase[] = [
@@ -116,7 +138,6 @@ describe("GoalUsecase", () => {
         mockDebtBalances: [],
         mockGoalProgresses: [],
         expectedGoalsCount: 0,
-        expectError: false,
       },
       {
         name: "success / with debt and monthly goals",
@@ -124,13 +145,22 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          { currentBalance: -5, totalDebt: 100, totalActual: 95 },
+          createMockDebtBalance({ 
+            currentBalance: -5, 
+            totalDebt: 100, 
+            totalActual: 95,
+            daysActive: 10,
+          }),
         ],
         mockGoalProgresses: [
-          { currentQuantity: 150, progressRate: 0.5, isAchieved: false },
+          createMockGoalProgress({ 
+            currentQuantity: 150, 
+            progressRate: 0.5, 
+            remainingQuantity: 150,
+            remainingDays: 15,
+          }),
         ],
         expectedGoalsCount: 2,
-        expectError: false,
       },
       {
         name: "success / with debt type filter",
@@ -139,13 +169,22 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          { currentBalance: -5, totalDebt: 100, totalActual: 95 },
+          createMockDebtBalance({ 
+            currentBalance: -5, 
+            totalDebt: 100, 
+            totalActual: 95,
+            daysActive: 10,
+          }),
         ],
         mockGoalProgresses: [
-          { currentQuantity: 150, progressRate: 0.5, isAchieved: false },
+          createMockGoalProgress({ 
+            currentQuantity: 150, 
+            progressRate: 0.5, 
+            remainingQuantity: 150,
+            remainingDays: 15,
+          }),
         ],
         expectedGoalsCount: 1,
-        expectError: false,
       },
       {
         name: "success / with activity filter",
@@ -154,13 +193,34 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          { currentBalance: -5, totalDebt: 100, totalActual: 95 },
+          createMockDebtBalance({ 
+            currentBalance: -5, 
+            totalDebt: 100, 
+            totalActual: 95,
+            daysActive: 10,
+          }),
         ],
         mockGoalProgresses: [
-          { currentQuantity: 150, progressRate: 0.5, isAchieved: false },
+          createMockGoalProgress({ 
+            currentQuantity: 150, 
+            progressRate: 0.5, 
+            remainingQuantity: 150,
+            remainingDays: 15,
+          }),
         ],
         expectedGoalsCount: 2,
-        expectError: false,
+      },
+      {
+        name: "failed / repository error",
+        userId: userId1,
+        mockDebts: [],
+        mockGoals: [],
+        mockDebtBalances: [],
+        mockGoalProgresses: [],
+        expectedGoalsCount: 0,
+        expectError: {
+          repositoryError: new Error("Repository error"),
+        },
       },
     ];
 
@@ -177,28 +237,39 @@ describe("GoalUsecase", () => {
         expectError,
       }) => {
         it(`${name}`, async () => {
-          when(activityDebtRepo.getByUserId(userId)).thenResolve(mockDebts);
-          when(activityGoalRepo.getByUserId(userId)).thenResolve(mockGoals);
-
-          mockDebts.forEach((debt, index) => {
-            when(
-              activityDebtService.calculateCurrentBalance(userId, debt),
-            ).thenResolve(mockDebtBalances[index]);
-          });
-
-          mockGoals.forEach((goal, index) => {
-            when(
-              activityGoalService.calculateProgress(userId, goal),
-            ).thenResolve(mockGoalProgresses[index]);
-          });
-
-          if (expectError) {
-            when(activityDebtRepo.getByUserId(userId)).thenReject(new Error());
+          if (expectError?.repositoryError) {
+            when(activityDebtRepo.getByUserId(userId)).thenReject(expectError.repositoryError);
             await expect(usecase.getGoals(userId, filters)).rejects.toThrow(
-              Error,
+              expectError.repositoryError.constructor,
             );
             return;
           }
+          
+          if (expectError?.serviceError) {
+            when(activityDebtRepo.getByUserId(userId)).thenResolve(mockDebts);
+            when(activityGoalRepo.getByUserId(userId)).thenResolve(mockGoals);
+            when(activityDebtService.calculateCurrentBalance(anything(), anything())).thenReject(expectError.serviceError);
+            await expect(usecase.getGoals(userId, filters)).rejects.toThrow(
+              expectError.serviceError.constructor,
+            );
+            return;
+          }
+
+          // リポジトリのモックを設定
+          when(activityDebtRepo.getByUserId(userId)).thenResolve(mockDebts);
+          when(activityGoalRepo.getByUserId(userId)).thenResolve(mockGoals);
+
+          // サービスのモックを設定
+          const balanceToReturn = mockDebtBalances.length > 0 ? mockDebtBalances[0] : createMockDebtBalance();
+          const progressToReturn = mockGoalProgresses.length > 0 ? mockGoalProgresses[0] : createMockGoalProgress();
+          
+          when(
+            activityDebtService.calculateCurrentBalance(anything(), anything()),
+          ).thenReturn(Promise.resolve(balanceToReturn));
+
+          when(
+            activityGoalService.calculateProgress(anything(), anything()),
+          ).thenReturn(Promise.resolve(progressToReturn));
 
           const result = await usecase.getGoals(userId, filters);
           expect(result).toHaveLength(expectedGoalsCount);
@@ -217,19 +288,12 @@ describe("GoalUsecase", () => {
       goalId: string;
       type: "debt" | "monthly_target";
       mockReturn: any | undefined;
-      mockBalance?: {
-        currentBalance: number;
-        totalDebt: number;
-        totalActual: number;
-      };
-      mockProgress?: {
-        currentQuantity: number;
-        progressRate: number;
-        isAchieved: boolean;
-      };
+      mockBalance?: DebtBalance;
+      mockProgress?: GoalProgress;
       expectError?: {
         notFound?: ResourceNotFoundError;
-        getError?: Error;
+        repositoryError?: Error;
+        serviceError?: Error;
       };
     };
 
@@ -240,7 +304,12 @@ describe("GoalUsecase", () => {
         goalId: debtId1,
         type: "debt",
         mockReturn: mockDebtEntity,
-        mockBalance: { currentBalance: -5, totalDebt: 100, totalActual: 95 },
+        mockBalance: createMockDebtBalance({ 
+          currentBalance: -5, 
+          totalDebt: 100, 
+          totalActual: 95,
+          daysActive: 10,
+        }),
       },
       {
         name: "success / monthly goal",
@@ -248,11 +317,12 @@ describe("GoalUsecase", () => {
         goalId: goalId1,
         type: "monthly_target",
         mockReturn: mockGoalEntity,
-        mockProgress: {
+        mockProgress: createMockGoalProgress({
           currentQuantity: 150,
           progressRate: 0.5,
-          isAchieved: false,
-        },
+          remainingQuantity: 150,
+          remainingDays: 15,
+        }),
       },
       {
         name: "failed / debt goal not found",
@@ -296,10 +366,12 @@ describe("GoalUsecase", () => {
               ),
             ).thenResolve(mockReturn);
 
-            if (mockReturn && mockBalance) {
+            // Always set up the calculateCurrentBalance mock when mockReturn is defined
+            if (mockReturn) {
+              const balanceToUse = mockBalance || createMockDebtBalance();
               when(
-                activityDebtService.calculateCurrentBalance(userId, mockReturn),
-              ).thenResolve(mockBalance);
+                activityDebtService.calculateCurrentBalance(anything(), anything()),
+              ).thenReturn(Promise.resolve(balanceToUse));
             }
           } else {
             when(
@@ -309,10 +381,11 @@ describe("GoalUsecase", () => {
               ),
             ).thenResolve(mockReturn);
 
-            if (mockReturn && mockProgress) {
+            if (mockReturn) {
+              const progressToUse = mockProgress || createMockGoalProgress();
               when(
-                activityGoalService.calculateProgress(userId, mockReturn),
-              ).thenResolve(mockProgress);
+                activityGoalService.calculateProgress(anything(), anything()),
+              ).thenReturn(Promise.resolve(progressToUse));
             }
           }
 
@@ -471,20 +544,229 @@ describe("GoalUsecase", () => {
   });
 
   describe("updateGoal", () => {
-    it("should throw not implemented error", async () => {
-      await expect(
-        usecase.updateGoal(userId1, debtId1, "debt", {
+    type UpdateGoalTestCase = {
+      name: string;
+      userId: UserId;
+      goalId: string;
+      type: "debt" | "monthly_target";
+      params: UpdateDebtGoalRequest | UpdateMonthlyGoalRequest;
+      mockExisting: any;
+      mockUpdated: any;
+      expectError?: {
+        notFound?: ResourceNotFoundError;
+        updateError?: Error;
+      };
+    };
+
+    const testCases: UpdateGoalTestCase[] = [
+      {
+        name: "success / update debt goal",
+        userId: userId1,
+        goalId: debtId1,
+        type: "debt",
+        params: {
           dailyTargetQuantity: 15,
-        }),
-      ).rejects.toThrow("Not implemented yet");
-    });
+          description: "Updated debt goal",
+        } as UpdateDebtGoalRequest,
+        mockExisting: mockDebtEntity,
+        mockUpdated: {
+          ...mockDebtEntity,
+          dailyTargetQuantity: 15,
+          description: "Updated debt goal",
+        },
+      },
+      {
+        name: "success / update monthly goal",
+        userId: userId1,
+        goalId: goalId1,
+        type: "monthly_target",
+        params: {
+          targetQuantity: 400,
+          description: "Updated monthly goal",
+        } as UpdateMonthlyGoalRequest,
+        mockExisting: mockGoalEntity,
+        mockUpdated: {
+          ...mockGoalEntity,
+          targetQuantity: 400,
+          description: "Updated monthly goal",
+        },
+      },
+      {
+        name: "failed / debt goal not found",
+        userId: userId1,
+        goalId: debtId1,
+        type: "debt",
+        params: { dailyTargetQuantity: 15 } as UpdateDebtGoalRequest,
+        mockExisting: undefined,
+        mockUpdated: null,
+        expectError: {
+          notFound: new ResourceNotFoundError("Debt goal not found"),
+        },
+      },
+      {
+        name: "failed / monthly goal not found",
+        userId: userId1,
+        goalId: goalId1,
+        type: "monthly_target",
+        params: { targetQuantity: 400 } as UpdateMonthlyGoalRequest,
+        mockExisting: undefined,
+        mockUpdated: null,
+        expectError: {
+          notFound: new ResourceNotFoundError("Monthly goal not found"),
+        },
+      },
+    ];
+
+    testCases.forEach(
+      ({
+        name,
+        userId,
+        goalId,
+        type,
+        params,
+        mockExisting,
+        mockUpdated,
+        expectError,
+      }) => {
+        it(`${name}`, async () => {
+          if (type === "debt") {
+            when(
+              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+            ).thenResolve(mockExisting);
+            
+            if (mockExisting && mockUpdated) {
+              when(activityDebtRepo.update(anything())).thenResolve(mockUpdated);
+            }
+          } else {
+            when(
+              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+            ).thenResolve(mockExisting);
+            
+            if (mockExisting && mockUpdated) {
+              when(activityGoalRepo.update(anything())).thenResolve(mockUpdated);
+            }
+          }
+
+          if (expectError?.notFound) {
+            await expect(
+              usecase.updateGoal(userId, goalId, type, params),
+            ).rejects.toThrow(ResourceNotFoundError);
+            return;
+          }
+
+          const result = await usecase.updateGoal(userId, goalId, type, params);
+          expect(result).toBeDefined();
+          expect(result.type).toEqual(type);
+
+          if (type === "debt") {
+            verify(
+              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+            ).once();
+            verify(activityDebtRepo.update(anything())).once();
+          } else {
+            verify(
+              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+            ).once();
+            verify(activityGoalRepo.update(anything())).once();
+          }
+        });
+      },
+    );
   });
 
   describe("deleteGoal", () => {
-    it("should throw not implemented error", async () => {
-      await expect(
-        usecase.deleteGoal(userId1, debtId1, "debt"),
-      ).rejects.toThrow("Not implemented yet");
-    });
+    type DeleteGoalTestCase = {
+      name: string;
+      userId: UserId;
+      goalId: string;
+      type: "debt" | "monthly_target";
+      mockExisting: any;
+      expectError?: {
+        notFound?: ResourceNotFoundError;
+        deleteError?: Error;
+      };
+    };
+
+    const testCases: DeleteGoalTestCase[] = [
+      {
+        name: "success / delete debt goal",
+        userId: userId1,
+        goalId: debtId1,
+        type: "debt",
+        mockExisting: mockDebtEntity,
+      },
+      {
+        name: "success / delete monthly goal",
+        userId: userId1,
+        goalId: goalId1,
+        type: "monthly_target",
+        mockExisting: mockGoalEntity,
+      },
+      {
+        name: "failed / debt goal not found",
+        userId: userId1,
+        goalId: debtId1,
+        type: "debt",
+        mockExisting: undefined,
+        expectError: {
+          notFound: new ResourceNotFoundError("Debt goal not found"),
+        },
+      },
+      {
+        name: "failed / monthly goal not found",
+        userId: userId1,
+        goalId: goalId1,
+        type: "monthly_target",
+        mockExisting: undefined,
+        expectError: {
+          notFound: new ResourceNotFoundError("Monthly goal not found"),
+        },
+      },
+    ];
+
+    testCases.forEach(
+      ({ name, userId, goalId, type, mockExisting, expectError }) => {
+        it(`${name}`, async () => {
+          if (type === "debt") {
+            when(
+              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+            ).thenResolve(mockExisting);
+            
+            if (mockExisting) {
+              when(activityDebtRepo.delete(mockExisting)).thenResolve();
+            }
+          } else {
+            when(
+              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+            ).thenResolve(mockExisting);
+            
+            if (mockExisting) {
+              when(activityGoalRepo.delete(mockExisting)).thenResolve();
+            }
+          }
+
+          if (expectError?.notFound) {
+            await expect(
+              usecase.deleteGoal(userId, goalId, type),
+            ).rejects.toThrow(ResourceNotFoundError);
+            return;
+          }
+
+          await usecase.deleteGoal(userId, goalId, type);
+
+          if (type === "debt") {
+            verify(
+              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+            ).once();
+            verify(activityDebtRepo.delete(mockExisting)).once();
+          } else {
+            verify(
+              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+            ).once();
+            verify(activityGoalRepo.delete(mockExisting)).once();
+          }
+        });
+      },
+    );
   });
 });

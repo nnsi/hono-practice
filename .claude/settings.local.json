@@ -17,7 +17,17 @@
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_take_screenshot",
       "Bash(npx tsc:*)",
-      "Bash(npm run test-once:*)"
+      "Bash(npm run test-once:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run gen:fe:*)",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "Bash(npm test:*)",
+      "Bash(sudo chmod:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": []
   },

@@ -65,14 +65,21 @@ export type CreateMonthlyGoalRequest = {
   description?: string;
 };
 
-export type UpdateGoalRequest = {
+export type UpdateDebtGoalRequest = {
   dailyTargetQuantity?: number;
-  targetQuantity?: number;
   startDate?: string;
-  endDate?: string;
-  description?: string;
+  endDate?: string | null;
+  description?: string | null;
   isActive?: boolean;
 };
+
+export type UpdateMonthlyGoalRequest = {
+  targetMonth?: string;
+  targetQuantity?: number;
+  description?: string | null;
+};
+
+export type UpdateGoalRequest = UpdateDebtGoalRequest | UpdateMonthlyGoalRequest;
 
 export type GoalFilters = {
   activityId?: string;
@@ -391,8 +398,85 @@ function updateGoal(
     type: GoalType,
     req: UpdateGoalRequest,
   ): Promise<Goal> => {
-    // 実装は省略 - 各typeに応じて適切なRepositoryで更新
-    throw new Error("Not implemented yet");
+    if (type === "debt") {
+      const existingDebt = await activityDebtRepo.getByIdAndUserId(
+        goalId as ActivityDebtId,
+        userId,
+      );
+      if (!existingDebt) {
+        throw new ResourceNotFoundError("Debt goal not found");
+      }
+
+      const debtReq = req as UpdateDebtGoalRequest;
+      const updatedDebt = createActivityDebtEntity({
+        ...existingDebt,
+        dailyTargetQuantity: debtReq.dailyTargetQuantity ?? existingDebt.dailyTargetQuantity,
+        startDate: debtReq.startDate ?? existingDebt.startDate,
+        endDate: debtReq.endDate !== undefined ? debtReq.endDate : existingDebt.endDate,
+        description: debtReq.description !== undefined ? debtReq.description : existingDebt.description,
+        isActive: debtReq.isActive ?? existingDebt.isActive,
+        type: "persisted",
+        createdAt: existingDebt.type === "persisted" ? existingDebt.createdAt : new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await activityDebtRepo.update(updatedDebt);
+
+      return {
+        id: result.id,
+        userId: result.userId,
+        activityId: result.activityId,
+        type: "debt" as const,
+        isActive: result.isActive,
+        description: result.description || undefined,
+        createdAt: result.type === "persisted" ? result.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: result.type === "persisted" ? result.updatedAt.toISOString() : new Date().toISOString(),
+        dailyTargetQuantity: result.dailyTargetQuantity,
+        startDate: result.startDate,
+        endDate: result.endDate || undefined,
+        currentBalance: 0, // Will be recalculated by service
+        totalDebt: 0,
+        totalActual: 0,
+      } satisfies DebtGoal;
+    }
+
+    // Monthly goal update
+    const existingGoal = await activityGoalRepo.getByIdAndUserId(
+      goalId as ActivityGoalId,
+      userId,
+    );
+    if (!existingGoal) {
+      throw new ResourceNotFoundError("Monthly goal not found");
+    }
+
+    const monthlyReq = req as UpdateMonthlyGoalRequest;
+    const updatedGoal = createActivityGoalEntity({
+      ...existingGoal,
+      targetMonth: monthlyReq.targetMonth ?? existingGoal.targetMonth,
+      targetQuantity: monthlyReq.targetQuantity ?? existingGoal.targetQuantity,
+      description: monthlyReq.description !== undefined ? monthlyReq.description : existingGoal.description,
+      type: "persisted",
+      createdAt: existingGoal.type === "persisted" ? existingGoal.createdAt : new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await activityGoalRepo.update(updatedGoal);
+
+    return {
+      id: result.id,
+      userId: result.userId,
+      activityId: result.activityId,
+      type: "monthly_target" as const,
+      isActive: true,
+      description: result.description || undefined,
+      createdAt: result.type === "persisted" ? result.createdAt.toISOString() : new Date().toISOString(),
+      updatedAt: result.type === "persisted" ? result.updatedAt.toISOString() : new Date().toISOString(),
+      targetMonth: result.targetMonth,
+      targetQuantity: result.targetQuantity,
+      currentQuantity: 0, // Will be recalculated by service
+      progressRate: 0,
+      isAchieved: false,
+    } satisfies MonthlyTargetGoal;
   };
 }
 
@@ -405,8 +489,29 @@ function deleteGoal(
     goalId: string,
     type: GoalType,
   ): Promise<void> => {
-    // 実装は省略 - 各typeに応じて適切なRepositoryで削除
-    throw new Error("Not implemented yet");
+    if (type === "debt") {
+      const existingDebt = await activityDebtRepo.getByIdAndUserId(
+        goalId as ActivityDebtId,
+        userId,
+      );
+      if (!existingDebt) {
+        throw new ResourceNotFoundError("Debt goal not found");
+      }
+
+      await activityDebtRepo.delete(existingDebt);
+      return;
+    }
+
+    // Monthly goal delete
+    const existingGoal = await activityGoalRepo.getByIdAndUserId(
+      goalId as ActivityGoalId,
+      userId,
+    );
+    if (!existingGoal) {
+      throw new ResourceNotFoundError("Monthly goal not found");
+    }
+
+    await activityGoalRepo.delete(existingGoal);
   };
 }
 

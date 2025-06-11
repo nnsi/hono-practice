@@ -11,6 +11,8 @@ import type {
   GoalType,
   GoalFilters,
   UpdateGoalRequest,
+  UpdateDebtGoalRequest,
+  UpdateMonthlyGoalRequest,
 } from "./goalUsecase";
 import type { UserId } from "@backend/domain";
 

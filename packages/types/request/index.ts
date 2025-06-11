@@ -4,6 +4,8 @@ export * from "./CreateTaskRequest";
 export * from "./CreateUserRequest";
 export * from "./CreateDebtGoalRequest";
 export * from "./CreateMonthlyGoalRequest";
+export * from "./UpdateDebtGoalRequest";
+export * from "./UpdateMonthlyGoalRequest";
 export * from "./GetTasksRequest";
 export * from "./GoogleLoginRequest";
 export * from "./LoginRequest";

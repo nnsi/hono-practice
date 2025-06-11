@@ -48,6 +48,168 @@ test("GET goals / with activity filter", async () => {
   expect(res.status).toEqual(200);
 });
 
+test("POST debt goal / success", async () => {
+  const route = createGoalRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.debt.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      dailyTargetQuantity: 10,
+      startDate: "2024-01-01",
+      description: "Test debt goal",
+    },
+  });
+
+  expect(res.status).toEqual(201);
+});
+
+test("POST monthly goal / success", async () => {
+  const route = createGoalRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.monthly.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      targetMonth: "2024-01",
+      targetQuantity: 300,
+      description: "Test monthly goal",
+    },
+  });
+
+  expect(res.status).toEqual(201);
+});
+
+test("PUT debt goal / success", async () => {
+  const route = createGoalRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  // First create a goal
+  const createRes = await client.debt.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      dailyTargetQuantity: 10,
+      startDate: "2024-01-01",
+      description: "Test debt goal",
+    },
+  });
+
+  const goal = await createRes.json();
+
+  // Then update it
+  const updateRes = await client.debt[":id"].$put({
+    param: { id: goal.id },
+    json: {
+      dailyTargetQuantity: 15,
+      description: "Updated debt goal",
+    },
+  });
+
+  expect(updateRes.status).toEqual(200);
+});
+
+test("PUT monthly goal / success", async () => {
+  const route = createGoalRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  // First create a goal
+  const createRes = await client.monthly.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      targetMonth: "2024-01",
+      targetQuantity: 300,
+      description: "Test monthly goal",
+    },
+  });
+
+  const goal = await createRes.json();
+
+  // Then update it
+  const updateRes = await client.monthly_target[":id"].$put({
+    param: { id: goal.id },
+    json: {
+      targetQuantity: 400,
+      description: "Updated monthly goal",
+    },
+  });
+
+  expect(updateRes.status).toEqual(200);
+});
+
+test("DELETE goal / success", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  // First create a goal
+  const createRes = await client.debt.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      dailyTargetQuantity: 10,
+      startDate: "2024-01-01",
+      description: "Test debt goal",
+    },
+  });
+
+  const goal = await createRes.json();
+
+  // Then delete it
+  const deleteRes = await client[":type"][":id"].$delete({
+    param: { type: "debt", id: goal.id },
+  });
+
+  expect(deleteRes.status).toEqual(200);
+});
+
+test("PUT debt goal / validation error", async () => {
+  const route = createGoalRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.debt[":id"].$put({
+    param: { id: "invalid-id" },
+    json: {
+      dailyTargetQuantity: -5, // Invalid negative value
+    },
+  });
+
+  expect(res.status).toEqual(400);
+});
+
+test("DELETE goal / not found", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client[":type"][":id"].$delete({
+    param: { type: "debt", id: "00000000-0000-4000-8000-000000000999" },
+  });
+
+  expect(res.status).toEqual(404);
+});
+
 test("GET goals/:type/:id / success for debt goal", async () => {
   const route = createGoalRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
@@ -200,12 +362,12 @@ test("DELETE goals/:type/:id / not implemented", async () => {
   const res = await client[":type"][":id"].$delete({
     param: {
       type: "debt",
-      id: "00000000-0000-4000-8000-000000000001",
+      id: "00000000-0000-4000-8000-000000000998",
     },
   });
 
-  // deleteGoalは現在"Not implemented yet"エラーを投げる
-  expect(res.status).toEqual(500);
+  // deleteGoal is now implemented and should return 404 for non-existent goal
+  expect(res.status).toEqual(404);
 });
 
 test("DELETE goals/:type/:id / invalid type", async () => {

@@ -5,6 +5,8 @@ import { zValidator } from "@hono/zod-validator";
 import {
   CreateDebtGoalRequestSchema,
   CreateMonthlyGoalRequestSchema,
+  UpdateDebtGoalRequestSchema,
+  UpdateMonthlyGoalRequestSchema,
 } from "@dtos/request";
 
 import { newActivityDebtRepository } from "../activitydebt/activityDebtRepository";
@@ -107,19 +109,32 @@ export function createGoalRoute() {
           return c.json(res, 201);
         },
       )
-      // 目標更新
-      .put("/:type/:id", async (c) => {
-        const userId = c.get("userId");
-        const { type, id } = c.req.param();
-        const req = await c.req.json();
+      // 負債目標更新
+      .put(
+        "/debt/:id",
+        zValidator("json", UpdateDebtGoalRequestSchema),
+        async (c) => {
+          const userId = c.get("userId");
+          const { id } = c.req.param();
+          const params = c.req.valid("json");
 
-        if (type !== "debt" && type !== "monthly_target") {
-          return c.json({ error: "Invalid goal type" }, 400);
-        }
+          const res = await c.var.h.updateGoal(userId, id, "debt", params);
+          return c.json(res);
+        },
+      )
+      // 月間目標更新
+      .put(
+        "/monthly_target/:id",
+        zValidator("json", UpdateMonthlyGoalRequestSchema),
+        async (c) => {
+          const userId = c.get("userId");
+          const { id } = c.req.param();
+          const params = c.req.valid("json");
 
-        const res = await c.var.h.updateGoal(userId, id, type, req);
-        return c.json(res);
-      })
+          const res = await c.var.h.updateGoal(userId, id, "monthly_target", params);
+          return c.json(res);
+        },
+      )
       // 目標削除
       .delete("/:type/:id", async (c) => {
         const userId = c.get("userId");
