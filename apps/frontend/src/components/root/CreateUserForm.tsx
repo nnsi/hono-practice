@@ -41,10 +41,15 @@ export const CreateUserForm: React.FC = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      await api.user.$post({ json: data });
-      await getUser();
-      // ユーザー作成成功時にホームページにリダイレクト
-      navigate({ to: "/" });
+      const res = await api.user.$post({ json: data });
+      if (res.status === 200) {
+        const { token } = await res.json();
+        setAccessToken(token);
+        scheduleTokenRefresh();
+        await getUser();
+        // ユーザー作成成功時にホームページにリダイレクト
+        navigate({ to: "/" });
+      }
     } catch (e) {
       console.error("CreateUserForm", e);
     }
