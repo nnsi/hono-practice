@@ -9,8 +9,8 @@ import { GetActivitiesResponseSchema } from "@dtos/response";
 
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui";
 
-import { GoalCreateDialog } from "./GoalCreateDialog";
 import { DebtGoalCard } from "./DebtGoalCard";
+import { GoalCreateDialog } from "./GoalCreateDialog";
 import { MonthlyGoalCard } from "./MonthlyGoalCard";
 
 export const GoalPage: React.FC = () => {

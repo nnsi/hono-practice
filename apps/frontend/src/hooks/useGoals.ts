@@ -2,16 +2,16 @@ import { apiClient, qp } from "@frontend/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
-  GetGoalsResponseSchema,
-  type GetGoalsResponse,
-  type GoalResponse,
-} from "@dtos/response";
-import {
   CreateDebtGoalRequestSchema,
   CreateMonthlyGoalRequestSchema,
   type CreateDebtGoalRequest,
   type CreateMonthlyGoalRequest,
 } from "@dtos/request";
+import {
+  GetGoalsResponseSchema,
+  type GetGoalsResponse,
+  type GoalResponse,
+} from "@dtos/response";
 
 type GoalFilters = {
   type?: "debt" | "monthly_target";
