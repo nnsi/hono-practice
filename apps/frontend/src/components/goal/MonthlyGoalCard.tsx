@@ -42,7 +42,7 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
 
   const updateMutation = useMutation({
     mutationFn: async (data: z.infer<typeof UpdateMonthlyGoalRequestSchema>) => {
-      const res = await apiClient.goals.monthly_target[":id"].$put({
+      const res = await apiClient.users.goals.monthly_target[":id"].$put({
         param: { id: goal.id },
         json: data,
       });
@@ -57,7 +57,7 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.goals[":type"][":id"].$delete({
+      const res = await apiClient.users.goals[":type"][":id"].$delete({
         param: { type: "monthly_target", id: goal.id },
       });
       if (!res.ok) throw new Error("Failed to delete goal");
