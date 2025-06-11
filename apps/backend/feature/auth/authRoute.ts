@@ -71,7 +71,6 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       return c.json({ token, refreshToken });
     })
     .post("/token", async (c) => {
-      console.log("===authRoute.token===");
       const { NODE_ENV } = c.env;
       const refreshTokenCookie = getCookie(c, "refresh_token");
       if (!refreshTokenCookie) {

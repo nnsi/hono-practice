@@ -12,6 +12,7 @@ export default defineConfig(() => {
         NODE_ENV: "test",
         JWT_SECRET: "test-jwt",
       },
+      exclude: ["db-data/**", "node_modules/**"],
     },
   };
 });

@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SettingImport } from './routes/setting'
+import { Route as GoalImport } from './routes/goal'
 import { Route as DailyImport } from './routes/daily'
 import { Route as IndexImport } from './routes/index'
 import { Route as ActivityStatsImport } from './routes/activity/stats'
@@ -21,6 +22,12 @@ import { Route as ActivityStatsImport } from './routes/activity/stats'
 const SettingRoute = SettingImport.update({
   id: '/setting',
   path: '/setting',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const GoalRoute = GoalImport.update({
+  id: '/goal',
+  path: '/goal',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -60,6 +67,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyImport
       parentRoute: typeof rootRoute
     }
+    '/goal': {
+      id: '/goal'
+      path: '/goal'
+      fullPath: '/goal'
+      preLoaderRoute: typeof GoalImport
+      parentRoute: typeof rootRoute
+    }
     '/setting': {
       id: '/setting'
       path: '/setting'
@@ -82,6 +96,7 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
+  '/goal': typeof GoalRoute
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
@@ -89,6 +104,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
+  '/goal': typeof GoalRoute
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
@@ -97,22 +113,24 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
+  '/goal': typeof GoalRoute
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/daily' | '/setting' | '/activity/stats'
+  fullPaths: '/' | '/daily' | '/goal' | '/setting' | '/activity/stats'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daily' | '/setting' | '/activity/stats'
-  id: '__root__' | '/' | '/daily' | '/setting' | '/activity/stats'
+  to: '/' | '/daily' | '/goal' | '/setting' | '/activity/stats'
+  id: '__root__' | '/' | '/daily' | '/goal' | '/setting' | '/activity/stats'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyRoute: typeof DailyRoute
+  GoalRoute: typeof GoalRoute
   SettingRoute: typeof SettingRoute
   ActivityStatsRoute: typeof ActivityStatsRoute
 }
@@ -120,6 +138,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DailyRoute: DailyRoute,
+  GoalRoute: GoalRoute,
   SettingRoute: SettingRoute,
   ActivityStatsRoute: ActivityStatsRoute,
 }
@@ -136,6 +155,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/daily",
+        "/goal",
         "/setting",
         "/activity/stats"
       ]
@@ -145,6 +165,9 @@ export const routeTree = rootRoute
     },
     "/daily": {
       "filePath": "daily.tsx"
+    },
+    "/goal": {
+      "filePath": "goal.tsx"
     },
     "/setting": {
       "filePath": "setting.tsx"

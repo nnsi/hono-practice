@@ -16,7 +16,7 @@ import {
 } from "@components/ui";
 
 export const RootPage: React.FC = () => {
-  const { user, requestStatus, refreshToken } = useAuth();
+  const { user, requestStatus, refreshToken, isInitialized } = useAuth();
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,6 +59,17 @@ export const RootPage: React.FC = () => {
       window.removeEventListener("touchstart", handleDisablePinchZoom);
     };
   }, []);
+
+  // 初期化中（/tokenリクエスト中）
+  if (!isInitialized) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   // 認証情報取得中
   if (!user && requestStatus === "loading") return <div>Loading...</div>;

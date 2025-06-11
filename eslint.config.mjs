@@ -2,7 +2,7 @@ import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/*.gen.ts", "**/*.js", "**/*.mjs", "**/*.cjs", "node_modules/**"] },
+  { ignores: ["**/*.gen.ts", "**/*.js", "**/*.mjs", "**/*.cjs","db-data/**", "node_modules/**"] },
   ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
