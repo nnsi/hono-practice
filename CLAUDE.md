@@ -1,0 +1,250 @@
+# CLAUDE.md
+
+このファイルは、このリポジトリでコードを扱う際のClaude Code (claude.ai/code)向けのガイダンスを提供します。
+
+## 🔨 最重要ルール - 新しいルールの追加プロセス
+
+ユーザーから今回限りではなく常に対応が必要だと思われる指示を受けた場合：
+
+1. 「これを標準のルールにしますか？」と質問する
+2. YESの回答を得た場合、CLAUDE.mdに追加ルールとして記載する
+3. 以降は標準ルールとして常に適用する
+
+このプロセスにより、プロジェクトのルールを継続的に改善していきます。
+
+## プロジェクト概要
+
+**Actiko** - どのアプリよりも最速で活動量を記録することを目指し、極限までシンプルに研ぎ澄ませたUXを実現する個人向け活動記録アプリケーション。
+
+## コマンド
+
+### 開発
+```bash
+# バックエンド開発サーバーの起動 (ポート3456)
+npm run dev
+
+# フロントエンド開発サーバーの起動 (ポート5173)
+npm run client-dev
+
+# フロントエンドとバックエンドを同時に起動
+npm run dev & npm run client-dev
+```
+
+### データベース
+```bash
+# スキーマ変更後のマイグレーション生成
+npm run db-generate
+
+# マイグレーションの適用
+npm run db-migrate
+
+# Dockerでローカルデータベースを起動
+docker-compose up -d  # PostgreSQLコンテナの起動
+```
+
+### テストと品質管理
+```bash
+# ウォッチモードでテストを実行
+npm run test
+
+# テストを一度だけ実行（CIモード）
+npm run test-once
+
+# 全てのCIチェックを実行（テスト＋リンティング）
+npm run ci-check
+
+# コードのリント
+npm run lint
+
+# リントエラーの自動修正
+npm run fix
+```
+
+### ビルドとデプロイ
+```bash
+# ステージング用フロントエンドのビルド
+npm run build-client-stg
+
+# 本番用フロントエンドのビルド
+npm run build-client
+
+# ステージングへのデプロイ（Cloudflare認証情報が必要）
+npm run deploy:stg
+
+# 本番へのデプロイ（Cloudflare認証情報が必要）
+npm run deploy:prod
+```
+
+## アーキテクチャ
+
+### バックエンド（クリーンアーキテクチャ）
+バックエンドは関心事の明確な分離を持つクリーンアーキテクチャの原則に従っています：
+
+- **`domain/`** - コアビジネスエンティティとルール（Activity、User、Authなど）
+- **`feature/`** - 機能ごとに整理されたユースケース、ハンドラー、リポジトリ
+  - 各機能は`handler.ts`（HTTPエンドポイント）、`repository.ts`（データアクセス）、`usecase.ts`（ビジネスロジック）を持つ
+  - テストは`feature/{name}/test/`に配置
+- **`infra/`** - インフラストラクチャ実装（データベース、キーバリューストア）
+- **`middleware/`** - HTTPミドルウェア（認証、エラーハンドリング）
+- **`query/`** - 複数ドメインをまたぐ複雑な読み取りクエリ
+
+### フロントエンドアーキテクチャ
+- **`routes/`** - Tanstack Routerのファイルベースルーティングを使用したページコンポーネント
+- **`components/`** - 再利用可能なReactコンポーネント（`ui/`にUIコンポーネント、サブディレクトリに機能コンポーネント）
+- **`hooks/`** - データフェッチと状態管理のためのカスタムReactフック
+- **`providers/`** - Reactコンテキストプロバイダー
+
+### 主要技術
+- **バックエンド**: Hono（Webフレームワーク）、Drizzle ORM、PostgreSQL（Neon）、Cloudflare Workers
+- **フロントエンド**: React 19、Tanstack Router/Query、Tailwind CSS、Radix UI
+- **テスト**: インソーステスティング対応のVitest
+- **認証**: JWTでアクセストークン（15分）とリフレッシュトークン（1ヶ月）をlocalStorageに保存
+
+### 重要なパターン
+1. **パスエイリアス**: `@backend/*`、`@frontend/*`、`@dtos/*`インポートを使用
+2. **モノレポ**: npm workspacesでapps/とpackages/構造
+3. **エラーハンドリング**: `backend/error/`のカスタムエラークラス
+4. **データベース**: 型安全なクエリとマイグレーションを持つDrizzle ORM
+5. **APIルート**: `/api/v1/*`配下のRESTfulエンドポイント
+
+### テスト戦略
+- 機能と同じ場所の`test/`ディレクトリにユニットテストを配置
+- Vitestの`describe`、`it`、`expect`構文を使用
+- Vitestモックを使用して外部依存関係をモック（`ts-mockito`を使用）
+- テストファイルは`*.test.ts`または`*.spec.ts`という名前
+- `beforeEach`でモックのリセットを行う
+- テストIDには UUID v4 形式を使用（例：`00000000-0000-4000-8000-000000000000`）
+
+## コーディング規約
+
+### TypeScriptのスタイルガイド
+- **型定義は `type` を使用** - `interface`は使わず、全て`type`で統一
+- **ファクトリ関数パターン** - `newXXX`関数で依存注入を行い、オブジェクトを返す
+- **関数の分割** - オブジェクトメソッドは個別の関数として定義し、ファクトリ関数内で組み立てる
+- **エラーハンドリング** - try-catchは使わず、`throw`で例外をスロー。エラーハンドリングはRoute層またはグローバルミドルウェアで行う
+
+### インポート順序（ESLintで強制）
+1. React、Hono等のビルトインモジュール
+2. 外部ライブラリ
+3. 内部モジュール（`@backend/*`、`@frontend/*`、`@dtos/*`等）
+4. 相対パス
+- グループ間は空行で区切る
+- 各グループ内はアルファベット順
+
+### Biome/ESLint設定
+- インデント：スペース2つ
+- クォート：ダブルクォート
+- 自動生成ファイル（`*.gen.ts`）は無視
+- `no-explicit-any`、`no-non-null-assertion`等は無効化
+
+## セキュリティ
+
+### 認証・認可
+- **JWT認証** - アクセストークン（15分）とリフレッシュトークン（1ヶ月）
+- **トークン保存** - localStorageに保存（XSS対策は別途実装）
+- **認証ヘッダー** - `Authorization: Bearer <token>`形式
+- **認証ミドルウェア** - 全ての保護されたエンドポイントで`authMiddleware`を使用
+- **401エラー時** - 自動的にリフレッシュトークンで更新を試みる
+
+## 環境変数の管理
+
+### 必須環境変数（`config.ts`で定義）
+- `APP_URL` - アプリケーションのURL
+- `JWT_SECRET` - JWT署名用の秘密鍵（32文字以上）
+- `NODE_ENV` - 環境（development/stg/production/test）
+- `DATABASE_URL` - PostgreSQL接続文字列
+- `API_PORT` - APIサーバーのポート（オプション）
+- `GOOGLE_OAUTH_CLIENT_ID` - Google OAuth認証用（デフォルト：dummy-string）
+
+### 環境変数の利用
+- バックエンド：`c.env`からアクセス（Honoのコンテキスト経由）
+- フロントエンド：`import.meta.env`を使用
+- ローカル開発：`.env`ファイルを使用（gitignore対象）
+
+## デプロイメント
+
+### デプロイ先
+- **フロントエンド**: Cloudflare Pages
+- **バックエンド**: Cloudflare Workers
+- **データベース**: Neon PostgreSQL
+
+### デプロイコマンド
+```bash
+# ステージング環境へのデプロイ
+npm run deploy:stg
+
+# 本番環境へのデプロイ
+npm run deploy:prod
+```
+
+### Wrangler設定
+- `wrangler.toml`で環境ごとの設定を管理
+- 環境変数は`[env.stg.vars]`、`[env.production.vars]`で設定
+
+## Git規約
+
+### コミットメッセージ
+- 日本語での簡潔なメッセージを使用
+- 絵文字の使用も可（例：🚨、🔨）
+- 長いメッセージは避け、1行で完結させる
+
+### ブランチ戦略
+- メインブランチ：`master`
+- リリースブランチ：`release`
+- 機能ブランチ：必要に応じて作成
+
+### Git Hooks（lefthook）
+- **pre-commit**: Biomeでのリント + Vitestでのテスト実行
+- コミット前に自動でコード品質をチェック
+
+## エラーハンドリング
+
+### カスタムエラークラス
+- `AppError` - 基底エラークラス（HTTPステータスコード付き）
+- `UnauthorizedError` - 認証エラー（401）
+- `ResourceNotFoundError` - リソース不在（404）
+- `DomainValidateError` - ドメイン検証エラー
+- `SqlExecutionError` - DB実行エラー
+
+### エラー処理の原則
+- ビジネスロジック層では例外をスロー
+- Route層でキャッチしてHTTPレスポンスに変換
+- クライアントには適切なエラーメッセージを返す
+
+## データベース
+
+### マイグレーション
+```bash
+# スキーマ変更後のマイグレーション生成
+npm run db-generate
+
+# マイグレーションの適用
+npm run db-migrate
+```
+
+### トランザクション管理
+- Repositoryパターンで`withTx`メソッドを実装
+- Usecase層でトランザクションを制御
+
+### 命名規則
+- テーブル名：スネークケース（例：`activity_logs`）
+- カラム名：スネークケース（例：`user_id`）
+- ドメインモデル：キャメルケース（例：`userId`）
+
+## 重要な注意事項
+
+### パフォーマンス
+- 「どのアプリよりも最速で活動量を記録する」ことが最優先目標
+- UIの応答性を重視し、不要な処理は排除する
+- ローディング状態は最小限に抑える
+
+### UX原則
+- 「極限までシンプルに研ぎ澄ませたUX」を常に意識
+- 操作回数を最小限に抑える
+- 直感的なインターフェースを優先
+- 余分な機能は追加しない
+
+### 開発時の注意
+- 新機能追加時は既存のUXを損なわないか確認
+- 全ての変更はテストを通してから commit
+- デプロイ前に必ずステージング環境での動作確認を行う
