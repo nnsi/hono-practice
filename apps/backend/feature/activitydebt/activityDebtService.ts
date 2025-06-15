@@ -1,3 +1,9 @@
+import {
+  getCurrentDateInTimezone,
+  getDaysBetweenInTimezone,
+  formatDateInTimezone,
+} from "@backend/utils/timezone";
+
 import type { ActivityLogRepository } from "../activityLog";
 import type {
   ActivityDebt,
@@ -42,17 +48,14 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
   return async (
     userId: UserId,
     debt: ActivityDebt,
-    calculateDate: string = new Date().toISOString().split("T")[0],
+    calculateDate: string = getCurrentDateInTimezone(),
   ): Promise<DebtBalance> => {
-    // 1. 開始日から計算日までの日数を計算
-    const startDate = new Date(debt.startDate);
-    const targetDate = new Date(calculateDate);
-    const daysPassed =
-      Math.floor(
-        (targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1;
-
-    // 負の日数の場合は0にする（開始日より前の日付が指定された場合）
+    // 1. 開始日から計算日までの日数を計算（JST基準）
+    // 開始日より前の場合は0日として扱う
+    const daysPassed = debt.startDate > calculateDate 
+      ? 0 
+      : getDaysBetweenInTimezone(debt.startDate, calculateDate);
+    
     const activeDays = Math.max(0, daysPassed);
 
     // 2. 累積負債を計算
@@ -98,7 +101,7 @@ function getBalanceHistory(activityLogRepo: ActivityLogRepository) {
       date <= endDate;
       date.setDate(date.getDate() + 1)
     ) {
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = formatDateInTimezone(date);
       const balance = await calculateCurrentBalance(activityLogRepo)(
         userId,
         debt,

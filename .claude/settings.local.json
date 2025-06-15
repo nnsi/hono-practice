@@ -28,7 +28,9 @@
       "Bash(docker-compose logs:*)",
       "Bash(docker-compose down:*)",
       "Bash(docker-compose ps:*)",
-      "mcp__playwright__browser_press_key"
+      "mcp__playwright__browser_press_key",
+      "Bash(timeout 30 npm run test)",
+      "Bash(npx vitest:*)"
     ],
     "deny": []
   },
