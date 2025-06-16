@@ -12,3 +12,6 @@ export * from "./LoginRequest";
 export * from "./UpdateActivityLogRequest";
 export * from "./UpdateActivityRequest";
 export * from "./UpdateTaskRequest";
+export * from "./CheckDuplicatesRequest";
+export * from "./EnqueueSyncRequest";
+export * from "./ProcessSyncRequest";
