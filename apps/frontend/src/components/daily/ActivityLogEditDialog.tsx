@@ -139,6 +139,7 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
                 }
                 className="w-24"
                 inputMode="numeric"
+                autoComplete="off"
               />
               <span>{activity?.quantityUnit ?? log.activity.quantityUnit}</span>
             </div>
@@ -172,6 +173,7 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             onChange={(e) => setMemo(e.target.value)}
             className="h-24"
             placeholder="メモ"
+            autoComplete="off"
           />
           <DialogFooter className="flex-shrink-0">
             <Button type="submit">保存</Button>

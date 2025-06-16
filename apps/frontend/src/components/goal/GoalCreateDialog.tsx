@@ -58,7 +58,7 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
     resolver: zodResolver(CreateDebtGoalRequestSchema),
     defaultValues: {
       activityId: "",
-      dailyTargetQuantity: 0,
+      dailyTargetQuantity: undefined as any,
       startDate: dayjs().format("YYYY-MM-DD"),
       endDate: undefined,
       description: "",
@@ -69,7 +69,7 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
     resolver: zodResolver(CreateMonthlyGoalRequestSchema),
     defaultValues: {
       activityId: "",
-      targetQuantity: 0,
+      targetQuantity: undefined as any,
       targetMonth: dayjs().format("YYYY-MM"),
       description: "",
     },
@@ -79,7 +79,10 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
   const createMonthlyGoal = useCreateMonthlyGoal();
 
   const handleDebtSubmit = (data: CreateDebtGoalRequest) => {
-    createDebtGoal.mutate(data, {
+    createDebtGoal.mutate({
+      ...data,
+      dailyTargetQuantity: data.dailyTargetQuantity || 1,
+    }, {
       onSuccess: () => {
         toast({
           title: "成功",
@@ -99,7 +102,10 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
   };
 
   const handleMonthlySubmit = (data: CreateMonthlyGoalRequest) => {
-    createMonthlyGoal.mutate(data, {
+    createMonthlyGoal.mutate({
+      ...data,
+      targetQuantity: data.targetQuantity || 1,
+    }, {
       onSuccess: () => {
         toast({
           title: "成功",
@@ -170,7 +176,13 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
                           type="number"
                           placeholder="例: 10"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? undefined : Number(value));
+                          }}
+                          inputMode="numeric"
+                          autoComplete="off"
                         />
                       </FormControl>
                       <FormMessage />
@@ -273,7 +285,13 @@ export const GoalCreateDialog: React.FC<GoalCreateDialogProps> = ({
                           type="number"
                           placeholder="例: 300"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? undefined : Number(value));
+                          }}
+                          inputMode="numeric"
+                          autoComplete="off"
                         />
                       </FormControl>
                       <FormMessage />
