@@ -312,3 +312,68 @@ export const activityGoalsRelations = relations(activityGoals, ({ one }) => ({
     references: [activities.id],
   }),
 }));
+
+// sync_metadata テーブル
+export const syncMetadata = pgTable(
+  "sync_metadata",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    status: text("status", {
+      enum: ["pending", "syncing", "synced", "failed"],
+    })
+      .notNull()
+      .default("pending"),
+    errorMessage: text("error_message"),
+    retryCount: customTypeNumeric("retry_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("sync_metadata_user_id_idx").on(table.userId),
+    entityIdx: index("sync_metadata_entity_idx").on(
+      table.entityType,
+      table.entityId
+    ),
+    statusIdx: index("sync_metadata_status_idx").on(table.status),
+  })
+);
+
+// sync_queue テーブル
+export const syncQueue = pgTable(
+  "sync_queue",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    operation: text("operation", {
+      enum: ["create", "update", "delete"],
+    }).notNull(),
+    payload: text("payload").notNull(), // JSON文字列として保存
+    timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+    sequenceNumber: customTypeNumeric("sequence_number").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("sync_queue_user_id_idx").on(table.userId),
+    sequenceIdx: index("sync_queue_sequence_idx").on(
+      table.userId,
+      table.sequenceNumber
+    ),
+    timestampIdx: index("sync_queue_timestamp_idx").on(table.timestamp),
+    entityIdx: index("sync_queue_entity_idx").on(
+      table.entityType,
+      table.entityId
+    ),
+  })
+);

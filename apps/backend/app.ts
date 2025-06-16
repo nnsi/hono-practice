@@ -4,6 +4,7 @@ import {
   authRoute,
   newActivityLogRoute,
   newActivityRoute,
+  newSyncRoute,
   taskRoute,
   userRoute,
 } from "./feature";
@@ -39,6 +40,7 @@ const routes = app
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
   .route("/users/goals", goalRoute)
+  .route("/users/sync", newSyncRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 

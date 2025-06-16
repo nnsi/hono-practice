@@ -6,3 +6,7 @@ export * from "./GetTasksResponse";
 export * from "./GetUserResponse";
 export * from "./LoginResponse";
 export * from "./AuthResponse";
+export * from "./CheckDuplicatesResponse";
+export * from "./SyncStatusResponse";
+export * from "./EnqueueSyncResponse";
+export * from "./ProcessSyncResponse";

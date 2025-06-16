@@ -133,6 +133,7 @@ export const ActivityLogCreateForm: React.FC<ActivityLogCreateFormProps> = ({
                     type="number"
                     className="col-span-2"
                     inputMode="numeric"
+                    autoComplete="off"
                     {...field}
                   />
                 )}
@@ -210,6 +211,7 @@ export function ActivityLogCreateFormBody({
                 type="number"
                 className="col-span-2"
                 inputMode="numeric"
+                autoComplete="off"
                 {...field}
               />
             )}

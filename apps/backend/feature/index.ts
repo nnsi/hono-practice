@@ -6,3 +6,4 @@ export * from "./user";
 export * from './goal';
 export * from './activitydebt';
 export * from './activitygoal';
+export * from './sync';
