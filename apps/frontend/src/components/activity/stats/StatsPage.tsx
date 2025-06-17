@@ -46,6 +46,53 @@ const getColorForKind = (kindName: string): string => {
   return colors[colorIndex];
 };
 
+// 共通のチャートコンポーネント
+type ChartData = {
+  date: string;
+  [key: string]: string | number;
+};
+
+type ActivityChartProps = {
+  data: ChartData[];
+  dataKeys: { name: string; color: string }[];
+  height?: number;
+  stackId?: string;
+  showLegend?: boolean;
+};
+
+const ActivityChart: React.FC<ActivityChartProps> = ({
+  data,
+  dataKeys,
+  height = 300,
+  stackId,
+  showLegend = true,
+}) => {
+  return (
+    <div className="bg-white rounded-lg p-4 border">
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          data={data}
+          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+        >
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} />
+          <Tooltip />
+          {showLegend && <Legend />}
+          {dataKeys.map((key) => (
+            <Bar
+              key={key.name}
+              dataKey={key.name}
+              fill={key.color}
+              name={key.name}
+              stackId={stackId}
+            />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
 export const ActivityStatsPage: React.FC = () => {
   const { date, setDate } = useContext(DateContext);
 
@@ -120,10 +167,10 @@ export const ActivityStatsPage: React.FC = () => {
                 {stat.showCombinedStats &&
                   ` (合計: ${stat.total} ${stat.quantityUnit})`}
               </h2>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">各種類別の集計</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {stat.kinds.map((kind) => (
+              {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
+                <div className="mb-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {stat.kinds.map((kind) => (
                     <div
                       key={kind.id || kind.name}
                       className="bg-white rounded-lg p-3 border shadow-sm"
@@ -143,32 +190,22 @@ export const ActivityStatsPage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div>
-                <h3 className="text-lg font-semibold mb-3">日別推移</h3>
+                <hr className="my-6" />
                 {stat.showCombinedStats ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={data}
-                      margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                    >
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      {stat.kinds[0].name !== "未指定" && <Legend />}
-                      {stat.kinds.map((kind) => (
-                        <Bar
-                          key={kind.id || kind.name}
-                          dataKey={kind.name}
-                          fill={getColorForKind(kind.name)}
-                          name={kind.name !== "未指定" ? kind.name : stat.name}
-                          stackId="a"
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <ActivityChart
+                    data={data}
+                    dataKeys={stat.kinds.map((kind) => ({
+                      name: kind.name,
+                      color: getColorForKind(kind.name),
+                    }))}
+                    stackId="a"
+                    showLegend={stat.kinds[0].name !== "未指定"}
+                  />
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {stat.kinds.map((kind) => {
@@ -185,33 +222,19 @@ export const ActivityStatsPage: React.FC = () => {
                         };
                       });
                       return (
-                        <div
-                          key={kind.id || kind.name}
-                          className="bg-white rounded-lg p-4 border"
-                        >
+                        <div key={kind.id || kind.name}>
                           <h4 className="font-semibold mb-2">
                             {kind.name} (合計: {kind.total} {stat.quantityUnit})
                           </h4>
-                          <ResponsiveContainer width="100%" height={250}>
-                            <BarChart
-                              data={kindData}
-                              margin={{
-                                top: 20,
-                                right: 30,
-                                left: 0,
-                                bottom: 5,
-                              }}
-                            >
-                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                              <YAxis tick={{ fontSize: 12 }} />
-                              <Tooltip />
-                              <Bar
-                                dataKey={kind.name}
-                                fill={getColorForKind(kind.name)}
-                                name={kind.name}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
+                          <ActivityChart
+                            data={kindData}
+                            dataKeys={[{
+                              name: kind.name,
+                              color: getColorForKind(kind.name),
+                            }]}
+                            height={250}
+                            showLegend={false}
+                          />
                         </div>
                       );
                     })}

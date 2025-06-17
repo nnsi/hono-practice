@@ -1,6 +1,7 @@
 node_modules
 .env
 db-data
+dist
 dist-backend
 dist-frontend
 .husky
