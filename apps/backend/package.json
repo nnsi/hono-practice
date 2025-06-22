@@ -4,12 +4,12 @@
     "dev": "tsx watch ./server.node.ts"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.2.15",
-    "@hono/zod-validator": "^0.4.2",
-    "@neondatabase/serverless": "^0.10.4",
-    "bcryptjs": "^2.4.3",
-    "drizzle-orm": "^0.38.3",
-    "hono": "^4.6.15",
+    "@electric-sql/pglite": "^0.3.3",
+    "@hono/zod-validator": "^0.7.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.44.2",
+    "hono": "^4.8.2",
     "jose": "^6.0.10",
     "postgres": "^3.4.5"
   },
@@ -17,9 +17,9 @@
     "@cloudflare/workers-types": "^4.20250422.0",
     "@hono/node-server": "^1.13.7",
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^22.10.2",
+    "@types/node": "^24.0.3",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.31.1",
-    "redis": "^4.6.7"
+    "redis": "^5.5.6"
   }
 }
