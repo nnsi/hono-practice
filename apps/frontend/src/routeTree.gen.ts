@@ -8,90 +8,38 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingRouteImport } from './routes/setting'
+import { Route as GoalRouteImport } from './routes/goal'
+import { Route as DailyRouteImport } from './routes/daily'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivityStatsRouteImport } from './routes/activity/stats'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SettingImport } from './routes/setting'
-import { Route as GoalImport } from './routes/goal'
-import { Route as DailyImport } from './routes/daily'
-import { Route as IndexImport } from './routes/index'
-import { Route as ActivityStatsImport } from './routes/activity/stats'
-
-// Create/Update Routes
-
-const SettingRoute = SettingImport.update({
+const SettingRoute = SettingRouteImport.update({
   id: '/setting',
   path: '/setting',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const GoalRoute = GoalImport.update({
+const GoalRoute = GoalRouteImport.update({
   id: '/goal',
   path: '/goal',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const DailyRoute = DailyImport.update({
+const DailyRoute = DailyRouteImport.update({
   id: '/daily',
   path: '/daily',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ActivityStatsRoute = ActivityStatsImport.update({
+const ActivityStatsRoute = ActivityStatsRouteImport.update({
   id: '/activity/stats',
   path: '/activity/stats',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/daily': {
-      id: '/daily'
-      path: '/daily'
-      fullPath: '/daily'
-      preLoaderRoute: typeof DailyImport
-      parentRoute: typeof rootRoute
-    }
-    '/goal': {
-      id: '/goal'
-      path: '/goal'
-      fullPath: '/goal'
-      preLoaderRoute: typeof GoalImport
-      parentRoute: typeof rootRoute
-    }
-    '/setting': {
-      id: '/setting'
-      path: '/setting'
-      fullPath: '/setting'
-      preLoaderRoute: typeof SettingImport
-      parentRoute: typeof rootRoute
-    }
-    '/activity/stats': {
-      id: '/activity/stats'
-      path: '/activity/stats'
-      fullPath: '/activity/stats'
-      preLoaderRoute: typeof ActivityStatsImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,7 +48,6 @@ export interface FileRoutesByFullPath {
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
@@ -108,16 +55,14 @@ export interface FileRoutesByTo {
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/goal': typeof GoalRoute
   '/setting': typeof SettingRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/daily' | '/goal' | '/setting' | '/activity/stats'
@@ -126,13 +71,52 @@ export interface FileRouteTypes {
   id: '__root__' | '/' | '/daily' | '/goal' | '/setting' | '/activity/stats'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyRoute: typeof DailyRoute
   GoalRoute: typeof GoalRoute
   SettingRoute: typeof SettingRoute
   ActivityStatsRoute: typeof ActivityStatsRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/setting': {
+      id: '/setting'
+      path: '/setting'
+      fullPath: '/setting'
+      preLoaderRoute: typeof SettingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goal': {
+      id: '/goal'
+      path: '/goal'
+      fullPath: '/goal'
+      preLoaderRoute: typeof GoalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity/stats': {
+      id: '/activity/stats'
+      path: '/activity/stats'
+      fullPath: '/activity/stats'
+      preLoaderRoute: typeof ActivityStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -142,39 +126,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingRoute: SettingRoute,
   ActivityStatsRoute: ActivityStatsRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/daily",
-        "/goal",
-        "/setting",
-        "/activity/stats"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/daily": {
-      "filePath": "daily.tsx"
-    },
-    "/goal": {
-      "filePath": "goal.tsx"
-    },
-    "/setting": {
-      "filePath": "setting.tsx"
-    },
-    "/activity/stats": {
-      "filePath": "activity/stats.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */
