@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
+
 import { ActivityLogCreateFormBody } from "@frontend/components/activity/ActivityLogCreateForm";
 import { Dialog, DialogContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@frontend/components/ui";
+import { useTimer } from "@frontend/hooks/useTimer";
 import { apiClient } from "@frontend/utils";
+import { 
+  isTimeUnit, 
+  getTimeUnitType, 
+  convertSecondsToUnit,
+  generateTimeMemo 
+} from "@frontend/utils/timeUtils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -18,15 +26,9 @@ import {
 } from "@dtos/response/GetActivityLogsResponse";
 
 import { useToast, Button, Form, FormField, FormControl, FormItem, FormLabel, RadioGroup, RadioGroupItem } from "@components/ui";
-import { useTimer } from "@frontend/hooks/useTimer";
-import { 
-  isTimeUnit, 
-  getTimeUnitType, 
-  convertSecondsToUnit,
-  generateTimeMemo 
-} from "@frontend/utils/timeUtils";
-import { TimerDisplay } from "./TimerDisplay";
+
 import { TimerControls } from "./TimerControls";
+import { TimerDisplay } from "./TimerDisplay";
 
 export function ActivityLogCreateDialog({
   open,

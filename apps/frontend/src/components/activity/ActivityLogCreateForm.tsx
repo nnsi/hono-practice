@@ -1,4 +1,3 @@
-import type { UseFormReturn } from "react-hook-form";
 
 import type {
   CreateActivityLogRequest,
@@ -17,6 +16,8 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@components/ui";
+
+import type { UseFormReturn } from "react-hook-form";
 
 export function ActivityLogCreateFormBody({
   form,

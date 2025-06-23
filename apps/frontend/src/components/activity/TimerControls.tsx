@@ -1,5 +1,6 @@
-import { Button } from "@components/ui";
 import { Pause, Play, RotateCcw } from "lucide-react";
+
+import { Button } from "@components/ui";
 
 type TimerControlsProps = {
   isRunning: boolean;
