@@ -1,8 +1,8 @@
-import { Stack } from "expo-router";
-import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
+
+import { Stack , Redirect } from "expo-router";
 
 import { useAuth } from "../../src/hooks/useAuth";
-import { ActivityIndicator, View, StyleSheet } from "react-native";
 
 export default function AuthLayout() {
   const { user, isInitialized } = useAuth();
@@ -10,8 +10,8 @@ export default function AuthLayout() {
   // 初期化中の表示
   if (!isInitialized) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View className="flex-1 bg-gray-50 items-center justify-center">
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
@@ -23,17 +23,9 @@ export default function AuthLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

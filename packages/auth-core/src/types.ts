@@ -3,6 +3,7 @@
 export type User = {
   id: string;
   name: string | null;
+  loginId?: string;
   providers: string[];
 };
 

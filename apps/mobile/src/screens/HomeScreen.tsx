@@ -1,104 +1,125 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
 
 import { useAuth } from "../hooks/useAuth";
-import { apiClient } from "../services/apiClient";
+
+type Activity = {
+  id: string;
+  emoji: string;
+  name: string;
+  value: number;
+  unit: string;
+  time: string;
+};
 
 export function HomeScreen() {
-  const { user, logout } = useAuth();
-  const [testResult, setTestResult] = useState<string>("");
-
-  const testAuthenticatedAPI = async () => {
-    try {
-      // 認証が必要なAPIエンドポイントをテスト
-      const response = await apiClient.users.activities.$get();
-      if (response.ok) {
-        const data = await response.json();
-        setTestResult(`Activities API成功: ${data.length}件のアクティビティ`);
-        Alert.alert(
-          "成功",
-          `Activities APIへのアクセスに成功しました\n${data.length}件のアクティビティを取得`,
-        );
-      } else {
-        setTestResult(`APIエラー: ${response.status}`);
-        Alert.alert("エラー", `APIアクセスに失敗しました: ${response.status}`);
-      }
-    } catch (error) {
-      setTestResult(`エラー: ${error}`);
-      Alert.alert("エラー", "APIアクセス中にエラーが発生しました");
-    }
-  };
+  const { user } = useAuth();
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Actiko Home</Text>
-      <Text style={styles.welcome}>
-        ようこそ、{user?.name || "ユーザー"}さん！
-      </Text>
+    <ScrollView className="flex-1 bg-gray-50">
+      <View className="p-4">
+        {/* ウェルカムメッセージ */}
+        <View className="bg-white rounded-lg p-6 mb-4 border border-gray-200">
+          <Text className="text-2xl font-bold text-gray-900">
+            こんにちは、{user?.name || "ユーザー"}さん！
+          </Text>
+          <Text className="text-gray-600 mt-2">
+            今日も活動を記録していきましょう
+          </Text>
+        </View>
 
-      <TouchableOpacity
-        style={styles.testButton}
-        onPress={testAuthenticatedAPI}
-      >
-        <Text style={styles.testButtonText}>認証APIテスト</Text>
-      </TouchableOpacity>
+        {/* クイックアクション */}
+        <View className="mb-6">
+          <Text className="text-lg font-semibold text-gray-900 mb-3">
+            クイックアクション
+          </Text>
+          <View className="flex-row justify-between">
+            <TouchableOpacity className="bg-blue-600 rounded-lg p-4 flex-1 mr-2">
+              <View className="items-center">
+                <Ionicons name="add-circle-outline" size={28} color="white" />
+                <Text className="text-white font-medium mt-2">記録する</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity className="bg-green-600 rounded-lg p-4 flex-1 ml-2">
+              <View className="items-center">
+                <Ionicons name="timer-outline" size={28} color="white" />
+                <Text className="text-white font-medium mt-2">タイマー</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {testResult ? <Text style={styles.testResult}>{testResult}</Text> : null}
+        {/* 今日の活動サマリー */}
+        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
+          <Text className="text-lg font-semibold text-gray-900 mb-3">
+            今日の活動
+          </Text>
+          <View className="flex-row justify-around">
+            <View className="items-center">
+              <Text className="text-3xl font-bold text-blue-600">0</Text>
+              <Text className="text-gray-600 text-sm">記録数</Text>
+            </View>
+            <View className="items-center">
+              <Text className="text-3xl font-bold text-green-600">0</Text>
+              <Text className="text-gray-600 text-sm">活動種類</Text>
+            </View>
+            <View className="items-center">
+              <Text className="text-3xl font-bold text-purple-600">0</Text>
+              <Text className="text-gray-600 text-sm">連続日数</Text>
+            </View>
+          </View>
+        </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutButtonText}>ログアウト</Text>
-      </TouchableOpacity>
-    </View>
+        {/* 最近の活動 */}
+        <View>
+          <Text className="text-lg font-semibold text-gray-900 mb-3">
+            最近の活動
+          </Text>
+          {recentActivities.length === 0 ? (
+            <View className="bg-white rounded-lg p-8 items-center border border-gray-200">
+              <Ionicons name="time-outline" size={48} color="#9ca3af" />
+              <Text className="text-gray-500 text-center mt-4">
+                まだ活動記録がありません
+              </Text>
+              <TouchableOpacity className="mt-4 bg-blue-100 px-4 py-2 rounded-lg">
+                <Text className="text-blue-600 font-medium">
+                  最初の記録を追加
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="space-y-2">
+              {recentActivities.map((activity) => (
+                <View
+                  key={activity.id}
+                  className="bg-white rounded-lg p-4 border border-gray-200"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <Text className="text-2xl mr-3">{activity.emoji}</Text>
+                      <View>
+                        <Text className="text-gray-900 font-medium">
+                          {activity.name}
+                        </Text>
+                        <Text className="text-gray-500 text-sm">
+                          {activity.value} {activity.unit}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className="text-gray-400 text-sm">
+                      {activity.time}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 24,
-    color: "#333",
-  },
-  welcome: {
-    fontSize: 20,
-    marginBottom: 24,
-    color: "#666",
-  },
-  testButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  testButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  testResult: {
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  logoutButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-});

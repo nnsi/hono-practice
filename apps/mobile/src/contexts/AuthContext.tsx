@@ -18,9 +18,9 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isInitialized: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (loginId: string, password: string, name: string) => Promise<void>;
   getUser: () => Promise<void>;
   refreshToken: () => Promise<void>;
 };
@@ -132,13 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ログイン
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (loginId: string, password: string) => {
       try {
         setIsLoading(true);
-        console.log("Attempting login with:", { login_id: email });
+        console.log("Attempting login with:", { login_id: loginId });
         const response = await apiClient.auth.login.$post({
           json: {
-            login_id: email,
+            login_id: loginId,
             password,
           },
         });
@@ -174,12 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // サインアップ
   const signup = useCallback(
-    async (email: string, password: string, name: string) => {
+    async (loginId: string, password: string, name: string) => {
       try {
         setIsLoading(true);
         const response = await apiClient.user.$post({
           json: {
-            loginId: email,
+            loginId,
             password,
             name,
           },
