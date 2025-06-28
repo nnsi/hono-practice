@@ -2,6 +2,7 @@
   "scripts": {
     "dev": "npm run dev -w actiko-backend",
     "client-dev": "npm run dev -w actiko-frontend",
+    "mobile-dev": "npm run web -w mobile",
     "build-client-stg": "npm run build-stg -w actiko-frontend",
     "build-client": "npm run build -w actiko-frontend",
     "test": "vitest --disable-console-intercept",
@@ -9,17 +10,14 @@
     "ci-check": "vitest run && biome lint && eslint",
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
-    "fix": "eslint --fix",
+    "fix": "biome check . --write && eslint --fix",
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "gen-be": "node scripts/gen-be.js"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "type": "module",
   "dependencies": {
     "dayjs": "^1.11.13",
