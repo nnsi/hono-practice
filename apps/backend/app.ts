@@ -17,7 +17,29 @@ export const app = newHonoWithErrorHandling();
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";
 
-  const origin = headerOrigin.includes(c.env.APP_URL)
+  // 開発環境でのモバイルアプリからのアクセスを許可
+  const allowedOrigins = [c.env.APP_URL];
+  if (c.env.NODE_ENV === "development") {
+    // ローカル開発環境のポート
+    allowedOrigins.push(
+      "http://localhost:8081",
+      "http://localhost:8082",
+      "http://localhost:19006", // Expo Web
+    );
+
+    // 実機からのアクセス用（同一ネットワーク内のIPアドレス）
+    // 192.168.x.x や 10.x.x.x からのアクセスを許可
+    const isLocalNetwork = headerOrigin.match(
+      /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/,
+    );
+    if (isLocalNetwork) {
+      allowedOrigins.push(headerOrigin);
+    }
+  }
+
+  const origin = allowedOrigins.some((allowed) =>
+    headerOrigin.includes(allowed),
+  )
     ? headerOrigin
     : c.env.APP_URL;
 

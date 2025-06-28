@@ -9,13 +9,20 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
+    "@hookform/resolvers": "^5.1.1",
+    "@packages/auth-core": "*",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "expo": "~53.0.13",
+    "expo-constants": "^17.1.6",
     "expo-status-bar": "~2.2.3",
+    "hono": "^4.8.3",
     "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.59.0",
     "react-native": "0.79.4",
     "react-native-web": "^0.20.0",
-    "react-dom": "^19.1.0",
-    "@expo/metro-runtime": "~5.0.4"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

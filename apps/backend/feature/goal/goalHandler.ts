@@ -6,7 +6,6 @@ import type {
 } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
 
-
 import type {
   GoalFilters,
   GoalType,
