@@ -1,8 +1,8 @@
 import {
   type Activity,
   type ActivityId,
-  createActivityEntity,
   type UserId,
+  createActivityEntity,
   createActivityId,
   createActivityKindId,
 } from "@backend/domain";

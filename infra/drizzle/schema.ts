@@ -340,10 +340,10 @@ export const syncMetadata = pgTable(
     userIdIdx: index("sync_metadata_user_id_idx").on(table.userId),
     entityIdx: index("sync_metadata_entity_idx").on(
       table.entityType,
-      table.entityId
+      table.entityId,
     ),
     statusIdx: index("sync_metadata_status_idx").on(table.status),
-  })
+  }),
 );
 
 // sync_queue テーブル
@@ -368,12 +368,12 @@ export const syncQueue = pgTable(
     userIdIdx: index("sync_queue_user_id_idx").on(table.userId),
     sequenceIdx: index("sync_queue_sequence_idx").on(
       table.userId,
-      table.sequenceNumber
+      table.sequenceNumber,
     ),
     timestampIdx: index("sync_queue_timestamp_idx").on(table.timestamp),
     entityIdx: index("sync_queue_entity_idx").on(
       table.entityType,
-      table.entityId
+      table.entityId,
     ),
-  })
+  }),
 );

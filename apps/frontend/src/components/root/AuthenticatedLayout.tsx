@@ -1,12 +1,12 @@
 import { DateProvider } from "@frontend/providers/DateProvider";
 import {
-  GearIcon,
-  CardStackPlusIcon,
   BarChartIcon,
   CalendarIcon,
+  CardStackPlusIcon,
+  GearIcon,
   TargetIcon,
 } from "@radix-ui/react-icons";
-import { Outlet, Link } from "@tanstack/react-router";
+import { Link, Outlet } from "@tanstack/react-router";
 
 import { Toaster } from "../ui";
 

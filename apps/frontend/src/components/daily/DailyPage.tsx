@@ -6,9 +6,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import {
-  GetActivityLogsResponseSchema,
-  type GetActivityLogResponse,
   GetActivitiesResponseSchema,
+  type GetActivityLogResponse,
+  GetActivityLogsResponseSchema,
   GetTasksResponseSchema,
 } from "@dtos/response";
 

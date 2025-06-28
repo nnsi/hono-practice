@@ -6,6 +6,10 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 
 import { GetActivitiesResponseSchema } from "@dtos/response";
+import type {
+  DebtGoalResponse,
+  MonthlyTargetGoalResponse,
+} from "@dtos/response";
 
 import { Button } from "@components/ui";
 
@@ -32,8 +36,12 @@ export const GoalPage: React.FC = () => {
   });
 
   const goals = goalsData?.goals || [];
-  const debtGoals = goals.filter((g) => g.type === "debt");
-  const monthlyGoals = goals.filter((g) => g.type === "monthly_target");
+  const debtGoals = goals.filter(
+    (g): g is DebtGoalResponse => g.type === "debt",
+  );
+  const monthlyGoals = goals.filter(
+    (g): g is MonthlyTargetGoalResponse => g.type === "monthly_target",
+  );
 
   const getActivityName = (activityId: string) => {
     const activity = activitiesData?.find((a) => a.id === activityId);

@@ -1,9 +1,12 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newSyncUsecase } from "../syncUsecase";
 
 import type { SyncRepository } from "../syncRepository";
-import type { DuplicateCheckResult, SyncQueueEntity } from "@backend/domain/sync";
+import type {
+  DuplicateCheckResult,
+  SyncQueueEntity,
+} from "@backend/domain/sync";
 
 describe("SyncUseCase", () => {
   let mockRepository: SyncRepository;
@@ -37,12 +40,10 @@ describe("SyncUseCase", () => {
         },
       ];
 
-      const mockResults: DuplicateCheckResult[] = [
-        { isDuplicate: false },
-      ];
+      const mockResults: DuplicateCheckResult[] = [{ isDuplicate: false }];
 
       vi.mocked(mockRepository.findDuplicatesByTimestamps).mockResolvedValue(
-        mockResults
+        mockResults,
       );
 
       const results = await syncUseCase.checkDuplicates("user-123", operations);
@@ -50,7 +51,7 @@ describe("SyncUseCase", () => {
       expect(results).toEqual(mockResults);
       expect(mockRepository.findDuplicatesByTimestamps).toHaveBeenCalledWith(
         "user-123",
-        operations
+        operations,
       );
     });
   });
@@ -182,7 +183,7 @@ describe("SyncUseCase", () => {
           status: "failed",
           errorMessage: "Simulated sync error",
           retryCount: 1,
-        })
+        }),
       );
 
       global.setTimeout = originalTimeout;
@@ -218,7 +219,7 @@ describe("SyncUseCase", () => {
       ];
 
       vi.mocked(mockRepository.findDuplicatesByTimestamps).mockResolvedValue(
-        mockDuplicateResults
+        mockDuplicateResults,
       );
 
       const mockEnqueuedOperations: SyncQueueEntity[] = [
@@ -229,7 +230,9 @@ describe("SyncUseCase", () => {
         },
       ];
 
-      vi.mocked(mockRepository.enqueueSync).mockResolvedValue(mockEnqueuedOperations);
+      vi.mocked(mockRepository.enqueueSync).mockResolvedValue(
+        mockEnqueuedOperations,
+      );
 
       const result = await syncUseCase.enqueueSyncOperations(operations);
 
@@ -256,7 +259,7 @@ describe("SyncUseCase", () => {
       ];
 
       vi.mocked(mockRepository.findDuplicatesByTimestamps).mockResolvedValue(
-        mockDuplicateResults
+        mockDuplicateResults,
       );
 
       const result = await syncUseCase.enqueueSyncOperations(operations);

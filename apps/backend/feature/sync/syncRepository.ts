@@ -26,7 +26,7 @@ export type SyncRepository<T = unknown> = {
       entityId: string;
       timestamp: Date;
       operation: "create" | "update" | "delete";
-    }>
+    }>,
   ): Promise<DuplicateCheckResult[]>;
   getSyncStatus(userId: string): Promise<{
     pendingCount: number;
@@ -44,17 +44,14 @@ export type SyncRepository<T = unknown> = {
       payload: Record<string, any>;
       timestamp: Date;
       sequenceNumber: number;
-    }>
+    }>,
   ): Promise<SyncQueueEntity[]>;
-  dequeueSyncBatch(
-    userId: string,
-    batchSize?: number
-  ): Promise<SyncQueueBatch>;
+  dequeueSyncBatch(userId: string, batchSize?: number): Promise<SyncQueueBatch>;
   markAsSynced(queueIds: SyncQueueId[]): Promise<void>;
   getMetadataByEntity(
     userId: string,
     entityType: string,
-    entityId: string
+    entityId: string,
   ): Promise<SyncMetadataEntity | null>;
   updateSyncMetadata(
     metadataId: SyncMetadataId,
@@ -63,7 +60,7 @@ export type SyncRepository<T = unknown> = {
       lastSyncedAt: Date | null;
       errorMessage: string | null;
       retryCount: number;
-    }>
+    }>,
   ): Promise<void>;
   getQueueByIds(queueIds: SyncQueueId[]): Promise<SyncQueueEntity[]>;
   deleteQueueItems(queueIds: SyncQueueId[]): Promise<void>;
@@ -81,7 +78,7 @@ export function newSyncRepository(db: QueryExecutor): SyncRepository {
     updateSyncMetadata: updateSyncMetadata(db),
     getQueueByIds: getQueueByIds(db),
     deleteQueueItems: deleteQueueItems(db),
-    withTx: (tx) => newSyncRepository(tx),
+    withTx: (tx) => newSyncRepository(tx as QueryExecutor),
   };
 }
 
@@ -93,7 +90,7 @@ function findDuplicatesByTimestamps(db: QueryExecutor) {
       entityId: string;
       timestamp: Date;
       operation: "create" | "update" | "delete";
-    }>
+    }>,
   ): Promise<DuplicateCheckResult[]> => {
     try {
       // バッチで既存の操作を取得
@@ -113,7 +110,7 @@ function findDuplicatesByTimestamps(db: QueryExecutor) {
           timestamp: row.timestamp,
           sequenceNumber: Number(row.sequenceNumber),
           createdAt: row.createdAt,
-        })
+        }),
       );
 
       // 各操作について重複チェック
@@ -125,7 +122,9 @@ function findDuplicatesByTimestamps(db: QueryExecutor) {
 }
 
 function getSyncStatus(db: QueryExecutor) {
-  return async (userId: string): Promise<{
+  return async (
+    userId: string,
+  ): Promise<{
     pendingCount: number;
     syncingCount: number;
     syncedCount: number;
@@ -186,7 +185,7 @@ function enqueueSync(db: QueryExecutor) {
       payload: Record<string, any>;
       timestamp: Date;
       sequenceNumber: number;
-    }>
+    }>,
   ): Promise<SyncQueueEntity[]> => {
     try {
       const entities = await db.transaction(async (tx) => {
@@ -218,16 +217,16 @@ function enqueueSync(db: QueryExecutor) {
 
       return entities;
     } catch (error) {
-      throw new UnexpectedError("同期キューへの追加に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "同期キューへの追加に失敗しました",
+        error as Error,
+      );
     }
   };
 }
 
 function dequeueSyncBatch(db: QueryExecutor) {
-  return async (
-    userId: string,
-    batchSize = 50
-  ): Promise<SyncQueueBatch> => {
+  return async (userId: string, batchSize = 50): Promise<SyncQueueBatch> => {
     try {
       const rows = await db
         .select()
@@ -247,7 +246,7 @@ function dequeueSyncBatch(db: QueryExecutor) {
           timestamp: row.timestamp,
           sequenceNumber: Number(row.sequenceNumber),
           createdAt: row.createdAt,
-        })
+        }),
       );
 
       return {
@@ -256,7 +255,10 @@ function dequeueSyncBatch(db: QueryExecutor) {
         hasMore,
       };
     } catch (error) {
-      throw new UnexpectedError("同期キューの取得に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "同期キューの取得に失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -316,7 +318,10 @@ function markAsSynced(db: QueryExecutor) {
         }
       });
     } catch (error) {
-      throw new UnexpectedError("同期完了のマーキングに失敗しました", error as Error);
+      throw new UnexpectedError(
+        "同期完了のマーキングに失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -325,7 +330,7 @@ function getMetadataByEntity(db: QueryExecutor) {
   return async (
     userId: string,
     entityType: string,
-    entityId: string
+    entityId: string,
   ): Promise<SyncMetadataEntity | null> => {
     try {
       const rows = await db
@@ -335,8 +340,8 @@ function getMetadataByEntity(db: QueryExecutor) {
           and(
             eq(syncMetadata.userId, userId),
             eq(syncMetadata.entityType, entityType),
-            eq(syncMetadata.entityId, entityId)
-          )
+            eq(syncMetadata.entityId, entityId),
+          ),
         )
         .limit(1);
 
@@ -358,7 +363,10 @@ function getMetadataByEntity(db: QueryExecutor) {
         updatedAt: row.updatedAt,
       });
     } catch (error) {
-      throw new UnexpectedError("メタデータの取得に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "メタデータの取得に失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -371,7 +379,7 @@ function updateSyncMetadata(db: QueryExecutor) {
       lastSyncedAt: Date | null;
       errorMessage: string | null;
       retryCount: number;
-    }>
+    }>,
   ): Promise<void> => {
     try {
       await db
@@ -382,7 +390,10 @@ function updateSyncMetadata(db: QueryExecutor) {
         })
         .where(eq(syncMetadata.id, metadataId));
     } catch (error) {
-      throw new UnexpectedError("メタデータの更新に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "メタデータの更新に失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -410,10 +421,13 @@ function getQueueByIds(db: QueryExecutor) {
           timestamp: row.timestamp,
           sequenceNumber: Number(row.sequenceNumber),
           createdAt: row.createdAt,
-        })
+        }),
       );
     } catch (error) {
-      throw new UnexpectedError("キューアイテムの取得に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "キューアイテムの取得に失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -427,7 +441,10 @@ function deleteQueueItems(db: QueryExecutor) {
     try {
       await db.delete(syncQueue).where(inArray(syncQueue.id, queueIds));
     } catch (error) {
-      throw new UnexpectedError("キューアイテムの削除に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "キューアイテムの削除に失敗しました",
+        error as Error,
+      );
     }
   };
 }

@@ -9,7 +9,7 @@ export const EnqueueSyncResponseSchema = z.object({
       entityId: z.string(),
       operation: z.enum(["create", "update", "delete"]),
       sequenceNumber: z.number(),
-    })
+    }),
   ),
 });
 

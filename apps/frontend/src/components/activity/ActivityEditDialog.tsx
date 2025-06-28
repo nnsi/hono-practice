@@ -3,25 +3,25 @@ import { useEffect } from "react";
 import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import {
-  UpdateActivityRequestSchema,
   type UpdateActivityRequest,
+  UpdateActivityRequestSchema,
 } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
 import {
   Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Form,
   FormField,
   Input,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
 } from "@components/ui";
 
 export const ActivityEditDialog = ({

@@ -7,8 +7,10 @@ export const CheckDuplicatesRequestSchema = z.object({
       entityId: z.string(),
       timestamp: z.string(),
       operation: z.enum(["create", "update", "delete"]),
-    })
+    }),
   ),
 });
 
-export type CheckDuplicatesRequest = z.infer<typeof CheckDuplicatesRequestSchema>;
+export type CheckDuplicatesRequest = z.infer<
+  typeof CheckDuplicatesRequestSchema
+>;

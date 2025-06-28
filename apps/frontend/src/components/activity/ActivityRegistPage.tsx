@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 
 import { Card, CardContent } from "@frontend/components/ui";
 import { useGlobalDate } from "@frontend/hooks";
@@ -9,9 +9,9 @@ import dayjs from "dayjs";
 
 import {
   GetActivitiesResponseSchema,
+  type GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
   type GetActivityResponse,
-  type GetActivityLogsResponse,
 } from "@dtos/response";
 
 import { ActivityDateHeader } from "./ActivityDateHeader";

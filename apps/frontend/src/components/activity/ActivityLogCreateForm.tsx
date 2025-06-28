@@ -1,7 +1,4 @@
-
-import type {
-  CreateActivityLogRequest,
-} from "@dtos/request/CreateActivityLogRequest";
+import type { CreateActivityLogRequest } from "@dtos/request/CreateActivityLogRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
 import {

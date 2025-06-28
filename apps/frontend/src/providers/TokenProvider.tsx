@@ -1,10 +1,10 @@
 import {
   type ReactNode,
   createContext,
-  useState,
   useCallback,
-  useRef,
   useEffect,
+  useRef,
+  useState,
 } from "react";
 
 import { tokenStore } from "@frontend/utils/tokenStore";
@@ -25,7 +25,7 @@ export const TokenContext = createContext<TokenState | undefined>(undefined);
 export const TokenProvider: React.FC<TokenProviderProps> = ({ children }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const setAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
     tokenStore.setToken(token);

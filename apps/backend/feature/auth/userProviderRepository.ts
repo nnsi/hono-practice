@@ -1,7 +1,7 @@
 import {
-  createUserProviderEntity,
-  type UserProvider,
   type Provider,
+  type UserProvider,
+  createUserProviderEntity,
 } from "@backend/domain";
 import { userProviders } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";

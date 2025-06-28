@@ -1,13 +1,13 @@
 import {
-  createSyncMetadataEntity,
-  createSyncQueueEntity,
-  markAsSynced,
-  markAsSyncing,
-  markAsFailed,
   canRetrySync,
   checkForDuplicates,
-  sortBySequence,
+  createSyncMetadataEntity,
+  createSyncQueueEntity,
   groupByEntityType,
+  markAsFailed,
+  markAsSynced,
+  markAsSyncing,
+  sortBySequence,
 } from "@backend/domain/sync";
 import { describe, expect, it } from "vitest";
 
@@ -106,7 +106,7 @@ describe("SyncMetadataEntity", () => {
       const updated = markAsSyncing(baseEntity);
       expect(updated.status).toBe("syncing");
       expect(updated.updatedAt.getTime()).toBeGreaterThan(
-        baseEntity.updatedAt.getTime()
+        baseEntity.updatedAt.getTime(),
       );
     });
 
@@ -226,7 +226,7 @@ describe("SyncQueueEntity", () => {
           operation: "create",
           timestamp: new Date("2024-01-01T10:00:00.500Z"), // 500ms差
         },
-        existingOperations
+        existingOperations,
       );
 
       expect(result.isDuplicate).toBe(true);
@@ -241,7 +241,7 @@ describe("SyncQueueEntity", () => {
           operation: "create",
           timestamp: new Date("2024-01-01T10:00:02Z"), // 2秒差
         },
-        existingOperations
+        existingOperations,
       );
 
       expect(result.isDuplicate).toBe(false);
@@ -256,7 +256,7 @@ describe("SyncQueueEntity", () => {
           operation: "update",
           timestamp: new Date("2024-01-01T10:00:00Z"),
         },
-        existingOperations
+        existingOperations,
       );
 
       expect(result.isDuplicate).toBe(false);

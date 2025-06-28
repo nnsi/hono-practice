@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export const UpdateDebtGoalRequestSchema = z.object({
   dailyTargetQuantity: z.number().positive().optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   endDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

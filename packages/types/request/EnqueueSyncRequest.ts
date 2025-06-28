@@ -9,7 +9,7 @@ export const EnqueueSyncRequestSchema = z.object({
       payload: z.record(z.any()),
       timestamp: z.string(),
       sequenceNumber: z.number().int().min(0),
-    })
+    }),
   ),
 });
 

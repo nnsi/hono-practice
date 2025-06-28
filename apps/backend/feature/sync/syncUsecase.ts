@@ -8,7 +8,6 @@ import { UnexpectedError } from "@backend/error";
 import type { SyncRepository } from "./syncRepository";
 import type {
   DuplicateCheckResult,
-  SyncQueueBatch,
   SyncQueueEntity,
   SyncQueueId,
 } from "@backend/domain/sync";
@@ -21,7 +20,7 @@ export type SyncUsecase = {
       entityId: string;
       timestamp: Date;
       operation: "create" | "update" | "delete";
-    }>
+    }>,
   ): Promise<DuplicateCheckResult[]>;
   getSyncStatus(userId: string): Promise<{
     pendingCount: number;
@@ -37,7 +36,7 @@ export type SyncUsecase = {
     options?: {
       batchSize?: number;
       maxRetries?: number;
-    }
+    },
   ): Promise<{
     processedCount: number;
     failedCount: number;
@@ -52,7 +51,7 @@ export type SyncUsecase = {
       payload: Record<string, any>;
       timestamp: Date;
       sequenceNumber: number;
-    }>
+    }>,
   ): Promise<SyncQueueEntity[]>;
 };
 
@@ -73,10 +72,13 @@ function checkDuplicates(syncRepository: SyncRepository) {
       entityId: string;
       timestamp: Date;
       operation: "create" | "update" | "delete";
-    }>
+    }>,
   ): Promise<DuplicateCheckResult[]> => {
     try {
-      return await syncRepository.findDuplicatesByTimestamps(userId, operations);
+      return await syncRepository.findDuplicatesByTimestamps(
+        userId,
+        operations,
+      );
     } catch (error) {
       throw new UnexpectedError("重複チェックに失敗しました", error as Error);
     }
@@ -84,7 +86,9 @@ function checkDuplicates(syncRepository: SyncRepository) {
 }
 
 function getSyncStatus(syncRepository: SyncRepository) {
-  return async (userId: string): Promise<{
+  return async (
+    userId: string,
+  ): Promise<{
     pendingCount: number;
     syncingCount: number;
     syncedCount: number;
@@ -102,7 +106,9 @@ function getSyncStatus(syncRepository: SyncRepository) {
         status.failedCount;
 
       const syncPercentage =
-        totalCount === 0 ? 100 : Math.round((status.syncedCount / totalCount) * 100);
+        totalCount === 0
+          ? 100
+          : Math.round((status.syncedCount / totalCount) * 100);
 
       return {
         ...status,
@@ -121,7 +127,7 @@ function processSyncQueue(syncRepository: SyncRepository) {
     options?: {
       batchSize?: number;
       maxRetries?: number;
-    }
+    },
   ): Promise<{
     processedCount: number;
     failedCount: number;
@@ -151,22 +157,20 @@ function processSyncQueue(syncRepository: SyncRepository) {
       const failedItems: Array<{ item: SyncQueueEntity; error: string }> = [];
 
       // グループごとに処理
-      for (const [entityType, items] of Object.entries(groupedItems)) {
+      for (const [, items] of Object.entries(groupedItems)) {
         for (const item of items) {
           try {
             // メタデータの状態を「同期中」に更新
-            const metadataId = `${userId}-${item.entityType}-${item.entityId}`;
             const metadata = await syncRepository.getMetadataByEntity(
               userId,
               item.entityType,
-              item.entityId
+              item.entityId,
             );
 
             if (metadata) {
-              await syncRepository.updateSyncMetadata(
-                metadata.id,
-                { status: "syncing" }
-              );
+              await syncRepository.updateSyncMetadata(metadata.id, {
+                status: "syncing",
+              });
             }
 
             // ここで実際のエンティティ固有の同期処理を実行
@@ -195,7 +199,7 @@ function processSyncQueue(syncRepository: SyncRepository) {
             const metadata = await syncRepository.getMetadataByEntity(
               userId,
               item.entityType,
-              item.entityId
+              item.entityId,
             );
 
             if (metadata) {
@@ -226,7 +230,10 @@ function processSyncQueue(syncRepository: SyncRepository) {
         hasMore: batch.hasMore,
       };
     } catch (error) {
-      throw new UnexpectedError("同期キューの処理に失敗しました", error as Error);
+      throw new UnexpectedError(
+        "同期キューの処理に失敗しました",
+        error as Error,
+      );
     }
   };
 }
@@ -241,7 +248,7 @@ function enqueueSyncOperations(syncRepository: SyncRepository) {
       payload: Record<string, any>;
       timestamp: Date;
       sequenceNumber: number;
-    }>
+    }>,
   ): Promise<SyncQueueEntity[]> => {
     try {
       // 重複チェック
@@ -252,12 +259,12 @@ function enqueueSyncOperations(syncRepository: SyncRepository) {
           entityId: op.entityId,
           timestamp: op.timestamp,
           operation: op.operation,
-        }))
+        })),
       );
 
       // 重複していない操作のみエンキュー
       const nonDuplicateOps = operations.filter(
-        (_, index) => !duplicateChecks[index].isDuplicate
+        (_, index) => !duplicateChecks[index].isDuplicate,
       );
 
       if (nonDuplicateOps.length === 0) {
@@ -266,13 +273,16 @@ function enqueueSyncOperations(syncRepository: SyncRepository) {
 
       return await syncRepository.enqueueSync(nonDuplicateOps);
     } catch (error) {
-      throw new UnexpectedError("同期操作のエンキューに失敗しました", error as Error);
+      throw new UnexpectedError(
+        "同期操作のエンキューに失敗しました",
+        error as Error,
+      );
     }
   };
 }
 
 // 実際の同期処理をシミュレート（実装時は各エンティティのリポジトリを呼ぶ）
-async function simulateSyncOperation(item: SyncQueueEntity): Promise<void> {
+async function simulateSyncOperation(_item: SyncQueueEntity): Promise<void> {
   // 実際の実装では、entityTypeに応じて適切なリポジトリのメソッドを呼ぶ
   // 例:
   // switch (item.entityType) {

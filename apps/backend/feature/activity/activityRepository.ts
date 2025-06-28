@@ -1,10 +1,10 @@
 import {
-  ActivityKindsSchema,
-  createActivityEntity,
   type Activity,
   type ActivityId,
   type ActivityKindId,
+  ActivityKindsSchema,
   type UserId,
+  createActivityEntity,
 } from "@backend/domain";
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";

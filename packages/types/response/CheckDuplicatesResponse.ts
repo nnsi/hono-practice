@@ -5,8 +5,10 @@ export const CheckDuplicatesResponseSchema = z.object({
     z.object({
       isDuplicate: z.boolean(),
       conflictingOperationIds: z.array(z.string()).optional(),
-    })
+    }),
   ),
 });
 
-export type CheckDuplicatesResponse = z.infer<typeof CheckDuplicatesResponseSchema>;
+export type CheckDuplicatesResponse = z.infer<
+  typeof CheckDuplicatesResponseSchema
+>;

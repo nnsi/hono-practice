@@ -16,12 +16,12 @@ import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
 import {
-  createTaskRequestSchema,
   type CreateTaskRequest,
+  createTaskRequestSchema,
 } from "@dtos/request/CreateTaskRequest";
 import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 
-import { Card, CardContent, Input, Button } from "@components/ui";
+import { Button, Card, CardContent, Input } from "@components/ui";
 
 interface TaskListProps {
   tasks: GetTaskResponse[] | undefined;
@@ -83,7 +83,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     },
   });
   const handleAddTask = form.handleSubmit((data) =>
-    mutateAddTask({ ...data, startDate: dateStr })
+    mutateAddTask({ ...data, startDate: dateStr }),
   );
 
   return (

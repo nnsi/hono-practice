@@ -89,12 +89,8 @@
           "name": "activity_user_id_user_id_fk",
           "tableFrom": "activity",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -162,12 +158,8 @@
           "name": "activity_kind_activity_id_activity_id_fk",
           "tableFrom": "activity_kind",
           "tableTo": "activity",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -247,12 +239,8 @@
           "name": "activity_log_activity_id_activity_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "activity",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -260,12 +248,8 @@
           "name": "activity_log_activity_kind_id_activity_kind_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "activity_kind",
-          "columnsFrom": [
-            "activity_kind_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_kind_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -326,12 +310,8 @@
           "name": "activity_quantity_options_activity_id_activity_id_fk",
           "tableFrom": "activity_quantity_options",
           "tableTo": "activity",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -406,12 +386,8 @@
           "name": "task_user_id_user_id_fk",
           "tableFrom": "task",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -479,9 +455,7 @@
         "user_login_id_unique": {
           "name": "user_login_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "login_id"
-          ]
+          "columns": ["login_id"]
         }
       },
       "policies": {},

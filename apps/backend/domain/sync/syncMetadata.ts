@@ -5,7 +5,12 @@ export const syncMetadataIdSchema = z.string().brand<"SyncMetadataId">();
 export type SyncMetadataId = z.infer<typeof syncMetadataIdSchema>;
 
 // 同期状態の定義
-export const syncStatusSchema = z.enum(["pending", "syncing", "synced", "failed"]);
+export const syncStatusSchema = z.enum([
+  "pending",
+  "syncing",
+  "synced",
+  "failed",
+]);
 export type SyncStatus = z.infer<typeof syncStatusSchema>;
 
 // SyncMetadataエンティティのスキーマ
@@ -25,22 +30,20 @@ export const syncMetadataEntitySchema = z.object({
 export type SyncMetadataEntity = z.infer<typeof syncMetadataEntitySchema>;
 
 // ファクトリ関数
-export function createSyncMetadataEntity(
-  params: {
-    id: string;
-    userId: string;
-    entityType: string;
-    entityId: string;
-    lastSyncedAt?: Date | null;
-    status?: SyncStatus;
-    errorMessage?: string | null;
-    retryCount?: number;
-    createdAt?: Date;
-    updatedAt?: Date;
-  }
-): SyncMetadataEntity {
+export function createSyncMetadataEntity(params: {
+  id: string;
+  userId: string;
+  entityType: string;
+  entityId: string;
+  lastSyncedAt?: Date | null;
+  status?: SyncStatus;
+  errorMessage?: string | null;
+  retryCount?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}): SyncMetadataEntity {
   const now = new Date();
-  
+
   return syncMetadataEntitySchema.parse({
     id: params.id,
     userId: params.userId,
@@ -56,11 +59,16 @@ export function createSyncMetadataEntity(
 }
 
 // ヘルパー関数
-export function canRetrySync(metadata: SyncMetadataEntity, maxRetries = 3): boolean {
+export function canRetrySync(
+  metadata: SyncMetadataEntity,
+  maxRetries = 3,
+): boolean {
   return metadata.status === "failed" && metadata.retryCount < maxRetries;
 }
 
-export function markAsSyncing(metadata: SyncMetadataEntity): SyncMetadataEntity {
+export function markAsSyncing(
+  metadata: SyncMetadataEntity,
+): SyncMetadataEntity {
   return {
     ...metadata,
     status: "syncing",
@@ -81,7 +89,7 @@ export function markAsSynced(metadata: SyncMetadataEntity): SyncMetadataEntity {
 
 export function markAsFailed(
   metadata: SyncMetadataEntity,
-  errorMessage: string
+  errorMessage: string,
 ): SyncMetadataEntity {
   return {
     ...metadata,

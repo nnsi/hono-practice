@@ -24,19 +24,17 @@ export const syncQueueEntitySchema = z.object({
 export type SyncQueueEntity = z.infer<typeof syncQueueEntitySchema>;
 
 // ファクトリ関数
-export function createSyncQueueEntity(
-  params: {
-    id: string;
-    userId: string;
-    entityType: string;
-    entityId: string;
-    operation: SyncOperation;
-    payload: Record<string, any>;
-    timestamp: Date;
-    sequenceNumber: number;
-    createdAt?: Date;
-  }
-): SyncQueueEntity {
+export function createSyncQueueEntity(params: {
+  id: string;
+  userId: string;
+  entityType: string;
+  entityId: string;
+  operation: SyncOperation;
+  payload: Record<string, any>;
+  timestamp: Date;
+  sequenceNumber: number;
+  createdAt?: Date;
+}): SyncQueueEntity {
   return syncQueueEntitySchema.parse({
     id: params.id,
     userId: params.userId,
@@ -63,20 +61,23 @@ export function sortBySequence(items: SyncQueueEntity[]): SyncQueueEntity[] {
 }
 
 export function groupByEntityType(
-  items: SyncQueueEntity[]
+  items: SyncQueueEntity[],
 ): Record<string, SyncQueueEntity[]> {
-  return items.reduce((acc, item) => {
-    if (!acc[item.entityType]) {
-      acc[item.entityType] = [];
-    }
-    acc[item.entityType].push(item);
-    return acc;
-  }, {} as Record<string, SyncQueueEntity[]>);
+  return items.reduce(
+    (acc, item) => {
+      if (!acc[item.entityType]) {
+        acc[item.entityType] = [];
+      }
+      acc[item.entityType].push(item);
+      return acc;
+    },
+    {} as Record<string, SyncQueueEntity[]>,
+  );
 }
 
 export function isConflictingOperation(
   op1: SyncQueueEntity,
-  op2: SyncQueueEntity
+  op2: SyncQueueEntity,
 ): boolean {
   // 同じエンティティに対する操作の競合をチェック
   return (
@@ -93,21 +94,24 @@ export type DuplicateCheckResult = {
 };
 
 export function checkForDuplicates(
-  newOperation: Pick<SyncQueueEntity, "entityType" | "entityId" | "timestamp" | "operation">,
-  existingOperations: SyncQueueEntity[]
+  newOperation: Pick<
+    SyncQueueEntity,
+    "entityType" | "entityId" | "timestamp" | "operation"
+  >,
+  existingOperations: SyncQueueEntity[],
 ): DuplicateCheckResult {
   // タイムスタンプの許容誤差（ミリ秒）
   const TIMESTAMP_TOLERANCE_MS = 1000;
 
-  const conflicts = existingOperations.filter(existing => {
-    const isSameEntity = 
+  const conflicts = existingOperations.filter((existing) => {
+    const isSameEntity =
       existing.entityType === newOperation.entityType &&
       existing.entityId === newOperation.entityId;
-    
+
     const isSameOperation = existing.operation === newOperation.operation;
-    
+
     const timeDiff = Math.abs(
-      existing.timestamp.getTime() - newOperation.timestamp.getTime()
+      existing.timestamp.getTime() - newOperation.timestamp.getTime(),
     );
     const isWithinTolerance = timeDiff <= TIMESTAMP_TOLERANCE_MS;
 

@@ -1,5 +1,5 @@
-import type { QueryExecutor } from "./drizzleInstance";
 import type { TransactionRunner } from "../db";
+import type { QueryExecutor } from "./drizzleInstance";
 
 export function newDrizzleTransactionRunner(
   db: QueryExecutor,

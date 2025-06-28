@@ -8,10 +8,12 @@ export const isTimeUnit = (unit: string | null | undefined): boolean => {
 // 時間単位の種別を取得
 export type TimeUnitType = "hour" | "minute" | "second" | null;
 
-export const getTimeUnitType = (unit: string | null | undefined): TimeUnitType => {
+export const getTimeUnitType = (
+  unit: string | null | undefined,
+): TimeUnitType => {
   if (!unit) return null;
   const lowerUnit = unit.toLowerCase();
-  
+
   if (lowerUnit.includes("時") || lowerUnit.includes("hour")) {
     return "hour";
   }
@@ -25,7 +27,10 @@ export const getTimeUnitType = (unit: string | null | undefined): TimeUnitType =
 };
 
 // 秒数を指定された単位に変換
-export const convertSecondsToUnit = (seconds: number, unitType: TimeUnitType): number => {
+export const convertSecondsToUnit = (
+  seconds: number,
+  unitType: TimeUnitType,
+): number => {
   switch (unitType) {
     case "hour":
       return Math.round((seconds / 3600) * 100) / 100; // 小数点2桁まで
@@ -45,6 +50,6 @@ export const generateTimeMemo = (startTime: Date, endTime: Date): string => {
     const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
-  
+
   return `${formatTime(startTime)} - ${formatTime(endTime)}`;
 };

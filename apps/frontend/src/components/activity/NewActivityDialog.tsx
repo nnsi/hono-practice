@@ -1,7 +1,7 @@
 import { apiClient } from "@frontend/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import {
   type CreateActivityRequest,
@@ -9,17 +9,17 @@ import {
 } from "@dtos/request/CreateActivityRequest";
 
 import {
+  Button,
   Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogContent,
   Form,
   FormField,
   Input,
-  Button,
   useToast,
-  DialogFooter,
-  DialogClose,
 } from "@components/ui";
 
 export function NewActivityDialog({

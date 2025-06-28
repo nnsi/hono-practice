@@ -39,7 +39,7 @@ export const useTimer = (activityId: string): UseTimerReturn => {
           setElapsedTime(elapsed);
           setStartTime(data.startTime);
           setIsRunning(true);
-          
+
           // 復元時にトースト通知
           toast({
             title: "タイマー継続中",
@@ -110,21 +110,26 @@ export const useTimer = (activityId: string): UseTimerReturn => {
     if (!isRunning) {
       // 他のタブで同じActivityのタイマーが動いていないかチェック
       const allTimers = Object.keys(localStorage)
-        .filter(key => key.startsWith("timer_"))
-        .map(key => {
+        .filter((key) => key.startsWith("timer_"))
+        .map((key) => {
           try {
-            return JSON.parse(localStorage.getItem(key) || "{}") as TimerPersistData;
+            return JSON.parse(
+              localStorage.getItem(key) || "{}",
+            ) as TimerPersistData;
           } catch {
             return null;
           }
         })
         .filter(Boolean);
 
-      const runningTimer = allTimers.find(timer => timer?.isRunning && timer?.activityId !== activityId);
+      const runningTimer = allTimers.find(
+        (timer) => timer?.isRunning && timer?.activityId !== activityId,
+      );
       if (runningTimer) {
         toast({
           title: "別のタイマーが実行中",
-          description: "他のタブでタイマーが実行中です。複数のタイマーを同時に実行することはできません。",
+          description:
+            "他のタブでタイマーが実行中です。複数のタイマーを同時に実行することはできません。",
           variant: "destructive",
         });
         return;

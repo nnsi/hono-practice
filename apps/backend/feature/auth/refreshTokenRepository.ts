@@ -1,8 +1,8 @@
 import { DomainValidateError } from "@backend/error";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import {
-  refreshTokenSchema,
   type RefreshToken,
+  refreshTokenSchema,
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";

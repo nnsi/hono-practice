@@ -2,10 +2,10 @@ import { createUserEntity } from "@backend/domain/user/user";
 import { createUserId } from "@backend/domain/user/userId";
 import { hashWithSHA256 } from "@backend/lib/hash";
 // Use only ts-mockito imports for mocking repos and verifier
-import { mock, instance, when, verify, anything } from "ts-mockito";
+import { anything, instance, mock, verify, when } from "ts-mockito";
 // Remove vitest mocking imports, keep test runner imports
 import { v7 } from "uuid";
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { AuthError } from "../../../error";
 import { newAuthUsecase } from "../authUsecase";

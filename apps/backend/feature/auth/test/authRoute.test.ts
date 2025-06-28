@@ -12,7 +12,7 @@ import { refreshTokens, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { v7 } from "uuid";
-import { expect, describe, it, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createAuthRoute, newAuthHandler } from "..";
 import { newUserRepository } from "../../user";

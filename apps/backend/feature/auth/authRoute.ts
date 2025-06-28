@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { setCookie, getCookie } from "hono/cookie";
+import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
-import { loginRequestSchema, googleLoginRequestSchema } from "@dtos/request";
+import { googleLoginRequestSchema, loginRequestSchema } from "@dtos/request";
 
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
