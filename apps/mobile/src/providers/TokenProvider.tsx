@@ -4,8 +4,11 @@ import React, {
   useState,
   useCallback,
   useRef,
+  useEffect,
   type ReactNode,
 } from "react";
+
+import { AppState, type AppStateStatus } from "react-native";
 
 import { calculateRefreshTime, tokenStore } from "@packages/auth-core";
 
@@ -58,6 +61,36 @@ export function TokenProvider({ children }: { children: ReactNode }) {
       }
     }, refreshTime);
   }, []);
+
+  // AppStateの変更を監視
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState === "active" && accessToken) {
+          console.log("App became active, checking token validity");
+
+          // トークンの有効期限をチェック
+          const refreshTime = calculateRefreshTime(accessToken);
+          if (refreshTime && refreshTime <= 0) {
+            // トークンの有効期限が切れている場合、即座にリフレッシュ
+            console.log("Token expired, triggering immediate refresh");
+            if (typeof window !== "undefined" && window.dispatchEvent) {
+              window.dispatchEvent(new Event("token-refresh-needed"));
+            }
+          } else if (refreshTime) {
+            // まだ有効な場合は、リフレッシュを再スケジュール
+            console.log("Token still valid, rescheduling refresh");
+            scheduleTokenRefresh(accessToken);
+          }
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [accessToken, scheduleTokenRefresh]);
 
   return (
     <TokenContext.Provider

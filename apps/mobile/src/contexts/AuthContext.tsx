@@ -10,7 +10,7 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useToken } from "../providers/TokenProvider";
-import { apiClient } from "../services/apiClient";
+import { apiClient } from "../utils/apiClient";
 
 import type { User } from "@packages/auth-core";
 

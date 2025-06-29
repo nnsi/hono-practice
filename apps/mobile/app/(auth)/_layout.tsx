@@ -18,7 +18,7 @@ export default function AuthLayout() {
 
   // 認証済みの場合はホーム画面へリダイレクト
   if (user) {
-    return <Redirect href="/(app)/(tabs)" />;
+    return <Redirect href="/(app)" />;
   }
 
   return (
