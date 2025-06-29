@@ -16,16 +16,16 @@ export function getApiUrl(): string {
     if (Platform.OS === "android") {
       // Androidエミュレータの場合
       // 10.0.2.2 はAndroidエミュレータからホストマシンへのエイリアス
-      return "http://10.0.2.2:3456";
+      return "http://10.0.2.2:3456/";
     }
     if (Platform.OS === "ios") {
       // iOSシミュレータの場合
       // シミュレータはホストマシンと同じネットワークスペースを共有
-      return "http://localhost:3456";
+      return "http://localhost:3456/";
     }
     if (Platform.OS === "web") {
       // Webブラウザの場合
-      return "http://localhost:3456";
+      return "http://localhost:3456/";
     }
   }
 
@@ -35,11 +35,11 @@ export function getApiUrl(): string {
   if (debuggerHost) {
     // debuggerHostは "192.168.1.100:8081" のような形式
     const hostname = debuggerHost.split(":")[0];
-    return `http://${hostname}:3456`;
+    return `http://${hostname}:3456/`;
   }
 
   // フォールバック
-  return "http://localhost:3456";
+  return "http://localhost:3456/";
 }
 
 /**

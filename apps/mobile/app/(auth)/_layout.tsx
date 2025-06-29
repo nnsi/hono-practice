@@ -1,6 +1,6 @@
 import { ActivityIndicator, View } from "react-native";
 
-import { Stack , Redirect } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 
 import { useAuth } from "../../src/hooks/useAuth";
 
@@ -18,7 +18,7 @@ export default function AuthLayout() {
 
   // 認証済みの場合はホーム画面へリダイレクト
   if (user) {
-    return <Redirect href="/(app)/home" />;
+    return <Redirect href="/(app)/(tabs)" />;
   }
 
   return (

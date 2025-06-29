@@ -1,125 +1,176 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import { useAuth } from "../hooks/useAuth";
+import type {
+  GetActivityLogsResponse,
+  GetActivityResponse,
+} from "@dtos/response";
 
-type Activity = {
-  id: string;
-  emoji: string;
-  name: string;
-  value: number;
-  unit: string;
-  time: string;
-};
+import {
+  ActivityEditDialog,
+  ActivityLogCreateDialog,
+  NewActivityDialog,
+} from "../components/activity";
+import { useActivities, useGlobalDate } from "../hooks";
 
 export function HomeScreen() {
-  const { user } = useAuth();
-  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const { date, setDate } = useGlobalDate();
+  const [selectedActivity, setSelectedActivity] =
+    useState<GetActivityResponse | null>(null);
+  const [newActivityModalOpen, setNewActivityModalOpen] = useState(false);
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTargetActivity, setEditTargetActivity] =
+    useState<GetActivityResponse | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const { activities, activityLogs, isLoading, error } = useActivities(date);
+
+  const handleActivityClick = (activity: GetActivityResponse) => {
+    setSelectedActivity(activity);
+    setLogModalOpen(true);
+  };
+
+  const handleNewActivityClick = () => {
+    setNewActivityModalOpen(true);
+  };
+
+  const handleActivityCardPressIn = (activity: GetActivityResponse) => {
+    longPressTimer.current = setTimeout(() => {
+      setEditTargetActivity(activity);
+      setEditModalOpen(true);
+    }, 700);
+  };
+
+  const handleActivityCardPressOut = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const renderActivityCard = ({
+    item,
+  }: { item: GetActivityResponse | "new" }) => {
+    if (item === "new") {
+      return (
+        <TouchableOpacity
+          className="bg-white rounded-3xl p-6 m-2 shadow-md items-center justify-center aspect-square"
+          onPress={handleNewActivityClick}
+        >
+          <Ionicons name="add" size={64} color="#000" />
+        </TouchableOpacity>
+      );
+    }
+
+    const hasActivityLogs = activityLogs.some(
+      (log: GetActivityLogsResponse[number]) => log.activity.id === item.id,
+    );
+
+    return (
+      <Pressable
+        className={`rounded-3xl p-6 m-2 shadow-md items-center justify-center aspect-square ${
+          hasActivityLogs ? "bg-lime-100" : "bg-white"
+        }`}
+        onPress={() => handleActivityClick(item)}
+        onPressIn={() => handleActivityCardPressIn(item)}
+        onPressOut={handleActivityCardPressOut}
+      >
+        <Text className="text-5xl mb-2">{item.emoji}</Text>
+        <Text className="text-sm text-gray-800 font-medium text-center">
+          {item.name}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  const activityData: (GetActivityResponse | "new")[] = [...activities, "new"];
+
+  const goToPreviousDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() - 1);
+    setDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + 1);
+    setDate(newDate);
+  };
+
+  const goToToday = () => {
+    setDate(new Date());
+  };
+
+  const isToday = new Date(date).toDateString() === new Date().toDateString();
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-4">
-        {/* ウェルカムメッセージ */}
-        <View className="bg-white rounded-lg p-6 mb-4 border border-gray-200">
-          <Text className="text-2xl font-bold text-gray-900">
-            こんにちは、{user?.name || "ユーザー"}さん！
-          </Text>
-          <Text className="text-gray-600 mt-2">
-            今日も活動を記録していきましょう
-          </Text>
-        </View>
+    <View className="flex-1 bg-gray-50">
+      {/* Date Header */}
+      <View className="bg-white px-4 py-3 border-b border-gray-200">
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity onPress={goToPreviousDay} className="p-2">
+            <Ionicons name="chevron-back" size={24} color="#374151" />
+          </TouchableOpacity>
 
-        {/* クイックアクション */}
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            クイックアクション
-          </Text>
-          <View className="flex-row justify-between">
-            <TouchableOpacity className="bg-blue-600 rounded-lg p-4 flex-1 mr-2">
-              <View className="items-center">
-                <Ionicons name="add-circle-outline" size={28} color="white" />
-                <Text className="text-white font-medium mt-2">記録する</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-green-600 rounded-lg p-4 flex-1 ml-2">
-              <View className="items-center">
-                <Ionicons name="timer-outline" size={28} color="white" />
-                <Text className="text-white font-medium mt-2">タイマー</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 今日の活動サマリー */}
-        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            今日の活動
-          </Text>
-          <View className="flex-row justify-around">
-            <View className="items-center">
-              <Text className="text-3xl font-bold text-blue-600">0</Text>
-              <Text className="text-gray-600 text-sm">記録数</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-3xl font-bold text-green-600">0</Text>
-              <Text className="text-gray-600 text-sm">活動種類</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-3xl font-bold text-purple-600">0</Text>
-              <Text className="text-gray-600 text-sm">連続日数</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 最近の活動 */}
-        <View>
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            最近の活動
-          </Text>
-          {recentActivities.length === 0 ? (
-            <View className="bg-white rounded-lg p-8 items-center border border-gray-200">
-              <Ionicons name="time-outline" size={48} color="#9ca3af" />
-              <Text className="text-gray-500 text-center mt-4">
-                まだ活動記録がありません
+          <TouchableOpacity onPress={goToToday} className="flex-1">
+            <Text className="text-lg font-medium text-center">
+              {new Date(date).toLocaleDateString("ja-JP", {
+                month: "long",
+                day: "numeric",
+                weekday: "short",
+              })}
+            </Text>
+            {!isToday && (
+              <Text className="text-xs text-gray-500 text-center">
+                タップして今日に戻る
               </Text>
-              <TouchableOpacity className="mt-4 bg-blue-100 px-4 py-2 rounded-lg">
-                <Text className="text-blue-600 font-medium">
-                  最初の記録を追加
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View className="space-y-2">
-              {recentActivities.map((activity) => (
-                <View
-                  key={activity.id}
-                  className="bg-white rounded-lg p-4 border border-gray-200"
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <Text className="text-2xl mr-3">{activity.emoji}</Text>
-                      <View>
-                        <Text className="text-gray-900 font-medium">
-                          {activity.name}
-                        </Text>
-                        <Text className="text-gray-500 text-sm">
-                          {activity.value} {activity.unit}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="text-gray-400 text-sm">
-                      {activity.time}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={goToNextDay} className="p-2">
+            <Ionicons name="chevron-forward" size={24} color="#374151" />
+          </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+
+      {/* Activity Grid */}
+      <FlatList
+        data={activityData}
+        renderItem={renderActivityCard}
+        keyExtractor={(item) => (item === "new" ? "new" : item.id)}
+        numColumns={2}
+        contentContainerStyle={{ padding: 8 }}
+        columnWrapperStyle={{ justifyContent: "space-between" }}
+      />
+
+      {/* Dialogs */}
+      <NewActivityDialog
+        open={newActivityModalOpen}
+        onOpenChange={setNewActivityModalOpen}
+      />
+      {selectedActivity && (
+        <ActivityLogCreateDialog
+          open={logModalOpen}
+          onOpenChange={setLogModalOpen}
+          activity={selectedActivity}
+          date={date}
+        />
+      )}
+      <ActivityEditDialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        activity={editTargetActivity}
+      />
+    </View>
   );
 }

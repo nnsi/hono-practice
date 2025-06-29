@@ -1,6 +1,6 @@
 import { ActivityIndicator, View } from "react-native";
 
-import { Redirect , Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 
 import { useAuth } from "../../src/hooks/useAuth";
 

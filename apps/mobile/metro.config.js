@@ -22,6 +22,7 @@ config.resolver.nodeModulesPaths = [
 config.resolver.extraNodeModules = {
   '@packages/auth-core': path.resolve(monorepoRoot, 'packages/auth-core'),
   '@backend': path.resolve(monorepoRoot, 'apps/backend'),
+  '@dtos': path.resolve(monorepoRoot, 'packages/types'),
 };
 
 // Webサポートの設定
