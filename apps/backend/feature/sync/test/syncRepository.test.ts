@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newSyncRepository } from "../syncRepository";
 
@@ -65,14 +65,17 @@ describe("SyncRepository", () => {
         }),
       } as any);
 
-      const results = await syncRepository.findDuplicatesByTimestamps("user-123", [
-        {
-          entityType: "activity",
-          entityId: "activity-1",
-          timestamp: new Date("2024-01-01T10:00:00.500Z"),
-          operation: "create",
-        },
-      ]);
+      const results = await syncRepository.findDuplicatesByTimestamps(
+        "user-123",
+        [
+          {
+            entityType: "activity",
+            entityId: "activity-1",
+            timestamp: new Date("2024-01-01T10:00:00.500Z"),
+            operation: "create",
+          },
+        ],
+      );
 
       expect(results).toHaveLength(1);
       expect(results[0].isDuplicate).toBe(true);
@@ -163,15 +166,18 @@ describe("SyncRepository", () => {
       const queueIds = ["queue-1", "queue-2"];
 
       // モックの設定
-      vi.mocked(mockQueryExecutor.select).mockImplementation(() => ({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]),
-          }),
-        }),
-      }) as any);
+      vi.mocked(mockQueryExecutor.select).mockImplementation(
+        () =>
+          ({
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }) as any,
+      );
 
-      await syncRepository.markAsSynced(queueIds);
+      await syncRepository.markAsSynced(queueIds as any);
 
       expect(mockQueryExecutor.transaction).toHaveBeenCalled();
     });
@@ -203,7 +209,7 @@ describe("SyncRepository", () => {
       const result = await syncRepository.getMetadataByEntity(
         "user-123",
         "activity",
-        "activity-1"
+        "activity-1",
       );
 
       expect(result).not.toBeNull();
@@ -223,7 +229,7 @@ describe("SyncRepository", () => {
       const result = await syncRepository.getMetadataByEntity(
         "user-123",
         "activity",
-        "nonexistent"
+        "nonexistent",
       );
 
       expect(result).toBeNull();

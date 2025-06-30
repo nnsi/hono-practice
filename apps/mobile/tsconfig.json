@@ -1,0 +1,13 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsxImportSource": "nativewind",
+    "baseUrl": ".",
+    "paths": {
+      "@backend/*": ["../backend/*"],
+      "@dtos/*": ["../../packages/types/*"],
+      "@packages/*": ["../../packages/*"]
+    }
+  }
+}

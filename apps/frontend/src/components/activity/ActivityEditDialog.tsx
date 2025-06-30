@@ -3,25 +3,29 @@ import { useEffect } from "react";
 import { apiClient } from "@frontend/utils/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import {
-  UpdateActivityRequestSchema,
   type UpdateActivityRequest,
+  UpdateActivityRequestSchema,
 } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
 import {
   Button,
-  Form,
-  FormField,
-  Input,
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
+  EmojiPicker,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  Input,
 } from "@components/ui";
 
 export const ActivityEditDialog = ({
@@ -124,24 +128,50 @@ export const ActivityEditDialog = ({
             <FormField
               control={form.control}
               name="activity.name"
-              render={({ field }) => <Input {...field} placeholder="名前" />}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input {...field} placeholder="名前" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <FormField
               control={form.control}
               name="activity.quantityUnit"
               render={({ field }) => (
-                <Input {...field} placeholder="単位（例: 回, 分, km など）" />
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="単位（例: 回, 分, km など）"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="activity.emoji"
               render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="絵文字"
-                  className="w-20 text-center"
-                />
+                <FormItem>
+                  <FormControl>
+                    <EmojiPicker
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                    >
+                      <Input
+                        value={field.value || ""}
+                        placeholder="絵文字を選択"
+                        className="w-32 text-center cursor-pointer"
+                        readOnly
+                      />
+                    </EmojiPicker>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
             <FormField

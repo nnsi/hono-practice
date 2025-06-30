@@ -1,7 +1,7 @@
 import { apiClient } from "@frontend/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import {
   type CreateActivityRequest,
@@ -9,17 +9,21 @@ import {
 } from "@dtos/request/CreateActivityRequest";
 
 import {
+  Button,
   Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogContent,
+  EmojiPicker,
   Form,
+  FormControl,
   FormField,
+  FormItem,
+  FormMessage,
   Input,
-  Button,
   useToast,
-  DialogFooter,
-  DialogClose,
 } from "@components/ui";
 
 export function NewActivityDialog({
@@ -88,24 +92,50 @@ export function NewActivityDialog({
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => <Input {...field} placeholder="名前" />}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input {...field} placeholder="名前" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <FormField
               control={form.control}
               name="quantityUnit"
               render={({ field }) => (
-                <Input {...field} placeholder="単位（例: 回, 分, km など）" />
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="単位（例: 回, 分, km など）"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="emoji"
               render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="絵文字"
-                  className="w-20 text-center"
-                />
+                <FormItem>
+                  <FormControl>
+                    <EmojiPicker
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                    >
+                      <Input
+                        value={field.value || ""}
+                        placeholder="絵文字を選択"
+                        className="w-32 text-center cursor-pointer"
+                        readOnly
+                      />
+                    </EmojiPicker>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
             <FormField

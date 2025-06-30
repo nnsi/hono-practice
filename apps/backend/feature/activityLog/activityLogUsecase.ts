@@ -3,10 +3,10 @@ import {
   type ActivityKindId,
   type ActivityLog,
   type ActivityLogId,
+  type UserId,
   createActivityKindId,
   createActivityLogEntity,
   createActivityLogId,
-  type UserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 

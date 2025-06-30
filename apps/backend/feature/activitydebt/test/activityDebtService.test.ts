@@ -1,11 +1,9 @@
 import {
   type UserId,
-  type ActivityId,
-  type ActivityDebtId,
-  createUserId,
-  createActivityId,
-  createActivityDebtId,
   createActivityDebtEntity,
+  createActivityId,
+  createActivityLogId,
+  createUserId,
 } from "@backend/domain";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -26,7 +24,7 @@ describe("ActivityDebtService", () => {
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
-  const debtId1 = createActivityDebtId("00000000-0000-4000-8000-000000000002");
+  const debtId1 = "00000000-0000-4000-8000-000000000002" as any;
 
   const mockDebtEntity = createActivityDebtEntity({
     type: "persisted",
@@ -44,25 +42,73 @@ describe("ActivityDebtService", () => {
 
   const mockActivityLogs = [
     {
-      id: "log1",
+      type: "persisted" as const,
+      id: createActivityLogId("00000000-0000-4000-8000-000000000003"),
       userId: userId1,
-      activity: { id: activityId1, name: "Test Activity" },
+      activity: {
+        type: "persisted" as const,
+        id: activityId1,
+        name: "Test Activity",
+        userId: userId1,
+        color: "#000000",
+        emoji: "🏃",
+        order: 0,
+        isDeleted: false,
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
+      },
+      activityKind: null,
       quantity: 5,
-      logDate: "2024-01-01",
+      memo: null,
+      date: "2024-01-01",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
     },
     {
-      id: "log2",
+      type: "persisted" as const,
+      id: createActivityLogId("00000000-0000-4000-8000-000000000004"),
       userId: userId1,
-      activity: { id: activityId1, name: "Test Activity" },
+      activity: {
+        type: "persisted" as const,
+        id: activityId1,
+        name: "Test Activity",
+        userId: userId1,
+        color: "#000000",
+        emoji: "🏃",
+        order: 0,
+        isDeleted: false,
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
+      },
+      activityKind: null,
       quantity: 8,
-      logDate: "2024-01-02",
+      memo: null,
+      date: "2024-01-02",
+      createdAt: new Date("2024-01-02T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     },
     {
-      id: "log3",
+      type: "persisted" as const,
+      id: createActivityLogId("00000000-0000-4000-8000-000000000005"),
       userId: userId1,
-      activity: { id: activityId1, name: "Test Activity" },
+      activity: {
+        type: "persisted" as const,
+        id: activityId1,
+        name: "Test Activity",
+        userId: userId1,
+        color: "#000000",
+        emoji: "🏃",
+        order: 0,
+        isDeleted: false,
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
+      },
+      activityKind: null,
       quantity: 12,
-      logDate: "2024-01-03",
+      memo: null,
+      date: "2024-01-03",
+      createdAt: new Date("2024-01-03T00:00:00Z"),
+      updatedAt: new Date("2024-01-03T00:00:00Z"),
     },
   ];
 

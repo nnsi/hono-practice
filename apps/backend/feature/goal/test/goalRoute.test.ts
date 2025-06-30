@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { testClient } from "hono/testing";
 
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
@@ -10,7 +9,9 @@ import { createGoalRoute } from "../goalRoute";
 
 test("GET goals / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -22,7 +23,9 @@ test("GET goals / success", async () => {
 
 test("GET goals / with type filter", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -36,7 +39,9 @@ test("GET goals / with type filter", async () => {
 
 test("GET goals / with activity filter", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -50,7 +55,9 @@ test("GET goals / with activity filter", async () => {
 
 test("POST debt goal / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -69,7 +76,9 @@ test("POST debt goal / success", async () => {
 
 test("POST monthly goal / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -88,7 +97,9 @@ test("POST monthly goal / success", async () => {
 
 test("PUT debt goal / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -119,7 +130,9 @@ test("PUT debt goal / success", async () => {
 
 test("PUT monthly goal / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -179,7 +192,9 @@ test("DELETE goal / success", async () => {
 
 test("PUT debt goal / validation error", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -212,10 +227,9 @@ test("DELETE goal / not found", async () => {
 
 test("GET goals/:type/:id / success for debt goal", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
 
   // Honoクライアントではなく、手動でリクエストを作成
   // 型安全性の問題を回避
@@ -236,7 +250,9 @@ test("GET goals/:type/:id / success for debt goal", async () => {
 
 test("GET goals/:type/:id / invalid type", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -253,7 +269,9 @@ test("GET goals/:type/:id / invalid type", async () => {
 
 test("POST goals/debt / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -272,7 +290,9 @@ test("POST goals/debt / success", async () => {
 
 test("POST goals/debt / validation error", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -291,7 +311,9 @@ test("POST goals/debt / validation error", async () => {
 
 test("POST goals/monthly / success", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -310,7 +332,9 @@ test("POST goals/monthly / success", async () => {
 
 test("POST goals/monthly / validation error", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });
@@ -372,7 +396,9 @@ test("DELETE goals/:type/:id / not implemented", async () => {
 
 test("DELETE goals/:type/:id / invalid type", async () => {
   const route = createGoalRoute();
-  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
   const client = testClient(app, {
     DB: testDB,
   });

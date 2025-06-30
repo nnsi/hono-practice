@@ -6,13 +6,13 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
+  BarChart,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
@@ -167,29 +167,31 @@ export const ActivityStatsPage: React.FC = () => {
                 {stat.showCombinedStats &&
                   ` (合計: ${stat.total} ${stat.quantityUnit})`}
               </h2>
-              {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
+              {!(
+                stat.kinds.length === 1 && stat.kinds[0].name === "未指定"
+              ) && (
                 <div className="mb-6">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {stat.kinds.map((kind) => (
-                    <div
-                      key={kind.id || kind.name}
-                      className="bg-white rounded-lg p-3 border shadow-sm"
-                    >
-                      <div className="text-sm text-gray-600 mb-1">
-                        {kind.name}
-                      </div>
                       <div
-                        className="text-xl font-bold"
-                        style={{
-                          color: getColorForKind(kind.name),
-                        }}
+                        key={kind.id || kind.name}
+                        className="bg-white rounded-lg p-3 border shadow-sm"
                       >
-                        {kind.total}
-                        <span className="text-sm font-normal text-gray-500 ml-1">
-                          {stat.quantityUnit}
-                        </span>
+                        <div className="text-sm text-gray-600 mb-1">
+                          {kind.name}
+                        </div>
+                        <div
+                          className="text-xl font-bold"
+                          style={{
+                            color: getColorForKind(kind.name),
+                          }}
+                        >
+                          {kind.total}
+                          <span className="text-sm font-normal text-gray-500 ml-1">
+                            {stat.quantityUnit}
+                          </span>
+                        </div>
                       </div>
-                    </div>
                     ))}
                   </div>
                 </div>
@@ -228,10 +230,12 @@ export const ActivityStatsPage: React.FC = () => {
                           </h4>
                           <ActivityChart
                             data={kindData}
-                            dataKeys={[{
-                              name: kind.name,
-                              color: getColorForKind(kind.name),
-                            }]}
+                            dataKeys={[
+                              {
+                                name: kind.name,
+                                color: getColorForKind(kind.name),
+                              },
+                            ]}
                             height={250}
                             showLegend={false}
                           />

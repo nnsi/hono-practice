@@ -28,7 +28,7 @@ export function createTaskRoute() {
     const db = c.env.DB;
 
     const repo = newTaskRepository(db);
-    const uc = newTaskUsecase(repo);
+    const uc = newTaskUsecase(repo as any);
     const h = newTaskHandler(uc);
 
     c.set("h", h);

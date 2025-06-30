@@ -1,4 +1,4 @@
-import { createUserEntity, type User, type UserId } from "@backend/domain";
+import { type User, type UserId, createUserEntity } from "@backend/domain";
 import { users } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 

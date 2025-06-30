@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  DEFAULT_TIMEZONE,
+  formatDateInTimezone,
   getCurrentDateInTimezone,
   getDaysBetweenInTimezone,
   getEndOfDayInTimezone,
   getStartOfDayInTimezone,
-  formatDateInTimezone,
 } from "./timezone";
 
 describe("timezone utils", () => {
@@ -17,8 +16,8 @@ describe("timezone utils", () => {
     });
 
     it("should throw error for non-JST timezone", () => {
-      expect(() => 
-        getStartOfDayInTimezone("2024-01-01", "America/New_York")
+      expect(() =>
+        getStartOfDayInTimezone("2024-01-01", "America/New_York"),
       ).toThrow("Timezone America/New_York is not supported yet");
     });
   });
@@ -80,13 +79,13 @@ describe("timezone utils", () => {
       // JST 2024-01-01 23:59 = UTC 2024-01-01 14:59
       const beforeMidnight = new Date("2024-01-01T14:59:00Z");
       const afterMidnight = new Date("2024-01-01T15:01:00Z");
-      
+
       const beforeDate = formatDateInTimezone(beforeMidnight);
       const afterDate = formatDateInTimezone(afterMidnight);
-      
+
       expect(beforeDate).toBe("2024-01-01");
       expect(afterDate).toBe("2024-01-02");
-      
+
       // Day count should increase
       const days = getDaysBetweenInTimezone(beforeDate, afterDate);
       expect(days).toBe(2); // 1月1日と1月2日の2日間

@@ -120,12 +120,8 @@
           "name": "activity_user_id_user_id_fk",
           "tableFrom": "activity",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -209,12 +205,8 @@
           "name": "activity_kind_activity_id_activity_id_fk",
           "tableFrom": "activity_kind",
           "tableTo": "activity",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -352,12 +344,8 @@
           "name": "activity_log_user_id_user_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -365,12 +353,8 @@
           "name": "activity_log_activity_id_activity_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "activity",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -378,12 +362,8 @@
           "name": "activity_log_activity_kind_id_activity_kind_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "activity_kind",
-          "columnsFrom": [
-            "activity_kind_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_kind_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -493,12 +473,8 @@
           "name": "refresh_token_user_id_user_id_fk",
           "tableFrom": "refresh_token",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -508,9 +484,7 @@
         "refresh_token_selector_unique": {
           "name": "refresh_token_selector_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "selector"
-          ]
+          "columns": ["selector"]
         }
       },
       "policies": {},
@@ -618,12 +592,8 @@
           "name": "task_user_id_user_id_fk",
           "tableFrom": "task",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -696,12 +666,8 @@
           "name": "user_provider_user_id_user_id_fk",
           "tableFrom": "user_provider",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -785,9 +751,7 @@
         "user_login_id_unique": {
           "name": "user_login_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "login_id"
-          ]
+          "columns": ["login_id"]
         }
       },
       "policies": {},

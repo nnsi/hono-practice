@@ -17,7 +17,7 @@ export function getStartOfDayInTimezone(
   if (timezone !== DEFAULT_TIMEZONE) {
     throw new Error(`Timezone ${timezone} is not supported yet`);
   }
-  
+
   // JST 00:00:00 を作成
   return new Date(`${dateStr}T00:00:00+09:00`);
 }
@@ -35,7 +35,7 @@ export function getEndOfDayInTimezone(
   if (timezone !== DEFAULT_TIMEZONE) {
     throw new Error(`Timezone ${timezone} is not supported yet`);
   }
-  
+
   // JST 23:59:59.999 を作成
   return new Date(`${dateStr}T23:59:59.999+09:00`);
 }
@@ -51,11 +51,11 @@ export function getCurrentDateInTimezone(
   if (timezone !== DEFAULT_TIMEZONE) {
     throw new Error(`Timezone ${timezone} is not supported yet`);
   }
-  
+
   const now = new Date();
   const jstOffset = JST_OFFSET_HOURS * 60 * 60 * 1000;
   const jstTime = new Date(now.getTime() + jstOffset);
-  
+
   // UTC時刻として扱い、YYYY-MM-DD形式で返す
   return jstTime.toISOString().split("T")[0];
 }
@@ -74,10 +74,10 @@ export function getDaysBetweenInTimezone(
 ): number {
   const startDate = getStartOfDayInTimezone(startDateStr, timezone);
   const endDate = getStartOfDayInTimezone(endDateStr, timezone);
-  
+
   const diffInMs = endDate.getTime() - startDate.getTime();
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-  
+
   // 開始日を1日目として数えるため +1
   return diffInDays + 1;
 }
@@ -95,7 +95,7 @@ export function formatDateInTimezone(
   if (timezone !== DEFAULT_TIMEZONE) {
     throw new Error(`Timezone ${timezone} is not supported yet`);
   }
-  
+
   // JSTでの日付を取得
   const options: Intl.DateTimeFormatOptions = {
     timeZone: timezone,
@@ -103,11 +103,11 @@ export function formatDateInTimezone(
     month: "2-digit",
     day: "2-digit",
   };
-  
+
   const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(date);
-  const year = parts.find(p => p.type === "year")?.value;
-  const month = parts.find(p => p.type === "month")?.value;
-  const day = parts.find(p => p.type === "day")?.value;
-  
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+
   return `${year}-${month}-${day}`;
 }

@@ -1,6 +1,6 @@
 import { createUserId } from "@backend/domain/user/userId";
 
-import type { LoginRequest, GoogleLoginRequest } from "@dtos/request";
+import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";

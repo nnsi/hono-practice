@@ -11,7 +11,24 @@ import { useForm } from "react-hook-form";
 import { UpdateDebtGoalRequestSchema } from "@dtos/request";
 import type { DebtGoalResponse } from "@dtos/response";
 
-import { Card, CardContent, CardHeader, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input } from "@components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+} from "@components/ui";
 
 import type { z } from "zod";
 
@@ -20,7 +37,10 @@ type DebtGoalCardProps = {
   activityName: string;
 };
 
-export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }) => {
+export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({
+  goal,
+  activityName,
+}) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -99,7 +119,13 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
   const formatDate = (date: string) => dayjs(date).format("YYYY/MM/DD");
 
   return (
-    <Card className={cn("border", isInDebt && "border-red-200", isSaving && "border-green-200")}>
+    <Card
+      className={cn(
+        "border",
+        isInDebt && "border-red-200",
+        isSaving && "border-green-200",
+      )}
+    >
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>
@@ -129,7 +155,10 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                     <DialogTitle>負債目標を編集</DialogTitle>
                   </DialogHeader>
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={form.control}
                         name="dailyTargetQuantity"
@@ -140,7 +169,9 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                               <Input
                                 type="number"
                                 {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
                               />
                             </FormControl>
                             <FormMessage />
@@ -167,7 +198,11 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                           <FormItem>
                             <FormLabel>終了日</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} value={field.value || ""} />
+                              <Input
+                                type="date"
+                                {...field}
+                                value={field.value || ""}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -187,10 +222,17 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                         )}
                       />
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setEditDialogOpen(false)}
+                        >
                           キャンセル
                         </Button>
-                        <Button type="submit" disabled={updateMutation.isPending}>
+                        <Button
+                          type="submit"
+                          disabled={updateMutation.isPending}
+                        >
                           {updateMutation.isPending ? "更新中..." : "更新"}
                         </Button>
                       </div>
@@ -198,7 +240,10 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                   </Form>
                 </DialogContent>
               </Dialog>
-              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <Dialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
                     <TrashIcon className="h-4 w-4" />
@@ -210,10 +255,17 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
                   </DialogHeader>
                   <p>この目標を削除しますか？この操作は取り消せません。</p>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDeleteDialogOpen(false)}
+                    >
                       キャンセル
                     </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
                       {deleteMutation.isPending ? "削除中..." : "削除"}
                     </Button>
                   </div>
@@ -228,7 +280,8 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
           <div>
             <p className="text-gray-500">期間</p>
             <p>
-              {formatDate(goal.startDate)} 〜 {goal.endDate ? formatDate(goal.endDate) : "無期限"}
+              {formatDate(goal.startDate)} 〜{" "}
+              {goal.endDate ? formatDate(goal.endDate) : "無期限"}
             </p>
           </div>
           <div>
@@ -242,12 +295,19 @@ export const DebtGoalCard: React.FC<DebtGoalCardProps> = ({ goal, activityName }
           <div className="mt-3">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-500">進捗</span>
-              <span>{Math.round((goal.totalActual / goal.totalDebt) * 100)}%</span>
+              <span>
+                {Math.round((goal.totalActual / goal.totalDebt) * 100)}%
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className={cn("h-2 rounded-full", isInDebt ? "bg-red-500" : "bg-green-500")}
-                style={{ width: `${Math.min(100, (goal.totalActual / goal.totalDebt) * 100)}%` }}
+                className={cn(
+                  "h-2 rounded-full",
+                  isInDebt ? "bg-red-500" : "bg-green-500",
+                )}
+                style={{
+                  width: `${Math.min(100, (goal.totalActual / goal.totalDebt) * 100)}%`,
+                }}
               />
             </div>
           </div>

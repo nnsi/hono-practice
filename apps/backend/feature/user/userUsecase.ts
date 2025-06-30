@@ -1,10 +1,10 @@
 import { sign } from "hono/jwt";
 
 import {
-  createUserEntity,
-  createUserId,
   type User,
   type UserId,
+  createUserEntity,
+  createUserId,
 } from "@backend/domain";
 import { AppError } from "@backend/error";
 

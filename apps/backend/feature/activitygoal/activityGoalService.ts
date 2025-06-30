@@ -1,10 +1,10 @@
 import type { ActivityLogRepository } from "../activityLog";
 import type {
   ActivityGoal,
-  UserId,
   ActivityId,
-  GoalProgress,
   ActivityLog,
+  GoalProgress,
+  UserId,
 } from "@backend/domain";
 
 export type ActivityGoalService = {
@@ -92,9 +92,9 @@ function calculateProgress(activityLogRepo: ActivityLogRepository) {
 
 function getMonthlyGoals() {
   return async (
-    userId: UserId,
-    year: number,
-    month?: number,
+    _userId: UserId,
+    _year: number,
+    _month?: number,
   ): Promise<ActivityGoal[]> => {
     // この機能は ActivityGoalRepository を使用して実装
     // 現在は簡単な実装として空配列を返す

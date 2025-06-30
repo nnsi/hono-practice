@@ -1,18 +1,16 @@
+import { AppError } from "@backend/error";
+
 import type {
   CreateDebtGoalRequest,
   CreateMonthlyGoalRequest,
 } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
 
-import { AppError } from "../../error";
-
 import type {
-  GoalUsecase,
-  GoalType,
   GoalFilters,
+  GoalType,
+  GoalUsecase,
   UpdateGoalRequest,
-  UpdateDebtGoalRequest,
-  UpdateMonthlyGoalRequest,
 } from "./goalUsecase";
 import type { UserId } from "@backend/domain";
 

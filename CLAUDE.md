@@ -33,6 +33,9 @@ npm run dev
 # フロントエンド開発サーバーの起動 (ポート5173)
 npm run client-dev
 
+# モバイル開発サーバーの起動 (ポート8081)
+npm run mobile-dev
+
 # フロントエンドとバックエンドを同時に起動
 npm run dev & npm run client-dev
 ```

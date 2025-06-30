@@ -14,7 +14,6 @@ import { newSyncUsecase } from "./syncUsecase";
 
 import type { AppContext } from "../../context";
 
-
 export function createSyncRoute() {
   const app = new Hono<
     AppContext & {
@@ -35,47 +34,52 @@ export function createSyncRoute() {
     return next();
   });
 
-  return app
-    // 重複チェックエンドポイント
-    .post("/check-duplicates", 
-      zValidator("json", CheckDuplicatesRequestSchema),
-      async (c) => {
+  return (
+    app
+      // 重複チェックエンドポイント
+      .post(
+        "/check-duplicates",
+        zValidator("json", CheckDuplicatesRequestSchema),
+        async (c) => {
+          const userId = c.get("userId");
+          const params = c.req.valid("json");
+
+          const result = await c.var.h.checkDuplicates(userId, params);
+          return c.json(result);
+        },
+      )
+      // 同期状況取得エンドポイント
+      .get("/status", async (c) => {
         const userId = c.get("userId");
-        const params = c.req.valid("json");
 
-        const result = await c.var.h.checkDuplicates(userId, params);
+        const result = await c.var.h.getSyncStatus(userId);
         return c.json(result);
-      }
-    )
-    // 同期状況取得エンドポイント
-    .get("/status", async (c) => {
-      const userId = c.get("userId");
+      })
+      // 同期操作のエンキュー
+      .post(
+        "/enqueue",
+        zValidator("json", EnqueueSyncRequestSchema),
+        async (c) => {
+          const userId = c.get("userId");
+          const params = c.req.valid("json");
 
-      const result = await c.var.h.getSyncStatus(userId);
-      return c.json(result);
-    })
-    // 同期操作のエンキュー
-    .post("/enqueue",
-      zValidator("json", EnqueueSyncRequestSchema),
-      async (c) => {
-        const userId = c.get("userId");
-        const params = c.req.valid("json");
+          const result = await c.var.h.enqueueSync(userId, params);
+          return c.json(result);
+        },
+      )
+      // 同期キューの処理（管理用）
+      .post(
+        "/process",
+        zValidator("json", ProcessSyncRequestSchema),
+        async (c) => {
+          const userId = c.get("userId");
+          const params = c.req.valid("json");
 
-        const result = await c.var.h.enqueueSync(userId, params);
-        return c.json(result);
-      }
-    )
-    // 同期キューの処理（管理用）
-    .post("/process",
-      zValidator("json", ProcessSyncRequestSchema),
-      async (c) => {
-        const userId = c.get("userId");
-        const params = c.req.valid("json");
-
-        const result = await c.var.h.processSync(userId, params);
-        return c.json(result);
-      }
-    );
+          const result = await c.var.h.processSync(userId, params);
+          return c.json(result);
+        },
+      )
+  );
 }
 
 export const newSyncRoute = createSyncRoute();

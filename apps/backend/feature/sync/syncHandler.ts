@@ -1,22 +1,19 @@
 import { AppError } from "@backend/error";
 
-import {
-  CheckDuplicatesRequestSchema,
-  EnqueueSyncRequestSchema,
-  ProcessSyncRequestSchema,
-  type CheckDuplicatesRequest,
-  type EnqueueSyncRequest,
-  type ProcessSyncRequest,
+import type {
+  CheckDuplicatesRequest,
+  EnqueueSyncRequest,
+  ProcessSyncRequest,
 } from "@dtos/request";
 import {
-  CheckDuplicatesResponseSchema,
-  SyncStatusResponseSchema,
-  EnqueueSyncResponseSchema,
-  ProcessSyncResponseSchema,
   type CheckDuplicatesResponse,
-  type SyncStatusResponse,
+  CheckDuplicatesResponseSchema,
   type EnqueueSyncResponse,
+  EnqueueSyncResponseSchema,
   type ProcessSyncResponse,
+  ProcessSyncResponseSchema,
+  type SyncStatusResponse,
+  SyncStatusResponseSchema,
 } from "@dtos/response";
 
 import type { SyncUsecase } from "./syncUsecase";
@@ -25,18 +22,16 @@ import type { SyncUsecase } from "./syncUsecase";
 export type SyncHandler = {
   checkDuplicates(
     userId: string,
-    params: CheckDuplicatesRequest
+    params: CheckDuplicatesRequest,
   ): Promise<CheckDuplicatesResponse>;
-  getSyncStatus(
-    userId: string
-  ): Promise<SyncStatusResponse>;
+  getSyncStatus(userId: string): Promise<SyncStatusResponse>;
   enqueueSync(
     userId: string,
-    params: EnqueueSyncRequest
+    params: EnqueueSyncRequest,
   ): Promise<EnqueueSyncResponse>;
   processSync(
     userId: string,
-    params: ProcessSyncRequest
+    params: ProcessSyncRequest,
   ): Promise<ProcessSyncResponse>;
 };
 
@@ -50,11 +45,8 @@ export function newSyncHandler(uc: SyncUsecase): SyncHandler {
 }
 
 function checkDuplicates(uc: SyncUsecase) {
-  return async (
-    userId: string,
-    params: CheckDuplicatesRequest
-  ) => {
-    const operations = params.operations.map(op => ({
+  return async (userId: string, params: CheckDuplicatesRequest) => {
+    const operations = params.operations.map((op) => ({
       ...op,
       timestamp: new Date(op.timestamp),
     }));
@@ -64,7 +56,9 @@ function checkDuplicates(uc: SyncUsecase) {
     const response = {
       results: results.map((result) => ({
         isDuplicate: result.isDuplicate,
-        conflictingOperationIds: result.conflictingOperations?.map((op) => op.id),
+        conflictingOperationIds: result.conflictingOperations?.map(
+          (op) => op.id,
+        ),
       })),
     };
 
@@ -103,11 +97,8 @@ function getSyncStatus(uc: SyncUsecase) {
 }
 
 function enqueueSync(uc: SyncUsecase) {
-  return async (
-    userId: string,
-    params: EnqueueSyncRequest
-  ) => {
-    const operations = params.operations.map(op => ({
+  return async (userId: string, params: EnqueueSyncRequest) => {
+    const operations = params.operations.map((op) => ({
       ...op,
       timestamp: new Date(op.timestamp),
       userId,
@@ -136,10 +127,7 @@ function enqueueSync(uc: SyncUsecase) {
 }
 
 function processSync(uc: SyncUsecase) {
-  return async (
-    userId: string,
-    params: ProcessSyncRequest
-  ) => {
+  return async (userId: string, params: ProcessSyncRequest) => {
     const result = await uc.processSyncQueue(userId, {
       batchSize: params.batchSize,
       maxRetries: params.maxRetries,

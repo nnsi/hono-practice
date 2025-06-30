@@ -1,9 +1,9 @@
 import {
-  createActivityDebtEntity,
   type ActivityDebt,
   type ActivityDebtId,
-  type UserId,
   type ActivityId,
+  type UserId,
+  createActivityDebtEntity,
 } from "@backend/domain";
 import { activityDebts } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";

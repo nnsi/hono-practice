@@ -67,7 +67,6 @@ export function createDebtBalance(params: unknown): DebtBalance {
   if (!result.success) {
     throw new DomainValidateError(
       `Invalid debt balance data: ${result.error.message}`,
-      result.error,
     );
   }
   return result.data;

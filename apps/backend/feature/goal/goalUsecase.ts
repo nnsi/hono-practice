@@ -1,12 +1,12 @@
 import {
-  type UserId,
-  type ActivityId,
   type ActivityDebtId,
   type ActivityGoalId,
-  createActivityDebtId,
-  createActivityGoalId,
+  type ActivityId,
+  type UserId,
   createActivityDebtEntity,
+  createActivityDebtId,
   createActivityGoalEntity,
+  createActivityGoalId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 
@@ -79,7 +79,9 @@ export type UpdateMonthlyGoalRequest = {
   description?: string | null;
 };
 
-export type UpdateGoalRequest = UpdateDebtGoalRequest | UpdateMonthlyGoalRequest;
+export type UpdateGoalRequest =
+  | UpdateDebtGoalRequest
+  | UpdateMonthlyGoalRequest;
 
 export type GoalFilters = {
   activityId?: string;
@@ -410,13 +412,23 @@ function updateGoal(
       const debtReq = req as UpdateDebtGoalRequest;
       const updatedDebt = createActivityDebtEntity({
         ...existingDebt,
-        dailyTargetQuantity: debtReq.dailyTargetQuantity ?? existingDebt.dailyTargetQuantity,
+        dailyTargetQuantity:
+          debtReq.dailyTargetQuantity ?? existingDebt.dailyTargetQuantity,
         startDate: debtReq.startDate ?? existingDebt.startDate,
-        endDate: debtReq.endDate !== undefined ? debtReq.endDate : existingDebt.endDate,
-        description: debtReq.description !== undefined ? debtReq.description : existingDebt.description,
+        endDate:
+          debtReq.endDate !== undefined
+            ? debtReq.endDate
+            : existingDebt.endDate,
+        description:
+          debtReq.description !== undefined
+            ? debtReq.description
+            : existingDebt.description,
         isActive: debtReq.isActive ?? existingDebt.isActive,
         type: "persisted",
-        createdAt: existingDebt.type === "persisted" ? existingDebt.createdAt : new Date(),
+        createdAt:
+          existingDebt.type === "persisted"
+            ? existingDebt.createdAt
+            : new Date(),
         updatedAt: new Date(),
       });
 
@@ -429,8 +441,14 @@ function updateGoal(
         type: "debt" as const,
         isActive: result.isActive,
         description: result.description || undefined,
-        createdAt: result.type === "persisted" ? result.createdAt.toISOString() : new Date().toISOString(),
-        updatedAt: result.type === "persisted" ? result.updatedAt.toISOString() : new Date().toISOString(),
+        createdAt:
+          result.type === "persisted"
+            ? result.createdAt.toISOString()
+            : new Date().toISOString(),
+        updatedAt:
+          result.type === "persisted"
+            ? result.updatedAt.toISOString()
+            : new Date().toISOString(),
         dailyTargetQuantity: result.dailyTargetQuantity,
         startDate: result.startDate,
         endDate: result.endDate || undefined,
@@ -454,9 +472,13 @@ function updateGoal(
       ...existingGoal,
       targetMonth: monthlyReq.targetMonth ?? existingGoal.targetMonth,
       targetQuantity: monthlyReq.targetQuantity ?? existingGoal.targetQuantity,
-      description: monthlyReq.description !== undefined ? monthlyReq.description : existingGoal.description,
+      description:
+        monthlyReq.description !== undefined
+          ? monthlyReq.description
+          : existingGoal.description,
       type: "persisted",
-      createdAt: existingGoal.type === "persisted" ? existingGoal.createdAt : new Date(),
+      createdAt:
+        existingGoal.type === "persisted" ? existingGoal.createdAt : new Date(),
       updatedAt: new Date(),
     });
 
@@ -469,8 +491,14 @@ function updateGoal(
       type: "monthly_target" as const,
       isActive: true,
       description: result.description || undefined,
-      createdAt: result.type === "persisted" ? result.createdAt.toISOString() : new Date().toISOString(),
-      updatedAt: result.type === "persisted" ? result.updatedAt.toISOString() : new Date().toISOString(),
+      createdAt:
+        result.type === "persisted"
+          ? result.createdAt.toISOString()
+          : new Date().toISOString(),
+      updatedAt:
+        result.type === "persisted"
+          ? result.updatedAt.toISOString()
+          : new Date().toISOString(),
       targetMonth: result.targetMonth,
       targetQuantity: result.targetQuantity,
       currentQuantity: 0, // Will be recalculated by service

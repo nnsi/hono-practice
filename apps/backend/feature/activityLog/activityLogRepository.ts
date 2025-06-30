@@ -1,8 +1,8 @@
 import {
   type ActivityLog,
   type ActivityLogId,
-  createActivityEntity,
   type UserId,
+  createActivityEntity,
   createActivityLogEntity,
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";

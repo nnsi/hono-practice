@@ -1,15 +1,15 @@
-import { apiClient, qp } from "@frontend/utils";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@frontend/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  CreateDebtGoalRequestSchema,
-  CreateMonthlyGoalRequestSchema,
   type CreateDebtGoalRequest,
+  CreateDebtGoalRequestSchema,
   type CreateMonthlyGoalRequest,
+  CreateMonthlyGoalRequestSchema,
 } from "@dtos/request";
 import {
-  GetGoalsResponseSchema,
   type GetGoalsResponse,
+  GetGoalsResponseSchema,
   type GoalResponse,
 } from "@dtos/response";
 
@@ -21,32 +21,35 @@ type GoalFilters = {
 
 export function useGoals(filters?: GoalFilters) {
   const queryKey = ["goals", filters];
-  
+
   return useQuery<GetGoalsResponse>({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams();
-      
+
       if (filters?.type) params.append("type", filters.type);
       if (filters?.activityId) params.append("activityId", filters.activityId);
-      if (filters?.isActive !== undefined) params.append("isActive", filters.isActive.toString());
-      
+      if (filters?.isActive !== undefined)
+        params.append("isActive", filters.isActive.toString());
+
       const queryString = params.toString();
       const path = queryString ? `/users/goals?${queryString}` : "/users/goals";
-      
+
       // Use batch API to make the request with query parameters
       const res = await apiClient.batch.$post({
-        json: [{
-          path: path,
-        }],
+        json: [
+          {
+            path: path,
+          },
+        ],
       });
       const json = await res.json();
-      
+
       const parsed = GetGoalsResponseSchema.safeParse(json[0]);
       if (!parsed.success) {
         throw new Error("Failed to parse goals");
       }
-      
+
       return parsed.data;
     },
   });
@@ -57,9 +60,11 @@ export function useGoal(type: "debt" | "monthly_target", id: string) {
     queryKey: ["goal", type, id],
     queryFn: async () => {
       const res = await apiClient.batch.$post({
-        json: [{
-          path: `/users/goals/${type}/${id}`,
-        }],
+        json: [
+          {
+            path: `/users/goals/${type}/${id}`,
+          },
+        ],
       });
       const json = await res.json();
       return json[0] as GoalResponse;
@@ -70,7 +75,7 @@ export function useGoal(type: "debt" | "monthly_target", id: string) {
 
 export function useCreateDebtGoal() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateDebtGoalRequest) => {
       const validated = CreateDebtGoalRequestSchema.parse(data);
@@ -87,7 +92,7 @@ export function useCreateDebtGoal() {
 
 export function useCreateMonthlyGoal() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateMonthlyGoalRequest) => {
       const validated = CreateMonthlyGoalRequestSchema.parse(data);
@@ -104,9 +109,12 @@ export function useCreateMonthlyGoal() {
 
 export function useDeleteGoal() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ type, id }: { type: "debt" | "monthly_target"; id: string }) => {
+    mutationFn: async (_params: {
+      type: "debt" | "monthly_target";
+      id: string;
+    }) => {
       // For now, throw error as delete is not implemented in backend
       throw new Error("Goal deletion is not implemented yet");
     },

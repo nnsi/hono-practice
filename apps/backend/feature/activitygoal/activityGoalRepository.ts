@@ -1,9 +1,9 @@
 import {
-  createActivityGoalEntity,
   type ActivityGoal,
   type ActivityGoalId,
-  type UserId,
   type ActivityId,
+  type UserId,
+  createActivityGoalEntity,
 } from "@backend/domain";
 import { activityGoals } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";

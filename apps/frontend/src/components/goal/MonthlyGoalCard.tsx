@@ -11,7 +11,24 @@ import { useForm } from "react-hook-form";
 import { UpdateMonthlyGoalRequestSchema } from "@dtos/request";
 import type { MonthlyTargetGoalResponse } from "@dtos/response";
 
-import { Card, CardContent, CardHeader, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input } from "@components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+} from "@components/ui";
 
 import type { z } from "zod";
 
@@ -20,16 +37,22 @@ type MonthlyGoalCardProps = {
   activityName: string;
 };
 
-export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activityName }) => {
+export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({
+  goal,
+  activityName,
+}) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const progressPercent = Math.round(goal.progressRate * 100);
-  const remainingDays = dayjs(goal.targetMonth).endOf("month").diff(dayjs(), "day");
-  const dailyPaceRequired = remainingDays > 0 
-    ? Math.ceil((goal.targetQuantity - goal.currentQuantity) / remainingDays)
-    : 0;
+  const remainingDays = dayjs(goal.targetMonth)
+    .endOf("month")
+    .diff(dayjs(), "day");
+  const dailyPaceRequired =
+    remainingDays > 0
+      ? Math.ceil((goal.targetQuantity - goal.currentQuantity) / remainingDays)
+      : 0;
 
   const form = useForm<z.infer<typeof UpdateMonthlyGoalRequestSchema>>({
     resolver: zodResolver(UpdateMonthlyGoalRequestSchema),
@@ -41,7 +64,9 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof UpdateMonthlyGoalRequestSchema>) => {
+    mutationFn: async (
+      data: z.infer<typeof UpdateMonthlyGoalRequestSchema>,
+    ) => {
       const res = await apiClient.users.goals.monthly_target[":id"].$put({
         param: { id: goal.id },
         json: data,
@@ -128,10 +153,13 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>月間目標を編集</DialogTitle>    
+                    <DialogTitle>月間目標を編集</DialogTitle>
                   </DialogHeader>
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={form.control}
                         name="targetMonth"
@@ -155,7 +183,9 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
                               <Input
                                 type="number"
                                 {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
                               />
                             </FormControl>
                             <FormMessage />
@@ -176,10 +206,17 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
                         )}
                       />
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setEditDialogOpen(false)}
+                        >
                           キャンセル
                         </Button>
-                        <Button type="submit" disabled={updateMutation.isPending}>
+                        <Button
+                          type="submit"
+                          disabled={updateMutation.isPending}
+                        >
                           {updateMutation.isPending ? "更新中..." : "更新"}
                         </Button>
                       </div>
@@ -187,7 +224,10 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
                   </Form>
                 </DialogContent>
               </Dialog>
-              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <Dialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
                     <TrashIcon className="h-4 w-4" />
@@ -199,10 +239,17 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
                   </DialogHeader>
                   <p>この目標を削除しますか？この操作は取り消せません。</p>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDeleteDialogOpen(false)}
+                    >
                       キャンセル
                     </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
                       {deleteMutation.isPending ? "削除中..." : "削除"}
                     </Button>
                   </div>
@@ -223,12 +270,15 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className={cn("h-3 rounded-full transition-all", getProgressBarColor())}
+                className={cn(
+                  "h-3 rounded-full transition-all",
+                  getProgressBarColor(),
+                )}
                 style={{ width: `${Math.min(100, progressPercent)}%` }}
               />
             </div>
           </div>
-          
+
           {!goal.isAchieved && remainingDays > 0 && (
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -241,7 +291,7 @@ export const MonthlyGoalCard: React.FC<MonthlyGoalCardProps> = ({ goal, activity
               </div>
             </div>
           )}
-          
+
           {goal.isAchieved && (
             <div className="text-center py-2">
               <p className="text-green-600 font-semibold">目標達成済み！</p>

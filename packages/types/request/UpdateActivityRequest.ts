@@ -5,7 +5,7 @@ export const UpdateActivityRequestSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
     quantityUnit: z.string(),
-    emoji: z.string().optional(),
+    emoji: z.string().min(1, "絵文字は必須です"),
     showCombinedStats: z.boolean().optional(),
   }),
   kinds: z.array(

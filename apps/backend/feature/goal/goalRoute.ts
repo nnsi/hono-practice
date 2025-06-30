@@ -131,7 +131,12 @@ export function createGoalRoute() {
           const { id } = c.req.param();
           const params = c.req.valid("json");
 
-          const res = await c.var.h.updateGoal(userId, id, "monthly_target", params);
+          const res = await c.var.h.updateGoal(
+            userId,
+            id,
+            "monthly_target",
+            params,
+          );
           return c.json(res);
         },
       )

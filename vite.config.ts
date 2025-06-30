@@ -13,8 +13,8 @@ export default defineConfig(() => {
         JWT_SECRET: "test-jwt",
       },
       exclude: ["db-data/**", "node_modules/**"],
-      testTimeout: 30000,      // 30 seconds for individual tests
-      hookTimeout: 30000,      // 30 seconds for hooks (beforeAll, afterEach, etc.)
+      testTimeout: 30000, // 30 seconds for individual tests
+      hookTimeout: 30000, // 30 seconds for hooks (beforeAll, afterEach, etc.)
     },
   };
 });

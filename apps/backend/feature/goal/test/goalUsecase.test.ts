@@ -1,19 +1,16 @@
 import {
-  type UserId,
-  type ActivityId,
   type ActivityDebtId,
   type ActivityGoalId,
   type DebtBalance,
   type GoalProgress,
-  createUserId,
-  createActivityId,
-  createActivityDebtId,
-  createActivityGoalId,
+  type UserId,
   createActivityDebtEntity,
   createActivityGoalEntity,
+  createActivityId,
+  createUserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
-import { anything, deepEqual, instance, mock, reset, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { newGoalUsecase } from "../goalUsecase";
@@ -23,14 +20,11 @@ import type { ActivityDebtService } from "../../activitydebt/activityDebtService
 import type { ActivityGoalRepository } from "../../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../../activitygoal/activityGoalService";
 import type {
-  GoalFilters,
   CreateDebtGoalRequest,
   CreateMonthlyGoalRequest,
+  GoalFilters,
   UpdateDebtGoalRequest,
   UpdateMonthlyGoalRequest,
-  Goal,
-  DebtGoal,
-  MonthlyTargetGoal,
 } from "../goalUsecase";
 
 describe("GoalUsecase", () => {
@@ -62,11 +56,13 @@ describe("GoalUsecase", () => {
   // Test data constants
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
-  const debtId1 = createActivityDebtId("00000000-0000-4000-8000-000000000002");
-  const goalId1 = createActivityGoalId("00000000-0000-4000-8000-000000000003");
+  const debtId1 = "00000000-0000-4000-8000-000000000002" as ActivityDebtId;
+  const goalId1 = "00000000-0000-4000-8000-000000000003" as ActivityGoalId;
 
   // Helper functions for creating mock data
-  const createMockDebtBalance = (overrides: Partial<DebtBalance> = {}): DebtBalance => ({
+  const createMockDebtBalance = (
+    overrides: Partial<DebtBalance> = {},
+  ): DebtBalance => ({
     currentBalance: 0,
     totalDebt: 0,
     totalActual: 0,
@@ -76,7 +72,9 @@ describe("GoalUsecase", () => {
     ...overrides,
   });
 
-  const createMockGoalProgress = (overrides: Partial<GoalProgress> = {}): GoalProgress => ({
+  const createMockGoalProgress = (
+    overrides: Partial<GoalProgress> = {},
+  ): GoalProgress => ({
     currentQuantity: 0,
     progressRate: 0,
     isAchieved: false,
@@ -145,17 +143,17 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          createMockDebtBalance({ 
-            currentBalance: -5, 
-            totalDebt: 100, 
+          createMockDebtBalance({
+            currentBalance: -5,
+            totalDebt: 100,
             totalActual: 95,
             daysActive: 10,
           }),
         ],
         mockGoalProgresses: [
-          createMockGoalProgress({ 
-            currentQuantity: 150, 
-            progressRate: 0.5, 
+          createMockGoalProgress({
+            currentQuantity: 150,
+            progressRate: 0.5,
             remainingQuantity: 150,
             remainingDays: 15,
           }),
@@ -169,17 +167,17 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          createMockDebtBalance({ 
-            currentBalance: -5, 
-            totalDebt: 100, 
+          createMockDebtBalance({
+            currentBalance: -5,
+            totalDebt: 100,
             totalActual: 95,
             daysActive: 10,
           }),
         ],
         mockGoalProgresses: [
-          createMockGoalProgress({ 
-            currentQuantity: 150, 
-            progressRate: 0.5, 
+          createMockGoalProgress({
+            currentQuantity: 150,
+            progressRate: 0.5,
             remainingQuantity: 150,
             remainingDays: 15,
           }),
@@ -193,17 +191,17 @@ describe("GoalUsecase", () => {
         mockDebts: [mockDebtEntity],
         mockGoals: [mockGoalEntity],
         mockDebtBalances: [
-          createMockDebtBalance({ 
-            currentBalance: -5, 
-            totalDebt: 100, 
+          createMockDebtBalance({
+            currentBalance: -5,
+            totalDebt: 100,
             totalActual: 95,
             daysActive: 10,
           }),
         ],
         mockGoalProgresses: [
-          createMockGoalProgress({ 
-            currentQuantity: 150, 
-            progressRate: 0.5, 
+          createMockGoalProgress({
+            currentQuantity: 150,
+            progressRate: 0.5,
             remainingQuantity: 150,
             remainingDays: 15,
           }),
@@ -238,19 +236,26 @@ describe("GoalUsecase", () => {
       }) => {
         it(`${name}`, async () => {
           if (expectError?.repositoryError) {
-            when(activityDebtRepo.getByUserId(userId)).thenReject(expectError.repositoryError);
+            when(activityDebtRepo.getByUserId(userId)).thenReject(
+              expectError.repositoryError,
+            );
             await expect(usecase.getGoals(userId, filters)).rejects.toThrow(
-              expectError.repositoryError.constructor,
+              expectError.repositoryError,
             );
             return;
           }
-          
+
           if (expectError?.serviceError) {
             when(activityDebtRepo.getByUserId(userId)).thenResolve(mockDebts);
             when(activityGoalRepo.getByUserId(userId)).thenResolve(mockGoals);
-            when(activityDebtService.calculateCurrentBalance(anything(), anything())).thenReject(expectError.serviceError);
+            when(
+              activityDebtService.calculateCurrentBalance(
+                anything(),
+                anything(),
+              ),
+            ).thenReject(expectError.serviceError);
             await expect(usecase.getGoals(userId, filters)).rejects.toThrow(
-              expectError.serviceError.constructor,
+              expectError.serviceError,
             );
             return;
           }
@@ -260,9 +265,15 @@ describe("GoalUsecase", () => {
           when(activityGoalRepo.getByUserId(userId)).thenResolve(mockGoals);
 
           // サービスのモックを設定
-          const balanceToReturn = mockDebtBalances.length > 0 ? mockDebtBalances[0] : createMockDebtBalance();
-          const progressToReturn = mockGoalProgresses.length > 0 ? mockGoalProgresses[0] : createMockGoalProgress();
-          
+          const balanceToReturn =
+            mockDebtBalances.length > 0
+              ? mockDebtBalances[0]
+              : createMockDebtBalance();
+          const progressToReturn =
+            mockGoalProgresses.length > 0
+              ? mockGoalProgresses[0]
+              : createMockGoalProgress();
+
           when(
             activityDebtService.calculateCurrentBalance(anything(), anything()),
           ).thenReturn(Promise.resolve(balanceToReturn));
@@ -304,9 +315,9 @@ describe("GoalUsecase", () => {
         goalId: debtId1,
         type: "debt",
         mockReturn: mockDebtEntity,
-        mockBalance: createMockDebtBalance({ 
-          currentBalance: -5, 
-          totalDebt: 100, 
+        mockBalance: createMockDebtBalance({
+          currentBalance: -5,
+          totalDebt: 100,
           totalActual: 95,
           daysActive: 10,
         }),
@@ -370,7 +381,10 @@ describe("GoalUsecase", () => {
             if (mockReturn) {
               const balanceToUse = mockBalance || createMockDebtBalance();
               when(
-                activityDebtService.calculateCurrentBalance(anything(), anything()),
+                activityDebtService.calculateCurrentBalance(
+                  anything(),
+                  anything(),
+                ),
               ).thenReturn(Promise.resolve(balanceToUse));
             }
           } else {
@@ -631,19 +645,29 @@ describe("GoalUsecase", () => {
         it(`${name}`, async () => {
           if (type === "debt") {
             when(
-              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+              activityDebtRepo.getByIdAndUserId(
+                goalId as ActivityDebtId,
+                userId,
+              ),
             ).thenResolve(mockExisting);
-            
+
             if (mockExisting && mockUpdated) {
-              when(activityDebtRepo.update(anything())).thenResolve(mockUpdated);
+              when(activityDebtRepo.update(anything())).thenResolve(
+                mockUpdated,
+              );
             }
           } else {
             when(
-              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+              activityGoalRepo.getByIdAndUserId(
+                goalId as ActivityGoalId,
+                userId,
+              ),
             ).thenResolve(mockExisting);
-            
+
             if (mockExisting && mockUpdated) {
-              when(activityGoalRepo.update(anything())).thenResolve(mockUpdated);
+              when(activityGoalRepo.update(anything())).thenResolve(
+                mockUpdated,
+              );
             }
           }
 
@@ -660,12 +684,18 @@ describe("GoalUsecase", () => {
 
           if (type === "debt") {
             verify(
-              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+              activityDebtRepo.getByIdAndUserId(
+                goalId as ActivityDebtId,
+                userId,
+              ),
             ).once();
             verify(activityDebtRepo.update(anything())).once();
           } else {
             verify(
-              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+              activityGoalRepo.getByIdAndUserId(
+                goalId as ActivityGoalId,
+                userId,
+              ),
             ).once();
             verify(activityGoalRepo.update(anything())).once();
           }
@@ -729,17 +759,23 @@ describe("GoalUsecase", () => {
         it(`${name}`, async () => {
           if (type === "debt") {
             when(
-              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+              activityDebtRepo.getByIdAndUserId(
+                goalId as ActivityDebtId,
+                userId,
+              ),
             ).thenResolve(mockExisting);
-            
+
             if (mockExisting) {
               when(activityDebtRepo.delete(mockExisting)).thenResolve();
             }
           } else {
             when(
-              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+              activityGoalRepo.getByIdAndUserId(
+                goalId as ActivityGoalId,
+                userId,
+              ),
             ).thenResolve(mockExisting);
-            
+
             if (mockExisting) {
               when(activityGoalRepo.delete(mockExisting)).thenResolve();
             }
@@ -756,12 +792,18 @@ describe("GoalUsecase", () => {
 
           if (type === "debt") {
             verify(
-              activityDebtRepo.getByIdAndUserId(goalId as ActivityDebtId, userId),
+              activityDebtRepo.getByIdAndUserId(
+                goalId as ActivityDebtId,
+                userId,
+              ),
             ).once();
             verify(activityDebtRepo.delete(mockExisting)).once();
           } else {
             verify(
-              activityGoalRepo.getByIdAndUserId(goalId as ActivityGoalId, userId),
+              activityGoalRepo.getByIdAndUserId(
+                goalId as ActivityGoalId,
+                userId,
+              ),
             ).once();
             verify(activityGoalRepo.delete(mockExisting)).once();
           }

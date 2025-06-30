@@ -8,7 +8,6 @@ import { describe, expect, it } from "vitest";
 import { createSyncRoute } from "../syncRoute";
 
 describe("Sync API Routes", () => {
-
   describe("POST /sync/check-duplicates", () => {
     it("重複チェックを実行できる", async () => {
       const route = createSyncRoute();

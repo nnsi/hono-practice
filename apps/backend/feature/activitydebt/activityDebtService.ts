@@ -1,16 +1,16 @@
 import {
+  formatDateInTimezone,
   getCurrentDateInTimezone,
   getDaysBetweenInTimezone,
-  formatDateInTimezone,
 } from "@backend/utils/timezone";
 
 import type { ActivityLogRepository } from "../activityLog";
 import type {
   ActivityDebt,
-  UserId,
   ActivityId,
-  DebtBalance,
   ActivityLog,
+  DebtBalance,
+  UserId,
 } from "@backend/domain";
 
 export type ActivityDebtService = {
@@ -52,10 +52,11 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
   ): Promise<DebtBalance> => {
     // 1. 開始日から計算日までの日数を計算（JST基準）
     // 開始日より前の場合は0日として扱う
-    const daysPassed = debt.startDate > calculateDate 
-      ? 0 
-      : getDaysBetweenInTimezone(debt.startDate, calculateDate);
-    
+    const daysPassed =
+      debt.startDate > calculateDate
+        ? 0
+        : getDaysBetweenInTimezone(debt.startDate, calculateDate);
+
     const activeDays = Math.max(0, daysPassed);
 
     // 2. 累積負債を計算
@@ -118,7 +119,7 @@ function adjustDailyTarget() {
   return async (
     debt: ActivityDebt,
     newTarget: number,
-    effectiveDate: string,
+    _effectiveDate: string,
   ): Promise<ActivityDebt> => {
     // 実際の実装では、過去の負債を保持しつつ新しい目標値を適用する
     // より複雑なロジックが必要になる場合があります
