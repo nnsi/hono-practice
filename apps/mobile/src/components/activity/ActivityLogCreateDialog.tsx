@@ -12,6 +12,7 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { Controller, useForm } from "react-hook-form";
 
 import {
@@ -36,7 +37,7 @@ export function ActivityLogCreateDialog({
   const form = useForm<CreateActivityLogRequest>({
     resolver: zodResolver(CreateActivityLogRequestSchema),
     defaultValues: {
-      date: date.toISOString().split("T")[0],
+      date: dayjs(date).format("YYYY-MM-DD"),
       quantity: 0,
       activityKindId: undefined,
     },
@@ -61,8 +62,11 @@ export function ActivityLogCreateDialog({
         queryKey: [
           "activity",
           "activity-logs-daily",
-          date.toISOString().split("T")[0],
+          dayjs(date).format("YYYY-MM-DD"),
         ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs", dayjs(date).format("YYYY-MM-DD")],
       });
     },
     onError: () => {

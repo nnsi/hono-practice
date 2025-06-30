@@ -148,7 +148,7 @@ describe("ActivityUsecase", () => {
       params: {
         name: string;
         label: string;
-        emoji?: string;
+        emoji: string;
         description?: string;
         quantityUnit: string;
       };
@@ -164,6 +164,7 @@ describe("ActivityUsecase", () => {
         params: {
           name: "Running",
           label: "Run",
+          emoji: "🏃",
           quantityUnit: "km",
         },
         mockLastOrderIndex: undefined,
@@ -238,7 +239,7 @@ describe("ActivityUsecase", () => {
           name: string;
           quantityUnit: string;
           description?: string;
-          emoji?: string;
+          emoji: string;
         };
         kinds: { id?: string; name: string }[];
       };
@@ -255,6 +256,7 @@ describe("ActivityUsecase", () => {
         params: {
           activity: {
             name: "Sprint Running",
+            emoji: "🏃",
             quantityUnit: "km",
           },
           kinds: [
@@ -277,6 +279,7 @@ describe("ActivityUsecase", () => {
         params: {
           activity: {
             name: "Sprint Running",
+            emoji: "🏃",
             quantityUnit: "km",
           },
           kinds: [],

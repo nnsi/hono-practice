@@ -9,8 +9,8 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import type { GetActivityLogResponse } from "@dtos/index";
@@ -73,7 +73,7 @@ export default function DailyPage() {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["activity-logs", dateStr] });
       queryClient.invalidateQueries({ queryKey: ["tasks", dateStr] });
-    }, [queryClient, dateStr])
+    }, [queryClient, dateStr]),
   );
 
   const isLoading = activitiesLoading || logsLoading || tasksLoading;

@@ -4,7 +4,7 @@ export const CreateActivityRequestSchema = z.object({
   name: z.string().min(1, "タイトルは必須です"),
   description: z.string().optional(),
   label: z.string().optional(),
-  emoji: z.string().optional(),
+  emoji: z.string().min(1, "絵文字は必須です"),
   quantityUnit: z.string().min(1, "単位名は必須です"),
   quantityOption: z.array(z.number()).optional(),
   showCombinedStats: z.boolean().optional(),

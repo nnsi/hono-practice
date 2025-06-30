@@ -53,6 +53,7 @@ test("POST activities / success", async () => {
     json: {
       name: "test",
       label: "test",
+      emoji: "🏃",
       quantityUnit: "回",
       showCombinedStats: true,
     },
@@ -75,6 +76,7 @@ test("PUT activities/:id / success", async () => {
     json: {
       activity: {
         name: "test",
+        emoji: "🏃",
         quantityUnit: "回",
         showCombinedStats: true,
       },
