@@ -9,7 +9,8 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "@react-navigation/native";
 import dayjs from "dayjs";
 
 import type { GetActivityLogResponse } from "@dtos/index";
@@ -26,6 +27,7 @@ export default function DailyPage() {
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const queryClient = useQueryClient();
 
   // 全てのアクティビティを取得
   const { data: allActivities = [], isLoading: activitiesLoading } = useQuery({
@@ -64,6 +66,15 @@ export default function DailyPage() {
     setEditTargetLog(log);
     setEditDialogOpen(true);
   }, []);
+
+  // タブがフォーカスされた時にデータを再取得
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-logs", dateStr] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", dateStr] });
+    }, [queryClient, dateStr])
+  );
 
   const isLoading = activitiesLoading || logsLoading || tasksLoading;
 
