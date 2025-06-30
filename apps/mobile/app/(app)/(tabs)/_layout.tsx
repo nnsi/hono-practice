@@ -46,29 +46,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="activities"
+        name="daily"
         options={{
-          title: "活動",
-          tabBarLabel: "活動",
-          headerTitle: "活動一覧",
+          title: "デイリー",
+          tabBarLabel: "デイリー",
+          headerTitle: "デイリー",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "list" : "list-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: "統計",
-          tabBarLabel: "統計",
-          headerTitle: "統計",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "stats-chart" : "stats-chart-outline"}
+              name={focused ? "calendar" : "calendar-outline"}
               size={24}
               color={color}
             />

@@ -12,6 +12,8 @@ import { AppState, type AppStateStatus } from "react-native";
 
 import { calculateRefreshTime, tokenStore } from "@packages/auth-core";
 
+import { eventBus } from "../utils/eventBus";
+
 type TokenContextType = {
   accessToken: string | null;
   setAccessToken: (token: string | null) => void;
@@ -56,9 +58,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     refreshTimeoutRef.current = setTimeout(() => {
       console.log("Token refresh timer triggered");
       // イベントを発火してAuthContextでリフレッシュ処理を行う
-      if (typeof window !== "undefined" && window.dispatchEvent) {
-        window.dispatchEvent(new Event("token-refresh-needed"));
-      }
+      eventBus.emit("token-refreshed", token);
     }, refreshTime);
   }, []);
 
@@ -75,9 +75,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
           if (refreshTime && refreshTime <= 0) {
             // トークンの有効期限が切れている場合、即座にリフレッシュ
             console.log("Token expired, triggering immediate refresh");
-            if (typeof window !== "undefined" && window.dispatchEvent) {
-              window.dispatchEvent(new Event("token-refresh-needed"));
-            }
+            eventBus.emit("token-refreshed", accessToken);
           } else if (refreshTime) {
             // まだ有効な場合は、リフレッシュを再スケジュール
             console.log("Token still valid, rescheduling refresh");

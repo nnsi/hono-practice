@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useToken } from "../providers/TokenProvider";
 import { apiClient } from "../utils/apiClient";
+import { eventBus } from "../utils/eventBus";
 
 import type { User } from "@packages/auth-core";
 
@@ -76,11 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       scheduleTokenRefresh(data.token);
 
       // token-refreshedイベントを発火
-      if (typeof window !== "undefined" && window.dispatchEvent) {
-        window.dispatchEvent(
-          new CustomEvent("token-refreshed", { detail: data.token }),
-        );
-      }
+      eventBus.emit("token-refreshed", data.token);
     } catch (error) {
       console.error("Token refresh error:", error);
       clearTokens();
@@ -89,24 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   }, [setAccessToken, clearTokens, scheduleTokenRefresh]);
-
-  // トークンリフレッシュイベントのリスナー
-  useEffect(() => {
-    const handleTokenRefreshNeeded = () => {
-      console.log("Token refresh needed event received");
-      refreshToken().catch(console.error);
-    };
-
-    if (typeof window !== "undefined" && window.addEventListener) {
-      window.addEventListener("token-refresh-needed", handleTokenRefreshNeeded);
-      return () => {
-        window.removeEventListener(
-          "token-refresh-needed",
-          handleTokenRefreshNeeded,
-        );
-      };
-    }
-  }, [refreshToken]);
 
   // 初期化：保存されたトークンをチェック
   useEffect(() => {

@@ -1,7 +1,6 @@
-import { DeviceEventEmitter } from "react-native";
-
 import { createApiClient } from "@packages/auth-core";
 
+import { eventBus } from "./eventBus";
 import { getApiUrl, logConnectionInfo } from "./getApiUrl";
 
 // API URLの設定
@@ -11,8 +10,6 @@ const API_URL = getApiUrl();
 if (__DEV__) {
   logConnectionInfo();
 }
-
-const eventEmitter = DeviceEventEmitter;
 
 // モバイル用のカスタムfetch
 // React Nativeではcredentialsを常にomitにする必要がある
@@ -30,20 +27,11 @@ export const apiClient = createApiClient({
   onUnauthorized: () => {
     // 認証エラー時の処理
     console.log("Unauthorized access detected");
-    eventEmitter.emit("unauthorized", "Authentication failed");
+    eventBus.emit("unauthorized");
   },
   onTokenRefreshed: (token) => {
     // トークンリフレッシュ時の処理
     console.log("Token refreshed");
-    eventEmitter.emit("token-refreshed", token);
-
-    // window.dispatchEventも発火（AuthContextとの互換性のため）
-    if (typeof window !== "undefined" && window.dispatchEvent) {
-      window.dispatchEvent(
-        new CustomEvent("token-refreshed", { detail: token }),
-      );
-    }
+    eventBus.emit("token-refreshed", token);
   },
 });
-
-export { eventEmitter as apiEventEmitter };
