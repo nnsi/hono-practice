@@ -30,7 +30,9 @@
       "Bash(docker-compose ps:*)",
       "mcp__playwright__browser_press_key",
       "Bash(timeout 30 npm run test)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(echo $SHELL)",
+      "Bash(grep:*)"
     ],
     "deny": []
   },
