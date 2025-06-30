@@ -115,12 +115,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         console.log("Attempting login with:", { login_id: loginId });
-        const response = await apiClient.auth.login.$post({
-          json: {
-            login_id: loginId,
-            password,
-          },
-        });
+        console.log("API URL:", apiClient.auth.login.$url().toString());
+
+        let response: Response;
+        try {
+          response = await apiClient.auth.login.$post({
+            json: {
+              login_id: loginId,
+              password,
+            },
+          });
+        } catch (networkError) {
+          console.error("Network request error:", networkError);
+          console.error("Network error details:", {
+            message: networkError.message,
+            stack: networkError.stack,
+            name: networkError.name,
+            cause: networkError.cause,
+          });
+          throw networkError;
+        }
 
         console.log("Login response status:", response.status);
         if (!response.ok) {
@@ -143,6 +157,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await getUser();
       } catch (error) {
         console.error("Login error:", error);
+        console.error("Error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+          cause: error.cause,
+        });
+        if (error.response) {
+          console.error("Response details:", {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            headers: error.response.headers,
+            url: error.response.url,
+          });
+        }
         throw error;
       } finally {
         setIsLoading(false);

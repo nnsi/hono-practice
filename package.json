@@ -17,13 +17,11 @@
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "gen-be": "node scripts/gen-be.js"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "type": "module",
   "dependencies": {
     "dayjs": "^1.11.13",
+    "drizzle-orm": "^0.44.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "uuid": "^11.0.3",
