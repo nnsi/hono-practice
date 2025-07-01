@@ -95,6 +95,17 @@ export default function Signup() {
             {isLoading ? "登録中..." : "登録"}
           </Text>
         </TouchableOpacity>
+
+        <View className="mt-4 flex-row justify-center">
+          <Text className="text-sm text-gray-600">
+            既にアカウントをお持ちの方は
+          </Text>
+          <TouchableOpacity onPress={handleSwitchToLogin}>
+            <Text className="text-sm text-blue-600 font-medium ml-1">
+              ログイン
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <StatusBar style="auto" />
     </>
