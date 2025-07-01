@@ -14,7 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { LineChart } from "react-native-chart-kit";
+import { StackedBarChart } from "react-native-chart-kit";
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
@@ -87,48 +87,82 @@ export const StatsScreen: React.FC = () => {
       startOfMonth.add(i, "day").format("YYYY-MM-DD"),
     );
 
-    // チャート用のデータを作成
+    // 積み上げ棒グラフ用のデータを作成（全ての日付を表示）
+    const stackedData = allDates.map((date) => {
+      return stat.kinds.map((kind: any) => {
+        const logs = kind.logs.filter(
+          (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
+        );
+        return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+      });
+    });
+
+    // ラベルを作成（1日から月末まで）
+    const labels = allDates.map((date) => dayjs(date).format("D"));
+
+    // 全て0の場合は空のグラフを表示
+    const hasData = stackedData.some((dayData) => 
+      dayData.some((value) => value > 0)
+    );
+    
+    if (!hasData) {
+      return (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Text style={{ color: "#999" }}>データがありません</Text>
+        </View>
+      );
+    }
+
     const chartData = {
-      labels: allDates.map((date) => dayjs(date).format("D")),
-      datasets: stat.kinds.map((kind: any) => ({
-        data: allDates.map((date) => {
-          const logs = kind.logs.filter(
-            (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
-          );
-          return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
-        }),
-        color: () => getColorForKind(kind.name),
-        strokeWidth: 2,
-      })),
+      labels: labels,
+      legend: stat.kinds.map((kind: any) => kind.name),
+      data: stackedData,
+      barColors: stat.kinds.map((kind: any) => getColorForKind(kind.name)),
     };
 
     return (
-      <LineChart
-        data={chartData}
-        width={width - 32}
-        height={220}
-        chartConfig={{
-          backgroundColor: "#ffffff",
-          backgroundGradientFrom: "#ffffff",
-          backgroundGradientTo: "#ffffff",
-          decimalPlaces: 0,
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          style: {
+      <>
+        <StackedBarChart
+          data={chartData}
+          width={width - 32}
+          height={220}
+          chartConfig={{
+            backgroundColor: "#ffffff",
+            backgroundGradientFrom: "#ffffff",
+            backgroundGradientTo: "#ffffff",
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            barPercentage: 0.5,
+            useShadowColorFromDataset: false,
+            style: {
+              borderRadius: 16,
+            },
+          }}
+          style={{
+            marginVertical: 8,
             borderRadius: 16,
-          },
-          propsForDots: {
-            r: "4",
-            strokeWidth: "1",
-            stroke: "#ffa726",
-          },
-        }}
-        bezier
-        style={{
-          marginVertical: 8,
-          borderRadius: 16,
-        }}
-      />
+          }}
+          hideLegend={true}
+        />
+        
+        {/* 凡例をグラフの下に表示 */}
+        {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
+          <View style={styles.legendContainer}>
+            {stat.kinds.map((kind: any) => (
+              <View key={kind.id || kind.name} style={styles.legendItem}>
+                <View 
+                  style={[
+                    styles.legendColor, 
+                    { backgroundColor: getColorForKind(kind.name) }
+                  ]} 
+                />
+                <Text style={styles.legendText}>{kind.name}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </>
     );
   };
 
@@ -286,6 +320,29 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: "#999",
+  },
+  legendContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 8,
+    marginVertical: 4,
+  },
+  legendColor: {
+    width: 16,
+    height: 16,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: "#666",
   },
 });
 
