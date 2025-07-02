@@ -1,0 +1,14 @@
+{
+  "name": "@packages",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    "./frontend-shared": "./frontend-shared/index.ts",
+    "./types": "./types/index.ts",
+    "./types/*": "./types/*.ts"
+  },
+  "dependencies": {
+    "hono": "^4.8.3"
+  }
+}

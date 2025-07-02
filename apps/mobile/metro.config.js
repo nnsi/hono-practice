@@ -20,7 +20,7 @@ config.resolver.nodeModulesPaths = [
 
 // パッケージエイリアスの解決
 config.resolver.extraNodeModules = {
-  '@packages/auth-core': path.resolve(monorepoRoot, 'packages/auth-core'),
+  '@packages/frontend-shared': path.resolve(monorepoRoot, 'packages/frontend-shared'),
   '@backend': path.resolve(monorepoRoot, 'apps/backend'),
   '@dtos': path.resolve(monorepoRoot, 'packages/types'),
 };

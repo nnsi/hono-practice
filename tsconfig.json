@@ -22,7 +22,9 @@
       "@hooks/*": ["apps/frontend/src/hooks/*"],
       "@infra/*": ["infra/*"],
       "@domain/*": ["apps/backend/domain/*"],
-      "@components/*": ["apps/frontend/src/components/*"]
+      "@components/*": ["apps/frontend/src/components/*"],
+      "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
+      "@packages/types": ["packages/types/index.ts"]
     }
   },
   "exclude": ["node_modules", "apps/mobile"]

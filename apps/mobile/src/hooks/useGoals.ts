@@ -1,4 +1,4 @@
-import { type GoalFilters, buildGoalPath } from "@packages/auth-core";
+import { type GoalFilters, buildGoalPath } from "@packages/frontend-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {

@@ -12,15 +12,13 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { calculateDebtBalance } from "@packages/auth-core";
+import { calculateDebtBalance } from "@packages/frontend-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Controller, useForm } from "react-hook-form";
 
-
 import { UpdateDebtGoalRequestSchema } from "@dtos/request";
 import type { DebtGoalResponse } from "@dtos/response";
-
 
 import { apiClient } from "../../utils/apiClient";
 

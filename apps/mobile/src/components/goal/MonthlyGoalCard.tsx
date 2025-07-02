@@ -12,15 +12,13 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { calculateMonthlyProgress } from "@packages/auth-core";
+import { calculateMonthlyProgress } from "@packages/frontend-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Controller, useForm } from "react-hook-form";
 
-
 import { UpdateMonthlyGoalRequestSchema } from "@dtos/request";
 import type { MonthlyTargetGoalResponse } from "@dtos/response";
-
 
 import { apiClient } from "../../utils/apiClient";
 
