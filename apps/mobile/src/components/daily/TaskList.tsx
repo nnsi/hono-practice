@@ -88,6 +88,11 @@ export default React.memo(function TaskList({ tasks, date }: TaskListProps) {
 
   return (
     <View>
+      {tasks.length === 0 && !showNewTaskForm && (
+        <Text className="text-gray-500 text-center py-4 mb-4">
+          タスクはありません
+        </Text>
+      )}
       {tasks.map((task) => (
         <View
           key={task.id}

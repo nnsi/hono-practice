@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import "../global.css";
 
 import { AuthProvider } from "../src/contexts/AuthContext";
+import { GlobalDateProvider } from "../src/providers/GlobalDateProvider";
 import { TokenProvider } from "../src/providers/TokenProvider";
 
 // グローバルなQueryClientインスタンス
@@ -22,10 +23,12 @@ export default function RootLayout() {
     <TokenProvider>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <Stack>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          </Stack>
+          <GlobalDateProvider>
+            <Stack>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(app)" options={{ headerShown: false }} />
+            </Stack>
+          </GlobalDateProvider>
         </QueryClientProvider>
       </AuthProvider>
     </TokenProvider>

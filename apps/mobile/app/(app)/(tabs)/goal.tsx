@@ -20,7 +20,7 @@ import {
 import { useActivities, useGoals } from "../../../src/hooks";
 
 export default function GoalScreen() {
-  const [createDialogVisible, setCreateDialogVisible] = useState(true);
+  const [createDialogVisible, setCreateDialogVisible] = useState(false);
 
   const { data: goalsData, isLoading, refetch } = useGoals();
   const { data: activitiesData } = useActivities();
@@ -40,7 +40,7 @@ export default function GoalScreen() {
 
   return (
     <>
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50">
         <ScrollView
           className="flex-1"
           refreshControl={
@@ -99,7 +99,7 @@ export default function GoalScreen() {
             )}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       <GoalCreateDialog
         visible={createDialogVisible}

@@ -87,6 +87,9 @@ export default function DailyPage() {
         setShowCalendar={setShowCalendar}
       />
 
+      {/* Separator */}
+      <View className="h-px bg-gray-200 mx-4 my-3" />
+
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#3b82f6" />
@@ -94,10 +97,9 @@ export default function DailyPage() {
       ) : (
         <ScrollView className="flex-1 px-4">
           <View className="mb-6">
-            <Text className="text-lg font-bold mb-3">活動ログ</Text>
             {activityLogs.length === 0 ? (
-              <Text className="text-gray-500 text-center py-4">
-                この日の活動ログはありません
+              <Text className="text-gray-500 text-center py-8">
+                アクティビティはありません
               </Text>
             ) : (
               <View>
@@ -143,8 +145,10 @@ export default function DailyPage() {
             )}
           </View>
 
+          {/* Separator */}
+          <View className="h-px bg-gray-200 my-4" />
+
           <View className="mb-6">
-            <Text className="text-lg font-bold mb-3">タスク</Text>
             <TaskList tasks={tasks} date={dateStr} />
           </View>
 

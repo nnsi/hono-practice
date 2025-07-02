@@ -117,32 +117,36 @@ export default function Home() {
   return (
     <View className="flex-1 bg-gray-50">
       {/* Date Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={goToPreviousDay} className="p-2">
-            <Ionicons name="chevron-back" size={24} color="#374151" />
+      <View className="bg-white px-4 py-4">
+        <View className="flex-row items-center justify-center gap-3">
+          <TouchableOpacity onPress={goToToday} className="p-1">
+            <Ionicons name="time-outline" size={18} color="#374151" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={goToToday} className="flex-1">
-            <Text className="text-lg font-medium text-center">
-              {new Date(date).toLocaleDateString("ja-JP", {
-                month: "long",
-                day: "numeric",
-                weekday: "short",
-              })}
-            </Text>
-            {!isToday && (
-              <Text className="text-xs text-gray-500 text-center">
-                タップして今日に戻る
-              </Text>
-            )}
+          <TouchableOpacity onPress={goToPreviousDay} className="p-1">
+            <Ionicons name="chevron-back" size={18} color="#374151" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={goToNextDay} className="p-2">
-            <Ionicons name="chevron-forward" size={24} color="#374151" />
+          <Text className="text-base">
+            {new Date(date).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+            })}
+          </Text>
+
+          <TouchableOpacity onPress={goToNextDay} className="p-1">
+            <Ionicons name="chevron-forward" size={18} color="#374151" />
+          </TouchableOpacity>
+
+          <TouchableOpacity className="p-1">
+            <Ionicons name="calendar-outline" size={18} color="#374151" />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Separator */}
+      <View className="h-px bg-gray-200 mx-4 my-3" />
 
       {/* Activity Grid */}
       <FlatList
@@ -150,7 +154,7 @@ export default function Home() {
         renderItem={renderActivityCard}
         keyExtractor={(item) => (item === "new" ? "new" : item.id)}
         numColumns={2}
-        contentContainerStyle={{ padding: 8 }}
+        contentContainerStyle={{ padding: 16 }}
         columnWrapperStyle={{ justifyContent: "space-between" }}
       />
 
