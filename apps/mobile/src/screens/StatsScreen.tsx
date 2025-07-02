@@ -101,10 +101,10 @@ export const StatsScreen: React.FC = () => {
     const labels = allDates.map((date) => dayjs(date).format("D"));
 
     // 全て0の場合は空のグラフを表示
-    const hasData = stackedData.some((dayData) => 
-      dayData.some((value) => value > 0)
+    const hasData = stackedData.some((dayData) =>
+      dayData.some((value) => value > 0),
     );
-    
+
     if (!hasData) {
       return (
         <View style={{ alignItems: "center", paddingVertical: 40 }}>
@@ -145,17 +145,17 @@ export const StatsScreen: React.FC = () => {
           }}
           hideLegend={true}
         />
-        
+
         {/* 凡例をグラフの下に表示 */}
         {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
           <View style={styles.legendContainer}>
             {stat.kinds.map((kind: any) => (
               <View key={kind.id || kind.name} style={styles.legendItem}>
-                <View 
+                <View
                   style={[
-                    styles.legendColor, 
-                    { backgroundColor: getColorForKind(kind.name) }
-                  ]} 
+                    styles.legendColor,
+                    { backgroundColor: getColorForKind(kind.name) },
+                  ]}
                 />
                 <Text style={styles.legendText}>{kind.name}</Text>
               </View>
@@ -345,4 +345,3 @@ const styles = StyleSheet.create({
     color: "#666",
   },
 });
-
