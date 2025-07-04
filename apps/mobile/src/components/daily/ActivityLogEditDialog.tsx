@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
-import type { GetActivityLogResponse, GetActivityResponse } from "@dtos/index";
+import type { GetActivityLogResponse, GetActivityResponse } from "@dtos/response";
 
 import { apiClient } from "../../utils/apiClient";
 

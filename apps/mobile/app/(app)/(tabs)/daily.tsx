@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 import {
   ActivityIndicator,
@@ -13,7 +13,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
-import type { GetActivityLogResponse } from "@dtos/index";
+import type { GetActivityLogResponse } from "@dtos/response";
 
 import ActivityDateHeader from "../../../src/components/daily/ActivityDateHeader";
 import ActivityLogEditDialog from "../../../src/components/daily/ActivityLogEditDialog";
@@ -47,7 +47,12 @@ export default function DailyPage() {
         query: { date: dateStr },
       });
       const data = await response.json();
-      return data;
+      return data.map((log: any) => ({
+        ...log,
+        date: new Date(log.date),
+        createdAt: new Date(log.createdAt),
+        updatedAt: new Date(log.updatedAt),
+      }));
     },
   });
 

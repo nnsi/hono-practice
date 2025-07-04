@@ -10,7 +10,6 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   DebtGoalCard,
@@ -23,15 +22,14 @@ export default function GoalScreen() {
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
 
   const { data: goalsData, isLoading, refetch } = useGoals();
-  const { data: activitiesData } = useActivities();
+  const { activities } = useActivities();
 
-  const activities = activitiesData?.activities || [];
   const goals = goalsData?.goals || [];
 
   console.log("Goal screen - createDialogVisible:", createDialogVisible);
 
   const getActivityName = (activityId: string) => {
-    const activity = activities.find((a) => a.id === activityId);
+    const activity = activities.find((a: { id: string; name: string }) => a.id === activityId);
     return activity?.name || "不明なアクティビティ";
   };
 
