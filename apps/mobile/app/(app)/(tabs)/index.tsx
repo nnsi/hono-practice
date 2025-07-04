@@ -120,7 +120,6 @@ export default function Home() {
     setDate(new Date());
   };
 
-
   return (
     <View className="flex-1 bg-gray-50">
       {/* Date Header */}

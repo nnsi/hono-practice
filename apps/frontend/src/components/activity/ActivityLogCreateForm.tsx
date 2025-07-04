@@ -65,9 +65,14 @@ export function ActivityLogCreateFormBody({
                           >
                             <FormLabel className="flex items-center w-full cursor-pointer border border-gray-200 rounded-md px-3 py-2 hover:bg-gray-50 has-[:checked]:bg-gray-100 transition-colors">
                               <FormControl>
-                                <RadioGroupItem value={String(kind.id)} className="mr-3" />
+                                <RadioGroupItem
+                                  value={String(kind.id)}
+                                  className="mr-3"
+                                />
                               </FormControl>
-                              <span className="font-normal mt-[-1px]">{kind.name}</span>
+                              <span className="font-normal mt-[-1px]">
+                                {kind.name}
+                              </span>
                             </FormLabel>
                           </FormItem>
                         ))}

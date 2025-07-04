@@ -223,6 +223,42 @@ describe("ActivityDebtService", () => {
         },
         expectError: false,
       },
+      {
+        name: "success / debt with end date, calculating before end",
+        userId: userId1,
+        debt: {
+          ...mockDebtEntity,
+          endDate: "2024-01-05", // 終了日を設定
+        },
+        calculateDate: "2024-01-03",
+        mockActivityLogs: mockActivityLogs, // 25量
+        expectedBalance: {
+          currentBalance: -5, // 25 - 30 = -5
+          totalDebt: 30, // 3日 × 10 = 30
+          totalActual: 25,
+          dailyTarget: 10,
+          daysActive: 3,
+        },
+        expectError: false,
+      },
+      {
+        name: "success / debt with end date, calculating after end",
+        userId: userId1,
+        debt: {
+          ...mockDebtEntity,
+          endDate: "2024-01-02", // 終了日を2日目に設定
+        },
+        calculateDate: "2024-01-10", // 終了日よりずっと後
+        mockActivityLogs: mockActivityLogs.slice(0, 2), // 1日目と2日目のみ (5 + 8 = 13)
+        expectedBalance: {
+          currentBalance: -7, // 13 - 20 = -7
+          totalDebt: 20, // 2日 × 10 = 20 (終了日で計算停止)
+          totalActual: 13,
+          dailyTarget: 10,
+          daysActive: 2,
+        },
+        expectError: false,
+      },
     ];
 
     testCases.forEach(

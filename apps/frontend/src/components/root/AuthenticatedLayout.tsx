@@ -58,6 +58,15 @@ export const AuthenticatedLayout: React.FC = () => {
               </button>
             </Link>
             <Link
+              to="/new-goal"
+              className="[&.active]:font-bold [&.active]:text-blue-600"
+            >
+              <button type="button" className="flex flex-col items-center">
+                <TargetIcon />
+                <span className="text-xs mt-1">Goal2</span>
+              </button>
+            </Link>
+            <Link
               to="/setting"
               className="[&.active]:font-bold [&.active]:text-blue-600"
             >

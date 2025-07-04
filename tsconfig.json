@@ -3,9 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -18,41 +16,18 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@backend/*": [
-        "apps/backend/*"
-      ],
-      "@frontend/*": [
-        "apps/frontend/src/*"
-      ],
-      "@dtos/*": [
-        "packages/types/*"
-      ],
-      "@hooks/*": [
-        "apps/frontend/src/hooks/*"
-      ],
-      "@infra/*": [
-        "infra/*"
-      ],
-      "@domain/*": [
-        "apps/backend/domain/*"
-      ],
-      "@components/*": [
-        "apps/frontend/src/components/*"
-      ],
-      "@packages/frontend-shared": [
-        "packages/frontend-shared/index.ts"
-      ],
-      "@packages/frontend-shared/*": [
-        "packages/frontend-shared/*"
-      ],
-      "@packages/types": [
-        "packages/types/index.ts"
-      ]
+      "@backend/*": ["apps/backend/*"],
+      "@frontend/*": ["apps/frontend/src/*"],
+      "@dtos/*": ["packages/types/*"],
+      "@hooks/*": ["apps/frontend/src/hooks/*"],
+      "@infra/*": ["infra/*"],
+      "@domain/*": ["apps/backend/domain/*"],
+      "@components/*": ["apps/frontend/src/components/*"],
+      "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
+      "@packages/frontend-shared/*": ["packages/frontend-shared/*"],
+      "@packages/types": ["packages/types/index.ts"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "apps/mobile"
-  ],
+  "exclude": ["node_modules", "apps/mobile"],
   "extends": "expo/tsconfig.base"
 }

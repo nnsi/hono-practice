@@ -50,28 +50,34 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
     debt: ActivityDebt,
     calculateDate: string = getCurrentDateInTimezone(),
   ): Promise<DebtBalance> => {
-    // 1. 開始日から計算日までの日数を計算（JST基準）
+    // 1. 終了日が設定されていて、計算日が終了日を超えている場合は終了日までで計算
+    const effectiveCalculateDate =
+      debt.endDate && calculateDate > debt.endDate
+        ? debt.endDate
+        : calculateDate;
+
+    // 2. 開始日から計算日までの日数を計算（JST基準）
     // 開始日より前の場合は0日として扱う
     const daysPassed =
-      debt.startDate > calculateDate
+      debt.startDate > effectiveCalculateDate
         ? 0
-        : getDaysBetweenInTimezone(debt.startDate, calculateDate);
+        : getDaysBetweenInTimezone(debt.startDate, effectiveCalculateDate);
 
     const activeDays = Math.max(0, daysPassed);
 
-    // 2. 累積負債を計算
+    // 3. 累積負債を計算
     const totalDebt = activeDays * debt.dailyTargetQuantity;
 
-    // 3. 実際の活動量を取得
+    // 4. 実際の活動量を取得（effectiveCalculateDateまでの期間で計算）
     const actualQuantity = await getActivityQuantityInPeriod(
       activityLogRepo,
       userId,
       debt.activityId,
       debt.startDate,
-      calculateDate,
+      effectiveCalculateDate,
     );
 
-    // 4. 残高計算（負の値が負債、正の値が貯金）
+    // 5. 残高計算（負の値が負債、正の値が貯金）
     const currentBalance = actualQuantity - totalDebt;
 
     return {
@@ -80,7 +86,7 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
       totalActual: actualQuantity,
       dailyTarget: debt.dailyTargetQuantity,
       daysActive: activeDays,
-      lastCalculatedDate: calculateDate,
+      lastCalculatedDate: effectiveCalculateDate,
     };
   };
 }
