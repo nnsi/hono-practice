@@ -51,9 +51,10 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
     calculateDate: string = getCurrentDateInTimezone(),
   ): Promise<DebtBalance> => {
     // 1. 終了日が設定されていて、計算日が終了日を超えている場合は終了日までで計算
-    const effectiveCalculateDate = debt.endDate && calculateDate > debt.endDate
-      ? debt.endDate
-      : calculateDate;
+    const effectiveCalculateDate =
+      debt.endDate && calculateDate > debt.endDate
+        ? debt.endDate
+        : calculateDate;
 
     // 2. 開始日から計算日までの日数を計算（JST基準）
     // 開始日より前の場合は0日として扱う

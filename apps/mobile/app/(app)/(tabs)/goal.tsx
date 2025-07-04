@@ -29,7 +29,9 @@ export default function GoalScreen() {
   console.log("Goal screen - createDialogVisible:", createDialogVisible);
 
   const getActivityName = (activityId: string) => {
-    const activity = activities.find((a: { id: string; name: string }) => a.id === activityId);
+    const activity = activities.find(
+      (a: { id: string; name: string }) => a.id === activityId,
+    );
     return activity?.name || "不明なアクティビティ";
   };
 

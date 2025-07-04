@@ -6,6 +6,10 @@ import {
   CreateDebtGoalRequestSchema,
   type CreateMonthlyGoalRequest,
   CreateMonthlyGoalRequestSchema,
+  type UpdateDebtGoalRequest,
+  UpdateDebtGoalRequestSchema,
+  type UpdateMonthlyGoalRequest,
+  UpdateMonthlyGoalRequestSchema,
 } from "@dtos/request";
 import {
   type GetGoalsResponse,
@@ -95,19 +99,56 @@ export function useCreateMonthlyGoal() {
   });
 }
 
+export function useUpdateGoal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      type: "debt" | "monthly_target";
+      id: string;
+      data: UpdateDebtGoalRequest | UpdateMonthlyGoalRequest;
+    }) => {
+      const { type, id, data } = params;
+
+      if (type === "debt") {
+        const validated = UpdateDebtGoalRequestSchema.parse(data);
+        const res = await apiClient.users.goals.debt[":id"].$put({
+          param: { id },
+          json: validated,
+        });
+        return res.json();
+      }
+      const validated = UpdateMonthlyGoalRequestSchema.parse(data);
+      const res = await apiClient.users.goals.monthly_target[":id"].$put({
+        param: { id },
+        json: validated,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goal"] });
+    },
+  });
+}
+
 export function useDeleteGoal() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_params: {
+    mutationFn: async (params: {
       type: "debt" | "monthly_target";
       id: string;
     }) => {
-      // For now, throw error as delete is not implemented in backend
-      throw new Error("Goal deletion is not implemented yet");
+      const { type, id } = params;
+      const res = await apiClient.users.goals[":type"][":id"].$delete({
+        param: { type, id },
+      });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goal"] });
     },
   });
 }
