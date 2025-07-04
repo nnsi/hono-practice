@@ -16,26 +16,19 @@ export default function TabLayout() {
           height: 85,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: "500",
+          marginTop: 4,
         },
-        headerStyle: {
-          backgroundColor: "#ffffff",
-          borderBottomColor: "#e5e7eb",
-          borderBottomWidth: 1,
-        },
-        headerTitleStyle: {
-          fontWeight: "600",
-          fontSize: 18,
-        },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "ホーム",
-          tabBarLabel: "ホーム",
-          headerTitle: "Actiko",
+          title: "Actiko",
+          tabBarLabel: "Actiko",
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
@@ -48,9 +41,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="daily"
         options={{
-          title: "デイリー",
-          tabBarLabel: "デイリー",
-          headerTitle: "デイリー",
+          title: "Daily",
+          tabBarLabel: "Daily",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "calendar" : "calendar-outline"}
@@ -61,11 +53,39 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="stats"
+        options={{
+          title: "Stats",
+          tabBarLabel: "Stats",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "stats-chart" : "stats-chart-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="goal"
+        options={{
+          title: "Goal",
+          tabBarLabel: "Goal",
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "flag" : "flag-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
-          title: "設定",
-          tabBarLabel: "設定",
-          headerTitle: "設定",
+          title: "Setting",
+          tabBarLabel: "Setting",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "settings" : "settings-outline"}

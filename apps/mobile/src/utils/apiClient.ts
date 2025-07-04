@@ -1,4 +1,4 @@
-import { createApiClient } from "@packages/auth-core";
+import { createApiClient } from "@packages/frontend-shared";
 
 import { eventBus } from "./eventBus";
 import { getApiUrl, logConnectionInfo } from "./getApiUrl";

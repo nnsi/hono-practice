@@ -13,7 +13,7 @@ import { useToken } from "../providers/TokenProvider";
 import { apiClient } from "../utils/apiClient";
 import { eventBus } from "../utils/eventBus";
 
-import type { User } from "@packages/auth-core";
+import type { User } from "@packages/frontend-shared";
 
 type AuthContextType = {
   user: User | null;

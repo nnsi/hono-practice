@@ -28,7 +28,6 @@ export function ActivityLogCreateFormBody({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <p className="mb-3 font-bold">Record [{activity.name}]</p>
         <div className="grid grid-cols-3 gap-3 items-center">
           <FormField
             control={form.control}
@@ -50,25 +49,25 @@ export function ActivityLogCreateFormBody({
                 control={form.control}
                 name="activityKindId"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-3">
+                  <FormItem className="w-full">
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={
                           field.value ? String(field.value) : undefined
                         }
-                        className="flex flex-col space-y-1"
+                        className="flex flex-col space-y-0"
                       >
                         {activity.kinds.map((kind) => (
                           <FormItem
                             key={kind.id}
                             className="flex items-center space-x-3 space-y-0"
                           >
-                            <FormControl>
-                              <RadioGroupItem value={String(kind.id)} />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {kind.name}
+                            <FormLabel className="flex items-center w-full cursor-pointer border border-gray-200 rounded-md px-3 py-2 hover:bg-gray-50 has-[:checked]:bg-gray-100 transition-colors">
+                              <FormControl>
+                                <RadioGroupItem value={String(kind.id)} className="mr-3" />
+                              </FormControl>
+                              <span className="font-normal mt-[-1px]">{kind.name}</span>
                             </FormLabel>
                           </FormItem>
                         ))}

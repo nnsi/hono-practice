@@ -10,7 +10,7 @@ import React, {
 
 import { AppState, type AppStateStatus } from "react-native";
 
-import { calculateRefreshTime, tokenStore } from "@packages/auth-core";
+import { calculateRefreshTime, tokenStore } from "@packages/frontend-shared";
 
 import { eventBus } from "../utils/eventBus";
 
