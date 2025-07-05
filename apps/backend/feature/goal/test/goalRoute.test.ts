@@ -21,22 +21,6 @@ test("GET goals / success", async () => {
   expect(res.status).toEqual(200);
 });
 
-test("GET goals / with type filter", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.index.$get({
-    query: { type: "debt" },
-  });
-
-  expect(res.status).toEqual(200);
-});
-
 test("GET goals / with activity filter", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()
@@ -53,7 +37,7 @@ test("GET goals / with activity filter", async () => {
   expect(res.status).toEqual(200);
 });
 
-test("POST debt goal / success", async () => {
+test("POST goals / success", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
@@ -62,19 +46,19 @@ test("POST debt goal / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.debt.$post({
+  const res = await client.index.$post({
     json: {
       activityId: "00000000-0000-4000-8000-000000000001",
       dailyTargetQuantity: 10,
       startDate: "2024-01-01",
-      description: "Test debt goal",
+      description: "Test goal",
     },
   });
 
   expect(res.status).toEqual(201);
 });
 
-test("POST monthly goal / success", async () => {
+test("GET goals/:id / success", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
@@ -83,172 +67,15 @@ test("POST monthly goal / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.monthly.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      targetMonth: "2024-01",
-      targetQuantity: 300,
-      description: "Test monthly goal",
-    },
+  const res = await client[":id"].$get({
+    param: { id: "00000000-0000-4000-8000-000000000001" },
   });
 
-  expect(res.status).toEqual(201);
-});
-
-test("PUT debt goal / success", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // First create a goal
-  const createRes = await client.debt.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      dailyTargetQuantity: 10,
-      startDate: "2024-01-01",
-      description: "Test debt goal",
-    },
-  });
-
-  const goal = await createRes.json();
-
-  // Then update it
-  const updateRes = await client.debt[":id"].$put({
-    param: { id: goal.id },
-    json: {
-      dailyTargetQuantity: 15,
-      description: "Updated debt goal",
-    },
-  });
-
-  expect(updateRes.status).toEqual(200);
-});
-
-test("PUT monthly goal / success", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // First create a goal
-  const createRes = await client.monthly.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      targetMonth: "2024-01",
-      targetQuantity: 300,
-      description: "Test monthly goal",
-    },
-  });
-
-  const goal = await createRes.json();
-
-  // Then update it
-  const updateRes = await client.monthly_target[":id"].$put({
-    param: { id: goal.id },
-    json: {
-      targetQuantity: 400,
-      description: "Updated monthly goal",
-    },
-  });
-
-  expect(updateRes.status).toEqual(200);
-});
-
-test("DELETE goal / success", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // First create a goal
-  const createRes = await client.debt.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      dailyTargetQuantity: 10,
-      startDate: "2024-01-01",
-      description: "Test debt goal",
-    },
-  });
-
-  const goal = await createRes.json();
-
-  // Then delete it
-  const deleteRes = await client[":type"][":id"].$delete({
-    param: { type: "debt", id: goal.id },
-  });
-
-  expect(deleteRes.status).toEqual(200);
-});
-
-test("PUT debt goal / validation error", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.debt[":id"].$put({
-    param: { id: "invalid-id" },
-    json: {
-      dailyTargetQuantity: -5, // Invalid negative value
-    },
-  });
-
-  expect(res.status).toEqual(400);
-});
-
-test("DELETE goal / not found", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client[":type"][":id"].$delete({
-    param: { type: "debt", id: "00000000-0000-4000-8000-000000000999" },
-  });
-
+  // Goal not found in test DB
   expect(res.status).toEqual(404);
 });
 
-test("GET goals/:type/:id / success for debt goal", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-
-  // Honoクライアントではなく、手動でリクエストを作成
-  // 型安全性の問題を回避
-  const testApp = app.request(
-    "/debt/00000000-0000-4000-8000-000000000001",
-    {
-      method: "GET",
-      headers: { "x-user-id": "user1" }, // mockAuthMiddlewareで設定されるユーザーID
-    },
-    { DB: testDB },
-  );
-
-  const res = await testApp;
-
-  // 新しい目標なのでnot foundまたはサーバーエラーになる可能性がある
-  expect([200, 404, 500]).toContain(res.status);
-});
-
-test("GET goals/:type/:id / invalid type", async () => {
+test("PUT goals/:id / success", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
@@ -257,144 +84,18 @@ test("GET goals/:type/:id / invalid type", async () => {
     DB: testDB,
   });
 
-  const res = await client[":type"][":id"].$get({
-    param: {
-      type: "invalid",
-      id: "00000000-0000-4000-8000-000000000001",
-    },
-  });
-
-  expect(res.status).toEqual(400);
-});
-
-test("POST goals/debt / success", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.debt.$post({
+  const res = await client[":id"].$put({
+    param: { id: "00000000-0000-4000-8000-000000000001" },
     json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      dailyTargetQuantity: 10,
-      startDate: "2024-01-01",
-      description: "Test debt goal",
+      dailyTargetQuantity: 20,
     },
   });
 
-  expect(res.status).toEqual(201);
-});
-
-test("POST goals/debt / validation error", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.debt.$post({
-    json: {
-      // activityIdが空文字列 - バリデーションエラーを期待
-      activityId: "",
-      dailyTargetQuantity: 10,
-      startDate: "2024-01-01",
-    },
-  });
-
-  expect(res.status).toEqual(400);
-});
-
-test("POST goals/monthly / success", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.monthly.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      targetMonth: "2024-01",
-      targetQuantity: 300,
-      description: "Test monthly goal",
-    },
-  });
-
-  expect(res.status).toEqual(201);
-});
-
-test("POST goals/monthly / validation error", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client.monthly.$post({
-    json: {
-      // 無効な値でバリデーションエラーを期待
-      activityId: "",
-      targetMonth: "invalid-month",
-      targetQuantity: -1,
-    },
-  });
-
-  expect(res.status).toEqual(400);
-});
-
-// PUT テストは型安全性の問題があるため、コメントアウト
-/*
-test("PUT goals/:type/:id / not implemented", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // PUT リクエストの構造を修正
-  const response = await fetch("/debt/00000000-0000-4000-8000-000000000001", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dailyTargetQuantity: 15 }),
-  });
-
-  // updateGoalは現在"Not implemented yet"エラーを投げる
-  expect([400, 500]).toContain(response.status);
-});
-*/
-
-test("DELETE goals/:type/:id / not implemented", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client[":type"][":id"].$delete({
-    param: {
-      type: "debt",
-      id: "00000000-0000-4000-8000-000000000998",
-    },
-  });
-
-  // deleteGoal is now implemented and should return 404 for non-existent goal
+  // Goal not found in test DB
   expect(res.status).toEqual(404);
 });
 
-test("DELETE goals/:type/:id / invalid type", async () => {
+test("DELETE goals/:id / success", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
@@ -403,125 +104,10 @@ test("DELETE goals/:type/:id / invalid type", async () => {
     DB: testDB,
   });
 
-  const res = await client[":type"][":id"].$delete({
-    param: {
-      type: "invalid",
-      id: "00000000-0000-4000-8000-000000000001",
-    },
+  const res = await client[":id"].$delete({
+    param: { id: "00000000-0000-4000-8000-000000000001" },
   });
 
-  expect(res.status).toEqual(400);
-});
-
-test("GET goals/:type/:id/stats / success for debt goal", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // First create a debt goal
-  const createRes = await client.debt.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      dailyTargetQuantity: 10,
-      startDate: "2024-01-01",
-      description: "Test debt goal for stats",
-    },
-  });
-
-  const goal = await createRes.json();
-
-  // Then get stats
-  const statsRes = await client[":type"][":id"].stats.$get({
-    param: { type: "debt", id: goal.id },
-  });
-
-  expect(statsRes.status).toEqual(200);
-  const stats = await statsRes.json();
-  expect(stats).toHaveProperty("goalType", "debt");
-  expect(stats).toHaveProperty("goalId");
-  expect(stats).toHaveProperty("stats");
-  if ("stats" in stats) {
-    expect(stats.stats).toHaveProperty("average");
-    expect(stats.stats).toHaveProperty("max");
-    expect(stats.stats).toHaveProperty("maxConsecutiveDays");
-    expect(stats.stats).toHaveProperty("achievedDays");
-  }
-});
-
-test("GET goals/:type/:id/stats / success for monthly goal", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  // First create a monthly goal
-  const createRes = await client.monthly.$post({
-    json: {
-      activityId: "00000000-0000-4000-8000-000000000001",
-      targetMonth: "2024-01",
-      targetQuantity: 300,
-      description: "Test monthly goal for stats",
-    },
-  });
-
-  const goal = await createRes.json();
-
-  // Then get stats
-  const statsRes = await client[":type"][":id"].stats.$get({
-    param: { type: "monthly_target", id: goal.id },
-  });
-
-  expect(statsRes.status).toEqual(200);
-  const stats = await statsRes.json();
-  expect(stats).toHaveProperty("goalType", "monthly_target");
-  expect(stats).toHaveProperty("goalId");
-  expect(stats).toHaveProperty("stats");
-  if ("stats" in stats) {
-    expect(stats.stats).toHaveProperty("average");
-    expect(stats.stats).toHaveProperty("max");
-    expect(stats.stats).toHaveProperty("maxConsecutiveDays");
-    expect(stats.stats).toHaveProperty("achievedDays");
-  }
-});
-
-test("GET goals/:type/:id/stats / not found", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client[":type"][":id"].stats.$get({
-    param: { type: "debt", id: "00000000-0000-4000-8000-000000000999" },
-  });
-
+  // Goal not found in test DB
   expect(res.status).toEqual(404);
-});
-
-test("GET goals/:type/:id/stats / invalid type", async () => {
-  const route = createGoalRoute();
-  const app = newHonoWithErrorHandling()
-    .use(mockAuthMiddleware)
-    .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
-
-  const res = await client[":type"][":id"].stats.$get({
-    param: {
-      type: "invalid",
-      id: "00000000-0000-4000-8000-000000000001",
-    },
-  });
-
-  expect(res.status).toEqual(400);
 });

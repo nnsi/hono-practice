@@ -5,15 +5,8 @@ import { z } from "zod";
 export const activityGoalIdSchema = z.string().uuid().brand<"ActivityGoalId">();
 export type ActivityGoalId = z.infer<typeof activityGoalIdSchema>;
 
-export function createActivityGoalId(id?: string): ActivityGoalId {
-  const activityGoalId = id ?? v7();
-  const parsedId = activityGoalIdSchema.safeParse(activityGoalId);
-
-  if (!parsedId.success) {
-    throw new DomainValidateError("createActivityGoalId: Invalid id");
-  }
-
-  return parsedId.data;
+export function createActivityGoalId(): ActivityGoalId {
+  return v7() as ActivityGoalId;
 }
 
 export function createActivityGoalIdFromString(id: string): ActivityGoalId {

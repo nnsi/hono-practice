@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const UpdateDebtGoalRequestSchema = z.object({
+export const UpdateGoalRequestSchema = z.object({
   dailyTargetQuantity: z.number().positive().optional(),
   startDate: z
     .string()
@@ -15,4 +15,4 @@ export const UpdateDebtGoalRequestSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export type UpdateDebtGoalRequest = z.infer<typeof UpdateDebtGoalRequestSchema>;
+export type UpdateGoalRequest = z.infer<typeof UpdateGoalRequestSchema>;

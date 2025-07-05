@@ -1,12 +1,10 @@
 import {
-  type UserId,
   createActivityGoalEntity,
-  createActivityGoalId,
   createActivityId,
   createActivityLogId,
   createUserId,
 } from "@backend/domain";
-import { anything, instance, mock, reset, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { newActivityGoalService } from "../activityGoalService";
@@ -25,21 +23,22 @@ describe("ActivityGoalService", () => {
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
-  const goalId1 = createActivityGoalId("00000000-0000-4000-8000-000000000002");
+  const goalId1 = "00000000-0000-4000-8000-000000000002" as any;
 
   const mockGoalEntity = createActivityGoalEntity({
     type: "persisted",
     id: goalId1,
     userId: userId1,
     activityId: activityId1,
-    targetQuantity: 100,
-    targetMonth: "2024-01",
+    dailyTargetQuantity: 10,
+    startDate: "2024-01-01",
+    endDate: null,
+    isActive: true,
     description: null,
     createdAt: new Date("2024-01-01T00:00:00Z"),
     updatedAt: new Date("2024-01-01T00:00:00Z"),
   });
 
-  // 2024年1月のアクティビティログモック (1月は31日まで)
   const mockActivityLogs = [
     {
       type: "persisted" as const,
@@ -48,21 +47,27 @@ describe("ActivityGoalService", () => {
       activity: {
         type: "persisted" as const,
         id: activityId1,
-        name: "Test Activity",
         userId: userId1,
-        color: "#000000",
-        emoji: "🏃",
-        order: 0,
-        isDeleted: false,
+        name: "Test Activity",
+        label: "",
+        emoji: "",
+        description: "",
+        quantityUnit: "",
+        orderIndex: "",
+        kinds: [],
+        showCombinedStats: true,
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),
       },
+      activityId: activityId1,
       activityKind: null,
-      quantity: 10,
-      memo: null,
-      date: "2024-01-05",
-      createdAt: new Date("2024-01-05T00:00:00Z"),
-      updatedAt: new Date("2024-01-05T00:00:00Z"),
+      activityKindId: null,
+      quantity: 5,
+      memo: "",
+      date: "2024-01-01",
+      time: null,
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
     },
     {
       type: "persisted" as const,
@@ -71,387 +76,196 @@ describe("ActivityGoalService", () => {
       activity: {
         type: "persisted" as const,
         id: activityId1,
-        name: "Test Activity",
         userId: userId1,
-        color: "#000000",
-        emoji: "🏃",
-        order: 0,
-        isDeleted: false,
+        name: "Test Activity",
+        label: "",
+        emoji: "",
+        description: "",
+        quantityUnit: "",
+        orderIndex: "",
+        kinds: [],
+        showCombinedStats: true,
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),
       },
+      activityId: activityId1,
       activityKind: null,
+      activityKindId: null,
       quantity: 15,
-      memo: null,
-      date: "2024-01-10",
-      createdAt: new Date("2024-01-10T00:00:00Z"),
-      updatedAt: new Date("2024-01-10T00:00:00Z"),
-    },
-    {
-      type: "persisted" as const,
-      id: createActivityLogId("00000000-0000-4000-8000-000000000005"),
-      userId: userId1,
-      activity: {
-        type: "persisted" as const,
-        id: activityId1,
-        name: "Test Activity",
-        userId: userId1,
-        color: "#000000",
-        emoji: "🏃",
-        order: 0,
-        isDeleted: false,
-        createdAt: new Date("2024-01-01T00:00:00Z"),
-        updatedAt: new Date("2024-01-01T00:00:00Z"),
-      },
-      activityKind: null,
-      quantity: 20,
-      memo: null,
-      date: "2024-01-15",
-      createdAt: new Date("2024-01-15T00:00:00Z"),
-      updatedAt: new Date("2024-01-15T00:00:00Z"),
+      memo: "",
+      date: "2024-01-02",
+      time: null,
+      createdAt: new Date("2024-01-02T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     },
   ];
 
-  describe("calculateProgress", () => {
-    type CalculateProgressTestCase = {
-      name: string;
-      userId: UserId;
-      goal: any;
-      mockActivityLogs: any[];
-      expectedProgress: {
-        currentQuantity: number;
-        targetQuantity: number;
-        progressRate: number;
-        remainingQuantity: number;
-        isAchieved: boolean;
-      };
-      expectError: boolean;
-    };
+  describe("calculateCurrentBalance", () => {
+    it("should calculate balance correctly when actual < target", async () => {
+      when(
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId1,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(mockActivityLogs);
 
-    const testCases: CalculateProgressTestCase[] = [
-      {
-        name: "success / partial progress (45%)",
-        userId: userId1,
-        goal: mockGoalEntity,
-        mockActivityLogs: mockActivityLogs, // 10 + 15 + 20 = 45
-        expectedProgress: {
-          currentQuantity: 45,
-          targetQuantity: 100,
-          progressRate: 0.45, // 45/100 = 0.45
-          remainingQuantity: 55, // 100 - 45 = 55
-          isAchieved: false,
+      const balance = await service.calculateCurrentBalance(
+        userId1,
+        mockGoalEntity,
+        "2024-01-10",
+      );
+
+      // 10日間 × 10/日 = 100 (目標)
+      // 実績: 5 + 15 = 20
+      // バランス: 20 - 100 = -80
+      expect(balance).toEqual({
+        currentBalance: -80,
+        totalTarget: 100,
+        totalActual: 20,
+        dailyTarget: 10,
+        daysActive: 10,
+        lastCalculatedDate: "2024-01-10",
+      });
+    });
+
+    it("should calculate balance correctly when actual > target", async () => {
+      const highActivityLogs = [
+        ...mockActivityLogs,
+        {
+          type: "persisted" as const,
+          id: createActivityLogId("00000000-0000-4000-8000-000000000005"),
+          userId: userId1,
+          activity: mockActivityLogs[0].activity,
+          activityId: activityId1,
+          activityKind: null,
+          activityKindId: null,
+          quantity: 100,
+          memo: "",
+          date: "2024-01-03",
+          time: null,
+          createdAt: new Date("2024-01-03T00:00:00Z"),
+          updatedAt: new Date("2024-01-03T00:00:00Z"),
         },
-        expectError: false,
-      },
-      {
-        name: "success / goal achieved (100%)",
-        userId: userId1,
-        goal: mockGoalEntity,
-        mockActivityLogs: [
-          ...mockActivityLogs,
-          {
-            type: "persisted" as const,
-            id: createActivityLogId("00000000-0000-4000-8000-000000000006"),
-            userId: userId1,
-            activity: {
-              type: "persisted" as const,
-              id: activityId1,
-              name: "Test Activity",
-              userId: userId1,
-              color: "#000000",
-              emoji: "🏃",
-              order: 0,
-              isDeleted: false,
-              createdAt: new Date("2024-01-01T00:00:00Z"),
-              updatedAt: new Date("2024-01-01T00:00:00Z"),
-            },
-            activityKind: null,
-            quantity: 55, // 合計100になる
-            memo: null,
-            date: "2024-01-20",
-            createdAt: new Date("2024-01-20T00:00:00Z"),
-            updatedAt: new Date("2024-01-20T00:00:00Z"),
-          },
-        ],
-        expectedProgress: {
-          currentQuantity: 100,
-          targetQuantity: 100,
-          progressRate: 1.0, // 100/100 = 1.0
-          remainingQuantity: 0, // 100 - 100 = 0
-          isAchieved: true,
-        },
-        expectError: false,
-      },
-      {
-        name: "success / over achieved (120%)",
-        userId: userId1,
-        goal: mockGoalEntity,
-        mockActivityLogs: [
-          ...mockActivityLogs,
-          {
-            type: "persisted" as const,
-            id: createActivityLogId("00000000-0000-4000-8000-000000000007"),
-            userId: userId1,
-            activity: {
-              type: "persisted" as const,
-              id: activityId1,
-              name: "Test Activity",
-              userId: userId1,
-              color: "#000000",
-              emoji: "🏃",
-              order: 0,
-              isDeleted: false,
-              createdAt: new Date("2024-01-01T00:00:00Z"),
-              updatedAt: new Date("2024-01-01T00:00:00Z"),
-            },
-            activityKind: null,
-            quantity: 75, // 合計120になる
-            memo: null,
-            date: "2024-01-25",
-            createdAt: new Date("2024-01-25T00:00:00Z"),
-            updatedAt: new Date("2024-01-25T00:00:00Z"),
-          },
-        ],
-        expectedProgress: {
-          currentQuantity: 120,
-          targetQuantity: 100,
-          progressRate: 1.0, // Math.min(120/100, 1) = 1.0
-          remainingQuantity: 0, // Math.max(100 - 120, 0) = 0
-          isAchieved: true,
-        },
-        expectError: false,
-      },
-      {
-        name: "success / no activity (0%)",
-        userId: userId1,
-        goal: mockGoalEntity,
-        mockActivityLogs: [],
-        expectedProgress: {
-          currentQuantity: 0,
-          targetQuantity: 100,
-          progressRate: 0, // 0/100 = 0
-          remainingQuantity: 100, // 100 - 0 = 100
-          isAchieved: false,
-        },
-        expectError: false,
-      },
-      {
-        name: "success / different activity not counted",
-        userId: userId1,
-        goal: mockGoalEntity,
-        mockActivityLogs: [
-          {
-            type: "persisted" as const,
-            id: createActivityLogId("00000000-0000-4000-8000-000000000008"),
-            userId: userId1,
-            activity: {
-              type: "persisted" as const,
-              id: createActivityId("00000000-0000-4000-8000-000000000009"),
-              name: "Different Activity",
-              userId: userId1,
-              color: "#000000",
-              emoji: "🏃",
-              order: 0,
-              isDeleted: false,
-              createdAt: new Date("2024-01-01T00:00:00Z"),
-              updatedAt: new Date("2024-01-01T00:00:00Z"),
-            },
-            activityKind: null,
-            quantity: 50, // この量は計算に含まれない
-            memo: null,
-            date: "2024-01-05",
-            createdAt: new Date("2024-01-05T00:00:00Z"),
-            updatedAt: new Date("2024-01-05T00:00:00Z"),
-          },
-          mockActivityLogs[0], // 正しいactivityIdのログ: 10
-        ],
-        expectedProgress: {
-          currentQuantity: 10, // 正しいactivityIdのログのみ
-          targetQuantity: 100,
-          progressRate: 0.1, // 10/100 = 0.1
-          remainingQuantity: 90, // 100 - 10 = 90
-          isAchieved: false,
-        },
-        expectError: false,
-      },
-      {
-        name: "success / high target goal",
-        userId: userId1,
-        goal: {
-          ...mockGoalEntity,
-          targetQuantity: 500, // より高い目標
-        },
-        mockActivityLogs: mockActivityLogs, // 45量
-        expectedProgress: {
-          currentQuantity: 45,
-          targetQuantity: 500,
-          progressRate: 0.09, // 45/500 = 0.09
-          remainingQuantity: 455, // 500 - 45 = 455
-          isAchieved: false,
-        },
-        expectError: false,
-      },
-    ];
+      ];
 
-    testCases.forEach(
-      ({
-        name,
-        userId,
-        goal,
-        mockActivityLogs,
-        expectedProgress,
-        expectError,
-      }) => {
-        it(`${name}`, async () => {
-          when(
-            activityLogRepo.getActivityLogsByUserIdAndDate(
-              userId,
-              anything(),
-              anything(),
-            ),
-          ).thenResolve(mockActivityLogs);
+      when(
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId1,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(highActivityLogs);
 
-          if (expectError) {
-            when(
-              activityLogRepo.getActivityLogsByUserIdAndDate(
-                userId,
-                anything(),
-                anything(),
-              ),
-            ).thenReject(new Error());
+      const balance = await service.calculateCurrentBalance(
+        userId1,
+        mockGoalEntity,
+        "2024-01-03",
+      );
 
-            await expect(
-              service.calculateProgress(userId, goal),
-            ).rejects.toThrow(Error);
-            return;
-          }
+      // 3日間 × 10/日 = 30 (目標)
+      // 実績: 5 + 15 + 100 = 120
+      // バランス: 120 - 30 = 90
+      expect(balance).toEqual({
+        currentBalance: 90,
+        totalTarget: 30,
+        totalActual: 120,
+        dailyTarget: 10,
+        daysActive: 3,
+        lastCalculatedDate: "2024-01-03",
+      });
+    });
 
-          const result = await service.calculateProgress(userId, goal);
+    it("should use endDate if provided and before calculate date", async () => {
+      const goalWithEndDate = createActivityGoalEntity({
+        ...mockGoalEntity,
+        endDate: "2024-01-05",
+      });
 
-          expect(result.currentQuantity).toEqual(
-            expectedProgress.currentQuantity,
-          );
-          expect(result.targetQuantity).toEqual(
-            expectedProgress.targetQuantity,
-          );
-          expect(result.progressRate).toBeCloseTo(
-            expectedProgress.progressRate,
-            2,
-          );
-          expect(result.remainingQuantity).toEqual(
-            expectedProgress.remainingQuantity,
-          );
-          expect(result.isAchieved).toEqual(expectedProgress.isAchieved);
+      when(
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId1,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(mockActivityLogs);
 
-          // 追加のプロパティも検証
-          expect(result).toHaveProperty("remainingDays");
-          expect(result).toHaveProperty("dailyPaceRequired");
+      const balance = await service.calculateCurrentBalance(
+        userId1,
+        goalWithEndDate,
+        "2024-01-10", // calculate date is after endDate
+      );
 
-          verify(
-            activityLogRepo.getActivityLogsByUserIdAndDate(
-              userId,
-              anything(),
-              anything(),
-            ),
-          ).once();
-        });
-      },
-    );
+      // endDateまでの5日間で計算
+      expect(balance.daysActive).toBe(5);
+      expect(balance.lastCalculatedDate).toBe("2024-01-05");
+    });
   });
 
-  describe("getMonthlyGoals", () => {
-    type GetMonthlyGoalsTestCase = {
-      name: string;
-      userId: UserId;
-      year: number;
-      month?: number;
-      expectedLength: number;
-    };
+  describe("getBalanceHistory", () => {
+    it("should return daily balance history", async () => {
+      // 全ての呼び出しに対して同じデータを返す
+      when(
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId1,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(mockActivityLogs);
 
-    const testCases: GetMonthlyGoalsTestCase[] = [
-      {
-        name: "success / get yearly goals",
-        userId: userId1,
-        year: 2024,
-        expectedLength: 0, // 現在は空配列を返す実装
-      },
-      {
-        name: "success / get monthly goals",
-        userId: userId1,
-        year: 2024,
-        month: 1,
-        expectedLength: 0, // 現在は空配列を返す実装
-      },
-    ];
+      const history = await service.getBalanceHistory(
+        userId1,
+        mockGoalEntity,
+        "2024-01-01",
+        "2024-01-03",
+      );
 
-    testCases.forEach(({ name, userId, year, month, expectedLength }) => {
-      it(`${name}`, async () => {
-        const result = await service.getMonthlyGoals(userId, year, month);
+      expect(history).toHaveLength(3);
 
-        expect(result).toHaveLength(expectedLength);
-        expect(Array.isArray(result)).toBe(true);
+      // Day 1: target 10, actual 20 (全データ), balance 10
+      expect(history[0]).toEqual({
+        currentBalance: 10,
+        totalTarget: 10,
+        totalActual: 20,
+        dailyTarget: 10,
+        daysActive: 1,
+        lastCalculatedDate: "2024-01-01",
+      });
+
+      // Day 2: target 20, actual 20, balance 0
+      expect(history[1]).toEqual({
+        currentBalance: 0,
+        totalTarget: 20,
+        totalActual: 20,
+        dailyTarget: 10,
+        daysActive: 2,
+        lastCalculatedDate: "2024-01-02",
+      });
+
+      // Day 3: target 30, actual 20, balance -10
+      expect(history[2]).toEqual({
+        currentBalance: -10,
+        totalTarget: 30,
+        totalActual: 20,
+        dailyTarget: 10,
+        daysActive: 3,
+        lastCalculatedDate: "2024-01-03",
       });
     });
   });
 
-  describe("updateTarget", () => {
-    type UpdateTargetTestCase = {
-      name: string;
-      goal: any;
-      newTarget: number;
-      expectedTarget: number;
-      expectError?: {
-        notPersisted?: Error;
-      };
-    };
+  describe("adjustDailyTarget", () => {
+    it("should create a new goal with adjusted target", async () => {
+      const adjusted = await service.adjustDailyTarget(
+        mockGoalEntity,
+        15,
+        "2024-02-01",
+      );
 
-    const testCases: UpdateTargetTestCase[] = [
-      {
-        name: "success / increase target",
-        goal: mockGoalEntity,
-        newTarget: 150,
-        expectedTarget: 150,
-      },
-      {
-        name: "success / decrease target",
-        goal: mockGoalEntity,
-        newTarget: 80,
-        expectedTarget: 80,
-      },
-      {
-        name: "failed / non-persisted goal",
-        goal: {
-          ...mockGoalEntity,
-          type: "new",
-        },
-        newTarget: 150,
-        expectedTarget: 150,
-        expectError: {
-          notPersisted: new Error(
-            "Cannot update target for non-persisted goal",
-          ),
-        },
-      },
-    ];
-
-    testCases.forEach(
-      ({ name, goal, newTarget, expectedTarget, expectError }) => {
-        it(`${name}`, async () => {
-          if (expectError?.notPersisted) {
-            await expect(service.updateTarget(goal, newTarget)).rejects.toThrow(
-              "Cannot update target for non-persisted goal",
-            );
-            return;
-          }
-
-          const result = await service.updateTarget(goal, newTarget);
-
-          expect(result.targetQuantity).toEqual(expectedTarget);
-          expect(result.id).toEqual(goal.id);
-          expect(result.userId).toEqual(goal.userId);
-          expect(result.targetMonth).toEqual(goal.targetMonth);
-        });
-      },
-    );
+      expect(adjusted.dailyTargetQuantity).toBe(15);
+      // 元の目標は非アクティブに
+      expect(mockGoalEntity.isActive).toBe(false);
+      expect(mockGoalEntity.endDate).toBe("2024-01-31");
+    });
   });
 });

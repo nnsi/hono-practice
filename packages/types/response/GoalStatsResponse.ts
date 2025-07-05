@@ -2,7 +2,12 @@ import { z } from "zod";
 
 const DailyRecordSchema = z.object({
   date: z.string(),
-  quantity: z.number(),
+  quantity: z.union([z.number(), z.string()]).transform((val) => {
+    if (typeof val === "string") {
+      return Number.parseFloat(val);
+    }
+    return val;
+  }),
   achieved: z.boolean(),
 });
 
@@ -14,7 +19,6 @@ const StatsSchema = z.object({
 });
 
 export const GoalStatsResponseSchema = z.object({
-  goalType: z.enum(["debt", "monthly_target"]),
   goalId: z.string(),
   startDate: z.string(),
   endDate: z.string(),

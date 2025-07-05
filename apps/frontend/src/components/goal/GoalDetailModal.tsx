@@ -1,11 +1,10 @@
 import { useMemo } from "react";
 
-import { useGoalStats } from "@frontend/hooks";
+import { useGoal, useGoalStats } from "@frontend/hooks";
+import { apiClient } from "@frontend/utils";
+import { useQuery } from "@tanstack/react-query";
 
-import type {
-  DebtGoalResponse,
-  MonthlyTargetGoalResponse,
-} from "@dtos/response";
+import { GetActivitiesResponseSchema, type GoalResponse } from "@dtos/response";
 
 import {
   Dialog,
@@ -16,12 +15,9 @@ import {
 } from "@components/ui";
 
 type GoalDetailModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  goal: DebtGoalResponse | MonthlyTargetGoalResponse;
-  activityName: string;
-  activityEmoji: string;
-  quantityUnit?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  goalId: string;
 };
 
 type GoalStats = {
@@ -29,14 +25,14 @@ type GoalStats = {
   currentProgress: number;
   targetProgress: number;
   progressPercentage: number;
-  averageDaily: number;
+  activeDays: number;
   maxDaily: number;
   maxConsecutiveDays: number;
   daysAchieved: number;
 };
 
 const calculateGoalStats = (
-  goal: DebtGoalResponse | MonthlyTargetGoalResponse,
+  goal: GoalResponse | null | undefined,
 ): GoalStats => {
   // TODO: これらの統計情報を計算するには、日次の活動記録データが必要
   // 現在は仮の値を返す
@@ -44,74 +40,70 @@ const calculateGoalStats = (
     currentProgress: 0,
     targetProgress: 0,
     progressPercentage: 0,
-    averageDaily: 0,
+    activeDays: 0,
     maxDaily: 0,
     maxConsecutiveDays: 0,
     daysAchieved: 0,
   };
 
-  if (goal.type === "debt") {
-    const today = new Date();
-    const endDate = goal.endDate ? new Date(goal.endDate) : null;
-
-    // 期限までの日数
-    if (endDate && today < endDate) {
-      stats.daysUntilDeadline = Math.ceil(
-        (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-      );
-    }
-
-    // 現在の進捗と目標
-    stats.currentProgress = goal.totalActual;
-    stats.targetProgress = goal.totalDebt;
-    stats.progressPercentage =
-      stats.targetProgress > 0
-        ? Math.min(100, (stats.currentProgress / stats.targetProgress) * 100)
-        : 0;
-  } else {
-    // monthly_target の場合
-    const targetDate = new Date(`${goal.targetMonth}-01`);
-    const endOfMonth = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth() + 1,
-      0,
-    );
-    const today = new Date();
-
-    // 月末までの日数
-    if (today < endOfMonth) {
-      stats.daysUntilDeadline = Math.ceil(
-        (endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-      );
-    }
-
-    stats.currentProgress = goal.currentQuantity;
-    stats.targetProgress = goal.targetQuantity;
-    stats.progressPercentage =
-      stats.targetProgress > 0
-        ? Math.min(100, (stats.currentProgress / stats.targetProgress) * 100)
-        : 0;
+  if (!goal) {
+    return stats;
   }
+
+  const today = new Date();
+  const endDate = goal.endDate ? new Date(goal.endDate) : null;
+
+  // 期限までの日数
+  if (endDate && today < endDate) {
+    stats.daysUntilDeadline = Math.ceil(
+      (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+  }
+
+  // 現在の進捗と目標
+  stats.currentProgress = goal.totalActual;
+  stats.targetProgress = goal.totalTarget;
+  stats.progressPercentage =
+    stats.targetProgress > 0
+      ? Math.min(100, (stats.currentProgress / stats.targetProgress) * 100)
+      : 0;
 
   return stats;
 };
 
 export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
-  isOpen,
-  onClose,
-  goal,
-  activityName,
-  activityEmoji,
-  quantityUnit = "",
+  open,
+  onOpenChange,
+  goalId,
 }) => {
-  const { data: statsData, isLoading } = useGoalStats(
-    goal.type,
-    goal.id,
-    isOpen,
-  );
+  const { data: goalData } = useGoal(goalId);
+  const { data: statsData, isLoading } = useGoalStats(goalId, open);
+
+  const { data: activitiesData } = useQuery({
+    queryKey: ["activity"],
+    queryFn: async () => {
+      const res = await apiClient.users.activities.$get();
+      const json = await res.json();
+      const parsed = GetActivitiesResponseSchema.safeParse(json);
+      if (!parsed.success) {
+        throw new Error("Failed to parse activities");
+      }
+      return parsed.data;
+    },
+  });
+
+  const goal = goalData;
+  const activity = activitiesData?.find((a) => a.id === goal?.activityId);
+  const activityName = activity?.name || "不明なアクティビティ";
+  const activityEmoji = activity?.emoji || "🎯";
+  const quantityUnit = activity?.quantityUnit || "";
 
   const stats = useMemo(() => {
-    if (!statsData) {
+    if (!goal) {
+      return calculateGoalStats(goal);
+    }
+
+    if (!statsData || isLoading) {
       return calculateGoalStats(goal);
     }
 
@@ -121,15 +113,20 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
 
     return {
       ...baseStats,
-      averageDaily: apiStats.average,
+      activeDays: statsData.dailyRecords.filter((record) => record.quantity > 0)
+        .length,
       maxDaily: apiStats.max,
       maxConsecutiveDays: apiStats.maxConsecutiveDays,
       daysAchieved: apiStats.achievedDays,
     };
-  }, [goal, statsData]);
+  }, [goal, statsData, isLoading]);
+
+  if (!goal) {
+    return null;
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -137,7 +134,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
             <span>{activityName}</span>
           </DialogTitle>
           <DialogDescription>
-            {goal.type === "debt" && (
+            {goal && (
               <>
                 {new Date(goal.startDate).toLocaleDateString("ja-JP")} 〜{" "}
                 {goal.endDate
@@ -145,11 +142,6 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
                   : ""}
               </>
             )}
-            {goal.type === "monthly_target" &&
-              new Date(`${goal.targetMonth}-01`).toLocaleDateString("ja-JP", {
-                year: "numeric",
-                month: "long",
-              })}
           </DialogDescription>
         </DialogHeader>
 
@@ -182,40 +174,31 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4 pt-4">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">期間中の平均活動量</p>
+              <p className="text-sm text-gray-600">期間中の活動日数</p>
               <p className="text-lg font-medium">
-                {statsData ? Math.round(stats.averageDaily) : "-"}
-                {quantityUnit}
+                {statsData && !isLoading ? stats.activeDays : "-"}日
               </p>
             </div>
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">期間中の最大活動量</p>
               <p className="text-lg font-medium">
-                {statsData ? stats.maxDaily : "-"}
-                {quantityUnit}
+                {statsData && !isLoading ? stats.maxDaily : "-"}
+                {statsData && !isLoading ? quantityUnit : ""}
               </p>
             </div>
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">最大連続活動日数</p>
               <p className="text-lg font-medium">
-                {statsData ? stats.maxConsecutiveDays : "-"}日
+                {statsData && !isLoading ? stats.maxConsecutiveDays : "-"}日
               </p>
             </div>
             <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
-                {goal.type === "monthly_target" ? "活動日数" : "目標達成日数"}
-              </p>
+              <p className="text-sm text-gray-600">目標達成日数</p>
               <p className="text-lg font-medium">
-                {statsData ? stats.daysAchieved : "-"}日
+                {statsData && !isLoading ? stats.daysAchieved : "-"}日
               </p>
             </div>
           </div>
-
-          {isLoading && (
-            <div className="pt-4 text-center text-sm text-gray-500">
-              統計情報を読み込み中...
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>

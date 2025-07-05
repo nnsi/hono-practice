@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CreateDebtGoalRequestSchema = z.object({
+export const CreateGoalRequestSchema = z.object({
   activityId: z.string().uuid(),
   dailyTargetQuantity: z.number().positive(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -11,4 +11,4 @@ export const CreateDebtGoalRequestSchema = z.object({
   description: z.string().optional(),
 });
 
-export type CreateDebtGoalRequest = z.infer<typeof CreateDebtGoalRequestSchema>;
+export type CreateGoalRequest = z.infer<typeof CreateGoalRequestSchema>;

@@ -1,137 +1,178 @@
+import {
+  formatDateInTimezone,
+  getCurrentDateInTimezone,
+  getDaysBetweenInTimezone,
+} from "@backend/utils/timezone";
+
 import type { ActivityLogRepository } from "../activityLog";
 import type {
   ActivityGoal,
   ActivityId,
   ActivityLog,
-  GoalProgress,
+  GoalBalance,
   UserId,
 } from "@backend/domain";
 
 export type ActivityGoalService = {
-  calculateProgress(userId: UserId, goal: ActivityGoal): Promise<GoalProgress>;
-
-  getMonthlyGoals(
+  calculateCurrentBalance(
     userId: UserId,
-    year: number,
-    month?: number,
-  ): Promise<ActivityGoal[]>;
+    goal: ActivityGoal,
+    calculateDate?: string,
+  ): Promise<GoalBalance>;
 
-  updateTarget(goal: ActivityGoal, newTarget: number): Promise<ActivityGoal>;
+  getBalanceHistory(
+    userId: UserId,
+    goal: ActivityGoal,
+    fromDate: string,
+    toDate: string,
+  ): Promise<GoalBalance[]>;
+
+  adjustDailyTarget(
+    goal: ActivityGoal,
+    newTarget: number,
+    effectiveDate: string,
+  ): Promise<ActivityGoal>;
 };
 
 export function newActivityGoalService(
   activityLogRepo: ActivityLogRepository,
 ): ActivityGoalService {
   return {
-    calculateProgress: calculateProgress(activityLogRepo),
-    getMonthlyGoals: getMonthlyGoals(),
-    updateTarget: updateTarget(),
+    calculateCurrentBalance: calculateCurrentBalance(activityLogRepo),
+    getBalanceHistory: getBalanceHistory(activityLogRepo),
+    adjustDailyTarget: adjustDailyTarget(),
   };
 }
 
-function calculateProgress(activityLogRepo: ActivityLogRepository) {
-  return async (userId: UserId, goal: ActivityGoal): Promise<GoalProgress> => {
-    // 対象月の開始日と終了日を計算
-    const [year, month] = goal.targetMonth.split("-").map(Number);
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0); // 月末日
+function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
+  return async (
+    userId: UserId,
+    goal: ActivityGoal,
+    calculateDate: string = getCurrentDateInTimezone(),
+  ): Promise<GoalBalance> => {
+    // 1. 終了日が設定されていて、計算日が終了日を超えている場合は終了日までで計算
+    const effectiveCalculateDate =
+      goal.endDate && calculateDate > goal.endDate
+        ? goal.endDate
+        : calculateDate;
 
-    // 対象月の活動量を取得
-    const currentQuantity = await getActivityQuantityInMonth(
+    // 2. 開始日から計算日までの日数を計算（JST基準）
+    // 開始日より前の場合は0日として扱う
+    const daysPassed =
+      goal.startDate > effectiveCalculateDate
+        ? 0
+        : getDaysBetweenInTimezone(goal.startDate, effectiveCalculateDate);
+
+    const activeDays = Math.max(0, daysPassed);
+
+    // 3. 累積目標を計算
+    const totalTarget = activeDays * goal.dailyTargetQuantity;
+
+    // 4. 実際の活動量を取得（effectiveCalculateDateまでの期間で計算）
+    const actualQuantity = await getActivityQuantityInPeriod(
       activityLogRepo,
       userId,
       goal.activityId,
-      startDate,
-      endDate,
+      goal.startDate,
+      effectiveCalculateDate,
     );
 
-    // 進捗率を計算
-    const progressRate = Math.min(currentQuantity / goal.targetQuantity, 1);
-
-    // 残り必要量
-    const remainingQuantity = Math.max(
-      goal.targetQuantity - currentQuantity,
-      0,
-    );
-
-    // 残り日数を計算
-    const today = new Date();
-    const lastDayOfMonth = new Date(year, month, 0);
-    let remainingDays = 0;
-
-    if (today.getFullYear() === year && today.getMonth() === month - 1) {
-      // 現在が対象月の場合、今日から月末までの日数
-      remainingDays = Math.max(
-        lastDayOfMonth.getDate() - today.getDate() + 1,
-        0,
-      );
-    } else if (today < startDate) {
-      // 対象月が未来の場合、月の全日数
-      remainingDays = lastDayOfMonth.getDate();
-    }
-    // 過去の月の場合、remainingDays = 0
-
-    // 目標達成に必要な日割りペース
-    const dailyPaceRequired =
-      remainingDays > 0 ? remainingQuantity / remainingDays : 0;
-
-    // 達成済みかどうか
-    const isAchieved = currentQuantity >= goal.targetQuantity;
+    // 5. 残高計算（負の値が負債、正の値が貯金）
+    const currentBalance = actualQuantity - totalTarget;
 
     return {
-      currentQuantity,
-      targetQuantity: goal.targetQuantity,
-      progressRate,
-      remainingQuantity,
-      remainingDays,
-      dailyPaceRequired,
-      isAchieved,
+      currentBalance,
+      totalTarget,
+      totalActual: actualQuantity,
+      dailyTarget: goal.dailyTargetQuantity,
+      daysActive: activeDays,
+      lastCalculatedDate: effectiveCalculateDate,
     };
   };
 }
 
-function getMonthlyGoals() {
+function getBalanceHistory(activityLogRepo: ActivityLogRepository) {
   return async (
-    _userId: UserId,
-    _year: number,
-    _month?: number,
-  ): Promise<ActivityGoal[]> => {
-    // この機能は ActivityGoalRepository を使用して実装
-    // 現在は簡単な実装として空配列を返す
-    return [];
+    userId: UserId,
+    goal: ActivityGoal,
+    fromDate: string,
+    toDate: string,
+  ): Promise<GoalBalance[]> => {
+    const balances: GoalBalance[] = [];
+    const startDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+
+    // 日別に計算
+    for (
+      let date = new Date(startDate);
+      date <= endDate;
+      date.setDate(date.getDate() + 1)
+    ) {
+      const dateStr = formatDateInTimezone(date);
+      const balance = await calculateCurrentBalance(activityLogRepo)(
+        userId,
+        goal,
+        dateStr,
+      );
+      balances.push(balance);
+    }
+
+    return balances;
   };
 }
 
-function updateTarget() {
+function adjustDailyTarget() {
   return async (
     goal: ActivityGoal,
     newTarget: number,
+    effectiveDate: string,
   ): Promise<ActivityGoal> => {
+    // 実際の実装では、過去の負債を保持しつつ新しい目標値を適用する
+    // より複雑なロジックが必要になる場合があります
     if (goal.type !== "persisted") {
-      throw new Error("Cannot update target for non-persisted goal");
+      throw new Error("Cannot adjust target for non-persisted goal");
     }
 
+    // 元の目標を非アクティブにして終了日を設定
+    const previousDay = new Date(effectiveDate);
+    previousDay.setDate(previousDay.getDate() - 1);
+    goal.isActive = false;
+    goal.endDate = formatDateInTimezone(previousDay);
+
+    // 新しい目標を返す
     return {
       ...goal,
-      targetQuantity: newTarget,
+      type: "new" as const,
+      dailyTargetQuantity: newTarget,
+      startDate: effectiveDate,
+      endDate: null,
+      isActive: true,
     };
   };
 }
 
-// Helper function: 月内の活動量を集計
-async function getActivityQuantityInMonth(
+// Helper function: 期間内の活動量を集計
+async function getActivityQuantityInPeriod(
   activityLogRepo: ActivityLogRepository,
   userId: UserId,
   activityId: ActivityId,
-  startDate: Date,
-  endDate: Date,
+  startDate: string,
+  endDate: string,
 ): Promise<number> {
-  // ActivityLogRepositoryを使用して月内の活動量を取得
+  // getActivityLogsByUserIdAndDateメソッドを使用
+  const fromDate = new Date(startDate);
+  const toDate = new Date(endDate);
+
   const logs = await activityLogRepo.getActivityLogsByUserIdAndDate(
     userId,
-    startDate,
-    endDate,
+    fromDate,
+    toDate,
   );
+
+  // nullチェックを追加
+  if (!logs) {
+    return 0;
+  }
 
   // 指定されたactivityIdのログのみフィルタリングして、quantityの合計を計算
   return logs
