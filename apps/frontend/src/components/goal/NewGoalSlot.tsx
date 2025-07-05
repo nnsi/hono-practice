@@ -47,11 +47,21 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
 
   const createGoal = useCreateGoal();
 
+  // 選択された活動の単位を取得
+  const selectedActivityId = form.watch("activityId");
+  const selectedActivity = activities.find((a) => a.id === selectedActivityId);
+  const quantityUnit = selectedActivity?.quantityUnit || "";
+
   const handleSubmit = (data: FormData) => {
+    const quantity = data.dailyTargetQuantity;
+    if (!quantity || quantity <= 0) {
+      return;
+    }
+
     createGoal.mutate(
       {
         activityId: data.activityId,
-        dailyTargetQuantity: data.dailyTargetQuantity,
+        dailyTargetQuantity: Number(quantity),
         startDate: data.startDate,
         endDate: data.endDate || undefined,
       },
@@ -111,30 +121,40 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
           />
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <FormField
-              control={form.control}
-              name="dailyTargetQuantity"
-              render={({ field }) => (
-                <FormItem className="w-24">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      placeholder="日目標"
-                      className="h-10"
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                </FormItem>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-muted-foreground">日次目標:</span>
+              <FormField
+                control={form.control}
+                name="dailyTargetQuantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="h-10 w-28 text-center"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? "" : Number(value));
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {quantityUnit && (
+                <span className="text-sm text-muted-foreground">
+                  {quantityUnit}
+                </span>
               )}
-            />
+            </div>
             <FormField
               control={form.control}
               name="startDate"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem>
                   <FormControl>
-                    <Input {...field} type="date" className="h-10" />
+                    <Input {...field} type="date" className="h-10 w-32" />
                   </FormControl>
                 </FormItem>
               )}
@@ -143,13 +163,13 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
               control={form.control}
               name="endDate"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem>
                   <FormControl>
                     <Input
                       {...field}
                       type="date"
                       placeholder="終了日（任意）"
-                      className="h-10"
+                      className="h-10 w-32"
                     />
                   </FormControl>
                 </FormItem>

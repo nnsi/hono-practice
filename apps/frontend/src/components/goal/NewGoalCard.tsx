@@ -69,10 +69,15 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   });
 
   const handleUpdate = (data: EditFormData) => {
+    const quantity = data.dailyTargetQuantity;
+    if (!quantity || quantity <= 0) {
+      return;
+    }
+
     updateGoal.mutate(
       {
         id: goal.id,
-        data: { dailyTargetQuantity: data.dailyTargetQuantity },
+        data: { dailyTargetQuantity: Number(quantity) },
       },
       {
         onSuccess: () => {
@@ -118,23 +123,34 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
               {activityName}
             </p>
 
-            <div className="flex-1 max-w-[100px] sm:max-w-[120px]">
-              <FormField
-                control={form.control}
-                name="dailyTargetQuantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        className="h-8 text-center text-sm"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+            <div className="flex items-center gap-1 flex-1">
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                日次目標:
+              </span>
+              <div className="min-w-[90px] max-w-[110px]">
+                <FormField
+                  control={form.control}
+                  name="dailyTargetQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          className="h-8 text-center text-sm"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? "" : Number(value));
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                {quantityUnit}
+              </span>
             </div>
 
             <div className="flex gap-1 ml-auto">
