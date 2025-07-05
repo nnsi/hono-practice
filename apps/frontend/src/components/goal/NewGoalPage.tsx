@@ -100,7 +100,7 @@ export const NewGoalPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       {/* 現在の目標 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="flex flex-col gap-2">
         {currentGoals.map((goal) => (
           <NewGoalCard
             key={goal.id}
@@ -127,7 +127,7 @@ export const NewGoalPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-600 mt-8 mb-4">
             過去の目標
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-2">
             {pastGoals.map((goal) => (
               <NewGoalCard
                 key={goal.id}

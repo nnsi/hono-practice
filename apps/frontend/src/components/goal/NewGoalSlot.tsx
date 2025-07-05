@@ -28,6 +28,8 @@ type FormData = {
   dailyTargetQuantity?: number;
   targetQuantity?: number;
   targetMonth?: string;
+  startDate?: string;
+  endDate?: string;
 };
 
 type NewGoalSlotProps = {
@@ -46,6 +48,8 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
       dailyTargetQuantity: 1,
       targetQuantity: 30,
       targetMonth: new Date().toISOString().slice(0, 7),
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: "",
     },
   });
 
@@ -57,12 +61,13 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
   const isPending = isCreatingDebt || isCreatingMonthly;
 
   const handleSubmit = (data: FormData) => {
-    if (data.type === "debt" && data.dailyTargetQuantity) {
+    if (data.type === "debt" && data.dailyTargetQuantity && data.startDate) {
       createDebtGoal(
         {
           activityId: data.activityId,
           dailyTargetQuantity: data.dailyTargetQuantity,
-          startDate: new Date().toISOString().split("T")[0],
+          startDate: data.startDate,
+          endDate: data.endDate || undefined,
         },
         {
           onSuccess: () => {
@@ -99,11 +104,11 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
       <button
         type="button"
         onClick={() => setIsCreating(true)}
-        className="relative w-full pb-[100%] rounded-2xl border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 group flex flex-col items-center justify-center"
+        className="w-full h-20 rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 group flex items-center justify-center gap-2"
       >
-        <PlusIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-gray-400 group-hover:text-gray-600 mb-2" />
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-8 text-sm text-gray-500 group-hover:text-gray-700">
-          新規目標
+        <PlusIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+        <span className="text-sm text-gray-500 group-hover:text-gray-700">
+          新規目標を追加
         </span>
       </button>
     );
@@ -113,129 +118,169 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="relative w-full pb-[100%] rounded-2xl border-2 border-blue-300 bg-blue-50 animate-in slide-in-from-bottom-2 duration-200"
+        className="w-full rounded-lg border-2 border-blue-300 bg-blue-50 animate-in slide-in-from-bottom-2 duration-200 p-4"
       >
-        <div className="absolute inset-0 p-4 flex flex-col">
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem className="mb-2">
-                <FormControl>
-                  <RadioGroup
-                    {...field}
-                    className="flex flex-col gap-1"
-                    onValueChange={field.onChange}
-                  >
-                    <div className="flex items-center gap-1 text-xs">
-                      <RadioGroupItem value="debt" className="w-3 h-3" />
-                      <span>負債型</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <RadioGroupItem
-                        value="monthly_target"
-                        className="w-3 h-3"
-                      />
-                      <span>月間型</span>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="activityId"
-            render={({ field }) => (
-              <FormItem className="mb-2">
-                <Select {...field} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="活動選択" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {activities.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id}>
-                        {activity.emoji} {activity.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-
-          {selectedType === "debt" ? (
+        <div className="flex flex-col gap-3">
+          {/* 1行目: タイプ選択とアクティビティ選択 */}
+          <div className="flex flex-col sm:flex-row gap-3">
             <FormField
               control={form.control}
-              name="dailyTargetQuantity"
+              name="type"
               render={({ field }) => (
-                <FormItem className="mb-2">
+                <FormItem className="flex-shrink-0">
                   <FormControl>
-                    <Input
+                    <RadioGroup
                       {...field}
-                      type="number"
-                      placeholder="日目標"
-                      className="h-8 text-xs"
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
+                      className="flex gap-4"
+                      onValueChange={field.onChange}
+                    >
+                      <div className="flex items-center gap-1">
+                        <RadioGroupItem value="debt" className="w-4 h-4" />
+                        <span className="text-sm">負債型</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <RadioGroupItem
+                          value="monthly_target"
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">月間型</span>
+                      </div>
+                    </RadioGroup>
                   </FormControl>
                 </FormItem>
               )}
             />
-          ) : (
-            <>
-              <FormField
-                control={form.control}
-                name="targetQuantity"
-                render={({ field }) => (
-                  <FormItem className="mb-1">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder="月目標"
-                        className="h-8 text-xs"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="targetMonth"
-                render={({ field }) => (
-                  <FormItem className="mb-2">
-                    <FormControl>
-                      <Input {...field} type="month" className="h-8 text-xs" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </>
-          )}
 
-          <div className="flex gap-1 mt-auto">
+            <FormField
+              control={form.control}
+              name="activityId"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <Select {...field} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="活動を選択" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {activities.map((activity) => (
+                        <SelectItem key={activity.id} value={activity.id}>
+                          {activity.emoji} {activity.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* 2行目: 詳細入力 */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {selectedType === "debt" ? (
+              <>
+                <FormField
+                  control={form.control}
+                  name="dailyTargetQuantity"
+                  render={({ field }) => (
+                    <FormItem className="w-24">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="日目標"
+                          className="h-10"
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input {...field} type="date" className="h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="date"
+                          placeholder="終了日（任意）"
+                          className="h-10"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              <>
+                <FormField
+                  control={form.control}
+                  name="targetQuantity"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="月目標"
+                          className="h-10"
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="targetMonth"
+                  render={({ field }) => (
+                    <FormItem className="w-32">
+                      <FormControl>
+                        <Input {...field} type="month" className="h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+          </div>
+
+          {/* ボタン */}
+          <div className="flex gap-2 justify-end">
             <Button
               type="submit"
-              size="sm"
+              size="default"
               disabled={isPending}
-              className="flex-1 h-7 text-xs"
+              className="h-10"
             >
               作成
             </Button>
             <Button
               type="button"
-              size="sm"
+              size="default"
               variant="outline"
               onClick={() => {
                 setIsCreating(false);
                 form.reset();
               }}
-              className="flex-1 h-7 text-xs"
+              className="h-10"
             >
               取消
             </Button>
