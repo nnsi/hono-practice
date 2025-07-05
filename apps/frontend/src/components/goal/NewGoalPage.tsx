@@ -5,10 +5,6 @@ import { apiClient } from "@frontend/utils";
 import { useQuery } from "@tanstack/react-query";
 
 import { GetActivitiesResponseSchema } from "@dtos/response";
-import type {
-  DebtGoalResponse,
-  MonthlyTargetGoalResponse,
-} from "@dtos/response";
 
 import { NewGoalCard } from "./NewGoalCard";
 import { NewGoalSlot } from "./NewGoalSlot";
@@ -31,48 +27,20 @@ export const NewGoalPage: React.FC = () => {
   });
 
   const goals = goalsData?.goals || [];
-  const debtGoals = goals.filter(
-    (g): g is DebtGoalResponse => g.type === "debt",
-  );
-  const monthlyGoals = goals.filter(
-    (g): g is MonthlyTargetGoalResponse => g.type === "monthly_target",
-  );
 
   // 現在の日付を取得
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
 
   // 現在の目標と過去の目標を分ける
-  const currentDebtGoals = debtGoals.filter((goal) => {
+  const currentGoals = goals.filter((goal) => {
     // 期間終了日がない、または期間終了日が未来の場合は現在の目標
     return !goal.endDate || new Date(goal.endDate) >= now;
   });
 
-  const pastDebtGoals = debtGoals.filter((goal) => {
+  const pastGoals = goals.filter((goal) => {
     // 期間終了日があり、かつ過去の場合は過去の目標
     return goal.endDate && new Date(goal.endDate) < now;
   });
-
-  const currentMonthlyGoals = monthlyGoals.filter((goal) => {
-    // targetMonthからyearとmonthを抽出 (YYYY-MM形式)
-    const [targetYear, targetMonth] = goal.targetMonth.split("-").map(Number);
-    // 現在の年月の目標
-    return targetYear === currentYear && targetMonth === currentMonth;
-  });
-
-  const pastMonthlyGoals = monthlyGoals.filter((goal) => {
-    // targetMonthからyearとmonthを抽出 (YYYY-MM形式)
-    const [targetYear, targetMonth] = goal.targetMonth.split("-").map(Number);
-    // 過去の年月の目標
-    return (
-      targetYear < currentYear ||
-      (targetYear === currentYear && targetMonth < currentMonth)
-    );
-  });
-
-  const currentGoals = [...currentDebtGoals, ...currentMonthlyGoals];
-  const pastGoals = [...pastDebtGoals, ...pastMonthlyGoals];
 
   const getActivityName = (activityId: string) => {
     const activity = activitiesData?.find((a) => a.id === activityId);

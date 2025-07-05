@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useCreateDebtGoal, useCreateMonthlyGoal } from "@frontend/hooks";
+import { useCreateGoal } from "@frontend/hooks";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useForm } from "react-hook-form";
 
@@ -13,8 +13,6 @@ import {
   FormField,
   FormItem,
   Input,
-  RadioGroup,
-  RadioGroupItem,
   Select,
   SelectContent,
   SelectItem,
@@ -23,12 +21,9 @@ import {
 } from "@components/ui";
 
 type FormData = {
-  type: "debt" | "monthly_target";
   activityId: string;
-  dailyTargetQuantity?: number;
-  targetQuantity?: number;
-  targetMonth?: string;
-  startDate?: string;
+  dailyTargetQuantity: number;
+  startDate: string;
   endDate?: string;
 };
 
@@ -44,59 +39,30 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const form = useForm<FormData>({
     defaultValues: {
-      type: "debt",
       dailyTargetQuantity: 1,
-      targetQuantity: 30,
-      targetMonth: new Date().toISOString().slice(0, 7),
       startDate: new Date().toISOString().split("T")[0],
       endDate: "",
     },
   });
 
-  const { mutate: createDebtGoal, isPending: isCreatingDebt } =
-    useCreateDebtGoal();
-  const { mutate: createMonthlyGoal, isPending: isCreatingMonthly } =
-    useCreateMonthlyGoal();
-  const selectedType = form.watch("type");
-  const isPending = isCreatingDebt || isCreatingMonthly;
+  const createGoal = useCreateGoal();
 
   const handleSubmit = (data: FormData) => {
-    if (data.type === "debt" && data.dailyTargetQuantity && data.startDate) {
-      createDebtGoal(
-        {
-          activityId: data.activityId,
-          dailyTargetQuantity: data.dailyTargetQuantity,
-          startDate: data.startDate,
-          endDate: data.endDate || undefined,
+    createGoal.mutate(
+      {
+        activityId: data.activityId,
+        dailyTargetQuantity: data.dailyTargetQuantity,
+        startDate: data.startDate,
+        endDate: data.endDate || undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsCreating(false);
+          form.reset();
+          onCreated();
         },
-        {
-          onSuccess: () => {
-            setIsCreating(false);
-            form.reset();
-            onCreated();
-          },
-        },
-      );
-    } else if (
-      data.type === "monthly_target" &&
-      data.targetQuantity &&
-      data.targetMonth
-    ) {
-      createMonthlyGoal(
-        {
-          activityId: data.activityId,
-          targetQuantity: data.targetQuantity,
-          targetMonth: data.targetMonth,
-        },
-        {
-          onSuccess: () => {
-            setIsCreating(false);
-            form.reset();
-            onCreated();
-          },
-        },
-      );
-    }
+      },
+    );
   };
 
   if (!isCreating) {
@@ -121,145 +87,74 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
         className="w-full rounded-lg border-2 border-blue-300 bg-blue-50 animate-in slide-in-from-bottom-2 duration-200 p-4"
       >
         <div className="flex flex-col gap-3">
-          {/* 1行目: タイプ選択とアクティビティ選択 */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <FormField
+            control={form.control}
+            name="activityId"
+            render={({ field }) => (
+              <FormItem>
+                <Select {...field} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="活動を選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {activities.map((activity) => (
+                      <SelectItem key={activity.id} value={activity.id}>
+                        {activity.emoji} {activity.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <div className="flex flex-col sm:flex-row gap-2">
             <FormField
               control={form.control}
-              name="type"
+              name="dailyTargetQuantity"
               render={({ field }) => (
-                <FormItem className="flex-shrink-0">
+                <FormItem className="w-24">
                   <FormControl>
-                    <RadioGroup
+                    <Input
                       {...field}
-                      className="flex gap-4"
-                      onValueChange={field.onChange}
-                    >
-                      <div className="flex items-center gap-1">
-                        <RadioGroupItem value="debt" className="w-4 h-4" />
-                        <span className="text-sm">負債型</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <RadioGroupItem
-                          value="monthly_target"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">月間型</span>
-                      </div>
-                    </RadioGroup>
+                      type="number"
+                      placeholder="日目標"
+                      className="h-10"
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="activityId"
+              name="startDate"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <Select {...field} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="活動を選択" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {activities.map((activity) => (
-                        <SelectItem key={activity.id} value={activity.id}>
-                          {activity.emoji} {activity.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input {...field} type="date" className="h-10" />
+                  </FormControl>
                 </FormItem>
               )}
             />
-          </div>
-
-          {/* 2行目: 詳細入力 */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            {selectedType === "debt" ? (
-              <>
-                <FormField
-                  control={form.control}
-                  name="dailyTargetQuantity"
-                  render={({ field }) => (
-                    <FormItem className="w-24">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="日目標"
-                          className="h-10"
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input {...field} type="date" className="h-10" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="endDate"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="date"
-                          placeholder="終了日（任意）"
-                          className="h-10"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </>
-            ) : (
-              <>
-                <FormField
-                  control={form.control}
-                  name="targetQuantity"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="月目標"
-                          className="h-10"
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="targetMonth"
-                  render={({ field }) => (
-                    <FormItem className="w-32">
-                      <FormControl>
-                        <Input {...field} type="month" className="h-10" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      placeholder="終了日（任意）"
+                      className="h-10"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* ボタン */}
@@ -267,7 +162,7 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
             <Button
               type="submit"
               size="default"
-              disabled={isPending}
+              disabled={createGoal.isPending}
               className="h-10"
             >
               作成

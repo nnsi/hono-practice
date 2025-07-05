@@ -4,6 +4,5 @@ export * from "./auth";
 export * from "./task";
 export * from "./user";
 export * from "./goal";
-export * from "./activitydebt";
 export * from "./activitygoal";
 export * from "./sync";

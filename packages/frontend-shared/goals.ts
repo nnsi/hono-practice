@@ -1,5 +1,4 @@
 export type GoalFilters = {
-  type?: "debt" | "monthly_target";
   activityId?: string;
   isActive?: boolean;
 };
@@ -9,7 +8,6 @@ export function buildGoalQueryString(filters?: GoalFilters): string {
 
   const params = new URLSearchParams();
 
-  if (filters.type) params.append("type", filters.type);
   if (filters.activityId) params.append("activityId", filters.activityId);
   if (filters.isActive !== undefined)
     params.append("isActive", filters.isActive.toString());
@@ -23,47 +21,48 @@ export function buildGoalPath(filters?: GoalFilters): string {
 }
 
 export function calculateDebtBalance(
-  current: number,
-  target: number,
+  currentBalance: number,
+  dailyTargetQuantity: number,
 ): {
   balance: number;
   status: "debt" | "savings" | "neutral";
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  label: string;
 } {
-  const balance = current - target;
-  const status = balance < 0 ? "debt" : balance > 0 ? "savings" : "neutral";
-  return { balance, status };
-}
+  const isInDebt = currentBalance < 0;
+  const isSaving = currentBalance > 0;
+  const absBalance = Math.abs(currentBalance);
+  const daysCount = Math.ceil(absBalance / dailyTargetQuantity);
 
-export function calculateMonthlyProgress(
-  current: number,
-  target: number,
-  remainingDays: number,
-): {
-  progressPercentage: number;
-  requiredDailyPace: number;
-  isAchieved: boolean;
-  status: "achieved" | "high" | "moderate" | "low";
-} {
-  const progressPercentage = target > 0 ? (current / target) * 100 : 0;
-  const remaining = Math.max(0, target - current);
-  const requiredDailyPace = remainingDays > 0 ? remaining / remainingDays : 0;
-  const isAchieved = current >= target;
-
-  let status: "achieved" | "high" | "moderate" | "low";
-  if (isAchieved) {
-    status = "achieved";
-  } else if (progressPercentage >= 80) {
-    status = "high";
-  } else if (progressPercentage >= 50) {
-    status = "moderate";
-  } else {
-    status = "low";
+  if (isInDebt) {
+    return {
+      balance: currentBalance,
+      status: "debt",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-200",
+      textColor: "text-red-600",
+      label: `${daysCount}日負債`,
+    };
   }
-
+  if (isSaving) {
+    return {
+      balance: currentBalance,
+      status: "savings",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      textColor: "text-green-600",
+      label: `${daysCount}日貯金`,
+    };
+  }
+  // バランスがゼロの場合
   return {
-    progressPercentage,
-    requiredDailyPace,
-    isAchieved,
-    status,
+    balance: currentBalance,
+    status: "neutral",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+    textColor: "text-gray-600",
+    label: "バランス: 0",
   };
 }

@@ -1,25 +1,16 @@
 import { AppError } from "@backend/error";
 
-import type {
-  CreateDebtGoalRequest,
-  CreateMonthlyGoalRequest,
-} from "@dtos/request";
+import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
 
-import type {
-  GoalFilters,
-  GoalType,
-  GoalUsecase,
-  UpdateGoalRequest,
-} from "./goalUsecase";
+import type { GoalFilters, GoalUsecase } from "./goalUsecase";
 import type { UserId } from "@backend/domain";
 
 export function newGoalHandler(uc: GoalUsecase) {
   return {
     getGoals: getGoals(uc),
     getGoal: getGoal(uc),
-    createDebtGoal: createDebtGoal(uc),
-    createMonthlyGoal: createMonthlyGoal(uc),
+    createGoal: createGoal(uc),
     updateGoal: updateGoal(uc),
     deleteGoal: deleteGoal(uc),
   };
@@ -41,8 +32,8 @@ function getGoals(uc: GoalUsecase) {
 }
 
 function getGoal(uc: GoalUsecase) {
-  return async (userId: UserId, goalId: string, type: GoalType) => {
-    const goal = await uc.getGoal(userId, goalId, type);
+  return async (userId: UserId, goalId: string) => {
+    const goal = await uc.getGoal(userId, goalId);
 
     const parsedGoal = GoalResponseSchema.safeParse(goal);
     if (!parsedGoal.success) {
@@ -53,26 +44,13 @@ function getGoal(uc: GoalUsecase) {
   };
 }
 
-function createDebtGoal(uc: GoalUsecase) {
-  return async (userId: UserId, params: CreateDebtGoalRequest) => {
-    const goal = await uc.createDebtGoal(userId, params);
+function createGoal(uc: GoalUsecase) {
+  return async (userId: UserId, params: CreateGoalRequest) => {
+    const goal = await uc.createGoal(userId, params);
 
     const parsedGoal = GoalResponseSchema.safeParse(goal);
     if (!parsedGoal.success) {
-      throw new AppError("createDebtGoalHandler: failed to parse goal", 500);
-    }
-
-    return parsedGoal.data;
-  };
-}
-
-function createMonthlyGoal(uc: GoalUsecase) {
-  return async (userId: UserId, params: CreateMonthlyGoalRequest) => {
-    const goal = await uc.createMonthlyGoal(userId, params);
-
-    const parsedGoal = GoalResponseSchema.safeParse(goal);
-    if (!parsedGoal.success) {
-      throw new AppError("createMonthlyGoalHandler: failed to parse goal", 500);
+      throw new AppError("createGoalHandler: failed to parse goal", 500);
     }
 
     return parsedGoal.data;
@@ -80,13 +58,8 @@ function createMonthlyGoal(uc: GoalUsecase) {
 }
 
 function updateGoal(uc: GoalUsecase) {
-  return async (
-    userId: UserId,
-    goalId: string,
-    type: GoalType,
-    params: UpdateGoalRequest,
-  ) => {
-    const goal = await uc.updateGoal(userId, goalId, type, params);
+  return async (userId: UserId, goalId: string, params: UpdateGoalRequest) => {
+    const goal = await uc.updateGoal(userId, goalId, params);
 
     const parsedGoal = GoalResponseSchema.safeParse(goal);
     if (!parsedGoal.success) {
@@ -98,8 +71,8 @@ function updateGoal(uc: GoalUsecase) {
 }
 
 function deleteGoal(uc: GoalUsecase) {
-  return async (userId: UserId, goalId: string, type: GoalType) => {
-    await uc.deleteGoal(userId, goalId, type);
+  return async (userId: UserId, goalId: string) => {
+    await uc.deleteGoal(userId, goalId);
     return { success: true };
   };
 }

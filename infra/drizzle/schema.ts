@@ -229,9 +229,9 @@ export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
   }),
 }));
 
-// ActivityDebt テーブル（活動量負債/貯金システム）
-export const activityDebts = pgTable(
-  "activity_debt",
+// ActivityGoal テーブル（統一された目標管理システム）
+export const activityGoals = pgTable(
+  "activity_goal",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
@@ -255,50 +255,8 @@ export const activityDebts = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
-    index("activity_debt_user_id_idx").on(t.userId),
-    index("activity_debt_activity_id_idx").on(t.activityId),
-  ],
-);
-
-export const activityDebtsRelations = relations(activityDebts, ({ one }) => ({
-  user: one(users, {
-    fields: [activityDebts.userId],
-    references: [users.id],
-  }),
-  activity: one(activities, {
-    fields: [activityDebts.activityId],
-    references: [activities.id],
-  }),
-}));
-
-// ActivityGoal テーブル（月間目標システム）
-export const activityGoals = pgTable(
-  "activity_goal",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-    activityId: uuid("activity_id")
-      .notNull()
-      .references(() => activities.id),
-    targetMonth: text("target_month").notNull(), // YYYY-MM
-    targetQuantity: customTypeNumeric("target_quantity").notNull(),
-    description: text("description"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  },
-  (t) => [
     index("activity_goal_user_id_idx").on(t.userId),
     index("activity_goal_activity_id_idx").on(t.activityId),
-    // 同じユーザー・活動・月の組み合わせは一意
-    index("activity_goal_unique_idx").on(t.userId, t.activityId, t.targetMonth),
   ],
 );
 

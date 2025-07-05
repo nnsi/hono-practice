@@ -106,6 +106,20 @@
       "when": 1750006768000,
       "tag": "0014_strong_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1751738908426,
+      "tag": "0015_daily_jack_flag",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1751739035010,
+      "tag": "0016_last_retro_girl",
+      "breakpoints": true
     }
   ]
 }

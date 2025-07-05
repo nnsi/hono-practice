@@ -20,10 +20,9 @@ export type ActivityGoalRepository = {
     userId: UserId,
     activityId: ActivityId,
   ): Promise<ActivityGoal[]>;
-  getByActivityIdAndMonth(
+  getActiveByActivityId(
     userId: UserId,
     activityId: ActivityId,
-    targetMonth: string,
   ): Promise<ActivityGoal | undefined>;
   create(goal: ActivityGoal): Promise<ActivityGoal>;
   update(goal: ActivityGoal): Promise<ActivityGoal>;
@@ -38,7 +37,7 @@ export function newActivityGoalRepository(
     getByUserId: getByUserId(db),
     getByIdAndUserId: getByIdAndUserId(db),
     getByActivityId: getByActivityId(db),
-    getByActivityIdAndMonth: getByActivityIdAndMonth(db),
+    getActiveByActivityId: getActiveByActivityId(db),
     create: create(db),
     update: update(db),
     delete: deleteGoal(db),
@@ -61,8 +60,10 @@ function getByUserId(db: QueryExecutor) {
         id: row.id,
         userId: row.userId,
         activityId: row.activityId,
-        targetMonth: row.targetMonth,
-        targetQuantity: row.targetQuantity,
+        dailyTargetQuantity: row.dailyTargetQuantity,
+        startDate: row.startDate || "",
+        endDate: row.endDate,
+        isActive: row.isActive,
         description: row.description,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -91,8 +92,10 @@ function getByIdAndUserId(db: QueryExecutor) {
       id: row.id,
       userId: row.userId,
       activityId: row.activityId,
-      targetMonth: row.targetMonth,
-      targetQuantity: row.targetQuantity,
+      dailyTargetQuantity: row.dailyTargetQuantity,
+      startDate: row.startDate || "",
+      endDate: row.endDate,
+      isActive: row.isActive,
       description: row.description,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -112,7 +115,7 @@ function getByActivityId(db: QueryExecutor) {
         eq(activityGoals.activityId, activityId),
         isNull(activityGoals.deletedAt),
       ),
-      orderBy: (goals, { desc }) => [desc(goals.targetMonth)],
+      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
     });
 
     return rows.map((row) =>
@@ -120,8 +123,10 @@ function getByActivityId(db: QueryExecutor) {
         id: row.id,
         userId: row.userId,
         activityId: row.activityId,
-        targetMonth: row.targetMonth,
-        targetQuantity: row.targetQuantity,
+        dailyTargetQuantity: row.dailyTargetQuantity,
+        startDate: row.startDate || "",
+        endDate: row.endDate,
+        isActive: row.isActive,
         description: row.description,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -131,19 +136,19 @@ function getByActivityId(db: QueryExecutor) {
   };
 }
 
-function getByActivityIdAndMonth(db: QueryExecutor) {
+function getActiveByActivityId(db: QueryExecutor) {
   return async (
     userId: UserId,
     activityId: ActivityId,
-    targetMonth: string,
   ): Promise<ActivityGoal | undefined> => {
     const row = await db.query.activityGoals.findFirst({
       where: and(
         eq(activityGoals.userId, userId),
         eq(activityGoals.activityId, activityId),
-        eq(activityGoals.targetMonth, targetMonth),
+        eq(activityGoals.isActive, true),
         isNull(activityGoals.deletedAt),
       ),
+      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
     });
 
     if (!row) return undefined;
@@ -152,8 +157,10 @@ function getByActivityIdAndMonth(db: QueryExecutor) {
       id: row.id,
       userId: row.userId,
       activityId: row.activityId,
-      targetMonth: row.targetMonth,
-      targetQuantity: row.targetQuantity,
+      dailyTargetQuantity: row.dailyTargetQuantity,
+      startDate: row.startDate || "",
+      endDate: row.endDate,
+      isActive: row.isActive,
       description: row.description,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -174,8 +181,10 @@ function create(db: QueryExecutor) {
         id: goal.id,
         userId: goal.userId,
         activityId: goal.activityId,
-        targetMonth: goal.targetMonth,
-        targetQuantity: goal.targetQuantity,
+        dailyTargetQuantity: goal.dailyTargetQuantity,
+        startDate: goal.startDate,
+        endDate: goal.endDate,
+        isActive: goal.isActive,
         description: goal.description,
       })
       .returning();
@@ -184,8 +193,10 @@ function create(db: QueryExecutor) {
       id: row.id,
       userId: row.userId,
       activityId: row.activityId,
-      targetMonth: row.targetMonth,
-      targetQuantity: row.targetQuantity,
+      dailyTargetQuantity: row.dailyTargetQuantity,
+      startDate: row.startDate || "",
+      endDate: row.endDate,
+      isActive: row.isActive,
       description: row.description,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -203,8 +214,10 @@ function update(db: QueryExecutor) {
     const [row] = await db
       .update(activityGoals)
       .set({
-        targetMonth: goal.targetMonth,
-        targetQuantity: goal.targetQuantity,
+        dailyTargetQuantity: goal.dailyTargetQuantity,
+        startDate: goal.startDate,
+        endDate: goal.endDate,
+        isActive: goal.isActive,
         description: goal.description,
         updatedAt: new Date(),
       })
@@ -215,8 +228,10 @@ function update(db: QueryExecutor) {
       id: row.id,
       userId: row.userId,
       activityId: row.activityId,
-      targetMonth: row.targetMonth,
-      targetQuantity: row.targetQuantity,
+      dailyTargetQuantity: row.dailyTargetQuantity,
+      startDate: row.startDate || "",
+      endDate: row.endDate,
+      isActive: row.isActive,
       description: row.description,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

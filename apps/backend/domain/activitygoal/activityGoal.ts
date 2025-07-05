@@ -10,8 +10,10 @@ const BaseActivityGoalSchema = z.object({
   id: activityGoalIdSchema,
   userId: userIdSchema,
   activityId: activityIdSchema,
-  targetMonth: z.string(), // YYYY-MM形式
-  targetQuantity: z.number().positive(),
+  dailyTargetQuantity: z.number().positive(),
+  startDate: z.string(),
+  endDate: z.string().nullable(),
+  isActive: z.boolean(),
   description: z.string().nullable(),
 });
 
@@ -48,24 +50,23 @@ export function createActivityGoalEntity(
   return parsedEntity.data;
 }
 
-// 進捗計算用のValue Object
-export const GoalProgressSchema = z.object({
-  currentQuantity: z.number(), // 現在の実績
-  targetQuantity: z.number(), // 目標量
-  progressRate: z.number(), // 進捗率（0-1）
-  remainingQuantity: z.number(), // 残り必要量
-  remainingDays: z.number(), // 残り日数
-  dailyPaceRequired: z.number(), // 目標達成に必要な日割りペース
-  isAchieved: z.boolean(), // 達成済みかどうか
+// 負債計算用のValue Object
+export const GoalBalanceSchema = z.object({
+  currentBalance: z.number(), // 現在の残高（負=負債、正=貯金）
+  totalTarget: z.number(), // 累積目標量
+  totalActual: z.number(), // 累積実績
+  dailyTarget: z.number(), // 1日の目標量
+  daysActive: z.number(), // 稼働日数
+  lastCalculatedDate: z.string(), // 最後に計算した日
 });
 
-export type GoalProgress = z.infer<typeof GoalProgressSchema>;
+export type GoalBalance = z.infer<typeof GoalBalanceSchema>;
 
-export function createGoalProgress(params: unknown): GoalProgress {
-  const result = GoalProgressSchema.safeParse(params);
+export function createGoalBalance(params: unknown): GoalBalance {
+  const result = GoalBalanceSchema.safeParse(params);
   if (!result.success) {
     throw new DomainValidateError(
-      `Invalid goal progress data: ${result.error.message}`,
+      `Invalid goal balance data: ${result.error.message}`,
     );
   }
   return result.data;

@@ -4,14 +4,10 @@ import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
 
 import {
-  CreateDebtGoalRequestSchema,
-  CreateMonthlyGoalRequestSchema,
-  UpdateDebtGoalRequestSchema,
-  UpdateMonthlyGoalRequestSchema,
+  CreateGoalRequestSchema,
+  UpdateGoalRequestSchema,
 } from "@dtos/request";
 
-import { newActivityDebtRepository } from "../activitydebt/activityDebtRepository";
-import { newActivityDebtService } from "../activitydebt/activityDebtService";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
@@ -35,22 +31,15 @@ export function createGoalRoute() {
     const db = c.env.DB;
 
     // Repository instances
-    const activityDebtRepo = newActivityDebtRepository(db);
     const activityGoalRepo = newActivityGoalRepository(db);
     const activityLogRepo = newActivityLogRepository(db);
 
     // Service instances
-    const activityDebtService = newActivityDebtService(activityLogRepo);
     const activityGoalService = newActivityGoalService(activityLogRepo);
     const goalQueryService = newGoalQueryService(db);
 
     // Usecase and Handler
-    const uc = newGoalUsecase(
-      activityDebtRepo,
-      activityGoalRepo,
-      activityDebtService,
-      activityGoalService,
-    );
+    const uc = newGoalUsecase(activityGoalRepo, activityGoalService);
     const h = newGoalHandler(uc);
 
     c.set("h", h);
@@ -61,15 +50,13 @@ export function createGoalRoute() {
 
   return (
     app
-      // 統合目標一覧取得
+      // 目標一覧取得
       .get("/", async (c) => {
         const userId = c.get("userId");
-        const type = c.req.query("type"); // debt | monthly_target
         const activityId = c.req.query("activityId");
         const isActive = c.req.query("isActive");
 
         const filters = {
-          ...(type && { type: type as "debt" | "monthly_target" }),
           ...(activityId && { activityId }),
           ...(isActive && { isActive: isActive === "true" }),
         };
@@ -78,33 +65,21 @@ export function createGoalRoute() {
         return c.json(res);
       })
       // 個別目標取得
-      .get("/:type/:id", async (c) => {
+      .get("/:id", async (c) => {
         const userId = c.get("userId");
-        const { type, id } = c.req.param();
+        const { id } = c.req.param();
 
-        if (type !== "debt" && type !== "monthly_target") {
-          return c.json({ error: "Invalid goal type" }, 400);
-        }
-
-        const res = await c.var.h.getGoal(userId, id, type);
+        const res = await c.var.h.getGoal(userId, id);
         return c.json(res);
       })
       // 目標統計情報取得
-      .get("/:type/:id/stats", async (c) => {
+      .get("/:id/stats", async (c) => {
         const userId = c.get("userId");
-        const { type, id } = c.req.param();
-
-        if (type !== "debt" && type !== "monthly_target") {
-          return c.json({ error: "Invalid goal type" }, 400);
-        }
+        const { id } = c.req.param();
 
         try {
           const goalQueryService = c.var.goalQueryService;
-          const res =
-            type === "debt"
-              ? await goalQueryService.getDebtGoalStats(userId, id)
-              : await goalQueryService.getMonthlyGoalStats(userId, id);
-
+          const res = await goalQueryService.getGoalStats(userId, id);
           return c.json(res);
         } catch (error) {
           if (error instanceof Error && error.message === "Goal not found") {
@@ -113,71 +88,29 @@ export function createGoalRoute() {
           throw error;
         }
       })
-      // 負債目標作成
-      .post(
-        "/debt",
-        zValidator("json", CreateDebtGoalRequestSchema),
-        async (c) => {
-          const userId = c.get("userId");
-          const params = c.req.valid("json");
-
-          const res = await c.var.h.createDebtGoal(userId, params);
-          return c.json(res, 201);
-        },
-      )
-      // 月間目標作成
-      .post(
-        "/monthly",
-        zValidator("json", CreateMonthlyGoalRequestSchema),
-        async (c) => {
-          const userId = c.get("userId");
-          const params = c.req.valid("json");
-
-          const res = await c.var.h.createMonthlyGoal(userId, params);
-          return c.json(res, 201);
-        },
-      )
-      // 負債目標更新
-      .put(
-        "/debt/:id",
-        zValidator("json", UpdateDebtGoalRequestSchema),
-        async (c) => {
-          const userId = c.get("userId");
-          const { id } = c.req.param();
-          const params = c.req.valid("json");
-
-          const res = await c.var.h.updateGoal(userId, id, "debt", params);
-          return c.json(res);
-        },
-      )
-      // 月間目標更新
-      .put(
-        "/monthly_target/:id",
-        zValidator("json", UpdateMonthlyGoalRequestSchema),
-        async (c) => {
-          const userId = c.get("userId");
-          const { id } = c.req.param();
-          const params = c.req.valid("json");
-
-          const res = await c.var.h.updateGoal(
-            userId,
-            id,
-            "monthly_target",
-            params,
-          );
-          return c.json(res);
-        },
-      )
-      // 目標削除
-      .delete("/:type/:id", async (c) => {
+      // 目標作成
+      .post("/", zValidator("json", CreateGoalRequestSchema), async (c) => {
         const userId = c.get("userId");
-        const { type, id } = c.req.param();
+        const params = c.req.valid("json");
 
-        if (type !== "debt" && type !== "monthly_target") {
-          return c.json({ error: "Invalid goal type" }, 400);
-        }
+        const res = await c.var.h.createGoal(userId, params);
+        return c.json(res, 201);
+      })
+      // 目標更新
+      .put("/:id", zValidator("json", UpdateGoalRequestSchema), async (c) => {
+        const userId = c.get("userId");
+        const { id } = c.req.param();
+        const params = c.req.valid("json");
 
-        await c.var.h.deleteGoal(userId, id, type);
+        const res = await c.var.h.updateGoal(userId, id, params);
+        return c.json(res);
+      })
+      // 目標削除
+      .delete("/:id", async (c) => {
+        const userId = c.get("userId");
+        const { id } = c.req.param();
+
+        await c.var.h.deleteGoal(userId, id);
         return c.json({ success: true });
       })
   );
