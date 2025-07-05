@@ -99,23 +99,23 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
       <button
         type="button"
         onClick={() => setIsCreating(true)}
-        className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex flex-col items-center justify-center gap-2 p-4 group"
+        className="relative w-full pb-[100%] rounded-2xl border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 group flex flex-col items-center justify-center"
       >
-        <PlusIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-600" />
-        <span className="text-sm text-gray-500 group-hover:text-gray-700">
-          新規
+        <PlusIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-gray-400 group-hover:text-gray-600 mb-2" />
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-8 text-sm text-gray-500 group-hover:text-gray-700">
+          新規目標
         </span>
       </button>
     );
   }
 
   return (
-    <div className="aspect-square rounded-2xl border-2 border-blue-300 bg-blue-50 p-4 animate-in slide-in-from-bottom-2 duration-200">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="h-full flex flex-col"
-        >
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="relative w-full pb-[100%] rounded-2xl border-2 border-blue-300 bg-blue-50 animate-in slide-in-from-bottom-2 duration-200"
+      >
+        <div className="absolute inset-0 p-4 flex flex-col">
           <FormField
             control={form.control}
             name="type"
@@ -240,8 +240,8 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
               取消
             </Button>
           </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
 };

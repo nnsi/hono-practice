@@ -15,6 +15,8 @@ import {
   type GetGoalsResponse,
   GetGoalsResponseSchema,
   type GoalResponse,
+  type GoalStatsResponse,
+  GoalStatsResponseSchema,
 } from "@dtos/response";
 
 type GoalFilters = {
@@ -162,5 +164,34 @@ export function useDeleteGoal() {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
       queryClient.invalidateQueries({ queryKey: ["goal"] });
     },
+  });
+}
+
+export function useGoalStats(
+  type: "debt" | "monthly_target",
+  id: string,
+  enabled = true,
+) {
+  return useQuery<GoalStatsResponse>({
+    queryKey: ["goalStats", type, id],
+    queryFn: async () => {
+      const res = await apiClient.users.goals[":type"][":id"].stats.$get({
+        param: { type, id },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch goal stats");
+      }
+
+      const json = await res.json();
+      const parsed = GoalStatsResponseSchema.safeParse(json);
+
+      if (!parsed.success) {
+        throw new Error("Failed to parse goal stats");
+      }
+
+      return parsed.data;
+    },
+    enabled: enabled && !!id && !!type,
   });
 }

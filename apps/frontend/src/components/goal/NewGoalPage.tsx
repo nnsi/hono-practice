@@ -50,33 +50,39 @@ export const NewGoalPage: React.FC = () => {
     return activity?.emoji || "🎯";
   };
 
-  return (
-      <div className="container mx-auto p-4 max-w-6xl">
-        {goalsLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="text-gray-500 text-lg">読み込み中...</div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {allGoals.map((goal) => (
-              <NewGoalCard
-                key={goal.id}
-                goal={goal}
-                activityName={getActivityName(goal.activityId)}
-                activityEmoji={getActivityEmoji(goal.activityId)}
-                isEditing={editingGoalId === goal.id}
-                onEditStart={() => setEditingGoalId(goal.id)}
-                onEditEnd={() => setEditingGoalId(null)}
-                activities={activitiesData || []}
-              />
-            ))}
+  const getActivityUnit = (activityId: string) => {
+    const activity = activitiesData?.find((a) => a.id === activityId);
+    return activity?.quantityUnit || "";
+  };
 
-            <NewGoalSlot
-              activities={activitiesData || []}
-              onCreated={() => setEditingGoalId(null)}
-            />
-          </div>
-        )}
+  if (goalsLoading) {
+    return (
+      <div className="container mx-auto p-4 max-w-6xl flex items-center justify-center py-16">
+        <p className="text-gray-500 text-lg">読み込み中...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4 max-w-6xl grid grid-cols-2 sm:grid-cols-3 gap-4">
+      {allGoals.map((goal) => (
+        <NewGoalCard
+          key={goal.id}
+          goal={goal}
+          activityName={getActivityName(goal.activityId)}
+          activityEmoji={getActivityEmoji(goal.activityId)}
+          quantityUnit={getActivityUnit(goal.activityId)}
+          isEditing={editingGoalId === goal.id}
+          onEditStart={() => setEditingGoalId(goal.id)}
+          onEditEnd={() => setEditingGoalId(null)}
+          activities={activitiesData || []}
+        />
+      ))}
+
+      <NewGoalSlot
+        activities={activitiesData || []}
+        onCreated={() => setEditingGoalId(null)}
+      />
+    </div>
   );
 };

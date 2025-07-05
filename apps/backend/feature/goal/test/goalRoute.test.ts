@@ -412,3 +412,116 @@ test("DELETE goals/:type/:id / invalid type", async () => {
 
   expect(res.status).toEqual(400);
 });
+
+test("GET goals/:type/:id/stats / success for debt goal", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  // First create a debt goal
+  const createRes = await client.debt.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      dailyTargetQuantity: 10,
+      startDate: "2024-01-01",
+      description: "Test debt goal for stats",
+    },
+  });
+
+  const goal = await createRes.json();
+
+  // Then get stats
+  const statsRes = await client[":type"][":id"].stats.$get({
+    param: { type: "debt", id: goal.id },
+  });
+
+  expect(statsRes.status).toEqual(200);
+  const stats = await statsRes.json();
+  expect(stats).toHaveProperty("goalType", "debt");
+  expect(stats).toHaveProperty("goalId");
+  expect(stats).toHaveProperty("stats");
+  if ("stats" in stats) {
+    expect(stats.stats).toHaveProperty("average");
+    expect(stats.stats).toHaveProperty("max");
+    expect(stats.stats).toHaveProperty("maxConsecutiveDays");
+    expect(stats.stats).toHaveProperty("achievedDays");
+  }
+});
+
+test("GET goals/:type/:id/stats / success for monthly goal", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  // First create a monthly goal
+  const createRes = await client.monthly.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      targetMonth: "2024-01",
+      targetQuantity: 300,
+      description: "Test monthly goal for stats",
+    },
+  });
+
+  const goal = await createRes.json();
+
+  // Then get stats
+  const statsRes = await client[":type"][":id"].stats.$get({
+    param: { type: "monthly_target", id: goal.id },
+  });
+
+  expect(statsRes.status).toEqual(200);
+  const stats = await statsRes.json();
+  expect(stats).toHaveProperty("goalType", "monthly_target");
+  expect(stats).toHaveProperty("goalId");
+  expect(stats).toHaveProperty("stats");
+  if ("stats" in stats) {
+    expect(stats.stats).toHaveProperty("average");
+    expect(stats.stats).toHaveProperty("max");
+    expect(stats.stats).toHaveProperty("maxConsecutiveDays");
+    expect(stats.stats).toHaveProperty("achievedDays");
+  }
+});
+
+test("GET goals/:type/:id/stats / not found", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client[":type"][":id"].stats.$get({
+    param: { type: "debt", id: "00000000-0000-4000-8000-000000000999" },
+  });
+
+  expect(res.status).toEqual(404);
+});
+
+test("GET goals/:type/:id/stats / invalid type", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client[":type"][":id"].stats.$get({
+    param: {
+      type: "invalid",
+      id: "00000000-0000-4000-8000-000000000001",
+    },
+  });
+
+  expect(res.status).toEqual(400);
+});

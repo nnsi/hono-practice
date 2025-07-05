@@ -1,10 +1,7 @@
 import { useState } from "react";
 
 import { useDeleteGoal, useUpdateGoal } from "@frontend/hooks";
-import {
-  calculateDebtBalance,
-  calculateMonthlyProgress,
-} from "@packages/frontend-shared";
+import { calculateDebtBalance } from "@packages/frontend-shared";
 import {
   CheckIcon,
   Cross2Icon,
@@ -28,6 +25,8 @@ import {
   Input,
 } from "@components/ui";
 
+import { GoalDetailModal } from "./GoalDetailModal";
+
 type GoalCardProps = {
   goal: DebtGoalResponse | MonthlyTargetGoalResponse;
   activityName: string;
@@ -36,11 +35,25 @@ type GoalCardProps = {
   onEditStart: () => void;
   onEditEnd: () => void;
   activities: GetActivityResponse[];
+  quantityUnit?: string;
 };
 
 type EditFormData = {
   dailyTargetQuantity?: number;
   targetQuantity?: number;
+};
+
+const getProgressColor = (statusInfo: { bgColor: string }) => {
+  const colorMap: Record<string, string> = {
+    "bg-green-50": "rgba(34, 197, 94, 0.2)",
+    "bg-red-50": "rgba(239, 68, 68, 0.2)",
+    "bg-red-100": "rgba(239, 68, 68, 0.3)",
+    "bg-blue-50": "rgba(59, 130, 246, 0.2)",
+    "bg-yellow-50": "rgba(250, 204, 21, 0.2)",
+    "bg-orange-50": "rgba(251, 146, 60, 0.2)",
+    "bg-gray-50": "rgba(156, 163, 175, 0.2)",
+  };
+  return colorMap[statusInfo.bgColor] || "rgba(156, 163, 175, 0.2)";
 };
 
 export const NewGoalCard: React.FC<GoalCardProps> = ({
@@ -50,8 +63,10 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   isEditing,
   onEditStart,
   onEditEnd,
+  quantityUnit = "",
 }) => {
   const [showActions, setShowActions] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const { mutate: deleteGoal, isPending: isDeleting } = useDeleteGoal();
   const { mutate: updateGoal, isPending: isUpdating } = useUpdateGoal();
 
@@ -109,75 +124,134 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
       const absBalance = Math.abs(goal.currentBalance);
       const daysCount = Math.ceil(absBalance / goal.dailyTargetQuantity);
 
+      // 進捗率の計算（負債型の場合は返済率）
+      const progressPercentage =
+        goal.totalDebt > 0
+          ? Math.min(
+              100,
+              Math.max(0, (goal.totalActual / goal.totalDebt) * 100),
+            )
+          : 100;
+
       if (goal.endDate && new Date(goal.endDate) < new Date()) {
+        // 期限切れの場合、currentBalanceが0以上（負債がない）かチェック
+        if (goal.currentBalance >= 0) {
+          return {
+            emoji: "✅",
+            color: "border-green-400",
+            bgColor: "bg-green-50",
+            label: "達成",
+            progress: 100,
+          };
+        }
+        // 期限切れで負債が残っている場合
         return {
-          emoji: "✅",
-          color: "border-green-400 bg-green-50",
-          label: "達成",
+          emoji: "❌",
+          color: "border-red-600",
+          bgColor: "bg-red-100",
+          label: "未達成",
+          progress: progressPercentage,
         };
       }
       if (status === "debt") {
         return {
           emoji: "📉",
-          color: "border-red-400 bg-red-50",
+          color: "border-red-400",
+          bgColor: "bg-red-50",
           label: `${daysCount}日負債`,
+          progress: progressPercentage,
         };
       }
       if (status === "savings") {
         return {
           emoji: "📈",
-          color: "border-blue-400 bg-blue-50",
+          color: "border-blue-400",
+          bgColor: "bg-blue-50",
           label: `${daysCount}日貯金`,
+          progress: 100,
         };
       }
-      return { emoji: "⚖️", color: "border-gray-400 bg-gray-50", label: "中立" };
+      return {
+        emoji: "⚖️",
+        color: "border-gray-400",
+        bgColor: "bg-gray-50",
+        label: "中立",
+        progress: progressPercentage,
+      };
     }
 
-    // Calculate remaining days in the month
+    // Calculate days in month and elapsed days
     const targetDate = new Date(`${goal.targetMonth}-01`);
+    const startOfMonth = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      1,
+    );
     const endOfMonth = new Date(
       targetDate.getFullYear(),
       targetDate.getMonth() + 1,
       0,
     );
     const today = new Date();
-    const remainingDays = Math.max(
-      0,
-      Math.ceil(
-        (endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-      ),
-    );
 
-    const progress = calculateMonthlyProgress(
-      goal.currentQuantity,
-      goal.targetQuantity,
-      remainingDays,
-    );
-    if (progress.isAchieved) {
+    // 月の総日数
+    const totalDaysInMonth = endOfMonth.getDate();
+
+    // 経過日数（今日が対象月の場合は今日までの日数、それ以外は月の総日数または0）
+    let elapsedDays = 0;
+    if (today >= startOfMonth && today <= endOfMonth) {
+      elapsedDays = today.getDate();
+    } else if (today > endOfMonth) {
+      elapsedDays = totalDaysInMonth;
+    }
+
+    // 日割り進捗率（経過日数ベース）
+    const expectedProgress =
+      elapsedDays > 0 ? (elapsedDays / totalDaysInMonth) * 100 : 0;
+    const actualProgress =
+      goal.targetQuantity > 0
+        ? (goal.currentQuantity / goal.targetQuantity) * 100
+        : 0;
+
+    // 実際の進捗率と期待される進捗率の比較
+    const progressRatio =
+      expectedProgress > 0 ? (actualProgress / expectedProgress) * 100 : 0;
+
+    if (goal.currentQuantity >= goal.targetQuantity) {
       return {
         emoji: "🏆",
-        color: "border-yellow-400 bg-yellow-50",
+        color: "border-yellow-400",
+        bgColor: "bg-yellow-50",
         label: "達成",
+        progress: 100,
       };
     }
-    if (progress.progressPercentage >= 70) {
+
+    // 日割り計算に基づく判定
+    if (progressRatio >= 80) {
       return {
         emoji: "📊",
-        color: "border-green-400 bg-green-50",
-        label: `${Math.round(progress.progressPercentage)}%`,
+        color: "border-green-400",
+        bgColor: "bg-green-50",
+        label: "順調",
+        progress: actualProgress,
       };
     }
-    if (progress.progressPercentage >= 40) {
+    if (progressRatio >= 50) {
       return {
         emoji: "⚡",
-        color: "border-orange-400 bg-orange-50",
-        label: `${Math.round(progress.progressPercentage)}%`,
+        color: "border-orange-400",
+        bgColor: "bg-orange-50",
+        label: "怪しい",
+        progress: actualProgress,
       };
     }
     return {
       emoji: "⚠️",
-      color: "border-red-400 bg-red-50",
-      label: `${Math.round(progress.progressPercentage)}%`,
+      color: "border-red-400",
+      bgColor: "bg-red-50",
+      label: "危ない",
+      progress: actualProgress,
     };
   };
 
@@ -186,18 +260,19 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
 
   if (isEditing) {
     return (
-      <div
-        className={`aspect-square rounded-2xl border-2 ${statusInfo.color} p-4 animate-in zoom-in-95 duration-200`}
-      >
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleUpdate)}
-            className="h-full flex flex-col"
-          >
-            <div className="text-center mb-2">
-              <div className="text-2xl mb-1">{activityEmoji}</div>
-              <div className="text-xs font-medium truncate">{activityName}</div>
-            </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleUpdate)}
+          className={`relative w-full pb-[100%] rounded-2xl border-2 ${statusInfo.color} animate-in zoom-in-95 duration-200 overflow-hidden`}
+          style={{
+            background: `linear-gradient(to top, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
+          }}
+        >
+          <div className="absolute inset-0 p-4 flex flex-col">
+            <p className="text-2xl mb-1 text-center">{activityEmoji}</p>
+            <p className="text-xs font-medium truncate text-center mb-2">
+              {activityName}
+            </p>
 
             {goal.type === "debt" ? (
               <FormField
@@ -254,69 +329,154 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 <Cross2Icon className="w-3 h-3" />
               </Button>
             </div>
-          </form>
-        </Form>
-      </div>
+          </div>
+        </form>
+      </Form>
     );
   }
 
   return (
-    <button
-      type="button"
-      className={`aspect-square rounded-2xl border-2 ${statusInfo.color} p-4 cursor-pointer hover:shadow-lg transition-all duration-200 relative group text-left`}
-      onClick={() => !showActions && onEditStart()}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <div className="h-full flex flex-col items-center justify-center text-center">
-        <div className="text-3xl mb-2">{activityEmoji}</div>
-        <div className="text-sm font-semibold truncate w-full">
-          {activityName}
-        </div>
-        <div className="flex items-center gap-1 mt-2">
-          <span className="text-lg">{statusInfo.emoji}</span>
-          <span className="text-xs font-medium">{statusInfo.label}</span>
-        </div>
-
+    <>
+      <button
+        type="button"
+        className={`relative w-full pb-[100%] rounded-2xl border-2 ${statusInfo.color} hover:shadow-lg transition-all duration-200 group overflow-hidden cursor-pointer`}
+        style={{
+          background: `linear-gradient(to top, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
+        }}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+        onClick={() => setShowDetailModal(true)}
+      >
+        {/* 左上に実績値表示 */}
         {goal.type === "debt" && (
-          <div className="text-xs text-gray-600 mt-1">
-            日目標: {goal.dailyTargetQuantity}
-          </div>
-        )}
+          <p className="absolute top-2 left-2 text-sm font-bold">
+            {goal.currentBalance > 0 ? "+" : ""}
+            {goal.currentBalance}
+            {quantityUnit}
+            {(() => {
+              // 期間中の合計値と当日時点での目標値を計算
+              const today = new Date();
+              const startDate = new Date(goal.startDate);
+              const endDate = goal.endDate ? new Date(goal.endDate) : null;
 
+              // 開始日から今日までの経過日数（開始日を含む）
+              const elapsedDays = Math.max(
+                1,
+                Math.floor(
+                  (today.getTime() - startDate.getTime()) /
+                    (1000 * 60 * 60 * 24),
+                ) + 1,
+              );
+
+              // 期間中の合計目標値
+              let totalTarget = 0;
+              let currentTarget = 0;
+
+              if (endDate) {
+                // 終了日が設定されている場合
+                const totalDays =
+                  Math.ceil(
+                    (endDate.getTime() - startDate.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  ) + 1;
+                totalTarget = goal.dailyTargetQuantity * totalDays;
+
+                // 今日が期間内の場合のみ当日時点の目標値を計算
+                if (today <= endDate) {
+                  currentTarget = goal.dailyTargetQuantity * elapsedDays;
+                } else {
+                  // 期間を過ぎている場合は全期間の目標値
+                  currentTarget = totalTarget;
+                }
+              } else {
+                // 終了日が設定されていない場合は今日までの累計
+                totalTarget = goal.dailyTargetQuantity * elapsedDays;
+                currentTarget = totalTarget;
+              }
+
+              return ` (${goal.totalActual}/${currentTarget})`;
+            })()}
+          </p>
+        )}
         {goal.type === "monthly_target" && (
-          <div className="text-xs text-gray-600 mt-1">
-            月目標: {goal.targetQuantity}
-          </div>
+          <p className="absolute top-2 left-2 text-sm font-bold">
+            {goal.currentQuantity}/{goal.targetQuantity}
+            {quantityUnit}
+          </p>
         )}
-      </div>
 
-      {showActions && isActive && (
-        <div className="absolute top-2 right-2 flex gap-1 animate-in fade-in duration-200">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditStart();
-            }}
-            className="h-6 w-6 p-0"
-          >
-            <Pencil1Icon className="w-3 h-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-          >
-            <TrashIcon className="w-3 h-3" />
-          </Button>
+        <div className="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
+          <p className="text-3xl mb-2">{activityEmoji}</p>
+          <p className="text-sm font-semibold truncate w-full">
+            {activityName}
+          </p>
+          <div className="flex items-center gap-1 mt-2">
+            <span className="text-lg">{statusInfo.emoji}</span>
+            <span className="text-xs font-medium">{statusInfo.label}</span>
+          </div>
+
+          {goal.type === "debt" && (
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(goal.startDate).toLocaleDateString("ja-JP", {
+                month: "numeric",
+                day: "numeric",
+              })}
+              〜
+              {goal.endDate
+                ? new Date(goal.endDate).toLocaleDateString("ja-JP", {
+                    month: "numeric",
+                    day: "numeric",
+                  })
+                : ""}
+            </p>
+          )}
+
+          {goal.type === "monthly_target" && (
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(`${goal.targetMonth}-01`).toLocaleDateString("ja-JP", {
+                year: "numeric",
+                month: "long",
+              })}
+            </p>
+          )}
         </div>
-      )}
-    </button>
+
+        {showActions && isActive && (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditStart();
+              }}
+              className="absolute bottom-2 right-8 h-6 w-6 p-0 animate-in fade-in duration-200"
+            >
+              <Pencil1Icon className="w-3 h-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 text-red-600 hover:text-red-700 animate-in fade-in duration-200"
+            >
+              <TrashIcon className="w-3 h-3" />
+            </Button>
+          </>
+        )}
+      </button>
+
+      <GoalDetailModal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        goal={goal}
+        activityName={activityName}
+        activityEmoji={activityEmoji}
+        quantityUnit={quantityUnit}
+      />
+    </>
   );
 };

@@ -1,5 +1,8 @@
 import { Hono } from "hono";
 
+
+
+import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
 
 import {
@@ -25,6 +28,7 @@ export function createGoalRoute() {
     AppContext & {
       Variables: {
         h: ReturnType<typeof newGoalHandler>;
+        goalQueryService: ReturnType<typeof newGoalQueryService>;
       };
     }
   >();
@@ -40,6 +44,7 @@ export function createGoalRoute() {
     // Service instances
     const activityDebtService = newActivityDebtService(activityLogRepo);
     const activityGoalService = newActivityGoalService(activityLogRepo);
+    const goalQueryService = newGoalQueryService(db);
 
     // Usecase and Handler
     const uc = newGoalUsecase(
@@ -51,6 +56,7 @@ export function createGoalRoute() {
     const h = newGoalHandler(uc);
 
     c.set("h", h);
+    c.set("goalQueryService", goalQueryService);
 
     return next();
   });
@@ -84,6 +90,30 @@ export function createGoalRoute() {
 
         const res = await c.var.h.getGoal(userId, id, type);
         return c.json(res);
+      })
+      // 目標統計情報取得
+      .get("/:type/:id/stats", async (c) => {
+        const userId = c.get("userId");
+        const { type, id } = c.req.param();
+
+        if (type !== "debt" && type !== "monthly_target") {
+          return c.json({ error: "Invalid goal type" }, 400);
+        }
+
+        try {
+          const goalQueryService = c.var.goalQueryService;
+          const res =
+            type === "debt"
+              ? await goalQueryService.getDebtGoalStats(userId, id)
+              : await goalQueryService.getMonthlyGoalStats(userId, id);
+
+          return c.json(res);
+        } catch (error) {
+          if (error instanceof Error && error.message === "Goal not found") {
+            return c.json({ error: "Goal not found" }, 404);
+          }
+          throw error;
+        }
       })
       // 負債目標作成
       .post(
