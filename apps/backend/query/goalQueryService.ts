@@ -198,10 +198,7 @@ function calculateStats(
   ).length;
 
   // 最大連続日数を計算
-  const maxConsecutiveDays = calculateMaxConsecutiveDays(
-    dailyLogs,
-    dailyTarget,
-  );
+  const maxConsecutiveDays = calculateMaxConsecutiveDays(dailyLogs);
 
   return {
     average: Math.round(average * 100) / 100,
@@ -211,10 +208,9 @@ function calculateStats(
   };
 }
 
-// 最大連続達成日数の計算
+// 最大連続活動日数の計算
 function calculateMaxConsecutiveDays(
   dailyLogs: { date: string; totalQuantity: number }[],
-  dailyTarget: number,
 ): number {
   if (dailyLogs.length === 0) return 0;
 
@@ -229,7 +225,7 @@ function calculateMaxConsecutiveDays(
     const dateStr = currentDate.format("YYYY-MM-DD");
     const quantity = Number(logMap.get(dateStr) || 0);
 
-    if (quantity >= dailyTarget) {
+    if (quantity > 0) {
       currentConsecutive++;
       maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
     } else {

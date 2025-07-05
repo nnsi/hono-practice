@@ -38,7 +38,41 @@ export const NewGoalPage: React.FC = () => {
     (g): g is MonthlyTargetGoalResponse => g.type === "monthly_target",
   );
 
-  const allGoals = [...debtGoals, ...monthlyGoals];
+  // 現在の日付を取得
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  // 現在の目標と過去の目標を分ける
+  const currentDebtGoals = debtGoals.filter((goal) => {
+    // 期間終了日がない、または期間終了日が未来の場合は現在の目標
+    return !goal.endDate || new Date(goal.endDate) >= now;
+  });
+
+  const pastDebtGoals = debtGoals.filter((goal) => {
+    // 期間終了日があり、かつ過去の場合は過去の目標
+    return goal.endDate && new Date(goal.endDate) < now;
+  });
+
+  const currentMonthlyGoals = monthlyGoals.filter((goal) => {
+    // targetMonthからyearとmonthを抽出 (YYYY-MM形式)
+    const [targetYear, targetMonth] = goal.targetMonth.split("-").map(Number);
+    // 現在の年月の目標
+    return targetYear === currentYear && targetMonth === currentMonth;
+  });
+
+  const pastMonthlyGoals = monthlyGoals.filter((goal) => {
+    // targetMonthからyearとmonthを抽出 (YYYY-MM形式)
+    const [targetYear, targetMonth] = goal.targetMonth.split("-").map(Number);
+    // 過去の年月の目標
+    return (
+      targetYear < currentYear ||
+      (targetYear === currentYear && targetMonth < currentMonth)
+    );
+  });
+
+  const currentGoals = [...currentDebtGoals, ...currentMonthlyGoals];
+  const pastGoals = [...pastDebtGoals, ...pastMonthlyGoals];
 
   const getActivityName = (activityId: string) => {
     const activity = activitiesData?.find((a) => a.id === activityId);
@@ -64,25 +98,52 @@ export const NewGoalPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl grid grid-cols-2 sm:grid-cols-3 gap-4">
-      {allGoals.map((goal) => (
-        <NewGoalCard
-          key={goal.id}
-          goal={goal}
-          activityName={getActivityName(goal.activityId)}
-          activityEmoji={getActivityEmoji(goal.activityId)}
-          quantityUnit={getActivityUnit(goal.activityId)}
-          isEditing={editingGoalId === goal.id}
-          onEditStart={() => setEditingGoalId(goal.id)}
-          onEditEnd={() => setEditingGoalId(null)}
-          activities={activitiesData || []}
-        />
-      ))}
+    <div className="container mx-auto p-4 max-w-6xl">
+      {/* 現在の目標 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {currentGoals.map((goal) => (
+          <NewGoalCard
+            key={goal.id}
+            goal={goal}
+            activityName={getActivityName(goal.activityId)}
+            activityEmoji={getActivityEmoji(goal.activityId)}
+            quantityUnit={getActivityUnit(goal.activityId)}
+            isEditing={editingGoalId === goal.id}
+            onEditStart={() => setEditingGoalId(goal.id)}
+            onEditEnd={() => setEditingGoalId(null)}
+            activities={activitiesData || []}
+          />
+        ))}
 
-      <NewGoalSlot
-        activities={activitiesData || []}
-        onCreated={() => setEditingGoalId(null)}
-      />
+        <NewGoalSlot
+          activities={activitiesData || []}
+          onCreated={() => setEditingGoalId(null)}
+        />
+      </div>
+
+      {/* 過去の目標 */}
+      {pastGoals.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold text-gray-600 mt-8 mb-4">
+            過去の目標
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {pastGoals.map((goal) => (
+              <NewGoalCard
+                key={goal.id}
+                goal={goal}
+                activityName={getActivityName(goal.activityId)}
+                activityEmoji={getActivityEmoji(goal.activityId)}
+                quantityUnit={getActivityUnit(goal.activityId)}
+                isEditing={editingGoalId === goal.id}
+                onEditStart={() => setEditingGoalId(goal.id)}
+                onEditEnd={() => setEditingGoalId(null)}
+                activities={activitiesData || []}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
