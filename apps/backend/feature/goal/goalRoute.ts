@@ -1,7 +1,5 @@
 import { Hono } from "hono";
 
-
-
 import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
 
