@@ -10,3 +10,4 @@ export * from "./CheckDuplicatesResponse";
 export * from "./SyncStatusResponse";
 export * from "./EnqueueSyncResponse";
 export * from "./ProcessSyncResponse";
+export * from "./GoalStatsResponse";

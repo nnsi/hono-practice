@@ -48,7 +48,7 @@ export const AuthenticatedLayout: React.FC = () => {
                 <span className="text-xs mt-1">Stats</span>
               </button>
             </Link>
-            <Link
+            {/*<Link
               to="/goal"
               className="[&.active]:font-bold [&.active]:text-blue-600"
             >
@@ -56,14 +56,14 @@ export const AuthenticatedLayout: React.FC = () => {
                 <TargetIcon />
                 <span className="text-xs mt-1">Goal</span>
               </button>
-            </Link>
+            </Link>*/}
             <Link
               to="/new-goal"
               className="[&.active]:font-bold [&.active]:text-blue-600"
             >
               <button type="button" className="flex flex-col items-center">
                 <TargetIcon />
-                <span className="text-xs mt-1">Goal2</span>
+                <span className="text-xs mt-1">Goal</span>
               </button>
             </Link>
             <Link
