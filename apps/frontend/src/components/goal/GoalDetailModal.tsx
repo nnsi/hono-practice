@@ -52,7 +52,6 @@ const calculateGoalStats = (
 
   if (goal.type === "debt") {
     const today = new Date();
-    const startDate = new Date(goal.startDate);
     const endDate = goal.endDate ? new Date(goal.endDate) : null;
 
     // 期限までの日数
@@ -63,14 +62,8 @@ const calculateGoalStats = (
     }
 
     // 現在の進捗と目標
-    const elapsedDays = Math.max(
-      1,
-      Math.floor(
-        (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1,
-    );
     stats.currentProgress = goal.totalActual;
-    stats.targetProgress = goal.dailyTargetQuantity * elapsedDays;
+    stats.targetProgress = goal.totalDebt;
     stats.progressPercentage =
       stats.targetProgress > 0
         ? Math.min(100, (stats.currentProgress / stats.targetProgress) * 100)

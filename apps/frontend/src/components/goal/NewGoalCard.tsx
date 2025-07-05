@@ -65,7 +65,6 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   onEditEnd,
   quantityUnit = "",
 }) => {
-  const [showActions, setShowActions] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const { mutate: deleteGoal, isPending: isDeleting } = useDeleteGoal();
   const { mutate: updateGoal, isPending: isUpdating } = useUpdateGoal();
@@ -263,70 +262,76 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleUpdate)}
-          className={`relative w-full pb-[100%] rounded-2xl border-2 ${statusInfo.color} animate-in zoom-in-95 duration-200 overflow-hidden`}
+          className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.color} animate-in zoom-in-95 duration-200 overflow-hidden`}
           style={{
-            background: `linear-gradient(to top, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
+            background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
           }}
         >
-          <div className="absolute inset-0 p-4 flex flex-col">
-            <p className="text-2xl mb-1 text-center">{activityEmoji}</p>
-            <p className="text-xs font-medium truncate text-center mb-2">
+          <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
+            <p className="text-xl sm:text-2xl flex-shrink-0">{activityEmoji}</p>
+            <p className="text-xs sm:text-sm font-medium truncate max-w-[80px] sm:max-w-none">
               {activityName}
             </p>
 
-            {goal.type === "debt" ? (
-              <FormField
-                control={form.control}
-                name="dailyTargetQuantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        className="h-8 text-center text-sm"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            ) : (
-              <FormField
-                control={form.control}
-                name="targetQuantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        className="h-8 text-center text-sm"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
+            <div className="flex-1 max-w-[100px] sm:max-w-[120px]">
+              {goal.type === "debt" ? (
+                <FormField
+                  control={form.control}
+                  name="dailyTargetQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          className="h-8 text-center text-sm"
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="targetQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          className="h-8 text-center text-sm"
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
-            <div className="flex gap-1 mt-auto">
+            <div className="flex gap-1 ml-auto">
               <Button
                 type="submit"
                 size="sm"
-                className="flex-1 h-7"
+                className="h-8 w-8 p-0"
                 disabled={isUpdating}
               >
-                <CheckIcon className="w-3 h-3" />
+                <CheckIcon className="w-4 h-4" />
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
                 onClick={onEditEnd}
-                className="flex-1 h-7"
+                className="h-8 w-8 p-0"
               >
-                <Cross2Icon className="w-3 h-3" />
+                <Cross2Icon className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -339,134 +344,108 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
     <>
       <button
         type="button"
-        className={`relative w-full pb-[100%] rounded-2xl border-2 ${statusInfo.color} hover:shadow-lg transition-all duration-200 group overflow-hidden cursor-pointer`}
+        className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.color} hover:shadow-md transition-all duration-200 group overflow-hidden cursor-pointer`}
         style={{
-          background: `linear-gradient(to top, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
+          background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${statusInfo.progress}%, transparent ${statusInfo.progress}%)`,
         }}
-        onMouseEnter={() => setShowActions(true)}
-        onMouseLeave={() => setShowActions(false)}
         onClick={() => setShowDetailModal(true)}
       >
-        {/* 左上に実績値表示 */}
-        {goal.type === "debt" && (
-          <p className="absolute top-2 left-2 text-sm font-bold">
-            {goal.currentBalance > 0 ? "+" : ""}
-            {goal.currentBalance}
-            {quantityUnit}
-            {(() => {
-              // 期間中の合計値と当日時点での目標値を計算
-              const today = new Date();
-              const startDate = new Date(goal.startDate);
-              const endDate = goal.endDate ? new Date(goal.endDate) : null;
-
-              // 開始日から今日までの経過日数（開始日を含む）
-              const elapsedDays = Math.max(
-                1,
-                Math.floor(
-                  (today.getTime() - startDate.getTime()) /
-                    (1000 * 60 * 60 * 24),
-                ) + 1,
-              );
-
-              // 期間中の合計目標値
-              let totalTarget = 0;
-              let currentTarget = 0;
-
-              if (endDate) {
-                // 終了日が設定されている場合
-                const totalDays =
-                  Math.ceil(
-                    (endDate.getTime() - startDate.getTime()) /
-                      (1000 * 60 * 60 * 24),
-                  ) + 1;
-                totalTarget = goal.dailyTargetQuantity * totalDays;
-
-                // 今日が期間内の場合のみ当日時点の目標値を計算
-                if (today <= endDate) {
-                  currentTarget = goal.dailyTargetQuantity * elapsedDays;
-                } else {
-                  // 期間を過ぎている場合は全期間の目標値
-                  currentTarget = totalTarget;
-                }
-              } else {
-                // 終了日が設定されていない場合は今日までの累計
-                totalTarget = goal.dailyTargetQuantity * elapsedDays;
-                currentTarget = totalTarget;
-              }
-
-              return ` (${goal.totalActual}/${currentTarget})`;
-            })()}
-          </p>
-        )}
-        {goal.type === "monthly_target" && (
-          <p className="absolute top-2 left-2 text-sm font-bold">
-            {goal.currentQuantity}/{goal.targetQuantity}
-            {quantityUnit}
-          </p>
-        )}
-
-        <div className="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
-          <p className="text-3xl mb-2">{activityEmoji}</p>
-          <p className="text-sm font-semibold truncate w-full">
-            {activityName}
-          </p>
-          <div className="flex items-center gap-1 mt-2">
-            <span className="text-lg">{statusInfo.emoji}</span>
-            <span className="text-xs font-medium">{statusInfo.label}</span>
+        <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
+          {/* 左側: 絵文字とアクティビティ名 */}
+          <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+            <p className="text-2xl flex-shrink-0">{activityEmoji}</p>
+            <p className="text-sm font-semibold truncate">{activityName}</p>
           </div>
 
-          {goal.type === "debt" && (
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(goal.startDate).toLocaleDateString("ja-JP", {
-                month: "numeric",
-                day: "numeric",
-              })}
-              〜
-              {goal.endDate
-                ? new Date(goal.endDate).toLocaleDateString("ja-JP", {
+          {/* 中央: 進捗表示 */}
+          <div className="flex-1 flex flex-col items-center justify-center min-w-0">
+            {goal.type === "debt" && (
+              <div className="text-center">
+                <p className="text-xs sm:text-sm font-bold">
+                  {goal.currentBalance > 0 ? "+" : ""}
+                  {goal.currentBalance.toLocaleString()}
+                  <span className="text-xs">{quantityUnit}</span>
+                </p>
+                <p className="text-xs text-gray-600 hidden sm:block">
+                  実績: {goal.totalActual.toLocaleString()} /{" "}
+                  {goal.totalDebt.toLocaleString()}
+                </p>
+              </div>
+            )}
+            {goal.type === "monthly_target" && (
+              <div className="text-center">
+                <p className="text-xs sm:text-sm font-bold">
+                  {goal.currentQuantity.toLocaleString()}/
+                  {goal.targetQuantity.toLocaleString()}
+                  <span className="text-xs">{quantityUnit}</span>
+                </p>
+                <p className="text-xs text-gray-600 hidden sm:block">
+                  {new Date(`${goal.targetMonth}-01`).toLocaleDateString(
+                    "ja-JP",
+                    {
+                      year: "numeric",
+                      month: "long",
+                    },
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 右側: ステータスと期間 */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="text-right">
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-sm sm:text-base">{statusInfo.emoji}</span>
+                <span className="text-xs font-medium hidden sm:inline">
+                  {statusInfo.label}
+                </span>
+              </div>
+              {goal.type === "debt" && (
+                <p className="text-xs text-gray-500 mt-1 hidden sm:block">
+                  {new Date(goal.startDate).toLocaleDateString("ja-JP", {
                     month: "numeric",
                     day: "numeric",
-                  })
-                : ""}
-            </p>
-          )}
+                  })}
+                  〜
+                  {goal.endDate
+                    ? new Date(goal.endDate).toLocaleDateString("ja-JP", {
+                        month: "numeric",
+                        day: "numeric",
+                      })
+                    : ""}
+                </p>
+              )}
+            </div>
 
-          {goal.type === "monthly_target" && (
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(`${goal.targetMonth}-01`).toLocaleDateString("ja-JP", {
-                year: "numeric",
-                month: "long",
-              })}
-            </p>
-          )}
+            {isActive && (
+              <div className="flex flex-col gap-0.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditStart();
+                  }}
+                  className="h-6 w-6 p-0"
+                >
+                  <Pencil1Icon className="w-3 h-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                >
+                  <TrashIcon className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-
-        {showActions && isActive && (
-          <>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditStart();
-              }}
-              className="absolute bottom-2 right-8 h-6 w-6 p-0 animate-in fade-in duration-200"
-            >
-              <Pencil1Icon className="w-3 h-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              className="absolute bottom-2 right-2 h-6 w-6 p-0 text-red-600 hover:text-red-700 animate-in fade-in duration-200"
-            >
-              <TrashIcon className="w-3 h-3" />
-            </Button>
-          </>
-        )}
       </button>
 
       <GoalDetailModal
