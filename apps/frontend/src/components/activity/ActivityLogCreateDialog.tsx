@@ -52,11 +52,13 @@ export function ActivityLogCreateDialog({
   onOpenChange,
   activity,
   date,
+  onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activity: GetActivityResponse;
   date: Date;
+  onSuccess?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState("manual");
   const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
@@ -164,6 +166,7 @@ export function ActivityLogCreateDialog({
       description: "アクティビティを記録しました",
       variant: "default",
     });
+    onSuccess?.();
     onOpenChange(false);
   };
 

@@ -6,8 +6,10 @@ import {
   CheckIcon,
   Cross2Icon,
   Pencil1Icon,
+  PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import type { GetActivityResponse, GoalResponse } from "@dtos/response";
@@ -21,6 +23,8 @@ import {
   Input,
 } from "@components/ui";
 
+import { ActivityLogCreateDialog } from "../activity/ActivityLogCreateDialog";
+
 import { GoalDetailModal } from "./GoalDetailModal";
 
 type GoalCardProps = {
@@ -32,6 +36,7 @@ type GoalCardProps = {
   onEditEnd: () => void;
   activities: GetActivityResponse[];
   quantityUnit?: string;
+  activity?: GetActivityResponse;
 };
 
 type EditFormData = {
@@ -57,10 +62,14 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   onEditStart,
   onEditEnd,
   quantityUnit = "",
+  activity,
 }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showLogCreateDialog, setShowLogCreateDialog] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const deleteGoal = useDeleteGoal();
   const updateGoal = useUpdateGoal();
+  const queryClient = useQueryClient();
 
   const form = useForm<EditFormData>({
     defaultValues: {
@@ -102,6 +111,14 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
       ? Math.min((goal.totalActual / goal.totalTarget) * 100, 100)
       : 0;
 
+  const handleLogCreateSuccess = async () => {
+    // 目標データを再取得
+    await queryClient.invalidateQueries({ queryKey: ["goals"] });
+    // アニメーションを開始
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 1500);
+  };
+
   const isActive = true;
 
   if (isEditing) {
@@ -112,7 +129,9 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} animate-in zoom-in-95 duration-200 overflow-hidden`}
         >
           <div
-            className="absolute inset-0"
+            className={`absolute inset-0 ${
+              isAnimating ? "transition-all duration-1000 ease-out" : ""
+            }`}
             style={{
               background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
             }}
@@ -156,6 +175,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 size="sm"
                 className="h-8 w-8 p-0"
                 disabled={updateGoal.isPending}
+                title="保存"
               >
                 <CheckIcon className="w-4 h-4" />
               </Button>
@@ -165,8 +185,22 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 variant="outline"
                 onClick={onEditEnd}
                 className="h-8 w-8 p-0"
+                title="キャンセル"
               >
                 <Cross2Icon className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDelete();
+                }}
+                className="h-8 w-8 p-0"
+                title="削除"
+              >
+                <TrashIcon className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -183,7 +217,9 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         onClick={() => setShowDetailModal(true)}
       >
         <div
-          className="absolute inset-0"
+          className={`absolute inset-0 ${
+            isAnimating ? "transition-all duration-1000 ease-out" : ""
+          }`}
           style={{
             background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
           }}
@@ -198,7 +234,11 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           {/* 中央: 進捗表示 */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-0">
             <div className="text-center">
-              <p className="text-xs sm:text-sm font-bold">
+              <p
+                className={`text-xs sm:text-sm font-bold ${
+                  goal.currentBalance < 0 ? "text-red-600" : "text-blue-600"
+                }`}
+              >
                 {goal.currentBalance > 0 ? "+" : ""}
                 {goal.currentBalance.toLocaleString()}
                 <span className="text-xs">{quantityUnit}</span>
@@ -214,7 +254,13 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="text-right">
               <div className="flex items-center gap-1 justify-end">
-                <span className="text-xs font-medium">{statusInfo.label}</span>
+                <span
+                  className={`text-xs font-medium ${
+                    goal.currentBalance < 0 ? "text-red-600" : "text-blue-600"
+                  }`}
+                >
+                  {statusInfo.label}
+                </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
                 {new Date(goal.startDate).toLocaleDateString("ja-JP", {
@@ -238,22 +284,24 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditStart();
+                    setShowLogCreateDialog(true);
                   }}
                   className="h-6 w-6 p-0"
+                  title="活動量を登録"
                 >
-                  <Pencil1Icon className="w-3 h-3" />
+                  <PlusIcon className="w-3 h-3" />
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete();
+                    onEditStart();
                   }}
-                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                  className="h-6 w-6 p-0"
+                  title="目標を編集"
                 >
-                  <TrashIcon className="w-3 h-3" />
+                  <Pencil1Icon className="w-3 h-3" />
                 </Button>
               </div>
             )}
@@ -266,6 +314,16 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         onOpenChange={setShowDetailModal}
         goalId={goal.id}
       />
+
+      {activity && (
+        <ActivityLogCreateDialog
+          open={showLogCreateDialog}
+          onOpenChange={setShowLogCreateDialog}
+          activity={activity}
+          date={new Date()}
+          onSuccess={handleLogCreateSuccess}
+        />
+      )}
     </>
   );
 };
