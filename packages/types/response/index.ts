@@ -11,3 +11,4 @@ export * from "./SyncStatusResponse";
 export * from "./EnqueueSyncResponse";
 export * from "./ProcessSyncResponse";
 export * from "./GoalStatsResponse";
+export * from "./ApiKeyResponse";

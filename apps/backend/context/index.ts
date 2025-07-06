@@ -13,6 +13,7 @@ export type AppContext = {
   Variables: {
     jwtPayload: JwtPayload;
     userId: UserId;
+    user?: { id: string };
   };
   Bindings: Config & {
     DB: QueryExecutor;

@@ -1,6 +1,8 @@
 import { cors } from "hono/cors";
 
+import { apiV1Route } from "./api/v1";
 import {
+  apiKeyRoute,
   authRoute,
   newActivityLogRoute,
   newActivityRoute,
@@ -63,6 +65,8 @@ const routes = app
   .route("/users/activity-logs", newActivityLogRoute)
   .route("/users/goals", goalRoute)
   .route("/users/sync", newSyncRoute)
+  .route("/users/api-keys", apiKeyRoute)
+  .route("/api/v1", apiV1Route)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 
