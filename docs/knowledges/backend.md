@@ -10,7 +10,10 @@
       "@hooks/*": ["apps/frontend/src/hooks/*"],
       "@infra/*": ["infra/*"],
       "@domain/*": ["apps/backend/domain/*"],
-      "@components/*": ["apps/frontend/src/components/*"]
+      "@components/*": ["apps/frontend/src/components/*"],
+      "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
+      "@packages/frontend-shared/*": ["packages/frontend-shared/*"],
+      "@packages/types": ["packages/types/index.ts"]
     }
 ```
 
@@ -77,6 +80,48 @@ HTTP Request → Route (DI, Validation) → Handler (Transform, Validation) → 
 - 外部サービスのクライアントライブラリ (例: `google-auth-library`) の初期化や設定値 (Client IDなど) の管理は、主に **Usecase層** で行います。
 - 必要な設定値 (Client IDなど) は、環境変数などから取得し、Route層のDIコンテナ設定時にUsecaseのファクトリ関数 (`newAuthUsecase` など) に注入します。
 - Usecase層は、注入された設定値や内部で初期化したクライアントインスタンスを使用して、外部サービスとの通信を行います。
+- Google認証の実装例:
+  - `authUsecase.loginWithProvider`: Google OAuth認証トークンの検証とユーザー作成・ログイン処理
+  - `userProviderRepository`: プロバイダー（Google）とユーザーの関連付けを管理
+
+## 現在実装されている主要な機能
+
+### 1. 認証・認可 (auth)
+- ユーザー登録・ログイン
+- JWT形式のアクセストークン発行
+- リフレッシュトークンによるトークン更新
+- Google OAuth認証
+- 認証ミドルウェア
+
+### 2. ユーザー管理 (user)
+- ユーザー情報の取得・更新
+- プロバイダー連携（user_providers）
+- ユーザー削除（論理削除）
+
+### 3. 活動記録 (activity)
+- 活動カテゴリーの作成・取得・更新・削除
+- デフォルト活動の設定
+- ソート順の管理
+
+### 4. 活動ログ (activityLog)
+- 活動記録の作成・取得・更新・削除
+- 日付ごとの活動履歴管理
+- 統計情報の集計
+
+### 5. タスク管理 (task)
+- タスクの作成・取得・更新・削除
+- タスクの完了状態管理
+- 期限管理
+
+### 6. 目標設定 (goal)
+- 月次目標の設定・取得・更新・削除
+- 活動ごとの目標値管理
+
+### 7. 同期機能 (sync)
+- オフライン時のデータ同期対応
+- 重複チェック機能
+- 同期キュー管理
+- 同期状態の追跡
 
 ## 新規機能実装時のガイドライン・サンプル
 
