@@ -10,6 +10,10 @@ export default defineConfig(() => {
   return {
     publicDir: "./public",
     plugins: [tsconfigPaths(), TanStackRouterVite(), react()],
+    server: {
+      port: Number.parseInt(process.env.VITE_PORT || "5173"),
+      host: true,
+    },
     build: {
       outDir: "../../dist-frontend",
       emptyOutDir: true,

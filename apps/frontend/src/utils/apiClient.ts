@@ -6,7 +6,8 @@ import type { AppType } from "@backend/app";
 
 const API_URL =
   import.meta.env.MODE === "development"
-    ? `http://${document.domain}:3456/`
+    ? import.meta.env.VITE_API_URL ||
+      `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
     : import.meta.env.VITE_API_URL;
 
 // リフレッシュトークンを使用中かどうかのフラグ

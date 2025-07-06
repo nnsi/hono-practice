@@ -31,33 +31,8 @@ install:
 # 環境変数ファイルのセットアップ
 setup-env:
 	@echo "🔧 環境変数ファイルをセットアップ中..."
-	@# バックエンドの.env設定
-	@if [ ! -f .env ]; then \
-		if [ -f .env.example ]; then \
-			cp .env.example .env; \
-			echo "  .env.example から .env をコピーしました"; \
-		else \
-			echo "DATABASE_URL=postgresql://user:password@localhost:5432/actiko" > .env; \
-			echo "JWT_SECRET=$$(openssl rand -base64 32)" >> .env; \
-			echo "NODE_ENV=development" >> .env; \
-			echo "APP_URL=http://localhost:5173" >> .env; \
-			echo "API_PORT=3456" >> .env; \
-			echo "  .env ファイルを作成しました"; \
-		fi; \
-	else \
-		echo "  .env ファイルは既に存在します"; \
-	fi
-	@# フロントエンドの.env設定
-	@if [ ! -f apps/frontend/.env ]; then \
-		if [ -f apps/frontend/.env_local ]; then \
-			cp apps/frontend/.env_local apps/frontend/.env; \
-			echo "  apps/frontend/.env_local から apps/frontend/.env をコピーしました"; \
-		else \
-			echo "  ⚠️  apps/frontend/.env_local が見つかりません"; \
-		fi; \
-	else \
-		echo "  apps/frontend/.env ファイルは既に存在します"; \
-	fi
+	@echo "🔍 利用可能なポートを検索して設定します..."
+	@node scripts/setup-ports.js
 
 # データベースのセットアップ
 setup-db: migrate seed
