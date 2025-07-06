@@ -124,9 +124,6 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
             </p>
 
             <div className="flex items-center gap-1 flex-1">
-              <span className="text-xs text-muted-foreground flex-shrink-0">
-                日次目標:
-              </span>
               <div className="min-w-[90px] max-w-[110px]">
                 <FormField
                   control={form.control}
@@ -219,7 +216,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
               <div className="flex items-center gap-1 justify-end">
                 <span className="text-xs font-medium">{statusInfo.label}</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1 hidden sm:block">
+              <p className="text-xs text-gray-500 mt-1">
                 {new Date(goal.startDate).toLocaleDateString("ja-JP", {
                   month: "numeric",
                   day: "numeric",

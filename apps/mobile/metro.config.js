@@ -46,15 +46,6 @@ config.watchFolders = config.watchFolders.filter(folder => !folder.includes('db-
 
 // ファイルウォッチャーの設定
 config.watcher = {
-  // watchman を使用する設定を追加
-  watchman: {
-    // db-dataを除外
-    ignore: [
-      '**/db-data/**',
-      '**/db-data',
-      'db-data/**',
-    ]
-  },
   // healthCheck のタイムアウトを延長
   healthCheck: {
     interval: 5000,
