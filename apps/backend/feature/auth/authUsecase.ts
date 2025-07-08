@@ -65,8 +65,8 @@ export type AuthUsecase = {
 
 export type OAuthVerifierMap = Record<Provider, OAuthVerify>;
 
-export function newAuthUsecase(
-  userRepo: UserRepository,
+export function newAuthUsecase<T>(
+  userRepo: UserRepository<T>,
   refreshTokenRepo: RefreshTokenRepository,
   userProviderRepo: UserProviderRepository,
   passwordVerifier: PasswordVerifier,
@@ -89,8 +89,8 @@ export function newAuthUsecase(
 }
 
 // 各メソッドを個別関数化
-function login(
-  userRepo: UserRepository,
+function login<T>(
+  userRepo: UserRepository<T>,
   refreshTokenRepo: RefreshTokenRepository,
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
@@ -171,8 +171,8 @@ function logout(refreshTokenRepo: RefreshTokenRepository) {
   };
 }
 
-function loginWithProvider(
-  userRepo: UserRepository,
+function loginWithProvider<T>(
+  userRepo: UserRepository<T>,
   refreshTokenRepo: RefreshTokenRepository,
   userProviderRepo: UserProviderRepository,
   jwtSecret: string,

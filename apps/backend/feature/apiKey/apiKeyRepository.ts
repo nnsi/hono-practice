@@ -9,17 +9,19 @@ import type {
 } from "@backend/domain/apiKey";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type ApiKeyRepository = {
+export type ApiKeyRepository<T = any> = {
   create: (data: CreateApiKeyData & { key: string }) => Promise<ApiKey>;
   findByUserId: (userId: string) => Promise<ApiKey[]>;
   findByKey: (key: string) => Promise<ApiKey | null>;
   findById: (id: string, userId: string) => Promise<ApiKey | null>;
   update: (id: string, data: UpdateApiKeyData) => Promise<ApiKey | null>;
   softDelete: (id: string) => Promise<boolean>;
-  withTx: (tx: QueryExecutor) => ApiKeyRepository;
+  withTx: (tx: T) => ApiKeyRepository<T>;
 };
 
-export function newApiKeyRepository(db: QueryExecutor): ApiKeyRepository {
+export function newApiKeyRepository(
+  db: QueryExecutor,
+): ApiKeyRepository<QueryExecutor> {
   return {
     create: create(db),
     findByUserId: findByUserId(db),

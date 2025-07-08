@@ -12,6 +12,7 @@ import {
   activityKinds,
   activityLogs,
   tasks,
+  userSubscriptions,
   users,
 } from "../infra/drizzle/schema";
 
@@ -82,6 +83,44 @@ async function seedData() {
       .returning();
 
     console.log(`✅ ${userRecords.length}人のユーザーを作成しました`);
+
+    // サブスクリプションデータを作成
+    console.log("\n💳 サブスクリプションデータを作成中...");
+    const subscriptionData = [
+      {
+        userId: userRecords[0].id, // 山田太郎 - プレミアムユーザー
+        plan: "premium" as const,
+        status: "active" as const,
+        paymentProvider: "stripe",
+        paymentProviderId: "sub_test_123456",
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30日後
+        cancelAtPeriodEnd: false,
+        priceAmount: 1980,
+        priceCurrency: "JPY",
+      },
+      {
+        userId: userRecords[1].id, // 鈴木花子 - 試用期間中
+        plan: "premium" as const,
+        status: "trial" as const,
+        trialStart: new Date(),
+        trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7日後
+        cancelAtPeriodEnd: false,
+        priceAmount: 1980,
+        priceCurrency: "JPY",
+      },
+      // デモユーザーはフリープランなのでサブスクリプションレコードなし
+    ];
+
+    for (const subData of subscriptionData) {
+      await db.insert(userSubscriptions).values({
+        id: randomUUID(),
+        ...subData,
+      });
+    }
+    console.log(
+      `✅ ${subscriptionData.length}件のサブスクリプションを作成しました`,
+    );
 
     // 2. 各ユーザーに対してアクティビティとデータを作成
     for (const user of userRecords) {
@@ -354,9 +393,9 @@ async function seedData() {
 
     console.log("\n🎉 初期データの生成が完了しました！");
     console.log("\n📝 作成されたログイン情報:");
-    console.log("  - taro@example.com / password123");
-    console.log("  - hanako@example.com / password123");
-    console.log("  - demo@example.com / password123");
+    console.log("  - taro@example.com / password123 (プレミアムユーザー)");
+    console.log("  - hanako@example.com / password123 (試用期間中)");
+    console.log("  - demo@example.com / password123 (フリープラン)");
   } catch (error) {
     console.error("❌ エラーが発生しました:", error);
     process.exit(1);

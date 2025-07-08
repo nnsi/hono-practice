@@ -14,6 +14,7 @@ test("GET /api-keys - should return list of API keys", async () => {
     .route("/", route);
   const client = testClient(app, {
     DB: testDB,
+    NODE_ENV: "test",
   });
 
   const res = await client.index.$get();
@@ -31,6 +32,7 @@ test("POST /api-keys - should create a new API key", async () => {
     .route("/", route);
   const client = testClient(app, {
     DB: testDB,
+    NODE_ENV: "test",
   });
 
   const res = await client.index.$post({
@@ -55,6 +57,7 @@ test("DELETE /api-keys/:id - should delete an API key", async () => {
     .route("/", route);
   const client = testClient(app, {
     DB: testDB,
+    NODE_ENV: "test",
   });
 
   // First create an API key
@@ -85,6 +88,7 @@ test("POST /api-keys - should validate name field", async () => {
     .route("/", route);
   const client = testClient(app, {
     DB: testDB,
+    NODE_ENV: "test",
   });
 
   const res = await client.index.$post({
@@ -103,6 +107,7 @@ test("DELETE /api-keys/:id - should return 404 for non-existent API key", async 
     .route("/", route);
   const client = testClient(app, {
     DB: testDB,
+    NODE_ENV: "test",
   });
 
   const res = await client[":id"].$delete({

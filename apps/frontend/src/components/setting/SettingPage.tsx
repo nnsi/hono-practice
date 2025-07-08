@@ -63,8 +63,6 @@ export const SettingPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">設定</h2>
-
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">アカウント</h3>
           <div className="flex items-center gap-4">
@@ -76,7 +74,13 @@ export const SettingPage: React.FC = () => {
             ) : (
               <GoogleLogin
                 onSuccess={handleGoogleLink}
-                onError={() => alert("Google認証に失敗しました")}
+                onError={() =>
+                  toast({
+                    title: "Error",
+                    description: "Failed to link Google account",
+                    variant: "destructive",
+                  })
+                }
               />
             )}
           </div>

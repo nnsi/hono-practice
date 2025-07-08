@@ -362,3 +362,50 @@ export const apiKeys = pgTable(
     index("api_key_key_idx").on(t.key),
   ],
 );
+
+// UserSubscription テーブル
+export const userSubscriptions = pgTable(
+  "user_subscription",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id)
+      .unique(),
+    plan: text("plan", {
+      enum: ["free", "premium", "enterprise"],
+    })
+      .notNull()
+      .default("free"),
+    status: text("status", {
+      enum: ["trial", "active", "paused", "cancelled", "expired"],
+    })
+      .notNull()
+      .default("trial"),
+    paymentProvider: text("payment_provider"), // stripe, paypal 等
+    paymentProviderId: text("payment_provider_id"), // StripeのサブスクリプションID等
+    currentPeriodStart: timestamp("current_period_start", {
+      withTimezone: true,
+    }),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    trialStart: timestamp("trial_start", { withTimezone: true }),
+    trialEnd: timestamp("trial_end", { withTimezone: true }),
+    priceAmount: customTypeNumeric("price_amount"), // 将来の価格変更履歴用
+    priceCurrency: text("price_currency").default("JPY"),
+    metadata: text("metadata"), // JSON形式での追加情報
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("user_subscription_user_id_idx").on(t.userId),
+    index("user_subscription_status_idx").on(t.status),
+    index("user_subscription_plan_idx").on(t.plan),
+  ],
+);

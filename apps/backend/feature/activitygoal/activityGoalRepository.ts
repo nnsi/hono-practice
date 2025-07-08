@@ -10,7 +10,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type ActivityGoalRepository = {
+export type ActivityGoalRepository<T = any> = {
   getByUserId(userId: UserId): Promise<ActivityGoal[]>;
   getByIdAndUserId(
     id: ActivityGoalId,
@@ -27,12 +27,12 @@ export type ActivityGoalRepository = {
   create(goal: ActivityGoal): Promise<ActivityGoal>;
   update(goal: ActivityGoal): Promise<ActivityGoal>;
   delete(goal: ActivityGoal): Promise<void>;
-  withTx(tx: any): ActivityGoalRepository;
+  withTx(tx: T): ActivityGoalRepository<T>;
 };
 
 export function newActivityGoalRepository(
   db: QueryExecutor,
-): ActivityGoalRepository {
+): ActivityGoalRepository<QueryExecutor> {
   return {
     getByUserId: getByUserId(db),
     getByIdAndUserId: getByIdAndUserId(db),

@@ -7,3 +7,4 @@ export * from "./goal";
 export * from "./activitygoal";
 export * from "./sync";
 export * from "./apiKey";
+export * from "./subscription";
