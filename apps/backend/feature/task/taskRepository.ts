@@ -11,7 +11,7 @@ import { and, desc, eq, gte, isNull, lte, not, or } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type TaskRepository<T = unknown> = {
+export type TaskRepository<T = any> = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,

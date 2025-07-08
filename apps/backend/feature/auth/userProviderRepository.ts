@@ -8,19 +8,19 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
-export type UserProviderRepository = {
+export type UserProviderRepository<T = any> = {
   findUserProviderByIdAndProvider(
     provider: Provider,
     providerId: string,
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
   getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
-  withTx(tx: any): UserProviderRepository;
+  withTx(tx: T): UserProviderRepository<T>;
 };
 
 export function newUserProviderRepository(
   db: QueryExecutor,
-): UserProviderRepository {
+): UserProviderRepository<QueryExecutor> {
   return {
     findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
     createUserProvider: createUserProvider(db),

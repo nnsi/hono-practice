@@ -4,6 +4,10 @@
 
 ## 🚫 重要な制限事項
 
+### 使用言語
+
+日本語を利用すること。
+
 ### 開発サーバーの起動
 - **開発サーバーは絶対に起動しないでください**
 - ユーザー側で既に起動しているため、Claude Code側での起動は不要です
@@ -70,19 +74,19 @@ docker-compose up -d  # PostgreSQLコンテナの起動
 
 ### テストと品質管理
 ```bash
-# ウォッチモードでテストを実行
-npm run test
-
 # テストを一度だけ実行（CIモード）
 npm run test-once
+
+# 注意: npm run test（ウォッチモード）は使用禁止
+# 常に npm run test-once を使用すること
 
 # 全てのCIチェックを実行（テスト＋リンティング）
 npm run ci-check
 
-# コードのリント
-npm run lint
+# コードのリント(TypeScript)
+npm run tsc
 
-# リントエラーの自動修正
+# コードのリント(biome+eslint)
 npm run fix
 ```
 

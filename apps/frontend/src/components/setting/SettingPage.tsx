@@ -1,3 +1,4 @@
+import { ApiKeyManager } from "@frontend/components/apiKey";
 import { Button, useToast } from "@frontend/components/ui";
 import { useAuth } from "@frontend/hooks/useAuth";
 import { apiClient } from "@frontend/utils/apiClient";
@@ -60,20 +61,33 @@ export const SettingPage: React.FC = () => {
   };
 
   return (
-    <>
-      <Button onClick={handleLogout}>Logout</Button>
-      <div style={{ marginTop: 16 }}>
-        {isGoogleLinked ? (
-          <span style={{ color: "green", fontWeight: "bold" }}>
-            Google認証済み
-          </span>
-        ) : (
-          <GoogleLogin
-            onSuccess={handleGoogleLink}
-            onError={() => alert("Google認証に失敗しました")}
-          />
-        )}
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">アカウント</h3>
+          <div className="flex items-center gap-4">
+            <Button onClick={handleLogout}>ログアウト</Button>
+            {isGoogleLinked ? (
+              <span style={{ color: "green", fontWeight: "bold" }}>
+                Google認証済み
+              </span>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleLink}
+                onError={() =>
+                  toast({
+                    title: "Error",
+                    description: "Failed to link Google account",
+                    variant: "destructive",
+                  })
+                }
+              />
+            )}
+          </div>
+        </div>
       </div>
-    </>
+
+      <ApiKeyManager />
+    </div>
   );
 };

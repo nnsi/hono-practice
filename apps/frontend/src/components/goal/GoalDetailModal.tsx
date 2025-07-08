@@ -34,8 +34,6 @@ type GoalStats = {
 const calculateGoalStats = (
   goal: GoalResponse | null | undefined,
 ): GoalStats => {
-  // TODO: これらの統計情報を計算するには、日次の活動記録データが必要
-  // 現在は仮の値を返す
   const stats: GoalStats = {
     currentProgress: 0,
     targetProgress: 0,

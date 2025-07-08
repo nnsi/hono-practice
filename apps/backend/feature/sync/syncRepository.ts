@@ -18,7 +18,7 @@ import type {
 } from "@backend/domain/sync";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle/drizzleInstance";
 
-export type SyncRepository<T = unknown> = {
+export type SyncRepository<T = any> = {
   findDuplicatesByTimestamps(
     userId: string,
     operations: Array<{
