@@ -83,10 +83,10 @@ npm run test-once
 # 全てのCIチェックを実行（テスト＋リンティング）
 npm run ci-check
 
-# コードのリント
-npm run lint
+# コードのリント(TypeScript)
+npm run tsc
 
-# リントエラーの自動修正
+# コードのリント(biome+eslint)
 npm run fix
 ```
 
