@@ -7,7 +7,7 @@ import {
   createActivityEntity,
 } from "@backend/domain";
 import { activities, activityKinds } from "@infra/drizzle/schema";
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
@@ -29,6 +29,11 @@ export type ActivityRepository<T = any> = {
   createActivity(activity: Activity): Promise<Activity>;
   updateActivity(activity: Activity): Promise<Activity>;
   deleteActivity(activity: Activity): Promise<void>;
+  getActivityChangesAfter(
+    userId: UserId,
+    timestamp: Date,
+    limit?: number,
+  ): Promise<{ activities: Activity[]; hasMore: boolean }>;
   withTx(tx: T): ActivityRepository<T>;
 };
 
@@ -45,6 +50,7 @@ export function newActivityRepository(
     createActivity: createActivity(db),
     updateActivity: updateActivity(db),
     deleteActivity: deleteActivity(db),
+    getActivityChangesAfter: getActivityChangesAfter(db),
     withTx: (tx) => newActivityRepository(tx),
   };
 }
@@ -316,5 +322,64 @@ function deleteActivity(db: QueryExecutor) {
       .where(eq(activities.id, activity.id));
 
     return;
+  };
+}
+
+function getActivityChangesAfter(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    timestamp: Date,
+    limit = 100,
+  ): Promise<{ activities: Activity[]; hasMore: boolean }> => {
+    const rows = await db
+      .select()
+      .from(activities)
+      .where(
+        and(eq(activities.userId, userId), gt(activities.updatedAt, timestamp)),
+      )
+      .orderBy(asc(activities.updatedAt))
+      .limit(limit + 1); // +1 to check if there are more
+
+    const hasMore = rows.length > limit;
+    const activitiesData = rows.slice(0, limit);
+
+    // 各活動に関連するActivityKindsを取得
+    const activitiesWithKinds = await Promise.all(
+      activitiesData.map(async (row) => {
+        const kindsRows = await db
+          .select()
+          .from(activityKinds)
+          .where(
+            and(
+              eq(activityKinds.activityId, row.id),
+              isNull(activityKinds.deletedAt),
+            ),
+          )
+          .orderBy(asc(activityKinds.orderIndex));
+
+        const kinds = ActivityKindsSchema.parse(kindsRows);
+
+        return createActivityEntity({
+          type: "persisted",
+          id: row.id,
+          userId: row.userId,
+          name: row.name,
+          label: row.label || "",
+          emoji: row.emoji || "",
+          description: row.description || "",
+          quantityUnit: row.quantityUnit || "",
+          orderIndex: row.orderIndex || "",
+          showCombinedStats: row.showCombinedStats,
+          kinds: kinds,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        });
+      }),
+    );
+
+    return {
+      activities: activitiesWithKinds,
+      hasMore,
+    };
   };
 }

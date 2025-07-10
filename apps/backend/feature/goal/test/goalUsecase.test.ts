@@ -64,7 +64,9 @@ describe("GoalUsecase", () => {
         lastCalculatedDate: "2024-01-10",
       };
 
-      when(activityGoalRepo.getByUserId(userId)).thenResolve([goal]);
+      when(activityGoalRepo.getActivityGoalsByUserId(userId)).thenResolve([
+        goal,
+      ]);
       when(
         activityGoalService.calculateCurrentBalance(userId, goal),
       ).thenResolve(balance);
@@ -127,7 +129,10 @@ describe("GoalUsecase", () => {
         lastCalculatedDate: "2024-01-01",
       };
 
-      when(activityGoalRepo.getByUserId(userId)).thenResolve([goal1, goal2]);
+      when(activityGoalRepo.getActivityGoalsByUserId(userId)).thenResolve([
+        goal1,
+        goal2,
+      ]);
       when(
         activityGoalService.calculateCurrentBalance(userId, anything()),
       ).thenResolve(balance);
@@ -152,7 +157,7 @@ describe("GoalUsecase", () => {
         description: "New goal",
       };
 
-      when(activityGoalRepo.create(anything())).thenResolve(
+      when(activityGoalRepo.createActivityGoal(anything())).thenResolve(
         createActivityGoalEntity({
           type: "persisted",
           id: "00000000-0000-4000-8000-000000000001" as ActivityGoalId,
@@ -174,7 +179,7 @@ describe("GoalUsecase", () => {
       expect(result.dailyTargetQuantity).toBe(10);
       expect(result.startDate).toBe("2024-01-01");
       expect(result.endDate).toBe("2024-12-31");
-      verify(activityGoalRepo.create(anything())).once();
+      verify(activityGoalRepo.createActivityGoal(anything())).once();
     });
   });
 
@@ -203,11 +208,11 @@ describe("GoalUsecase", () => {
         description: "Updated description",
       };
 
-      when(activityGoalRepo.getByIdAndUserId(anything(), userId)).thenResolve(
-        existingGoal,
-      );
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(existingGoal);
 
-      when(activityGoalRepo.update(anything())).thenResolve(
+      when(activityGoalRepo.updateActivityGoal(anything())).thenResolve(
         createActivityGoalEntity({
           type: "persisted",
           id: existingGoal.id,
@@ -230,16 +235,16 @@ describe("GoalUsecase", () => {
 
       expect(result.dailyTargetQuantity).toBe(20);
       expect(result.description).toBe("Updated description");
-      verify(activityGoalRepo.update(anything())).once();
+      verify(activityGoalRepo.updateActivityGoal(anything())).once();
     });
 
     it("should throw error if goal not found", async () => {
       const userId = createUserId();
       const goalId = "00000000-0000-4000-8000-000000000001";
 
-      when(activityGoalRepo.getByIdAndUserId(anything(), userId)).thenResolve(
-        undefined,
-      );
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(undefined);
 
       await expect(usecase.updateGoal(userId, goalId, {})).rejects.toThrow(
         ResourceNotFoundError,
@@ -267,24 +272,24 @@ describe("GoalUsecase", () => {
         updatedAt: new Date(),
       });
 
-      when(activityGoalRepo.getByIdAndUserId(anything(), userId)).thenResolve(
-        goal,
-      );
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(goal);
 
-      when(activityGoalRepo.delete(goal)).thenResolve();
+      when(activityGoalRepo.deleteActivityGoal(goal)).thenResolve();
 
       await usecase.deleteGoal(userId, goalId);
 
-      verify(activityGoalRepo.delete(goal)).once();
+      verify(activityGoalRepo.deleteActivityGoal(goal)).once();
     });
 
     it("should throw error if goal not found", async () => {
       const userId = createUserId();
       const goalId = "00000000-0000-4000-8000-000000000001";
 
-      when(activityGoalRepo.getByIdAndUserId(anything(), userId)).thenResolve(
-        undefined,
-      );
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(undefined);
 
       await expect(usecase.deleteGoal(userId, goalId)).rejects.toThrow(
         ResourceNotFoundError,

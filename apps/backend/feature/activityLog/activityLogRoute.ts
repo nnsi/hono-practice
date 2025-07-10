@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { syncMiddleware } from "@backend/middleware/syncMiddleware";
 import { newActivityQueryService } from "@backend/query";
 import { zValidator } from "@hono/zod-validator";
 
@@ -9,6 +10,7 @@ import {
 } from "@dtos/request";
 
 import { newActivityRepository } from "../activity";
+import { newSyncRepository } from "../sync/syncRepository";
 
 import { newActivityLogHandler } from "./activityLogHandler";
 import { newActivityLogRepository } from "./activityLogRepository";
@@ -35,6 +37,18 @@ export function createActivityLogRoute() {
     const h = newActivityLogHandler(uc);
 
     c.set("h", h);
+
+    // 同期ミドルウェアを適用
+    if (c.env.NODE_ENV !== "test") {
+      const syncRepo = newSyncRepository(db);
+      return syncMiddleware<
+        AppContext & {
+          Variables: {
+            h: ReturnType<typeof newActivityLogHandler>;
+          };
+        }
+      >(syncRepo)(c, next);
+    }
 
     return next();
   });

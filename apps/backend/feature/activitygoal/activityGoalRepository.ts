@@ -6,27 +6,32 @@ import {
   createActivityGoalEntity,
 } from "@backend/domain";
 import { activityGoals } from "@infra/drizzle/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityGoalRepository<T = any> = {
-  getByUserId(userId: UserId): Promise<ActivityGoal[]>;
-  getByIdAndUserId(
+  getActivityGoalsByUserId(userId: UserId): Promise<ActivityGoal[]>;
+  getActivityGoalByIdAndUserId(
     id: ActivityGoalId,
     userId: UserId,
   ): Promise<ActivityGoal | undefined>;
-  getByActivityId(
+  getActivityGoalsByActivityId(
     userId: UserId,
     activityId: ActivityId,
   ): Promise<ActivityGoal[]>;
-  getActiveByActivityId(
+  getActiveActivityGoalByActivityId(
     userId: UserId,
     activityId: ActivityId,
   ): Promise<ActivityGoal | undefined>;
-  create(goal: ActivityGoal): Promise<ActivityGoal>;
-  update(goal: ActivityGoal): Promise<ActivityGoal>;
-  delete(goal: ActivityGoal): Promise<void>;
+  createActivityGoal(goal: ActivityGoal): Promise<ActivityGoal>;
+  updateActivityGoal(goal: ActivityGoal): Promise<ActivityGoal>;
+  deleteActivityGoal(goal: ActivityGoal): Promise<void>;
+  getActivityGoalChangesAfter(
+    userId: UserId,
+    timestamp: Date,
+    limit?: number,
+  ): Promise<{ goals: ActivityGoal[]; hasMore: boolean }>;
   withTx(tx: T): ActivityGoalRepository<T>;
 };
 
@@ -34,18 +39,19 @@ export function newActivityGoalRepository(
   db: QueryExecutor,
 ): ActivityGoalRepository<QueryExecutor> {
   return {
-    getByUserId: getByUserId(db),
-    getByIdAndUserId: getByIdAndUserId(db),
-    getByActivityId: getByActivityId(db),
-    getActiveByActivityId: getActiveByActivityId(db),
-    create: create(db),
-    update: update(db),
-    delete: deleteGoal(db),
+    getActivityGoalsByUserId: getActivityGoalsByUserId(db),
+    getActivityGoalByIdAndUserId: getActivityGoalByIdAndUserId(db),
+    getActivityGoalsByActivityId: getActivityGoalsByActivityId(db),
+    getActiveActivityGoalByActivityId: getActiveActivityGoalByActivityId(db),
+    createActivityGoal: createActivityGoal(db),
+    updateActivityGoal: updateActivityGoal(db),
+    deleteActivityGoal: deleteActivityGoal(db),
+    getActivityGoalChangesAfter: getActivityGoalChangesAfter(db),
     withTx: (tx) => newActivityGoalRepository(tx),
   };
 }
 
-function getByUserId(db: QueryExecutor) {
+function getActivityGoalsByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<ActivityGoal[]> => {
     const rows = await db.query.activityGoals.findMany({
       where: and(
@@ -73,7 +79,7 @@ function getByUserId(db: QueryExecutor) {
   };
 }
 
-function getByIdAndUserId(db: QueryExecutor) {
+function getActivityGoalByIdAndUserId(db: QueryExecutor) {
   return async (
     id: ActivityGoalId,
     userId: UserId,
@@ -104,7 +110,7 @@ function getByIdAndUserId(db: QueryExecutor) {
   };
 }
 
-function getByActivityId(db: QueryExecutor) {
+function getActivityGoalsByActivityId(db: QueryExecutor) {
   return async (
     userId: UserId,
     activityId: ActivityId,
@@ -136,7 +142,7 @@ function getByActivityId(db: QueryExecutor) {
   };
 }
 
-function getActiveByActivityId(db: QueryExecutor) {
+function getActiveActivityGoalByActivityId(db: QueryExecutor) {
   return async (
     userId: UserId,
     activityId: ActivityId,
@@ -169,7 +175,7 @@ function getActiveByActivityId(db: QueryExecutor) {
   };
 }
 
-function create(db: QueryExecutor) {
+function createActivityGoal(db: QueryExecutor) {
   return async (goal: ActivityGoal): Promise<ActivityGoal> => {
     if (goal.type !== "new") {
       throw new Error("Cannot create persisted goal");
@@ -205,7 +211,7 @@ function create(db: QueryExecutor) {
   };
 }
 
-function update(db: QueryExecutor) {
+function updateActivityGoal(db: QueryExecutor) {
   return async (goal: ActivityGoal): Promise<ActivityGoal> => {
     if (goal.type !== "persisted") {
       throw new Error("Cannot update non-persisted goal");
@@ -240,7 +246,7 @@ function update(db: QueryExecutor) {
   };
 }
 
-function deleteGoal(db: QueryExecutor) {
+function deleteActivityGoal(db: QueryExecutor) {
   return async (goal: ActivityGoal): Promise<void> => {
     if (goal.type !== "persisted") {
       throw new Error("Cannot delete non-persisted goal");
@@ -253,5 +259,49 @@ function deleteGoal(db: QueryExecutor) {
         updatedAt: new Date(),
       })
       .where(eq(activityGoals.id, goal.id));
+  };
+}
+
+function getActivityGoalChangesAfter(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    timestamp: Date,
+    limit = 100,
+  ): Promise<{ goals: ActivityGoal[]; hasMore: boolean }> => {
+    const rows = await db
+      .select()
+      .from(activityGoals)
+      .where(
+        and(
+          eq(activityGoals.userId, userId),
+          gt(activityGoals.updatedAt, timestamp),
+        ),
+      )
+      .orderBy(asc(activityGoals.updatedAt))
+      .limit(limit + 1); // +1 to check if there are more
+
+    const hasMore = rows.length > limit;
+    const goalsData = rows.slice(0, limit);
+
+    const result = goalsData.map((row) =>
+      createActivityGoalEntity({
+        type: "persisted",
+        id: row.id,
+        userId: row.userId,
+        activityId: row.activityId,
+        dailyTargetQuantity: row.dailyTargetQuantity,
+        startDate: row.startDate || "",
+        endDate: row.endDate,
+        isActive: row.isActive,
+        description: row.description,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    );
+
+    return {
+      goals: result,
+      hasMore,
+    };
   };
 }

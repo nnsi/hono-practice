@@ -7,7 +7,7 @@ import {
 } from "@backend/domain";
 import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
-import { and, between, eq, isNull } from "drizzle-orm";
+import { and, between, eq, gt, isNull } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
@@ -24,6 +24,11 @@ export type ActivityLogRepository<T = any> = {
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   deleteActivityLog: (activityLog: ActivityLog) => Promise<void>;
+  getActivityLogChangesAfter: (
+    userId: UserId,
+    timestamp: Date,
+    limit?: number,
+  ) => Promise<{ activityLogs: ActivityLog[]; hasMore: boolean }>;
   withTx: (tx: T) => ActivityLogRepository<T>;
 };
 
@@ -36,6 +41,7 @@ export function newActivityLogRepository(
     createActivityLog: createActivityLog(db),
     updateActivityLog: updateActivityLog(db),
     deleteActivityLog: deleteActivityLog(db),
+    getActivityLogChangesAfter: getActivityLogChangesAfter(db),
     withTx: (tx) => newActivityLogRepository(tx),
   };
 }
@@ -159,5 +165,47 @@ function deleteActivityLog(db: QueryExecutor) {
         deletedAt: new Date(),
       })
       .where(eq(activityLogs.id, activityLog.id));
+  };
+}
+
+function getActivityLogChangesAfter(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    timestamp: Date,
+    limit = 100,
+  ): Promise<{ activityLogs: ActivityLog[]; hasMore: boolean }> => {
+    const rows = await db.query.activityLogs.findMany({
+      with: {
+        activity: true,
+        activityKind: true,
+      },
+      where: and(
+        eq(activityLogs.userId, userId),
+        gt(activityLogs.updatedAt, timestamp),
+      ),
+      orderBy: (logs, { asc }) => [asc(logs.updatedAt)],
+      limit: limit + 1, // +1 to check if there are more
+    });
+
+    const hasMore = rows.length > limit;
+    const activityLogsData = rows.slice(0, limit);
+
+    return {
+      activityLogs: activityLogsData.map((r) => {
+        const activity = createActivityEntity({
+          ...r.activity,
+          kinds: r.activityKind ? [r.activityKind] : [],
+          type: "persisted",
+        });
+
+        return createActivityLogEntity({
+          ...r,
+          activity,
+          activityKind: activity.kinds[0],
+          type: "persisted",
+        });
+      }),
+      hasMore,
+    };
   };
 }

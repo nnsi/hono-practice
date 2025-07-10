@@ -77,7 +77,7 @@ function getGoals(
   activityGoalService: ActivityGoalService,
 ) {
   return async (userId: UserId, filters?: GoalFilters): Promise<Goal[]> => {
-    const goals = await activityGoalRepo.getByUserId(userId);
+    const goals = await activityGoalRepo.getActivityGoalsByUserId(userId);
 
     // 並行で計算処理
     const goalsWithBalance = await Promise.all(
@@ -135,7 +135,7 @@ function getGoal(
   activityGoalService: ActivityGoalService,
 ) {
   return async (userId: UserId, goalId: string): Promise<Goal> => {
-    const goal = await activityGoalRepo.getByIdAndUserId(
+    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
       goalId as ActivityGoalId,
       userId,
     );
@@ -183,7 +183,7 @@ function createGoal(activityGoalRepo: ActivityGoalRepository) {
       description: req.description || null,
     });
 
-    const created = await activityGoalRepo.create(goal);
+    const created = await activityGoalRepo.createActivityGoal(goal);
 
     return {
       id: created.id,
@@ -215,7 +215,7 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
     goalId: string,
     req: UpdateGoalRequest,
   ): Promise<Goal> => {
-    const goal = await activityGoalRepo.getByIdAndUserId(
+    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
       goalId as ActivityGoalId,
       userId,
     );
@@ -231,7 +231,7 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
       isActive: req.isActive ?? goal.isActive,
     });
 
-    const saved = await activityGoalRepo.update(updated);
+    const saved = await activityGoalRepo.updateActivityGoal(updated);
 
     return {
       id: saved.id,
@@ -259,12 +259,12 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
 
 function deleteGoal(activityGoalRepo: ActivityGoalRepository) {
   return async (userId: UserId, goalId: string): Promise<void> => {
-    const goal = await activityGoalRepo.getByIdAndUserId(
+    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
       goalId as ActivityGoalId,
       userId,
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
-    await activityGoalRepo.delete(goal);
+    await activityGoalRepo.deleteActivityGoal(goal);
   };
 }

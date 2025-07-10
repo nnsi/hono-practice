@@ -6,7 +6,7 @@ import {
 } from "@backend/domain/sync";
 import { UnexpectedError } from "@backend/error";
 import { syncMetadata, syncQueue } from "@infra/drizzle/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, gt, inArray } from "drizzle-orm";
 
 import type {
   DuplicateCheckResult,
@@ -64,6 +64,19 @@ export type SyncRepository<T = any> = {
   ): Promise<void>;
   getQueueByIds(queueIds: SyncQueueId[]): Promise<SyncQueueEntity[]>;
   deleteQueueItems(queueIds: SyncQueueId[]): Promise<void>;
+  getChangesAfter(
+    userId: string,
+    timestamp: Date,
+    entityType?: string,
+    limit?: number,
+  ): Promise<SyncQueueEntity[]>;
+  getSyncQueueByUser(
+    userId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<SyncQueueEntity[]>;
+  getSyncQueueCount(userId: string): Promise<number>;
+  getSyncQueueById(queueId: string): Promise<SyncQueueEntity | null>;
   withTx(tx: T): SyncRepository<T>;
 };
 
@@ -78,6 +91,10 @@ export function newSyncRepository(db: QueryExecutor): SyncRepository {
     updateSyncMetadata: updateSyncMetadata(db),
     getQueueByIds: getQueueByIds(db),
     deleteQueueItems: deleteQueueItems(db),
+    getChangesAfter: getChangesAfter(db),
+    getSyncQueueByUser: getSyncQueueByUser(db),
+    getSyncQueueCount: getSyncQueueCount(db),
+    getSyncQueueById: getSyncQueueById(db),
     withTx: (tx) => newSyncRepository(tx as QueryExecutor),
   };
 }
@@ -443,6 +460,152 @@ function deleteQueueItems(db: QueryExecutor) {
     } catch (error) {
       throw new UnexpectedError(
         "キューアイテムの削除に失敗しました",
+        error as Error,
+      );
+    }
+  };
+}
+
+function getChangesAfter(db: QueryExecutor) {
+  return async (
+    userId: string,
+    timestamp: Date,
+    entityType?: string,
+    limit = 100,
+  ): Promise<SyncQueueEntity[]> => {
+    try {
+      let query = db
+        .select()
+        .from(syncQueue)
+        .where(
+          and(eq(syncQueue.userId, userId), gt(syncQueue.timestamp, timestamp)),
+        )
+        .orderBy(asc(syncQueue.sequenceNumber))
+        .limit(limit);
+
+      // entityTypeが指定されている場合はフィルタリング
+      if (entityType) {
+        query = db
+          .select()
+          .from(syncQueue)
+          .where(
+            and(
+              eq(syncQueue.userId, userId),
+              gt(syncQueue.timestamp, timestamp),
+              eq(syncQueue.entityType, entityType),
+            ),
+          )
+          .orderBy(asc(syncQueue.sequenceNumber))
+          .limit(limit);
+      }
+
+      const rows = await query;
+
+      return rows.map((row) =>
+        createSyncQueueEntity({
+          id: row.id,
+          userId: row.userId,
+          entityType: row.entityType,
+          entityId: row.entityId,
+          operation: row.operation as "create" | "update" | "delete",
+          payload: JSON.parse(row.payload),
+          timestamp: row.timestamp,
+          sequenceNumber: Number(row.sequenceNumber),
+          createdAt: row.createdAt,
+        }),
+      );
+    } catch (error) {
+      throw new UnexpectedError(
+        "指定時刻以降の変更の取得に失敗しました",
+        error as Error,
+      );
+    }
+  };
+}
+
+function getSyncQueueByUser(db: QueryExecutor) {
+  return async (
+    userId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<SyncQueueEntity[]> => {
+    try {
+      const rows = await db
+        .select()
+        .from(syncQueue)
+        .where(eq(syncQueue.userId, userId))
+        .orderBy(asc(syncQueue.sequenceNumber))
+        .limit(limit)
+        .offset(offset);
+
+      return rows.map((row) =>
+        createSyncQueueEntity({
+          id: row.id,
+          userId: row.userId,
+          entityType: row.entityType,
+          entityId: row.entityId,
+          operation: row.operation as "create" | "update" | "delete",
+          payload: JSON.parse(row.payload),
+          timestamp: row.timestamp,
+          sequenceNumber: Number(row.sequenceNumber),
+          createdAt: row.createdAt,
+        }),
+      );
+    } catch (error) {
+      throw new UnexpectedError(
+        "ユーザーの同期キューの取得に失敗しました",
+        error as Error,
+      );
+    }
+  };
+}
+
+function getSyncQueueCount(db: QueryExecutor) {
+  return async (userId: string): Promise<number> => {
+    try {
+      const result = await db
+        .select({ count: count() })
+        .from(syncQueue)
+        .where(eq(syncQueue.userId, userId));
+
+      return result[0]?.count || 0;
+    } catch (error) {
+      throw new UnexpectedError(
+        "同期キューのカウント取得に失敗しました",
+        error as Error,
+      );
+    }
+  };
+}
+
+function getSyncQueueById(db: QueryExecutor) {
+  return async (queueId: string): Promise<SyncQueueEntity | null> => {
+    try {
+      const rows = await db
+        .select()
+        .from(syncQueue)
+        .where(eq(syncQueue.id, queueId))
+        .limit(1);
+
+      if (rows.length === 0) {
+        return null;
+      }
+
+      const row = rows[0];
+      return createSyncQueueEntity({
+        id: row.id,
+        userId: row.userId,
+        entityType: row.entityType,
+        entityId: row.entityId,
+        operation: row.operation as "create" | "update" | "delete",
+        payload: JSON.parse(row.payload),
+        timestamp: row.timestamp,
+        sequenceNumber: Number(row.sequenceNumber),
+        createdAt: row.createdAt,
+      });
+    } catch (error) {
+      throw new UnexpectedError(
+        "同期キューアイテムの取得に失敗しました",
         error as Error,
       );
     }

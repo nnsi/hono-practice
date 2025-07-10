@@ -10,6 +10,7 @@ import type {
 
 describe("SyncUseCase", () => {
   let mockRepository: SyncRepository;
+  let mockSyncService: any;
   let syncUseCase: ReturnType<typeof newSyncUsecase>;
 
   beforeEach(() => {
@@ -26,7 +27,14 @@ describe("SyncUseCase", () => {
       deleteQueueItems: vi.fn(),
     } as any;
 
-    syncUseCase = newSyncUsecase(mockRepository);
+    // モックSyncServiceの初期化
+    mockSyncService = {
+      syncEntity: vi.fn(),
+      syncBatchItems: vi.fn(),
+      detectConflict: vi.fn(),
+    };
+
+    syncUseCase = newSyncUsecase(mockRepository, mockSyncService);
   });
 
   describe("checkDuplicates", () => {
@@ -121,6 +129,9 @@ describe("SyncUseCase", () => {
       vi.mocked(mockRepository.getMetadataByEntity).mockResolvedValue(null);
       vi.mocked(mockRepository.deleteQueueItems).mockResolvedValue(undefined);
 
+      // syncServiceのsyncEntityメソッドが成功するようにモック
+      vi.mocked(mockSyncService.syncEntity).mockResolvedValue(undefined);
+
       const result = await syncUseCase.processSyncQueue("user-123");
 
       expect(result.processedCount).toBe(1);
@@ -167,11 +178,10 @@ describe("SyncUseCase", () => {
         .mockResolvedValueOnce(mockMetadata)
         .mockResolvedValueOnce(mockMetadata);
 
-      // simulateSyncOperationをモックしてエラーを発生させる
-      const originalTimeout = global.setTimeout;
-      global.setTimeout = vi.fn().mockImplementation(() => {
-        throw new Error("Simulated sync error");
-      }) as any;
+      // syncServiceのsyncEntityメソッドをモックしてエラーを発生させる
+      vi.mocked(mockSyncService.syncEntity).mockRejectedValue(
+        new Error("Simulated sync error"),
+      );
 
       const result = await syncUseCase.processSyncQueue("user-123");
 
@@ -185,8 +195,6 @@ describe("SyncUseCase", () => {
           retryCount: 1,
         }),
       );
-
-      global.setTimeout = originalTimeout;
     });
   });
 
