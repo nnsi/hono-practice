@@ -126,7 +126,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleUpdate)}
-          className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} animate-in zoom-in-95 duration-200 overflow-hidden`}
+          className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} shadow-sm animate-in zoom-in-95 duration-200 overflow-hidden`}
         >
           <div
             className={`absolute inset-0 ${
@@ -153,7 +153,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                         <Input
                           {...field}
                           type="number"
-                          className="h-8 text-center text-sm"
+                          className="h-8 text-center text-base"
                           onChange={(e) => {
                             const value = e.target.value;
                             field.onChange(value === "" ? "" : Number(value));
@@ -213,7 +213,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
     <>
       <button
         type="button"
-        className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} hover:shadow-md transition-all duration-200 group overflow-hidden cursor-pointer`}
+        className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden cursor-pointer`}
         onClick={() => setShowDetailModal(true)}
       >
         <div

@@ -85,13 +85,13 @@ export const ActivityDailyPage: React.FC = () => {
                   setEditTargetLog(log);
                   setEditDialogOpen(true);
                 }}
-                className="cursor-pointer"
+                className="cursor-pointer shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 h-20"
               >
-                <CardContent className="flex items-center gap-4 py-4">
+                <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
                   <span className="flex items-center justify-center w-10 h-10 text-3xl">
                     {log.activity.emoji}
                   </span>
-                  <div>
+                  <div className="flex-1">
                     <div className="text-lg font-semibold">
                       {log.activity.name}
                       {log.activityKind?.name && (
