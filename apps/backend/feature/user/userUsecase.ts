@@ -6,7 +6,7 @@ import {
   createUserEntity,
   createUserId,
 } from "@backend/domain";
-import { AppError } from "@backend/error";
+import { AppError, ConflictError } from "@backend/error";
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 
@@ -46,6 +46,12 @@ function createUser(
   passwordVerifier: MultiHashPasswordVerifier,
 ) {
   return async (params: CreateUserInputParams, secret: string) => {
+    // ログインIDの重複チェック
+    const existingUser = await repo.getUserByLoginId(params.loginId);
+    if (existingUser) {
+      throw new ConflictError("このログインIDは既に使用されています");
+    }
+
     const cryptedPassword = await passwordVerifier.hash(params.password);
     const newUser = createUserEntity({
       type: "new",
