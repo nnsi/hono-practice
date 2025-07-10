@@ -18,8 +18,6 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
       return c.json({ message: err.message }, 401);
     }
 
-    console.error(err.stack);
-
     if (err instanceof AppError) {
       return c.json({ message: err.message }, err.status);
     }

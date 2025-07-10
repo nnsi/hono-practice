@@ -7,7 +7,7 @@ import {
 } from "@backend/domain";
 import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
 import { tasks } from "@infra/drizzle/schema";
-import { and, desc, eq, gte, isNull, lte, not, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, isNull, lte, not, or } from "drizzle-orm";
 
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
@@ -20,6 +20,11 @@ export type TaskRepository<T = any> = {
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
+  getTaskChangesAfter: (
+    userId: UserId,
+    timestamp: Date,
+    limit?: number,
+  ) => Promise<{ tasks: Task[]; hasMore: boolean }>;
   withTx: (tx: T) => TaskRepository<T>;
 };
 
@@ -32,6 +37,7 @@ export function newTaskRepository(
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
+    getTaskChangesAfter: getTaskChangesAfter(db),
     withTx: (tx) => newTaskRepository(tx),
   };
 }
@@ -150,5 +156,43 @@ function deleteTask(db: QueryExecutor) {
     if (!result) {
       throw new ResourceNotFoundError("task not found");
     }
+  };
+}
+
+function getTaskChangesAfter(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    timestamp: Date,
+    limit = 100,
+  ): Promise<{ tasks: Task[]; hasMore: boolean }> => {
+    const rows = await db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), gt(tasks.updatedAt, timestamp)))
+      .orderBy(asc(tasks.updatedAt))
+      .limit(limit + 1); // +1 to check if there are more
+
+    const hasMore = rows.length > limit;
+    const tasksData = rows.slice(0, limit);
+
+    const result = tasksData.map((row) =>
+      createTaskEntity({
+        type: "persisted",
+        id: row.id,
+        userId: row.userId,
+        title: row.title,
+        memo: row.memo || "",
+        startDate: row.startDate || undefined,
+        dueDate: row.dueDate || undefined,
+        doneDate: row.doneDate || undefined,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    );
+
+    return {
+      tasks: result,
+      hasMore,
+    };
   };
 }

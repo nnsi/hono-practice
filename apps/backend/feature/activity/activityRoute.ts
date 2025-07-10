@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
+import { syncMiddleware } from "@backend/middleware/syncMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
 import {
@@ -9,6 +10,8 @@ import {
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@dtos/request";
+
+import { newSyncRepository } from "../sync/syncRepository";
 
 import { newActivityHandler } from "./activityHandler";
 import { newActivityRepository } from "./activityRepository";
@@ -33,6 +36,18 @@ export function createActivityRoute() {
     const h = newActivityHandler(uc);
 
     c.set("h", h);
+
+    // 同期ミドルウェアを適用
+    if (c.env.NODE_ENV !== "test") {
+      const syncRepo = newSyncRepository(db);
+      return syncMiddleware<
+        AppContext & {
+          Variables: {
+            h: ReturnType<typeof newActivityHandler>;
+          };
+        }
+      >(syncRepo)(c, next);
+    }
 
     return next();
   });

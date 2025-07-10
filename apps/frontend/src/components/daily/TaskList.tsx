@@ -92,8 +92,11 @@ export const TaskList: React.FC<TaskListProps> = ({
         <div className="flex flex-col-reverse gap-4">
           {tasks && tasks.length > 0 ? (
             tasks.map((task: GetTaskResponse) => (
-              <Card key={task.id} className="cursor-default">
-                <CardContent className="flex items-center gap-4 py-4">
+              <Card
+                key={task.id}
+                className="cursor-pointer shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 h-20"
+              >
+                <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
                   <Button
                     type="button"
                     variant="ghost"
@@ -139,8 +142,8 @@ export const TaskList: React.FC<TaskListProps> = ({
           )}
         </div>
         {addFormOpen ? (
-          <Card className="cursor-default">
-            <CardContent className="flex items-center gap-4 py-4">
+          <Card className="cursor-default shadow-sm h-20">
+            <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
               <form
                 onSubmit={handleAddTask}
                 className="flex items-center gap-4 w-full"
@@ -168,14 +171,18 @@ export const TaskList: React.FC<TaskListProps> = ({
           </Card>
         ) : (
           <Card
-            className="cursor-pointer hover:bg-gray-100"
+            className="cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group h-20"
             onClick={() => setAddFormOpen(true)}
           >
-            <CardContent className="flex items-center gap-4 py-4">
+            <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
               <span className="flex items-center justify-center w-10 h-10 text-3xl">
-                <PlusCircledIcon className="text-gray-400 w-8 h-8" />
+                <PlusCircledIcon className="text-gray-400 w-8 h-8 group-hover:text-gray-600" />
               </span>
-              <div className="text-lg text-gray-500">新しいタスクを追加</div>
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
+                  新しいタスクを追加
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

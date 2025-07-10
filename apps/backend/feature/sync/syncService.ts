@@ -1,0 +1,561 @@
+import { UnexpectedError } from "@backend/error";
+
+import type { SyncItem } from "@dtos/request";
+import type { SyncResult } from "@dtos/response";
+
+import type { ActivityRepository } from "../activity/activityRepository";
+import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
+import type { ActivityLogRepository } from "../activityLog/activityLogRepository";
+import type { TaskRepository } from "../task/taskRepository";
+import type {
+  Activity,
+  ActivityGoal,
+  ActivityLog,
+  Task,
+} from "@backend/domain";
+import type { SyncQueueEntity } from "@backend/domain/sync/syncQueue";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+
+export type ConflictResolutionStrategy =
+  | "client-wins"
+  | "server-wins"
+  | "timestamp";
+
+export type ConflictResolver = {
+  resolve(
+    clientData: any,
+    serverData: any,
+    strategy: ConflictResolutionStrategy,
+  ): any;
+};
+
+export type SyncService = {
+  syncEntity(item: SyncQueueEntity): Promise<void>;
+  syncBatchItems(
+    items: SyncItem[],
+    strategy?: ConflictResolutionStrategy,
+  ): Promise<SyncResult[]>;
+  detectConflict(clientData: any, serverData: any): boolean;
+};
+
+export function newSyncService(
+  db: QueryExecutor,
+  activityRepository: ActivityRepository,
+  activityLogRepository: ActivityLogRepository,
+  activityGoalRepository: ActivityGoalRepository,
+  taskRepository: TaskRepository,
+): SyncService {
+  return {
+    syncEntity: syncEntity(
+      activityRepository,
+      activityLogRepository,
+      activityGoalRepository,
+      taskRepository,
+    ),
+    syncBatchItems: syncBatchItems(
+      db,
+      activityRepository,
+      activityLogRepository,
+      activityGoalRepository,
+      taskRepository,
+    ),
+    detectConflict: detectConflict(),
+  };
+}
+
+function syncEntity(
+  activityRepository: ActivityRepository,
+  activityLogRepository: ActivityLogRepository,
+  activityGoalRepository: ActivityGoalRepository,
+  taskRepository: TaskRepository,
+) {
+  return async (item: SyncQueueEntity): Promise<void> => {
+    switch (item.entityType) {
+      case "activity":
+        return syncActivity(activityRepository)(item);
+      case "activityLog":
+        return syncActivityLog(activityLogRepository)(item);
+      case "goal":
+        return syncGoal(activityGoalRepository)(item);
+      case "task":
+        return syncTask(taskRepository)(item);
+      default:
+        throw new UnexpectedError(
+          `不明なエンティティタイプです: ${item.entityType}`,
+        );
+    }
+  };
+}
+
+function syncActivity(activityRepository: ActivityRepository) {
+  return async (item: SyncQueueEntity): Promise<void> => {
+    const activity = item.payload as Activity;
+
+    switch (item.operation) {
+      case "create":
+        await activityRepository.createActivity(activity);
+        break;
+      case "update":
+        await activityRepository.updateActivity(activity);
+        break;
+      case "delete":
+        await activityRepository.deleteActivity(activity);
+        break;
+      default:
+        throw new UnexpectedError(`不明な操作です: ${item.operation}`);
+    }
+  };
+}
+
+function syncActivityLog(activityLogRepository: ActivityLogRepository) {
+  return async (item: SyncQueueEntity): Promise<void> => {
+    const activityLog = item.payload as ActivityLog;
+
+    switch (item.operation) {
+      case "create":
+        await activityLogRepository.createActivityLog(activityLog);
+        break;
+      case "update":
+        await activityLogRepository.updateActivityLog(activityLog);
+        break;
+      case "delete":
+        await activityLogRepository.deleteActivityLog(activityLog);
+        break;
+      default:
+        throw new UnexpectedError(`不明な操作です: ${item.operation}`);
+    }
+  };
+}
+
+function syncGoal(activityGoalRepository: ActivityGoalRepository) {
+  return async (item: SyncQueueEntity): Promise<void> => {
+    const goal = item.payload as ActivityGoal;
+
+    switch (item.operation) {
+      case "create":
+        await activityGoalRepository.createActivityGoal(goal);
+        break;
+      case "update":
+        await activityGoalRepository.updateActivityGoal(goal);
+        break;
+      case "delete":
+        await activityGoalRepository.deleteActivityGoal(goal);
+        break;
+      default:
+        throw new UnexpectedError(`不明な操作です: ${item.operation}`);
+    }
+  };
+}
+
+function syncTask(taskRepository: TaskRepository) {
+  return async (item: SyncQueueEntity): Promise<void> => {
+    const task = item.payload as Task;
+
+    switch (item.operation) {
+      case "create":
+        await taskRepository.createTask(task);
+        break;
+      case "update":
+        await taskRepository.updateTask(task);
+        break;
+      case "delete":
+        await taskRepository.deleteTask(task);
+        break;
+      default:
+        throw new UnexpectedError(`不明な操作です: ${item.operation}`);
+    }
+  };
+}
+
+/**
+ * エンティティタイプの処理順序を定義（依存関係を考慮）
+ *
+ * 処理順序：
+ * 1. activity - 基本となるエンティティ（ActivityKindも同時に処理）
+ * 2. activityKind - Activityに含まれるため実際には処理されない
+ * 3. activityLog - Activityに依存
+ * 4. task - 独立したエンティティ
+ * 5. goal - 独立したエンティティ
+ *
+ * この順序により、ActivityLogを作成する前にActivityが存在することが保証される
+ */
+const ENTITY_PROCESSING_ORDER = [
+  "activity",
+  "activityKind", // ActivityはActivityKindを内包するので同時に処理
+  "activityLog",
+  "task",
+  "goal",
+];
+
+/**
+ * バッチ同期処理
+ *
+ * 主な機能：
+ * 1. 依存関係の順序保証 - エンティティタイプごとに定義された順序で処理
+ * 2. 冪等性の保証 - 同じ操作を複数回実行しても安全
+ * 3. トランザクション管理 - エンティティタイプごとにトランザクションで処理
+ * 4. コンフリクト解決 - 更新時のコンフリクトを検出し解決戦略に従って解決
+ *
+ * 冪等性の実装：
+ * - CREATE: 既存チェックを行い、存在する場合はスキップ
+ * - UPDATE: 存在チェックを行い、存在しない場合はエラー
+ * - DELETE: 既に削除されている場合はスキップ
+ */
+function syncBatchItems(
+  db: QueryExecutor,
+  activityRepository: ActivityRepository,
+  activityLogRepository: ActivityLogRepository,
+  activityGoalRepository: ActivityGoalRepository,
+  taskRepository: TaskRepository,
+) {
+  return async (
+    items: SyncItem[],
+    strategy: ConflictResolutionStrategy = "timestamp",
+  ): Promise<SyncResult[]> => {
+    const results: SyncResult[] = [];
+    const conflictResolver = createConflictResolver();
+
+    // エンティティタイプごとにグループ化
+    const groupedItems = new Map<string, SyncItem[]>();
+    for (const item of items) {
+      const group = groupedItems.get(item.entityType) || [];
+      group.push(item);
+      groupedItems.set(item.entityType, group);
+    }
+
+    // 定義された順序で処理
+    for (const entityType of ENTITY_PROCESSING_ORDER) {
+      const entityItems = groupedItems.get(entityType);
+      if (!entityItems || entityItems.length === 0) continue;
+
+      // エンティティタイプごとにトランザクションで処理
+      await db.transaction(async (tx: QueryExecutor) => {
+        for (const item of entityItems) {
+          try {
+            const result: SyncResult = {
+              clientId: item.clientId,
+              status: "success",
+            };
+
+            switch (item.entityType) {
+              case "activity": {
+                const activity = item.payload as Activity;
+
+                // 冪等性の保証：既存チェック
+                const existing = await activityRepository
+                  .withTx(tx)
+                  .getActivityByIdAndUserId(activity.userId, activity.id);
+
+                if (item.operation === "create") {
+                  if (existing) {
+                    // 既に存在する場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message = "既に存在するため、作成をスキップしました";
+                    result.serverId = existing.id;
+                  } else {
+                    const created = await activityRepository
+                      .withTx(tx)
+                      .createActivity(activity);
+                    result.serverId = created.id;
+                  }
+                } else if (item.operation === "update") {
+                  if (!existing) {
+                    // 存在しない場合はエラー
+                    throw new UnexpectedError(
+                      "更新対象のActivityが存在しません",
+                    );
+                  }
+                  if (detectConflict()(activity, existing)) {
+                    const resolved = conflictResolver.resolve(
+                      activity,
+                      existing,
+                      strategy,
+                    );
+                    await activityRepository
+                      .withTx(tx)
+                      .updateActivity(resolved);
+                    result.status = "conflict";
+                    result.conflictData = existing;
+                  } else {
+                    await activityRepository
+                      .withTx(tx)
+                      .updateActivity(activity);
+                  }
+                } else if (item.operation === "delete") {
+                  if (existing) {
+                    await activityRepository
+                      .withTx(tx)
+                      .deleteActivity(activity);
+                  } else {
+                    // 既に削除されている場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message =
+                      "既に削除されているため、削除をスキップしました";
+                  }
+                }
+                break;
+              }
+              case "activityLog": {
+                const activityLogPayload = item.payload as any;
+
+                // payloadからactivityIdを取得（activity.idまたはactivityIdを確認）
+                const activityId =
+                  activityLogPayload.activityId ||
+                  activityLogPayload.activity?.id;
+                if (!activityId) {
+                  throw new UnexpectedError(
+                    "ActivityLogのactivityIdが指定されていません",
+                  );
+                }
+
+                // 依存関係チェック：Activityが存在するか確認
+                const activityExists = await activityRepository
+                  .withTx(tx)
+                  .getActivityByIdAndUserId(
+                    activityLogPayload.userId,
+                    activityId,
+                  );
+                if (!activityExists) {
+                  throw new UnexpectedError("関連するActivityが存在しません");
+                }
+
+                // activityオブジェクトを作成
+                const activityLog = {
+                  ...activityLogPayload,
+                  activity: activityExists,
+                } as ActivityLog;
+
+                // 冪等性の保証：既存チェック
+                const existing = await activityLogRepository
+                  .withTx(tx)
+                  .getActivityLogByIdAndUserId(
+                    activityLog.userId,
+                    activityLog.id,
+                  );
+
+                if (item.operation === "create") {
+                  if (existing) {
+                    // 既に存在する場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message = "既に存在するため、作成をスキップしました";
+                    result.serverId = existing.id;
+                  } else {
+                    const created = await activityLogRepository
+                      .withTx(tx)
+                      .createActivityLog(activityLog);
+                    result.serverId = created.id;
+                  }
+                } else if (item.operation === "update") {
+                  if (!existing) {
+                    throw new UnexpectedError(
+                      "更新対象のActivityLogが存在しません",
+                    );
+                  }
+                  if (detectConflict()(activityLog, existing)) {
+                    const resolved = conflictResolver.resolve(
+                      activityLog,
+                      existing,
+                      strategy,
+                    );
+                    await activityLogRepository
+                      .withTx(tx)
+                      .updateActivityLog(resolved);
+                    result.status = "conflict";
+                    result.conflictData = existing;
+                  } else {
+                    await activityLogRepository
+                      .withTx(tx)
+                      .updateActivityLog(activityLog);
+                  }
+                } else if (item.operation === "delete") {
+                  if (existing) {
+                    await activityLogRepository
+                      .withTx(tx)
+                      .deleteActivityLog(activityLog);
+                  } else {
+                    // 既に削除されている場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message =
+                      "既に削除されているため、削除をスキップしました";
+                  }
+                }
+                break;
+              }
+              case "goal": {
+                const goal = item.payload as ActivityGoal;
+
+                // 冪等性の保証：既存チェック
+                const existing = await activityGoalRepository
+                  .withTx(tx)
+                  .getActivityGoalByIdAndUserId(goal.id, goal.userId);
+
+                if (item.operation === "create") {
+                  if (existing) {
+                    // 既に存在する場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message = "既に存在するため、作成をスキップしました";
+                    result.serverId = existing.id;
+                  } else {
+                    const created = await activityGoalRepository
+                      .withTx(tx)
+                      .createActivityGoal(goal);
+                    result.serverId = created.id;
+                  }
+                } else if (item.operation === "update") {
+                  if (!existing) {
+                    throw new UnexpectedError("更新対象のGoalが存在しません");
+                  }
+                  if (detectConflict()(goal, existing)) {
+                    const resolved = conflictResolver.resolve(
+                      goal,
+                      existing,
+                      strategy,
+                    );
+                    await activityGoalRepository
+                      .withTx(tx)
+                      .updateActivityGoal(resolved);
+                    result.status = "conflict";
+                    result.conflictData = existing;
+                  } else {
+                    await activityGoalRepository
+                      .withTx(tx)
+                      .updateActivityGoal(goal);
+                  }
+                } else if (item.operation === "delete") {
+                  if (existing) {
+                    await activityGoalRepository
+                      .withTx(tx)
+                      .deleteActivityGoal(goal);
+                  } else {
+                    // 既に削除されている場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message =
+                      "既に削除されているため、削除をスキップしました";
+                  }
+                }
+                break;
+              }
+              case "task": {
+                const task = item.payload as Task;
+
+                // 冪等性の保証：既存チェック
+                const existing = await taskRepository
+                  .withTx(tx)
+                  .getTaskByUserIdAndTaskId(task.userId, task.id);
+
+                if (item.operation === "create") {
+                  if (existing) {
+                    // 既に存在する場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message = "既に存在するため、作成をスキップしました";
+                    result.serverId = existing.id;
+                  } else {
+                    const created = await taskRepository
+                      .withTx(tx)
+                      .createTask(task);
+                    result.serverId = created.id;
+                  }
+                } else if (item.operation === "update") {
+                  if (!existing) {
+                    throw new UnexpectedError("更新対象のTaskが存在しません");
+                  }
+                  if (detectConflict()(task, existing)) {
+                    const resolved = conflictResolver.resolve(
+                      task,
+                      existing,
+                      strategy,
+                    );
+                    await taskRepository.withTx(tx).updateTask(resolved);
+                    result.status = "conflict";
+                    result.conflictData = existing;
+                  } else {
+                    await taskRepository.withTx(tx).updateTask(task);
+                  }
+                } else if (item.operation === "delete") {
+                  if (existing) {
+                    await taskRepository.withTx(tx).deleteTask(task);
+                  } else {
+                    // 既に削除されている場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message =
+                      "既に削除されているため、削除をスキップしました";
+                  }
+                }
+                break;
+              }
+              default:
+                throw new UnexpectedError(
+                  `不明なエンティティタイプです: ${item.entityType}`,
+                );
+            }
+
+            results.push(result);
+          } catch (error) {
+            results.push({
+              clientId: item.clientId,
+              status: "error",
+              error: error instanceof Error ? error.message : "同期エラー",
+            });
+          }
+        }
+      });
+    }
+
+    return results;
+  };
+}
+
+// 型ガード関数
+function hasUpdatedAt(
+  entity: any,
+): entity is { updatedAt: Date; [key: string]: any } {
+  return entity && entity.type === "persisted" && "updatedAt" in entity;
+}
+
+function detectConflict() {
+  return (clientData: any, serverData: any): boolean => {
+    // persistedタイプでない場合は競合なし
+    if (!hasUpdatedAt(clientData) || !hasUpdatedAt(serverData)) {
+      return false;
+    }
+
+    // バージョン番号による競合検出
+    if (clientData.version !== undefined && serverData.version !== undefined) {
+      return clientData.version < serverData.version;
+    }
+
+    // タイムスタンプによる競合検出
+    const clientTime = new Date(clientData.updatedAt).getTime();
+    const serverTime = new Date(serverData.updatedAt).getTime();
+    return clientTime < serverTime;
+  };
+}
+
+function createConflictResolver(): ConflictResolver {
+  return {
+    resolve(
+      clientData: any,
+      serverData: any,
+      strategy: ConflictResolutionStrategy,
+    ): any {
+      switch (strategy) {
+        case "client-wins":
+          return clientData;
+        case "server-wins":
+          return serverData;
+        case "timestamp": {
+          // 型ガードを使用して安全にアクセス
+          const clientTime = hasUpdatedAt(clientData)
+            ? new Date(clientData.updatedAt).getTime()
+            : 0;
+          const serverTime = hasUpdatedAt(serverData)
+            ? new Date(serverData.updatedAt).getTime()
+            : 0;
+          return clientTime >= serverTime ? clientData : serverData;
+        }
+        default:
+          throw new UnexpectedError(`不明な競合解決戦略です: ${strategy}`);
+      }
+    },
+  };
+}

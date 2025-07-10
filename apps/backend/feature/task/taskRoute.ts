@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { createTaskId } from "@backend/domain";
+import { syncMiddleware } from "@backend/middleware/syncMiddleware";
 import { zValidator } from "@hono/zod-validator";
 
 import {
@@ -8,6 +9,8 @@ import {
   updateTaskRequestSchema,
 } from "@dtos/request";
 import { getTasksRequestSchema } from "@dtos/request/GetTasksRequest";
+
+import { newSyncRepository } from "../sync/syncRepository";
 
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";
@@ -32,6 +35,18 @@ export function createTaskRoute() {
     const h = newTaskHandler(uc);
 
     c.set("h", h);
+
+    // 同期ミドルウェアを適用
+    if (c.env.NODE_ENV !== "test") {
+      const syncRepo = newSyncRepository(db);
+      return syncMiddleware<
+        AppContext & {
+          Variables: {
+            h: ReturnType<typeof newTaskHandler>;
+          };
+        }
+      >(syncRepo)(c, next);
+    }
 
     return next();
   });

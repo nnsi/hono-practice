@@ -175,7 +175,7 @@ export const ActivityStatsPage: React.FC = () => {
                     {stat.kinds.map((kind) => (
                       <div
                         key={kind.id || kind.name}
-                        className="bg-white rounded-lg p-3 border shadow-sm"
+                        className="bg-white rounded-lg p-4 border shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 cursor-pointer"
                       >
                         <div className="text-sm text-gray-600 mb-1">
                           {kind.name}

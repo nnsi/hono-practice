@@ -1,21 +1,28 @@
 import { AppError } from "@backend/error";
 
 import type {
+  BatchSyncRequest,
   CheckDuplicatesRequest,
   EnqueueSyncRequest,
   ProcessSyncRequest,
+  PullSyncRequest,
 } from "@dtos/request";
 import {
+  type BatchSyncResponse,
+  BatchSyncResponseSchema,
   type CheckDuplicatesResponse,
   CheckDuplicatesResponseSchema,
   type EnqueueSyncResponse,
   EnqueueSyncResponseSchema,
   type ProcessSyncResponse,
   ProcessSyncResponseSchema,
+  type PullSyncResponse,
+  PullSyncResponseSchema,
   type SyncStatusResponse,
   SyncStatusResponseSchema,
 } from "@dtos/response";
 
+import type { ConflictResolutionStrategy } from "./syncService";
 import type { SyncUsecase } from "./syncUsecase";
 
 // Handler type definition
@@ -33,6 +40,29 @@ export type SyncHandler = {
     userId: string,
     params: ProcessSyncRequest,
   ): Promise<ProcessSyncResponse>;
+  batchSync(
+    userId: string,
+    params: BatchSyncRequest,
+    strategy?: ConflictResolutionStrategy,
+  ): Promise<BatchSyncResponse>;
+  getSyncQueue(
+    userId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<{
+    items: Array<{
+      id: string;
+      entityType: string;
+      entityId: string;
+      operation: string;
+      timestamp: string;
+      sequenceNumber: number;
+    }>;
+    total: number;
+    hasMore: boolean;
+  }>;
+  deleteSyncQueueItem(userId: string, queueId: string): Promise<void>;
+  pullSync(userId: string, params: PullSyncRequest): Promise<PullSyncResponse>;
 };
 
 export function newSyncHandler(uc: SyncUsecase): SyncHandler {
@@ -41,6 +71,10 @@ export function newSyncHandler(uc: SyncUsecase): SyncHandler {
     getSyncStatus: getSyncStatus(uc),
     enqueueSync: enqueueSync(uc),
     processSync: processSync(uc),
+    batchSync: batchSync(uc),
+    getSyncQueue: getSyncQueue(uc),
+    deleteSyncQueueItem: deleteSyncQueueItem(uc),
+    pullSync: pullSync(uc),
   };
 }
 
@@ -136,6 +170,61 @@ function processSync(uc: SyncUsecase) {
     const parsedResponse = ProcessSyncResponseSchema.safeParse(result);
     if (!parsedResponse.success) {
       throw new AppError("failed to parse process sync response", 500);
+    }
+
+    return parsedResponse.data;
+  };
+}
+
+function batchSync(uc: SyncUsecase) {
+  return async (
+    userId: string,
+    params: BatchSyncRequest,
+    strategy?: ConflictResolutionStrategy,
+  ) => {
+    const response = await uc.batchSync(userId, params, strategy);
+
+    const parsedResponse = BatchSyncResponseSchema.safeParse(response);
+    if (!parsedResponse.success) {
+      throw new AppError("failed to parse batch sync response", 500);
+    }
+
+    return parsedResponse.data;
+  };
+}
+
+function getSyncQueue(uc: SyncUsecase) {
+  return async (userId: string, limit?: number, offset?: number) => {
+    const result = await uc.getSyncQueueItems(userId, limit, offset);
+
+    return {
+      items: result.items.map((item) => ({
+        id: item.id,
+        entityType: item.entityType,
+        entityId: item.entityId,
+        operation: item.operation,
+        timestamp: item.timestamp.toISOString(),
+        sequenceNumber: item.sequenceNumber,
+      })),
+      total: result.total,
+      hasMore: result.hasMore,
+    };
+  };
+}
+
+function deleteSyncQueueItem(uc: SyncUsecase) {
+  return async (userId: string, queueId: string) => {
+    await uc.deleteSyncQueueItem(userId, queueId);
+  };
+}
+
+function pullSync(uc: SyncUsecase) {
+  return async (userId: string, params: PullSyncRequest) => {
+    const response = await uc.pullSync(userId, params);
+
+    const parsedResponse = PullSyncResponseSchema.safeParse(response);
+    if (!parsedResponse.success) {
+      throw new AppError("failed to parse pull sync response", 500);
     }
 
     return parsedResponse.data;

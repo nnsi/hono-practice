@@ -8,6 +8,8 @@ import type { GetActivityResponse } from "@dtos/response";
 
 import {
   Button,
+  Card,
+  CardContent,
   Form,
   FormControl,
   FormField,
@@ -77,16 +79,17 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
 
   if (!isCreating) {
     return (
-      <button
-        type="button"
+      <Card
         onClick={() => setIsCreating(true)}
-        className="w-full h-20 rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 group flex items-center justify-center gap-2"
+        className="w-full h-20 cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group"
       >
-        <PlusIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-        <span className="text-sm text-gray-500 group-hover:text-gray-700">
-          新規目標を追加
-        </span>
-      </button>
+        <CardContent className="flex items-center justify-center gap-2 p-0 h-full">
+          <PlusIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+          <span className="text-sm text-gray-500 group-hover:text-gray-700">
+            新規目標を追加
+          </span>
+        </CardContent>
+      </Card>
     );
   }
 

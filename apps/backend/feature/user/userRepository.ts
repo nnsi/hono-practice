@@ -1,4 +1,5 @@
 import { type User, type UserId, createUserEntity } from "@backend/domain";
+import { ConflictError } from "@backend/error";
 import { users } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -24,19 +25,30 @@ export function newUserRepository(
 
 function createUser(db: QueryExecutor) {
   return async (user: User) => {
-    const [result] = await db
-      .insert(users)
-      .values({
-        id: user.id as string,
-        loginId: user.loginId ?? "",
-        name: user.name ?? "",
-        password: user.password,
-      })
-      .returning();
+    try {
+      const [result] = await db
+        .insert(users)
+        .values({
+          id: user.id as string,
+          loginId: user.loginId ?? "",
+          name: user.name ?? "",
+          password: user.password,
+        })
+        .returning();
 
-    const persistedUser = createUserEntity({ ...result, type: "persisted" });
+      const persistedUser = createUserEntity({ ...result, type: "persisted" });
 
-    return persistedUser;
+      return persistedUser;
+    } catch (error: any) {
+      // PostgreSQLの一意制約違反エラーをチェック
+      if (
+        error.code === "23505" &&
+        error.constraint === "user_login_id_unique"
+      ) {
+        throw new ConflictError("このログインIDは既に使用されています");
+      }
+      throw error;
+    }
   };
 }
 

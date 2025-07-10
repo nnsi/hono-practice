@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { syncMiddleware } from "@backend/middleware/syncMiddleware";
 import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
 
@@ -11,6 +12,7 @@ import {
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
+import { newSyncRepository } from "../sync/syncRepository";
 
 import { newGoalHandler } from "./goalHandler";
 import { newGoalUsecase } from "./goalUsecase";
@@ -44,6 +46,12 @@ export function createGoalRoute() {
 
     c.set("h", h);
     c.set("goalQueryService", goalQueryService);
+
+    // 同期ミドルウェアを適用
+    if (c.env.NODE_ENV !== "test") {
+      const syncRepo = newSyncRepository(db);
+      return syncMiddleware(syncRepo)(c as any, next);
+    }
 
     return next();
   });

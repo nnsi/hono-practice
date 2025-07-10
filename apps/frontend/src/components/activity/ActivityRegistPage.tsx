@@ -107,7 +107,7 @@ export const ActivityRegistPage: React.FC = () => {
     <>
       <ActivityDateHeader date={date} setDate={setDate} />
       <hr className="my-6" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 items-center justify-center">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {activities.map((activity: GetActivityResponse) => {
           const hasActivityLogs = activityLogs.some(
             (log: GetActivityLogsResponse[number]) =>
@@ -130,9 +130,12 @@ export const ActivityRegistPage: React.FC = () => {
             </ActivityCard>
           );
         })}
-        <ActivityCard onClick={handleNewActivityClick}>
+        <ActivityCard onClick={handleNewActivityClick} isDashed>
           <div className="text-5xl mb-2">
-            <PlusIcon className="w-16 h-16" />
+            <PlusIcon className="w-16 h-16 text-gray-400 group-hover:text-gray-600" />
+          </div>
+          <div className="text-sm text-gray-500 group-hover:text-gray-700 font-medium">
+            新規追加
           </div>
         </ActivityCard>
       </div>
@@ -176,6 +179,7 @@ function ActivityCard({
   onPointerUp,
   onPointerLeave,
   isDone,
+  isDashed,
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -183,18 +187,23 @@ function ActivityCard({
   onPointerUp?: () => void;
   onPointerLeave?: () => void;
   isDone?: boolean;
+  isDashed?: boolean;
 }) {
   return (
     <Card
-      className={`flex items-center justify-center py-6 shadow-md rounded-3xl cursor-pointer hover:bg-gray-100 select-none ${
-        isDone ? "bg-lime-100" : ""
+      className={`flex items-center justify-center h-full min-h-[140px] shadow-sm rounded-lg cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all duration-200 select-none group ${
+        isDone ? "bg-green-50" : ""
+      } ${
+        isDashed
+          ? "border-2 border-dashed border-gray-300 bg-white hover:border-gray-400"
+          : ""
       }`}
       onClick={onClick}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
     >
-      <CardContent className="flex flex-col items-center justify-center py-0">
+      <CardContent className="flex flex-col items-center justify-center p-6">
         {children}
       </CardContent>
     </Card>

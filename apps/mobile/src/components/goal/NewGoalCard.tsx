@@ -206,7 +206,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                       field.onChange(value);
                     }}
                     keyboardType="numeric"
-                    className="h-8 px-2 bg-white rounded border border-gray-300 text-center text-sm"
+                    className="h-9 px-3 py-1 bg-white rounded-md border border-gray-300 text-center text-base"
                   />
                 )}
               />
