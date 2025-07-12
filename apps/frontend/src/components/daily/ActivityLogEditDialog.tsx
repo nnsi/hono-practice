@@ -5,7 +5,7 @@ import {
   useUpdateActivityLog,
 } from "@frontend/hooks/useSyncedActivityLog";
 import { apiClient } from "@frontend/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import {
@@ -40,7 +40,6 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
   onOpenChange,
   log,
 }) => {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [memo, setMemo] = useState("");
   const [quantity, setQuantity] = useState<number | null>(null);
@@ -100,14 +99,14 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
       memo,
       quantity: quantity ?? undefined,
       activityKindId: activityKindId || undefined,
+      date: dayjs(log.date).format("YYYY-MM-DD"),
+      activityKindInfo: activityKindId
+        ? activity?.kinds?.find((k) => k.id === activityKindId) ||
+          log.activityKind ||
+          undefined
+        : undefined,
     });
 
-    queryClient.invalidateQueries({
-      queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["activity-logs-monthly", dayjs(log.date).format("YYYY-MM")],
-    });
     toast({ title: "保存しました", variant: "default" });
     onOpenChange(false);
   };
@@ -118,15 +117,9 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
 
     await deleteActivityLog.mutateAsync({
       id: log.id,
-      date: dayjs(log.date).format("YYYY-MM-DD"), // 日付を追加
+      date: dayjs(log.date).format("YYYY-MM-DD"),
     });
 
-    queryClient.invalidateQueries({
-      queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["activity-logs-monthly", dayjs(log.date).format("YYYY-MM")],
-    });
     toast({ title: "削除しました", variant: "default" });
     onOpenChange(false);
   };

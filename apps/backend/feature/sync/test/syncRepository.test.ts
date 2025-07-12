@@ -1,4 +1,3 @@
-import { createSyncMetadataId, createSyncQueueId } from "@backend/domain/sync";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newSyncRepository } from "../syncRepository";
