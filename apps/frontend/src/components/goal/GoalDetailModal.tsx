@@ -91,6 +91,12 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
   });
 
   const goal = goalData;
+
+  // 過去目標（終了日が現在より前）の判定
+  const isPastGoal = useMemo(() => {
+    if (!goal || !goal.endDate) return false;
+    return new Date(goal.endDate) < new Date();
+  }, [goal]);
   const activity = activitiesData?.find((a) => a.id === goal?.activityId);
   const activityName = activity?.name || "不明なアクティビティ";
   const activityEmoji = activity?.emoji || "🎯";
@@ -153,7 +159,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
 
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span>現在の活動量</span>
+              <span>{isPastGoal ? "活動量" : "現在の活動量"}</span>
               <span className="font-medium">
                 {stats.currentProgress}/{stats.targetProgress}
                 {quantityUnit}

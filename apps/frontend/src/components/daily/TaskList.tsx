@@ -1,8 +1,11 @@
 import type React from "react";
 import { useState } from "react";
 
-import { apiClient } from "@frontend/utils";
-import { mp } from "@frontend/utils/mutationParams";
+import {
+  useCreateTask,
+  useDeleteTask,
+  useUpdateTask,
+} from "@frontend/hooks/useSyncedTask";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircledIcon,
@@ -11,7 +14,6 @@ import {
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
@@ -35,56 +37,26 @@ export const TaskList: React.FC<TaskListProps> = ({
   date,
 }) => {
   const [addFormOpen, setAddFormOpen] = useState(false);
-  const queryClient = useQueryClient();
   const dateStr = dayjs(date).format("YYYY-MM-DD");
 
-  const { mutate: mutateTaskDone } = useMutation({
-    ...mp({
-      queryKey: ["tasks", dateStr],
-      mutationFn: ({ id, done }: { id: string; done: boolean }) =>
-        apiClient.users.tasks[":id"].$put({
-          param: { id },
-          json: { doneDate: done ? dateStr : null },
-        }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  // タスク削除
-  const { mutate: mutateDeleteTask, isPending: isDeletingTask } = useMutation({
-    ...mp({
-      queryKey: ["tasks", dateStr],
-      mutationFn: (id: string) =>
-        apiClient.users.tasks[":id"].$delete({ param: { id } }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
+  // 同期対応のフックを使用
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const createTask = useCreateTask();
 
   // タスク追加
   const form = useForm<CreateTaskRequest>({
     resolver: zodResolver(createTaskRequestSchema),
     defaultValues: { title: "", startDate: dateStr },
   });
-  const { mutate: mutateAddTask, isPending: isAddingTask } = useMutation({
-    ...mp({
-      queryKey: ["tasks", dateStr],
-      mutationFn: (data: CreateTaskRequest) =>
-        apiClient.users.tasks.$post({ json: data }),
-      requestSchema: createTaskRequestSchema,
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      setAddFormOpen(false);
-      form.reset();
-    },
+  const handleAddTask = form.handleSubmit(async (data) => {
+    await createTask.mutateAsync({
+      title: data.title,
+      startDate: dateStr,
+    });
+    setAddFormOpen(false);
+    form.reset();
   });
-  const handleAddTask = form.handleSubmit((data) =>
-    mutateAddTask({ ...data, startDate: dateStr }),
-  );
 
   return (
     <>
@@ -102,7 +74,11 @@ export const TaskList: React.FC<TaskListProps> = ({
                     variant="ghost"
                     className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
                     onClick={() =>
-                      mutateTaskDone({ id: task.id, done: !task.doneDate })
+                      updateTask.mutate({
+                        id: task.id,
+                        doneDate: task.doneDate ? null : dateStr,
+                        date: dateStr,
+                      })
                     }
                   >
                     {task.doneDate ? (
@@ -125,9 +101,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                     className="ml-2 text-gray-400 hover:text-red-500 bg-transparent border-none p-0 m-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      mutateDeleteTask(task.id);
+                      deleteTask.mutate({ id: task.id, date: dateStr });
                     }}
-                    disabled={isDeletingTask}
+                    disabled={deleteTask.isPending}
                     aria-label="タスク削除"
                   >
                     <TrashIcon className="w-6 h-6" />
@@ -151,11 +127,11 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <Input
                   {...form.register("title")}
                   placeholder="新しいタスクのタイトル"
-                  disabled={isAddingTask}
+                  disabled={createTask.isPending}
                   className="flex-1"
                   autoFocus
                 />
-                <Button type="submit" disabled={isAddingTask}>
+                <Button type="submit" disabled={createTask.isPending}>
                   追加
                 </Button>
                 <Button
