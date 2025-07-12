@@ -1,8 +1,21 @@
+import { DomainValidateError } from "@backend/error";
+import { v7 } from "uuid";
 import { z } from "zod";
 
 // ID型の定義
-export const syncMetadataIdSchema = z.string().brand<"SyncMetadataId">();
+export const syncMetadataIdSchema = z.string().uuid().brand<"SyncMetadataId">();
 export type SyncMetadataId = z.infer<typeof syncMetadataIdSchema>;
+
+export function createSyncMetadataId(id?: string): SyncMetadataId {
+  const syncMetadataId = id ?? v7();
+
+  const parsedId = syncMetadataIdSchema.safeParse(syncMetadataId);
+  if (!parsedId.success) {
+    throw new DomainValidateError("createSyncMetadataId: Invalid id");
+  }
+
+  return parsedId.data;
+}
 
 // 同期状態の定義
 export const syncStatusSchema = z.enum([
@@ -31,7 +44,7 @@ export type SyncMetadataEntity = z.infer<typeof syncMetadataEntitySchema>;
 
 // ファクトリ関数
 export function createSyncMetadataEntity(params: {
-  id: string;
+  id: SyncMetadataId;
   userId: string;
   entityType: string;
   entityId: string;

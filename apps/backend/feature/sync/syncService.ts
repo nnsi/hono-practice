@@ -11,7 +11,9 @@ import type {
   Activity,
   ActivityGoal,
   ActivityLog,
+  ActivityLogId,
   Task,
+  UserId,
 } from "@backend/domain";
 import type { SyncQueueEntity } from "@backend/domain/sync/syncQueue";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
@@ -32,6 +34,7 @@ export type ConflictResolver = {
 export type SyncService = {
   syncEntity(item: SyncQueueEntity): Promise<void>;
   syncBatchItems(
+    userId: string,
     items: SyncItem[],
     strategy?: ConflictResolutionStrategy,
   ): Promise<SyncResult[]>;
@@ -209,6 +212,7 @@ function syncBatchItems(
   taskRepository: TaskRepository,
 ) {
   return async (
+    userId: string,
     items: SyncItem[],
     strategy: ConflictResolutionStrategy = "timestamp",
   ): Promise<SyncResult[]> => {
@@ -298,10 +302,34 @@ function syncBatchItems(
               case "activityLog": {
                 const activityLogPayload = item.payload as any;
 
-                // payloadからactivityIdを取得（activity.idまたはactivityIdを確認）
-                const activityId =
-                  activityLogPayload.activityId ||
-                  activityLogPayload.activity?.id;
+                // 削除操作の場合は最小限の情報でOK
+                if (item.operation === "delete") {
+                  // 削除対象の既存データを取得
+                  const existing = await activityLogRepository
+                    .withTx(tx)
+                    .getActivityLogByIdAndUserId(
+                      userId as UserId,
+                      item.entityId as ActivityLogId,
+                    );
+
+                  if (existing) {
+                    await activityLogRepository
+                      .withTx(tx)
+                      .deleteActivityLog(existing);
+                    result.serverId = existing.id;
+                  } else {
+                    // 既に削除されている場合はスキップ（冪等性）
+                    result.status = "skipped";
+                    result.message =
+                      "既に削除されているため、削除をスキップしました";
+                  }
+                  break;
+                }
+
+                // CREATE/UPDATE操作の場合
+                // payloadから必要な情報を取得
+                const activityId = activityLogPayload.activityId;
+
                 if (!activityId) {
                   throw new UnexpectedError(
                     "ActivityLogのactivityIdが指定されていません",
@@ -311,19 +339,27 @@ function syncBatchItems(
                 // 依存関係チェック：Activityが存在するか確認
                 const activityExists = await activityRepository
                   .withTx(tx)
-                  .getActivityByIdAndUserId(
-                    activityLogPayload.userId,
-                    activityId,
-                  );
+                  .getActivityByIdAndUserId(userId as UserId, activityId);
+
                 if (!activityExists) {
                   throw new UnexpectedError("関連するActivityが存在しません");
                 }
 
-                // activityオブジェクトを作成
-                const activityLog = {
-                  ...activityLogPayload,
+                // activityLogオブジェクトを作成
+                const activityLog: ActivityLog = {
+                  id: item.entityId as ActivityLogId,
+                  userId: userId as UserId,
+                  date: activityLogPayload.date,
+                  quantity: activityLogPayload.quantity,
+                  memo: activityLogPayload.memo || "",
                   activity: activityExists,
-                } as ActivityLog;
+                  activityKind: activityLogPayload.activityKindId
+                    ? activityExists.kinds?.find(
+                        (k) => k.id === activityLogPayload.activityKindId,
+                      ) || null
+                    : null,
+                  type: "new",
+                };
 
                 // 冪等性の保証：既存チェック
                 const existing = await activityLogRepository
@@ -366,17 +402,6 @@ function syncBatchItems(
                     await activityLogRepository
                       .withTx(tx)
                       .updateActivityLog(activityLog);
-                  }
-                } else if (item.operation === "delete") {
-                  if (existing) {
-                    await activityLogRepository
-                      .withTx(tx)
-                      .deleteActivityLog(activityLog);
-                  } else {
-                    // 既に削除されている場合はスキップ（冪等性）
-                    result.status = "skipped";
-                    result.message =
-                      "既に削除されているため、削除をスキップしました";
                   }
                 }
                 break;

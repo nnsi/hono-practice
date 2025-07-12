@@ -1,4 +1,4 @@
-import { newSubscription, newSubscriptionId } from "@backend/domain";
+import { createSubscriptionId, newSubscription } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 
 import type { SubscriptionRepository } from "./subscriptionRepository";
@@ -61,7 +61,7 @@ function canUserAccessApiKey(subscriptionRepo: SubscriptionRepository) {
 
 function createDefaultSubscription(userId: UserId): Subscription {
   return newSubscription({
-    id: newSubscriptionId("00000000-0000-4000-8000-000000000000"),
+    id: createSubscriptionId(),
     userId,
     plan: "free",
     status: "active",

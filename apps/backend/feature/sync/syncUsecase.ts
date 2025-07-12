@@ -340,7 +340,11 @@ function batchSync(syncRepository: SyncRepository, syncService?: SyncService) {
 
     try {
       // 同期結果を取得
-      const results = await syncService.syncBatchItems(request.items, strategy);
+      const results = await syncService.syncBatchItems(
+        userId,
+        request.items,
+        strategy,
+      );
 
       // サーバー側の変更を取得（最後の同期以降の変更）
       const serverChanges = request.lastSyncTimestamp
@@ -468,8 +472,9 @@ function pullSync(
         entityType: "activity" | "activityLog" | "task" | "goal";
         entityId: string;
         operation: "create" | "update" | "delete";
-        data?: Record<string, any>;
-        updatedAt: string;
+        payload: Record<string, unknown>;
+        timestamp: string;
+        version: number;
       }> = [];
 
       let hasMore = false;
@@ -488,11 +493,12 @@ function pullSync(
             entityType: "activity",
             entityId: activity.id,
             operation: activity.type === "new" ? "create" : "update",
-            data: activity,
-            updatedAt:
+            payload: activity as unknown as Record<string, unknown>,
+            timestamp:
               activity.type === "persisted"
                 ? activity.updatedAt.toISOString()
                 : new Date().toISOString(),
+            version: 1, // TODO: エンティティにバージョンフィールドを追加後、実装
           });
         }
 
@@ -512,11 +518,12 @@ function pullSync(
             entityType: "activityLog",
             entityId: log.id,
             operation: log.type === "new" ? "create" : "update",
-            data: log,
-            updatedAt:
+            payload: log as unknown as Record<string, unknown>,
+            timestamp:
               log.type === "persisted"
                 ? log.updatedAt.toISOString()
                 : new Date().toISOString(),
+            version: 1, // TODO: エンティティにバージョンフィールドを追加後、実装
           });
         }
 
@@ -536,11 +543,12 @@ function pullSync(
             entityType: "task",
             entityId: task.id,
             operation: task.type === "new" ? "create" : "update",
-            data: task,
-            updatedAt:
+            payload: task as unknown as Record<string, unknown>,
+            timestamp:
               task.type === "persisted"
                 ? task.updatedAt.toISOString()
                 : new Date().toISOString(),
+            version: 1, // TODO: エンティティにバージョンフィールドを追加後、実装
           });
         }
 
@@ -560,21 +568,22 @@ function pullSync(
             entityType: "goal",
             entityId: goal.id,
             operation: goal.type === "new" ? "create" : "update",
-            data: goal,
-            updatedAt:
+            payload: goal as unknown as Record<string, unknown>,
+            timestamp:
               goal.type === "persisted"
                 ? goal.updatedAt.toISOString()
                 : new Date().toISOString(),
+            version: 1, // TODO: エンティティにバージョンフィールドを追加後、実装
           });
         }
 
         hasMore = hasMore || goalHasMore;
       }
 
-      // updatedAtでソート
+      // timestampでソート
       changes.sort(
         (a, b) =>
-          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
 
       // 制限を超える場合は切り詰める
@@ -583,10 +592,9 @@ function pullSync(
 
       return {
         changes: limitedChanges,
-        syncTimestamp: new Date().toISOString(),
         hasMore,
-        nextCursor: hasMore
-          ? limitedChanges[limitedChanges.length - 1]?.updatedAt
+        nextTimestamp: hasMore
+          ? limitedChanges[limitedChanges.length - 1]?.timestamp
           : undefined,
       };
     } catch (error) {

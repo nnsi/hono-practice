@@ -1,6 +1,6 @@
 import type { ClientResponse } from "hono/client";
 
-import type { QueryFunction, QueryKey } from "@tanstack/react-query";
+import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
 import type { ZodSchema } from "zod";
 
 type queryPropsParamsFunc<T> = {
@@ -9,10 +9,11 @@ type queryPropsParamsFunc<T> = {
   schema: ZodSchema<T>;
 };
 
-export function qp<T>({ queryKey, queryFn, schema }: queryPropsParamsFunc<T>): {
-  queryKey: QueryKey;
-  queryFn: QueryFunction<T>;
-} {
+export function qp<T>({
+  queryKey,
+  queryFn,
+  schema,
+}: queryPropsParamsFunc<T>): UseQueryOptions<T> {
   return {
     queryKey,
     queryFn: async () => {
@@ -24,5 +25,6 @@ export function qp<T>({ queryKey, queryFn, schema }: queryPropsParamsFunc<T>): {
       }
       return parsedResult.data;
     },
+    // グローバル設定を使用するため、ここでは設定しない
   };
 }

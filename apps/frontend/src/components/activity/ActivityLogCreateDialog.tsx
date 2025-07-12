@@ -9,8 +9,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@frontend/components/ui";
+import { useCreateActivityLog } from "@frontend/hooks/useSyncedActivityLog";
 import { useTimer } from "@frontend/hooks/useTimer";
-import { apiClient } from "@frontend/utils";
 import {
   convertSecondsToUnit,
   generateTimeMemo,
@@ -18,7 +18,6 @@ import {
   isTimeUnit,
 } from "@frontend/utils/timeUtils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
 
@@ -27,10 +26,6 @@ import {
   CreateActivityLogRequestSchema,
 } from "@dtos/request/CreateActivityLogRequest";
 import type { GetActivityResponse } from "@dtos/response";
-import {
-  GetActivityLogResponseSchema,
-  type GetActivityLogsResponse,
-} from "@dtos/response/GetActivityLogsResponse";
 
 import {
   Button,
@@ -71,8 +66,8 @@ export function ActivityLogCreateDialog({
       activityKindId: undefined,
     },
   });
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const createActivityLogMutation = useCreateActivityLog();
 
   form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
 
@@ -120,6 +115,7 @@ export function ActivityLogCreateDialog({
   }, [open, isRunning, timerEnabled]);
 
   const onSubmit = async (data: CreateActivityLogRequest) => {
+    console.log("[ActivityLogCreateDialog] onSubmit called with data:", data);
     CreateActivityLogRequestSchema.parse(data);
     if (!date) {
       toast({
@@ -129,45 +125,59 @@ export function ActivityLogCreateDialog({
       });
       return;
     }
-    const res = await apiClient.users["activity-logs"].$post({
-      json: {
-        ...data,
+
+    try {
+      console.log(
+        "[ActivityLogCreateDialog] Calling createActivityLogMutation.mutateAsync",
+      );
+      await createActivityLogMutation.mutateAsync({
         activityId: activity.id,
-      },
-    });
-    if (res.status !== 200) {
-      return;
-    }
-    const json = await res.json();
-    const parsedJson = GetActivityLogResponseSchema.safeParse(json);
-    if (!parsedJson.success) {
+        date: data.date,
+        quantity: data.quantity,
+        activityKindId: data.activityKindId,
+        memo: data.memo,
+        activityInfo: {
+          name: activity.name,
+          quantityUnit: activity.quantityUnit,
+          emoji: activity.emoji || "",
+          kinds: activity.kinds,
+        },
+      });
+
+      console.log(
+        "[ActivityLogCreateDialog] mutateAsync completed successfully",
+      );
+      form.reset();
+
+      // キャッシュの更新はuseSyncedActivityLogのonSuccessで行われるため、ここでは不要
+      // オフライン時はカスタムイベントによってUIが更新される
+
       toast({
-        title: "Error",
-        description: "Failed to create activity log",
+        title: "登録完了",
+        description: "アクティビティを記録しました",
+        variant: "default",
+      });
+
+      // mutateAsyncが完了した後、少し待機してから画面を更新
+      // オフライン時のlocalStorage書き込みが完了するまでの時間を確保
+      setTimeout(() => {
+        // onSuccessを呼び出してActivityRegistPageにも通知
+        onSuccess?.();
+
+        // ダイアログを閉じる
+        onOpenChange(false);
+      }, 100);
+    } catch (error) {
+      console.error(
+        "[ActivityLogCreateDialog] アクティビティログの作成に失敗しました:",
+        error,
+      );
+      toast({
+        title: "エラー",
+        description: "アクティビティの記録に失敗しました",
         variant: "destructive",
       });
-      return;
     }
-    form.reset();
-    queryClient.setQueryData(
-      ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
-    queryClient.setQueryData(
-      ["activity-logs-monthly", dayjs(date).format("YYYY-MM")],
-      (prev: GetActivityLogsResponse) => {
-        return [...(prev ?? []), parsedJson.data];
-      },
-    );
-    toast({
-      title: "登録完了",
-      description: "アクティビティを記録しました",
-      variant: "default",
-    });
-    onSuccess?.();
-    onOpenChange(false);
   };
 
   // タイマーからの記録

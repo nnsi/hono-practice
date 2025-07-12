@@ -1,8 +1,8 @@
 import {
   type Subscription,
   type SubscriptionId,
+  createSubscriptionId,
   newSubscription,
-  newSubscriptionId,
 } from "@backend/domain/subscription";
 import { type UserId, createUserId } from "@backend/domain/user";
 import { userSubscriptions } from "@infra/drizzle/schema";
@@ -35,7 +35,7 @@ function create(db: QueryExecutor) {
     const [result] = await db
       .insert(userSubscriptions)
       .values({
-        id: subscription.id.value,
+        id: subscription.id,
         userId: subscription.userId,
         plan: subscription.plan,
         status: subscription.status,
@@ -62,7 +62,7 @@ function create(db: QueryExecutor) {
 function findById(db: QueryExecutor) {
   return async (id: SubscriptionId): Promise<Subscription | undefined> => {
     const result = await db.query.userSubscriptions.findFirst({
-      where: eq(userSubscriptions.id, id.value),
+      where: eq(userSubscriptions.id, id),
     });
 
     if (!result) {
@@ -109,7 +109,7 @@ function update(db: QueryExecutor) {
           : null,
         updatedAt: new Date(),
       })
-      .where(eq(userSubscriptions.id, subscription.id.value))
+      .where(eq(userSubscriptions.id, subscription.id))
       .returning();
 
     return mapToSubscription(result);
@@ -118,7 +118,7 @@ function update(db: QueryExecutor) {
 
 function mapToSubscription(row: any): Subscription {
   return newSubscription({
-    id: newSubscriptionId(row.id),
+    id: createSubscriptionId(row.id),
     userId: createUserId(row.userId),
     plan: row.plan,
     status: row.status,

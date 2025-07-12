@@ -1,3 +1,4 @@
+import { createApiKeyId } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -5,7 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { newApiKeyUsecase } from "../apiKeyUsecase";
 
 import type { ApiKeyRepository } from "../apiKeyRepository";
-import type { ApiKey, CreateApiKeyData } from "@backend/domain/apiKey";
+import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 
 describe("ApiKeyUsecase", () => {
   let repo: ApiKeyRepository;
@@ -21,7 +22,7 @@ describe("ApiKeyUsecase", () => {
   const apiKeyId = "00000000-0000-4000-8000-000000000001";
 
   const mockApiKey: ApiKey = {
-    id: apiKeyId,
+    id: createApiKeyId(apiKeyId),
     userId: userId,
     key: "test_key_1234567890abcdef",
     name: "Test API Key",
@@ -54,7 +55,7 @@ describe("ApiKeyUsecase", () => {
         mockApiKey,
         {
           ...mockApiKey,
-          id: "00000000-0000-4000-8000-000000000002",
+          id: createApiKeyId("00000000-0000-4000-8000-000000000002"),
           key: "another_key",
         },
       ];
