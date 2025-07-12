@@ -1,7 +1,9 @@
 // Cloudflare Workers環境では Web Crypto API を使用
 
+import type { ApiKeyId } from "./apiKeyId";
+
 export type ApiKey = {
-  id: string;
+  id: ApiKeyId;
   userId: string;
   key: string;
   name: string;

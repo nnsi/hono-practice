@@ -1,8 +1,8 @@
 import type { Next } from "hono";
 
 import {
+  createSubscriptionId,
   newSubscription,
-  newSubscriptionId,
 } from "@backend/domain/subscription";
 
 import type { HonoContext } from "@backend/context";
@@ -17,7 +17,7 @@ export async function mockPremiumMiddleware(c: HonoContext, next: Next) {
 
   // モックのプレミアムサブスクリプションを作成
   const mockSubscription = newSubscription({
-    id: newSubscriptionId("test-subscription-id"),
+    id: createSubscriptionId(),
     userId: userId,
     plan: "premium",
     status: "active",

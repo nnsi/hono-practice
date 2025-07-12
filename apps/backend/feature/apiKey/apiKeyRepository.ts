@@ -1,16 +1,19 @@
-import { hashApiKey } from "@backend/domain/apiKey";
+import { createApiKeyId, hashApiKey } from "@backend/domain";
 import { apiKeys } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 import type {
   ApiKey,
+  ApiKeyId,
   CreateApiKeyData,
   UpdateApiKeyData,
-} from "@backend/domain/apiKey";
+} from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ApiKeyRepository<T = any> = {
-  create: (data: CreateApiKeyData & { key: string }) => Promise<ApiKey>;
+  create: (
+    data: CreateApiKeyData & { id: ApiKeyId; key: string },
+  ) => Promise<ApiKey>;
   findByUserId: (userId: string) => Promise<ApiKey[]>;
   findByKey: (key: string) => Promise<ApiKey | null>;
   findById: (id: string, userId: string) => Promise<ApiKey | null>;
@@ -34,13 +37,16 @@ export function newApiKeyRepository(
 }
 
 function create(db: QueryExecutor) {
-  return async (data: CreateApiKeyData & { key: string }): Promise<ApiKey> => {
+  return async (
+    data: CreateApiKeyData & { id: ApiKeyId; key: string },
+  ): Promise<ApiKey> => {
     // APIキーをハッシュ化して保存
     const hashedKey = await hashApiKey(data.key);
 
     const [result] = await db
       .insert(apiKeys)
       .values({
+        id: data.id,
         userId: data.userId,
         key: hashedKey,
         name: data.name,
@@ -48,7 +54,7 @@ function create(db: QueryExecutor) {
       .returning();
 
     return {
-      id: result.id,
+      id: createApiKeyId(result.id),
       userId: result.userId,
       key: data.key, // 生成時は平文のキーを返す
       name: result.name,
@@ -69,7 +75,7 @@ function findByUserId(db: QueryExecutor) {
       .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.deletedAt)));
 
     return results.map((result) => ({
-      id: result.id,
+      id: createApiKeyId(result.id),
       userId: result.userId,
       key: result.key,
       name: result.name,
@@ -98,7 +104,7 @@ function findByKey(db: QueryExecutor) {
     }
 
     return {
-      id: result.id,
+      id: createApiKeyId(result.id),
       userId: result.userId,
       key: result.key, // ハッシュ化されたキーを返す（後でマスク処理される）
       name: result.name,
@@ -130,7 +136,7 @@ function findById(db: QueryExecutor) {
     }
 
     return {
-      id: result.id,
+      id: createApiKeyId(result.id),
       userId: result.userId,
       key: result.key, // ハッシュ化されたキー
       name: result.name,
@@ -156,7 +162,7 @@ function update(db: QueryExecutor) {
     }
 
     return {
-      id: result.id,
+      id: createApiKeyId(result.id),
       userId: result.userId,
       key: result.key,
       name: result.name,

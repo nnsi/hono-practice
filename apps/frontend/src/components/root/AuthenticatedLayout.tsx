@@ -1,3 +1,8 @@
+import {
+  NetworkDebugToggle,
+  OfflineBanner,
+  SyncStatusIndicator,
+} from "@frontend/components/sync";
 import { DateProvider } from "@frontend/providers/DateProvider";
 import {
   BarChartIcon,
@@ -13,7 +18,14 @@ import { Toaster } from "../ui";
 export const AuthenticatedLayout: React.FC = () => {
   return (
     <>
+      <OfflineBanner />
       <div className="h-svh w-full max-w-3xl mx-auto flex flex-col">
+        <header className="sticky top-0 bg-white border-b border-gray-200 z-40">
+          <div className="flex items-center justify-between p-4">
+            <h1 className="text-lg font-semibold">Actiko</h1>
+            <SyncStatusIndicator />
+          </div>
+        </header>
         <main className="flex-1 p-4 overflow-y-auto">
           <DateProvider>
             <Outlet />
@@ -79,6 +91,7 @@ export const AuthenticatedLayout: React.FC = () => {
         </footer>
       </div>
       <Toaster />
+      <NetworkDebugToggle />
     </>
   );
 };

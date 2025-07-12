@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { apiClient } from "@frontend/utils/apiClient";
+import {
+  useDeleteActivityLog,
+  useUpdateActivityLog,
+} from "@frontend/hooks/useSyncedActivityLog";
+import { apiClient } from "@frontend/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
-import type {
-  GetActivitiesResponse,
-  GetActivityLogResponse,
+import {
+  type GetActivitiesResponse,
+  GetActivitiesResponseSchema,
+  type GetActivityLogResponse,
 } from "@dtos/response";
 
 import {
@@ -41,14 +46,40 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
   const [quantity, setQuantity] = useState<number | null>(null);
   const [activityKindId, setActivityKindId] = useState<string>("");
 
+  // 同期対応のフック
+  const updateActivityLog = useUpdateActivityLog();
+  const deleteActivityLog = useDeleteActivityLog();
+
   // activities一覧取得
   const { data: activities } = useQuery<GetActivitiesResponse>({
     queryKey: ["activity"],
+    queryFn: async () => {
+      const res = await apiClient.users.activities.$get();
+      const json = await res.json();
+      const parsedResult = GetActivitiesResponseSchema.safeParse(json);
+      if (!parsedResult.success) {
+        throw parsedResult.error;
+      }
+      return parsedResult.data;
+    },
     enabled: open,
+    networkMode: "online", // オフライン時はキャッシュデータを使用
+    staleTime: 1000 * 60 * 5, // 5分間はキャッシュを有効とする
   });
 
   // 編集対象のactivity情報
-  const activity = activities?.find((a) => a.id === log?.activity.id);
+  // オフライン時はlogに含まれるactivity情報を使用
+  const activity =
+    activities?.find((a) => a.id === log?.activity.id) ||
+    (log
+      ? {
+          id: log.activity.id,
+          name: log.activity.name,
+          quantityUnit: log.activity.quantityUnit,
+          emoji: log.activity.emoji,
+          kinds: log.activityKind ? [log.activityKind] : [],
+        }
+      : undefined);
 
   // log変更時に初期値をセット
   useEffect(() => {
@@ -63,59 +94,41 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!log) return;
-    try {
-      await apiClient.users["activity-logs"][":id"].$put({
-        param: { id: log.id },
-        json: {
-          memo,
-          quantity: quantity ?? undefined,
-          activityKindId: activityKindId || undefined,
-        },
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
-      });
-      toast({ title: "保存しました", variant: "default" });
-      onOpenChange(false);
-    } catch (e) {
-      toast({
-        title: "エラー",
-        description: "保存に失敗しました",
-        variant: "destructive",
-      });
-    }
+
+    await updateActivityLog.mutateAsync({
+      id: log.id,
+      memo,
+      quantity: quantity ?? undefined,
+      activityKindId: activityKindId || undefined,
+    });
+
+    queryClient.invalidateQueries({
+      queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["activity-logs-monthly", dayjs(log.date).format("YYYY-MM")],
+    });
+    toast({ title: "保存しました", variant: "default" });
+    onOpenChange(false);
   };
 
   // 削除処理
   const handleDelete = async () => {
     if (!log) return;
-    try {
-      const res = await apiClient.users["activity-logs"][":id"].$delete({
-        param: { id: log.id },
-      });
-      if (res.status !== 200) {
-        toast({
-          title: "エラー",
-          description: "削除に失敗しました",
-          variant: "destructive",
-        });
-        return;
-      }
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-monthly", dayjs(log.date).format("YYYY-MM")],
-      });
-      toast({ title: "削除しました", variant: "default" });
-      onOpenChange(false);
-    } catch (e) {
-      toast({
-        title: "エラー",
-        description: "削除に失敗しました",
-        variant: "destructive",
-      });
-    }
+
+    await deleteActivityLog.mutateAsync({
+      id: log.id,
+      date: dayjs(log.date).format("YYYY-MM-DD"), // 日付を追加
+    });
+
+    queryClient.invalidateQueries({
+      queryKey: ["activity-logs-daily", dayjs(log.date).format("YYYY-MM-DD")],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["activity-logs-monthly", dayjs(log.date).format("YYYY-MM")],
+    });
+    toast({ title: "削除しました", variant: "default" });
+    onOpenChange(false);
   };
 
   if (!log) return null;
@@ -143,8 +156,13 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
               />
               <span>{activity?.quantityUnit ?? log.activity.quantityUnit}</span>
             </div>
-            <Button type="button" variant="destructive" onClick={handleDelete}>
-              削除
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteActivityLog.isPending}
+            >
+              {deleteActivityLog.isPending ? "削除中..." : "削除"}
             </Button>
           </div>
           {activity?.kinds && activity.kinds.length > 0 && (
@@ -176,7 +194,9 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             autoComplete="off"
           />
           <DialogFooter className="flex-shrink-0">
-            <Button type="submit">保存</Button>
+            <Button type="submit" disabled={updateActivityLog.isPending}>
+              {updateActivityLog.isPending ? "保存中..." : "保存"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

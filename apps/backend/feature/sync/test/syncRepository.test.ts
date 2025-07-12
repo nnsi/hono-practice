@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createSyncQueueId, createSyncMetadataId } from "@backend/domain/sync";
 
 import { newSyncRepository } from "../syncRepository";
 
@@ -47,7 +48,7 @@ describe("SyncRepository", () => {
     it("重複チェック結果を返す", async () => {
       const mockExistingOps = [
         {
-          id: "queue-1",
+          id: "00000000-0000-4000-8000-000000000201",
           userId: "user-123",
           entityType: "activity",
           entityId: "activity-1",
@@ -134,7 +135,7 @@ describe("SyncRepository", () => {
   describe("dequeueSyncBatch", () => {
     it("バッチサイズに応じてキューアイテムを取得する", async () => {
       const mockQueueItems = Array.from({ length: 51 }, (_, i) => ({
-        id: `queue-${i}`,
+        id: `00000000-0000-4000-8000-${(i + 300).toString().padStart(12, "0")}`,
         userId: "user-123",
         entityType: "activity",
         entityId: `activity-${i}`,
@@ -163,7 +164,10 @@ describe("SyncRepository", () => {
 
   describe("markAsSynced", () => {
     it("同期完了のマーキングを行う", async () => {
-      const queueIds = ["queue-1", "queue-2"];
+      const queueIds = [
+        "00000000-0000-4000-8000-000000000501",
+        "00000000-0000-4000-8000-000000000502",
+      ];
 
       // モックの設定
       vi.mocked(mockQueryExecutor.select).mockImplementation(
@@ -186,7 +190,7 @@ describe("SyncRepository", () => {
   describe("getMetadataByEntity", () => {
     it("エンティティに対応するメタデータを取得する", async () => {
       const mockMetadata = {
-        id: "metadata-1",
+        id: "00000000-0000-4000-8000-000000000601",
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-1",

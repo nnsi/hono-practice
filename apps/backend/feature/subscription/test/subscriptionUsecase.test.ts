@@ -1,8 +1,8 @@
 import {
   type Subscription,
+  createSubscriptionId,
   createUserId,
   newSubscription,
-  newSubscriptionId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 import { instance, mock, reset, verify, when } from "ts-mockito";
@@ -23,7 +23,7 @@ describe("SubscriptionUsecase", () => {
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
-  const subscriptionId1 = newSubscriptionId(
+  const subscriptionId1 = createSubscriptionId(
     "00000000-0000-4000-8000-000000000001",
   );
 
