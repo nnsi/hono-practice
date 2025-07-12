@@ -5,3 +5,5 @@ export * from "./user";
 export * from "./auth";
 export * from "./activitygoal";
 export * from "./subscription";
+export * from "./apiKey";
+export * from "./apiKeyId";

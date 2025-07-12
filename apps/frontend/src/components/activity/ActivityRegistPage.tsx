@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 import { Card, CardContent } from "@frontend/components/ui";
 import { useGlobalDate } from "@frontend/hooks";
+import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient } from "@frontend/utils";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,80 @@ export const ActivityRegistPage: React.FC = () => {
   const longPressTimer = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
+  // オフラインデータをローカルストレージから読み込む
+  const [offlineDataTrigger, setOfflineDataTrigger] = useState(0);
+  const { offlineActivityLogs, deletedIds } = React.useMemo(() => {
+    const storageKey = `offline-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
+    const storedData = localStorage.getItem(storageKey);
+
+    // 削除されたIDのリストを読み込む
+    const deletedKey = `deleted-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
+    const deletedData = localStorage.getItem(deletedKey);
+    const deletedIdSet = deletedData
+      ? new Set(JSON.parse(deletedData))
+      : new Set();
+
+    if (storedData) {
+      const logs = JSON.parse(storedData);
+      return {
+        offlineActivityLogs: logs,
+        deletedIds: deletedIdSet,
+      };
+    }
+    return {
+      offlineActivityLogs: [],
+      deletedIds: deletedIdSet,
+    };
+  }, [date, offlineDataTrigger]);
+
+  // localStorageの変更を監視
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      setOfflineDataTrigger((prev) => prev + 1);
+      // キャッシュを無効化して再フェッチ
+      queryClient.invalidateQueries({
+        queryKey: [
+          "activity",
+          "activity-logs-daily",
+          dayjs(date).format("YYYY-MM-DD"),
+        ],
+      });
+    };
+
+    const handleSyncDeleteSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const entityId = customEvent.detail.entityId;
+      console.log("[ActivityRegistPage] 同期削除成功:", entityId);
+
+      // 各日付の削除IDリストから該当IDを削除
+      const dateStr = dayjs(date).format("YYYY-MM-DD");
+      const deletedKey = `deleted-activity-logs-${dateStr}`;
+      const deletedIds = JSON.parse(localStorage.getItem(deletedKey) || "[]");
+      const filteredIds = deletedIds.filter((id: string) => id !== entityId);
+
+      if (filteredIds.length === 0) {
+        localStorage.removeItem(deletedKey);
+      } else {
+        localStorage.setItem(deletedKey, JSON.stringify(filteredIds));
+      }
+
+      setOfflineDataTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener("offline-data-updated", handleStorageChange);
+    window.addEventListener("sync-delete-success", handleSyncDeleteSuccess);
+
+    return () => {
+      window.removeEventListener("offline-data-updated", handleStorageChange);
+      window.removeEventListener(
+        "sync-delete-success",
+        handleSyncDeleteSuccess,
+      );
+    };
+  }, [date, queryClient]);
+
+  const { isOnline } = useNetworkStatusContext();
+
   const { data, error } = useQuery<{
     activities: GetActivityResponse[];
     activityLogs: GetActivityLogsResponse;
@@ -42,6 +117,8 @@ export const ActivityRegistPage: React.FC = () => {
       "activity-logs-daily",
       dayjs(date).format("YYYY-MM-DD"),
     ],
+    networkMode: "offlineFirst",
+    enabled: isOnline,
     queryFn: async () => {
       const res = await apiClient.batch.$post({
         json: [
@@ -109,10 +186,16 @@ export const ActivityRegistPage: React.FC = () => {
       <hr className="my-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {activities.map((activity: GetActivityResponse) => {
-          const hasActivityLogs = activityLogs.some(
+          // サーバーデータとオフラインデータの両方をチェック（削除されたアイテムは除外）
+          const hasServerLogs = activityLogs.some(
             (log: GetActivityLogsResponse[number]) =>
-              log.activity.id === activity.id,
+              log.activity.id === activity.id && !deletedIds.has(log.id),
           );
+          const hasOfflineLogs = offlineActivityLogs.some(
+            (log: any) =>
+              log.activity.id === activity.id && !deletedIds.has(log.id),
+          );
+          const hasActivityLogs = hasServerLogs || hasOfflineLogs;
 
           return (
             <ActivityCard
@@ -150,9 +233,17 @@ export const ActivityRegistPage: React.FC = () => {
             setOpen(o);
             if (!o) {
               setSelectedActivity(null);
+              // 全てのキャッシュを無効化
               await queryClient.invalidateQueries({
                 queryKey: [
                   "activity",
+                  "activity-logs-daily",
+                  dayjs(date).format("YYYY-MM-DD"),
+                ],
+              });
+              // DailyPageで使用されているキーも無効化
+              await queryClient.invalidateQueries({
+                queryKey: [
                   "activity-logs-daily",
                   dayjs(date).format("YYYY-MM-DD"),
                 ],
@@ -161,6 +252,10 @@ export const ActivityRegistPage: React.FC = () => {
           }}
           activity={selectedActivity}
           date={date}
+          onSuccess={() => {
+            // 成功時もオフラインデータをリロード
+            setOfflineDataTrigger((prev) => prev + 1);
+          }}
         />
       )}
       <ActivityEditDialog

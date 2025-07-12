@@ -1,8 +1,8 @@
-import { generateApiKey } from "@backend/domain/apiKey";
+import { createApiKeyId, generateApiKey } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 
 import type { ApiKeyRepository } from "./apiKeyRepository";
-import type { ApiKey, CreateApiKeyData } from "@backend/domain/apiKey";
+import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 
 export type ApiKeyUsecase = {
   createApiKey: (data: CreateApiKeyData) => Promise<ApiKey>; // throwする：DomainValidateError, SqlExecutionError
@@ -24,8 +24,9 @@ export function newApiKeyUsecase(
 
 function createApiKey(repo: ApiKeyRepository) {
   return async (data: CreateApiKeyData): Promise<ApiKey> => {
+    const id = createApiKeyId();
     const key = generateApiKey();
-    const apiKey = await repo.create({ ...data, key });
+    const apiKey = await repo.create({ id, ...data, key });
     return apiKey;
   };
 }

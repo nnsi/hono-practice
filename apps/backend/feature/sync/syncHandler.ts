@@ -186,6 +186,8 @@ function batchSync(uc: SyncUsecase) {
 
     const parsedResponse = BatchSyncResponseSchema.safeParse(response);
     if (!parsedResponse.success) {
+      console.error("Batch sync response parse error:", parsedResponse.error);
+      console.error("Response object:", JSON.stringify(response, null, 2));
       throw new AppError("failed to parse batch sync response", 500);
     }
 

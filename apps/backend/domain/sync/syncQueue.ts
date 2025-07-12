@@ -1,8 +1,21 @@
+import { DomainValidateError } from "@backend/error";
+import { v7 } from "uuid";
 import { z } from "zod";
 
 // ID型の定義
-export const syncQueueIdSchema = z.string().brand<"SyncQueueId">();
+export const syncQueueIdSchema = z.string().uuid().brand<"SyncQueueId">();
 export type SyncQueueId = z.infer<typeof syncQueueIdSchema>;
+
+export function createSyncQueueId(id?: string): SyncQueueId {
+  const syncQueueId = id ?? v7();
+
+  const parsedId = syncQueueIdSchema.safeParse(syncQueueId);
+  if (!parsedId.success) {
+    throw new DomainValidateError("createSyncQueueId: Invalid id");
+  }
+
+  return parsedId.data;
+}
 
 // 操作種別の定義
 export const syncOperationSchema = z.enum(["create", "update", "delete"]);
@@ -25,7 +38,7 @@ export type SyncQueueEntity = z.infer<typeof syncQueueEntitySchema>;
 
 // ファクトリ関数
 export function createSyncQueueEntity(params: {
-  id: string;
+  id: SyncQueueId;
   userId: string;
   entityType: string;
   entityId: string;

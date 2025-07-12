@@ -1,7 +1,9 @@
 import {
   checkForDuplicates,
   createSyncMetadataEntity,
+  createSyncMetadataId,
   createSyncQueueEntity,
+  createSyncQueueId,
   sortBySequence,
 } from "@backend/domain/sync";
 import { UnexpectedError } from "@backend/error";
@@ -118,7 +120,7 @@ function findDuplicatesByTimestamps(db: QueryExecutor) {
 
       const existingEntities = existingOps.map((row) =>
         createSyncQueueEntity({
-          id: row.id,
+          id: createSyncQueueId(row.id),
           userId: row.userId,
           entityType: row.entityType,
           entityId: row.entityId,
@@ -209,7 +211,7 @@ function enqueueSync(db: QueryExecutor) {
         const createdEntities: SyncQueueEntity[] = [];
 
         for (const op of operations) {
-          const id = crypto.randomUUID();
+          const id = createSyncQueueId();
           const entity = createSyncQueueEntity({
             id,
             ...op,
@@ -254,7 +256,7 @@ function dequeueSyncBatch(db: QueryExecutor) {
       const hasMore = rows.length > batchSize;
       const items = rows.slice(0, batchSize).map((row) =>
         createSyncQueueEntity({
-          id: row.id,
+          id: createSyncQueueId(row.id),
           userId: row.userId,
           entityType: row.entityType,
           entityId: row.entityId,
@@ -368,7 +370,7 @@ function getMetadataByEntity(db: QueryExecutor) {
 
       const row = rows[0];
       return createSyncMetadataEntity({
-        id: row.id,
+        id: createSyncMetadataId(row.id),
         userId: row.userId,
         entityType: row.entityType,
         entityId: row.entityId,
@@ -429,7 +431,7 @@ function getQueueByIds(db: QueryExecutor) {
 
       return rows.map((row) =>
         createSyncQueueEntity({
-          id: row.id,
+          id: createSyncQueueId(row.id),
           userId: row.userId,
           entityType: row.entityType,
           entityId: row.entityId,
@@ -503,7 +505,7 @@ function getChangesAfter(db: QueryExecutor) {
 
       return rows.map((row) =>
         createSyncQueueEntity({
-          id: row.id,
+          id: createSyncQueueId(row.id),
           userId: row.userId,
           entityType: row.entityType,
           entityId: row.entityId,
@@ -540,7 +542,7 @@ function getSyncQueueByUser(db: QueryExecutor) {
 
       return rows.map((row) =>
         createSyncQueueEntity({
-          id: row.id,
+          id: createSyncQueueId(row.id),
           userId: row.userId,
           entityType: row.entityType,
           entityId: row.entityId,
@@ -593,7 +595,7 @@ function getSyncQueueById(db: QueryExecutor) {
 
       const row = rows[0];
       return createSyncQueueEntity({
-        id: row.id,
+        id: createSyncQueueId(row.id),
         userId: row.userId,
         entityType: row.entityType,
         entityId: row.entityId,

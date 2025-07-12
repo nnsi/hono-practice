@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 
+import { syncCrypto } from "@frontend/services/sync/crypto";
 import { apiClient } from "@frontend/utils/apiClient";
 
 import type { LoginRequest } from "@dtos/request/LoginRequest";
@@ -141,6 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       clearTokens();
       setRequestStatus("idle");
+      // 暗号化キャッシュをクリア
+      syncCrypto.clearCache();
     }
   };
 

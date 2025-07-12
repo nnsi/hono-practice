@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { useGlobalDate } from "@frontend/hooks";
+import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient, qp } from "@frontend/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -24,6 +25,94 @@ export const ActivityDailyPage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);
+  const queryClient = useQueryClient();
+  const { isOnline } = useNetworkStatusContext();
+
+  // オフラインデータをローカルストレージから読み込む（localStorageの変更を監視）
+  const [offlineDataTrigger, setOfflineDataTrigger] = useState(0);
+  const { offlineData, deletedIds } = React.useMemo(() => {
+    const storageKey = `offline-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
+    const storedData = localStorage.getItem(storageKey);
+
+    // 削除されたIDのリストを読み込む
+    const deletedKey = `deleted-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
+    const deletedData = localStorage.getItem(deletedKey);
+    const deletedIdSet = deletedData
+      ? new Set(JSON.parse(deletedData))
+      : new Set();
+
+    if (storedData) {
+      console.log(
+        "[DailyPage] オフラインデータを読み込み:",
+        JSON.parse(storedData),
+      );
+      console.log("[DailyPage] 削除されたID:", Array.from(deletedIdSet));
+      return {
+        offlineData: JSON.parse(storedData),
+        deletedIds: deletedIdSet,
+      };
+    }
+    return {
+      offlineData: [],
+      deletedIds: deletedIdSet,
+    };
+  }, [date, offlineDataTrigger]);
+
+  // localStorageの変更を監視
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("[DailyPage] localStorage変更を検知");
+      setOfflineDataTrigger((prev) => prev + 1);
+      // キャッシュを無効化して再フェッチ
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+      });
+    };
+
+    const handleSyncDeleteSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const entityId = customEvent.detail.entityId;
+      console.log("[DailyPage] 同期削除成功:", entityId);
+
+      // 各日付の削除IDリストから該当IDを削除
+      const dateStr = dayjs(date).format("YYYY-MM-DD");
+      const deletedKey = `deleted-activity-logs-${dateStr}`;
+      const deletedIds = JSON.parse(localStorage.getItem(deletedKey) || "[]");
+      const filteredIds = deletedIds.filter((id: string) => id !== entityId);
+
+      if (filteredIds.length === 0) {
+        localStorage.removeItem(deletedKey);
+      } else {
+        localStorage.setItem(deletedKey, JSON.stringify(filteredIds));
+      }
+
+      setOfflineDataTrigger((prev) => prev + 1);
+    };
+
+    // カスタムイベントを監視
+    window.addEventListener("offline-data-updated", handleStorageChange);
+    window.addEventListener("sync-delete-success", handleSyncDeleteSuccess);
+
+    return () => {
+      window.removeEventListener("offline-data-updated", handleStorageChange);
+      window.removeEventListener(
+        "sync-delete-success",
+        handleSyncDeleteSuccess,
+      );
+    };
+  }, [date, queryClient]);
+
+  // オンライン状態変更時にキャッシュを無効化
+  useEffect(() => {
+    if (isOnline) {
+      console.log(
+        "[DailyPage] オンラインになりました。キャッシュを無効化します。",
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+      });
+    }
+  }, [isOnline, queryClient, date]);
 
   const {
     data: activityLogs,
@@ -40,9 +129,18 @@ export const ActivityDailyPage: React.FC = () => {
         }),
       schema: GetActivityLogsResponseSchema,
     }),
+    placeholderData: () => {
+      // キャッシュからデータを取得
+      return queryClient.getQueryData([
+        "activity-logs-daily",
+        dayjs(date).format("YYYY-MM-DD"),
+      ]);
+    },
+    // オフライン時でもデータを表示できるようにする
+    networkMode: "offlineFirst",
+    enabled: isOnline,
   });
 
-  const queryClient = useQueryClient();
   const cachedActivities = queryClient.getQueryData(["activity"]);
 
   useQuery({
@@ -51,7 +149,7 @@ export const ActivityDailyPage: React.FC = () => {
       schema: GetActivitiesResponseSchema,
       queryFn: () => apiClient.users.activities.$get(),
     }),
-    enabled: !cachedActivities,
+    enabled: !cachedActivities && isOnline,
   });
 
   const {
@@ -69,7 +167,34 @@ export const ActivityDailyPage: React.FC = () => {
         }),
       schema: GetTasksResponseSchema,
     }),
+    enabled: isOnline,
   });
+
+  // サーバーデータとオフラインデータをマージ
+  const mergedActivityLogs = React.useMemo(() => {
+    const serverLogs = activityLogs || [];
+    const allLogs = [...serverLogs, ...offlineData];
+    // 重複を除去（IDでユニーク化）し、削除されたアイテムをフィルタリング
+    const uniqueLogs = allLogs.reduce(
+      (acc, log) => {
+        // 削除されたIDリストに含まれている場合はスキップ
+        if (deletedIds.has(log.id)) {
+          console.log(
+            "[DailyPage] 削除されたアイテムをフィルタリング:",
+            log.id,
+          );
+          return acc;
+        }
+
+        if (!acc.find((l: any) => l.id === log.id)) {
+          acc.push(log);
+        }
+        return acc;
+      },
+      [] as typeof allLogs,
+    );
+    return uniqueLogs;
+  }, [activityLogs, offlineData, deletedIds]);
 
   return (
     <>
@@ -77,8 +202,8 @@ export const ActivityDailyPage: React.FC = () => {
         <ActivityDateHeader date={date} setDate={setDate} />
         <hr className="my-6" />
         <div className="flex-1 flex flex-col gap-4 px-4 mt-2">
-          {activityLogs && activityLogs.length > 0 ? (
-            activityLogs.map((log) => (
+          {mergedActivityLogs && mergedActivityLogs.length > 0 ? (
+            mergedActivityLogs.map((log: any) => (
               <Card
                 key={log.id}
                 onClick={() => {

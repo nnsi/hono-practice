@@ -2,7 +2,9 @@ import {
   canRetrySync,
   checkForDuplicates,
   createSyncMetadataEntity,
+  createSyncMetadataId,
   createSyncQueueEntity,
+  createSyncQueueId,
   groupByEntityType,
   markAsFailed,
   markAsSynced,
@@ -15,13 +17,15 @@ describe("SyncMetadataEntity", () => {
   describe("createSyncMetadataEntity", () => {
     it("デフォルト値でエンティティを作成できる", () => {
       const entity = createSyncMetadataEntity({
-        id: "test-id",
+        id: createSyncMetadataId("00000000-0000-4000-8000-000000000100"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
       });
 
-      expect(entity.id).toBe("test-id");
+      expect(entity.id).toBe(
+        createSyncMetadataId("00000000-0000-4000-8000-000000000100"),
+      );
       expect(entity.userId).toBe("user-123");
       expect(entity.entityType).toBe("activity");
       expect(entity.entityId).toBe("activity-456");
@@ -36,7 +40,7 @@ describe("SyncMetadataEntity", () => {
     it("カスタム値でエンティティを作成できる", () => {
       const now = new Date();
       const entity = createSyncMetadataEntity({
-        id: "test-id",
+        id: createSyncMetadataId("00000000-0000-4000-8000-000000000101"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
@@ -56,7 +60,7 @@ describe("SyncMetadataEntity", () => {
   describe("canRetrySync", () => {
     it("失敗状態でリトライ回数が上限未満の場合はtrueを返す", () => {
       const entity = createSyncMetadataEntity({
-        id: "test-id",
+        id: createSyncMetadataId("00000000-0000-4000-8000-000000000102"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
@@ -69,7 +73,7 @@ describe("SyncMetadataEntity", () => {
 
     it("失敗状態でリトライ回数が上限に達している場合はfalseを返す", () => {
       const entity = createSyncMetadataEntity({
-        id: "test-id",
+        id: createSyncMetadataId("00000000-0000-4000-8000-000000000103"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
@@ -82,7 +86,7 @@ describe("SyncMetadataEntity", () => {
 
     it("成功状態の場合はfalseを返す", () => {
       const entity = createSyncMetadataEntity({
-        id: "test-id",
+        id: createSyncMetadataId("00000000-0000-4000-8000-000000000104"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
@@ -96,7 +100,7 @@ describe("SyncMetadataEntity", () => {
 
   describe("状態変更ヘルパー関数", () => {
     const baseEntity = createSyncMetadataEntity({
-      id: "test-id",
+      id: createSyncMetadataId("00000000-0000-4000-8000-000000000106"),
       userId: "user-123",
       entityType: "activity",
       entityId: "activity-456",
@@ -132,7 +136,7 @@ describe("SyncQueueEntity", () => {
     it("エンティティを作成できる", () => {
       const now = new Date();
       const entity = createSyncQueueEntity({
-        id: "queue-id",
+        id: createSyncQueueId("00000000-0000-4000-8000-000000000001"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-456",
@@ -142,7 +146,9 @@ describe("SyncQueueEntity", () => {
         sequenceNumber: 1,
       });
 
-      expect(entity.id).toBe("queue-id");
+      expect(entity.id).toBe(
+        createSyncQueueId("00000000-0000-4000-8000-000000000001"),
+      );
       expect(entity.userId).toBe("user-123");
       expect(entity.entityType).toBe("activity");
       expect(entity.entityId).toBe("activity-456");
@@ -157,7 +163,7 @@ describe("SyncQueueEntity", () => {
   describe("ヘルパー関数", () => {
     const entities = [
       createSyncQueueEntity({
-        id: "1",
+        id: createSyncQueueId("00000000-0000-4000-8000-000000000001"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-1",
@@ -167,7 +173,7 @@ describe("SyncQueueEntity", () => {
         sequenceNumber: 3,
       }),
       createSyncQueueEntity({
-        id: "2",
+        id: createSyncQueueId("00000000-0000-4000-8000-000000000002"),
         userId: "user-123",
         entityType: "task",
         entityId: "task-1",
@@ -177,7 +183,7 @@ describe("SyncQueueEntity", () => {
         sequenceNumber: 1,
       }),
       createSyncQueueEntity({
-        id: "3",
+        id: createSyncQueueId("00000000-0000-4000-8000-000000000003"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-2",
@@ -207,7 +213,7 @@ describe("SyncQueueEntity", () => {
   describe("checkForDuplicates", () => {
     const existingOperations = [
       createSyncQueueEntity({
-        id: "1",
+        id: createSyncQueueId("00000000-0000-4000-8000-000000000001"),
         userId: "user-123",
         entityType: "activity",
         entityId: "activity-1",
