@@ -129,9 +129,9 @@
   - [x] Pull同期テストの実装
 
 #### 同期の最適化
-- [ ] バルク操作の実装
-  - [ ] 複数のActivityLogを一度に同期
-  - [ ] パフォーマンス最適化
+- [x] バルク操作の実装
+  - [x] 複数のActivityLogを一度に同期
+  - [x] パフォーマンス最適化
 - [x] 同期順序の保証
   - [x] 依存関係のあるエンティティの順序制御
   - [x] Activity → ActivityKind → ActivityLogの順序保証
@@ -146,69 +146,69 @@
 ## Week 2: フロントエンド実装
 
 ### 準備フェーズ
-- [ ] 必要な依存関係のインストール
-  - [ ] `npm install @tanstack/react-query-persist-client`
-  - [ ] `npm install @tanstack/query-sync-storage-persister`
+- [x] 必要な依存関係のインストール
+  - [x] `npm install @tanstack/react-query-persist-client`
+  - [x] `npm install @tanstack/query-sync-storage-persister`
 
 ### フロントエンド基盤実装（3日）
 
 #### ネットワーク状態検知（0.5日）
-- [ ] `frontend/hooks/useNetworkStatus.ts` の作成
-  - [ ] `navigator.onLine` を使用した基本実装
-  - [ ] ネットワーク状態変更イベントリスナーの追加
-  - [ ] 型定義（`NetworkStatus` 型）
-- [ ] `frontend/providers/NetworkStatusProvider.tsx` の作成
-  - [ ] React Context でアプリ全体へ状態を提供
-  - [ ] 子コンポーネントへの状態伝播
+- [x] `frontend/hooks/useNetworkStatus.ts` の作成
+  - [x] `navigator.onLine` を使用した基本実装
+  - [x] ネットワーク状態変更イベントリスナーの追加
+  - [x] 型定義（`NetworkStatus` 型）
+- [x] `frontend/providers/NetworkStatusProvider.tsx` の作成
+  - [x] React Context でアプリ全体へ状態を提供
+  - [x] 子コンポーネントへの状態伝播
 
 #### React Query永続化設定（0.5日）
-- [ ] React Query の永続化設定実装
-  - [ ] `createSyncStoragePersister` の設定
-  - [ ] `QueryClient` のキャッシュ時間設定（24時間）
-  - [ ] localStorage をストレージバックエンドとして設定
-- [ ] アプリケーションエントリポイントの更新
-  - [ ] `main.tsx` で `PersistQueryClientProvider` に変更
-  - [ ] 永続化オプションの設定
+- [x] React Query の永続化設定実装
+  - [x] `createSyncStoragePersister` の設定
+  - [x] `QueryClient` のキャッシュ時間設定（24時間）
+  - [x] localStorage をストレージバックエンドとして設定
+- [x] アプリケーションエントリポイントの更新
+  - [x] `main.tsx` で `PersistQueryClientProvider` に変更
+  - [x] 永続化オプションの設定
 
 #### 同期システムの実装（2日）
 
 ##### 同期サービス層の作成
-- [ ] `frontend/services/sync/` ディレクトリ作成
-- [ ] `SyncQueue` クラスの実装
-  - [ ] 未同期データのメモリ内キュー管理
-  - [ ] localStorage への永続化処理
-  - [ ] FIFO順序でのデータ取り出し
-- [ ] `SyncManager` クラスの実装
-  - [ ] オンライン復帰時の自動同期トリガー
-  - [ ] バックエンドAPIとの通信処理
-  - [ ] 重複チェックロジックの実装
-  - [ ] エラーハンドリングとリトライ
+- [x] `frontend/services/sync/` ディレクトリ作成
+- [x] `SyncQueue` クラスの実装
+  - [x] 未同期データのメモリ内キュー管理
+  - [x] localStorage への永続化処理
+  - [x] FIFO順序でのデータ取り出し
+- [x] `SyncManager` クラスの実装
+  - [x] オンライン復帰時の自動同期トリガー
+  - [x] バックエンドAPIとの通信処理
+  - [x] 重複チェックロジックの実装
+  - [x] エラーハンドリングとリトライ
 
 ##### React Queryとの統合
-- [ ] カスタムミューテーションフックの作成
-  - [ ] `useSyncedMutation` - オフライン対応ミューテーション
+- [x] カスタムミューテーションフックの作成
+  - [x] `useSyncedMutation` - オフライン対応ミューテーション
   - [ ] `resumePausedMutations()` の組み込み
-  - [ ] 同期状態の管理
+  - [x] 同期状態の管理
 - [ ] 既存のデータ送信フックの改修
-  - [ ] 活動記録送信の同期対応
+  - [x] 活動記録送信の同期対応
   - [ ] タスク更新の同期対応
 
 ### UI/UX実装（2日）
 
 #### 同期状態表示コンポーネント（1日）
-- [ ] `frontend/components/sync/SyncStatusIndicator.tsx` の作成
-  - [ ] オンライン/オフラインアイコン表示
-  - [ ] 未同期データ件数バッジ
-  - [ ] 同期中のローディングアニメーション
-- [ ] `frontend/components/sync/SyncProgressBar.tsx` の作成
-  - [ ] 同期進捗のパーセンテージ表示
-  - [ ] アニメーション付きプログレスバー
-- [ ] `frontend/components/sync/OfflineBanner.tsx` の作成
-  - [ ] オフライン時の通知バナー
-  - [ ] 自動非表示タイマー
+- [x] `frontend/components/sync/SyncStatusIndicator.tsx` の作成
+  - [x] オンライン/オフラインアイコン表示
+  - [x] 未同期データ件数バッジ
+  - [x] 同期中のローディングアニメーション
+- [x] `frontend/components/sync/SyncProgressBar.tsx` の作成
+  - [x] 同期進捗のパーセンテージ表示
+  - [x] アニメーション付きプログレスバー
+- [x] `frontend/components/sync/OfflineBanner.tsx` の作成
+  - [x] オフライン時の通知バナー
+  - [x] 自動非表示タイマー
 
 #### 既存コンポーネントへの統合（1日）
-- [ ] ヘッダーコンポーネントへの同期状態表示追加
+- [x] ヘッダーコンポーネントへの同期状態表示追加
 - [ ] 活動記録リストへの未同期マーク追加
   - [ ] 未同期データのスタイリング（opacity等）
   - [ ] 同期待ちアイコンの表示
