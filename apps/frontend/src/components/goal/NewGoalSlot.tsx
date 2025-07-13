@@ -105,7 +105,22 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
             name="activityId"
             render={({ field }) => (
               <FormItem>
-                <Select {...field} onValueChange={field.onChange}>
+                <Select
+                  {...field}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    // 活動選択後、日次目標の入力欄にフォーカス
+                    setTimeout(() => {
+                      const targetInput = document.querySelector(
+                        'input[name="dailyTargetQuantity"]',
+                      ) as HTMLInputElement;
+                      if (targetInput) {
+                        targetInput.focus();
+                        targetInput.select();
+                      }
+                    }, 0);
+                  }}
+                >
                   <FormControl>
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="活動を選択" />
@@ -123,7 +138,7 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
             )}
           />
 
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1">
               <span className="text-sm text-muted-foreground">日次目標:</span>
               <FormField
@@ -151,33 +166,52 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
                 </span>
               )}
             </div>
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input {...field} type="date" className="h-10 w-32" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="date"
-                      placeholder="終了日（任意）"
-                      className="h-10 w-32"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <label
+                      htmlFor="startDate"
+                      className="text-xs text-muted-foreground block mb-1"
+                    >
+                      開始日
+                    </label>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        id="startDate"
+                        type="date"
+                        className="h-10 w-full"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <label
+                      htmlFor="endDate"
+                      className="text-xs text-muted-foreground block mb-1"
+                    >
+                      終了日（任意）
+                    </label>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        id="endDate"
+                        type="date"
+                        className="h-10 w-full"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           {/* ボタン */}
