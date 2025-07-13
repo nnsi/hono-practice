@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-import { Card, CardContent } from "@frontend/components/ui";
+import { Card, CardContent, useToast } from "@frontend/components/ui";
 import { useGlobalDate } from "@frontend/hooks";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient } from "@frontend/utils";
@@ -33,6 +33,7 @@ export const ActivityRegistPage: React.FC = () => {
     useState<GetActivityResponse | null>(null);
   const longPressTimer = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // オフラインデータをローカルストレージから読み込む
   const [offlineDataTrigger, setOfflineDataTrigger] = useState(0);
@@ -77,7 +78,6 @@ export const ActivityRegistPage: React.FC = () => {
     const handleSyncDeleteSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const entityId = customEvent.detail.entityId;
-      console.log("[ActivityRegistPage] 同期削除成功:", entityId);
 
       // 各日付の削除IDリストから該当IDを削除
       const dateStr = dayjs(date).format("YYYY-MM-DD");
@@ -151,7 +151,11 @@ export const ActivityRegistPage: React.FC = () => {
   });
 
   if (error) {
-    console.error(error);
+    toast({
+      title: "エラー",
+      description: "データの取得に失敗しました",
+      variant: "destructive",
+    });
   }
 
   const activities = data?.activities ?? [];

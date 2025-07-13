@@ -4,6 +4,9 @@ import { ActivityLogCreateFormBody } from "@frontend/components/activity/Activit
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   Tabs,
   TabsContent,
   TabsList,
@@ -75,16 +78,6 @@ export function ActivityLogCreateDialog({
   const timerEnabled = isTimeUnit(activity.quantityUnit);
   const timeUnitType = getTimeUnitType(activity.quantityUnit);
 
-  // デバッグ用
-  console.log(
-    "ActivityLogCreateDialog - Activity:",
-    activity.name,
-    "Unit:",
-    activity.quantityUnit,
-    "Timer enabled:",
-    timerEnabled,
-  );
-
   // タイマーフック
   const {
     isRunning,
@@ -115,7 +108,6 @@ export function ActivityLogCreateDialog({
   }, [open, isRunning, timerEnabled]);
 
   const onSubmit = async (data: CreateActivityLogRequest) => {
-    console.log("[ActivityLogCreateDialog] onSubmit called with data:", data);
     CreateActivityLogRequestSchema.parse(data);
     if (!date) {
       toast({
@@ -127,9 +119,6 @@ export function ActivityLogCreateDialog({
     }
 
     try {
-      console.log(
-        "[ActivityLogCreateDialog] Calling createActivityLogMutation.mutateAsync",
-      );
       await createActivityLogMutation.mutateAsync({
         activityId: activity.id,
         date: data.date,
@@ -144,9 +133,6 @@ export function ActivityLogCreateDialog({
         },
       });
 
-      console.log(
-        "[ActivityLogCreateDialog] mutateAsync completed successfully",
-      );
       form.reset();
 
       // キャッシュの更新はuseSyncedActivityLogのonSuccessで行われるため、ここでは不要
@@ -168,10 +154,6 @@ export function ActivityLogCreateDialog({
         onOpenChange(false);
       }, 100);
     } catch (error) {
-      console.error(
-        "[ActivityLogCreateDialog] アクティビティログの作成に失敗しました:",
-        error,
-      );
       toast({
         title: "エラー",
         description: "アクティビティの記録に失敗しました",
@@ -204,7 +186,10 @@ export function ActivityLogCreateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-80 mt-[-0.5rem]">
-        <p className="mb-3 font-bold">Record [{activity.name}]</p>
+        <DialogHeader>
+          <DialogTitle>Record [{activity.name}]</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
 
         {timerEnabled ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>

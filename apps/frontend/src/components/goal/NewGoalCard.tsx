@@ -37,6 +37,7 @@ type GoalCardProps = {
   activities: GetActivityResponse[];
   quantityUnit?: string;
   activity?: GetActivityResponse;
+  isPast?: boolean;
 };
 
 type EditFormData = {
@@ -63,6 +64,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   onEditEnd,
   quantityUnit = "",
   activity,
+  isPast = false,
 }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showLogCreateDialog, setShowLogCreateDialog] = useState(false);
@@ -119,7 +121,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
     setTimeout(() => setIsAnimating(false), 1500);
   };
 
-  const isActive = true;
+  const isActive = !isPast;
 
   if (isEditing) {
     return (
@@ -211,10 +213,17 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
 
   return (
     <>
-      <button
-        type="button"
+      <div
         className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden cursor-pointer`}
         onClick={() => setShowDetailModal(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setShowDetailModal(true);
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         <div
           className={`absolute inset-0 ${
@@ -277,7 +286,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
               </p>
             </div>
 
-            {isActive && (
+            {isActive ? (
               <div className="flex flex-col gap-0.5">
                 <Button
                   size="sm"
@@ -304,10 +313,23 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                   <Pencil1Icon className="w-3 h-3" />
                 </Button>
               </div>
+            ) : (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                className="h-6 w-6 p-0"
+                title="削除"
+              >
+                <TrashIcon className="w-3 h-3" />
+              </Button>
             )}
           </div>
         </div>
-      </button>
+      </div>
 
       <GoalDetailModal
         open={showDetailModal}

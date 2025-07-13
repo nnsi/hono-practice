@@ -34,13 +34,10 @@ export function useSyncedMutation<
     ...options,
     networkMode: "always", // オフライン時でもmutationを実行
     mutationFn: async (variables: TVariables) => {
-      console.log("[useSyncedMutation] mutationFn called, isOnline:", isOnline);
       if (isOnline) {
         try {
-          console.log("[useSyncedMutation] Calling onlineAction");
           return await options.onlineAction(variables);
         } catch (error) {
-          console.log("[useSyncedMutation] onlineAction failed:", error);
           if (options.offlineAction) {
             const entityId = options.getEntityId(variables);
             // オフラインキューへの登録は非同期で行い、失敗してもUIがブロックされないようにする
@@ -51,27 +48,17 @@ export function useSyncedMutation<
                 options.operation,
                 variables as Record<string, unknown>,
               )
-              .catch((enqueueError) => {
-                console.error(
-                  "[useSyncedMutation] enqueue 失敗 (online fallback):",
-                  enqueueError,
-                );
-              });
+              .catch(() => {});
             return options.offlineAction(variables);
           }
           throw error;
         }
       } else {
-        console.log("[useSyncedMutation] Offline mode");
         if (!options.offlineAction) {
           throw new Error("オフライン時の処理が定義されていません");
         }
 
         const entityId = options.getEntityId(variables);
-        console.log(
-          "[useSyncedMutation] Enqueueing offline action, entityId:",
-          entityId,
-        );
 
         // オフライン時は非同期でキューに登録し、結果を待たずに処理を進める
         syncManager
@@ -82,19 +69,11 @@ export function useSyncedMutation<
             variables as Record<string, unknown>,
           )
           .then((result) => {
-            console.log("[useSyncedMutation] Enqueue successful:", result);
             return result;
           })
-          .catch((enqueueError) => {
-            console.error(
-              "[useSyncedMutation] enqueue 失敗 (offline):",
-              enqueueError,
-            );
-          });
+          .catch(() => {});
 
-        console.log("[useSyncedMutation] Calling offlineAction");
         const result = options.offlineAction(variables);
-        console.log("[useSyncedMutation] offlineAction result:", result);
 
         // enqueueの完了を待たずに結果を返す
         return result;
@@ -122,10 +101,7 @@ export function useSyncedMutation<
 
   useEffect(() => {
     if (isOnline && syncManager.getSyncStatus().pendingCount > 0) {
-      console.log("[useSyncedMutation] Online detected, triggering sync...");
-      syncManager.syncBatch().catch((error) => {
-        console.error("[useSyncedMutation] Sync failed:", error);
-      });
+      syncManager.syncBatch().catch(() => {});
     }
   }, [isOnline]);
 

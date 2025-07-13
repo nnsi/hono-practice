@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -86,6 +87,9 @@ export function NewActivityDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>アクティビティ新規作成</DialogTitle>
+          <DialogDescription>
+            新しいアクティビティを作成します
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

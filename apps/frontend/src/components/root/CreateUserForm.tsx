@@ -23,12 +23,14 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  useToast,
 } from "@components/ui";
 
 export const CreateUserForm: React.FC = () => {
   const api = apiClient;
   const { getUser, setAccessToken, scheduleTokenRefresh } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<CreateUserRequest>({
     resolver: zodResolver(createUserRequestSchema),
@@ -51,7 +53,11 @@ export const CreateUserForm: React.FC = () => {
         navigate({ to: "/" });
       }
     } catch (e) {
-      console.error("CreateUserForm", e);
+      toast({
+        title: "エラー",
+        description: "ユーザー作成に失敗しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -116,7 +122,11 @@ export const CreateUserForm: React.FC = () => {
           <GoogleLogin
             onSuccess={async (credentialResponse) => {
               if (!credentialResponse.credential) {
-                console.error("Google認証: credentialが取得できませんでした");
+                toast({
+                  title: "エラー",
+                  description: "Google認証に失敗しました",
+                  variant: "destructive",
+                });
                 return;
               }
               try {
@@ -130,15 +140,27 @@ export const CreateUserForm: React.FC = () => {
                   await getUser();
                   navigate({ to: "/" });
                 } else {
-                  const error = await res.json();
-                  console.error("Googleアカウントでユーザー作成失敗", error);
+                  await res.json();
+                  toast({
+                    title: "エラー",
+                    description: "Google認証に失敗しました",
+                    variant: "destructive",
+                  });
                 }
               } catch (e) {
-                console.error("Googleアカウントでユーザー作成失敗", e);
+                toast({
+                  title: "エラー",
+                  description: "Google認証に失敗しました",
+                  variant: "destructive",
+                });
               }
             }}
             onError={() => {
-              console.error("Googleアカウントでユーザー作成失敗");
+              toast({
+                title: "エラー",
+                description: "Google認証に失敗しました",
+                variant: "destructive",
+              });
             }}
           />
         </div>

@@ -38,6 +38,8 @@ export function ActivityLogCreateFormBody({
                 className="col-span-2"
                 inputMode="numeric"
                 autoComplete="off"
+                autoFocus
+                onFocus={(e) => e.target.select()}
                 {...field}
               />
             )}

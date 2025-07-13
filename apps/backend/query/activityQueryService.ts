@@ -86,13 +86,13 @@ function transform(
           id: row.id,
           name: row.name,
           quantityUnit: row.quantityUnit || "",
-          total: row.quantity || 0,
+          total: Math.round((row.quantity || 0) * 100) / 100,
           showCombinedStats: row.showCombinedStats,
           kinds: [
             {
               id: row.kindid || null,
               name: row.kindname || "未指定",
-              total: row.quantity || 0,
+              total: Math.round((row.quantity || 0) * 100) / 100,
               logs: [
                 {
                   date: dayjs(row.date).format("YYYY-MM-DD"),
@@ -109,7 +109,10 @@ function transform(
       const activity = acc.stats[acc.activityMap.get(row.id)!];
       // NOTE:GetActivityStatsResponseのtotalはnullableなので型エラー回避でこうやっている
       // 本来はactivity.total += row.quantity || 0;としたい
-      activity.total = (activity.total || 0) + (row.quantity || 0) || 0;
+      // 小数点の計算誤差を防ぐため、小数第2位で四捨五入
+      activity.total =
+        Math.round(((activity.total || 0) + (row.quantity || 0)) * 100) / 100 ||
+        0;
 
       const activityKindIndex = acc.activityKindMap.get(row.kindid || row.id)!;
 
@@ -118,7 +121,7 @@ function transform(
         activity.kinds.push({
           id: row.kindid || null,
           name: row.kindname || "未指定",
-          total: row.quantity || 0,
+          total: Math.round((row.quantity || 0) * 100) / 100,
           logs: [
             {
               date: row.date,
@@ -131,7 +134,8 @@ function transform(
       }
 
       const kind = activity.kinds[activityKindIndex];
-      kind.total += row.quantity || 0;
+      // 小数点の計算誤差を防ぐため、小数第2位で四捨五入
+      kind.total = Math.round((kind.total + (row.quantity || 0)) * 100) / 100;
       kind.logs.push({
         date: row.date,
         quantity: row.quantity || 0,

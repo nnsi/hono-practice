@@ -16,6 +16,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -122,6 +123,9 @@ export const ActivityEditDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>アクティビティ編集</DialogTitle>
+          <DialogDescription>
+            アクティビティの詳細設定を編集します
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

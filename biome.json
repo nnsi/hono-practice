@@ -36,6 +36,9 @@
       "complexity": {
         "noForEach": "off",
         "noBannedTypes": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
       }
     }
   },
