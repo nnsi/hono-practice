@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
 
+import { toast } from "@frontend/components/ui/use-toast";
 import { useSyncStatus } from "@frontend/hooks/useSyncStatus";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { cn } from "@frontend/utils/cn";
 import { Cloud, CloudOff, RefreshCw } from "lucide-react";
-
-import { toast } from "@frontend/components/ui/use-toast";
 
 export function SyncStatusIndicator() {
   const { isOnline } = useNetworkStatusContext();

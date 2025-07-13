@@ -113,6 +113,7 @@ export const NewGoalPage: React.FC = () => {
                 onEditEnd={() => setEditingGoalId(null)}
                 activities={activitiesData || []}
                 activity={getActivity(goal.activityId)}
+                isPast={true}
               />
             ))}
           </div>

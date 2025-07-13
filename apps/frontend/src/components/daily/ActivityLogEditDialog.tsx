@@ -18,6 +18,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -150,6 +151,9 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             {log.activity.name}
             {log.activityKind && `[${log.activityKind.name}]`}
           </DialogTitle>
+          <DialogDescription>
+            活動記録の詳細を編集・削除できます
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex items-center">

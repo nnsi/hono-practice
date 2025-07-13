@@ -4,6 +4,9 @@ import { ActivityLogCreateFormBody } from "@frontend/components/activity/Activit
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   Tabs,
   TabsContent,
   TabsList,
@@ -183,7 +186,10 @@ export function ActivityLogCreateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-80 mt-[-0.5rem]">
-        <p className="mb-3 font-bold">Record [{activity.name}]</p>
+        <DialogHeader>
+          <DialogTitle>Record [{activity.name}]</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
 
         {timerEnabled ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>

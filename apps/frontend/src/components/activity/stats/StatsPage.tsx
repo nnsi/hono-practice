@@ -150,8 +150,11 @@ export const ActivityStatsPage: React.FC = () => {
                 (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
               );
               kindsData[kind.name] = log
-                ? (kindsData[kind.name] ?? 0) +
-                  log.reduce((sum, l) => sum + l.quantity, 0)
+                ? Math.round(
+                    ((kindsData[kind.name] ?? 0) +
+                      log.reduce((sum, l) => sum + l.quantity, 0)) *
+                      100,
+                  ) / 100
                 : 0;
             });
             return {
@@ -219,7 +222,10 @@ export const ActivityStatsPage: React.FC = () => {
                         return {
                           date: dayjs(date).format("D日"),
                           [kind.name]: log
-                            ? log.reduce((sum, l) => sum + l.quantity, 0)
+                            ? Math.round(
+                                log.reduce((sum, l) => sum + l.quantity, 0) *
+                                  100,
+                              ) / 100
                             : 0,
                         };
                       });
