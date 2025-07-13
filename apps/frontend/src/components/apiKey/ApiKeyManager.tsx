@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@frontend/components/ui";
-import { useSubscription } from "@frontend/hooks/useSubscription";
+import { useSubscription } from "@frontend/hooks/api/useSubscription";
 import { Loader2 } from "lucide-react";
 
 import { ApiKeyList } from "./ApiKeyList";

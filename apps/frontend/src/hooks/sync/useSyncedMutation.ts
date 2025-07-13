@@ -4,7 +4,7 @@ import { useAuth } from "@frontend/hooks/useAuth";
 import { SyncManager } from "@frontend/services/sync";
 import { useMutation } from "@tanstack/react-query";
 
-import { useNetworkStatusContext } from "../providers/NetworkStatusProvider";
+import { useNetworkStatusContext } from "../../providers/NetworkStatusProvider";
 
 import type { EntityType, SyncOperation } from "@frontend/services/sync";
 import type { UseMutationOptions } from "@tanstack/react-query";

@@ -5,7 +5,7 @@ import {
   useCreateTask,
   useDeleteTask,
   useUpdateTask,
-} from "@frontend/hooks/useSyncedTask";
+} from "@frontend/hooks/sync/useSyncedTask";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircledIcon,

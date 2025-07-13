@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { useGoals } from "@frontend/hooks/useGoals";
+import { useGoals } from "@frontend/hooks/api/useGoals";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { apiClient, qp } from "@frontend/utils";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";

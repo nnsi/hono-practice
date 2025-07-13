@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   useDeleteActivityLog,
   useUpdateActivityLog,
-} from "@frontend/hooks/useSyncedActivityLog";
+} from "@frontend/hooks/sync/useSyncedActivityLog";
 import { apiClient } from "@frontend/utils";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";

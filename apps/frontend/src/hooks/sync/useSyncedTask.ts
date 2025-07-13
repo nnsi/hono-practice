@@ -2,7 +2,7 @@ import { apiClient } from "@frontend/utils/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
 
-import { useNetworkStatusContext } from "../providers/NetworkStatusProvider";
+import { useNetworkStatusContext } from "../../providers/NetworkStatusProvider";
 
 import { useSyncedMutation } from "./useSyncedMutation";
 

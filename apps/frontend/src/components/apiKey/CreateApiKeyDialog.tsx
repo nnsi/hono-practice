@@ -19,7 +19,7 @@ import {
   Input,
 } from "@frontend/components/ui";
 import { useToast } from "@frontend/components/ui/use-toast";
-import { useCreateApiKey } from "@frontend/hooks/apiKey";
+import { useCreateApiKey } from "@frontend/hooks/api/apiKey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 

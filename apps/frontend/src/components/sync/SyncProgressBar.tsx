@@ -1,4 +1,4 @@
-import { useSyncStatus } from "@frontend/hooks/useSyncStatus";
+import { useSyncStatus } from "@frontend/hooks/sync/useSyncStatus";
 import { cn } from "@frontend/utils/cn";
 
 export function SyncProgressBar() {

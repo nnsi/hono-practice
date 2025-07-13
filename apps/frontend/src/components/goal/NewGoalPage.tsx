@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useGoals } from "@frontend/hooks";
+import { useGoals } from "@frontend/hooks/api";
 import { apiClient } from "@frontend/utils";
 import { useQuery } from "@tanstack/react-query";
 

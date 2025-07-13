@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@frontend/components/ui";
 import { useToast } from "@frontend/components/ui/use-toast";
-import { useApiKeys, useDeleteApiKey } from "@frontend/hooks/apiKey";
+import { useApiKeys, useDeleteApiKey } from "@frontend/hooks/api/apiKey";
 import dayjs from "dayjs";
 
 export const ApiKeyList: React.FC = () => {

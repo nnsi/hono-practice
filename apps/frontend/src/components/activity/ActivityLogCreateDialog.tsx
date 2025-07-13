@@ -12,7 +12,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@frontend/components/ui";
-import { useCreateActivityLog } from "@frontend/hooks/useSyncedActivityLog";
+import { useCreateActivityLog } from "@frontend/hooks/sync/useSyncedActivityLog";
 import { useTimer } from "@frontend/hooks/useTimer";
 import {
   convertSecondsToUnit,
