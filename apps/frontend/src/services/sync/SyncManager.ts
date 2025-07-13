@@ -101,7 +101,6 @@ export class SyncManager {
 
   async syncBatch(batchSize = 10): Promise<SyncResult[]> {
     if (this.isSyncing) {
-      console.log("[SyncManager] Already syncing, skipping...");
       return [];
     }
 
@@ -111,11 +110,8 @@ export class SyncManager {
     try {
       const items = await this.syncQueue.dequeue(batchSize);
       if (items.length === 0) {
-        console.log("[SyncManager] No items to sync");
         return [];
       }
-
-      console.log(`[SyncManager] Syncing ${items.length} items...`);
 
       // 同期開始前にsyncPercentageを更新
       this.notifyListeners();
@@ -139,7 +135,6 @@ export class SyncManager {
         });
       } catch (error) {
         // ネットワークエラーの場合、アイテムを失敗としてマーク（リトライ遅延付き）
-        console.error("[SyncManager] Network error during sync:", error);
         const errorMessage =
           error instanceof Error ? error.message : "Network error";
         for (const item of items) {
@@ -150,7 +145,6 @@ export class SyncManager {
 
       if (!response.ok) {
         // APIエラーの場合、ステータスコードに応じて処理
-        console.error(`[SyncManager] API error: ${response.status}`);
         const isRetriable = response.status >= 500 || response.status === 429;
         const errorMessage = `API error: ${response.status}`;
 
@@ -160,9 +154,6 @@ export class SyncManager {
             await this.syncQueue.markAsFailed(item.id, errorMessage, true);
           } else {
             // 4xx エラーなどはリトライしない
-            console.error(
-              `[SyncManager] Non-retriable error for ${item.entityType}:${item.entityId}`,
-            );
             // リトライ回数を最大値に設定して削除する
             for (let i = 0; i < 3; i++) {
               await this.syncQueue.markAsFailed(item.id, errorMessage, false);
@@ -182,9 +173,6 @@ export class SyncManager {
 
         if (syncResult.status === "success") {
           await this.syncQueue.markAsSuccess(item.id);
-          console.log(
-            `[SyncManager] Successfully synced ${item.entityType}:${item.entityId}`,
-          );
 
           // 削除操作が成功した場合は、削除IDリストから削除するイベントを発火
           if (
@@ -200,9 +188,6 @@ export class SyncManager {
         } else if (syncResult.status === "skipped") {
           // スキップされたアイテムも成功として扱い、キューから削除
           await this.syncQueue.markAsSuccess(item.id);
-          console.log(
-            `[SyncManager] Skipped ${item.entityType}:${item.entityId}: ${(syncResult as any).message || ""}`,
-          );
 
           // 削除操作がスキップされた場合も、削除IDリストから削除するイベントを発火
           if (
@@ -220,14 +205,7 @@ export class SyncManager {
             item.id,
             syncResult.error || "Unknown error",
           );
-          console.error(
-            `[SyncManager] Failed to sync ${item.entityType}:${item.entityId}:`,
-            syncResult.error,
-          );
         } else if (syncResult.status === "conflict") {
-          console.warn(
-            `[SyncManager] Conflict detected for ${item.entityType}:${item.entityId}`,
-          );
           await this.syncQueue.markAsFailed(item.id, "Conflict detected");
         }
 
@@ -238,9 +216,6 @@ export class SyncManager {
       this.saveLastSyncedAt();
 
       return results;
-    } catch (error) {
-      console.error("[SyncManager] Sync error:", error);
-      throw error;
     } finally {
       this.isSyncing = false;
       this.notifyListeners();
@@ -259,19 +234,15 @@ export class SyncManager {
       this.stopAutoSync();
     }
 
-    console.log(`[SyncManager] Starting auto-sync every ${intervalMs}ms`);
     this.syncInterval = setInterval(async () => {
       if (!navigator.onLine) {
-        console.log("[SyncManager] Offline, skipping auto-sync");
         return;
       }
 
       if (this.syncQueue.hasPendingItems()) {
         try {
           await this.syncBatch();
-        } catch (error) {
-          console.error("[SyncManager] Auto-sync error:", error);
-        }
+        } catch (error) {}
       }
     }, intervalMs);
   }
@@ -280,7 +251,6 @@ export class SyncManager {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log("[SyncManager] Stopped auto-sync");
     }
   }
 
@@ -337,21 +307,16 @@ export class SyncManager {
   ): Promise<
     Array<{ isDuplicate: boolean; conflictingOperationIds?: string[] }>
   > {
-    try {
-      const response = await apiClient.users.sync["check-duplicates"].$post({
-        json: { operations },
-      });
+    const response = await apiClient.users.sync["check-duplicates"].$post({
+      json: { operations },
+    });
 
-      if (!response.ok) {
-        throw new Error("Duplicate check failed");
-      }
-
-      const result = await response.json();
-      return result.results;
-    } catch (error) {
-      console.error("[SyncManager] Duplicate check error:", error);
-      throw error;
+    if (!response.ok) {
+      throw new Error("Duplicate check failed");
     }
+
+    const result = await response.json();
+    return result.results;
   }
 
   async pullSync(
@@ -370,28 +335,23 @@ export class SyncManager {
     hasMore: boolean;
     nextTimestamp?: string;
   }> {
-    try {
-      const params = new URLSearchParams();
-      if (lastSyncTimestamp) {
-        params.append("lastSyncTimestamp", lastSyncTimestamp);
-      }
-      if (entityTypes && entityTypes.length > 0) {
-        params.append("entityTypes", entityTypes.join(","));
-      }
-      params.append("limit", limit.toString());
-
-      const response = await apiClient.users.sync.pull.$get({
-        query: Object.fromEntries(params.entries()),
-      });
-
-      if (!response.ok) {
-        throw new Error("Pull sync failed");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("[SyncManager] Pull sync error:", error);
-      throw error;
+    const params = new URLSearchParams();
+    if (lastSyncTimestamp) {
+      params.append("lastSyncTimestamp", lastSyncTimestamp);
     }
+    if (entityTypes && entityTypes.length > 0) {
+      params.append("entityTypes", entityTypes.join(","));
+    }
+    params.append("limit", limit.toString());
+
+    const response = await apiClient.users.sync.pull.$get({
+      query: Object.fromEntries(params.entries()),
+    });
+
+    if (!response.ok) {
+      throw new Error("Pull sync failed");
+    }
+
+    return await response.json();
   }
 }

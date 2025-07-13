@@ -21,7 +21,11 @@ export const SettingPage: React.FC = () => {
         to: "/",
       });
     } catch (e) {
-      console.error("Root", e);
+      toast({
+        title: "エラー",
+        description: "ログアウトに失敗しました",
+        variant: "destructive",
+      });
     }
   };
 

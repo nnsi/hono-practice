@@ -22,20 +22,12 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
     syncManager.updateUserId(user?.id);
 
     if (!networkStatus.isOnline) {
-      const statusMsg = networkStatus.isSimulated ? "（模擬）" : "";
-      console.log(`[NetworkStatus] オフライン${statusMsg}になりました`);
       syncManager.stopAutoSync();
     } else {
-      const statusMsg =
-        networkStatus.isSimulated === false ? "（模擬解除）" : "";
-      console.log(`[NetworkStatus] オンライン${statusMsg}になりました`);
       syncManager.startAutoSync();
 
       if (syncManager.getSyncStatus().pendingCount > 0) {
-        console.log("[NetworkStatus] 未同期データを同期します...");
-        syncManager.syncBatch().catch((error) => {
-          console.error("[NetworkStatus] 同期エラー:", error);
-        });
+        syncManager.syncBatch().catch(() => {});
       }
     }
   }, [networkStatus.isOnline, user?.id]);

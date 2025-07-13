@@ -100,7 +100,11 @@ export const LoginForm: React.FC = () => {
           <GoogleLogin
             onSuccess={async (credentialResponse) => {
               if (!credentialResponse.credential) {
-                console.error("Google認証: credentialが取得できませんでした");
+                toast({
+                  title: "エラー",
+                  description: "Google認証に失敗しました",
+                  variant: "destructive",
+                });
                 return;
               }
               try {
@@ -116,15 +120,27 @@ export const LoginForm: React.FC = () => {
                     navigate({ to: "/" });
                   }, 0);
                 } else {
-                  const error = await res.json();
-                  console.error("Google認証失敗", error);
+                  await res.json();
+                  toast({
+                    title: "エラー",
+                    description: "Google認証に失敗しました",
+                    variant: "destructive",
+                  });
                 }
               } catch (e) {
-                console.error("Google認証失敗", e);
+                toast({
+                  title: "エラー",
+                  description: "Google認証に失敗しました",
+                  variant: "destructive",
+                });
               }
             }}
             onError={() => {
-              console.error("Google認証失敗");
+              toast({
+                title: "エラー",
+                description: "Google認証に失敗しました",
+                variant: "destructive",
+              });
             }}
             useOneTap
           />

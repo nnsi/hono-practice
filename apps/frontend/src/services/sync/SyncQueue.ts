@@ -71,18 +71,13 @@ export class SyncQueue {
           }
         } else {
           // 暗号化されている場合は非同期で初期化
-          console.log(
-            "[SyncQueue] Encrypted data detected, loading asynchronously",
-          );
-          this.initializePromise = this.loadFromStorage().catch((error) => {
-            console.error("[SyncQueue] Async load failed:", error);
+          this.initializePromise = this.loadFromStorage().catch(() => {
             // エラーが発生しても初期化を完了させる
             this.initializePromise = null;
           });
         }
       }
     } catch (error) {
-      console.error("[SyncQueue] Failed to load from storage:", error);
       // エラーが発生した場合はストレージをクリアして初期化
       localStorage.removeItem(SyncQueue.STORAGE_KEY);
       this.queue = {};
@@ -95,9 +90,6 @@ export class SyncQueue {
     // 他タブでの変更を検知
     this.storageEventHandler = (event: StorageEvent) => {
       if (event.key === SyncQueue.STORAGE_KEY && event.newValue !== null) {
-        console.log(
-          "[SyncQueue] Storage changed from another tab, reloading...",
-        );
         this.loadFromStorage();
       }
     };
@@ -136,7 +128,6 @@ export class SyncQueue {
         }
       }
     } catch (error) {
-      console.error("[SyncQueue] Failed to load from storage:", error);
       // エラーが発生した場合はストレージをクリアして初期化
       localStorage.removeItem(SyncQueue.STORAGE_KEY);
       this.queue = {};
@@ -148,21 +139,15 @@ export class SyncQueue {
   }
 
   private async saveToStorage(): Promise<void> {
-    console.log("[SyncQueue] saveToStorage called");
     try {
       const data = {
         queue: this.queue,
         sequenceCounter: this.sequenceCounter,
       };
-      console.log("[SyncQueue] Serializing data");
       const serialized = JSON.stringify(data);
-      console.log("[SyncQueue] Encrypting data");
       const encrypted = await syncCrypto.encrypt(serialized, this.userId);
-      console.log("[SyncQueue] Saving to localStorage");
       localStorage.setItem(SyncQueue.STORAGE_KEY, encrypted);
-      console.log("[SyncQueue] saveToStorage completed");
     } catch (error) {
-      console.error("[SyncQueue] Failed to save to storage:", error);
       // ストレージの保存に失敗した場合は、エラーをスローして上位に伝播
       throw new Error(`Failed to save sync queue to storage: ${error}`);
     }
@@ -176,14 +161,9 @@ export class SyncQueue {
   ): Promise<string> {
     // 初期化が完了していない場合は待機
     if (this.initializePromise) {
-      console.log("[SyncQueue] Waiting for initialization...");
       try {
         await this.initializePromise;
-      } catch (error) {
-        console.error(
-          "[SyncQueue] Initialization failed, proceeding anyway:",
-          error,
-        );
+      } catch {
       } finally {
         this.initializePromise = null;
       }
@@ -206,9 +186,6 @@ export class SyncQueue {
     this.queue[id] = item;
     await this.saveToStorage();
 
-    console.log(
-      `[SyncQueue] Enqueued ${operation} for ${entityType}:${entityId}`,
-    );
     return id;
   }
 
@@ -235,7 +212,6 @@ export class SyncQueue {
   async markAsSuccess(id: string): Promise<void> {
     delete this.queue[id];
     await this.saveToStorage();
-    console.log(`[SyncQueue] Marked ${id} as success and removed from queue`);
   }
 
   async markAsFailed(
@@ -252,9 +228,6 @@ export class SyncQueue {
     item.lastRetryAt = new Date().toISOString();
 
     if (item.retryCount >= SyncQueue.MAX_RETRY_COUNT) {
-      console.error(
-        `[SyncQueue] Max retries reached for ${id}, removing from queue`,
-      );
       delete this.queue[id];
     } else {
       // エクスポネンシャルバックオフを適用
@@ -264,9 +237,6 @@ export class SyncQueue {
       );
       item.nextRetryAt = new Date(Date.now() + retryDelay).toISOString();
       item.status = "failed_pending_retry";
-      console.log(
-        `[SyncQueue] Marked ${id} as failed, will retry in ${retryDelay}ms (${item.retryCount}/${SyncQueue.MAX_RETRY_COUNT})`,
-      );
     }
 
     await this.saveToStorage();
@@ -278,7 +248,6 @@ export class SyncQueue {
 
     item.status = "pending";
     await this.saveToStorage();
-    console.log(`[SyncQueue] Marked ${id} as pending`);
   }
 
   getPendingCount(): number {
@@ -308,7 +277,6 @@ export class SyncQueue {
     this.queue = {};
     this.sequenceCounter = 0;
     await this.saveToStorage();
-    console.log("[SyncQueue] Cleared all items");
   }
 
   hasPendingItems(): boolean {

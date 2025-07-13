@@ -86,7 +86,6 @@ export function useCreateTask() {
       return await response.json();
     },
     offlineAction: (variables: CreateTaskVariables) => {
-      console.log("[useSyncedTask] オフラインでタスクを作成");
       const taskId = uuidv4();
 
       const newTask = {
@@ -113,8 +112,6 @@ export function useCreateTask() {
       return newTask;
     },
     onSuccess: (data, variables) => {
-      console.log("[useSyncedTask] タスクを作成しました:", data);
-
       // オンラインで成功した場合のみ、ローカルストレージのオフラインデータをクリア
       if (isOnline) {
         const storageKey = `offline-tasks-${variables.startDate}`;
@@ -147,8 +144,7 @@ export function useCreateTask() {
       // クエリを無効化してリフェッチを促す
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedTask] エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx) {
@@ -229,8 +225,6 @@ export function useUpdateTask() {
       };
     },
     onSuccess: (_data, variables) => {
-      console.log("[useSyncedTask] タスクを更新しました");
-
       // クエリを無効化してリフェッチ
       if (variables.date) {
         const tasksKey = ["tasks", variables.date];
@@ -238,8 +232,7 @@ export function useUpdateTask() {
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedTask] 更新エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {
@@ -327,8 +320,6 @@ export function useDeleteTask() {
       return true;
     },
     onSuccess: (_data, variables) => {
-      console.log("[useSyncedTask] タスクを削除しました");
-
       // オンライン時のみ、削除が成功したら削除IDリストからIDを削除
       if (isOnline && variables.date) {
         const deletedKey = `deleted-tasks-${variables.date}`;
@@ -351,8 +342,7 @@ export function useDeleteTask() {
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedTask] 削除エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {

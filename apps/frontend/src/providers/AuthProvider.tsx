@@ -137,7 +137,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await apiClient.auth.logout.$post({});
     } catch (e) {
-      console.error("Logout failed:", e);
     } finally {
       setUser(null);
       clearTokens();
@@ -160,7 +159,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (e) {
         // User is not logged in
-        console.log("No valid session");
       } finally {
         // Mark as initialized after the initial token check
         setIsInitialized(true);

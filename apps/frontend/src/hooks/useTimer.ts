@@ -47,7 +47,6 @@ export const useTimer = (activityId: string): UseTimerReturn => {
           });
         }
       } catch (e) {
-        console.error("Failed to restore timer state:", e);
         localStorage.removeItem(storageKey);
       }
     }
@@ -67,9 +66,7 @@ export const useTimer = (activityId: string): UseTimerReturn => {
               variant: "destructive",
             });
           }
-        } catch (e) {
-          console.error("Failed to parse storage event:", e);
-        }
+        } catch (e) {}
       }
     };
 

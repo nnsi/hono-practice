@@ -121,10 +121,8 @@ export function useCreateActivityLog() {
       return await response.json();
     },
     offlineAction: (variables: CreateActivityLogVariables) => {
-      console.log("[useSyncedActivityLog] offlineAction started");
       // オフライン時のIDを生成
       const logId = uuidv4();
-      console.log("[useSyncedActivityLog] オフラインで活動記録を作成:", logId);
 
       const newLog = {
         id: logId,
@@ -149,32 +147,16 @@ export function useCreateActivityLog() {
 
       // ローカルストレージにも保存
       const storageKey = `offline-activity-logs-${variables.date}`;
-      console.log(
-        "[useSyncedActivityLog] Reading from localStorage:",
-        storageKey,
-      );
       const existingLogs = JSON.parse(localStorage.getItem(storageKey) || "[]");
       existingLogs.push(newLog);
-      console.log("[useSyncedActivityLog] Saving to localStorage");
       localStorage.setItem(storageKey, JSON.stringify(existingLogs));
-      console.log(
-        "[useSyncedActivityLog] ローカルストレージに保存:",
-        storageKey,
-        newLog,
-      );
 
       // カスタムイベントを発火してDailyPageに通知
-      console.log(
-        "[useSyncedActivityLog] カスタムイベント 'offline-data-updated' を発火",
-      );
       window.dispatchEvent(new Event("offline-data-updated"));
 
-      console.log("[useSyncedActivityLog] offlineAction completed");
       return newLog;
     },
     onSuccess: (data, variables) => {
-      console.log("[useSyncedActivityLog] 活動記録を作成しました:", data);
-
       // オンラインで成功した場合のみ、ローカルストレージのオフラインデータをクリア
       if (isOnline) {
         const storageKey = `offline-activity-logs-${variables.date}`;
@@ -186,17 +168,8 @@ export function useCreateActivityLog() {
         );
         if (filteredLogs.length === 0) {
           localStorage.removeItem(storageKey);
-          console.log(
-            "[useSyncedActivityLog] ローカルストレージをクリア:",
-            storageKey,
-          );
         } else {
           localStorage.setItem(storageKey, JSON.stringify(filteredLogs));
-          console.log(
-            "[useSyncedActivityLog] ローカルストレージを更新:",
-            storageKey,
-            filteredLogs,
-          );
         }
       }
 
@@ -241,8 +214,7 @@ export function useCreateActivityLog() {
       queryClient.invalidateQueries({ queryKey: dateKey });
       queryClient.invalidateQueries({ queryKey: compositeKey });
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedActivityLog] エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx) {
@@ -349,8 +321,6 @@ export function useUpdateActivityLog() {
       };
     },
     onSuccess: (_data, variables) => {
-      console.log("[useSyncedActivityLog] 活動記録を更新しました");
-
       // クエリを無効化してリフェッチ
       if (variables.date) {
         const dateKey = ["activity-logs-daily", variables.date];
@@ -369,8 +339,7 @@ export function useUpdateActivityLog() {
         queryClient.invalidateQueries({ queryKey: compositeKey });
       }
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedActivityLog] 更新エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {
@@ -476,12 +445,6 @@ export function useDeleteActivityLog() {
           localStorage.setItem(deletedKey, JSON.stringify(deletedIds));
         }
 
-        console.log(
-          "[useSyncedActivityLog] オフライン削除 - ローカルストレージを更新:",
-          storageKey,
-        );
-        console.log("[useSyncedActivityLog] 削除されたIDを記録:", variables.id);
-
         // カスタムイベントを発火してDailyPageに通知
         window.dispatchEvent(new Event("offline-data-updated"));
       }
@@ -489,8 +452,6 @@ export function useDeleteActivityLog() {
       return true;
     },
     onSuccess: (_data, variables) => {
-      console.log("[useSyncedActivityLog] 活動記録を削除しました");
-
       // オンライン時のみ、削除が成功したら削除IDリストからIDを削除
       if (isOnline && variables.date) {
         const deletedKey = `deleted-activity-logs-${variables.date}`;
@@ -504,11 +465,6 @@ export function useDeleteActivityLog() {
         } else {
           localStorage.setItem(deletedKey, JSON.stringify(filteredDeletedIds));
         }
-
-        console.log(
-          "[useSyncedActivityLog] 削除成功 - 削除IDリストから削除:",
-          variables.id,
-        );
       }
 
       // React Queryのキャッシュを無効化
@@ -532,8 +488,7 @@ export function useDeleteActivityLog() {
       // 全体のactivity-logsキャッシュも無効化
       queryClient.invalidateQueries({ queryKey: ["activity-logs-daily"] });
     },
-    onError: (error, variables, context) => {
-      console.error("[useSyncedActivityLog] 削除エラー:", error);
+    onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {

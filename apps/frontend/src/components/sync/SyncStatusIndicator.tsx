@@ -1,7 +1,11 @@
+import { useEffect, useRef } from "react";
+
 import { useSyncStatus } from "@frontend/hooks/useSyncStatus";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { cn } from "@frontend/utils/cn";
 import { Cloud, CloudOff, RefreshCw } from "lucide-react";
+
+import { toast } from "@frontend/components/ui/use-toast";
 
 export function SyncStatusIndicator() {
   const { isOnline } = useNetworkStatusContext();
@@ -13,14 +17,52 @@ export function SyncStatusIndicator() {
     isSyncing,
     syncNow,
   } = useSyncStatus();
+  const prevFailedCountRef = useRef(failedCount);
+  const prevOnlineRef = useRef(isOnline);
+
+  // 同期エラー時のトースト通知
+  useEffect(() => {
+    // エラー数が増えた場合
+    if (failedCount > prevFailedCountRef.current && failedCount > 0) {
+      toast({
+        title: "同期エラー",
+        description: `${failedCount}件のデータの同期に失敗しました。オンライン状態を確認してください。`,
+        variant: "destructive",
+      });
+    }
+    prevFailedCountRef.current = failedCount;
+  }, [failedCount]);
+
+  // オンライン復帰時の通知
+  useEffect(() => {
+    if (!prevOnlineRef.current && isOnline && hasPendingSync) {
+      toast({
+        title: "オンラインに復帰",
+        description: "未同期のデータがあります。同期を開始します。",
+      });
+    }
+    prevOnlineRef.current = isOnline;
+  }, [isOnline, hasPendingSync]);
 
   const handleSync = async () => {
     if (!isOnline || isSyncing) return;
 
     try {
       await syncNow();
+      // 同期成功時の通知（エラーがなく、すべて同期された場合）
+      if (failedCount === 0 && pendingCount === 0) {
+        toast({
+          title: "同期完了",
+          description: "すべてのデータが同期されました。",
+        });
+      }
     } catch (error) {
-      console.error("[SyncStatusIndicator] Sync failed:", error);
+      toast({
+        title: "同期エラー",
+        description:
+          "データの同期に失敗しました。しばらくしてから再試行してください。",
+        variant: "destructive",
+      });
     }
   };
 

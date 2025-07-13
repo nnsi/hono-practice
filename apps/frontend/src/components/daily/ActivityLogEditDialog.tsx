@@ -94,34 +94,50 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
     e.preventDefault();
     if (!log) return;
 
-    await updateActivityLog.mutateAsync({
-      id: log.id,
-      memo,
-      quantity: quantity ?? undefined,
-      activityKindId: activityKindId || undefined,
-      date: dayjs(log.date).format("YYYY-MM-DD"),
-      activityKindInfo: activityKindId
-        ? activity?.kinds?.find((k) => k.id === activityKindId) ||
-          log.activityKind ||
-          undefined
-        : undefined,
-    });
+    try {
+      await updateActivityLog.mutateAsync({
+        id: log.id,
+        memo,
+        quantity: quantity ?? undefined,
+        activityKindId: activityKindId || undefined,
+        date: dayjs(log.date).format("YYYY-MM-DD"),
+        activityKindInfo: activityKindId
+          ? activity?.kinds?.find((k) => k.id === activityKindId) ||
+            log.activityKind ||
+            undefined
+          : undefined,
+      });
 
-    toast({ title: "保存しました", variant: "default" });
-    onOpenChange(false);
+      toast({ title: "保存しました", variant: "default" });
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   // 削除処理
   const handleDelete = async () => {
     if (!log) return;
 
-    await deleteActivityLog.mutateAsync({
-      id: log.id,
-      date: dayjs(log.date).format("YYYY-MM-DD"),
-    });
+    try {
+      await deleteActivityLog.mutateAsync({
+        id: log.id,
+        date: dayjs(log.date).format("YYYY-MM-DD"),
+      });
 
-    toast({ title: "削除しました", variant: "default" });
-    onOpenChange(false);
+      toast({ title: "削除しました", variant: "default" });
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "削除に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!log) return null;
