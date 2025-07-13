@@ -1,5 +1,6 @@
 import { useContext } from "react";
 
+import { useGoals } from "@frontend/hooks/useGoals";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { apiClient, qp } from "@frontend/utils";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
@@ -9,6 +10,7 @@ import {
   Bar,
   BarChart,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -52,12 +54,20 @@ type ChartData = {
   [key: string]: string | number;
 };
 
+type GoalLine = {
+  id: string;
+  value: number;
+  label: string;
+  color?: string;
+};
+
 type ActivityChartProps = {
   data: ChartData[];
   dataKeys: { name: string; color: string }[];
   height?: number;
   stackId?: string;
   showLegend?: boolean;
+  goalLines?: GoalLine[];
 };
 
 const ActivityChart: React.FC<ActivityChartProps> = ({
@@ -66,6 +76,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
   height = 300,
   stackId,
   showLegend = true,
+  goalLines = [],
 }) => {
   return (
     <div className="bg-white rounded-lg p-4 border">
@@ -85,6 +96,20 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
               fill={key.color}
               name={key.name}
               stackId={stackId}
+            />
+          ))}
+          {goalLines.map((goal) => (
+            <ReferenceLine
+              key={`goal-${goal.id}`}
+              y={goal.value}
+              stroke={goal.color || "#ff0000"}
+              strokeDasharray="5 5"
+              label={{
+                value: goal.label,
+                position: "right",
+                fill: goal.color || "#ff0000",
+                fontSize: 12,
+              }}
             />
           ))}
         </BarChart>
@@ -120,6 +145,39 @@ export const ActivityStatsPage: React.FC = () => {
       schema: GetActivityStatsResponseSchema,
     }),
   });
+
+  // 全ての目標を取得
+  const { data: goalsData } = useGoals();
+
+  // アクティビティIDと表示月に基づいて目標ラインを計算
+  const getGoalLinesForActivity = (activityId: string): GoalLine[] => {
+    if (!goalsData?.goals) return [];
+
+    const monthStart = dayjs(month).startOf("month");
+    const monthEnd = dayjs(month).endOf("month");
+
+    // 該当するアクティビティの目標で、表示期間と重複するものを見つける
+    const relevantGoals = goalsData.goals.filter((goal) => {
+      if (goal.activityId !== activityId) return false;
+
+      const goalStart = dayjs(goal.startDate);
+      const goalEnd = goal.endDate ? dayjs(goal.endDate) : null;
+
+      // 目標の期間が表示月と重複しているかチェック
+      if (goalEnd?.isBefore(monthStart)) return false;
+      if (goalStart.isAfter(monthEnd)) return false;
+
+      return true;
+    });
+
+    // 各目標に対して横線を作成
+    return relevantGoals.map((goal, index) => ({
+      id: goal.id,
+      value: goal.dailyTargetQuantity,
+      label: `目標${relevantGoals.length > 1 ? index + 1 : ""}: ${goal.dailyTargetQuantity}`,
+      color: "#ff6b6b", // 赤系統の色
+    }));
+  };
 
   return (
     <div>
@@ -210,6 +268,7 @@ export const ActivityStatsPage: React.FC = () => {
                     }))}
                     stackId="a"
                     showLegend={stat.kinds[0].name !== "未指定"}
+                    goalLines={getGoalLinesForActivity(stat.id)}
                   />
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
@@ -244,6 +303,7 @@ export const ActivityStatsPage: React.FC = () => {
                             ]}
                             height={250}
                             showLegend={false}
+                            goalLines={getGoalLinesForActivity(stat.id)}
                           />
                         </div>
                       );
