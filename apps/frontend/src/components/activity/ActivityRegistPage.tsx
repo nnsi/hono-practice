@@ -46,6 +46,48 @@ export const ActivityRegistPage: React.FC = () => {
     setEditModalOpen(true);
   };
 
+  // NewActivityDialogのopen/close処理
+  const handleNewActivityDialogChange = (open: boolean) => {
+    setOpen(open);
+  };
+
+  // ActivityLogCreateDialogのopen/close処理
+  const handleActivityLogCreateDialogChange = async (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      setSelectedActivity(null);
+      // 全てのキャッシュを無効化
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "activity",
+          "activity-logs-daily",
+          dayjs(date).format("YYYY-MM-DD"),
+        ],
+      });
+      // DailyPageで使用されているキーも無効化
+      await queryClient.invalidateQueries({
+        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
+      });
+    }
+  };
+
+  // ActivityLogCreateDialogのsuccess処理
+  const handleActivityLogCreateSuccess = () => {
+    // キャッシュを更新
+    queryClient.invalidateQueries({
+      queryKey: [
+        "activity",
+        "activity-logs-daily",
+        dayjs(date).format("YYYY-MM-DD"),
+      ],
+    });
+  };
+
+  // ActivityEditDialogのclose処理
+  const handleActivityEditDialogClose = () => {
+    setEditModalOpen(false);
+  };
+
   return (
     <>
       <ActivityDateHeader date={date} setDate={setDate} />
@@ -75,49 +117,20 @@ export const ActivityRegistPage: React.FC = () => {
       </div>
       <NewActivityDialog
         open={open && !selectedActivity}
-        onOpenChange={setOpen}
+        onOpenChange={handleNewActivityDialogChange}
       />
       {selectedActivity && (
         <ActivityLogCreateDialog
           open={open}
-          onOpenChange={async (o) => {
-            setOpen(o);
-            if (!o) {
-              setSelectedActivity(null);
-              // 全てのキャッシュを無効化
-              await queryClient.invalidateQueries({
-                queryKey: [
-                  "activity",
-                  "activity-logs-daily",
-                  dayjs(date).format("YYYY-MM-DD"),
-                ],
-              });
-              // DailyPageで使用されているキーも無効化
-              await queryClient.invalidateQueries({
-                queryKey: [
-                  "activity-logs-daily",
-                  dayjs(date).format("YYYY-MM-DD"),
-                ],
-              });
-            }
-          }}
+          onOpenChange={handleActivityLogCreateDialogChange}
           activity={selectedActivity}
           date={date}
-          onSuccess={() => {
-            // キャッシュを更新
-            queryClient.invalidateQueries({
-              queryKey: [
-                "activity",
-                "activity-logs-daily",
-                dayjs(date).format("YYYY-MM-DD"),
-              ],
-            });
-          }}
+          onSuccess={handleActivityLogCreateSuccess}
         />
       )}
       <ActivityEditDialog
         open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onClose={handleActivityEditDialogClose}
         activity={editTargetActivity}
       />
     </>

@@ -94,6 +94,17 @@ export const ActivityDailyPage: React.FC = () => {
     activityLogs,
   });
 
+  // ActivityLogカードのクリックハンドラ
+  const handleActivityLogClick = (log: GetActivityLogResponse) => {
+    setEditTargetLog(log);
+    setEditDialogOpen(true);
+  };
+
+  // ActivityLogEditDialogのopen/close処理
+  const handleActivityLogEditDialogChange = (open: boolean) => {
+    setEditDialogOpen(open);
+  };
+
   return (
     <>
       <div>
@@ -104,10 +115,7 @@ export const ActivityDailyPage: React.FC = () => {
             mergedActivityLogs.map((log: any) => (
               <Card
                 key={log.id}
-                onClick={() => {
-                  setEditTargetLog(log);
-                  setEditDialogOpen(true);
-                }}
+                onClick={() => handleActivityLogClick(log)}
                 className={`cursor-pointer shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 h-20 ${
                   isOfflineData(log) ? "opacity-70 border-orange-200" : ""
                 }`}
@@ -151,7 +159,7 @@ export const ActivityDailyPage: React.FC = () => {
       </div>
       <ActivityLogEditDialog
         open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
+        onOpenChange={handleActivityLogEditDialogChange}
         log={editTargetLog}
       />
     </>

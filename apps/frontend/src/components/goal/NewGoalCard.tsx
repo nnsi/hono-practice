@@ -121,6 +121,52 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
     setTimeout(() => setIsAnimating(false), 1500);
   };
 
+  // 日次目標数量の変更ハンドラ
+  const handleTargetQuantityChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldOnChange: (value: string | number) => void,
+  ) => {
+    const value = e.target.value;
+    fieldOnChange(value === "" ? "" : Number(value));
+  };
+
+  // 削除ボタンのクリックハンドラ（編集モード）
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDelete();
+  };
+
+  // カードのクリックハンドラ
+  const handleCardClick = () => {
+    setShowDetailModal(true);
+  };
+
+  // カードのキーダウンハンドラ
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setShowDetailModal(true);
+    }
+  };
+
+  // 活動量登録ボタンのクリックハンドラ
+  const handleLogCreateClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowLogCreateDialog(true);
+  };
+
+  // 編集ボタンのクリックハンドラ
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEditStart();
+  };
+
+  // 削除ボタンのクリックハンドラ（過去の目標）
+  const handlePastGoalDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleDelete();
+  };
+
   const isActive = !isPast;
 
   if (isEditing) {
@@ -156,10 +202,9 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                           {...field}
                           type="number"
                           className="h-8 text-center text-base"
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(value === "" ? "" : Number(value));
-                          }}
+                          onChange={(e) =>
+                            handleTargetQuantityChange(e, field.onChange)
+                          }
                         />
                       </FormControl>
                     </FormItem>
@@ -195,10 +240,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 type="button"
                 size="sm"
                 variant="destructive"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDelete();
-                }}
+                onClick={handleDeleteClick}
                 className="h-8 w-8 p-0"
                 title="削除"
               >
@@ -215,13 +257,8 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
     <>
       <div
         className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden cursor-pointer`}
-        onClick={() => setShowDetailModal(true)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setShowDetailModal(true);
-          }
-        }}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
         role="button"
         tabIndex={0}
       >
@@ -291,10 +328,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowLogCreateDialog(true);
-                  }}
+                  onClick={handleLogCreateClick}
                   className="h-6 w-6 p-0"
                   title="活動量を登録"
                 >
@@ -303,10 +337,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditStart();
-                  }}
+                  onClick={handleEditClick}
                   className="h-6 w-6 p-0"
                   title="目標を編集"
                 >
@@ -317,10 +348,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
+                onClick={handlePastGoalDeleteClick}
                 className="h-6 w-6 p-0"
                 title="削除"
               >

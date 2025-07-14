@@ -141,6 +141,21 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
     }
   };
 
+  // quantity入力ハンドラ
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuantity(e.target.value ? Number(e.target.value) : null);
+  };
+
+  // activityKind選択ハンドラ
+  const handleActivityKindChange = (value: string) => {
+    setActivityKindId(value);
+  };
+
+  // memo入力ハンドラ
+  const handleMemoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMemo(e.target.value);
+  };
+
   if (!log) return null;
 
   return (
@@ -160,9 +175,7 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             <div className="flex flex-1 w-full items-center gap-1">
               <Input
                 value={quantity ?? ""}
-                onChange={(e) =>
-                  setQuantity(e.target.value ? Number(e.target.value) : null)
-                }
+                onChange={handleQuantityChange}
                 className="w-24"
                 inputMode="numeric"
                 autoComplete="off"
@@ -182,7 +195,7 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             <RadioGroup
               className="flex"
               value={activityKindId}
-              onValueChange={(v) => setActivityKindId(v)}
+              onValueChange={handleActivityKindChange}
             >
               <div className="flex items-center space-y-0 gap-1">
                 <RadioGroupItem value="" />
@@ -201,7 +214,7 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
           )}
           <Textarea
             value={memo}
-            onChange={(e) => setMemo(e.target.value)}
+            onChange={handleMemoChange}
             className="h-24"
             placeholder="メモ"
             autoComplete="off"

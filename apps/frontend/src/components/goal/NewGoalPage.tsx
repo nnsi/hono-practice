@@ -61,6 +61,21 @@ export const NewGoalPage: React.FC = () => {
     return activitiesData?.find((a) => a.id === activityId);
   };
 
+  // 編集開始時のハンドラを作成する関数
+  const createEditStartHandler = (goalId: string) => {
+    return () => setEditingGoalId(goalId);
+  };
+
+  // 編集終了時のハンドラ
+  const handleEditEnd = () => {
+    setEditingGoalId(null);
+  };
+
+  // 目標作成完了時のハンドラ
+  const handleGoalCreated = () => {
+    setEditingGoalId(null);
+  };
+
   if (goalsLoading) {
     return (
       <div className="container mx-auto p-4 max-w-6xl flex items-center justify-center py-16">
@@ -81,8 +96,8 @@ export const NewGoalPage: React.FC = () => {
             activityEmoji={getActivityEmoji(goal.activityId)}
             quantityUnit={getActivityUnit(goal.activityId)}
             isEditing={editingGoalId === goal.id}
-            onEditStart={() => setEditingGoalId(goal.id)}
-            onEditEnd={() => setEditingGoalId(null)}
+            onEditStart={createEditStartHandler(goal.id)}
+            onEditEnd={handleEditEnd}
             activities={activitiesData || []}
             activity={getActivity(goal.activityId)}
           />
@@ -90,7 +105,7 @@ export const NewGoalPage: React.FC = () => {
 
         <NewGoalSlot
           activities={activitiesData || []}
-          onCreated={() => setEditingGoalId(null)}
+          onCreated={handleGoalCreated}
         />
       </div>
 
@@ -109,8 +124,8 @@ export const NewGoalPage: React.FC = () => {
                 activityEmoji={getActivityEmoji(goal.activityId)}
                 quantityUnit={getActivityUnit(goal.activityId)}
                 isEditing={editingGoalId === goal.id}
-                onEditStart={() => setEditingGoalId(goal.id)}
-                onEditEnd={() => setEditingGoalId(null)}
+                onEditStart={createEditStartHandler(goal.id)}
+                onEditEnd={handleEditEnd}
                 activities={activitiesData || []}
                 activity={getActivity(goal.activityId)}
                 isPast={true}

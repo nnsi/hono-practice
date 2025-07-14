@@ -64,6 +64,15 @@ export const SettingPage: React.FC = () => {
     }
   };
 
+  // Google紐付けエラー時のハンドラ
+  const handleGoogleLinkError = () => {
+    toast({
+      title: "Error",
+      description: "Failed to link Google account",
+      variant: "destructive",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -78,13 +87,7 @@ export const SettingPage: React.FC = () => {
             ) : (
               <GoogleLogin
                 onSuccess={handleGoogleLink}
-                onError={() =>
-                  toast({
-                    title: "Error",
-                    description: "Failed to link Google account",
-                    variant: "destructive",
-                  })
-                }
+                onError={handleGoogleLinkError}
               />
             )}
           </div>

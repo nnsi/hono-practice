@@ -27,6 +27,11 @@ export function OfflineBanner() {
     }
   }, [isOnline, isVisible]);
 
+  // バナーを閉じるハンドラ
+  const handleDismiss = () => {
+    setIsDismissed(true);
+  };
+
   if (!isVisible) {
     return null;
   }
@@ -51,7 +56,7 @@ export function OfflineBanner() {
       </div>
       <button
         type="button"
-        onClick={() => setIsDismissed(true)}
+        onClick={handleDismiss}
         className="p-1 hover:bg-yellow-600 rounded transition-colors"
         aria-label="閉じる"
       >

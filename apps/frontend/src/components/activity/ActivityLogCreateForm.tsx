@@ -25,6 +25,11 @@ export function ActivityLogCreateFormBody({
   activity: GetActivityResponse;
   onSubmit: (data: CreateActivityLogRequest) => Promise<void>;
 }) {
+  // 入力フィールドフォーカス時のハンドラ
+  const handleQuantityFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -39,7 +44,7 @@ export function ActivityLogCreateFormBody({
                 inputMode="numeric"
                 autoComplete="off"
                 autoFocus
-                onFocus={(e) => e.target.select()}
+                onFocus={handleQuantityFocus}
                 {...field}
               />
             )}

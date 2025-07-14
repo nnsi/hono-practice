@@ -58,6 +58,31 @@ export const TaskList: React.FC<TaskListProps> = ({
     form.reset();
   });
 
+  // タスクの完了/未完了を切り替えるハンドラ
+  const handleToggleTaskDone = (task: GetTaskResponse) => {
+    updateTask.mutate({
+      id: task.id,
+      doneDate: task.doneDate ? null : dateStr,
+      date: dateStr,
+    });
+  };
+
+  // タスクを削除するハンドラ
+  const handleDeleteTask = (e: React.MouseEvent, task: GetTaskResponse) => {
+    e.stopPropagation();
+    deleteTask.mutate({ id: task.id, date: dateStr });
+  };
+
+  // タスク追加フォームを閉じるハンドラ
+  const handleCloseAddForm = () => {
+    setAddFormOpen(false);
+  };
+
+  // タスク追加フォームを開くハンドラ
+  const handleOpenAddForm = () => {
+    setAddFormOpen(true);
+  };
+
   return (
     <>
       <div className="flex-1 flex flex-col gap-4 px-4">
@@ -73,13 +98,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     type="button"
                     variant="ghost"
                     className="flex items-center justify-center w-10 h-10 text-3xl bg-transparent border-none p-0 m-0"
-                    onClick={() =>
-                      updateTask.mutate({
-                        id: task.id,
-                        doneDate: task.doneDate ? null : dateStr,
-                        date: dateStr,
-                      })
-                    }
+                    onClick={() => handleToggleTaskDone(task)}
                   >
                     {task.doneDate ? (
                       <CheckCircledIcon className="text-green-500 w-8 h-8" />
@@ -99,10 +118,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     type="button"
                     variant="ghost"
                     className="ml-2 text-gray-400 hover:text-red-500 bg-transparent border-none p-0 m-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteTask.mutate({ id: task.id, date: dateStr });
-                    }}
+                    onClick={(e) => handleDeleteTask(e, task)}
                     disabled={deleteTask.isPending}
                     aria-label="タスク削除"
                   >
@@ -137,7 +153,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => setAddFormOpen(false)}
+                  onClick={handleCloseAddForm}
                   className="p-1"
                 >
                   <CrossCircledIcon className="text-gray-400 w-8 h-8" />
@@ -148,7 +164,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         ) : (
           <Card
             className="cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group h-20"
-            onClick={() => setAddFormOpen(true)}
+            onClick={handleOpenAddForm}
           >
             <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
               <span className="flex items-center justify-center w-10 h-10 text-3xl">

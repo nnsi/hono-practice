@@ -13,17 +13,20 @@ export function generateOrder(
   prev: string | null | undefined,
   next: string | null | undefined,
 ) {
-  if (!prev) {
-    if (!next) return generateRandomAlphabet(8);
+  if (!prev && !next) return generateRandomAlphabet(8);
 
-    const lastNextChar = next.slice(-1).charCodeAt(0);
-    if (lastNextChar === CHAR_CODE_A) return next.slice(0, -1);
-    return next.slice(0, -1) + String.fromCharCode(lastNextChar - 1);
+  if (!prev) {
+    const lastNextChar = next!.slice(-1).charCodeAt(0);
+    return lastNextChar === CHAR_CODE_A
+      ? next!.slice(0, -1)
+      : next!.slice(0, -1) + String.fromCharCode(lastNextChar - 1);
   }
+
   if (!next) {
     const lastPrevChar = prev.slice(-1).charCodeAt(0);
-    if (lastPrevChar === CHAR_CODE_Z) return `${prev}a`;
-    return prev.slice(0, -1) + String.fromCharCode(lastPrevChar + 1);
+    return lastPrevChar === CHAR_CODE_Z
+      ? `${prev}a`
+      : prev.slice(0, -1) + String.fromCharCode(lastPrevChar + 1);
   }
 
   if (prev >= next) {
@@ -39,16 +42,16 @@ export function generateOrder(
 
   if (i === minLength && prev.length < next.length) {
     const lastNextChar = next.charCodeAt(next.length - 1);
-    if (lastNextChar === CHAR_CODE_A) {
-      if (next.length - prev.length === 1) {
-        throw new Error("cannot generate: next is already the last order");
-      }
-      return next.slice(0, -1);
+    if (lastNextChar !== CHAR_CODE_A) {
+      return (
+        next.slice(0, -1) +
+        String.fromCharCode(Math.floor((CHAR_CODE_A + lastNextChar) / 2))
+      );
     }
-    return (
-      next.slice(0, -1) +
-      String.fromCharCode(Math.floor((CHAR_CODE_A + lastNextChar) / 2))
-    );
+    if (next.length - prev.length === 1) {
+      throw new Error("cannot generate: next is already the last order");
+    }
+    return next.slice(0, -1);
   }
 
   const prevCharCode = prev.charCodeAt(i);

@@ -38,6 +38,11 @@ export const ApiKeyList: React.FC = () => {
     }
   };
 
+  // APIキー削除ボタンのクリックハンドラを作成する関数
+  const createDeleteHandler = (id: string, name: string) => {
+    return () => handleDelete(id, name);
+  };
+
   if (isLoading) {
     return <div>読み込み中...</div>;
   }
@@ -74,7 +79,7 @@ export const ApiKeyList: React.FC = () => {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDelete(apiKey.id, apiKey.name)}
+                  onClick={createDeleteHandler(apiKey.id, apiKey.name)}
                   disabled={deleteApiKey.isPending}
                 >
                   削除
