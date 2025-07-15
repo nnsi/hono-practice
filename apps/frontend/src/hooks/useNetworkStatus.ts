@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import type { NetworkStatusManager } from "@frontend/services/abstractions";
+
 export type NetworkStatus = {
   isOnline: boolean;
   lastOnlineAt: Date | null;
@@ -18,6 +20,47 @@ export function setSimulatedOffline(offline: boolean) {
 
 export function getSimulatedOffline(): boolean {
   return simulatedOffline;
+}
+
+// NetworkStatusManagerを使用するバージョンのhook
+export function useNetworkStatusWithManager(
+  networkStatusManager: NetworkStatusManager,
+  storage?: {
+    getItem: (key: string) => string | null;
+    setItem: (key: string, value: string) => void;
+  },
+): NetworkStatus {
+  const [isOnline, setIsOnline] = useState(() => {
+    const online = networkStatusManager.isOnline();
+    // 初期値もstorageに保存
+    storage?.setItem("network-status", online ? "online" : "offline");
+    return online;
+  });
+  const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
+  const [lastOfflineAt, setLastOfflineAt] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = networkStatusManager.addListener((online) => {
+      setIsOnline(online);
+
+      // storageに状態を保存（qp関数で参照するため）
+      storage?.setItem("network-status", online ? "online" : "offline");
+
+      if (online) {
+        setLastOnlineAt(new Date());
+      } else {
+        setLastOfflineAt(new Date());
+      }
+    });
+
+    return unsubscribe;
+  }, [networkStatusManager, storage]);
+
+  return {
+    isOnline,
+    lastOnlineAt,
+    lastOfflineAt,
+  };
 }
 
 export function useNetworkStatus(): NetworkStatus {

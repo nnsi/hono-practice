@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { useAuth } from "@frontend/hooks/useAuth";
 import { useNetworkStatus } from "@frontend/hooks/useNetworkStatus";
-import { SyncManager } from "@frontend/services/sync";
+import { getSyncManagerInstance } from "@frontend/services/sync";
 
 import type { NetworkStatus } from "@frontend/hooks/useNetworkStatus";
 
@@ -16,7 +16,7 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    const syncManager = SyncManager.getInstance(user?.id);
+    const syncManager = getSyncManagerInstance(user?.id);
 
     // ユーザーIDが変わった場合に更新
     syncManager.updateUserId(user?.id);

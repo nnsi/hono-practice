@@ -1,24 +1,26 @@
 import type { TokenStorage } from "./types";
 
 /**
- * シンプルなメモリベースのトークンストレージ
- * プラットフォーム共通で使用可能
+ * メモリベースのトークンストレージを作成
+ * クロージャを使用して状態を管理
  */
-export class MemoryTokenStore implements TokenStorage {
-  private token: string | null = null;
+export function createMemoryTokenStore(): TokenStorage {
+  let token: string | null = null;
 
-  getToken(): string | null {
-    return this.token;
-  }
+  return {
+    getToken(): string | null {
+      return token;
+    },
 
-  setToken(token: string | null): void {
-    this.token = token;
-  }
+    setToken(newToken: string | null): void {
+      token = newToken;
+    },
 
-  clearToken(): void {
-    this.token = null;
-  }
+    clearToken(): void {
+      token = null;
+    },
+  };
 }
 
 // グローバルインスタンス
-export const tokenStore = new MemoryTokenStore();
+export const tokenStore = createMemoryTokenStore();

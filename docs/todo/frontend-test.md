@@ -26,26 +26,26 @@
 ### 2. 依存性の抽象化とリファクタリング
 
 #### 2.1 グローバル依存の抽象化
-- [ ] StorageProvider インターフェースの作成（localStorage/sessionStorageの抽象化）
-- [ ] EventBus インターフェースの作成（window.dispatchEventの抽象化）
-- [ ] NetworkStatusProvider インターフェースの改善（navigator.onLineの抽象化）
-- [ ] TimeProvider インターフェースの作成（setTimeout/DateNowの抽象化）
+- [x] StorageProvider インターフェースの作成（localStorage/sessionStorageの抽象化）
+- [x] EventBus インターフェースの作成（window.dispatchEventの抽象化）
+- [x] NetworkStatusProvider インターフェースの改善（navigator.onLineの抽象化）
+- [x] TimeProvider インターフェースの作成（setTimeout/DateNowの抽象化）
 
 #### 2.2 API層の改善
-- [ ] apiClientをファクトリー関数化（依存性注入を可能に）
-- [ ] グローバル変数（isRefreshing、failedRequestsQueue）の除去
-- [ ] HTTPクライアントインターフェースの定義
+- [x] apiClientをファクトリー関数化（依存性注入を可能に）
+- [x] グローバル変数（isRefreshing、failedRequestsQueue）の除去
+- [x] HTTPクライアントインターフェースの定義
 
 #### 2.3 認証層の改善
-- [ ] TokenStoreインターフェースの定義とDI対応
-- [ ] AuthProviderへの依存性注入対応
-- [ ] TokenProviderへの依存性注入対応
-- [ ] イベント通信をEventBus経由に変更
+- [x] TokenStoreインターフェースの定義とDI対応
+- [x] AuthProviderへの依存性注入対応
+- [x] TokenProviderへの依存性注入対応
+- [x] イベント通信をEventBus経由に変更
 
 #### 2.4 同期処理の改善
-- [ ] SyncManagerのシングルトンパターンを依存性注入に変更
-- [ ] SyncQueueの抽象化
-- [ ] 暗号化処理（syncCrypto）の注入対応
+- [x] SyncManagerのシングルトンパターンを依存性注入に変更
+- [x] SyncQueueの抽象化
+- [x] 暗号化処理（syncCrypto）の注入対応
 
 ### 3. テストユーティリティの作成
 
