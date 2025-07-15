@@ -1,3 +1,4 @@
+import { createTaskEntity } from "@backend/domain/task";
 import { UnexpectedError } from "@backend/error";
 
 import type { SyncItem } from "@dtos/request";
@@ -256,12 +257,20 @@ function syncBatchItems(
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
                   const created = await activityRepository
                     .withTx(tx)
                     .createActivity(activity);
                   result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -277,14 +286,24 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityRepository
+                    const updated = await activityRepository
                       .withTx(tx)
                       .updateActivity(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
-                  await activityRepository.withTx(tx).updateActivity(activity);
+                  const updated = await activityRepository
+                    .withTx(tx)
+                    .updateActivity(activity);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -373,12 +392,20 @@ function syncBatchItems(
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
                   const created = await activityLogRepository
                     .withTx(tx)
                     .createActivityLog(activityLog);
                   result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -394,16 +421,24 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityLogRepository
+                    const updated = await activityLogRepository
                       .withTx(tx)
                       .updateActivityLog(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
-                  await activityLogRepository
+                  const updated = await activityLogRepository
                     .withTx(tx)
                     .updateActivityLog(activityLog);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
                 }
                 break;
               }
@@ -420,12 +455,20 @@ function syncBatchItems(
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
                   const created = await activityGoalRepository
                     .withTx(tx)
                     .createActivityGoal(goal);
                   result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -439,16 +482,24 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityGoalRepository
+                    const updated = await activityGoalRepository
                       .withTx(tx)
                       .updateActivityGoal(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
-                  await activityGoalRepository
+                  const updated = await activityGoalRepository
                     .withTx(tx)
                     .updateActivityGoal(goal);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -466,7 +517,76 @@ function syncBatchItems(
                 break;
               }
               case "task": {
-                const task = item.payload as Task;
+                const taskPayload = item.payload as any;
+                let task: Task;
+
+                try {
+                  // payloadのログを出力して問題を特定
+                  console.log("Task sync payload:", {
+                    clientId: item.clientId,
+                    payload: taskPayload,
+                    userId: taskPayload.userId || userId,
+                  });
+
+                  // userIdが"offline"の場合は実際のユーザーIDを使用
+                  const actualUserId =
+                    taskPayload.userId === "offline" || !taskPayload.userId
+                      ? userId
+                      : taskPayload.userId;
+
+                  // payloadにtype フィールドが無い場合は追加する
+                  // memoフィールドが無い場合はnullを設定
+                  // archivedAtフィールドが無い場合はnullを設定
+                  // createdAt/updatedAtがstring型の場合はDateに変換
+                  task = createTaskEntity({
+                    ...taskPayload,
+                    type: taskPayload.type || "new",
+                    userId: actualUserId,
+                    memo:
+                      taskPayload.memo !== undefined ? taskPayload.memo : null,
+                    archivedAt:
+                      taskPayload.archivedAt !== undefined
+                        ? taskPayload.archivedAt
+                        : null,
+                    createdAt: taskPayload.createdAt
+                      ? new Date(taskPayload.createdAt)
+                      : undefined,
+                    updatedAt: taskPayload.updatedAt
+                      ? new Date(taskPayload.updatedAt)
+                      : undefined,
+                  });
+
+                  console.log("Processing task sync:", {
+                    clientId: item.clientId,
+                    taskId: task.id,
+                    operation: item.operation,
+                  });
+                } catch (createError) {
+                  console.error("Failed to create task entity:", {
+                    clientId: item.clientId,
+                    payload: taskPayload,
+                    actualPayload: {
+                      ...taskPayload,
+                      type: taskPayload.type || "new",
+                      userId:
+                        taskPayload.userId === "offline" || !taskPayload.userId
+                          ? userId
+                          : taskPayload.userId,
+                    },
+                    error: createError,
+                    errorMessage:
+                      createError instanceof Error
+                        ? createError.message
+                        : "Unknown error",
+                    errorStack:
+                      createError instanceof Error
+                        ? createError.stack
+                        : undefined,
+                  });
+                  throw new UnexpectedError(
+                    `タスクエンティティの作成に失敗しました: ${createError instanceof Error ? createError.message : "Unknown error"}`,
+                  );
+                }
 
                 // 冪等性の保証：既存チェック
                 const existing = await taskRepository
@@ -478,12 +598,20 @@ function syncBatchItems(
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
                   const created = await taskRepository
                     .withTx(tx)
                     .createTask(task);
                   result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 
@@ -497,12 +625,24 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await taskRepository.withTx(tx).updateTask(resolved);
+                    const updated = await taskRepository
+                      .withTx(tx)
+                      .updateTask(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
                     break;
                   }
-                  await taskRepository.withTx(tx).updateTask(task);
+                  const updated = await taskRepository
+                    .withTx(tx)
+                    .updateTask(task);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
                   break;
                 }
 

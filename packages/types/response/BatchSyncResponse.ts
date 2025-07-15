@@ -17,6 +17,7 @@ export const SyncResultSchema = z.object({
   message: z.string().optional(), // 情報メッセージ（スキップの理由など）
   conflictData: z.record(z.any()).optional(), // コンフリクト時の現在のサーバーデータ
   version: z.number().int().optional(), // 更新後のバージョン番号
+  payload: z.record(z.any()).optional(), // 作成・更新されたエンティティの完全なデータ
 });
 
 // サーバーからクライアントへの変更通知

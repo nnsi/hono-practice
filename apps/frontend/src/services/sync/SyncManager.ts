@@ -36,6 +36,7 @@ export type SyncResult = {
   conflictData?: Record<string, unknown>;
   error?: string;
   message?: string;
+  payload?: Record<string, unknown>;
 };
 
 export class SyncManager {
@@ -182,6 +183,42 @@ export class SyncManager {
             window.dispatchEvent(
               new CustomEvent("sync-delete-success", {
                 detail: { entityId: item.entityId },
+              }),
+            );
+          }
+
+          // 作成操作が成功した場合は、作成されたエンティティのデータを含むイベントを発火
+          if (item.operation === "create" && syncResult.payload) {
+            window.dispatchEvent(
+              new CustomEvent("sync-create-success", {
+                detail: {
+                  entityType: item.entityType,
+                  entityId: item.entityId,
+                  serverId: syncResult.serverId,
+                  payload: syncResult.payload,
+                },
+              }),
+            );
+          }
+
+          // 更新操作が成功した場合も、更新されたエンティティのデータを含むイベントを発火
+          if (item.operation === "update" && syncResult.payload) {
+            window.dispatchEvent(
+              new CustomEvent("sync-update-success", {
+                detail: {
+                  entityType: item.entityType,
+                  entityId: item.entityId,
+                  payload: syncResult.payload,
+                },
+              }),
+            );
+          }
+
+          // タスクの削除操作が成功した場合
+          if (item.operation === "delete" && item.entityType === "task") {
+            window.dispatchEvent(
+              new CustomEvent("sync-delete-success", {
+                detail: { entityId: item.entityId, entityType: "task" },
               }),
             );
           }

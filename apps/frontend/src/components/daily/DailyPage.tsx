@@ -21,6 +21,7 @@ import { Card, CardContent } from "@components/ui";
 import { ActivityDateHeader } from "@components/activity/ActivityDateHeader";
 
 import { ActivityLogEditDialog } from "./ActivityLogEditDialog";
+import { DailyActivityLogCreateDialog } from "./DailyActivityLogCreateDialog";
 import { TaskList } from "./TaskList";
 
 export const ActivityDailyPage: React.FC = () => {
@@ -28,6 +29,7 @@ export const ActivityDailyPage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatusContext();
 
@@ -161,6 +163,14 @@ export const ActivityDailyPage: React.FC = () => {
         open={editDialogOpen}
         onOpenChange={handleActivityLogEditDialogChange}
         log={editTargetLog}
+      />
+      <DailyActivityLogCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        date={date}
+        onSuccess={() => {
+          // 必要に応じてリフレッシュ処理を追加
+        }}
       />
     </>
   );

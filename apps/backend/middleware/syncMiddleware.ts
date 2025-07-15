@@ -154,11 +154,15 @@ export const syncMiddleware = <T extends AppContext = AppContext>(
       });
 
       // Cloudflare Workersの場合はwaitUntilで実行を保証
-      if (c.executionCtx?.waitUntil) {
-        try {
-          c.executionCtx.waitUntil(syncJob);
-        } catch {
-          // Node.js環境ではexecutionCtxが存在しないため、エラーは無視
+      try {
+        c.executionCtx.waitUntil(syncJob);
+      } catch (e) {
+        if (e instanceof Error) {
+          if (e.message === "This context has no ExecutionContext") {
+            // Node.js環境ではexecutionCtxが存在しないため、エラーは無視
+          } else {
+            throw e;
+          }
         }
       }
     } catch (error) {

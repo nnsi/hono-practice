@@ -3,7 +3,7 @@ import type React from "react";
 
 import { useGlobalDate, useLongPress } from "@frontend/hooks";
 import { useActivityBatchData } from "@frontend/hooks/api";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { PlusCircledIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
@@ -108,7 +108,7 @@ export const ActivityRegistPage: React.FC = () => {
         })}
         <ActivityCard onClick={handleNewActivityClick} isDashed>
           <div className="text-5xl mb-2">
-            <PlusIcon className="w-16 h-16 text-gray-400 group-hover:text-gray-600" />
+            <PlusCircledIcon className="w-16 h-16 text-gray-400 group-hover:text-gray-600" />
           </div>
           <div className="text-sm text-gray-500 group-hover:text-gray-700 font-medium">
             新規追加

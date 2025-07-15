@@ -120,10 +120,10 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
 
 export const ActivityStatsPage: React.FC = () => {
   const { date } = useContext(DateContext);
-  
+
   // monthを独立して管理
   const [month, setMonth] = useState(dayjs(date).format("YYYY-MM"));
-  
+
   // dateの月が変化したときのみmonthを更新
   useEffect(() => {
     const newMonth = dayjs(date).format("YYYY-MM");
