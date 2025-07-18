@@ -478,4 +478,3 @@ export function getSyncManagerInstance(userId?: string): SyncManager {
   }
   return syncManagerInstance;
 }
-

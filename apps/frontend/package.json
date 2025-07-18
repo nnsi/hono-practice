@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "build-stg": "vite build --mode stg"
+    "build-stg": "vite build --mode stg",
+    "test": "vitest",
+    "test-once": "vitest run"
   },
   "type": "module",
   "dependencies": {

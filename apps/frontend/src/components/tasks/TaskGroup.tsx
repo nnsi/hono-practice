@@ -1,11 +1,9 @@
 import type React from "react";
 import { useState } from "react";
 
-import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { TaskEditDialog } from "@frontend/components/tasks/TaskEditDialog";
 import {
   useArchiveTask,
-  useDeleteTask,
   useUpdateTask,
 } from "@frontend/hooks/sync/useSyncedTask";
 import {
@@ -13,9 +11,7 @@ import {
   CalendarIcon,
   CheckCircledIcon,
   CircleIcon,
-  Cross2Icon,
   PlusCircledIcon,
-  PlusIcon,
 } from "@radix-ui/react-icons";
 import dayjs from "dayjs";
 
@@ -42,6 +38,7 @@ interface TaskGroupProps {
   highlight?: boolean;
   completed?: boolean;
   emptyMessage?: string;
+  onCreateClick?: () => void;
 }
 
 export const TaskGroup: React.FC<TaskGroupProps> = ({
@@ -52,15 +49,12 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
   highlight = false,
   completed = false,
   emptyMessage,
+  onCreateClick,
 }) => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [pressedTaskId, setPressedTaskId] = useState<string | null>(null);
 
   const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
   const archiveTask = useArchiveTask();
 
   // タスクの完了/未完了を切り替え
@@ -82,32 +76,6 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
     });
   };
 
-  // 長押し開始
-  const handlePressStart = (taskId: string) => {
-    const timer = setTimeout(() => {
-      setPressedTaskId(taskId);
-      // 振動フィードバック（対応環境のみ）
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-    }, 500);
-    setPressTimer(timer);
-  };
-
-  // 長押し終了
-  const handlePressEnd = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-    }
-  };
-
-  // タスク削除
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask.mutate({ id: taskId });
-    setPressedTaskId(null);
-  };
-
   // タスクアーカイブ
   const handleArchiveTask = (task: TaskItem) => {
     archiveTask.mutate({ id: task.id, date: task.startDate || undefined });
@@ -115,11 +83,8 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
 
   // タスクをクリックしたときの処理
   const handleTaskClick = (task: TaskItem) => {
-    // 長押し中でない場合のみ編集ダイアログを開く
-    if (!pressedTaskId) {
-      setSelectedTask(task);
-      setEditDialogOpen(true);
-    }
+    setSelectedTask(task);
+    setEditDialogOpen(true);
   };
 
   if (isLoading && tasks.length === 0) {
@@ -137,28 +102,15 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className={`text-lg font-semibold ${titleColor}`}>
-          {title}{" "}
-          <span className="text-sm text-gray-500">({tasks.length})</span>
-        </h2>
-        {!completed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCreateDialogOpen(true)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <PlusIcon className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+      <h2 className={`text-lg font-semibold ${titleColor} mb-2`}>
+        {title} <span className="text-sm text-gray-500">({tasks.length})</span>
+      </h2>
 
       <div className="space-y-2">
         {title === "今日" && (
           <Card
             className="cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group h-20"
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={() => onCreateClick?.()}
           >
             <CardContent className="flex items-center justify-center gap-2 p-0 h-full">
               <PlusCircledIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
@@ -175,14 +127,8 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
               cursor-pointer transition-all duration-200 h-20
               ${highlight ? "border-red-200 bg-red-50" : ""}
               ${!completed ? "hover:shadow-md" : ""}
-              ${pressedTaskId === task.id ? "bg-red-100 scale-95" : ""}
             `}
             onClick={() => handleTaskClick(task)}
-            onMouseDown={() => handlePressStart(task.id)}
-            onMouseUp={handlePressEnd}
-            onMouseLeave={handlePressEnd}
-            onTouchStart={() => handlePressStart(task.id)}
-            onTouchEnd={handlePressEnd}
           >
             <div className="flex items-center gap-3 p-3 h-full">
               {/* チェックボックス */}
@@ -211,74 +157,52 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
                 </div>
                 {(task.startDate || task.dueDate) && (
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {task.dueDate &&
-                      `期限: ${dayjs(task.dueDate).format("MM/DD")}`}
-                    {task.startDate && task.dueDate && " / "}
                     {task.startDate &&
                       `開始: ${dayjs(task.startDate).format("MM/DD")}`}
+                    {task.startDate && task.dueDate && " / "}
+                    {task.dueDate &&
+                      `期限: ${dayjs(task.dueDate).format("MM/DD")}`}
                   </div>
                 )}
               </div>
 
               {/* アクションボタン */}
               <div className="flex items-center gap-1">
-                {pressedTaskId === task.id ? (
+                {/* 完了済みタスクのアーカイブボタン */}
+                {task.doneDate && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteTask(task.id);
+                      handleArchiveTask(task);
                     }}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-gray-500 hover:text-gray-700"
+                    title="アーカイブ"
                   >
-                    <Cross2Icon className="w-4 h-4" />
+                    <ArchiveIcon className="w-4 h-4" />
                   </Button>
-                ) : (
-                  <>
-                    {/* 完了済みタスクのアーカイブボタン */}
-                    {task.doneDate && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleArchiveTask(task);
-                        }}
-                        className="text-gray-500 hover:text-gray-700"
-                        title="アーカイブ"
-                      >
-                        <ArchiveIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {/* 未完了タスクの今日やるボタン */}
-                    {!completed && !task.doneDate && title !== "今日" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMoveToToday(task);
-                        }}
-                        className="text-blue-500 hover:text-blue-700"
-                        title="今日やる"
-                      >
-                        <CalendarIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </>
+                )}
+                {/* 未完了タスクの今日やるボタン */}
+                {!completed && !task.doneDate && title !== "今日" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveToToday(task);
+                    }}
+                    className="text-blue-500 hover:text-blue-700"
+                    title="今日やる"
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
             </div>
           </Card>
         ))}
       </div>
-
-      <TaskCreateDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={() => setCreateDialogOpen(false)}
-      />
 
       <TaskEditDialog
         open={editDialogOpen}

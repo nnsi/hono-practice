@@ -113,15 +113,27 @@ export const createInMemoryStorageProvider = (): StorageProvider => {
     oldValue: string | null,
     newValue: string | null,
   ) => {
-    const event = new StorageEvent("storage", {
-      key,
-      oldValue,
-      newValue,
-      storageArea: storage as any,
-      url: window.location.href,
-    });
-
-    listeners.forEach((listener) => listener(event));
+    // テスト環境での互換性のため、StorageEventを適切に処理
+    try {
+      const event = new StorageEvent("storage", {
+        key,
+        oldValue,
+        newValue,
+        storageArea: window.localStorage,
+        url: window.location.href,
+      });
+      listeners.forEach((listener) => listener(event));
+    } catch (e) {
+      // StorageEventの構築に失敗した場合、カスタムイベントを使用
+      const customEvent = {
+        key,
+        oldValue,
+        newValue,
+        storageArea: null,
+        url: window.location.href,
+      } as StorageEvent;
+      listeners.forEach((listener) => listener(customEvent));
+    }
   };
 
   return {

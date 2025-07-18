@@ -43,4 +43,3 @@ export function createTokenStore(storage?: StorageProvider): TokenStorage {
 
 // デフォルトのトークンストア（互換性のため）
 export { tokenStore } from "@packages/frontend-shared";
-

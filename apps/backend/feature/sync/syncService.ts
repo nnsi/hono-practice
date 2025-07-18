@@ -521,13 +521,6 @@ function syncBatchItems(
                 let task: Task;
 
                 try {
-                  // payloadのログを出力して問題を特定
-                  console.log("Task sync payload:", {
-                    clientId: item.clientId,
-                    payload: taskPayload,
-                    userId: taskPayload.userId || userId,
-                  });
-
                   // userIdが"offline"の場合は実際のユーザーIDを使用
                   const actualUserId =
                     taskPayload.userId === "offline" || !taskPayload.userId

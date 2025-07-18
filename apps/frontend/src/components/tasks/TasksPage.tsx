@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 
+import { FloatingActionButton } from "@frontend/components/tasks/FloatingActionButton";
+import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 
+import { EmptyState } from "./EmptyState";
 import { TaskGroup } from "./TaskGroup";
 
 dayjs.extend(isBetween);
@@ -24,6 +27,7 @@ type TaskItem = {
 
 export function TasksPage() {
   const [showCompleted, setShowCompleted] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // 全タスクを取得
   const { data: tasks, isLoading: isTasksLoading } = useQuery({
@@ -143,9 +147,16 @@ export function TasksPage() {
     return groups;
   }, [tasks]);
 
+  const hasAnyTasks = Object.values(groupedTasks).some(
+    (group) => group.length > 0,
+  );
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto py-4 px-4">
+    <div className="min-h-screen relative">
+      <div className="max-w-4xl mx-auto py-4 px-4 relative">
+        {!hasAnyTasks && (
+          <EmptyState onCreateClick={() => setCreateDialogOpen(true)} />
+        )}
         <div className="space-y-6">
           {/* 期限切れ */}
           {groupedTasks.overdue.length > 0 && (
@@ -165,7 +176,6 @@ export function TasksPage() {
               tasks={groupedTasks.dueToday}
               isLoading={isTasksLoading}
               titleColor="text-orange-600"
-              highlight
             />
           )}
 
@@ -213,6 +223,14 @@ export function TasksPage() {
           )}
         </div>
       </div>
+      <FloatingActionButton onClick={() => setCreateDialogOpen(true)} />
+      <TaskCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={() => setCreateDialogOpen(false)}
+      />
     </div>
   );
 }
+
+export default TasksPage;

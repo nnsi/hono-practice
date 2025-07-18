@@ -18,7 +18,6 @@ import { TokenContext } from "./TokenProvider";
 
 import type { EventBus } from "@frontend/services/abstractions";
 
-
 type UserState = GetUserResponse | null;
 
 type RequestStatus = "idle" | "loading";

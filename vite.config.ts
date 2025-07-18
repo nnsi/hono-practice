@@ -11,6 +11,7 @@ export default defineConfig(() => {
       env: {
         NODE_ENV: "test",
         JWT_SECRET: "test-jwt",
+        IS_REACT_ACT_ENVIRONMENT: "true",
       },
       exclude: ["db-data/**", "node_modules/**"],
       testTimeout: 30000, // 30 seconds for individual tests

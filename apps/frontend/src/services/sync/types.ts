@@ -7,7 +7,6 @@ import type {
 } from "@frontend/services/abstractions";
 import type { apiClient as defaultApiClient } from "@frontend/utils/apiClient";
 
-
 /**
  * SyncManagerの依存関係
  */
@@ -176,4 +175,3 @@ export type SyncQueueDependencies = {
    */
   timeProvider: TimeProvider;
 };
-

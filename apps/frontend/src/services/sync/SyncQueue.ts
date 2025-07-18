@@ -366,4 +366,3 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
     cleanup,
   };
 }
-

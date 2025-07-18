@@ -20,7 +20,10 @@ import {
 import { Input } from "@frontend/components/ui/input";
 import { Textarea } from "@frontend/components/ui/textarea";
 import { toast } from "@frontend/components/ui/use-toast";
-import { useUpdateTask } from "@frontend/hooks/sync/useSyncedTask";
+import {
+  useDeleteTask,
+  useUpdateTask,
+} from "@frontend/hooks/sync/useSyncedTask";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -60,6 +63,8 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
   onSuccess,
 }) => {
   const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const form = useForm<UpdateTaskFormData>({
     resolver: zodResolver(updateTaskSchema),
@@ -108,81 +113,142 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!task) return;
+
+    try {
+      await deleteTask.mutateAsync({ id: task.id });
+      toast({
+        title: "タスクを削除しました",
+      });
+      setShowDeleteDialog(false);
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      toast({
+        variant: "destructive",
+        title: "タスクの削除に失敗しました",
+      });
+    }
+  };
+
   if (!task) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>タスクを編集</DialogTitle>
-          <DialogDescription>タスクの詳細情報を編集できます</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>タイトル</FormLabel>
-                  <FormControl>
-                    <Input placeholder="タスクのタイトル" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>開始日</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>期限日（任意）</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="memo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>メモ（任意）</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="タスクに関するメモ"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={updateTask.isPending}>
-                {updateTask.isPending ? "更新中..." : "更新"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>タスクを編集</DialogTitle>
+            <DialogDescription>
+              タスクの詳細情報を編集できます
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>タイトル</FormLabel>
+                    <FormControl>
+                      <Input placeholder="タスクのタイトル" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>開始日</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>期限日（任意）</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="memo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>メモ（任意）</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="タスクに関するメモ"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="flex justify-between">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={deleteTask.isPending}
+                >
+                  削除
+                </Button>
+                <Button type="submit" disabled={updateTask.isPending}>
+                  {updateTask.isPending ? "更新中..." : "更新"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>タスクを削除しますか？</DialogTitle>
+            <DialogDescription>
+              この操作は取り消せません。タスク「{task?.title}
+              」を完全に削除します。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              キャンセル
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteTask.isPending}
+            >
+              削除する
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
