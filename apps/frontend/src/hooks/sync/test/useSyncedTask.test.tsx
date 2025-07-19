@@ -19,7 +19,6 @@ import {
   useUpdateTask,
 } from "../useSyncedTask";
 
-
 // useNetworkStatusContextのモック
 vi.mock("@frontend/providers/NetworkStatusProvider", () => ({
   useNetworkStatusContext: vi.fn(),

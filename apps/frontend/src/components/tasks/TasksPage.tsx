@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { FloatingActionButton } from "@frontend/components/tasks/FloatingActionButton";
 import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { apiClient } from "@frontend/utils/apiClient";
+import { PlusCircledIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
+
+import { Card, CardContent } from "@components/ui";
 
 import { EmptyState } from "./EmptyState";
 import { TaskGroup } from "./TaskGroup";
@@ -27,6 +29,7 @@ type TaskItem = {
 
 export function TasksPage() {
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showFuture, setShowFuture] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // 全タスクを取得
@@ -199,6 +202,51 @@ export function TasksPage() {
             />
           )}
 
+          {/* 今週締切 */}
+          {groupedTasks.dueThisWeek.length > 0 && (
+            <TaskGroup
+              title="今週締切"
+              tasks={groupedTasks.dueThisWeek}
+              isLoading={isTasksLoading}
+            />
+          )}
+
+          {/* 未来のタスク */}
+          {(groupedTasks.notStarted.length > 0 ||
+            groupedTasks.future.length > 0) && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowFuture(!showFuture)}
+                className="text-gray-500 hover:text-gray-700 text-sm"
+              >
+                {showFuture
+                  ? "未来のタスクを隠す"
+                  : `未来のタスク (${groupedTasks.notStarted.length + groupedTasks.future.length})`}
+              </button>
+              {showFuture && (
+                <>
+                  {groupedTasks.notStarted.length > 0 && (
+                    <TaskGroup
+                      title="未開始"
+                      tasks={groupedTasks.notStarted}
+                      isLoading={isTasksLoading}
+                      titleColor="text-purple-600"
+                    />
+                  )}
+                  {groupedTasks.future.length > 0 && (
+                    <TaskGroup
+                      title="来週以降"
+                      tasks={groupedTasks.future}
+                      isLoading={isTasksLoading}
+                      titleColor="text-indigo-600"
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+
           {/* 完了済み */}
           {groupedTasks.completed.length > 0 && (
             <>
@@ -221,9 +269,21 @@ export function TasksPage() {
               )}
             </>
           )}
+
+          {/* 新規タスク追加ボタン */}
+          <Card
+            onClick={() => setCreateDialogOpen(true)}
+            className="w-full cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group"
+          >
+            <CardContent className="flex items-center justify-center gap-2 py-6">
+              <PlusCircledIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+              <span className="text-sm text-gray-500 group-hover:text-gray-700">
+                新規タスクを追加
+              </span>
+            </CardContent>
+          </Card>
         </div>
       </div>
-      <FloatingActionButton onClick={() => setCreateDialogOpen(true)} />
       <TaskCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}

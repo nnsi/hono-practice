@@ -1,4 +1,4 @@
-import { useContext , act } from "react";
+import { act, useContext } from "react";
 import type { ReactNode } from "react";
 
 import { useAuth } from "@frontend/hooks/useAuth";
@@ -10,7 +10,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom";
 
 import { AppProviders } from "../AppProviders";
-
 
 // モック
 vi.mock("@react-oauth/google", () => ({

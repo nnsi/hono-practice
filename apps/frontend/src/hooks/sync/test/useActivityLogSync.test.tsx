@@ -12,7 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivityLogSync } from "../useActivityLogSync";
 
-
 describe("useActivityLogSync", () => {
   let queryClient: QueryClient;
 

@@ -91,7 +91,7 @@ export function ActivityLogCreateFormBody({
             </div>
           )}
           <div className="col-span-3 text-center">
-            <Button type="submit" variant="secondary" className="w-full">
+            <Button type="submit" variant="default" className="w-full">
               Record it!
             </Button>
           </div>

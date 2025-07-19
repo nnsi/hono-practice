@@ -12,7 +12,6 @@ import type { SubscriptionResponse } from "@dtos/response";
 
 import { useSubscription } from "../useSubscription";
 
-
 // モック
 vi.mock("@frontend/utils/apiClient", () => {
   const mockApiClient = {

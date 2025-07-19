@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivities } from "../useActivities";
 
-
 // apiClientのモック
 vi.mock("@frontend/utils", () => ({
   apiClient: {

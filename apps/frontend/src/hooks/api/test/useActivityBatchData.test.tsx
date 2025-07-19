@@ -14,7 +14,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivityBatchData } from "../useActivityBatchData";
 
-
 // useActivityLogSyncのモック
 vi.mock("@frontend/hooks/sync/useActivityLogSync", () => ({
   useActivityLogSync: vi.fn(),

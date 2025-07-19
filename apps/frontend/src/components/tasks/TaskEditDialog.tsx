@@ -153,9 +153,23 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>タイトル</FormLabel>
-                    <FormControl>
-                      <Input placeholder="タスクのタイトル" {...field} />
-                    </FormControl>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Input
+                          placeholder="タスクのタイトル"
+                          {...field}
+                          className="flex-1"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => setShowDeleteDialog(true)}
+                        disabled={deleteTask.isPending}
+                      >
+                        削除
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -203,15 +217,7 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
                   </FormItem>
                 )}
               />
-              <DialogFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={deleteTask.isPending}
-                >
-                  削除
-                </Button>
+              <DialogFooter>
                 <Button type="submit" disabled={updateTask.isPending}>
                   {updateTask.isPending ? "更新中..." : "更新"}
                 </Button>
