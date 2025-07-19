@@ -478,4 +478,155 @@ describe("TaskUsecase", () => {
       });
     });
   });
+
+  describe("getArchivedTasks", () => {
+    type GetArchivedTasksTestCase = {
+      name: string;
+      userId: UserId;
+      mockReturn: Task[] | undefined;
+      expectError: boolean;
+    };
+
+    const testCases: GetArchivedTasksTestCase[] = [
+      {
+        name: "success",
+        userId: userId1,
+        mockReturn: [
+          {
+            id: taskId1,
+            userId: userId1,
+            title: "archived task 1",
+            doneDate: "2021-01-01",
+            memo: null,
+            archivedAt: new Date("2021-01-02"),
+            type: "persisted",
+            createdAt: new Date("2021-01-01"),
+            updatedAt: new Date("2021-01-02"),
+          },
+          {
+            id: taskId2,
+            userId: userId1,
+            title: "archived task 2",
+            doneDate: "2021-01-03",
+            memo: "test memo",
+            archivedAt: new Date("2021-01-04"),
+            type: "persisted",
+            createdAt: new Date("2021-01-03"),
+            updatedAt: new Date("2021-01-04"),
+          },
+        ],
+        expectError: false,
+      },
+      {
+        name: "success / empty result",
+        userId: userId1,
+        mockReturn: [],
+        expectError: false,
+      },
+      {
+        name: "failed / getArchivedTasksByUserId error",
+        userId: userId1,
+        mockReturn: undefined,
+        expectError: true,
+      },
+    ];
+
+    testCases.forEach(({ name, userId, mockReturn, expectError }) => {
+      it(`${name}`, async () => {
+        if (expectError) {
+          when(repo.getArchivedTasksByUserId(userId)).thenReject(new Error());
+
+          await expect(usecase.getArchivedTasks(userId)).rejects.toThrow(Error);
+          return verify(repo.getArchivedTasksByUserId(userId)).once();
+        }
+
+        when(repo.getArchivedTasksByUserId(userId)).thenResolve(mockReturn!);
+
+        const result = await usecase.getArchivedTasks(userId);
+        expect(result).toEqual(mockReturn);
+
+        verify(repo.getArchivedTasksByUserId(userId)).once();
+      });
+    });
+  });
+
+  describe("archiveTask", () => {
+    type ArchiveTaskTestCase = {
+      name: string;
+      userId: UserId;
+      taskId: TaskId;
+      mockReturn: Task | undefined;
+      expectError?: {
+        archiveTask?: Error;
+        notFound?: ResourceNotFoundError;
+      };
+    };
+
+    const testCases: ArchiveTaskTestCase[] = [
+      {
+        name: "success",
+        userId: userId1,
+        taskId: taskId1,
+        mockReturn: {
+          id: taskId1,
+          userId: userId1,
+          title: "archived task",
+          doneDate: "2021-01-01",
+          memo: null,
+          archivedAt: new Date("2021-01-02"),
+          type: "persisted",
+          createdAt: new Date("2021-01-01"),
+          updatedAt: new Date("2021-01-02"),
+        },
+      },
+      {
+        name: "failed / task not found",
+        userId: userId1,
+        taskId: taskId1,
+        mockReturn: undefined,
+        expectError: {
+          notFound: new ResourceNotFoundError("task not found"),
+        },
+      },
+      {
+        name: "failed / archiveTask error",
+        userId: userId1,
+        taskId: taskId1,
+        mockReturn: undefined,
+        expectError: {
+          archiveTask: new Error(),
+        },
+      },
+    ];
+
+    testCases.forEach(({ name, userId, taskId, mockReturn, expectError }) => {
+      it(`${name}`, async () => {
+        if (expectError?.archiveTask) {
+          when(repo.archiveTask(userId, taskId)).thenReject(
+            expectError.archiveTask,
+          );
+
+          await expect(usecase.archiveTask(userId, taskId)).rejects.toThrow(
+            Error,
+          );
+          return verify(repo.archiveTask(userId, taskId)).once();
+        }
+
+        when(repo.archiveTask(userId, taskId)).thenResolve(mockReturn);
+
+        if (expectError?.notFound) {
+          await expect(usecase.archiveTask(userId, taskId)).rejects.toThrow(
+            ResourceNotFoundError,
+          );
+          return verify(repo.archiveTask(userId, taskId)).once();
+        }
+
+        const result = await usecase.archiveTask(userId, taskId);
+        expect(result).toEqual(mockReturn);
+
+        verify(repo.archiveTask(userId, taskId)).once();
+        expect(expectError).toBeUndefined();
+      });
+    });
+  });
 });

@@ -58,6 +58,11 @@ export function createTaskRoute() {
       const res = await c.var.h.getTasks(id, date);
       return c.json(res);
     })
+    .get("/archived", async (c) => {
+      const id = c.get("userId");
+      const res = await c.var.h.getArchivedTasks(id);
+      return c.json(res);
+    })
     .get("/:id", async (c) => {
       const userId = c.get("userId");
       const { id } = c.req.param();

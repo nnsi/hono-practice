@@ -37,6 +37,7 @@ interface TaskGroupProps {
   titleColor?: string;
   highlight?: boolean;
   completed?: boolean;
+  archived?: boolean;
   emptyMessage?: string;
   onCreateClick?: () => void;
 }
@@ -48,6 +49,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
   titleColor = "text-gray-700",
   highlight = false,
   completed = false,
+  archived = false,
   emptyMessage,
   onCreateClick,
 }) => {
@@ -169,7 +171,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
               {/* アクションボタン */}
               <div className="flex items-center gap-1">
                 {/* 完了済みタスクのアーカイブボタン */}
-                {task.doneDate && (
+                {task.doneDate && !archived && (
                   <Button
                     variant="ghost"
                     size="sm"

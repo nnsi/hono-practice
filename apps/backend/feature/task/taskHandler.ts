@@ -9,6 +9,7 @@ import type { TaskId, UserId } from "@backend/domain";
 export function newTaskHandler(uc: TaskUsecase) {
   return {
     getTasks: getTasks(uc),
+    getArchivedTasks: getArchivedTasks(uc),
     getTask: getTask(uc),
     createTask: createTask(uc),
     updateTask: updateTask(uc),
@@ -30,6 +31,25 @@ function getTasks(uc: TaskUsecase) {
     const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);
     if (!parsedTasks.success) {
       throw new AppError("getTasksHandler: failed to parse tasks", 500);
+    }
+
+    return parsedTasks.data;
+  };
+}
+
+function getArchivedTasks(uc: TaskUsecase) {
+  return async (userId: UserId) => {
+    const tasks = await uc.getArchivedTasks(userId);
+
+    const responseTasks = tasks.map((task) => ({
+      ...task,
+      id: task.id,
+      userId: task.userId,
+    }));
+
+    const parsedTasks = GetTasksResponseSchema.safeParse(responseTasks);
+    if (!parsedTasks.success) {
+      throw new AppError("getArchivedTasksHandler: failed to parse tasks", 500);
     }
 
     return parsedTasks.data;
