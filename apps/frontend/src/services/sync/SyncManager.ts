@@ -1,8 +1,16 @@
-import { apiClient } from "@frontend/utils/apiClient";
+import {
+  AppEvents,
+  createBrowserNetworkStatusManager,
+  createBrowserTimeProvider,
+  createLocalStorageProvider,
+  createWindowEventBus,
+} from "@frontend/services/abstractions";
+import { apiClient as defaultApiClient } from "@frontend/utils/apiClient";
 
-import { SyncQueue } from "./SyncQueue";
+import { createSyncQueue } from "./SyncQueue";
 
 import type { SyncQueueItem } from "./SyncQueue";
+import type { SyncManagerDependencies } from "./types";
 
 // TODO: Move to DTOs when available
 export type BatchSyncRequest = {
@@ -36,88 +44,156 @@ export type SyncResult = {
   conflictData?: Record<string, unknown>;
   error?: string;
   message?: string;
+  payload?: Record<string, unknown>;
 };
 
-export class SyncManager {
-  private static instance: SyncManager | null = null;
-  private syncQueue: SyncQueue;
-  private isSyncing = false;
-  private syncListeners: Array<(status: SyncStatus) => void> = [];
-  private lastSyncedAt: Date | null = null;
-  private syncInterval: ReturnType<typeof setInterval> | null = null;
-  private userId?: string;
+/**
+ * SyncManagerの設定
+ */
+export type SyncManagerConfig = {
+  userId?: string;
+  autoSyncInterval?: number;
+  dependencies?: Partial<SyncManagerDependencies>;
+};
 
-  private constructor(userId?: string) {
-    this.userId = userId;
-    this.syncQueue = new SyncQueue(userId);
-    this.loadLastSyncedAt();
-  }
-
-  static getInstance(userId?: string): SyncManager {
-    if (!SyncManager.instance) {
-      SyncManager.instance = new SyncManager(userId);
-    }
-    return SyncManager.instance;
-  }
-
-  // ユーザーIDが変わった場合に呼び出す
-  updateUserId(userId?: string): void {
-    if (this.userId !== userId) {
-      this.userId = userId;
-      // 新しいSyncQueueを作成
-      this.syncQueue = new SyncQueue(userId);
-    }
-  }
-
-  private loadLastSyncedAt(): void {
-    const stored = localStorage.getItem("actiko-last-synced-at");
-    if (stored) {
-      this.lastSyncedAt = new Date(stored);
-    }
-  }
-
-  private saveLastSyncedAt(): void {
-    if (this.lastSyncedAt) {
-      localStorage.setItem(
-        "actiko-last-synced-at",
-        this.lastSyncedAt.toISOString(),
-      );
-    }
-  }
-
-  async enqueue(
+export type SyncManager = {
+  updateUserId: (userId?: string) => void;
+  enqueue: (
     entityType: SyncQueueItem["entityType"],
     entityId: string,
     operation: SyncQueueItem["operation"],
     payload: Record<string, unknown>,
-  ): Promise<string> {
-    return await this.syncQueue.enqueue(
-      entityType,
-      entityId,
-      operation,
-      payload,
-    );
-  }
+  ) => Promise<string>;
+  syncBatch: (batchSize?: number) => Promise<SyncResult[]>;
+  syncAll: () => Promise<void>;
+  startAutoSync: (intervalMs?: number) => void;
+  stopAutoSync: () => void;
+  getSyncStatus: () => SyncStatus;
+  subscribeToStatus: (listener: (status: SyncStatus) => void) => () => void;
+  clearQueue: () => Promise<void>;
+  checkDuplicates: (
+    operations: Array<{
+      entityType: SyncQueueItem["entityType"];
+      entityId: string;
+      operation: SyncQueueItem["operation"];
+      timestamp: string;
+    }>,
+  ) => Promise<
+    Array<{ isDuplicate: boolean; conflictingOperationIds?: string[] }>
+  >;
+  pullSync: (
+    lastSyncTimestamp?: string,
+    entityTypes?: SyncQueueItem["entityType"][],
+    limit?: number,
+  ) => Promise<{
+    changes: Array<{
+      entityType: string;
+      entityId: string;
+      operation: string;
+      payload: Record<string, unknown>;
+      timestamp: string;
+      version: number;
+    }>;
+    hasMore: boolean;
+    nextTimestamp?: string;
+  }>;
+};
 
-  async syncBatch(batchSize = 10): Promise<SyncResult[]> {
-    if (this.isSyncing) {
+// シングルトンインスタンスの管理
+let syncManagerInstance: SyncManager | null = null;
+
+/**
+ * SyncManagerを作成するファクトリー関数
+ * クロージャを使用して状態を管理
+ */
+export function createSyncManager(config?: SyncManagerConfig): SyncManager {
+  const dependencies: SyncManagerDependencies = {
+    apiClient: config?.dependencies?.apiClient || defaultApiClient,
+    syncQueue:
+      config?.dependencies?.syncQueue ||
+      createSyncQueue({ userId: config?.userId }),
+    storage: config?.dependencies?.storage || createLocalStorageProvider(),
+    eventBus: config?.dependencies?.eventBus || createWindowEventBus(),
+    timeProvider:
+      config?.dependencies?.timeProvider || createBrowserTimeProvider(),
+    networkStatusManager:
+      config?.dependencies?.networkStatusManager ||
+      createBrowserNetworkStatusManager(),
+  };
+
+  // プライベート状態
+  let userId = config?.userId;
+  let syncQueue = dependencies.syncQueue;
+  let isSyncing = false;
+  let syncListeners: Array<(status: SyncStatus) => void> = [];
+  let lastSyncedAt: Date | null = null;
+  let syncInterval: number | null = null;
+
+  // 最後の同期時刻を読み込み
+  const loadLastSyncedAt = (): void => {
+    const stored = dependencies.storage.getItem("actiko-last-synced-at");
+    if (stored) {
+      lastSyncedAt = new Date(stored);
+    }
+  };
+
+  // 最後の同期時刻を保存
+  const saveLastSyncedAt = (): void => {
+    if (lastSyncedAt) {
+      dependencies.storage.setItem(
+        "actiko-last-synced-at",
+        lastSyncedAt.toISOString(),
+      );
+    }
+  };
+
+  // リスナーに通知
+  const notifyListeners = (): void => {
+    const status = getSyncStatus();
+    syncListeners.forEach((listener) => listener(status));
+  };
+
+  // 初期化
+  loadLastSyncedAt();
+
+  // パブリックAPI
+  const updateUserId = (newUserId?: string): void => {
+    if (userId !== newUserId) {
+      userId = newUserId;
+      // 新しいSyncQueueを作成
+      syncQueue = createSyncQueue({ userId: newUserId });
+      dependencies.syncQueue = syncQueue;
+    }
+  };
+
+  const enqueue = async (
+    entityType: SyncQueueItem["entityType"],
+    entityId: string,
+    operation: SyncQueueItem["operation"],
+    payload: Record<string, unknown>,
+  ): Promise<string> => {
+    return await syncQueue.enqueue(entityType, entityId, operation, payload);
+  };
+
+  const syncBatch = async (batchSize = 10): Promise<SyncResult[]> => {
+    if (isSyncing) {
       return [];
     }
 
-    this.isSyncing = true;
-    this.notifyListeners();
+    isSyncing = true;
+    notifyListeners();
 
     try {
-      const items = await this.syncQueue.dequeue(batchSize);
+      const items = await syncQueue.dequeue(batchSize);
       if (items.length === 0) {
         return [];
       }
 
       // 同期開始前にsyncPercentageを更新
-      this.notifyListeners();
+      notifyListeners();
 
       const request: BatchSyncRequest = {
-        items: items.map((item) => ({
+        items: items.map((item: SyncQueueItem) => ({
           clientId: item.clientId,
           entityType: item.entityType,
           entityId: item.entityId,
@@ -130,7 +206,7 @@ export class SyncManager {
 
       let response: Response;
       try {
-        response = await apiClient.users.sync.batch.$post({
+        response = await dependencies.apiClient.users.sync.batch.$post({
           json: request,
         });
       } catch (error) {
@@ -138,7 +214,7 @@ export class SyncManager {
         const errorMessage =
           error instanceof Error ? error.message : "Network error";
         for (const item of items) {
-          await this.syncQueue.markAsFailed(item.id, errorMessage, true);
+          await syncQueue.markAsFailed(item.id, errorMessage, true);
         }
         throw error;
       }
@@ -151,12 +227,12 @@ export class SyncManager {
         for (const item of items) {
           if (isRetriable) {
             // 5xx または 429 エラーはリトライ対象
-            await this.syncQueue.markAsFailed(item.id, errorMessage, true);
+            await syncQueue.markAsFailed(item.id, errorMessage, true);
           } else {
             // 4xx エラーなどはリトライしない
             // リトライ回数を最大値に設定して削除する
             for (let i = 0; i < 3; i++) {
-              await this.syncQueue.markAsFailed(item.id, errorMessage, false);
+              await syncQueue.markAsFailed(item.id, errorMessage, false);
             }
           }
         }
@@ -172,92 +248,115 @@ export class SyncManager {
         if (!item) continue;
 
         if (syncResult.status === "success") {
-          await this.syncQueue.markAsSuccess(item.id);
+          await syncQueue.markAsSuccess(item.id);
 
           // 削除操作が成功した場合は、削除IDリストから削除するイベントを発火
           if (
             item.operation === "delete" &&
             item.entityType === "activityLog"
           ) {
-            window.dispatchEvent(
-              new CustomEvent("sync-delete-success", {
-                detail: { entityId: item.entityId },
-              }),
-            );
+            dependencies.eventBus.emit("sync-delete-success", {
+              entityId: item.entityId,
+            });
+          }
+
+          // 作成操作が成功した場合は、作成されたエンティティのデータを含むイベントを発火
+          if (item.operation === "create" && syncResult.payload) {
+            dependencies.eventBus.emit(AppEvents.SYNC_CREATE_SUCCESS, {
+              entityType: item.entityType,
+              entityId: item.entityId,
+              serverId: syncResult.serverId,
+              payload: syncResult.payload,
+            });
+          }
+
+          // 更新操作が成功した場合も、更新されたエンティティのデータを含むイベントを発火
+          if (item.operation === "update" && syncResult.payload) {
+            dependencies.eventBus.emit(AppEvents.SYNC_UPDATE_SUCCESS, {
+              entityType: item.entityType,
+              entityId: item.entityId,
+              payload: syncResult.payload,
+            });
+          }
+
+          // タスクの削除操作が成功した場合
+          if (item.operation === "delete" && item.entityType === "task") {
+            dependencies.eventBus.emit("sync-delete-success", {
+              entityId: item.entityId,
+              entityType: "task",
+            });
           }
         } else if (syncResult.status === "skipped") {
           // スキップされたアイテムも成功として扱い、キューから削除
-          await this.syncQueue.markAsSuccess(item.id);
+          await syncQueue.markAsSuccess(item.id);
 
           // 削除操作がスキップされた場合も、削除IDリストから削除するイベントを発火
           if (
             item.operation === "delete" &&
             item.entityType === "activityLog"
           ) {
-            window.dispatchEvent(
-              new CustomEvent("sync-delete-success", {
-                detail: { entityId: item.entityId },
-              }),
-            );
+            dependencies.eventBus.emit("sync-delete-success", {
+              entityId: item.entityId,
+            });
           }
         } else if (syncResult.status === "error") {
-          await this.syncQueue.markAsFailed(
+          await syncQueue.markAsFailed(
             item.id,
             syncResult.error || "Unknown error",
           );
         } else if (syncResult.status === "conflict") {
-          await this.syncQueue.markAsFailed(item.id, "Conflict detected");
+          await syncQueue.markAsFailed(item.id, "Conflict detected");
         }
 
         results.push(syncResult);
       }
 
-      this.lastSyncedAt = new Date();
-      this.saveLastSyncedAt();
+      lastSyncedAt = new Date();
+      saveLastSyncedAt();
 
       return results;
     } finally {
-      this.isSyncing = false;
-      this.notifyListeners();
+      isSyncing = false;
+      notifyListeners();
     }
-  }
+  };
 
-  async syncAll(): Promise<void> {
-    while (this.syncQueue.hasPendingItems()) {
-      await this.syncBatch();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const syncAll = async (): Promise<void> => {
+    while (syncQueue.hasPendingItems()) {
+      await syncBatch();
+      await dependencies.timeProvider.sleep(1000);
     }
-  }
+  };
 
-  startAutoSync(intervalMs = 30000): void {
-    if (this.syncInterval) {
-      this.stopAutoSync();
+  const startAutoSync = (intervalMs = 30000): void => {
+    if (syncInterval) {
+      stopAutoSync();
     }
 
-    this.syncInterval = setInterval(async () => {
-      if (!navigator.onLine) {
+    syncInterval = dependencies.timeProvider.setInterval(async () => {
+      if (!dependencies.networkStatusManager.isOnline()) {
         return;
       }
 
-      if (this.syncQueue.hasPendingItems()) {
+      if (syncQueue.hasPendingItems()) {
         try {
-          await this.syncBatch();
+          await syncBatch();
         } catch (error) {}
       }
     }, intervalMs);
-  }
+  };
 
-  stopAutoSync(): void {
-    if (this.syncInterval) {
-      clearInterval(this.syncInterval);
-      this.syncInterval = null;
+  const stopAutoSync = (): void => {
+    if (syncInterval) {
+      dependencies.timeProvider.clearInterval(syncInterval);
+      syncInterval = null;
     }
-  }
+  };
 
-  getSyncStatus(): SyncStatus {
-    const pendingCount = this.syncQueue.getPendingCount();
-    const syncingCount = this.syncQueue.getSyncingCount();
-    const failedCount = this.syncQueue.getFailedCount();
+  const getSyncStatus = (): SyncStatus => {
+    const pendingCount = syncQueue.getPendingCount();
+    const syncingCount = syncQueue.getSyncingCount();
+    const failedCount = syncQueue.getFailedCount();
     const totalCount = pendingCount + syncingCount + failedCount;
 
     // 同期中のアイテムも進捗率に含める
@@ -274,30 +373,27 @@ export class SyncManager {
       failedCount,
       totalCount,
       syncPercentage: Math.round(syncPercentage),
-      lastSyncedAt: this.lastSyncedAt,
+      lastSyncedAt,
     };
-  }
+  };
 
-  subscribeToStatus(listener: (status: SyncStatus) => void): () => void {
-    this.syncListeners.push(listener);
-    listener(this.getSyncStatus());
+  const subscribeToStatus = (
+    listener: (status: SyncStatus) => void,
+  ): (() => void) => {
+    syncListeners.push(listener);
+    listener(getSyncStatus());
 
     return () => {
-      this.syncListeners = this.syncListeners.filter((l) => l !== listener);
+      syncListeners = syncListeners.filter((l) => l !== listener);
     };
-  }
+  };
 
-  private notifyListeners(): void {
-    const status = this.getSyncStatus();
-    this.syncListeners.forEach((listener) => listener(status));
-  }
+  const clearQueue = async (): Promise<void> => {
+    await syncQueue.clear();
+    notifyListeners();
+  };
 
-  async clearQueue(): Promise<void> {
-    await this.syncQueue.clear();
-    this.notifyListeners();
-  }
-
-  async checkDuplicates(
+  const checkDuplicates = async (
     operations: Array<{
       entityType: SyncQueueItem["entityType"];
       entityId: string;
@@ -306,8 +402,10 @@ export class SyncManager {
     }>,
   ): Promise<
     Array<{ isDuplicate: boolean; conflictingOperationIds?: string[] }>
-  > {
-    const response = await apiClient.users.sync["check-duplicates"].$post({
+  > => {
+    const response = await dependencies.apiClient.users.sync[
+      "check-duplicates"
+    ].$post({
       json: { operations },
     });
 
@@ -317,9 +415,9 @@ export class SyncManager {
 
     const result = await response.json();
     return result.results;
-  }
+  };
 
-  async pullSync(
+  const pullSync = async (
     lastSyncTimestamp?: string,
     entityTypes?: SyncQueueItem["entityType"][],
     limit = 100,
@@ -334,7 +432,7 @@ export class SyncManager {
     }>;
     hasMore: boolean;
     nextTimestamp?: string;
-  }> {
+  }> => {
     const params = new URLSearchParams();
     if (lastSyncTimestamp) {
       params.append("lastSyncTimestamp", lastSyncTimestamp);
@@ -344,7 +442,7 @@ export class SyncManager {
     }
     params.append("limit", limit.toString());
 
-    const response = await apiClient.users.sync.pull.$get({
+    const response = await dependencies.apiClient.users.sync.pull.$get({
       query: Object.fromEntries(params.entries()),
     });
 
@@ -353,5 +451,30 @@ export class SyncManager {
     }
 
     return await response.json();
+  };
+
+  // パブリックAPIを返す
+  return {
+    updateUserId,
+    enqueue,
+    syncBatch,
+    syncAll,
+    startAutoSync,
+    stopAutoSync,
+    getSyncStatus,
+    subscribeToStatus,
+    clearQueue,
+    checkDuplicates,
+    pullSync,
+  };
+}
+
+/**
+ * シングルトンインスタンスを取得
+ */
+export function getSyncManagerInstance(userId?: string): SyncManager {
+  if (!syncManagerInstance) {
+    syncManagerInstance = createSyncManager({ userId });
   }
+  return syncManagerInstance;
 }

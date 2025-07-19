@@ -20,6 +20,7 @@ export type TaskRepository<T = any> = {
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
+  archiveTask: (userId: UserId, taskId: TaskId) => Promise<Task | undefined>;
   getTaskChangesAfter: (
     userId: UserId,
     timestamp: Date,
@@ -37,6 +38,7 @@ export function newTaskRepository(
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),
+    archiveTask: archiveTask(db),
     getTaskChangesAfter: getTaskChangesAfter(db),
     withTx: (tx) => newTaskRepository(tx),
   };
@@ -49,6 +51,7 @@ function getTasksByUserId(db: QueryExecutor) {
       whereClause = and(
         eq(tasks.userId, userId),
         isNull(tasks.deletedAt),
+        isNull(tasks.archivedAt),
         // 完了済み: 完了日と一致
         or(
           and(
@@ -73,7 +76,11 @@ function getTasksByUserId(db: QueryExecutor) {
         ),
       );
     } else {
-      whereClause = and(eq(tasks.userId, userId), isNull(tasks.deletedAt));
+      whereClause = and(
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+        isNull(tasks.archivedAt),
+      );
     }
     const result = await db.query.tasks.findMany({
       where: whereClause,
@@ -94,6 +101,7 @@ function getTaskByUserIdAndTaskId(db: QueryExecutor) {
         eq(tasks.id, taskId),
         eq(tasks.userId, userId),
         isNull(tasks.deletedAt),
+        isNull(tasks.archivedAt),
       ),
     });
 
@@ -129,8 +137,11 @@ function updateTask(db: QueryExecutor) {
       .update(tasks)
       .set({
         title: task.title,
+        startDate: task.startDate,
+        dueDate: task.dueDate,
         doneDate: task.doneDate,
         memo: task.memo,
+        archivedAt: task.archivedAt,
       })
       .where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
       .returning();
@@ -156,6 +167,30 @@ function deleteTask(db: QueryExecutor) {
     if (!result) {
       throw new ResourceNotFoundError("task not found");
     }
+  };
+}
+
+function archiveTask(db: QueryExecutor) {
+  return async (userId: UserId, taskId: TaskId) => {
+    const [result] = await db
+      .update(tasks)
+      .set({ archivedAt: new Date() })
+      .where(
+        and(
+          eq(tasks.id, taskId),
+          eq(tasks.userId, userId),
+          isNull(tasks.deletedAt),
+        ),
+      )
+      .returning();
+
+    if (!result) {
+      return undefined;
+    }
+
+    const archivedTask = createTaskEntity({ ...result, type: "persisted" });
+
+    return archivedTask;
   };
 }
 
@@ -185,6 +220,7 @@ function getTaskChangesAfter(db: QueryExecutor) {
         startDate: row.startDate || undefined,
         dueDate: row.dueDate || undefined,
         doneDate: row.doneDate || undefined,
+        archivedAt: row.archivedAt || undefined,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),

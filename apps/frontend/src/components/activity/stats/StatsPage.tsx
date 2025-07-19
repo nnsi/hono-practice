@@ -1,6 +1,6 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 
-import { useGoals } from "@frontend/hooks/useGoals";
+import { useGoals } from "@frontend/hooks/api/useGoals";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { apiClient, qp } from "@frontend/utils";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
@@ -119,19 +119,28 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
 };
 
 export const ActivityStatsPage: React.FC = () => {
-  const { date, setDate } = useContext(DateContext);
+  const { date } = useContext(DateContext);
 
-  // 月変更用の関数
+  // monthを独立して管理
+  const [month, setMonth] = useState(dayjs(date).format("YYYY-MM"));
+
+  // dateの月が変化したときのみmonthを更新
+  useEffect(() => {
+    const newMonth = dayjs(date).format("YYYY-MM");
+    if (newMonth !== month) {
+      setMonth(newMonth);
+    }
+  }, [date]);
+
+  // 月変更用の関数（monthのみを更新）
   const handlePrevMonth = () => {
-    const prevMonth = dayjs(date).subtract(1, "month");
-    setDate(prevMonth.endOf("month").toDate());
+    const prevMonth = dayjs(month).subtract(1, "month");
+    setMonth(prevMonth.format("YYYY-MM"));
   };
   const handleNextMonth = () => {
-    const nextMonth = dayjs(date).add(1, "month");
-    setDate(nextMonth.startOf("month").toDate());
+    const nextMonth = dayjs(month).add(1, "month");
+    setMonth(nextMonth.format("YYYY-MM"));
   };
-
-  const month = dayjs(date).format("YYYY-MM");
 
   const { data: stats, isLoading } = useQuery({
     ...qp({
@@ -185,7 +194,7 @@ export const ActivityStatsPage: React.FC = () => {
         <button type="button" onClick={handlePrevMonth} className="ml-1">
           <ChevronLeftIcon />
         </button>
-        <span>{dayjs(date).format("YYYY年MM月")}</span>
+        <span>{dayjs(month).format("YYYY年MM月")}</span>
         <button type="button" onClick={handleNextMonth}>
           <ChevronRightIcon />
         </button>

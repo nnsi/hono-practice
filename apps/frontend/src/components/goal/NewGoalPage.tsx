@@ -1,16 +1,20 @@
 import { useState } from "react";
 
-import { useGoals } from "@frontend/hooks";
+import { useGoals } from "@frontend/hooks/api";
 import { apiClient } from "@frontend/utils";
+import { PlusCircledIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 
 import { GetActivitiesResponseSchema } from "@dtos/response";
 
+import { Card, CardContent } from "@components/ui";
+
 import { NewGoalCard } from "./NewGoalCard";
-import { NewGoalSlot } from "./NewGoalSlot";
+import { NewGoalDialog } from "./NewGoalDialog";
 
 export const NewGoalPage: React.FC = () => {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { data: goalsData, isLoading: goalsLoading } = useGoals();
 
   const { data: activitiesData } = useQuery({
@@ -61,6 +65,22 @@ export const NewGoalPage: React.FC = () => {
     return activitiesData?.find((a) => a.id === activityId);
   };
 
+  // 編集開始時のハンドラを作成する関数
+  const createEditStartHandler = (goalId: string) => {
+    return () => setEditingGoalId(goalId);
+  };
+
+  // 編集終了時のハンドラ
+  const handleEditEnd = () => {
+    setEditingGoalId(null);
+  };
+
+  // 目標作成完了時のハンドラ
+  const handleGoalCreated = () => {
+    setEditingGoalId(null);
+    setCreateDialogOpen(false);
+  };
+
   if (goalsLoading) {
     return (
       <div className="container mx-auto p-4 max-w-6xl flex items-center justify-center py-16">
@@ -81,17 +101,24 @@ export const NewGoalPage: React.FC = () => {
             activityEmoji={getActivityEmoji(goal.activityId)}
             quantityUnit={getActivityUnit(goal.activityId)}
             isEditing={editingGoalId === goal.id}
-            onEditStart={() => setEditingGoalId(goal.id)}
-            onEditEnd={() => setEditingGoalId(null)}
+            onEditStart={createEditStartHandler(goal.id)}
+            onEditEnd={handleEditEnd}
             activities={activitiesData || []}
             activity={getActivity(goal.activityId)}
           />
         ))}
 
-        <NewGoalSlot
-          activities={activitiesData || []}
-          onCreated={() => setEditingGoalId(null)}
-        />
+        <Card
+          onClick={() => setCreateDialogOpen(true)}
+          className="w-full h-20 cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group"
+        >
+          <CardContent className="flex items-center justify-center gap-2 p-0 h-full">
+            <PlusCircledIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+            <span className="text-sm text-gray-500 group-hover:text-gray-700">
+              新規目標を追加
+            </span>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 過去の目標 */}
@@ -109,8 +136,8 @@ export const NewGoalPage: React.FC = () => {
                 activityEmoji={getActivityEmoji(goal.activityId)}
                 quantityUnit={getActivityUnit(goal.activityId)}
                 isEditing={editingGoalId === goal.id}
-                onEditStart={() => setEditingGoalId(goal.id)}
-                onEditEnd={() => setEditingGoalId(null)}
+                onEditStart={createEditStartHandler(goal.id)}
+                onEditEnd={handleEditEnd}
                 activities={activitiesData || []}
                 activity={getActivity(goal.activityId)}
                 isPast={true}
@@ -119,6 +146,13 @@ export const NewGoalPage: React.FC = () => {
           </div>
         </>
       )}
+
+      <NewGoalDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        activities={activitiesData || []}
+        onSuccess={handleGoalCreated}
+      />
     </div>
   );
 };

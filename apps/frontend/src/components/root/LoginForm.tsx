@@ -52,6 +52,54 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  // Google認証成功時のハンドラ
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) {
+      toast({
+        title: "エラー",
+        description: "Google認証に失敗しました",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const res = await apiClient.auth.google.$post({
+        json: { credential: credentialResponse.credential },
+      });
+      if (res.status === 200) {
+        const { user, token } = await res.json();
+        setAccessToken(token);
+        scheduleTokenRefresh();
+        setUser({ ...user, name: user.name ?? null });
+        setTimeout(() => {
+          navigate({ to: "/" });
+        }, 0);
+      } else {
+        await res.json();
+        toast({
+          title: "エラー",
+          description: "Google認証に失敗しました",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({
+        title: "エラー",
+        description: "Google認証に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Google認証エラー時のハンドラ
+  const handleGoogleError = () => {
+    toast({
+      title: "エラー",
+      description: "Google認証に失敗しました",
+      variant: "destructive",
+    });
+  };
+
   return (
     <Card className="w-80">
       <CardHeader>ログインする</CardHeader>
@@ -98,50 +146,8 @@ export const LoginForm: React.FC = () => {
         </Form>
         <div className="flex flex-col items-center mt-4">
           <GoogleLogin
-            onSuccess={async (credentialResponse) => {
-              if (!credentialResponse.credential) {
-                toast({
-                  title: "エラー",
-                  description: "Google認証に失敗しました",
-                  variant: "destructive",
-                });
-                return;
-              }
-              try {
-                const res = await apiClient.auth.google.$post({
-                  json: { credential: credentialResponse.credential },
-                });
-                if (res.status === 200) {
-                  const { user, token } = await res.json();
-                  setAccessToken(token);
-                  scheduleTokenRefresh();
-                  setUser({ ...user, name: user.name ?? null });
-                  setTimeout(() => {
-                    navigate({ to: "/" });
-                  }, 0);
-                } else {
-                  await res.json();
-                  toast({
-                    title: "エラー",
-                    description: "Google認証に失敗しました",
-                    variant: "destructive",
-                  });
-                }
-              } catch (e) {
-                toast({
-                  title: "エラー",
-                  description: "Google認証に失敗しました",
-                  variant: "destructive",
-                });
-              }
-            }}
-            onError={() => {
-              toast({
-                title: "エラー",
-                description: "Google認証に失敗しました",
-                variant: "destructive",
-              });
-            }}
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
             useOneTap
           />
         </div>

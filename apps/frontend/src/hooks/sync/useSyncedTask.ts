@@ -2,13 +2,15 @@ import { apiClient } from "@frontend/utils/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
 
-import { useNetworkStatusContext } from "../providers/NetworkStatusProvider";
+import { useNetworkStatusContext } from "../../providers/NetworkStatusProvider";
 
 import { useSyncedMutation } from "./useSyncedMutation";
 
 type CreateTaskVariables = {
   title: string;
   startDate: string;
+  dueDate?: string;
+  memo?: string;
 };
 
 type UpdateTaskVariables = {
@@ -16,11 +18,18 @@ type UpdateTaskVariables = {
   doneDate?: string | null;
   title?: string;
   memo?: string;
+  startDate?: string;
+  dueDate?: string | null;
   // 楽観的更新用
   date?: string;
 };
 
 type DeleteTaskVariables = {
+  id: string;
+  date?: string;
+};
+
+type ArchiveTaskVariables = {
   id: string;
   date?: string;
 };
@@ -34,18 +43,33 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatusContext();
 
+  // タスクIDを事前に生成して保持
+  let taskId: string;
+
   return useSyncedMutation({
     entityType: "task",
     operation: "create",
-    getEntityId: () => uuidv4(),
+    getEntityId: () => {
+      // 既に生成されたtaskIdを返すか、新しく生成
+      if (!taskId) {
+        taskId = uuidv4();
+      }
+      return taskId;
+    },
     onMutate: async (variables: CreateTaskVariables) => {
+      // taskIdを初期化
+      taskId = uuidv4();
+
       // 楽観的更新: 即座にUIを更新
       const optimisticTask = {
-        id: `optimistic-${uuidv4()}`,
+        id: taskId,
         userId: "offline",
         title: variables.title,
-        memo: null,
+        startDate: variables.startDate,
+        dueDate: variables.dueDate || null,
+        memo: variables.memo || null,
         doneDate: null,
+        archivedAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -76,6 +100,8 @@ export function useCreateTask() {
         json: {
           title: variables.title,
           startDate: variables.startDate,
+          dueDate: variables.dueDate,
+          memo: variables.memo,
         },
       });
 
@@ -86,17 +112,26 @@ export function useCreateTask() {
       return await response.json();
     },
     offlineAction: (variables: CreateTaskVariables) => {
-      const taskId = uuidv4();
-
+      // 既に生成されたtaskIdを使用
       const newTask = {
         id: taskId,
         userId: "offline",
         title: variables.title,
-        memo: null,
+        startDate: variables.startDate,
+        dueDate: variables.dueDate || null,
+        memo: variables.memo || null,
         doneDate: null,
+        archivedAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
+      // 同期用にvariablesにidを追加
+      (variables as any).id = taskId;
+      // memoフィールドがundefinedの場合はnullに設定
+      if (variables.memo === undefined) {
+        (variables as any).memo = null;
+      }
 
       // ローカルストレージに保存
       const storageKey = `offline-tasks-${variables.startDate}`;
@@ -135,10 +170,8 @@ export function useCreateTask() {
       const tasksKey = ["tasks", variables.startDate];
       queryClient.setQueryData(tasksKey, (prev: any) => {
         if (!prev) return [data];
-        // optimistic-で始まるIDを実際のデータで置き換え
-        return prev.map((task: any) =>
-          task.id.startsWith("optimistic-") ? data : task,
-        );
+        // taskIdで一致するタスクを実際のデータで置き換え
+        return prev.map((task: any) => (task.id === taskId ? data : task));
       });
 
       // クエリを無効化してリフェッチを促す
@@ -164,14 +197,10 @@ export function useUpdateTask() {
     operation: "update",
     getEntityId: (variables: UpdateTaskVariables) => variables.id,
     onMutate: async (variables: UpdateTaskVariables) => {
-      if (!variables.date) return;
-
-      // 楽観的更新のために現在のキャッシュを取得
-      const tasksKey = ["tasks", variables.date];
-      const allTasksKey = ["tasks"];
+      // 全タスクのキャッシュを更新（["tasks", "all"]を使用）
+      const allTasksKey = ["tasks", "all"];
 
       // 既存のキャッシュを保存
-      const previousTasksData = queryClient.getQueryData(tasksKey);
       const previousAllTasksData = queryClient.getQueryData(allTasksKey);
 
       // 楽観的にキャッシュを更新
@@ -185,16 +214,25 @@ export function useUpdateTask() {
               : task.doneDate,
           title: variables.title !== undefined ? variables.title : task.title,
           memo: variables.memo !== undefined ? variables.memo : task.memo,
+          startDate:
+            variables.startDate !== undefined
+              ? variables.startDate
+              : task.startDate,
+          dueDate:
+            variables.dueDate !== undefined ? variables.dueDate : task.dueDate,
           updatedAt: new Date().toISOString(),
         };
       };
 
-      queryClient.setQueryData(tasksKey, (prev: any) => {
+      queryClient.setQueryData(allTasksKey, (prev: any) => {
         if (!prev) return prev;
         return prev.map(updateTask);
       });
 
-      return { previousTasksData, previousAllTasksData };
+      // キャンセル可能なクエリをキャンセル
+      await queryClient.cancelQueries({ queryKey: allTasksKey });
+
+      return { previousAllTasksData };
     },
     onlineAction: async (variables: UpdateTaskVariables) => {
       const response = await apiClient.users.tasks[":id"].$put({
@@ -203,6 +241,8 @@ export function useUpdateTask() {
           doneDate: variables.doneDate,
           title: variables.title,
           memo: variables.memo,
+          startDate: variables.startDate,
+          dueDate: variables.dueDate,
         },
       });
 
@@ -218,27 +258,25 @@ export function useUpdateTask() {
         id: variables.id,
         userId: "offline",
         title: "", // 実際の値はUIで楽観的更新される
+        startDate: null,
+        dueDate: null,
         memo: null,
         doneDate: variables.doneDate !== undefined ? variables.doneDate : null,
+        archivedAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, _variables) => {
       // クエリを無効化してリフェッチ
-      if (variables.date) {
-        const tasksKey = ["tasks", variables.date];
-        queryClient.invalidateQueries({ queryKey: tasksKey });
-      }
+      queryClient.invalidateQueries({ queryKey: ["tasks", "all"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (_error, variables, context) => {
+    onError: (_error, _variables, context) => {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
-      if (ctx && variables.date) {
-        const tasksKey = ["tasks", variables.date];
-        queryClient.setQueryData(tasksKey, ctx.previousTasksData);
-        queryClient.setQueryData(["tasks"], ctx.previousAllTasksData);
+      if (ctx) {
+        queryClient.setQueryData(["tasks", "all"], ctx.previousAllTasksData);
       }
     },
   });
@@ -335,6 +373,94 @@ export function useDeleteTask() {
         }
       }
 
+      // React Queryのキャッシュを無効化
+      if (variables.date) {
+        const tasksKey = ["tasks", variables.date];
+        queryClient.invalidateQueries({ queryKey: tasksKey });
+      }
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (_error, variables, context) => {
+      // エラー時は楽観的更新をロールバック
+      const ctx = context as MutationContext | undefined;
+      if (ctx && variables.date) {
+        const tasksKey = ["tasks", variables.date];
+        queryClient.setQueryData(tasksKey, ctx.previousTasksData);
+        queryClient.setQueryData(["tasks"], ctx.previousAllTasksData);
+      }
+    },
+  });
+}
+
+export function useArchiveTask() {
+  const queryClient = useQueryClient();
+
+  return useSyncedMutation({
+    entityType: "task",
+    operation: "update",
+    getEntityId: (variables: ArchiveTaskVariables) => variables.id,
+    onMutate: async (variables: ArchiveTaskVariables) => {
+      if (!variables.date) return;
+
+      // 楽観的更新のために現在のキャッシュを取得
+      const tasksKey = ["tasks", variables.date];
+      const allTasksKey = ["tasks"];
+
+      // 既存のキャッシュを保存
+      const previousTasksData = queryClient.getQueryData(tasksKey);
+      const previousAllTasksData = queryClient.getQueryData(allTasksKey);
+
+      // 楽観的にキャッシュから削除（アーカイブされたタスクは非表示）
+      const filterOutArchived = (tasks: any[]) => {
+        if (!tasks) return tasks;
+        return tasks.filter((task: any) => task.id !== variables.id);
+      };
+
+      queryClient.setQueryData(tasksKey, filterOutArchived);
+
+      // キャンセル可能なクエリをキャンセル
+      await queryClient.cancelQueries({ queryKey: tasksKey });
+      await queryClient.cancelQueries({ queryKey: allTasksKey });
+
+      return { previousTasksData, previousAllTasksData };
+    },
+    onlineAction: async (variables: ArchiveTaskVariables) => {
+      const response = await apiClient.users.tasks[":id"].archive.$post({
+        param: { id: variables.id },
+      });
+
+      if (!response.ok) {
+        throw new Error("タスクのアーカイブに失敗しました");
+      }
+
+      return await response.json();
+    },
+    offlineAction: (variables: ArchiveTaskVariables) => {
+      // オフライン時はアーカイブ済みIDを記録
+      const archivedKey = "archived-tasks";
+      const archivedIds = JSON.parse(localStorage.getItem(archivedKey) || "[]");
+      if (!archivedIds.includes(variables.id)) {
+        archivedIds.push(variables.id);
+        localStorage.setItem(archivedKey, JSON.stringify(archivedIds));
+      }
+
+      // カスタムイベントを発火
+      window.dispatchEvent(new Event("offline-data-updated"));
+
+      return {
+        id: variables.id,
+        userId: "offline",
+        title: "",
+        startDate: null,
+        dueDate: null,
+        memo: null,
+        doneDate: null,
+        archivedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    },
+    onSuccess: (_data, variables) => {
       // React Queryのキャッシュを無効化
       if (variables.date) {
         const tasksKey = ["tasks", variables.date];

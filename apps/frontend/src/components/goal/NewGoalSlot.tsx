@@ -77,10 +77,48 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
     );
   };
 
+  // 新規目標追加ボタンのクリックハンドラ
+  const handleStartCreating = () => {
+    setIsCreating(true);
+  };
+
+  // 活動選択時のハンドラ
+  const handleActivityChange = (
+    value: string,
+    fieldOnChange: (value: string) => void,
+  ) => {
+    fieldOnChange(value);
+    // 活動選択後、日次目標の入力欄にフォーカス
+    setTimeout(() => {
+      const targetInput = document.querySelector(
+        'input[name="dailyTargetQuantity"]',
+      ) as HTMLInputElement;
+      if (targetInput) {
+        targetInput.focus();
+        targetInput.select();
+      }
+    }, 0);
+  };
+
+  // 日次目標数量の変更ハンドラ
+  const handleTargetQuantityChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldOnChange: (value: string | number) => void,
+  ) => {
+    const value = e.target.value;
+    fieldOnChange(value === "" ? "" : Number(value));
+  };
+
+  // キャンセルボタンのクリックハンドラ
+  const handleCancel = () => {
+    setIsCreating(false);
+    form.reset();
+  };
+
   if (!isCreating) {
     return (
       <Card
-        onClick={() => setIsCreating(true)}
+        onClick={handleStartCreating}
         className="w-full h-20 cursor-pointer shadow-sm rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 group"
       >
         <CardContent className="flex items-center justify-center gap-2 p-0 h-full">
@@ -107,19 +145,9 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
               <FormItem>
                 <Select
                   {...field}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    // 活動選択後、日次目標の入力欄にフォーカス
-                    setTimeout(() => {
-                      const targetInput = document.querySelector(
-                        'input[name="dailyTargetQuantity"]',
-                      ) as HTMLInputElement;
-                      if (targetInput) {
-                        targetInput.focus();
-                        targetInput.select();
-                      }
-                    }, 0);
-                  }}
+                  onValueChange={(value) =>
+                    handleActivityChange(value, field.onChange)
+                  }
                 >
                   <FormControl>
                     <SelectTrigger className="h-10">
@@ -151,10 +179,9 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
                         {...field}
                         type="number"
                         className="h-10 w-28 text-center"
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? "" : Number(value));
-                        }}
+                        onChange={(e) =>
+                          handleTargetQuantityChange(e, field.onChange)
+                        }
                       />
                     </FormControl>
                   </FormItem>
@@ -228,10 +255,7 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
               type="button"
               size="default"
               variant="outline"
-              onClick={() => {
-                setIsCreating(false);
-                form.reset();
-              }}
+              onClick={handleCancel}
               className="h-10"
             >
               取消

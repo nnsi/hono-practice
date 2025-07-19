@@ -215,13 +215,13 @@ function processSyncQueue(
             }
 
             // エンティティ固有の同期処理を実行
-            if (syncService) {
-              await syncService.syncEntity(item);
-            } else {
+            if (!syncService) {
               // syncServiceが提供されていない場合は警告
               console.warn(
                 "SyncService not provided, skipping actual sync operation",
               );
+            } else {
+              await syncService.syncEntity(item);
             }
 
             successfulIds.push(item.id);
@@ -249,18 +249,18 @@ function processSyncQueue(
               item.entityId,
             );
 
-            if (metadata) {
-              const updatedMetadata = markAsFailed(metadata, errorMessage);
-              await syncRepository.updateSyncMetadata(metadata.id, {
-                status: updatedMetadata.status,
-                errorMessage: updatedMetadata.errorMessage,
-                retryCount: updatedMetadata.retryCount,
-              });
+            if (!metadata) continue;
 
-              // リトライ可能でない場合はキューから削除
-              if (!canRetrySync(updatedMetadata, maxRetries)) {
-                await syncRepository.deleteQueueItems([item.id]);
-              }
+            const updatedMetadata = markAsFailed(metadata, errorMessage);
+            await syncRepository.updateSyncMetadata(metadata.id, {
+              status: updatedMetadata.status,
+              errorMessage: updatedMetadata.errorMessage,
+              retryCount: updatedMetadata.retryCount,
+            });
+
+            // リトライ可能でない場合はキューから削除
+            if (!canRetrySync(updatedMetadata, maxRetries)) {
+              await syncRepository.deleteQueueItems([item.id]);
             }
           }
         }

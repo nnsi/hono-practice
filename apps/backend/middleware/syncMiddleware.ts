@@ -101,67 +101,73 @@ export const syncMiddleware = <T extends AppContext = AppContext>(
     // ハンドラーを実行
     await next();
 
-    // レスポンスが成功（2xx）の場合のみ同期
-    if (c.res.status >= 200 && c.res.status < 300) {
+    // レスポンスが成功（2xx）でない場合はスキップ
+    if (c.res.status < 200 || c.res.status >= 300) {
+      return;
+    }
+
+    try {
+      // レスポンスボディを取得
+      const responseBody = await c.res
+        .clone()
+        .json()
+        .catch(() => null);
+
+      // エンティティIDを決定
+      const entityId = matchedConfig.getEntityId?.(c) || responseBody?.id;
+
+      // 操作タイプを決定
+      const operationType =
+        method === "POST"
+          ? ("create" as const)
+          : method === "PUT"
+            ? ("update" as const)
+            : method === "DELETE"
+              ? ("delete" as const)
+              : undefined;
+
+      // エンティティIDまたは操作タイプがない場合はスキップ
+      if (!entityId || !operationType) {
+        return;
+      }
+
+      // ペイロードを決定
+      const payload =
+        operationType === "delete" ? {} : responseBody || requestBody || {};
+
+      // 同期キューに追加（非同期で実行）
+      const syncJob = syncRepo.enqueueSync([
+        {
+          userId,
+          entityType: matchedConfig.entityType,
+          entityId,
+          operation: operationType,
+          payload,
+          timestamp: new Date(),
+          sequenceNumber: Date.now(),
+        },
+      ]);
+
+      // エラーハンドリング
+      syncJob.catch((error) => {
+        console.error("Failed to enqueue sync:", error);
+      });
+
+      // Cloudflare Workersの場合はwaitUntilで実行を保証
       try {
-        // レスポンスボディを取得
-        const responseBody = await c.res
-          .clone()
-          .json()
-          .catch(() => null);
-
-        // エンティティIDを決定
-        let entityId = matchedConfig.getEntityId?.(c);
-        if (!entityId && responseBody?.id) {
-          entityId = responseBody.id;
-        }
-
-        // 操作タイプを決定
-        const operationType =
-          method === "POST"
-            ? ("create" as const)
-            : method === "PUT"
-              ? ("update" as const)
-              : method === "DELETE"
-                ? ("delete" as const)
-                : undefined;
-
-        if (entityId && operationType) {
-          // ペイロードを決定
-          const payload =
-            operationType === "delete" ? {} : responseBody || requestBody || {};
-
-          // 同期キューに追加（非同期で実行）
-          const syncJob = syncRepo.enqueueSync([
-            {
-              userId,
-              entityType: matchedConfig.entityType,
-              entityId,
-              operation: operationType,
-              payload,
-              timestamp: new Date(),
-              sequenceNumber: Date.now(),
-            },
-          ]);
-
-          // エラーハンドリング
-          syncJob.catch((error) => {
-            console.error("Failed to enqueue sync:", error);
-          });
-
-          // Cloudflare Workersの場合はwaitUntilで実行を保証
-          try {
-            if (c.executionCtx?.waitUntil) {
-              c.executionCtx.waitUntil(syncJob);
-            }
-          } catch {
+        c.executionCtx.waitUntil(syncJob);
+      } catch (e) {
+        if (e instanceof Error) {
+          if (e.message === "This context has no ExecutionContext") {
             // Node.js環境ではexecutionCtxが存在しないため、エラーは無視
+          } else {
+            throw e;
           }
         }
-      } catch (error) {
-        // 同期エラーはログに記録するが、リクエストは失敗させない
-        console.error("Sync middleware error:", error);
       }
+    } catch (error) {
+      // 同期エラーはログに記録するが、リクエストは失敗させない
+      console.error("Sync middleware error:", error);
     }
   };
 };

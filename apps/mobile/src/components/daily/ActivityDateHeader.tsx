@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -14,7 +14,7 @@ type ActivityDateHeaderProps = {
   setShowCalendar: (show: boolean) => void;
 };
 
-export default React.memo(function ActivityDateHeader({
+export default memo(function ActivityDateHeader({
   date,
   onDateChange,
   showCalendar,

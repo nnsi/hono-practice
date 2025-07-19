@@ -115,12 +115,9 @@ function createActivityLog(
     params: CreateActivityLogParams,
   ) => {
     const activity = await acRepo.getActivityByIdAndUserId(userId, activityId);
-    if (!activity) {
-      throw new Error("activity not found");
-    }
-    if (!activity.kinds) {
-      activity.kinds = [];
-    }
+    if (!activity) throw new Error("activity not found");
+
+    if (!activity.kinds) activity.kinds = [];
 
     const activityKind =
       activity.kinds.find((kind) => kind.id === activityKindId) || null;

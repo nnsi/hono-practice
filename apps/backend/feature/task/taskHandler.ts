@@ -13,6 +13,7 @@ export function newTaskHandler(uc: TaskUsecase) {
     createTask: createTask(uc),
     updateTask: updateTask(uc),
     deleteTask: deleteTask(uc),
+    archiveTask: archiveTask(uc),
   };
 }
 
@@ -91,5 +92,24 @@ function deleteTask(uc: TaskUsecase) {
     await uc.deleteTask(userId, taskId);
 
     return { message: "success" };
+  };
+}
+
+function archiveTask(uc: TaskUsecase) {
+  return async (userId: UserId, taskId: TaskId) => {
+    const task = await uc.archiveTask(userId, taskId);
+
+    const responseTask = {
+      ...task,
+      id: task.id,
+      userId: task.userId,
+    };
+
+    const parsedTask = GetTaskResponseSchema.safeParse(responseTask);
+    if (!parsedTask.success) {
+      throw new AppError("archiveTaskHandler: failed to parse task", 500);
+    }
+
+    return parsedTask.data;
   };
 }

@@ -66,9 +66,7 @@ function validateApiKey(repo: ApiKeyRepository) {
 
     // データベースから取得
     const apiKey = await repo.findByKey(key);
-    if (!apiKey || !apiKey.isActive) {
-      return null;
-    }
+    if (!apiKey || !apiKey.isActive) return null;
 
     // TODO: KVストアにキャッシュする実装を追加
 

@@ -2,7 +2,7 @@
 export * from "./types";
 
 // トークンストレージ
-export { MemoryTokenStore, tokenStore } from "./tokenStore";
+export { createMemoryTokenStore, tokenStore } from "./tokenStore";
 
 // APIクライアント
 export { createApiClient } from "./apiClient";

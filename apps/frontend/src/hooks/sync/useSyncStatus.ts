@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@frontend/hooks/useAuth";
-import { SyncManager } from "@frontend/services/sync";
+import { getSyncManagerInstance } from "@frontend/services/sync";
 
 import type { SyncStatus } from "@frontend/services/sync";
 
 export function useSyncStatus() {
   const { user } = useAuth();
-  const syncManager = SyncManager.getInstance(user?.id);
+  const syncManager = getSyncManagerInstance(user?.id);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(
     syncManager.getSyncStatus(),
   );

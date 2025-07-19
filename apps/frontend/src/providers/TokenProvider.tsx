@@ -7,7 +7,11 @@ import {
   useState,
 } from "react";
 
-import { tokenStore } from "@frontend/utils/tokenStore";
+import { AppEvents } from "@frontend/services/abstractions";
+import { tokenStore as defaultTokenStore } from "@frontend/utils/tokenStore";
+
+import type { EventBus, TimeProvider } from "@frontend/services/abstractions";
+import type { TokenStorage } from "@packages/frontend-shared/types";
 
 type TokenState = {
   accessToken: string | null;
@@ -18,13 +22,21 @@ type TokenState = {
 
 type TokenProviderProps = {
   children: ReactNode;
+  tokenStore?: TokenStorage;
+  timeProvider?: TimeProvider;
+  eventBus?: EventBus;
 };
 
 export const TokenContext = createContext<TokenState | undefined>(undefined);
 
-export const TokenProvider: React.FC<TokenProviderProps> = ({ children }) => {
+export const TokenProvider: React.FC<TokenProviderProps> = ({
+  children,
+  tokenStore = defaultTokenStore,
+  timeProvider,
+  eventBus,
+}) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshTimeoutRef = useRef<number | NodeJS.Timeout | null>(null);
 
   const setAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
@@ -34,33 +46,62 @@ export const TokenProvider: React.FC<TokenProviderProps> = ({ children }) => {
   const clearTokens = useCallback(() => {
     setAccessToken(null);
     if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
+      if (timeProvider) {
+        timeProvider.clearTimeout(refreshTimeoutRef.current as number);
+      } else {
+        clearTimeout(refreshTimeoutRef.current as NodeJS.Timeout);
+      }
       refreshTimeoutRef.current = null;
     }
   }, []);
 
-  const scheduleTokenRefresh = useCallback((expiresIn: number = 15 * 60) => {
-    // Clear any existing timeout
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-    }
+  const scheduleTokenRefresh = useCallback(
+    (expiresIn: number = 15 * 60) => {
+      // Clear any existing timeout
+      if (refreshTimeoutRef.current) {
+        if (timeProvider) {
+          timeProvider.clearTimeout(refreshTimeoutRef.current as number);
+        } else {
+          clearTimeout(refreshTimeoutRef.current as NodeJS.Timeout);
+        }
+      }
 
-    // Schedule refresh 1 minute before expiration (14 minutes)
-    const refreshTime = (expiresIn - 60) * 1000;
-    refreshTimeoutRef.current = setTimeout(() => {
-      // This will trigger token refresh in AuthProvider
-      window.dispatchEvent(new Event("token-refresh-needed"));
-    }, refreshTime);
-  }, []);
+      // Schedule refresh 1 minute before expiration (14 minutes)
+      const refreshTime = (expiresIn - 60) * 1000;
+
+      const triggerRefresh = () => {
+        // This will trigger token refresh in AuthProvider
+        if (eventBus) {
+          eventBus.emit(AppEvents.TOKEN_REFRESH_NEEDED);
+        } else {
+          window.dispatchEvent(new Event("token-refresh-needed"));
+        }
+      };
+
+      if (timeProvider) {
+        refreshTimeoutRef.current = timeProvider.setTimeout(
+          triggerRefresh,
+          refreshTime,
+        );
+      } else {
+        refreshTimeoutRef.current = setTimeout(triggerRefresh, refreshTime);
+      }
+    },
+    [eventBus, timeProvider],
+  );
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
       if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
+        if (timeProvider) {
+          timeProvider.clearTimeout(refreshTimeoutRef.current as number);
+        } else {
+          clearTimeout(refreshTimeoutRef.current as NodeJS.Timeout);
+        }
       }
     };
-  }, []);
+  }, [timeProvider]);
 
   return (
     <TokenContext.Provider

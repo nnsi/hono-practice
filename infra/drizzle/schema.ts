@@ -107,6 +107,7 @@ export const tasks = pgTable(
     memo: text("memo").default(""),
     startDate: date("start_date"),
     dueDate: date("due_date"),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

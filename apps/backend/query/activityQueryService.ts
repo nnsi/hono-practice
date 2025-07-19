@@ -79,6 +79,7 @@ function transform(
 ) {
   const { stats } = rows.reduce(
     (acc, row) => {
+      // 新しいアクティビティの場合
       if (!acc.activityMap.has(row.id)) {
         acc.activityMap.set(row.id, acc.stats.length);
         acc.activityKindMap.set(row.kindid || row.id, 0);
@@ -102,10 +103,10 @@ function transform(
             },
           ],
         });
-
         return acc;
       }
 
+      // 既存のアクティビティの場合
       const activity = acc.stats[acc.activityMap.get(row.id)!];
       // NOTE:GetActivityStatsResponseのtotalはnullableなので型エラー回避でこうやっている
       // 本来はactivity.total += row.quantity || 0;としたい
@@ -114,8 +115,9 @@ function transform(
         Math.round(((activity.total || 0) + (row.quantity || 0)) * 100) / 100 ||
         0;
 
-      const activityKindIndex = acc.activityKindMap.get(row.kindid || row.id)!;
+      const activityKindIndex = acc.activityKindMap.get(row.kindid || row.id);
 
+      // 新しい種別の場合
       if (activityKindIndex === undefined) {
         acc.activityKindMap.set(row.kindid || row.id, activity.kinds.length);
         activity.kinds.push({
@@ -129,10 +131,10 @@ function transform(
             },
           ],
         });
-
         return acc;
       }
 
+      // 既存の種別の場合
       const kind = activity.kinds[activityKindIndex];
       // 小数点の計算誤差を防ぐため、小数第2位で四捨五入
       kind.total = Math.round((kind.total + (row.quantity || 0)) * 100) / 100;

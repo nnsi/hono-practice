@@ -44,27 +44,51 @@ export const ActivityDateHeader: React.FC<{
     setCalendarOpen(false);
   };
 
+  // 今日の日付に移動するハンドラ
+  const handleGoToToday = () => {
+    setDate(new Date());
+  };
+
+  // 前日に移動するハンドラ
+  const handleGoToPreviousDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() - 1);
+    setDate(newDate);
+  };
+
+  // 翌日に移動するハンドラ
+  const handleGoToNextDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + 1);
+    setDate(newDate);
+  };
+
+  // カレンダーの前月に移動するハンドラ
+  const handlePreviousMonth = () => {
+    setCalendarMonth(calendarMonth.subtract(1, "month"));
+  };
+
+  // カレンダーの翌月に移動するハンドラ
+  const handleNextMonth = () => {
+    setCalendarMonth(calendarMonth.add(1, "month"));
+  };
+
+  // カレンダーの日付選択ハンドラ
+  const handleCalendarDayClick = (day: number) => {
+    handleSelectDate(day);
+  };
+
   return (
     <p className="flex items-center justify-center gap-2 mb-3">
-      <button
-        type="button"
-        className="ml-1"
-        onClick={() => setDate(new Date())}
-      >
+      <button type="button" className="ml-1" onClick={handleGoToToday}>
         <ClockIcon />
       </button>
-      <button
-        type="button"
-        onClick={() => setDate(new Date(date.setDate(date.getDate() - 1)))}
-      >
+      <button type="button" onClick={handleGoToPreviousDay}>
         <ChevronLeftIcon />
       </button>
 
       {date.toLocaleDateString()}
-      <button
-        type="button"
-        onClick={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
-      >
+      <button type="button" onClick={handleGoToNextDay}>
         <ChevronRightIcon />
       </button>
 
@@ -78,19 +102,13 @@ export const ActivityDateHeader: React.FC<{
           <div className="flex justify-between items-center mb-2">
             <button
               type="button"
-              onClick={() =>
-                setCalendarMonth(calendarMonth.subtract(1, "month"))
-              }
+              onClick={handlePreviousMonth}
               className="px-2"
             >
               &lt;
             </button>
             <span>{calendarMonth.format("YYYY年MM月")}</span>
-            <button
-              type="button"
-              onClick={() => setCalendarMonth(calendarMonth.add(1, "month"))}
-              className="px-2"
-            >
+            <button type="button" onClick={handleNextMonth} className="px-2">
               &gt;
             </button>
           </div>
@@ -125,7 +143,7 @@ export const ActivityDateHeader: React.FC<{
                               <button
                                 type="button"
                                 className={`w-7 h-7 rounded-full ${calendarMonth.year() === dayjs(date).year() && calendarMonth.month() === dayjs(date).month() && day === dayjs(date).date() ? "bg-blue-500 text-white" : "hover:bg-gray-200"}`}
-                                onClick={() => handleSelectDate(day)}
+                                onClick={() => handleCalendarDayClick(day)}
                               >
                                 {day}
                               </button>

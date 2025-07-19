@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import type React from "react";
 
 import { useGlobalDate } from "@frontend/hooks";
+import { useActivityLogSync } from "@frontend/hooks/sync";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient, qp } from "@frontend/utils";
 import { UpdateIcon } from "@radix-ui/react-icons";
@@ -19,6 +21,7 @@ import { Card, CardContent } from "@components/ui";
 import { ActivityDateHeader } from "@components/activity/ActivityDateHeader";
 
 import { ActivityLogEditDialog } from "./ActivityLogEditDialog";
+import { DailyActivityLogCreateDialog } from "./DailyActivityLogCreateDialog";
 import { TaskList } from "./TaskList";
 
 export const ActivityDailyPage: React.FC = () => {
@@ -26,84 +29,9 @@ export const ActivityDailyPage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatusContext();
-
-  // オフラインデータをローカルストレージから読み込む（localStorageの変更を監視）
-  const [offlineDataTrigger, setOfflineDataTrigger] = useState(0);
-  const { offlineData, deletedIds } = React.useMemo(() => {
-    const storageKey = `offline-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
-    const storedData = localStorage.getItem(storageKey);
-
-    // 削除されたIDのリストを読み込む
-    const deletedKey = `deleted-activity-logs-${dayjs(date).format("YYYY-MM-DD")}`;
-    const deletedData = localStorage.getItem(deletedKey);
-    const deletedIdSet = deletedData
-      ? new Set(JSON.parse(deletedData))
-      : new Set();
-
-    if (storedData) {
-      return {
-        offlineData: JSON.parse(storedData),
-        deletedIds: deletedIdSet,
-      };
-    }
-    return {
-      offlineData: [],
-      deletedIds: deletedIdSet,
-    };
-  }, [date, offlineDataTrigger]);
-
-  // localStorageの変更を監視
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setOfflineDataTrigger((prev) => prev + 1);
-      // キャッシュを無効化して再フェッチ
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      });
-    };
-
-    const handleSyncDeleteSuccess = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const entityId = customEvent.detail.entityId;
-
-      // 各日付の削除IDリストから該当IDを削除
-      const dateStr = dayjs(date).format("YYYY-MM-DD");
-      const deletedKey = `deleted-activity-logs-${dateStr}`;
-      const deletedIds = JSON.parse(localStorage.getItem(deletedKey) || "[]");
-      const filteredIds = deletedIds.filter((id: string) => id !== entityId);
-
-      if (filteredIds.length === 0) {
-        localStorage.removeItem(deletedKey);
-      } else {
-        localStorage.setItem(deletedKey, JSON.stringify(filteredIds));
-      }
-
-      setOfflineDataTrigger((prev) => prev + 1);
-    };
-
-    // カスタムイベントを監視
-    window.addEventListener("offline-data-updated", handleStorageChange);
-    window.addEventListener("sync-delete-success", handleSyncDeleteSuccess);
-
-    return () => {
-      window.removeEventListener("offline-data-updated", handleStorageChange);
-      window.removeEventListener(
-        "sync-delete-success",
-        handleSyncDeleteSuccess,
-      );
-    };
-  }, [date, queryClient]);
-
-  // オンライン状態変更時にキャッシュを無効化
-  useEffect(() => {
-    if (isOnline) {
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      });
-    }
-  }, [isOnline, queryClient, date]);
 
   const {
     data: activityLogs,
@@ -161,32 +89,23 @@ export const ActivityDailyPage: React.FC = () => {
     enabled: isOnline,
   });
 
-  // サーバーデータとオフラインデータをマージ
-  const mergedActivityLogs = React.useMemo(() => {
-    const serverLogs = activityLogs || [];
-    // オフラインデータにフラグを追加
-    const offlineDataWithFlag = offlineData.map((log: any) => ({
-      ...log,
-      isOffline: true,
-    }));
-    const allLogs = [...serverLogs, ...offlineDataWithFlag];
-    // 重複を除去（IDでユニーク化）し、削除されたアイテムをフィルタリング
-    const uniqueLogs = allLogs.reduce(
-      (acc, log) => {
-        // 削除されたIDリストに含まれている場合はスキップ
-        if (deletedIds.has(log.id)) {
-          return acc;
-        }
+  // sync処理をカスタムフックで管理
+  const { mergedActivityLogs, isOfflineData } = useActivityLogSync({
+    date,
+    isOnline,
+    activityLogs,
+  });
 
-        if (!acc.find((l: any) => l.id === log.id)) {
-          acc.push(log);
-        }
-        return acc;
-      },
-      [] as typeof allLogs,
-    );
-    return uniqueLogs;
-  }, [activityLogs, offlineData, deletedIds]);
+  // ActivityLogカードのクリックハンドラ
+  const handleActivityLogClick = (log: GetActivityLogResponse) => {
+    setEditTargetLog(log);
+    setEditDialogOpen(true);
+  };
+
+  // ActivityLogEditDialogのopen/close処理
+  const handleActivityLogEditDialogChange = (open: boolean) => {
+    setEditDialogOpen(open);
+  };
 
   return (
     <>
@@ -198,12 +117,9 @@ export const ActivityDailyPage: React.FC = () => {
             mergedActivityLogs.map((log: any) => (
               <Card
                 key={log.id}
-                onClick={() => {
-                  setEditTargetLog(log);
-                  setEditDialogOpen(true);
-                }}
+                onClick={() => handleActivityLogClick(log)}
                 className={`cursor-pointer shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 h-20 ${
-                  log.isOffline ? "opacity-70 border-orange-200" : ""
+                  isOfflineData(log) ? "opacity-70 border-orange-200" : ""
                 }`}
               >
                 <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
@@ -216,7 +132,7 @@ export const ActivityDailyPage: React.FC = () => {
                       {log.activityKind?.name && (
                         <> [{log.activityKind.name}]</>
                       )}
-                      {log.isOffline && (
+                      {isOfflineData(log) && (
                         <UpdateIcon className="w-4 h-4 text-orange-500 animate-spin" />
                       )}
                     </div>
@@ -245,8 +161,16 @@ export const ActivityDailyPage: React.FC = () => {
       </div>
       <ActivityLogEditDialog
         open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
+        onOpenChange={handleActivityLogEditDialogChange}
         log={editTargetLog}
+      />
+      <DailyActivityLogCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        date={date}
+        onSuccess={() => {
+          // 必要に応じてリフレッシュ処理を追加
+        }}
       />
     </>
   );

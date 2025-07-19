@@ -116,6 +116,16 @@ export const ActivityEditDialog = ({
     mutate(data);
   };
 
+  // 種類を削除するハンドラ
+  const handleRemoveKind = (index: number) => {
+    kindRemove(index);
+  };
+
+  // 種類を追加するハンドラ
+  const handleAddKind = () => {
+    kindAppend({ name: "" });
+  };
+
   if (!open || !activity) return null;
 
   return (
@@ -206,17 +216,13 @@ export const ActivityEditDialog = ({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => kindRemove(index)}
+                    onClick={() => handleRemoveKind(index)}
                   >
                     -
                   </Button>
                 </div>
               ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => kindAppend({ name: "" })}
-              >
+              <Button type="button" variant="outline" onClick={handleAddKind}>
                 + 種類を追加
               </Button>
             </div>

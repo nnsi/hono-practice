@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingRouteImport } from './routes/setting'
 import { Route as NewGoalRouteImport } from './routes/new-goal'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityStatsRouteImport } from './routes/activity/stats'
 
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingRoute = SettingRouteImport.update({
   id: '/setting',
   path: '/setting',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
+  '/tasks': typeof TasksRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
+  '/tasks': typeof TasksRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
+  '/tasks': typeof TasksRoute
   '/activity/stats': typeof ActivityStatsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/daily' | '/new-goal' | '/setting' | '/activity/stats'
+  fullPaths:
+    | '/'
+    | '/daily'
+    | '/new-goal'
+    | '/setting'
+    | '/tasks'
+    | '/activity/stats'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daily' | '/new-goal' | '/setting' | '/activity/stats'
-  id: '__root__' | '/' | '/daily' | '/new-goal' | '/setting' | '/activity/stats'
+  to: '/' | '/daily' | '/new-goal' | '/setting' | '/tasks' | '/activity/stats'
+  id:
+    | '__root__'
+    | '/'
+    | '/daily'
+    | '/new-goal'
+    | '/setting'
+    | '/tasks'
+    | '/activity/stats'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,11 +98,19 @@ export interface RootRouteChildren {
   DailyRoute: typeof DailyRoute
   NewGoalRoute: typeof NewGoalRoute
   SettingRoute: typeof SettingRoute
+  TasksRoute: typeof TasksRoute
   ActivityStatsRoute: typeof ActivityStatsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setting': {
       id: '/setting'
       path: '/setting'
@@ -124,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyRoute: DailyRoute,
   NewGoalRoute: NewGoalRoute,
   SettingRoute: SettingRoute,
+  TasksRoute: TasksRoute,
   ActivityStatsRoute: ActivityStatsRoute,
 }
 export const routeTree = rootRouteImport

@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@frontend/components/ui";
 import { useToast } from "@frontend/components/ui/use-toast";
-import { useApiKeys, useDeleteApiKey } from "@frontend/hooks/apiKey";
+import { useApiKeys, useDeleteApiKey } from "@frontend/hooks/api/apiKey";
 import dayjs from "dayjs";
 
 export const ApiKeyList: React.FC = () => {
@@ -36,6 +36,11 @@ export const ApiKeyList: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // APIキー削除ボタンのクリックハンドラを作成する関数
+  const createDeleteHandler = (id: string, name: string) => {
+    return () => handleDelete(id, name);
   };
 
   if (isLoading) {
@@ -74,7 +79,7 @@ export const ApiKeyList: React.FC = () => {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDelete(apiKey.id, apiKey.name)}
+                  onClick={createDeleteHandler(apiKey.id, apiKey.name)}
                   disabled={deleteApiKey.isPending}
                 >
                   削除

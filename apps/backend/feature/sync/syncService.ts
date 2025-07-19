@@ -1,3 +1,4 @@
+import { createTaskEntity } from "@backend/domain/task";
 import { UnexpectedError } from "@backend/error";
 
 import type { SyncItem } from "@dtos/request";
@@ -256,15 +257,25 @@ function syncBatchItems(
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
-                  } else {
-                    const created = await activityRepository
-                      .withTx(tx)
-                      .createActivity(activity);
-                    result.serverId = created.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "update") {
+                  const created = await activityRepository
+                    .withTx(tx)
+                    .createActivity(activity);
+                  result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "update") {
                   if (!existing) {
-                    // 存在しない場合はエラー
                     throw new UnexpectedError(
                       "更新対象のActivityが存在しません",
                     );
@@ -275,36 +286,44 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityRepository
+                    const updated = await activityRepository
                       .withTx(tx)
                       .updateActivity(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
-                  } else {
-                    await activityRepository
-                      .withTx(tx)
-                      .updateActivity(activity);
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "delete") {
-                  if (existing) {
-                    await activityRepository
-                      .withTx(tx)
-                      .deleteActivity(activity);
-                  } else {
+                  const updated = await activityRepository
+                    .withTx(tx)
+                    .updateActivity(activity);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "delete") {
+                  if (!existing) {
                     // 既に削除されている場合はスキップ（冪等性）
                     result.status = "skipped";
                     result.message =
                       "既に削除されているため、削除をスキップしました";
+                    break;
                   }
+                  await activityRepository.withTx(tx).deleteActivity(activity);
                 }
                 break;
               }
               case "activityLog": {
                 const activityLogPayload = item.payload as any;
 
-                // 削除操作の場合は最小限の情報でOK
+                // 削除操作の場合は早期処理
                 if (item.operation === "delete") {
-                  // 削除対象の既存データを取得
                   const existing = await activityLogRepository
                     .withTx(tx)
                     .getActivityLogByIdAndUserId(
@@ -312,17 +331,16 @@ function syncBatchItems(
                       item.entityId as ActivityLogId,
                     );
 
-                  if (existing) {
-                    await activityLogRepository
-                      .withTx(tx)
-                      .deleteActivityLog(existing);
-                    result.serverId = existing.id;
-                  } else {
-                    // 既に削除されている場合はスキップ（冪等性）
+                  if (!existing) {
                     result.status = "skipped";
                     result.message =
                       "既に削除されているため、削除をスキップしました";
+                    break;
                   }
+                  await activityLogRepository
+                    .withTx(tx)
+                    .deleteActivityLog(existing);
+                  result.serverId = existing.id;
                   break;
                 }
 
@@ -371,17 +389,27 @@ function syncBatchItems(
 
                 if (item.operation === "create") {
                   if (existing) {
-                    // 既に存在する場合はスキップ（冪等性）
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
-                  } else {
-                    const created = await activityLogRepository
-                      .withTx(tx)
-                      .createActivityLog(activityLog);
-                    result.serverId = created.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "update") {
+                  const created = await activityLogRepository
+                    .withTx(tx)
+                    .createActivityLog(activityLog);
+                  result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "update") {
                   if (!existing) {
                     throw new UnexpectedError(
                       "更新対象のActivityLogが存在しません",
@@ -393,16 +421,24 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityLogRepository
+                    const updated = await activityLogRepository
                       .withTx(tx)
                       .updateActivityLog(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
-                  } else {
-                    await activityLogRepository
-                      .withTx(tx)
-                      .updateActivityLog(activityLog);
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
+                  const updated = await activityLogRepository
+                    .withTx(tx)
+                    .updateActivityLog(activityLog);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
                 }
                 break;
               }
@@ -416,17 +452,27 @@ function syncBatchItems(
 
                 if (item.operation === "create") {
                   if (existing) {
-                    // 既に存在する場合はスキップ（冪等性）
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
-                  } else {
-                    const created = await activityGoalRepository
-                      .withTx(tx)
-                      .createActivityGoal(goal);
-                    result.serverId = created.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "update") {
+                  const created = await activityGoalRepository
+                    .withTx(tx)
+                    .createActivityGoal(goal);
+                  result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "update") {
                   if (!existing) {
                     throw new UnexpectedError("更新対象のGoalが存在しません");
                   }
@@ -436,32 +482,104 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await activityGoalRepository
+                    const updated = await activityGoalRepository
                       .withTx(tx)
                       .updateActivityGoal(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
-                  } else {
-                    await activityGoalRepository
-                      .withTx(tx)
-                      .updateActivityGoal(goal);
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "delete") {
-                  if (existing) {
-                    await activityGoalRepository
-                      .withTx(tx)
-                      .deleteActivityGoal(goal);
-                  } else {
-                    // 既に削除されている場合はスキップ（冪等性）
+                  const updated = await activityGoalRepository
+                    .withTx(tx)
+                    .updateActivityGoal(goal);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "delete") {
+                  if (!existing) {
                     result.status = "skipped";
                     result.message =
                       "既に削除されているため、削除をスキップしました";
+                    break;
                   }
+                  await activityGoalRepository
+                    .withTx(tx)
+                    .deleteActivityGoal(goal);
                 }
                 break;
               }
               case "task": {
-                const task = item.payload as Task;
+                const taskPayload = item.payload as any;
+                let task: Task;
+
+                try {
+                  // userIdが"offline"の場合は実際のユーザーIDを使用
+                  const actualUserId =
+                    taskPayload.userId === "offline" || !taskPayload.userId
+                      ? userId
+                      : taskPayload.userId;
+
+                  // payloadにtype フィールドが無い場合は追加する
+                  // memoフィールドが無い場合はnullを設定
+                  // archivedAtフィールドが無い場合はnullを設定
+                  // createdAt/updatedAtがstring型の場合はDateに変換
+                  task = createTaskEntity({
+                    ...taskPayload,
+                    type: taskPayload.type || "new",
+                    userId: actualUserId,
+                    memo:
+                      taskPayload.memo !== undefined ? taskPayload.memo : null,
+                    archivedAt:
+                      taskPayload.archivedAt !== undefined
+                        ? taskPayload.archivedAt
+                        : null,
+                    createdAt: taskPayload.createdAt
+                      ? new Date(taskPayload.createdAt)
+                      : undefined,
+                    updatedAt: taskPayload.updatedAt
+                      ? new Date(taskPayload.updatedAt)
+                      : undefined,
+                  });
+
+                  console.log("Processing task sync:", {
+                    clientId: item.clientId,
+                    taskId: task.id,
+                    operation: item.operation,
+                  });
+                } catch (createError) {
+                  console.error("Failed to create task entity:", {
+                    clientId: item.clientId,
+                    payload: taskPayload,
+                    actualPayload: {
+                      ...taskPayload,
+                      type: taskPayload.type || "new",
+                      userId:
+                        taskPayload.userId === "offline" || !taskPayload.userId
+                          ? userId
+                          : taskPayload.userId,
+                    },
+                    error: createError,
+                    errorMessage:
+                      createError instanceof Error
+                        ? createError.message
+                        : "Unknown error",
+                    errorStack:
+                      createError instanceof Error
+                        ? createError.stack
+                        : undefined,
+                  });
+                  throw new UnexpectedError(
+                    `タスクエンティティの作成に失敗しました: ${createError instanceof Error ? createError.message : "Unknown error"}`,
+                  );
+                }
 
                 // 冪等性の保証：既存チェック
                 const existing = await taskRepository
@@ -470,17 +588,27 @@ function syncBatchItems(
 
                 if (item.operation === "create") {
                   if (existing) {
-                    // 既に存在する場合はスキップ（冪等性）
                     result.status = "skipped";
                     result.message = "既に存在するため、作成をスキップしました";
                     result.serverId = existing.id;
-                  } else {
-                    const created = await taskRepository
-                      .withTx(tx)
-                      .createTask(task);
-                    result.serverId = created.id;
+                    result.payload = existing as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "update") {
+                  const created = await taskRepository
+                    .withTx(tx)
+                    .createTask(task);
+                  result.serverId = created.id;
+                  result.payload = created as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "update") {
                   if (!existing) {
                     throw new UnexpectedError("更新対象のTaskが存在しません");
                   }
@@ -490,21 +618,35 @@ function syncBatchItems(
                       existing,
                       strategy,
                     );
-                    await taskRepository.withTx(tx).updateTask(resolved);
+                    const updated = await taskRepository
+                      .withTx(tx)
+                      .updateTask(resolved);
                     result.status = "conflict";
                     result.conflictData = existing;
-                  } else {
-                    await taskRepository.withTx(tx).updateTask(task);
+                    result.payload = updated as unknown as Record<
+                      string,
+                      unknown
+                    >;
+                    break;
                   }
-                } else if (item.operation === "delete") {
-                  if (existing) {
-                    await taskRepository.withTx(tx).deleteTask(task);
-                  } else {
-                    // 既に削除されている場合はスキップ（冪等性）
+                  const updated = await taskRepository
+                    .withTx(tx)
+                    .updateTask(task);
+                  result.payload = updated as unknown as Record<
+                    string,
+                    unknown
+                  >;
+                  break;
+                }
+
+                if (item.operation === "delete") {
+                  if (!existing) {
                     result.status = "skipped";
                     result.message =
                       "既に削除されているため、削除をスキップしました";
+                    break;
                   }
+                  await taskRepository.withTx(tx).deleteTask(task);
                 }
                 break;
               }

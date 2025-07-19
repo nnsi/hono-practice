@@ -12,12 +12,16 @@ import type { TaskRepository } from ".";
 export type CreateTaskInputParams = {
   title: string;
   startDate?: string;
+  dueDate?: string;
+  memo?: string;
 };
 
 export type UpdateTaskInputParams = {
   title?: string;
   doneDate?: string | null;
   memo?: string | null;
+  startDate?: string;
+  dueDate?: string | null;
 };
 
 export type TaskUsecase = {
@@ -30,6 +34,7 @@ export type TaskUsecase = {
     params: UpdateTaskInputParams,
   ) => Promise<Task>;
   deleteTask: (userId: UserId, taskId: TaskId) => Promise<void>;
+  archiveTask: (userId: UserId, taskId: TaskId) => Promise<Task>;
 };
 
 export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
@@ -39,6 +44,7 @@ export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
     createTask: createTask(repo),
     updateTask: updateTask(repo),
     deleteTask: deleteTask(repo),
+    archiveTask: archiveTask(repo),
   };
 }
 
@@ -64,9 +70,11 @@ function createTask(repo: TaskRepository) {
       id: createTaskId(),
       userId: userId,
       title: params.title,
-      startDate: params.startDate,
+      startDate: params.startDate || null,
+      dueDate: params.dueDate || null,
       doneDate: null,
-      memo: null,
+      memo: params.memo || null,
+      archivedAt: null,
     });
 
     return await repo.createTask(task);
@@ -104,5 +112,14 @@ function deleteTask(repo: TaskRepository) {
     await repo.deleteTask(task);
 
     return;
+  };
+}
+
+function archiveTask(repo: TaskRepository) {
+  return async (userId: UserId, taskId: TaskId) => {
+    const archivedTask = await repo.archiveTask(userId, taskId);
+    if (!archivedTask) throw new ResourceNotFoundError("task not found");
+
+    return archivedTask;
   };
 }

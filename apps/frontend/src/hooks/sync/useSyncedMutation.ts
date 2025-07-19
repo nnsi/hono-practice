@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
 import { useAuth } from "@frontend/hooks/useAuth";
-import { SyncManager } from "@frontend/services/sync";
+import { getSyncManagerInstance } from "@frontend/services/sync";
 import { useMutation } from "@tanstack/react-query";
 
-import { useNetworkStatusContext } from "../providers/NetworkStatusProvider";
+import { useNetworkStatusContext } from "../../providers/NetworkStatusProvider";
 
 import type { EntityType, SyncOperation } from "@frontend/services/sync";
 import type { UseMutationOptions } from "@tanstack/react-query";
@@ -28,7 +28,7 @@ export function useSyncedMutation<
 >(options: SyncedMutationOptions<TData, TError, TVariables>) {
   const { isOnline } = useNetworkStatusContext();
   const { user } = useAuth();
-  const syncManager = SyncManager.getInstance(user?.id);
+  const syncManager = getSyncManagerInstance(user?.id);
 
   const mutation = useMutation<TData, TError, TVariables>({
     ...options,

@@ -93,6 +93,15 @@ export function createTaskRoute() {
       const res = await c.var.h.deleteTask(userId, taskId);
 
       return c.json(res);
+    })
+    .post("/:id/archive", async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const taskId = createTaskId(id);
+
+      const res = await c.var.h.archiveTask(userId, taskId);
+
+      return c.json(res);
     });
 }
 

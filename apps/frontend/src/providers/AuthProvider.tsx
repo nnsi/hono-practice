@@ -7,13 +7,16 @@ import {
   useState,
 } from "react";
 
+import { AppEvents } from "@frontend/services/abstractions";
 import { syncCrypto } from "@frontend/services/sync/crypto";
-import { apiClient } from "@frontend/utils/apiClient";
+import { apiClient as defaultApiClient } from "@frontend/utils/apiClient";
 
 import type { LoginRequest } from "@dtos/request/LoginRequest";
 import type { GetUserResponse } from "@dtos/response/GetUserResponse";
 
 import { TokenContext } from "./TokenProvider";
+
+import type { EventBus } from "@frontend/services/abstractions";
 
 type UserState = GetUserResponse | null;
 
@@ -36,11 +39,19 @@ type AuthState =
 
 type AuthProviderProps = {
   children: ReactNode;
+  apiClient?: typeof defaultApiClient;
+  eventBus?: EventBus;
+  onClearCrypto?: () => void;
 };
 
 export const AuthContext = createContext<AuthState>(undefined);
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({
+  children,
+  apiClient = defaultApiClient,
+  eventBus,
+  onClearCrypto = () => syncCrypto.clearCache(),
+}) => {
   const tokenContext = useContext(TokenContext);
   if (!tokenContext) {
     throw new Error("AuthProvider must be used within TokenProvider");
@@ -142,7 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       clearTokens();
       setRequestStatus("idle");
       // 暗号化キャッシュをクリア
-      syncCrypto.clearCache();
+      onClearCrypto();
     }
   };
 
@@ -179,12 +190,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       scheduleTokenRefresh();
     };
 
+    if (eventBus) {
+      const unsubscribeRefreshNeeded = eventBus.on(
+        AppEvents.TOKEN_REFRESH_NEEDED,
+        handleTokenRefresh,
+      );
+      const unsubscribeRefreshed = eventBus.on(
+        AppEvents.TOKEN_REFRESHED,
+        (event) => handleTokenRefreshed(event),
+      );
+
+      return () => {
+        unsubscribeRefreshNeeded();
+        unsubscribeRefreshed();
+      };
+    }
     window.addEventListener("token-refresh-needed", handleTokenRefresh);
-    window.addEventListener("token-refreshed", handleTokenRefreshed);
+    window.addEventListener(
+      "token-refreshed",
+      handleTokenRefreshed as EventListener,
+    );
 
     return () => {
       window.removeEventListener("token-refresh-needed", handleTokenRefresh);
-      window.removeEventListener("token-refreshed", handleTokenRefreshed);
+      window.removeEventListener(
+        "token-refreshed",
+        handleTokenRefreshed as EventListener,
+      );
     };
   }, [refreshToken, setAccessToken, scheduleTokenRefresh]);
 
