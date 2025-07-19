@@ -650,6 +650,10 @@ describe("AuthRoute Integration Tests", () => {
         { json: { credential: mockGoogleToken } },
         { headers: { "x-client-id": mockClientId } },
       );
+      if (res.status !== 200) {
+        const errorBody = await res.json();
+        console.error("Google auth error:", errorBody);
+      }
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.user).toEqual(expect.any(Object));

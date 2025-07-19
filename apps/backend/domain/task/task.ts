@@ -30,11 +30,24 @@ const PersistedTaskSchema = BaseTaskSchema.merge(
   }),
 );
 
+// アーカイブ済みタスクのスキーマ
+const ArchivedTaskSchema = BaseTaskSchema.merge(
+  z.object({
+    type: z.literal("archived"),
+    doneDate: z.string(), // アーカイブ済みタスクは必ず完了済み
+    archivedAt: z.date(), // アーカイブ済みタスクは必ずarchivedAtを持つ
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
 export const TaskSchema = z.discriminatedUnion("type", [
   NewTaskSchema,
   PersistedTaskSchema,
+  ArchivedTaskSchema,
 ]);
 export type Task = z.infer<typeof TaskSchema>;
+export type ArchivedTask = z.infer<typeof ArchivedTaskSchema>;
 type TaskInput = z.input<typeof TaskSchema>;
 
 export function createTaskEntity(params: TaskInput): Task {
@@ -45,6 +58,21 @@ export function createTaskEntity(params: TaskInput): Task {
       errors: parsedEntity.error.errors,
     });
     throw new DomainValidateError("createTaskEntity: invalid params");
+  }
+
+  return parsedEntity.data;
+}
+
+export function createArchivedTaskEntity(
+  params: z.input<typeof ArchivedTaskSchema>,
+): ArchivedTask {
+  const parsedEntity = ArchivedTaskSchema.safeParse(params);
+  if (!parsedEntity.success) {
+    console.error("ArchivedTask validation failed:", {
+      params,
+      errors: parsedEntity.error.errors,
+    });
+    throw new DomainValidateError("createArchivedTaskEntity: invalid params");
   }
 
   return parsedEntity.data;

@@ -134,21 +134,23 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
           >
             <div className="flex items-center gap-3 p-3 h-full">
               {/* チェックボックス */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleTaskDone(task);
-                }}
-                className="p-0 h-auto"
-              >
-                {task.doneDate ? (
-                  <CheckCircledIcon className="w-5 h-5 text-green-500" />
-                ) : (
-                  <CircleIcon className="w-5 h-5 text-gray-400" />
-                )}
-              </Button>
+              {!archived && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleTaskDone(task);
+                  }}
+                  className="p-0 h-auto"
+                >
+                  {task.doneDate ? (
+                    <CheckCircledIcon className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <CircleIcon className="w-5 h-5 text-gray-400" />
+                  )}
+                </Button>
+              )}
 
               {/* タスクタイトル */}
               <div className="flex-1 min-w-0">

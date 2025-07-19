@@ -36,6 +36,7 @@ type TaskItem = {
   dueDate: string | null;
   doneDate: string | null;
   memo: string | null;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
 };
@@ -142,7 +143,9 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
           <DialogHeader>
             <DialogTitle>タスクを編集</DialogTitle>
             <DialogDescription>
-              タスクの詳細情報を編集できます
+              {task.archivedAt
+                ? "アーカイブ済みタスクはメモの編雈と削除のみ可能です"
+                : "タスクの詳細情報を編集できます"}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -159,6 +162,7 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
                           placeholder="タスクのタイトル"
                           {...field}
                           className="flex-1"
+                          disabled={!!task.archivedAt}
                         />
                       </FormControl>
                       <Button
@@ -181,7 +185,11 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
                   <FormItem>
                     <FormLabel>開始日</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input
+                        type="date"
+                        {...field}
+                        disabled={!!task.archivedAt}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +202,11 @@ export const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
                   <FormItem>
                     <FormLabel>期限日（任意）</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input
+                        type="date"
+                        {...field}
+                        disabled={!!task.archivedAt}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
