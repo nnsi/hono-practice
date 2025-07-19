@@ -135,10 +135,6 @@ describe("useActivityBatchData", () => {
       return {
         ok: true,
         json: async () => {
-          console.log("json() called, returning:", [
-            mockActivities,
-            mockActivityLogs,
-          ]);
           return [mockActivities, mockActivityLogs];
         },
       } as any;

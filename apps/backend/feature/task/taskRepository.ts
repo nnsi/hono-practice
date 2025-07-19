@@ -13,6 +13,7 @@ import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type TaskRepository<T = any> = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
+  getArchivedTasksByUserId: (userId: UserId) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
     userId: UserId,
     taskId: TaskId,
@@ -34,6 +35,7 @@ export function newTaskRepository(
 ): TaskRepository<QueryExecutor> {
   return {
     getTasksByUserId: getTasksByUserId(db),
+    getArchivedTasksByUserId: getArchivedTasksByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
@@ -85,6 +87,24 @@ function getTasksByUserId(db: QueryExecutor) {
     const result = await db.query.tasks.findMany({
       where: whereClause,
       orderBy: desc(tasks.createdAt),
+    });
+
+    return result.map((r) => {
+      const task = createTaskEntity({ ...r, type: "persisted" });
+      return task;
+    });
+  };
+}
+
+function getArchivedTasksByUserId(db: QueryExecutor) {
+  return async (userId: UserId) => {
+    const result = await db.query.tasks.findMany({
+      where: and(
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+        not(isNull(tasks.archivedAt)),
+      ),
+      orderBy: desc(tasks.archivedAt),
     });
 
     return result.map((r) => {
