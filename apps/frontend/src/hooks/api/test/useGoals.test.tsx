@@ -87,6 +87,7 @@ describe("useGoals", () => {
           currentBalance: 0,
           totalTarget: 10950,
           totalActual: 0,
+          inactiveDates: ["2024-01-02", "2024-01-05"],
         },
         {
           id: "00000000-0000-4000-8000-000000000002",
@@ -102,6 +103,7 @@ describe("useGoals", () => {
           currentBalance: 0,
           totalTarget: 10950,
           totalActual: 0,
+          inactiveDates: [],
         },
       ];
 
@@ -137,6 +139,7 @@ describe("useGoals", () => {
           currentBalance: 0,
           totalTarget: 10950,
           totalActual: 0,
+          inactiveDates: [],
         },
       ];
 
@@ -197,6 +200,7 @@ describe("useGoals", () => {
         currentBalance: 0,
         totalTarget: 10950,
         totalActual: 0,
+        inactiveDates: ["2024-01-03", "2024-01-07"],
       };
 
       vi.mocked(mockApiClient.users.goals.$get).mockResolvedValue({
@@ -271,6 +275,7 @@ describe("useGoals", () => {
         currentBalance: 0,
         totalTarget: newGoalData.dailyTargetQuantity * 365,
         totalActual: 0,
+        inactiveDates: [],
       };
 
       vi.mocked(mockApiClient.users.goals.$post).mockResolvedValue({
@@ -341,6 +346,7 @@ describe("useGoals", () => {
         currentBalance: 0,
         totalTarget: 10950,
         totalActual: 0,
+        inactiveDates: ["2024-01-04"],
       };
 
       vi.mocked(mockApiClient.users.goals[":id"].$put).mockImplementation(

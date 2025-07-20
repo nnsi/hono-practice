@@ -14,6 +14,7 @@ export const GoalResponseSchema = z.object({
   currentBalance: z.number(),
   totalTarget: z.number(),
   totalActual: z.number(),
+  inactiveDates: z.array(z.string()),
 });
 
 export const GetGoalsResponseSchema = z.object({
