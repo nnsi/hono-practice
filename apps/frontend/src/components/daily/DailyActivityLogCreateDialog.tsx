@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { ActivityLogCreateDialog } from "@frontend/components/activity/ActivityLogCreateDialog";
 import {
   Dialog,
@@ -8,9 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@frontend/components/ui";
-import { useActivities } from "@frontend/hooks/api";
-
-import type { GetActivityResponse } from "@dtos/response";
+import { useDailyActivityCreate } from "@frontend/hooks/feature/daily/useDailyActivityCreate";
 
 import { Card, CardContent } from "@components/ui";
 
@@ -25,29 +21,14 @@ export function DailyActivityLogCreateDialog({
   date: Date;
   onSuccess?: () => void;
 }) {
-  const [selectedActivity, setSelectedActivity] =
-    useState<GetActivityResponse | null>(null);
-  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
-  const { data: activities } = useActivities();
-
-  const handleActivitySelect = (activity: GetActivityResponse) => {
-    setSelectedActivity(activity);
-    setActivityDialogOpen(true);
-  };
-
-  const handleActivityDialogClose = (open: boolean) => {
-    setActivityDialogOpen(open);
-    if (!open) {
-      setSelectedActivity(null);
-    }
-  };
-
-  const handleSuccess = () => {
-    setSelectedActivity(null);
-    setActivityDialogOpen(false);
-    onOpenChange(false);
-    onSuccess?.();
-  };
+  const {
+    selectedActivity,
+    activityDialogOpen,
+    activities,
+    handleActivitySelect,
+    handleActivityDialogClose,
+    handleSuccess,
+  } = useDailyActivityCreate(onOpenChange, onSuccess);
 
   return (
     <>

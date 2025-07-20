@@ -1,10 +1,7 @@
-import { useEffect } from "react";
-
 import { AuthenticatedLayout } from "@frontend/components";
 import { CreateUserForm } from "@frontend/components/root/CreateUserForm";
 import { LoginForm } from "@frontend/components/root/LoginForm";
-import { useAuth } from "@frontend/hooks/useAuth";
-import { useNavigate } from "@tanstack/react-router";
+import { useAuthInitializer } from "@frontend/hooks/feature/auth/useAuthInitializer";
 
 import {
   Tabs,
@@ -12,53 +9,10 @@ import {
   TabsList,
   TabsTrigger,
   Toaster,
-  useToast,
 } from "@components/ui";
 
 export const RootPage: React.FC = () => {
-  const { user, requestStatus, refreshToken, isInitialized } = useAuth();
-
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    function handleApiError(e: CustomEvent<string>) {
-      toast({
-        title: "Error",
-        description: e.detail,
-        variant: "destructive",
-      });
-    }
-    async function handleUnauthorized() {
-      // すでに未認証状態なら何もしない
-      if (!user) return;
-      try {
-        // トークンリフレッシュを試みる
-        await refreshToken();
-      } catch (e) {
-        // リフレッシュに失敗した場合のみログインページにリダイレクト
-        navigate({
-          to: "/",
-        });
-      }
-    }
-    function handleDisablePinchZoom(e: TouchEvent) {
-      if (e.touches.length > 1) {
-        e.preventDefault();
-      }
-    }
-    window.addEventListener("api-error", handleApiError);
-    window.addEventListener("unauthorized", handleUnauthorized);
-    window.addEventListener("touchstart", handleDisablePinchZoom, {
-      passive: false,
-    });
-
-    return () => {
-      window.removeEventListener("api-error", handleApiError);
-      window.removeEventListener("unauthorized", handleUnauthorized);
-      window.removeEventListener("touchstart", handleDisablePinchZoom);
-    };
-  }, []);
+  const { isInitialized, user, requestStatus } = useAuthInitializer();
 
   // 初期化中（/tokenリクエスト中）
   if (!isInitialized) {

@@ -1,13 +1,8 @@
 import type React from "react";
-import { useState } from "react";
 
 import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { TaskEditDialog } from "@frontend/components/tasks/TaskEditDialog";
-import {
-  useArchiveTask,
-  useDeleteTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useTaskActions } from "@frontend/hooks/feature/tasks/useTaskActions";
 import {
   ArchiveIcon,
   CheckCircledIcon,
@@ -15,7 +10,6 @@ import {
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import dayjs from "dayjs";
 
 import { Button, Card, CardContent } from "@components/ui";
 
@@ -41,46 +35,21 @@ export const TaskList: React.FC<TaskListProps> = ({
   tasks,
   isTasksLoading,
 }) => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
-
-  // 同期対応のフックを使用
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
-  const archiveTask = useArchiveTask();
-
-  // タスクの完了/未完了を切り替えるハンドラ
-  const handleToggleTaskDone = (task: TaskItem) => {
-    updateTask.mutate({
-      id: task.id,
-      doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
-    });
-  };
-
-  // タスクを削除するハンドラ
-  const handleDeleteTask = (e: React.MouseEvent, task: TaskItem) => {
-    e.stopPropagation();
-    deleteTask.mutate({ id: task.id });
-  };
-
-  // タスクをアーカイブするハンドラ
-  const handleArchiveTask = (e: React.MouseEvent, task: TaskItem) => {
-    e.stopPropagation();
-    archiveTask.mutate({ id: task.id, date: task.startDate || undefined });
-  };
-
-  // タスク編集の開始
-  const handleStartEdit = (task: TaskItem) => {
-    setSelectedTask(task);
-    setEditDialogOpen(true);
-  };
-
-  // 日付のフォーマット
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    return dayjs(dateStr).format("MM/DD");
-  };
+  const {
+    createDialogOpen,
+    setCreateDialogOpen,
+    editDialogOpen,
+    setEditDialogOpen,
+    selectedTask,
+    handleToggleTaskDone,
+    handleDeleteTask,
+    handleArchiveTask,
+    handleStartEdit,
+    handleEditDialogClose,
+    formatDate,
+    deleteTaskPending,
+    archiveTaskPending,
+  } = useTaskActions();
 
   return (
     <>
@@ -155,7 +124,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                       variant="ghost"
                       className="ml-2 text-gray-400 hover:text-blue-500 bg-transparent border-none p-0 m-0"
                       onClick={(e) => handleArchiveTask(e, task)}
-                      disabled={archiveTask.isPending}
+                      disabled={archiveTaskPending}
                       aria-label="タスクアーカイブ"
                     >
                       <ArchiveIcon className="w-6 h-6" />
@@ -166,7 +135,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     variant="ghost"
                     className="ml-2 text-gray-400 hover:text-red-500 bg-transparent border-none p-0 m-0"
                     onClick={(e) => handleDeleteTask(e, task)}
-                    disabled={deleteTask.isPending}
+                    disabled={deleteTaskPending}
                     aria-label="タスク削除"
                   >
                     <TrashIcon className="w-6 h-6" />
@@ -194,10 +163,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         task={selectedTask}
-        onSuccess={() => {
-          setEditDialogOpen(false);
-          setSelectedTask(null);
-        }}
+        onSuccess={handleEditDialogClose}
       />
     </>
   );

@@ -1,11 +1,7 @@
 import type React from "react";
-import { useState } from "react";
 
 import { TaskEditDialog } from "@frontend/components/tasks/TaskEditDialog";
-import {
-  useArchiveTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useTaskGroup } from "@frontend/hooks/feature/tasks/useTaskGroup";
 import {
   ArchiveIcon,
   CalendarIcon,
@@ -53,41 +49,16 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
   emptyMessage,
   onCreateClick,
 }) => {
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
-
-  const updateTask = useUpdateTask();
-  const archiveTask = useArchiveTask();
-
-  // タスクの完了/未完了を切り替え
-  const handleToggleTaskDone = (task: TaskItem) => {
-    updateTask.mutate({
-      id: task.id,
-      doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
-    });
-  };
-
-  // タスクを今日に移動
-  const handleMoveToToday = (task: TaskItem) => {
-    const today = dayjs().format("YYYY-MM-DD");
-    updateTask.mutate({
-      id: task.id,
-      startDate: today,
-      // 締切日も今日に設定
-      dueDate: today,
-    });
-  };
-
-  // タスクアーカイブ
-  const handleArchiveTask = (task: TaskItem) => {
-    archiveTask.mutate({ id: task.id, date: task.startDate || undefined });
-  };
-
-  // タスクをクリックしたときの処理
-  const handleTaskClick = (task: TaskItem) => {
-    setSelectedTask(task);
-    setEditDialogOpen(true);
-  };
+  const {
+    editDialogOpen,
+    selectedTask,
+    setEditDialogOpen,
+    handleToggleTaskDone,
+    handleMoveToToday,
+    handleArchiveTask,
+    handleTaskClick,
+    handleDialogSuccess,
+  } = useTaskGroup();
 
   if (isLoading && tasks.length === 0) {
     return (
@@ -212,10 +183,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         task={selectedTask}
-        onSuccess={() => {
-          setEditDialogOpen(false);
-          setSelectedTask(null);
-        }}
+        onSuccess={handleDialogSuccess}
       />
     </div>
   );

@@ -1,11 +1,7 @@
-import { useState } from "react";
 import type React from "react";
 
-import { useGlobalDate } from "@frontend/hooks";
-import { useActivityBatchData } from "@frontend/hooks/api";
+import { useActivityRegistPage } from "@frontend/hooks/feature/activity/useActivityRegistPage";
 import { Pencil1Icon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
 
 import type { GetActivityResponse } from "@dtos/response";
 
@@ -19,74 +15,25 @@ import {
 } from ".";
 
 export const ActivityRegistPage: React.FC = () => {
-  const { date, setDate } = useGlobalDate();
-  const [open, setOpen] = useState(false);
-  const [selectedActivity, setSelectedActivity] =
-    useState<GetActivityResponse | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editTargetActivity, setEditTargetActivity] =
-    useState<GetActivityResponse | null>(null);
-  const queryClient = useQueryClient();
-
-  // データ取得とsync処理をカスタムフックで管理
-  const { activities, hasActivityLogs } = useActivityBatchData({ date });
-
-  const handleActivityClick = (activity: GetActivityResponse) => {
-    setSelectedActivity(activity);
-    setOpen(true);
-  };
-
-  const handleNewActivityClick = () => {
-    setOpen(true);
-  };
-
-  // 編集ボタンクリックのハンドラ
-  const handleEditClick = (activity: GetActivityResponse) => {
-    setEditTargetActivity(activity);
-    setEditModalOpen(true);
-  };
-
-  // NewActivityDialogのopen/close処理
-  const handleNewActivityDialogChange = (open: boolean) => {
-    setOpen(open);
-  };
-
-  // ActivityLogCreateDialogのopen/close処理
-  const handleActivityLogCreateDialogChange = async (open: boolean) => {
-    setOpen(open);
-    if (!open) {
-      setSelectedActivity(null);
-      // 全てのキャッシュを無効化
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "activity",
-          "activity-logs-daily",
-          dayjs(date).format("YYYY-MM-DD"),
-        ],
-      });
-      // DailyPageで使用されているキーも無効化
-      await queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      });
-    }
-  };
-
-  // ActivityLogCreateDialogのsuccess処理
-  const handleActivityLogCreateSuccess = () => {
-    // キャッシュを更新
-    queryClient.invalidateQueries({
-      queryKey: [
-        "activity",
-        "activity-logs-daily",
-        dayjs(date).format("YYYY-MM-DD"),
-      ],
-    });
-  };
-
-  // ActivityEditDialogのclose処理
-  const handleActivityEditDialogClose = () => {
-    setEditModalOpen(false);
-  };
+  const {
+    // 状態
+    date,
+    setDate,
+    activities,
+    hasActivityLogs,
+    open,
+    selectedActivity,
+    editModalOpen,
+    editTargetActivity,
+    // ハンドラー
+    handleActivityClick,
+    handleNewActivityClick,
+    handleEditClick,
+    handleNewActivityDialogChange,
+    handleActivityLogCreateDialogChange,
+    handleActivityLogCreateSuccess,
+    handleActivityEditDialogClose,
+  } = useActivityRegistPage();
 
   return (
     <>
