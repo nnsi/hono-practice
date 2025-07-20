@@ -47,5 +47,35 @@ export function createActivityLogEntity(params: ActivityLogInput): ActivityLog {
     throw new DomainValidateError("createActivityLogEntity: invalid params");
   }
 
-  return parsedEntity.data;
+  const activityLog = parsedEntity.data;
+
+  // 日付の妥当性チェック
+  const date = new Date(activityLog.date);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // 今日の終わりまでは許可
+
+  // 未来の日付は許可しない
+  if (date > today) {
+    throw new DomainValidateError(
+      "createActivityLogEntity: date cannot be in the future",
+    );
+  }
+
+  // 極端に古い日付は許可しない（例：10年以上前）
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+  if (date < tenYearsAgo) {
+    throw new DomainValidateError(
+      "createActivityLogEntity: date is too old (more than 10 years ago)",
+    );
+  }
+
+  // 数量の妥当性チェック（nullでない場合）
+  if (activityLog.quantity !== null && activityLog.quantity < 0) {
+    throw new DomainValidateError(
+      "createActivityLogEntity: quantity cannot be negative",
+    );
+  }
+
+  return activityLog;
 }

@@ -99,6 +99,13 @@ function updateTask(repo: TaskRepository) {
     if (!task)
       throw new ResourceNotFoundError("updateTaskUsecase:task not found");
 
+    // アーカイブ済みタスクは getTaskByUserIdAndTaskId では取得されないため、
+    // ここに到達する task は必ず "new" か "persisted" タイプ
+    if (task.type === "archived") {
+      // 実際にはここに到達しないが、型安全性のため
+      throw new ResourceNotFoundError("updateTaskUsecase:task not found");
+    }
+
     const newTask = createTaskEntity({
       ...task,
       ...params,

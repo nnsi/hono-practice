@@ -47,7 +47,16 @@ export function createActivityGoalEntity(
     throw new DomainValidateError("createActivityGoalEntity: invalid params");
   }
 
-  return parsedEntity.data;
+  const goal = parsedEntity.data;
+
+  // 終了日が設定されている場合、開始日より後でなければならない
+  if (goal.endDate && goal.startDate >= goal.endDate) {
+    throw new DomainValidateError(
+      "createActivityGoalEntity: endDate must be after startDate",
+    );
+  }
+
+  return goal;
 }
 
 // 負債計算用のValue Object

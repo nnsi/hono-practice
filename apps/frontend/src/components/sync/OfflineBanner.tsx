@@ -1,36 +1,9 @@
-import { useEffect, useState } from "react";
-
-import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
+import { useOfflineBanner } from "@frontend/hooks/sync/useOfflineBanner";
 import { cn } from "@frontend/utils/cn";
 import { WifiOff, X } from "lucide-react";
 
 export function OfflineBanner() {
-  const { isOnline } = useNetworkStatusContext();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!isOnline && !isDismissed) {
-      setIsVisible(true);
-    } else if (isOnline) {
-      setIsVisible(false);
-      setIsDismissed(false);
-    }
-  }, [isOnline, isDismissed]);
-
-  useEffect(() => {
-    if (isOnline && isVisible) {
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isOnline, isVisible]);
-
-  // バナーを閉じるハンドラ
-  const handleDismiss = () => {
-    setIsDismissed(true);
-  };
+  const { isVisible, isOnline, handleDismiss } = useOfflineBanner();
 
   if (!isVisible) {
     return null;

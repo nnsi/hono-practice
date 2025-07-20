@@ -38,6 +38,7 @@ type GoalCardProps = {
   quantityUnit?: string;
   activity?: GetActivityResponse;
   isPast?: boolean;
+  hideGraph?: boolean;
 };
 
 type EditFormData = {
@@ -65,6 +66,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   quantityUnit = "",
   activity,
   isPast = false,
+  hideGraph = false,
 }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showLogCreateDialog, setShowLogCreateDialog] = useState(false);
@@ -176,14 +178,16 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           onSubmit={form.handleSubmit(handleUpdate)}
           className={`relative w-full h-20 rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} shadow-sm animate-in zoom-in-95 duration-200 overflow-hidden`}
         >
-          <div
-            className={`absolute inset-0 ${
-              isAnimating ? "transition-all duration-1000 ease-out" : ""
-            }`}
-            style={{
-              background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
-            }}
-          />
+          {!hideGraph && (
+            <div
+              className={`absolute inset-0 ${
+                isAnimating ? "transition-all duration-1000 ease-out" : ""
+              }`}
+              style={{
+                background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
+              }}
+            />
+          )}
           <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
             <p className="text-xl sm:text-2xl flex-shrink-0">{activityEmoji}</p>
             <p className="text-xs sm:text-sm font-medium truncate max-w-[80px] sm:max-w-none">
@@ -262,14 +266,16 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         role="button"
         tabIndex={0}
       >
-        <div
-          className={`absolute inset-0 ${
-            isAnimating ? "transition-all duration-1000 ease-out" : ""
-          }`}
-          style={{
-            background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
-          }}
-        />
+        {!hideGraph && (
+          <div
+            className={`absolute inset-0 ${
+              isAnimating ? "transition-all duration-1000 ease-out" : ""
+            }`}
+            style={{
+              background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
+            }}
+          />
+        )}
         <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
           {/* 左側: 絵文字とアクティビティ名 */}
           <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
@@ -289,10 +295,12 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 {goal.currentBalance.toLocaleString()}
                 <span className="text-xs">{quantityUnit}</span>
               </p>
-              <p className="text-xs text-gray-600 hidden sm:block">
-                実績: {goal.totalActual.toLocaleString()} /{" "}
-                {goal.totalTarget.toLocaleString()}
-              </p>
+              {!hideGraph && (
+                <p className="text-xs text-gray-600 hidden sm:block">
+                  実績: {goal.totalActual.toLocaleString()} /{" "}
+                  {goal.totalTarget.toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
 
@@ -363,6 +371,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         open={showDetailModal}
         onOpenChange={setShowDetailModal}
         goalId={goal.id}
+        hideGraph={hideGraph}
       />
 
       {activity && (

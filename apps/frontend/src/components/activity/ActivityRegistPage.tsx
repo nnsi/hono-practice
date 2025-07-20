@@ -1,11 +1,7 @@
-import { useState } from "react";
 import type React from "react";
 
-import { useGlobalDate, useLongPress } from "@frontend/hooks";
-import { useActivityBatchData } from "@frontend/hooks/api";
-import { PlusCircledIcon } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
+import { useActivityRegistPage } from "@frontend/hooks/feature/activity/useActivityRegistPage";
+import { Pencil1Icon, PlusCircledIcon } from "@radix-ui/react-icons";
 
 import type { GetActivityResponse } from "@dtos/response";
 
@@ -19,74 +15,25 @@ import {
 } from ".";
 
 export const ActivityRegistPage: React.FC = () => {
-  const { date, setDate } = useGlobalDate();
-  const [open, setOpen] = useState(false);
-  const [selectedActivity, setSelectedActivity] =
-    useState<GetActivityResponse | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editTargetActivity, setEditTargetActivity] =
-    useState<GetActivityResponse | null>(null);
-  const queryClient = useQueryClient();
-
-  // データ取得とsync処理をカスタムフックで管理
-  const { activities, hasActivityLogs } = useActivityBatchData({ date });
-
-  const handleActivityClick = (activity: GetActivityResponse) => {
-    setSelectedActivity(activity);
-    setOpen(true);
-  };
-
-  const handleNewActivityClick = () => {
-    setOpen(true);
-  };
-
-  // 長押し処理のハンドラ
-  const handleLongPress = (activity: GetActivityResponse) => {
-    setEditTargetActivity(activity);
-    setEditModalOpen(true);
-  };
-
-  // NewActivityDialogのopen/close処理
-  const handleNewActivityDialogChange = (open: boolean) => {
-    setOpen(open);
-  };
-
-  // ActivityLogCreateDialogのopen/close処理
-  const handleActivityLogCreateDialogChange = async (open: boolean) => {
-    setOpen(open);
-    if (!open) {
-      setSelectedActivity(null);
-      // 全てのキャッシュを無効化
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "activity",
-          "activity-logs-daily",
-          dayjs(date).format("YYYY-MM-DD"),
-        ],
-      });
-      // DailyPageで使用されているキーも無効化
-      await queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dayjs(date).format("YYYY-MM-DD")],
-      });
-    }
-  };
-
-  // ActivityLogCreateDialogのsuccess処理
-  const handleActivityLogCreateSuccess = () => {
-    // キャッシュを更新
-    queryClient.invalidateQueries({
-      queryKey: [
-        "activity",
-        "activity-logs-daily",
-        dayjs(date).format("YYYY-MM-DD"),
-      ],
-    });
-  };
-
-  // ActivityEditDialogのclose処理
-  const handleActivityEditDialogClose = () => {
-    setEditModalOpen(false);
-  };
+  const {
+    // 状態
+    date,
+    setDate,
+    activities,
+    hasActivityLogs,
+    open,
+    selectedActivity,
+    editModalOpen,
+    editTargetActivity,
+    // ハンドラー
+    handleActivityClick,
+    handleNewActivityClick,
+    handleEditClick,
+    handleNewActivityDialogChange,
+    handleActivityLogCreateDialogChange,
+    handleActivityLogCreateSuccess,
+    handleActivityEditDialogClose,
+  } = useActivityRegistPage();
 
   return (
     <>
@@ -97,11 +44,11 @@ export const ActivityRegistPage: React.FC = () => {
           const isDone = hasActivityLogs(activity.id);
 
           return (
-            <ActivityCardWithLongPress
+            <ActivityCardWithEdit
               key={activity.id}
               activity={activity}
               onClick={() => handleActivityClick(activity)}
-              onLongPress={() => handleLongPress(activity)}
+              onEditClick={() => handleEditClick(activity)}
               isDone={isDone}
             />
           );
@@ -137,24 +84,35 @@ export const ActivityRegistPage: React.FC = () => {
   );
 };
 
-// 長押し処理付きのActivityCardラッパー
-function ActivityCardWithLongPress({
+// 編集ボタン付きのActivityCardラッパー
+function ActivityCardWithEdit({
   activity,
   onClick,
-  onLongPress,
+  onEditClick,
   isDone,
 }: {
   activity: GetActivityResponse;
   onClick: () => void;
-  onLongPress: () => void;
+  onEditClick: () => void;
   isDone: boolean;
 }) {
-  const longPressHandlers = useLongPress({ onLongPress });
-
   return (
-    <ActivityCard onClick={onClick} isDone={isDone} {...longPressHandlers}>
-      <div className="text-5xl mb-2">{activity.emoji}</div>
-      <div className="text-sm text-gray-800 font-medium">{activity.name}</div>
-    </ActivityCard>
+    <div className="relative">
+      <ActivityCard onClick={onClick} isDone={isDone}>
+        <div className="text-5xl mb-2">{activity.emoji}</div>
+        <div className="text-sm text-gray-800 font-medium">{activity.name}</div>
+      </ActivityCard>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEditClick();
+        }}
+        className="absolute bottom-2 right-2 p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors"
+        aria-label="編集"
+      >
+        <Pencil1Icon className="w-4 h-4" />
+      </button>
+    </div>
   );
 }

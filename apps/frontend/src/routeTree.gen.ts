@@ -13,6 +13,7 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingRouteImport } from './routes/setting'
 import { Route as NewGoalRouteImport } from './routes/new-goal'
 import { Route as DailyRouteImport } from './routes/daily'
+import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityStatsRouteImport } from './routes/activity/stats'
 
@@ -36,6 +37,11 @@ const DailyRoute = DailyRouteImport.update({
   path: '/daily',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActikoRoute = ActikoRouteImport.update({
+  id: '/actiko',
+  path: '/actiko',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const ActivityStatsRoute = ActivityStatsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/actiko': typeof ActikoRoute
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/actiko': typeof ActikoRoute
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/actiko': typeof ActikoRoute
   '/daily': typeof DailyRoute
   '/new-goal': typeof NewGoalRoute
   '/setting': typeof SettingRoute
@@ -76,16 +85,25 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/actiko'
     | '/daily'
     | '/new-goal'
     | '/setting'
     | '/tasks'
     | '/activity/stats'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daily' | '/new-goal' | '/setting' | '/tasks' | '/activity/stats'
+  to:
+    | '/'
+    | '/actiko'
+    | '/daily'
+    | '/new-goal'
+    | '/setting'
+    | '/tasks'
+    | '/activity/stats'
   id:
     | '__root__'
     | '/'
+    | '/actiko'
     | '/daily'
     | '/new-goal'
     | '/setting'
@@ -95,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActikoRoute: typeof ActikoRoute
   DailyRoute: typeof DailyRoute
   NewGoalRoute: typeof NewGoalRoute
   SettingRoute: typeof SettingRoute
@@ -132,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/actiko': {
+      id: '/actiko'
+      path: '/actiko'
+      fullPath: '/actiko'
+      preLoaderRoute: typeof ActikoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -151,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActikoRoute: ActikoRoute,
   DailyRoute: DailyRoute,
   NewGoalRoute: NewGoalRoute,
   SettingRoute: SettingRoute,

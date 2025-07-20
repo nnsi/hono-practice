@@ -144,6 +144,14 @@ test("POST tasks/:id/archive / success", async () => {
   const createdTask = await createRes.json();
   const taskId = createdTask.id;
 
+  // タスクを完了状態にする
+  await client[":id"].$put({
+    param: { id: taskId },
+    json: {
+      doneDate: "2021-01-02",
+    },
+  });
+
   // タスクをアーカイブ
   const archiveRes = await client[":id"].archive.$post({
     param: {

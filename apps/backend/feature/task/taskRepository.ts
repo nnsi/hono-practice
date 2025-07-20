@@ -108,7 +108,18 @@ function getArchivedTasksByUserId(db: QueryExecutor) {
     });
 
     return result.map((r) => {
-      const task = createTaskEntity({ ...r, type: "persisted" });
+      // アーカイブ済みタスクは必ず完了済みである
+      if (!r.doneDate || !r.archivedAt) {
+        throw new DomainValidateError(
+          "getArchivedTasksByUserId: archived task must have doneDate and archivedAt",
+        );
+      }
+      const task = createTaskEntity({
+        ...r,
+        type: "archived",
+        doneDate: r.doneDate,
+        archivedAt: r.archivedAt,
+      });
       return task;
     });
   };
@@ -192,6 +203,27 @@ function deleteTask(db: QueryExecutor) {
 
 function archiveTask(db: QueryExecutor) {
   return async (userId: UserId, taskId: TaskId) => {
+    // アーカイブ前にタスクの状態を確認
+    const task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.id, taskId),
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+      ),
+    });
+
+    if (!task) {
+      return undefined;
+    }
+
+    // アーカイブするタスクは必ず完了済みでなければならない
+    // （この検証はcreateTaskEntityで行われるが、早期チェックのため残す）
+    if (!task.doneDate) {
+      throw new DomainValidateError(
+        "archiveTask: task must be completed before archiving",
+      );
+    }
+
     const [result] = await db
       .update(tasks)
       .set({ archivedAt: new Date() })
@@ -208,7 +240,19 @@ function archiveTask(db: QueryExecutor) {
       return undefined;
     }
 
-    const archivedTask = createTaskEntity({ ...result, type: "persisted" });
+    // アーカイブ処理の結果は必ず完了済みでアーカイブ日が設定されている
+    if (!result.doneDate || !result.archivedAt) {
+      throw new DomainValidateError(
+        "archiveTask: result must have doneDate and archivedAt",
+      );
+    }
+
+    const archivedTask = createTaskEntity({
+      ...result,
+      type: "archived",
+      doneDate: result.doneDate,
+      archivedAt: result.archivedAt,
+    });
 
     return archivedTask;
   };
@@ -230,8 +274,23 @@ function getTaskChangesAfter(db: QueryExecutor) {
     const hasMore = rows.length > limit;
     const tasksData = rows.slice(0, limit);
 
-    const result = tasksData.map((row) =>
-      createTaskEntity({
+    const result = tasksData.map((row) => {
+      if (row.archivedAt && row.doneDate) {
+        return createTaskEntity({
+          type: "archived",
+          id: row.id,
+          userId: row.userId,
+          title: row.title,
+          memo: row.memo || "",
+          startDate: row.startDate || undefined,
+          dueDate: row.dueDate || undefined,
+          doneDate: row.doneDate,
+          archivedAt: row.archivedAt,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        });
+      }
+      return createTaskEntity({
         type: "persisted",
         id: row.id,
         userId: row.userId,
@@ -243,8 +302,8 @@ function getTaskChangesAfter(db: QueryExecutor) {
         archivedAt: row.archivedAt || undefined,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-      }),
-    );
+      });
+    });
 
     return {
       tasks: result,
