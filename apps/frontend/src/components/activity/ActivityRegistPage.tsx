@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type React from "react";
 
-import { useGlobalDate, useLongPress } from "@frontend/hooks";
+import { useGlobalDate } from "@frontend/hooks";
 import { useActivityBatchData } from "@frontend/hooks/api";
-import { PlusCircledIcon } from "@radix-ui/react-icons";
+import { Pencil1Icon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
@@ -40,8 +40,8 @@ export const ActivityRegistPage: React.FC = () => {
     setOpen(true);
   };
 
-  // 長押し処理のハンドラ
-  const handleLongPress = (activity: GetActivityResponse) => {
+  // 編集ボタンクリックのハンドラ
+  const handleEditClick = (activity: GetActivityResponse) => {
     setEditTargetActivity(activity);
     setEditModalOpen(true);
   };
@@ -97,11 +97,11 @@ export const ActivityRegistPage: React.FC = () => {
           const isDone = hasActivityLogs(activity.id);
 
           return (
-            <ActivityCardWithLongPress
+            <ActivityCardWithEdit
               key={activity.id}
               activity={activity}
               onClick={() => handleActivityClick(activity)}
-              onLongPress={() => handleLongPress(activity)}
+              onEditClick={() => handleEditClick(activity)}
               isDone={isDone}
             />
           );
@@ -137,24 +137,35 @@ export const ActivityRegistPage: React.FC = () => {
   );
 };
 
-// 長押し処理付きのActivityCardラッパー
-function ActivityCardWithLongPress({
+// 編集ボタン付きのActivityCardラッパー
+function ActivityCardWithEdit({
   activity,
   onClick,
-  onLongPress,
+  onEditClick,
   isDone,
 }: {
   activity: GetActivityResponse;
   onClick: () => void;
-  onLongPress: () => void;
+  onEditClick: () => void;
   isDone: boolean;
 }) {
-  const longPressHandlers = useLongPress({ onLongPress });
-
   return (
-    <ActivityCard onClick={onClick} isDone={isDone} {...longPressHandlers}>
-      <div className="text-5xl mb-2">{activity.emoji}</div>
-      <div className="text-sm text-gray-800 font-medium">{activity.name}</div>
-    </ActivityCard>
+    <div className="relative">
+      <ActivityCard onClick={onClick} isDone={isDone}>
+        <div className="text-5xl mb-2">{activity.emoji}</div>
+        <div className="text-sm text-gray-800 font-medium">{activity.name}</div>
+      </ActivityCard>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEditClick();
+        }}
+        className="absolute bottom-2 right-2 p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors"
+        aria-label="編集"
+      >
+        <Pencil1Icon className="w-4 h-4" />
+      </button>
+    </div>
   );
 }
