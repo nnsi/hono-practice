@@ -18,6 +18,7 @@ type GoalDetailModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   goalId: string;
+  hideGraph?: boolean;
 };
 
 type GoalStats = {
@@ -73,6 +74,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
   open,
   onOpenChange,
   goalId,
+  hideGraph = false,
 }) => {
   const { data: goalData } = useGoal(goalId);
   const { data: statsData, isLoading } = useGoalStats(goalId, open);
@@ -157,24 +159,26 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
             </div>
           )}
 
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>{isPastGoal ? "活動量" : "現在の活動量"}</span>
-              <span className="font-medium">
-                {stats.currentProgress}/{stats.targetProgress}
-                {quantityUnit}
-              </span>
+          {!hideGraph && (
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span>{isPastGoal ? "活動量" : "現在の活動量"}</span>
+                <span className="font-medium">
+                  {stats.currentProgress}/{stats.targetProgress}
+                  {quantityUnit}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-blue-500 h-full transition-all duration-300"
+                  style={{ width: `${stats.progressPercentage}%` }}
+                />
+              </div>
+              <p className="text-right text-sm text-gray-600 mt-1">
+                {stats.progressPercentage.toFixed(1)}%
+              </p>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-blue-500 h-full transition-all duration-300"
-                style={{ width: `${stats.progressPercentage}%` }}
-              />
-            </div>
-            <p className="text-right text-sm text-gray-600 mt-1">
-              {stats.progressPercentage.toFixed(1)}%
-            </p>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 pt-4">
             <div className="text-center p-3 bg-gray-50 rounded-lg">

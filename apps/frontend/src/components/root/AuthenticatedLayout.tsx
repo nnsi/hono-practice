@@ -92,7 +92,7 @@ export const AuthenticatedLayout: React.FC = () => {
         <footer className="w-full bg-gray-50 shadow-lg sticky bottom-0 left-0 select-none">
           <nav className="flex justify-around items-center p-4">
             <Link
-              to="/"
+              to="/actiko"
               className="[&.active]:font-bold [&.active]:text-blue-600"
             >
               <button type="button" className="flex flex-col items-center">

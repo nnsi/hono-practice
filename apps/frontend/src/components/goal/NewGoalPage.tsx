@@ -1,4 +1,5 @@
 import { useNewGoalPage } from "@frontend/hooks/feature/goal/useNewGoalPage";
+import { useAppSettings } from "@frontend/hooks/feature/setting/useAppSettings";
 import { PlusCircledIcon } from "@radix-ui/react-icons";
 
 import { Card, CardContent } from "@components/ui";
@@ -7,6 +8,7 @@ import { NewGoalCard } from "./NewGoalCard";
 import { NewGoalDialog } from "./NewGoalDialog";
 
 export const NewGoalPage: React.FC = () => {
+  const { settings } = useAppSettings();
   const {
     editingGoalId,
     createDialogOpen,
@@ -48,6 +50,7 @@ export const NewGoalPage: React.FC = () => {
             onEditEnd={handleEditEnd}
             activities={activitiesData || []}
             activity={getActivity(goal.activityId)}
+            hideGraph={settings.hideGoalGraph}
           />
         ))}
 
@@ -84,6 +87,7 @@ export const NewGoalPage: React.FC = () => {
                 activities={activitiesData || []}
                 activity={getActivity(goal.activityId)}
                 isPast={true}
+                hideGraph={settings.hideGoalGraph}
               />
             ))}
           </div>

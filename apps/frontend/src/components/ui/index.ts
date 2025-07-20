@@ -2,6 +2,7 @@ export * from "./accordion";
 export * from "./alert";
 export * from "./button";
 export * from "./card";
+export * from "./checkbox";
 export * from "./dialog";
 export * from "./dropdown-menu";
 export * from "./emoji-picker";
