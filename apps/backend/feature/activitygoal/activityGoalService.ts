@@ -32,6 +32,8 @@ export type ActivityGoalService = {
     newTarget: number,
     effectiveDate: string,
   ): Promise<ActivityGoal>;
+
+  getInactiveDates(userId: UserId, goal: ActivityGoal): Promise<string[]>;
 };
 
 export function newActivityGoalService(
@@ -41,6 +43,7 @@ export function newActivityGoalService(
     calculateCurrentBalance: calculateCurrentBalance(activityLogRepo),
     getBalanceHistory: getBalanceHistory(activityLogRepo),
     adjustDailyTarget: adjustDailyTarget(),
+    getInactiveDates: getInactiveDates(activityLogRepo),
   };
 }
 
@@ -180,4 +183,45 @@ async function getActivityQuantityInPeriod(
     .reduce((total: number, log: ActivityLog) => {
       return total + (log.quantity || 0);
     }, 0);
+}
+
+function getInactiveDates(activityLogRepo: ActivityLogRepository) {
+  return async (userId: UserId, goal: ActivityGoal): Promise<string[]> => {
+    // 計算対象の終了日を決定
+    const today = getCurrentDateInTimezone();
+    const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
+
+    // 期間内のログを取得
+    const logs = await activityLogRepo.getActivityLogsByUserIdAndDate(
+      userId,
+      new Date(goal.startDate),
+      new Date(endDate),
+    );
+
+    // 活動があった日付のセットを作成
+    const activeDates = new Set<string>();
+    if (logs) {
+      logs
+        .filter((log: ActivityLog) => log.activity.id === goal.activityId)
+        .filter((log: ActivityLog) => log.quantity !== null && log.quantity > 0)
+        .forEach((log: ActivityLog) => {
+          activeDates.add(log.date);
+        });
+    }
+
+    // 期間内の全日付をチェックして、活動がなかった日付を収集
+    const inactiveDates: string[] = [];
+    const current = new Date(goal.startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+      const dateStr = formatDateInTimezone(current);
+      if (!activeDates.has(dateStr)) {
+        inactiveDates.push(dateStr);
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return inactiveDates;
+  };
 }

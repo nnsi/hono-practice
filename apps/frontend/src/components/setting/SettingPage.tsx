@@ -77,6 +77,24 @@ export const SettingPage: React.FC = () => {
               </span>
             </Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="show-inactive-dates"
+              checked={settings.showInactiveDates}
+              onCheckedChange={(checked: boolean) =>
+                updateSetting("showInactiveDates", checked)
+              }
+            />
+            <Label
+              htmlFor="show-inactive-dates"
+              className="flex flex-col gap-1 cursor-pointer"
+            >
+              <span>やらなかった日付をデフォルトで表示</span>
+              <span className="text-sm text-gray-500">
+                目標詳細で活動がなかった日付を表示します
+              </span>
+            </Label>
+          </div>
         </div>
       </div>
 

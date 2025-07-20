@@ -24,6 +24,7 @@ export type Goal = {
   currentBalance: number; // 現在の進捗バランス
   totalTarget: number; // 累積目標量
   totalActual: number; // 累積実績
+  inactiveDates: string[]; // やらなかった日付のリスト
 };
 
 export type CreateGoalRequest = {
@@ -82,10 +83,10 @@ function getGoals(
     // 並行で計算処理
     const goalsWithBalance = await Promise.all(
       goals.map(async (goal) => {
-        const balance = await activityGoalService.calculateCurrentBalance(
-          userId,
-          goal,
-        );
+        const [balance, inactiveDates] = await Promise.all([
+          activityGoalService.calculateCurrentBalance(userId, goal),
+          activityGoalService.getInactiveDates(userId, goal),
+        ]);
         return {
           id: goal.id,
           userId: goal.userId,
@@ -106,6 +107,7 @@ function getGoals(
           currentBalance: balance.currentBalance,
           totalTarget: balance.totalTarget,
           totalActual: balance.totalActual,
+          inactiveDates,
         } satisfies Goal;
       }),
     );
@@ -141,10 +143,10 @@ function getGoal(
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
-    const balance = await activityGoalService.calculateCurrentBalance(
-      userId,
-      goal,
-    );
+    const [balance, inactiveDates] = await Promise.all([
+      activityGoalService.calculateCurrentBalance(userId, goal),
+      activityGoalService.getInactiveDates(userId, goal),
+    ]);
     return {
       id: goal.id,
       userId: goal.userId,
@@ -165,6 +167,7 @@ function getGoal(
       currentBalance: balance.currentBalance,
       totalTarget: balance.totalTarget,
       totalActual: balance.totalActual,
+      inactiveDates,
     };
   };
 }
@@ -205,6 +208,7 @@ function createGoal(activityGoalRepo: ActivityGoalRepository) {
       currentBalance: 0,
       totalTarget: 0,
       totalActual: 0,
+      inactiveDates: [], // 新規作成時は空配列
     };
   };
 }
@@ -253,6 +257,7 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
       currentBalance: 0,
       totalTarget: 0,
       totalActual: 0,
+      inactiveDates: [], // 更新時は一旦空配列
     };
   };
 }
