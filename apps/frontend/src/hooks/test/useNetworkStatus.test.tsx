@@ -1,10 +1,5 @@
-import { act } from "react";
-
-import {
-  createMockStorage,
-  flushPromisesWithAct,
-  renderHookWithAct,
-} from "@frontend/test-utils";
+import { createMockStorage, flushPromisesWithAct } from "@frontend/test-utils";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -40,7 +35,7 @@ describe("useNetworkStatus", () => {
 
   describe("基本的な動作", () => {
     it("初期状態でオンラインステータスを正しく返す", async () => {
-      const { result } = await renderHookWithAct(() => useNetworkStatus());
+      const { result } = renderHook(() => useNetworkStatus());
 
       await act(async () => {
         // 初期化時のlocalStorage更新を待つ
@@ -61,7 +56,7 @@ describe("useNetworkStatus", () => {
         });
       });
 
-      const { result } = await renderHookWithAct(() => useNetworkStatus());
+      const { result } = renderHook(() => useNetworkStatus());
 
       await act(async () => {
         // 初期化時のlocalStorage更新を待つ
@@ -79,7 +74,7 @@ describe("useNetworkStatus", () => {
         });
       });
 
-      const { result } = await renderHookWithAct(() => useNetworkStatus());
+      const { result } = renderHook(() => useNetworkStatus());
 
       await act(async () => {
         await flushPromisesWithAct();
@@ -103,7 +98,7 @@ describe("useNetworkStatus", () => {
     });
 
     it("オフラインイベントでステータスが更新される", async () => {
-      const { result } = await renderHookWithAct(() => useNetworkStatus());
+      const { result } = renderHook(() => useNetworkStatus());
 
       await act(async () => {
         await flushPromisesWithAct();
@@ -151,7 +146,7 @@ describe("useNetworkStatus", () => {
       // 現在の環境が開発環境の場合のみ、このテストは意味を持つ
       // テスト環境でimport.meta.env.DEVを変更できないため、
       // フックの動作のみを確認
-      const { result } = await renderHookWithAct(() => useNetworkStatus());
+      const { result } = renderHook(() => useNetworkStatus());
 
       await act(async () => {
         await flushPromisesWithAct();
@@ -165,7 +160,7 @@ describe("useNetworkStatus", () => {
 
   describe("localStorage統合", () => {
     it("ネットワークステータスをlocalStorageに保存する", async () => {
-      await renderHookWithAct(() => useNetworkStatus());
+      renderHook(() => useNetworkStatus());
 
       await act(async () => {
         await flushPromisesWithAct();
@@ -191,7 +186,7 @@ describe("useNetworkStatus", () => {
     it("アンマウント時にイベントリスナーが削除される", async () => {
       const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
-      const { unmount } = await renderHookWithAct(() => useNetworkStatus());
+      const { unmount } = renderHook(() => useNetworkStatus());
 
       unmount();
 
@@ -215,7 +210,7 @@ describe("useNetworkStatusWithManager", () => {
       addListener: vi.fn().mockReturnValue(() => {}),
     };
 
-    const { result } = await renderHookWithAct(() =>
+    const { result } = renderHook(() =>
       useNetworkStatusWithManager(mockNetworkStatusManager, mockStorage),
     );
 
@@ -238,7 +233,7 @@ describe("useNetworkStatusWithManager", () => {
       }),
     };
 
-    const { result } = await renderHookWithAct(() =>
+    const { result } = renderHook(() =>
       useNetworkStatusWithManager(mockNetworkStatusManager, mockStorage),
     );
 
@@ -265,7 +260,7 @@ describe("useNetworkStatusWithManager", () => {
       addListener: vi.fn().mockReturnValue(mockUnsubscribe),
     };
 
-    const { unmount } = await renderHookWithAct(() =>
+    const { unmount } = renderHook(() =>
       useNetworkStatusWithManager(mockNetworkStatusManager),
     );
 

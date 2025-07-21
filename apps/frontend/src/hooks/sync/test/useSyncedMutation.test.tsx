@@ -1,4 +1,3 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
 import { AuthContext } from "@frontend/providers/AuthProvider";
@@ -9,10 +8,9 @@ import {
   createMockNetworkStatus,
   createMockSyncManager,
   createMockUserResponse,
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
 } from "@frontend/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useSyncedMutation } from "../useSyncedMutation";
@@ -66,7 +64,7 @@ describe("useSyncedMutation", () => {
       .fn()
       .mockResolvedValue({ id: "123", success: true });
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -81,7 +79,7 @@ describe("useSyncedMutation", () => {
       result.current.mutate({ name: "Test Activity" });
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -98,7 +96,7 @@ describe("useSyncedMutation", () => {
       .fn()
       .mockReturnValue({ id: "temp-123", success: true });
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -114,7 +112,7 @@ describe("useSyncedMutation", () => {
       result.current.mutate({ name: "Test Activity" });
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -132,7 +130,7 @@ describe("useSyncedMutation", () => {
       createMockNetworkStatus({ isOnline: false }),
     );
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -147,7 +145,7 @@ describe("useSyncedMutation", () => {
       result.current.mutate({ name: "Test Activity" });
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
 
@@ -164,7 +162,7 @@ describe("useSyncedMutation", () => {
       .fn()
       .mockReturnValue({ id: "temp-123", success: true });
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -180,7 +178,7 @@ describe("useSyncedMutation", () => {
       result.current.mutate({ name: "Test Activity" });
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -193,7 +191,7 @@ describe("useSyncedMutation", () => {
     const mockOptimisticUpdate = vi.fn();
     const mockOnlineAction = vi.fn().mockResolvedValue({ success: true });
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -219,7 +217,7 @@ describe("useSyncedMutation", () => {
     const mockOnError = vi.fn();
     const mockOnlineAction = vi.fn().mockResolvedValue({ success: true });
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -236,7 +234,7 @@ describe("useSyncedMutation", () => {
       result.current.mutate({ name: "Test Activity" });
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -260,7 +258,7 @@ describe("useSyncedMutation", () => {
 
     vi.mocked(mockSyncManager.getSyncStatus).mockReturnValue(mockSyncStatus);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -284,7 +282,7 @@ describe("useSyncedMutation", () => {
       lastSyncedAt: null,
     });
 
-    const { rerender } = renderHookWithAct(
+    const { rerender } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",
@@ -307,13 +305,13 @@ describe("useSyncedMutation", () => {
     );
     rerender();
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(mockSyncManager.syncBatch).toHaveBeenCalled();
     });
   });
 
   it("ユーザーがない場合でも動作する", () => {
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useSyncedMutation({
           entityType: "activity",

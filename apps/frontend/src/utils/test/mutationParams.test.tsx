@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { renderHookWithActSync as renderHookWithAct } from "@frontend/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -26,7 +26,7 @@ describe("mp (mutationParams)", () => {
   };
 
   it("mutationFnとonSuccessを含むオブジェクトを返す", () => {
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["test"],
@@ -49,7 +49,7 @@ describe("mp (mutationParams)", () => {
     };
     const mockMutationFn = vi.fn().mockResolvedValue(mockResponse);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["test"],
@@ -72,7 +72,7 @@ describe("mp (mutationParams)", () => {
 
     const mockMutationFn = vi.fn();
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["test"],
@@ -104,7 +104,7 @@ describe("mp (mutationParams)", () => {
     };
     const mockMutationFn = vi.fn().mockResolvedValue(mockResponse);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["test"],
@@ -121,7 +121,7 @@ describe("mp (mutationParams)", () => {
     const queryKey = ["test", "data"];
     const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey,
@@ -143,7 +143,7 @@ describe("mp (mutationParams)", () => {
     };
     const mockMutationFn = vi.fn().mockResolvedValue(mockResponse);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp<void>({
           queryKey: ["void-test"],
@@ -185,7 +185,7 @@ describe("mp (mutationParams)", () => {
     };
     const mockMutationFn = vi.fn().mockResolvedValue(mockResponse);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["auth", "login"],
@@ -206,7 +206,7 @@ describe("mp (mutationParams)", () => {
     const networkError = new Error("Network error");
     const mockMutationFn = vi.fn().mockRejectedValue(networkError);
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         mp({
           queryKey: ["error-test"],

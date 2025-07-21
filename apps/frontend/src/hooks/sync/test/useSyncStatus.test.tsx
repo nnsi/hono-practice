@@ -1,5 +1,3 @@
-import { act } from "react";
-
 import { AuthContext } from "@frontend/providers/AuthProvider";
 import { getSyncManagerInstance } from "@frontend/services/sync";
 import {
@@ -7,8 +5,8 @@ import {
   createMockSyncManager,
   createMockSyncStatus,
   createMockUserResponse,
-  renderHookWithActSync as renderHookWithAct,
 } from "@frontend/test-utils";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useSyncStatus } from "../useSyncStatus";
@@ -43,7 +41,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     expect(mockSyncManager.getSyncStatus).toHaveBeenCalled();
     expect(result.current.pendingCount).toBe(0);
@@ -63,7 +61,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    renderHookWithAct(() => useSyncStatus(), { wrapper });
+    renderHook(() => useSyncStatus(), { wrapper });
 
     expect(getSyncManagerInstance).toHaveBeenCalledWith("user-123");
     expect(mockSyncManager.updateUserId).toHaveBeenCalledWith("user-123");
@@ -79,7 +77,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     expect(mockSyncManager.subscribeToStatus).toHaveBeenCalled();
 
@@ -113,7 +111,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     expect(result.current.hasPendingSync).toBe(true);
     expect(result.current.isSyncing).toBe(true);
@@ -138,7 +136,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     expect(result.current.isFullySynced).toBe(true);
   });
@@ -153,7 +151,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     await act(async () => {
       await result.current.syncNow();
@@ -172,7 +170,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     await act(async () => {
       await result.current.syncAll();
@@ -191,7 +189,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     await act(async () => {
       await result.current.clearQueue();
@@ -209,7 +207,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useSyncStatus(), { wrapper });
 
     expect(getSyncManagerInstance).toHaveBeenCalledWith(undefined);
     expect(mockSyncManager.updateUserId).toHaveBeenCalledWith(undefined);
@@ -226,7 +224,7 @@ describe("useSyncStatus", () => {
       </AuthContext.Provider>
     );
 
-    const { unmount } = renderHookWithAct(() => useSyncStatus(), { wrapper });
+    const { unmount } = renderHook(() => useSyncStatus(), { wrapper });
 
     unmount();
 

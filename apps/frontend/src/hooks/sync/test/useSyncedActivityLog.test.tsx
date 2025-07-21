@@ -1,13 +1,10 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
-import {
-  createMockNetworkStatus,
-  renderHookWithActSync as renderHookWithAct,
-} from "@frontend/test-utils";
+import { createMockNetworkStatus } from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils/apiClient";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -144,7 +141,7 @@ describe("useCreateActivityLog", () => {
       Response.json(mockResponseData, { status: 200 }) as any,
     );
 
-    const { result } = renderHookWithAct(() => useCreateActivityLog(), {
+    const { result } = renderHook(() => useCreateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -173,7 +170,7 @@ describe("useCreateActivityLog", () => {
       createMockNetworkStatus({ isOnline: false }),
     );
 
-    const { result } = renderHookWithAct(() => useCreateActivityLog(), {
+    const { result } = renderHook(() => useCreateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -213,7 +210,7 @@ describe("useCreateActivityLog", () => {
     const dateKey = ["activity-logs-daily", "2024-01-15"];
     queryClient.setQueryData(dateKey, []);
 
-    const { result } = renderHookWithAct(() => useCreateActivityLog(), {
+    const { result } = renderHook(() => useCreateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -274,7 +271,7 @@ describe("useUpdateActivityLog", () => {
       Response.json(mockResponseData, { status: 200 }) as any,
     );
 
-    const { result } = renderHookWithAct(() => useUpdateActivityLog(), {
+    const { result } = renderHook(() => useUpdateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -306,7 +303,7 @@ describe("useUpdateActivityLog", () => {
 
     queryClient.setQueryData(dateKey, [existingLog]);
 
-    const { result } = renderHookWithAct(() => useUpdateActivityLog(), {
+    const { result } = renderHook(() => useUpdateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -331,7 +328,7 @@ describe("useUpdateActivityLog", () => {
       createMockNetworkStatus({ isOnline: false }),
     );
 
-    const { result } = renderHookWithAct(() => useUpdateActivityLog(), {
+    const { result } = renderHook(() => useUpdateActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -386,7 +383,7 @@ describe("useDeleteActivityLog", () => {
       Response.json({ message: "Deleted" }, { status: 200 }) as any,
     );
 
-    const { result } = renderHookWithAct(() => useDeleteActivityLog(), {
+    const { result } = renderHook(() => useDeleteActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -413,7 +410,7 @@ describe("useDeleteActivityLog", () => {
 
     queryClient.setQueryData(dateKey, existingLogs);
 
-    const { result } = renderHookWithAct(() => useDeleteActivityLog(), {
+    const { result } = renderHook(() => useDeleteActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -445,7 +442,7 @@ describe("useDeleteActivityLog", () => {
       JSON.stringify([{ id: "log-123", date: "2024-01-15", quantity: 30 }]),
     );
 
-    const { result } = renderHookWithAct(() => useDeleteActivityLog(), {
+    const { result } = renderHook(() => useDeleteActivityLog(), {
       wrapper: createWrapper(),
     });
 
@@ -482,7 +479,7 @@ describe("useDeleteActivityLog", () => {
       apiClient.users["activity-logs"][":id"].$delete,
     ).mockRejectedValue(new Error("削除エラー"));
 
-    const { result } = renderHookWithAct(() => useDeleteActivityLog(), {
+    const { result } = renderHook(() => useDeleteActivityLog(), {
       wrapper: createWrapper(),
     });
 

@@ -1,15 +1,10 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
-import {
-  createMockNetworkStatus,
-  createMockTask,
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
+import { createMockNetworkStatus, createMockTask } from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -163,7 +158,7 @@ describe("useSyncedTask", () => {
         json: vi.fn().mockResolvedValue(newTask),
       } as any);
 
-      const { result } = renderHookWithAct(() => useCreateTask(), {
+      const { result } = renderHook(() => useCreateTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -175,7 +170,7 @@ describe("useSyncedTask", () => {
       });
 
       // onlineActionが呼ばれたことを確認
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(mockApiClient.users.tasks.$post).toHaveBeenCalledWith({
           json: {
             title: "新しいタスク",
@@ -186,7 +181,7 @@ describe("useSyncedTask", () => {
     });
 
     it("楽観的更新を行う", async () => {
-      const { result } = renderHookWithAct(() => useCreateTask(), {
+      const { result } = renderHook(() => useCreateTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -205,7 +200,7 @@ describe("useSyncedTask", () => {
     });
 
     it("オフライン時にローカルストレージに保存する", async () => {
-      const { result } = renderHookWithAct(() => useCreateTask(), {
+      const { result } = renderHook(() => useCreateTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -227,7 +222,7 @@ describe("useSyncedTask", () => {
     });
 
     it("memoがundefinedの場合nullに変換する", async () => {
-      const { result } = renderHookWithAct(() => useCreateTask(), {
+      const { result } = renderHook(() => useCreateTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -258,7 +253,7 @@ describe("useSyncedTask", () => {
         json: vi.fn().mockResolvedValue(updatedTask),
       } as any);
 
-      const { result } = renderHookWithAct(() => useUpdateTask(), {
+      const { result } = renderHook(() => useUpdateTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -270,7 +265,7 @@ describe("useSyncedTask", () => {
         });
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(mockApiClient.users.tasks[":id"].$put).toHaveBeenCalledWith({
           param: { id: "00000000-0000-4000-8000-000000000001" },
           json: {
@@ -291,7 +286,7 @@ describe("useSyncedTask", () => {
       const allTasksKey = ["tasks", "all"];
       queryClient.setQueryData(allTasksKey, [existingTask]);
 
-      const { result } = renderHookWithAct(() => useUpdateTask(), {
+      const { result } = renderHook(() => useUpdateTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -308,7 +303,7 @@ describe("useSyncedTask", () => {
     });
 
     it("オフライン時に適切な応答を返す", async () => {
-      const { result } = renderHookWithAct(() => useUpdateTask(), {
+      const { result } = renderHook(() => useUpdateTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -331,7 +326,7 @@ describe("useSyncedTask", () => {
         json: vi.fn().mockResolvedValue(true),
       } as any);
 
-      const { result } = renderHookWithAct(() => useDeleteTask(), {
+      const { result } = renderHook(() => useDeleteTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -342,7 +337,7 @@ describe("useSyncedTask", () => {
         });
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(mockApiClient.users.tasks[":id"].$delete).toHaveBeenCalledWith({
           param: { id: "00000000-0000-4000-8000-000000000001" },
         });
@@ -357,7 +352,7 @@ describe("useSyncedTask", () => {
       const tasksKey = ["tasks", "2024-01-15"];
       queryClient.setQueryData(tasksKey, [existingTask]);
 
-      const { result } = renderHookWithAct(() => useDeleteTask(), {
+      const { result } = renderHook(() => useDeleteTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -374,7 +369,7 @@ describe("useSyncedTask", () => {
     });
 
     it("オフライン時に削除IDを記録する", async () => {
-      const { result } = renderHookWithAct(() => useDeleteTask(), {
+      const { result } = renderHook(() => useDeleteTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -398,7 +393,7 @@ describe("useSyncedTask", () => {
       const eventListener = vi.fn();
       window.addEventListener("offline-data-updated", eventListener);
 
-      const { result } = renderHookWithAct(() => useDeleteTask(), {
+      const { result } = renderHook(() => useDeleteTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -428,7 +423,7 @@ describe("useSyncedTask", () => {
         json: vi.fn().mockResolvedValue(archivedTask),
       } as any);
 
-      const { result } = renderHookWithAct(() => useArchiveTask(), {
+      const { result } = renderHook(() => useArchiveTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -439,7 +434,7 @@ describe("useSyncedTask", () => {
         });
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(
           mockApiClient.users.tasks[":id"].archive.$post,
         ).toHaveBeenCalledWith({
@@ -456,7 +451,7 @@ describe("useSyncedTask", () => {
       const tasksKey = ["tasks", "2024-01-15"];
       queryClient.setQueryData(tasksKey, [existingTask]);
 
-      const { result } = renderHookWithAct(() => useArchiveTask(), {
+      const { result } = renderHook(() => useArchiveTask(), {
         wrapper: createWrapper(true),
       });
 
@@ -473,7 +468,7 @@ describe("useSyncedTask", () => {
     });
 
     it("オフライン時にアーカイブIDを記録する", async () => {
-      const { result } = renderHookWithAct(() => useArchiveTask(), {
+      const { result } = renderHook(() => useArchiveTask(), {
         wrapper: createWrapper(false),
       });
 
@@ -504,7 +499,7 @@ describe("useSyncedTask", () => {
         mockApiClient.users.tasks[":id"].archive.$post,
       ).mockRejectedValue(new Error("Archive failed"));
 
-      const { result } = renderHookWithAct(() => useArchiveTask(), {
+      const { result } = renderHook(() => useArchiveTask(), {
         wrapper: createWrapper(true),
       });
 

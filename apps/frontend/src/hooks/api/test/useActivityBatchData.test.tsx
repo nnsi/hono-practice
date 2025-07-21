@@ -2,13 +2,10 @@ import type { ReactNode } from "react";
 
 import { useActivityLogSync } from "@frontend/hooks/sync/useActivityLogSync";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
-import {
-  createMockNetworkStatus,
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
+import { createMockNetworkStatus } from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -145,16 +142,16 @@ describe("useActivityBatchData", () => {
       isOfflineData: () => false,
     });
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
     // APIが呼ばれるまで待つ
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(mockApiClient.batch.$post).toHaveBeenCalled();
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.activities).toEqual(mockActivities);
       expect(result.current.activityLogs).toEqual(mockActivityLogs);
     });
@@ -185,7 +182,7 @@ describe("useActivityBatchData", () => {
   it("オフライン時はAPIを呼び出さない", () => {
     const date = new Date("2024-01-15");
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(false),
     });
 
@@ -238,12 +235,12 @@ describe("useActivityBatchData", () => {
       isOfflineData: () => false,
     });
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
     // APIが呼ばれてデータが返されるまで待つ
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.activities).toEqual(mockActivities);
       expect(result.current.activityLogs).toEqual(mockActivityLogs);
     });
@@ -302,11 +299,11 @@ describe("useActivityBatchData", () => {
       isOfflineData: () => false,
     });
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.hasActivityLogs(activityId)).toBe(true);
       expect(
         result.current.hasActivityLogs("00000000-0000-4000-8000-999999999999"),
@@ -321,11 +318,11 @@ describe("useActivityBatchData", () => {
       new Error("Network error"),
     );
 
-    renderHookWithAct(() => useActivityBatchData({ date }), {
+    renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith({
         title: "エラー",
         description: "データの取得に失敗しました",
@@ -344,11 +341,11 @@ describe("useActivityBatchData", () => {
       ]),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.error).toBeTruthy();
       expect(result.current.error?.message).toBe("Failed to parse activities");
     });
@@ -376,11 +373,11 @@ describe("useActivityBatchData", () => {
       ]),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.error).toBeTruthy();
       expect(result.current.error?.message).toBe(
         "Failed to parse activity logs",
@@ -420,11 +417,11 @@ describe("useActivityBatchData", () => {
       json: vi.fn().mockResolvedValue([[], []]),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivityBatchData({ date }), {
+    const { result } = renderHook(() => useActivityBatchData({ date }), {
       wrapper: createWrapper(true),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isOfflineData).toBe(mockIsOfflineData);
       expect(result.current.isOfflineData(mockActivityLog)).toBe(true);
     });
@@ -440,7 +437,7 @@ describe("useActivityBatchData", () => {
       json: vi.fn().mockResolvedValue([[], []]),
     } as any);
 
-    const { rerender } = renderHookWithAct(
+    const { rerender } = renderHook(
       ({ date }: { date: Date }) => useActivityBatchData({ date }),
       {
         wrapper: createWrapper(true),
@@ -448,7 +445,7 @@ describe("useActivityBatchData", () => {
       },
     );
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(mockApiClient.batch.$post).toHaveBeenCalledWith({
         json: [
           { path: "/users/activities" },
@@ -460,7 +457,7 @@ describe("useActivityBatchData", () => {
     // 日付を変更
     rerender({ date: date2 });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(mockApiClient.batch.$post).toHaveBeenCalledWith({
         json: [
           { path: "/users/activities" },

@@ -49,6 +49,11 @@ export function createMockApiClient() {
       token: {
         $post: vi.fn(),
       },
+      google: {
+        link: {
+          $post: vi.fn(),
+        },
+      },
     },
     user: {
       me: {
@@ -92,6 +97,9 @@ export function createMockApiClient() {
         $post: vi.fn(),
       },
     },
+    batch: {
+      $post: vi.fn(),
+    },
     users: {
       sync: {
         batch: {
@@ -103,6 +111,35 @@ export function createMockApiClient() {
         pull: {
           $get: vi.fn(),
         },
+      },
+      "activity-logs": {
+        stats: {
+          $get: vi.fn(),
+        },
+      },
+      activities: {
+        $get: vi.fn(),
+        ":id": {
+          $put: vi.fn(),
+          $delete: vi.fn(),
+        },
+      },
+      "api-keys": {
+        $get: vi.fn(),
+        $post: vi.fn(),
+        ":id": {
+          $delete: vi.fn(),
+        },
+      },
+      tasks: {
+        $post: vi.fn(),
+        ":id": {
+          $put: vi.fn(),
+          $delete: vi.fn(),
+        },
+      },
+      subscription: {
+        $get: vi.fn(),
       },
     },
   };
@@ -145,7 +182,7 @@ export function createMockEventBus() {
 export function createMockStorage() {
   const storage = new Map<string, string>();
 
-  return {
+  const mockStorage = {
     getItem: vi.fn((key: string) => storage.get(key) || null),
     setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
     removeItem: vi.fn((key: string) => storage.delete(key)),
@@ -158,6 +195,42 @@ export function createMockStorage() {
       return keys[index] || null;
     }),
   };
+
+  // Object.keysが動作するように、ストレージのキーをオブジェクトのプロパティとして追加
+  Object.defineProperty(mockStorage, "keys", {
+    get() {
+      return Array.from(storage.keys());
+    },
+  });
+
+  // Object.keys()をサポートするためのProxy
+  return new Proxy(mockStorage, {
+    ownKeys(target) {
+      // 既存のプロパティとストレージのキーを両方返す
+      const targetKeys = Reflect.ownKeys(target);
+      const storageKeys = Array.from(storage.keys());
+      return [...new Set([...targetKeys, ...storageKeys])];
+    },
+    getOwnPropertyDescriptor(target, key) {
+      if (storage.has(String(key))) {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: storage.get(String(key)),
+        };
+      }
+      return Reflect.getOwnPropertyDescriptor(target, key);
+    },
+    has(target, key) {
+      return storage.has(String(key)) || Reflect.has(target, key);
+    },
+    get(target, key) {
+      if (storage.has(String(key))) {
+        return storage.get(String(key));
+      }
+      return Reflect.get(target, key);
+    },
+  });
 }
 
 // テスト用のタイムプロバイダーモック

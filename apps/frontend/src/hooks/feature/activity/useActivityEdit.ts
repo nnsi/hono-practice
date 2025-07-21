@@ -90,6 +90,7 @@ export const useActivityEdit = (
   };
 
   const onSubmit = (data: UpdateActivityRequest) => {
+    if (!activity) return;
     mutate(data);
   };
 

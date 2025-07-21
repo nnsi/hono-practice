@@ -1,12 +1,8 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
-import {
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
@@ -111,11 +107,11 @@ describe("useGoals", () => {
         json: vi.fn().mockResolvedValue([{ goals: mockGoals }]),
       } as any);
 
-      const { result } = renderHookWithAct(() => useGoals(), {
+      const { result } = renderHook(() => useGoals(), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -147,12 +143,12 @@ describe("useGoals", () => {
         json: vi.fn().mockResolvedValue([{ goals: mockGoals }]),
       } as any);
 
-      const { result } = renderHookWithAct(
+      const { result } = renderHook(
         () => useGoals({ activityId, isActive: true }),
         { wrapper: createWrapper() },
       );
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -171,11 +167,11 @@ describe("useGoals", () => {
         json: vi.fn().mockResolvedValue([{ invalid: "data" }]),
       } as any);
 
-      const { result } = renderHookWithAct(() => useGoals(), {
+      const { result } = renderHook(() => useGoals(), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -207,11 +203,11 @@ describe("useGoals", () => {
         json: vi.fn().mockResolvedValue({ goals: [mockGoal] }),
       } as any);
 
-      const { result } = renderHookWithAct(() => useGoal(goalId), {
+      const { result } = renderHook(() => useGoal(goalId), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -219,28 +215,26 @@ describe("useGoals", () => {
       expect(result.current.data?.description).toBe("目標ゴール");
     });
 
-    it("ゴールが見つからない場合はundefinedを返す", async () => {
+    it("ゴールが見つからない場合はnullを返す", async () => {
       const goalId = "00000000-0000-4000-8000-000000000001";
 
       vi.mocked(mockApiClient.users.goals.$get).mockResolvedValue({
         json: vi.fn().mockResolvedValue({ goals: [] }),
       } as any);
 
-      const { result } = renderHookWithAct(() => useGoal(goalId), {
+      const { result } = renderHook(() => useGoal(goalId), {
         wrapper: createWrapper(),
       });
 
-      // React Queryはundefinedを返すことを許可しないため、エラーが発生する
-      await waitForWithAct(() => {
-        expect(result.current.isError).toBe(true);
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.data).toBeUndefined();
-      expect(result.current.error?.message).toContain("data is undefined");
+      expect(result.current.data).toBeNull();
     });
 
     it("IDが空の場合はクエリを実行しない", () => {
-      const { result } = renderHookWithAct(() => useGoal(""), {
+      const { result } = renderHook(() => useGoal(""), {
         wrapper: createWrapper(),
       });
 
@@ -284,7 +278,7 @@ describe("useGoals", () => {
 
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHookWithAct(() => useCreateGoal(), {
+      const { result } = renderHook(() => useCreateGoal(), {
         wrapper: createWrapper(),
       });
 
@@ -292,7 +286,7 @@ describe("useGoals", () => {
         result.current.mutate(newGoalData);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -310,7 +304,7 @@ describe("useGoals", () => {
         name: "不完全なゴール",
       } as any;
 
-      const { result } = renderHookWithAct(() => useCreateGoal(), {
+      const { result } = renderHook(() => useCreateGoal(), {
         wrapper: createWrapper(),
       });
 
@@ -318,7 +312,7 @@ describe("useGoals", () => {
         result.current.mutate(invalidGoalData);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
     });
@@ -361,7 +355,7 @@ describe("useGoals", () => {
 
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHookWithAct(() => useUpdateGoal(), {
+      const { result } = renderHook(() => useUpdateGoal(), {
         wrapper: createWrapper(),
       });
 
@@ -369,7 +363,7 @@ describe("useGoals", () => {
         result.current.mutate({ id: goalId, data: updateData });
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -396,7 +390,7 @@ describe("useGoals", () => {
 
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHookWithAct(() => useDeleteGoal(), {
+      const { result } = renderHook(() => useDeleteGoal(), {
         wrapper: createWrapper(),
       });
 
@@ -404,7 +398,7 @@ describe("useGoals", () => {
         result.current.mutate(goalId);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -449,11 +443,11 @@ describe("useGoals", () => {
         json: vi.fn().mockResolvedValue(mockStats),
       } as any);
 
-      const { result } = renderHookWithAct(() => useGoalStats(goalId), {
+      const { result } = renderHook(() => useGoalStats(goalId), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -474,11 +468,11 @@ describe("useGoals", () => {
         },
       );
 
-      const { result } = renderHookWithAct(() => useGoalStats(goalId), {
+      const { result } = renderHook(() => useGoalStats(goalId), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -488,7 +482,7 @@ describe("useGoals", () => {
     it("enabledがfalseの場合はクエリを実行しない", () => {
       const goalId = "00000000-0000-4000-8000-000000000001";
 
-      const { result } = renderHookWithAct(() => useGoalStats(goalId, false), {
+      const { result } = renderHook(() => useGoalStats(goalId, false), {
         wrapper: createWrapper(),
       });
 
@@ -501,7 +495,7 @@ describe("useGoals", () => {
     });
 
     it("IDが空の場合はクエリを実行しない", () => {
-      const { result } = renderHookWithAct(() => useGoalStats(""), {
+      const { result } = renderHook(() => useGoalStats(""), {
         wrapper: createWrapper(),
       });
 
