@@ -13,6 +13,8 @@ export const useOfflineBanner = () => {
     } else if (isOnline) {
       setIsVisible(false);
       setIsDismissed(false);
+    } else if (isDismissed) {
+      setIsVisible(false);
     }
   }, [isOnline, isDismissed]);
 

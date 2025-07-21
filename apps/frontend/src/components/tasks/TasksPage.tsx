@@ -28,9 +28,9 @@ export function TasksPage() {
   } = useTasksPage();
 
   return (
-    <div className="min-h-screen relative">
-      <div className="max-w-4xl mx-auto py-4 px-4 relative">
-        <Tabs
+    <div>
+      <hr className="mt-12 mb-6" />
+      <Tabs
           value={activeTab}
           onValueChange={(value) =>
             setActiveTab(value as "active" | "archived")
@@ -190,7 +190,6 @@ export function TasksPage() {
             )}
           </TabsContent>
         </Tabs>
-      </div>
       <TaskCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}

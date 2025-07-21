@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
 
-import {
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SubscriptionResponse } from "@dtos/response";
@@ -68,7 +65,7 @@ describe("useSubscription", () => {
       json: vi.fn().mockResolvedValue(mockSubscription),
     } as any);
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
@@ -76,7 +73,7 @@ describe("useSubscription", () => {
     expect(result.current.isLoading).toBe(true);
     expect(result.current.data).toBeUndefined();
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -92,11 +89,11 @@ describe("useSubscription", () => {
       json: vi.fn(),
     } as any);
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
 
@@ -110,11 +107,11 @@ describe("useSubscription", () => {
       mockError,
     );
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
 
@@ -129,11 +126,11 @@ describe("useSubscription", () => {
       json: vi.fn().mockResolvedValue(mockSubscription),
     } as any);
 
-    renderHookWithAct(() => useSubscription(), {
+    renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       // キャッシュにデータが保存されていることを確認
       const cachedData = queryClient.getQueryData(["subscription"]);
       expect(cachedData).toEqual(mockSubscription);
@@ -148,7 +145,7 @@ describe("useSubscription", () => {
       json: vi.fn().mockResolvedValue(mockSubscription),
     } as any);
 
-    renderHookWithAct(() => useSubscription(), {
+    renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
@@ -171,11 +168,11 @@ describe("useSubscription", () => {
       json: vi.fn().mockResolvedValue(mockSubscription),
     } as any);
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -195,11 +192,11 @@ describe("useSubscription", () => {
       json: vi.fn().mockResolvedValue(mockSubscription),
     } as any);
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -228,19 +225,19 @@ describe("useSubscription", () => {
         json: vi.fn().mockResolvedValue(mockSubscription2),
       } as any);
 
-    const { result } = renderHookWithAct(() => useSubscription(), {
+    const { result } = renderHook(() => useSubscription(), {
       wrapper: createWrapper(),
     });
 
     // 初回データ取得を待つ
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.data?.plan).toBe("free");
     });
 
     // 再フェッチ
     await result.current.refetch();
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.data?.plan).toBe("premium");
     });
 

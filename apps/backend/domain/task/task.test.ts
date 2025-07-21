@@ -79,7 +79,7 @@ test("parse ArchivedTask", async () => {
   expect(validArchivedTask.doneDate).toBe("2021-01-01");
 
   // 異常系：archivedタイプだが未完了のタスク
-  expect(() =>
+  expect(() => {
     // @ts-expect-error: テスト用に意図的に不正な値を渡している
     createTaskEntity({
       type: "archived",
@@ -91,11 +91,11 @@ test("parse ArchivedTask", async () => {
       memo: null,
       createdAt: new Date("2021-01-01"),
       updatedAt: new Date("2021-01-02"),
-    }),
-  ).toThrow(DomainValidateError);
+    });
+  }).toThrow(DomainValidateError);
 
   // 異常系：archivedタイプだがarchivedAtがない
-  expect(() =>
+  expect(() => {
     // @ts-expect-error: テスト用に意図的に不正な値を渡している
     createTaskEntity({
       type: "archived",
@@ -107,6 +107,6 @@ test("parse ArchivedTask", async () => {
       memo: null,
       createdAt: new Date("2021-01-01"),
       updatedAt: new Date("2021-01-02"),
-    }),
-  ).toThrow(DomainValidateError);
+    });
+  }).toThrow(DomainValidateError);
 });

@@ -15,6 +15,7 @@ export const SettingPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-8">
+      <hr className="mt-12 mb-6" />
       <div>
         <h2 className="text-lg font-semibold mb-4">アカウント設定</h2>
         <div className="space-y-4">

@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
 
-import {
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivities } from "../useActivities";
@@ -78,7 +75,7 @@ describe("useActivities", () => {
       json: vi.fn().mockResolvedValue(mockActivities),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivities(), {
+    const { result } = renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
@@ -89,7 +86,7 @@ describe("useActivities", () => {
     // APIが呼ばれたことを確認
     expect(mockApiClient.users.activities.$get).toHaveBeenCalled();
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -104,11 +101,11 @@ describe("useActivities", () => {
       json: vi.fn().mockResolvedValue([]),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivities(), {
+    const { result } = renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
@@ -120,11 +117,11 @@ describe("useActivities", () => {
     const mockError = new Error("Network error");
     mockApiClient.users.activities.$get.mockRejectedValue(mockError);
 
-    const { result } = renderHookWithAct(() => useActivities(), {
+    const { result } = renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
 
@@ -141,11 +138,11 @@ describe("useActivities", () => {
       }),
     } as any);
 
-    const { result } = renderHookWithAct(() => useActivities(), {
+    const { result } = renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
 
@@ -168,11 +165,11 @@ describe("useActivities", () => {
       json: vi.fn().mockResolvedValue(mockActivities),
     } as any);
 
-    renderHookWithAct(() => useActivities(), {
+    renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       // キャッシュにデータが保存されていることを確認
       const cachedData = queryClient.getQueryData(["activity"]);
       expect(cachedData).toEqual(mockActivities);
@@ -218,19 +215,19 @@ describe("useActivities", () => {
         json: vi.fn().mockResolvedValue(mockActivities2),
       } as any);
 
-    const { result } = renderHookWithAct(() => useActivities(), {
+    const { result } = renderHook(() => useActivities(), {
       wrapper: createWrapper(),
     });
 
     // 初回データ取得を待つ
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.data).toEqual(mockActivities1);
     });
 
     // 再フェッチ
     await result.current.refetch();
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.data).toEqual(mockActivities2);
     });
 

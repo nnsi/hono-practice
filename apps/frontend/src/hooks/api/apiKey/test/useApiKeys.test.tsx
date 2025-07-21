@@ -1,12 +1,8 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
-import {
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
 import { apiClient } from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CreateApiKeyRequest } from "@dtos/request";
@@ -87,7 +83,7 @@ describe("useApiKeys", () => {
         json: vi.fn().mockResolvedValue(mockApiKeys),
       } as any);
 
-      const { result } = renderHookWithAct(() => useApiKeys(), {
+      const { result } = renderHook(() => useApiKeys(), {
         wrapper: createWrapper(),
       });
 
@@ -95,7 +91,7 @@ describe("useApiKeys", () => {
       expect(result.current.isLoading).toBe(true);
       expect(result.current.data).toBeUndefined();
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -115,11 +111,11 @@ describe("useApiKeys", () => {
         json: vi.fn().mockResolvedValue(mockApiKeys),
       } as any);
 
-      const { result } = renderHookWithAct(() => useApiKeys(), {
+      const { result } = renderHook(() => useApiKeys(), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -132,11 +128,11 @@ describe("useApiKeys", () => {
         json: vi.fn(),
       } as any);
 
-      const { result } = renderHookWithAct(() => useApiKeys(), {
+      const { result } = renderHook(() => useApiKeys(), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -149,11 +145,11 @@ describe("useApiKeys", () => {
         json: vi.fn().mockResolvedValue({ invalid: "data" }),
       } as any);
 
-      const { result } = renderHookWithAct(() => useApiKeys(), {
+      const { result } = renderHook(() => useApiKeys(), {
         wrapper: createWrapper(),
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -186,7 +182,7 @@ describe("useApiKeys", () => {
 
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHookWithAct(() => useCreateApiKey(), {
+      const { result } = renderHook(() => useCreateApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -194,7 +190,7 @@ describe("useApiKeys", () => {
         result.current.mutate(newApiKeyData);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -219,7 +215,7 @@ describe("useApiKeys", () => {
         json: vi.fn(),
       } as any);
 
-      const { result } = renderHookWithAct(() => useCreateApiKey(), {
+      const { result } = renderHook(() => useCreateApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -227,7 +223,7 @@ describe("useApiKeys", () => {
         result.current.mutate(newApiKeyData);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -239,7 +235,7 @@ describe("useApiKeys", () => {
         // nameが欠けている
       } as any;
 
-      const { result } = renderHookWithAct(() => useCreateApiKey(), {
+      const { result } = renderHook(() => useCreateApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -247,7 +243,7 @@ describe("useApiKeys", () => {
         result.current.mutate(invalidApiKeyData);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
     });
@@ -266,7 +262,7 @@ describe("useApiKeys", () => {
 
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHookWithAct(() => useDeleteApiKey(), {
+      const { result } = renderHook(() => useDeleteApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -274,7 +270,7 @@ describe("useApiKeys", () => {
         result.current.mutate(apiKeyId);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
@@ -298,7 +294,7 @@ describe("useApiKeys", () => {
         json: vi.fn(),
       } as any);
 
-      const { result } = renderHookWithAct(() => useDeleteApiKey(), {
+      const { result } = renderHook(() => useDeleteApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -306,7 +302,7 @@ describe("useApiKeys", () => {
         result.current.mutate(apiKeyId);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 
@@ -321,7 +317,7 @@ describe("useApiKeys", () => {
         mockApiClient.users["api-keys"][":id"].$delete,
       ).mockRejectedValue(mockError);
 
-      const { result } = renderHookWithAct(() => useDeleteApiKey(), {
+      const { result } = renderHook(() => useDeleteApiKey(), {
         wrapper: createWrapper(),
       });
 
@@ -329,7 +325,7 @@ describe("useApiKeys", () => {
         result.current.mutate(apiKeyId);
       });
 
-      await waitForWithAct(() => {
+      await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
 

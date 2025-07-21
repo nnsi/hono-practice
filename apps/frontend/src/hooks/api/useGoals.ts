@@ -56,7 +56,7 @@ export function useGoals(filters?: GoalFilters) {
 }
 
 export function useGoal(id: string) {
-  return useQuery<GoalResponse | undefined>({
+  return useQuery<GoalResponse | null>({
     queryKey: ["goal", id],
     queryFn: async () => {
       const res = await apiClient.users.goals.$get();
@@ -66,7 +66,7 @@ export function useGoal(id: string) {
         throw new Error("Failed to parse goals");
       }
       const goal = parsed.data.goals.find((g) => g.id === id);
-      return goal;
+      return goal ?? null;
     },
     enabled: !!id,
   });

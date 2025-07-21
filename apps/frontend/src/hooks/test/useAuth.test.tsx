@@ -4,8 +4,8 @@ import { AuthContext } from "@frontend/providers/AuthProvider";
 import {
   createMockAuthContext,
   createMockUserResponse,
-  renderHookWithActSync as renderHookWithAct,
 } from "@frontend/test-utils";
+import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useAuth } from "../useAuth";
@@ -14,7 +14,7 @@ describe("useAuth", () => {
   it("AuthProviderの外で使用された場合にエラーをスローする", () => {
     // useAuthをAuthProviderの外で使用するとエラーがスローされることを確認
     expect(() => {
-      renderHookWithAct(() => useAuth());
+      renderHook(() => useAuth());
     }).toThrow("useAuth must be used within an AuthProvider");
   });
 
@@ -28,7 +28,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current).toBe(mockAuthContext);
     expect(result.current.user).toBe(mockUser);
@@ -44,7 +44,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     await result.current.login({
       login_id: "test@example.com",
@@ -67,7 +67,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     await result.current.logout();
 
@@ -84,7 +84,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     await result.current.getUser();
 
@@ -103,7 +103,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     await result.current.refreshToken();
 
@@ -119,7 +119,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current.requestStatus).toBe("loading");
   });
@@ -133,7 +133,7 @@ describe("useAuth", () => {
       </AuthContext.Provider>
     );
 
-    const { result } = renderHookWithAct(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current.isInitialized).toBe(true);
   });

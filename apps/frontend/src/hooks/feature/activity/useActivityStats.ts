@@ -53,10 +53,8 @@ export const useActivityStats = () => {
   // dateの月が変化したときのみmonthを更新
   useEffect(() => {
     const newMonth = dayjs(date).format("YYYY-MM");
-    if (newMonth !== month) {
-      setMonth(newMonth);
-    }
-  }, [date, month]);
+    setMonth(newMonth);
+  }, [date]);
 
   // 月変更用の関数（monthのみを更新）
   const handlePrevMonth = () => {

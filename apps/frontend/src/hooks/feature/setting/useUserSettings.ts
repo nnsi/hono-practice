@@ -10,7 +10,7 @@ export const useUserSettings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const isGoogleLinked = user?.providers?.includes("google");
+  const isGoogleLinked = user?.providers?.includes("google") || false;
 
   const handleLogout = async () => {
     try {

@@ -1,12 +1,8 @@
-import { act } from "react";
 import type { ReactNode } from "react";
 
-import {
-  createMockActivityLogResponse,
-  renderHookWithActSync as renderHookWithAct,
-  waitForWithAct,
-} from "@frontend/test-utils";
+import { createMockActivityLogResponse } from "@frontend/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -49,7 +45,7 @@ describe("useActivityLogSync", () => {
       }),
     ];
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -91,7 +87,7 @@ describe("useActivityLogSync", () => {
       }),
     ];
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -132,7 +128,7 @@ describe("useActivityLogSync", () => {
       }),
     ];
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -177,7 +173,7 @@ describe("useActivityLogSync", () => {
       }),
     ];
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -202,7 +198,7 @@ describe("useActivityLogSync", () => {
 
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -232,7 +228,7 @@ describe("useActivityLogSync", () => {
       window.dispatchEvent(new Event("offline-data-updated"));
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(result.current.mergedActivityLogs).toHaveLength(1);
     });
 
@@ -256,7 +252,7 @@ describe("useActivityLogSync", () => {
       }),
     ];
 
-    const { result } = renderHookWithAct(
+    const { result } = renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -276,7 +272,7 @@ describe("useActivityLogSync", () => {
       window.dispatchEvent(event);
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       // 削除IDリストから削除されたため、マージ結果に含まれるようになる
       expect(result.current.mergedActivityLogs).toHaveLength(2);
     });
@@ -299,7 +295,7 @@ describe("useActivityLogSync", () => {
       activityLogs: [],
     };
 
-    const { rerender } = renderHookWithAct(
+    const { rerender } = renderHook(
       (props = initialProps) => useActivityLogSync(props as any),
       { wrapper: createWrapper() },
     );
@@ -316,7 +312,7 @@ describe("useActivityLogSync", () => {
 
     rerender(updatedProps);
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["activity-logs-daily", dateStr],
       });
@@ -332,7 +328,7 @@ describe("useActivityLogSync", () => {
     const deletedId2 = "00000000-0000-4000-8000-000000000008";
     localStorage.setItem(deletedKey, JSON.stringify([deletedId1, deletedId2]));
 
-    renderHookWithAct(
+    renderHook(
       () =>
         useActivityLogSync({
           date,
@@ -350,7 +346,7 @@ describe("useActivityLogSync", () => {
       window.dispatchEvent(event);
     });
 
-    await waitForWithAct(() => {
+    await waitFor(() => {
       const remainingDeletedIds = JSON.parse(
         localStorage.getItem(deletedKey) || "[]",
       );
@@ -362,7 +358,7 @@ describe("useActivityLogSync", () => {
     const date = new Date("2024-01-15");
     const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
-    const { unmount } = renderHookWithAct(
+    const { unmount } = renderHook(
       () =>
         useActivityLogSync({
           date,
