@@ -28,14 +28,15 @@ export const NewGoalPage: React.FC = () => {
 
   if (goalsLoading) {
     return (
-      <div className="container mx-auto p-4 max-w-6xl flex items-center justify-center py-16">
+      <div className="w-full flex items-center justify-center py-16">
         <p className="text-gray-500 text-lg">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
+    <div className="w-full">
+      <hr className="mt-12 mb-6" />
       {/* 現在の目標 */}
       <div className="flex flex-col gap-2">
         {currentGoals.map((goal) => (
