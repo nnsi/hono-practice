@@ -11,14 +11,14 @@ import type {
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ApiKeyRepository<T = any> = {
-  create: (
+  createApiKey: (
     data: CreateApiKeyData & { id: ApiKeyId; key: string },
   ) => Promise<ApiKey>;
-  findByUserId: (userId: string) => Promise<ApiKey[]>;
-  findByKey: (key: string) => Promise<ApiKey | null>;
-  findById: (id: string, userId: string) => Promise<ApiKey | null>;
-  update: (id: string, data: UpdateApiKeyData) => Promise<ApiKey | null>;
-  softDelete: (id: string) => Promise<boolean>;
+  findApiKeyByUserId: (userId: string) => Promise<ApiKey[]>;
+  findApiKeyByKey: (key: string) => Promise<ApiKey | null>;
+  findApiKeyById: (id: string, userId: string) => Promise<ApiKey | null>;
+  updateApiKey: (id: string, data: UpdateApiKeyData) => Promise<ApiKey | null>;
+  softDeleteApiKey: (id: string) => Promise<boolean>;
   withTx: (tx: T) => ApiKeyRepository<T>;
 };
 
@@ -26,17 +26,17 @@ export function newApiKeyRepository(
   db: QueryExecutor,
 ): ApiKeyRepository<QueryExecutor> {
   return {
-    create: create(db),
-    findByUserId: findByUserId(db),
-    findByKey: findByKey(db),
-    findById: findById(db),
-    update: update(db),
-    softDelete: softDelete(db),
+    createApiKey: createApiKey(db),
+    findApiKeyByUserId: findApiKeyByUserId(db),
+    findApiKeyByKey: findApiKeyByKey(db),
+    findApiKeyById: findApiKeyById(db),
+    updateApiKey: updateApiKey(db),
+    softDeleteApiKey: softDeleteApiKey(db),
     withTx: (tx) => newApiKeyRepository(tx),
   };
 }
 
-function create(db: QueryExecutor) {
+function createApiKey(db: QueryExecutor) {
   return async (
     data: CreateApiKeyData & { id: ApiKeyId; key: string },
   ): Promise<ApiKey> => {
@@ -67,7 +67,7 @@ function create(db: QueryExecutor) {
   };
 }
 
-function findByUserId(db: QueryExecutor) {
+function findApiKeyByUserId(db: QueryExecutor) {
   return async (userId: string): Promise<ApiKey[]> => {
     const results = await db
       .select()
@@ -88,7 +88,7 @@ function findByUserId(db: QueryExecutor) {
   };
 }
 
-function findByKey(db: QueryExecutor) {
+function findApiKeyByKey(db: QueryExecutor) {
   return async (key: string): Promise<ApiKey | null> => {
     // 検索時もハッシュ化して比較
     const hashedKey = await hashApiKey(key);
@@ -117,7 +117,7 @@ function findByKey(db: QueryExecutor) {
   };
 }
 
-function findById(db: QueryExecutor) {
+function findApiKeyById(db: QueryExecutor) {
   return async (id: string, userId: string): Promise<ApiKey | null> => {
     const [result] = await db
       .select()
@@ -149,7 +149,7 @@ function findById(db: QueryExecutor) {
   };
 }
 
-function update(db: QueryExecutor) {
+function updateApiKey(db: QueryExecutor) {
   return async (id: string, data: UpdateApiKeyData): Promise<ApiKey | null> => {
     const [result] = await db
       .update(apiKeys)
@@ -175,7 +175,7 @@ function update(db: QueryExecutor) {
   };
 }
 
-function softDelete(db: QueryExecutor) {
+function softDeleteApiKey(db: QueryExecutor) {
   return async (id: string): Promise<boolean> => {
     const [result] = await db
       .update(apiKeys)

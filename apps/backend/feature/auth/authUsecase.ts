@@ -268,13 +268,14 @@ function linkProvider(
         providerUserId,
       );
     if (existingProvider) {
-      if (existingProvider.userId === userId) {
-        throw new AppError("すでにこのアカウントは紐付け済みです", 400);
+      if (existingProvider.userId !== userId) {
+        throw new AppError(
+          "このアカウントは他のユーザーに紐付けられています",
+          400,
+        );
       }
-      throw new AppError(
-        "このアカウントは他のユーザーに紐付けられています",
-        400,
-      );
+      // 同じユーザーが既に連携している場合は、既存のレコードを論理削除
+      await userProviderRepo.softDeleteByUserIdAndProvider(userId, provider);
     }
 
     const userProvider = createUserProviderEntity({
@@ -282,6 +283,7 @@ function linkProvider(
       userId,
       provider,
       providerId: providerUserId,
+      email: payload.email,
       type: "new",
     });
 

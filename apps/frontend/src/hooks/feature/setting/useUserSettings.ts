@@ -5,12 +5,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 export const useUserSettings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, getUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const isGoogleLinked = user?.providers?.includes("google") || false;
+  const googleEmail = user?.providerEmails?.google;
 
   const handleLogout = async () => {
     try {
@@ -46,6 +47,8 @@ export const useUserSettings = () => {
           title: "Success",
           description: "Successfully linked Google account",
         });
+        // ユーザー情報を再取得して「Google連携済み」を表示
+        await getUser();
         queryClient.invalidateQueries({ queryKey: ["user", "me"] });
       } else {
         toast({
@@ -73,6 +76,7 @@ export const useUserSettings = () => {
 
   return {
     isGoogleLinked,
+    googleEmail,
     handleLogout,
     handleGoogleLink,
     handleGoogleLinkError,

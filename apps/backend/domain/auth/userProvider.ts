@@ -15,6 +15,7 @@ const BaseUserProviderSchema = z.object({
   userId: userIdSchema,
   provider: providerSchema,
   providerId: z.string(),
+  email: z.string().email().optional(),
 });
 
 const NewUserProviderSchema = BaseUserProviderSchema.merge(

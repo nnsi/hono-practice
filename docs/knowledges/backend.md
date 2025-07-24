@@ -167,9 +167,13 @@ if (!task) throw new ResourceNotFoundError("task not found");
 
 ### 4. Repositoryも同様にtype＋ファクトリ＋関数分割
 
+**重要**: Repositoryのメソッド名には必ずドメイン名を含めてください（例：`createTask`、`findTaskById`）。これは`withTx`でトランザクション内で複数のリポジトリを使用する際の名前衝突を防ぐためです。
+
 ```ts
 export type TaskRepository = {
   getTasksByUserId: (userId: UserId) => Promise<Task[]>;
+  createTask: (task: Task) => Promise<Task>;  // × create ではなく ○ createTask
+  findTaskById: (id: TaskId) => Promise<Task | null>;  // × findById ではなく ○ findTaskById
   // ...他メソッド
   withTx: (tx: QueryExecutor) => TaskRepository;
 };
@@ -177,6 +181,8 @@ export type TaskRepository = {
 export function newTaskRepository(db: QueryExecutor): TaskRepository {
   return {
     getTasksByUserId: getTasksByUserId(db),
+    createTask: createTask(db),
+    findTaskById: findTaskById(db),
     // ...他メソッド
     withTx: (tx) => newTaskRepository(tx),
   };
