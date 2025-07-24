@@ -7,6 +7,7 @@ import { GoogleLogin } from "@react-oauth/google";
 export const SettingPage: React.FC = () => {
   const {
     isGoogleLinked,
+    googleEmail,
     handleLogout,
     handleGoogleLink,
     handleGoogleLinkError,
@@ -23,17 +24,17 @@ export const SettingPage: React.FC = () => {
             <Button onClick={handleLogout} variant="outline">
               ログアウト
             </Button>
-            {isGoogleLinked ? (
-              <div className="flex items-center gap-2">
-                <span className="text-green-600 font-medium">
-                  Google認証済み
-                </span>
+            <GoogleLogin
+              onSuccess={handleGoogleLink}
+              onError={handleGoogleLinkError}
+            />
+            {isGoogleLinked && (
+              <div className="flex flex-col">
+                <span className="text-green-600 text-sm">Google連携済み</span>
+                {googleEmail && (
+                  <span className="text-gray-600 text-xs">{googleEmail}</span>
+                )}
               </div>
-            ) : (
-              <GoogleLogin
-                onSuccess={handleGoogleLink}
-                onError={handleGoogleLinkError}
-              />
             )}
           </div>
         </div>

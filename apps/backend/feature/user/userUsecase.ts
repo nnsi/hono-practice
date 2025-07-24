@@ -19,7 +19,10 @@ export type CreateUserInputParams = {
   name?: string;
 };
 
-export type UserWithProviders = User & { providers: string[] };
+export type UserWithProviders = User & {
+  providers: string[];
+  providerEmails?: Record<string, string>;
+};
 
 export type UserUsecase = {
   createUser: (
@@ -79,9 +82,23 @@ function getUserById(
   return async (userId: UserId): Promise<UserWithProviders> => {
     const user = await repo.getUserById(userId);
     if (!user) throw new AppError("user not found", 404);
-    const providers = (
-      await userProviderRepo.getUserProvidersByUserId(userId)
-    ).map((p) => p.provider);
-    return { ...user, providers };
+    const userProviders =
+      await userProviderRepo.getUserProvidersByUserId(userId);
+    const providers = userProviders.map((p) => p.provider);
+
+    // providerEmailsオブジェクトを作成
+    const providerEmails: Record<string, string> = {};
+    for (const userProvider of userProviders) {
+      if (userProvider.email) {
+        providerEmails[userProvider.provider] = userProvider.email;
+      }
+    }
+
+    return {
+      ...user,
+      providers,
+      providerEmails:
+        Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
+    };
   };
 }

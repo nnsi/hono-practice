@@ -26,14 +26,14 @@ function createApiKey(repo: ApiKeyRepository) {
   return async (data: CreateApiKeyData): Promise<ApiKey> => {
     const id = createApiKeyId();
     const key = generateApiKey();
-    const apiKey = await repo.create({ id, ...data, key });
+    const apiKey = await repo.createApiKey({ id, ...data, key });
     return apiKey;
   };
 }
 
 function listApiKeys(repo: ApiKeyRepository) {
   return async (userId: string): Promise<ApiKey[]> => {
-    const apiKeys = await repo.findByUserId(userId);
+    const apiKeys = await repo.findApiKeyByUserId(userId);
     // ハッシュ化されたキーを固定のマスク表示に変換
     return apiKeys.map((apiKey) => ({
       ...apiKey,
@@ -45,13 +45,13 @@ function listApiKeys(repo: ApiKeyRepository) {
 function deleteApiKey(repo: ApiKeyRepository) {
   return async (id: string, userId: string): Promise<void> => {
     // ユーザーのAPIキーであることを確認（効率的にクエリ）
-    const apiKey = await repo.findById(id, userId);
+    const apiKey = await repo.findApiKeyById(id, userId);
 
     if (!apiKey) {
       throw new ResourceNotFoundError(`APIキーが見つかりません: ${id}`);
     }
 
-    const deleted = await repo.softDelete(id);
+    const deleted = await repo.softDeleteApiKey(id);
     if (!deleted) {
       throw new ResourceNotFoundError(`APIキーが見つかりません: ${id}`);
     }
@@ -65,14 +65,14 @@ function validateApiKey(repo: ApiKeyRepository) {
     // TODO: KVストアからキャッシュを確認する実装を追加
 
     // データベースから取得
-    const apiKey = await repo.findByKey(key);
+    const apiKey = await repo.findApiKeyByKey(key);
     if (!apiKey || !apiKey.isActive) return null;
 
     // TODO: KVストアにキャッシュする実装を追加
 
     // 最終使用日時を更新（非同期で実行）
     // エラーが発生しても認証は成功させるが、監視ツールへの通知を推奨
-    repo.update(apiKey.id, { lastUsedAt: new Date() }).catch((error) => {
+    repo.updateApiKey(apiKey.id, { lastUsedAt: new Date() }).catch((error) => {
       // TODO: 監視ツール（Sentry、DataDogなど）への通知を実装
       console.error("Failed to update lastUsedAt for API key:", {
         apiKeyId: apiKey.id,

@@ -285,6 +285,11 @@ npm run db-migrate
 - カラム名：スネークケース（例：`user_id`）
 - ドメインモデル：キャメルケース（例：`userId`）
 
+### リポジトリメソッド名規則
+- **重要**: Repositoryのメソッド名には必ずドメイン名を含める（例：`createApiKey`、`findApiKeyById`）
+- これは`withTx`でトランザクション内で複数のリポジトリを使用する際の名前衝突を防ぐため
+- 例：`create`ではなく`createApiKey`、`findById`ではなく`findApiKeyById`とする
+
 ## 重要な注意事項
 
 ### パフォーマンス

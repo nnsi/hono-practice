@@ -15,6 +15,10 @@ export type UserProviderRepository<T = any> = {
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
   getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
+  softDeleteByUserIdAndProvider(
+    userId: string,
+    provider: Provider,
+  ): Promise<boolean>;
   withTx(tx: T): UserProviderRepository<T>;
 };
 
@@ -25,6 +29,7 @@ export function newUserProviderRepository(
     findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
     createUserProvider: createUserProvider(db),
     getUserProvidersByUserId: getUserProvidersByUserId(db),
+    softDeleteByUserIdAndProvider: softDeleteByUserIdAndProvider(db),
     withTx: (tx) => newUserProviderRepository(tx),
   };
 }
@@ -52,6 +57,7 @@ function findUserProviderByIdAndProvider(db: QueryExecutor) {
         userId: result.userId,
         provider: result.provider as Provider,
         providerId: result.providerAccountId,
+        email: result.email || undefined,
         type: "persisted",
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
@@ -73,6 +79,7 @@ function createUserProvider(db: QueryExecutor) {
       userId: userProvider.userId,
       provider: userProvider.provider,
       providerAccountId: userProvider.providerId,
+      email: userProvider.email,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -87,6 +94,7 @@ function createUserProvider(db: QueryExecutor) {
       userId: result.userId,
       provider: result.provider as Provider,
       providerId: result.providerAccountId,
+      email: result.email || undefined,
       type: "persisted",
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
@@ -108,10 +116,29 @@ function getUserProvidersByUserId(db: QueryExecutor) {
         userId: result.userId,
         provider: result.provider as Provider,
         providerId: result.providerAccountId,
+        email: result.email || undefined,
         type: "persisted",
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
       }),
     );
+  };
+}
+
+function softDeleteByUserIdAndProvider(db: QueryExecutor) {
+  return async (userId: string, provider: Provider): Promise<boolean> => {
+    const [result] = await db
+      .update(userProviders)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(userProviders.userId, userId),
+          eq(userProviders.provider, provider),
+          isNull(userProviders.deletedAt),
+        ),
+      )
+      .returning();
+
+    return !!result;
   };
 }

@@ -30,9 +30,12 @@ let mockUser: { id: string; email: string; providers: string[] } | null = {
   providers: ["email"],
 };
 
+const mockGetUser = vi.fn();
+
 const mockUseAuth = vi.fn(() => ({
   user: mockUser,
   logout: mockLogout,
+  getUser: mockGetUser,
 }));
 
 vi.mock("@frontend/hooks/useAuth", () => ({
@@ -106,6 +109,7 @@ describe("useUserSettings", () => {
       mockUseAuth.mockReturnValueOnce({
         user: null,
         logout: mockLogout,
+        getUser: mockGetUser,
       });
 
       const { result } = renderHook(() => useUserSettings(), {
@@ -179,6 +183,7 @@ describe("useUserSettings", () => {
           title: "Success",
           description: "Successfully linked Google account",
         });
+        expect(mockGetUser).toHaveBeenCalled();
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ["user", "me"],
         });

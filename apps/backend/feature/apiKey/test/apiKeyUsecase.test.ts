@@ -40,12 +40,12 @@ describe("ApiKeyUsecase", () => {
         name: "New API Key",
       };
 
-      when(repo.create(anything())).thenResolve(mockApiKey);
+      when(repo.createApiKey(anything())).thenResolve(mockApiKey);
 
       const result = await usecase.createApiKey(createData);
 
       expect(result).toEqual(mockApiKey);
-      verify(repo.create(anything())).once();
+      verify(repo.createApiKey(anything())).once();
     });
   });
 
@@ -60,7 +60,7 @@ describe("ApiKeyUsecase", () => {
         },
       ];
 
-      when(repo.findByUserId(userId)).thenResolve(apiKeys);
+      when(repo.findApiKeyByUserId(userId)).thenResolve(apiKeys);
 
       const result = await usecase.listApiKeys(userId);
 
@@ -70,22 +70,22 @@ describe("ApiKeyUsecase", () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].key).toBe("api_****...****"); // マスクされているか確認
-      verify(repo.findByUserId(userId)).once();
+      verify(repo.findApiKeyByUserId(userId)).once();
     });
   });
 
   describe("deleteApiKey", () => {
     it("should delete an API key successfully", async () => {
-      when(repo.findById(apiKeyId, userId)).thenResolve(mockApiKey);
-      when(repo.softDelete(apiKeyId)).thenResolve(true);
+      when(repo.findApiKeyById(apiKeyId, userId)).thenResolve(mockApiKey);
+      when(repo.softDeleteApiKey(apiKeyId)).thenResolve(true);
 
       await usecase.deleteApiKey(apiKeyId, userId);
 
-      verify(repo.softDelete(apiKeyId)).once();
+      verify(repo.softDeleteApiKey(apiKeyId)).once();
     });
 
     it("should throw ResourceNotFoundError when API key not found", async () => {
-      when(repo.findById(apiKeyId, userId)).thenResolve(null);
+      when(repo.findApiKeyById(apiKeyId, userId)).thenResolve(null);
 
       await expect(usecase.deleteApiKey(apiKeyId, userId)).rejects.toThrow(
         ResourceNotFoundError,
@@ -93,8 +93,8 @@ describe("ApiKeyUsecase", () => {
     });
 
     it("should throw ResourceNotFoundError when delete fails", async () => {
-      when(repo.findById(apiKeyId, userId)).thenResolve(mockApiKey);
-      when(repo.softDelete(apiKeyId)).thenResolve(false);
+      when(repo.findApiKeyById(apiKeyId, userId)).thenResolve(mockApiKey);
+      when(repo.softDeleteApiKey(apiKeyId)).thenResolve(false);
 
       await expect(usecase.deleteApiKey(apiKeyId, userId)).rejects.toThrow(
         ResourceNotFoundError,
@@ -104,45 +104,45 @@ describe("ApiKeyUsecase", () => {
 
   describe("validateApiKey", () => {
     it("should validate an active API key successfully", async () => {
-      when(repo.findByKey(mockApiKey.key)).thenResolve(mockApiKey);
+      when(repo.findApiKeyByKey(mockApiKey.key)).thenResolve(mockApiKey);
       // update メソッドが Promise を返すようにモック
-      when(repo.update(anything(), anything())).thenResolve(mockApiKey);
+      when(repo.updateApiKey(anything(), anything())).thenResolve(mockApiKey);
 
       const result = await usecase.validateApiKey(mockApiKey.key);
 
       expect(result).toEqual(mockApiKey);
-      verify(repo.findByKey(mockApiKey.key)).once();
+      verify(repo.findApiKeyByKey(mockApiKey.key)).once();
       // Note: lastUsedAt更新は非同期で実行されるため、検証しない
     });
 
     it("should return null for non-existent API key", async () => {
-      when(repo.findByKey("non_existent_key")).thenResolve(null);
+      when(repo.findApiKeyByKey("non_existent_key")).thenResolve(null);
 
       const result = await usecase.validateApiKey("non_existent_key");
 
       expect(result).toBeNull();
-      verify(repo.findByKey("non_existent_key")).once();
+      verify(repo.findApiKeyByKey("non_existent_key")).once();
     });
 
     it("should return null for inactive API key", async () => {
       const inactiveKey = { ...mockApiKey, isActive: false };
-      when(repo.findByKey(inactiveKey.key)).thenResolve(inactiveKey);
+      when(repo.findApiKeyByKey(inactiveKey.key)).thenResolve(inactiveKey);
 
       const result = await usecase.validateApiKey(inactiveKey.key);
 
       expect(result).toBeNull();
-      verify(repo.findByKey(inactiveKey.key)).once();
+      verify(repo.findApiKeyByKey(inactiveKey.key)).once();
     });
 
     it("should return null for deleted API key", async () => {
       const deletedKey = { ...mockApiKey, deletedAt: new Date("2024-01-02") };
       // 削除済みのキーはリポジトリから返されない（findByKeyがdeletedAtをチェックするため）
-      when(repo.findByKey(deletedKey.key)).thenResolve(null);
+      when(repo.findApiKeyByKey(deletedKey.key)).thenResolve(null);
 
       const result = await usecase.validateApiKey(deletedKey.key);
 
       expect(result).toBeNull();
-      verify(repo.findByKey(deletedKey.key)).once();
+      verify(repo.findApiKeyByKey(deletedKey.key)).once();
     });
   });
 });
