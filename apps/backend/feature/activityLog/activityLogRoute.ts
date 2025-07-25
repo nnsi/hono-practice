@@ -5,6 +5,7 @@ import { newActivityQueryService } from "@backend/query";
 import { zValidator } from "@hono/zod-validator";
 
 import {
+  CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
 } from "@dtos/request";
@@ -33,7 +34,7 @@ export function createActivityLogRoute() {
     const repo = newActivityLogRepository(db);
     const acRepo = newActivityRepository(db);
     const qs = newActivityQueryService(db);
-    const uc = newActivityLogUsecase(repo, acRepo, qs);
+    const uc = newActivityLogUsecase(repo, acRepo, qs, db);
     const h = newActivityLogHandler(uc);
 
     c.set("h", h);
@@ -75,6 +76,18 @@ export function createActivityLogRoute() {
       zValidator("json", CreateActivityLogRequestSchema),
       async (c) => {
         const res = await c.var.h.createActivityLog(
+          c.get("userId"),
+          c.req.valid("json"),
+        );
+
+        return c.json(res);
+      },
+    )
+    .post(
+      "/batch",
+      zValidator("json", CreateActivityLogBatchRequestSchema),
+      async (c) => {
+        const res = await c.var.h.createActivityLogBatch(
           c.get("userId"),
           c.req.valid("json"),
         );

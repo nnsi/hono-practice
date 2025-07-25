@@ -1,4 +1,5 @@
 export * from "./CreateActivityLogRequest";
+export * from "./CreateActivityLogBatchRequest";
 export * from "./CreateActivityRequest";
 export * from "./CreateTaskRequest";
 export * from "./CreateUserRequest";

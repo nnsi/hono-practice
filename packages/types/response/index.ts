@@ -1,5 +1,6 @@
 export * from "./GetActivitiesResponse";
 export * from "./GetActivityLogsResponse";
+export * from "./CreateActivityLogBatchResponse";
 export * from "./GetActivityStatsResponse";
 export * from "./GetGoalsResponse";
 export * from "./GetTasksResponse";

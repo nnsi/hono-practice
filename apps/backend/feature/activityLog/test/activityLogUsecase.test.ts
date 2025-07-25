@@ -18,26 +18,31 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { type ActivityLogRepository, newActivityLogUsecase } from "..";
 
 import type { ActivityRepository } from "../../activity";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { ActivityQueryService } from "@backend/query";
 
 describe("ActivityLogUsecase", () => {
   let repo: ActivityLogRepository;
   let acRepo: ActivityRepository;
   let qs: ActivityQueryService;
+  let db: QueryExecutor;
   let usecase: ReturnType<typeof newActivityLogUsecase>;
 
   beforeEach(() => {
     repo = mock<ActivityLogRepository>();
     acRepo = mock<ActivityRepository>();
     qs = mock<ActivityQueryService>();
+    db = mock<QueryExecutor>();
     usecase = newActivityLogUsecase(
       instance(repo),
       instance(acRepo),
       instance(qs),
+      instance(db),
     );
     reset(repo);
     reset(acRepo);
     reset(qs);
+    reset(db);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
