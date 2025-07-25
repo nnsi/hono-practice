@@ -19,9 +19,9 @@ Expo Routerによるファイルベースルーティングを採用し、Web版
 - **Expo Secure Store**: 機密データの安全な保存
 
 ### UI・スタイリング
+- **NativeWind**: Tailwind CSSベースのスタイリング
 - **React Native Elements**: UIコンポーネントライブラリ
 - **React Native Vector Icons**: アイコンライブラリ
-- **StyleSheet API**: スタイリング
 
 ### 開発ツール
 - **Expo Dev Client**: カスタム開発クライアント
@@ -33,26 +33,34 @@ Expo Routerによるファイルベースルーティングを採用し、Web版
 ```txt
 apps/mobile/
 ├── app/                    # ルーティング定義（Expo Router）
-│   ├── (auth)/            # 認証必須画面
-│   │   ├── _layout.tsx    # 認証レイアウト
-│   │   ├── activity/      # 活動関連画面
-│   │   ├── goals/         # 目標設定画面
-│   │   ├── settings.tsx   # 設定画面
-│   │   ├── tasks.tsx      # タスク一覧画面
-│   │   └── today.tsx      # 今日の活動記録画面
+│   ├── (app)/             # アプリメインレイアウト
+│   │   ├── (tabs)/       # タブナビゲーション
+│   │   │   ├── _layout.tsx
+│   │   │   ├── daily.tsx    # 日次記録画面
+│   │   │   ├── goal.tsx     # 目標設定画面
+│   │   │   ├── index.tsx    # ホーム画面
+│   │   │   ├── settings.tsx # 設定画面
+│   │   │   └── stats.tsx    # 統計画面
+│   │   └── _layout.tsx
+│   ├── (auth)/            # 認証関連画面
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx      # 認証メイン画面
+│   │   ├── login.tsx      # ログイン画面
+│   │   └── signup.tsx     # ユーザー登録画面
 │   ├── _layout.tsx        # ルートレイアウト
-│   ├── index.tsx          # エントリーポイント
-│   ├── login.tsx          # ログイン画面
-│   └── register.tsx       # ユーザー登録画面
-├── components/            # UIコンポーネント
-│   ├── activity/         # 活動記録関連
-│   ├── common/           # 共通コンポーネント
-│   ├── goal/             # 目標設定関連
-│   └── task/             # タスク管理関連
-├── hooks/                # カスタムフック
-├── services/             # APIクライアント・サービス
-├── utils/                # ユーティリティ関数
-├── constants/            # 定数定義
+│   └── index.tsx          # エントリーポイント
+├── src/                   # ソースコード
+│   ├── components/       # UIコンポーネント
+│   │   ├── activity/    # 活動記録関連コンポーネント
+│   │   ├── daily/       # 日次記録関連コンポーネント
+│   │   └── goal/        # 目標設定関連コンポーネント
+│   ├── contexts/         # Reactコンテキスト
+│   ├── hooks/            # カスタムフック
+│   ├── providers/        # プロバイダー
+│   ├── screens/          # 画面コンポーネント
+│   └── utils/            # ユーティリティ
+├── global.css             # グローバルCSS（NativeWind）
+├── tailwind.config.js    # Tailwind設定
 ├── app.json             # Expoアプリ設定
 ├── expo-env.d.ts        # Expo型定義
 └── package.json         # 依存関係管理

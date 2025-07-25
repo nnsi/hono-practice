@@ -34,8 +34,10 @@ apps/backend/
 ├── feature/        # routing(DI)/handler/usecase/repository
 │   ├── activity/   # 活動記録機能
 │   ├── activityLog/# 活動ログ機能
+│   ├── apiKey/     # APIキー管理機能
 │   ├── auth/       # 認証機能
 │   ├── goal/       # 目標設定機能
+│   ├── subscription/# サブスクリプション管理機能
 │   ├── sync/       # 同期機能
 │   ├── task/       # タスク管理機能
 │   ├── user/       # ユーザー管理機能
@@ -97,44 +99,32 @@ apps/frontend/
 ```txt
 apps/mobile/
 ├── app/                    # ルーティング定義（Expo Router）
-│   ├── (auth)/            # 認証必須画面
-│   │   ├── _layout.tsx    # 認証レイアウト
-│   │   ├── activity/      # 活動関連画面
-│   │   │   ├── [id].tsx   # 活動詳細
-│   │   │   └── new.tsx    # 新規活動作成
-│   │   ├── goals/         # 目標設定画面
-│   │   │   └── [year].[month].tsx  # 月次目標
-│   │   ├── settings.tsx   # 設定画面
-│   │   ├── tasks.tsx      # タスク一覧画面
-│   │   └── today.tsx      # 今日の活動記録画面
-│   ├── _layout.tsx        # ルートレイアウト
-│   ├── index.tsx          # エントリーポイント
-│   ├── login.tsx          # ログイン画面
-│   └── register.tsx       # ユーザー登録画面
+│   ├── (app)/             # アプリメインレイアウト
+│   │   ├── (tabs)/       # タブナビゲーション
+│   │   │   ├── daily.tsx    # 日次記録画面
+│   │   │   ├── goal.tsx     # 目標設定画面
+│   │   │   ├── index.tsx    # ホーム画面
+│   │   │   ├── settings.tsx # 設定画面
+│   │   │   └── stats.tsx    # 統計画面
+│   │   └── _layout.tsx
+│   ├── (auth)/            # 認証関連画面
+│   │   ├── login.tsx      # ログイン画面
+│   │   └── signup.tsx     # ユーザー登録画面
+│   └── _layout.tsx        # ルートレイアウト
 │
-├── components/            # UIコンポーネント
-│   ├── activity/         # 活動記録関連コンポーネント
-│   ├── common/           # 共通コンポーネント
-│   ├── goal/             # 目標設定関連コンポーネント
-│   └── task/             # タスク管理関連コンポーネント
-│
-├── hooks/                # カスタムフック
-│   ├── useActivities.ts  # 活動データ管理
-│   ├── useAuth.ts        # 認証管理
-│   └── useTasks.ts       # タスク管理
-│
-├── services/             # APIクライアント・サービス
-│   ├── api/             # API通信
-│   └── storage/         # ローカルストレージ管理
-│
-├── utils/                # ユーティリティ関数
-├── constants/            # 定数定義
-├── types/                # 型定義
+├── src/                   # ソースコード
+│   ├── components/       # UIコンポーネント
+│   │   ├── activity/    # 活動記録関連
+│   │   ├── daily/       # 日次記録関連
+│   │   └── goal/        # 目標設定関連
+│   ├── hooks/            # カスタムフック
+│   ├── providers/        # プロバイダー
+│   └── utils/            # ユーティリティ
 ├── app.json             # Expoアプリ設定
-├── expo-env.d.ts        # Expo型定義
+├── global.css           # グローバルCSS（NativeWind）
+├── tailwind.config.js  # Tailwind設定
 ├── babel.config.js      # Babel設定
 ├── metro.config.js      # Metro設定
 ├── tsconfig.json        # TypeScript設定
-├── .env                 # 環境変数
 └── package.json         # 依存関係管理
 ```

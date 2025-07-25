@@ -123,6 +123,18 @@ HTTP Request → Route (DI, Validation) → Handler (Transform, Validation) → 
 - 同期キュー管理
 - 同期状態の追跡
 
+### 8. APIキー管理 (apiKey)
+- APIキーの生成・取得・削除
+- APIキーを使用した認証
+- 使用履歴の追跡
+- キーの有効・無効化
+
+### 9. サブスクリプション管理 (subscription)
+- プランの管理（free/premium/enterprise）
+- サブスクリプション状態の管理
+- 決済プロバイダー連携
+- トライアル期間の管理
+
 ## 新規機能実装時のガイドライン・サンプル
 
 このプロジェクトで新たな機能（エンドポイントやユースケース）を追加する際は、以下のルール・スタイルに従ってください。
@@ -272,3 +284,300 @@ describe("TaskUsecase", () => {
 サンプルは `feature/task/` ディレクトリの各ファイルを参照してください。
 
 必要に応じて、`auth`や`activity`など他のfeatureディレクトリの実装も参考にしてください。
+
+## テスト戦略
+
+### テストフレームワーク
+- **Vitest**: 高速なテストランナー（ESMネイティブサポート）
+- **ts-mockito**: TypeScript向けモッキングライブラリ
+- **Zod**: リクエスト/レスポンスのスキーマバリデーション
+
+### テスト構造
+```txt
+apps/backend/
+├── feature/
+│   └── {feature}/
+│       ├── test/
+│       │   ├── handler.test.ts
+│       │   ├── usecase.test.ts
+│       │   └── repository.test.ts
+│       └── index.ts
+├── middleware/
+│   └── test/
+└── test/
+    └── utils/
+        └── testHelpers.ts
+```
+
+### テストの原則
+
+#### 1. 単体テストのスコープ
+- **Handler**: リクエスト/レスポンスの変換とバリデーションのテスト
+- **Usecase**: ビジネスロジックの正常系・異常系のテスト
+- **Repository**: データ永続化とドメインモデル変換のテスト
+- **Middleware**: 認証・エラーハンドリングなどの横断的関心事のテスト
+
+#### 2. モックの使用方針
+```typescript
+// ts-mockitoを使用したモック
+import { mock, instance, when, verify, reset } from "ts-mockito";
+
+describe("TaskUsecase", () => {
+  let taskRepository: TaskRepository;
+  let mockTaskRepository: TaskRepository;
+  
+  beforeEach(() => {
+    mockTaskRepository = mock<TaskRepository>();
+    taskRepository = instance(mockTaskRepository);
+    reset(mockTaskRepository);
+  });
+  
+  it("should create task with default values", async () => {
+    // Arrange
+    const userId = "00000000-0000-4000-8000-000000000001" as UserId;
+    const input = { title: "Test Task", userId };
+    
+    when(mockTaskRepository.createTask(anything())).thenResolve(expectedTask);
+    
+    // Act
+    const usecase = newTaskUsecase(taskRepository);
+    const result = await usecase.createTask(input);
+    
+    // Assert
+    expect(result.title).toBe("Test Task");
+    verify(mockTaskRepository.createTask(anything())).once();
+  });
+});
+```
+
+#### 3. テストIDの規則
+- すべてのテストデータはUUID v4形式を使用
+- 形式: `00000000-0000-4000-8000-00000000000X`
+- 例:
+  ```typescript
+  const testUserId = "00000000-0000-4000-8000-000000000001" as UserId;
+  const testTaskId = "00000000-0000-4000-8000-000000000002" as TaskId;
+  ```
+
+#### 4. エラーケースのテスト
+```typescript
+it("should throw ResourceNotFoundError when task not found", async () => {
+  // Arrange
+  when(mockTaskRepository.findTaskById(anything())).thenResolve(null);
+  
+  // Act & Assert
+  const usecase = newTaskUsecase(taskRepository);
+  await expect(usecase.getTask(testTaskId))
+    .rejects.toThrow(ResourceNotFoundError);
+});
+```
+
+#### 5. トランザクションのテスト
+```typescript
+it("should rollback on error within transaction", async () => {
+  // Arrange
+  const mockDb = mock<QueryExecutor>();
+  const mockTx = mock<QueryExecutor>();
+  
+  when(mockDb.transaction(anything())).thenCall(async (callback) => {
+    try {
+      return await callback(instance(mockTx));
+    } catch (error) {
+      // トランザクションロールバック
+      throw error;
+    }
+  });
+  
+  // Act & Assert
+  const repo = newTaskRepository(instance(mockDb));
+  await expect(repo.createTaskWithRelations(invalidData))
+    .rejects.toThrow();
+});
+```
+
+### 統合テストの方針
+
+#### 1. データベース統合テスト
+- 実際のデータベース接続を使用するテストは`__integration__`ディレクトリに配置
+- テスト用データベースの使用（環境変数`TEST_DATABASE_URL`）
+- 各テスト前後でのデータクリーンアップ
+
+#### 2. API統合テスト
+```typescript
+// Honoアプリケーションの統合テスト
+import { testClient } from "hono/testing";
+
+describe("Task API Integration", () => {
+  const app = createApp();
+  const client = testClient(app);
+  
+  it("should create and retrieve task", async () => {
+    // Create
+    const createRes = await client.api.v1.tasks.$post({
+      json: { title: "Integration Test Task" }
+    });
+    expect(createRes.status).toBe(201);
+    
+    // Retrieve
+    const getRes = await client.api.v1.tasks.$get();
+    expect(getRes.status).toBe(200);
+    const tasks = await getRes.json();
+    expect(tasks).toHaveLength(1);
+  });
+});
+```
+
+### テスト実行とカバレッジ
+
+```bash
+# 単体テスト実行（CIモード）
+npm run test-once
+
+# ウォッチモードでテスト実行（開発時）
+npm run test
+
+# カバレッジレポート生成
+npm run test-once -- --coverage
+
+# 特定のテストファイルのみ実行
+npm run test-once -- task.usecase.test.ts
+```
+
+### カバレッジ目標
+- **Usecase層**: 90%以上（ビジネスロジックの網羅）
+- **Handler層**: 80%以上（入出力変換の確認）
+- **Repository層**: 70%以上（主要なクエリパターンの確認）
+- **全体**: 80%以上
+
+### ベストプラクティス
+
+1. **Arrange-Act-Assert パターン**
+   - Arrange: テストデータとモックの準備
+   - Act: テスト対象の実行
+   - Assert: 結果の検証
+
+2. **モックのリセット**
+   - `beforeEach`で必ず`reset()`を実行
+   - テスト間の依存を排除
+
+3. **命名規則**
+   - テストファイル: `{対象}.test.ts`
+   - テスト名: `should {期待される動作} when {条件}`
+
+4. **非同期処理**
+   - 必ず`async/await`を使用
+   - Promise rejectionは`.rejects.toThrow()`で検証
+
+5. **テストデータ**
+   - ファクトリ関数で一貫性のあるテストデータ生成
+   - 日付は固定値を使用（`new Date("2024-01-01")`）
+
+### CI/CDでのテスト実行
+
+GitHub Actionsでの自動テスト実行設定：
+```yaml
+- name: Run backend tests
+  run: npm run test-once
+  working-directory: ./apps/backend
+
+- name: Upload coverage
+  uses: codecov/codecov-action@v3
+  with:
+    file: ./apps/backend/coverage/coverage-final.json
+```
+
+## APIルート仕様
+
+### 概要
+このバックエンドは、フロントエンドアプリケーション（Web、モバイル）およびサードパーティ開発者向けにREST APIを提供しています。すべてのAPIエンドポイントは`/api/v1`配下に配置されています。
+
+### 認証方式
+1. **JWTトークン認証**（メインアプリケーション用）
+   - Bearer認証: `Authorization: Bearer <access_token>`
+   - アクセストークン有効期限: 15分
+   - リフレッシュトークンによる自動更新
+
+2. **APIキー認証**（サードパーティ開発者用）
+   - ヘッダー認証: `X-API-Key: <api_key>`
+   - APIキーは設定画面から生成・管理可能
+
+### 主要なAPIエンドポイント
+
+#### 認証関連
+- `POST /api/v1/auth/signup` - 新規ユーザー登録
+- `POST /api/v1/auth/login` - ログイン
+- `POST /api/v1/auth/logout` - ログアウト
+- `POST /api/v1/auth/refresh` - トークンリフレッシュ
+- `POST /api/v1/auth/login-with-provider` - プロバイダー認証（Google）
+
+#### ユーザー関連
+- `GET /api/v1/users/me` - 現在のユーザー情報取得
+- `PUT /api/v1/users/me` - ユーザー情報更新
+- `DELETE /api/v1/users/me` - アカウント削除
+
+#### 活動記録関連
+- `GET /api/v1/users/activities` - 活動カテゴリー一覧
+- `POST /api/v1/users/activities` - 活動カテゴリー作成
+- `PUT /api/v1/users/activities/:id` - 活動カテゴリー更新
+- `DELETE /api/v1/users/activities/:id` - 活動カテゴリー削除
+- `PUT /api/v1/users/activities/sort` - 並び順更新
+
+#### 活動ログ関連
+- `GET /api/v1/users/activity-logs` - 活動ログ一覧（日付指定）
+- `POST /api/v1/users/activity-logs` - 活動ログ作成
+- `PUT /api/v1/users/activity-logs/:id` - 活動ログ更新
+- `DELETE /api/v1/users/activity-logs/:id` - 活動ログ削除
+- `GET /api/v1/users/activity-logs/stats` - 統計情報取得
+
+#### タスク関連
+- `GET /api/v1/users/tasks` - タスク一覧
+- `POST /api/v1/users/tasks` - タスク作成
+- `PUT /api/v1/users/tasks/:id` - タスク更新
+- `DELETE /api/v1/users/tasks/:id` - タスク削除
+
+#### 目標関連
+- `GET /api/v1/users/goals/monthly` - 月次目標取得
+- `POST /api/v1/users/goals` - 目標作成
+- `PUT /api/v1/users/goals/:id` - 目標更新
+- `DELETE /api/v1/users/goals/:id` - 目標削除
+
+#### APIキー管理（設定画面用）
+- `GET /api/v1/users/api-keys` - APIキー一覧
+- `POST /api/v1/users/api-keys` - APIキー生成
+- `DELETE /api/v1/users/api-keys/:id` - APIキー削除
+
+#### 同期関連
+- `POST /api/v1/sync/check` - 重複チェック
+- `POST /api/v1/sync/batch` - バッチ同期
+
+### レスポンス形式
+すべてのAPIレスポンスはJSON形式で、以下の構造を持ちます：
+
+**成功時**
+```json
+{
+  "data": { ... },
+  "status": "success"
+}
+```
+
+**エラー時**
+```json
+{
+  "error": {
+    "message": "エラーメッセージ",
+    "code": "ERROR_CODE"
+  },
+  "status": "error"
+}
+```
+
+### レート制限
+- 認証済みユーザー: 1000リクエスト/時間
+- APIキー使用: プランに応じて制限
+  - Free: 100リクエスト/時間
+  - Premium: 1000リクエスト/時間
+  - Enterprise: 無制限
+
+### 開発者向けドキュメント
+APIの詳細な仕様やサンプルコードは、今後OpenAPI（Swagger）形式でのドキュメント提供を予定しています。

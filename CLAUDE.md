@@ -27,6 +27,19 @@
 
 **Actiko** - どのアプリよりも最速で活動量を記録することを目指し、極限までシンプルに研ぎ澄ませたUXを実現する個人向け活動記録アプリケーション。
 
+## 📚 プロジェクトドキュメント
+
+詳細なアーキテクチャ、技術仕様、実装ガイドラインについては、**`/docs/knowledges`ディレクトリ**を参照してください：
+
+- **🏗️ `structure.md`** - プロジェクト全体の構造
+- **🔐 `auth_flow.md`** - 認証フローの詳細
+- **🔧 `backend.md`** - バックエンドアーキテクチャ
+- **🎨 `frontend.md`** - フロントエンドアーキテクチャとテスト戦略
+- **📱 `mobile.md`** - モバイルアプリの構造
+- **🗜️ `database.md`** - データベース設計とスキーマ
+
+作業を開始する前に、関連するドキュメントを確認してください。
+
 ## セットアップ
 
 ### 初回セットアップ
@@ -73,6 +86,10 @@ docker-compose up -d  # PostgreSQLコンテナの起動
 ```
 
 ### テストと品質管理
+
+- フロントエンドのテスト戦略については `/docs/knowledges/frontend.md` を参照
+- バックエンドのテスト戦略については `/docs/knowledges/backend.md` を参照
+
 ```bash
 # テストを一度だけ実行（CIモード）
 npm run test-once
@@ -105,45 +122,16 @@ npm run deploy:stg
 npm run deploy:prod
 ```
 
-## アーキテクチャ
+## アーキテクチャ概要
 
-### バックエンド（クリーンアーキテクチャ）
-バックエンドは関心事の明確な分離を持つクリーンアーキテクチャの原則に従っています：
-
-- **`domain/`** - コアビジネスエンティティとルール（Activity、User、Authなど）
-- **`feature/`** - 機能ごとに整理されたユースケース、ハンドラー、リポジトリ
-  - 各機能は`handler.ts`（HTTPエンドポイント）、`repository.ts`（データアクセス）、`usecase.ts`（ビジネスロジック）を持つ
-  - テストは`feature/{name}/test/`に配置
-- **`infra/`** - インフラストラクチャ実装（データベース、キーバリューストア）
-- **`middleware/`** - HTTPミドルウェア（認証、エラーハンドリング）
-- **`query/`** - 複数ドメインをまたぐ複雑な読み取りクエリ
-
-### フロントエンドアーキテクチャ
-- **`routes/`** - Tanstack Routerのファイルベースルーティングを使用したページコンポーネント
-- **`components/`** - 再利用可能なReactコンポーネント（`ui/`にUIコンポーネント、サブディレクトリに機能コンポーネント）
-- **`hooks/`** - データフェッチと状態管理のためのカスタムReactフック
-- **`providers/`** - Reactコンテキストプロバイダー
-
-### 主要技術
-- **バックエンド**: Hono（Webフレームワーク）、Drizzle ORM、PostgreSQL（Neon）、Cloudflare Workers
-- **フロントエンド**: React 19、Tanstack Router/Query、Tailwind CSS、Radix UI
-- **テスト**: インソーステスティング対応のVitest
-- **認証**: JWTでアクセストークン（15分）とリフレッシュトークン（1ヶ月）をlocalStorageに保存
+詳細なアーキテクチャについては以下のドキュメントを参照：
+- **バックエンド**: `/docs/knowledges/backend.md`
+- **フロントエンド**: `/docs/knowledges/frontend.md`
+- **モバイル**: `/docs/knowledges/mobile.md`
 
 ### 重要なパターン
 1. **パスエイリアス**: `@backend/*`、`@frontend/*`、`@dtos/*`インポートを使用
 2. **モノレポ**: npm workspacesでapps/とpackages/構造
-3. **エラーハンドリング**: `backend/error/`のカスタムエラークラス
-4. **データベース**: 型安全なクエリとマイグレーションを持つDrizzle ORM
-5. **APIルート**: `/api/v1/*`配下のRESTfulエンドポイント
-
-### テスト戦略
-- 機能と同じ場所の`test/`ディレクトリにユニットテストを配置
-- Vitestの`describe`、`it`、`expect`構文を使用
-- Vitestモックを使用して外部依存関係をモック（`ts-mockito`を使用）
-- テストファイルは`*.test.ts`または`*.spec.ts`という名前
-- `beforeEach`でモックのリセットを行う
-- テストIDには UUID v4 形式を使用（例：`00000000-0000-4000-8000-000000000000`）
 
 ## コーディング規約
 
@@ -167,14 +155,16 @@ npm run deploy:prod
 - 自動生成ファイル（`*.gen.ts`）は無視
 - `no-explicit-any`、`no-non-null-assertion`等は無効化
 
+### フロントエンドアーキテクチャ方針
+- **コンポーネント**: 純粋なプレゼンテーション層として実装（ビジネスロジックは含まない）
+- **カスタムフック**: すべてのロジックを集約（状態管理、API通信、ビジネスロジック、イベントハンドラー）
+- **テスト**: フックのユニットテストでビジネスロジックを100%カバー
+
+詳細は `/docs/knowledges/frontend.md` を参照
+
 ## セキュリティ
 
-### 認証・認可
-- **JWT認証** - アクセストークン（15分）とリフレッシュトークン（1ヶ月）
-- **トークン保存** - localStorageに保存（XSS対策は別途実装）
-- **認証ヘッダー** - `Authorization: Bearer <token>`形式
-- **認証ミドルウェア** - 全ての保護されたエンドポイントで`authMiddleware`を使用
-- **401エラー時** - 自動的にリフレッシュトークンで更新を試みる
+認証フローの詳細については `/docs/knowledges/auth_flow.md` を参照
 
 ## 環境変数の管理
 
@@ -251,23 +241,12 @@ npm run deploy:prod
 - **pre-commit**: Biomeでのリント + Vitestでのテスト実行
 - コミット前に自動でコード品質をチェック
 
-## エラーハンドリング
-
-### カスタムエラークラス
-- `AppError` - 基底エラークラス（HTTPステータスコード付き）
-- `UnauthorizedError` - 認証エラー（401）
-- `ResourceNotFoundError` - リソース不在（404）
-- `DomainValidateError` - ドメイン検証エラー
-- `SqlExecutionError` - DB実行エラー
-
-### エラー処理の原則
-- ビジネスロジック層では例外をスロー
-- Route層でキャッチしてHTTPレスポンスに変換
-- クライアントには適切なエラーメッセージを返す
 
 ## データベース
 
-### マイグレーション
+データベース設計とスキーマの詳細については `/docs/knowledges/database.md` を参照
+
+### マイグレーションコマンド
 ```bash
 # スキーマ変更後のマイグレーション生成
 npm run db-generate
@@ -276,19 +255,24 @@ npm run db-generate
 npm run db-migrate
 ```
 
-### トランザクション管理
-- Repositoryパターンで`withTx`メソッドを実装
-- Usecase層でトランザクションを制御
-
-### 命名規則
-- テーブル名：スネークケース（例：`activity_logs`）
-- カラム名：スネークケース（例：`user_id`）
-- ドメインモデル：キャメルケース（例：`userId`）
-
 ### リポジトリメソッド名規則
 - **重要**: Repositoryのメソッド名には必ずドメイン名を含める（例：`createApiKey`、`findApiKeyById`）
 - これは`withTx`でトランザクション内で複数のリポジトリを使用する際の名前衝突を防ぐため
 - 例：`create`ではなく`createApiKey`、`findById`ではなく`findApiKeyById`とする
+
+## エラーハンドリング
+
+### エラー処理の原則
+- ビジネスロジック層では例外をスロー
+- Route層でキャッチしてHTTPレスポンスに変換
+- クライアントには適切なエラーメッセージを返す
+
+### カスタムエラークラス
+- `AppError` - 基底エラークラス（HTTPステータスコード付き）
+- `UnauthorizedError` - 認証エラー（401）
+- `ResourceNotFoundError` - リソース不在（404）
+- `DomainValidateError` - ドメイン検証エラー
+- `SqlExecutionError` - DB実行エラー
 
 ## 重要な注意事項
 
