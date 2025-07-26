@@ -24,17 +24,150 @@
 - **React Hook Form**: フォーム管理
 - **Zod**: スキーマバリデーション
 
+## アーキテクチャ方針
+
+### コンポーネントとフックの責務分離
+
+本プロジェクトでは、**コンポーネントは純粋なプレゼンテーション層**として実装し、**すべてのロジックをカスタムフックに集約**する設計を採用しています。
+
+#### 設計原則
+
+1. **コンポーネントの責務**
+   - UIの表示のみを担当
+   - フックから受け取ったデータとハンドラーを使用
+   - ビジネスロジック、状態管理、API通信は行わない
+   - テストは基本的に不要（フックのテストでカバー）
+
+2. **カスタムフックの責務**
+   - すべての状態管理
+   - API通信とデータフェッチ
+   - ビジネスロジックの実装
+   - イベントハンドラーの実装
+   - フォーム管理とバリデーション
+   - ユニットテストの実施
+
+#### 実装例
+
+**コンポーネントの例（DailyPage.tsx）**
+```typescript
+export const ActivityDailyPage: React.FC = () => {
+  // フックからすべてのロジックを取得
+  const {
+    date,
+    setDate,
+    editDialogOpen,
+    editTargetLog,
+    createDialogOpen,
+    setCreateDialogOpen,
+    isLoading,
+    tasks,
+    isTasksLoading,
+    mergedActivityLogs,
+    isOfflineData,
+    handleActivityLogClick,
+    handleActivityLogEditDialogChange,
+  } = useDailyPage();
+
+  // UIの表示のみを担当
+  return (
+    <>
+      <ActivityDateHeader date={date} setDate={setDate} />
+      {/* UIの定義... */}
+    </>
+  );
+};
+```
+
+**カスタムフックの例（useDailyPage.ts）**
+```typescript
+export const useDailyPage = () => {
+  // 状態管理
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTargetLog, setEditTargetLog] = useState<GetActivityLogResponse | null>(null);
+  
+  // API通信
+  const { data: activityLogs, isLoading } = useQuery({
+    queryKey: ["activity-logs-daily", date],
+    queryFn: () => apiClient.users["activity-logs"].$get({ query: { date } }),
+  });
+  
+  // 同期処理のロジック
+  const { mergedActivityLogs, isOfflineData } = useActivityLogSync({
+    date,
+    isOnline,
+    activityLogs,
+  });
+  
+  // イベントハンドラー
+  const handleActivityLogClick = (log: GetActivityLogResponse) => {
+    setEditTargetLog(log);
+    setEditDialogOpen(true);
+  };
+  
+  // コンポーネントに公開するインターフェース
+  return {
+    // State
+    date,
+    setDate,
+    editDialogOpen,
+    // Data
+    mergedActivityLogs,
+    isLoading,
+    // Handlers
+    handleActivityLogClick,
+    // その他必要なもの...
+  };
+};
+```
+
+#### テスト戦略
+
+- **コンポーネント**: 基本的にテストを書かない（シンプルなUIのため）
+- **カスタムフック**: すべてのロジックに対してユニットテストを書く
+- **テストカバレッジ**: フックのテストでビジネスロジックを100%カバー
+
+#### メリット
+
+1. **テスタビリティの向上**
+   - ビジネスロジックがフックに集約されているため、テストが書きやすい
+   - UIとロジックが分離されているため、モックが容易
+
+2. **再利用性**
+   - カスタムフックは複数のコンポーネントで共有可能
+   - ロジックの変更がコンポーネントに影響しない
+
+3. **保守性**
+   - コンポーネントはシンプルで読みやすい
+   - ロジックの変更がフック内に閉じ込められる
+
+4. **パフォーマンス**
+   - コンポーネントの再レンダリングが最小限に抑えられる
+   - ロジックの最適化がフック内で完結
+
+#### フックの命名規則
+
+- **機能別フック**: `use{Feature}Page` (例: `useDailyPage`, `useTasksPage`)
+- **アクションフック**: `use{Action}` (例: `useLogin`, `useCreateUser`)
+- **データフック**: `use{Entity}` (例: `useActivities`, `useTasks`)
+- **同期関連フック**: `useSynced{Entity}` (例: `useSyncedActivityLog`)
+
 ## ディレクトリ構造
 
 ```txt
 apps/frontend/src/
 ├── components/          # UIコンポーネント
 │   ├── activity/       # 活動記録関連
+│   ├── apiKey/       # APIキー管理関連
+│   ├── daily/        # 日次記録関連
 │   ├── goal/          # 目標設定関連
 │   ├── root/          # ルートレベルコンポーネント
-│   ├── task/          # タスク管理関連
+│   ├── sync/          # 同期関連
+│   ├── tasks/         # タスク管理関連
 │   └── ui/            # 共通UIコンポーネント（shadcn/ui）
-├── hooks/             # カスタムフック
+├── hooks/             # カスタムフック（ビジネスロジックを集約）
+│   ├── api/          # API通信関連フック
+│   ├── feature/      # 機能別フック
+│   └── sync/         # 同期関連フック
 ├── providers/         # コンテキストプロバイダー
 ├── routes/            # ルーティング定義（Tanstack Router）
 ├── types/             # 型定義
@@ -90,26 +223,79 @@ apps/frontend/src/
 - 月次目標の設定
 - 活動ごとの目標値管理
 
+### 5. APIキー管理機能 (`components/apiKey/`)
+
+#### ApiKeyManager
+- APIキーの一覧表示
+- 新規APIキーの生成
+- APIキーの削除・管理
+
+#### CreateApiKeyDialog
+- APIキー作成ダイアログ
+- キー名の入力
+- 生成後のキー表示
+
+### 6. 同期機能 (`components/sync/`)
+
+#### OfflineBanner
+- オフライン状態の表示
+- 同期待ちデータの表示
+
+#### SyncStatusIndicator
+- 同期状態の表示
+- 同期エラーの表示
+
+#### SyncProgressBar
+- 同期進捗の表示
+
 ## ルーティング構造
 
 Tanstack Routerによるファイルベースルーティング：
 
 ```txt
 routes/
-├── __root.tsx                    # ルートレイアウト
-├── (authenticated)/              # 認証必須ルート
-│   ├── (index).tsx              # ホーム（リダイレクト）
-│   ├── activity/
-│   │   ├── $id.tsx              # 活動詳細
-│   │   └── new.tsx              # 新規活動作成
-│   ├── goals/
-│   │   └── $year.$month.tsx    # 月次目標設定
-│   ├── settings.tsx             # 設定画面
-│   ├── tasks.tsx                # タスク一覧
-│   └── today.tsx                # 今日の活動記録
-├── login.tsx                     # ログイン画面
-└── new.tsx                       # ユーザー登録画面
+├── __root.tsx                    # ルートレイアウト（RootPageコンポーネント）
+├── index.tsx                     # インデックスページ（設定に応じてリダイレクト）
+├── actiko.tsx                    # 活動記録画面（メイン機能）
+├── daily.tsx                     # 日次記録画面
+├── tasks.tsx                     # タスク一覧画面
+├── new-goal.tsx                  # 目標設定画面
+├── setting.tsx                   # 設定画面
+└── activity/
+    └── stats.tsx                 # 活動統計画面
 ```
+
+### ルーティングの特徴
+
+1. **ルートレイアウト（`__root.tsx`）**
+   - `RootPage`コンポーネントが認証状態を管理
+   - 未ログイン: ログイン/新規登録フォームを表示
+   - ログイン済み: `AuthenticatedLayout`を表示
+
+2. **認証後のレイアウト（`AuthenticatedLayout`）**
+   - メインコンテンツエリア（`<Outlet />`）
+   - 下部ナビゲーションバー
+   - 右上ハンバーガーメニュー（設定・ログアウト）
+   - オフラインバナーと同期状態表示
+
+3. **ナビゲーション構造**
+   ```
+   Actiko | Daily | Stats | Goal | Tasks
+   ```
+   - 各タブはTanstack Routerの`<Link>`で実装
+   - アクティブ状態は`.active`クラスでスタイリング
+
+4. **インデックスページのリダイレクト**
+   ```typescript
+   const { settings } = useAppSettings();
+   const redirectTo = settings.showGoalOnStartup ? "/new-goal" : "/actiko";
+   ```
+   - 設定に基づいて初期画面を決定
+
+5. **フラットなルート構造**
+   - ネストされたルートグループは使用せず
+   - すべてのページがルート直下に配置
+   - 認証制御は`RootPage`内で実施
 
 ## カスタムフック
 
@@ -131,6 +317,19 @@ routes/
 - 各エンティティのCRUD操作
 - Tanstack Queryを使用したキャッシュ管理
 - 楽観的更新
+
+### useApiKeys
+- APIキーの取得・作成・削除
+- APIキー一覧の管理
+
+### useSubscription
+- サブスクリプション情報の取得
+- プランの状態管理
+
+### 同期関連フック
+- **useSyncStatus**: 同期状態の監視
+- **useSyncedMutation**: オフライン対応のミューテーション
+- **useOfflineBanner**: オフライン状態の表示制御
 
 ## 状態管理戦略
 
@@ -179,6 +378,173 @@ routes/
 - 仮想スクロール（大量データ表示時）
 
 ## テスト戦略
+
+### テストフレームワーク
+- **Vitest**: 高速なテストランナー（Viteベース）
+- **React Testing Library**: DOM テスティング
+- **@testing-library/jest-dom**: DOM アサーション拡張
+- **@testing-library/user-event**: ユーザーインタラクションのシミュレーション
+
+### テスト設定（`vitest.config.ts`）
+```typescript
+{
+  globals: true,
+  environment: 'jsdom',
+  setupFiles: ['./test.setup.ts'],
+  testTimeout: 20000,
+  hookTimeout: 20000,
+  coverage: {
+    provider: 'v8',
+    reporter: ['text', 'json', 'html'],
+    exclude: [
+      'node_modules/', 'dist/', '**/*.d.ts',
+      '**/*.config.*', '**/*.gen.ts', '**/mockData.ts',
+      '**/test-utils/**'
+    ]
+  }
+}
+```
+
+### テストユーティリティ（`src/test-utils/`）
+
+#### 1. テストセットアップ
+- **test.setup.ts**: グローバルモックとReact 19対応設定
+  - localStorage/sessionStorageのモック
+  - navigator.onLineのモック
+  - matchMediaのモック
+  - React 19のact警告抑制
+
+#### 2. カスタムレンダラー
+- **renderWithProviders**: プロバイダーラップ用カスタムレンダラー
+- **renderWithAct**: React 19対応のact自動ラップ
+- **waitForWithAct**: 非同期処理の待機ヘルパー
+
+#### 3. モックプロバイダー
+- **MockAuthProvider**: 認証コンテキストのモック
+- **MockTokenProvider**: トークン管理のモック
+- **MockNetworkStatusProvider**: ネットワーク状態のモック
+- **MockSyncManager**: 同期処理のモック
+
+#### 4. モックヘルパー関数
+```typescript
+// APIクライアントモック
+createMockApiClient()
+
+// イベントバスモック
+createMockEventBus()
+
+// ストレージモック（Proxy使用）
+createMockStorage()
+
+// タイムプロバイダーモック
+createMockTimeProvider(initialTime)
+```
+
+#### 5. テストデータファクトリー（`testData.ts`）
+```typescript
+// UUID v4形式のテストID使用
+createMockUser(overrides?)
+createMockActivity(overrides?)
+createMockActivityLog(overrides?)
+createMockGoal(overrides?)
+createMockTask(overrides?)
+createMockActivityLogResponse(overrides?)
+```
+
+### テストパターン
+
+#### 1. カスタムフックのテスト
+```typescript
+// フックのモック設定
+vi.mock('@frontend/hooks/useAuth')
+vi.mock('@tanstack/react-router')
+
+// テスト例
+describe('useLogin', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // モックの設定
+  })
+  
+  it('should handle login success', async () => {
+    const { result } = renderHook(() => useLogin())
+    await act(async () => {
+      await result.current.login({ login_id: 'test', password: 'pass' })
+    })
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/today' })
+  })
+})
+```
+
+#### 2. コンポーネントのテスト
+```typescript
+const renderWithContext = (ui: ReactElement) => {
+  return renderWithProviders(ui, {
+    providers: (
+      <MockTokenProvider>
+        <MockAuthProvider>
+          {/* 他のプロバイダー */}
+        </MockAuthProvider>
+      </MockTokenProvider>
+    )
+  })
+}
+```
+
+#### 3. 非同期処理のテスト
+```typescript
+// waitForWithActを使用
+await waitForWithAct(async () => {
+  expect(screen.getByText('Loading')).toBeInTheDocument()
+})
+
+// renderHookWithActSyncを使用
+const { result, waitForNextUpdate } = renderHookWithActSync(
+  () => useAsyncHook()
+)
+```
+
+### テストの構造
+```
+src/
+├── components/
+│   └── {feature}/
+│       └── __tests__/
+├── hooks/
+│   ├── api/
+│   │   └── {feature}/
+│   │       └── test/
+│   ├── feature/
+│   │   └── {feature}/
+│   │       └── test/
+│   └── sync/
+│       └── test/
+└── test-utils/
+    ├── Mock*.tsx
+    ├── render*.tsx
+    ├── testData.ts
+    └── index.tsx
+```
+
+### テスト実行コマンド
+```bash
+# 単体テスト実行（CIモード）
+npm run test-once
+
+# カバレッジレポート生成
+npm run test-once -- --coverage
+
+# 特定のファイルのみテスト
+npm run test-once -- useLogin.test.tsx
+```
+
+### ベストプラクティス
+
+1. **テストIDの一貫性**: UUID v4形式（`00000000-0000-4000-8000-00000000000x`）
+2. **モックの初期化**: `beforeEach`で`vi.clearAllMocks()`を実行
+3. **非同期処理**: React 19対応の`act`ラッパーを使用
+4. **テストデータ**: ファクトリー関数で一貫性のあるデータ生成
+5. **カバレッジ**: 重要なビジネスロジックとカスタムフックを優先
 
 ### ユニットテスト
 - Vitestによるコンポーネントテスト

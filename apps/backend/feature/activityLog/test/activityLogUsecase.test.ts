@@ -18,26 +18,31 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { type ActivityLogRepository, newActivityLogUsecase } from "..";
 
 import type { ActivityRepository } from "../../activity";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { ActivityQueryService } from "@backend/query";
 
 describe("ActivityLogUsecase", () => {
   let repo: ActivityLogRepository;
   let acRepo: ActivityRepository;
   let qs: ActivityQueryService;
+  let db: QueryExecutor;
   let usecase: ReturnType<typeof newActivityLogUsecase>;
 
   beforeEach(() => {
     repo = mock<ActivityLogRepository>();
     acRepo = mock<ActivityRepository>();
     qs = mock<ActivityQueryService>();
+    db = mock<QueryExecutor>();
     usecase = newActivityLogUsecase(
       instance(repo),
       instance(acRepo),
       instance(qs),
+      instance(db),
     );
     reset(repo);
     reset(acRepo);
     reset(qs);
+    reset(db);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
@@ -600,6 +605,252 @@ describe("ActivityLogUsecase", () => {
 
         verify(qs.activityStatsQuery(userId, params.from, params.to)).once();
       });
+    });
+  });
+
+  describe("createActivityLogBatch", () => {
+    type CreateActivityLogBatchTestCase = {
+      name: string;
+      userId: UserId;
+      activityLogs: Array<{
+        date: string;
+        quantity: number;
+        memo?: string;
+        activityId: string;
+        activityKindId?: string;
+      }>;
+      mockActivities: Array<Activity | undefined>;
+      mockCreatedLogs: ActivityLog[];
+      mockTransaction?: {
+        error?: Error;
+      };
+      expectedResponse?: {
+        summary: {
+          total: number;
+          succeeded: number;
+          failed: number;
+        };
+      };
+      expectError?: boolean;
+    };
+
+    const mockActivityLogBatch: ActivityLog[] = [
+      {
+        ...mockActivityLog,
+        id: createActivityLogId("00000000-0000-4000-8000-000000000010"),
+        date: "2025-01-01",
+        quantity: 5,
+      },
+      {
+        ...mockActivityLog,
+        id: createActivityLogId("00000000-0000-4000-8000-000000000011"),
+        date: "2025-01-02",
+        quantity: 10,
+      },
+    ];
+
+    const testCases: CreateActivityLogBatchTestCase[] = [
+      {
+        name: "success - 複数のアクティビティログを一括作成",
+        userId: userId1,
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 5,
+            memo: "Morning run",
+            activityId: activityId1,
+            activityKindId: activityKindId1,
+          },
+          {
+            date: "2025-01-02",
+            quantity: 10,
+            memo: "Evening run",
+            activityId: activityId1,
+            activityKindId: activityKindId1,
+          },
+        ],
+        mockActivities: [mockActivity, mockActivity],
+        mockCreatedLogs: mockActivityLogBatch,
+        expectedResponse: {
+          summary: {
+            total: 2,
+            succeeded: 2,
+            failed: 0,
+          },
+        },
+      },
+      {
+        name: "failed - アクティビティが見つからない",
+        userId: userId1,
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 5,
+            activityId: "00000000-0000-4000-8000-000000000999",
+          },
+        ],
+        mockActivities: [undefined],
+        mockCreatedLogs: [],
+        expectError: true,
+      },
+      {
+        name: "failed - トランザクションエラー",
+        userId: userId1,
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 5,
+            activityId: activityId1,
+          },
+        ],
+        mockActivities: [mockActivity],
+        mockCreatedLogs: [],
+        mockTransaction: {
+          error: new Error("Database error"),
+        },
+        expectedResponse: {
+          summary: {
+            total: 1,
+            succeeded: 0,
+            failed: 1,
+          },
+        },
+      },
+    ];
+
+    testCases.forEach(
+      ({
+        name,
+        userId,
+        activityLogs,
+        mockActivities,
+        mockCreatedLogs,
+        mockTransaction,
+        expectedResponse,
+        expectError,
+      }) => {
+        it(`${name}`, async () => {
+          // トランザクションのモック設定
+          const txRepo = mock<ActivityLogRepository>();
+          const txAcRepo = mock<ActivityRepository>();
+
+          when(repo.withTx(anything())).thenReturn(instance(txRepo));
+          when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
+
+          // アクティビティの取得をモック
+          activityLogs.forEach((log, index) => {
+            const activityId = createActivityId(log.activityId);
+            when(
+              txAcRepo.getActivityByIdAndUserId(userId, activityId),
+            ).thenResolve(mockActivities[index]);
+          });
+
+          // バッチ作成のモック
+          when(txRepo.createActivityLogBatch(anything())).thenResolve(
+            mockCreatedLogs,
+          );
+
+          if (mockTransaction?.error) {
+            // トランザクションエラーをシミュレート
+            when(db.transaction(anything())).thenReject(mockTransaction.error);
+
+            const result = await usecase.createActivityLogBatch(
+              userId,
+              activityLogs,
+            );
+
+            expect(result.summary.failed).toBe(activityLogs.length);
+            expect(result.summary.succeeded).toBe(0);
+            expect(result.results.every((r) => !r.success)).toBe(true);
+            return;
+          }
+
+          if (expectError) {
+            // トランザクション内でエラーをスロー
+            when(db.transaction(anything())).thenCall(async () => {
+              throw new Error(
+                "Activity not found: 00000000-0000-4000-8000-000000000999",
+              );
+            });
+
+            const result = await usecase.createActivityLogBatch(
+              userId,
+              activityLogs,
+            );
+
+            expect(result.summary.failed).toBe(activityLogs.length);
+            expect(result.summary.succeeded).toBe(0);
+            expect(result.results.every((r) => !r.success)).toBe(true);
+            return;
+          }
+
+          // 正常系: トランザクションを実行
+          when(db.transaction(anything())).thenCall(async (callback) => {
+            return callback({ withTx: () => {} } as any);
+          });
+
+          const result = await usecase.createActivityLogBatch(
+            userId,
+            activityLogs,
+          );
+
+          expect(result.summary).toEqual(expectedResponse?.summary);
+          expect(result.results).toHaveLength(activityLogs.length);
+          result.results.forEach((r, index) => {
+            expect(r.success).toBe(true);
+            expect(r.index).toBe(index);
+            expect(r.activityLogId).toBe(mockCreatedLogs[index].id);
+          });
+
+          verify(db.transaction(anything())).once();
+        });
+      },
+    );
+
+    it("アクティビティ種別が存在しない場合でも正常に処理される", async () => {
+      const activityWithoutKinds: Activity = {
+        ...mockActivity,
+        kinds: undefined as any,
+      };
+
+      const txRepo = mock<ActivityLogRepository>();
+      const txAcRepo = mock<ActivityRepository>();
+
+      when(repo.withTx(anything())).thenReturn(instance(txRepo));
+      when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
+
+      when(txAcRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        activityWithoutKinds,
+      );
+
+      when(txRepo.createActivityLogBatch(anything())).thenResolve([
+        mockActivityLog,
+      ]);
+
+      when(db.transaction(anything())).thenCall(async (callback) => {
+        return callback({ withTx: () => {} } as any);
+      });
+
+      const result = await usecase.createActivityLogBatch(userId1, [
+        {
+          date: "2025-01-01",
+          quantity: 5,
+          activityId: activityId1,
+          activityKindId: activityKindId1,
+        },
+      ]);
+
+      expect(result.summary.succeeded).toBe(1);
+      expect(result.summary.failed).toBe(0);
+    });
+
+    it("空の配列を渡した場合は空の結果を返す", async () => {
+      const result = await usecase.createActivityLogBatch(userId1, []);
+
+      expect(result.summary.total).toBe(0);
+      expect(result.summary.succeeded).toBe(0);
+      expect(result.summary.failed).toBe(0);
+      expect(result.results).toEqual([]);
     });
   });
 });

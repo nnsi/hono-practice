@@ -8,10 +8,12 @@ import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
 
 import type {
+  CreateActivityLogBatchRequest,
   CreateActivityLogRequest,
   UpdateActivityLogRequest,
 } from "@dtos/request";
 import {
+  CreateActivityLogBatchResponseSchema,
   GetActivityLogResponseSchema,
   GetActivityLogsResponseSchema,
 } from "@dtos/response";
@@ -23,6 +25,7 @@ export function newActivityLogHandler(uc: ActivityLogUsecase) {
     getActivityLogs: getActivityLogs(uc),
     getActivityLog: getActivityLog(uc),
     createActivityLog: createActivityLog(uc),
+    createActivityLogBatch: createActivityLogBatch(uc),
     updateActivityLog: updateActivityLog(uc),
     deleteActivityLog: deleteActivityLog(uc),
     getStats: getStats(uc),
@@ -129,5 +132,22 @@ function getStats(uc: ActivityLogUsecase) {
     const stats = await uc.getStats(userId, { from, to });
 
     return stats;
+  };
+}
+
+function createActivityLogBatch(uc: ActivityLogUsecase) {
+  return async (userId: UserId, params: CreateActivityLogBatchRequest) => {
+    const results = await uc.createActivityLogBatch(
+      userId,
+      params.activityLogs,
+    );
+
+    const parsedResults =
+      CreateActivityLogBatchResponseSchema.safeParse(results);
+    if (!parsedResults.success) {
+      throw new AppError("Invalid parse");
+    }
+
+    return parsedResults.data;
   };
 }

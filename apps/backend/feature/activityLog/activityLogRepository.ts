@@ -22,6 +22,9 @@ export type ActivityLogRepository<T = any> = {
     activityLogId: ActivityLogId,
   ) => Promise<ActivityLog | undefined>;
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
+  createActivityLogBatch: (
+    activityLogs: ActivityLog[],
+  ) => Promise<ActivityLog[]>;
   updateActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
   deleteActivityLog: (activityLog: ActivityLog) => Promise<void>;
   getActivityLogChangesAfter: (
@@ -39,6 +42,7 @@ export function newActivityLogRepository(
     getActivityLogsByUserIdAndDate: getActivityLogsByUserIdAndDate(db),
     getActivityLogByIdAndUserId: getActivityLogByIdAndUserId(db),
     createActivityLog: createActivityLog(db),
+    createActivityLogBatch: createActivityLogBatch(db),
     updateActivityLog: updateActivityLog(db),
     deleteActivityLog: deleteActivityLog(db),
     getActivityLogChangesAfter: getActivityLogChangesAfter(db),
@@ -207,5 +211,29 @@ function getActivityLogChangesAfter(db: QueryExecutor) {
       }),
       hasMore,
     };
+  };
+}
+
+function createActivityLogBatch(db: QueryExecutor) {
+  return async (logs: ActivityLog[]): Promise<ActivityLog[]> => {
+    const values = logs.map((activityLog) => ({
+      id: activityLog.id,
+      userId: activityLog.userId,
+      activityId: activityLog.activity.id,
+      activityKindId: activityLog.activityKind?.id,
+      quantity: activityLog.quantity,
+      memo: activityLog.memo,
+      date: activityLog.date,
+    }));
+
+    const rows = await db.insert(activityLogs).values(values).returning();
+
+    return logs.map((log, index) =>
+      createActivityLogEntity({
+        ...log,
+        ...rows[index],
+        type: "persisted",
+      }),
+    );
   };
 }

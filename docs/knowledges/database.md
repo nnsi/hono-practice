@@ -186,6 +186,48 @@
 
 インデックス: user_id, user_id/sequence_number, timestamp, entity_type/entity_id
 
+### 11. api_key（APIキー）
+ユーザーが生成するAPIキーを管理。プログラマティックなアクセス用。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|-----|------|
+| id | UUID | PK | APIキーID |
+| user_id | UUID | FK(users), NOT NULL | ユーザーID |
+| key | TEXT | UNIQUE, NOT NULL | APIキー（ハッシュ化） |
+| name | TEXT | NOT NULL | APIキー名 |
+| last_used_at | TIMESTAMP | | 最終使用日時 |
+| is_active | BOOLEAN | NOT NULL, DEFAULT true | 有効フラグ |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP | | 削除日時 |
+
+インデックス: user_id, key
+
+### 12. user_subscription（ユーザーサブスクリプション）
+ユーザーのサブスクリプション情報を管理。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|-----|------|
+| id | UUID | PK | サブスクリプションID |
+| user_id | UUID | FK(users), UNIQUE, NOT NULL | ユーザーID |
+| plan | TEXT | NOT NULL, DEFAULT 'free' | プラン（free/premium/enterprise） |
+| status | TEXT | NOT NULL, DEFAULT 'trial' | ステータス（trial/active/paused/cancelled/expired） |
+| payment_provider | TEXT | | 決済プロバイダー（stripe, paypal等） |
+| payment_provider_id | TEXT | | プロバイダー側のID |
+| current_period_start | TIMESTAMP | | 現在の期間開始日 |
+| current_period_end | TIMESTAMP | | 現在の期間終了日 |
+| cancel_at_period_end | BOOLEAN | NOT NULL, DEFAULT false | 期間終了時キャンセルフラグ |
+| cancelled_at | TIMESTAMP | | キャンセル日時 |
+| trial_start | TIMESTAMP | | トライアル開始日 |
+| trial_end | TIMESTAMP | | トライアル終了日 |
+| price_amount | NUMERIC | | 価格 |
+| price_currency | TEXT | DEFAULT 'JPY' | 通貨 |
+| metadata | TEXT | | 追加情報（JSON） |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+
+インデックス: user_id, status, plan
+
 ## リレーション
 
 1. **user → activity**: 1対多
@@ -197,6 +239,8 @@
 7. **user → user_provider**: 1対多
 8. **user → activity_goal**: 1対多
 9. **activity → activity_goal**: 1対多
+10. **user → api_key**: 1対多
+11. **user → user_subscription**: 1対1
 
 ## マイグレーション
 
