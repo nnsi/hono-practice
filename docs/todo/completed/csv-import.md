@@ -60,10 +60,10 @@ date,activity,kind,quantity,memo
 - [x] インポート結果サマリーの表示（成功/失敗件数）
 
 #### テスト
-- [ ] CSVパース処理のユニットテスト
-- [ ] バリデーションロジックのユニットテスト（各種エッジケース）
-- [ ] useCSVParser、useActivityLogValidatorフックのテスト
-- [ ] インポートプレビューコンポーネントのテスト
+- [x] CSVパース処理のユニットテスト
+- [x] バリデーションロジックのユニットテスト（各種エッジケース）
+- [x] useCSVParser、useActivityLogValidatorフックのテスト
+- [x] インポートプレビューコンポーネントのテスト
 
 ### バックエンド
 
@@ -74,5 +74,4 @@ date,activity,kind,quantity,memo
 - [x] バッチ処理の結果レスポンス（成功/失敗の詳細）
 
 #### テスト
-- [ ] バッチAPIのユニットテスト
-- [ ] 並列リクエストの負荷テスト
+- [x] バッチAPIのユニットテスト
