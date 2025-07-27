@@ -7,13 +7,13 @@ import React, {
   useCallback,
 } from "react";
 
+import { tokenStore } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useToken } from "../providers/TokenProvider";
 import { apiClient } from "../utils/apiClient";
 import { eventBus } from "../utils/eventBus";
 
-import { tokenStore } from "@packages/frontend-shared";
 import type { User } from "@packages/frontend-shared";
 
 type AuthContextType = {
@@ -63,17 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshTokenFunc = useCallback(async () => {
     try {
       console.log("Refreshing token...");
-      const savedRefreshToken = refreshToken || await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-      
+      const savedRefreshToken =
+        refreshToken || (await AsyncStorage.getItem(REFRESH_TOKEN_KEY));
+
       if (!savedRefreshToken) {
         throw new Error("No refresh token available");
       }
-      
+
       // Use custom fetch with refresh token in Authorization header
       const response = await fetch(`${apiClient.auth.token.$url()}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${savedRefreshToken}`,
+          Authorization: `Bearer ${savedRefreshToken}`,
         },
       });
 
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 新しいトークンを保存
       setAccessToken(data.token);
       await AsyncStorage.setItem(TOKEN_KEY, data.token);
-      
+
       // 新しいリフレッシュトークンも保存
       setRefreshToken(data.refreshToken);
       await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
@@ -112,12 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // 保存されたトークンを確認
         const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
         const savedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-        
+
         if (savedToken && savedRefreshToken) {
           setAccessToken(savedToken);
           setRefreshToken(savedRefreshToken);
           scheduleTokenRefresh(savedToken);
-          
+
           try {
             await getUser();
           } catch (error) {
@@ -194,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // トークンを保存
         setAccessToken(data.token);
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
-        
+
         // リフレッシュトークンも保存
         setRefreshToken(data.refreshToken);
         await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
@@ -252,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // トークンを保存
         setAccessToken(data.token);
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
-        
+
         // リフレッシュトークンも保存（サインアップレスポンスにも含まれる想定）
         if (data.refreshToken) {
           setRefreshToken(data.refreshToken);
@@ -278,14 +279,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
-      const savedRefreshToken = refreshToken || await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-      
+      const savedRefreshToken =
+        refreshToken || (await AsyncStorage.getItem(REFRESH_TOKEN_KEY));
+
       if (savedRefreshToken) {
         // Use custom fetch with refresh token in header
         await fetch(`${apiClient.auth.logout.$url()}`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${tokenStore.getToken()}`,
+            Authorization: `Bearer ${tokenStore.getToken()}`,
             "X-Refresh-Token": savedRefreshToken,
           },
         });

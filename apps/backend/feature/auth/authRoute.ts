@@ -74,7 +74,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       const { NODE_ENV } = c.env;
       // Try to get refresh token from cookie first (for web)
       let refreshTokenValue = getCookie(c, "refresh_token");
-      
+
       // If not in cookie, try to get from header (for mobile)
       if (!refreshTokenValue) {
         const authHeader = c.req.header("Authorization");
@@ -82,7 +82,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           refreshTokenValue = authHeader.substring(7);
         }
       }
-      
+
       if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
@@ -110,7 +110,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       const userId = c.get("userId");
       // Try to get refresh token from cookie first (for web)
       let refreshTokenValue = getCookie(c, "refresh_token");
-      
+
       // If not in cookie, try to get from header (for mobile)
       if (!refreshTokenValue) {
         const authHeader = c.req.header("X-Refresh-Token");
@@ -118,7 +118,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           refreshTokenValue = authHeader;
         }
       }
-      
+
       if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }

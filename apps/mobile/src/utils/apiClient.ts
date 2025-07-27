@@ -1,6 +1,6 @@
+import { createApiClient, tokenStore } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { createApiClient, tokenStore } from "@packages/frontend-shared";
 
 import { eventBus } from "./eventBus";
 import { getApiUrl, logConnectionInfo } from "./getApiUrl";
@@ -72,19 +72,19 @@ const mobileFetch: typeof fetch = async (url, init) => {
           const refreshResponse = await fetch(`${API_URL}/auth/token`, {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${refreshToken}`,
+              Authorization: `Bearer ${refreshToken}`,
             },
             credentials: "omit" as RequestCredentials,
           });
 
           if (refreshResponse.ok) {
             const data = await refreshResponse.json();
-            
+
             // 新しいトークンを保存
             tokenStore.setToken(data.token);
             await AsyncStorage.setItem("accessToken", data.token);
             await AsyncStorage.setItem("refreshToken", data.refreshToken);
-            
+
             // 新しいトークンでリトライ
             const headers = new Headers(init?.headers);
             headers.set("Authorization", `Bearer ${data.token}`);
