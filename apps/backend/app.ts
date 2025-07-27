@@ -28,13 +28,9 @@ app.use("*", async (c, next) => {
     allowedOrigins.push(
       "http://localhost:8081",
       "http://localhost:8082",
+      "http://localhost:8086",
       "http://localhost:19006", // Expo Web
     );
-
-    // テスト環境でのlocalhost全ポートを許可
-    if (headerOrigin.startsWith("http://localhost:")) {
-      allowedOrigins.push(headerOrigin);
-    }
 
     // 実機からのアクセス用（同一ネットワーク内のIPアドレス）
     // 192.168.x.x や 10.x.x.x からのアクセスを許可
@@ -46,11 +42,11 @@ app.use("*", async (c, next) => {
     }
   }
 
-  const origin =
-    allowedOrigins.find((allowed) => headerOrigin === allowed) ||
-    (headerOrigin.startsWith("http://localhost:")
-      ? headerOrigin
-      : c.env.APP_URL);
+  const origin = allowedOrigins.some((allowed) =>
+    headerOrigin.includes(allowed),
+  )
+    ? headerOrigin
+    : c.env.APP_URL;
 
   const middleware = cors({
     origin,
