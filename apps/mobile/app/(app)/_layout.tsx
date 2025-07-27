@@ -2,6 +2,7 @@ import { ActivityIndicator, View } from "react-native";
 
 import { Redirect, Stack } from "expo-router";
 
+import { OfflineBanner } from "../../src/components/sync";
 import { useAuth } from "../../src/hooks/useAuth";
 
 export default function AppLayout() {
@@ -22,8 +23,11 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <>
+      <OfflineBanner />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </>
   );
 }

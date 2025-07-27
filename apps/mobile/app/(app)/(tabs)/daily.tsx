@@ -125,7 +125,7 @@ export default function DailyPage() {
                           </Text>
                           {log.quantity !== null && (
                             <Text className="text-gray-600">
-                              {log.quantity} {log.activity.quantityUnit}
+                              {`${log.quantity} ${log.activity.quantityUnit}`}
                             </Text>
                           )}
                           {log.activityKind && (

@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 
+import { tokenStore } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useToken } from "../providers/TokenProvider";
@@ -29,12 +30,14 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { setAccessToken, clearTokens, scheduleTokenRefresh } = useToken();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
   // ユーザー情報を取得
   const getUser = useCallback(async () => {
@@ -57,10 +60,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // トークンリフレッシュ
-  const refreshToken = useCallback(async () => {
+  const refreshTokenFunc = useCallback(async () => {
     try {
       console.log("Refreshing token...");
-      const response = await apiClient.auth.refresh.$post();
+      const savedRefreshToken =
+        refreshToken || (await AsyncStorage.getItem(REFRESH_TOKEN_KEY));
+
+      if (!savedRefreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      // Use custom fetch with refresh token in Authorization header
+      const response = await fetch(`${apiClient.auth.token.$url()}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${savedRefreshToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Token refresh failed");
@@ -73,19 +89,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(data.token);
       await AsyncStorage.setItem(TOKEN_KEY, data.token);
 
+      // 新しいリフレッシュトークンも保存
+      setRefreshToken(data.refreshToken);
+      await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+
       // リフレッシュをスケジュール
       scheduleTokenRefresh(data.token);
-
-      // token-refreshedイベントを発火
-      eventBus.emit("token-refreshed", data.token);
     } catch (error) {
       console.error("Token refresh error:", error);
       clearTokens();
       await AsyncStorage.removeItem(TOKEN_KEY);
+      await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
       setUser(null);
+      setRefreshToken(null);
       throw error;
     }
-  }, [setAccessToken, clearTokens, scheduleTokenRefresh]);
+  }, [refreshToken, setAccessToken, clearTokens, scheduleTokenRefresh]);
 
   // 初期化：保存されたトークンをチェック
   useEffect(() => {
@@ -93,12 +112,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         // 保存されたトークンを確認
         const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
-        if (savedToken) {
+        const savedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+
+        if (savedToken && savedRefreshToken) {
           setAccessToken(savedToken);
+          setRefreshToken(savedRefreshToken);
           scheduleTokenRefresh(savedToken);
-          await getUser();
+
+          try {
+            await getUser();
+          } catch (error) {
+            // トークンが無効な場合はリフレッシュを試みる
+            console.log("Initial user fetch failed, trying to refresh token");
+            await refreshTokenFunc();
+            await getUser();
+          }
         }
-        // モバイルアプリではCookieが使えないため、初回リフレッシュは行わない
       } catch (error) {
         console.log("Auth initialization failed, user needs to login");
       } finally {
@@ -107,7 +136,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initAuth();
-  }, [setAccessToken, scheduleTokenRefresh, getUser, refreshToken]);
+  }, [setAccessToken, scheduleTokenRefresh, getUser, refreshTokenFunc]);
+
+  // トークンリフレッシュイベントをリッスン
+  useEffect(() => {
+    const handleTokenRefreshNeeded = async () => {
+      try {
+        await refreshTokenFunc();
+      } catch (error) {
+        console.error("Token refresh failed:", error);
+      }
+    };
+
+    eventBus.on("token-refresh-needed", handleTokenRefreshNeeded);
+
+    return () => {
+      eventBus.off("token-refresh-needed", handleTokenRefreshNeeded);
+    };
+  }, [refreshTokenFunc]);
 
   // ログイン
   const login = useCallback(
@@ -149,6 +195,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // トークンを保存
         setAccessToken(data.token);
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
+
+        // リフレッシュトークンも保存
+        setRefreshToken(data.refreshToken);
+        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
 
         // リフレッシュをスケジュール
         scheduleTokenRefresh(data.token);
@@ -204,10 +254,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(data.token);
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
 
+        // リフレッシュトークンも保存（サインアップレスポンスにも含まれる想定）
+        if (data.refreshToken) {
+          setRefreshToken(data.refreshToken);
+          await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        }
+
         // リフレッシュをスケジュール
         scheduleTokenRefresh(data.token);
 
-        // ユーザー情報を取得
+        // ユーザー情娱を取得
         await getUser();
       } catch (error) {
         console.error("Signup error:", error);
@@ -223,7 +279,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
-      await apiClient.auth.logout.$post();
+      const savedRefreshToken =
+        refreshToken || (await AsyncStorage.getItem(REFRESH_TOKEN_KEY));
+
+      if (savedRefreshToken) {
+        // Use custom fetch with refresh token in header
+        await fetch(`${apiClient.auth.logout.$url()}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${tokenStore.getToken()}`,
+            "X-Refresh-Token": savedRefreshToken,
+          },
+        });
+      }
     } catch (error) {
       // モバイルアプリではCookieが使えないため、401エラーは無視
       console.log("Logout API call failed (expected for mobile):", error);
@@ -231,10 +299,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ローカルの認証状態をクリア
       clearTokens();
       await AsyncStorage.removeItem(TOKEN_KEY);
+      await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
       setUser(null);
+      setRefreshToken(null);
       setIsLoading(false);
     }
-  }, [clearTokens]);
+  }, [refreshToken, clearTokens]);
 
   return (
     <AuthContext.Provider
@@ -246,7 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         signup,
         getUser,
-        refreshToken,
+        refreshToken: refreshTokenFunc,
       }}
     >
       {children}

@@ -7,6 +7,7 @@
     "build-client": "npm run build -w actiko-frontend",
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
+    "test-e2e": "vitest run --config vitest.e2e.config.ts",
     "ci-check": "vitest run --reporter=dot && biome lint && eslint",
     "tsc": "tsc --noEmit",
     "lint": "biome lint && eslint",
@@ -19,9 +20,14 @@
     "db-clean": "tsx scripts/clean-db.ts",
     "gen-be": "node scripts/gen-be.js"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "type": "module",
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.5",
+    "@hono/node-server": "^1.17.1",
     "@tanstack/query-sync-storage-persister": "^5.82.0",
     "@tanstack/react-query-persist-client": "^5.82.0",
     "dayjs": "^1.11.13",

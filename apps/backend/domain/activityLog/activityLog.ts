@@ -54,13 +54,6 @@ export function createActivityLogEntity(params: ActivityLogInput): ActivityLog {
   const today = new Date();
   today.setHours(23, 59, 59, 999); // 今日の終わりまでは許可
 
-  // 未来の日付は許可しない
-  if (date > today) {
-    throw new DomainValidateError(
-      "createActivityLogEntity: date cannot be in the future",
-    );
-  }
-
   // 極端に古い日付は許可しない（例：10年以上前）
   const tenYearsAgo = new Date();
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);

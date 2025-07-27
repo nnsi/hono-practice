@@ -30,6 +30,7 @@ export default defineConfig({
       "**/db-data/**",
       "**/dist-frontend/**",
       "**/mobile/**",
+      "**/e2e/**",
     ],
     environment: "node",
     environmentMatchGlobs: [

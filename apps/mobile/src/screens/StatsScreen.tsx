@@ -13,11 +13,13 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { scaleBand, scaleLinear } from "d3-scale";
 import dayjs from "dayjs";
-import { StackedBarChart } from "react-native-chart-kit";
+import Svg, { Line, Text as SvgText, G, Rect } from "react-native-svg";
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
+import { useGoals } from "../hooks/useGoals";
 import { apiClient } from "../utils/apiClient";
 
 const { width } = Dimensions.get("window");
@@ -50,6 +52,7 @@ const getColorForKind = (kindName: string): string => {
 
 export const StatsScreen: React.FC = () => {
   const [date, setDate] = useState(new Date());
+  const { data: goalsData } = useGoals({ isActive: true });
 
   const handlePrevMonth = () => {
     const prevMonth = dayjs(date).subtract(1, "month");
@@ -81,88 +84,358 @@ export const StatsScreen: React.FC = () => {
   });
 
   const renderChart = (stat: any) => {
+    // アクティビティに対する目標値を取得
+    const goal = goalsData?.goals.find((g) => g.activityId === stat.id);
     const startOfMonth = dayjs(`${month}-01`);
     const daysInMonth = startOfMonth.daysInMonth();
     const allDates = Array.from({ length: daysInMonth }, (_, i) =>
       startOfMonth.add(i, "day").format("YYYY-MM-DD"),
     );
 
-    // 積み上げ棒グラフ用のデータを作成（全ての日付を表示）
-    const stackedData = allDates.map((date) => {
-      return stat.kinds.map((kind: any) => {
-        const logs = kind.logs.filter(
-          (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
-        );
-        return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+    if (stat.showCombinedStats) {
+      // 各種別ごとに日付ごとのデータを集計
+      const kindDataMap = stat.kinds.map((kind: any) => {
+        const dailyData = allDates.map((date) => {
+          const logs = kind.logs.filter(
+            (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
+          );
+          return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+        });
+        return { kind, dailyData };
       });
-    });
 
-    // ラベルを作成（1日から月末まで）
-    const labels = allDates.map((date) => dayjs(date).format("D"));
+      // 積み上げ用のデータを作成
+      const stackedData = allDates.map((_, index) => {
+        const values: number[] = [];
+        kindDataMap.forEach(({ dailyData }) => {
+          values.push(dailyData[index]);
+        });
+        return values;
+      });
 
-    // 全て0の場合は空のグラフを表示
-    const hasData = stackedData.some((dayData) =>
-      dayData.some((value) => value > 0),
-    );
+      const hasData = stackedData.some((dayData) =>
+        dayData.some((value) => value > 0),
+      );
 
-    if (!hasData) {
+      if (!hasData) {
+        return (
+          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+            <Text style={{ color: "#999" }}>データがありません</Text>
+          </View>
+        );
+      }
+
+      // ラベルを5日ごとに表示
+      const labels = allDates.map((date, index) => {
+        const day = dayjs(date).date();
+        return day % 5 === 1 || day === daysInMonth ? `${day}日` : "";
+      });
+
+      // グラフの最大値を計算
+      const maxValue =
+        Math.max(
+          ...stackedData.map((dayData) =>
+            dayData.reduce((sum, value) => sum + value, 0),
+          ),
+          goal?.dailyTargetQuantity || 0,
+        ) * 1.2;
+
+      // D3スケールの設定
+      const chartWidth = width - 80;
+      const chartHeight = 220;
+      const marginTop = 20;
+      const marginBottom = 40;
+      const marginLeft = 50;
+      const marginRight = 30;
+
+      const xScale = scaleBand()
+        .domain(allDates.map((_, i) => i.toString()))
+        .range([marginLeft, chartWidth - marginRight])
+        .padding(0.3);
+
+      const yScale = scaleLinear()
+        .domain([0, maxValue])
+        .range([chartHeight - marginBottom, marginTop]);
+
+      // Y軸のティック
+      const yTicks = yScale.ticks(5);
+
       return (
-        <View style={{ alignItems: "center", paddingVertical: 40 }}>
-          <Text style={{ color: "#999" }}>データがありません</Text>
-        </View>
+        <>
+          <View style={{ height: 280 }}>
+            <Svg width={chartWidth} height={chartHeight}>
+              {/* グリッド線 */}
+              {yTicks.map((tick) => (
+                <Line
+                  key={tick}
+                  x1={marginLeft}
+                  y1={yScale(tick)}
+                  x2={chartWidth - marginRight}
+                  y2={yScale(tick)}
+                  stroke="#e0e0e0"
+                  strokeDasharray="2 3"
+                />
+              ))}
+
+              {/* Y軸ラベル */}
+              {yTicks.map((tick) => (
+                <SvgText
+                  key={`ylabel-${tick}`}
+                  x={marginLeft - 10}
+                  y={yScale(tick) + 4}
+                  fontSize="10"
+                  fill="#666666"
+                  textAnchor="end"
+                >
+                  {tick}
+                </SvgText>
+              ))}
+
+              {/* X軸ラベル */}
+              {allDates.map((date, index) => {
+                const day = dayjs(date).date();
+                if (day % 5 === 1 || day === daysInMonth) {
+                  return (
+                    <SvgText
+                      key={`xlabel-${date}`}
+                      x={xScale(index.toString())! + xScale.bandwidth() / 2}
+                      y={chartHeight - marginBottom + 20}
+                      fontSize="10"
+                      fill="#666666"
+                      textAnchor="middle"
+                    >
+                      {day}日
+                    </SvgText>
+                  );
+                }
+                return null;
+              })}
+
+              {/* 積み上げ棒グラフ */}
+              {allDates.map((_, dayIndex) => {
+                let cumulativeHeight = 0;
+                return (
+                  <G key={`day-${allDates[dayIndex]}`}>
+                    {kindDataMap.map(({ kind, dailyData }, kindIndex) => {
+                      const value = dailyData[dayIndex];
+                      if (value === 0) return null;
+
+                      // この種別のバーの高さ
+                      const barHeight = yScale(0) - yScale(value);
+                      // 積み上げのy座標（前の種別の上に乗せる）
+                      const y = yScale(cumulativeHeight + value);
+                      // 次の種別のために累積値を更新
+                      cumulativeHeight += value;
+
+                      return (
+                        <Rect
+                          key={`${kind.name}-${dayIndex}`}
+                          x={xScale(dayIndex.toString())}
+                          y={y}
+                          width={xScale.bandwidth()}
+                          height={barHeight}
+                          fill={getColorForKind(kind.name)}
+                        />
+                      );
+                    })}
+                  </G>
+                );
+              })}
+
+              {/* 目標ライン */}
+              {goal && (
+                <>
+                  <Line
+                    x1={marginLeft}
+                    y1={yScale(goal.dailyTargetQuantity)}
+                    x2={chartWidth - marginRight}
+                    y2={yScale(goal.dailyTargetQuantity)}
+                    stroke="#ff0000"
+                    strokeWidth="1"
+                    strokeDasharray="5,5"
+                  />
+                  <SvgText
+                    x={marginLeft + 5}
+                    y={yScale(goal.dailyTargetQuantity) - 5}
+                    fill="#ff0000"
+                    fontSize="10"
+                  >
+                    目標: {goal.dailyTargetQuantity}
+                  </SvgText>
+                </>
+              )}
+            </Svg>
+          </View>
+          {/* 凡例をグラフの下に表示 */}
+          {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
+            <View style={styles.legendContainer}>
+              {stat.kinds.map((kind: any) => (
+                <View key={kind.id || kind.name} style={styles.legendItem}>
+                  <View
+                    style={[
+                      styles.legendColor,
+                      { backgroundColor: getColorForKind(kind.name) },
+                    ]}
+                  />
+                  <Text style={styles.legendText}>{kind.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
       );
     }
-
-    const chartData = {
-      labels: labels,
-      legend: stat.kinds.map((kind: any) => kind.name),
-      data: stackedData,
-      barColors: stat.kinds.map((kind: any) => getColorForKind(kind.name)),
-    };
-
+    // 個別棒グラフ
     return (
-      <>
-        <StackedBarChart
-          data={chartData}
-          width={width - 32}
-          height={220}
-          chartConfig={{
-            backgroundColor: "#ffffff",
-            backgroundGradientFrom: "#ffffff",
-            backgroundGradientTo: "#ffffff",
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            barPercentage: 0.5,
-            useShadowColorFromDataset: false,
-            style: {
-              borderRadius: 16,
-            },
-          }}
-          style={{
-            marginVertical: 8,
-            borderRadius: 16,
-          }}
-          hideLegend={true}
-        />
+      <View>
+        {stat.kinds.map((kind: any) => {
+          const dailyData = allDates.map((date) => {
+            const logs = kind.logs.filter(
+              (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
+            );
+            return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+          });
 
-        {/* 凡例をグラフの下に表示 */}
-        {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
-          <View style={styles.legendContainer}>
-            {stat.kinds.map((kind: any) => (
-              <View key={kind.id || kind.name} style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.legendColor,
-                    { backgroundColor: getColorForKind(kind.name) },
-                  ]}
-                />
-                <Text style={styles.legendText}>{kind.name}</Text>
+          const hasData = dailyData.some((value) => value > 0);
+
+          if (!hasData) {
+            return (
+              <View key={kind.id || kind.name} style={styles.kindChartCard}>
+                <Text style={styles.kindChartTitle}>
+                  {kind.name} (合計: {kind.total} {stat.quantityUnit})
+                </Text>
+                <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                  <Text style={{ color: "#999" }}>データがありません</Text>
+                </View>
               </View>
-            ))}
-          </View>
-        )}
-      </>
+            );
+          }
+
+          // グラフの最大値を計算
+          const maxValue =
+            Math.max(...dailyData, goal?.dailyTargetQuantity || 0) * 1.2;
+
+          // D3スケールの設定
+          const chartWidth = width - 80;
+          const chartHeight = 220;
+          const marginTop = 20;
+          const marginBottom = 40;
+          const marginLeft = 50;
+          const marginRight = 30;
+
+          const xScale = scaleBand()
+            .domain(allDates.map((_, i) => i.toString()))
+            .range([marginLeft, chartWidth - marginRight])
+            .padding(0.3);
+
+          const yScale = scaleLinear()
+            .domain([0, maxValue])
+            .range([chartHeight - marginBottom, marginTop]);
+
+          // Y軸のティック
+          const yTicks = yScale.ticks(5);
+
+          return (
+            <View key={kind.id || kind.name} style={styles.kindChartCard}>
+              <Text style={styles.kindChartTitle}>
+                {kind.name} (合計: {kind.total} {stat.quantityUnit})
+              </Text>
+              <View style={{ height: 220, position: "relative" }}>
+                <Svg width={chartWidth} height={chartHeight}>
+                  {/* グリッド線 */}
+                  {yTicks.map((tick) => (
+                    <Line
+                      key={tick}
+                      x1={marginLeft}
+                      y1={yScale(tick)}
+                      x2={chartWidth - marginRight}
+                      y2={yScale(tick)}
+                      stroke="#e0e0e0"
+                      strokeDasharray="2 3"
+                    />
+                  ))}
+
+                  {/* Y軸ラベル */}
+                  {yTicks.map((tick) => (
+                    <SvgText
+                      key={`ylabel-${tick}`}
+                      x={marginLeft - 10}
+                      y={yScale(tick) + 4}
+                      fontSize="10"
+                      fill="#666666"
+                      textAnchor="end"
+                    >
+                      {tick}
+                    </SvgText>
+                  ))}
+
+                  {/* X軸ラベル */}
+                  {allDates.map((date, index) => {
+                    const day = dayjs(date).date();
+                    if (day % 5 === 1 || day === daysInMonth) {
+                      return (
+                        <SvgText
+                          key={`xlabel-${date}`}
+                          x={xScale(index.toString())! + xScale.bandwidth() / 2}
+                          y={chartHeight - marginBottom + 20}
+                          fontSize="10"
+                          fill="#666666"
+                          textAnchor="middle"
+                        >
+                          {day}日
+                        </SvgText>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* 棒グラフ */}
+                  {dailyData.map((value, index) => {
+                    if (value === 0) return null;
+
+                    const barHeight = yScale(0) - yScale(value);
+                    const y = yScale(value);
+
+                    return (
+                      <Rect
+                        key={`bar-${kind.name}-${allDates[index]}`}
+                        x={xScale(index.toString())}
+                        y={y}
+                        width={xScale.bandwidth()}
+                        height={barHeight}
+                        fill={getColorForKind(kind.name)}
+                      />
+                    );
+                  })}
+
+                  {/* 目標ライン */}
+                  {goal && (
+                    <>
+                      <Line
+                        x1={marginLeft}
+                        y1={yScale(goal.dailyTargetQuantity)}
+                        x2={chartWidth - marginRight}
+                        y2={yScale(goal.dailyTargetQuantity)}
+                        stroke="#ff0000"
+                        strokeWidth="1"
+                        strokeDasharray="5,5"
+                      />
+                      <SvgText
+                        x={marginLeft + 5}
+                        y={yScale(goal.dailyTargetQuantity) - 5}
+                        fill="#ff0000"
+                        fontSize="10"
+                      >
+                        目標: {goal.dailyTargetQuantity}
+                      </SvgText>
+                    </>
+                  )}
+                </Svg>
+              </View>
+            </View>
+          );
+        })}
+      </View>
     );
   };
 
@@ -343,5 +616,24 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
     color: "#666",
+  },
+  kindChartTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  kindChartCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
