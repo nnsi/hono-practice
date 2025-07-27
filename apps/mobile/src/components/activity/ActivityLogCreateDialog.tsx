@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  Alert,
   Modal,
   ScrollView,
   Text,
@@ -9,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ import {
 import type { GetActivityResponse } from "@dtos/response";
 
 import { useTimer } from "../../hooks/useTimer";
+import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 
 import { TimerControls } from "./TimerControls";
@@ -74,9 +75,6 @@ export function ActivityLogCreateDialog({
           "activity-logs-daily",
           dayjs(date).format("YYYY-MM-DD"),
         ],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs", dayjs(date).format("YYYY-MM-DD")],
       });
     },
     onError: () => {

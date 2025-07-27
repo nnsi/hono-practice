@@ -1,7 +1,6 @@
 import { createApiClient, tokenStore } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 import { eventBus } from "./eventBus";
 import { getApiUrl, logConnectionInfo } from "./getApiUrl";
 

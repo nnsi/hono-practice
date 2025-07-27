@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import {
-  Alert,
   Modal,
   ScrollView,
   Switch,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,7 @@ import {
 } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
+import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 
 export const ActivityEditDialog = ({

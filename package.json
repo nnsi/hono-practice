@@ -20,7 +20,10 @@
     "db-clean": "tsx scripts/clean-db.ts",
     "gen-be": "node scripts/gen-be.js"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "type": "module",
   "dependencies": {
     "@electric-sql/pglite": "^0.3.5",

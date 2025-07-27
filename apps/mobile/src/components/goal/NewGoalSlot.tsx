@@ -1,14 +1,8 @@
 import type React from "react";
 import { useState } from "react";
 
-import {
-  Alert,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+
 
 import { Ionicons } from "@expo/vector-icons";
 import { Controller, useForm } from "react-hook-form";
@@ -17,6 +11,7 @@ import DatePicker from "react-native-date-picker";
 import type { GetActivityResponse } from "@dtos/response";
 
 import { useCreateGoal } from "../../hooks/useGoals";
+import { Alert } from "../../utils/AlertWrapper";
 
 type FormData = {
   activityId: string;

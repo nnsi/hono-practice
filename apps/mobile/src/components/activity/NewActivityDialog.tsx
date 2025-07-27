@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  Alert,
   Modal,
   ScrollView,
   Switch,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,7 @@ import {
   CreateActivityRequestSchema,
 } from "@dtos/request/CreateActivityRequest";
 
+import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 
 export function NewActivityDialog({

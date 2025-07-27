@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,11 +12,13 @@ import {
   View,
 } from "react-native";
 
+
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
 import { useTaskEdit } from "../../hooks/useTaskEdit";
+import { Alert } from "../../utils/AlertWrapper";
 
 interface TaskEditDialogProps {
   visible: boolean;

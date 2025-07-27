@@ -1,7 +1,8 @@
 import type React from "react";
 import { useState } from "react";
 
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 
 import { Ionicons } from "@expo/vector-icons";
 import { Controller, useForm } from "react-hook-form";
@@ -9,6 +10,7 @@ import { Controller, useForm } from "react-hook-form";
 import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 
 import { useDeleteGoal, useUpdateGoal } from "../../hooks/useGoals";
+import { Alert } from "../../utils/AlertWrapper";
 
 import { GoalDetailModal } from "./GoalDetailModal";
 

@@ -1,12 +1,14 @@
 import React, { useCallback, useState } from "react";
 
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { GetTaskResponse } from "@dtos/index";
 
+import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 
 type TaskListProps = {

@@ -1,11 +1,13 @@
 import { useState } from "react";
 
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import { useAuth } from "../../src/hooks/useAuth";
+import { Alert } from "../../src/utils/AlertWrapper";
 
 export default function Login() {
   const router = useRouter();
