@@ -58,7 +58,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     refreshTimeoutRef.current = setTimeout(() => {
       console.log("Token refresh timer triggered");
       // イベントを発火してAuthContextでリフレッシュ処理を行う
-      eventBus.emit("token-refreshed", token);
+      eventBus.emit("token-refresh-needed");
     }, refreshTime);
   }, []);
 
@@ -75,7 +75,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
           if (refreshTime && refreshTime <= 0) {
             // トークンの有効期限が切れている場合、即座にリフレッシュ
             console.log("Token expired, triggering immediate refresh");
-            eventBus.emit("token-refreshed", accessToken);
+            eventBus.emit("token-refresh-needed");
           } else if (refreshTime) {
             // まだ有効な場合は、リフレッシュを再スケジュール
             console.log("Token still valid, rescheduling refresh");

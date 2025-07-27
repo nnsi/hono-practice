@@ -8,7 +8,6 @@ import type { PGlite } from "@electric-sql/pglite";
 import type * as schema from "@infra/drizzle/schema";
 import type { drizzle } from "drizzle-orm/pglite";
 
-
 let server: any = null; // Use any type to avoid server type issues
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let pglite: PGlite | null = null;

@@ -83,7 +83,7 @@ export const ActivityEditDialog = ({
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: UpdateActivityRequest) => {
       if (!activity) return;
-      return apiClient.users.activities[":id"].$patch({
+      return apiClient.users.activities[":id"].$put({
         param: { id: activity.id },
         json: data,
       });

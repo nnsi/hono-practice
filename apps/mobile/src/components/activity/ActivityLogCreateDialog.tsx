@@ -21,7 +21,11 @@ import {
 } from "@dtos/request/CreateActivityLogRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
+import { useTimer } from "../../hooks/useTimer";
 import { apiClient } from "../../utils/apiClient";
+
+import { TimerControls } from "./TimerControls";
+import { TimerDisplay } from "./TimerDisplay";
 
 export function ActivityLogCreateDialog({
   open,
@@ -34,6 +38,9 @@ export function ActivityLogCreateDialog({
   activity: GetActivityResponse;
   date: Date;
 }) {
+  const [activeTab, setActiveTab] = useState<"manual" | "timer">("manual");
+  const timerEnabled = activity.unit === "seconds";
+
   const form = useForm<CreateActivityLogRequest>({
     resolver: zodResolver(CreateActivityLogRequestSchema),
     defaultValues: {
@@ -42,6 +49,9 @@ export function ActivityLogCreateDialog({
       activityKindId: undefined,
     },
   });
+
+  const { isRunning, start, stop, reset, getFormattedTime, getElapsedSeconds } =
+    useTimer(activity.id);
 
   const queryClient = useQueryClient();
 
@@ -78,6 +88,16 @@ export function ActivityLogCreateDialog({
     mutate(data);
   };
 
+  const handleTimerSave = () => {
+    const seconds = getElapsedSeconds();
+    mutate({
+      date: dayjs(date).format("YYYY-MM-DD"),
+      quantity: seconds,
+      activityKindId: undefined,
+    });
+    reset();
+  };
+
   return (
     <Modal
       visible={open}
@@ -109,83 +129,150 @@ export function ActivityLogCreateDialog({
         </View>
 
         <ScrollView className="flex-1 p-4">
+          {timerEnabled && (
+            <View className="flex-row justify-center mb-4">
+              <TouchableOpacity
+                onPress={() => setActiveTab("manual")}
+                className={`px-4 py-2 mx-2 rounded-lg ${
+                  activeTab === "manual" ? "bg-blue-600" : "bg-gray-200"
+                }`}
+              >
+                <Text
+                  className={`font-medium ${
+                    activeTab === "manual" ? "text-white" : "text-gray-700"
+                  }`}
+                >
+                  手動入力
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setActiveTab("timer")}
+                className={`px-4 py-2 mx-2 rounded-lg ${
+                  activeTab === "timer" ? "bg-blue-600" : "bg-gray-200"
+                }`}
+              >
+                <Text
+                  className={`font-medium ${
+                    activeTab === "timer" ? "text-white" : "text-gray-700"
+                  }`}
+                >
+                  タイマー
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View className="items-center py-8">
             <Text className="text-6xl mb-4">{activity.emoji}</Text>
             <Text className="text-2xl font-bold mb-8">{activity.name}</Text>
 
-            <View className="w-full max-w-xs">
-              <Controller
-                control={form.control}
-                name="quantity"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View className="flex-row items-center justify-center">
-                    <TextInput
-                      className="bg-gray-100 p-4 rounded-lg text-3xl text-center w-32"
-                      onBlur={onBlur}
-                      onChangeText={(text) => {
-                        const num = Number.parseFloat(text) || 0;
-                        onChange(num);
-                      }}
-                      value={value?.toString() || "0"}
-                      placeholder="0"
-                      keyboardType="numeric"
-                    />
-                    <Text className="text-2xl ml-3">
-                      {activity.quantityUnit}
+            {activeTab === "manual" ? (
+              <View className="w-full max-w-xs">
+                <Controller
+                  control={form.control}
+                  name="quantity"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View className="flex-row items-center justify-center">
+                      <TextInput
+                        className="bg-gray-100 p-4 rounded-lg text-3xl text-center w-32"
+                        onBlur={onBlur}
+                        onChangeText={(text) => {
+                          const num = Number.parseFloat(text) || 0;
+                          onChange(num);
+                        }}
+                        value={value?.toString() || "0"}
+                        placeholder="0"
+                        keyboardType="numeric"
+                      />
+                      <Text className="text-2xl ml-3">
+                        {activity.quantityUnit}
+                      </Text>
+                    </View>
+                  )}
+                />
+
+                {activity.kinds && activity.kinds.length > 0 && (
+                  <View className="mt-8">
+                    <Text className="text-base font-medium mb-3 text-center">
+                      種類を選択
                     </Text>
+                    <Controller
+                      control={form.control}
+                      name="activityKindId"
+                      render={({ field: { onChange, value } }) => (
+                        <View className="space-y-2">
+                          {activity.kinds.map((kind) => (
+                            <TouchableOpacity
+                              key={kind.id}
+                              className={`p-4 rounded-lg border ${
+                                value === kind.id
+                                  ? "bg-blue-100 border-blue-500"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                              onPress={() => onChange(kind.id)}
+                            >
+                              <Text
+                                className={`text-center ${
+                                  value === kind.id
+                                    ? "text-blue-700 font-medium"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                {kind.name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    />
                   </View>
                 )}
-              />
 
-              {activity.kinds && activity.kinds.length > 0 && (
-                <View className="mt-8">
-                  <Text className="text-base font-medium mb-3 text-center">
-                    種類を選択
+                <TouchableOpacity
+                  className={`mt-12 py-4 px-8 rounded-full ${
+                    isPending ? "bg-gray-300" : "bg-blue-600"
+                  }`}
+                  onPress={form.handleSubmit(onSubmit)}
+                  disabled={isPending}
+                >
+                  <Text className="text-white text-lg font-medium text-center">
+                    記録する！
                   </Text>
-                  <Controller
-                    control={form.control}
-                    name="activityKindId"
-                    render={({ field: { onChange, value } }) => (
-                      <View className="space-y-2">
-                        {activity.kinds.map((kind) => (
-                          <TouchableOpacity
-                            key={kind.id}
-                            className={`p-4 rounded-lg border ${
-                              value === kind.id
-                                ? "bg-blue-100 border-blue-500"
-                                : "bg-gray-50 border-gray-200"
-                            }`}
-                            onPress={() => onChange(kind.id)}
-                          >
-                            <Text
-                              className={`text-center ${
-                                value === kind.id
-                                  ? "text-blue-700 font-medium"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              {kind.name}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View className="w-full max-w-xs">
+                <View className="mb-8">
+                  <TimerDisplay
+                    time={getFormattedTime()}
+                    isRunning={isRunning}
                   />
                 </View>
-              )}
 
-              <TouchableOpacity
-                className={`mt-12 py-4 px-8 rounded-full ${
-                  isPending ? "bg-gray-300" : "bg-blue-600"
-                }`}
-                onPress={form.handleSubmit(onSubmit)}
-                disabled={isPending}
-              >
-                <Text className="text-white text-lg font-medium text-center">
-                  記録する！
-                </Text>
-              </TouchableOpacity>
-            </View>
+                <View className="mb-8">
+                  <TimerControls
+                    isRunning={isRunning}
+                    onStart={start}
+                    onStop={stop}
+                    onReset={reset}
+                  />
+                </View>
+
+                {!isRunning && getElapsedSeconds() > 0 && (
+                  <TouchableOpacity
+                    className={`mt-8 py-4 px-8 rounded-full ${
+                      isPending ? "bg-gray-300" : "bg-blue-600"
+                    }`}
+                    onPress={handleTimerSave}
+                    disabled={isPending}
+                  >
+                    <Text className="text-white text-lg font-medium text-center">
+                      {getElapsedSeconds()}秒を記録する
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
         </ScrollView>
       </View>

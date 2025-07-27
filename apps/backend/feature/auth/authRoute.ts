@@ -72,14 +72,24 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     })
     .post("/token", async (c) => {
       const { NODE_ENV } = c.env;
-      const refreshTokenCookie = getCookie(c, "refresh_token");
-      if (!refreshTokenCookie) {
+      // Try to get refresh token from cookie first (for web)
+      let refreshTokenValue = getCookie(c, "refresh_token");
+      
+      // If not in cookie, try to get from header (for mobile)
+      if (!refreshTokenValue) {
+        const authHeader = c.req.header("Authorization");
+        if (authHeader?.startsWith("Bearer ")) {
+          refreshTokenValue = authHeader.substring(7);
+        }
+      }
+      
+      if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
 
       try {
         const { token, refreshToken } =
-          await c.var.h.refreshToken(refreshTokenCookie);
+          await c.var.h.refreshToken(refreshTokenValue);
 
         const isDev = NODE_ENV === "development";
         // Only set refresh token cookie, access token is returned in response body
@@ -98,11 +108,21 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     })
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
-      const refreshTokenCookie = getCookie(c, "refresh_token");
-      if (!refreshTokenCookie) {
+      // Try to get refresh token from cookie first (for web)
+      let refreshTokenValue = getCookie(c, "refresh_token");
+      
+      // If not in cookie, try to get from header (for mobile)
+      if (!refreshTokenValue) {
+        const authHeader = c.req.header("X-Refresh-Token");
+        if (authHeader) {
+          refreshTokenValue = authHeader;
+        }
+      }
+      
+      if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
-      const result = await c.var.h.logout(userId, refreshTokenCookie);
+      const result = await c.var.h.logout(userId, refreshTokenValue);
 
       const isDev = c.env.NODE_ENV === "development";
       // Only clear refresh token cookie since access token is now in memory

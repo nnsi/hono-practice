@@ -1,11 +1,20 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
+import { SyncStatusIndicator } from "../../../src/components/sync";
+import { useAppSettings } from "../../../src/hooks/useAppSettings";
 import { useAuth } from "../../../src/hooks/useAuth";
+import { useSubscription } from "../../../src/hooks/useSubscription";
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
+  const {
+    settings,
+    updateSetting,
+    isLoading: isSettingsLoading,
+  } = useAppSettings();
+  const { data: subscription } = useSubscription();
 
   const handleLogout = () => {
     logout();
@@ -61,6 +70,105 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
+
+        {/* 同期ステータス */}
+        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-gray-900 font-medium">データ同期</Text>
+            <SyncStatusIndicator />
+          </View>
+        </View>
+
+        {/* アプリ設定 */}
+        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
+          <Text className="text-lg font-semibold text-gray-900 mb-4">
+            アプリ設定
+          </Text>
+
+          <View className="space-y-4">
+            <View className="flex-row items-center justify-between py-2">
+              <View className="flex-1 mr-4">
+                <Text className="text-gray-900 font-medium">
+                  起動時に目標画面を表示
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  アプリ起動時の初期画面を目標画面にします
+                </Text>
+              </View>
+              <Switch
+                value={settings.showGoalOnStartup}
+                onValueChange={(value) =>
+                  updateSetting("showGoalOnStartup", value)
+                }
+                trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
+                thumbColor={settings.showGoalOnStartup ? "#ffffff" : "#f3f4f6"}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between py-2">
+              <View className="flex-1 mr-4">
+                <Text className="text-gray-900 font-medium">
+                  目標グラフを非表示
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  負債時間と未実施日のみを表示します
+                </Text>
+              </View>
+              <Switch
+                value={settings.hideGoalGraph}
+                onValueChange={(value) => updateSetting("hideGoalGraph", value)}
+                trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
+                thumbColor={settings.hideGoalGraph ? "#ffffff" : "#f3f4f6"}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between py-2">
+              <View className="flex-1 mr-4">
+                <Text className="text-gray-900 font-medium">
+                  やらなかった日付をデフォルトで表示
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  目標詳細で活動がなかった日付を表示します
+                </Text>
+              </View>
+              <Switch
+                value={settings.showInactiveDates}
+                onValueChange={(value) =>
+                  updateSetting("showInactiveDates", value)
+                }
+                trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
+                thumbColor={settings.showInactiveDates ? "#ffffff" : "#f3f4f6"}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* サブスクリプション情報 */}
+        {subscription && (
+          <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
+            <Text className="text-lg font-semibold text-gray-900 mb-2">
+              サブスクリプション
+            </Text>
+            <View className="flex-row items-center">
+              <Ionicons
+                name={
+                  subscription.isActive ? "checkmark-circle" : "close-circle"
+                }
+                size={20}
+                color={subscription.isActive ? "#10b981" : "#ef4444"}
+              />
+              <Text className="ml-2 text-gray-700">
+                {subscription.isActive ? "アクティブ" : "未加入"}
+              </Text>
+            </View>
+            {subscription.expiresAt && (
+              <Text className="text-sm text-gray-500 mt-1">
+                有効期限:{" "}
+                {new Date(subscription.expiresAt).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* 設定項目 */}
         <View className="bg-white rounded-lg border border-gray-200 overflow-hidden">
