@@ -27,6 +27,7 @@ let mockTimer = {
   reset: vi.fn(),
   getFormattedTime: vi.fn(() => "0:00"),
   getElapsedSeconds: vi.fn(() => 0),
+  getStartTime: vi.fn(() => Date.now()),
 };
 vi.mock("@frontend/hooks/useTimer", () => ({
   useTimer: () => mockTimer,
@@ -93,6 +94,7 @@ describe("useActivityLogCreate", () => {
       reset: vi.fn(),
       getFormattedTime: vi.fn(() => "0:00"),
       getElapsedSeconds: vi.fn(() => 0),
+      getStartTime: vi.fn(() => Date.now()),
     };
 
     mockActivity = {
@@ -122,7 +124,6 @@ describe("useActivityLogCreate", () => {
       );
 
       expect(result.current.activeTab).toBe("manual");
-      expect(result.current.timerStartTime).toBe(null);
       expect(result.current.timerEnabled).toBe(true);
       expect(result.current.timeUnitType).toBe("minutes");
       expect(mockForm.setValue).toHaveBeenCalledWith("date", "2025-01-20");
@@ -197,7 +198,6 @@ describe("useActivityLogCreate", () => {
       });
 
       expect(mockTimer.start).toHaveBeenCalled();
-      expect(result.current.timerStartTime).toBeInstanceOf(Date);
     });
 
     it("タイマーを停止できる", () => {

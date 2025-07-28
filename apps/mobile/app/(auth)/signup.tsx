@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
-
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 

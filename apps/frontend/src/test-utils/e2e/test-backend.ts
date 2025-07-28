@@ -11,12 +11,19 @@ import type { drizzle } from "drizzle-orm/pglite";
 let server: any = null; // Use any type to avoid server type issues
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let pglite: PGlite | null = null;
+let serverPort: number | null = null;
 
 export async function startTestBackend(port = 3457) {
+  // 既存のサーバーがあれば先に終了
+  if (server) {
+    await stopTestBackend();
+  }
+
   // Create test database
   const { db, pglite: pgliteInstance } = await createTestDb();
   testDb = db;
   pglite = pgliteInstance;
+  serverPort = port;
 
   // Test configuration
   const testConfig: Config = {
@@ -46,22 +53,62 @@ export async function startTestBackend(port = 3457) {
 }
 
 export async function stopTestBackend() {
+  const cleanup = async () => {
+    // ポートを使用しているプロセスを強制終了
+    if (serverPort) {
+      try {
+        const killCommand =
+          process.platform === "win32"
+            ? `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${serverPort}') do taskkill /PID %a /F`
+            : `lsof -ti:${serverPort} | xargs -r kill -9 2>/dev/null || true`;
+
+        require("node:child_process").execSync(killCommand, {
+          stdio: "ignore",
+        });
+      } catch (e) {
+        // エラーは無視
+      }
+    }
+
+    if (pglite) {
+      try {
+        await pglite.close();
+      } catch (e) {
+        // エラーは無視
+      }
+    }
+
+    server = null;
+    testDb = null;
+    pglite = null;
+    serverPort = null;
+  };
+
   if (server) {
     return new Promise<void>((resolve) => {
+      let closed = false;
+
+      const forceClose = () => {
+        if (!closed) {
+          closed = true;
+          cleanup().then(resolve);
+        }
+      };
+
+      // 正常終了を試みる
       server.close(() => {
-        console.log("Test backend stopped");
-        resolve();
+        if (!closed) {
+          closed = true;
+          console.log("Test backend stopped");
+          cleanup().then(resolve);
+        }
       });
+
+      // 2秒後に強制終了
+      setTimeout(forceClose, 2000);
     });
   }
-
-  if (pglite) {
-    await pglite.close();
-  }
-
-  server = null;
-  testDb = null;
-  pglite = null;
+  await cleanup();
 }
 
 export function getTestDb(): ReturnType<typeof drizzle<typeof schema>> {

@@ -23,12 +23,12 @@ app.use("*", async (c, next) => {
   // 開発環境でのモバイルアプリからのアクセスを許可
   const allowedOrigins = [c.env.APP_URL];
 
-  if (c.env.NODE_ENV === "development") {
+  if (c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test") {
     // ローカル開発環境のポート
     allowedOrigins.push(
+      "http://localhost:5176",
       "http://localhost:8081",
       "http://localhost:8082",
-      "http://localhost:8086",
       "http://localhost:19006", // Expo Web
     );
 

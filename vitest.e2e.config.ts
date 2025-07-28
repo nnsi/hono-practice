@@ -28,6 +28,13 @@ export default defineConfig({
       "**/mobile/**",
     ],
     environment: "node",
+    // テストの実行を1つずつ順番に実行（並列実行によるポート競合を防ぐ）
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
   resolve: {
     alias: {
