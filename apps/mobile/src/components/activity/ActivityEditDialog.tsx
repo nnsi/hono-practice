@@ -10,7 +10,6 @@ import {
   View,
 } from "react-native";
 
-
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

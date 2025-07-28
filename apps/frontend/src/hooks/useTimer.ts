@@ -17,6 +17,7 @@ type UseTimerReturn = {
   reset: () => void;
   getFormattedTime: () => string;
   getElapsedSeconds: () => number;
+  getStartTime: () => number | null;
 };
 
 export const useTimer = (activityId: string): UseTimerReturn => {
@@ -175,6 +176,10 @@ export const useTimer = (activityId: string): UseTimerReturn => {
     return Math.floor(elapsedTime / 1000);
   }, [elapsedTime]);
 
+  const getStartTime = useCallback(() => {
+    return startTime;
+  }, [startTime]);
+
   return {
     isRunning,
     elapsedTime,
@@ -183,5 +188,6 @@ export const useTimer = (activityId: string): UseTimerReturn => {
     reset,
     getFormattedTime,
     getElapsedSeconds,
+    getStartTime,
   };
 };

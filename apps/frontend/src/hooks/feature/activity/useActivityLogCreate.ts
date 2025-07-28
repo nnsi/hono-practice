@@ -28,7 +28,6 @@ export const useActivityLogCreate = (
   onSuccess?: () => void,
 ) => {
   const [activeTab, setActiveTab] = useState("manual");
-  const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
 
   const form = useForm<CreateActivityLogRequest>({
     resolver: zodResolver(CreateActivityLogRequestSchema),
@@ -56,11 +55,11 @@ export const useActivityLogCreate = (
     reset,
     getFormattedTime,
     getElapsedSeconds,
+    getStartTime,
   } = useTimer(activity.id);
 
   // タイマー開始時に開始時刻を記録
   const handleTimerStart = () => {
-    setTimerStartTime(new Date());
     start();
   };
 
@@ -137,26 +136,32 @@ export const useActivityLogCreate = (
     const quantity = convertSecondsToUnit(seconds, timeUnitType);
 
     const endTime = new Date();
+    const startTimeStamp = getStartTime();
+    const timerStartTime = startTimeStamp ? new Date(startTimeStamp) : null;
     const memo = timerStartTime
       ? generateTimeMemo(timerStartTime, endTime)
       : undefined;
 
+    // タイマー開始時の日付を使用
+    const recordDate = timerStartTime
+      ? dayjs(timerStartTime).format("YYYY-MM-DD")
+      : form.getValues().date;
+
     const data: CreateActivityLogRequest = {
       ...form.getValues(),
+      date: recordDate,
       quantity,
       memo,
     };
 
     await onSubmit(data);
     reset();
-    setTimerStartTime(null);
   };
 
   return {
     // State
     activeTab,
     setActiveTab,
-    timerStartTime,
 
     // Form
     form,

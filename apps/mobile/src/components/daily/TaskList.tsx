@@ -2,7 +2,6 @@ import React, { useCallback, useState } from "react";
 
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
-
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 

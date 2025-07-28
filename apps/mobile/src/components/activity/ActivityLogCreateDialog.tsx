@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -51,8 +50,15 @@ export function ActivityLogCreateDialog({
     },
   });
 
-  const { isRunning, start, stop, reset, getFormattedTime, getElapsedSeconds } =
-    useTimer(activity.id);
+  const {
+    isRunning,
+    start,
+    stop,
+    reset,
+    getFormattedTime,
+    getElapsedSeconds,
+    getStartTime,
+  } = useTimer(activity.id);
 
   const queryClient = useQueryClient();
 
@@ -88,8 +94,16 @@ export function ActivityLogCreateDialog({
 
   const handleTimerSave = () => {
     const seconds = getElapsedSeconds();
+    const startTimeStamp = getStartTime();
+    const timerStartTime = startTimeStamp ? new Date(startTimeStamp) : null;
+
+    // タイマー開始時の日付を使用
+    const recordDate = timerStartTime
+      ? dayjs(timerStartTime).format("YYYY-MM-DD")
+      : dayjs(date).format("YYYY-MM-DD");
+
     mutate({
-      date: dayjs(date).format("YYYY-MM-DD"),
+      date: recordDate,
       quantity: seconds,
       activityKindId: undefined,
     });
