@@ -14,6 +14,9 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { NetworkStatusProvider } from "./providers/NetworkStatusProvider";
 import { TokenProvider } from "./providers/TokenProvider";
 import { routeTree } from "./routeTree.gen";
+import { createLocalStorageProvider } from "./services/abstractions/StorageProvider";
+import { createApiClient } from "./utils/apiClient";
+import { createTokenStore } from "./utils/createTokenStore";
 
 // ネットワーク状態を取得するためのヘルパー
 function getIsOnline(): boolean {
@@ -68,6 +71,20 @@ const RouterProviderWithAuth: React.FC = () => {
   return <RouterProvider router={router} context={{ auth }} />;
 };
 
+// E2Eテスト環境またはlocalStorageモードの場合はlocalStorageベースのtokenStoreを使用
+const isE2EMode =
+  import.meta.env.VITE_E2E_TEST === "true" ||
+  import.meta.env.VITE_USE_LOCALSTORAGE_TOKEN === "true";
+const tokenStore = isE2EMode
+  ? createTokenStore(createLocalStorageProvider())
+  : undefined;
+
+// E2E環境ではAPIクライアントもlocalStorageベースのtokenStoreを使用
+const apiClient =
+  isE2EMode && tokenStore
+    ? createApiClient({ tokenManager: tokenStore })
+    : undefined;
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
@@ -75,8 +92,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         client={queryClient}
         persistOptions={{ persister }}
       >
-        <TokenProvider>
-          <AuthProvider>
+        <TokenProvider tokenStore={tokenStore}>
+          <AuthProvider apiClient={apiClient}>
             <NetworkStatusProvider>
               <RouterProviderWithAuth />
             </NetworkStatusProvider>

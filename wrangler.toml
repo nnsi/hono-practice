@@ -5,6 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [env.stg.vars]
 NODE_ENV = "stg"
+STORAGE_TYPE = "r2"
 
 [env.production.vars]
 NODE_ENV = "production"
+STORAGE_TYPE = "r2"

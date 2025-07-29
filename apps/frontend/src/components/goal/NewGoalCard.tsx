@@ -32,6 +32,12 @@ type GoalCardProps = {
   goal: GoalResponse;
   activityName: string;
   activityEmoji: string;
+  activityIcon?: {
+    iconType: string;
+    iconUrl?: string | null;
+    iconThumbnailUrl?: string | null;
+    emoji: string;
+  };
   isEditing: boolean;
   onEditStart: () => void;
   onEditEnd: () => void;
@@ -61,6 +67,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   goal,
   activityName,
   activityEmoji,
+  activityIcon,
   isEditing,
   onEditStart,
   onEditEnd,
@@ -191,7 +198,18 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
             />
           )}
           <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
-            <p className="text-xl sm:text-2xl flex-shrink-0">{activityEmoji}</p>
+            <p className="text-xl sm:text-2xl flex-shrink-0">
+              {activityIcon?.iconType === "upload" &&
+              activityIcon.iconThumbnailUrl ? (
+                <img
+                  src={activityIcon.iconThumbnailUrl}
+                  alt={activityName}
+                  className="w-8 h-8 object-cover rounded"
+                />
+              ) : (
+                activityEmoji
+              )}
+            </p>
             <p className="text-xs sm:text-sm font-medium truncate max-w-[80px] sm:max-w-none">
               {activityName}
             </p>
@@ -282,7 +300,18 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           <div className="absolute inset-0 px-3 py-2 flex items-center gap-2">
             {/* 左側: 絵文字とアクティビティ名 */}
             <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-              <p className="text-2xl flex-shrink-0">{activityEmoji}</p>
+              <p className="text-2xl flex-shrink-0">
+                {activityIcon?.iconType === "upload" &&
+                activityIcon.iconThumbnailUrl ? (
+                  <img
+                    src={activityIcon.iconThumbnailUrl}
+                    alt={activityName}
+                    className="w-8 h-8 object-cover rounded"
+                  />
+                ) : (
+                  activityEmoji
+                )}
+              </p>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold truncate">{activityName}</p>
                 <p

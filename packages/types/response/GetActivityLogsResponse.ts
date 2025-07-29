@@ -9,6 +9,9 @@ export const GetActivityLogResponseSchema = z.object({
     name: z.string(),
     quantityUnit: z.string(),
     emoji: z.string().optional(),
+    iconType: z.enum(["emoji", "upload"]).optional(),
+    iconUrl: z.string().nullable().optional(),
+    iconThumbnailUrl: z.string().nullable().optional(),
   }),
   activityKind: z
     .object({

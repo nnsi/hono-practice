@@ -98,6 +98,12 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
       const json = await res.json();
 
       if (res.status === 401) {
+        // E2E環境では自動リフレッシュをスキップ
+        const isE2E = import.meta.env.VITE_E2E_TEST === "true";
+        if (isE2E) {
+          return new Response(JSON.stringify(json), { status: 401 });
+        }
+
         if (isRetry) {
           return new Response(JSON.stringify(json), { status: 401 });
         }

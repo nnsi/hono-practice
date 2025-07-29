@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 import { apiClient } from "@frontend/utils";
+import { tokenStore } from "@frontend/utils/tokenStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -17,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmojiPicker,
   Form,
   FormControl,
   FormField,
@@ -27,16 +29,22 @@ import {
   useToast,
 } from "@components/ui";
 
+import { IconTypeSelector } from "./IconTypeSelector";
+
 export function NewActivityDialog({
   open,
   onOpenChange,
 }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [iconFile, setIconFile] = useState<File | undefined>();
+  const [iconPreview, setIconPreview] = useState<string | undefined>();
+
   const form = useForm<CreateActivityRequest & { kinds: { name: string }[] }>({
     resolver: zodResolver(CreateActivityRequestSchema),
     defaultValues: {
       name: "",
       quantityUnit: "",
       emoji: "",
+      iconType: "emoji",
       showCombinedStats: false,
       kinds: [],
     },
@@ -55,9 +63,49 @@ export function NewActivityDialog({
     mutationFn: async (
       data: CreateActivityRequest & { kinds: { name: string }[] },
     ) => {
-      return apiClient.users.activities.$post({
+      // Create activity first
+      const response = await apiClient.users.activities.$post({
         json: data,
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to create activity");
+      }
+
+      const activity = await response.json();
+
+      // Upload icon if file is selected
+      if (data.iconType === "upload" && iconFile) {
+        const formData = new FormData();
+        formData.append("file", iconFile);
+
+        const API_URL =
+          import.meta.env.MODE === "development"
+            ? import.meta.env.VITE_API_URL ||
+              `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+            : import.meta.env.VITE_API_URL;
+
+        const token = tokenStore.getToken();
+        const headers: HeadersInit = {};
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const uploadResponse = await fetch(
+          `${API_URL}users/activities/${activity.id}/icon`,
+          {
+            method: "POST",
+            body: formData,
+            headers,
+          },
+        );
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload icon");
+        }
+      }
+
+      return activity;
     },
     onSuccess: () => {
       toast({
@@ -67,6 +115,8 @@ export function NewActivityDialog({
       });
       onOpenChange(false);
       form.reset();
+      setIconFile(undefined);
+      setIconPreview(undefined);
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
     onError: () => {
@@ -131,28 +181,30 @@ export function NewActivityDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="emoji"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <EmojiPicker
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                    >
-                      <Input
-                        value={field.value || ""}
-                        placeholder="絵文字を選択"
-                        className="w-32 text-center cursor-pointer"
-                        readOnly
-                      />
-                    </EmojiPicker>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <IconTypeSelector
+                value={{
+                  type: form.watch("iconType") || "emoji",
+                  emoji: form.watch("emoji"),
+                  file: iconFile,
+                  preview: iconPreview,
+                }}
+                onChange={(value) => {
+                  form.setValue("iconType", value.type);
+                  if (value.type === "emoji") {
+                    form.setValue("emoji", value.emoji || "");
+                    setIconFile(undefined);
+                    setIconPreview(undefined);
+                  } else if (value.type === "upload") {
+                    form.setValue("emoji", "📷"); // Default emoji for uploaded icons
+                    setIconFile(value.file);
+                    setIconPreview(value.preview);
+                  }
+                }}
+                disabled={isPending}
+              />
+              <FormMessage />
+            </FormItem>
             <FormField
               control={form.control}
               name="showCombinedStats"

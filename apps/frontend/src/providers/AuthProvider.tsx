@@ -95,6 +95,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
   const refreshToken = useCallback(async () => {
     if (isRefreshing) return;
+
+    // E2E環境ではリフレッシュトークンの処理をスキップ
+    const isE2E = import.meta.env.VITE_E2E_TEST === "true";
+    if (isE2E) {
+      console.log("Skipping token refresh in E2E environment");
+      return;
+    }
+
     setIsRefreshing(true);
     try {
       const res = await apiClient.auth.token.$post({});
@@ -161,12 +169,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   useEffect(() => {
     const fetchInitialToken = async () => {
       try {
-        const res = await apiClient.auth.token.$post({});
-        if (res.status === 200) {
-          const data = await res.json();
-          setAccessToken(data.token);
-          scheduleTokenRefresh();
-          await getUser();
+        // E2E環境でlocalStorageからトークンを復元
+        const isE2E = import.meta.env.VITE_E2E_TEST === "true";
+        if (isE2E) {
+          const storedToken = localStorage.getItem("actiko-access-token");
+          if (storedToken) {
+            setAccessToken(storedToken);
+            scheduleTokenRefresh();
+            await getUser();
+          }
+          // E2E環境では/auth/tokenへのリクエストをスキップ
+        } else {
+          const res = await apiClient.auth.token.$post({});
+          if (res.status === 200) {
+            const data = await res.json();
+            setAccessToken(data.token);
+            scheduleTokenRefresh();
+            await getUser();
+          }
         }
       } catch (e) {
         // User is not logged in

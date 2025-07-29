@@ -50,6 +50,16 @@ export const useNewGoalPage = () => {
     return activity?.emoji || "🎯";
   };
 
+  const getActivityIcon = (activityId: string) => {
+    const activity = activitiesData?.find((a) => a.id === activityId);
+    return {
+      iconType: activity?.iconType || "emoji",
+      iconUrl: activity?.iconUrl,
+      iconThumbnailUrl: activity?.iconThumbnailUrl,
+      emoji: activity?.emoji || "🎯",
+    };
+  };
+
   const getActivityUnit = (activityId: string) => {
     const activity = activitiesData?.find((a) => a.id === activityId);
     return activity?.quantityUnit || "";
@@ -90,6 +100,7 @@ export const useNewGoalPage = () => {
     // Getters
     getActivityName,
     getActivityEmoji,
+    getActivityIcon,
     getActivityUnit,
     getActivity,
 

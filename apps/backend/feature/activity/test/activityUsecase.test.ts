@@ -48,6 +48,10 @@ describe("ActivityUsecase", () => {
     kinds: [],
     type: "new",
     showCombinedStats: true,
+    iconType: "emoji",
+    emoji: "🏃",
+    iconUrl: null,
+    iconThumbnailUrl: null,
   };
 
   const mockActivity2: Activity = {
@@ -59,6 +63,10 @@ describe("ActivityUsecase", () => {
     kinds: [],
     type: "new",
     showCombinedStats: true,
+    iconType: "emoji",
+    emoji: "🏊",
+    iconUrl: null,
+    iconThumbnailUrl: null,
   };
 
   describe("getActivities", () => {
@@ -149,6 +157,7 @@ describe("ActivityUsecase", () => {
         name: string;
         label: string;
         emoji: string;
+        iconType: "emoji" | "upload" | "generate";
         description?: string;
         quantityUnit: string;
       };
@@ -165,6 +174,7 @@ describe("ActivityUsecase", () => {
           name: "Running",
           label: "Run",
           emoji: "🏃",
+          iconType: "emoji" as const,
           quantityUnit: "km",
         },
         mockLastOrderIndex: undefined,
@@ -181,6 +191,7 @@ describe("ActivityUsecase", () => {
           name: "Swimming",
           label: "Pool",
           emoji: "🏊‍♂️",
+          iconType: "emoji" as const,
           description: "Swimming practice",
           quantityUnit: "m",
         },
@@ -240,6 +251,7 @@ describe("ActivityUsecase", () => {
           quantityUnit: string;
           description?: string;
           emoji: string;
+          iconType: "emoji" | "upload" | "generate";
         };
         kinds: { id?: string; name: string }[];
       };
@@ -257,6 +269,7 @@ describe("ActivityUsecase", () => {
           activity: {
             name: "Sprint Running",
             emoji: "🏃",
+            iconType: "emoji" as const,
             quantityUnit: "km",
           },
           kinds: [
@@ -280,6 +293,7 @@ describe("ActivityUsecase", () => {
           activity: {
             name: "Sprint Running",
             emoji: "🏃",
+            iconType: "emoji" as const,
             quantityUnit: "km",
           },
           kinds: [],

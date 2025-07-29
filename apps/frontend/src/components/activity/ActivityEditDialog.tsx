@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { useActivityEdit } from "@frontend/hooks/feature/activity/useActivityEdit";
 
 import type { GetActivityResponse } from "@dtos/response";
@@ -11,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmojiPicker,
   Form,
   FormControl,
   FormField,
@@ -19,6 +20,8 @@ import {
   FormMessage,
   Input,
 } from "@components/ui";
+
+import { IconTypeSelector } from "./IconTypeSelector";
 
 export const ActivityEditDialog = ({
   open,
@@ -29,6 +32,9 @@ export const ActivityEditDialog = ({
   onClose: () => void;
   activity: GetActivityResponse | null;
 }) => {
+  const [iconFile, setIconFile] = useState<File | undefined>();
+  const [iconPreview, setIconPreview] = useState<string | undefined>();
+
   const {
     form,
     kindFields,
@@ -37,6 +43,8 @@ export const ActivityEditDialog = ({
     handleDelete,
     handleRemoveKind,
     handleAddKind,
+    uploadIcon,
+    deleteIcon,
   } = useActivityEdit(activity, onClose);
 
   if (!open || !activity) return null;
@@ -79,28 +87,37 @@ export const ActivityEditDialog = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="activity.emoji"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <EmojiPicker
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                    >
-                      <Input
-                        value={field.value || ""}
-                        placeholder="絵文字を選択"
-                        className="w-32 text-center cursor-pointer"
-                        readOnly
-                      />
-                    </EmojiPicker>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <IconTypeSelector
+                value={{
+                  type: activity.iconType || "emoji",
+                  emoji: form.watch("activity.emoji"),
+                  file: iconFile,
+                  preview: iconPreview || activity.iconUrl || undefined,
+                }}
+                onChange={async (value) => {
+                  if (value.type === "emoji") {
+                    form.setValue("activity.emoji", value.emoji || "");
+                    setIconFile(undefined);
+                    setIconPreview(undefined);
+                    // Delete uploaded icon if switching back to emoji
+                    if (activity.iconType === "upload" && deleteIcon) {
+                      await deleteIcon();
+                    }
+                  } else if (value.type === "upload") {
+                    form.setValue("activity.emoji", "📷"); // Default emoji for uploaded icons
+                    setIconFile(value.file);
+                    setIconPreview(value.preview);
+                    // Upload icon immediately if file is selected
+                    if (value.file && uploadIcon) {
+                      await uploadIcon(value.file);
+                    }
+                  }
+                }}
+                disabled={isPending}
+              />
+              <FormMessage />
+            </FormItem>
             <FormField
               control={form.control}
               name="activity.showCombinedStats"

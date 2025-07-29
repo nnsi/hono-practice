@@ -7,6 +7,9 @@ export const configSchema = z.object({
   DATABASE_URL: z.string(),
   API_PORT: z.coerce.number().optional(),
   GOOGLE_OAUTH_CLIENT_ID: z.string().default("dummy-string"),
+  STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
+  R2_PUBLIC_URL: z.string().optional(),
+  UPLOAD_DIR: z.string().default("public/uploads"),
 });
 
 export type Config = z.infer<typeof configSchema>;

@@ -57,6 +57,7 @@ export const useActivityLogEdit = (
           name: log.activity.name,
           quantityUnit: log.activity.quantityUnit,
           emoji: log.activity.emoji,
+          iconType: log.activity.iconType ?? "emoji",
           kinds: log.activityKind ? [log.activityKind] : [],
         }
       : undefined);

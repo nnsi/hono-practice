@@ -27,6 +27,7 @@ app.use("*", async (c, next) => {
     // ローカル開発環境のポート
     allowedOrigins.push(
       "http://localhost:5176",
+      "http://localhost:5177", // E2Eテスト用追加ポート
       "http://localhost:8081",
       "http://localhost:8082",
       "http://localhost:19006", // Expo Web
@@ -55,6 +56,7 @@ app.use("*", async (c, next) => {
 
   return middleware(c, next);
 });
+
 app.use("/users/*", authMiddleware);
 
 const routes = app

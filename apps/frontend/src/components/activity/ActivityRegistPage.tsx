@@ -99,7 +99,17 @@ function ActivityCardWithEdit({
   return (
     <div className="relative">
       <ActivityCard onClick={onClick} isDone={isDone}>
-        <div className="text-5xl mb-2">{activity.emoji}</div>
+        <div className="text-5xl mb-2">
+          {activity.iconType === "upload" && activity.iconThumbnailUrl ? (
+            <img
+              src={activity.iconThumbnailUrl}
+              alt={activity.name}
+              className="w-16 h-16 object-cover rounded"
+            />
+          ) : (
+            activity.emoji
+          )}
+        </div>
         <div className="text-sm text-gray-800 font-medium">{activity.name}</div>
       </ActivityCard>
       <button

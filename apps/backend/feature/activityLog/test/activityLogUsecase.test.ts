@@ -69,6 +69,10 @@ describe("ActivityLogUsecase", () => {
     kinds: [mockActivityKind],
     type: "new",
     showCombinedStats: true,
+    iconType: "emoji",
+    emoji: "🏃",
+    iconUrl: null,
+    iconThumbnailUrl: null,
   };
 
   const mockActivityLog: ActivityLog = {

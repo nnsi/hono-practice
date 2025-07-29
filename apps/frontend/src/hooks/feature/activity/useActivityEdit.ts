@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
+import { tokenStore } from "@frontend/utils/tokenStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -104,6 +105,83 @@ export const useActivityEdit = (
     kindAppend({ name: "" });
   };
 
+  // アイコンアップロード
+  const uploadIcon = async (file: File) => {
+    if (!activity) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const API_URL =
+        import.meta.env.MODE === "development"
+          ? import.meta.env.VITE_API_URL ||
+            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+          : import.meta.env.VITE_API_URL;
+
+      const token = tokenStore.getToken();
+      console.log("Token for icon upload:", token);
+      const headers: HeadersInit = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log(
+        "Uploading to:",
+        `${API_URL}users/activities/${activity.id}/icon`,
+      );
+      console.log("Headers:", headers);
+
+      const response = await fetch(
+        `${API_URL}users/activities/${activity.id}/icon`,
+        {
+          method: "POST",
+          body: formData,
+          headers,
+        },
+      );
+
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["activity"] });
+      }
+    } catch (error) {
+      console.error("Failed to upload icon:", error);
+    }
+  };
+
+  // アイコン削除
+  const deleteIcon = async () => {
+    if (!activity) return;
+
+    try {
+      const API_URL =
+        import.meta.env.MODE === "development"
+          ? import.meta.env.VITE_API_URL ||
+            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+          : import.meta.env.VITE_API_URL;
+
+      const token = tokenStore.getToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `${API_URL}users/activities/${activity.id}/icon`,
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
+
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["activity"] });
+      }
+    } catch (error) {
+      console.error("Failed to delete icon:", error);
+    }
+  };
+
   return {
     form,
     kindFields,
@@ -112,5 +190,7 @@ export const useActivityEdit = (
     handleDelete,
     handleRemoveKind,
     handleAddKind,
+    uploadIcon,
+    deleteIcon,
   };
 };
