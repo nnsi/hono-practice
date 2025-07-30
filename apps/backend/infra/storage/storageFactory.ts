@@ -11,7 +11,7 @@ export function createStorageService(
     if (!env.R2_BUCKET) {
       throw new Error("R2 bucket is required when STORAGE_TYPE is 'r2'");
     }
-    return newR2StorageService(env.R2_BUCKET, env.APP_URL);
+    return newR2StorageService(env.R2_BUCKET);
   }
 
   return newLocalStorageService(env.APP_URL, env.UPLOAD_DIR);

@@ -215,19 +215,30 @@ export function createActivityRoute() {
         contentType: mimeType,
       });
 
-      // Update activity with new icon (use same URL for both since image is already resized)
+      // Convert relative URLs to absolute URLs using the request host
+      const protocol = c.req.header("x-forwarded-proto") || "http";
+      const host = c.req.header("host") || "localhost";
+      const apiBaseUrl = `${protocol}://${host}`;
+      
+      // Convert relative URLs to absolute URLs
+      const iconUrl = uploaded.url.startsWith("/") 
+        ? `${apiBaseUrl}${uploaded.url}` 
+        : uploaded.url;
+      const iconThumbnailUrl = iconUrl; // Same URL since already resized
+
+      // Update activity with new icon
       const db = c.env.DB;
       const repo = newActivityRepository(db);
       await repo.updateActivityIcon(
         activityId,
         "upload",
-        uploaded.url,
-        uploaded.url, // Use same URL for thumbnail since it's already resized
+        iconUrl,
+        iconThumbnailUrl,
       );
 
       return c.json({
-        iconUrl: uploaded.url,
-        iconThumbnailUrl: uploaded.url,
+        iconUrl,
+        iconThumbnailUrl,
       });
     })
     .delete("/:id/icon", async (c) => {
@@ -247,8 +258,9 @@ export function createActivityRoute() {
       // Delete files from storage if they exist
       if (activity.iconUrl) {
         // Extract key from URL
-        const urlParts = activity.iconUrl.split("/");
-        const key = urlParts.slice(-4).join("/"); // icons/userId/activityId_timestamp_random.webp or _thumb.webp
+        // URLが絶対URLの場合は /r2/ 以降を取得
+        const match = activity.iconUrl.match(/\/r2\/(.+)$/);
+        const key = match ? match[1] : activity.iconUrl.split("/").slice(-4).join("/");
 
         try {
           await storageService.delete(key);
@@ -262,8 +274,8 @@ export function createActivityRoute() {
         activity.iconThumbnailUrl !== activity.iconUrl
       ) {
         // Extract key from URL
-        const urlParts = activity.iconThumbnailUrl.split("/");
-        const key = urlParts.slice(-4).join("/");
+        const match = activity.iconThumbnailUrl.match(/\/r2\/(.+)$/);
+        const key = match ? match[1] : activity.iconThumbnailUrl.split("/").slice(-4).join("/");
 
         try {
           await storageService.delete(key);

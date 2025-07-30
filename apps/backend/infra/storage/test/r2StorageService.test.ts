@@ -40,11 +40,10 @@ const createMockR2Object = (overrides?: Partial<R2Object>): R2Object => {
 describe("r2StorageService", () => {
   let mockR2Bucket: R2Bucket;
   let storageService: ReturnType<typeof newR2StorageService>;
-  const appUrl = "https://example.com";
 
   beforeEach(() => {
     mockR2Bucket = createMockR2Bucket();
-    storageService = newR2StorageService(mockR2Bucket, appUrl);
+    storageService = newR2StorageService(mockR2Bucket);
   });
 
   describe("upload", () => {
@@ -60,7 +59,7 @@ describe("r2StorageService", () => {
       const result = await storageService.upload(mockFile, key);
 
       expect(result).toEqual({
-        url: `${appUrl}/r2/${key}`,
+        url: `/r2/${key}`,
         key,
         size: mockFile.size,
         contentType: "image/webp",
@@ -152,14 +151,14 @@ describe("r2StorageService", () => {
       const key = "uploads/icons/test.webp";
       const url = storageService.getUrl(key);
 
-      expect(url).toBe(`${appUrl}/r2/${key}`);
+      expect(url).toBe(`/r2/${key}`);
     });
 
     it("ネストされたパスも正しく処理される", () => {
       const key = "uploads/icons/user-123/activity-456/icon.png";
       const url = storageService.getUrl(key);
 
-      expect(url).toBe(`${appUrl}/r2/${key}`);
+      expect(url).toBe(`/r2/${key}`);
     });
   });
 

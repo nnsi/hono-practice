@@ -3,7 +3,6 @@ import type { R2Bucket } from "@cloudflare/workers-types";
 
 export function newR2StorageService(
   bucket: R2Bucket,
-  appUrl: string,
 ): StorageService {
   return {
     upload: async (file, key, options) => {
@@ -22,7 +21,7 @@ export function newR2StorageService(
       }
 
       return {
-        url: `${appUrl}/r2/${key}`,
+        url: `/r2/${key}`,
         key,
         size: object.size,
         contentType:
@@ -35,7 +34,7 @@ export function newR2StorageService(
     },
 
     getUrl: (key) => {
-      return `${appUrl}/r2/${key}`;
+      return `/r2/${key}`;
     },
 
     exists: async (key) => {
