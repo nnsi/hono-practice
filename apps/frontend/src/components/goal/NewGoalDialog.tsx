@@ -26,6 +26,8 @@ import {
   useToast,
 } from "@components/ui";
 
+import { ActivityIcon } from "../common/ActivityIcon";
+
 const FormSchema = z.object({
   activityId: z.string().min(1, "活動を選択してください"),
   dailyTargetQuantity: z
@@ -123,13 +125,23 @@ export const NewGoalDialog: React.FC<NewGoalDialogProps> = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="活動を選択" />
+                        <SelectValue placeholder="活動を選択">
+                          {selectedActivity && (
+                            <div className="flex items-center gap-2">
+                              <ActivityIcon activity={selectedActivity} size="small" />
+                              <span>{selectedActivity.name}</span>
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {activities.map((activity) => (
                         <SelectItem key={activity.id} value={activity.id}>
-                          {activity.emoji} {activity.name}
+                          <div className="flex items-center gap-2">
+                            <ActivityIcon activity={activity} size="small" />
+                            <span>{activity.name}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
