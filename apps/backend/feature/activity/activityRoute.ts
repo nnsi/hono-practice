@@ -6,10 +6,8 @@ import { join } from "node:path";
 import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
-import { multipartMiddleware } from "@backend/middleware/multipartMiddleware";
 import { syncMiddleware } from "@backend/middleware/syncMiddleware";
-import { generateThumbnail } from "@backend/utils/imageThumbnail";
-import { generateIconKey, validateImage } from "@backend/utils/imageValidator";
+import { generateIconKey } from "@backend/utils/imageValidator";
 import { zValidator } from "@hono/zod-validator";
 
 import {
@@ -174,15 +172,19 @@ export function createActivityRoute() {
       const res = await c.var.h.deleteActivity(userId, activityId);
       return c.json(res);
     })
-    .post("/:id/icon", multipartMiddleware, async (c) => {
+    .post("/:id/icon", async (c) => {
       const userId = c.get("userId");
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      const file = (c as any).get("uploadedFile") as File;
+      const body = await c.req.json<{ base64: string; mimeType: string }>();
+      const { base64, mimeType } = body;
 
-      // Validate image
-      await validateImage(file);
+      // Validate mime type
+      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+      if (!ALLOWED_TYPES.includes(mimeType)) {
+        return c.json({ error: "Invalid image type" }, 400);
+      }
 
       // Get activity to check ownership
       const activity = await c.var.h.getActivity(userId, activityId);
@@ -193,53 +195,39 @@ export function createActivityRoute() {
       // Create storage service
       const storageService = createStorageService(c.env);
 
-      // Generate unique keys for main and thumbnail
+      // Generate unique key for image
       const mainKey = generateIconKey(userId, activityId);
-      const thumbKey = generateIconKey(userId, activityId, true);
 
-      // Get file data
-      const fileBuffer = await file.arrayBuffer();
+      // Convert base64 to Uint8Array
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
 
-      // Upload main image
+      // Create file from bytes
+      const file = new File([bytes], "icon.webp", {
+        type: mimeType,
+      });
+
+      // Upload image
       const uploaded = await storageService.upload(file, mainKey, {
-        contentType: file.type,
+        contentType: mimeType,
       });
 
-      // Generate and upload thumbnail
-      const thumbnailBuffer = await generateThumbnail(fileBuffer, {
-        size: 512,
-        format: "webp",
-      });
-
-      const thumbnailFile = new File(
-        [thumbnailBuffer],
-        file.name.replace(/\.[^.]+$/, "_thumb.webp"),
-        { type: "image/webp" },
-      );
-
-      const uploadedThumbnail = await storageService.upload(
-        thumbnailFile,
-        thumbKey,
-        {
-          contentType: "image/webp",
-        },
-      );
-
-      const thumbnailUrl = uploadedThumbnail.url;
-
-      // Update activity with new icon
+      // Update activity with new icon (use same URL for both since image is already resized)
       const db = c.env.DB;
       const repo = newActivityRepository(db);
       await repo.updateActivityIcon(
         activityId,
         "upload",
         uploaded.url,
-        thumbnailUrl,
+        uploaded.url, // Use same URL for thumbnail since it's already resized
       );
 
       return c.json({
         iconUrl: uploaded.url,
-        iconThumbnailUrl: thumbnailUrl,
+        iconThumbnailUrl: uploaded.url,
       });
     })
     .delete("/:id/icon", async (c) => {

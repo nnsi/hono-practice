@@ -1,4 +1,3 @@
-
 import { newLocalStorageService } from "./localStorageService";
 import { newR2StorageService } from "./r2StorageService";
 
@@ -12,10 +11,7 @@ export function createStorageService(
     if (!env.R2_BUCKET) {
       throw new Error("R2 bucket is required when STORAGE_TYPE is 'r2'");
     }
-    if (!env.R2_PUBLIC_URL) {
-      throw new Error("R2_PUBLIC_URL is required when STORAGE_TYPE is 'r2'");
-    }
-    return newR2StorageService(env.R2_BUCKET, env.R2_PUBLIC_URL);
+    return newR2StorageService(env.R2_BUCKET, env.APP_URL);
   }
 
   return newLocalStorageService(env.APP_URL, env.UPLOAD_DIR);

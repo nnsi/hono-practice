@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
+import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -109,10 +110,10 @@ export const useActivityEdit = (
   const uploadIcon = async (file: File) => {
     if (!activity) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      // Resize image to 256x256 max and convert to base64
+      const { base64, mimeType } = await resizeImage(file, 256, 256);
+
       const API_URL =
         import.meta.env.MODE === "development"
           ? import.meta.env.VITE_API_URL ||
@@ -121,7 +122,9 @@ export const useActivityEdit = (
 
       const token = tokenStore.getToken();
       console.log("Token for icon upload:", token);
-      const headers: HeadersInit = {};
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -136,7 +139,7 @@ export const useActivityEdit = (
         `${API_URL}users/activities/${activity.id}/icon`,
         {
           method: "POST",
-          body: formData,
+          body: JSON.stringify({ base64, mimeType }),
           headers,
         },
       );

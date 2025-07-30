@@ -24,7 +24,7 @@ describe("localStorageService", () => {
     }
   });
 
-  describe.skip("upload", () => {
+  describe("upload", () => {
     it("ファイルをアップロードできる", async () => {
       const content = "test content";
       const file = new File([content], "test.txt", { type: "text/plain" });
@@ -32,7 +32,9 @@ describe("localStorageService", () => {
 
       const result = await storage.upload(file, key);
 
-      expect(result.url).toBe(`${baseUrl}/${testDir}/${key}`);
+      // 開発環境ではdata URLが返される
+      expect(result.url).toMatch(/^data:text\/plain;base64,/);
+      expect(result.url).toBe(`data:text/plain;base64,${Buffer.from(content).toString("base64")}`);
       expect(result.key).toBe(key);
       expect(result.size).toBe(content.length);
       expect(result.contentType).toBe("text/plain");

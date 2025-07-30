@@ -1,7 +1,6 @@
 import { AppError } from "@backend/error";
 import { describe, expect, it } from "vitest";
 
-
 import { generateIconKey, validateImage } from "../imageValidator";
 
 describe("imageValidator", () => {

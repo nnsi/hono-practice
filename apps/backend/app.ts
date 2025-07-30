@@ -11,6 +11,7 @@ import {
   userRoute,
 } from "./feature";
 import { goalRoute } from "./feature/goal/goalRoute";
+import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
@@ -73,6 +74,7 @@ const routes = app
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
   .route("/api/v1", apiV1Route)
+  .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 

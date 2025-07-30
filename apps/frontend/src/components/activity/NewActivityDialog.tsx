@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { apiClient } from "@frontend/utils";
+import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -76,31 +77,38 @@ export function NewActivityDialog({
 
       // Upload icon if file is selected
       if (data.iconType === "upload" && iconFile) {
-        const formData = new FormData();
-        formData.append("file", iconFile);
+        try {
+          // Resize image to 256x256 max and convert to base64
+          const { base64, mimeType } = await resizeImage(iconFile, 256, 256);
 
-        const API_URL =
-          import.meta.env.MODE === "development"
-            ? import.meta.env.VITE_API_URL ||
-              `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-            : import.meta.env.VITE_API_URL;
+          const API_URL =
+            import.meta.env.MODE === "development"
+              ? import.meta.env.VITE_API_URL ||
+                `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+              : import.meta.env.VITE_API_URL;
 
-        const token = tokenStore.getToken();
-        const headers: HeadersInit = {};
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
+          const token = tokenStore.getToken();
+          const headers: HeadersInit = {
+            "Content-Type": "application/json",
+          };
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
 
-        const uploadResponse = await fetch(
-          `${API_URL}users/activities/${activity.id}/icon`,
-          {
-            method: "POST",
-            body: formData,
-            headers,
-          },
-        );
+          const uploadResponse = await fetch(
+            `${API_URL}users/activities/${activity.id}/icon`,
+            {
+              method: "POST",
+              body: JSON.stringify({ base64, mimeType }),
+              headers,
+            },
+          );
 
-        if (!uploadResponse.ok) {
+          if (!uploadResponse.ok) {
+            throw new Error("Failed to upload icon");
+          }
+        } catch (error) {
+          console.error("Failed to upload icon:", error);
           throw new Error("Failed to upload icon");
         }
       }
