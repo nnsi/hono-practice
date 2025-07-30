@@ -1,4 +1,6 @@
-import { Image, Text, View } from "react-native";
+import { useState } from "react";
+
+import { ActivityIndicator, Image, Text, View } from "react-native";
 
 import type { GetActivityResponse } from "@dtos/response";
 
@@ -13,6 +15,9 @@ export function ActivityIcon({
   size = "medium",
   className = "",
 }: ActivityIconProps) {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
   const sizeClasses = {
     small: "w-6 h-6",
     medium: "w-8 h-8",
@@ -30,13 +35,34 @@ export function ActivityIcon({
   const sizeClass = sizeClasses[size];
   const textSize = textSizes[size];
 
-  if (activity.iconType === "upload" && activity.iconUrl) {
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  const iconUrl = activity.iconThumbnailUrl || activity.iconUrl;
+  const showImage = activity.iconType === "upload" && iconUrl && !imageError;
+
+  if (showImage) {
     return (
       <View className={`${sizeClass} ${className}`}>
+        {imageLoading && (
+          <View
+            className={`${sizeClass} absolute z-10 bg-gray-100 rounded items-center justify-center`}
+          >
+            <ActivityIndicator size="small" color="#4b5563" />
+          </View>
+        )}
         <Image
-          source={{ uri: activity.iconUrl }}
+          source={{ uri: iconUrl }}
           className={`${sizeClass} rounded`}
           resizeMode="cover"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       </View>
     );
