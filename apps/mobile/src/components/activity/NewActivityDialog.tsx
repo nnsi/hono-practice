@@ -22,17 +22,25 @@ import {
 
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
+import { getApiUrl } from "../../utils/getApiUrl";
+import { resizeImage } from "../../utils/imageResizer";
+
+import { IconTypeSelector } from "./IconTypeSelector";
 
 export function NewActivityDialog({
   open,
   onOpenChange,
 }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [iconFile, setIconFile] = useState<{ uri: string } | undefined>();
+  const [iconPreview, setIconPreview] = useState<string | undefined>();
+
   const form = useForm<CreateActivityRequest & { kinds: { name: string }[] }>({
     resolver: zodResolver(CreateActivityRequestSchema),
     defaultValues: {
       name: "",
       quantityUnit: "",
       emoji: "",
+      iconType: "emoji",
       showCombinedStats: false,
       kinds: [],
     },
@@ -52,14 +60,63 @@ export function NewActivityDialog({
     mutationFn: async (
       data: CreateActivityRequest & { kinds: { name: string }[] },
     ) => {
-      return apiClient.users.activities.$post({
+      // Create activity first
+      const response = await apiClient.users.activities.$post({
         json: data,
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to create activity");
+      }
+
+      const activity = await response.json();
+
+      // Upload icon if file is selected
+      if (data.iconType === "upload" && iconFile) {
+        try {
+          // Resize image to 256x256 max and convert to base64
+          const { base64, mimeType } = await resizeImage(
+            iconFile.uri,
+            256,
+            256,
+          );
+
+          const API_URL = getApiUrl();
+
+          const token = await apiClient.getAuthToken();
+          const headers: HeadersInit = {
+            "Content-Type": "application/json",
+          };
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+
+          const uploadResponse = await fetch(
+            `${API_URL}users/activities/${activity.id}/icon`,
+            {
+              method: "POST",
+              body: JSON.stringify({ base64, mimeType }),
+              headers,
+            },
+          );
+
+          if (!uploadResponse.ok) {
+            throw new Error("Failed to upload icon");
+          }
+        } catch (error) {
+          console.error("Failed to upload icon:", error);
+          throw new Error("Failed to upload icon");
+        }
+      }
+
+      return activity;
     },
     onSuccess: () => {
       Alert.alert("登録完了", "アクティビティを作成しました");
       onOpenChange(false);
       form.reset();
+      setIconFile(undefined);
+      setIconPreview(undefined);
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
     onError: () => {
@@ -139,19 +196,27 @@ export function NewActivityDialog({
             </View>
 
             <View>
-              <Text className="text-sm text-gray-600 mb-1">絵文字</Text>
-              <Controller
-                control={form.control}
-                name="emoji"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className="bg-gray-100 p-3 rounded-lg text-base text-center w-20"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    placeholder="🏃"
-                  />
-                )}
+              <Text className="text-sm text-gray-600 mb-1">アイコン</Text>
+              <IconTypeSelector
+                value={{
+                  type: form.watch("iconType") || "emoji",
+                  emoji: form.watch("emoji"),
+                  file: iconFile,
+                  preview: iconPreview,
+                }}
+                onChange={(value) => {
+                  form.setValue("iconType", value.type);
+                  if (value.type === "emoji") {
+                    form.setValue("emoji", value.emoji || "");
+                    setIconFile(undefined);
+                    setIconPreview(undefined);
+                  } else if (value.type === "upload") {
+                    form.setValue("emoji", "📷"); // Default emoji for uploaded icons
+                    setIconFile(value.file);
+                    setIconPreview(value.preview);
+                  }
+                }}
+                disabled={isPending}
               />
             </View>
 

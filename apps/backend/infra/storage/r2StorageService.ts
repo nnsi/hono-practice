@@ -1,9 +1,7 @@
 import type { StorageService } from ".";
 import type { R2Bucket } from "@cloudflare/workers-types";
 
-export function newR2StorageService(
-  bucket: R2Bucket,
-): StorageService {
+export function newR2StorageService(bucket: R2Bucket): StorageService {
   return {
     upload: async (file, key, options) => {
       const buffer = await file.arrayBuffer();

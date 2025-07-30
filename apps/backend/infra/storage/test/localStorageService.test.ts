@@ -34,7 +34,9 @@ describe("localStorageService", () => {
 
       // 開発環境ではdata URLが返される
       expect(result.url).toMatch(/^data:text\/plain;base64,/);
-      expect(result.url).toBe(`data:text/plain;base64,${Buffer.from(content).toString("base64")}`);
+      expect(result.url).toBe(
+        `data:text/plain;base64,${Buffer.from(content).toString("base64")}`,
+      );
       expect(result.key).toBe(key);
       expect(result.size).toBe(content.length);
       expect(result.contentType).toBe("text/plain");

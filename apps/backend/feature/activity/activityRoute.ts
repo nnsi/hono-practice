@@ -219,10 +219,10 @@ export function createActivityRoute() {
       const protocol = c.req.header("x-forwarded-proto") || "http";
       const host = c.req.header("host") || "localhost";
       const apiBaseUrl = `${protocol}://${host}`;
-      
+
       // Convert relative URLs to absolute URLs
-      const iconUrl = uploaded.url.startsWith("/") 
-        ? `${apiBaseUrl}${uploaded.url}` 
+      const iconUrl = uploaded.url.startsWith("/")
+        ? `${apiBaseUrl}${uploaded.url}`
         : uploaded.url;
       const iconThumbnailUrl = iconUrl; // Same URL since already resized
 
@@ -260,7 +260,9 @@ export function createActivityRoute() {
         // Extract key from URL
         // URLが絶対URLの場合は /r2/ 以降を取得
         const match = activity.iconUrl.match(/\/r2\/(.+)$/);
-        const key = match ? match[1] : activity.iconUrl.split("/").slice(-4).join("/");
+        const key = match
+          ? match[1]
+          : activity.iconUrl.split("/").slice(-4).join("/");
 
         try {
           await storageService.delete(key);
@@ -275,7 +277,9 @@ export function createActivityRoute() {
       ) {
         // Extract key from URL
         const match = activity.iconThumbnailUrl.match(/\/r2\/(.+)$/);
-        const key = match ? match[1] : activity.iconThumbnailUrl.split("/").slice(-4).join("/");
+        const key = match
+          ? match[1]
+          : activity.iconThumbnailUrl.split("/").slice(-4).join("/");
 
         try {
           await storageService.delete(key);

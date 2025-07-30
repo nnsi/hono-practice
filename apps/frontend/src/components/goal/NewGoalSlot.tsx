@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@components/ui";
 
+import { ActivityIcon } from "../common/ActivityIcon";
+
 type FormData = {
   activityId: string;
   dailyTargetQuantity: number;
@@ -151,13 +153,26 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
                 >
                   <FormControl>
                     <SelectTrigger className="h-10">
-                      <SelectValue placeholder="活動を選択" />
+                      <SelectValue placeholder="活動を選択">
+                        {selectedActivity && (
+                          <div className="flex items-center gap-2">
+                            <ActivityIcon
+                              activity={selectedActivity}
+                              size="small"
+                            />
+                            <span>{selectedActivity.name}</span>
+                          </div>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {activities.map((activity) => (
                       <SelectItem key={activity.id} value={activity.id}>
-                        {activity.emoji} {activity.name}
+                        <div className="flex items-center gap-2">
+                          <ActivityIcon activity={activity} size="small" />
+                          <span>{activity.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

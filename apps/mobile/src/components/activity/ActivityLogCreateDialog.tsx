@@ -23,6 +23,7 @@ import type { GetActivityResponse } from "@dtos/response";
 import { useTimer } from "../../hooks/useTimer";
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
+import { ActivityIcon } from "../common/ActivityIcon";
 
 import { TimerControls } from "./TimerControls";
 import { TimerDisplay } from "./TimerDisplay";
@@ -124,7 +125,11 @@ export function ActivityLogCreateDialog({
               <Text className="text-blue-600 text-base">キャンセル</Text>
             </TouchableOpacity>
             <View className="flex-row items-center">
-              <Text className="text-2xl mr-2">{activity.emoji}</Text>
+              <ActivityIcon
+                activity={activity}
+                size="medium"
+                className="mr-2"
+              />
               <Text className="text-lg font-semibold">{activity.name}</Text>
             </View>
             <TouchableOpacity
@@ -175,7 +180,7 @@ export function ActivityLogCreateDialog({
           )}
 
           <View className="items-center py-8">
-            <Text className="text-6xl mb-4">{activity.emoji}</Text>
+            <ActivityIcon activity={activity} size="xlarge" className="mb-4" />
             <Text className="text-2xl font-bold mb-8">{activity.name}</Text>
 
             {activeTab === "manual" ? (

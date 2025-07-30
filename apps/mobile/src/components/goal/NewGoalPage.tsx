@@ -61,6 +61,10 @@ export const NewGoalPage: React.FC = () => {
     return activity?.quantityUnit || "";
   };
 
+  const getActivity = (activityId: string) => {
+    return activitiesData?.find((a) => a.id === activityId);
+  };
+
   if (goalsLoading) {
     return (
       <View className="flex-1 items-center justify-center py-16">
@@ -81,6 +85,7 @@ export const NewGoalPage: React.FC = () => {
               goal={goal}
               activityName={getActivityName(goal.activityId)}
               activityEmoji={getActivityEmoji(goal.activityId)}
+              activity={getActivity(goal.activityId)}
               quantityUnit={getActivityUnit(goal.activityId)}
               isEditing={editingGoalId === goal.id}
               onEditStart={() => setEditingGoalId(goal.id)}
@@ -108,6 +113,7 @@ export const NewGoalPage: React.FC = () => {
                   goal={goal}
                   activityName={getActivityName(goal.activityId)}
                   activityEmoji={getActivityEmoji(goal.activityId)}
+                  activity={getActivity(goal.activityId)}
                   quantityUnit={getActivityUnit(goal.activityId)}
                   isEditing={editingGoalId === goal.id}
                   onEditStart={() => setEditingGoalId(goal.id)}

@@ -153,3 +153,17 @@ export const apiClient = createApiClient({
     eventBus.emit("token-refreshed", token);
   },
 });
+
+// getAuthToken関数を別途エクスポート
+export const getAuthToken = async () => {
+  // まずtokenStoreから取得を試みる
+  const token = tokenStore.getToken();
+  if (token) return token;
+
+  // なければAsyncStorageから取得
+  const storedToken = await AsyncStorage.getItem("accessToken");
+  if (storedToken) {
+    tokenStore.setToken(storedToken);
+  }
+  return storedToken;
+};

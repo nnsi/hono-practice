@@ -19,7 +19,6 @@ export const NewGoalPage: React.FC = () => {
     activitiesData,
     getActivityName,
     getActivityEmoji,
-    getActivityIcon,
     getActivityUnit,
     getActivity,
     createEditStartHandler,
@@ -46,7 +45,6 @@ export const NewGoalPage: React.FC = () => {
             goal={goal}
             activityName={getActivityName(goal.activityId)}
             activityEmoji={getActivityEmoji(goal.activityId)}
-            activityIcon={getActivityIcon(goal.activityId)}
             quantityUnit={getActivityUnit(goal.activityId)}
             isEditing={editingGoalId === goal.id}
             onEditStart={createEditStartHandler(goal.id)}
@@ -83,7 +81,6 @@ export const NewGoalPage: React.FC = () => {
                 goal={goal}
                 activityName={getActivityName(goal.activityId)}
                 activityEmoji={getActivityEmoji(goal.activityId)}
-                activityIcon={getActivityIcon(goal.activityId)}
                 quantityUnit={getActivityUnit(goal.activityId)}
                 isEditing={editingGoalId === goal.id}
                 onEditStart={createEditStartHandler(goal.id)}
