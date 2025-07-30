@@ -4,12 +4,20 @@ import {
   customType,
   date,
   index,
+  pgEnum,
   pgTable,
   text,
   time,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+// Enum定義
+export const iconTypeEnum = pgEnum("icon_type", [
+  "emoji",
+  "upload",
+  "generate",
+]);
 
 function customTypeNumeric(columnName: string) {
   return customType<{
@@ -135,6 +143,9 @@ export const activities = pgTable(
     name: text("name").notNull(),
     label: text("label").default(""),
     emoji: text("emoji").default(""),
+    iconType: iconTypeEnum("icon_type").default("emoji").notNull(),
+    iconUrl: text("icon_url"),
+    iconThumbnailUrl: text("icon_thumbnail_url"),
     description: text("description").default(""),
     quantityUnit: text("quantity_unit").default(""),
     orderIndex: text("order_index").default(""),

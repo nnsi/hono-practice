@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Modal,
@@ -22,7 +22,11 @@ import {
 import type { GetActivityResponse } from "@dtos/response";
 
 import { Alert } from "../../utils/AlertWrapper";
-import { apiClient } from "../../utils/apiClient";
+import { apiClient, getAuthToken } from "../../utils/apiClient";
+import { getApiUrl } from "../../utils/getApiUrl";
+import { resizeImage } from "../../utils/imageResizer";
+
+import { IconTypeSelector } from "./IconTypeSelector";
 
 export const ActivityEditDialog = ({
   open,
@@ -33,6 +37,8 @@ export const ActivityEditDialog = ({
   onClose: () => void;
   activity: GetActivityResponse | null;
 }) => {
+  const [iconFile, setIconFile] = useState<{ uri: string } | undefined>();
+  const [iconPreview, setIconPreview] = useState<string | undefined>();
   const queryClient = useQueryClient();
   const form = useForm<UpdateActivityRequest>({
     resolver: zodResolver(UpdateActivityRequestSchema),
@@ -130,6 +136,71 @@ export const ActivityEditDialog = ({
     mutate(data);
   };
 
+  // アイコンアップロード
+  const uploadIcon = async (file: { uri: string }) => {
+    if (!activity) return;
+
+    try {
+      // Resize image to 256x256 max and convert to base64
+      const { base64, mimeType } = await resizeImage(file.uri, 256, 256);
+
+      const API_URL = getApiUrl();
+
+      const token = await getAuthToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `${API_URL}users/activities/${activity.id}/icon`,
+        {
+          method: "POST",
+          body: JSON.stringify({ base64, mimeType }),
+          headers,
+        },
+      );
+
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["activity"] });
+      }
+    } catch (error) {
+      console.error("Failed to upload icon:", error);
+      Alert.alert("エラー", "アイコンのアップロードに失敗しました");
+    }
+  };
+
+  // アイコン削除
+  const deleteIcon = async () => {
+    if (!activity) return;
+
+    try {
+      const API_URL = getApiUrl();
+
+      const token = await getAuthToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `${API_URL}users/activities/${activity.id}/icon`,
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
+
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["activity"] });
+      }
+    } catch (error) {
+      console.error("Failed to delete icon:", error);
+    }
+  };
+
   if (!activity) return null;
 
   return (
@@ -196,19 +267,34 @@ export const ActivityEditDialog = ({
             </View>
 
             <View>
-              <Text className="text-sm text-gray-600 mb-1">絵文字</Text>
-              <Controller
-                control={form.control}
-                name="activity.emoji"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className="bg-gray-100 p-3 rounded-lg text-base text-center w-20"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    placeholder="🏃"
-                  />
-                )}
+              <Text className="text-sm text-gray-600 mb-1">アイコン</Text>
+              <IconTypeSelector
+                value={{
+                  type: activity.iconType || "emoji",
+                  emoji: form.watch("activity.emoji"),
+                  file: iconFile,
+                  preview: iconPreview || activity.iconUrl || undefined,
+                }}
+                onChange={async (value) => {
+                  if (value.type === "emoji") {
+                    form.setValue("activity.emoji", value.emoji || "");
+                    setIconFile(undefined);
+                    setIconPreview(undefined);
+                    // Delete uploaded icon if switching back to emoji
+                    if (activity.iconType === "upload" && deleteIcon) {
+                      await deleteIcon();
+                    }
+                  } else if (value.type === "upload") {
+                    form.setValue("activity.emoji", "📷"); // Default emoji for uploaded icons
+                    setIconFile(value.file);
+                    setIconPreview(value.preview);
+                    // Upload icon immediately if file is selected
+                    if (value.file && uploadIcon) {
+                      await uploadIcon(value.file);
+                    }
+                  }
+                }}
+                disabled={isPending}
               />
             </View>
 

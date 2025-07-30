@@ -55,6 +55,7 @@ describe("useActivityLogEdit", () => {
       id: "00000000-0000-4000-8000-000000000101",
       name: "Reading",
       emoji: "📚",
+      iconType: "emoji",
       quantityUnit: "pages",
       kinds: [
         {
@@ -365,6 +366,7 @@ describe("useActivityLogEdit", () => {
       name: "Reading",
       quantityUnit: "pages",
       emoji: "📚",
+      iconType: "emoji",
       kinds: [
         {
           id: "00000000-0000-4000-8000-000000000201",
@@ -395,6 +397,7 @@ describe("useActivityLogEdit", () => {
       name: "Reading",
       quantityUnit: "pages",
       emoji: "📚",
+      iconType: "emoji",
       kinds: [
         {
           id: "00000000-0000-4000-8000-000000000201",

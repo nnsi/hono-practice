@@ -65,7 +65,7 @@ export function createUserRoute() {
         JWT_SECRET,
       );
 
-      const isDev = NODE_ENV === "development";
+      const isDev = NODE_ENV === "development" || NODE_ENV === "test";
       // Only set refresh token cookie, access token is returned in response body
       setCookie(c, "refresh_token", refreshToken, {
         httpOnly: true,

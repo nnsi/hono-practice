@@ -6,6 +6,9 @@ import { userIdSchema } from "../user";
 import { activityIdSchema } from "./activityId";
 import { activityKindIdSchema } from "./activityKindId";
 
+export const iconTypeSchema = z.enum(["emoji", "upload", "generate"]);
+export type IconType = z.infer<typeof iconTypeSchema>;
+
 export const ActivityKindSchema = z.object({
   id: activityKindIdSchema,
   name: z.string(),
@@ -21,6 +24,9 @@ const BaseActivitySchema = z.object({
   name: z.string(),
   label: z.string().nullish(),
   emoji: z.string().nullish(),
+  iconType: iconTypeSchema,
+  iconUrl: z.string().nullish(),
+  iconThumbnailUrl: z.string().nullish(),
   description: z.string().nullish(),
   quantityUnit: z.string().nullable(),
   orderIndex: z.string().nullish(),

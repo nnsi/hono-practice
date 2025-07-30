@@ -18,6 +18,7 @@ const mockActivities = [
     id: "activity-1",
     name: "ランニング",
     emoji: "🏃",
+    iconType: "emoji",
     kinds: [
       { id: "kind-1", name: "5km" },
       { id: "kind-2", name: "10km" },
@@ -27,6 +28,7 @@ const mockActivities = [
     id: "activity-2",
     name: "読書",
     emoji: "📚",
+    iconType: "emoji",
     kinds: [],
   },
 ];

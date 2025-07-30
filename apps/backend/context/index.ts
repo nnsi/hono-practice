@@ -4,6 +4,7 @@ import type { Config } from "../config";
 import type { UserId } from "../domain";
 import type { Subscription } from "../domain/subscription";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
+import type { R2Bucket } from "@cloudflare/workers-types";
 
 export type JwtPayload = {
   id: string;
@@ -19,6 +20,7 @@ export type AppContext = {
   };
   Bindings: Config & {
     DB: QueryExecutor;
+    R2_BUCKET?: R2Bucket;
   };
 };
 

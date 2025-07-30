@@ -1,8 +1,13 @@
 import { Hono } from "hono";
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
 import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
+import { createStorageService } from "@backend/infra/storage";
 import { syncMiddleware } from "@backend/middleware/syncMiddleware";
+import { generateIconKey } from "@backend/utils/imageValidator";
 import { zValidator } from "@hono/zod-validator";
 
 import {
@@ -10,6 +15,7 @@ import {
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@dtos/request";
+import type { GetActivityResponse } from "@dtos/response";
 
 import { newSyncRepository } from "../sync/syncRepository";
 
@@ -18,6 +24,52 @@ import { newActivityRepository } from "./activityRepository";
 import { newActivityUsecase } from "./activityUsecase";
 
 import type { AppContext } from "../../context";
+
+// ローカル環境で画像URLをBase64に変換する関数
+async function convertImageUrlsToBase64(
+  activity: GetActivityResponse,
+  env: AppContext["Bindings"],
+): Promise<GetActivityResponse> {
+  if (env.NODE_ENV !== "development") {
+    return activity;
+  }
+
+  const convertUrl = async (
+    url: string | null | undefined,
+  ): Promise<string | null | undefined> => {
+    if (!url || !url.includes("/public/uploads/")) {
+      return url;
+    }
+
+    try {
+      // URLからファイルパスを抽出
+      const match = url.match(/\/public\/uploads\/(.*)/);
+      if (!match || !match[1]) return url;
+
+      const filePath = join(process.cwd(), "public", "uploads", match[1]);
+      const data = await readFile(filePath);
+
+      // MIMEタイプを推測
+      let contentType = "application/octet-stream";
+      if (url.endsWith(".webp")) contentType = "image/webp";
+      else if (url.endsWith(".jpg") || url.endsWith(".jpeg"))
+        contentType = "image/jpeg";
+      else if (url.endsWith(".png")) contentType = "image/png";
+      else if (url.endsWith(".gif")) contentType = "image/gif";
+
+      return `data:${contentType};base64,${data.toString("base64")}`;
+    } catch (error) {
+      console.error("Failed to convert image URL to base64:", error);
+      return url;
+    }
+  };
+
+  return {
+    ...activity,
+    iconUrl: await convertUrl(activity.iconUrl),
+    iconThumbnailUrl: await convertUrl(activity.iconThumbnailUrl),
+  };
+}
 
 export function createActivityRoute() {
   const app = new Hono<
@@ -56,16 +108,26 @@ export function createActivityRoute() {
     .get("/", async (c) => {
       const userId = c.get("userId");
 
-      const res = await c.var.h.getActivities(userId);
-      return c.json(res);
+      const activities = await c.var.h.getActivities(userId);
+
+      // ローカル環境では画像URLをBase64に変換
+      const convertedActivities = await Promise.all(
+        activities.map((activity) => convertImageUrlsToBase64(activity, c.env)),
+      );
+
+      return c.json(convertedActivities);
     })
     .get("/:id", async (c) => {
       const userId = c.get("userId");
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      const res = await c.var.h.getActivity(userId, activityId);
-      return c.json(res);
+      const activity = await c.var.h.getActivity(userId, activityId);
+
+      // ローカル環境では画像URLをBase64に変換
+      const convertedActivity = await convertImageUrlsToBase64(activity, c.env);
+
+      return c.json(convertedActivity);
     })
     .post("/", zValidator("json", CreateActivityRequestSchema), async (c) => {
       const userId = c.get("userId");
@@ -109,6 +171,129 @@ export function createActivityRoute() {
 
       const res = await c.var.h.deleteActivity(userId, activityId);
       return c.json(res);
+    })
+    .post("/:id/icon", async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const activityId = createActivityId(id);
+
+      const body = await c.req.json<{ base64: string; mimeType: string }>();
+      const { base64, mimeType } = body;
+
+      // Validate mime type
+      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+      if (!ALLOWED_TYPES.includes(mimeType)) {
+        return c.json({ error: "Invalid image type" }, 400);
+      }
+
+      // Get activity to check ownership
+      const activity = await c.var.h.getActivity(userId, activityId);
+      if (!activity) {
+        return c.json({ error: "Activity not found" }, 404);
+      }
+
+      // Create storage service
+      const storageService = createStorageService(c.env);
+
+      // Generate unique key for image
+      const mainKey = generateIconKey(userId, activityId);
+
+      // Convert base64 to Uint8Array
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Create file from bytes
+      const file = new File([bytes], "icon.webp", {
+        type: mimeType,
+      });
+
+      // Upload image
+      const uploaded = await storageService.upload(file, mainKey, {
+        contentType: mimeType,
+      });
+
+      // Convert relative URLs to absolute URLs using the request host
+      const protocol = c.req.header("x-forwarded-proto") || "http";
+      const host = c.req.header("host") || "localhost";
+      const apiBaseUrl = `${protocol}://${host}`;
+
+      // Convert relative URLs to absolute URLs
+      const iconUrl = uploaded.url.startsWith("/")
+        ? `${apiBaseUrl}${uploaded.url}`
+        : uploaded.url;
+      const iconThumbnailUrl = iconUrl; // Same URL since already resized
+
+      // Update activity with new icon
+      const db = c.env.DB;
+      const repo = newActivityRepository(db);
+      await repo.updateActivityIcon(
+        activityId,
+        "upload",
+        iconUrl,
+        iconThumbnailUrl,
+      );
+
+      return c.json({
+        iconUrl,
+        iconThumbnailUrl,
+      });
+    })
+    .delete("/:id/icon", async (c) => {
+      const userId = c.get("userId");
+      const { id } = c.req.param();
+      const activityId = createActivityId(id);
+
+      // Get activity to check ownership and get current icon URLs
+      const activity = await c.var.h.getActivity(userId, activityId);
+      if (!activity) {
+        return c.json({ error: "Activity not found" }, 404);
+      }
+
+      // Create storage service
+      const storageService = createStorageService(c.env);
+
+      // Delete files from storage if they exist
+      if (activity.iconUrl) {
+        // Extract key from URL
+        // URLが絶対URLの場合は /r2/ 以降を取得
+        const match = activity.iconUrl.match(/\/r2\/(.+)$/);
+        const key = match
+          ? match[1]
+          : activity.iconUrl.split("/").slice(-4).join("/");
+
+        try {
+          await storageService.delete(key);
+        } catch (error) {
+          console.error("Failed to delete main icon:", error);
+        }
+      }
+
+      if (
+        activity.iconThumbnailUrl &&
+        activity.iconThumbnailUrl !== activity.iconUrl
+      ) {
+        // Extract key from URL
+        const match = activity.iconThumbnailUrl.match(/\/r2\/(.+)$/);
+        const key = match
+          ? match[1]
+          : activity.iconThumbnailUrl.split("/").slice(-4).join("/");
+
+        try {
+          await storageService.delete(key);
+        } catch (error) {
+          console.error("Failed to delete thumbnail icon:", error);
+        }
+      }
+
+      // Update activity to reset icon to emoji
+      const db = c.env.DB;
+      const repo = newActivityRepository(db);
+      await repo.updateActivityIcon(activityId, "emoji", null, null);
+
+      return c.json({ success: true });
     });
 }
 

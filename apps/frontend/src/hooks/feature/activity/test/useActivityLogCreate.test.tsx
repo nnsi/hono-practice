@@ -103,6 +103,7 @@ describe("useActivityLogCreate", () => {
       description: "毎日のランニング",
       quantityUnit: "分",
       emoji: "🏃",
+      iconType: "emoji",
       showCombinedStats: false,
       kinds: [
         { id: "kind-1", name: "朝ラン" },

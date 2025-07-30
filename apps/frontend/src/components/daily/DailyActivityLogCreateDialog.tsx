@@ -49,7 +49,16 @@ export function DailyActivityLogCreateDialog({
               >
                 <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
                   <span className="flex items-center justify-center w-10 h-10 text-3xl">
-                    {activity.emoji}
+                    {activity.iconType === "upload" &&
+                    activity.iconThumbnailUrl ? (
+                      <img
+                        src={activity.iconThumbnailUrl}
+                        alt={activity.name}
+                        className="w-10 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      activity.emoji
+                    )}
                   </span>
                   <div className="flex-1">
                     <div className="text-base font-medium">{activity.name}</div>

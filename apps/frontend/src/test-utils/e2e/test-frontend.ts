@@ -26,7 +26,9 @@ export async function startTestFrontend(
       env: {
         ...process.env,
         VITE_PORT: String(port),
-        VITE_API_URL: `http://localhost:${apiPort}/`
+        VITE_API_URL: `http://localhost:${apiPort}/`,
+        VITE_E2E_TEST: "true",
+        VITE_GOOGLE_OAUTH_CLIENT_ID: "test-client-id",
       },
       stdio: ["ignore", "pipe", "pipe"],
       // プロセスグループを作成して、子プロセスも含めて終了できるようにする

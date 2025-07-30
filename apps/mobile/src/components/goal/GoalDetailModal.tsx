@@ -10,6 +10,7 @@ import { GetActivitiesResponseSchema, type GoalResponse } from "@dtos/response";
 
 import { useGoal, useGoalStats } from "../../hooks/useGoals";
 import { apiClient } from "../../utils/apiClient";
+import { ActivityIcon } from "../common/ActivityIcon";
 
 type GoalDetailModalProps = {
   open: boolean;
@@ -133,7 +134,11 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
             {/* Header */}
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center gap-2">
-                <Text className="text-2xl">{activityEmoji}</Text>
+                {activity ? (
+                  <ActivityIcon activity={activity} size="medium" />
+                ) : (
+                  <Text className="text-2xl">{activityEmoji}</Text>
+                )}
                 <Text className="text-xl font-bold">{activityName}</Text>
               </View>
               <TouchableOpacity

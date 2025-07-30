@@ -21,6 +21,8 @@
     "expo": "~53.0.13",
     "expo-application": "^6.1.4",
     "expo-constants": "~17.1.6",
+    "expo-image-manipulator": "^13.1.7",
+    "expo-image-picker": "^16.1.4",
     "expo-linking": "~7.1.5",
     "expo-router": "~5.1.1",
     "expo-status-bar": "~2.2.3",

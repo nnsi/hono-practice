@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from "@components/ui";
 
+import { ActivityIcon } from "../common/ActivityIcon";
+
 type GoalDetailModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -136,7 +138,11 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">{activityEmoji}</span>
+            {activity ? (
+              <ActivityIcon activity={activity} size="medium" />
+            ) : (
+              <span className="text-2xl">{activityEmoji}</span>
+            )}
             <span>{activityName}</span>
           </DialogTitle>
           <DialogDescription>

@@ -35,7 +35,10 @@ export const TokenProvider: React.FC<TokenProviderProps> = ({
   timeProvider,
   eventBus,
 }) => {
-  const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(() => {
+    // 初期値としてtokenStoreから読み込む
+    return tokenStore.getToken();
+  });
   const refreshTimeoutRef = useRef<number | NodeJS.Timeout | null>(null);
 
   const setAccessToken = useCallback((token: string | null) => {
@@ -57,6 +60,13 @@ export const TokenProvider: React.FC<TokenProviderProps> = ({
 
   const scheduleTokenRefresh = useCallback(
     (expiresIn: number = 15 * 60) => {
+      // E2E環境ではトークンリフレッシュのスケジューリングをスキップ
+      const isE2E = import.meta.env.VITE_E2E_TEST === "true";
+      if (isE2E) {
+        console.log("Skipping token refresh scheduling in E2E environment");
+        return;
+      }
+
       // Clear any existing timeout
       if (refreshTimeoutRef.current) {
         if (timeProvider) {

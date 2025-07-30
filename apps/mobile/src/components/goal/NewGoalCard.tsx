@@ -10,6 +10,7 @@ import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 
 import { useDeleteGoal, useUpdateGoal } from "../../hooks/useGoals";
 import { Alert } from "../../utils/AlertWrapper";
+import { ActivityIcon } from "../common/ActivityIcon";
 
 import { GoalDetailModal } from "./GoalDetailModal";
 
@@ -17,6 +18,7 @@ type GoalCardProps = {
   goal: GoalResponse;
   activityName: string;
   activityEmoji: string;
+  activity?: GetActivityResponse;
   isEditing: boolean;
   onEditStart: () => void;
   onEditEnd: () => void;
@@ -65,6 +67,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   goal,
   activityName,
   activityEmoji,
+  activity,
   isEditing,
   onEditStart,
   onEditEnd,
@@ -186,7 +189,15 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           }}
         />
         <View className="absolute inset-0 px-3 py-2 flex-row items-center gap-2">
-          <Text className="text-xl flex-shrink-0">{activityEmoji}</Text>
+          {activity ? (
+            <ActivityIcon
+              activity={activity}
+              size="small"
+              className="flex-shrink-0"
+            />
+          ) : (
+            <Text className="text-xl flex-shrink-0">{activityEmoji}</Text>
+          )}
           <Text
             className="text-xs font-medium truncate"
             style={{ maxWidth: 80 }}
@@ -257,7 +268,15 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         <View className="absolute inset-0 px-3 py-2 flex-row items-center gap-2">
           {/* 左側: 絵文字とアクティビティ名 */}
           <View className="flex-row items-center gap-2 flex-shrink-0">
-            <Text className="text-2xl flex-shrink-0">{activityEmoji}</Text>
+            {activity ? (
+              <ActivityIcon
+                activity={activity}
+                size="medium"
+                className="flex-shrink-0"
+              />
+            ) : (
+              <Text className="text-2xl flex-shrink-0">{activityEmoji}</Text>
+            )}
             <Text className="text-sm font-semibold truncate">
               {activityName}
             </Text>

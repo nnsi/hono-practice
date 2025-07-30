@@ -78,6 +78,7 @@ describe("useActivityBatchData", () => {
         id: "00000000-0000-4000-8000-000000000001",
         name: "ランニング",
         emoji: "🏃",
+        iconType: "emoji",
         description: "Running activity",
         quantityUnit: "分",
         kinds: [],
@@ -87,6 +88,7 @@ describe("useActivityBatchData", () => {
         id: "00000000-0000-4000-8000-000000000002",
         name: "読書",
         emoji: "📚",
+        iconType: "emoji",
         description: "Reading activity",
         quantityUnit: "ページ",
         kinds: [],
@@ -105,6 +107,7 @@ describe("useActivityBatchData", () => {
           name: "ランニング",
           quantityUnit: "分",
           emoji: "🏃",
+          iconType: "emoji",
         },
         activityKind: null,
         createdAt: new Date("2024-01-15"),
@@ -120,6 +123,7 @@ describe("useActivityBatchData", () => {
           name: "読書",
           quantityUnit: "ページ",
           emoji: "📚",
+          iconType: "emoji",
         },
         activityKind: null,
         createdAt: new Date("2024-01-15"),
@@ -138,7 +142,7 @@ describe("useActivityBatchData", () => {
     });
 
     vi.mocked(useActivityLogSync).mockReturnValue({
-      mergedActivityLogs: mockActivityLogs,
+      mergedActivityLogs: mockActivityLogs as any,
       isOfflineData: () => false,
     });
 
@@ -200,6 +204,7 @@ describe("useActivityBatchData", () => {
         id: "00000000-0000-4000-8000-000000000001",
         name: "Test Activity",
         emoji: "🏃",
+        iconType: "emoji",
         description: "Test activity description",
         quantityUnit: "分",
         kinds: [],
@@ -218,6 +223,7 @@ describe("useActivityBatchData", () => {
           name: "Test Activity",
           quantityUnit: "分",
           emoji: "🏃",
+          iconType: "emoji",
         },
         activityKind: null,
         createdAt: new Date("2024-01-15"),
@@ -231,7 +237,7 @@ describe("useActivityBatchData", () => {
     } as any);
 
     vi.mocked(useActivityLogSync).mockReturnValue({
-      mergedActivityLogs: mockActivityLogs,
+      mergedActivityLogs: mockActivityLogs as any,
       isOfflineData: () => false,
     });
 
@@ -281,6 +287,7 @@ describe("useActivityBatchData", () => {
         name: "Test Activity",
         quantityUnit: "分",
         emoji: "🏃",
+        iconType: "emoji",
       },
       activityKind: null,
       createdAt: new Date("2024-01-15"),
@@ -295,7 +302,7 @@ describe("useActivityBatchData", () => {
     } as any);
 
     vi.mocked(useActivityLogSync).mockReturnValue({
-      mergedActivityLogs: [mockActivityLogWithActivity],
+      mergedActivityLogs: [mockActivityLogWithActivity] as any,
       isOfflineData: () => false,
     });
 
@@ -359,6 +366,7 @@ describe("useActivityBatchData", () => {
         id: "00000000-0000-4000-8000-000000000001",
         name: "Test Activity",
         emoji: "🏃",
+        iconType: "emoji",
         description: "Test description",
         quantityUnit: "回",
         kinds: [],
@@ -398,6 +406,7 @@ describe("useActivityBatchData", () => {
         name: "Test Activity",
         quantityUnit: "分",
         emoji: "🏃",
+        iconType: "emoji",
       },
       activityKind: null,
       createdAt: new Date("2024-01-15"),
@@ -409,7 +418,7 @@ describe("useActivityBatchData", () => {
     );
 
     vi.mocked(useActivityLogSync).mockReturnValue({
-      mergedActivityLogs: [mockActivityLog],
+      mergedActivityLogs: [mockActivityLog as any],
       isOfflineData: mockIsOfflineData,
     });
 
@@ -423,7 +432,9 @@ describe("useActivityBatchData", () => {
 
     await waitFor(() => {
       expect(result.current.isOfflineData).toBe(mockIsOfflineData);
-      expect(result.current.isOfflineData(mockActivityLog)).toBe(true);
+      if (typeof result.current.isOfflineData === "function") {
+        expect(result.current.isOfflineData(mockActivityLog as any)).toBe(true);
+      }
     });
   });
 

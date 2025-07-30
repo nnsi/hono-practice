@@ -11,6 +11,7 @@ import {
   userRoute,
 } from "./feature";
 import { goalRoute } from "./feature/goal/goalRoute";
+import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
@@ -27,6 +28,7 @@ app.use("*", async (c, next) => {
     // ローカル開発環境のポート
     allowedOrigins.push(
       "http://localhost:5176",
+      "http://localhost:5177", // E2Eテスト用追加ポート
       "http://localhost:8081",
       "http://localhost:8082",
       "http://localhost:19006", // Expo Web
@@ -55,6 +57,7 @@ app.use("*", async (c, next) => {
 
   return middleware(c, next);
 });
+
 app.use("/users/*", authMiddleware);
 
 const routes = app
@@ -71,6 +74,7 @@ const routes = app
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
   .route("/api/v1", apiV1Route)
+  .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 

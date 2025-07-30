@@ -59,7 +59,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
 
       const { token, refreshToken } = await c.var.h.login(body);
 
-      const isDev = NODE_ENV === "development";
+      const isDev = NODE_ENV === "development" || NODE_ENV === "test";
       // Only set refresh token cookie, access token is returned in response body
       setCookie(c, "refresh_token", refreshToken, {
         httpOnly: true,
@@ -91,7 +91,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const { token, refreshToken } =
           await c.var.h.refreshToken(refreshTokenValue);
 
-        const isDev = NODE_ENV === "development";
+        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
         // Only set refresh token cookie, access token is returned in response body
         setCookie(c, "refresh_token", refreshToken, {
           httpOnly: true,
@@ -124,7 +124,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       }
       const result = await c.var.h.logout(userId, refreshTokenValue);
 
-      const isDev = c.env.NODE_ENV === "development";
+      const isDev =
+        c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test";
       // Only clear refresh token cookie since access token is now in memory
       setCookie(c, "refresh_token", "", {
         httpOnly: true,
@@ -155,7 +156,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const userUsecase = newUserUsecase(repo, userProviderRepo);
         const user = await userUsecase.getUserById(userId);
 
-        const isDev = NODE_ENV === "development";
+        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
         // Only set refresh token cookie, access token is returned in response body
         setCookie(c, "refresh_token", refreshToken, {
           httpOnly: true,

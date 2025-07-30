@@ -27,12 +27,14 @@ export async function startTestBackend(port = 3457) {
 
   // Test configuration
   const testConfig: Config = {
-    APP_URL: `http://localhost:${port}`,
+    APP_URL: "http://localhost:5176", // フロントエンドのURLに合わせる
     JWT_SECRET: "test-jwt-secret-very-secure-key-for-testing",
     NODE_ENV: "test",
     DATABASE_URL: "pglite://memory",
     API_PORT: port,
     GOOGLE_OAUTH_CLIENT_ID: "test-client-id",
+    STORAGE_TYPE: "local",
+    UPLOAD_DIR: "public/uploads",
   };
 
   // Start the server

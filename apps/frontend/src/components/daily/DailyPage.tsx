@@ -45,7 +45,16 @@ export const ActivityDailyPage: React.FC = () => {
               >
                 <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
                   <span className="flex items-center justify-center w-10 h-10 text-3xl">
-                    {log.activity.emoji}
+                    {log.activity.iconType === "upload" &&
+                    log.activity.iconThumbnailUrl ? (
+                      <img
+                        src={log.activity.iconThumbnailUrl}
+                        alt={log.activity.name}
+                        className="w-10 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      log.activity.emoji
+                    )}
                   </span>
                   <div className="flex-1">
                     <div className="text-lg font-semibold flex items-center gap-2">

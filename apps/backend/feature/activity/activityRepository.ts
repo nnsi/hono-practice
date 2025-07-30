@@ -28,6 +28,12 @@ export type ActivityRepository<T = any> = {
   getLastOrderIndexByUserId(userId: UserId): Promise<string | undefined>;
   createActivity(activity: Activity): Promise<Activity>;
   updateActivity(activity: Activity): Promise<Activity>;
+  updateActivityIcon(
+    activityId: ActivityId,
+    iconType: "emoji" | "upload" | "generate",
+    iconUrl?: string | null,
+    iconThumbnailUrl?: string | null,
+  ): Promise<void>;
   deleteActivity(activity: Activity): Promise<void>;
   getActivityChangesAfter(
     userId: UserId,
@@ -49,6 +55,7 @@ export function newActivityRepository(
     getLastOrderIndexByUserId: getLastOrderIndexByUserId(db),
     createActivity: createActivity(db),
     updateActivity: updateActivity(db),
+    updateActivityIcon: updateActivityIcon(db),
     deleteActivity: deleteActivity(db),
     getActivityChangesAfter: getActivityChangesAfter(db),
     withTx: (tx) => newActivityRepository(tx),
@@ -80,6 +87,9 @@ function getActivitiesByUserId(db: QueryExecutor) {
         name: r.name,
         label: r.label || "",
         emoji: r.emoji || "",
+        iconType: r.iconType,
+        iconUrl: r.iconUrl,
+        iconThumbnailUrl: r.iconThumbnailUrl,
         description: r.description || "",
         quantityUnit: r.quantityUnit || "",
         orderIndex: r.orderIndex || "",
@@ -120,6 +130,9 @@ function getActivitiesByIdsAndUserId(db: QueryExecutor) {
         name: r.name,
         label: r.label || "",
         emoji: r.emoji || "",
+        iconType: r.iconType,
+        iconUrl: r.iconUrl,
+        iconThumbnailUrl: r.iconThumbnailUrl,
         description: r.description || "",
         quantityUnit: r.quantityUnit || "",
         orderIndex: r.orderIndex || "",
@@ -160,6 +173,9 @@ function getActivityByIdAndUserId(db: QueryExecutor) {
       name: row.name,
       label: row.label || "",
       emoji: row.emoji || "",
+      iconType: row.iconType,
+      iconUrl: row.iconUrl,
+      iconThumbnailUrl: row.iconThumbnailUrl,
       description: row.description || "",
       quantityUnit: row.quantityUnit || "",
       orderIndex: row.orderIndex || "",
@@ -197,6 +213,9 @@ function getActivityByUserIdAndActivityKindId(db: QueryExecutor) {
       name: row.name,
       label: row.label || "",
       emoji: row.emoji || "",
+      iconType: row.iconType,
+      iconUrl: row.iconUrl,
+      iconThumbnailUrl: row.iconThumbnailUrl,
       description: row.description || "",
       quantityUnit: row.quantityUnit || "",
       orderIndex: row.orderIndex || "",
@@ -236,7 +255,14 @@ function createActivity(db: QueryExecutor) {
       .returning();
 
     if (!kinds || kinds.length === 0) {
-      return createActivityEntity({ ...result, kinds: [], type: "persisted" });
+      return createActivityEntity({
+        ...result,
+        iconType: result.iconType,
+        iconUrl: result.iconUrl,
+        iconThumbnailUrl: result.iconThumbnailUrl,
+        kinds: [],
+        type: "persisted",
+      });
     }
 
     const activityKindResults = await db
@@ -255,6 +281,9 @@ function createActivity(db: QueryExecutor) {
 
     return createActivityEntity({
       ...result,
+      iconType: result.iconType,
+      iconUrl: result.iconUrl,
+      iconThumbnailUrl: result.iconThumbnailUrl,
       kinds: parsedActivityKinds,
       type: "persisted",
     });
@@ -366,6 +395,9 @@ function getActivityChangesAfter(db: QueryExecutor) {
           name: row.name,
           label: row.label || "",
           emoji: row.emoji || "",
+          iconType: row.iconType,
+          iconUrl: row.iconUrl,
+          iconThumbnailUrl: row.iconThumbnailUrl,
           description: row.description || "",
           quantityUnit: row.quantityUnit || "",
           orderIndex: row.orderIndex || "",
@@ -381,5 +413,24 @@ function getActivityChangesAfter(db: QueryExecutor) {
       activities: activitiesWithKinds,
       hasMore,
     };
+  };
+}
+
+function updateActivityIcon(db: QueryExecutor) {
+  return async (
+    activityId: ActivityId,
+    iconType: "emoji" | "upload" | "generate",
+    iconUrl?: string | null,
+    iconThumbnailUrl?: string | null,
+  ): Promise<void> => {
+    await db
+      .update(activities)
+      .set({
+        iconType,
+        iconUrl: iconUrl || null,
+        iconThumbnailUrl: iconThumbnailUrl || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(activities.id, activityId));
   };
 }

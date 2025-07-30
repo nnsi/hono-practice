@@ -26,6 +26,7 @@ describe("useDailyActivityCreate", () => {
       id: "00000000-0000-4000-8000-000000000001",
       name: "Running",
       emoji: "🏃",
+      iconType: "emoji",
       quantityUnit: "km",
       kinds: [],
       showCombinedStats: false,
@@ -34,6 +35,7 @@ describe("useDailyActivityCreate", () => {
       id: "00000000-0000-4000-8000-000000000002",
       name: "Reading",
       emoji: "📚",
+      iconType: "emoji",
       quantityUnit: "pages",
       kinds: [
         {

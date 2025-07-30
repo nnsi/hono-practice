@@ -11,6 +11,7 @@ import type { GetActivityResponse } from "@dtos/response";
 
 import { useCreateGoal } from "../../hooks/useGoals";
 import { Alert } from "../../utils/AlertWrapper";
+import { ActivityIcon } from "../common/ActivityIcon";
 
 type FormData = {
   activityId: string;
@@ -101,9 +102,10 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
           className="h-10 border border-gray-300 rounded bg-white px-3 justify-center"
         >
           {selectedActivity ? (
-            <Text>
-              {selectedActivity.emoji} {selectedActivity.name}
-            </Text>
+            <View className="flex-row items-center gap-2">
+              <ActivityIcon activity={selectedActivity} size="small" />
+              <Text>{selectedActivity.name}</Text>
+            </View>
           ) : (
             <Text className="text-gray-500">活動を選択</Text>
           )}
@@ -205,8 +207,8 @@ export const NewGoalSlot: React.FC<NewGoalSlotProps> = ({
                   }}
                   className="flex-row items-center gap-3 py-3 border-b border-gray-100"
                 >
-                  <Text className="text-2xl">{activity.emoji}</Text>
-                  <Text className="text-base">{activity.name}</Text>
+                  <ActivityIcon activity={activity} size="medium" />
+                  <Text className="text-base ml-1">{activity.name}</Text>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
