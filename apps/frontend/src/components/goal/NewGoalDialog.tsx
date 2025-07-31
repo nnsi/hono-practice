@@ -128,7 +128,10 @@ export const NewGoalDialog: React.FC<NewGoalDialogProps> = ({
                         <SelectValue placeholder="活動を選択">
                           {selectedActivity && (
                             <div className="flex items-center gap-2">
-                              <ActivityIcon activity={selectedActivity} size="small" />
+                              <ActivityIcon
+                                activity={selectedActivity}
+                                size="small"
+                              />
                               <span>{selectedActivity.name}</span>
                             </div>
                           )}

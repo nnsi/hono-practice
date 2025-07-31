@@ -36,6 +36,10 @@ export default defineConfig({
     environmentMatchGlobs: [
       // フロントエンドのテストはjsdom環境で実行
       ["**/apps/frontend/**", "jsdom"],
+      // frontend-shared/adaptersのテストもDOM環境が必要
+      ["**/packages/frontend-shared/adapters/**", "jsdom"],
+      // frontend-shared/hooksのテストもDOM環境が必要
+      ["**/packages/frontend-shared/hooks/**", "jsdom"],
     ],
     coverage: {
       provider: "v8",

@@ -17,9 +17,9 @@ type TaskItem = {
   dueDate: string | null;
   doneDate: string | null;
   memo: string | null;
-  archivedAt: string | null;
-  createdAt: string;
-  updatedAt: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 interface TaskGroupProps {
@@ -44,7 +44,7 @@ export function TaskGroup({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
-  const { toggleTaskDone, moveToToday, archiveTask } = useTaskActions();
+  const { toggleTaskDone, archiveTask } = useTaskActions();
 
   const handleTaskClick = (task: TaskItem) => {
     setSelectedTask(task);
@@ -53,10 +53,6 @@ export function TaskGroup({
 
   const handleToggleTaskDone = async (task: TaskItem) => {
     await toggleTaskDone(task);
-  };
-
-  const handleMoveToToday = async (task: TaskItem) => {
-    await moveToToday(task);
   };
 
   const handleArchiveTask = async (task: TaskItem) => {
@@ -136,19 +132,6 @@ export function TaskGroup({
                       name="archive-outline"
                       size={20}
                       color="#6B7280"
-                    />
-                  </TouchableOpacity>
-                )}
-                {/* 未完了タスクの今日やるボタン */}
-                {!completed && !task.doneDate && title !== "今日" && (
-                  <TouchableOpacity
-                    onPress={() => handleMoveToToday(task)}
-                    style={styles.actionButton}
-                  >
-                    <Ionicons
-                      name="calendar-outline"
-                      size={20}
-                      color="#3B82F6"
                     />
                   </TouchableOpacity>
                 )}

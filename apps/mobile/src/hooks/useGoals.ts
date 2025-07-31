@@ -1,153 +1,58 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
 import {
-  type CreateGoalRequest,
-  CreateGoalRequestSchema,
-  type UpdateGoalRequest,
-  UpdateGoalRequestSchema,
-} from "@dtos/request";
-import {
-  type GetGoalsResponse,
-  GetGoalsResponseSchema,
-  type GoalResponse,
-  type GoalStatsResponse,
-  GoalStatsResponseSchema,
-} from "@dtos/response";
+  type GoalFilters,
+  createUseCreateGoal,
+  createUseDeleteGoal,
+  createUseGoal,
+  createUseGoalStats,
+  createUseGoals,
+  createUseUpdateGoal,
+} from "@packages/frontend-shared/hooks";
 
 import { apiClient } from "../utils/apiClient";
 
-type GoalFilters = {
-  activityId?: string;
-  isActive?: boolean;
-};
-
+/**
+ * Goals一覧を取得するフック
+ */
 export function useGoals(filters?: GoalFilters) {
-  const queryKey = ["goals", filters];
-
-  return useQuery<GetGoalsResponse>({
-    queryKey,
-    queryFn: async () => {
-      const params = new URLSearchParams();
-
-      if (filters?.activityId) params.append("activityId", filters.activityId);
-      if (filters?.isActive !== undefined)
-        params.append("isActive", filters.isActive.toString());
-
-      const queryString = params.toString();
-      const path = queryString ? `/users/goals?${queryString}` : "/users/goals";
-
-      // Use batch API to make the request with query parameters
-      const res = await apiClient.batch.$post({
-        json: [
-          {
-            path: path,
-          },
-        ],
-      });
-      const json = await res.json();
-
-      const parsed = GetGoalsResponseSchema.safeParse(json[0]);
-      if (!parsed.success) {
-        throw new Error("Failed to parse goals");
-      }
-
-      return parsed.data;
-    },
-  });
+  return createUseGoals({ apiClient, filters });
 }
 
+/**
+ * 単一のGoalを取得するフック
+ */
 export function useGoal(id: string) {
-  return useQuery<GoalResponse | undefined>({
-    queryKey: ["goal", id],
-    queryFn: async () => {
-      const res = await apiClient.users.goals.$get();
-      const json = await res.json();
-      const parsed = GetGoalsResponseSchema.safeParse(json);
-      if (!parsed.success) {
-        throw new Error("Failed to parse goals");
-      }
-      const goal = parsed.data.goals.find((g) => g.id === id);
-      return goal;
-    },
-    enabled: !!id,
-  });
+  const result = createUseGoal({ apiClient, id });
+  // Mobile版はundefinedを使用
+  return {
+    ...result,
+    data: result.data === null ? undefined : result.data,
+  };
 }
 
+/**
+ * Goal作成用のフック
+ */
 export function useCreateGoal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateGoalRequest) => {
-      const validated = CreateGoalRequestSchema.parse(data);
-      const res = await apiClient.users.goals.$post({
-        json: validated,
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-    },
-  });
+  return createUseCreateGoal({ apiClient });
 }
 
+/**
+ * Goal更新用のフック
+ */
 export function useUpdateGoal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: { id: string; data: UpdateGoalRequest }) => {
-      const { id, data } = params;
-      const validated = UpdateGoalRequestSchema.parse(data);
-      const res = await apiClient.users.goals[":id"].$put({
-        param: { id },
-        json: validated,
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-      queryClient.invalidateQueries({ queryKey: ["goal"] });
-    },
-  });
+  return createUseUpdateGoal({ apiClient });
 }
 
+/**
+ * Goal削除用のフック
+ */
 export function useDeleteGoal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiClient.users.goals[":id"].$delete({
-        param: { id },
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-      queryClient.invalidateQueries({ queryKey: ["goal"] });
-    },
-  });
+  return createUseDeleteGoal({ apiClient });
 }
 
+/**
+ * Goal統計情報を取得するフック
+ */
 export function useGoalStats(id: string, enabled = true) {
-  return useQuery<GoalStatsResponse>({
-    queryKey: ["goalStats", id],
-    queryFn: async () => {
-      const res = await apiClient.users.goals[":id"].stats.$get({
-        param: { id },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch goal stats");
-      }
-
-      const json = await res.json();
-      const parsed = GoalStatsResponseSchema.safeParse(json);
-
-      if (!parsed.success) {
-        throw new Error("Failed to parse goal stats");
-      }
-
-      return parsed.data;
-    },
-    enabled: enabled && !!id,
-  });
+  return createUseGoalStats({ apiClient, id, enabled });
 }

@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
+import {
+  createUseArchivedTasks,
+  createUseTasks,
+} from "@packages/frontend-shared/hooks";
 import dayjs from "dayjs";
 
 import { apiClient } from "../utils/apiClient";
-import { eventBus } from "../utils/eventBus";
 
 type Task = {
   id: string;
@@ -13,9 +16,9 @@ type Task = {
   dueDate: string | null;
   doneDate: string | null;
   memo: string | null;
-  archivedAt: string | null;
-  createdAt: string;
-  updatedAt: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 type GroupedTasks = {
@@ -30,38 +33,31 @@ type GroupedTasks = {
 };
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
-  const [isTasksLoading, setIsTasksLoading] = useState(true);
-  const [isArchivedTasksLoading, setIsArchivedTasksLoading] = useState(true);
+  // 共通フックを使用してタスクを取得
+  const {
+    data: activeTasks,
+    isLoading: isTasksLoading,
+    refetch: refetchActiveTasks,
+  } = createUseTasks({
+    apiClient,
+    includeArchived: false,
+  });
 
-  const fetchTasks = async () => {
-    try {
-      const response = await apiClient.users.tasks.$get({
-        query: {},
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const activeTasks = data.filter((task: Task) => !task.archivedAt);
-        const archived = data.filter((task: Task) => task.archivedAt);
-        setTasks(activeTasks);
-        setArchivedTasks(archived);
-      }
-    } catch (error) {
-      console.error("Failed to fetch tasks:", error);
-    } finally {
-      setIsTasksLoading(false);
-      setIsArchivedTasksLoading(false);
-    }
+  const {
+    data: archivedTasks,
+    isLoading: isArchivedTasksLoading,
+    refetch: refetchArchivedTasks,
+  } = createUseArchivedTasks({
+    apiClient,
+  });
+
+  // tasksデータはnullやundefinedの場合は空配列を使用
+  const tasks = activeTasks || [];
+  const archived = archivedTasks || [];
+
+  const refetch = async () => {
+    await Promise.all([refetchActiveTasks(), refetchArchivedTasks()]);
   };
-
-  useEffect(() => {
-    fetchTasks();
-
-    // イベントリスナーを登録
-    const unsubscribe = eventBus.on("tasks:refresh", fetchTasks);
-    return unsubscribe;
-  }, []);
 
   const groupedTasks = useMemo<GroupedTasks>(() => {
     const today = dayjs().startOf("day");
@@ -155,15 +151,15 @@ export function useTasks() {
   }, [tasks]);
 
   const hasAnyTasks = tasks.length > 0;
-  const hasAnyArchivedTasks = archivedTasks.length > 0;
+  const hasAnyArchivedTasks = archived.length > 0;
 
   return {
     groupedTasks,
-    archivedTasks,
+    archivedTasks: archived,
     isTasksLoading,
     isArchivedTasksLoading,
     hasAnyTasks,
     hasAnyArchivedTasks,
-    refetch: fetchTasks,
+    refetch,
   };
 }

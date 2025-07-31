@@ -1,7 +1,10 @@
+import {
+  createUseArchiveTask,
+  createUseUpdateTask,
+} from "@packages/frontend-shared/hooks";
 import dayjs from "dayjs";
 
 import { apiClient } from "../utils/apiClient";
-import { eventBus } from "../utils/eventBus";
 
 type Task = {
   id: string;
@@ -12,51 +15,28 @@ type Task = {
 };
 
 export function useTaskActions() {
+  // 共通フックを使用
+  const updateTaskMutation = createUseUpdateTask({ apiClient });
+  const archiveTaskMutation = createUseArchiveTask({ apiClient });
+
   const toggleTaskDone = async (task: Task) => {
     try {
-      const response = await apiClient.users.tasks[":id"].$put({
-        param: { id: task.id },
-        json: {
+      await updateTaskMutation.mutateAsync({
+        id: task.id,
+        data: {
           doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
         },
       });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-      }
     } catch (error) {
       console.error("Failed to toggle task done:", error);
     }
   };
 
-  const moveToToday = async (task: Task) => {
-    try {
-      const today = dayjs().format("YYYY-MM-DD");
-      const response = await apiClient.users.tasks[":id"].$put({
-        param: { id: task.id },
-        json: {
-          startDate: today,
-          dueDate: task.dueDate || today,
-        },
-      });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-      }
-    } catch (error) {
-      console.error("Failed to move task to today:", error);
-    }
-  };
-
   const archiveTask = async (task: Task) => {
     try {
-      const response = await apiClient.users.tasks[":id"].archive.$post({
-        param: { id: task.id },
+      await archiveTaskMutation.mutateAsync({
+        id: task.id,
       });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-      }
     } catch (error) {
       console.error("Failed to archive task:", error);
     }
@@ -64,7 +44,6 @@ export function useTaskActions() {
 
   return {
     toggleTaskDone,
-    moveToToday,
     archiveTask,
   };
 }

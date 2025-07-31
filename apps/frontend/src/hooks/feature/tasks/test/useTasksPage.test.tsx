@@ -50,7 +50,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-01T00:00:00Z",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -62,7 +62,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-15T00:00:00Z",
+      createdAt: new Date("2024-01-15T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -74,7 +74,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-15T00:00:00Z",
+      createdAt: new Date("2024-01-15T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -86,7 +86,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-01T00:00:00Z",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -98,7 +98,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-15T00:00:00Z",
+      createdAt: new Date("2024-01-15T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -110,7 +110,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-15T00:00:00Z",
+      createdAt: new Date("2024-01-15T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -122,7 +122,7 @@ describe("useTasksPage", () => {
       doneDate: "2024-01-15",
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-10T00:00:00Z",
+      createdAt: new Date("2024-01-10T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -134,7 +134,7 @@ describe("useTasksPage", () => {
       doneDate: null,
       memo: null,
       archivedAt: null,
-      createdAt: "2024-01-15T00:00:00Z",
+      createdAt: new Date("2024-01-15T00:00:00Z"),
       updatedAt: null,
     },
   ];
@@ -148,8 +148,8 @@ describe("useTasksPage", () => {
       dueDate: "2024-01-10",
       doneDate: "2024-01-10",
       memo: null,
-      archivedAt: "2024-01-11T00:00:00Z",
-      createdAt: "2024-01-01T00:00:00Z",
+      archivedAt: new Date("2024-01-11T00:00:00Z"),
+      createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: null,
     },
     {
@@ -160,8 +160,8 @@ describe("useTasksPage", () => {
       dueDate: "2024-01-15",
       doneDate: null,
       memo: null,
-      archivedAt: "2024-01-16T00:00:00Z",
-      createdAt: "2024-01-05T00:00:00Z",
+      archivedAt: new Date("2024-01-16T00:00:00Z"),
+      createdAt: new Date("2024-01-05T00:00:00Z"),
       updatedAt: null,
     },
   ];
