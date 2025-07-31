@@ -7,45 +7,53 @@ import type {
 } from "./types";
 
 // Web Storage adapter using localStorage
-export class WebStorageAdapter implements StorageAdapter {
-  async getItem(key: string): Promise<string | null> {
+export function createWebStorageAdapter(): StorageAdapter {
+  const getItem = async (key: string): Promise<string | null> => {
     try {
       return localStorage.getItem(key);
     } catch (error) {
       console.error("Failed to get item from localStorage:", error);
       return null;
     }
-  }
+  };
 
-  async setItem(key: string, value: string): Promise<void> {
+  const setItem = async (key: string, value: string): Promise<void> => {
     localStorage.setItem(key, value);
-  }
+  };
 
-  async removeItem(key: string): Promise<void> {
+  const removeItem = async (key: string): Promise<void> => {
     localStorage.removeItem(key);
-  }
+  };
 
-  async getAllKeys(): Promise<string[]> {
+  const getAllKeys = async (): Promise<string[]> => {
     try {
       return Object.keys(localStorage);
     } catch (error) {
       console.error("Failed to get all keys from localStorage:", error);
       return [];
     }
-  }
+  };
 
-  async clear(): Promise<void> {
+  const clear = async (): Promise<void> => {
     localStorage.clear();
-  }
+  };
+
+  return {
+    getItem,
+    setItem,
+    removeItem,
+    getAllKeys,
+    clear,
+  };
 }
 
 // Web Network adapter using navigator.onLine
-export class WebNetworkAdapter implements NetworkAdapter {
-  isOnline(): boolean {
+export function createWebNetworkAdapter(): NetworkAdapter {
+  const isOnline = (): boolean => {
     return navigator.onLine;
-  }
+  };
 
-  addListener(callback: (isOnline: boolean) => void): () => void {
+  const addListener = (callback: (isOnline: boolean) => void): (() => void) => {
     const handleOnline = () => callback(true);
     const handleOffline = () => callback(false);
 
@@ -57,74 +65,102 @@ export class WebNetworkAdapter implements NetworkAdapter {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }
+  };
+
+  return {
+    isOnline,
+    addListener,
+  };
 }
 
 // Web Notification adapter
-export class WebNotificationAdapter implements NotificationAdapter {
-  private toastCallback?: (options: any) => void;
+export function createWebNotificationAdapter(): NotificationAdapter & {
+  setToastCallback: (callback: (options: any) => void) => void;
+} {
+  let toastCallback: ((options: any) => void) | undefined;
 
-  setToastCallback(callback: (options: any) => void) {
-    this.toastCallback = callback;
-  }
+  const setToastCallback = (callback: (options: any) => void) => {
+    toastCallback = callback;
+  };
 
-  toast(options: any): void {
-    if (this.toastCallback) {
-      this.toastCallback(options);
+  const toast = (options: any): void => {
+    if (toastCallback) {
+      toastCallback(options);
     } else {
       // Fallback to console if no toast UI is available
       console.log(`[Toast] ${options.title}:`, options.description);
     }
-  }
+  };
 
-  async alert(title: string, message?: string): Promise<void> {
+  const alert = async (title: string, message?: string): Promise<void> => {
     window.alert(message || title);
-  }
+  };
 
-  async confirm(title: string, message?: string): Promise<boolean> {
+  const confirm = async (title: string, message?: string): Promise<boolean> => {
     return window.confirm(message || title);
-  }
+  };
+
+  return {
+    toast,
+    alert,
+    confirm,
+    setToastCallback,
+  };
 }
 
 // Web Event Bus adapter
-export class WebEventBusAdapter implements EventBusAdapter {
-  private listeners = new Map<string, Set<(data?: unknown) => void>>();
+export function createWebEventBusAdapter(): EventBusAdapter {
+  const listeners = new Map<string, Set<(data?: unknown) => void>>();
 
-  emit(event: string, data?: unknown): void {
-    const handlers = this.listeners.get(event);
+  const emit = (event: string, data?: unknown): void => {
+    const handlers = listeners.get(event);
     if (handlers) {
       handlers.forEach((handler) => handler(data));
     }
-  }
+  };
 
-  on(event: string, handler: (data?: unknown) => void): () => void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+  const on = (
+    event: string,
+    handler: (data?: unknown) => void,
+  ): (() => void) => {
+    if (!listeners.has(event)) {
+      listeners.set(event, new Set());
     }
-    this.listeners.get(event)!.add(handler);
+    listeners.get(event)!.add(handler);
 
     // Return cleanup function
-    return () => this.off(event, handler);
-  }
+    return () => off(event, handler);
+  };
 
-  off(event: string, handler: (data?: unknown) => void): void {
-    const handlers = this.listeners.get(event);
+  const off = (event: string, handler: (data?: unknown) => void): void => {
+    const handlers = listeners.get(event);
     if (handlers) {
       handlers.delete(handler);
       if (handlers.size === 0) {
-        this.listeners.delete(event);
+        listeners.delete(event);
       }
     }
-  }
+  };
+
+  return {
+    emit,
+    on,
+    off,
+  };
 }
 
 // Web Timer adapter
-export class WebTimerAdapter implements TimerAdapter<number> {
-  setInterval(callback: () => void, ms: number): number {
+export function createWebTimerAdapter(): TimerAdapter<number> {
+  const setInterval = (callback: () => void, ms: number): number => {
     return window.setInterval(callback, ms);
-  }
+  };
 
-  clearInterval(id: number): void {
+  const clearInterval = (id: number): void => {
     window.clearInterval(id);
-  }
+  };
+
+  return {
+    setInterval,
+    clearInterval,
+  };
 }

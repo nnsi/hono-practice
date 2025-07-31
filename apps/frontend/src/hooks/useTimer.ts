@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from "react";
 
 import {
-  WebEventBusAdapter,
-  WebNotificationAdapter,
-  WebStorageAdapter,
-  WebTimerAdapter,
+  createWebEventBusAdapter,
+  createWebNotificationAdapter,
+  createWebStorageAdapter,
+  createWebTimerAdapter,
 } from "@packages/frontend-shared/adapters/web";
 import { createUseTimer } from "@packages/frontend-shared/hooks";
 
@@ -14,9 +14,9 @@ import type { TimerAdapter } from "@packages/frontend-shared/adapters";
 import type { UseTimerReturn as BaseUseTimerReturn } from "@packages/frontend-shared/hooks";
 
 // Web環境用のadaptersをシングルトンとして作成
-const storage = new WebStorageAdapter();
-const eventBus = new WebEventBusAdapter();
-const timer = new WebTimerAdapter() as TimerAdapter<unknown>;
+const storage = createWebStorageAdapter();
+const eventBus = createWebEventBusAdapter();
+const timer = createWebTimerAdapter() as TimerAdapter<unknown>;
 
 // Web版の戻り値の型（startメソッドを同期的にする）
 type UseTimerReturn = Omit<BaseUseTimerReturn, "start"> & {
@@ -28,7 +28,7 @@ export const useTimer = (activityId: string): UseTimerReturn => {
 
   // NotificationAdapterはtoast関数を使うため、毎回新しいインスタンスを作成
   const notification = useMemo(() => {
-    const adapter = new WebNotificationAdapter();
+    const adapter = createWebNotificationAdapter();
     adapter.setToastCallback(toast);
     return adapter;
   }, [toast]);

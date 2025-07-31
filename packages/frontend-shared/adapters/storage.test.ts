@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ReactNativeStorageAdapter, WebStorageAdapter } from "./index";
+import {
+  createReactNativeStorageAdapter,
+  createWebStorageAdapter,
+} from "./index";
+
+import type { StorageAdapter } from "./index";
 
 describe("StorageAdapter", () => {
   describe("WebStorageAdapter", () => {
-    let adapter: WebStorageAdapter;
+    let adapter: StorageAdapter;
 
     beforeEach(() => {
-      adapter = new WebStorageAdapter();
+      adapter = createWebStorageAdapter();
       localStorage.clear();
     });
 
@@ -37,6 +42,14 @@ describe("StorageAdapter", () => {
       expect(keys).toContain("key2");
     });
 
+    it("should clear all items", async () => {
+      await adapter.setItem("key1", "value1");
+      await adapter.setItem("key2", "value2");
+      await adapter.clear?.();
+      const keys = await adapter.getAllKeys();
+      expect(keys).toHaveLength(0);
+    });
+
     it("should throw error when localStorage fails", async () => {
       // Skip this test for now - jsdom localStorage doesn't throw errors
       // in the same way as real browsers
@@ -44,7 +57,7 @@ describe("StorageAdapter", () => {
   });
 
   describe("ReactNativeStorageAdapter", () => {
-    let adapter: ReactNativeStorageAdapter;
+    let adapter: StorageAdapter;
     let mockAsyncStorage: any;
 
     beforeEach(() => {
@@ -55,7 +68,7 @@ describe("StorageAdapter", () => {
         removeItem: vi.fn(),
         getAllKeys: vi.fn(),
       };
-      adapter = new ReactNativeStorageAdapter(mockAsyncStorage);
+      adapter = createReactNativeStorageAdapter(mockAsyncStorage);
     });
 
     it("should get items from AsyncStorage", async () => {
@@ -93,6 +106,18 @@ describe("StorageAdapter", () => {
       );
       const value = await adapter.getItem("test-key");
       expect(value).toBeNull();
+    });
+
+    it("should clear all items from AsyncStorage", async () => {
+      mockAsyncStorage.getAllKeys.mockResolvedValue(["key1", "key2", "key3"]);
+      mockAsyncStorage.removeItem.mockResolvedValue(undefined);
+
+      await adapter.clear?.();
+
+      expect(mockAsyncStorage.getAllKeys).toHaveBeenCalled();
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key1");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key2");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key3");
     });
   });
 });

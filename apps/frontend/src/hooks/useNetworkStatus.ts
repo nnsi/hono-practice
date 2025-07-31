@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 
 import {
-  WebNetworkAdapter,
-  WebStorageAdapter,
+  createWebNetworkAdapter,
+  createWebStorageAdapter,
 } from "@packages/frontend-shared/adapters/web";
 import {
   createUseNetworkStatus,
@@ -16,8 +16,8 @@ import type { UseNetworkStatusReturn } from "@packages/frontend-shared/hooks";
 export type NetworkStatus = UseNetworkStatusReturn;
 
 // Web環境用のadaptersをシングルトンとして作成
-const network = new WebNetworkAdapter();
-const storage = new WebStorageAdapter();
+const network = createWebNetworkAdapter();
+const storage = createWebStorageAdapter();
 
 // 既存のコードとの互換性のため、元の関数名でエクスポート
 export const setSimulatedOffline = setSharedSimulatedOffline;

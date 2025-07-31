@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WebEventBusAdapter } from "./index";
+import { createWebEventBusAdapter } from "./index";
+
+import type { EventBusAdapter } from "./index";
 
 describe("EventBusAdapter", () => {
   describe("WebEventBusAdapter", () => {
-    let adapter: WebEventBusAdapter;
+    let adapter: EventBusAdapter;
 
     beforeEach(() => {
-      adapter = new WebEventBusAdapter();
+      adapter = createWebEventBusAdapter();
     });
 
     it("should emit and receive events", () => {

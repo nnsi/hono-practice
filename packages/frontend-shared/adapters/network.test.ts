@@ -1,14 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ReactNativeNetworkAdapter, WebNetworkAdapter } from "./index";
+import {
+  createReactNativeNetworkAdapter,
+  createWebNetworkAdapter,
+} from "./index";
+
+import type { NetworkAdapter } from "./index";
 
 describe("NetworkAdapter", () => {
   describe("WebNetworkAdapter", () => {
-    let adapter: WebNetworkAdapter;
+    let adapter: NetworkAdapter;
     let originalNavigatorOnLine: boolean;
 
     beforeEach(() => {
-      adapter = new WebNetworkAdapter();
+      adapter = createWebNetworkAdapter();
       originalNavigatorOnLine = navigator.onLine;
     });
 
@@ -60,7 +65,7 @@ describe("NetworkAdapter", () => {
   });
 
   describe("ReactNativeNetworkAdapter", () => {
-    let adapter: ReactNativeNetworkAdapter;
+    let adapter: NetworkAdapter;
     let mockNetInfo: any;
     let mockUnsubscribe: ReturnType<typeof vi.fn>;
 
@@ -70,7 +75,7 @@ describe("NetworkAdapter", () => {
         addEventListener: vi.fn().mockReturnValue(mockUnsubscribe),
         fetch: vi.fn().mockResolvedValue({ isConnected: true }),
       };
-      adapter = new ReactNativeNetworkAdapter(mockNetInfo);
+      adapter = createReactNativeNetworkAdapter(mockNetInfo);
     });
 
     it("should initialize with online status", () => {

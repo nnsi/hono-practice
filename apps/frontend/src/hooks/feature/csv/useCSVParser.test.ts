@@ -282,10 +282,10 @@ describe("useCSVParser", () => {
       expect(result.current.isLoading).toBe(false);
 
       let parsePromise: Promise<any>;
-      
+
       await act(async () => {
         parsePromise = result.current.parseFile(file as any);
-        
+
         // FileReaderの完了をシミュレート
         await new Promise((resolve) => {
           setTimeout(() => {

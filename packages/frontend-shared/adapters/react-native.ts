@@ -33,112 +33,125 @@ type AlertType = {
 };
 
 // React Native Storage adapter
-export class ReactNativeStorageAdapter implements StorageAdapter {
-  constructor(private asyncStorage: AsyncStorageType) {}
-
-  async getItem(key: string): Promise<string | null> {
+export function createReactNativeStorageAdapter(
+  asyncStorage: AsyncStorageType,
+): StorageAdapter {
+  const getItem = async (key: string): Promise<string | null> => {
     try {
-      return await this.asyncStorage.getItem(key);
+      return await asyncStorage.getItem(key);
     } catch (error) {
       console.error("Failed to get item from AsyncStorage:", error);
       return null;
     }
-  }
+  };
 
-  async setItem(key: string, value: string): Promise<void> {
+  const setItem = async (key: string, value: string): Promise<void> => {
     try {
-      await this.asyncStorage.setItem(key, value);
+      await asyncStorage.setItem(key, value);
     } catch (error) {
       console.error("Failed to set item in AsyncStorage:", error);
       throw error;
     }
-  }
+  };
 
-  async removeItem(key: string): Promise<void> {
+  const removeItem = async (key: string): Promise<void> => {
     try {
-      await this.asyncStorage.removeItem(key);
+      await asyncStorage.removeItem(key);
     } catch (error) {
       console.error("Failed to remove item from AsyncStorage:", error);
       throw error;
     }
-  }
+  };
 
-  async getAllKeys(): Promise<string[]> {
+  const getAllKeys = async (): Promise<string[]> => {
     try {
-      return await this.asyncStorage.getAllKeys();
+      return await asyncStorage.getAllKeys();
     } catch (error) {
       console.error("Failed to get all keys from AsyncStorage:", error);
       return [];
     }
-  }
+  };
 
-  async clear(): Promise<void> {
+  const clear = async (): Promise<void> => {
     try {
-      const keys = await this.asyncStorage.getAllKeys();
-      await Promise.all(keys.map((key) => this.asyncStorage.removeItem(key)));
+      const keys = await asyncStorage.getAllKeys();
+      await Promise.all(keys.map((key) => asyncStorage.removeItem(key)));
     } catch (error) {
       console.error("Failed to clear AsyncStorage:", error);
       throw error;
     }
-  }
+  };
+
+  return {
+    getItem,
+    setItem,
+    removeItem,
+    getAllKeys,
+    clear,
+  };
 }
 
 // React Native Network adapter
-export class ReactNativeNetworkAdapter implements NetworkAdapter {
-  private isConnected = true;
+export function createReactNativeNetworkAdapter(
+  netInfo: NetInfoType,
+): NetworkAdapter {
+  let isConnected = true;
 
-  constructor(private netInfo: NetInfoType) {
-    // Initialize connection state
-    this.netInfo.fetch().then((state) => {
-      this.isConnected = state.isConnected ?? true;
-    });
-  }
+  // Initialize connection state
+  netInfo.fetch().then((state) => {
+    isConnected = state.isConnected ?? true;
+  });
 
-  isOnline(): boolean {
-    return this.isConnected;
-  }
+  const isOnline = (): boolean => {
+    return isConnected;
+  };
 
-  addListener(callback: (isOnline: boolean) => void): () => void {
-    const unsubscribe = this.netInfo.addEventListener((state) => {
+  const addListener = (callback: (isOnline: boolean) => void): (() => void) => {
+    const unsubscribe = netInfo.addEventListener((state) => {
       const connected = state.isConnected ?? true;
-      this.isConnected = connected;
+      isConnected = connected;
       callback(connected);
     });
 
     // Fetch initial state
-    this.netInfo.fetch().then((state) => {
+    netInfo.fetch().then((state) => {
       const connected = state.isConnected ?? true;
-      this.isConnected = connected;
+      isConnected = connected;
       callback(connected);
     });
 
     return unsubscribe;
-  }
+  };
+
+  return {
+    isOnline,
+    addListener,
+  };
 }
 
 // React Native Notification adapter
-export class ReactNativeNotificationAdapter implements NotificationAdapter {
-  constructor(private Alert: AlertType) {}
-
-  toast(options: any): void {
+export function createReactNativeNotificationAdapter(
+  Alert: AlertType,
+): NotificationAdapter {
+  const toast = (options: any): void => {
     // React Native doesn't have built-in toast, use Alert as fallback
-    this.Alert.alert(options.title, options.description);
-  }
+    Alert.alert(options.title, options.description);
+  };
 
-  async alert(title: string, message?: string): Promise<void> {
+  const alert = async (title: string, message?: string): Promise<void> => {
     return new Promise((resolve) => {
-      this.Alert.alert(title, message, [
+      Alert.alert(title, message, [
         {
           text: "OK",
           onPress: () => resolve(),
         },
       ]);
     });
-  }
+  };
 
-  async confirm(title: string, message?: string): Promise<boolean> {
+  const confirm = async (title: string, message?: string): Promise<boolean> => {
     return new Promise((resolve) => {
-      this.Alert.alert(title, message, [
+      Alert.alert(title, message, [
         {
           text: "Cancel",
           onPress: () => resolve(false),
@@ -150,19 +163,30 @@ export class ReactNativeNotificationAdapter implements NotificationAdapter {
         },
       ]);
     });
-  }
+  };
+
+  return {
+    toast,
+    alert,
+    confirm,
+  };
 }
 
 // React Native Event Bus adapter - can reuse the web implementation
-export { WebEventBusAdapter as ReactNativeEventBusAdapter } from "./web";
+export { createWebEventBusAdapter as createReactNativeEventBusAdapter } from "./web";
 
 // React Native Timer adapter
-export class ReactNativeTimerAdapter implements TimerAdapter<NodeJS.Timeout> {
-  setInterval(callback: () => void, ms: number): NodeJS.Timeout {
+export function createReactNativeTimerAdapter(): TimerAdapter<NodeJS.Timeout> {
+  const setIntervalFn = (callback: () => void, ms: number): NodeJS.Timeout => {
     return setInterval(callback, ms);
-  }
+  };
 
-  clearInterval(id: NodeJS.Timeout): void {
+  const clearIntervalFn = (id: NodeJS.Timeout): void => {
     clearInterval(id);
-  }
+  };
+
+  return {
+    setInterval: setIntervalFn,
+    clearInterval: clearIntervalFn,
+  };
 }

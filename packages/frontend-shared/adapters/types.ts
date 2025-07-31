@@ -23,6 +23,7 @@ export type StorageAdapter = {
   setItem: (key: string, value: string) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
   getAllKeys: () => Promise<string[]>;
+  clear?: () => Promise<void>;
 };
 
 // Network status adapter

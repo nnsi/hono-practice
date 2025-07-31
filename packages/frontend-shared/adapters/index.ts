@@ -10,20 +10,20 @@ export type {
   ToastOptions,
 } from "./types";
 
-// Export Web adapters
+// Export Web adapter factory functions
 export {
-  WebEventBusAdapter,
-  WebNetworkAdapter,
-  WebNotificationAdapter,
-  WebStorageAdapter,
-  WebTimerAdapter,
+  createWebEventBusAdapter,
+  createWebNetworkAdapter,
+  createWebNotificationAdapter,
+  createWebStorageAdapter,
+  createWebTimerAdapter,
 } from "./web";
 
-// Export React Native adapters
+// Export React Native adapter factory functions
 export {
-  ReactNativeEventBusAdapter,
-  ReactNativeNetworkAdapter,
-  ReactNativeNotificationAdapter,
-  ReactNativeStorageAdapter,
-  ReactNativeTimerAdapter,
+  createReactNativeEventBusAdapter,
+  createReactNativeNetworkAdapter,
+  createReactNativeNotificationAdapter,
+  createReactNativeStorageAdapter,
+  createReactNativeTimerAdapter,
 } from "./react-native";

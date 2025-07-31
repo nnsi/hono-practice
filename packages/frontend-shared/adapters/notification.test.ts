@@ -1,18 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ReactNativeNotificationAdapter,
-  WebNotificationAdapter,
+  createReactNativeNotificationAdapter,
+  createWebNotificationAdapter,
 } from "./index";
+
+import type { NotificationAdapter } from "./index";
 
 describe("NotificationAdapter", () => {
   describe("WebNotificationAdapter", () => {
-    let adapter: WebNotificationAdapter;
+    let adapter: NotificationAdapter & {
+      setToastCallback: (callback: (options: any) => void) => void;
+    };
     let originalAlert: typeof window.alert;
     let originalConfirm: typeof window.confirm;
 
     beforeEach(() => {
-      adapter = new WebNotificationAdapter();
+      adapter = createWebNotificationAdapter();
       originalAlert = window.alert;
       originalConfirm = window.confirm;
       window.alert = vi.fn();
@@ -81,14 +85,14 @@ describe("NotificationAdapter", () => {
   });
 
   describe("ReactNativeNotificationAdapter", () => {
-    let adapter: ReactNativeNotificationAdapter;
+    let adapter: NotificationAdapter;
     let mockAlert: any;
 
     beforeEach(() => {
       mockAlert = {
         alert: vi.fn(),
       };
-      adapter = new ReactNativeNotificationAdapter(mockAlert);
+      adapter = createReactNativeNotificationAdapter(mockAlert);
     });
 
     it("should show toast using Alert", () => {

@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ReactNativeTimerAdapter, WebTimerAdapter } from "./index";
+import { createReactNativeTimerAdapter, createWebTimerAdapter } from "./index";
+
+import type { TimerAdapter } from "./index";
 
 describe("TimerAdapter", () => {
   describe("WebTimerAdapter", () => {
-    let adapter: WebTimerAdapter;
+    let adapter: TimerAdapter<number>;
 
     beforeEach(() => {
-      adapter = new WebTimerAdapter();
+      adapter = createWebTimerAdapter();
       vi.useFakeTimers();
     });
 
@@ -60,10 +62,10 @@ describe("TimerAdapter", () => {
   });
 
   describe("ReactNativeTimerAdapter", () => {
-    let adapter: ReactNativeTimerAdapter;
+    let adapter: TimerAdapter<NodeJS.Timeout>;
 
     beforeEach(() => {
-      adapter = new ReactNativeTimerAdapter();
+      adapter = createReactNativeTimerAdapter();
       vi.useFakeTimers();
     });
 
