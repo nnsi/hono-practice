@@ -1,7 +1,9 @@
-import { useState } from "react";
+import {
+  createUseDeleteTask,
+  createUseUpdateTask,
+} from "@packages/frontend-shared/hooks";
 
 import { apiClient } from "../utils/apiClient";
-import { eventBus } from "../utils/eventBus";
 
 type UpdateTaskInput = {
   id: string;
@@ -12,55 +14,37 @@ type UpdateTaskInput = {
 };
 
 export function useTaskEdit() {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // 共通フックを使用
+  const updateTaskMutation = createUseUpdateTask({ apiClient });
+  const deleteTaskMutation = createUseDeleteTask({ apiClient });
 
   const updateTask = async (input: UpdateTaskInput) => {
-    setIsUpdating(true);
     try {
       const { id, ...data } = input;
-      const response = await apiClient.users.tasks[":id"].$put({
-        param: { id },
-        json: data,
+      const result = await updateTaskMutation.mutateAsync({
+        id,
+        data,
       });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-        return await response.json();
-      }
-      throw new Error("Failed to update task");
+      return result;
     } catch (error) {
       console.error("Failed to update task:", error);
       throw error;
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const deleteTask = async (id: string) => {
-    setIsDeleting(true);
     try {
-      const response = await apiClient.users.tasks[":id"].$delete({
-        param: { id },
-      });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-      } else {
-        throw new Error("Failed to delete task");
-      }
+      await deleteTaskMutation.mutateAsync(id);
     } catch (error) {
       console.error("Failed to delete task:", error);
       throw error;
-    } finally {
-      setIsDeleting(false);
     }
   };
 
   return {
     updateTask,
     deleteTask,
-    isUpdating,
-    isDeleting,
+    isUpdating: updateTaskMutation.isPending,
+    isDeleting: deleteTaskMutation.isPending,
   };
 }

@@ -29,9 +29,9 @@ type TaskItem = {
   dueDate: string | null;
   doneDate: string | null;
   memo: string | null;
-  archivedAt: string | null;
-  createdAt: string;
-  updatedAt: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 type TaskEditDialogProps = {

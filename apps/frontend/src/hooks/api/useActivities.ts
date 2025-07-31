@@ -1,10 +1,8 @@
 import { apiClient } from "@frontend/utils";
 import { useQuery } from "@tanstack/react-query";
 
-import {
-  type GetActivitiesResponse,
-  GetActivitiesResponseSchema,
-} from "@dtos/response";
+import type { GetActivitiesResponse } from "@dtos/response";
+import { GetActivitiesResponseSchema } from "@dtos/response";
 
 /**
  * 全アクティビティ一覧を取得するフック

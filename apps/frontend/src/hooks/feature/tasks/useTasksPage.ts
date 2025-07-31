@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 
 import { apiClient } from "@frontend/utils/apiClient";
-import { useQuery } from "@tanstack/react-query";
+import {
+  createUseArchivedTasks,
+  createUseTasks,
+} from "@packages/frontend-shared/hooks";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 
@@ -15,9 +18,9 @@ type TaskItem = {
   dueDate: string | null;
   doneDate: string | null;
   memo: string | null;
-  archivedAt: string | null;
-  createdAt: string;
-  updatedAt: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 export const useTasksPage = () => {
@@ -27,34 +30,20 @@ export const useTasksPage = () => {
   const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
 
   // 全タスクを取得
-  const { data: tasks, isLoading: isTasksLoading } = useQuery({
-    queryKey: ["tasks", "all"],
-    queryFn: async () => {
-      const response = await apiClient.users.tasks.$get({
-        query: {},
-      });
-      if (!response.ok) {
-        throw new Error("タスクの取得に失敗しました");
-      }
-      const data = await response.json();
-      return data;
-    },
-    enabled: activeTab === "active",
+  const { data: activeTasks, isLoading: isTasksLoading } = createUseTasks({
+    apiClient,
+    includeArchived: false,
   });
 
   // アーカイブ済みタスクを取得
-  const { data: archivedTasks, isLoading: isArchivedTasksLoading } = useQuery({
-    queryKey: ["tasks", "archived"],
-    queryFn: async () => {
-      const response = await apiClient.users.tasks.archived.$get();
-      if (!response.ok) {
-        throw new Error("アーカイブ済みタスクの取得に失敗しました");
-      }
-      const data = await response.json();
-      return data;
-    },
-    enabled: activeTab === "archived",
-  });
+  const { data: archivedTasks, isLoading: isArchivedTasksLoading } =
+    createUseArchivedTasks({
+      apiClient,
+      enabled: activeTab === "archived",
+    });
+
+  // activeTabに応じてタスクを選択
+  const tasks = activeTab === "active" ? activeTasks : undefined;
 
   // タスクを時間軸でグループ化
   const groupedTasks = useMemo(() => {

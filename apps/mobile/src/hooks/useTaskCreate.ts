@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { createUseCreateTask } from "@packages/frontend-shared/hooks";
 
 import { apiClient } from "../utils/apiClient";
-import { eventBus } from "../utils/eventBus";
 
 type CreateTaskInput = {
   title: string;
@@ -11,30 +10,21 @@ type CreateTaskInput = {
 };
 
 export function useTaskCreate() {
-  const [isCreating, setIsCreating] = useState(false);
+  // 共通フックを使用
+  const createTaskMutation = createUseCreateTask({ apiClient });
 
   const createTask = async (input: CreateTaskInput) => {
-    setIsCreating(true);
     try {
-      const response = await apiClient.users.tasks.$post({
-        json: input,
-      });
-
-      if (response.ok) {
-        eventBus.emit("tasks:refresh");
-        return await response.json();
-      }
-      throw new Error("Failed to create task");
+      const result = await createTaskMutation.mutateAsync(input);
+      return result;
     } catch (error) {
       console.error("Failed to create task:", error);
       throw error;
-    } finally {
-      setIsCreating(false);
     }
   };
 
   return {
     createTask,
-    isCreating,
+    isCreating: createTaskMutation.isPending,
   };
 }

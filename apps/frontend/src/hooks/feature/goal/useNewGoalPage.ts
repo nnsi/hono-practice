@@ -1,28 +1,13 @@
 import { useState } from "react";
 
-import { useGoals } from "@frontend/hooks/api";
-import { apiClient } from "@frontend/utils";
-import { useQuery } from "@tanstack/react-query";
-
-import { GetActivitiesResponseSchema } from "@dtos/response";
+import { useActivities, useGoals } from "@frontend/hooks/api";
 
 export const useNewGoalPage = () => {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { data: goalsData, isLoading: goalsLoading } = useGoals();
 
-  const { data: activitiesData } = useQuery({
-    queryKey: ["activity"],
-    queryFn: async () => {
-      const res = await apiClient.users.activities.$get();
-      const json = await res.json();
-      const parsed = GetActivitiesResponseSchema.safeParse(json);
-      if (!parsed.success) {
-        throw new Error("Failed to parse activities");
-      }
-      return parsed.data;
-    },
-  });
+  const { data: activitiesData } = useActivities();
 
   const goals = goalsData?.goals || [];
 

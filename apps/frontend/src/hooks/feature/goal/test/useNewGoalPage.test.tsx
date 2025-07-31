@@ -9,8 +9,8 @@ import type { GetActivitiesResponse, GetGoalsResponse } from "@dtos/response";
 
 import { useNewGoalPage } from "../useNewGoalPage";
 
-// モックの設定
-vi.mock("@frontend/hooks/api");
+// useGoalsのみをモックし、他のフック（特にuseActivities）は実装をそのまま利用する
+// vitest.spyOnを使って部分的に振る舞いを上書きする
 vi.mock("@frontend/utils", () => ({
   apiClient: {
     users: {
@@ -97,7 +97,7 @@ describe("useNewGoalPage", () => {
     vi.clearAllMocks();
 
     // useGoalsのモック
-    vi.mocked(apiHooks.useGoals).mockReturnValue({
+    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
       data: mockGoals,
       isLoading: false,
       error: null,
@@ -302,7 +302,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.mocked(apiHooks.useGoals).mockReturnValue({
+    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
       data: goalsWithNoEndDate,
       isLoading: false,
       error: null,
@@ -333,7 +333,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.mocked(apiHooks.useGoals).mockReturnValue({
+    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
       data: goalsEndingToday,
       isLoading: false,
       error: null,
@@ -351,7 +351,7 @@ describe("useNewGoalPage", () => {
   });
 
   it("ローディング中はgoalsLoadingがtrueになる", () => {
-    vi.mocked(apiHooks.useGoals).mockReturnValue({
+    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
