@@ -1,138 +1,70 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+
+import {
+  WebNetworkAdapter,
+  WebStorageAdapter,
+} from "@packages/frontend-shared/adapters/web";
+import {
+  createUseNetworkStatus,
+  getSimulatedOffline as getSharedSimulatedOffline,
+  setSimulatedOffline as setSharedSimulatedOffline,
+} from "@packages/frontend-shared/hooks";
 
 import type { NetworkStatusManager } from "@frontend/services/abstractions";
+import type { UseNetworkStatusReturn } from "@packages/frontend-shared/hooks";
 
-export type NetworkStatus = {
-  isOnline: boolean;
-  lastOnlineAt: Date | null;
-  lastOfflineAt: Date | null;
-  isSimulated?: boolean; // 開発環境での模擬オフライン状態
-};
+export type NetworkStatus = UseNetworkStatusReturn;
 
-// 開発環境でのオフライン状態を管理するためのグローバル変数
-let simulatedOffline = false;
-let simulatedOfflineListeners: Array<() => void> = [];
+// Web環境用のadaptersをシングルトンとして作成
+const network = new WebNetworkAdapter();
+const storage = new WebStorageAdapter();
 
-export function setSimulatedOffline(offline: boolean) {
-  simulatedOffline = offline;
-  simulatedOfflineListeners.forEach((listener) => listener());
-}
+// 既存のコードとの互換性のため、元の関数名でエクスポート
+export const setSimulatedOffline = setSharedSimulatedOffline;
+export const getSimulatedOffline = getSharedSimulatedOffline;
 
-export function getSimulatedOffline(): boolean {
-  return simulatedOffline;
-}
-
-// NetworkStatusManagerを使用するバージョンのhook
+// NetworkStatusManagerを使用するバージョンのhook（既存との互換性のため）
 export function useNetworkStatusWithManager(
   networkStatusManager: NetworkStatusManager,
-  storage?: {
+  storageAdapter?: {
     getItem: (key: string) => string | null;
     setItem: (key: string, value: string) => void;
   },
 ): NetworkStatus {
-  const [isOnline, setIsOnline] = useState(() => {
-    const online = networkStatusManager.isOnline();
-    // 初期値もstorageに保存
-    storage?.setItem("network-status", online ? "online" : "offline");
-    return online;
+  // NetworkStatusManagerのインターフェースをNetworkAdapterにラップ
+  const networkAdapter = useMemo(
+    () => ({
+      isOnline: () => networkStatusManager.isOnline(),
+      addListener: (callback: (isOnline: boolean) => void) =>
+        networkStatusManager.addListener(callback),
+    }),
+    [networkStatusManager],
+  );
+
+  // storageAdapterがある場合はそれを使用、なければデフォルトのWebStorageAdapterを使用
+  const storageToUse = useMemo(() => {
+    if (storageAdapter) {
+      return {
+        getItem: async (key: string) => storageAdapter.getItem(key),
+        setItem: async (key: string, value: string) =>
+          storageAdapter.setItem(key, value),
+        removeItem: async () => {},
+        getAllKeys: async () => [],
+        clear: async () => {},
+      };
+    }
+    return storage;
+  }, [storageAdapter]);
+
+  return createUseNetworkStatus({
+    network: networkAdapter,
+    storage: storageToUse,
   });
-  const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
-  const [lastOfflineAt, setLastOfflineAt] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = networkStatusManager.addListener((online) => {
-      setIsOnline(online);
-
-      // storageに状態を保存（qp関数で参照するため）
-      storage?.setItem("network-status", online ? "online" : "offline");
-
-      if (online) {
-        setLastOnlineAt(new Date());
-      } else {
-        setLastOfflineAt(new Date());
-      }
-    });
-
-    return unsubscribe;
-  }, [networkStatusManager, storage]);
-
-  return {
-    isOnline,
-    lastOnlineAt,
-    lastOfflineAt,
-  };
 }
 
 export function useNetworkStatus(): NetworkStatus {
-  const [isOnline, setIsOnline] = useState(() => {
-    const isDevelopment = import.meta.env.DEV;
-    const shouldBeOnline =
-      isDevelopment && simulatedOffline ? false : navigator.onLine;
-    // 初期値もlocalStorageに保存
-    localStorage.setItem(
-      "network-status",
-      shouldBeOnline ? "online" : "offline",
-    );
-    return shouldBeOnline;
+  return createUseNetworkStatus({
+    network,
+    storage,
   });
-  const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
-  const [lastOfflineAt, setLastOfflineAt] = useState<Date | null>(null);
-  const [isSimulated, setIsSimulated] = useState(false);
-
-  useEffect(() => {
-    const updateNetworkStatus = () => {
-      const isActuallyOnline = navigator.onLine;
-      const isDevelopment = import.meta.env.DEV;
-
-      // 開発環境では模擬オフライン状態を優先
-      const shouldBeOnline =
-        isDevelopment && simulatedOffline ? false : isActuallyOnline;
-
-      setIsOnline(shouldBeOnline);
-      setIsSimulated(isDevelopment && simulatedOffline);
-
-      // localStorageに状態を保存（qp関数で参照するため）
-      localStorage.setItem(
-        "network-status",
-        shouldBeOnline ? "online" : "offline",
-      );
-
-      if (shouldBeOnline) {
-        setLastOnlineAt(new Date());
-      } else {
-        setLastOfflineAt(new Date());
-      }
-    };
-
-    const handleOnline = () => {
-      if (!simulatedOffline) {
-        updateNetworkStatus();
-      }
-    };
-
-    const handleOffline = () => {
-      updateNetworkStatus();
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // 模擬オフライン状態の変更を監視
-    simulatedOfflineListeners.push(updateNetworkStatus);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-      simulatedOfflineListeners = simulatedOfflineListeners.filter(
-        (listener) => listener !== updateNetworkStatus,
-      );
-    };
-  }, []);
-
-  return {
-    isOnline,
-    lastOnlineAt,
-    lastOfflineAt,
-    isSimulated,
-  };
 }

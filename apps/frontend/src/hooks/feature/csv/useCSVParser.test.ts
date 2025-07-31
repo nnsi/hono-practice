@@ -281,10 +281,12 @@ describe("useCSVParser", () => {
       // ローディング開始前
       expect(result.current.isLoading).toBe(false);
 
-      const parsePromise = result.current.parseFile(file as any);
-
-      // FileReaderの完了をシミュレート
+      let parsePromise: Promise<any>;
+      
       await act(async () => {
+        parsePromise = result.current.parseFile(file as any);
+        
+        // FileReaderの完了をシミュレート
         await new Promise((resolve) => {
           setTimeout(() => {
             if (mockFileReader.onload) {
@@ -295,7 +297,7 @@ describe("useCSVParser", () => {
         });
       });
 
-      await parsePromise;
+      await parsePromise!;
 
       // ローディング終了を確認
       expect(result.current.isLoading).toBe(false);

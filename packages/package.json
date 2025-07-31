@@ -5,6 +5,8 @@
   "types": "index.ts",
   "exports": {
     "./frontend-shared": "./frontend-shared/index.ts",
+    "./frontend-shared/adapters": "./frontend-shared/adapters/index.ts",
+    "./frontend-shared/hooks": "./frontend-shared/hooks/index.ts",
     "./types": "./types/index.ts",
     "./types/*": "./types/*.ts"
   },

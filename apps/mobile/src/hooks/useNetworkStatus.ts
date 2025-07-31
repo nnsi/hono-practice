@@ -1,28 +1,21 @@
-import { useEffect, useState } from "react";
-
+import { ReactNativeNetworkAdapter } from "@packages/frontend-shared/adapters/react-native";
+import { createUseNetworkStatus } from "@packages/frontend-shared/hooks";
 import NetInfo from "@react-native-community/netinfo";
 
+// React Native環境用のadapterをシングルトンとして作成
+const network = new ReactNativeNetworkAdapter(NetInfo);
+
 export function useNetworkStatus() {
-  const [isOnline, setIsOnline] = useState(true);
-  const [isConnected, setIsConnected] = useState(true);
+  const result = createUseNetworkStatus({
+    network,
+  });
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOnline(state.isConnected ?? false);
-      setIsConnected(state.isInternetReachable ?? false);
-    });
-
-    // 初期状態を取得
-    NetInfo.fetch().then((state) => {
-      setIsOnline(state.isConnected ?? false);
-      setIsConnected(state.isInternetReachable ?? false);
-    });
-
-    return unsubscribe;
-  }, []);
-
+  // 既存のコードとの互換性のため、isConnectedも返す
+  // React Nativeでは、isOnlineとisConnectedは同じ値として扱う
   return {
-    isOnline,
-    isConnected,
+    isOnline: result.isOnline,
+    isConnected: result.isOnline,
+    lastOnlineAt: result.lastOnlineAt,
+    lastOfflineAt: result.lastOfflineAt,
   };
 }
