@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 
-import { apiClient } from "@frontend/utils/apiClient";
-import { resizeImage } from "@frontend/utils/imageResizer";
-import { tokenStore } from "@frontend/utils/tokenStore";
+import {
+  useDeleteActivity,
+  useDeleteActivityIcon,
+  useUpdateActivity,
+  useUploadActivityIcon,
+} from "@frontend/hooks/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -17,8 +19,6 @@ export const useActivityEdit = (
   activity: GetActivityResponse | null,
   onClose: () => void,
 ) => {
-  const api = apiClient;
-  const queryClient = useQueryClient();
   const form = useForm<UpdateActivityRequest>({
     resolver: zodResolver(UpdateActivityRequestSchema),
     defaultValues: activity
@@ -65,35 +65,31 @@ export const useActivityEdit = (
     name: "kinds",
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: UpdateActivityRequest) => {
-      if (!activity) return;
-      return api.users.activities[":id"].$put({
-        param: { id: activity.id },
-        json: data,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-      onClose();
-    },
-  });
+  const updateActivity = useUpdateActivity();
+  const deleteActivity = useDeleteActivity();
+  const uploadIconMutation = useUploadActivityIcon();
+  const deleteIconMutation = useDeleteActivityIcon();
 
   const handleDelete = async () => {
     if (!activity) return;
-    const res = await api.users.activities[":id"].$delete({
-      param: { id: activity.id },
-    });
-    if (res.status !== 200) {
-      return;
+    try {
+      await deleteActivity.mutateAsync(activity.id);
+      onClose();
+    } catch (error) {
+      console.error("Failed to delete activity:", error);
     }
-    queryClient.invalidateQueries({ queryKey: ["activity"] });
-    onClose();
   };
 
   const onSubmit = (data: UpdateActivityRequest) => {
     if (!activity) return;
-    mutate(data);
+    updateActivity.mutate(
+      { id: activity.id, data },
+      {
+        onSuccess: () => {
+          onClose();
+        },
+      },
+    );
   };
 
   // 種類を削除するハンドラ
@@ -111,42 +107,7 @@ export const useActivityEdit = (
     if (!activity) return;
 
     try {
-      // Resize image to 256x256 max and convert to base64
-      const { base64, mimeType } = await resizeImage(file, 256, 256);
-
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      console.log("Token for icon upload:", token);
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      console.log(
-        "Uploading to:",
-        `${API_URL}users/activities/${activity.id}/icon`,
-      );
-      console.log("Headers:", headers);
-
-      const response = await fetch(
-        `${API_URL}users/activities/${activity.id}/icon`,
-        {
-          method: "POST",
-          body: JSON.stringify({ base64, mimeType }),
-          headers,
-        },
-      );
-
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["activity"] });
-      }
+      await uploadIconMutation.mutateAsync({ id: activity.id, file });
     } catch (error) {
       console.error("Failed to upload icon:", error);
     }
@@ -157,29 +118,7 @@ export const useActivityEdit = (
     if (!activity) return;
 
     try {
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(
-        `${API_URL}users/activities/${activity.id}/icon`,
-        {
-          method: "DELETE",
-          headers,
-        },
-      );
-
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["activity"] });
-      }
+      await deleteIconMutation.mutateAsync(activity.id);
     } catch (error) {
       console.error("Failed to delete icon:", error);
     }
@@ -188,7 +127,7 @@ export const useActivityEdit = (
   return {
     form,
     kindFields,
-    isPending,
+    isPending: updateActivity.isPending,
     onSubmit,
     handleDelete,
     handleRemoveKind,

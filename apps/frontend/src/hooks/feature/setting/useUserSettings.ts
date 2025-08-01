@@ -1,11 +1,12 @@
 import { useToast } from "@frontend/components/ui";
+import { useLinkGoogleAccount } from "@frontend/hooks/api";
 import { useAuth } from "@frontend/hooks/useAuth";
-import { apiClient } from "@frontend/utils/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 export const useUserSettings = () => {
   const { user, logout, getUser } = useAuth();
+  const linkGoogleAccount = useLinkGoogleAccount();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -39,23 +40,14 @@ export const useUserSettings = () => {
       return;
     }
     try {
-      const res = await apiClient.auth.google.link.$post({
-        json: { credential: credentialResponse.credential },
+      await linkGoogleAccount.mutateAsync(credentialResponse.credential);
+      toast({
+        title: "Success",
+        description: "Successfully linked Google account",
       });
-      if (res.status === 200) {
-        toast({
-          title: "Success",
-          description: "Successfully linked Google account",
-        });
-        // ユーザー情報を再取得して「Google連携済み」を表示
-        await getUser();
-        queryClient.invalidateQueries({ queryKey: ["user", "me"] });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to link Google account",
-        });
-      }
+      // ユーザー情報を再取得して「Google連携済み」を表示
+      await getUser();
+      queryClient.invalidateQueries({ queryKey: ["user", "me"] });
     } catch (e) {
       toast({
         title: "Error",

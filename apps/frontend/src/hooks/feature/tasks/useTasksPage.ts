@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { apiClient } from "@frontend/utils/apiClient";
-import {
-  createUseArchivedTasks,
-  createUseTasks,
-} from "@packages/frontend-shared/hooks";
+import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 
@@ -30,17 +26,13 @@ export const useTasksPage = () => {
   const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
 
   // 全タスクを取得
-  const { data: activeTasks, isLoading: isTasksLoading } = createUseTasks({
-    apiClient,
+  const { data: activeTasks, isLoading: isTasksLoading } = useTasks({
     includeArchived: false,
   });
 
   // アーカイブ済みタスクを取得
   const { data: archivedTasks, isLoading: isArchivedTasksLoading } =
-    createUseArchivedTasks({
-      apiClient,
-      enabled: activeTab === "archived",
-    });
+    useArchivedTasks(activeTab === "archived");
 
   // activeTabに応じてタスクを選択
   const tasks = activeTab === "active" ? activeTasks : undefined;

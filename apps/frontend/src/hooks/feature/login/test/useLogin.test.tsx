@@ -1,4 +1,7 @@
+import type React from "react";
+
 import * as useAuthHook from "@frontend/hooks/useAuth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as routerHooks from "@tanstack/react-router";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,14 +16,9 @@ import { useLogin } from "../useLogin";
 vi.mock("@frontend/hooks/useAuth");
 vi.mock("@components/ui");
 vi.mock("@tanstack/react-router");
-vi.mock("@frontend/utils/apiClient", () => ({
-  apiClient: {
-    auth: {
-      google: {
-        $post: vi.fn(),
-      },
-    },
-  },
+const mockUseGoogleAuth = vi.fn();
+vi.mock("@frontend/hooks/api", () => ({
+  useGoogleAuth: () => mockUseGoogleAuth(),
 }));
 
 describe("useLogin", () => {
@@ -30,6 +28,18 @@ describe("useLogin", () => {
   const mockScheduleTokenRefresh = vi.fn();
   const mockToast = vi.fn();
   const mockNavigate = vi.fn();
+
+  const createWrapper = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,7 +62,9 @@ describe("useLogin", () => {
   });
 
   it("フォームが初期化される", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.form.getValues()).toEqual({
       login_id: "",
@@ -63,7 +75,9 @@ describe("useLogin", () => {
   it("ログイン成功時にホームページにリダイレクトする", async () => {
     mockLogin.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     const loginData: LoginRequest = {
       login_id: "test@example.com",
@@ -82,7 +96,9 @@ describe("useLogin", () => {
   it("ログイン失敗時にエラートーストを表示する", async () => {
     mockLogin.mockRejectedValue(new Error("Login failed"));
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     const loginData: LoginRequest = {
       login_id: "test@example.com",
@@ -115,21 +131,21 @@ describe("useLogin", () => {
       token: "mock-access-token",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockApiResponse),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(mockApiResponse),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
     });
 
-    expect(apiClient.auth.google.$post).toHaveBeenCalledWith({
-      json: { credential: "mock-google-credential" },
-    });
+    expect(mockUseGoogleAuth().mutateAsync).toHaveBeenCalledWith(
+      "mock-google-credential",
+    );
     expect(mockSetAccessToken).toHaveBeenCalledWith("mock-access-token");
     expect(mockScheduleTokenRefresh).toHaveBeenCalled();
     expect(mockSetUser).toHaveBeenCalledWith({
@@ -147,7 +163,9 @@ describe("useLogin", () => {
       credential: null,
     };
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -166,13 +184,13 @@ describe("useLogin", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 401,
-      json: vi.fn().mockResolvedValue({ error: "Unauthorized" }),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error("Unauthorized")),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -191,12 +209,13 @@ describe("useLogin", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockRejectedValue(
-      new Error("Network error"),
-    );
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error("Network error")),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -211,7 +230,9 @@ describe("useLogin", () => {
   });
 
   it("handleGoogleErrorがエラートーストを表示する", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.handleGoogleError();
@@ -228,7 +249,9 @@ describe("useLogin", () => {
   // 実際のフォームコンポーネントでのテストが推奨される
 
   it("フォームの値を更新できる", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.form.setValue("login_id", "new@example.com");
@@ -255,13 +278,13 @@ describe("useLogin", () => {
       token: "mock-access-token",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockApiResponse),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(mockApiResponse),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);

@@ -8,13 +8,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useUserSettings } from "../useUserSettings";
 
 // vi.hoistedでモック関数を定義
-const { mockToast, mockLogout, mockNavigate } = vi.hoisted(() => {
-  return {
-    mockToast: vi.fn(),
-    mockLogout: vi.fn(),
-    mockNavigate: vi.fn(),
-  };
-});
+const { mockToast, mockLogout, mockNavigate, mockLinkGoogleAccount } =
+  vi.hoisted(() => {
+    return {
+      mockToast: vi.fn(),
+      mockLogout: vi.fn(),
+      mockNavigate: vi.fn(),
+      mockLinkGoogleAccount: vi.fn(),
+    };
+  });
 
 // mockApiClientはvi.hoisted外で定義
 let mockApiClient: ReturnType<typeof createMockApiClient>;
@@ -52,6 +54,12 @@ vi.mock("@frontend/utils/apiClient", () => ({
   },
 }));
 
+vi.mock("@frontend/hooks/api", () => ({
+  useLinkGoogleAccount: () => ({
+    mutateAsync: mockLinkGoogleAccount,
+  }),
+}));
+
 describe("useUserSettings", () => {
   let queryClient: QueryClient;
 
@@ -69,9 +77,7 @@ describe("useUserSettings", () => {
       },
     });
 
-    vi.mocked(mockApiClient.auth.google.link.$post).mockResolvedValue({
-      status: 200,
-    });
+    mockLinkGoogleAccount.mockResolvedValue(undefined);
 
     // Reset mockUser to default state
     mockUser = {
@@ -176,9 +182,7 @@ describe("useUserSettings", () => {
       });
 
       await waitFor(async () => {
-        expect(mockApiClient.auth.google.link.$post).toHaveBeenCalledWith({
-          json: { credential: "test-google-token" },
-        });
+        expect(mockLinkGoogleAccount).toHaveBeenCalledWith("test-google-token");
         expect(mockToast).toHaveBeenCalledWith({
           title: "Success",
           description: "Successfully linked Google account",
@@ -204,7 +208,7 @@ describe("useUserSettings", () => {
       });
 
       await waitFor(async () => {
-        expect(mockApiClient.auth.google.link.$post).not.toHaveBeenCalled();
+        expect(mockLinkGoogleAccount).not.toHaveBeenCalled();
         expect(mockToast).toHaveBeenCalledWith({
           title: "Error",
           description: "Failed to link Google account",
@@ -214,9 +218,9 @@ describe("useUserSettings", () => {
     });
 
     it("API呼び出しが200以外のステータスを返した場合、エラートーストを表示する", async () => {
-      vi.mocked(mockApiClient.auth.google.link.$post).mockResolvedValue({
-        status: 400,
-      });
+      mockLinkGoogleAccount.mockRejectedValue(
+        new Error("Failed to link Google account"),
+      );
 
       const { result } = renderHook(() => useUserSettings(), {
         wrapper,
@@ -234,16 +238,13 @@ describe("useUserSettings", () => {
         expect(mockToast).toHaveBeenCalledWith({
           title: "Error",
           description: "Failed to link Google account",
+          variant: "destructive",
         });
-        // エラーの場合は invalidateQueries が呼ばれないことを確認
-        // (この場合はエラートーストが表示されることで十分なので、この検証は省略)
       });
     });
 
     it("API呼び出しが例外をスローした場合、エラートーストを表示する", async () => {
-      vi.mocked(mockApiClient.auth.google.link.$post).mockRejectedValue(
-        new Error("Network error"),
-      );
+      mockLinkGoogleAccount.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useUserSettings(), {
         wrapper,

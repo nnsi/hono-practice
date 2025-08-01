@@ -1,6 +1,7 @@
 import type React from "react";
 
 import * as globalDateHook from "@frontend/hooks";
+import * as apiHooks from "@frontend/hooks/api";
 import * as syncHooks from "@frontend/hooks/sync";
 import * as networkProvider from "@frontend/providers/NetworkStatusProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -46,6 +47,11 @@ vi.mock("@frontend/utils", () => ({
       return parsedResult.data;
     },
   }),
+}));
+vi.mock("@frontend/hooks/api", () => ({
+  useActivities: vi.fn(),
+  useActivityLogs: vi.fn(),
+  useTasks: vi.fn(),
 }));
 
 describe("useDailyPage", () => {
@@ -128,6 +134,34 @@ describe("useDailyPage", () => {
       mergedActivityLogs: mockActivityLogs,
       isOfflineData: vi.fn(() => false),
     });
+
+    // API hooks のモック
+    vi.mocked(apiHooks.useActivities).mockReturnValue({
+      data: mockActivities,
+      error: null,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(apiHooks.useActivityLogs).mockReturnValue({
+      data: mockActivityLogs,
+      error: null,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(apiHooks.useTasks).mockReturnValue({
+      data: mockTasks,
+      error: null,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+    } as any);
 
     // apiClientのモック - @frontend/utils経由でアクセスされる
     const { apiClient: mockedApiClient } = await import("@frontend/utils");
@@ -249,12 +283,10 @@ describe("useDailyPage", () => {
     // キャッシュデータを設定
     queryClient.setQueryData(["activity"], mockActivities);
 
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-
     renderHook(() => useDailyPage(), { wrapper });
 
-    // activities.$getが呼ばれないことを確認
-    expect(mockedApiClient.users.activities.$get).not.toHaveBeenCalled();
+    // useActivitiesが呼ばれることを確認（フックは常に呼ばれるが、内部でキャッシュを使う）
+    expect(apiHooks.useActivities).toHaveBeenCalled();
   });
 
   it("日付フォーマットが正しく処理される", async () => {
@@ -264,17 +296,15 @@ describe("useDailyPage", () => {
       setDate: mockSetDate,
     });
 
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-
     renderHook(() => useDailyPage(), { wrapper });
 
-    await waitFor(() => {
-      expect(mockedApiClient.users["activity-logs"].$get).toHaveBeenCalledWith({
-        query: { date: "2024-12-31" },
-      });
-      expect(mockedApiClient.users.tasks.$get).toHaveBeenCalledWith({
-        query: { date: "2024-12-31" },
-      });
-    });
+    // useActivityLogsとuseTasksが正しい日付で呼ばれることを確認
+    expect(apiHooks.useActivityLogs).toHaveBeenCalledWith(
+      testDate,
+      expect.objectContaining({ enabled: true }),
+    );
+    expect(apiHooks.useTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2024-12-31" }),
+    );
   });
 });

@@ -1,12 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 
-import { useGoals } from "@frontend/hooks/api/useGoals";
+import { useActivityStatsApi, useGoals } from "@frontend/hooks/api";
 import { DateContext } from "@frontend/providers/DateProvider";
-import { apiClient, qp } from "@frontend/utils";
-import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-
-import { GetActivityStatsResponseSchema } from "@dtos/response";
 
 // kind名から固定的な色を取得する関数（色覚バリアフリー対応）
 export const getColorForKind = (kindName: string): string => {
@@ -66,18 +62,7 @@ export const useActivityStats = () => {
     setMonth(nextMonth.format("YYYY-MM"));
   };
 
-  const { data: stats, isLoading } = useQuery({
-    ...qp({
-      queryKey: ["activity-stats-monthly", month],
-      queryFn: () =>
-        apiClient.users["activity-logs"].stats.$get({
-          query: {
-            date: month,
-          },
-        }),
-      schema: GetActivityStatsResponseSchema,
-    }),
-  });
+  const { data: stats, isLoading } = useActivityStatsApi(month);
 
   // 全ての目標を取得
   const { data: goalsData } = useGoals();

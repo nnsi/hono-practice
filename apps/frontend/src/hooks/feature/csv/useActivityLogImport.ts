@@ -1,13 +1,10 @@
 import { useCallback, useState } from "react";
 
-import { useActivities } from "@frontend/hooks/api/useActivities";
-import { apiClient } from "@frontend/utils/apiClient";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import type {
-  CreateActivityLogBatchRequest,
-  CreateActivityLogBatchResponse,
-} from "@dtos/index";
+import {
+  useActivities,
+  useBatchImportActivityLogs,
+  useCreateActivity,
+} from "@frontend/hooks/api";
 
 import type { ValidatedActivityLog } from "./useActivityLogValidator";
 
@@ -33,8 +30,9 @@ export type ImportResult = {
 };
 
 export function useActivityLogImport() {
-  const queryClient = useQueryClient();
   const { data: activities } = useActivities();
+  const createActivity = useCreateActivity();
+  const batchImportMutation = useBatchImportActivityLogs();
   const [progress, setProgress] = useState<ImportProgress>({
     total: 0,
     processed: 0,
@@ -57,20 +55,14 @@ export function useActivityLogImport() {
 
       for (const name of newActivityNames) {
         try {
-          const response = await apiClient.users.activities.$post({
-            json: {
-              name,
-              quantityUnit: "回",
-              emoji: "📊",
-              description: "",
-              showCombinedStats: false,
-            },
+          const data = await createActivity.mutateAsync({
+            name,
+            quantityUnit: "回",
+            emoji: "📊",
+            description: "",
+            showCombinedStats: false,
           });
-
-          if (response.ok) {
-            const data = await response.json();
-            createdActivities.set(name, data.id);
-          }
+          createdActivities.set(name, data.id);
         } catch (error) {
           console.error(`Failed to create activity: ${name}`, error);
         }
@@ -78,7 +70,7 @@ export function useActivityLogImport() {
 
       return createdActivities;
     },
-    [],
+    [createActivity],
   );
 
   const findActivityId = useCallback(
@@ -108,28 +100,6 @@ export function useActivityLogImport() {
     },
     [activities],
   );
-
-  const batchImportMutation = useMutation<
-    CreateActivityLogBatchResponse,
-    Error,
-    CreateActivityLogBatchRequest
-  >({
-    mutationFn: async (request) => {
-      const response = await apiClient.users["activity-logs"].batch.$post({
-        json: request,
-      });
-
-      if (!response.ok) {
-        throw new Error("バッチインポートに失敗しました");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
-    },
-  });
 
   const importLogs = useCallback(
     async (validatedLogs: ValidatedActivityLog[]): Promise<ImportResult> => {

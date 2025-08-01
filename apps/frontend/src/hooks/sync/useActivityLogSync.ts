@@ -32,8 +32,17 @@ export function useActivityLogSync({
     const storedData = localStorage.getItem(storageKey);
     const deletedData = localStorage.getItem(deletedKey);
 
+    // 日付文字列をDateオブジェクトに変換
+    const parsedOfflineData = storedData
+      ? JSON.parse(storedData).map((log: any) => ({
+          ...log,
+          createdAt: new Date(log.createdAt),
+          updatedAt: new Date(log.updatedAt),
+        }))
+      : [];
+
     return {
-      offlineData: storedData ? JSON.parse(storedData) : [],
+      offlineData: parsedOfflineData,
       deletedIds: new Set(deletedData ? JSON.parse(deletedData) : []),
     };
   }, [date, offlineDataTrigger]);

@@ -1,4 +1,4 @@
-import { apiClient } from "@frontend/utils/apiClient";
+import { useCreateUserApi, useGoogleAuth } from "@frontend/hooks/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -13,7 +13,8 @@ import { useAuth } from "@hooks/useAuth";
 import { useToast } from "@components/ui";
 
 export const useCreateUser = () => {
-  const api = apiClient;
+  const createUserApi = useCreateUserApi();
+  const googleAuth = useGoogleAuth();
   const { getUser, setAccessToken, scheduleTokenRefresh } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,15 +30,12 @@ export const useCreateUser = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      const res = await api.user.$post({ json: data });
-      if (res.status === 200) {
-        const { token } = await res.json();
-        setAccessToken(token);
-        scheduleTokenRefresh();
-        await getUser();
-        // ユーザー作成成功時にホームページにリダイレクト
-        navigate({ to: "/" });
-      }
+      const { token } = await createUserApi.mutateAsync(data);
+      setAccessToken(token);
+      scheduleTokenRefresh();
+      await getUser();
+      // ユーザー作成成功時にホームページにリダイレクト
+      navigate({ to: "/" });
     } catch (e) {
       toast({
         title: "エラー",
@@ -58,23 +56,13 @@ export const useCreateUser = () => {
       return;
     }
     try {
-      const res = await apiClient.auth.google.$post({
-        json: { credential: credentialResponse.credential },
-      });
-      if (res.status === 200) {
-        const { token } = await res.json();
-        setAccessToken(token);
-        scheduleTokenRefresh();
-        await getUser();
-        navigate({ to: "/" });
-      } else {
-        await res.json();
-        toast({
-          title: "エラー",
-          description: "Google認証に失敗しました",
-          variant: "destructive",
-        });
-      }
+      const { token } = await googleAuth.mutateAsync(
+        credentialResponse.credential,
+      );
+      setAccessToken(token);
+      scheduleTokenRefresh();
+      await getUser();
+      navigate({ to: "/" });
     } catch (e) {
       toast({
         title: "エラー",
