@@ -1,6 +1,7 @@
 import type React from "react";
 
-import * as apiHooks from "@frontend/hooks/api";
+import { useActivities } from "@frontend/hooks/api/useActivities";
+import { useGoals } from "@frontend/hooks/api/useGoals";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,16 +10,13 @@ import type { GetActivitiesResponse, GetGoalsResponse } from "@dtos/response";
 
 import { useNewGoalPage } from "../useNewGoalPage";
 
-// useGoalsのみをモックし、他のフック（特にuseActivities）は実装をそのまま利用する
-// vitest.spyOnを使って部分的に振る舞いを上書きする
-vi.mock("@frontend/utils", () => ({
-  apiClient: {
-    users: {
-      activities: {
-        $get: vi.fn(),
-      },
-    },
-  },
+// useGoalsとuseActivitiesをモック
+vi.mock("@frontend/hooks/api/useActivities", () => ({
+  useActivities: vi.fn(),
+}));
+
+vi.mock("@frontend/hooks/api/useGoals", () => ({
+  useGoals: vi.fn(),
 }));
 
 describe("useNewGoalPage", () => {
@@ -97,7 +95,7 @@ describe("useNewGoalPage", () => {
     vi.clearAllMocks();
 
     // useGoalsのモック
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: mockGoals,
       isLoading: false,
       error: null,
@@ -106,10 +104,14 @@ describe("useNewGoalPage", () => {
       isSuccess: true,
     } as any);
 
-    // apiClientのモック
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-    vi.mocked(mockedApiClient.users.activities.$get).mockResolvedValue({
-      json: vi.fn().mockResolvedValue(mockActivities),
+    // useActivitiesのモック
+    vi.mocked(useActivities).mockReturnValue({
+      data: mockActivities,
+      isLoading: false,
+      error: null,
+      isError: false,
+      isFetching: false,
+      isSuccess: true,
     } as any);
   });
 
@@ -302,7 +304,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: goalsWithNoEndDate,
       isLoading: false,
       error: null,
@@ -333,7 +335,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: goalsEndingToday,
       isLoading: false,
       error: null,
@@ -351,7 +353,7 @@ describe("useNewGoalPage", () => {
   });
 
   it("ローディング中はgoalsLoadingがtrueになる", () => {
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
@@ -368,9 +370,13 @@ describe("useNewGoalPage", () => {
   });
 
   it("アクティビティデータがない場合でもエラーにならない", async () => {
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-    vi.mocked(mockedApiClient.users.activities.$get).mockResolvedValue({
-      json: vi.fn().mockResolvedValue([]),
+    vi.mocked(useActivities).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      isError: false,
+      isFetching: false,
+      isSuccess: true,
     } as any);
 
     const { result } = renderHook(() => useNewGoalPage(), { wrapper });

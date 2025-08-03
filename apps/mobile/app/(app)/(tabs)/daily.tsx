@@ -10,7 +10,7 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import type { GetActivityLogResponse } from "@dtos/response";
@@ -18,8 +18,10 @@ import type { GetActivityLogResponse } from "@dtos/response";
 import ActivityDateHeader from "../../../src/components/daily/ActivityDateHeader";
 import ActivityLogEditDialog from "../../../src/components/daily/ActivityLogEditDialog";
 import TaskList from "../../../src/components/daily/TaskList";
+import { useActivities } from "../../../src/hooks/useActivities";
+import { useActivityLogs } from "../../../src/hooks/useActivityLogs";
 import { useGlobalDate } from "../../../src/hooks/useGlobalDate";
-import { apiClient } from "../../../src/utils/apiClient";
+import { useTasks } from "../../../src/hooks/useTasks";
 
 export default function DailyPage() {
   const { date, setDate } = useGlobalDate();
@@ -30,41 +32,17 @@ export default function DailyPage() {
   const queryClient = useQueryClient();
 
   // 全てのアクティビティを取得
-  const { data: allActivities = [], isLoading: activitiesLoading } = useQuery({
-    queryKey: ["activities"],
-    queryFn: async () => {
-      const response = await apiClient.users.activities.$get();
-      const data = await response.json();
-      return data;
-    },
-  });
+  const { activities: allActivities = [], isLoading: activitiesLoading } =
+    useActivities();
 
+  // アクティビティログを取得
+  const { data: activityLogs = [], isLoading: logsLoading } =
+    useActivityLogs(date);
+
+  // タスクを取得
   const dateStr = dayjs(date).format("YYYY-MM-DD");
-  const { data: activityLogs = [], isLoading: logsLoading } = useQuery({
-    queryKey: ["activity-logs", dateStr],
-    queryFn: async () => {
-      const response = await apiClient.users["activity-logs"].$get({
-        query: { date: dateStr },
-      });
-      const data = await response.json();
-      return data.map((log: any) => ({
-        ...log,
-        date: new Date(log.date),
-        createdAt: new Date(log.createdAt),
-        updatedAt: new Date(log.updatedAt),
-      }));
-    },
-  });
-
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ["tasks", dateStr],
-    queryFn: async () => {
-      const response = await apiClient.users.tasks.$get({
-        query: { date: dateStr },
-      });
-      const data = await response.json();
-      return data;
-    },
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks({
+    date: dateStr,
   });
 
   const handleEditLog = useCallback((log: GetActivityLogResponse) => {

@@ -27,3 +27,9 @@ export type { LoginDependencies, GoogleCredentialResponse } from "./useLogin";
 
 export { createUseUserSettings } from "./useUserSettings";
 export type { UserSettingsDependencies, UserInfo } from "./useUserSettings";
+
+export { createUseNewGoalPage } from "./useNewGoalPage";
+export type { GoalPageDependencies } from "./useNewGoalPage";
+
+export { createUseActivityRegistPage } from "./useActivityRegistPage";
+export type { ActivityRegistPageDependencies } from "./useActivityRegistPage";

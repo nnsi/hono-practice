@@ -169,6 +169,7 @@ describe("useActivityLogImport", () => {
         name: "水泳",
         quantityUnit: "回",
         emoji: "📊",
+        iconType: "emoji",
         description: "",
         showCombinedStats: false,
       });

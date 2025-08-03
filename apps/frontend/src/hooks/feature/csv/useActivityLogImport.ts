@@ -59,6 +59,7 @@ export function useActivityLogImport() {
             name,
             quantityUnit: "回",
             emoji: "📊",
+            iconType: "emoji" as const,
             description: "",
             showCombinedStats: false,
           });

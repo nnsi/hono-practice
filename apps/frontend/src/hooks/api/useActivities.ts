@@ -2,9 +2,13 @@ import { apiClient } from "@frontend/utils";
 import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
 import { createUseActivities } from "@packages/frontend-shared/hooks";
+import {
+  createUseCreateActivity,
+  createUseDeleteActivity,
+  createUseUpdateActivity,
+} from "@packages/frontend-shared/hooks/useActivityMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { UpdateActivityRequest } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivitiesResponse } from "@dtos/response";
 
 /**
@@ -30,58 +34,29 @@ export function useActivities() {
 }
 
 /**
+ * Activity作成用のフック
+ */
+export function useCreateActivity() {
+  return createUseCreateActivity({ apiClient });
+}
+
+/**
  * Activity更新用のフック
  */
 export function useUpdateActivity() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: UpdateActivityRequest;
-    }) => {
-      const res = await apiClient.users.activities[":id"].$put({
-        param: { id },
-        json: data,
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update activity");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-  });
+  return createUseUpdateActivity({ apiClient });
 }
 
 /**
  * Activity削除用のフック
  */
 export function useDeleteActivity() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiClient.users.activities[":id"].$delete({
-        param: { id },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete activity");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-  });
+  return createUseDeleteActivity({ apiClient });
 }
 
 /**
  * Activityアイコンアップロード用のフック
+ * Note: This needs special handling for image resizing, so it's not shared yet
  */
 export function useUploadActivityIcon() {
   const queryClient = useQueryClient();
@@ -124,6 +99,7 @@ export function useUploadActivityIcon() {
 
 /**
  * Activityアイコン削除用のフック
+ * Note: This uses raw fetch for now, but could be migrated to shared implementation
  */
 export function useDeleteActivityIcon() {
   const queryClient = useQueryClient();
@@ -151,34 +127,6 @@ export function useDeleteActivityIcon() {
         throw new Error("Failed to delete icon");
       }
       return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-  });
-}
-
-/**
- * Activity作成用のフック
- */
-export function useCreateActivity() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: {
-      name: string;
-      quantityUnit: string;
-      emoji: string;
-      description: string;
-      showCombinedStats: boolean;
-    }) => {
-      const res = await apiClient.users.activities.$post({
-        json: data,
-      });
-      if (!res.ok) {
-        throw new Error("Failed to create activity");
-      }
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity"] });

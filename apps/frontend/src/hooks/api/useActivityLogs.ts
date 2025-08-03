@@ -1,35 +1,23 @@
 import { apiClient, qp } from "@frontend/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-
-import type {
-  CreateActivityLogBatchRequest,
-  CreateActivityLogRequest,
-  UpdateActivityLogRequest,
-} from "@dtos/request";
 import {
-  type GetActivityLogsResponse,
-  GetActivityLogsResponseSchema,
-  GetActivityStatsResponseSchema,
-} from "@dtos/response";
+  createUseActivityLogs,
+  createUseCreateActivityLog,
+  createUseDeleteActivityLog,
+  createUseUpdateActivityLog,
+} from "@packages/frontend-shared/hooks/useActivityLogs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import type { CreateActivityLogBatchRequest } from "@dtos/request";
+import { GetActivityStatsResponseSchema } from "@dtos/response";
 
 /**
  * 特定日のアクティビティログ一覧を取得するフック
  */
 export function useActivityLogs(date: Date, options?: { enabled?: boolean }) {
-  // dayjsを使用してローカルタイムゾーンで日付を取得
-  const dateString = dayjs(date).format("YYYY-MM-DD");
-
-  return useQuery<GetActivityLogsResponse>({
-    ...qp({
-      queryKey: ["activity-logs-daily", dateString],
-      queryFn: () =>
-        apiClient.users["activity-logs"].$get({
-          query: { date: dateString },
-        }),
-      schema: GetActivityLogsResponseSchema,
-    }),
-    enabled: options?.enabled ?? true,
+  return createUseActivityLogs({
+    apiClient,
+    date,
+    enabled: options?.enabled,
   });
 }
 
@@ -37,84 +25,21 @@ export function useActivityLogs(date: Date, options?: { enabled?: boolean }) {
  * アクティビティログ作成用のフック
  */
 export function useCreateActivityLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateActivityLogRequest) => {
-      const res = await apiClient.users["activity-logs"].$post({
-        json: data,
-      });
-      if (!res.ok) {
-        throw new Error("Failed to create activity log");
-      }
-      return res.json();
-    },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
-  });
+  return createUseCreateActivityLog({ apiClient });
 }
 
 /**
  * アクティビティログ更新用のフック
  */
 export function useUpdateActivityLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-      date: _date,
-    }: {
-      id: string;
-      data: UpdateActivityLogRequest;
-      date: string;
-    }) => {
-      const res = await apiClient.users["activity-logs"][":id"].$put({
-        param: { id },
-        json: data,
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update activity log");
-      }
-      return res.json();
-    },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
-  });
+  return createUseUpdateActivityLog({ apiClient });
 }
 
 /**
  * アクティビティログ削除用のフック
  */
 export function useDeleteActivityLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, date: _date }: { id: string; date: string }) => {
-      const res = await apiClient.users["activity-logs"][":id"].$delete({
-        param: { id },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete activity log");
-      }
-      return res.json();
-    },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
-  });
+  return createUseDeleteActivityLog({ apiClient });
 }
 
 /**
