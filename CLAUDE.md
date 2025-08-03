@@ -13,6 +13,11 @@
 - ユーザー側で既に起動しているため、Claude Code側での起動は不要です
 - `npm run dev`、`npm run client-dev` などのサーバー起動コマンドは実行しないでください
 
+### ブラウザ動作確認
+- **「ブラウザで動作確認して」と言われた場合は、Playwright MCPを使用してブラウザ上で動作確認を行う**
+- 手動確認を求めるのではなく、必ずPlaywrightで自動的に動作確認を実施すること
+- `mcp__playwright__browser_navigate`でページにアクセスし、`mcp__playwright__browser_snapshot`で状態を確認する
+
 ## 🔨 最重要ルール - 新しいルールの追加プロセス
 
 ユーザーから今回限りではなく常に対応が必要だと思われる指示を受けた場合：

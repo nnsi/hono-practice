@@ -53,10 +53,6 @@ type TaskInput = z.input<typeof TaskSchema>;
 export function createTaskEntity(params: TaskInput): Task {
   const parsedEntity = TaskSchema.safeParse(params);
   if (!parsedEntity.success) {
-    console.error("Task validation failed:", {
-      params,
-      errors: parsedEntity.error.errors,
-    });
     throw new DomainValidateError("createTaskEntity: invalid params");
   }
 
@@ -68,10 +64,6 @@ export function createArchivedTaskEntity(
 ): ArchivedTask {
   const parsedEntity = ArchivedTaskSchema.safeParse(params);
   if (!parsedEntity.success) {
-    console.error("ArchivedTask validation failed:", {
-      params,
-      errors: parsedEntity.error.errors,
-    });
     throw new DomainValidateError("createArchivedTaskEntity: invalid params");
   }
 

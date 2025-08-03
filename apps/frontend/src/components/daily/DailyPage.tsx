@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { useDailyPage } from "@frontend/hooks/feature/daily/useDailyPage";
+import { useOfflineActivityLogSync } from "@frontend/hooks/sync/useSyncedActivityLog";
 import { UpdateIcon } from "@radix-ui/react-icons";
 
 import { Card, CardContent } from "@components/ui";
@@ -12,6 +13,9 @@ import { DailyActivityLogCreateDialog } from "./DailyActivityLogCreateDialog";
 import { TaskList } from "./TaskList";
 
 export const ActivityDailyPage: React.FC = () => {
+  // オフラインデータの同期を有効化
+  useOfflineActivityLogSync();
+
   const {
     date,
     setDate,

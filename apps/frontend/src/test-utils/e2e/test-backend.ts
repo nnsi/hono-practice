@@ -13,7 +13,7 @@ let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let pglite: PGlite | null = null;
 let serverPort: number | null = null;
 
-export async function startTestBackend(port = 3457) {
+export async function startTestBackend(port = 3457, frontendPort?: number) {
   // 既存のサーバーがあれば先に終了
   if (server) {
     await stopTestBackend();
@@ -27,7 +27,9 @@ export async function startTestBackend(port = 3457) {
 
   // Test configuration
   const testConfig: Config = {
-    APP_URL: "http://localhost:5176", // フロントエンドのURLに合わせる
+    APP_URL: frontendPort
+      ? `http://localhost:${frontendPort}`
+      : "http://localhost:5176", // フロントエンドのURLに合わせる
     JWT_SECRET: "test-jwt-secret-very-secure-key-for-testing",
     NODE_ENV: "test",
     DATABASE_URL: "pglite://memory",

@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-
+import { useToast } from "@frontend/components/ui";
 import {
   useDeleteActivity,
   useDeleteActivityIcon,
@@ -7,6 +6,11 @@ import {
   useUploadActivityIcon,
 } from "@frontend/hooks/api";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createWebFormAdapter,
+  createWebNotificationAdapter,
+} from "@packages/frontend-shared/adapters";
+import { createUseActivityEdit } from "@packages/frontend-shared/hooks/feature";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -15,10 +19,12 @@ import {
 } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
+// 新しい共通化されたフックを使用する実装
 export const useActivityEdit = (
   activity: GetActivityResponse | null,
   onClose: () => void,
 ) => {
+  // React Hook Form setup
   const form = useForm<UpdateActivityRequest>({
     resolver: zodResolver(UpdateActivityRequestSchema),
     defaultValues: activity
@@ -38,101 +44,59 @@ export const useActivityEdit = (
       : undefined,
   });
 
-  useEffect(() => {
-    if (activity) {
-      form.reset({
-        activity: {
-          name: activity.name,
-          description: activity.description ?? "",
-          quantityUnit: activity.quantityUnit,
-          emoji: activity.emoji ?? "",
-          showCombinedStats: activity.showCombinedStats ?? false,
-        },
-        kinds: activity.kinds.map((kind) => ({
-          id: kind.id,
-          name: kind.name,
-        })),
-      });
-    }
-  }, [activity, form]);
+  // Toast setup
+  const { toast } = useToast();
 
-  const {
-    fields: kindFields,
-    append: kindAppend,
-    remove: kindRemove,
-  } = useFieldArray({
-    control: form.control,
-    name: "kinds",
-  });
-
+  // API mutations
   const updateActivity = useUpdateActivity();
   const deleteActivity = useDeleteActivity();
   const uploadIconMutation = useUploadActivityIcon();
   const deleteIconMutation = useDeleteActivityIcon();
 
-  const handleDelete = async () => {
-    if (!activity) return;
-    try {
-      await deleteActivity.mutateAsync(activity.id);
-      onClose();
-    } catch (error) {
-      console.error("Failed to delete activity:", error);
-    }
-  };
-
-  const onSubmit = (data: UpdateActivityRequest) => {
-    if (!activity) return;
-    updateActivity.mutate(
-      { id: activity.id, data },
-      {
-        onSuccess: () => {
-          onClose();
-        },
+  // Create adapters and dependencies
+  const dependencies = {
+    form: createWebFormAdapter<UpdateActivityRequest>(
+      form as never,
+      useFieldArray,
+    ),
+    notification: createWebNotificationAdapter(),
+    api: {
+      updateActivity: async (params: {
+        id: string;
+        data: UpdateActivityRequest;
+      }) => {
+        await updateActivity.mutateAsync(params);
       },
-    );
+      deleteActivity: async (id: string) => {
+        await deleteActivity.mutateAsync(id);
+      },
+      uploadActivityIcon: async (params: {
+        id: string;
+        file: File | FormData;
+      }) => {
+        await uploadIconMutation.mutateAsync({
+          ...params,
+          file: params.file as File,
+        });
+      },
+      deleteActivityIcon: async (id: string) => {
+        await deleteIconMutation.mutateAsync(id);
+      },
+    },
   };
 
-  // 種類を削除するハンドラ
-  const handleRemoveKind = (index: number) => {
-    kindRemove(index);
-  };
+  // Set toast callback for Web notification adapter
+  if ("setToastCallback" in dependencies.notification) {
+    dependencies.notification.setToastCallback(toast);
+  }
 
-  // 種類を追加するハンドラ
-  const handleAddKind = () => {
-    kindAppend({ name: "" });
-  };
+  // Use the common hook
+  const commonHook = createUseActivityEdit(dependencies, activity, onClose);
 
-  // アイコンアップロード
-  const uploadIcon = async (file: File) => {
-    if (!activity) return;
-
-    try {
-      await uploadIconMutation.mutateAsync({ id: activity.id, file });
-    } catch (error) {
-      console.error("Failed to upload icon:", error);
-    }
-  };
-
-  // アイコン削除
-  const deleteIcon = async () => {
-    if (!activity) return;
-
-    try {
-      await deleteIconMutation.mutateAsync(activity.id);
-    } catch (error) {
-      console.error("Failed to delete icon:", error);
-    }
-  };
-
+  // Return the common hook result with the original form instance for compatibility
   return {
+    ...commonHook,
+    // Return the original react-hook-form instance for UI components
     form,
-    kindFields,
-    isPending: updateActivity.isPending,
-    onSubmit,
-    handleDelete,
-    handleRemoveKind,
-    handleAddKind,
-    uploadIcon,
-    deleteIcon,
   };
 };

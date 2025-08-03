@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { apiClient } from "@frontend/utils/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
@@ -143,9 +145,10 @@ export function useCreateActivityLog() {
                 (k) => k.id === variables.activityKindId,
               )
             : undefined,
+        isOffline: true, // オフラインフラグを追加
       };
 
-      // ローカルストレージにも保存
+      // ローカルストレージにも保存（同期完了まで保持）
       const storageKey = `offline-activity-logs-${variables.date}`;
       const existingLogs = JSON.parse(localStorage.getItem(storageKey) || "[]");
       existingLogs.push(newLog);
@@ -487,6 +490,9 @@ export function useDeleteActivityLog() {
 
       // 全体のactivity-logsキャッシュも無効化
       queryClient.invalidateQueries({ queryKey: ["activity-logs-daily"] });
+
+      // カスタムイベントを発火してDailyPageに通知（削除成功時）
+      window.dispatchEvent(new Event("sync-delete-success"));
     },
     onError: (_error, variables, context) => {
       // エラー時は楽観的更新をロールバック
@@ -509,4 +515,107 @@ export function useDeleteActivityLog() {
       }
     },
   });
+}
+
+// オフラインデータを同期するためのフック
+export function useOfflineActivityLogSync() {
+  const { isOnline } = useNetworkStatusContext();
+  const queryClient = useQueryClient();
+  const syncingRef = useRef(false);
+
+  useEffect(() => {
+    console.log(
+      "useOfflineActivityLogSync: isOnline =",
+      isOnline,
+      "syncingRef.current =",
+      syncingRef.current,
+    );
+
+    if (!isOnline || syncingRef.current) return;
+
+    const syncOfflineData = async () => {
+      syncingRef.current = true;
+      console.log("Starting offline data sync...");
+
+      try {
+        // ローカルストレージから全てのオフラインデータを取得
+        const allKeys = Object.keys(localStorage).filter((key) =>
+          key.startsWith("offline-activity-logs-"),
+        );
+
+        console.log("Found offline data keys:", allKeys);
+
+        let syncedCount = 0;
+
+        for (const key of allKeys) {
+          const offlineLogs = JSON.parse(localStorage.getItem(key) || "[]");
+          console.log(`Processing ${offlineLogs.length} logs from ${key}`);
+
+          for (const log of offlineLogs) {
+            // 古いオフラインデータ（isOfflineフラグがない）もクリーンアップ
+            if (log.isOffline || !log.id.startsWith("019")) {
+              // 019で始まるIDはサーバー生成のID
+              try {
+                console.log("Syncing offline log:", log);
+
+                // オフラインデータを直接APIでサーバーに送信（mutationを使わない）
+                const response = await apiClient.users["activity-logs"].$post({
+                  json: {
+                    activityId: log.activity.id,
+                    date: log.date,
+                    quantity: log.quantity,
+                    activityKindId: log.activityKind?.id,
+                    memo: log.memo,
+                  },
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to sync activity log");
+                }
+
+                syncedCount++;
+                console.log(`Successfully synced log ${log.id}`);
+
+                // 同期成功したらローカルストレージから削除
+                const updatedLogs = JSON.parse(
+                  localStorage.getItem(key) || "[]",
+                );
+                const remainingLogs = updatedLogs.filter(
+                  (l: any) => l.id !== log.id,
+                );
+                if (remainingLogs.length === 0) {
+                  localStorage.removeItem(key);
+                } else {
+                  localStorage.setItem(key, JSON.stringify(remainingLogs));
+                }
+              } catch (error) {
+                console.error("Failed to sync offline activity log:", error);
+              }
+            }
+          }
+        }
+
+        // 同期完了後、React Queryのキャッシュを無効化
+        if (syncedCount > 0) {
+          console.log(
+            `Offline data sync completed! Synced ${syncedCount} logs`,
+          );
+
+          // キャッシュを無効化して最新データを取得
+          await queryClient.invalidateQueries({
+            queryKey: ["activity-logs-daily"],
+          });
+
+          // イベントを発火して他のコンポーネントに通知
+          window.dispatchEvent(new Event("offline-data-synced"));
+        } else {
+          console.log("No offline data to sync");
+        }
+      } finally {
+        syncingRef.current = false;
+      }
+    };
+
+    syncOfflineData();
+  }, [isOnline, queryClient]);
 }

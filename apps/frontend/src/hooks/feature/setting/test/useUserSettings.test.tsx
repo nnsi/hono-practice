@@ -46,6 +46,9 @@ vi.mock("@frontend/hooks/useAuth", () => ({
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mockNavigate,
+  useRouter: vi.fn(() => ({
+    navigate: mockNavigate,
+  })),
 }));
 
 vi.mock("@frontend/utils/apiClient", () => ({
@@ -186,6 +189,7 @@ describe("useUserSettings", () => {
         expect(mockToast).toHaveBeenCalledWith({
           title: "Success",
           description: "Successfully linked Google account",
+          variant: "default",
         });
         expect(mockGetUser).toHaveBeenCalled();
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -200,7 +204,7 @@ describe("useUserSettings", () => {
       });
 
       const credentialResponse = {
-        credential: null,
+        credential: null as unknown as string,
       };
 
       await act(async () => {

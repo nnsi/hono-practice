@@ -87,7 +87,7 @@ describe("useSyncedMutation", () => {
     expect(result.current.data).toEqual({ id: "123", success: true });
   });
 
-  it("オフライン時にofflineActionを実行し、キューに登録する", async () => {
+  it("オフライン時にofflineActionを実行する", async () => {
     vi.mocked(useNetworkStatusContext).mockReturnValue(
       createMockNetworkStatus({ isOnline: false }),
     );
@@ -117,12 +117,8 @@ describe("useSyncedMutation", () => {
     });
 
     expect(mockOfflineAction).toHaveBeenCalledWith({ name: "Test Activity" });
-    expect(mockSyncManager.enqueue).toHaveBeenCalledWith(
-      "activity",
-      "activity-123",
-      "create",
-      { name: "Test Activity" },
-    );
+    // オフラインキューへの登録は無効化されているため、enqueueは呼ばれない
+    expect(mockSyncManager.enqueue).not.toHaveBeenCalled();
   });
 
   it("オフライン時にofflineActionが定義されていない場合エラーをスローする", async () => {
@@ -184,7 +180,8 @@ describe("useSyncedMutation", () => {
 
     expect(mockOnlineAction).toHaveBeenCalled();
     expect(mockOfflineAction).toHaveBeenCalled();
-    expect(mockSyncManager.enqueue).toHaveBeenCalled();
+    // オフラインキューへの登録は無効化されているため、enqueueは呼ばれない
+    expect(mockSyncManager.enqueue).not.toHaveBeenCalled();
   });
 
   it("optimisticUpdateが定義されている場合、mutate時に実行される", async () => {
@@ -272,7 +269,7 @@ describe("useSyncedMutation", () => {
     expect(result.current.syncStatus).toEqual(mockSyncStatus);
   });
 
-  it("オンラインに復帰した時、ペンディングのアイテムがある場合は同期を実行する", async () => {
+  it("オンラインに復帰した時でも自動同期は実行されない", async () => {
     vi.mocked(mockSyncManager.getSyncStatus).mockReturnValue({
       pendingCount: 3,
       syncingCount: 0,
@@ -294,7 +291,6 @@ describe("useSyncedMutation", () => {
     );
 
     // オフラインからオンラインに変更
-    // オフラインからオンラインに変更
     vi.mocked(useNetworkStatusContext).mockReturnValue(
       createMockNetworkStatus({ isOnline: false }),
     );
@@ -305,9 +301,9 @@ describe("useSyncedMutation", () => {
     );
     rerender();
 
-    await waitFor(() => {
-      expect(mockSyncManager.syncBatch).toHaveBeenCalled();
-    });
+    // 自動同期は無効化されているため、syncBatchは呼ばれない
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(mockSyncManager.syncBatch).not.toHaveBeenCalled();
   });
 
   it("ユーザーがない場合でも動作する", () => {

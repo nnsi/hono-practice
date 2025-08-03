@@ -27,12 +27,19 @@ export const useActivityRegistPage = () => {
     const dateString = dayjs(date).format("YYYY-MM-DD");
     await Promise.all([
       queryClient.invalidateQueries({
+        queryKey: ["activity"],
+      }),
+      queryClient.invalidateQueries({
         queryKey: ["activity", "activity-logs-daily", dateString],
       }),
       queryClient.invalidateQueries({
         queryKey: ["activity-logs-daily", dateString],
       }),
     ]);
+    // 強制的に再フェッチ
+    await queryClient.refetchQueries({
+      queryKey: ["activity", "activity-logs-daily", dateString],
+    });
   };
 
   // アクティビティクリック時の処理
@@ -53,8 +60,12 @@ export const useActivityRegistPage = () => {
   };
 
   // NewActivityDialogのopen/close処理
-  const handleNewActivityDialogChange = (open: boolean) => {
+  const handleNewActivityDialogChange = async (open: boolean) => {
     setOpen(open);
+    // ダイアログが閉じた時にキャッシュを無効化して最新データを取得
+    if (!open) {
+      await invalidateActivityCache();
+    }
   };
 
   // ActivityLogCreateDialogのopen/close処理

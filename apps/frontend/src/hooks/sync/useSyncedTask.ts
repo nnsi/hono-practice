@@ -74,8 +74,11 @@ export function useCreateTask() {
         updatedAt: new Date().toISOString(),
       };
 
-      // 各キーのキャッシュを更新
-      const tasksKey = ["tasks", variables.startDate];
+      // 各キーのキャッシュを更新（useTasks と同じクエリキー形式を使用）
+      const tasksKey = [
+        "tasks",
+        { date: variables.startDate, includeArchived: false },
+      ];
       const allTasksKey = ["tasks"];
 
       // 既存のキャッシュを保存（ロールバック用）
@@ -167,7 +170,10 @@ export function useCreateTask() {
       window.dispatchEvent(new Event("offline-data-updated"));
 
       // 楽観的更新されたデータを実際のデータで置き換え
-      const tasksKey = ["tasks", variables.startDate];
+      const tasksKey = [
+        "tasks",
+        { date: variables.startDate, includeArchived: false },
+      ];
       queryClient.setQueryData(tasksKey, (prev: any) => {
         if (!prev) return [data];
         // taskIdで一致するタスクを実際のデータで置き換え
@@ -181,7 +187,10 @@ export function useCreateTask() {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx) {
-        const tasksKey = ["tasks", variables.startDate];
+        const tasksKey = [
+          "tasks",
+          { date: variables.startDate, includeArchived: false },
+        ];
         queryClient.setQueryData(tasksKey, ctx.previousTasksData);
         queryClient.setQueryData(["tasks"], ctx.previousAllTasksData);
       }
@@ -294,7 +303,10 @@ export function useDeleteTask() {
       if (!variables.date) return;
 
       // 楽観的更新のために現在のキャッシュを取得
-      const tasksKey = ["tasks", variables.date];
+      const tasksKey = [
+        "tasks",
+        { date: variables.date, includeArchived: false },
+      ];
       const allTasksKey = ["tasks"];
 
       // 既存のキャッシュを保存
@@ -375,7 +387,10 @@ export function useDeleteTask() {
 
       // React Queryのキャッシュを無効化
       if (variables.date) {
-        const tasksKey = ["tasks", variables.date];
+        const tasksKey = [
+          "tasks",
+          { date: variables.date, includeArchived: false },
+        ];
         queryClient.invalidateQueries({ queryKey: tasksKey });
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -384,7 +399,10 @@ export function useDeleteTask() {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {
-        const tasksKey = ["tasks", variables.date];
+        const tasksKey = [
+          "tasks",
+          { date: variables.date, includeArchived: false },
+        ];
         queryClient.setQueryData(tasksKey, ctx.previousTasksData);
         queryClient.setQueryData(["tasks"], ctx.previousAllTasksData);
       }
@@ -403,7 +421,10 @@ export function useArchiveTask() {
       if (!variables.date) return;
 
       // 楽観的更新のために現在のキャッシュを取得
-      const tasksKey = ["tasks", variables.date];
+      const tasksKey = [
+        "tasks",
+        { date: variables.date, includeArchived: false },
+      ];
       const allTasksKey = ["tasks"];
 
       // 既存のキャッシュを保存
@@ -463,7 +484,10 @@ export function useArchiveTask() {
     onSuccess: (_data, variables) => {
       // React Queryのキャッシュを無効化
       if (variables.date) {
-        const tasksKey = ["tasks", variables.date];
+        const tasksKey = [
+          "tasks",
+          { date: variables.date, includeArchived: false },
+        ];
         queryClient.invalidateQueries({ queryKey: tasksKey });
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -472,7 +496,10 @@ export function useArchiveTask() {
       // エラー時は楽観的更新をロールバック
       const ctx = context as MutationContext | undefined;
       if (ctx && variables.date) {
-        const tasksKey = ["tasks", variables.date];
+        const tasksKey = [
+          "tasks",
+          { date: variables.date, includeArchived: false },
+        ];
         queryClient.setQueryData(tasksKey, ctx.previousTasksData);
         queryClient.setQueryData(["tasks"], ctx.previousAllTasksData);
       }

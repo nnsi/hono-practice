@@ -25,10 +25,7 @@ export const LoginForm: React.FC = () => {
       <CardHeader>ログインする</CardHeader>
       <CardContent>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleLogin)}
-            className="flex flex-wrap gap-5"
-          >
+          <form onSubmit={handleLogin} className="flex flex-wrap gap-5">
             <FormField
               control={form.control}
               name="login_id"

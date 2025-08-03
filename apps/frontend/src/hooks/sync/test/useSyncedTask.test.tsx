@@ -185,7 +185,10 @@ describe("useSyncedTask", () => {
         wrapper: createWrapper(true),
       });
 
-      const tasksKey = ["tasks", "2024-01-15"];
+      const tasksKey = [
+        "tasks",
+        { date: "2024-01-15", includeArchived: false },
+      ];
 
       await act(async () => {
         result.current.mutate({
@@ -349,7 +352,10 @@ describe("useSyncedTask", () => {
         id: "00000000-0000-4000-8000-000000000001" as any,
       });
 
-      const tasksKey = ["tasks", "2024-01-15"];
+      const tasksKey = [
+        "tasks",
+        { date: "2024-01-15", includeArchived: false },
+      ];
       queryClient.setQueryData(tasksKey, [existingTask]);
 
       const { result } = renderHook(() => useDeleteTask(), {
@@ -448,7 +454,10 @@ describe("useSyncedTask", () => {
         id: "00000000-0000-4000-8000-000000000001" as any,
       });
 
-      const tasksKey = ["tasks", "2024-01-15"];
+      const tasksKey = [
+        "tasks",
+        { date: "2024-01-15", includeArchived: false },
+      ];
       queryClient.setQueryData(tasksKey, [existingTask]);
 
       const { result } = renderHook(() => useArchiveTask(), {
@@ -492,7 +501,10 @@ describe("useSyncedTask", () => {
         id: "00000000-0000-4000-8000-000000000001" as any,
       });
 
-      const tasksKey = ["tasks", "2024-01-15"];
+      const tasksKey = [
+        "tasks",
+        { date: "2024-01-15", includeArchived: false },
+      ];
       queryClient.setQueryData(tasksKey, [existingTask]);
 
       vi.mocked(

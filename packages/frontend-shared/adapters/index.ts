@@ -2,6 +2,13 @@
 export type {
   AlertOptions,
   EventBusAdapter,
+  FileAdapter,
+  FormAdapter,
+  FormAdapterWithFieldArray,
+  FormFieldArrayOperations,
+  FormFieldMeta,
+  FormFieldOptions,
+  NavigationAdapter,
   NetworkAdapter,
   NotificationAdapter,
   PlatformAdapters,
@@ -13,6 +20,8 @@ export type {
 // Export Web adapter factory functions
 export {
   createWebEventBusAdapter,
+  createWebFormAdapter,
+  createWebNavigationAdapter,
   createWebNetworkAdapter,
   createWebNotificationAdapter,
   createWebStorageAdapter,
@@ -22,6 +31,8 @@ export {
 // Export React Native adapter factory functions
 export {
   createReactNativeEventBusAdapter,
+  createReactNativeFormAdapter,
+  createReactNativeNavigationAdapter,
   createReactNativeNetworkAdapter,
   createReactNativeNotificationAdapter,
   createReactNativeStorageAdapter,

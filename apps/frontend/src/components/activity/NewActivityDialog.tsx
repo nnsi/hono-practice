@@ -44,7 +44,7 @@ export function NewActivityDialog({
     defaultValues: {
       name: "",
       quantityUnit: "",
-      emoji: "",
+      emoji: "🎯",
       iconType: "emoji",
       showCombinedStats: false,
       kinds: [],
@@ -84,7 +84,7 @@ export function NewActivityDialog({
           const API_URL =
             import.meta.env.MODE === "development"
               ? import.meta.env.VITE_API_URL ||
-                `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+                `http://${window.location.hostname}:${import.meta.env.VITE_API_PORT || "3456"}/`
               : import.meta.env.VITE_API_URL;
 
           const token = tokenStore.getToken();
@@ -115,17 +115,34 @@ export function NewActivityDialog({
 
       return activity;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // First invalidate and refetch data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["activity"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["activity", "activity-logs-daily"],
+          exact: false,
+        }),
+      ]);
+
+      // Force refetch
+      await queryClient.refetchQueries({
+        queryKey: ["activity", "activity-logs-daily"],
+        exact: false,
+      });
+
+      // Then close dialog and reset form
+      onOpenChange(false);
+      form.reset();
+      setIconFile(undefined);
+      setIconPreview(undefined);
+
+      // Show toast notification
       toast({
         title: "登録完了",
         description: "アクティビティを作成しました",
         variant: "default",
       });
-      onOpenChange(false);
-      form.reset();
-      setIconFile(undefined);
-      setIconPreview(undefined);
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
     onError: () => {
       toast({

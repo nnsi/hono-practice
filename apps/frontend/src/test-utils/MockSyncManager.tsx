@@ -4,7 +4,7 @@ import type {
   SyncManager,
   SyncResult,
   SyncStatus,
-} from "@frontend/services/sync/SyncManager";
+} from "@frontend/services/sync";
 
 export const createMockSyncStatus = (
   overrides?: Partial<SyncStatus>,

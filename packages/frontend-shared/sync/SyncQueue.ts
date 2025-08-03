@@ -1,91 +1,89 @@
-import {
-  createBrowserTimeProvider,
-  createLocalStorageProvider,
-} from "@frontend/services/abstractions";
 import { v4 as uuidv4 } from "uuid";
 
-import { syncCrypto as defaultSyncCrypto } from "./crypto";
+import { createCryptoProvider } from "./crypto";
 
-import type { ISyncQueue, SyncQueueDependencies } from "./types";
+import type {
+  CryptoProvider,
+  EntityType,
+  ISyncQueue,
+  SyncOperation,
+  SyncQueueItem,
+  TimeProviderAdapter,
+} from "./types";
 
-export type SyncOperation = "create" | "update" | "delete";
-export type EntityType = "activity" | "activityLog" | "task" | "goal";
-export type { ISyncQueue } from "./types";
-
-export type SyncItemStatus =
-  | "pending"
-  | "syncing"
-  | "failed"
-  | "failed_pending_retry";
-
-export type SyncQueueItem = {
-  id: string;
-  clientId: string;
-  entityType: EntityType;
-  entityId: string;
-  operation: SyncOperation;
-  payload: Record<string, unknown>;
-  timestamp: string;
-  sequenceNumber: number;
-  retryCount: number;
-  status: SyncItemStatus;
-  error?: string;
-  lastRetryAt?: string;
-  nextRetryAt?: string;
-};
-
-/**
- * SyncQueueの設定
- */
 export type SyncQueueConfig = {
   userId?: string;
   storageKey?: string;
-  dependencies?: Partial<SyncQueueDependencies>;
+  dependencies?: {
+    storage?: {
+      getItem: (key: string) => string | null;
+      setItem: (key: string, value: string) => void;
+      removeItem: (key: string) => void;
+      addEventListener: (listener: (event: StorageEvent) => void) => () => void;
+    };
+    cryptoProvider?: CryptoProvider;
+    timeProvider?: TimeProviderAdapter;
+  };
 };
 
 const MAX_RETRY_COUNT = 3;
-const BASE_RETRY_DELAY = 1000; // 1秒
-const MAX_RETRY_DELAY = 60000; // 60秒
+const BASE_RETRY_DELAY = 1000; // 1 second
+const MAX_RETRY_DELAY = 60000; // 60 seconds
 
 /**
- * SyncQueueを作成するファクトリー関数
- * クロージャを使用して状態を管理
+ * Create a sync queue for managing offline operations
  */
 export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
-  const dependencies: SyncQueueDependencies = {
-    storage: config?.dependencies?.storage || createLocalStorageProvider(),
-    cryptoProvider: config?.dependencies?.cryptoProvider || defaultSyncCrypto,
-    timeProvider:
-      config?.dependencies?.timeProvider || createBrowserTimeProvider(),
-  };
-
   const STORAGE_KEY = config?.storageKey || "actiko-sync-queue";
   const userId = config?.userId;
 
-  // プライベート状態
+  // Dependencies
+  const storage = config?.dependencies?.storage || {
+    getItem: (key: string) => localStorage.getItem(key),
+    setItem: (key: string, value: string) => localStorage.setItem(key, value),
+    removeItem: (key: string) => localStorage.removeItem(key),
+    addEventListener: (listener: (event: StorageEvent) => void) => {
+      const handler = (e: StorageEvent) => listener(e);
+      window.addEventListener("storage", handler);
+      return () => window.removeEventListener("storage", handler);
+    },
+  };
+
+  const cryptoProvider =
+    config?.dependencies?.cryptoProvider || createCryptoProvider({ storage });
+  const timeProvider: TimeProviderAdapter = config?.dependencies
+    ?.timeProvider || {
+    setInterval: (cb, ms) => window.setInterval(cb, ms) as unknown as number,
+    clearInterval: (id) => window.clearInterval(id as unknown as number),
+    now: () => Date.now(),
+    getDate: () => new Date(),
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  };
+
+  // Private state
   let queue: Record<string, SyncQueueItem> = {};
   let sequenceCounter = 0;
   let storageEventHandler: (() => void) | null = null;
   let initializePromise: Promise<void> | null = null;
 
-  // リトライ遅延を計算
+  // Calculate retry delay
   const calculateRetryDelay = (
     retryCount: number,
     isNetworkError: boolean,
   ): number => {
-    // ネットワークエラーの場合はより長い遅延を使用
+    // Use longer delay for network errors
     const baseFactor = isNetworkError ? 2 : 1;
     const baseDelay = BASE_RETRY_DELAY * baseFactor;
 
-    // エクスポネンシャルバックオフ: 2^retryCount * baseDelay
+    // Exponential backoff: 2^retryCount * baseDelay
     const delay = Math.min(baseDelay * 2 ** (retryCount - 1), MAX_RETRY_DELAY);
 
-    // ジッターを追加（±20%）
+    // Add jitter (±20%)
     const jitter = delay * 0.2;
     return Math.floor(delay + (Math.random() - 0.5) * jitter);
   };
 
-  // ストレージに保存
+  // Save to storage
   const saveToStorage = async (): Promise<void> => {
     try {
       const data = {
@@ -93,31 +91,28 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
         sequenceCounter,
       };
       const serialized = JSON.stringify(data);
-      const encrypted = await dependencies.cryptoProvider.encrypt(
-        serialized,
-        userId,
-      );
-      dependencies.storage.setItem(STORAGE_KEY, encrypted);
+      const encrypted = await cryptoProvider.encrypt(serialized, userId);
+      storage.setItem(STORAGE_KEY, encrypted);
     } catch (error) {
       throw new Error(`Failed to save sync queue to storage: ${error}`);
     }
   };
 
-  // ストレージから読み込み（非同期）
+  // Load from storage (async)
   const loadFromStorage = async (): Promise<void> => {
     try {
-      const stored = dependencies.storage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(STORAGE_KEY);
       if (stored) {
-        // 暗号化されているかチェック
-        const decrypted = dependencies.cryptoProvider.isEncrypted(stored)
-          ? await dependencies.cryptoProvider.decrypt(stored, userId)
+        // Check if encrypted
+        const decrypted = cryptoProvider.isEncrypted(stored)
+          ? await cryptoProvider.decrypt(stored, userId)
           : stored;
 
         const data = JSON.parse(decrypted);
         queue = data.queue || {};
         sequenceCounter = data.sequenceCounter || 0;
 
-        // sequenceCounterが復元されない場合、既存アイテムの最大値から計算
+        // If sequenceCounter is not restored, calculate from existing items
         if (sequenceCounter === 0 && Object.keys(queue).length > 0) {
           const maxSequence = Math.max(
             ...Object.values(queue).map((item) => item.sequenceNumber || 0),
@@ -126,28 +121,28 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
         }
       }
     } catch (error) {
-      // エラーが発生した場合はストレージをクリアして初期化
-      dependencies.storage.removeItem(STORAGE_KEY);
+      // Clear storage and initialize on error
+      storage.removeItem(STORAGE_KEY);
       queue = {};
       sequenceCounter = 0;
     } finally {
-      // 必ず初期化完了を保証
+      // Always ensure initialization completes
       initializePromise = null;
     }
   };
 
-  // ストレージから読み込み（同期）
+  // Load from storage (sync)
   const loadFromStorageSync = (): void => {
     try {
-      const stored = dependencies.storage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(STORAGE_KEY);
       if (stored) {
-        // 暗号化されていない場合のみ同期的に処理
-        if (!dependencies.cryptoProvider.isEncrypted(stored)) {
+        // Only process synchronously if not encrypted
+        if (!cryptoProvider.isEncrypted(stored)) {
           const data = JSON.parse(stored);
           queue = data.queue || {};
           sequenceCounter = data.sequenceCounter || 0;
 
-          // sequenceCounterが復元されない場合、既存アイテムの最大値から計算
+          // If sequenceCounter is not restored, calculate from existing items
           if (sequenceCounter === 0 && Object.keys(queue).length > 0) {
             const maxSequence = Math.max(
               ...Object.values(queue).map((item) => item.sequenceNumber || 0),
@@ -155,44 +150,44 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
             sequenceCounter = maxSequence;
           }
         } else {
-          // 暗号化されている場合は非同期で初期化
+          // Initialize asynchronously if encrypted
           initializePromise = loadFromStorage().catch(() => {
-            // エラーが発生しても初期化を完了させる
+            // Complete initialization even on error
             initializePromise = null;
           });
         }
       }
     } catch (error) {
-      // エラーが発生した場合はストレージをクリアして初期化
-      dependencies.storage.removeItem(STORAGE_KEY);
+      // Clear storage and initialize on error
+      storage.removeItem(STORAGE_KEY);
       queue = {};
       sequenceCounter = 0;
       initializePromise = null;
     }
   };
 
-  // ストレージリスナーのセットアップ
+  // Setup storage listener
   const setupStorageListener = (): void => {
-    // 他タブでの変更を検知
-    storageEventHandler = dependencies.storage.addEventListener((event) => {
+    // Detect changes in other tabs
+    storageEventHandler = storage.addEventListener((event) => {
       if (event.key === STORAGE_KEY && event.newValue !== null) {
         loadFromStorage();
       }
     });
   };
 
-  // 初期化
+  // Initialize
   loadFromStorageSync();
   setupStorageListener();
 
-  // パブリックAPI
+  // Public API
   const enqueue = async (
     entityType: EntityType,
     entityId: string,
     operation: SyncOperation,
     payload: Record<string, unknown>,
   ): Promise<string> => {
-    // 初期化が完了していない場合は待機
+    // Wait for initialization if not complete
     if (initializePromise) {
       try {
         await initializePromise;
@@ -210,7 +205,7 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
       entityId,
       operation,
       payload,
-      timestamp: dependencies.timeProvider.getDate().toISOString(),
+      timestamp: timeProvider.getDate().toISOString(),
       sequenceNumber: ++sequenceCounter,
       retryCount: 0,
       status: "pending",
@@ -223,7 +218,7 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
   };
 
   const dequeue = async (batchSize = 10): Promise<SyncQueueItem[]> => {
-    const now = dependencies.timeProvider.getDate().toISOString();
+    const now = timeProvider.getDate().toISOString();
     const pendingItems = Object.values(queue)
       .filter(
         (item) =>
@@ -258,15 +253,15 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
     item.status = "failed";
     item.error = error;
     item.retryCount++;
-    item.lastRetryAt = dependencies.timeProvider.getDate().toISOString();
+    item.lastRetryAt = timeProvider.getDate().toISOString();
 
     if (item.retryCount >= MAX_RETRY_COUNT) {
       delete queue[id];
     } else {
-      // エクスポネンシャルバックオフを適用
+      // Apply exponential backoff
       const retryDelay = calculateRetryDelay(item.retryCount, isNetworkError);
       item.nextRetryAt = new Date(
-        dependencies.timeProvider.now() + retryDelay,
+        timeProvider.now() + retryDelay,
       ).toISOString();
       item.status = "failed_pending_retry";
     }
@@ -333,7 +328,7 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
   };
 
   const getRetriableItems = (): SyncQueueItem[] => {
-    const now = dependencies.timeProvider.getDate().toISOString();
+    const now = timeProvider.getDate().toISOString();
     return Object.values(queue).filter(
       (item) =>
         (item.status === "pending" || item.status === "failed_pending_retry") &&
@@ -348,7 +343,7 @@ export function createSyncQueue(config?: SyncQueueConfig): ISyncQueue {
     }
   };
 
-  // パブリックAPIを返す
+  // Return public API
   return {
     enqueue,
     dequeue,

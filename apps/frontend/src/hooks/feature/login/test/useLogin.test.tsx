@@ -15,10 +15,48 @@ import { useLogin } from "../useLogin";
 // モックの設定
 vi.mock("@frontend/hooks/useAuth");
 vi.mock("@components/ui");
-vi.mock("@tanstack/react-router");
+vi.mock("@tanstack/react-router", () => ({
+  useRouter: vi.fn(() => ({
+    navigate: vi.fn(),
+  })),
+  useNavigate: vi.fn(() => vi.fn()),
+}));
 const mockUseGoogleAuth = vi.fn();
 vi.mock("@frontend/hooks/api", () => ({
   useGoogleAuth: () => mockUseGoogleAuth(),
+}));
+
+// react-hook-formのモック
+let formValues: any = {};
+vi.mock("react-hook-form", () => ({
+  useForm: vi.fn((config?: any) => {
+    // 初期値を設定
+    if (config?.defaultValues) {
+      formValues = { ...config.defaultValues };
+    }
+    return {
+      control: {},
+      handleSubmit: vi.fn((fn: any) => (event?: any) => {
+        if (event?.preventDefault) event.preventDefault();
+        return fn(formValues);
+      }),
+      reset: vi.fn(),
+      formState: { errors: {} },
+      register: vi.fn(),
+      setValue: vi.fn((name: string, value: any) => {
+        formValues[name] = value;
+      }),
+      getValues: vi.fn(() => formValues),
+      watch: vi.fn(),
+    };
+  }),
+  zodResolver: vi.fn(() => vi.fn()),
+  FormProvider: ({ children }: { children: React.ReactNode }) => children,
+  Controller: ({ render }: any) => render({ field: {} }),
+  useFormContext: vi.fn(() => ({
+    getFieldState: vi.fn(),
+    formState: { errors: {} },
+  })),
 }));
 
 describe("useLogin", () => {
@@ -43,6 +81,7 @@ describe("useLogin", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    formValues = {}; // フォーム値をリセット
 
     // useAuthのモック
     vi.mocked(useAuthHook.useAuth).mockReturnValue({
@@ -59,6 +98,16 @@ describe("useLogin", () => {
 
     // useNavigateのモック
     vi.mocked(routerHooks.useNavigate).mockReturnValue(mockNavigate);
+
+    // useRouterのモック
+    vi.mocked(routerHooks.useRouter).mockReturnValue({
+      navigate: mockNavigate,
+      history: {
+        replace: vi.fn(),
+        back: vi.fn(),
+        canGoBack: vi.fn().mockReturnValue(true),
+      },
+    } as any);
   });
 
   it("フォームが初期化される", () => {
@@ -84,8 +133,14 @@ describe("useLogin", () => {
       password: "password123",
     };
 
+    // Set form values before submission
+    act(() => {
+      result.current.form.setValue("login_id", loginData.login_id);
+      result.current.form.setValue("password", loginData.password);
+    });
+
     await act(async () => {
-      await result.current.handleLogin(loginData);
+      await result.current.handleLogin();
     });
 
     expect(mockLogin).toHaveBeenCalledWith(loginData);
@@ -105,13 +160,20 @@ describe("useLogin", () => {
       password: "wrong-password",
     };
 
+    // Set form values before submission
+    act(() => {
+      result.current.form.setValue("login_id", loginData.login_id);
+      result.current.form.setValue("password", loginData.password);
+    });
+
     await act(async () => {
-      await result.current.handleLogin(loginData);
+      await result.current.handleLogin();
     });
 
     expect(mockLogin).toHaveBeenCalledWith(loginData);
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockToast).toHaveBeenCalledWith({
+      title: "ログインエラー",
       description: "ログインIDまたはパスワードが間違っています",
       variant: "destructive",
     });
@@ -160,7 +222,7 @@ describe("useLogin", () => {
 
   it("Google認証でcredentialがない場合はエラートーストを表示する", async () => {
     const mockGoogleResponse = {
-      credential: null,
+      credential: null as unknown as string,
     };
 
     const { result } = renderHook(() => useLogin(), {

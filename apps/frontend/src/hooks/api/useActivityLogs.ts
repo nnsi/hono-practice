@@ -1,5 +1,6 @@
 import { apiClient, qp } from "@frontend/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 
 import type {
   CreateActivityLogBatchRequest,
@@ -16,7 +17,8 @@ import {
  * 特定日のアクティビティログ一覧を取得するフック
  */
 export function useActivityLogs(date: Date, options?: { enabled?: boolean }) {
-  const dateString = date.toISOString().split("T")[0];
+  // dayjsを使用してローカルタイムゾーンで日付を取得
+  const dateString = dayjs(date).format("YYYY-MM-DD");
 
   return useQuery<GetActivityLogsResponse>({
     ...qp({

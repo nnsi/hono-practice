@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+// import { useEffect } from "react"; // Not used after SyncManager auto-sync was disabled
 
 import { useAuth } from "@frontend/hooks/useAuth";
 import { getSyncManagerInstance } from "@frontend/services/sync";
@@ -39,16 +39,16 @@ export function useSyncedMutation<
           return await options.onlineAction(variables);
         } catch (error) {
           if (options.offlineAction) {
-            const entityId = options.getEntityId(variables);
-            // オフラインキューへの登録は非同期で行い、失敗してもUIがブロックされないようにする
-            syncManager
-              .enqueue(
-                options.entityType,
-                entityId,
-                options.operation,
-                variables as Record<string, unknown>,
-              )
-              .catch(() => {});
+            // const entityId = options.getEntityId(variables); // Not used when offline queue is disabled
+            // オフラインキューへの登録は無効化（useOfflineActivityLogSyncで管理）
+            // syncManager
+            //   .enqueue(
+            //     options.entityType,
+            //     entityId,
+            //     options.operation,
+            //     variables as Record<string, unknown>,
+            //   )
+            //   .catch(() => {});
             return options.offlineAction(variables);
           }
           throw error;
@@ -58,20 +58,20 @@ export function useSyncedMutation<
           throw new Error("オフライン時の処理が定義されていません");
         }
 
-        const entityId = options.getEntityId(variables);
+        // const entityId = options.getEntityId(variables); // Not used when offline queue is disabled
 
-        // オフライン時は非同期でキューに登録し、結果を待たずに処理を進める
-        syncManager
-          .enqueue(
-            options.entityType,
-            entityId,
-            options.operation,
-            variables as Record<string, unknown>,
-          )
-          .then((result) => {
-            return result;
-          })
-          .catch(() => {});
+        // オフライン時はSyncManagerのキューには入れない（useOfflineActivityLogSyncで管理）
+        // syncManager
+        //   .enqueue(
+        //     options.entityType,
+        //     entityId,
+        //     options.operation,
+        //     variables as Record<string, unknown>,
+        //   )
+        //   .then((result) => {
+        //     return result;
+        //   })
+        //   .catch(() => {});
 
         const result = options.offlineAction(variables);
 
@@ -99,11 +99,12 @@ export function useSyncedMutation<
     },
   });
 
-  useEffect(() => {
-    if (isOnline && syncManager.getSyncStatus().pendingCount > 0) {
-      syncManager.syncBatch().catch(() => {});
-    }
-  }, [isOnline]);
+  // SyncManagerの自動同期は無効化（useOfflineActivityLogSyncで管理）
+  // useEffect(() => {
+  //   if (isOnline && syncManager.getSyncStatus().pendingCount > 0) {
+  //     syncManager.syncBatch().catch(() => {});
+  //   }
+  // }, [isOnline]);
 
   return {
     ...mutation,

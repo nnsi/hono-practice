@@ -446,11 +446,13 @@ describe.sequential("Simplified E2E Tests", () => {
     const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
     await emojiInput.click();
     await page.waitForTimeout(500); // ポップオーバーが開くのを待つ
-    
+
     // emoji-martピッカーから最初の絵文字を選択
     // または、JavaScriptを使ってフォームの値を直接設定
-    const firstEmoji = page.locator('em-emoji-picker button[data-emoji]').first();
-    if (await firstEmoji.count() > 0) {
+    const firstEmoji = page
+      .locator("em-emoji-picker button[data-emoji]")
+      .first();
+    if ((await firstEmoji.count()) > 0) {
       await firstEmoji.click();
     } else {
       // ピッカーが開かない場合は、デフォルトの絵文字が使われる
@@ -492,7 +494,10 @@ describe.sequential("Simplified E2E Tests", () => {
 
     // ダイアログが閉じるのを待つ
     try {
-      await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 });
+      await page.waitForSelector('[role="dialog"]', {
+        state: "hidden",
+        timeout: 5000,
+      });
       console.log("Dialog closed successfully");
     } catch (e) {
       console.log("Dialog did not close within timeout");
@@ -552,17 +557,25 @@ describe.sequential("Simplified E2E Tests", () => {
 
     // アクティビティログを作成
     await activityCard.click();
-    
+
     // デバッグ: ダイアログ/モーダルの内容を確認
     await page.waitForTimeout(1000);
     const modalContent = await page.evaluate(() => {
-      const modals = Array.from(document.querySelectorAll('[role="dialog"], [class*="modal"], [class*="Modal"]'));
-      const buttons = Array.from(document.querySelectorAll('button')).map(btn => btn.textContent?.trim());
-      const inputs = Array.from(document.querySelectorAll('input')).map(input => ({
-        type: input.type,
-        placeholder: input.placeholder,
-        value: input.value,
-      }));
+      const modals = Array.from(
+        document.querySelectorAll(
+          '[role="dialog"], [class*="modal"], [class*="Modal"]',
+        ),
+      );
+      const buttons = Array.from(document.querySelectorAll("button")).map(
+        (btn) => btn.textContent?.trim(),
+      );
+      const inputs = Array.from(document.querySelectorAll("input")).map(
+        (input) => ({
+          type: input.type,
+          placeholder: input.placeholder,
+          value: input.value,
+        }),
+      );
       return {
         modalCount: modals.length,
         buttons,
@@ -571,26 +584,34 @@ describe.sequential("Simplified E2E Tests", () => {
       };
     });
     console.log("Modal content after activity click:", modalContent);
-    
+
     // APIリクエストを監視
-    const logResponsePromise = page.waitForResponse(
-      response => response.url().includes('/logs') && response.request().method() === 'POST',
-      { timeout: 5000 }
-    ).catch(() => null);
-    
+    const logResponsePromise = page
+      .waitForResponse(
+        (response) =>
+          response.url().includes("/logs") &&
+          response.request().method() === "POST",
+        { timeout: 5000 },
+      )
+      .catch(() => null);
+
     // より柔軟なセレクタでボタンを探す
-    const recordButton = page.locator('button:has-text("Record it!"), button:has-text("記録"), button:has-text("保存")').first();
-    const recordButtonExists = await recordButton.count() > 0;
-    
+    const recordButton = page
+      .locator(
+        'button:has-text("Record it!"), button:has-text("記録"), button:has-text("保存")',
+      )
+      .first();
+    const recordButtonExists = (await recordButton.count()) > 0;
+
     if (recordButtonExists) {
       // 数値入力フィールドを探して入力
       const numberInput = page.locator('input[type="number"]').first();
-      if (await numberInput.count() > 0) {
+      if ((await numberInput.count()) > 0) {
         await numberInput.fill("5");
       }
-      
+
       await recordButton.click();
-      
+
       // APIレスポンスを待つ
       const logResponse = await logResponsePromise;
       if (logResponse) {
@@ -601,7 +622,7 @@ describe.sequential("Simplified E2E Tests", () => {
       } else {
         console.log("No log POST response received");
       }
-      
+
       await page.waitForTimeout(1500);
       console.log("Activity log created!");
     } else {
@@ -611,13 +632,16 @@ describe.sequential("Simplified E2E Tests", () => {
     // デイリーページの編集・削除はスキップ
     // 日付の問題があるため、ログの作成が成功したことで十分とする
     console.log("Skipping daily page edit/delete tests due to date mismatch");
-    
+
     // 代わりに、アクティビティが存在することを確認
     await page.goto(`http://localhost:${actualFrontendPort}/actiko`);
     await page.waitForLoadState("networkidle");
-    
+
     // アクティビティカードがまだ存在することを確認
-    const activityStillExists = await page.locator(`text=${testActivity.name}`).first().isVisible();
+    const activityStillExists = await page
+      .locator(`text=${testActivity.name}`)
+      .first()
+      .isVisible();
     expect(activityStillExists).toBe(true);
     console.log("Activity still exists after log creation!");
 
@@ -634,9 +658,11 @@ describe.sequential("Simplified E2E Tests", () => {
     // アクティビティ選択 - SelectTriggerをクリック
     await page.locator('[role="combobox"]').click();
     await page.waitForTimeout(500); // SelectContentが開くのを待つ
-    
+
     // SelectItem内のテキストをクリック
-    await page.locator(`[role="option"]:has-text("${testActivity.name}")`).click();
+    await page
+      .locator(`[role="option"]:has-text("${testActivity.name}")`)
+      .click();
 
     // 目標値と開始日を入力
     await page.locator('input[name="dailyTargetQuantity"]').fill("10");
@@ -658,15 +684,18 @@ describe.sequential("Simplified E2E Tests", () => {
     const goalCardContent = await goalCard.evaluate((el) => ({
       html: el.innerHTML,
       text: el.textContent,
-      clickable: window.getComputedStyle(el).cursor === 'pointer',
+      clickable: window.getComputedStyle(el).cursor === "pointer",
       classes: el.className,
     }));
     console.log("Goal card debug:", goalCardContent);
 
     // より具体的なセレクタでクリック可能な要素を探す
-    const clickableGoalElement = page.locator('[role="article"], .cursor-pointer').filter({ hasText: testActivity.name }).first();
-    const clickableExists = await clickableGoalElement.count() > 0;
-    
+    const clickableGoalElement = page
+      .locator('[role="article"], .cursor-pointer')
+      .filter({ hasText: testActivity.name })
+      .first();
+    const clickableExists = (await clickableGoalElement.count()) > 0;
+
     if (clickableExists) {
       console.log("Found clickable goal element, clicking...");
       await clickableGoalElement.click();
@@ -676,15 +705,18 @@ describe.sequential("Simplified E2E Tests", () => {
     }
     // モーダルが開くかテスト（失敗してもテストを続行）
     try {
-      await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 5000 });
-      
+      await page.waitForSelector('[role="dialog"]', {
+        state: "visible",
+        timeout: 5000,
+      });
+
       // ダイアログ内にアクティビティ名が表示されることを確認
       const dialogContent = await page.locator('[role="dialog"]').textContent();
       console.log("Dialog content:", dialogContent);
-      
+
       // ダイアログ内にアクティビティ名が含まれていることを確認
       expect(dialogContent).toContain(testActivity.name);
-      
+
       await page.keyboard.press("Escape");
       await page.waitForSelector('[role="dialog"]', { state: "hidden" });
       console.log("Goal detail displayed!");

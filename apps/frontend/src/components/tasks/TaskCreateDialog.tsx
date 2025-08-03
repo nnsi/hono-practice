@@ -74,10 +74,14 @@ export const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           });
           onSuccess?.();
         },
-        onError: () => {
+        onError: (error) => {
+          console.error("Task creation error:", error);
           toast({
             title: "エラー",
-            description: "タスクの作成に失敗しました",
+            description:
+              error instanceof Error
+                ? error.message
+                : "タスクの作成に失敗しました",
             variant: "destructive",
           });
         },

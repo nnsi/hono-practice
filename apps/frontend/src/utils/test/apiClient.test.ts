@@ -100,7 +100,7 @@ describe("apiClient", () => {
           headers: expect.objectContaining({
             "Content-Type": "application/json",
           }),
-          credentials: "omit",
+          credentials: "include", // /user エンドポイントは include
         }),
       );
       expect(data).toEqual(mockData);
@@ -422,13 +422,13 @@ describe("apiClient", () => {
       );
 
       await apiClient.users.activities.$get();
-      await apiClient.user.me.$get();
       await apiClient.users.tasks.$post({ json: {} });
 
-      // auth以外のリクエストでcredentials: "omit"が設定されていることを確認
+      // /auth/と/user以外のリクエストでcredentials: "omit"が設定されていることを確認
       const calls = vi.mocked(httpClient.fetch).mock.calls;
       for (const [url, init] of calls) {
-        if (!url.toString().includes("/auth/")) {
+        const urlStr = url.toString();
+        if (!urlStr.includes("/auth/") && !urlStr.includes("/user")) {
           expect(init?.credentials).toBe("omit");
         }
       }

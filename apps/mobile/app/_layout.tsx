@@ -1,22 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import "../global.css";
 
 import { AuthProvider } from "../src/contexts/AuthContext";
 import { GlobalDateProvider } from "../src/providers/GlobalDateProvider";
 import { TokenProvider } from "../src/providers/TokenProvider";
-
-// グローバルなQueryClientインスタンス
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5分
-      gcTime: 10 * 60 * 1000, // 10分（旧cacheTime）
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import { queryClient } from "../src/utils/queryClient";
 
 export default function RootLayout() {
   return (

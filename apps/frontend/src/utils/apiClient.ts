@@ -1,7 +1,9 @@
 import { hc } from "hono/client";
 
 import { AppEvents } from "@frontend/services/abstractions";
+import { createLocalStorageProvider } from "@frontend/services/abstractions/StorageProvider";
 
+import { createTokenStore } from "./createTokenStore";
 import { tokenStore } from "./tokenStore";
 
 import type { AppType } from "@backend/app";
@@ -10,7 +12,7 @@ import type { ApiClientConfig } from "@frontend/services/abstractions";
 const API_URL =
   import.meta.env.MODE === "development"
     ? import.meta.env.VITE_API_URL ||
-      `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+      `${window.location.protocol}//${window.location.hostname}:${import.meta.env.VITE_API_PORT || "3456"}/`
     : import.meta.env.VITE_API_URL;
 
 /**
@@ -83,9 +85,10 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      // Only include credentials for auth endpoints (for refresh token cookie)
+      // Include credentials for auth endpoints and user creation (for refresh token cookie)
       const url = typeof input === "string" ? input : input.toString();
-      const includeCredentials = url.includes("/auth/");
+      const includeCredentials =
+        url.includes("/auth/") || url.includes("/user");
 
       const res = await httpClient.fetch(input, {
         ...init,
@@ -176,4 +179,10 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
 }
 
 // デフォルトのAPIクライアント（互換性保持のため）
-export const apiClient = createApiClient();
+// E2E環境ではlocalStorageベースのtokenStoreを使用
+const isE2E = import.meta.env.VITE_E2E_TEST === "true";
+const defaultTokenStore = isE2E
+  ? createTokenStore(createLocalStorageProvider())
+  : tokenStore;
+
+export const apiClient = createApiClient({ tokenManager: defaultTokenStore });
