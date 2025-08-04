@@ -1,7 +1,4 @@
 import { useToast } from "@frontend/components/ui/use-toast";
-import { useActivityLogSync } from "@frontend/hooks/sync";
-import { useActivityLogSync as useActivityLogSyncE2E } from "@frontend/hooks/sync/useActivityLogSyncE2E";
-import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient } from "@frontend/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -19,7 +16,6 @@ type UseActivityBatchDataOptions = {
 
 export function useActivityBatchData({ date }: UseActivityBatchDataOptions) {
   const queryClient = useQueryClient();
-  const { isOnline } = useNetworkStatusContext();
   const { toast } = useToast();
 
   const { data, error } = useQuery<{
@@ -32,7 +28,7 @@ export function useActivityBatchData({ date }: UseActivityBatchDataOptions) {
       dayjs(date).format("YYYY-MM-DD"),
     ],
     networkMode: "offlineFirst",
-    enabled: isOnline,
+    enabled: true, // オフラインでもキャッシュデータを読み取れるようにする
     queryFn: async () => {
       const res = await apiClient.batch.$post({
         json: [
@@ -65,9 +61,7 @@ export function useActivityBatchData({ date }: UseActivityBatchDataOptions) {
     },
   });
 
-  const isE2E = import.meta.env.VITE_E2E_TEST === "true";
-
-  if (error && !isE2E) {
+  if (error) {
     toast({
       title: "エラー",
       description: "データの取得に失敗しました",
@@ -75,27 +69,18 @@ export function useActivityBatchData({ date }: UseActivityBatchDataOptions) {
     });
   }
 
-  // sync処理を使用してオフラインデータとマージ
-  // E2E環境では簡略化されたフックを使用
-  const syncHook = isE2E ? useActivityLogSyncE2E : useActivityLogSync;
-  const { mergedActivityLogs, isOfflineData } = syncHook({
-    date,
-    isOnline,
-    activityLogs: data?.activityLogs,
-  });
-
   const activities = data?.activities ?? [];
+  const activityLogs = data?.activityLogs ?? [];
 
   // アクティビティごとのログ存在チェック関数
   const hasActivityLogs = (activityId: string) => {
-    return mergedActivityLogs.some((log) => log.activity.id === activityId);
+    return activityLogs.some((log) => log.activity.id === activityId);
   };
 
   return {
     activities,
-    activityLogs: mergedActivityLogs,
+    activityLogs,
     hasActivityLogs,
-    isOfflineData,
     error,
   };
 }

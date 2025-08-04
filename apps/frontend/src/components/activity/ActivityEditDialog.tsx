@@ -47,6 +47,9 @@ export const ActivityEditDialog = ({
     deleteIcon,
   } = useActivityEdit(activity, onClose);
 
+  // watch values outside of render to prevent re-renders
+  const emojiValue = form.watch("activity.emoji");
+
   if (!open || !activity) return null;
 
   return (
@@ -91,7 +94,7 @@ export const ActivityEditDialog = ({
               <IconTypeSelector
                 value={{
                   type: activity.iconType || "emoji",
-                  emoji: form.watch("activity.emoji"),
+                  emoji: emojiValue,
                   file: iconFile,
                   preview: iconPreview || activity.iconUrl || undefined,
                 }}

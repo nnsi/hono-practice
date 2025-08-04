@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import type {
   FileAdapter,
@@ -35,9 +35,13 @@ export function createUseActivityEdit(
 ) {
   const { form, notification, file, api } = dependencies;
 
+  // Track previous activity to avoid unnecessary form resets
+  const prevActivityIdRef = useRef<string | null>(null);
+
   // Initialize form with activity data
   useEffect(() => {
-    if (activity) {
+    if (activity && activity.id !== prevActivityIdRef.current) {
+      prevActivityIdRef.current = activity.id;
       form.reset({
         activity: {
           name: activity.name,
@@ -52,7 +56,7 @@ export function createUseActivityEdit(
         })),
       });
     }
-  }, [activity, form]);
+  }, [activity, form.reset]);
 
   // Field array operations for kinds
   const kindFieldArray = form.useFieldArray?.("kinds");

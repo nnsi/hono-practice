@@ -161,19 +161,6 @@ describe("AppProviders", () => {
     consoleSpy.mockRestore();
   });
 
-  it("persistを無効化できる", async () => {
-    await act(async () => {
-      render(
-        <AppProviders enablePersist={false}>
-          <TestComponent />
-        </AppProviders>,
-      );
-    });
-
-    // localStorageにキャッシュが保存されないことを確認
-    expect(localStorage.getItem("actiko-query-cache")).toBeNull();
-  });
-
   it("ネットワーク状態の初期値が正しく設定される", async () => {
     // navigator.onLineをモックしてオフライン状態をシミュレート
     Object.defineProperty(window.navigator, "onLine", {
@@ -293,9 +280,9 @@ describe("AppProviders", () => {
       // デフォルト設定が適用されていることを確認
       expect(defaultOptions.queries?.retry).toBe(false);
       expect(defaultOptions.queries?.gcTime).toBe(1000 * 60 * 60 * 24);
-      expect(defaultOptions.queries?.networkMode).toBe("offlineFirst");
       expect(defaultOptions.queries?.staleTime).toBe(0);
       expect(defaultOptions.queries?.refetchOnMount).toBe("always");
+      expect(defaultOptions.queries?.refetchOnWindowFocus).toBe(true);
       expect(defaultOptions.mutations?.retry).toBe(false);
     });
   });

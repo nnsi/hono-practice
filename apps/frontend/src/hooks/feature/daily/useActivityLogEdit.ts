@@ -4,7 +4,7 @@ import { useActivities } from "@frontend/hooks/api";
 import {
   useDeleteActivityLog,
   useUpdateActivityLog,
-} from "@frontend/hooks/sync/useSyncedActivityLog";
+} from "@frontend/hooks/api/useActivityLogs";
 import dayjs from "dayjs";
 
 import type { GetActivityLogResponse } from "@dtos/response";
@@ -60,15 +60,12 @@ export const useActivityLogEdit = (
     try {
       await updateActivityLog.mutateAsync({
         id: log.id,
-        memo,
-        quantity: quantity ?? undefined,
-        activityKindId: activityKindId || undefined,
+        data: {
+          memo,
+          quantity: quantity ?? undefined,
+          activityKindId: activityKindId || undefined,
+        },
         date: dayjs(log.date).format("YYYY-MM-DD"),
-        activityKindInfo: activityKindId
-          ? activity?.kinds?.find((k) => k.id === activityKindId) ||
-            log.activityKind ||
-            undefined
-          : undefined,
       });
 
       toast({ title: "保存しました", variant: "default" });

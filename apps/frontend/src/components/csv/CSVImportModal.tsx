@@ -26,7 +26,7 @@ type Props = {
   onClose: () => void;
 };
 
-export const CSVImportModal = ({ isOpen, onClose }: Props) => {
+const CSVImportModal = ({ isOpen, onClose }: Props) => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -313,3 +313,5 @@ export const CSVImportModal = ({ isOpen, onClose }: Props) => {
     </Dialog>
   );
 };
+
+export { CSVImportModal };

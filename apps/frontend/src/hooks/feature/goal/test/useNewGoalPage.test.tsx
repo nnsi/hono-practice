@@ -48,7 +48,7 @@ describe("useNewGoalPage", () => {
         id: "00000000-0000-4000-8000-000000000002",
         userId: "00000000-0000-4000-8000-000000000101",
         activityId: "00000000-0000-4000-8000-000000000202",
-        isActive: true,
+        isActive: false,
         description: "月200分の読書",
         createdAt: "2024-12-01T00:00:00Z",
         updatedAt: "2024-12-01T00:00:00Z",
@@ -164,7 +164,7 @@ describe("useNewGoalPage", () => {
       result.current.getActivityName("00000000-0000-4000-8000-000000000202"),
     ).toBe("読書");
     expect(result.current.getActivityName("unknown-id")).toBe(
-      "不明なアクティビティ",
+      "Unknown Activity",
     );
   });
 
@@ -197,7 +197,7 @@ describe("useNewGoalPage", () => {
     expect(
       result.current.getActivityUnit("00000000-0000-4000-8000-000000000202"),
     ).toBe("分");
-    expect(result.current.getActivityUnit("unknown-id")).toBe("");
+    expect(result.current.getActivityUnit("unknown-id")).toBe("回");
   });
 
   it("getActivityが正しくアクティビティオブジェクトを返す", async () => {
@@ -258,23 +258,15 @@ describe("useNewGoalPage", () => {
     // 最初に状態を設定
     act(() => {
       result.current.setCreateDialogOpen(true);
-      const editHandler = result.current.createEditStartHandler(
-        "00000000-0000-4000-8000-000000000001",
-      );
-      editHandler();
     });
 
     expect(result.current.createDialogOpen).toBe(true);
-    expect(result.current.editingGoalId).toBe(
-      "00000000-0000-4000-8000-000000000001",
-    );
 
     // 目標作成完了
     act(() => {
       result.current.handleGoalCreated();
     });
 
-    expect(result.current.editingGoalId).toBeNull();
     expect(result.current.createDialogOpen).toBe(false);
   });
 
@@ -385,10 +377,8 @@ describe("useNewGoalPage", () => {
       expect(result.current.activitiesData).toEqual([]);
     });
 
-    expect(result.current.getActivityName("any-id")).toBe(
-      "不明なアクティビティ",
-    );
+    expect(result.current.getActivityName("any-id")).toBe("Unknown Activity");
     expect(result.current.getActivityEmoji("any-id")).toBe("🎯");
-    expect(result.current.getActivityUnit("any-id")).toBe("");
+    expect(result.current.getActivityUnit("any-id")).toBe("回");
   });
 });

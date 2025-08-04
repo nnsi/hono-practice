@@ -1,4 +1,4 @@
-import { useCreateTask } from "@frontend/hooks/sync/useSyncedTask";
+import { useCreateTask } from "@frontend/hooks/api/useTasks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";

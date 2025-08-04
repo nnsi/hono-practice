@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-import { useArchivedTasks } from "@frontend/hooks/api";
-import { useOfflineTasks } from "@frontend/hooks/sync/useOfflineTasks";
+import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import { NetworkStatusProvider } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient } from "@frontend/utils/apiClient";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -37,30 +36,23 @@ vi.mock("@frontend/hooks/useAuth", () => ({
   }),
 }));
 
-// getSyncManagerInstanceのモック
-vi.mock("@frontend/services/sync", () => ({
-  getSyncManagerInstance: () => ({
-    updateUserId: vi.fn(),
-    stopAutoSync: vi.fn(),
-    startAutoSync: vi.fn(),
-    getSyncStatus: () => ({ pendingCount: 0 }),
-    syncBatch: vi.fn().mockResolvedValue(undefined),
-  }),
-}));
+// useTasksのモック - useArchivedTasksのモックに含める
+vi.mocked(useTasks).mockReturnValue({
+  data: [],
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn().mockResolvedValue({ data: [] }),
+} as any);
 
-// useOfflineTasksのモック
-vi.mock("@frontend/hooks/sync/useOfflineTasks", () => ({
-  useOfflineTasks: vi.fn(() => ({
+// useArchivedTasksとuseTasksのモック
+vi.mock("@frontend/hooks/api", () => ({
+  useArchivedTasks: vi.fn(() => ({
     data: [],
     isLoading: false,
     isError: false,
     refetch: vi.fn().mockResolvedValue({ data: [] }),
   })),
-}));
-
-// useArchivedTasksのモック
-vi.mock("@frontend/hooks/api", () => ({
-  useArchivedTasks: vi.fn(() => ({
+  useTasks: vi.fn(() => ({
     data: [],
     isLoading: false,
     isError: false,
@@ -222,8 +214,8 @@ describe("useTasksPage", () => {
       json: vi.fn().mockResolvedValue(mockArchivedTasks),
     } as any);
 
-    // useOfflineTasksのモックを更新してmockTasksを返すように設定
-    vi.mocked(useOfflineTasks).mockReturnValue({
+    // useTasksのモックを更新してmockTasksを返すように設定
+    vi.mocked(useTasks).mockReturnValue({
       data: mockTasks,
       isLoading: false,
       isError: false,
@@ -284,8 +276,8 @@ describe("useTasksPage", () => {
     });
 
     it("タスク取得エラー時の処理", async () => {
-      // エラー時にuseOfflineTasksが空の配列を返すように設定
-      vi.mocked(useOfflineTasks).mockReturnValue({
+      // エラー時にuseTasksが空の配列を返すように設定
+      vi.mocked(useTasks).mockReturnValue({
         data: [],
         isLoading: false,
         isError: true,
@@ -385,7 +377,7 @@ describe("useTasksPage", () => {
         dueDate: dayjs().format("YYYY-MM-DD"), // dueDateも今日に設定
       };
 
-      vi.mocked(useOfflineTasks).mockReturnValue({
+      vi.mocked(useTasks).mockReturnValue({
         data: [todayTask],
         isLoading: false,
         isError: false,
@@ -413,7 +405,7 @@ describe("useTasksPage", () => {
     });
 
     it("タスクがない場合、空のグループが返される", async () => {
-      vi.mocked(useOfflineTasks).mockReturnValue({
+      vi.mocked(useTasks).mockReturnValue({
         data: [],
         isLoading: false,
         isError: false,
@@ -466,7 +458,7 @@ describe("useTasksPage", () => {
         },
       ];
 
-      vi.mocked(useOfflineTasks).mockReturnValue({
+      vi.mocked(useTasks).mockReturnValue({
         data: multipleTasks,
         isLoading: false,
         isError: false,
@@ -585,7 +577,7 @@ describe("useTasksPage", () => {
     });
 
     it("タスクがない場合falseを返す", async () => {
-      vi.mocked(useOfflineTasks).mockReturnValue({
+      vi.mocked(useTasks).mockReturnValue({
         data: [],
         isLoading: false,
         isError: false,

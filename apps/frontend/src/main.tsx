@@ -2,9 +2,7 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import "../main.css";
@@ -18,32 +16,19 @@ import { createLocalStorageProvider } from "./services/abstractions/StorageProvi
 import { createApiClient } from "./utils/apiClient";
 import { createTokenStore } from "./utils/createTokenStore";
 
-// ネットワーク状態を取得するためのヘルパー
-function getIsOnline(): boolean {
-  const networkStatus = window.localStorage.getItem("network-status");
-  return networkStatus !== "offline";
-}
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
       gcTime: 1000 * 60 * 60 * 24, // 24時間
-      networkMode: "offlineFirst",
       staleTime: 0, // 常に最新データを取得
-      refetchOnMount: "always", // 常にマウント時にフェッチ（オフライン時はnetworkModeで制御）
-      refetchOnWindowFocus: () => getIsOnline(), // オンライン時はウィンドウフォーカス時にもフェッチ
+      refetchOnMount: "always", // 常にマウント時にフェッチ
+      refetchOnWindowFocus: true, // ウィンドウフォーカス時にフェッチ
     },
     mutations: {
       retry: false,
     },
   },
-});
-
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: "actiko-query-cache",
-  throttleTime: 1000,
 });
 
 const router = createRouter({
@@ -88,10 +73,7 @@ const apiClient =
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister }}
-      >
+      <QueryClientProvider client={queryClient}>
         <TokenProvider tokenStore={tokenStore}>
           <AuthProvider apiClient={apiClient}>
             <NetworkStatusProvider>
@@ -99,7 +81,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             </NetworkStatusProvider>
           </AuthProvider>
         </TokenProvider>
-      </PersistQueryClientProvider>
+      </QueryClientProvider>
     </GoogleOAuthProvider>
   </StrictMode>,
 );

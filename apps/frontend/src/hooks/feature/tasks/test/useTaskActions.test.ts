@@ -4,7 +4,7 @@ import {
   useArchiveTask,
   useDeleteTask,
   useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+} from "@frontend/hooks/api/useTasks";
 import { act, renderHook } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskActions } from "../useTaskActions";
 
 // モックの設定
-vi.mock("@frontend/hooks/sync/useSyncedTask", () => ({
+vi.mock("@frontend/hooks/api/useTasks", () => ({
   useUpdateTask: vi.fn(),
   useDeleteTask: vi.fn(),
   useArchiveTask: vi.fn(),
@@ -71,7 +71,9 @@ describe("useTaskActions", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: mockTask.id,
-        doneDate: today,
+        data: {
+          doneDate: today,
+        },
       });
     });
 
@@ -86,7 +88,9 @@ describe("useTaskActions", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: completedTask.id,
-        doneDate: null,
+        data: {
+          doneDate: null,
+        },
       });
     });
   });
@@ -101,9 +105,7 @@ describe("useTaskActions", () => {
       result.current.handleDeleteTask(mockEvent, mockTask);
 
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
-      expect(mockDeleteMutate).toHaveBeenCalledWith({
-        id: mockTask.id,
-      });
+      expect(mockDeleteMutate).toHaveBeenCalledWith(mockTask.id);
     });
   });
 

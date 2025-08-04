@@ -1,15 +1,12 @@
 import { toast } from "@frontend/components/ui/use-toast";
-import {
-  useDeleteTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useDeleteTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useTaskEditForm } from "../useTaskEditForm";
 
 // モックの設定
-vi.mock("@frontend/hooks/sync/useSyncedTask", () => ({
+vi.mock("@frontend/hooks/api/useTasks", () => ({
   useUpdateTask: vi.fn(),
   useDeleteTask: vi.fn(),
 }));
@@ -117,10 +114,12 @@ describe("useTaskEditForm", () => {
 
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         id: mockTask.id,
-        title: "更新されたタスク",
-        startDate: "2024-01-16",
-        dueDate: "2024-01-21",
-        memo: "更新されたメモ",
+        data: {
+          title: "更新されたタスク",
+          startDate: "2024-01-16",
+          dueDate: "2024-01-21",
+          memo: "更新されたメモ",
+        },
       });
 
       expect(toast).toHaveBeenCalledWith({
@@ -151,10 +150,12 @@ describe("useTaskEditForm", () => {
 
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         id: mockTask.id,
-        title: "更新されたタスク",
-        startDate: "2024-01-16",
-        dueDate: null,
-        memo: undefined,
+        data: {
+          title: "更新されたタスク",
+          startDate: "2024-01-16",
+          dueDate: null,
+          memo: undefined,
+        },
       });
     });
 
@@ -233,9 +234,7 @@ describe("useTaskEditForm", () => {
         await result.current.handleDelete();
       });
 
-      expect(mockDeleteMutateAsync).toHaveBeenCalledWith({
-        id: mockTask.id,
-      });
+      expect(mockDeleteMutateAsync).toHaveBeenCalledWith(mockTask.id);
 
       expect(toast).toHaveBeenCalledWith({
         title: "タスクを削除しました",

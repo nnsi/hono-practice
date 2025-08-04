@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
-import { useArchivedTasks } from "@frontend/hooks/api";
-import { useOfflineTasks } from "@frontend/hooks/sync/useOfflineTasks";
+import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import {
   createUseTasksPage,
   groupTasksByTimeline,
@@ -10,7 +9,7 @@ import {
 // 新しい共通化されたフックを使用する実装
 export const useTasksPage = () => {
   // API hooks
-  const activeTasksQuery = useOfflineTasks({ includeArchived: false });
+  const activeTasksQuery = useTasks({ includeArchived: false });
   const archivedTasksQuery = useArchivedTasks(false); // Will be enabled based on tab
 
   // Create dependencies

@@ -1,10 +1,7 @@
 import React from "react";
 
 import { toast } from "@frontend/components/ui/use-toast";
-import {
-  useDeleteTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useDeleteTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -68,10 +65,12 @@ export const useTaskEditForm = (
     try {
       await updateTask.mutateAsync({
         id: task.id,
-        title: data.title,
-        startDate: data.startDate,
-        dueDate: data.dueDate || null,
-        memo: data.memo || undefined,
+        data: {
+          title: data.title,
+          startDate: data.startDate,
+          dueDate: data.dueDate || null,
+          memo: data.memo || undefined,
+        },
       });
       toast({
         title: "タスクを更新しました",
@@ -91,7 +90,7 @@ export const useTaskEditForm = (
     if (!task) return;
 
     try {
-      await deleteTask.mutateAsync({ id: task.id });
+      await deleteTask.mutateAsync(task.id);
       toast({
         title: "タスクを削除しました",
       });

@@ -35,6 +35,7 @@ export function useActivities() {
 
 /**
  * Activity作成用のフック
+ * @deprecated Use useCreateActivity from '@frontend/hooks/sync' instead
  */
 export function useCreateActivity() {
   return createUseCreateActivity({ apiClient });

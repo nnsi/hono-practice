@@ -23,14 +23,12 @@ const TestWrapper = ({
   eventBus,
   timeProvider,
   tokenStore,
-  onClearCrypto,
 }: {
   children: ReactNode;
   apiClient?: any;
   eventBus?: EventBus;
   timeProvider?: any;
   tokenStore?: any;
-  onClearCrypto?: () => void;
 }) => {
   return (
     <TokenProvider
@@ -38,11 +36,7 @@ const TestWrapper = ({
       timeProvider={timeProvider}
       eventBus={eventBus}
     >
-      <AuthProvider
-        apiClient={apiClient}
-        eventBus={eventBus}
-        onClearCrypto={onClearCrypto}
-      >
+      <AuthProvider apiClient={apiClient} eventBus={eventBus}>
         {children}
       </AuthProvider>
     </TokenProvider>
@@ -58,7 +52,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
     setToken: ReturnType<typeof vi.fn>;
     clearToken: ReturnType<typeof vi.fn>;
   };
-  let onClearCrypto: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     apiClient = createMockApiClient();
@@ -73,8 +66,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
       setInterval: vi.fn(baseTimeProvider.setInterval),
       clearInterval: vi.fn(baseTimeProvider.clearInterval),
     };
-
-    onClearCrypto = vi.fn();
 
     // TokenStorageインターフェースに合わせたモック
     tokenStore = {
@@ -339,7 +330,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
           eventBus={eventBus}
           timeProvider={timeProvider}
           tokenStore={tokenStore}
-          onClearCrypto={onClearCrypto}
         >
           <TestComponent />
         </TestWrapper>,
@@ -358,7 +348,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
       await waitFor(() => {
         expect(apiClient.auth.logout.$post).toHaveBeenCalled();
         expect(tokenStore.setToken).toHaveBeenCalledWith(null);
-        expect(onClearCrypto).toHaveBeenCalled();
         expect(getByTestId("user")).toHaveTextContent("No user");
       });
     });
@@ -390,7 +379,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
           eventBus={eventBus}
           timeProvider={timeProvider}
           tokenStore={tokenStore}
-          onClearCrypto={onClearCrypto}
         >
           <TestComponent />
         </TestWrapper>,
@@ -402,7 +390,6 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
 
       await waitFor(() => {
         expect(tokenStore.setToken).toHaveBeenCalledWith(null);
-        expect(onClearCrypto).toHaveBeenCalled();
       });
     });
   });

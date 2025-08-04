@@ -6,7 +6,6 @@ import {
   authRoute,
   newActivityLogRoute,
   newActivityRoute,
-  newSyncRoute,
   taskRoute,
   userRoute,
 } from "./feature";
@@ -70,7 +69,6 @@ const routes = app
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
   .route("/users/goals", goalRoute)
-  .route("/users/sync", newSyncRoute)
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
   .route("/api/v1", apiV1Route)

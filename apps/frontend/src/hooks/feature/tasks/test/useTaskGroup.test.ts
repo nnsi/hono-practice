@@ -1,7 +1,4 @@
-import {
-  useArchiveTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useArchiveTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
 import { act, renderHook } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskGroup } from "../useTaskGroup";
 
 // モックの設定
-vi.mock("@frontend/hooks/sync/useSyncedTask", () => ({
+vi.mock("@frontend/hooks/api/useTasks", () => ({
   useUpdateTask: vi.fn(),
   useArchiveTask: vi.fn(),
 }));
@@ -61,7 +58,9 @@ describe("useTaskGroup", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: mockTask.id,
-        doneDate: today,
+        data: {
+          doneDate: today,
+        },
       });
     });
 
@@ -76,7 +75,9 @@ describe("useTaskGroup", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: completedTask.id,
-        doneDate: null,
+        data: {
+          doneDate: null,
+        },
       });
     });
   });
@@ -90,8 +91,10 @@ describe("useTaskGroup", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: mockTask.id,
-        startDate: today,
-        dueDate: today,
+        data: {
+          startDate: today,
+          dueDate: today,
+        },
       });
     });
 
@@ -108,8 +111,10 @@ describe("useTaskGroup", () => {
 
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: futureTask.id,
-        startDate: today,
-        dueDate: today,
+        data: {
+          startDate: today,
+          dueDate: today,
+        },
       });
     });
   });
@@ -224,7 +229,9 @@ describe("useTaskGroup", () => {
       result.current.handleToggleTaskDone(mockTask);
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: mockTask.id,
-        doneDate: dayjs().format("YYYY-MM-DD"),
+        data: {
+          doneDate: dayjs().format("YYYY-MM-DD"),
+        },
       });
 
       // 完了済みタスクをアーカイブする
@@ -247,8 +254,10 @@ describe("useTaskGroup", () => {
       result.current.handleMoveToToday(mockTask);
       expect(mockUpdateMutate).toHaveBeenCalledWith({
         id: mockTask.id,
-        startDate: today,
-        dueDate: today,
+        data: {
+          startDate: today,
+          dueDate: today,
+        },
       });
 
       // 移動したタスクを編集

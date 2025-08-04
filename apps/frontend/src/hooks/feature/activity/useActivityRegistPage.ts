@@ -1,12 +1,21 @@
+import { useCallback, useState } from "react";
+
 import { useGlobalDate } from "@frontend/hooks";
 import { useActivityBatchData } from "@frontend/hooks/api";
-import { createUseActivityRegistPage } from "@packages/frontend-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+
+import type { GetActivityResponse } from "@dtos/response";
 
 export const useActivityRegistPage = () => {
   const { date, setDate } = useGlobalDate();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] =
+    useState<GetActivityResponse | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTargetActivity, setEditTargetActivity] =
+    useState<GetActivityResponse | null>(null);
 
   // データ取得とsync処理をカスタムフックで管理
   const { activities, hasActivityLogs } = useActivityBatchData({ date });
@@ -31,33 +40,71 @@ export const useActivityRegistPage = () => {
     });
   };
 
-  // Create dependencies
-  const dependencies = {
-    dateStore: {
-      date,
-      setDate,
-    },
-    api: {
-      getActivities: async () => {
-        // Return cached activities from React Query
-        return activities;
-      },
-      hasActivityLogs: (activityId: string) => {
-        return hasActivityLogs(activityId);
-      },
-    },
-    cache: {
-      invalidateActivityCache,
-    },
-  };
+  // Event handlers
+  const handleActivityClick = useCallback((activity: GetActivityResponse) => {
+    setSelectedActivity(activity);
+    setOpen(true);
+  }, []);
 
-  // Use the common hook
-  const commonResult = createUseActivityRegistPage(dependencies);
+  const handleNewActivityClick = useCallback(() => {
+    setOpen(true);
+  }, []);
 
-  // Override with React Query data for consistency
+  const handleEditClick = useCallback((activity: GetActivityResponse) => {
+    setEditTargetActivity(activity);
+    setEditModalOpen(true);
+  }, []);
+
+  const handleNewActivityDialogChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSelectedActivity(null);
+    }
+  }, []);
+
+  const handleActivityLogCreateDialogChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen);
+      if (!newOpen) {
+        setSelectedActivity(null);
+      }
+    },
+    [],
+  );
+
+  const handleActivityLogCreateSuccess = useCallback(() => {
+    invalidateActivityCache();
+  }, [invalidateActivityCache]);
+
+  const handleActivityEditDialogClose = useCallback(() => {
+    setEditModalOpen(false);
+    setEditTargetActivity(null);
+    invalidateActivityCache();
+  }, [invalidateActivityCache]);
+
+  const handleDeleteActivity = useCallback(() => {
+    setEditModalOpen(false);
+    setEditTargetActivity(null);
+    invalidateActivityCache();
+  }, [invalidateActivityCache]);
+
   return {
-    ...commonResult,
-    activities, // Use React Query's latest data
+    date,
+    setDate,
+    activities,
     hasActivityLogs,
+    invalidateActivityCache,
+    open,
+    selectedActivity,
+    editModalOpen,
+    editTargetActivity,
+    handleActivityClick,
+    handleNewActivityClick,
+    handleEditClick,
+    handleNewActivityDialogChange,
+    handleActivityLogCreateDialogChange,
+    handleActivityLogCreateSuccess,
+    handleActivityEditDialogClose,
+    handleDeleteActivity,
   };
 };
