@@ -1,6 +1,11 @@
-import { apiClient } from "@frontend/utils/apiClient";
+import { useGoogleAuth } from "@frontend/hooks/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
+import {
+  createWebFormAdapter,
+  createWebNotificationAdapter,
+} from "@packages/frontend-shared/adapters";
+import { createUseLogin } from "@packages/frontend-shared/hooks/feature";
+import { useRouter } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
 import {
@@ -12,12 +17,15 @@ import { useAuth } from "@hooks/useAuth";
 
 import { useToast } from "@components/ui";
 
+// 新しい共通化されたフックを使用する実装
 export const useLogin = () => {
   const { login, setUser, setAccessToken, scheduleTokenRefresh } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  // フォーム管理
+  const router = useRouter();
+  const { toast } = useToast();
+  const googleAuth = useGoogleAuth();
+
+  // Form setup
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: {
@@ -26,72 +34,45 @@ export const useLogin = () => {
     },
   });
 
-  // 通常のログイン処理
-  const handleLogin = async (data: LoginRequest) => {
-    try {
-      await login(data);
-      // ログイン成功時にホームページにリダイレクト
-      navigate({ to: "/" });
-    } catch (e) {
-      toast({
-        description: "ログインIDまたはパスワードが間違っています",
-        variant: "destructive",
-      });
-    }
+  // Create adapters and dependencies
+  const notificationAdapter = createWebNotificationAdapter();
+  if ("setToastCallback" in notificationAdapter) {
+    notificationAdapter.setToastCallback(toast);
+  }
+
+  const dependencies = {
+    form: createWebFormAdapter<LoginRequest>(form as never),
+    navigation: {
+      navigate: (path: string) => router.navigate({ to: path }),
+      replace: (path: string) => router.history.replace(path),
+      goBack: () => router.history.back(),
+      canGoBack: () => router.history.canGoBack(),
+    },
+    notification: notificationAdapter,
+    auth: {
+      login: async (data: LoginRequest) => {
+        await login(data);
+      },
+      googleLogin: async (credential: string) => {
+        const result = await googleAuth.mutateAsync(credential);
+        return result;
+      },
+      setUser,
+      setAccessToken,
+      scheduleTokenRefresh,
+    },
   };
 
-  // Google認証成功時のハンドラ
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    if (!credentialResponse.credential) {
-      toast({
-        title: "エラー",
-        description: "Google認証に失敗しました",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const res = await apiClient.auth.google.$post({
-        json: { credential: credentialResponse.credential },
-      });
-      if (res.status === 200) {
-        const { user, token } = await res.json();
-        setAccessToken(token);
-        scheduleTokenRefresh();
-        setUser({ ...user, name: user.name ?? null });
-        setTimeout(() => {
-          navigate({ to: "/" });
-        }, 0);
-      } else {
-        await res.json();
-        toast({
-          title: "エラー",
-          description: "Google認証に失敗しました",
-          variant: "destructive",
-        });
-      }
-    } catch (e) {
-      toast({
-        title: "エラー",
-        description: "Google認証に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
+  // Use the common hook
+  const result = createUseLogin(dependencies);
 
-  // Google認証エラー時のハンドラ
-  const handleGoogleError = () => {
-    toast({
-      title: "エラー",
-      description: "Google認証に失敗しました",
-      variant: "destructive",
-    });
-  };
-
+  // Return the form object separately for compatibility with existing components
   return {
     form,
-    handleLogin,
-    handleGoogleSuccess,
-    handleGoogleError,
+    handleLogin: result.handleLogin, // This is already wrapped by handleSubmit in createUseLogin
+    handleGoogleSuccess: result.handleGoogleSuccess,
+    handleGoogleError: result.handleGoogleError,
+    handleMobileGoogleLogin: result.handleMobileGoogleLogin,
+    isSubmitting: result.isSubmitting,
   };
 };

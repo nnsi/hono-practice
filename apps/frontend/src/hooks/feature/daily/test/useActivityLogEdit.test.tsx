@@ -1,6 +1,6 @@
 import type React from "react";
 
-import * as syncedActivityLog from "@frontend/hooks/sync/useSyncedActivityLog";
+import * as syncedActivityLog from "@frontend/hooks/api/useActivityLogs";
 import * as apiClient from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
@@ -16,7 +16,7 @@ import * as toast from "@components/ui";
 import { useActivityLogEdit } from "../useActivityLogEdit";
 
 // モックの設定
-vi.mock("@frontend/hooks/sync/useSyncedActivityLog");
+vi.mock("@frontend/hooks/api/useActivityLogs");
 vi.mock("@frontend/utils");
 vi.mock("@components/ui");
 
@@ -247,14 +247,12 @@ describe("useActivityLogEdit", () => {
     expect(mockEvent.preventDefault).toHaveBeenCalled();
     expect(mockUpdateActivityLog).toHaveBeenCalledWith({
       id: "00000000-0000-4000-8000-000000000001",
-      memo: "Great book!",
-      quantity: 50,
-      activityKindId: "00000000-0000-4000-8000-000000000201",
-      date: "2025-01-20",
-      activityKindInfo: {
-        id: "00000000-0000-4000-8000-000000000201",
-        name: "Fiction",
+      data: {
+        memo: "Great book!",
+        quantity: 50,
+        activityKindId: "00000000-0000-4000-8000-000000000201",
       },
+      date: "2025-01-20",
     });
 
     expect(mockToast).toHaveBeenCalledWith({

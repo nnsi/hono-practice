@@ -58,12 +58,16 @@ describe("createUseNetworkStatus", () => {
     network = createMockNetworkAdapter(true);
     storage = createMockStorageAdapter();
     // Reset simulated offline state
-    setSimulatedOffline(false);
+    act(() => {
+      setSimulatedOffline(false);
+    });
   });
 
   afterEach(() => {
     vi.clearAllMocks();
-    setSimulatedOffline(false);
+    act(() => {
+      setSimulatedOffline(false);
+    });
   });
 
   it("初期状態でオンラインの場合", () => {
@@ -170,7 +174,9 @@ describe("createUseNetworkStatus", () => {
 
     it("シミュレートされたオフライン状態を反映すること", () => {
       // グローバルシミュレーション状態をtrueに設定
-      setSimulatedOffline(true);
+      act(() => {
+        setSimulatedOffline(true);
+      });
 
       const { result } = renderHook(() =>
         createUseNetworkStatus({
@@ -183,7 +189,9 @@ describe("createUseNetworkStatus", () => {
     });
 
     it("グローバルなシミュレート状態を反映すること", () => {
-      setSimulatedOffline(true);
+      act(() => {
+        setSimulatedOffline(true);
+      });
 
       const { result } = renderHook(() =>
         createUseNetworkStatus({

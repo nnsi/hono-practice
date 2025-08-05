@@ -1,8 +1,12 @@
 import { useEffect, useMemo } from "react";
 
 import {
+  createUseArchiveTask,
   createUseArchivedTasks,
+  createUseCreateTask,
+  createUseDeleteTask,
   createUseTasks,
+  createUseUpdateTask,
 } from "@packages/frontend-shared/hooks";
 import dayjs from "dayjs";
 
@@ -32,7 +36,40 @@ type GroupedTasks = {
   completed: Task[];
 };
 
-export function useTasks() {
+export function useTasks(options?: {
+  date?: string;
+  includeArchived?: boolean;
+}) {
+  return createUseTasks({
+    apiClient,
+    date: options?.date,
+    includeArchived: options?.includeArchived,
+  });
+}
+
+export function useArchivedTasks(enabled = true) {
+  return createUseArchivedTasks({ apiClient, enabled });
+}
+
+export function useCreateTask() {
+  return createUseCreateTask({ apiClient });
+}
+
+export function useUpdateTask() {
+  return createUseUpdateTask({ apiClient });
+}
+
+export function useDeleteTask() {
+  return createUseDeleteTask({ apiClient });
+}
+
+export function useArchiveTask() {
+  return createUseArchiveTask({ apiClient });
+}
+
+// Legacy grouped tasks implementation (for Tasks screen)
+
+export function useTasksWithGroups() {
   // 共通フックを使用してタスクを取得
   const {
     data: activeTasks,

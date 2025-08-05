@@ -1,95 +1,80 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
-import { useActivities, useGoals } from "@frontend/hooks/api";
+import { useActivities } from "@frontend/hooks/api/useActivities";
+import { useGoals } from "@frontend/hooks/api/useGoals";
+
+import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 
 export const useNewGoalPage = () => {
+  const { data: goalsData, isLoading: goalsLoading } = useGoals();
+  const { data: activitiesData } = useActivities();
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const { data: goalsData, isLoading: goalsLoading } = useGoals();
 
-  const { data: activitiesData } = useActivities();
+  // Split goals into current and past
+  const currentGoals =
+    goalsData?.goals?.filter((goal: GoalResponse) => goal.isActive) || [];
+  const pastGoals =
+    goalsData?.goals?.filter((goal: GoalResponse) => !goal.isActive) || [];
 
-  const goals = goalsData?.goals || [];
+  // Helper functions
+  const getActivity = useCallback(
+    (activityId: string) => {
+      return activitiesData?.find(
+        (a: GetActivityResponse) => a.id === activityId,
+      );
+    },
+    [activitiesData],
+  );
 
-  // 現在の日付を取得
-  const now = new Date();
+  const getActivityName = useCallback(
+    (activityId: string) => {
+      const activity = getActivity(activityId);
+      return activity?.name || "Unknown Activity";
+    },
+    [getActivity],
+  );
 
-  // 現在の目標と過去の目標を分ける
-  const currentGoals = goals.filter((goal) => {
-    // 期間終了日がない、または期間終了日が未来の場合は現在の目標
-    return !goal.endDate || new Date(goal.endDate) >= now;
-  });
+  const getActivityEmoji = useCallback(
+    (activityId: string) => {
+      const activity = getActivity(activityId);
+      return activity?.emoji || "🎯";
+    },
+    [getActivity],
+  );
 
-  const pastGoals = goals.filter((goal) => {
-    // 期間終了日があり、かつ過去の場合は過去の目標
-    return goal.endDate && new Date(goal.endDate) < now;
-  });
+  const getActivityUnit = useCallback(
+    (activityId: string) => {
+      const activity = getActivity(activityId);
+      return activity?.quantityUnit || "回";
+    },
+    [getActivity],
+  );
 
-  const getActivityName = (activityId: string) => {
-    const activity = activitiesData?.find((a) => a.id === activityId);
-    return activity?.name || "不明なアクティビティ";
-  };
-
-  const getActivityEmoji = (activityId: string) => {
-    const activity = activitiesData?.find((a) => a.id === activityId);
-    return activity?.emoji || "🎯";
-  };
-
-  const getActivityIcon = (activityId: string) => {
-    const activity = activitiesData?.find((a) => a.id === activityId);
-    return {
-      iconType: activity?.iconType || "emoji",
-      iconUrl: activity?.iconUrl,
-      iconThumbnailUrl: activity?.iconThumbnailUrl,
-      emoji: activity?.emoji || "🎯",
-    };
-  };
-
-  const getActivityUnit = (activityId: string) => {
-    const activity = activitiesData?.find((a) => a.id === activityId);
-    return activity?.quantityUnit || "";
-  };
-
-  const getActivity = (activityId: string) => {
-    return activitiesData?.find((a) => a.id === activityId);
-  };
-
-  // 編集開始時のハンドラを作成する関数
-  const createEditStartHandler = (goalId: string) => {
+  const createEditStartHandler = useCallback((goalId: string) => {
     return () => setEditingGoalId(goalId);
-  };
+  }, []);
 
-  // 編集終了時のハンドラ
-  const handleEditEnd = () => {
+  const handleEditEnd = useCallback(() => {
     setEditingGoalId(null);
-  };
+  }, []);
 
-  // 目標作成完了時のハンドラ
-  const handleGoalCreated = () => {
-    setEditingGoalId(null);
+  const handleGoalCreated = useCallback(() => {
     setCreateDialogOpen(false);
-  };
+  }, []);
 
   return {
-    // State
     editingGoalId,
     createDialogOpen,
     setCreateDialogOpen,
-
-    // Data
     goalsLoading,
     currentGoals,
     pastGoals,
     activitiesData,
-
-    // Getters
     getActivityName,
     getActivityEmoji,
-    getActivityIcon,
     getActivityUnit,
     getActivity,
-
-    // Handlers
     createEditStartHandler,
     handleEditEnd,
     handleGoalCreated,

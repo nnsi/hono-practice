@@ -1,9 +1,6 @@
 import { useState } from "react";
 
-import {
-  useArchiveTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useArchiveTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
 import dayjs from "dayjs";
 
 type TaskItem = {
@@ -28,9 +25,16 @@ export const useTaskGroup = () => {
 
   // タスクの完了/未完了を切り替え
   const handleToggleTaskDone = (task: TaskItem) => {
+    console.log("handleToggleTaskDone called:", {
+      taskId: task.id,
+      currentDoneDate: task.doneDate,
+      newDoneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
+    });
     updateTask.mutate({
       id: task.id,
-      doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
+      data: {
+        doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
+      },
     });
   };
 
@@ -39,9 +43,11 @@ export const useTaskGroup = () => {
     const today = dayjs().format("YYYY-MM-DD");
     updateTask.mutate({
       id: task.id,
-      startDate: today,
-      // 締切日も今日に設定
-      dueDate: today,
+      data: {
+        startDate: today,
+        // 締切日も今日に設定
+        dueDate: today,
+      },
     });
   };
 

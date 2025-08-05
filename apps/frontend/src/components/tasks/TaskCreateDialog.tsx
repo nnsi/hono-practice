@@ -1,4 +1,4 @@
-import { useCreateTask } from "@frontend/hooks/sync/useSyncedTask";
+import { useCreateTask } from "@frontend/hooks/api/useTasks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
@@ -74,10 +74,14 @@ export const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           });
           onSuccess?.();
         },
-        onError: () => {
+        onError: (error) => {
+          console.error("Task creation error:", error);
           toast({
             title: "エラー",
-            description: "タスクの作成に失敗しました",
+            description:
+              error instanceof Error
+                ? error.message
+                : "タスクの作成に失敗しました",
             variant: "destructive",
           });
         },

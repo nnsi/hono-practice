@@ -1,4 +1,7 @@
+import type React from "react";
+
 import * as useAuthHook from "@frontend/hooks/useAuth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as routerHooks from "@tanstack/react-router";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,18 +16,30 @@ import { useCreateUser } from "../useCreateUser";
 vi.mock("@frontend/hooks/useAuth");
 vi.mock("@components/ui");
 vi.mock("@tanstack/react-router");
-vi.mock("@frontend/utils/apiClient", () => ({
-  apiClient: {
-    user: {
-      $post: vi.fn(),
-    },
-    auth: {
-      google: {
-        $post: vi.fn(),
-      },
-    },
-  },
+
+const mockCreateUserApi = vi.fn();
+const mockGoogleAuth = vi.fn();
+
+vi.mock("@frontend/hooks/api", () => ({
+  useCreateUserApi: () => ({
+    mutateAsync: mockCreateUserApi,
+  }),
+  useGoogleAuth: () => ({
+    mutateAsync: mockGoogleAuth,
+  }),
 }));
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 describe("useCreateUser", () => {
   const mockGetUser = vi.fn();
@@ -53,7 +68,9 @@ describe("useCreateUser", () => {
   });
 
   it("フォームが初期化される", () => {
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.form.getValues()).toEqual({
       name: "",
@@ -64,16 +81,12 @@ describe("useCreateUser", () => {
 
   it("ユーザー作成成功時にホームページにリダイレクトする", async () => {
     const mockToken = "mock-access-token";
-    const { apiClient } = await import("@frontend/utils/apiClient");
-
-    vi.mocked(apiClient.user.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue({ token: mockToken }),
-    } as any);
-
+    mockCreateUserApi.mockResolvedValue({ token: mockToken });
     mockGetUser.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     const userData: CreateUserRequest = {
       name: "Test User",
@@ -85,7 +98,7 @@ describe("useCreateUser", () => {
       await result.current.onSubmit(userData);
     });
 
-    expect(apiClient.user.$post).toHaveBeenCalledWith({ json: userData });
+    expect(mockCreateUserApi).toHaveBeenCalledWith(userData);
     expect(mockSetAccessToken).toHaveBeenCalledWith(mockToken);
     expect(mockScheduleTokenRefresh).toHaveBeenCalled();
     expect(mockGetUser).toHaveBeenCalled();
@@ -94,13 +107,11 @@ describe("useCreateUser", () => {
   });
 
   it("ユーザー作成失敗時にエラートーストを表示する", async () => {
-    const { apiClient } = await import("@frontend/utils/apiClient");
+    mockCreateUserApi.mockRejectedValue(new Error("User creation failed"));
 
-    vi.mocked(apiClient.user.$post).mockRejectedValue(
-      new Error("User creation failed"),
-    );
-
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     const userData: CreateUserRequest = {
       name: "Test User",
@@ -112,7 +123,7 @@ describe("useCreateUser", () => {
       await result.current.onSubmit(userData);
     });
 
-    expect(apiClient.user.$post).toHaveBeenCalledWith({ json: userData });
+    expect(mockCreateUserApi).toHaveBeenCalledWith(userData);
     expect(mockSetAccessToken).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockToast).toHaveBeenCalledWith({
@@ -122,57 +133,33 @@ describe("useCreateUser", () => {
     });
   });
 
-  it("APIが200以外のステータスを返した場合は処理しない", async () => {
-    const { apiClient } = await import("@frontend/utils/apiClient");
-
-    vi.mocked(apiClient.user.$post).mockResolvedValue({
-      status: 400,
-      json: vi.fn().mockResolvedValue({ error: "Bad request" }),
-    } as any);
-
-    const { result } = renderHook(() => useCreateUser());
-
-    const userData: CreateUserRequest = {
-      name: "Test User",
-      loginId: "testuser",
-      password: "password123",
-    };
-
-    await act(async () => {
-      await result.current.onSubmit(userData);
-    });
-
-    expect(mockSetAccessToken).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
-    // Note: 200以外のステータスコードの場合、現在の実装ではトーストは表示されない
-  });
-
   it("Google認証成功時に正しく処理される", async () => {
     const mockGoogleResponse = {
       credential: "mock-google-credential",
     };
 
     const mockApiResponse = {
+      user: {
+        id: "00000000-0000-4000-8000-000000000001",
+        name: "Google User",
+        providers: ["google"],
+      },
       token: "mock-access-token",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockApiResponse),
-    } as any);
+    mockGoogleAuth.mockResolvedValue(mockApiResponse);
 
     mockGetUser.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
     });
 
-    expect(apiClient.auth.google.$post).toHaveBeenCalledWith({
-      json: { credential: "mock-google-credential" },
-    });
+    expect(mockGoogleAuth).toHaveBeenCalledWith("mock-google-credential");
     expect(mockSetAccessToken).toHaveBeenCalledWith("mock-access-token");
     expect(mockScheduleTokenRefresh).toHaveBeenCalled();
     expect(mockGetUser).toHaveBeenCalled();
@@ -184,7 +171,9 @@ describe("useCreateUser", () => {
       credential: null,
     };
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -203,13 +192,11 @@ describe("useCreateUser", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 401,
-      json: vi.fn().mockResolvedValue({ error: "Unauthorized" }),
-    } as any);
+    mockGoogleAuth.mockRejectedValue(new Error("Unauthorized"));
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -228,12 +215,11 @@ describe("useCreateUser", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockRejectedValue(
-      new Error("Network error"),
-    );
+    mockGoogleAuth.mockRejectedValue(new Error("Network error"));
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -248,7 +234,9 @@ describe("useCreateUser", () => {
   });
 
   it("handleGoogleErrorがエラートーストを表示する", () => {
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.handleGoogleError();
@@ -265,7 +253,9 @@ describe("useCreateUser", () => {
   // 実際のフォームコンポーネントでのテストが推奨される
 
   it("フォームの値を更新できる", () => {
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.form.setValue("name", "New User");
@@ -282,16 +272,12 @@ describe("useCreateUser", () => {
 
   it("getUser呼び出し後にナビゲートする", async () => {
     const mockToken = "mock-access-token";
-    const { apiClient } = await import("@frontend/utils/apiClient");
-
-    vi.mocked(apiClient.user.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue({ token: mockToken }),
-    } as any);
-
+    mockCreateUserApi.mockResolvedValue({ token: mockToken });
     mockGetUser.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useCreateUser());
+    const { result } = renderHook(() => useCreateUser(), {
+      wrapper: createWrapper(),
+    });
 
     const userData: CreateUserRequest = {
       name: "Test User",

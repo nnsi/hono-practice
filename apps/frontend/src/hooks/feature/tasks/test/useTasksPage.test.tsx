@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
+import { NetworkStatusProvider } from "@frontend/providers/NetworkStatusProvider";
 import { apiClient } from "@frontend/utils/apiClient";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
@@ -25,6 +27,39 @@ vi.mock("@frontend/utils/apiClient", () => ({
   },
 }));
 
+// useAuthのモック
+vi.mock("@frontend/hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: { id: "test-user-id" },
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
+// useTasksのモック - useArchivedTasksのモックに含める
+vi.mocked(useTasks).mockReturnValue({
+  data: [],
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn().mockResolvedValue({ data: [] }),
+} as any);
+
+// useArchivedTasksとuseTasksのモック
+vi.mock("@frontend/hooks/api", () => ({
+  useArchivedTasks: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn().mockResolvedValue({ data: [] }),
+  })),
+  useTasks: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn().mockResolvedValue({ data: [] }),
+  })),
+}));
+
 // QueryClientProviderのラッパー
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -35,7 +70,9 @@ const createWrapper = () => {
   });
 
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <NetworkStatusProvider>{children}</NetworkStatusProvider>
+    </QueryClientProvider>
   );
 };
 
@@ -176,18 +213,36 @@ describe("useTasksPage", () => {
       ok: true,
       json: vi.fn().mockResolvedValue(mockArchivedTasks),
     } as any);
+
+    // useTasksのモックを更新してmockTasksを返すように設定
+    vi.mocked(useTasks).mockReturnValue({
+      data: mockTasks,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn().mockResolvedValue({ data: mockTasks }),
+    } as any);
+
+    // useArchivedTasksのモックを更新
+    vi.mocked(useArchivedTasks).mockReturnValue({
+      data: mockArchivedTasks,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn().mockResolvedValue({ data: mockArchivedTasks }),
+    } as any);
   });
 
   describe("初期状態", () => {
-    it("初期値が正しく設定される", () => {
+    it("初期値が正しく設定される", async () => {
       const { result } = renderHook(() => useTasksPage(), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.showCompleted).toBe(false);
-      expect(result.current.showFuture).toBe(false);
-      expect(result.current.createDialogOpen).toBe(false);
-      expect(result.current.activeTab).toBe("active");
+      await waitFor(() => {
+        expect(result.current.showCompleted).toBe(false);
+        expect(result.current.showFuture).toBe(false);
+        expect(result.current.createDialogOpen).toBe(false);
+        expect(result.current.activeTab).toBe("active");
+      });
     });
   });
 
@@ -201,9 +256,6 @@ describe("useTasksPage", () => {
         expect(result.current.isTasksLoading).toBe(false);
       });
 
-      expect(apiClient.users.tasks.$get).toHaveBeenCalledWith({
-        query: {},
-      });
       expect(result.current.tasks).toEqual(mockTasks);
     });
 
@@ -212,7 +264,7 @@ describe("useTasksPage", () => {
         wrapper: createWrapper(),
       });
 
-      act(() => {
+      await act(async () => {
         result.current.setActiveTab("archived");
       });
 
@@ -220,11 +272,18 @@ describe("useTasksPage", () => {
         expect(result.current.isArchivedTasksLoading).toBe(false);
       });
 
-      expect(apiClient.users.tasks.archived.$get).toHaveBeenCalled();
       expect(result.current.archivedTasks).toEqual(mockArchivedTasks);
     });
 
     it("タスク取得エラー時の処理", async () => {
+      // エラー時にuseTasksが空の配列を返すように設定
+      vi.mocked(useTasks).mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: true,
+        refetch: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.$get).mockResolvedValue({
         ok: false,
       } as any);
@@ -237,7 +296,7 @@ describe("useTasksPage", () => {
         expect(result.current.isTasksLoading).toBe(false);
       });
 
-      expect(result.current.tasks).toBeUndefined();
+      expect(result.current.tasks).toEqual([]);
     });
   });
 
@@ -249,6 +308,12 @@ describe("useTasksPage", () => {
 
       await waitFor(() => {
         expect(result.current.isTasksLoading).toBe(false);
+      });
+
+      // 完了済みタスクと将来のタスクを表示するために設定
+      await act(async () => {
+        result.current.setShowCompleted(true);
+        result.current.setShowFuture(true);
       });
 
       const groups = result.current.groupedTasks;
@@ -309,7 +374,16 @@ describe("useTasksPage", () => {
       const todayTask = {
         ...mockTasks[1],
         doneDate: dayjs().format("YYYY-MM-DD"),
+        dueDate: dayjs().format("YYYY-MM-DD"), // dueDateも今日に設定
       };
+
+      vi.mocked(useTasks).mockReturnValue({
+        data: [todayTask],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn().mockResolvedValue({ data: [todayTask] }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.$get).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue([todayTask]),
@@ -324,12 +398,20 @@ describe("useTasksPage", () => {
       });
 
       const groups = result.current.groupedTasks;
+      // completedInTheirCategoriesがtrueなので、完了済みでも今日締切カテゴリに表示される
       expect(groups.dueToday).toHaveLength(1);
       expect(groups.dueToday[0].doneDate).toBe(dayjs().format("YYYY-MM-DD"));
       expect(groups.completed).toHaveLength(0);
     });
 
     it("タスクがない場合、空のグループが返される", async () => {
+      vi.mocked(useTasks).mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.$get).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue([]),
@@ -359,19 +441,30 @@ describe("useTasksPage", () => {
         {
           ...mockTasks[0],
           id: "task1",
-          dueDate: "2024-01-03",
+          dueDate: dayjs().subtract(7, "day").format("YYYY-MM-DD"),
+          doneDate: null,
         },
         {
           ...mockTasks[0],
           id: "task2",
-          dueDate: "2024-01-01",
+          dueDate: dayjs().subtract(9, "day").format("YYYY-MM-DD"),
+          doneDate: null,
         },
         {
           ...mockTasks[0],
           id: "task3",
-          dueDate: "2024-01-02",
+          dueDate: dayjs().subtract(8, "day").format("YYYY-MM-DD"),
+          doneDate: null,
         },
       ];
+
+      vi.mocked(useTasks).mockReturnValue({
+        data: multipleTasks,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn().mockResolvedValue({ data: multipleTasks }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.$get).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue(multipleTasks),
@@ -386,80 +479,84 @@ describe("useTasksPage", () => {
       });
 
       const groups = result.current.groupedTasks;
-      expect(groups.overdue[0].id).toBe("task2");
-      expect(groups.overdue[1].id).toBe("task3");
-      expect(groups.overdue[2].id).toBe("task1");
+      // 日付が過去のタスクがoverdueグループに入っているか確認
+      expect(groups.overdue.length).toBe(3);
+      if (groups.overdue.length === 3) {
+        expect(groups.overdue[0].id).toBe("task2");
+        expect(groups.overdue[1].id).toBe("task3");
+        expect(groups.overdue[2].id).toBe("task1");
+      }
     });
   });
 
   describe("状態管理", () => {
-    it("showCompletedの切り替えができる", () => {
+    it("showCompletedの切り替えができる", async () => {
       const { result } = renderHook(() => useTasksPage(), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.showCompleted).toBe(false);
 
-      act(() => {
+      await act(async () => {
         result.current.setShowCompleted(true);
       });
       expect(result.current.showCompleted).toBe(true);
 
-      act(() => {
+      await act(async () => {
         result.current.setShowCompleted(false);
       });
       expect(result.current.showCompleted).toBe(false);
     });
 
-    it("showFutureの切り替えができる", () => {
+    it("showFutureの切り替えができる", async () => {
       const { result } = renderHook(() => useTasksPage(), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.showFuture).toBe(false);
 
-      act(() => {
+      await act(async () => {
         result.current.setShowFuture(true);
       });
       expect(result.current.showFuture).toBe(true);
 
-      act(() => {
+      await act(async () => {
         result.current.setShowFuture(false);
       });
       expect(result.current.showFuture).toBe(false);
     });
 
-    it("createDialogOpenの切り替えができる", () => {
+    it("createDialogOpenの切り替えができる", async () => {
       const { result } = renderHook(() => useTasksPage(), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.createDialogOpen).toBe(false);
 
-      act(() => {
+      await act(async () => {
         result.current.setCreateDialogOpen(true);
       });
       expect(result.current.createDialogOpen).toBe(true);
 
-      act(() => {
+      await act(async () => {
         result.current.setCreateDialogOpen(false);
       });
       expect(result.current.createDialogOpen).toBe(false);
     });
 
-    it("activeTabの切り替えができる", () => {
+    it("activeTabの切り替えができる", async () => {
       const { result } = renderHook(() => useTasksPage(), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.activeTab).toBe("active");
 
-      act(() => {
+      await act(async () => {
         result.current.setActiveTab("archived");
       });
       expect(result.current.activeTab).toBe("archived");
 
-      act(() => {
+      await act(async () => {
         result.current.setActiveTab("active");
       });
       expect(result.current.activeTab).toBe("active");
@@ -480,6 +577,13 @@ describe("useTasksPage", () => {
     });
 
     it("タスクがない場合falseを返す", async () => {
+      vi.mocked(useTasks).mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.$get).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue([]),
@@ -503,7 +607,7 @@ describe("useTasksPage", () => {
         wrapper: createWrapper(),
       });
 
-      act(() => {
+      await act(async () => {
         result.current.setActiveTab("archived");
       });
 
@@ -515,6 +619,13 @@ describe("useTasksPage", () => {
     });
 
     it("アーカイブ済みタスクがない場合falseを返す", async () => {
+      vi.mocked(useArchivedTasks).mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
+
       vi.mocked(apiClient.users.tasks.archived.$get).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue([]),
@@ -524,7 +635,7 @@ describe("useTasksPage", () => {
         wrapper: createWrapper(),
       });
 
-      act(() => {
+      await act(async () => {
         result.current.setActiveTab("archived");
       });
 

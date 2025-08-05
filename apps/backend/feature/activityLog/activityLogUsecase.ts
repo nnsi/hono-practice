@@ -32,6 +32,7 @@ export type GetStatsParams = {
 };
 
 type CreateActivityLogParams = {
+  id?: string;
   date: string;
   quantity: number;
   memo?: string;
@@ -134,7 +135,7 @@ function createActivityLog(
       activity.kinds.find((kind) => kind.id === activityKindId) || null;
 
     const activityLog = createActivityLogEntity({
-      id: createActivityLogId(),
+      id: params.id ? createActivityLogId(params.id) : createActivityLogId(),
       userId,
       date: new Date(params.date),
       quantity: params.quantity,

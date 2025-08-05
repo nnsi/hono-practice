@@ -87,7 +87,11 @@ export const ActivityDailyPage: React.FC = () => {
           )}
         </div>
         <hr className="my-6" />
-        <TaskList tasks={tasks} isTasksLoading={isTasksLoading} date={date} />
+        <TaskList
+          tasks={tasks ?? undefined}
+          isTasksLoading={isTasksLoading}
+          date={date}
+        />
       </div>
       <ActivityLogEditDialog
         open={editDialogOpen}

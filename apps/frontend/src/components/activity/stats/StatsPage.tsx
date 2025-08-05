@@ -1,9 +1,16 @@
+import { useState } from "react";
+
 import {
   type GoalLine,
-  getColorForKind,
+  getUniqueColorForKind,
   useActivityStats,
 } from "@frontend/hooks/feature/activity/useActivityStats";
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+} from "@radix-ui/react-icons";
 import dayjs from "dayjs";
 import {
   Bar,
@@ -31,6 +38,172 @@ type ActivityChartProps = {
   goalLines?: GoalLine[];
 };
 
+// 日別・週別の合計値テーブルコンポーネント
+type SummaryTableProps = {
+  quantityUnit: string;
+  data: ChartData[];
+  kinds: Array<{
+    name: string;
+  }>;
+  kindColors: Record<string, string>;
+  month: string;
+};
+
+const SummaryTable: React.FC<SummaryTableProps> = ({
+  quantityUnit,
+  data,
+  kinds,
+  kindColors,
+  month,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 週ごとにデータをグループ化
+  const weeklyData = data.reduce(
+    (acc, day) => {
+      // 月の日付を再構築（dataのdateは"1日", "2日"形式なので、渡された月を使って完全な日付を生成）
+      const dayNumber = Number.parseInt(day.date.replace("日", ""));
+      const date = dayjs(month).date(dayNumber);
+      const weekStart = date.startOf("week");
+      const weekKey = weekStart.format("YYYY-MM-DD");
+
+      if (!acc[weekKey]) {
+        acc[weekKey] = {
+          weekStart,
+          days: [],
+          weekTotal: 0,
+        };
+      }
+
+      const dayTotal = kinds.reduce((sum, kind) => {
+        return sum + (Number(day[kind.name]) || 0);
+      }, 0);
+
+      acc[weekKey].days.push({
+        date: date.format("MM/DD"),
+        dayOfWeek: date.format("ddd"),
+        total: dayTotal,
+        breakdown: kinds.reduce(
+          (breakdown, kind) => {
+            breakdown[kind.name] = Number(day[kind.name]) || 0;
+            return breakdown;
+          },
+          {} as Record<string, number>,
+        ),
+      });
+
+      acc[weekKey].weekTotal += dayTotal;
+
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        weekStart: dayjs.Dayjs;
+        days: Array<{
+          date: string;
+          dayOfWeek: string;
+          total: number;
+          breakdown: Record<string, number>;
+        }>;
+        weekTotal: number;
+      }
+    >,
+  );
+
+  const weeks = Object.values(weeklyData).sort(
+    (a, b) => a.weekStart.valueOf() - b.weekStart.valueOf(),
+  );
+
+  return (
+    <div className="mt-4 border rounded-lg overflow-hidden">
+      <div
+        className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-expanded={isExpanded}
+      >
+        <h3 className="font-semibold">日別・週別 合計値</h3>
+        {isExpanded ? (
+          <ChevronUpIcon className="h-5 w-5" />
+        ) : (
+          <ChevronDownIcon className="h-5 w-5" />
+        )}
+      </div>
+
+      {isExpanded && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  日付
+                </th>
+                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  日合計
+                </th>
+                {kinds.length > 1 &&
+                  kinds.map((kind) => (
+                    <th
+                      key={kind.name}
+                      className="hidden md:table-cell px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {kind.name}
+                    </th>
+                  ))}
+                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  週合計
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {weeks.map((week, _weekIndex) =>
+                week.days.map((day, dayIndex) => (
+                  <tr
+                    key={`${day.date}-${day.dayOfWeek}`}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {day.date} ({day.dayOfWeek})
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-right font-medium">
+                      {day.total.toFixed(1)} {quantityUnit}
+                    </td>
+                    {kinds.length > 1 &&
+                      kinds.map((kind) => (
+                        <td
+                          key={kind.name}
+                          className="hidden md:table-cell px-4 py-2 whitespace-nowrap text-sm text-right"
+                          style={{ color: kindColors[kind.name] }}
+                        >
+                          {day.breakdown[kind.name]?.toFixed(1) || "0.0"}
+                        </td>
+                      ))}
+                    {dayIndex === 0 && (
+                      <td
+                        className="px-4 py-2 whitespace-nowrap text-sm text-right font-bold bg-gray-50"
+                        rowSpan={week.days.length}
+                      >
+                        {week.weekTotal.toFixed(1)} {quantityUnit}
+                      </td>
+                    )}
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
 const ActivityChart: React.FC<ActivityChartProps> = ({
   data,
   dataKeys,
@@ -128,6 +301,18 @@ export const ActivityStatsPage: React.FC = () => {
             };
           });
 
+          // 各statごとに色の割り当てを管理
+          const kindColors = (() => {
+            const usedColors = new Set<string>();
+            const colorMap: Record<string, string> = {};
+            stat.kinds.forEach((kind) => {
+              const color = getUniqueColorForKind(kind.name, usedColors);
+              usedColors.add(color);
+              colorMap[kind.name] = color;
+            });
+            return colorMap;
+          })();
+
           return (
             <div key={stat.id} className="border rounded-lg p-4 bg-gray-50">
               <h2 className="text-xl font-bold mb-4">
@@ -142,7 +327,7 @@ export const ActivityStatsPage: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {stat.kinds.map((kind) => (
                       <div
-                        key={kind.id || kind.name}
+                        key={kind.name}
                         className="bg-white rounded-lg p-4 border shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 cursor-pointer"
                       >
                         <div className="text-sm text-gray-600 mb-1">
@@ -151,7 +336,7 @@ export const ActivityStatsPage: React.FC = () => {
                         <div
                           className="text-xl font-bold"
                           style={{
-                            color: getColorForKind(kind.name),
+                            color: kindColors[kind.name],
                           }}
                         >
                           {kind.total}
@@ -171,7 +356,7 @@ export const ActivityStatsPage: React.FC = () => {
                     data={data}
                     dataKeys={stat.kinds.map((kind) => ({
                       name: kind.name,
-                      color: getColorForKind(kind.name),
+                      color: kindColors[kind.name],
                     }))}
                     stackId="a"
                     showLegend={stat.kinds[0].name !== "未指定"}
@@ -205,7 +390,7 @@ export const ActivityStatsPage: React.FC = () => {
                             dataKeys={[
                               {
                                 name: kind.name,
-                                color: getColorForKind(kind.name),
+                                color: kindColors[kind.name],
                               },
                             ]}
                             height={250}
@@ -218,6 +403,15 @@ export const ActivityStatsPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* 日別・週別の合計値テーブル */}
+              <SummaryTable
+                quantityUnit={stat.quantityUnit}
+                data={data}
+                kinds={stat.kinds}
+                kindColors={kindColors}
+                month={month}
+              />
             </div>
           );
         }) || (

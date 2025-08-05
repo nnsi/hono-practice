@@ -1,8 +1,3 @@
-import {
-  NetworkDebugToggle,
-  OfflineBanner,
-  SyncStatusIndicator,
-} from "@frontend/components/sync";
 import { useAuth } from "@frontend/hooks/useAuth";
 import { DateProvider } from "@frontend/providers/DateProvider";
 import {
@@ -49,10 +44,8 @@ export const AuthenticatedLayout: React.FC = () => {
 
   return (
     <>
-      <OfflineBanner />
       <div className="h-svh w-full max-w-3xl mx-auto flex flex-col relative">
         <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-          <SyncStatusIndicator />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -149,7 +142,6 @@ export const AuthenticatedLayout: React.FC = () => {
         </footer>
       </div>
       <Toaster />
-      <NetworkDebugToggle />
     </>
   );
 };

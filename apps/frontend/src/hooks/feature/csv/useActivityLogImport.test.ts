@@ -1,8 +1,11 @@
 import type React from "react";
 import { createElement } from "react";
 
-import { useActivities } from "@frontend/hooks/api/useActivities";
-import { apiClient } from "@frontend/utils/apiClient";
+import {
+  useActivities,
+  useBatchImportActivityLogs,
+  useCreateActivity,
+} from "@frontend/hooks/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,23 +15,10 @@ import { useActivityLogImport } from "./useActivityLogImport";
 import type { ValidatedActivityLog } from "./useActivityLogValidator";
 
 // モック
-vi.mock("@frontend/hooks/api/useActivities", () => ({
+vi.mock("@frontend/hooks/api", () => ({
   useActivities: vi.fn(),
-}));
-
-vi.mock("@frontend/utils/apiClient", () => ({
-  apiClient: {
-    users: {
-      activities: {
-        $post: vi.fn(),
-      },
-      "activity-logs": {
-        batch: {
-          $post: vi.fn(),
-        },
-      },
-    },
-  },
+  useCreateActivity: vi.fn(),
+  useBatchImportActivityLogs: vi.fn(),
 }));
 
 const mockActivities = [
@@ -47,6 +37,14 @@ const mockActivities = [
   },
 ];
 
+const mockCreateActivity = {
+  mutateAsync: vi.fn(),
+};
+
+const mockBatchImportMutation = {
+  mutateAsync: vi.fn(),
+};
+
 // QueryClientProviderでラップするwrapper
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -64,6 +62,10 @@ describe("useActivityLogImport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useActivities as any).mockReturnValue({ data: mockActivities });
+    (useCreateActivity as any).mockReturnValue(mockCreateActivity);
+    (useBatchImportActivityLogs as any).mockReturnValue(
+      mockBatchImportMutation,
+    );
   });
 
   describe("importLogs", () => {
@@ -90,19 +92,16 @@ describe("useActivityLogImport", () => {
       ];
 
       // バッチAPIのモック
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 2,
-            succeeded: 2,
-            failed: 0,
-          },
-          results: [
-            { success: true, id: "log-1" },
-            { success: true, id: "log-2" },
-          ],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 2,
+          succeeded: 2,
+          failed: 0,
+        },
+        results: [
+          { success: true, id: "log-1" },
+          { success: true, id: "log-2" },
+        ],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -142,25 +141,19 @@ describe("useActivityLogImport", () => {
       ];
 
       // 新規アクティビティ作成のモック
-      (apiClient.users.activities.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          id: "activity-new",
-          name: "水泳",
-        }),
+      mockCreateActivity.mutateAsync.mockResolvedValue({
+        id: "activity-new",
+        name: "水泳",
       });
 
       // バッチAPIのモック
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-          results: [{ success: true, id: "log-1" }],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+        },
+        results: [{ success: true, id: "log-1" }],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -172,32 +165,27 @@ describe("useActivityLogImport", () => {
       });
 
       // 新規アクティビティが作成されたことを確認
-      expect(apiClient.users.activities.$post).toHaveBeenCalledWith({
-        json: {
-          name: "水泳",
-          quantityUnit: "回",
-          emoji: "📊",
-          description: "",
-          showCombinedStats: false,
-        },
+      expect(mockCreateActivity.mutateAsync).toHaveBeenCalledWith({
+        name: "水泳",
+        quantityUnit: "回",
+        emoji: "📊",
+        iconType: "emoji",
+        description: "",
+        showCombinedStats: false,
       });
 
       // バッチインポートが呼ばれたことを確認
-      expect(apiClient.users["activity-logs"].batch.$post).toHaveBeenCalledWith(
-        {
-          json: {
-            activityLogs: [
-              {
-                date: "2025-01-01",
-                quantity: 45,
-                memo: undefined,
-                activityId: "activity-new",
-                activityKindId: undefined,
-              },
-            ],
+      expect(mockBatchImportMutation.mutateAsync).toHaveBeenCalledWith({
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 45,
+            memo: undefined,
+            activityId: "activity-new",
+            activityKindId: undefined,
           },
-        },
-      );
+        ],
+      });
     });
 
     it("バリデーションエラーがあるログを除外してインポートする", async () => {
@@ -219,16 +207,13 @@ describe("useActivityLogImport", () => {
         },
       ];
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-          results: [{ success: true, id: "log-1" }],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+        },
+        results: [{ success: true, id: "log-1" }],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -241,21 +226,17 @@ describe("useActivityLogImport", () => {
       });
 
       // エラーがあるログが除外されていることを確認
-      expect(apiClient.users["activity-logs"].batch.$post).toHaveBeenCalledWith(
-        {
-          json: {
-            activityLogs: [
-              {
-                date: "2025-01-01",
-                quantity: 30,
-                memo: undefined,
-                activityId: "activity-1",
-                activityKindId: undefined,
-              },
-            ],
+      expect(mockBatchImportMutation.mutateAsync).toHaveBeenCalledWith({
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 30,
+            memo: undefined,
+            activityId: "activity-1",
+            activityKindId: undefined,
           },
-        },
-      );
+        ],
+      });
 
       expect(importResult).toEqual({
         success: false,
@@ -294,9 +275,7 @@ describe("useActivityLogImport", () => {
       });
 
       // APIが呼ばれていないことを確認
-      expect(
-        apiClient.users["activity-logs"].batch.$post,
-      ).not.toHaveBeenCalled();
+      expect(mockBatchImportMutation.mutateAsync).not.toHaveBeenCalled();
 
       expect(importResult).toEqual({
         success: false,
@@ -334,19 +313,16 @@ describe("useActivityLogImport", () => {
         },
       ];
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 2,
-            succeeded: 1,
-            failed: 1,
-          },
-          results: [
-            { success: true, id: "log-1" },
-            { success: false, error: "データベースエラー" },
-          ],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 2,
+          succeeded: 1,
+          failed: 1,
+        },
+        results: [
+          { success: true, id: "log-1" },
+          { success: false, error: "データベースエラー" },
+        ],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -380,9 +356,9 @@ describe("useActivityLogImport", () => {
         },
       ];
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: false,
-      });
+      mockBatchImportMutation.mutateAsync.mockRejectedValue(
+        new Error("バッチインポートに失敗しました"),
+      );
 
       const { result } = renderHook(() => useActivityLogImport(), {
         wrapper: createWrapper(),
@@ -411,16 +387,13 @@ describe("useActivityLogImport", () => {
         },
       ];
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-          results: [{ success: true, id: "log-1" }],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+        },
+        results: [{ success: true, id: "log-1" }],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -431,21 +404,17 @@ describe("useActivityLogImport", () => {
         await result.current.importLogs(validatedLogs);
       });
 
-      expect(apiClient.users["activity-logs"].batch.$post).toHaveBeenCalledWith(
-        {
-          json: {
-            activityLogs: [
-              {
-                date: "2025-01-01",
-                quantity: 30,
-                memo: undefined,
-                activityId: "activity-1",
-                activityKindId: "kind-1",
-              },
-            ],
+      expect(mockBatchImportMutation.mutateAsync).toHaveBeenCalledWith({
+        activityLogs: [
+          {
+            date: "2025-01-01",
+            quantity: 30,
+            memo: undefined,
+            activityId: "activity-1",
+            activityKindId: "kind-1",
           },
-        },
-      );
+        ],
+      });
     });
 
     it("複数の新規アクティビティを重複なく作成する", async () => {
@@ -474,32 +443,26 @@ describe("useActivityLogImport", () => {
       ];
 
       let createCount = 0;
-      (apiClient.users.activities.$post as any).mockImplementation(async () => {
+      mockCreateActivity.mutateAsync.mockImplementation(async () => {
         createCount++;
         const name = createCount === 1 ? "水泳" : "ヨガ";
         return {
-          ok: true,
-          json: async () => ({
-            id: `activity-new-${createCount}`,
-            name,
-          }),
+          id: `activity-new-${createCount}`,
+          name,
         };
       });
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 3,
-            succeeded: 3,
-            failed: 0,
-          },
-          results: [
-            { success: true, id: "log-1" },
-            { success: true, id: "log-2" },
-            { success: true, id: "log-3" },
-          ],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 3,
+          succeeded: 3,
+          failed: 0,
+        },
+        results: [
+          { success: true, id: "log-1" },
+          { success: true, id: "log-2" },
+          { success: true, id: "log-3" },
+        ],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {
@@ -511,7 +474,7 @@ describe("useActivityLogImport", () => {
       });
 
       // 新規アクティビティが2つだけ作成されたことを確認（水泳とヨガ）
-      expect(apiClient.users.activities.$post).toHaveBeenCalledTimes(2);
+      expect(mockCreateActivity.mutateAsync).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -528,16 +491,13 @@ describe("useActivityLogImport", () => {
         },
       ];
 
-      (apiClient.users["activity-logs"].batch.$post as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          summary: {
-            total: 1,
-            succeeded: 1,
-            failed: 0,
-          },
-          results: [{ success: true, id: "log-1" }],
-        }),
+      mockBatchImportMutation.mutateAsync.mockResolvedValue({
+        summary: {
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+        },
+        results: [{ success: true, id: "log-1" }],
       });
 
       const { result } = renderHook(() => useActivityLogImport(), {

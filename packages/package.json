@@ -7,6 +7,7 @@
     "./frontend-shared": "./frontend-shared/index.ts",
     "./frontend-shared/adapters": "./frontend-shared/adapters/index.ts",
     "./frontend-shared/hooks": "./frontend-shared/hooks/index.ts",
+    "./frontend-shared/hooks/feature": "./frontend-shared/hooks/feature/index.ts",
     "./types": "./types/index.ts",
     "./types/*": "./types/*.ts"
   },

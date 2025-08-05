@@ -1,9 +1,6 @@
 import { useState } from "react";
 
-import {
-  useDeleteTask,
-  useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+import { useDeleteTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
 import dayjs from "dayjs";
 
 import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
@@ -20,15 +17,16 @@ export const useDailyTaskActions = (date: Date) => {
   const handleToggleTaskDone = (task: GetTaskResponse) => {
     updateTask.mutate({
       id: task.id,
-      doneDate: task.doneDate ? null : dateStr,
-      date: dateStr,
+      data: {
+        doneDate: task.doneDate ? null : dateStr,
+      },
     });
   };
 
   // タスクを削除するハンドラ
   const handleDeleteTask = (e: React.MouseEvent, task: GetTaskResponse) => {
     e.stopPropagation();
-    deleteTask.mutate({ id: task.id, date: dateStr });
+    deleteTask.mutate(task.id);
   };
 
   return {

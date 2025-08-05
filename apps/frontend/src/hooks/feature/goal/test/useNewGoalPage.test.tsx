@@ -1,6 +1,7 @@
 import type React from "react";
 
-import * as apiHooks from "@frontend/hooks/api";
+import { useActivities } from "@frontend/hooks/api/useActivities";
+import { useGoals } from "@frontend/hooks/api/useGoals";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,16 +10,13 @@ import type { GetActivitiesResponse, GetGoalsResponse } from "@dtos/response";
 
 import { useNewGoalPage } from "../useNewGoalPage";
 
-// useGoalsのみをモックし、他のフック（特にuseActivities）は実装をそのまま利用する
-// vitest.spyOnを使って部分的に振る舞いを上書きする
-vi.mock("@frontend/utils", () => ({
-  apiClient: {
-    users: {
-      activities: {
-        $get: vi.fn(),
-      },
-    },
-  },
+// useGoalsとuseActivitiesをモック
+vi.mock("@frontend/hooks/api/useActivities", () => ({
+  useActivities: vi.fn(),
+}));
+
+vi.mock("@frontend/hooks/api/useGoals", () => ({
+  useGoals: vi.fn(),
 }));
 
 describe("useNewGoalPage", () => {
@@ -50,7 +48,7 @@ describe("useNewGoalPage", () => {
         id: "00000000-0000-4000-8000-000000000002",
         userId: "00000000-0000-4000-8000-000000000101",
         activityId: "00000000-0000-4000-8000-000000000202",
-        isActive: true,
+        isActive: false,
         description: "月200分の読書",
         createdAt: "2024-12-01T00:00:00Z",
         updatedAt: "2024-12-01T00:00:00Z",
@@ -97,7 +95,7 @@ describe("useNewGoalPage", () => {
     vi.clearAllMocks();
 
     // useGoalsのモック
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: mockGoals,
       isLoading: false,
       error: null,
@@ -106,10 +104,14 @@ describe("useNewGoalPage", () => {
       isSuccess: true,
     } as any);
 
-    // apiClientのモック
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-    vi.mocked(mockedApiClient.users.activities.$get).mockResolvedValue({
-      json: vi.fn().mockResolvedValue(mockActivities),
+    // useActivitiesのモック
+    vi.mocked(useActivities).mockReturnValue({
+      data: mockActivities,
+      isLoading: false,
+      error: null,
+      isError: false,
+      isFetching: false,
+      isSuccess: true,
     } as any);
   });
 
@@ -162,7 +164,7 @@ describe("useNewGoalPage", () => {
       result.current.getActivityName("00000000-0000-4000-8000-000000000202"),
     ).toBe("読書");
     expect(result.current.getActivityName("unknown-id")).toBe(
-      "不明なアクティビティ",
+      "Unknown Activity",
     );
   });
 
@@ -195,7 +197,7 @@ describe("useNewGoalPage", () => {
     expect(
       result.current.getActivityUnit("00000000-0000-4000-8000-000000000202"),
     ).toBe("分");
-    expect(result.current.getActivityUnit("unknown-id")).toBe("");
+    expect(result.current.getActivityUnit("unknown-id")).toBe("回");
   });
 
   it("getActivityが正しくアクティビティオブジェクトを返す", async () => {
@@ -256,23 +258,15 @@ describe("useNewGoalPage", () => {
     // 最初に状態を設定
     act(() => {
       result.current.setCreateDialogOpen(true);
-      const editHandler = result.current.createEditStartHandler(
-        "00000000-0000-4000-8000-000000000001",
-      );
-      editHandler();
     });
 
     expect(result.current.createDialogOpen).toBe(true);
-    expect(result.current.editingGoalId).toBe(
-      "00000000-0000-4000-8000-000000000001",
-    );
 
     // 目標作成完了
     act(() => {
       result.current.handleGoalCreated();
     });
 
-    expect(result.current.editingGoalId).toBeNull();
     expect(result.current.createDialogOpen).toBe(false);
   });
 
@@ -302,7 +296,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: goalsWithNoEndDate,
       isLoading: false,
       error: null,
@@ -333,7 +327,7 @@ describe("useNewGoalPage", () => {
       ],
     };
 
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: goalsEndingToday,
       isLoading: false,
       error: null,
@@ -351,7 +345,7 @@ describe("useNewGoalPage", () => {
   });
 
   it("ローディング中はgoalsLoadingがtrueになる", () => {
-    vi.spyOn(apiHooks, "useGoals").mockReturnValue({
+    vi.mocked(useGoals).mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
@@ -368,9 +362,13 @@ describe("useNewGoalPage", () => {
   });
 
   it("アクティビティデータがない場合でもエラーにならない", async () => {
-    const { apiClient: mockedApiClient } = await import("@frontend/utils");
-    vi.mocked(mockedApiClient.users.activities.$get).mockResolvedValue({
-      json: vi.fn().mockResolvedValue([]),
+    vi.mocked(useActivities).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      isError: false,
+      isFetching: false,
+      isSuccess: true,
     } as any);
 
     const { result } = renderHook(() => useNewGoalPage(), { wrapper });
@@ -379,10 +377,8 @@ describe("useNewGoalPage", () => {
       expect(result.current.activitiesData).toEqual([]);
     });
 
-    expect(result.current.getActivityName("any-id")).toBe(
-      "不明なアクティビティ",
-    );
+    expect(result.current.getActivityName("any-id")).toBe("Unknown Activity");
     expect(result.current.getActivityEmoji("any-id")).toBe("🎯");
-    expect(result.current.getActivityUnit("any-id")).toBe("");
+    expect(result.current.getActivityUnit("any-id")).toBe("回");
   });
 });

@@ -1,10 +1,9 @@
 import { useState } from "react";
 
-import { apiClient } from "@frontend/utils";
+import { useCreateActivity } from "@frontend/hooks/api";
 import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -44,7 +43,7 @@ export function NewActivityDialog({
     defaultValues: {
       name: "",
       quantityUnit: "",
-      emoji: "",
+      emoji: "🎯",
       iconType: "emoji",
       showCombinedStats: false,
       kinds: [],
@@ -58,25 +57,16 @@ export function NewActivityDialog({
     control: form.control,
     name: "kinds",
   });
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (
-      data: CreateActivityRequest & { kinds: { name: string }[] },
-    ) => {
-      // Create activity first
-      const response = await apiClient.users.activities.$post({
-        json: data,
-      });
+  const { mutateAsync, isPending } = useCreateActivity();
+  const onSubmit = async (
+    data: CreateActivityRequest & { kinds: { name: string }[] },
+  ) => {
+    try {
+      const activity = await mutateAsync(data);
 
-      if (!response.ok) {
-        throw new Error("Failed to create activity");
-      }
-
-      const activity = await response.json();
-
-      // Upload icon if file is selected
-      if (data.iconType === "upload" && iconFile) {
+      // Upload icon if file is selected and activity was created successfully
+      if (data.iconType === "upload" && iconFile && activity?.id) {
         try {
           // Resize image to 256x256 max and convert to base64
           const { base64, mimeType } = await resizeImage(iconFile, 256, 256);
@@ -84,7 +74,7 @@ export function NewActivityDialog({
           const API_URL =
             import.meta.env.MODE === "development"
               ? import.meta.env.VITE_API_URL ||
-                `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
+                `http://${window.location.hostname}:${import.meta.env.VITE_API_PORT || "3456"}/`
               : import.meta.env.VITE_API_URL;
 
           const token = tokenStore.getToken();
@@ -105,40 +95,32 @@ export function NewActivityDialog({
           );
 
           if (!uploadResponse.ok) {
-            throw new Error("Failed to upload icon");
+            console.error("Failed to upload icon");
           }
         } catch (error) {
           console.error("Failed to upload icon:", error);
-          throw new Error("Failed to upload icon");
         }
       }
 
-      return activity;
-    },
-    onSuccess: () => {
+      // Close dialog and reset form
+      onOpenChange(false);
+      form.reset();
+      setIconFile(undefined);
+      setIconPreview(undefined);
+
+      // Show toast notification
       toast({
         title: "登録完了",
         description: "アクティビティを作成しました",
         variant: "default",
       });
-      onOpenChange(false);
-      form.reset();
-      setIconFile(undefined);
-      setIconPreview(undefined);
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-    onError: () => {
+    } catch (error) {
       toast({
         title: "エラー",
         description: "アクティビティの作成に失敗しました",
         variant: "destructive",
       });
-    },
-  });
-  const onSubmit = (
-    data: CreateActivityRequest & { kinds: { name: string }[] },
-  ) => {
-    mutate(data);
+    }
   };
 
   // 種類を削除するハンドラ

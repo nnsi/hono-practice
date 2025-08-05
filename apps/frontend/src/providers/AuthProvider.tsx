@@ -8,7 +8,6 @@ import {
 } from "react";
 
 import { AppEvents } from "@frontend/services/abstractions";
-import { syncCrypto } from "@frontend/services/sync/crypto";
 import { apiClient as defaultApiClient } from "@frontend/utils/apiClient";
 
 import type { LoginRequest } from "@dtos/request/LoginRequest";
@@ -41,7 +40,6 @@ type AuthProviderProps = {
   children: ReactNode;
   apiClient?: typeof defaultApiClient;
   eventBus?: EventBus;
-  onClearCrypto?: () => void;
 };
 
 export const AuthContext = createContext<AuthState>(undefined);
@@ -50,7 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
   apiClient = defaultApiClient,
   eventBus,
-  onClearCrypto = () => syncCrypto.clearCache(),
 }) => {
   const tokenContext = useContext(TokenContext);
   if (!tokenContext) {
@@ -160,8 +157,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       setUser(null);
       clearTokens();
       setRequestStatus("idle");
-      // 暗号化キャッシュをクリア
-      onClearCrypto();
     }
   };
 

@@ -1,10 +1,16 @@
-import { useEffect } from "react";
-
-import { apiClient } from "@frontend/utils/apiClient";
-import { resizeImage } from "@frontend/utils/imageResizer";
-import { tokenStore } from "@frontend/utils/tokenStore";
+import { useToast } from "@frontend/components/ui";
+import {
+  useDeleteActivity,
+  useDeleteActivityIcon,
+  useUpdateActivity,
+  useUploadActivityIcon,
+} from "@frontend/hooks/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  createWebFormAdapter,
+  createWebNotificationAdapter,
+} from "@packages/frontend-shared/adapters";
+import { createUseActivityEdit } from "@packages/frontend-shared/hooks/feature";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -13,12 +19,12 @@ import {
 } from "@dtos/request/UpdateActivityRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
+// 新しい共通化されたフックを使用する実装
 export const useActivityEdit = (
   activity: GetActivityResponse | null,
   onClose: () => void,
 ) => {
-  const api = apiClient;
-  const queryClient = useQueryClient();
+  // React Hook Form setup
   const form = useForm<UpdateActivityRequest>({
     resolver: zodResolver(UpdateActivityRequestSchema),
     defaultValues: activity
@@ -38,162 +44,59 @@ export const useActivityEdit = (
       : undefined,
   });
 
-  useEffect(() => {
-    if (activity) {
-      form.reset({
-        activity: {
-          name: activity.name,
-          description: activity.description ?? "",
-          quantityUnit: activity.quantityUnit,
-          emoji: activity.emoji ?? "",
-          showCombinedStats: activity.showCombinedStats ?? false,
-        },
-        kinds: activity.kinds.map((kind) => ({
-          id: kind.id,
-          name: kind.name,
-        })),
-      });
-    }
-  }, [activity, form]);
+  // Toast setup
+  const { toast } = useToast();
 
-  const {
-    fields: kindFields,
-    append: kindAppend,
-    remove: kindRemove,
-  } = useFieldArray({
-    control: form.control,
-    name: "kinds",
-  });
+  // API mutations
+  const updateActivity = useUpdateActivity();
+  const deleteActivity = useDeleteActivity();
+  const uploadIconMutation = useUploadActivityIcon();
+  const deleteIconMutation = useDeleteActivityIcon();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: UpdateActivityRequest) => {
-      if (!activity) return;
-      return api.users.activities[":id"].$put({
-        param: { id: activity.id },
-        json: data,
-      });
+  // Create adapters and dependencies
+  const dependencies = {
+    form: createWebFormAdapter<UpdateActivityRequest>(
+      form as never,
+      useFieldArray,
+    ),
+    notification: createWebNotificationAdapter(),
+    api: {
+      updateActivity: async (params: {
+        id: string;
+        data: UpdateActivityRequest;
+      }) => {
+        await updateActivity.mutateAsync(params);
+      },
+      deleteActivity: async (id: string) => {
+        await deleteActivity.mutateAsync(id);
+      },
+      uploadActivityIcon: async (params: {
+        id: string;
+        file: File | FormData;
+      }) => {
+        await uploadIconMutation.mutateAsync({
+          ...params,
+          file: params.file as File,
+        });
+      },
+      deleteActivityIcon: async (id: string) => {
+        await deleteIconMutation.mutateAsync(id);
+      },
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-      onClose();
-    },
-  });
-
-  const handleDelete = async () => {
-    if (!activity) return;
-    const res = await api.users.activities[":id"].$delete({
-      param: { id: activity.id },
-    });
-    if (res.status !== 200) {
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ["activity"] });
-    onClose();
   };
 
-  const onSubmit = (data: UpdateActivityRequest) => {
-    if (!activity) return;
-    mutate(data);
-  };
+  // Set toast callback for Web notification adapter
+  if ("setToastCallback" in dependencies.notification) {
+    dependencies.notification.setToastCallback(toast);
+  }
 
-  // 種類を削除するハンドラ
-  const handleRemoveKind = (index: number) => {
-    kindRemove(index);
-  };
+  // Use the common hook
+  const commonHook = createUseActivityEdit(dependencies, activity, onClose);
 
-  // 種類を追加するハンドラ
-  const handleAddKind = () => {
-    kindAppend({ name: "" });
-  };
-
-  // アイコンアップロード
-  const uploadIcon = async (file: File) => {
-    if (!activity) return;
-
-    try {
-      // Resize image to 256x256 max and convert to base64
-      const { base64, mimeType } = await resizeImage(file, 256, 256);
-
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      console.log("Token for icon upload:", token);
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      console.log(
-        "Uploading to:",
-        `${API_URL}users/activities/${activity.id}/icon`,
-      );
-      console.log("Headers:", headers);
-
-      const response = await fetch(
-        `${API_URL}users/activities/${activity.id}/icon`,
-        {
-          method: "POST",
-          body: JSON.stringify({ base64, mimeType }),
-          headers,
-        },
-      );
-
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["activity"] });
-      }
-    } catch (error) {
-      console.error("Failed to upload icon:", error);
-    }
-  };
-
-  // アイコン削除
-  const deleteIcon = async () => {
-    if (!activity) return;
-
-    try {
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(
-        `${API_URL}users/activities/${activity.id}/icon`,
-        {
-          method: "DELETE",
-          headers,
-        },
-      );
-
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["activity"] });
-      }
-    } catch (error) {
-      console.error("Failed to delete icon:", error);
-    }
-  };
-
+  // Return the common hook result with the original form instance for compatibility
   return {
+    ...commonHook,
+    // Return the original react-hook-form instance for UI components
     form,
-    kindFields,
-    isPending,
-    onSubmit,
-    handleDelete,
-    handleRemoveKind,
-    handleAddKind,
-    uploadIcon,
-    deleteIcon,
   };
 };

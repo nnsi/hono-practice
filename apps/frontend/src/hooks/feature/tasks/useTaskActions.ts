@@ -5,7 +5,7 @@ import {
   useArchiveTask,
   useDeleteTask,
   useUpdateTask,
-} from "@frontend/hooks/sync/useSyncedTask";
+} from "@frontend/hooks/api/useTasks";
 import dayjs from "dayjs";
 
 type TaskItem = {
@@ -35,14 +35,16 @@ export const useTaskActions = () => {
   const handleToggleTaskDone = (task: TaskItem) => {
     updateTask.mutate({
       id: task.id,
-      doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
+      data: {
+        doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
+      },
     });
   };
 
   // タスクを削除するハンドラ
   const handleDeleteTask = (e: React.MouseEvent, task: TaskItem) => {
     e.stopPropagation();
-    deleteTask.mutate({ id: task.id });
+    deleteTask.mutate(task.id);
   };
 
   // タスクをアーカイブするハンドラ

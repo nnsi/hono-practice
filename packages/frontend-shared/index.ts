@@ -22,3 +22,11 @@ export {
 
 // 目標関連
 export * from "./goals";
+
+// Feature Hooks
+export * from "./hooks/feature";
+
+// API Hooks (Note: These are not exported from the main index to avoid conflicts with sync hooks)
+// Import them directly from their paths when needed:
+// import { createUseActivityLogs } from "@packages/frontend-shared/hooks/useActivityLogs"
+// import { createUseCreateActivity } from "@packages/frontend-shared/hooks/useActivityMutations"

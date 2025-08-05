@@ -1,172 +1,67 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { apiClient } from "@frontend/utils/apiClient";
+import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import {
-  createUseArchivedTasks,
-  createUseTasks,
-} from "@packages/frontend-shared/hooks";
-import dayjs from "dayjs";
-import isBetween from "dayjs/plugin/isBetween";
+  createUseTasksPage,
+  groupTasksByTimeline,
+} from "@packages/frontend-shared/hooks/feature";
 
-dayjs.extend(isBetween);
-
-type TaskItem = {
-  id: string;
-  userId: string;
-  title: string;
-  startDate: string | null;
-  dueDate: string | null;
-  doneDate: string | null;
-  memo: string | null;
-  archivedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date | null;
-};
-
+// 新しい共通化されたフックを使用する実装
 export const useTasksPage = () => {
-  const [showCompleted, setShowCompleted] = useState(false);
-  const [showFuture, setShowFuture] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  // API hooks
+  const activeTasksQuery = useTasks({ includeArchived: false });
+  const archivedTasksQuery = useArchivedTasks(false); // Will be enabled based on tab
 
-  // 全タスクを取得
-  const { data: activeTasks, isLoading: isTasksLoading } = createUseTasks({
-    apiClient,
-    includeArchived: false,
-  });
+  // Create dependencies
+  const dependencies = {
+    api: {
+      getTasks: async (_params: { includeArchived: boolean }) => {
+        // Return cached data or fetch if needed
+        const result = await activeTasksQuery.refetch();
+        return result.data || [];
+      },
+      getArchivedTasks: async () => {
+        // Return cached archived tasks
+        const result = await archivedTasksQuery.refetch();
+        return result.data || [];
+      },
+    },
+  };
 
-  // アーカイブ済みタスクを取得
-  const { data: archivedTasks, isLoading: isArchivedTasksLoading } =
-    createUseArchivedTasks({
-      apiClient,
-      enabled: activeTab === "archived",
-    });
+  // Use the common hook
+  const commonResult = createUseTasksPage(dependencies);
 
-  // activeTabに応じてタスクを選択
-  const tasks = activeTab === "active" ? activeTasks : undefined;
+  // Use React Query data for tasks
+  const tasks =
+    commonResult.activeTab === "active" ? activeTasksQuery.data : undefined;
+  const archivedTasks =
+    commonResult.activeTab === "archived" ? archivedTasksQuery.data : undefined;
 
-  // タスクを時間軸でグループ化
+  // Re-calculate groupedTasks with the actual React Query data
   const groupedTasks = useMemo(() => {
-    if (!tasks)
-      return {
-        overdue: [],
-        dueToday: [],
-        startingToday: [],
-        inProgress: [],
-        dueThisWeek: [],
-        notStarted: [],
-        future: [],
-        completed: [],
-      };
-
-    const today = dayjs().startOf("day");
-    const nextWeek = today.add(7, "day");
-
-    const groups: Record<string, TaskItem[]> = {
-      overdue: [],
-      dueToday: [],
-      startingToday: [],
-      inProgress: [],
-      dueThisWeek: [],
-      notStarted: [],
-      future: [],
-      completed: [],
-    };
-
-    tasks.forEach((task) => {
-      const dueDate = task.dueDate ? dayjs(task.dueDate) : null;
-      const startDate = task.startDate ? dayjs(task.startDate) : null;
-
-      // 完了済みタスク
-      if (task.doneDate) {
-        // 今日締切のタスクは完了しても今日締切カテゴリに表示
-        if (dueDate?.isSame(today, "day")) {
-          groups.dueToday.push(task);
-          return;
-        }
-
-        // 今日開始のタスクは完了しても今日開始カテゴリに表示
-        if (startDate?.isSame(today, "day")) {
-          groups.startingToday.push(task);
-          return;
-        }
-
-        // それ以外の完了済みタスクのみ完了済みカテゴリに表示
-        groups.completed.push(task);
-        return;
-      }
-
-      // 期限切れ（締切日が過去）
-      if (dueDate?.isBefore(today)) {
-        groups.overdue.push(task);
-      }
-      // 今日締切
-      else if (dueDate?.isSame(today, "day")) {
-        groups.dueToday.push(task);
-      }
-      // 今日開始（締切日は今日以降）
-      else if (
-        startDate?.isSame(today, "day") &&
-        (!dueDate || dueDate.isAfter(today))
-      ) {
-        groups.startingToday.push(task);
-      }
-      // 進行中（開始日が過去で締切日が未来）
-      else if (
-        startDate?.isBefore(today) &&
-        (!dueDate || dueDate.isAfter(today))
-      ) {
-        groups.inProgress.push(task);
-      }
-      // 今週締切（明日から7日以内）
-      else if (dueDate?.isAfter(today) && dueDate.isBefore(nextWeek)) {
-        groups.dueThisWeek.push(task);
-      }
-      // 未開始（開始日が未来）
-      else if (startDate?.isAfter(today)) {
-        groups.notStarted.push(task);
-      }
-      // 来週以降
-      else {
-        groups.future.push(task);
-      }
+    return groupTasksByTimeline(tasks || [], {
+      showCompleted: commonResult.showCompleted,
+      showFuture: commonResult.showFuture,
+      completedInTheirCategories: true,
     });
+  }, [tasks, commonResult.showCompleted, commonResult.showFuture]);
 
-    // 各グループ内でソート
-    Object.keys(groups).forEach((key) => {
-      groups[key].sort((a, b) => {
-        // 優先順位: 締切日 > 開始日
-        const dateA = a.dueDate || a.startDate;
-        const dateB = b.dueDate || b.startDate;
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        return dateA.localeCompare(dateB);
-      });
-    });
-
-    return groups;
-  }, [tasks]);
-
+  // Re-calculate hasAnyTasks with the actual groupedTasks
   const hasAnyTasks = Object.values(groupedTasks).some(
     (group) => group.length > 0,
   );
 
   const hasAnyArchivedTasks = archivedTasks && archivedTasks.length > 0;
 
+  // Override with React Query data for consistency
   return {
-    showCompleted,
-    setShowCompleted,
-    showFuture,
-    setShowFuture,
-    createDialogOpen,
-    setCreateDialogOpen,
-    activeTab,
-    setActiveTab,
+    ...commonResult,
+    // Use React Query's loading states
+    isTasksLoading: activeTasksQuery.isLoading,
+    isArchivedTasksLoading: archivedTasksQuery.isLoading,
+    // Use React Query's data and recalculated values
     tasks,
-    isTasksLoading,
     archivedTasks,
-    isArchivedTasksLoading,
     groupedTasks,
     hasAnyTasks,
     hasAnyArchivedTasks,

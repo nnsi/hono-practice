@@ -1,8 +1,4 @@
-import { useState } from "react";
-
-import { useDeleteGoal, useUpdateGoal } from "@frontend/hooks";
-import { useAppSettings } from "@frontend/hooks/feature/setting/useAppSettings";
-import { calculateDebtBalance } from "@packages/frontend-shared";
+import { useNewGoalCard } from "@frontend/hooks/feature/goal/useNewGoalCard";
 import {
   CheckIcon,
   Cross2Icon,
@@ -10,8 +6,6 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 
 import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 
@@ -43,21 +37,6 @@ type GoalCardProps = {
   hideGraph?: boolean;
 };
 
-type EditFormData = {
-  dailyTargetQuantity: number;
-};
-
-const getProgressColor = (statusInfo: { bgColor: string }) => {
-  const colorMap: Record<string, string> = {
-    "bg-green-50": "rgba(34, 197, 94, 0.2)",
-    "bg-red-50": "rgba(239, 68, 68, 0.2)",
-    "bg-red-100": "rgba(239, 68, 68, 0.3)",
-    "bg-orange-50": "rgba(251, 146, 60, 0.2)",
-    "bg-gray-50": "rgba(156, 163, 175, 0.2)",
-  };
-  return colorMap[statusInfo.bgColor] || "rgba(156, 163, 175, 0.2)";
-};
-
 export const NewGoalCard: React.FC<GoalCardProps> = ({
   goal,
   activityName,
@@ -70,109 +49,29 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
   isPast = false,
   hideGraph = false,
 }) => {
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showLogCreateDialog, setShowLogCreateDialog] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const deleteGoal = useDeleteGoal();
-  const updateGoal = useUpdateGoal();
-  const queryClient = useQueryClient();
-  const { settings } = useAppSettings();
-
-  const form = useForm<EditFormData>({
-    defaultValues: {
-      dailyTargetQuantity: goal.dailyTargetQuantity,
-    },
-  });
-
-  const handleUpdate = (data: EditFormData) => {
-    const quantity = data.dailyTargetQuantity;
-    if (!quantity || quantity <= 0) {
-      return;
-    }
-
-    updateGoal.mutate(
-      {
-        id: goal.id,
-        data: { dailyTargetQuantity: Number(quantity) },
-      },
-      {
-        onSuccess: () => {
-          onEditEnd();
-        },
-      },
-    );
-  };
-
-  const handleDelete = () => {
-    if (confirm("このゴールを削除しますか？")) {
-      deleteGoal.mutate(goal.id);
-    }
-  };
-
-  const statusInfo = calculateDebtBalance(
-    goal.currentBalance,
-    goal.dailyTargetQuantity,
-  );
-  const progressPercentage =
-    goal.totalTarget > 0
-      ? Math.min((goal.totalActual / goal.totalTarget) * 100, 100)
-      : 0;
-
-  const handleLogCreateSuccess = async () => {
-    // 目標データを再取得
-    await queryClient.invalidateQueries({ queryKey: ["goals"] });
-    // アニメーションを開始
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 1500);
-  };
-
-  // 日次目標数量の変更ハンドラ
-  const handleTargetQuantityChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fieldOnChange: (value: string | number) => void,
-  ) => {
-    const value = e.target.value;
-    fieldOnChange(value === "" ? "" : Number(value));
-  };
-
-  // 削除ボタンのクリックハンドラ（編集モード）
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleDelete();
-  };
-
-  // カードのクリックハンドラ
-  const handleCardClick = () => {
-    setShowDetailModal(true);
-  };
-
-  // カードのキーダウンハンドラ
-  const handleCardKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setShowDetailModal(true);
-    }
-  };
-
-  // 活動量登録ボタンのクリックハンドラ
-  const handleLogCreateClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowLogCreateDialog(true);
-  };
-
-  // 編集ボタンのクリックハンドラ
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onEditStart();
-  };
-
-  // 削除ボタンのクリックハンドラ（過去の目標）
-  const handlePastGoalDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleDelete();
-  };
-
-  const isActive = !isPast;
+  const {
+    showDetailModal,
+    setShowDetailModal,
+    showLogCreateDialog,
+    setShowLogCreateDialog,
+    isAnimating,
+    form,
+    statusInfo,
+    progressPercentage,
+    progressColor,
+    isActive,
+    settings,
+    updateGoal,
+    handleUpdate,
+    handleLogCreateSuccess,
+    handleTargetQuantityChange,
+    handleDeleteClick,
+    handleCardClick,
+    handleCardKeyDown,
+    handleLogCreateClick,
+    handleEditClick,
+    handlePastGoalDeleteClick,
+  } = useNewGoalCard(goal, onEditEnd, isPast);
 
   if (isEditing) {
     return (
@@ -187,7 +86,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 isAnimating ? "transition-all duration-1000 ease-out" : ""
               }`}
               style={{
-                background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
+                background: `linear-gradient(to right, ${progressColor} ${progressPercentage}%, white ${progressPercentage}%)`,
               }}
             />
           )}
@@ -286,7 +185,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                 isAnimating ? "transition-all duration-1000 ease-out" : ""
               }`}
               style={{
-                background: `linear-gradient(to right, ${getProgressColor(statusInfo)} ${progressPercentage}%, white ${progressPercentage}%)`,
+                background: `linear-gradient(to right, ${progressColor} ${progressPercentage}%, white ${progressPercentage}%)`,
               }}
             />
           )}
@@ -360,7 +259,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={handleEditClick}
+                    onClick={(e) => handleEditClick(e, onEditStart)}
                     className="h-6 w-6 p-0"
                     title="目標を編集"
                   >

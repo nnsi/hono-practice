@@ -2,7 +2,6 @@ import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import { SyncStatusIndicator } from "../../../src/components/sync";
 import { useAppSettings } from "../../../src/hooks/useAppSettings";
 import { useAuth } from "../../../src/hooks/useAuth";
 import { useSubscription } from "../../../src/hooks/useSubscription";
@@ -68,14 +67,6 @@ export default function SettingsScreen() {
             <Text className="text-gray-500 text-sm mt-1">
               {user?.loginId || "ログインID未設定"}
             </Text>
-          </View>
-        </View>
-
-        {/* 同期ステータス */}
-        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-gray-900 font-medium">データ同期</Text>
-            <SyncStatusIndicator />
           </View>
         </View>
 

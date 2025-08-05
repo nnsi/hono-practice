@@ -1,84 +1,59 @@
 import { useToast } from "@frontend/components/ui";
+import { useLinkGoogleAccount } from "@frontend/hooks/api";
 import { useAuth } from "@frontend/hooks/useAuth";
-import { apiClient } from "@frontend/utils/apiClient";
+import { createWebNotificationAdapter } from "@packages/frontend-shared/adapters";
+import { createUseUserSettings } from "@packages/frontend-shared/hooks/feature";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 
+// 新しい共通化されたフックを使用する実装
 export const useUserSettings = () => {
   const { user, logout, getUser } = useAuth();
-  const navigate = useNavigate();
+  const linkGoogleAccount = useLinkGoogleAccount();
+
+  const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const isGoogleLinked = user?.providers?.includes("google") || false;
-  const googleEmail = user?.providerEmails?.google;
+  // Create adapters and dependencies
+  const notificationAdapter = createWebNotificationAdapter();
+  if ("setToastCallback" in notificationAdapter) {
+    notificationAdapter.setToastCallback(toast);
+  }
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate({
-        to: "/",
-      });
-    } catch (e) {
-      toast({
-        title: "エラー",
-        description: "ログアウトに失敗しました",
-        variant: "destructive",
-      });
-    }
+  const dependencies = {
+    navigation: {
+      navigate: (path: string) => router.navigate({ to: path }),
+      replace: (path: string) => router.history.replace(path),
+      goBack: () => router.history.back(),
+      canGoBack: () => router.history.canGoBack(),
+    },
+    notification: notificationAdapter,
+    auth: {
+      user: user
+        ? {
+            id: user.id,
+            email: user.providerEmails?.google || "",
+            name: user.name,
+            providers: user.providers,
+            providerEmails: {
+              google: user.providerEmails?.google,
+            },
+          }
+        : null,
+      logout,
+      getUser,
+    },
+    api: {
+      linkGoogleAccount: async (credential: string) => {
+        await linkGoogleAccount.mutateAsync(credential);
+      },
+      invalidateUserCache: async () => {
+        await queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+      },
+    },
   };
 
-  // Googleアカウント紐付け処理
-  const handleGoogleLink = async (credentialResponse: any) => {
-    if (!credentialResponse.credential) {
-      toast({
-        title: "Error",
-        description: "Failed to link Google account",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const res = await apiClient.auth.google.link.$post({
-        json: { credential: credentialResponse.credential },
-      });
-      if (res.status === 200) {
-        toast({
-          title: "Success",
-          description: "Successfully linked Google account",
-        });
-        // ユーザー情報を再取得して「Google連携済み」を表示
-        await getUser();
-        queryClient.invalidateQueries({ queryKey: ["user", "me"] });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to link Google account",
-        });
-      }
-    } catch (e) {
-      toast({
-        title: "Error",
-        description: "Failed to link Google account",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Google紐付けエラー時のハンドラ
-  const handleGoogleLinkError = () => {
-    toast({
-      title: "Error",
-      description: "Failed to link Google account",
-      variant: "destructive",
-    });
-  };
-
-  return {
-    isGoogleLinked,
-    googleEmail,
-    handleLogout,
-    handleGoogleLink,
-    handleGoogleLinkError,
-  };
+  // Use the common hook
+  return createUseUserSettings(dependencies);
 };

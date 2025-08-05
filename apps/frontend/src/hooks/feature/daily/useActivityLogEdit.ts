@@ -1,23 +1,18 @@
 import { useEffect, useState } from "react";
 
+import { useActivities } from "@frontend/hooks/api";
 import {
   useDeleteActivityLog,
   useUpdateActivityLog,
-} from "@frontend/hooks/sync/useSyncedActivityLog";
-import { apiClient } from "@frontend/utils";
-import { useQuery } from "@tanstack/react-query";
+} from "@frontend/hooks/api/useActivityLogs";
 import dayjs from "dayjs";
 
-import {
-  type GetActivitiesResponse,
-  GetActivitiesResponseSchema,
-  type GetActivityLogResponse,
-} from "@dtos/response";
+import type { GetActivityLogResponse } from "@dtos/response";
 
 import { useToast } from "@components/ui";
 
 export const useActivityLogEdit = (
-  open: boolean,
+  _open: boolean,
   onOpenChange: (open: boolean) => void,
   log: GetActivityLogResponse | null,
 ) => {
@@ -31,21 +26,7 @@ export const useActivityLogEdit = (
   const deleteActivityLog = useDeleteActivityLog();
 
   // activities一覧取得
-  const { data: activities } = useQuery<GetActivitiesResponse>({
-    queryKey: ["activity"],
-    queryFn: async () => {
-      const res = await apiClient.users.activities.$get();
-      const json = await res.json();
-      const parsedResult = GetActivitiesResponseSchema.safeParse(json);
-      if (!parsedResult.success) {
-        throw parsedResult.error;
-      }
-      return parsedResult.data;
-    },
-    enabled: open,
-    networkMode: "online", // オフライン時はキャッシュデータを使用
-    staleTime: 1000 * 60 * 5, // 5分間はキャッシュを有効とする
-  });
+  const { data: activities } = useActivities();
 
   // 編集対象のactivity情報
   // オフライン時はlogに含まれるactivity情報を使用
@@ -79,15 +60,12 @@ export const useActivityLogEdit = (
     try {
       await updateActivityLog.mutateAsync({
         id: log.id,
-        memo,
-        quantity: quantity ?? undefined,
-        activityKindId: activityKindId || undefined,
+        data: {
+          memo,
+          quantity: quantity ?? undefined,
+          activityKindId: activityKindId || undefined,
+        },
         date: dayjs(log.date).format("YYYY-MM-DD"),
-        activityKindInfo: activityKindId
-          ? activity?.kinds?.find((k) => k.id === activityKindId) ||
-            log.activityKind ||
-            undefined
-          : undefined,
       });
 
       toast({ title: "保存しました", variant: "default" });

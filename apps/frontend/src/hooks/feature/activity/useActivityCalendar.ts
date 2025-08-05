@@ -7,7 +7,7 @@ export const useActivityCalendar = (
   setDate: (date: Date) => void,
 ) => {
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(dayjs(date));
+  const [calendarMonth, setCalendarMonth] = useState(() => dayjs(date));
 
   const handleCalendarOpenChange = (open: boolean) => {
     setCalendarOpen(open);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useCreateActivityLog } from "@frontend/hooks/sync/useSyncedActivityLog";
+import { useCreateActivityLog } from "@frontend/hooks/api/useActivityLogs";
 import { useTimer } from "@frontend/hooks/useTimer";
 import {
   convertSecondsToUnit,
@@ -93,12 +93,6 @@ export const useActivityLogCreate = (
         quantity: data.quantity,
         activityKindId: data.activityKindId,
         memo: data.memo,
-        activityInfo: {
-          name: activity.name,
-          quantityUnit: activity.quantityUnit,
-          emoji: activity.emoji || "",
-          kinds: activity.kinds,
-        },
       });
 
       form.reset();

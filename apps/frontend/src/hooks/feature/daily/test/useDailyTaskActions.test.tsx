@@ -1,6 +1,6 @@
 import type React from "react";
 
-import * as useSyncedTask from "@frontend/hooks/sync/useSyncedTask";
+import * as useSyncedTask from "@frontend/hooks/api/useTasks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +10,7 @@ import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 import { useDailyTaskActions } from "../useDailyTaskActions";
 
 // モックの設定
-vi.mock("@frontend/hooks/sync/useSyncedTask");
+vi.mock("@frontend/hooks/api/useTasks");
 
 describe("useDailyTaskActions", () => {
   let queryClient: QueryClient;
@@ -125,8 +125,9 @@ describe("useDailyTaskActions", () => {
 
     expect(mockUpdateTask).toHaveBeenCalledWith({
       id: "00000000-0000-4000-8000-000000000001",
-      doneDate: "2025-01-20",
-      date: "2025-01-20",
+      data: {
+        doneDate: "2025-01-20",
+      },
     });
   });
 
@@ -155,8 +156,9 @@ describe("useDailyTaskActions", () => {
 
     expect(mockUpdateTask).toHaveBeenCalledWith({
       id: "00000000-0000-4000-8000-000000000002",
-      doneDate: null,
-      date: "2025-01-20",
+      data: {
+        doneDate: null,
+      },
     });
   });
 
@@ -188,10 +190,9 @@ describe("useDailyTaskActions", () => {
     });
 
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
-    expect(mockDeleteTask).toHaveBeenCalledWith({
-      id: "00000000-0000-4000-8000-000000000003",
-      date: "2025-01-20",
-    });
+    expect(mockDeleteTask).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000003",
+    );
   });
 
   it("異なる日付で正しくフォーマットされる", () => {
@@ -219,8 +220,9 @@ describe("useDailyTaskActions", () => {
 
     expect(mockUpdateTask).toHaveBeenCalledWith({
       id: "00000000-0000-4000-8000-000000000004",
-      doneDate: "2024-12-31",
-      date: "2024-12-31",
+      data: {
+        doneDate: "2024-12-31",
+      },
     });
   });
 });

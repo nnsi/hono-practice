@@ -2,7 +2,6 @@ export * from "./testData";
 export * from "./MockAuthProvider";
 export * from "./MockTokenProvider";
 export * from "./MockNetworkStatusProvider";
-export * from "./MockSyncManager";
 export { renderHookWithAct, renderHookWithActSync } from "./renderWithAct";
 export * from "./waitForWithAct";
 
@@ -92,26 +91,10 @@ export function createMockApiClient() {
         $delete: vi.fn(),
       })),
     },
-    sync: {
-      batch: {
-        $post: vi.fn(),
-      },
-    },
     batch: {
       $post: vi.fn(),
     },
     users: {
-      sync: {
-        batch: {
-          $post: vi.fn(),
-        },
-        "check-duplicates": {
-          $post: vi.fn(),
-        },
-        pull: {
-          $get: vi.fn(),
-        },
-      },
       "activity-logs": {
         stats: {
           $get: vi.fn(),

@@ -13,7 +13,7 @@ vi.mock("@components/ui", () => ({
 }));
 
 const mockCreateActivityLog = vi.fn();
-vi.mock("@frontend/hooks/sync/useSyncedActivityLog", () => ({
+vi.mock("@frontend/hooks/api/useActivityLogs", () => ({
   useCreateActivityLog: () => ({
     mutateAsync: mockCreateActivityLog,
   }),
@@ -241,12 +241,6 @@ describe("useActivityLogCreate", () => {
           quantity: 5, // 300秒 = 5分
           activityKindId: undefined,
           memo: expect.stringContaining(" - "),
-          activityInfo: {
-            name: "ランニング",
-            quantityUnit: "分",
-            emoji: "🏃",
-            kinds: mockActivity.kinds,
-          },
         });
 
         expect(mockTimer.reset).toHaveBeenCalled();
@@ -292,12 +286,6 @@ describe("useActivityLogCreate", () => {
           quantity: 30,
           activityKindId: "kind-1",
           memo: "朝のランニング",
-          activityInfo: {
-            name: "ランニング",
-            quantityUnit: "分",
-            emoji: "🏃",
-            kinds: mockActivity.kinds,
-          },
         });
 
         expect(mockForm.reset).toHaveBeenCalled();

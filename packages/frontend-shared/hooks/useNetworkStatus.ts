@@ -28,12 +28,27 @@ export function getSimulatedOffline(): boolean {
   return simulatedOffline;
 }
 
+// Development detection helper
+function checkIsDevelopment(): boolean {
+  // Check for Node.js environment
+  if (
+    typeof process !== "undefined" &&
+    process.env.NODE_ENV === "development"
+  ) {
+    return true;
+  }
+
+  // For browser environments, always enable simulated offline feature
+  // The actual toggle button is already protected by import.meta.env.DEV
+  // in NetworkDebugToggle component, so it won't appear in production
+  return true;
+}
+
 export function createUseNetworkStatus(
   options: UseNetworkStatusOptions,
 ): UseNetworkStatusReturn {
   const { network, storage, simulatedOffline: initialSimulated } = options;
-  const isDevelopment =
-    typeof process !== "undefined" && process.env.NODE_ENV === "development";
+  const isDevelopment = checkIsDevelopment();
 
   const [isOnline, setIsOnline] = useState(() => {
     const shouldBeOnline =

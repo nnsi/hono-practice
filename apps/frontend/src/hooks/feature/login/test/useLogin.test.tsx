@@ -1,4 +1,7 @@
+import type React from "react";
+
 import * as useAuthHook from "@frontend/hooks/useAuth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as routerHooks from "@tanstack/react-router";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,15 +15,48 @@ import { useLogin } from "../useLogin";
 // モックの設定
 vi.mock("@frontend/hooks/useAuth");
 vi.mock("@components/ui");
-vi.mock("@tanstack/react-router");
-vi.mock("@frontend/utils/apiClient", () => ({
-  apiClient: {
-    auth: {
-      google: {
-        $post: vi.fn(),
-      },
-    },
-  },
+vi.mock("@tanstack/react-router", () => ({
+  useRouter: vi.fn(() => ({
+    navigate: vi.fn(),
+  })),
+  useNavigate: vi.fn(() => vi.fn()),
+}));
+const mockUseGoogleAuth = vi.fn();
+vi.mock("@frontend/hooks/api", () => ({
+  useGoogleAuth: () => mockUseGoogleAuth(),
+}));
+
+// react-hook-formのモック
+let formValues: any = {};
+vi.mock("react-hook-form", () => ({
+  useForm: vi.fn((config?: any) => {
+    // 初期値を設定
+    if (config?.defaultValues) {
+      formValues = { ...config.defaultValues };
+    }
+    return {
+      control: {},
+      handleSubmit: vi.fn((fn: any) => (event?: any) => {
+        if (event?.preventDefault) event.preventDefault();
+        return fn(formValues);
+      }),
+      reset: vi.fn(),
+      formState: { errors: {} },
+      register: vi.fn(),
+      setValue: vi.fn((name: string, value: any) => {
+        formValues[name] = value;
+      }),
+      getValues: vi.fn(() => formValues),
+      watch: vi.fn(),
+    };
+  }),
+  zodResolver: vi.fn(() => vi.fn()),
+  FormProvider: ({ children }: { children: React.ReactNode }) => children,
+  Controller: ({ render }: any) => render({ field: {} }),
+  useFormContext: vi.fn(() => ({
+    getFieldState: vi.fn(),
+    formState: { errors: {} },
+  })),
 }));
 
 describe("useLogin", () => {
@@ -31,8 +67,21 @@ describe("useLogin", () => {
   const mockToast = vi.fn();
   const mockNavigate = vi.fn();
 
+  const createWrapper = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    formValues = {}; // フォーム値をリセット
 
     // useAuthのモック
     vi.mocked(useAuthHook.useAuth).mockReturnValue({
@@ -49,10 +98,22 @@ describe("useLogin", () => {
 
     // useNavigateのモック
     vi.mocked(routerHooks.useNavigate).mockReturnValue(mockNavigate);
+
+    // useRouterのモック
+    vi.mocked(routerHooks.useRouter).mockReturnValue({
+      navigate: mockNavigate,
+      history: {
+        replace: vi.fn(),
+        back: vi.fn(),
+        canGoBack: vi.fn().mockReturnValue(true),
+      },
+    } as any);
   });
 
   it("フォームが初期化される", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.form.getValues()).toEqual({
       login_id: "",
@@ -63,15 +124,23 @@ describe("useLogin", () => {
   it("ログイン成功時にホームページにリダイレクトする", async () => {
     mockLogin.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     const loginData: LoginRequest = {
       login_id: "test@example.com",
       password: "password123",
     };
 
+    // Set form values before submission
+    act(() => {
+      result.current.form.setValue("login_id", loginData.login_id);
+      result.current.form.setValue("password", loginData.password);
+    });
+
     await act(async () => {
-      await result.current.handleLogin(loginData);
+      await result.current.handleLogin();
     });
 
     expect(mockLogin).toHaveBeenCalledWith(loginData);
@@ -82,20 +151,29 @@ describe("useLogin", () => {
   it("ログイン失敗時にエラートーストを表示する", async () => {
     mockLogin.mockRejectedValue(new Error("Login failed"));
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     const loginData: LoginRequest = {
       login_id: "test@example.com",
       password: "wrong-password",
     };
 
+    // Set form values before submission
+    act(() => {
+      result.current.form.setValue("login_id", loginData.login_id);
+      result.current.form.setValue("password", loginData.password);
+    });
+
     await act(async () => {
-      await result.current.handleLogin(loginData);
+      await result.current.handleLogin();
     });
 
     expect(mockLogin).toHaveBeenCalledWith(loginData);
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockToast).toHaveBeenCalledWith({
+      title: "ログインエラー",
       description: "ログインIDまたはパスワードが間違っています",
       variant: "destructive",
     });
@@ -115,21 +193,21 @@ describe("useLogin", () => {
       token: "mock-access-token",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockApiResponse),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(mockApiResponse),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
     });
 
-    expect(apiClient.auth.google.$post).toHaveBeenCalledWith({
-      json: { credential: "mock-google-credential" },
-    });
+    expect(mockUseGoogleAuth().mutateAsync).toHaveBeenCalledWith(
+      "mock-google-credential",
+    );
     expect(mockSetAccessToken).toHaveBeenCalledWith("mock-access-token");
     expect(mockScheduleTokenRefresh).toHaveBeenCalled();
     expect(mockSetUser).toHaveBeenCalledWith({
@@ -144,10 +222,12 @@ describe("useLogin", () => {
 
   it("Google認証でcredentialがない場合はエラートーストを表示する", async () => {
     const mockGoogleResponse = {
-      credential: null,
+      credential: null as unknown as string,
     };
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -166,13 +246,13 @@ describe("useLogin", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 401,
-      json: vi.fn().mockResolvedValue({ error: "Unauthorized" }),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error("Unauthorized")),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -191,12 +271,13 @@ describe("useLogin", () => {
       credential: "mock-google-credential",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockRejectedValue(
-      new Error("Network error"),
-    );
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error("Network error")),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
@@ -211,7 +292,9 @@ describe("useLogin", () => {
   });
 
   it("handleGoogleErrorがエラートーストを表示する", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.handleGoogleError();
@@ -228,7 +311,9 @@ describe("useLogin", () => {
   // 実際のフォームコンポーネントでのテストが推奨される
 
   it("フォームの値を更新できる", () => {
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     act(() => {
       result.current.form.setValue("login_id", "new@example.com");
@@ -255,13 +340,13 @@ describe("useLogin", () => {
       token: "mock-access-token",
     };
 
-    const { apiClient } = await import("@frontend/utils/apiClient");
-    vi.mocked(apiClient.auth.google.$post).mockResolvedValue({
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockApiResponse),
-    } as any);
+    mockUseGoogleAuth.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(mockApiResponse),
+    });
 
-    const { result } = renderHook(() => useLogin());
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleGoogleSuccess(mockGoogleResponse);
