@@ -17,11 +17,6 @@ export {
   type UseGlobalDateReturn,
 } from "./useGlobalDate";
 export {
-  createUseLongPress,
-  type UseLongPressOptions,
-  type UseLongPressReturn,
-} from "./useLongPress";
-export {
   createUseActivities,
   type UseActivitiesOptions,
   type UseActivitiesReturn,

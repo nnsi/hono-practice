@@ -33,6 +33,65 @@ export const getColorForKind = (kindName: string): string => {
   return colors[colorIndex];
 };
 
+// 使用済みの色を追跡しながら色を割り当てる関数
+export const getUniqueColorForKind = (
+  kindName: string,
+  usedColors: Set<string>,
+): string => {
+  // 色覚バリアフリーに配慮した色パレット
+  const colors = [
+    "#0173B2", // 濃い青
+    "#DE8F05", // オレンジ
+    "#029E73", // 緑
+    "#D55E00", // 赤
+    "#CC79A7", // ピンク
+    "#F0E442", // 黄色
+    "#56B4E9", // 明るい青
+    "#999999", // グレー
+    "#7570B3", // 紫
+    "#1B9E77", // 濃い緑
+  ];
+
+  // まず、ハッシュベースで色を決定
+  let hash = 0;
+  for (let i = 0; i < kindName.length; i++) {
+    const char = kindName.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  const initialColorIndex = Math.abs(hash) % colors.length;
+
+  // 初期色が使用されていない場合はそれを使用
+  if (!usedColors.has(colors[initialColorIndex])) {
+    return colors[initialColorIndex];
+  }
+
+  // 使用されていない色を探す
+  for (const color of colors) {
+    if (!usedColors.has(color)) {
+      return color;
+    }
+  }
+
+  // すべての色が使用されている場合は、追加の色パレットから選択
+  const additionalColors = [
+    "#E69F00", // 別のオレンジ
+    "#0072B2", // 別の青
+    "#009E73", // 別の緑
+    "#D55E00", // 別の赤
+    "#CC79A7", // 別のピンク
+  ];
+
+  for (const color of additionalColors) {
+    if (!usedColors.has(color)) {
+      return color;
+    }
+  }
+
+  // それでも足りない場合は、初期色を返す（重複を許容）
+  return colors[initialColorIndex];
+};
+
 export type GoalLine = {
   id: string;
   value: number;

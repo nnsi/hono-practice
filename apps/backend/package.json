@@ -11,7 +11,8 @@
     "drizzle-orm": "^0.44.2",
     "hono": "^4.8.2",
     "jose": "^6.0.10",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "redis": "^5.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250422.0",
@@ -19,7 +20,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.0.3",
     "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.31.1",
-    "redis": "^5.5.6"
+    "drizzle-kit": "^0.31.1"
   }
 }
