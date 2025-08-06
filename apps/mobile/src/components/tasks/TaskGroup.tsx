@@ -5,7 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 
-import { useTaskActions } from "../../hooks/useTaskActions";
+import { useTaskActions } from "../../hooks";
 
 import { TaskEditDialog } from "./TaskEditDialog";
 

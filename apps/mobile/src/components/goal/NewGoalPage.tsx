@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { GetActivitiesResponseSchema } from "@dtos/response";
 
-import { useGoals } from "../../hooks/useGoals";
+import { useGoals } from "../../hooks";
 import { apiClient } from "../../utils/apiClient";
 
 import { NewGoalCard } from "./NewGoalCard";

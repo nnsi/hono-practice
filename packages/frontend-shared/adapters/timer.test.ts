@@ -62,7 +62,7 @@ describe("TimerAdapter", () => {
   });
 
   describe("ReactNativeTimerAdapter", () => {
-    let adapter: TimerAdapter<NodeJS.Timeout>;
+    let adapter: TimerAdapter<number>;
 
     beforeEach(() => {
       adapter = createReactNativeTimerAdapter();

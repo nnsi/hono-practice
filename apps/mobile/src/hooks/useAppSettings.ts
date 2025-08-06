@@ -1,25 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { type AppSettings, defaultSettings } from "../types/settings";
+export type AppSettings = {
+  showGoalOnStartup: boolean;
+  hideGoalGraph: boolean;
+  showInactiveDates: boolean;
+};
 
-const SETTINGS_KEY = "@actiko_app_settings";
+const DEFAULT_SETTINGS: AppSettings = {
+  showGoalOnStartup: false,
+  hideGoalGraph: false,
+  showInactiveDates: false,
+};
 
-export const useAppSettings = () => {
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+const SETTINGS_KEY = "app_settings";
+
+export function useAppSettings() {
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 設定を読み込む
+  // Load settings from AsyncStorage
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const saved = await AsyncStorage.getItem(SETTINGS_KEY);
-        if (saved) {
-          setSettings({ ...defaultSettings, ...JSON.parse(saved) });
+        const stored = await AsyncStorage.getItem(SETTINGS_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setSettings({ ...DEFAULT_SETTINGS, ...parsed });
         }
-      } catch (e) {
-        console.error("Failed to load settings:", e);
+      } catch (error) {
+        console.error("Failed to load settings:", error);
       } finally {
         setIsLoading(false);
       }
@@ -28,30 +39,35 @@ export const useAppSettings = () => {
     loadSettings();
   }, []);
 
-  // 設定を保存する
-  const saveSettings = useCallback(async (newSettings: AppSettings) => {
+  // Update a setting
+  const updateSetting = async <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K],
+  ) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+
     try {
       await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
-    } catch (e) {
-      console.error("Failed to save settings:", e);
+    } catch (error) {
+      console.error("Failed to save settings:", error);
     }
-  }, []);
+  };
 
-  const updateSetting = useCallback(
-    async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-      const newSettings = {
-        ...settings,
-        [key]: value,
-      };
-      setSettings(newSettings);
-      await saveSettings(newSettings);
-    },
-    [settings, saveSettings],
-  );
+  // Reset all settings
+  const resetSettings = async () => {
+    setSettings(DEFAULT_SETTINGS);
+    try {
+      await AsyncStorage.removeItem(SETTINGS_KEY);
+    } catch (error) {
+      console.error("Failed to reset settings:", error);
+    }
+  };
 
   return {
     settings,
     updateSetting,
+    resetSettings,
     isLoading,
   };
-};
+}

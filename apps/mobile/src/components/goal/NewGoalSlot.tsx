@@ -9,7 +9,7 @@ import DatePicker from "react-native-date-picker";
 
 import type { GetActivityResponse } from "@dtos/response";
 
-import { useCreateGoal } from "../../hooks/useGoals";
+import { useCreateGoal } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 import { ActivityIcon } from "../common/ActivityIcon";
 

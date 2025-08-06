@@ -8,7 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 
-import { useDeleteGoal, useUpdateGoal } from "../../hooks/useGoals";
+import { useDeleteGoal, useUpdateGoal } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 import { ActivityIcon } from "../common/ActivityIcon";
 

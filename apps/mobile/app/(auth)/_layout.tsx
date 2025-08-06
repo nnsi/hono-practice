@@ -2,7 +2,7 @@ import { ActivityIndicator, View } from "react-native";
 
 import { Redirect, Stack } from "expo-router";
 
-import { useAuth } from "../../src/hooks/useAuth";
+import { useAuth } from "../../src/contexts/AuthContext";
 
 export default function AuthLayout() {
   const { user, isInitialized } = useAuth();

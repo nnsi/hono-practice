@@ -25,7 +25,7 @@ import {
 import { useActivities, useGlobalDate } from "../../../src/hooks";
 
 export default function Home() {
-  const { date, setDate } = useGlobalDate();
+  const { selectedDate: date, setSelectedDate: setDate } = useGlobalDate();
   const [selectedActivity, setSelectedActivity] =
     useState<GetActivityResponse | null>(null);
   const [newActivityModalOpen, setNewActivityModalOpen] = useState(false);

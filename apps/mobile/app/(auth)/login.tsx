@@ -5,7 +5,7 @@ import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
-import { useAuth } from "../../src/hooks/useAuth";
+import { useAuth } from "../../src/contexts/AuthContext";
 import { Alert } from "../../src/utils/AlertWrapper";
 
 export default function Login() {

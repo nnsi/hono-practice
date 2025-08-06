@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { GetActivitiesResponseSchema, type GoalResponse } from "@dtos/response";
 
-import { useGoal, useGoalStats } from "../../hooks/useGoals";
+import { useGoal, useGoalStats } from "../../hooks";
 import { apiClient } from "../../utils/apiClient";
 import { ActivityIcon } from "../common/ActivityIcon";
 
