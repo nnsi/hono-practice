@@ -20,13 +20,15 @@ vi.mock("@tanstack/react-router");
 const mockCreateUserApi = vi.fn();
 const mockGoogleAuth = vi.fn();
 
-vi.mock("@frontend/hooks/api", () => ({
-  useCreateUserApi: () => ({
+vi.mock("@packages/frontend-shared/hooks", () => ({
+  createUseCreateUserApi: vi.fn(() => ({
     mutateAsync: mockCreateUserApi,
-  }),
-  useGoogleAuth: () => ({
+    isPending: false,
+  })),
+  createUseGoogleAuth: vi.fn(() => ({
     mutateAsync: mockGoogleAuth,
-  }),
+    isPending: false,
+  })),
 }));
 
 const createWrapper = () => {

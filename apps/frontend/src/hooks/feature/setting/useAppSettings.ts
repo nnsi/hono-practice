@@ -1,42 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { createWebStorageAdapter } from "@packages/frontend-shared/adapters/web";
+import { createUseAppSettings } from "@packages/frontend-shared/hooks/feature";
 
-import { type AppSettings, defaultSettings } from "@frontend/types/settings";
+// Webアダプターのインスタンスを作成
+const storage = createWebStorageAdapter();
 
-const SETTINGS_KEY = "actiko_app_settings";
+// 共通フックをインスタンス化
+const useAppSettingsBase = createUseAppSettings({ storage });
 
 export const useAppSettings = () => {
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    try {
-      const saved = localStorage.getItem(SETTINGS_KEY);
-      if (saved) {
-        return { ...defaultSettings, ...JSON.parse(saved) };
-      }
-    } catch (e) {
-      console.error("Failed to load settings:", e);
-    }
-    return defaultSettings;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-      console.error("Failed to save settings:", e);
-    }
-  }, [settings]);
-
-  const updateSetting = useCallback(
-    <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-      setSettings((prev) => ({
-        ...prev,
-        [key]: value,
-      }));
-    },
-    [],
-  );
-
-  return {
-    settings,
-    updateSetting,
-  };
+  return useAppSettingsBase();
 };

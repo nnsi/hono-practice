@@ -1,72 +1,77 @@
 import type React from "react";
 
-import { DateContext } from "@frontend/providers/DateProvider";
+import { EventBusProvider } from "@frontend/providers/EventBusProvider";
+import { createWindowEventBus } from "@frontend/services/abstractions";
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { useGlobalDate } from "../useGlobalDate";
 
 describe("useGlobalDate", () => {
-  it("DateProviderの外で使用された場合でもデフォルトコンテキスト値を返す", () => {
-    // 注意: DateContextにはデフォルト値が設定されているため、
-    // Provider外でも動作しますが、setDateは何もしません
-    const { result } = renderHook(() => useGlobalDate());
+  it("初期状態が正しく設定される", () => {
+    const eventBus = createWindowEventBus();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
+    );
+    const { result } = renderHook(() => useGlobalDate(), { wrapper });
 
-    expect(result.current.date).toBeInstanceOf(Date);
-    expect(result.current.setDate).toBeInstanceOf(Function);
-
-    // setDateを呼んでも何も起こらない
-    const newDate = new Date("2025-01-21");
-    act(() => {
-      result.current.setDate(newDate);
-    });
-
-    // 日付は変わらない（デフォルトのsetDateは何もしない）
-    expect(result.current.date).not.toBe(newDate);
+    expect(result.current.selectedDate).toBeInstanceOf(Date);
+    expect(result.current.setSelectedDate).toBeInstanceOf(Function);
+    expect(result.current.goToToday).toBeInstanceOf(Function);
+    expect(result.current.goToPreviousDay).toBeInstanceOf(Function);
+    expect(result.current.goToNextDay).toBeInstanceOf(Function);
+    expect(result.current.isToday).toBeInstanceOf(Function);
+    expect(result.current.formatDate).toBeInstanceOf(Function);
   });
 
-  it("DateContextの値を正しく返す", () => {
-    const mockDate = new Date("2025-01-20");
-    const mockSetDate = vi.fn();
-    const mockDateContext = {
-      date: mockDate,
-      setDate: mockSetDate,
-    };
-
+  it("setSelectedDateが正しく動作する", () => {
+    const eventBus = createWindowEventBus();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <DateContext.Provider value={mockDateContext}>
-        {children}
-      </DateContext.Provider>
+      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
     );
 
     const { result } = renderHook(() => useGlobalDate(), { wrapper });
 
-    expect(result.current).toBe(mockDateContext);
-    expect(result.current.date).toBe(mockDate);
-    expect(result.current.setDate).toBe(mockSetDate);
+    const newDate = new Date("2025-01-20");
+
+    act(() => {
+      result.current.setSelectedDate(newDate);
+    });
+
+    expect(result.current.selectedDate).toEqual(newDate);
   });
 
-  it("setDate関数が呼び出せる", () => {
-    const mockDate = new Date("2025-01-20");
-    const newDate = new Date("2025-01-21");
-    const mockSetDate = vi.fn();
-    const mockDateContext = {
-      date: mockDate,
-      setDate: mockSetDate,
-    };
-
+  it("日付ナビゲーション関数が正しく動作する", () => {
+    const eventBus = createWindowEventBus();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <DateContext.Provider value={mockDateContext}>
-        {children}
-      </DateContext.Provider>
+      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
     );
 
     const { result } = renderHook(() => useGlobalDate(), { wrapper });
 
+    const initialDate = result.current.selectedDate;
+
+    // goToPreviousDay
     act(() => {
-      result.current.setDate(newDate);
+      result.current.goToPreviousDay();
     });
 
-    expect(mockSetDate).toHaveBeenCalledWith(newDate);
+    const previousDate = result.current.selectedDate;
+    expect(previousDate.getDate()).toBe(initialDate.getDate() - 1);
+
+    // goToNextDay
+    act(() => {
+      result.current.goToNextDay();
+    });
+
+    expect(result.current.selectedDate.getDate()).toBe(initialDate.getDate());
+
+    // goToToday
+    act(() => {
+      result.current.goToToday();
+    });
+
+    const today = new Date();
+    expect(result.current.selectedDate.getDate()).toBe(today.getDate());
   });
 });

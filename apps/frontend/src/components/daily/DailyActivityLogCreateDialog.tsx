@@ -8,6 +8,8 @@ import {
 } from "@frontend/components/ui";
 import { useDailyActivityCreate } from "@frontend/hooks/feature/daily/useDailyActivityCreate";
 
+import type { GetActivityResponse } from "@dtos/response";
+
 import { Card, CardContent } from "@components/ui";
 
 export function DailyActivityLogCreateDialog({
@@ -41,7 +43,7 @@ export function DailyActivityLogCreateDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-4">
-            {activities?.map((activity) => (
+            {activities?.map((activity: GetActivityResponse) => (
               <Card
                 key={activity.id}
                 onClick={() => handleActivitySelect(activity)}

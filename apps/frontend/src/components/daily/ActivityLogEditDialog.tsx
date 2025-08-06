@@ -72,9 +72,9 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
               type="button"
               variant="destructive"
               onClick={handleDelete}
-              disabled={deleteActivityLog.isPending}
+              disabled={(deleteActivityLog as any).isPending || false}
             >
-              {deleteActivityLog.isPending ? "削除中..." : "削除"}
+              {(deleteActivityLog as any).isPending ? "削除中..." : "削除"}
             </Button>
           </div>
           {activity?.kinds && activity.kinds.length > 0 && (
@@ -106,8 +106,11 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
             autoComplete="off"
           />
           <DialogFooter className="flex-shrink-0">
-            <Button type="submit" disabled={updateActivityLog.isPending}>
-              {updateActivityLog.isPending ? "保存中..." : "保存"}
+            <Button
+              type="submit"
+              disabled={(updateActivityLog as any).isPending || false}
+            >
+              {(updateActivityLog as any).isPending ? "保存中..." : "保存"}
             </Button>
           </DialogFooter>
         </form>

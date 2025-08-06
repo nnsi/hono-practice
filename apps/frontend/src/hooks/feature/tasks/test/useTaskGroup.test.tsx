@@ -1,4 +1,7 @@
+import type React from "react";
+
 import { useArchiveTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,8 +15,13 @@ vi.mock("@frontend/hooks/api/useTasks", () => ({
 }));
 
 describe("useTaskGroup", () => {
+  let queryClient: QueryClient;
   const mockUpdateMutate = vi.fn();
   const mockArchiveMutate = vi.fn();
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 
   const mockTask = {
     id: "00000000-0000-4000-8000-000000000001",
@@ -30,6 +38,12 @@ describe("useTaskGroup", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
     vi.mocked(useUpdateTask).mockReturnValue({
       mutate: mockUpdateMutate,
       isPending: false,
@@ -42,7 +56,7 @@ describe("useTaskGroup", () => {
 
   describe("初期状態", () => {
     it("編集ダイアログが閉じている状態で初期化される", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       expect(result.current.editDialogOpen).toBe(false);
       expect(result.current.selectedTask).toBeNull();
@@ -51,7 +65,7 @@ describe("useTaskGroup", () => {
 
   describe("handleToggleTaskDone", () => {
     it("未完了のタスクを完了にする", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const today = dayjs().format("YYYY-MM-DD");
 
       result.current.handleToggleTaskDone(mockTask);
@@ -65,7 +79,7 @@ describe("useTaskGroup", () => {
     });
 
     it("完了済みのタスクを未完了にする", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const completedTask = {
         ...mockTask,
         doneDate: "2024-01-16",
@@ -84,7 +98,7 @@ describe("useTaskGroup", () => {
 
   describe("handleMoveToToday", () => {
     it("タスクを今日に移動する", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const today = dayjs().format("YYYY-MM-DD");
 
       result.current.handleMoveToToday(mockTask);
@@ -99,7 +113,7 @@ describe("useTaskGroup", () => {
     });
 
     it("開始日と締切日の両方が今日に設定される", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const today = dayjs().format("YYYY-MM-DD");
       const futureTask = {
         ...mockTask,
@@ -121,7 +135,7 @@ describe("useTaskGroup", () => {
 
   describe("handleArchiveTask", () => {
     it("開始日があるタスクをアーカイブする", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       result.current.handleArchiveTask(mockTask);
 
@@ -132,7 +146,7 @@ describe("useTaskGroup", () => {
     });
 
     it("開始日がないタスクをアーカイブする", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const taskWithoutStartDate = {
         ...mockTask,
         startDate: null,
@@ -149,7 +163,7 @@ describe("useTaskGroup", () => {
 
   describe("handleTaskClick", () => {
     it("タスクをクリックすると編集ダイアログが開く", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       act(() => {
         result.current.handleTaskClick(mockTask);
@@ -160,7 +174,7 @@ describe("useTaskGroup", () => {
     });
 
     it("別のタスクをクリックすると選択が更新される", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const anotherTask = {
         ...mockTask,
         id: "00000000-0000-4000-8000-000000000003",
@@ -184,7 +198,7 @@ describe("useTaskGroup", () => {
 
   describe("handleDialogSuccess", () => {
     it("ダイアログを閉じて選択を解除する", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       // まずタスクを選択して編集ダイアログを開く
       act(() => {
@@ -205,7 +219,7 @@ describe("useTaskGroup", () => {
 
   describe("setEditDialogOpen", () => {
     it("編集ダイアログの開閉を直接制御できる", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       expect(result.current.editDialogOpen).toBe(false);
 
@@ -223,7 +237,7 @@ describe("useTaskGroup", () => {
 
   describe("複数のアクションの組み合わせ", () => {
     it("タスクを完了にしてからアーカイブできる", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
 
       // タスクを完了にする
       result.current.handleToggleTaskDone(mockTask);
@@ -247,7 +261,7 @@ describe("useTaskGroup", () => {
     });
 
     it("タスクを今日に移動してから編集できる", () => {
-      const { result } = renderHook(() => useTaskGroup());
+      const { result } = renderHook(() => useTaskGroup(), { wrapper });
       const today = dayjs().format("YYYY-MM-DD");
 
       // タスクを今日に移動

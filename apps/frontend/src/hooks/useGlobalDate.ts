@@ -1,12 +1,9 @@
-import { useContext } from "react";
-
-import { DateContext } from "@frontend/providers/DateProvider";
+import { createEventBusAdapter } from "@frontend/adapters/EventBusAdapter";
+import { useEventBus } from "@frontend/providers/EventBusProvider";
+import { createUseGlobalDate } from "@packages/frontend-shared/hooks";
 
 export const useGlobalDate = () => {
-  const context = useContext(DateContext);
-  if (!context) {
-    throw new Error("useGlobalDate must be used within a DateProvider");
-  }
-
-  return context;
+  const eventBus = useEventBus();
+  const eventBusAdapter = createEventBusAdapter(eventBus);
+  return createUseGlobalDate({ eventBus: eventBusAdapter });
 };

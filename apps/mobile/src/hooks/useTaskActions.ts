@@ -1,42 +1,33 @@
-import {
-  createUseArchiveTask,
-  createUseUpdateTask,
-} from "@packages/frontend-shared/hooks";
-import dayjs from "dayjs";
+import { createUseTaskActions } from "@packages/frontend-shared/hooks/feature";
 
 import { apiClient } from "../utils/apiClient";
 
-type Task = {
-  id: string;
-  title: string;
-  startDate: string | null;
-  dueDate: string | null;
-  doneDate: string | null;
-};
+// 共通フックをインスタンス化
+const useTaskActionsBase = createUseTaskActions({ apiClient });
 
 export function useTaskActions() {
-  // 共通フックを使用
-  const updateTaskMutation = createUseUpdateTask({ apiClient });
-  const archiveTaskMutation = createUseArchiveTask({ apiClient });
+  const {
+    handleToggleTaskDone,
+    handleArchiveTask,
+    formatDate,
+    selectedTask,
+    handleSelectTask,
+    updateTaskPending,
+    archiveTaskPending,
+  } = useTaskActionsBase();
 
-  const toggleTaskDone = async (task: Task) => {
+  // Mobile側では async/await スタイルを維持
+  const toggleTaskDone = async (task: any) => {
     try {
-      await updateTaskMutation.mutateAsync({
-        id: task.id,
-        data: {
-          doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
-        },
-      });
+      handleToggleTaskDone(task);
     } catch (error) {
       console.error("Failed to toggle task done:", error);
     }
   };
 
-  const archiveTask = async (task: Task) => {
+  const archiveTask = async (task: any) => {
     try {
-      await archiveTaskMutation.mutateAsync({
-        id: task.id,
-      });
+      handleArchiveTask(task);
     } catch (error) {
       console.error("Failed to archive task:", error);
     }
@@ -45,5 +36,10 @@ export function useTaskActions() {
   return {
     toggleTaskDone,
     archiveTask,
+    formatDate,
+    selectedTask,
+    handleSelectTask,
+    isUpdating: updateTaskPending,
+    isArchiving: archiveTaskPending,
   };
 }

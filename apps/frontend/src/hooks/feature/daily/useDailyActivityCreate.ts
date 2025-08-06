@@ -1,43 +1,25 @@
-import { useState } from "react";
+import { apiClient } from "@frontend/utils/apiClient";
+import { createUseDailyActivityCreate } from "@packages/frontend-shared/hooks/feature";
 
-import { useActivities } from "@frontend/hooks/api";
-
-import type { GetActivityResponse } from "@dtos/response";
+// 共通フックをインスタンス化
+const useDailyActivityCreateBase = createUseDailyActivityCreate({ apiClient });
 
 export const useDailyActivityCreate = (
   onOpenChange: (open: boolean) => void,
   onSuccess?: () => void,
 ) => {
-  const [selectedActivity, setSelectedActivity] =
-    useState<GetActivityResponse | null>(null);
-  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
-  const { data: activities } = useActivities();
+  // 共通のロジックを使用し、Web固有のコールバックを渡す
+  const base = useDailyActivityCreateBase();
 
-  const handleActivitySelect = (activity: GetActivityResponse) => {
-    setSelectedActivity(activity);
-    setActivityDialogOpen(true);
-  };
-
-  const handleActivityDialogClose = (open: boolean) => {
-    setActivityDialogOpen(open);
-    if (!open) {
-      setSelectedActivity(null);
-    }
-  };
-
+  // onOpenChangeとonSuccessをオーバーライド
   const handleSuccess = () => {
-    setSelectedActivity(null);
-    setActivityDialogOpen(false);
+    base.handleSuccess();
     onOpenChange(false);
     onSuccess?.();
   };
 
   return {
-    selectedActivity,
-    activityDialogOpen,
-    activities,
-    handleActivitySelect,
-    handleActivityDialogClose,
+    ...base,
     handleSuccess,
   };
 };

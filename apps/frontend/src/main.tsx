@@ -9,9 +9,11 @@ import "../main.css";
 import { useAuth } from "@hooks/useAuth";
 
 import { AuthProvider } from "./providers/AuthProvider";
+import { EventBusProvider } from "./providers/EventBusProvider";
 import { NetworkStatusProvider } from "./providers/NetworkStatusProvider";
 import { TokenProvider } from "./providers/TokenProvider";
 import { routeTree } from "./routeTree.gen";
+import { createWindowEventBus } from "./services/abstractions";
 import { createLocalStorageProvider } from "./services/abstractions/StorageProvider";
 import { createApiClient } from "./utils/apiClient";
 import { createTokenStore } from "./utils/createTokenStore";
@@ -70,17 +72,22 @@ const apiClient =
     ? createApiClient({ tokenManager: tokenStore })
     : undefined;
 
+// EventBusの作成
+const eventBus = createWindowEventBus();
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
-        <TokenProvider tokenStore={tokenStore}>
-          <AuthProvider apiClient={apiClient}>
-            <NetworkStatusProvider>
-              <RouterProviderWithAuth />
-            </NetworkStatusProvider>
-          </AuthProvider>
-        </TokenProvider>
+        <EventBusProvider eventBus={eventBus}>
+          <TokenProvider tokenStore={tokenStore} eventBus={eventBus}>
+            <AuthProvider apiClient={apiClient} eventBus={eventBus}>
+              <NetworkStatusProvider>
+                <RouterProviderWithAuth />
+              </NetworkStatusProvider>
+            </AuthProvider>
+          </TokenProvider>
+        </EventBusProvider>
       </QueryClientProvider>
     </GoogleOAuthProvider>
   </StrictMode>,
