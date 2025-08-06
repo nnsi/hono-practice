@@ -7,3 +7,4 @@ dist-frontend
 .husky
 stats.html
 public
+*.pkl

@@ -205,6 +205,9 @@ export function useLinkGoogleAccount() {
 // Export wrapper hooks for React Native
 export { useAppSettings } from "./useAppSettings";
 
+// Export React Native specific feature hooks
+export { useTaskActions } from "./feature";
+
 // Re-export feature hooks from frontend-shared
 export {
   useActivityEdit,
@@ -223,7 +226,6 @@ export {
   useNewGoalDialog,
   useNewGoalPage,
   useNewGoalSlot,
-  useTaskActions,
   useTaskEditForm,
   useTaskGroup,
   useTasksPage,
