@@ -3,9 +3,9 @@ import { useState } from "react";
 
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
+import { GetActivitiesResponseSchema } from "@packages/types/response/GetActivitiesResponse";
 import { useQuery } from "@tanstack/react-query";
 
-import { GetActivitiesResponseSchema } from "@dtos/response";
 
 import { useGoals } from "../../hooks";
 import { apiClient } from "../../utils/apiClient";

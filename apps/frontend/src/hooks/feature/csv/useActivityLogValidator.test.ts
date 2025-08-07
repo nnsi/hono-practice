@@ -309,7 +309,7 @@ describe("useActivityLogValidator", () => {
 
         expect(validated.errors).toContainEqual({
           field: "quantity",
-          message: "数量は数値で入力してください",
+          message: "数値で入力してください",
         });
       });
 
@@ -432,7 +432,7 @@ describe("useActivityLogValidator", () => {
       });
       expect(validated.errors).toContainEqual({
         field: "quantity",
-        message: "数量は数値で入力してください",
+        message: "数値で入力してください",
       });
     });
   });
