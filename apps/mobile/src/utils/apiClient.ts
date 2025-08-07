@@ -126,12 +126,12 @@ const mobileFetch: typeof fetch = async (url, init) => {
     }
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     if (__DEV__) {
       console.error("Fetch error:", {
         url,
-        error: error.message,
-        stack: error.stack,
+        error: error?.message,
+        stack: error?.stack,
       });
     }
     throw error;

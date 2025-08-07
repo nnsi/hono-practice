@@ -19,7 +19,7 @@ import Svg, { Line, Text as SvgText, G, Rect } from "react-native-svg";
 
 import { GetActivityStatsResponseSchema } from "@dtos/response";
 
-import { useGoals } from "../hooks/useGoals";
+import { useGoals } from "../hooks";
 import { apiClient } from "../utils/apiClient";
 
 const { width } = Dimensions.get("window");

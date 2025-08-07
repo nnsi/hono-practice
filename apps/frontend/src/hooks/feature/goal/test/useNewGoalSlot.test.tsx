@@ -1,15 +1,25 @@
-import { useCreateGoal } from "@frontend/hooks/api";
+import type React from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useNewGoalSlot } from "../useNewGoalSlot";
 
 // モックの設定
-vi.mock("@frontend/hooks/api", () => ({
-  useCreateGoal: vi.fn(),
+let mockCreateGoal = { mutate: vi.fn(), isPending: false };
+
+vi.mock("@packages/frontend-shared/hooks", () => ({
+  createUseCreateGoal: vi.fn(() => mockCreateGoal),
 }));
 
 describe("useNewGoalSlot", () => {
+  let queryClient: QueryClient;
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
   const mockOnCreated = vi.fn();
   const mockActivities = [
     {
@@ -34,14 +44,19 @@ describe("useNewGoalSlot", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateGoal = { mutate: vi.fn(), isPending: false };
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
   });
 
   it("初期状態が正しく設定される", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     expect(result.current.isCreating).toBe(false);
@@ -52,11 +67,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleStartCreatingで作成モードになる", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     act(() => {
@@ -67,11 +80,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("活動が選択されたときに単位が更新される", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     act(() => {
@@ -85,11 +96,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleSubmitが正常に動作する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     const formData = {
@@ -117,11 +126,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("数量が0以下の場合handleSubmitが実行されない", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     const formData = {
@@ -139,12 +146,11 @@ describe("useNewGoalSlot", () => {
   });
 
   it("目標作成成功時の処理が正しく動作する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
     const mockReset = vi.fn();
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
 
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     // form.resetをモック
@@ -180,12 +186,11 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleCancelで作成がキャンセルされる", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
     const mockReset = vi.fn();
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
 
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     // form.resetをモック
@@ -207,11 +212,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleActivityChangeでフォーカスが移動する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     const mockFieldOnChange = vi.fn();
@@ -240,11 +243,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleTargetQuantityChangeが正しく動作する", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     const mockFieldOnChange = vi.fn();
@@ -260,11 +261,9 @@ describe("useNewGoalSlot", () => {
   });
 
   it("handleTargetQuantityChangeで空文字の場合", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalSlot(mockActivities, mockOnCreated),
+    const { result } = renderHook(
+      () => useNewGoalSlot(mockActivities, mockOnCreated),
+      { wrapper },
     );
 
     const mockFieldOnChange = vi.fn();

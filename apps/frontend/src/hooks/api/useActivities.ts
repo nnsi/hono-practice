@@ -17,7 +17,8 @@ import type { GetActivitiesResponse } from "@dtos/response";
  * 他のコンポーネントで重複していた取得処理を共通化するために作成。
  */
 export function useActivities() {
-  const result = createUseActivities({ apiClient });
+  const useActivitiesBase = createUseActivities({ apiClient });
+  const result = useActivitiesBase();
 
   // 既存のコードとの互換性を保つため、TanStack Queryの形式に合わせて返す
   return {

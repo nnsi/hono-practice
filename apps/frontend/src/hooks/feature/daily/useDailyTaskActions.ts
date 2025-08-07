@@ -1,32 +1,27 @@
-import { useState } from "react";
+import type React from "react";
 
-import { useDeleteTask, useUpdateTask } from "@frontend/hooks/api/useTasks";
-import dayjs from "dayjs";
+import { apiClient } from "@frontend/utils/apiClient";
+import { createUseDailyTaskActions } from "@packages/frontend-shared/hooks/feature";
 
 import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 
+// 共通フックをインスタンス化
+const useDailyTaskActionsBase = createUseDailyTaskActions({ apiClient });
+
 export const useDailyTaskActions = (date: Date) => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const dateStr = dayjs(date).format("YYYY-MM-DD");
+  const {
+    createDialogOpen,
+    setCreateDialogOpen,
+    updateTask,
+    deleteTask,
+    handleToggleTaskDone,
+    handleDeleteTask: handleDeleteTaskBase,
+  } = useDailyTaskActionsBase(date);
 
-  // 同期対応のフックを使用
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
-
-  // タスクの完了/未完了を切り替えるハンドラ
-  const handleToggleTaskDone = (task: GetTaskResponse) => {
-    updateTask.mutate({
-      id: task.id,
-      data: {
-        doneDate: task.doneDate ? null : dateStr,
-      },
-    });
-  };
-
-  // タスクを削除するハンドラ
+  // Web固有：タスクを削除するハンドラ（イベント処理を含む）
   const handleDeleteTask = (e: React.MouseEvent, task: GetTaskResponse) => {
     e.stopPropagation();
-    deleteTask.mutate(task.id);
+    handleDeleteTaskBase(task);
   };
 
   return {

@@ -2,12 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import type {
+  CreateActivityLogBatchRequest,
   CreateActivityLogRequest,
   UpdateActivityLogRequest,
 } from "@dtos/request";
 import {
   type GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
+  type GetActivityStatsResponse,
+  GetActivityStatsResponseSchema,
 } from "@dtos/response";
 
 import type { AppType } from "@backend/app";
@@ -127,6 +130,66 @@ export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
       queryClient.invalidateQueries({
         queryKey: ["activity-logs-daily", variables.date],
       });
+    },
+  });
+}
+
+export type UseActivityStatsOptions = {
+  apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
+  month: string;
+};
+
+/**
+ * アクティビティ統計情報を取得する共通フック
+ */
+export function createUseActivityStatsApi(options: UseActivityStatsOptions) {
+  const { apiClient, month } = options;
+
+  return useQuery<GetActivityStatsResponse>({
+    queryKey: ["activity-stats-monthly", month],
+    queryFn: async () => {
+      const res = await apiClient.users["activity-logs"].stats.$get({
+        query: { date: month },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch activity stats");
+      }
+      const json = await res.json();
+      const parsed = GetActivityStatsResponseSchema.safeParse(json);
+      if (!parsed.success) {
+        throw new Error("Failed to parse activity stats");
+      }
+      return parsed.data;
+    },
+  });
+}
+
+export type UseBatchImportActivityLogsOptions = {
+  apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
+};
+
+/**
+ * アクティビティログバッチインポート用の共通フック
+ */
+export function createUseBatchImportActivityLogs(
+  options: UseBatchImportActivityLogsOptions,
+) {
+  const { apiClient } = options;
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateActivityLogBatchRequest) => {
+      const res = await apiClient.users["activity-logs"].batch.$post({
+        json: data,
+      });
+      if (!res.ok) {
+        throw new Error("Failed to batch import activity logs");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
   });
 }

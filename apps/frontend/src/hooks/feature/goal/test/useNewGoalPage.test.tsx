@@ -164,7 +164,7 @@ describe("useNewGoalPage", () => {
       result.current.getActivityName("00000000-0000-4000-8000-000000000202"),
     ).toBe("読書");
     expect(result.current.getActivityName("unknown-id")).toBe(
-      "Unknown Activity",
+      "不明なアクティビティ",
     );
   });
 
@@ -197,7 +197,7 @@ describe("useNewGoalPage", () => {
     expect(
       result.current.getActivityUnit("00000000-0000-4000-8000-000000000202"),
     ).toBe("分");
-    expect(result.current.getActivityUnit("unknown-id")).toBe("回");
+    expect(result.current.getActivityUnit("unknown-id")).toBe("");
   });
 
   it("getActivityが正しくアクティビティオブジェクトを返す", async () => {
@@ -377,8 +377,10 @@ describe("useNewGoalPage", () => {
       expect(result.current.activitiesData).toEqual([]);
     });
 
-    expect(result.current.getActivityName("any-id")).toBe("Unknown Activity");
+    expect(result.current.getActivityName("any-id")).toBe(
+      "不明なアクティビティ",
+    );
     expect(result.current.getActivityEmoji("any-id")).toBe("🎯");
-    expect(result.current.getActivityUnit("any-id")).toBe("回");
+    expect(result.current.getActivityUnit("any-id")).toBe("");
   });
 });

@@ -181,12 +181,12 @@ export function createReactNativeNotificationAdapter(
 export { createWebEventBusAdapter as createReactNativeEventBusAdapter } from "./web";
 
 // React Native Timer adapter
-export function createReactNativeTimerAdapter(): TimerAdapter<NodeJS.Timeout> {
-  const setIntervalFn = (callback: () => void, ms: number): NodeJS.Timeout => {
-    return setInterval(callback, ms);
+export function createReactNativeTimerAdapter(): TimerAdapter<number> {
+  const setIntervalFn = (callback: () => void, ms: number): number => {
+    return setInterval(callback, ms) as unknown as number;
   };
 
-  const clearIntervalFn = (id: NodeJS.Timeout): void => {
+  const clearIntervalFn = (id: number): void => {
     clearInterval(id);
   };
 

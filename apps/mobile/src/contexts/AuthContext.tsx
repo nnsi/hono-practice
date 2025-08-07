@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Attempting login with:", { login_id: loginId });
         console.log("API URL:", apiClient.auth.login.$url().toString());
 
-        let response: Response;
+        let response: any;
         try {
           response = await apiClient.auth.login.$post({
             json: {
@@ -171,13 +171,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               password,
             },
           });
-        } catch (networkError) {
+        } catch (networkError: any) {
           console.error("Network request error:", networkError);
           console.error("Network error details:", {
-            message: networkError.message,
-            stack: networkError.stack,
-            name: networkError.name,
-            cause: networkError.cause,
+            message: networkError?.message,
+            stack: networkError?.stack,
+            name: networkError?.name,
+            cause: networkError?.cause,
           });
           throw networkError;
         }
@@ -205,20 +205,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // ユーザー情報を取得
         await getUser();
-      } catch (error) {
+      } catch (error: any) {
         console.error("Login error:", error);
         console.error("Error details:", {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-          cause: error.cause,
+          message: error?.message,
+          stack: error?.stack,
+          name: error?.name,
+          cause: error?.cause,
         });
-        if (error.response) {
+        if (error?.response) {
           console.error("Response details:", {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            headers: error.response.headers,
-            url: error.response.url,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            headers: error.response?.headers,
+            url: error.response?.url,
           });
         }
         throw error;
@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.message || "Signup failed");
+          throw new Error((error as any).message || "Signup failed");
         }
 
         const data = await response.json();

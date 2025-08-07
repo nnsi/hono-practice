@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
-import { useTaskEdit } from "../../hooks/useTaskEdit";
+import { useDeleteTask, useUpdateTask } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 
 interface TaskEditDialogProps {
@@ -29,7 +29,7 @@ interface TaskEditDialogProps {
     startDate: string | null;
     dueDate: string | null;
     doneDate: string | null;
-    archivedAt: string | null;
+    archivedAt: string | Date | null;
   };
   onSuccess: () => void;
 }
@@ -47,7 +47,8 @@ export function TaskEditDialog({
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
 
-  const { updateTask, deleteTask, isUpdating, isDeleting } = useTaskEdit();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
 
   useEffect(() => {
     if (task) {
@@ -62,7 +63,7 @@ export function TaskEditDialog({
     if (!title.trim()) return;
 
     try {
-      await updateTask({
+      await updateTask.mutateAsync({
         id: task.id,
         title: title.trim(),
         memo: memo.trim() || null,
@@ -87,7 +88,7 @@ export function TaskEditDialog({
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteTask(task.id);
+            await deleteTask.mutateAsync(task.id);
             onSuccess();
           } catch (error) {
             console.error("Failed to delete task:", error);
@@ -193,7 +194,7 @@ export function TaskEditDialog({
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={handleDelete}
-              disabled={isDeleting}
+              disabled={deleteTask.isPending}
             >
               <Ionicons name="trash-outline" size={20} color="#EF4444" />
               <Text style={styles.deleteButtonText}>タスクを削除</Text>
@@ -208,10 +209,11 @@ export function TaskEditDialog({
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                (!title.trim() || isUpdating) && styles.submitButtonDisabled,
+                (!title.trim() || updateTask.isPending) &&
+                  styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
-              disabled={!title.trim() || isUpdating}
+              disabled={!title.trim() || updateTask.isPending}
             >
               <Text style={styles.submitButtonText}>更新</Text>
             </TouchableOpacity>

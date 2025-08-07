@@ -12,6 +12,55 @@ import { useDailyTaskActions } from "../useDailyTaskActions";
 // モックの設定
 vi.mock("@frontend/hooks/api/useTasks");
 
+// apiClientのモック
+vi.mock("@frontend/utils/apiClient", () => ({
+  apiClient: {
+    users: {
+      tasks: {
+        ":id": {
+          $put: vi.fn(),
+          $delete: vi.fn(),
+        },
+      },
+    },
+  },
+}));
+
+// createUseDailyTaskActionsのモック
+vi.mock("@packages/frontend-shared/hooks/feature", () => {
+  const { useState } = require("react");
+
+  return {
+    createUseDailyTaskActions: vi.fn(() => {
+      return (date: Date) => {
+        const [createDialogOpen, setCreateDialogOpen] = useState(false);
+        const updateTaskMock = useSyncedTask.useUpdateTask();
+        const deleteTaskMock = useSyncedTask.useDeleteTask();
+
+        return {
+          createDialogOpen,
+          setCreateDialogOpen,
+          updateTask: updateTaskMock,
+          deleteTask: deleteTaskMock,
+          handleToggleTaskDone: (task: GetTaskResponse) => {
+            const doneDate = task.doneDate
+              ? null
+              : date.toISOString().split("T")[0];
+
+            updateTaskMock.mutate({
+              id: task.id,
+              data: { doneDate },
+            });
+          },
+          handleDeleteTask: (task: GetTaskResponse) => {
+            deleteTaskMock.mutate(task.id);
+          },
+        };
+      };
+    }),
+  };
+});
+
 describe("useDailyTaskActions", () => {
   let queryClient: QueryClient;
   const mockUpdateTask = vi.fn();

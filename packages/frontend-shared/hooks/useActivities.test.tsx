@@ -61,10 +61,10 @@ describe("createUseActivities", () => {
       json: vi.fn().mockResolvedValue(mockActivities),
     });
 
-    const { result } = renderHook(
-      () => createUseActivities({ apiClient: mockApiClient }),
-      { wrapper: createWrapper() },
-    );
+    const useActivities = createUseActivities({ apiClient: mockApiClient });
+    const { result } = renderHook(() => useActivities(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -140,10 +140,10 @@ describe("createUseActivities", () => {
 
     const testDate = new Date("2024-01-15");
 
-    const { result } = renderHook(
-      () => createUseActivities({ apiClient: mockApiClient, date: testDate }),
-      { wrapper: createWrapper() },
-    );
+    const useActivities = createUseActivities({ apiClient: mockApiClient });
+    const { result } = renderHook(() => useActivities(testDate), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -166,10 +166,10 @@ describe("createUseActivities", () => {
       json: vi.fn().mockResolvedValue({ invalid: "data" }),
     });
 
-    const { result } = renderHook(
-      () => createUseActivities({ apiClient: mockApiClient }),
-      { wrapper: createWrapper() },
-    );
+    const useActivities = createUseActivities({ apiClient: mockApiClient });
+    const { result } = renderHook(() => useActivities(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -200,10 +200,10 @@ describe("createUseActivities", () => {
 
     const testDate = new Date("2024-01-15");
 
-    const { result } = renderHook(
-      () => createUseActivities({ apiClient: mockApiClient, date: testDate }),
-      { wrapper: createWrapper() },
-    );
+    const useActivities = createUseActivities({ apiClient: mockApiClient });
+    const { result } = renderHook(() => useActivities(testDate), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

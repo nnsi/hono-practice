@@ -196,19 +196,479 @@ eas build --platform android --profile production
 - アセットの最適化
 - コード分割（検討中）
 
-## 今後の計画
+## コンポーネントの作り方
 
-### 機能拡張
-- プッシュ通知
-- ウィジェット対応
-- Apple Watch / Wear OS対応
+### モバイル版コンポーネントの実装原則
 
-### UX改善
-- ダークモード対応
-- アニメーション強化
-- ジェスチャー操作の充実
+Web版と同様に、**コンポーネントは純粋なプレゼンテーション層**、**カスタムフックにすべてのロジックを集約**する設計を採用しています。
 
-### 技術的改善
-- React Native New Architecture対応
-- Hermes エンジン最適化
-- バンドルサイズの削減
+#### React NativeとWebの違い
+
+1. **UIコンポーネント**
+   - Web: `<div>`, `<button>`, `<span>`など
+   - Mobile: `<View>`, `<TouchableOpacity>`, `<Text>`など
+
+2. **スタイリング**
+   - Web: Tailwind CSS（className）
+   - Mobile: NativeWind（className）+ StyleSheet
+
+3. **イベント**
+   - Web: `onClick`, `onChange`
+   - Mobile: `onPress`, `onChangeText`
+
+4. **ナビゲーション**
+   - Web: Tanstack Router
+   - Mobile: Expo Router
+
+### 新規コンポーネント作成の手順
+
+#### Step 1: カスタムフックの作成
+
+`apps/mobile/src/hooks/feature/`にカスタムフックを作成します。可能な限り`packages/frontend-shared`の共通ロジックを活用します。
+
+```typescript
+// apps/mobile/src/hooks/feature/use{Feature}Page.ts
+import { createUse{Feature}Page } from '@frontend-shared/hooks/feature/use{Feature}Page';
+import { useQueryClient } from '@tanstack/react-query';
+import { useGlobalDate } from '../useGlobalDate';
+import { apiClient } from '@mobile/utils/apiClient';
+
+export const use{Feature}Page = () => {
+  const { selectedDate, setSelectedDate } = useGlobalDate();
+  const queryClient = useQueryClient();
+  
+  // 共通ロジックを利用
+  const sharedLogic = createUse{Feature}Page({
+    dateStore: {
+      date: selectedDate,
+      setDate: setSelectedDate,
+    },
+    api: {
+      getData: async () => {
+        const response = await apiClient.feature.$get();
+        return response.data;
+      },
+    },
+    cache: {
+      invalidateCache: async () => {
+        await queryClient.invalidateQueries({ queryKey: ['feature'] });
+      },
+    },
+  });
+  
+  // モバイル固有のロジック
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await sharedLogic.invalidateCache();
+    setRefreshing(false);
+  };
+  
+  return {
+    ...sharedLogic,
+    refreshing,
+    handleRefresh,
+  };
+};
+```
+
+#### Step 2: UIコンポーネントの作成
+
+`apps/mobile/src/components/{feature}/`にコンポーネントを作成します。
+
+```typescript
+// apps/mobile/src/components/{feature}/{Feature}Page.tsx
+import React from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { use{Feature}Page } from '@mobile/hooks/feature/use{Feature}Page';
+
+export function {Feature}Page() {
+  const {
+    data,
+    isLoading,
+    refreshing,
+    handleRefresh,
+    handleItemPress,
+  } = use{Feature}Page();
+  
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </View>
+    );
+  }
+  
+  return (
+    <View className="flex-1 bg-gray-50">
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => handleItemPress(item)}
+            className="bg-white mx-4 my-2 p-4 rounded-lg shadow-sm"
+          >
+            <Text className="text-lg font-semibold">{item.title}</Text>
+            <Text className="text-gray-600 mt-1">{item.description}</Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
+```
+
+### コンポーネントパターン集
+
+#### 1. カードコンポーネント
+
+```typescript
+// apps/mobile/src/components/activity/ActivityCard.tsx
+import { TouchableOpacity, View, Text } from 'react-native';
+import { ActivityIcon } from '../common/ActivityIcon';
+
+type ActivityCardProps = {
+  activity: Activity;
+  onPress: () => void;
+  onLongPress?: () => void;
+  isDone?: boolean;
+};
+
+export function ActivityCard({
+  activity,
+  onPress,
+  onLongPress,
+  isDone = false,
+}: ActivityCardProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onLongPress={onLongPress}
+      className={`bg-white rounded-lg p-4 shadow-sm ${
+        isDone ? 'bg-green-50' : ''
+      }`}
+      activeOpacity={0.7}
+    >
+      <View className="items-center">
+        <ActivityIcon activity={activity} size="large" />
+        <Text className="mt-2 text-center text-base font-medium">
+          {activity.name}
+        </Text>
+        {activity.quantity && (
+          <Text className="text-sm text-gray-500 mt-1">
+            {activity.quantity} {activity.unit}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+```
+
+#### 2. ダイアログ/モーダルコンポーネント
+
+```typescript
+// apps/mobile/src/components/{feature}/{Feature}Dialog.tsx
+import { Modal, View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { use{Feature}Dialog } from '@mobile/hooks/feature/use{Feature}Dialog';
+
+type {Feature}DialogProps = {
+  visible: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+};
+
+export function {Feature}Dialog({
+  visible,
+  onClose,
+  onSuccess,
+}: {Feature}DialogProps) {
+  const { formData, handleSubmit, handleChange } = use{Feature}Dialog(
+    onClose,
+    onSuccess
+  );
+  
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-end bg-black/50">
+        <View className="bg-white rounded-t-3xl p-6">
+          <Text className="text-xl font-bold mb-4">タイトル</Text>
+          
+          <TextInput
+            value={formData.name}
+            onChangeText={(text) => handleChange('name', text)}
+            placeholder="名前を入力"
+            className="border border-gray-300 rounded-lg p-3 mb-4"
+          />
+          
+          <View className="flex-row justify-end space-x-2">
+            <TouchableOpacity
+              onPress={onClose}
+              className="px-6 py-3 rounded-lg bg-gray-200"
+            >
+              <Text>キャンセル</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={handleSubmit}
+              className="px-6 py-3 rounded-lg bg-blue-500"
+            >
+              <Text className="text-white font-semibold">作成</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+```
+
+#### 3. リストコンポーネント
+
+```typescript
+// apps/mobile/src/components/tasks/TaskList.tsx
+import { FlatList, View, Text } from 'react-native';
+import { TaskItem } from './TaskItem';
+import { EmptyState } from './EmptyState';
+
+type TaskListProps = {
+  tasks: Task[];
+  onTaskPress: (task: Task) => void;
+  onTaskComplete: (task: Task) => void;
+  isLoading?: boolean;
+};
+
+export function TaskList({
+  tasks,
+  onTaskPress,
+  onTaskComplete,
+  isLoading = false,
+}: TaskListProps) {
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+  
+  if (tasks.length === 0) {
+    return <EmptyState message="タスクがありません" />;
+  }
+  
+  return (
+    <FlatList
+      data={tasks}
+      keyExtractor={(item) => item.id}
+      ItemSeparatorComponent={() => <View className="h-2" />}
+      contentContainerStyle={{ padding: 16 }}
+      renderItem={({ item }) => (
+        <TaskItem
+          task={item}
+          onPress={() => onTaskPress(item)}
+          onComplete={() => onTaskComplete(item)}
+        />
+      )}
+    />
+  );
+}
+```
+
+### モバイル固有の実装パターン
+
+#### 1. Pull to Refreshの実装
+
+```typescript
+export function DailyPage() {
+  const { data, refreshing, handleRefresh } = useDailyPage();
+  
+  return (
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          colors={['#3B82F6']} // Android
+          tintColor="#3B82F6"  // iOS
+        />
+      }
+    >
+      {/* コンテンツ */}
+    </ScrollView>
+  );
+}
+```
+
+#### 2. タブ切り替えの実装
+
+```typescript
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+
+const Tab = createMaterialTopTabNavigator();
+
+export function StatsScreen() {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Daily" component={DailyStats} />
+      <Tab.Screen name="Weekly" component={WeeklyStats} />
+      <Tab.Screen name="Monthly" component={MonthlyStats} />
+    </Tab.Navigator>
+  );
+}
+```
+
+#### 3. ジェスチャー操作
+
+```typescript
+import { Swipeable } from 'react-native-gesture-handler';
+
+export function SwipeableTaskItem({ task, onDelete }) {
+  const renderRightActions = () => (
+    <TouchableOpacity
+      onPress={() => onDelete(task)}
+      className="bg-red-500 justify-center px-6"
+    >
+      <Text className="text-white">削除</Text>
+    </TouchableOpacity>
+  );
+  
+  return (
+    <Swipeable renderRightActions={renderRightActions}>
+      <View className="bg-white p-4">
+        <Text>{task.title}</Text>
+      </View>
+    </Swipeable>
+  );
+}
+```
+
+### プラットフォーム別の処理
+
+```typescript
+import { Platform } from 'react-native';
+
+export function PlatformSpecificComponent() {
+  return (
+    <View
+      style={{
+        paddingTop: Platform.OS === 'ios' ? 20 : 0,
+        elevation: Platform.OS === 'android' ? 4 : 0,
+        shadowOpacity: Platform.OS === 'ios' ? 0.2 : 0,
+      }}
+    >
+      <Text>
+        {Platform.select({
+          ios: 'iOS向けテキスト',
+          android: 'Android向けテキスト',
+        })}
+      </Text>
+    </View>
+  );
+}
+```
+
+### パフォーマンス最適化
+
+#### 1. FlatListの最適化
+
+```typescript
+<FlatList
+  data={largeDataSet}
+  keyExtractor={(item) => item.id}
+  // パフォーマンス最適化
+  removeClippedSubviews={true}
+  maxToRenderPerBatch={10}
+  updateCellsBatchingPeriod={50}
+  windowSize={10}
+  initialNumToRender={10}
+  // メモリ最適化
+  getItemLayout={(data, index) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  })}
+/>
+```
+
+#### 2. 画像の最適化
+
+```typescript
+import { Image } from 'expo-image';
+
+export function OptimizedImage({ source, style }) {
+  return (
+    <Image
+      source={source}
+      style={style}
+      placeholder={blurhash}
+      contentFit="cover"
+      transition={200}
+      cachePolicy="memory-disk" // キャッシュ戦略
+    />
+  );
+}
+```
+
+### テスト戦略
+
+#### カスタムフックのテスト
+
+```typescript
+// apps/mobile/src/hooks/feature/test/use{Feature}Page.test.tsx
+import { renderHook, act } from '@testing-library/react-native';
+import { use{Feature}Page } from '../use{Feature}Page';
+
+describe('use{Feature}Page', () => {
+  it('should handle refresh', async () => {
+    const { result } = renderHook(() => use{Feature}Page());
+    
+    expect(result.current.refreshing).toBe(false);
+    
+    await act(async () => {
+      await result.current.handleRefresh();
+    });
+    
+    expect(result.current.data).toBeDefined();
+  });
+});
+```
+
+### ファイル構成
+
+```
+apps/mobile/
+├── app/                          # Expo Routerのルーティング
+│   └── (app)/
+│       └── (tabs)/
+│           └── feature.tsx      # 画面ファイル
+├── src/
+│   ├── components/
+│   │   └── feature/
+│   │       ├── FeaturePage.tsx  # ページコンポーネント
+│   │       ├── FeatureCard.tsx  # カードコンポーネント
+│   │       └── FeatureDialog.tsx # ダイアログコンポーネント
+│   └── hooks/
+│       └── feature/
+│           ├── useFeaturePage.ts
+│           └── useFeatureDialog.ts
+```

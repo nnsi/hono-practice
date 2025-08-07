@@ -26,6 +26,12 @@ export * from "./goals";
 // Feature Hooks
 export * from "./hooks/feature";
 
+// Export AppSettings types
+export {
+  type AppSettings,
+  defaultSettings,
+} from "./hooks/feature/useAppSettings";
+
 // API Hooks (Note: These are not exported from the main index to avoid conflicts with sync hooks)
 // Import them directly from their paths when needed:
 // import { createUseActivityLogs } from "@packages/frontend-shared/hooks/useActivityLogs"

@@ -556,6 +556,427 @@ npm run test-once -- useLogin.test.tsx
 - ユーザー操作のシミュレーション
 - APIモックによるE2Eテスト
 
+## コンポーネントの作り方
+
+### 新規コンポーネント作成の手順
+
+#### 1. コンポーネントとフックの作成
+
+新しい機能を実装する際は、以下の手順に従います：
+
+##### Step 1: カスタムフックの作成
+
+まず、`apps/frontend/src/hooks/feature/`ディレクトリにカスタムフックを作成します。
+
+```typescript
+// apps/frontend/src/hooks/feature/{feature}/use{Feature}Page.ts
+export const use{Feature}Page = () => {
+  // 1. 状態管理
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  
+  // 2. グローバル状態の取得
+  const { selectedDate } = useGlobalDate();
+  const queryClient = useQueryClient();
+  
+  // 3. API通信（packages/frontend-sharedのフックを使用）
+  const { data, isLoading } = useQuery({
+    queryKey: ['feature', selectedDate],
+    queryFn: () => apiClient.feature.$get({ query: { date: selectedDate } })
+  });
+  
+  // 4. ミューテーション
+  const createMutation = useMutation({
+    mutationFn: (data: CreateRequest) => apiClient.feature.$post({ json: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feature'] });
+      setDialogOpen(false);
+    }
+  });
+  
+  // 5. イベントハンドラー
+  const handleItemClick = (item: Item) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
+  
+  const handleSubmit = async (data: FormData) => {
+    await createMutation.mutateAsync(data);
+  };
+  
+  // 6. 公開インターフェース
+  return {
+    // State
+    dialogOpen,
+    selectedItem,
+    // Data
+    data,
+    isLoading,
+    // Handlers
+    handleItemClick,
+    handleSubmit,
+    setDialogOpen,
+  };
+};
+```
+
+##### Step 2: 共通ロジックの抽出（必要な場合）
+
+Web版とモバイル版で共通化できるロジックは`packages/frontend-shared/hooks/feature/`に配置します。
+
+```typescript
+// packages/frontend-shared/hooks/feature/use{Feature}Page.ts
+export const createUse{Feature}Page = (deps: {
+  dateStore: { date: Date; setDate: (date: Date) => void };
+  api: { getData: () => Promise<Data[]> };
+  cache: { invalidateCache: () => Promise<void> };
+}) => {
+  const { date, setDate } = deps.dateStore;
+  const { getData } = deps.api;
+  
+  // 共通のビジネスロジック
+  const processData = (data: Data[]) => {
+    return data.filter(item => item.date === date);
+  };
+  
+  return {
+    date,
+    setDate,
+    processData,
+    // その他の共通ロジック
+  };
+};
+```
+
+##### Step 3: UIコンポーネントの作成
+
+`apps/frontend/src/components/{feature}/`ディレクトリにコンポーネントを作成します。
+
+```typescript
+// apps/frontend/src/components/{feature}/{Feature}Page.tsx
+import { use{Feature}Page } from '@frontend/hooks/feature/{feature}/use{Feature}Page';
+
+export const {Feature}Page: React.FC = () => {
+  // すべてのロジックをフックから取得
+  const {
+    dialogOpen,
+    selectedItem,
+    data,
+    isLoading,
+    handleItemClick,
+    handleSubmit,
+    setDialogOpen,
+  } = use{Feature}Page();
+  
+  // UIの表示のみを担当
+  if (isLoading) {
+    return <div>読み込み中...</div>;
+  }
+  
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">タイトル</h1>
+      
+      <div className="grid grid-cols-2 gap-4">
+        {data?.map((item) => (
+          <Card
+            key={item.id}
+            onClick={() => handleItemClick(item)}
+            className="cursor-pointer hover:shadow-md"
+          >
+            <CardContent>{item.name}</CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          {/* ダイアログの内容 */}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+```
+
+#### 2. コンポーネントの構成パターン
+
+##### 基本的なページコンポーネント
+
+```typescript
+// 1. インポート - カスタムフックとUIコンポーネントのみ
+import { use{Feature} } from '@frontend/hooks/feature/{feature}/use{Feature}';
+import { Card, Button, Dialog } from '@frontend/components/ui';
+
+// 2. 型定義（必要な場合）
+type {Feature}PageProps = {
+  // プロップスがある場合のみ
+};
+
+// 3. コンポーネント実装
+export const {Feature}Page: React.FC<{Feature}PageProps> = () => {
+  // 4. フックからすべてを取得
+  const { /* destructured values */ } = use{Feature}();
+  
+  // 5. UIレンダリング（条件分岐はシンプルに）
+  return (
+    <div>
+      {/* UIの実装 */}
+    </div>
+  );
+};
+```
+
+##### ダイアログ/モーダルコンポーネント
+
+```typescript
+type {Feature}DialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+};
+
+export const {Feature}Dialog: React.FC<{Feature}DialogProps> = ({
+  open,
+  onOpenChange,
+  onSuccess,
+}) => {
+  // フックでロジックを管理
+  const { form, handleSubmit } = use{Feature}Dialog(onOpenChange, onSuccess);
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <Form {...form}>
+          {/* フォームの内容 */}
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+```
+
+##### リストアイテムコンポーネント
+
+```typescript
+type {Feature}CardProps = {
+  item: {Feature}Item;
+  onClick: () => void;
+  onDelete?: () => void;
+};
+
+export const {Feature}Card: React.FC<{Feature}CardProps> = ({
+  item,
+  onClick,
+  onDelete,
+}) => {
+  // UIのみ、ロジックなし
+  return (
+    <Card onClick={onClick} className="cursor-pointer">
+      <CardContent>
+        <h3>{item.title}</h3>
+        <p>{item.description}</p>
+      </CardContent>
+      {onDelete && (
+        <Button onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}>
+          削除
+        </Button>
+      )}
+    </Card>
+  );
+};
+```
+
+#### 3. Web版とモバイル版の実装
+
+##### Web版（React + Tailwind CSS）
+
+```typescript
+// apps/frontend/src/components/activity/ActivityCard.tsx
+export function ActivityCard({
+  activity,
+  onClick,
+  isDone,
+}: ActivityCardProps) {
+  return (
+    <Card
+      className={`cursor-pointer hover:bg-gray-50 ${
+        isDone ? "bg-green-50" : ""
+      }`}
+      onClick={onClick}
+    >
+      <CardContent className="p-4">
+        <ActivityIcon activity={activity} size="large" />
+        <p className="mt-2 text-center">{activity.name}</p>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+##### モバイル版（React Native + NativeWind）
+
+```typescript
+// apps/mobile/src/components/activity/ActivityCard.tsx
+export function ActivityCard({
+  activity,
+  onPress,
+  isDone,
+}: ActivityCardProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`bg-white rounded-lg p-4 ${
+        isDone ? "bg-green-50" : ""
+      }`}
+    >
+      <View className="items-center">
+        <ActivityIcon activity={activity} size="large" />
+        <Text className="mt-2 text-center">{activity.name}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+```
+
+#### 4. コンポーネント設計のベストプラクティス
+
+##### DO: 推奨パターン
+
+1. **単一責任の原則**
+   - コンポーネント: UI表示のみ
+   - カスタムフック: ロジックのみ
+
+2. **Props最小化**
+   - 必要最小限のPropsのみ受け取る
+   - コールバックは具体的な名前（onDelete, onSuccess）
+
+3. **フック名の一貫性**
+   - ページ: `use{Feature}Page`
+   - ダイアログ: `use{Feature}Dialog`
+   - アクション: `use{Feature}Actions`
+
+4. **エラーハンドリング**
+   - フック内でtry-catchを使用
+   - エラー状態をUIに伝達
+
+5. **型安全性**
+   - DTOの型を使用（@dtos/から）
+   - 厳密な型定義
+
+##### DON'T: 避けるべきパターン
+
+1. **コンポーネント内でのAPI呼び出し**
+   ```typescript
+   // ❌ Bad
+   const MyComponent = () => {
+     useEffect(() => {
+       fetch('/api/data')...
+     }, []);
+   };
+   
+   // ✅ Good
+   const MyComponent = () => {
+     const { data } = useMyData();
+   };
+   ```
+
+2. **コンポーネント内での複雑な状態管理**
+   ```typescript
+   // ❌ Bad
+   const MyComponent = () => {
+     const [state1, setState1] = useState();
+     const [state2, setState2] = useState();
+     // 複雑なロジック...
+   };
+   
+   // ✅ Good
+   const MyComponent = () => {
+     const { state, handlers } = useMyFeature();
+   };
+   ```
+
+3. **直接的なDOM操作**
+   ```typescript
+   // ❌ Bad
+   document.getElementById('my-element').style.display = 'none';
+   
+   // ✅ Good
+   const [isVisible, setIsVisible] = useState(true);
+   ```
+
+#### 5. テストの実装
+
+##### カスタムフックのテスト
+
+```typescript
+// apps/frontend/src/hooks/feature/{feature}/test/use{Feature}Page.test.tsx
+describe('use{Feature}Page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  
+  it('should fetch data on mount', async () => {
+    const { result } = renderHook(() => use{Feature}Page());
+    
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+  });
+  
+  it('should handle item click', async () => {
+    const { result } = renderHook(() => use{Feature}Page());
+    
+    act(() => {
+      result.current.handleItemClick(mockItem);
+    });
+    
+    expect(result.current.selectedItem).toBe(mockItem);
+    expect(result.current.dialogOpen).toBe(true);
+  });
+});
+```
+
+##### コンポーネントのテスト（必要な場合のみ）
+
+```typescript
+// 基本的にコンポーネントテストは不要だが、
+// 複雑なUI相互作用がある場合のみ実装
+describe('{Feature}Page', () => {
+  it('should render without errors', () => {
+    render(<{Feature}Page />);
+    expect(screen.getByText('タイトル')).toBeInTheDocument();
+  });
+});
+```
+
+#### 6. ファイル構成例
+
+```
+apps/frontend/src/
+├── components/
+│   └── feature/
+│       ├── FeaturePage.tsx         # メインページ
+│       ├── FeatureCard.tsx         # リストアイテム
+│       ├── FeatureDialog.tsx       # 作成/編集ダイアログ
+│       └── index.ts                 # エクスポート
+├── hooks/
+│   └── feature/
+│       └── feature/
+│           ├── useFeaturePage.ts   # ページ全体のロジック
+│           ├── useFeatureDialog.ts # ダイアログのロジック
+│           └── test/
+│               └── useFeaturePage.test.tsx
+
+packages/frontend-shared/
+└── hooks/
+    └── feature/
+        └── useFeaturePage.ts       # 共通ロジック
+```
+
 ## セキュリティ考慮事項
 
 ### XSS対策
@@ -578,23 +999,3 @@ npm run test-once -- useLogin.test.tsx
 npm run build-client     # 本番ビルド
 npm run build-client-stg # ステージングビルド
 ```
-
-### ホスティング
-- Cloudflare Pages
-- 自動デプロイ（GitHub連携）
-- プレビューデプロイ機能
-
-## 今後の計画
-
-### PWA対応
-- Service Worker実装
-- オフライン対応
-- プッシュ通知
-
-### 国際化（i18n）
-- 多言語対応
-- 日付・数値フォーマット
-
-### アクセシビリティ向上
-- WAI-ARIA対応強化
-- キーボードナビゲーション改善

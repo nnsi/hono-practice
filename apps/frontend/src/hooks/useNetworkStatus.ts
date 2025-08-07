@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import {
   createWebNetworkAdapter,
   createWebStorageAdapter,
-} from "@packages/frontend-shared/adapters/web";
+} from "@packages/frontend-shared/adapters";
 import {
   createUseNetworkStatus,
   getSimulatedOffline as getSharedSimulatedOffline,

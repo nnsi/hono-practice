@@ -1,4 +1,6 @@
-import { useCreateGoal } from "@frontend/hooks/api";
+import type React from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,8 +9,27 @@ import { useToast } from "@components/ui";
 import { useNewGoalDialog } from "../useNewGoalDialog";
 
 // モックの設定
-vi.mock("@frontend/hooks/api", () => ({
-  useCreateGoal: vi.fn(),
+let mockCreateGoal = { mutate: vi.fn(), isPending: false };
+
+vi.mock("@packages/frontend-shared/hooks", () => ({
+  createUseCreateGoal: vi.fn(() => mockCreateGoal),
+}));
+
+// react-hook-formのモック
+let mockForm = {
+  watch: vi.fn(() => ""),
+  setValue: vi.fn(),
+  getValues: vi.fn(() => ({
+    activityId: "",
+    dailyTargetQuantity: 1,
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: "",
+  })),
+  reset: vi.fn(),
+};
+
+vi.mock("react-hook-form", () => ({
+  useForm: vi.fn(() => mockForm),
 }));
 
 vi.mock("@components/ui", () => ({
@@ -18,6 +39,12 @@ vi.mock("@components/ui", () => ({
 }));
 
 describe("useNewGoalDialog", () => {
+  let queryClient: QueryClient;
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
   const mockOnOpenChange = vi.fn();
   const mockOnSuccess = vi.fn();
   const mockActivities = [
@@ -43,14 +70,30 @@ describe("useNewGoalDialog", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateGoal = { mutate: vi.fn(), isPending: false };
+    mockForm = {
+      watch: vi.fn(() => ""),
+      setValue: vi.fn(),
+      getValues: vi.fn(() => ({
+        activityId: "",
+        dailyTargetQuantity: 1,
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: "",
+      })),
+      reset: vi.fn(),
+    };
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
   });
 
   it("初期状態が正しく設定される", () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     const formValues = result.current.form.getValues();
@@ -60,11 +103,12 @@ describe("useNewGoalDialog", () => {
   });
 
   it("活動が選択されたときに単位が更新される", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
+    // mockForm.watchが"activity-1"を返すように設定
+    mockForm.watch = vi.fn(() => "activity-1");
 
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     act(() => {
@@ -78,13 +122,12 @@ describe("useNewGoalDialog", () => {
   });
 
   it("handleSubmitが正常に動作する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
     const mockToast = vi.fn();
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
     vi.mocked(useToast).mockReturnValue({ toast: mockToast } as any);
 
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     const formData = {
@@ -113,14 +156,13 @@ describe("useNewGoalDialog", () => {
   });
 
   it("目標作成成功時の処理が正しく動作する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
     const mockToast = vi.fn();
     const mockReset = vi.fn();
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
     vi.mocked(useToast).mockReturnValue({ toast: mockToast } as any);
 
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     // form.resetをモック
@@ -153,13 +195,12 @@ describe("useNewGoalDialog", () => {
   });
 
   it("目標作成失敗時の処理が正しく動作する", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
     const mockToast = vi.fn();
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
     vi.mocked(useToast).mockReturnValue({ toast: mockToast } as any);
 
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     const formData = {
@@ -187,11 +228,9 @@ describe("useNewGoalDialog", () => {
   });
 
   it("endDateが空の場合undefinedとして送信される", async () => {
-    const mockCreateGoal = { mutate: vi.fn(), isPending: false };
-    vi.mocked(useCreateGoal).mockReturnValue(mockCreateGoal as any);
-
-    const { result } = renderHook(() =>
-      useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+    const { result } = renderHook(
+      () => useNewGoalDialog(mockOnOpenChange, mockActivities, mockOnSuccess),
+      { wrapper },
     );
 
     const formData = {

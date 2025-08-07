@@ -1,12 +1,8 @@
 import type React from "react";
 import { useState } from "react";
 
-import {
-  useArchiveTask,
-  useDeleteTask,
-  useUpdateTask,
-} from "@frontend/hooks/api/useTasks";
-import dayjs from "dayjs";
+import { apiClient } from "@frontend/utils/apiClient";
+import { createUseTaskActions } from "@packages/frontend-shared/hooks/feature";
 
 type TaskItem = {
   id: string;
@@ -21,58 +17,51 @@ type TaskItem = {
   updatedAt: Date | null;
 };
 
+// 共通フックをインスタンス化
+const useTaskActionsBase = createUseTaskActions({ apiClient });
+
 export const useTaskActions = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
-  // 同期対応のフックを使用
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
-  const archiveTask = useArchiveTask();
+  // 共通のロジックを使用
+  const {
+    selectedTask,
+    handleToggleTaskDone,
+    handleDeleteTask: handleDeleteTaskBase,
+    handleArchiveTask: handleArchiveTaskBase,
+    handleSelectTask,
+    formatDate,
+    deleteTaskPending,
+    archiveTaskPending,
+  } = useTaskActionsBase();
 
-  // タスクの完了/未完了を切り替えるハンドラ
-  const handleToggleTaskDone = (task: TaskItem) => {
-    updateTask.mutate({
-      id: task.id,
-      data: {
-        doneDate: task.doneDate ? null : dayjs().format("YYYY-MM-DD"),
-      },
-    });
-  };
-
-  // タスクを削除するハンドラ
+  // Web固有：タスクを削除するハンドラ（イベント処理を含む）
   const handleDeleteTask = (e: React.MouseEvent, task: TaskItem) => {
     e.stopPropagation();
-    deleteTask.mutate(task.id);
+    handleDeleteTaskBase(task);
   };
 
-  // タスクをアーカイブするハンドラ
+  // Web固有：タスクをアーカイブするハンドラ（イベント処理を含む）
   const handleArchiveTask = (e: React.MouseEvent, task: TaskItem) => {
     e.stopPropagation();
-    archiveTask.mutate({ id: task.id, date: task.startDate || undefined });
+    handleArchiveTaskBase(task);
   };
 
-  // タスク編集の開始
+  // Web固有：タスク編集の開始
   const handleStartEdit = (task: TaskItem) => {
-    setSelectedTask(task);
+    handleSelectTask(task);
     setEditDialogOpen(true);
   };
 
-  // ダイアログクローズ時の処理
+  // Web固有：ダイアログクローズ時の処理
   const handleEditDialogClose = () => {
     setEditDialogOpen(false);
-    setSelectedTask(null);
-  };
-
-  // 日付のフォーマット
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    return dayjs(dateStr).format("MM/DD");
+    handleSelectTask(null);
   };
 
   return {
-    // Dialog states
+    // Dialog states (Web固有)
     createDialogOpen,
     setCreateDialogOpen,
     editDialogOpen,
@@ -90,7 +79,7 @@ export const useTaskActions = () => {
     formatDate,
 
     // Mutation states
-    deleteTaskPending: deleteTask.isPending,
-    archiveTaskPending: archiveTask.isPending,
+    deleteTaskPending,
+    archiveTaskPending,
   };
 };

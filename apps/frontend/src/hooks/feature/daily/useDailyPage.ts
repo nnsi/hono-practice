@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 
 // 新しい共通化されたフックを使用する実装
 export const useDailyPage = () => {
-  const { date, setDate } = useGlobalDate();
+  const { selectedDate: date, setSelectedDate: setDate } = useGlobalDate();
 
   // API hooks
   const activityLogsQuery = useActivityLogs(date);

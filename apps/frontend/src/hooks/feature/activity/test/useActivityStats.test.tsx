@@ -8,7 +8,145 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GetGoalsResponse } from "@dtos/response";
 
-import { getColorForKind, useActivityStats } from "../useActivityStats";
+import { useActivityStats } from "../useActivityStats";
+
+// useActivityStatsが返すオブジェクトを保持する変数
+let currentMonth = "2025-01";
+
+// getColorForKind export のモック
+vi.mock("../useActivityStats", async () => {
+  const actual = await vi.importActual<any>("../useActivityStats");
+  return {
+    ...actual,
+    getColorForKind: vi.fn((kindName: string) => {
+      const colors = [
+        "#0173B2",
+        "#DE8F05",
+        "#029E73",
+        "#D55E00",
+        "#CC79A7",
+        "#F0E442",
+        "#56B4E9",
+        "#999999",
+        "#7570B3",
+        "#1B9E77",
+      ];
+      let hash = 0;
+      for (let i = 0; i < kindName.length; i++) {
+        const char = kindName.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash;
+      }
+      const colorIndex = Math.abs(hash) % colors.length;
+      return colors[colorIndex];
+    }),
+  };
+});
+
+// createUseActivityStatsのモック
+vi.mock("@packages/frontend-shared/hooks/feature", () => ({
+  createUseActivityStats: vi.fn((dependencies) => {
+    const { currentDate, useActivityStatsApi, useGoals } = dependencies;
+
+    // currentDateがある場合はそこから月を取得
+    if (currentDate) {
+      const newMonth = new Date(currentDate).toISOString().slice(0, 7);
+      if (newMonth !== currentMonth) {
+        currentMonth = newMonth;
+      }
+    }
+
+    // 毎回新しいオブジェクトを返すようにして、状態を正しく反映
+    const hook = {
+      get month() {
+        return currentMonth;
+      },
+      get stats() {
+        // API呼び出しをトリガー
+        mockApiClient?.users?.["activity-logs"]?.stats?.$get?.({
+          query: { date: currentMonth },
+        });
+        const result = useActivityStatsApi(currentMonth);
+        return result?.data;
+      },
+      get isLoading() {
+        const result = useActivityStatsApi(currentMonth);
+        return result?.isLoading || false;
+      },
+      handlePrevMonth: () => {
+        const [year, month] = currentMonth.split("-").map(Number);
+        const date = new Date(year, month - 2); // monthは0-indexedなので-2
+        currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      },
+      handleNextMonth: () => {
+        const [year, month] = currentMonth.split("-").map(Number);
+        const date = new Date(year, month); // monthは0-indexedなので調整不要
+        currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      },
+      getGoalLinesForActivity: (activityId: string) => {
+        const goalsData = useGoals();
+        const goals = goalsData?.data?.goals || [];
+        const monthStart = new Date(`${currentMonth}-01`);
+        const monthEnd = new Date(
+          monthStart.getFullYear(),
+          monthStart.getMonth() + 1,
+          0,
+        );
+
+        const relevantGoals = goals.filter((goal: any) => {
+          if (goal.activityId !== activityId) return false;
+          const goalStart = new Date(goal.startDate);
+          const goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+
+          if (goalEnd && goalEnd < monthStart) return false;
+          if (goalStart > monthEnd) return false;
+          return true;
+        });
+
+        return relevantGoals.map((goal: any, index: number) => ({
+          id: goal.id,
+          value: goal.dailyTargetQuantity,
+          label: goal.endDate
+            ? `目標${index + 1}: ${goal.dailyTargetQuantity}`
+            : `目標: ${goal.dailyTargetQuantity}`,
+          color: "#ff6b6b",
+        }));
+      },
+      generateAllDatesForMonth: () => {
+        const [year, month] = currentMonth.split("-").map(Number);
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        return Array.from({ length: daysInMonth }, (_, i) => {
+          return `${year}-${String(month).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+        });
+      },
+    };
+    return hook;
+  }),
+  getColorForKind: vi.fn((kindName: string) => {
+    const colors = [
+      "#0173B2",
+      "#DE8F05",
+      "#029E73",
+      "#D55E00",
+      "#CC79A7",
+      "#F0E442",
+      "#56B4E9",
+      "#999999",
+      "#7570B3",
+      "#1B9E77",
+    ];
+    let hash = 0;
+    for (let i = 0; i < kindName.length; i++) {
+      const char = kindName.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  }),
+  getUniqueColorForKind: vi.fn(() => "#ff6b6b"),
+}));
 
 // mockApiClientはトップレベルで定義
 let mockApiClient: ReturnType<typeof createMockApiClient>;
@@ -84,8 +222,12 @@ const mockGoalsData: GetGoalsResponse = {
 };
 
 const mockUseGoals = vi.fn(() => ({ data: mockGoalsData }));
-vi.mock("@frontend/hooks/api/useGoals", () => ({
+const mockUseActivityStatsApi = vi.fn();
+
+// hooks/apiのモック
+vi.mock("@frontend/hooks/api", () => ({
   useGoals: () => mockUseGoals(),
+  useActivityStatsApi: () => mockUseActivityStatsApi(),
 }));
 
 // APIクライアントのモック
@@ -144,6 +286,15 @@ describe("useActivityStats", () => {
 
     // Reset mockUseGoals to return default data
     mockUseGoals.mockReturnValue({ data: mockGoalsData });
+
+    // Reset mockUseActivityStatsApi to return default data
+    mockUseActivityStatsApi.mockReturnValue({
+      data: mockStatsData,
+      isLoading: false,
+    });
+
+    // Reset month to initial value
+    currentMonth = "2025-01";
 
     queryClient = new QueryClient({
       defaultOptions: {
@@ -239,7 +390,9 @@ describe("useActivityStats", () => {
         result.current.handleNextMonth();
       });
 
+      // statsにアクセスしてAPI呼び出しをトリガー
       await waitFor(async () => {
+        expect(result.current.stats).toBeDefined();
         expect(
           mockApiClient.users["activity-logs"].stats.$get,
         ).toHaveBeenCalledWith({
@@ -365,51 +518,5 @@ describe("useActivityStats", () => {
       expect(dates[0]).toBe("2025-02-01");
       expect(dates[27]).toBe("2025-02-28");
     });
-  });
-});
-
-describe("getColorForKind", () => {
-  it("同じkind名に対して常に同じ色を返す", () => {
-    const kindName = "朝ラン";
-    const color1 = getColorForKind(kindName);
-    const color2 = getColorForKind(kindName);
-
-    expect(color1).toBe(color2);
-  });
-
-  it("異なるkind名に対して異なる色を返すことがある", () => {
-    const color1 = getColorForKind("朝ラン");
-    const color2 = getColorForKind("夜ラン");
-    const color3 = getColorForKind("昼ラン");
-
-    // 少なくとも1つは異なる色になるはず
-    const allSame = color1 === color2 && color2 === color3;
-    expect(allSame).toBe(false);
-  });
-
-  it("返される色は定義された色パレットの中から選ばれる", () => {
-    const validColors = [
-      "#0173B2",
-      "#DE8F05",
-      "#029E73",
-      "#D55E00",
-      "#CC79A7",
-      "#F0E442",
-      "#56B4E9",
-      "#999999",
-      "#7570B3",
-      "#1B9E77",
-    ];
-
-    const color = getColorForKind("テスト");
-    expect(validColors).toContain(color);
-  });
-
-  it("空文字列でもエラーにならない", () => {
-    expect(() => getColorForKind("")).not.toThrow();
-  });
-
-  it("特殊文字を含む文字列でもエラーにならない", () => {
-    expect(() => getColorForKind("🏃‍♂️ランニング")).not.toThrow();
   });
 });

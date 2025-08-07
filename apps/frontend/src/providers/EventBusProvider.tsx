@@ -9,7 +9,7 @@ type EventBusContextValue = {
   eventBus: EventBus;
 };
 
-const EventBusContext = createContext<EventBusContextValue | undefined>(
+export const EventBusContext = createContext<EventBusContextValue | undefined>(
   undefined,
 );
 

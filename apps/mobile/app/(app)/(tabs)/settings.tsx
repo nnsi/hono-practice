@@ -2,9 +2,8 @@ import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import { useAppSettings } from "../../../src/hooks/useAppSettings";
-import { useAuth } from "../../../src/hooks/useAuth";
-import { useSubscription } from "../../../src/hooks/useSubscription";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { useAppSettings, useSubscription } from "../../../src/hooks";
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();

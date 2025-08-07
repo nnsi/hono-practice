@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-
 import { useActivities } from "@frontend/hooks/api";
 import {
   useDeleteActivityLog,
   useUpdateActivityLog,
 } from "@frontend/hooks/api/useActivityLogs";
-import dayjs from "dayjs";
+import { createWebNotificationAdapter } from "@packages/frontend-shared/adapters";
+import { createUseActivityLogEdit } from "@packages/frontend-shared/hooks/feature";
 
 import type { GetActivityLogResponse } from "@dtos/response";
 
@@ -17,9 +16,6 @@ export const useActivityLogEdit = (
   log: GetActivityLogResponse | null,
 ) => {
   const { toast } = useToast();
-  const [memo, setMemo] = useState("");
-  const [quantity, setQuantity] = useState<number | null>(null);
-  const [activityKindId, setActivityKindId] = useState<string>("");
 
   // 同期対応のフック
   const updateActivityLog = useUpdateActivityLog();
@@ -28,111 +24,25 @@ export const useActivityLogEdit = (
   // activities一覧取得
   const { data: activities } = useActivities();
 
-  // 編集対象のactivity情報
-  // オフライン時はlogに含まれるactivity情報を使用
-  const activity =
-    activities?.find((a) => a.id === log?.activity.id) ||
-    (log
-      ? {
-          id: log.activity.id,
-          name: log.activity.name,
-          quantityUnit: log.activity.quantityUnit,
-          emoji: log.activity.emoji,
-          iconType: log.activity.iconType ?? "emoji",
-          kinds: log.activityKind ? [log.activityKind] : [],
-        }
-      : undefined);
+  const notification = createWebNotificationAdapter();
+  if ("setToastCallback" in notification) {
+    notification.setToastCallback(toast);
+  }
 
-  // log変更時に初期値をセット
-  useEffect(() => {
-    if (log) {
-      setMemo(log.memo ?? "");
-      setQuantity(log.quantity ?? null);
-      setActivityKindId(log.activityKind?.id ?? "");
-    }
-  }, [log]);
-
-  // 保存処理
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!log) return;
-
-    try {
-      await updateActivityLog.mutateAsync({
-        id: log.id,
-        data: {
-          memo,
-          quantity: quantity ?? undefined,
-          activityKindId: activityKindId || undefined,
-        },
-        date: dayjs(log.date).format("YYYY-MM-DD"),
-      });
-
-      toast({ title: "保存しました", variant: "default" });
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "保存に失敗しました",
-        variant: "destructive",
-      });
-    }
+  const dependencies = {
+    activities,
+    updateActivityLog: {
+      mutateAsync: async (params: any) => {
+        await updateActivityLog.mutateAsync(params);
+      },
+    },
+    deleteActivityLog: {
+      mutateAsync: async (params: any) => {
+        await deleteActivityLog.mutateAsync(params);
+      },
+    },
+    notification,
   };
 
-  // 削除処理
-  const handleDelete = async () => {
-    if (!log) return;
-
-    try {
-      await deleteActivityLog.mutateAsync({
-        id: log.id,
-        date: dayjs(log.date).format("YYYY-MM-DD"),
-      });
-
-      toast({ title: "削除しました", variant: "default" });
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "削除に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // quantity入力ハンドラ
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuantity(e.target.value ? Number(e.target.value) : null);
-  };
-
-  // activityKind選択ハンドラ
-  const handleActivityKindChange = (value: string) => {
-    setActivityKindId(value);
-  };
-
-  // memo入力ハンドラ
-  const handleMemoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMemo(e.target.value);
-  };
-
-  return {
-    // State
-    memo,
-    quantity,
-    activityKindId,
-
-    // Data
-    activity,
-
-    // Mutations
-    updateActivityLog,
-    deleteActivityLog,
-
-    // Handlers
-    handleSubmit,
-    handleDelete,
-    handleQuantityChange,
-    handleActivityKindChange,
-    handleMemoChange,
-  };
+  return createUseActivityLogEdit(dependencies, _open, onOpenChange, log);
 };

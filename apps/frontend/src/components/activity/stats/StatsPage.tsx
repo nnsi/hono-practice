@@ -174,7 +174,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                       {day.date} ({day.dayOfWeek})
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-right font-medium">
-                      {day.total.toFixed(1)} {quantityUnit}
+                      {day.total} {quantityUnit}
                     </td>
                     {kinds.length > 1 &&
                       kinds.map((kind) => (
@@ -183,7 +183,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                           className="hidden md:table-cell px-4 py-2 whitespace-nowrap text-sm text-right"
                           style={{ color: kindColors[kind.name] }}
                         >
-                          {day.breakdown[kind.name]?.toFixed(1) || "0.0"}
+                          {day.breakdown[kind.name] || 0}
                         </td>
                       ))}
                     {dayIndex === 0 && (
@@ -191,7 +191,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                         className="px-4 py-2 whitespace-nowrap text-sm text-right font-bold bg-gray-50"
                         rowSpan={week.days.length}
                       >
-                        {week.weekTotal.toFixed(1)} {quantityUnit}
+                        {week.weekTotal} {quantityUnit}
                       </td>
                     )}
                   </tr>

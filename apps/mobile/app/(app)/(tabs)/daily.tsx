@@ -18,13 +18,15 @@ import type { GetActivityLogResponse } from "@dtos/response";
 import ActivityDateHeader from "../../../src/components/daily/ActivityDateHeader";
 import ActivityLogEditDialog from "../../../src/components/daily/ActivityLogEditDialog";
 import TaskList from "../../../src/components/daily/TaskList";
-import { useActivities } from "../../../src/hooks/useActivities";
-import { useActivityLogs } from "../../../src/hooks/useActivityLogs";
-import { useGlobalDate } from "../../../src/hooks/useGlobalDate";
-import { useTasks } from "../../../src/hooks/useTasks";
+import {
+  useActivities,
+  useActivityLogs,
+  useGlobalDate,
+  useTasks,
+} from "../../../src/hooks";
 
 export default function DailyPage() {
-  const { date, setDate } = useGlobalDate();
+  const { selectedDate: date, setSelectedDate: setDate } = useGlobalDate();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTargetLog, setEditTargetLog] =
     useState<GetActivityLogResponse | null>(null);

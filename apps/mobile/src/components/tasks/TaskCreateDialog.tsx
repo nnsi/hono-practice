@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
-import { useTaskCreate } from "../../hooks/useTaskCreate";
+import { useCreateTask } from "../../hooks";
 
 interface TaskCreateDialogProps {
   visible: boolean;
@@ -36,7 +36,7 @@ export function TaskCreateDialog({
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
 
-  const { createTask, isCreating } = useTaskCreate();
+  const createTask = useCreateTask();
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
@@ -173,10 +173,11 @@ export function TaskCreateDialog({
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                (!title.trim() || isCreating) && styles.submitButtonDisabled,
+                (!title.trim() || createTask.isPending) &&
+                  styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
-              disabled={!title.trim() || isCreating}
+              disabled={!title.trim() || createTask.isPending}
             >
               <Text style={styles.submitButtonText}>作成</Text>
             </TouchableOpacity>

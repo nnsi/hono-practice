@@ -20,7 +20,7 @@ import {
 } from "@dtos/request/CreateActivityLogRequest";
 import type { GetActivityResponse } from "@dtos/response";
 
-import { useTimer } from "../../hooks/useTimer";
+import { useTimer } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 import { ActivityIcon } from "../common/ActivityIcon";

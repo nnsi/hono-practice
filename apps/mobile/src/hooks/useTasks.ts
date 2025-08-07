@@ -1,202 +1,71 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  createUseArchiveTask,
   createUseArchivedTasks,
-  createUseCreateTask,
-  createUseDeleteTask,
-  createUseTasks,
-  createUseUpdateTask,
-} from "@packages/frontend-shared/hooks";
-import dayjs from "dayjs";
+  createUseTasks as createUseTasksBase,
+} from "@frontend-shared/hooks";
+import {
+  type GroupedTasks,
+  groupTasksByTimeline,
+} from "@frontend-shared/hooks/feature";
 
 import { apiClient } from "../utils/apiClient";
 
-type Task = {
-  id: string;
-  userId: string;
-  title: string;
-  startDate: string | null;
-  dueDate: string | null;
-  doneDate: string | null;
-  memo: string | null;
-  archivedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date | null;
-};
+export function useTasks() {
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [showFuture, setShowFuture] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
 
-type GroupedTasks = {
-  overdue: Task[];
-  dueToday: Task[];
-  startingToday: Task[];
-  inProgress: Task[];
-  dueThisWeek: Task[];
-  notStarted: Task[];
-  future: Task[];
-  completed: Task[];
-};
-
-export function useTasks(options?: {
-  date?: string;
-  includeArchived?: boolean;
-}) {
-  return createUseTasks({
-    apiClient,
-    date: options?.date,
-    includeArchived: options?.includeArchived,
-  });
-}
-
-export function useArchivedTasks(enabled = true) {
-  return createUseArchivedTasks({ apiClient, enabled });
-}
-
-export function useCreateTask() {
-  return createUseCreateTask({ apiClient });
-}
-
-export function useUpdateTask() {
-  return createUseUpdateTask({ apiClient });
-}
-
-export function useDeleteTask() {
-  return createUseDeleteTask({ apiClient });
-}
-
-export function useArchiveTask() {
-  return createUseArchiveTask({ apiClient });
-}
-
-// Legacy grouped tasks implementation (for Tasks screen)
-
-export function useTasksWithGroups() {
-  // 共通フックを使用してタスクを取得
+  // Fetch active tasks
   const {
-    data: activeTasks,
+    data: activeTasks = [],
     isLoading: isTasksLoading,
-    refetch: refetchActiveTasks,
-  } = createUseTasks({
+    refetch,
+  } = createUseTasksBase({
     apiClient,
     includeArchived: false,
   });
 
-  const {
-    data: archivedTasks,
-    isLoading: isArchivedTasksLoading,
-    refetch: refetchArchivedTasks,
-  } = createUseArchivedTasks({
-    apiClient,
-  });
-
-  // tasksデータはnullやundefinedの場合は空配列を使用
-  const tasks = activeTasks || [];
-  const archived = archivedTasks || [];
-
-  const refetch = async () => {
-    await Promise.all([refetchActiveTasks(), refetchArchivedTasks()]);
-  };
-
-  const groupedTasks = useMemo<GroupedTasks>(() => {
-    const today = dayjs().startOf("day");
-    const thisWeekEnd = today.endOf("week");
-
-    const groups: GroupedTasks = {
-      overdue: [],
-      dueToday: [],
-      startingToday: [],
-      inProgress: [],
-      dueThisWeek: [],
-      notStarted: [],
-      future: [],
-      completed: [],
-    };
-
-    tasks.forEach((task) => {
-      const startDate = task.startDate ? dayjs(task.startDate) : null;
-      const dueDate = task.dueDate ? dayjs(task.dueDate) : null;
-
-      // 完了済み
-      if (task.doneDate) {
-        groups.completed.push(task);
-        return;
-      }
-
-      // 期限切れ
-      if (dueDate?.isBefore(today)) {
-        groups.overdue.push(task);
-        return;
-      }
-
-      // 今日締切
-      if (dueDate?.isSame(today, "day")) {
-        groups.dueToday.push(task);
-        return;
-      }
-
-      // 今日開始
-      if (startDate?.isSame(today, "day")) {
-        groups.startingToday.push(task);
-        return;
-      }
-
-      // 進行中（開始日が過去で、期限が未来または未設定）
-      if (startDate?.isBefore(today) && (!dueDate || dueDate.isAfter(today))) {
-        groups.inProgress.push(task);
-        return;
-      }
-
-      // 今週締切
-      if (dueDate?.isAfter(today) && dueDate.isBefore(thisWeekEnd)) {
-        groups.dueThisWeek.push(task);
-        return;
-      }
-
-      // 未開始（開始日が未来）
-      if (startDate?.isAfter(today)) {
-        groups.notStarted.push(task);
-        return;
-      }
-
-      // その他（来週以降）
-      groups.future.push(task);
+  // Fetch archived tasks
+  const { data: archivedTasks = [], isLoading: isArchivedTasksLoading } =
+    createUseArchivedTasks({
+      apiClient,
+      enabled: activeTab === "archived",
     });
 
-    // 各グループをソート
-    Object.keys(groups).forEach((key) => {
-      const groupKey = key as keyof GroupedTasks;
-      groups[groupKey].sort((a, b) => {
-        // 期限でソート
-        if (a.dueDate && b.dueDate) {
-          return dayjs(a.dueDate).diff(dayjs(b.dueDate));
-        }
-        if (a.dueDate) return -1;
-        if (b.dueDate) return 1;
-
-        // 開始日でソート
-        if (a.startDate && b.startDate) {
-          return dayjs(a.startDate).diff(dayjs(b.startDate));
-        }
-        if (a.startDate) return -1;
-        if (b.startDate) return 1;
-
-        // 作成日でソート
-        return dayjs(b.createdAt).diff(dayjs(a.createdAt));
-      });
+  // Group tasks by timeline
+  const groupedTasks = useMemo(() => {
+    return groupTasksByTimeline(activeTasks, {
+      showCompleted,
+      showFuture,
+      completedInTheirCategories: true,
     });
+  }, [activeTasks, showCompleted, showFuture]);
 
-    return groups;
-  }, [tasks]);
+  const hasAnyTasks = Object.values(groupedTasks).some(
+    (group) => group.length > 0,
+  );
 
-  const hasAnyTasks = tasks.length > 0;
-  const hasAnyArchivedTasks = archived.length > 0;
+  const hasAnyArchivedTasks = archivedTasks.length > 0;
 
   return {
+    // State
+    showCompleted,
+    setShowCompleted,
+    showFuture,
+    setShowFuture,
+    activeTab,
+    setActiveTab,
+
+    // Data
     groupedTasks,
-    archivedTasks: archived,
+    archivedTasks,
     isTasksLoading,
     isArchivedTasksLoading,
     hasAnyTasks,
     hasAnyArchivedTasks,
+
+    // Actions
     refetch,
   };
 }
