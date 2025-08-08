@@ -31,8 +31,6 @@ export async function resetTestDb(
   await db.execute(sql`DELETE FROM activity_kind`);
   await db.execute(sql`DELETE FROM activity`);
   await db.execute(sql`DELETE FROM task`);
-  await db.execute(sql`DELETE FROM sync_queue`);
-  await db.execute(sql`DELETE FROM sync_metadata`);
   await db.execute(sql`DELETE FROM api_key`);
   await db.execute(sql`DELETE FROM refresh_token`);
   await db.execute(sql`DELETE FROM user_subscription`);
