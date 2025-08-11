@@ -23,9 +23,15 @@ export function TasksPage() {
     archivedTasks,
     isArchivedTasksLoading,
     groupedTasks,
+    allGroupedTasks,
     hasAnyTasks,
     hasAnyArchivedTasks,
+    tasks,
   } = useTasksPage();
+
+  // 完了済みセクションに表示される完了済みタスクの数を計算
+  // （completedInTheirCategoriesにより、今日開始/今日締切に表示される完了済みは除外）
+  const completedSectionCount = allGroupedTasks?.completed?.length || 0;
 
   return (
     <div>
@@ -34,7 +40,7 @@ export function TasksPage() {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as "active" | "archived")}
       >
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="active">アクティブ</TabsTrigger>
           <TabsTrigger value="archived">アーカイブ済み</TabsTrigger>
         </TabsList>
@@ -131,7 +137,7 @@ export function TasksPage() {
             )}
 
             {/* 完了済み */}
-            {groupedTasks.completed.length > 0 && (
+            {(completedSectionCount > 0 || !showCompleted) && (
               <>
                 <button
                   type="button"
@@ -140,9 +146,9 @@ export function TasksPage() {
                 >
                   {showCompleted
                     ? "完了済みを隠す"
-                    : `完了済み (${groupedTasks.completed.length})`}
+                    : `完了済みを表示 (${completedSectionCount})`}
                 </button>
-                {showCompleted && (
+                {showCompleted && completedSectionCount > 0 && (
                   <TaskGroup
                     title="完了済み"
                     tasks={groupedTasks.completed}

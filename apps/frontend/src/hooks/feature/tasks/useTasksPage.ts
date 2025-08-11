@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import {
@@ -30,6 +30,11 @@ export const useTasksPage = () => {
 
   // Use the common hook
   const commonResult = createUseTasksPage(dependencies);
+  
+  // 初回ロード時に完了済みタスクを表示するように設定
+  useEffect(() => {
+    commonResult.setShowCompleted(true);
+  }, []);
 
   // Use React Query data for tasks
   const tasks =
@@ -45,6 +50,15 @@ export const useTasksPage = () => {
       completedInTheirCategories: true,
     });
   }, [tasks, commonResult.showCompleted, commonResult.showFuture]);
+  
+  // 完了済みセクションに表示されるタスク数を計算（表示・非表示に関わらず）
+  const allGroupedTasks = useMemo(() => {
+    return groupTasksByTimeline(tasks || [], {
+      showCompleted: true, // 常に完了済みを含める
+      showFuture: commonResult.showFuture,
+      completedInTheirCategories: true,
+    });
+  }, [tasks, commonResult.showFuture]);
 
   // Re-calculate hasAnyTasks with the actual groupedTasks
   const hasAnyTasks = Object.values(groupedTasks).some(
@@ -63,6 +77,7 @@ export const useTasksPage = () => {
     tasks,
     archivedTasks,
     groupedTasks,
+    allGroupedTasks,
     hasAnyTasks,
     hasAnyArchivedTasks,
   };
