@@ -9,7 +9,9 @@ export const CreateActivityRequestSchema = z.object({
   quantityUnit: z.string().min(1, "単位名は必須です"),
   quantityOption: z.array(z.number()).optional(),
   showCombinedStats: z.boolean().optional(),
-  kinds: z.array(z.object({ name: z.string() })).optional(),
+  kinds: z
+    .array(z.object({ name: z.string(), color: z.string().optional() }))
+    .optional(),
 });
 
 export type CreateActivityRequest = z.infer<typeof CreateActivityRequestSchema>;

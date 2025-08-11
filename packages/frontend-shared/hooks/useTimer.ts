@@ -169,7 +169,15 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
         eventBus.emit("timer:stopped", { activityId, elapsedTime });
       }
     }
-  }, [isRunning, activityId, elapsedTime, eventBus, timer, storage, storageKey]);
+  }, [
+    isRunning,
+    activityId,
+    elapsedTime,
+    eventBus,
+    timer,
+    storage,
+    storageKey,
+  ]);
 
   const reset = useCallback(async () => {
     setIsRunning(false);

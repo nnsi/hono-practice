@@ -23,7 +23,7 @@ export const createUseAppSettings = (deps: UseAppSettingsDependencies) => {
     // 設定の読み込み（初回のみ）
     useEffect(() => {
       if (isLoaded) return;
-      
+
       const loadSettings = async () => {
         try {
           const saved = await storage.getItem(SETTINGS_KEY);
@@ -46,12 +46,14 @@ export const createUseAppSettings = (deps: UseAppSettingsDependencies) => {
             ...prevSettings,
             [key]: value,
           };
-          
+
           // 設定を即座に保存（非同期だがawaitしない）
-          storage.setItem(SETTINGS_KEY, JSON.stringify(newSettings)).catch((e) => {
-            console.error("Failed to save settings:", e);
-          });
-          
+          storage
+            .setItem(SETTINGS_KEY, JSON.stringify(newSettings))
+            .catch((e) => {
+              console.error("Failed to save settings:", e);
+            });
+
           return newSettings;
         });
       },

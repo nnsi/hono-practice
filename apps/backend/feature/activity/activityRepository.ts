@@ -272,6 +272,7 @@ function createActivity(db: QueryExecutor) {
           id: kind.id,
           activityId: result.id,
           name: kind.name,
+          color: kind.color && kind.color.trim() !== "" ? kind.color : null,
           orderIndex: kind.orderIndex || null,
         })),
       )
@@ -315,20 +316,22 @@ function updateActivity(db: QueryExecutor) {
       );
 
     if (kinds && kinds.length > 0) {
+      const kindsValues = kinds.map((kind) => ({
+        id: kind.id || undefined,
+        activityId: activity.id,
+        name: kind.name,
+        color: kind.color && kind.color.trim() !== "" ? kind.color : null,
+        orderIndex: kind.orderIndex || null,
+      }));
+
       await db
         .insert(activityKinds)
-        .values(
-          kinds.map((kind) => ({
-            id: kind.id || undefined,
-            activityId: activity.id,
-            name: kind.name,
-            orderIndex: kind.orderIndex || null,
-          })),
-        )
+        .values(kindsValues)
         .onConflictDoUpdate({
           target: activityKinds.id,
           set: {
             name: sql`excluded.name`,
+            color: sql`excluded.color`,
             orderIndex: sql`excluded.order_index`,
             deletedAt: sql`null`,
           },

@@ -77,6 +77,7 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         id: createActivityKindId(),
         name: k.name,
         orderIndex: null,
+        color: k.color,
       }));
 
       const activity = createActivityEntity({
@@ -118,6 +119,7 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
         return {
           id: k.id ?? createActivityKindId(),
           name: k.name,
+          color: k.color,
         };
       });
 

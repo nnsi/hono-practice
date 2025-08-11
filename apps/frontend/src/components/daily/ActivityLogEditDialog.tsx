@@ -72,9 +72,9 @@ export const ActivityLogEditDialog: React.FC<ActivityLogEditDialogProps> = ({
               type="button"
               variant="destructive"
               onClick={handleDelete}
-              disabled={(deleteActivityLog as any).isPending || false}
+              disabled={deleteActivityLog.isPending || false}
             >
-              {(deleteActivityLog as any).isPending ? "削除中..." : "削除"}
+              {deleteActivityLog.isPending ? "削除中..." : "削除"}
             </Button>
           </div>
           {activity?.kinds && activity.kinds.length > 0 && (

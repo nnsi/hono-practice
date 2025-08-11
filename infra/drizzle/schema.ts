@@ -222,6 +222,7 @@ export const activityKinds = pgTable(
       .notNull()
       .references(() => activities.id),
     name: text("name").notNull(),
+    color: text("color"), // 色設定（hex形式: #RRGGBB）
     orderIndex: text("order_index").default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

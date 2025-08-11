@@ -63,9 +63,14 @@ export const useTaskEditForm = (
   // タスクが変更されたらフォームの値を更新
   React.useEffect(() => {
     if (task) {
-      form.reset(initialValues);
+      form.reset({
+        title: task.title,
+        startDate: task.startDate ?? "",
+        dueDate: task.dueDate ?? "",
+        memo: task.memo ?? "",
+      });
     }
-  }, [task, form, initialValues]);
+  }, [task?.id, task?.title, task?.startDate, task?.dueDate, task?.memo, form]);
 
   const onSubmit = async (data: UpdateTaskFormData) => {
     await handleUpdateTask(data);

@@ -119,8 +119,8 @@ describe("createUseActivityEdit", () => {
         showCombinedStats: false,
       },
       kinds: [
-        { id: "kind-1", name: "Kind 1" },
-        { id: "kind-2", name: "Kind 2" },
+        { id: "kind-1", name: "Kind 1", color: "" },
+        { id: "kind-2", name: "Kind 2", color: "" },
       ],
     });
   });
@@ -220,7 +220,7 @@ describe("createUseActivityEdit", () => {
     act(() => {
       result.current.handleAddKind();
     });
-    expect(mockAppend).toHaveBeenCalledWith({ name: "" });
+    expect(mockAppend).toHaveBeenCalledWith({ name: "", color: "" });
 
     // Remove kind
     act(() => {

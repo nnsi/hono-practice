@@ -162,6 +162,13 @@
       "when": 1754489700706,
       "tag": "0022_flat_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1754920914469,
+      "tag": "0023_shocking_colonel_america",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,7 @@ function activityStatsQuery(db: QueryExecutor) {
         name: activities.name,
         kindid: activityKinds.id,
         kindname: activityKinds.name,
+        kindcolor: activityKinds.color,
         logid: activityLogs.id,
         date: activityLogs.date,
         quantity: activityLogs.quantity,
@@ -70,6 +71,7 @@ function transform(
     name: string;
     kindid: string | null;
     kindname: string | null;
+    kindcolor: string | null;
     logid: string;
     date: string;
     quantity: number | null;
@@ -93,6 +95,7 @@ function transform(
             {
               id: row.kindid || null,
               name: row.kindname || "未指定",
+              color: row.kindcolor || null,
               total: Math.round((row.quantity || 0) * 100) / 100,
               logs: [
                 {
@@ -123,6 +126,7 @@ function transform(
         activity.kinds.push({
           id: row.kindid || null,
           name: row.kindname || "未指定",
+          color: row.kindcolor || null,
           total: Math.round((row.quantity || 0) * 100) / 100,
           logs: [
             {

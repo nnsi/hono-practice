@@ -21,12 +21,14 @@ export type ActivityLogEditDependencies = {
       };
       date: string;
     }) => Promise<void>;
+    isPending?: boolean;
   };
   deleteActivityLog: {
     mutateAsync: (params: {
       id: string;
       date: string;
     }) => Promise<void>;
+    isPending?: boolean;
   };
   notification: NotificationAdapter;
 };
