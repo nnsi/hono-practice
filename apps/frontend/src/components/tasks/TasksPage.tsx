@@ -26,7 +26,6 @@ export function TasksPage() {
     allGroupedTasks,
     hasAnyTasks,
     hasAnyArchivedTasks,
-    tasks,
   } = useTasksPage();
 
   // 完了済みセクションに表示される完了済みタスクの数を計算

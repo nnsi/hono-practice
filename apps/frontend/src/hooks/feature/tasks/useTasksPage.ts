@@ -30,7 +30,7 @@ export const useTasksPage = () => {
 
   // Use the common hook
   const commonResult = createUseTasksPage(dependencies);
-  
+
   // 初回ロード時に完了済みタスクを表示するように設定
   useEffect(() => {
     commonResult.setShowCompleted(true);
@@ -50,7 +50,7 @@ export const useTasksPage = () => {
       completedInTheirCategories: true,
     });
   }, [tasks, commonResult.showCompleted, commonResult.showFuture]);
-  
+
   // 完了済みセクションに表示されるタスク数を計算（表示・非表示に関わらず）
   const allGroupedTasks = useMemo(() => {
     return groupTasksByTimeline(tasks || [], {
