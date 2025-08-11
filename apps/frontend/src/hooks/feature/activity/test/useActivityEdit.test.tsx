@@ -155,8 +155,8 @@ describe("useActivityEdit", () => {
           showCombinedStats: true,
         },
         kinds: [
-          { id: "kind-1", name: "Kind 1" },
-          { id: "kind-2", name: "Kind 2" },
+          { id: "kind-1", name: "Kind 1", color: "" },
+          { id: "kind-2", name: "Kind 2", color: "" },
         ],
       });
     });
@@ -202,8 +202,8 @@ describe("useActivityEdit", () => {
           showCombinedStats: true,
         },
         kinds: [
-          { id: "kind-1", name: "Kind 1" },
-          { id: "kind-2", name: "Kind 2" },
+          { id: "kind-1", name: "Kind 1", color: "" },
+          { id: "kind-2", name: "Kind 2", color: "" },
         ],
       });
     });
@@ -365,7 +365,7 @@ describe("useActivityEdit", () => {
         result.current.handleAddKind();
       });
 
-      expect(mockAppend).toHaveBeenCalledWith({ name: "" });
+      expect(mockAppend).toHaveBeenCalledWith({ name: "", color: "" });
     });
 
     it("種類の削除ハンドラが正しく動作する", async () => {

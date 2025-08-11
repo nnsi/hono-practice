@@ -39,6 +39,7 @@ export const useActivityEdit = (
           kinds: activity.kinds.map((kind) => ({
             id: kind.id,
             name: kind.name,
+            color: kind.color ?? "",
           })),
         }
       : undefined,

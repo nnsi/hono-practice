@@ -12,6 +12,7 @@ export type IconType = z.infer<typeof iconTypeSchema>;
 export const ActivityKindSchema = z.object({
   id: activityKindIdSchema,
   name: z.string(),
+  color: z.string().nullish(), // hex形式の色（#RRGGBB）
   orderIndex: z.string().nullish(),
 });
 export type ActivityKind = z.infer<typeof ActivityKindSchema>;

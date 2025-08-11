@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import { useArchivedTasks, useTasks } from "@frontend/hooks/api";
 import {
@@ -30,11 +30,6 @@ export const useTasksPage = () => {
 
   // Use the common hook
   const commonResult = createUseTasksPage(dependencies);
-
-  // 初回ロード時に完了済みタスクを表示するように設定
-  useEffect(() => {
-    commonResult.setShowCompleted(true);
-  }, []);
 
   // Use React Query data for tasks
   const tasks =

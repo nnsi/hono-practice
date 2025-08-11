@@ -143,7 +143,32 @@ export const ActivityEditDialog = ({
                     control={form.control}
                     name={`kinds.${index}.name`}
                     render={({ field }) => (
-                      <Input {...field} placeholder="種類名" />
+                      <Input
+                        {...field}
+                        placeholder="種類名"
+                        className="flex-1"
+                      />
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`kinds.${index}.color`}
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          {...field}
+                          type="color"
+                          className="w-14 h-10 p-1 cursor-pointer"
+                          title="色を選択"
+                        />
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="#000000"
+                          className="w-24"
+                          pattern="^#[0-9A-Fa-f]{6}$"
+                        />
+                      </div>
                     )}
                   />
                   <Button

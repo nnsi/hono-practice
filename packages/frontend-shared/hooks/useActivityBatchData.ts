@@ -3,9 +3,7 @@ import dayjs from "dayjs";
 
 import {
   GetActivitiesResponseSchema,
-  type GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
-  type GetActivityResponse,
 } from "@dtos/response";
 
 import type { AppType } from "@backend/app";
@@ -16,15 +14,12 @@ export type UseActivityBatchDataOptions = {
 };
 
 export function createUseActivityBatchData(
-  options: UseActivityBatchDataOptions,
+  options: UseActivityBatchDataOptions & { onError?: (error: Error) => void },
 ) {
-  const { apiClient, date } = options;
+  const { apiClient, date, onError } = options;
   const queryClient = useQueryClient();
 
-  const { data, error } = useQuery<{
-    activities: GetActivityResponse[];
-    activityLogs: GetActivityLogsResponse;
-  }>({
+  const query = useQuery({
     queryKey: [
       "activity",
       "activity-logs-daily",
@@ -64,8 +59,13 @@ export function createUseActivityBatchData(
     },
   });
 
-  const activities = data?.activities ?? [];
-  const activityLogs = data?.activityLogs ?? [];
+  // エラー時のコールバック呼び出し
+  if (query.error && onError) {
+    onError(query.error as Error);
+  }
+
+  const activities = query.data?.activities ?? [];
+  const activityLogs = query.data?.activityLogs ?? [];
 
   // アクティビティごとのログ存在チェック関数
   const hasActivityLogs = (activityId: string) => {
@@ -76,6 +76,6 @@ export function createUseActivityBatchData(
     activities,
     activityLogs,
     hasActivityLogs,
-    error,
+    error: query.error,
   };
 }

@@ -13,6 +13,7 @@ export const UpdateActivityRequestSchema = z.object({
     z.object({
       id: z.string().optional(),
       name: z.string(),
+      color: z.string().optional(),
     }),
   ),
 });

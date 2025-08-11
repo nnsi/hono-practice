@@ -35,11 +35,13 @@ export const useActivityLogEdit = (
       mutateAsync: async (params: any) => {
         await updateActivityLog.mutateAsync(params);
       },
+      isPending: updateActivityLog.isPending,
     },
     deleteActivityLog: {
       mutateAsync: async (params: any) => {
         await deleteActivityLog.mutateAsync(params);
       },
+      isPending: deleteActivityLog.isPending,
     },
     notification,
   };

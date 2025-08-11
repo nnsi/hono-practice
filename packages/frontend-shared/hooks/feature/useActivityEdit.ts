@@ -53,6 +53,7 @@ export function createUseActivityEdit(
         kinds: activity.kinds.map((kind) => ({
           id: kind.id,
           name: kind.name,
+          color: kind.color ?? "",
         })),
       });
     }
@@ -110,7 +111,7 @@ export function createUseActivityEdit(
   };
 
   const handleAddKind = () => {
-    kindFieldArray?.append({ name: "" });
+    kindFieldArray?.append({ name: "", color: "" });
   };
 
   // Icon upload handler

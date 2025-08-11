@@ -241,7 +241,7 @@ export function createActivityRoute() {
       const storageService = createStorageService(c.env);
 
       // Delete files from storage if they exist
-      if (activity.iconUrl) {
+      if (activity.iconUrl && typeof activity.iconUrl === "string") {
         // Extract key from URL
         // URLが絶対URLの場合は /r2/ 以降を取得
         const match = activity.iconUrl.match(/\/r2\/(.+)$/);
@@ -258,6 +258,7 @@ export function createActivityRoute() {
 
       if (
         activity.iconThumbnailUrl &&
+        typeof activity.iconThumbnailUrl === "string" &&
         activity.iconThumbnailUrl !== activity.iconUrl
       ) {
         // Extract key from URL

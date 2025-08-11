@@ -160,8 +160,8 @@ describe("createUseTimer", () => {
       vi.advanceTimersByTime(2000);
     });
 
-    act(() => {
-      result.current.stop();
+    await act(async () => {
+      await result.current.stop();
     });
 
     expect(result.current.isRunning).toBe(false);
@@ -337,8 +337,8 @@ describe("createUseTimer", () => {
       await result.current.start();
     });
 
-    act(() => {
-      result.current.stop();
+    await act(async () => {
+      await result.current.stop();
     });
 
     await act(async () => {

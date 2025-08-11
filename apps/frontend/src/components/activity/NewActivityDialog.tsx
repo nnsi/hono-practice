@@ -38,7 +38,9 @@ export function NewActivityDialog({
   const [iconFile, setIconFile] = useState<File | undefined>();
   const [iconPreview, setIconPreview] = useState<string | undefined>();
 
-  const form = useForm<CreateActivityRequest & { kinds: { name: string }[] }>({
+  const form = useForm<
+    CreateActivityRequest & { kinds: { name: string; color?: string }[] }
+  >({
     resolver: zodResolver(CreateActivityRequestSchema),
     defaultValues: {
       name: "",
@@ -60,7 +62,7 @@ export function NewActivityDialog({
   const { toast } = useToast();
   const { mutateAsync, isPending } = useCreateActivity();
   const onSubmit = async (
-    data: CreateActivityRequest & { kinds: { name: string }[] },
+    data: CreateActivityRequest & { kinds: { name: string; color?: string }[] },
   ) => {
     try {
       const activity = await mutateAsync(data);
@@ -130,7 +132,7 @@ export function NewActivityDialog({
 
   // 種類を追加するハンドラ
   const handleAddKind = () => {
-    kindAppend({ name: "" });
+    kindAppend({ name: "", color: "" });
   };
 
   return (
@@ -217,7 +219,32 @@ export function NewActivityDialog({
                     control={form.control}
                     name={`kinds.${index}.name`}
                     render={({ field }) => (
-                      <Input {...field} placeholder="種類名" />
+                      <Input
+                        {...field}
+                        placeholder="種類名"
+                        className="flex-1"
+                      />
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`kinds.${index}.color`}
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          {...field}
+                          type="color"
+                          className="w-14 h-10 p-1 cursor-pointer"
+                          title="色を選択"
+                        />
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="#000000"
+                          className="w-24"
+                          pattern="^#[0-9A-Fa-f]{6}$"
+                        />
+                      </div>
                     )}
                   />
                   <Button

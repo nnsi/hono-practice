@@ -306,7 +306,9 @@ export const ActivityStatsPage: React.FC = () => {
             const usedColors = new Set<string>();
             const colorMap: Record<string, string> = {};
             stat.kinds.forEach((kind) => {
-              const color = getUniqueColorForKind(kind.name, usedColors);
+              // 設定されている色があればそれを使用、なければ自動生成
+              const color =
+                kind.color || getUniqueColorForKind(kind.name, usedColors);
               usedColors.add(color);
               colorMap[kind.name] = color;
             });

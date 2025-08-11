@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import dayjs, { type Dayjs } from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -46,7 +46,7 @@ export function createUseTasksPage(dependencies: TasksPageDependencies) {
   const { api } = dependencies;
 
   // View state
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(true);
   const [showFuture, setShowFuture] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
@@ -73,8 +73,6 @@ export function createUseTasksPage(dependencies: TasksPageDependencies) {
 
   // Fetch archived tasks
   const fetchArchivedTasks = async () => {
-    if (activeTab !== "archived") return;
-
     setIsArchivedTasksLoading(true);
     try {
       const tasks = await api.getArchivedTasks();
@@ -87,17 +85,13 @@ export function createUseTasksPage(dependencies: TasksPageDependencies) {
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    void fetchActiveTasks();
-  }, []);
-
-  // Fetch archived tasks when tab changes
-  useEffect(() => {
-    if (activeTab === "archived") {
-      void fetchArchivedTasks();
+  // Handle tab change with fetch
+  const handleSetActiveTab = async (tab: "active" | "archived") => {
+    setActiveTab(tab);
+    if (tab === "archived") {
+      await fetchArchivedTasks();
     }
-  }, [activeTab]);
+  };
 
   // Select tasks based on active tab
   const tasks = activeTab === "active" ? activeTasks : undefined;
@@ -126,7 +120,7 @@ export function createUseTasksPage(dependencies: TasksPageDependencies) {
     createDialogOpen,
     setCreateDialogOpen,
     activeTab,
-    setActiveTab,
+    setActiveTab: handleSetActiveTab,
 
     // Data
     tasks,

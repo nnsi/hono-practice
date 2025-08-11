@@ -11,6 +11,7 @@ export const GetActivityStatsResponseSchema = z.array(
       z.object({
         id: z.string().nullable(),
         name: z.string(),
+        color: z.string().nullish(),
         total: z.number(),
         logs: z.array(
           z.object({

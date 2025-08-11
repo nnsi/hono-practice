@@ -63,7 +63,9 @@ export function useActivityLogImport() {
             description: "",
             showCombinedStats: false,
           });
-          createdActivities.set(name, data.id);
+          if (data.id) {
+            createdActivities.set(name, data.id);
+          }
         } catch (error) {
           console.error(`Failed to create activity: ${name}`, error);
         }
