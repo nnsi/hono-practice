@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import dayjs from "dayjs";
 
@@ -127,24 +127,22 @@ export function createUseActivityStats(
 ): UseActivityStatsReturn {
   const { currentDate, useActivityStatsApi, useGoals } = dependencies;
 
-  // monthを独立して管理
-  const [month, setMonth] = useState(dayjs(currentDate).format("YYYY-MM"));
+  // monthを独立して管理（初期値はcurrentDateから）
+  const [internalMonth, setInternalMonth] = useState<string | null>(null);
 
-  // dateの月が変化したときのみmonthを更新
-  useEffect(() => {
-    const newMonth = dayjs(currentDate).format("YYYY-MM");
-    setMonth(newMonth);
-  }, [currentDate]);
+  // monthを派生状態として扱う
+  // internalMonthがnullの場合はcurrentDateから計算、そうでなければinternalMonthを使用
+  const month = internalMonth ?? dayjs(currentDate).format("YYYY-MM");
 
-  // 月変更用の関数（monthのみを更新）
+  // 月変更用の関数（明示的な操作時のみinternalMonthを更新）
   const handlePrevMonth = useCallback(() => {
     const prevMonth = dayjs(month).subtract(1, "month");
-    setMonth(prevMonth.format("YYYY-MM"));
+    setInternalMonth(prevMonth.format("YYYY-MM"));
   }, [month]);
 
   const handleNextMonth = useCallback(() => {
     const nextMonth = dayjs(month).add(1, "month");
-    setMonth(nextMonth.format("YYYY-MM"));
+    setInternalMonth(nextMonth.format("YYYY-MM"));
   }, [month]);
 
   const { data: stats, isLoading } = useActivityStatsApi(month);

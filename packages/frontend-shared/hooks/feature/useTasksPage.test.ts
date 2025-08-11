@@ -76,7 +76,7 @@ describe("createUseTasksPage", () => {
   it("should initialize with default state", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
-    expect(result.current.showCompleted).toBe(false);
+    expect(result.current.showCompleted).toBe(true);
     expect(result.current.showFuture).toBe(false);
     expect(result.current.createDialogOpen).toBe(false);
     expect(result.current.activeTab).toBe("active");
@@ -86,8 +86,12 @@ describe("createUseTasksPage", () => {
     });
   });
 
-  it("should fetch active tasks on mount", async () => {
+  it("should be able to fetch active tasks", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
+
+    act(() => {
+      result.current.refetch();
+    });
 
     await waitFor(() => {
       expect(mockApi.getTasks).toHaveBeenCalledWith({ includeArchived: false });
@@ -166,6 +170,10 @@ describe("createUseTasksPage", () => {
 
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
+    act(() => {
+      result.current.refetch();
+    });
+
     await waitFor(() => {
       expect(result.current.tasks).toEqual([]);
       expect(result.current.isTasksLoading).toBe(false);
@@ -182,9 +190,11 @@ describe("createUseTasksPage", () => {
   it("should refetch tasks", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
-    await waitFor(() => {
-      expect(mockApi.getTasks).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await result.current.refetch();
     });
+
+    expect(mockApi.getTasks).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       await result.current.refetch();

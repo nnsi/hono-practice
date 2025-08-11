@@ -39,11 +39,31 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<unknown | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const storageKey = `timer_${activityId}`;
 
-  // Restore state from storage
+  // ストレージへの保存を行う内部関数
+  const saveTimerState = useCallback(
+    async (running: boolean, start: number | null, elapsed: number) => {
+      if (running && start) {
+        const data: TimerPersistData = {
+          activityId,
+          startTime: start,
+          isRunning: running,
+        };
+        await storage.setItem(storageKey, JSON.stringify(data));
+      } else if (!running && elapsed === 0) {
+        await storage.removeItem(storageKey);
+      }
+    },
+    [activityId, storageKey, storage],
+  );
+
+  // 初期化処理 - ストレージからの復元
   useEffect(() => {
+    if (isInitialized) return;
+
     const restoreTimer = async () => {
       try {
         const stored = await storage.getItem(storageKey);
@@ -64,13 +84,15 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
         }
       } catch (e) {
         await storage.removeItem(storageKey);
+      } finally {
+        setIsInitialized(true);
       }
     };
 
     restoreTimer();
-  }, [activityId, storageKey, storage, notification]);
+  }, [activityId, storageKey, storage, notification, isInitialized]);
 
-  // Timer update logic
+  // Timer update logic - UIの更新なので維持
   useEffect(() => {
     if (isRunning && startTime && timer) {
       intervalRef.current = timer.setInterval(() => {
@@ -84,24 +106,6 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
       };
     }
   }, [isRunning, startTime, timer]);
-
-  // Save state to storage when changed
-  useEffect(() => {
-    const saveTimer = async () => {
-      if (isRunning && startTime) {
-        const data: TimerPersistData = {
-          activityId,
-          startTime,
-          isRunning,
-        };
-        await storage.setItem(storageKey, JSON.stringify(data));
-      } else if (!isRunning && elapsedTime === 0) {
-        await storage.removeItem(storageKey);
-      }
-    };
-
-    saveTimer();
-  }, [isRunning, startTime, elapsedTime, activityId, storageKey, storage]);
 
   const start = useCallback(async () => {
     if (!isRunning) {
@@ -130,27 +134,42 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
       }
 
       const now = Date.now();
-      setStartTime(now - elapsedTime);
+      const newStartTime = now - elapsedTime;
+      setStartTime(newStartTime);
       setIsRunning(true);
+
+      // 状態変更時に即座に保存
+      await saveTimerState(true, newStartTime, elapsedTime);
 
       if (eventBus) {
         eventBus.emit("timer:started", { activityId });
       }
     }
-  }, [isRunning, elapsedTime, activityId, storage, notification, eventBus]);
+  }, [
+    isRunning,
+    elapsedTime,
+    activityId,
+    storage,
+    notification,
+    eventBus,
+    saveTimerState,
+  ]);
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async () => {
     if (isRunning) {
       setIsRunning(false);
       if (intervalRef.current && timer) {
         timer.clearInterval(intervalRef.current);
       }
 
+      // 停止時にストレージをクリア
+      await storage.removeItem(storageKey);
+
       if (eventBus) {
         eventBus.emit("timer:stopped", { activityId, elapsedTime });
       }
     }
-  }, [isRunning, activityId, elapsedTime, eventBus, timer]);
+  }, [isRunning, activityId, elapsedTime, eventBus, timer, storage, storageKey]);
 
   const reset = useCallback(async () => {
     setIsRunning(false);

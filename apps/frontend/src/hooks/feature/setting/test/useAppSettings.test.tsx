@@ -101,10 +101,10 @@ describe("useAppSettings", () => {
         expect(result.current.isLoaded).toBe(true);
       });
 
-      // act内でstate更新を実行
-      act(() => {
-        result.current.updateSetting("showGoalOnStartup", true);
-        result.current.updateSetting("showInactiveDates", true);
+      // act内でstate更新を実行（非同期処理）
+      await act(async () => {
+        await result.current.updateSetting("showGoalOnStartup", true);
+        await result.current.updateSetting("showInactiveDates", true);
       });
 
       expect(result.current.settings).toEqual({

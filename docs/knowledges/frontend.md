@@ -977,6 +977,188 @@ packages/frontend-shared/
         └── useFeaturePage.ts       # 共通ロジック
 ```
 
+## useEffectのベストプラクティス
+
+### 基本原則: 「useEffectはUIの管理という目的のために使う」
+
+Reactは本質的にUIライブラリであり、useEffectは**UIの管理**のためだけに使用すべきです。
+
+### useEffectを使うべきではない場面
+
+#### 1. データフェッチ（TanStack Query使用時）
+
+```typescript
+// ❌ Bad: TanStack Queryが自動でマウント時にフェッチするため不要
+const useTasksPage = () => {
+  const { data, refetch } = useQuery({ queryKey: ['tasks'] });
+  
+  useEffect(() => {
+    void refetch(); // 不要！
+  }, []);
+};
+
+// ✅ Good: TanStack Queryに任せる
+const useTasksPage = () => {
+  const { data } = useQuery({ queryKey: ['tasks'] });
+  // TanStack Queryが自動的にマウント時にフェッチ
+};
+```
+
+#### 2. 状態の同期
+
+```typescript
+// ❌ Bad: useEffectで状態を同期
+const [month, setMonth] = useState<string>();
+useEffect(() => {
+  const newMonth = dayjs(currentDate).format("YYYY-MM");
+  setMonth(newMonth);
+}, [currentDate]);
+
+// ✅ Good: 派生状態パターンを使用
+const [internalMonth, setInternalMonth] = useState<string | null>(null);
+const month = internalMonth ?? dayjs(currentDate).format("YYYY-MM");
+```
+
+#### 3. イベントハンドラーで処理すべき副作用
+
+```typescript
+// ❌ Bad: 状態変更時に自動保存
+useEffect(() => {
+  saveToStorage(settings);
+}, [settings]);
+
+// ✅ Good: 更新処理の中で直接保存
+const updateSetting = useCallback(
+  async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    setSettings((prevSettings) => {
+      const newSettings = { ...prevSettings, [key]: value };
+      storage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+      return newSettings;
+    });
+  },
+  [storage],
+);
+```
+
+#### 4. エラーハンドリング
+
+```typescript
+// ❌ Bad: useEffectでエラーを監視
+useEffect(() => {
+  if (error) {
+    showErrorToast(error);
+  }
+}, [error]);
+
+// ✅ Good: コールバックパターンを使用
+const { data, error } = useQuery({
+  queryKey: ['data'],
+  onError: (error) => {
+    showErrorToast(error);
+  },
+});
+
+// または
+type Options = {
+  onError?: (error: Error) => void;
+};
+if (query.error && onError) {
+  onError(query.error as Error);
+}
+```
+
+### useEffectを使うべき場面
+
+#### 1. UI更新のための定期処理
+
+```typescript
+// ✅ Good: タイマー表示の更新はUI管理
+useEffect(() => {
+  if (!isRunning) return;
+  
+  const interval = setInterval(() => {
+    setCurrentTime(Date.now());
+  }, 100);
+  
+  return () => clearInterval(interval);
+}, [isRunning]);
+```
+
+#### 2. 外部システムとの同期
+
+```typescript
+// ✅ Good: イベントリスナーの登録はUI管理
+useEffect(() => {
+  const handleResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+```
+
+#### 3. コンポーネントマウント時の初期化
+
+```typescript
+// ✅ Good: 初期フォーカスの設定
+useEffect(() => {
+  inputRef.current?.focus();
+}, []);
+```
+
+### リファクタリングチェックリスト
+
+1. **データフェッチのuseEffect**
+   - TanStack Queryを使用している？ → 削除
+   - 手動フェッチが必要？ → イベントハンドラーに移動
+
+2. **状態同期のuseEffect**
+   - 他の状態から計算可能？ → 派生状態パターンに変更
+   - 本当に同期が必要？ → 設計を見直し
+
+3. **副作用のuseEffect**
+   - ユーザーアクションの結果？ → イベントハンドラーに移動
+   - 自動保存？ → 更新処理に統合
+
+4. **依存配列が多いuseEffect**
+   - 責務が多すぎる可能性 → 分割を検討
+   - 本当にすべての依存が必要？ → 見直し
+
+### 実装例: useTasksPageのリファクタリング
+
+```typescript
+// Before: 不要なuseEffect
+const useTasksPage = () => {
+  const { data, refetch } = useQuery({ ... });
+  const [showCompleted, setShowCompleted] = useState(false);
+  
+  // ❌ TanStack Queryが自動でフェッチするため不要
+  useEffect(() => {
+    void refetch();
+  }, []);
+  
+  // ❌ 初期値の設定にuseEffectは不要
+  useEffect(() => {
+    setShowCompleted(true);
+  }, []);
+};
+
+// After: クリーンな実装
+const useTasksPage = () => {
+  // ✅ TanStack Queryが自動的にデータをフェッチ
+  const { data } = useQuery({ ... });
+  
+  // ✅ 初期値を直接設定
+  const [showCompleted, setShowCompleted] = useState(true);
+};
+```
+
+### まとめ
+
+- **useEffectは最後の手段** - まず他の方法を検討する
+- **UIの管理にのみ使用** - Reactの本質を理解する
+- **依存配列を最小限に** - 複雑な依存は設計の見直しサイン
+- **TanStack Queryを信頼** - 自動フェッチ機能を活用する
+- **イベントハンドラーを活用** - 副作用は適切な場所で実行する
+
 ## セキュリティ考慮事項
 
 ### XSS対策

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+
 
 import { useToast } from "@frontend/components/ui/use-toast";
 import { apiClient } from "@frontend/utils";
@@ -10,18 +10,19 @@ type UseActivityBatchDataOptions = {
 
 export function useActivityBatchData({ date }: UseActivityBatchDataOptions) {
   const { toast } = useToast();
-  const result = createUseActivityBatchData({ apiClient, date });
-
-  // エラーハンドリング
-  useEffect(() => {
-    if (result.error) {
+  
+  // エラー時のトースト通知を直接createUseActivityBatchDataに渡す
+  const result = createUseActivityBatchData({ 
+    apiClient, 
+    date,
+    onError: () => {
       toast({
         title: "エラー",
         description: "データの取得に失敗しました",
         variant: "destructive",
       });
     }
-  }, [result.error, toast]);
+  });
 
   return result;
 }

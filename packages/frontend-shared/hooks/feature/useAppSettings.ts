@@ -20,8 +20,10 @@ export const createUseAppSettings = (deps: UseAppSettingsDependencies) => {
     const [settings, setSettings] = useState<AppSettings>(defaultSettings);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // 設定の読み込み
+    // 設定の読み込み（初回のみ）
     useEffect(() => {
+      if (isLoaded) return;
+      
       const loadSettings = async () => {
         try {
           const saved = await storage.getItem(SETTINGS_KEY);
@@ -35,30 +37,25 @@ export const createUseAppSettings = (deps: UseAppSettingsDependencies) => {
         }
       };
       loadSettings();
-    }, [storage]);
-
-    // 設定の保存
-    useEffect(() => {
-      if (!isLoaded) return; // 初回読み込み前は保存しない
-
-      const saveSettings = async () => {
-        try {
-          await storage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-        } catch (e) {
-          console.error("Failed to save settings:", e);
-        }
-      };
-      saveSettings();
-    }, [settings, storage, isLoaded]);
+    }, [storage, isLoaded]);
 
     const updateSetting = useCallback(
-      <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-        setSettings((prev) => ({
-          ...prev,
-          [key]: value,
-        }));
+      async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+        setSettings((prevSettings) => {
+          const newSettings = {
+            ...prevSettings,
+            [key]: value,
+          };
+          
+          // 設定を即座に保存（非同期だがawaitしない）
+          storage.setItem(SETTINGS_KEY, JSON.stringify(newSettings)).catch((e) => {
+            console.error("Failed to save settings:", e);
+          });
+          
+          return newSettings;
+        });
       },
-      [],
+      [storage],
     );
 
     return {
