@@ -8,3 +8,4 @@ dist-frontend
 stats.html
 public
 *.pkl
+.serena

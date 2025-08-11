@@ -238,7 +238,7 @@ describe("useTasksPage", () => {
       });
 
       await waitFor(() => {
-        expect(result.current.showCompleted).toBe(false);
+        expect(result.current.showCompleted).toBe(true);
         expect(result.current.showFuture).toBe(false);
         expect(result.current.createDialogOpen).toBe(false);
         expect(result.current.activeTab).toBe("active");
@@ -495,17 +495,17 @@ describe("useTasksPage", () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.showCompleted).toBe(false);
-
-      await act(async () => {
-        result.current.setShowCompleted(true);
-      });
       expect(result.current.showCompleted).toBe(true);
 
       await act(async () => {
         result.current.setShowCompleted(false);
       });
       expect(result.current.showCompleted).toBe(false);
+
+      await act(async () => {
+        result.current.setShowCompleted(true);
+      });
+      expect(result.current.showCompleted).toBe(true);
     });
 
     it("showFutureの切り替えができる", async () => {

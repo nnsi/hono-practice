@@ -2,6 +2,7 @@ import { hc } from "hono/client";
 
 import { AppEvents } from "@frontend/services/abstractions";
 import { createLocalStorageProvider } from "@frontend/services/abstractions/StorageProvider";
+import { getWebApiUrl } from "@packages/frontend-shared/utils/apiUrl";
 
 import { createTokenStore } from "./createTokenStore";
 import { tokenStore } from "./tokenStore";
@@ -9,11 +10,11 @@ import { tokenStore } from "./tokenStore";
 import type { AppType } from "@backend/app";
 import type { ApiClientConfig } from "@frontend/services/abstractions";
 
-const API_URL =
-  import.meta.env.MODE === "development"
-    ? import.meta.env.VITE_API_URL ||
-      `${window.location.protocol}//${window.location.hostname}:${import.meta.env.VITE_API_PORT || "3456"}/`
-    : import.meta.env.VITE_API_URL;
+const API_URL = getWebApiUrl({
+  isDevelopment: import.meta.env.MODE === "development",
+  apiUrl: import.meta.env.VITE_API_URL,
+  apiPort: import.meta.env.VITE_API_PORT || "3456",
+});
 
 /**
  * APIクライアントを作成するファクトリー関数

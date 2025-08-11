@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { useCreateTask } from "@frontend/hooks/api/useTasks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
@@ -56,6 +58,13 @@ export const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const { toast } = useToast();
   const createTask = useCreateTask();
 
+  // ダイアログが開かれるたびに、またはdefaultDateが変更されたときにフォームの開始日を更新
+  useEffect(() => {
+    if (open && defaultDate) {
+      form.setValue("startDate", dayjs(defaultDate).format("YYYY-MM-DD"));
+    }
+  }, [open, defaultDate, form]);
+
   const handleSubmit = (data: FormData) => {
     createTask.mutate(
       {
@@ -66,7 +75,12 @@ export const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       },
       {
         onSuccess: () => {
-          form.reset();
+          form.reset({
+            title: "",
+            startDate: dayjs(defaultDate || new Date()).format("YYYY-MM-DD"),
+            dueDate: "",
+            memo: "",
+          });
           onOpenChange(false);
           toast({
             title: "タスクを作成しました",

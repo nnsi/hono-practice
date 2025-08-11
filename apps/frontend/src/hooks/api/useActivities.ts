@@ -3,11 +3,15 @@ import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
 import { createUseActivities } from "@packages/frontend-shared/hooks";
 import {
+  createUseDeleteActivityIcon,
+  createUseUploadActivityIcon,
+} from "@packages/frontend-shared/hooks/useActivityIcon";
+import {
   createUseCreateActivity,
   createUseDeleteActivity,
   createUseUpdateActivity,
 } from "@packages/frontend-shared/hooks/useActivityMutations";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getWebApiUrl } from "@packages/frontend-shared/utils/apiUrl";
 
 import type { GetActivitiesResponse } from "@dtos/response";
 
@@ -58,80 +62,42 @@ export function useDeleteActivity() {
 
 /**
  * Activityアイコンアップロード用のフック
- * Note: This needs special handling for image resizing, so it's not shared yet
  */
 export function useUploadActivityIcon() {
-  const queryClient = useQueryClient();
+  // Web用のリサイザー実装
+  const webResizer = {
+    resizeImage: (file: File, maxWidth: number, maxHeight: number) =>
+      resizeImage(file, maxWidth, maxHeight),
+  };
 
-  return useMutation({
-    mutationFn: async ({ id, file }: { id: string; file: File }) => {
-      // Resize image to 256x256 max and convert to base64
-      const { base64, mimeType } = await resizeImage(file, 256, 256);
+  // API設定
+  const apiConfig = {
+    getApiUrl: () =>
+      getWebApiUrl({
+        isDevelopment: import.meta.env.MODE === "development",
+        apiUrl: import.meta.env.VITE_API_URL,
+        apiPort: import.meta.env.VITE_API_PORT || "3456",
+      }),
+    getToken: () => tokenStore.getToken(),
+  };
 
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${API_URL}users/activities/${id}/icon`, {
-        method: "POST",
-        body: JSON.stringify({ base64, mimeType }),
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload icon");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-  });
+  return createUseUploadActivityIcon(webResizer, apiConfig);
 }
 
 /**
  * Activityアイコン削除用のフック
- * Note: This uses raw fetch for now, but could be migrated to shared implementation
  */
 export function useDeleteActivityIcon() {
-  const queryClient = useQueryClient();
+  // API設定
+  const apiConfig = {
+    getApiUrl: () =>
+      getWebApiUrl({
+        isDevelopment: import.meta.env.MODE === "development",
+        apiUrl: import.meta.env.VITE_API_URL,
+        apiPort: import.meta.env.VITE_API_PORT || "3456",
+      }),
+    getToken: () => tokenStore.getToken(),
+  };
 
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const API_URL =
-        import.meta.env.MODE === "development"
-          ? import.meta.env.VITE_API_URL ||
-            `http://${document.domain}:${import.meta.env.VITE_API_PORT || "3456"}/`
-          : import.meta.env.VITE_API_URL;
-
-      const token = tokenStore.getToken();
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${API_URL}users/activities/${id}/icon`, {
-        method: "DELETE",
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete icon");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
-  });
+  return createUseDeleteActivityIcon(apiConfig);
 }

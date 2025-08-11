@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import type { GetActivityResponse } from "@dtos/response";
 
@@ -14,6 +14,7 @@ export type ActivityRegistPageDependencies = {
   cache?: {
     invalidateActivityCache: () => Promise<void>;
   };
+  activities?: GetActivityResponse[]; // 外部から渡されるactivities
 };
 
 export function createUseActivityRegistPage(
@@ -29,22 +30,8 @@ export function createUseActivityRegistPage(
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTargetActivity, setEditTargetActivity] =
     useState<GetActivityResponse | null>(null);
-  const [activities, setActivities] = useState<GetActivityResponse[]>([]);
-
-  // データ取得
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const data = await api.getActivities();
-        setActivities(data);
-      } catch (error) {
-        console.error("Failed to fetch activities:", error);
-        setActivities([]);
-      }
-    };
-
-    void fetchActivities();
-  }, [api]);
+  // activitiesは外部から提供される
+  const activities = dependencies.activities || [];
 
   // アクティビティクリック時の処理
   const handleActivityClick = useCallback((activity: GetActivityResponse) => {

@@ -1,7 +1,10 @@
 import { useCallback } from "react";
 
 import { useActivities } from "@frontend/hooks/api/useActivities";
-import dayjs from "dayjs";
+import {
+  validateDate as validateDateUtil,
+  validateQuantity as validateQuantityUtil,
+} from "@packages/frontend-shared/utils/validation";
 
 import type { ColumnMapping } from "@frontend/components/csv/CSVColumnMapper";
 
@@ -27,9 +30,6 @@ export type ValidationResult = {
   totalErrors: number;
 };
 
-const MAX_QUANTITY = 99999;
-const MIN_QUANTITY = 0;
-
 export function useActivityLogValidator() {
   const { data: activities } = useActivities();
 
@@ -45,36 +45,12 @@ export function useActivityLogValidator() {
   }, []);
 
   const validateDate = useCallback((dateStr: string): string | null => {
-    if (!dateStr) return "日付は必須です";
-
-    const date = dayjs(dateStr);
-    if (!date.isValid())
-      return "日付の形式が正しくありません（YYYY-MM-DD形式で入力してください）";
-
-    if (date.isAfter(dayjs())) return "未来の日付は指定できません";
-
-    return null;
+    return validateDateUtil(dateStr);
   }, []);
 
   const validateQuantity = useCallback(
     (quantityStr: string): { value: number; error: string | null } => {
-      if (!quantityStr) return { value: 0, error: "数量は必須です" };
-
-      const num = Number(quantityStr);
-      if (Number.isNaN(num))
-        return { value: 0, error: "数量は数値で入力してください" };
-      if (num < MIN_QUANTITY)
-        return {
-          value: 0,
-          error: `数量は${MIN_QUANTITY}以上で入力してください`,
-        };
-      if (num > MAX_QUANTITY)
-        return {
-          value: 0,
-          error: `数量は${MAX_QUANTITY}以下で入力してください`,
-        };
-
-      return { value: num, error: null };
+      return validateQuantityUtil(quantityStr);
     },
     [],
   );

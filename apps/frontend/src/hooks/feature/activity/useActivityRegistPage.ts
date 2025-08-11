@@ -43,6 +43,7 @@ export const useActivityRegistPage = () => {
     cache: {
       invalidateActivityCache,
     },
+    activities: activities || [], // activitiesを直接渡す
   });
 
   // Add handleDeleteActivity which is not in the shared implementation
