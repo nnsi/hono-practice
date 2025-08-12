@@ -305,6 +305,7 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
         open={showDetailModal}
         onOpenChange={setShowDetailModal}
         goalId={goal.id}
+        goal={goal}
         hideGraph={hideGraph}
       />
 

@@ -10,10 +10,13 @@ import {
 
 import { ActivityIcon } from "../common/ActivityIcon";
 
+import type { GoalResponse } from "@dtos/response";
+
 type GoalDetailModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   goalId: string;
+  goal: GoalResponse;  // 親から目標データを受け取る
   hideGraph?: boolean;
 };
 
@@ -21,6 +24,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
   open,
   onOpenChange,
   goalId,
+  goal: goalProp,  // 親から受け取ったgoalデータ
   hideGraph = false,
 }) => {
   const {
@@ -33,7 +37,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
     quantityUnit,
     isLoading,
     statsData,
-  } = useGoalDetailModal(goalId, open);
+  } = useGoalDetailModal(goalId, goalProp, open);
 
   if (!goal) {
     return null;
