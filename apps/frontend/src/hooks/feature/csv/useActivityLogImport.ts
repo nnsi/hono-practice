@@ -5,6 +5,7 @@ import {
   useBatchImportActivityLogs,
   useCreateActivity,
 } from "@frontend/hooks/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { ValidatedActivityLog } from "./useActivityLogValidator";
 
@@ -33,6 +34,7 @@ export function useActivityLogImport() {
   const { data: activities } = useActivities();
   const createActivity = useCreateActivity();
   const batchImportMutation = useBatchImportActivityLogs();
+  const queryClient = useQueryClient();
   const [progress, setProgress] = useState<ImportProgress>({
     total: 0,
     processed: 0,
@@ -162,6 +164,16 @@ export function useActivityLogImport() {
         const result = await batchImportMutation.mutateAsync({
           activityLogs,
         });
+
+        // インポートした日付ごとにキャッシュを無効化
+        const uniqueDates = [...new Set(activityLogs.map((log) => log.date))];
+        await Promise.all(
+          uniqueDates.map((date) =>
+            queryClient.invalidateQueries({
+              queryKey: ["activity", "activity-logs-daily", date],
+            }),
+          ),
+        );
 
         const totalProcessed = result.summary.total + logsWithErrors.length;
         const totalFailed = result.summary.failed + logsWithErrors.length;

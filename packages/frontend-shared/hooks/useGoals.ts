@@ -59,31 +59,31 @@ export function createUseGoals(
   return useQuery<GetGoalsResponse>({
     queryKey,
     queryFn: async () => {
-      const params = new URLSearchParams();
-
-      if (filters?.activityId) params.append("activityId", filters.activityId);
-      if (filters?.isActive !== undefined)
-        params.append("isActive", filters.isActive.toString());
-
-      const queryString = params.toString();
-      const path = queryString ? `/users/goals?${queryString}` : "/users/goals";
-
-      // Use batch API to make the request with query parameters
-      const res = await apiClient.batch.$post({
-        json: [
-          {
-            path: path,
-          },
-        ],
-      });
+      // 直接GETリクエストを使用
+      const res = await apiClient.users.goals.$get();
       const json = await res.json();
 
-      const parsed = GetGoalsResponseSchema.safeParse(json[0]);
+      const parsed = GetGoalsResponseSchema.safeParse(json);
       if (!parsed.success) {
         throw new Error("Failed to parse goals");
       }
 
-      return parsed.data;
+      // フィルタリングが必要な場合はクライアント側で実施
+      let filteredGoals = parsed.data.goals;
+      if (filters?.activityId) {
+        filteredGoals = filteredGoals.filter(
+          (g) => g.activityId === filters.activityId,
+        );
+      }
+      if (filters?.isActive !== undefined) {
+        const now = new Date();
+        filteredGoals = filteredGoals.filter((g) => {
+          const isActive = !g.endDate || new Date(g.endDate) >= now;
+          return isActive === filters.isActive;
+        });
+      }
+
+      return { ...parsed.data, goals: filteredGoals };
     },
   });
 }

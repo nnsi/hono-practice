@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import type {
@@ -51,7 +51,6 @@ export type CreateActivityLogOptions = {
 
 export function createUseCreateActivityLog(options: CreateActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateActivityLogRequest) => {
@@ -63,12 +62,7 @@ export function createUseCreateActivityLog(options: CreateActivityLogOptions) {
       }
       return res.json();
     },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
+    // onSuccessを削除 - invalidateはuseActivityRegistPageのhandleActivityLogCreateSuccessで一括処理
   });
 }
 
@@ -78,7 +72,6 @@ export type UpdateActivityLogOptions = {
 
 export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -99,12 +92,7 @@ export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
       }
       return res.json();
     },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
+    // onSuccessを削除 - invalidateは呼び出し元で一括処理
   });
 }
 
@@ -114,7 +102,6 @@ export type DeleteActivityLogOptions = {
 
 export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, date: _date }: { id: string; date: string }) => {
@@ -125,12 +112,7 @@ export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
         throw new Error("Failed to delete activity log");
       }
     },
-    onSuccess: (_data, variables) => {
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-    },
+    // onSuccessを削除 - invalidateは呼び出し元で一括処理
   });
 }
 
@@ -175,7 +157,6 @@ export function createUseBatchImportActivityLogs(
   options: UseBatchImportActivityLogsOptions,
 ) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateActivityLogBatchRequest) => {
@@ -187,9 +168,6 @@ export function createUseBatchImportActivityLogs(
       }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-    },
+    // onSuccessを削除 - バッチインポート後のキャッシュ無効化は呼び出し元で管理
   });
 }

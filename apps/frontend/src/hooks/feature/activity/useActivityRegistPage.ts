@@ -14,19 +14,8 @@ export const useActivityRegistPage = () => {
   // キャッシュ無効化ヘルパー関数
   const invalidateActivityCache = async () => {
     const dateString = dayjs(date).format("YYYY-MM-DD");
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ["activity"],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ["activity", "activity-logs-daily", dateString],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", dateString],
-      }),
-    ]);
-    // 強制的に再フェッチ
-    await queryClient.refetchQueries({
+    // バッチクエリのキーのみを無効化（これにより内部で個別のキャッシュも更新される）
+    await queryClient.invalidateQueries({
       queryKey: ["activity", "activity-logs-daily", dateString],
     });
   };

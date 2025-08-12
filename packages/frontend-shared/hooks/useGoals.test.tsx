@@ -71,8 +71,8 @@ describe("Goal Hooks", () => {
         ],
       };
 
-      mockApiClient.batch.$post = vi.fn().mockResolvedValue({
-        json: vi.fn().mockResolvedValue([mockGoals]),
+      mockApiClient.users.goals.$get = vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue(mockGoals),
       });
 
       const { result } = renderHook(
@@ -85,9 +85,7 @@ describe("Goal Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockGoals);
-      expect(mockApiClient.batch.$post).toHaveBeenCalledWith({
-        json: [{ path: "/users/goals" }],
-      });
+      expect(mockApiClient.users.goals.$get).toHaveBeenCalled();
     });
 
     it("should fetch goals with filters", async () => {
@@ -112,8 +110,8 @@ describe("Goal Hooks", () => {
         ],
       };
 
-      mockApiClient.batch.$post = vi.fn().mockResolvedValue({
-        json: vi.fn().mockResolvedValue([mockGoals]),
+      mockApiClient.users.goals.$get = vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue(mockGoals),
       });
 
       const { result } = renderHook(
@@ -133,13 +131,7 @@ describe("Goal Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockGoals);
-      expect(mockApiClient.batch.$post).toHaveBeenCalledWith({
-        json: [
-          {
-            path: "/users/goals?activityId=00000000-0000-4000-8000-000000000002&isActive=true",
-          },
-        ],
-      });
+      expect(mockApiClient.users.goals.$get).toHaveBeenCalled();
     });
   });
 

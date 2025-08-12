@@ -50,13 +50,11 @@ const mockStatsData = {
 };
 
 // モック用の関数
-const mockUseGoal = vi.fn();
 const mockUseGoalStats = vi.fn();
 const mockUseActivities = vi.fn();
 
 // APIフックのモック
 vi.mock("@frontend/hooks/api/useGoals", () => ({
-  useGoal: () => mockUseGoal(),
   useGoalStats: () => mockUseGoalStats(),
 }));
 
@@ -67,10 +65,10 @@ vi.mock("@frontend/hooks/api/useActivities", () => ({
 // createUseGoalDetailModalのモック
 vi.mock("@packages/frontend-shared/hooks/feature", () => ({
   createUseGoalDetailModal: vi.fn(() => {
-    return (_goalId: string, open: boolean) => {
+    return (_goalId: string, goalProp: any | null, open: boolean) => {
       if (!open) {
         return {
-          goal: null,
+          goal: goalProp,
           isLoading: false,
           activity: null,
           activityName: "不明なアクティビティ",
@@ -90,11 +88,9 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
         };
       }
 
-      const goalData = mockUseGoal();
+      const goal = goalProp;
       const statsData = mockUseGoalStats();
       const activitiesData = mockUseActivities();
-
-      const goal = goalData?.data || null;
       const activity = activitiesData?.data?.find(
         (a: any) => a.id === goal?.activityId,
       );
@@ -106,10 +102,7 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
 
       return {
         goal,
-        isLoading:
-          goalData?.isLoading ||
-          statsData?.isLoading ||
-          activitiesData?.isLoading,
+        isLoading: statsData?.isLoading || activitiesData?.isLoading,
         activity,
         activityName: activity?.name || "不明なアクティビティ",
         activityEmoji: activity?.emoji || "🎯",
@@ -159,11 +152,6 @@ describe("useGoalDetailModal", () => {
   });
 
   it("正しく目標データを取得できる", async () => {
-    mockUseGoal.mockReturnValue({
-      data: mockGoal,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: mockStatsData,
       isLoading: false,
@@ -174,9 +162,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", mockGoal, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.goal).toEqual(mockGoal);
@@ -188,11 +179,6 @@ describe("useGoalDetailModal", () => {
   });
 
   it("統計情報を正しく計算できる", async () => {
-    mockUseGoal.mockReturnValue({
-      data: mockGoal,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: mockStatsData,
       isLoading: false,
@@ -203,9 +189,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", mockGoal, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.stats.currentProgress).toBe(5000);
@@ -224,11 +213,6 @@ describe("useGoalDetailModal", () => {
       endDate: "2020-12-31", // 過去の日付
     };
 
-    mockUseGoal.mockReturnValue({
-      data: pastGoal,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: mockStatsData,
       isLoading: false,
@@ -239,9 +223,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", pastGoal, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.isPastGoal).toBe(true);
@@ -249,11 +236,6 @@ describe("useGoalDetailModal", () => {
   });
 
   it("アクティビティが見つからない場合のデフォルト値", async () => {
-    mockUseGoal.mockReturnValue({
-      data: mockGoal,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: mockStatsData,
       isLoading: false,
@@ -264,9 +246,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", mockGoal, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.activity).toBeUndefined();
@@ -277,11 +262,6 @@ describe("useGoalDetailModal", () => {
   });
 
   it("目標データがない場合の処理", async () => {
-    mockUseGoal.mockReturnValue({
-      data: null,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: null,
       isLoading: false,
@@ -292,9 +272,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", null as any, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.goal).toBeNull();
@@ -305,11 +288,6 @@ describe("useGoalDetailModal", () => {
   });
 
   it("統計データロード中の処理", async () => {
-    mockUseGoal.mockReturnValue({
-      data: mockGoal,
-      isLoading: false,
-    });
-
     mockUseGoalStats.mockReturnValue({
       data: null,
       isLoading: true,
@@ -320,9 +298,12 @@ describe("useGoalDetailModal", () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", mockGoal, true),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(true);
@@ -330,12 +311,15 @@ describe("useGoalDetailModal", () => {
   });
 
   it("openがfalseの場合はデータを取得しない", async () => {
-    const { result } = renderHook(() => useGoalDetailModal("goal-1", false), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useGoalDetailModal("goal-1", mockGoal, false),
+      {
+        wrapper,
+      },
+    );
 
     await waitFor(() => {
-      expect(result.current.goal).toBeNull();
+      expect(result.current.goal).toEqual(mockGoal);
       expect(result.current.isLoading).toBe(false);
       expect(result.current.activityName).toBe("不明なアクティビティ");
     });

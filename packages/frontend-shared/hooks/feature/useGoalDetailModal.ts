@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { GoalResponse } from "@dtos/response";
 
-import { createUseActivities, createUseGoal, createUseGoalStats } from "../";
+import { createUseActivities, createUseGoalStats } from "../";
 
 type GoalStats = {
   daysUntilDeadline?: number;
@@ -63,8 +63,8 @@ export const createUseGoalDetailModal = (
   const { apiClient } = deps;
   const useActivities = createUseActivities({ apiClient });
 
-  return (goalId: string, open: boolean) => {
-    const { data: goalData } = createUseGoal({ apiClient, id: goalId });
+  return (goalId: string, goalProp: GoalResponse, open: boolean) => {
+    // 親から渡されたgoalデータを使用し、リクエストを避ける
     const { data: statsData, isLoading } = createUseGoalStats({
       apiClient,
       id: goalId,
@@ -72,7 +72,7 @@ export const createUseGoalDetailModal = (
     });
     const { activities: activitiesData } = useActivities();
 
-    const goal = goalData;
+    const goal = goalProp;
 
     // 過去目標（終了日が現在より前）の判定
     const isPastGoal = useMemo(() => {
