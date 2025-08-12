@@ -1,10 +1,12 @@
+import { useCallback, useContext, useEffect } from "react";
+
 import { createEventBusAdapter } from "@frontend/adapters/EventBusAdapter";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { useEventBus } from "@frontend/providers/EventBusProvider";
-import { useCallback, useContext, useEffect } from "react";
 
 export const useGlobalDate = () => {
-  const { date: selectedDate, setDate: setSelectedDateState } = useContext(DateContext);
+  const { date: selectedDate, setDate: setSelectedDateState } =
+    useContext(DateContext);
   const eventBus = useEventBus();
   const eventBusAdapter = createEventBusAdapter(eventBus);
 
@@ -21,7 +23,10 @@ export const useGlobalDate = () => {
       }
     };
 
-    const unsubscribe = eventBusAdapter.on("globalDate:changed", handleDateChange);
+    const unsubscribe = eventBusAdapter.on(
+      "globalDate:changed",
+      handleDateChange,
+    );
     return unsubscribe;
   }, [eventBusAdapter, setSelectedDateState]);
 

@@ -5,18 +5,18 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.3",
-    "@hono/zod-validator": "^0.7.0",
+    "@hono/zod-validator": "^0.7.2",
     "@neondatabase/serverless": "^1.0.1",
     "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.44.2",
-    "hono": "^4.8.2",
+    "hono": "^4.9.1",
     "jose": "^6.0.10",
     "postgres": "^3.4.5",
     "redis": "^5.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250422.0",
-    "@hono/node-server": "^1.13.7",
+    "@hono/node-server": "^1.18.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.0.3",
     "dotenv": "^16.4.7",
