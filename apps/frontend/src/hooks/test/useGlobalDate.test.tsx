@@ -1,5 +1,6 @@
 import type React from "react";
 
+import { DateProvider } from "@frontend/providers/DateProvider";
 import { EventBusProvider } from "@frontend/providers/EventBusProvider";
 import { createWindowEventBus } from "@frontend/services/abstractions";
 import { act, renderHook } from "@testing-library/react";
@@ -11,7 +12,9 @@ describe("useGlobalDate", () => {
   it("初期状態が正しく設定される", () => {
     const eventBus = createWindowEventBus();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
+      <EventBusProvider eventBus={eventBus}>
+        <DateProvider>{children}</DateProvider>
+      </EventBusProvider>
     );
     const { result } = renderHook(() => useGlobalDate(), { wrapper });
 
@@ -27,7 +30,9 @@ describe("useGlobalDate", () => {
   it("setSelectedDateが正しく動作する", () => {
     const eventBus = createWindowEventBus();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
+      <EventBusProvider eventBus={eventBus}>
+        <DateProvider>{children}</DateProvider>
+      </EventBusProvider>
     );
 
     const { result } = renderHook(() => useGlobalDate(), { wrapper });
@@ -44,7 +49,9 @@ describe("useGlobalDate", () => {
   it("日付ナビゲーション関数が正しく動作する", () => {
     const eventBus = createWindowEventBus();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <EventBusProvider eventBus={eventBus}>{children}</EventBusProvider>
+      <EventBusProvider eventBus={eventBus}>
+        <DateProvider>{children}</DateProvider>
+      </EventBusProvider>
     );
 
     const { result } = renderHook(() => useGlobalDate(), { wrapper });

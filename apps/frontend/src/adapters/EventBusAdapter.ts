@@ -10,7 +10,11 @@ export function createEventBusAdapter(eventBus: EventBus): EventBusAdapter {
       eventBus.emit(eventName, data);
     },
     on: (eventName, handler) => {
-      const unsubscribe = eventBus.on(eventName, handler);
+      // EventBusのonメソッドはCustomEventを渡すので、detailを抽出して渡す
+      const customEventHandler = (event: CustomEvent) => {
+        handler(event.detail);
+      };
+      const unsubscribe = eventBus.on(eventName, customEventHandler);
       handlerMap.set(handler, unsubscribe);
       return unsubscribe;
     },
