@@ -1,5 +1,7 @@
 import { useGoalDetailModal } from "@frontend/hooks/feature/goal/useGoalDetailModal";
 
+import type { GoalResponse } from "@dtos/response";
+
 import {
   Dialog,
   DialogContent,
@@ -10,13 +12,12 @@ import {
 
 import { ActivityIcon } from "../common/ActivityIcon";
 
-import type { GoalResponse } from "@dtos/response";
 
 type GoalDetailModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   goalId: string;
-  goal: GoalResponse;  // 親から目標データを受け取る
+  goal: GoalResponse; // 親から目標データを受け取る
   hideGraph?: boolean;
 };
 
@@ -24,7 +25,7 @@ export const GoalDetailModal: React.FC<GoalDetailModalProps> = ({
   open,
   onOpenChange,
   goalId,
-  goal: goalProp,  // 親から受け取ったgoalデータ
+  goal: goalProp, // 親から受け取ったgoalデータ
   hideGraph = false,
 }) => {
   const {

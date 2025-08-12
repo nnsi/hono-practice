@@ -62,7 +62,7 @@ export function createUseGoals(
       // 直接GETリクエストを使用
       const res = await apiClient.users.goals.$get();
       const json = await res.json();
-      
+
       const parsed = GetGoalsResponseSchema.safeParse(json);
       if (!parsed.success) {
         throw new Error("Failed to parse goals");
@@ -71,11 +71,13 @@ export function createUseGoals(
       // フィルタリングが必要な場合はクライアント側で実施
       let filteredGoals = parsed.data.goals;
       if (filters?.activityId) {
-        filteredGoals = filteredGoals.filter(g => g.activityId === filters.activityId);
+        filteredGoals = filteredGoals.filter(
+          (g) => g.activityId === filters.activityId,
+        );
       }
       if (filters?.isActive !== undefined) {
         const now = new Date();
-        filteredGoals = filteredGoals.filter(g => {
+        filteredGoals = filteredGoals.filter((g) => {
           const isActive = !g.endDate || new Date(g.endDate) >= now;
           return isActive === filters.isActive;
         });
