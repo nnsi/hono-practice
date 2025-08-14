@@ -1,11 +1,13 @@
 type Repository = {
-  withTx: (tx: any) => Repository;
-  [key: string]: any;
+  withTx: <T>(tx: T) => Repository;
+  [key: string]: unknown;
 };
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
+type UnionToIntersection<U> = (
+  U extends unknown
+    ? (k: U) => void
+    : never
+) extends (k: infer I) => void
   ? I
   : never;
 

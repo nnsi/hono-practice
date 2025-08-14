@@ -59,12 +59,12 @@ export function useActivityLogValidator() {
     (activityName: string, kindName?: string) => {
       if (!activities || !activityName) return { activity: null, isNew: true };
 
-      const activity = activities.find((a: any) => a.name === activityName);
+      const activity = activities.find((a) => a.name === activityName);
       if (!activity) return { activity: null, isNew: true };
 
       // 種別名が指定されている場合は、その活動の種別として存在するかチェック
       if (kindName && activity.kinds) {
-        const hasKind = activity.kinds.some((k: any) => k.name === kindName);
+        const hasKind = activity.kinds.some((k) => k.name === kindName);
         if (!hasKind) {
           return {
             activity,
@@ -95,7 +95,7 @@ export function useActivityLogValidator() {
       // 固定アクティビティIDが設定されている場合
       if (mapping.fixedActivityId && activities) {
         const fixedActivity = activities.find(
-          (a: any) => a.id === mapping.fixedActivityId,
+          (a) => a.id === mapping.fixedActivityId,
         );
         if (fixedActivity) {
           activityName = fixedActivity.name;

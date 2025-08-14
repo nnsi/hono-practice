@@ -387,7 +387,7 @@ export function CSVImportPreview({
                   <TableCell>
                     {log.errors.length > 0 && (
                       <div className="text-sm text-red-600">
-                        {log.errors.map((error: any, i: number) => (
+                        {log.errors.map((error, i) => (
                           <div key={`error-${i}-${error.message}`}>
                             {error.message}
                           </div>

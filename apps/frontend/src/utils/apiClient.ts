@@ -26,7 +26,7 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
   };
   const tokenManager = config?.tokenManager || tokenStore;
   const eventBus = config?.eventBus || {
-    emit: (eventName: string, detail?: any) => {
+    emit: (eventName: string, detail?: unknown) => {
       window.dispatchEvent(new CustomEvent(eventName, { detail }));
     },
   };
@@ -152,9 +152,9 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
           "Content-Type": "application/json",
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       // 401や未認証系のエラーはapi-errorを発火しない
-      const msg = error?.message || "";
+      const msg = error instanceof Error ? error.message : "";
       if (
         msg.includes("401") ||
         msg.includes("unauthorized") ||

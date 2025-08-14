@@ -101,10 +101,22 @@ const CSVImportModal = ({ isOpen, onClose }: Props) => {
         const updated = [...prev];
         const log = { ...updated[index] };
 
-        if (field === "quantity") {
-          log.quantity = Number(value) || 0;
-        } else {
-          (log as any)[field] = value;
+        // 型安全なフィールド更新
+        switch (field) {
+          case "quantity":
+            log[field] = Number(value) || 0;
+            break;
+          case "date":
+          case "activityName":
+          case "kindName":
+          case "memo":
+            log[field] = value;
+            break;
+          // 読み取り専用フィールドは更新しない
+          case "activityId":
+          case "isNewActivity":
+          case "errors":
+            return prev; // 変更しない
         }
 
         // アクティビティが変更された場合、種別をクリア

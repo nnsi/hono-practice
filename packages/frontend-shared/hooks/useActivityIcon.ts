@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
  */
 export interface ImageResizer {
   resizeImage(
-    input: any,
+    input: File | Blob,
     maxWidth: number,
     maxHeight: number,
   ): Promise<{ base64: string; mimeType: string }>;
@@ -30,7 +30,7 @@ export function createUseUploadActivityIcon(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, file }: { id: string; file: any }) => {
+    mutationFn: async ({ id, file }: { id: string; file: File | Blob }) => {
       // Resize image to 256x256 max and convert to base64
       const { base64, mimeType } = await resizer.resizeImage(file, 256, 256);
 

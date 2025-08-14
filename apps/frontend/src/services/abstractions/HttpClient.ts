@@ -65,7 +65,7 @@ export type ApiClientConfig = {
    * イベントバス（エラー通知用）
    */
   eventBus?: {
-    emit: (eventName: string, detail?: any) => void;
+    emit: (eventName: string, detail?: unknown) => void;
   };
 
   /**

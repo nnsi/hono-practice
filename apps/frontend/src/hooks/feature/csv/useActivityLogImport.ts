@@ -85,9 +85,7 @@ export function useActivityLogImport() {
       if (createdId) return createdId;
 
       // 既存のアクティビティから探す
-      const existingActivity = activities?.find(
-        (a: any) => a.name === activityName,
-      );
+      const existingActivity = activities?.find((a) => a.name === activityName);
       return existingActivity?.id;
     },
     [activities],
@@ -97,10 +95,10 @@ export function useActivityLogImport() {
     (activityName: string, kindName?: string) => {
       if (!kindName || !activities) return undefined;
 
-      const activity = activities.find((a: any) => a.name === activityName);
+      const activity = activities.find((a) => a.name === activityName);
       if (!activity?.kinds) return undefined;
 
-      const kind = activity.kinds.find((k: any) => k.name === kindName);
+      const kind = activity.kinds.find((k) => k.name === kindName);
       return kind?.id;
     },
     [activities],
@@ -189,8 +187,8 @@ export function useActivityLogImport() {
         // バックエンドエラーとバリデーションエラーを統合
         const allErrors = [
           ...result.results
-            .filter((r: any) => !r.success)
-            .map((r: any, idx: number) => ({
+            .filter((r) => !r.success)
+            .map((r, idx) => ({
               index: validatedLogs.findIndex(
                 (log) => log === logsToImport[idx],
               ),

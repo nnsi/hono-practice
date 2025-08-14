@@ -17,7 +17,10 @@ import { scaleBand, scaleLinear } from "d3-scale";
 import dayjs from "dayjs";
 import Svg, { Line, Text as SvgText, G, Rect } from "react-native-svg";
 
-import { GetActivityStatsResponseSchema } from "@dtos/response";
+import {
+  type GetActivityStatsResponse,
+  GetActivityStatsResponseSchema,
+} from "@dtos/response";
 
 import { useGoals } from "../hooks";
 import { apiClient } from "../utils/apiClient";
@@ -83,7 +86,7 @@ export const StatsScreen: React.FC = () => {
     },
   });
 
-  const renderChart = (stat: any) => {
+  const renderChart = (stat: GetActivityStatsResponse[number]) => {
     // アクティビティに対する目標値を取得
     const goal = goalsData?.goals.find((g) => g.activityId === stat.id);
     const startOfMonth = dayjs(`${month}-01`);
@@ -94,12 +97,12 @@ export const StatsScreen: React.FC = () => {
 
     if (stat.showCombinedStats) {
       // 各種別ごとに日付ごとのデータを集計
-      const kindDataMap = stat.kinds.map((kind: any) => {
+      const kindDataMap = stat.kinds.map((kind) => {
         const dailyData = allDates.map((date) => {
           const logs = kind.logs.filter(
-            (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
+            (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
           );
-          return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+          return logs.reduce((sum, l) => sum + l.quantity, 0);
         });
         return { kind, dailyData };
       });
@@ -269,7 +272,7 @@ export const StatsScreen: React.FC = () => {
           {/* 凡例をグラフの下に表示 */}
           {!(stat.kinds.length === 1 && stat.kinds[0].name === "未指定") && (
             <View style={styles.legendContainer}>
-              {stat.kinds.map((kind: any) => (
+              {stat.kinds.map((kind) => (
                 <View key={kind.id || kind.name} style={styles.legendItem}>
                   <View
                     style={[
@@ -288,12 +291,12 @@ export const StatsScreen: React.FC = () => {
     // 個別棒グラフ
     return (
       <View>
-        {stat.kinds.map((kind: any) => {
+        {stat.kinds.map((kind) => {
           const dailyData = allDates.map((date) => {
             const logs = kind.logs.filter(
-              (l: any) => dayjs(l.date).format("YYYY-MM-DD") === date,
+              (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
             );
-            return logs.reduce((sum: number, l: any) => sum + l.quantity, 0);
+            return logs.reduce((sum, l) => sum + l.quantity, 0);
           });
 
           const hasData = dailyData.some((value) => value > 0);

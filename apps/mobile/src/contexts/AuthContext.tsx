@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Attempting login with:", { login_id: loginId });
         console.log("API URL:", apiClient.auth.login.$url().toString());
 
-        let response: any;
+        let response: Response;
         try {
           response = await apiClient.auth.login.$post({
             json: {
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               password,
             },
           });
-        } catch (networkError: any) {
+        } catch (networkError) {
           console.error("Network request error:", networkError);
           console.error("Network error details:", {
             message: networkError?.message,
@@ -205,20 +205,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // ユーザー情報を取得
         await getUser();
-      } catch (error: any) {
+      } catch (error) {
         console.error("Login error:", error);
-        console.error("Error details:", {
-          message: error?.message,
-          stack: error?.stack,
-          name: error?.name,
-          cause: error?.cause,
-        });
-        if (error?.response) {
-          console.error("Response details:", {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            headers: error.response?.headers,
-            url: error.response?.url,
+        if (error instanceof Error) {
+          console.error("Error details:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            cause: error.cause,
           });
         }
         throw error;
@@ -244,7 +238,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error((error as any).message || "Signup failed");
+          throw new Error(
+            (error as { message?: string }).message || "Signup failed",
+          );
         }
 
         const data = await response.json();

@@ -8,7 +8,7 @@ export type EventBus = {
    * @param eventName イベント名
    * @param detail イベントの詳細データ（オプション）
    */
-  emit: (eventName: string, detail?: any) => void;
+  emit: (eventName: string, detail?: unknown) => void;
 
   /**
    * イベントリスナーを登録する
@@ -43,7 +43,7 @@ export const createWindowEventBus = (): EventBus => {
   const listeners = new Map<string, Set<EventListenerOrEventListenerObject>>();
 
   return {
-    emit: (eventName: string, detail?: any) => {
+    emit: (eventName: string, detail?: unknown) => {
       const event = new CustomEvent(eventName, { detail });
       window.dispatchEvent(event);
     },
@@ -127,7 +127,7 @@ export const createInMemoryEventBus = (): EventBus => {
   const listeners = new Map<string, Set<(event: CustomEvent) => void>>();
 
   return {
-    emit: (eventName: string, detail?: any) => {
+    emit: (eventName: string, detail?: unknown) => {
       const event = new CustomEvent(eventName, { detail });
       const eventListeners = listeners.get(eventName);
       if (eventListeners) {

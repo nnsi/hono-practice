@@ -5,7 +5,7 @@ export class APIError extends Error {
     message: string,
     public statusCode: number,
     public code?: string,
-    public details?: any,
+    public details?: unknown,
   ) {
     super(message);
     this.name = "APIError";
@@ -23,7 +23,7 @@ export class NetworkError extends Error {
 }
 
 export class AuthError extends APIError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 401, "AUTH_ERROR", details);
     this.name = "AuthError";
   }

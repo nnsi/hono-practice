@@ -12,7 +12,6 @@ import {
 
 import { ActivityIcon } from "../common/ActivityIcon";
 
-
 type GoalDetailModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
