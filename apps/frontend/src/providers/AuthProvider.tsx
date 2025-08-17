@@ -104,10 +104,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     try {
       const res = await apiClient.auth.token.$post({});
       if (res.status !== 200) {
-        const body: any = await res.json().catch(() => ({}));
+        const body = await res.json().catch(() => ({ message: "" }));
         if (
           res.status === 401 &&
           body &&
+          "message" in body &&
           (body.message === "refresh token not found" ||
             body.message === "invalid refresh token")
         ) {

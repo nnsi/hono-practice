@@ -79,10 +79,13 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
         return sum + (Number(day[kind.name]) || 0);
       }, 0);
 
+      // 小数点第3位まで正確に丸める
+      const roundedDayTotal = Math.round(dayTotal * 1000) / 1000;
+
       acc[weekKey].days.push({
         date: date.format("MM/DD"),
         dayOfWeek: date.format("ddd"),
-        total: dayTotal,
+        total: roundedDayTotal,
         breakdown: kinds.reduce(
           (breakdown, kind) => {
             breakdown[kind.name] = Number(day[kind.name]) || 0;
@@ -92,7 +95,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
         ),
       });
 
-      acc[weekKey].weekTotal += dayTotal;
+      acc[weekKey].weekTotal += roundedDayTotal;
 
       return acc;
     },
@@ -191,7 +194,8 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                         className="px-4 py-2 whitespace-nowrap text-sm text-right font-bold bg-gray-50"
                         rowSpan={week.days.length}
                       >
-                        {week.weekTotal} {quantityUnit}
+                        {Math.round(week.weekTotal * 1000) / 1000}{" "}
+                        {quantityUnit}
                       </td>
                     )}
                   </tr>

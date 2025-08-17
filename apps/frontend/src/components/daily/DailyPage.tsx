@@ -35,7 +35,7 @@ export const ActivityDailyPage: React.FC = () => {
         <hr className="my-6" />
         <div className="flex-1 flex flex-col gap-4 px-4 mt-2">
           {mergedActivityLogs && mergedActivityLogs.length > 0 ? (
-            mergedActivityLogs.map((log: any) => (
+            mergedActivityLogs.map((log) => (
               <Card
                 key={log.id}
                 onClick={() => handleActivityLogClick(log)}

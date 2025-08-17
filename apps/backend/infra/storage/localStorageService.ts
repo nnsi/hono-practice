@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import type { StorageService } from ".";
 
@@ -22,8 +22,8 @@ export function newLocalStorageService(
       const filePath = join(uploadDir, key);
 
       // Ensure parent directory exists
-      const parentDir = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (parentDir && !existsSync(parentDir)) {
+      const parentDir = dirname(filePath);
+      if (!existsSync(parentDir)) {
         await mkdir(parentDir, { recursive: true });
       }
 
