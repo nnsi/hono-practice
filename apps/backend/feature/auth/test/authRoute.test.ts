@@ -217,9 +217,12 @@ describe("AuthRoute Integration Tests", () => {
         "error" in body &&
         body.error &&
         typeof body.error === "object" &&
-        "issues" in body.error
+        "message" in body.error
       ) {
-        expect((body.error as any).issues).toEqual(
+        // Zod 4 serializes errors as JSON string in message field
+        const errorMessage = (body.error as any).message;
+        const issues = JSON.parse(errorMessage);
+        expect(issues).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ path: ["password"] }),
           ]),

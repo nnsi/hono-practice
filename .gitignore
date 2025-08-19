@@ -9,3 +9,4 @@ stats.html
 public
 *.pkl
 .serena
+tmp

@@ -213,7 +213,7 @@ test("POST activities/:id/icon / activity not found", async () => {
   const mimeType = "image/png";
 
   const res = await app.request(
-    "/99999999-9999-9999-9999-999999999999/icon",
+    "/00000000-0000-4000-8000-000000000000/icon",
     {
       method: "POST",
       body: JSON.stringify({ base64, mimeType }),
@@ -292,7 +292,7 @@ test("DELETE activities/:id/icon / activity not found", async () => {
     .route("/", route);
 
   const res = await app.request(
-    "/99999999-9999-9999-9999-999999999999/icon",
+    "/00000000-0000-4000-8000-000000000000/icon",
     {
       method: "DELETE",
       headers: {
