@@ -14,5 +14,3 @@ export * from "./ProcessSyncResponse";
 export * from "./GoalStatsResponse";
 export * from "./ApiKeyResponse";
 export * from "./SubscriptionResponse";
-export * from "./BatchSyncResponse";
-export * from "./PullSyncResponse";

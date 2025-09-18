@@ -12,8 +12,6 @@ export * from "./UpdateActivityLogRequest";
 export * from "./UpdateActivityRequest";
 export * from "./UpdateTaskRequest";
 export * from "./CheckDuplicatesRequest";
-export * from "./EnqueueSyncRequest";
 export * from "./ProcessSyncRequest";
 export * from "./CreateApiKeyRequest";
-export * from "./BatchSyncRequest";
 export * from "./PullSyncRequest";

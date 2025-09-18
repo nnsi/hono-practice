@@ -39,7 +39,7 @@ export const useActivityLogEdit = (
         // 更新後にキャッシュを無効化
         if (params.date) {
           await queryClient.invalidateQueries({
-            queryKey: ["activity", "activity-logs-daily", params.date],
+            queryKey: ["activity-logs-daily", params.date],
           });
         }
       },
@@ -51,7 +51,7 @@ export const useActivityLogEdit = (
         // 削除後にキャッシュを無効化
         if (params.date) {
           await queryClient.invalidateQueries({
-            queryKey: ["activity", "activity-logs-daily", params.date],
+            queryKey: ["activity-logs-daily", params.date],
           });
         }
       },

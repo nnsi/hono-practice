@@ -50,6 +50,7 @@ export function ActivityLogCreateDialog({
     timeUnitType,
     isRunning,
     elapsedTime,
+    isPending,
     handleTimerStart,
     handleTimerStop,
     handleTimerSave,
@@ -79,6 +80,7 @@ export function ActivityLogCreateDialog({
                 form={form}
                 activity={activity}
                 onSubmit={onSubmit}
+                isPending={isPending}
               />
             </TabsContent>
 
@@ -146,8 +148,9 @@ export function ActivityLogCreateDialog({
                       onClick={handleTimerSave}
                       variant="secondary"
                       className="w-full"
+                      disabled={isPending}
                     >
-                      記録する
+                      {isPending ? "記録中..." : "記録する"}
                     </Button>
                   </div>
                 )}
@@ -159,6 +162,7 @@ export function ActivityLogCreateDialog({
             form={form}
             activity={activity}
             onSubmit={onSubmit}
+            isPending={isPending}
           />
         )}
       </DialogContent>

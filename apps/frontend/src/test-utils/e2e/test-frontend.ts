@@ -21,7 +21,7 @@ export async function startTestFrontend(
     const frontendDir = path.resolve(__dirname, "../..");
 
     console.log("Starting Vite dev server...");
-    viteProcess = spawn("npm", ["run", "dev"], {
+    viteProcess = spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "dev"], {
       cwd: frontendDir,
       env: {
         ...process.env,
@@ -31,6 +31,7 @@ export async function startTestFrontend(
         VITE_GOOGLE_OAUTH_CLIENT_ID: "test-client-id",
       },
       stdio: ["ignore", "pipe", "pipe"],
+      shell: process.platform === "win32",
       // プロセスグループを作成して、子プロセスも含めて終了できるようにする
       detached: process.platform !== "win32",
     });

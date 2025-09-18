@@ -47,7 +47,6 @@ export const ActivityEditDialog = ({
     deleteIcon,
   } = useActivityEdit(activity, onClose);
 
-  // watch values outside of render to prevent re-renders
   const emojiValue = form.watch("activity.emoji");
 
   if (!open || !activity) return null;

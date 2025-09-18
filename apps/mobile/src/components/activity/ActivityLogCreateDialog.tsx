@@ -90,10 +90,13 @@ export function ActivityLogCreateDialog({
   });
 
   const onSubmit = (data: CreateActivityLogRequest) => {
+    if (isPending) return;
     mutate(data);
   };
 
   const handleTimerSave = () => {
+    if (isPending) return;
+
     const seconds = getElapsedSeconds();
     const startTimeStamp = getStartTime();
     const timerStartTime = startTimeStamp ? new Date(startTimeStamp) : null;

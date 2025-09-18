@@ -9,3 +9,16 @@ stats.html
 public
 *.pkl
 .serena
+tmp
+
+# Terraform
+terraform/*.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfplan
+terraform/.terraformrc
+terraform/terraform.rc
+terraform/.env.secrets
+terraform/.env

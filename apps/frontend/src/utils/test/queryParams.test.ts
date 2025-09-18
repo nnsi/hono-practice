@@ -237,14 +237,14 @@ describe("qp (queryParams)", () => {
       }
       expect.fail("Should have thrown an error");
     } catch (error: any) {
-      expect(error.errors).toBeDefined();
+      expect(error.issues).toBeDefined();
       expect(
-        error.errors.some((e: any) =>
+        error.issues.some((e: any) =>
           e.message.includes("Invalid email format"),
         ),
       ).toBe(true);
       expect(
-        error.errors.some((e: any) =>
+        error.issues.some((e: any) =>
           e.message.includes("Must be at least 18 years old"),
         ),
       ).toBe(true);

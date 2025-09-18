@@ -19,6 +19,11 @@ Claude Code (claude.ai/code)向けのガイダンス
 - 手動確認を求めるのではなく、必ずPlaywrightで自動的に動作確認を実施すること
 - `mcp__playwright__browser_navigate`でアクセス、`mcp__playwright__browser_snapshot`で状態確認
 
+### パッケージ管理
+- **絶対にnpm ci、クリーンインストールを実行しないでください**
+- パッケージのインストールや更新はユーザー側で管理されています
+- 勝手にnode_modulesを削除したり、再インストールしたりしないでください
+
 ## 🔨 新しいルールの追加プロセス
 
 ユーザーから常に対応が必要だと思われる指示を受けた場合：

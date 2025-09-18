@@ -1,0 +1,37 @@
+cloudflare_api_token  = "your-cloudflare-api-token"
+cloudflare_account_id = "your-cloudflare-account-id"
+
+environment    = "production"
+project_name   = "actiko"
+
+worker_name        = "actiko-api"
+worker_script_path = "../dist/worker.js"
+worker_routes      = [
+  "api.yourdomain.com/*",
+  "yourdomain.com/api/*"
+]
+
+pages_project_name       = "actiko-web"
+pages_production_branch  = "main"
+
+r2_bucket_name     = "actiko-storage"
+r2_bucket_location = "apac"
+
+custom_domain = "yourdomain.com"
+
+worker_environment_variables = {
+  DATABASE_URL = "postgresql://user:password@host:5432/database"
+  FRONTEND_URL = "https://yourdomain.com"
+}
+
+worker_secrets = {
+  JWT_SECRET     = "your-jwt-secret"
+  ENCRYPTION_KEY = "your-encryption-key"
+}
+
+pages_environment_variables = {
+  VITE_API_URL = "https://api.yourdomain.com"
+}
+
+enable_worker_logpush = true
+worker_cpu_limit      = 50

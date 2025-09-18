@@ -86,6 +86,11 @@ export const useActivityLogCreate = (
       return;
     }
 
+    // 既にリクエスト中の場合は処理しない
+    if (createActivityLogMutation.isPending) {
+      return;
+    }
+
     try {
       await createActivityLogMutation.mutateAsync({
         activityId: activity.id,
@@ -126,6 +131,11 @@ export const useActivityLogCreate = (
 
   // タイマーからの記録
   const handleTimerSave = async () => {
+    // 既にリクエスト中の場合は処理しない
+    if (createActivityLogMutation.isPending) {
+      return;
+    }
+
     const seconds = getElapsedSeconds();
     const quantity = convertSecondsToUnit(seconds, timeUnitType);
 
@@ -165,6 +175,9 @@ export const useActivityLogCreate = (
     timeUnitType,
     isRunning,
     elapsedTime,
+
+    // Mutation status
+    isPending: createActivityLogMutation.isPending,
 
     // Handlers
     handleTimerStart,

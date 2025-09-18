@@ -20,10 +20,12 @@ export function ActivityLogCreateFormBody({
   form,
   activity,
   onSubmit,
+  isPending = false,
 }: {
   form: UseFormReturn<CreateActivityLogRequest, any, CreateActivityLogRequest>;
   activity: GetActivityResponse;
   onSubmit: (data: CreateActivityLogRequest) => Promise<void>;
+  isPending?: boolean;
 }) {
   // 入力フィールドフォーカス時のハンドラ
   const handleQuantityFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -91,8 +93,13 @@ export function ActivityLogCreateFormBody({
             </div>
           )}
           <div className="col-span-3 text-center">
-            <Button type="submit" variant="default" className="w-full">
-              Record it!
+            <Button
+              type="submit"
+              variant="default"
+              className="w-full"
+              disabled={isPending}
+            >
+              {isPending ? "記録中..." : "Record it!"}
             </Button>
           </div>
         </div>
