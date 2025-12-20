@@ -47,6 +47,7 @@ describe("AuthUsecase", () => {
   let passwordVerifier: PasswordVerifier;
   let mockVerifier: OAuthVerify;
   const JWT_SECRET = "test-secret";
+  const JWT_AUDIENCE = "test-audience";
 
   beforeEach(() => {
     userRepo = mock<UserRepository>();
@@ -60,6 +61,7 @@ describe("AuthUsecase", () => {
       instance(userProviderRepo),
       instance(passwordVerifier),
       JWT_SECRET,
+      JWT_AUDIENCE,
       { google: mockVerifier },
     );
   });

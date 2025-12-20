@@ -7,7 +7,9 @@ import type { QueryExecutor } from "../infra/rdb/drizzle";
 import type { R2Bucket } from "@cloudflare/workers-types";
 
 export type JwtPayload = {
-  id: string;
+  userId: string;
+  aud: string;
+  iat?: number;
   exp: number;
 };
 

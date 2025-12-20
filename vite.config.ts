@@ -10,6 +10,7 @@ export default defineConfig(() => {
       setupFiles: ["./apps/backend/test.setup.ts"],
       env: {
         NODE_ENV: "test",
+        JWT_AUDIENCE: "test-audience",
         JWT_SECRET: "test-jwt",
         IS_REACT_ACT_ENVIRONMENT: "true",
       },

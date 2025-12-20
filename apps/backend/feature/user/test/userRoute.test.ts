@@ -9,6 +9,7 @@ test("POST user / success", async () => {
   const route = createUserRoute();
   const client = testClient(route, {
     JWT_SECRET: "test",
+    JWT_AUDIENCE: "test-audience",
     NODE_ENV: "test",
     DB: testDB,
   });

@@ -31,7 +31,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
-    const { JWT_SECRET } = c.env;
+    const { JWT_SECRET, JWT_AUDIENCE } = c.env;
 
     const repo = newUserRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
@@ -43,6 +43,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
+      JWT_AUDIENCE,
       oauthVerifiers,
     );
     const h = newAuthHandler(uc);

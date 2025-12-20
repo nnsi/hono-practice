@@ -25,11 +25,26 @@ export async function authMiddleware(c: HonoContext, next: Next) {
   }
 
   try {
-    const { JWT_SECRET } = c.env;
+    const { JWT_SECRET, JWT_AUDIENCE } = c.env;
     const payload = await verifyToken(jwt, JWT_SECRET);
 
+    // aud（Audience）を検証し、この API 向けに発行されたトークンのみ受け付ける
+    // これが無いと「同じ署名鍵で別用途に発行した JWT」を誤って受け入れるリスクがある
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      (payload as any).aud !== JWT_AUDIENCE
+    ) {
+      throw new UnauthorizedError("unauthorized");
+    }
+
+    const userId = (payload as any).userId;
+    if (typeof userId !== "string" || userId.length === 0) {
+      throw new UnauthorizedError("unauthorized");
+    }
+
     c.set("jwtPayload", payload);
-    c.set("userId", createUserId(payload.userId as string));
+    c.set("userId", createUserId(userId));
   } catch (e) {
     throw new UnauthorizedError("unauthorized");
   }

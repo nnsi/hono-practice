@@ -30,6 +30,7 @@ export async function startTestBackend(port = 3457, frontendPort?: number) {
     APP_URL: frontendPort
       ? `http://localhost:${frontendPort}`
       : "http://localhost:5176", // フロントエンドのURLに合わせる
+    JWT_AUDIENCE: "test-audience",
     JWT_SECRET: "test-jwt-secret-very-secure-key-for-testing",
     NODE_ENV: "test",
     DATABASE_URL: "pglite://memory",

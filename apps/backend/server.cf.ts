@@ -6,7 +6,7 @@ import postgres from "postgres";
 
 import { app } from "./app";
 
-import type { Config } from "./config";
+import { configSchema, type Config } from "./config";
 import type { Hyperdrive } from "@cloudflare/workers-types";
 
 let sql: ReturnType<typeof postgres> | undefined;
@@ -18,6 +18,10 @@ type Env = Config & {
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+    // Cloudflare Workers の env はデフォルト値が適用されないため、
+    // Zod で parse して Config の default を反映する
+    const config = configSchema.parse(env);
+
     sql = postgres(env.HYPERDRIVE.connectionString, {
       max: 5,
       fetch_types: false,
@@ -28,6 +32,6 @@ export default {
     //    const pool = new Pool({ connectionString: env.DATABASE_URL });
     //    const db = drizzle({ client: pool, schema: schema });
 
-    return app.fetch(req, { ...env, DB: db }, ctx);
+    return app.fetch(req, { ...env, ...config, DB: db }, ctx);
   },
 };

@@ -69,6 +69,7 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
 
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
+  const JWT_AUDIENCE = "test-audience";
   let refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
 
   const testLoginId = "integration-user-auth";
@@ -98,6 +99,7 @@ describe("AuthRoute Integration Tests", () => {
           userProviderRepo,
           passwordVerifier,
           JWT_SECRET,
+          JWT_AUDIENCE,
           oauthVerifiers,
         );
         const h = newAuthHandler(uc);
@@ -120,12 +122,20 @@ describe("AuthRoute Integration Tests", () => {
     return testClient(app, {
       DB: testDB,
       JWT_SECRET,
+      JWT_AUDIENCE,
       NODE_ENV: "test",
     });
   };
 
   const createJwtToken = async (userId: string) => {
-    return await sign({ userId }, JWT_SECRET);
+    return await sign(
+      {
+        userId,
+        aud: JWT_AUDIENCE,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60,
+      },
+      JWT_SECRET,
+    );
   };
 
   beforeEach(async () => {
@@ -524,7 +534,14 @@ describe("AuthRoute Integration Tests", () => {
 
       it("異常系：不正なJWTシグネチャ", async () => {
         const client = createTestClient(true);
-        const invalidToken = await sign({ userId: testUserId }, "wrong-secret");
+        const invalidToken = await sign(
+          {
+            userId: testUserId,
+            aud: JWT_AUDIENCE,
+            exp: Math.floor(Date.now() / 1000) + 60 * 60,
+          },
+          "wrong-secret",
+        );
 
         const res = await client.token.$post(
           {},
@@ -544,6 +561,7 @@ describe("AuthRoute Integration Tests", () => {
         const expiredToken = await sign(
           {
             userId: testUserId,
+            aud: JWT_AUDIENCE,
             exp: Math.floor(Date.now() / 1000) - 3600,
           },
           JWT_SECRET,
