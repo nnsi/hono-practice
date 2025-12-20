@@ -1,9 +1,8 @@
 import { type User, type UserId, createUserEntity } from "@backend/domain";
 import { ConflictError } from "@backend/error";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { users } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type UserRepository<T = any> = {
   createUser: (user: User) => Promise<User>;

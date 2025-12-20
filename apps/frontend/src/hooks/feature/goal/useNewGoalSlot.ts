@@ -1,7 +1,6 @@
+import type { GetActivityResponse } from "@dtos/response";
 import { apiClient } from "@frontend/utils/apiClient";
 import { createUseNewGoalSlot } from "@packages/frontend-shared/hooks/feature";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 export const useNewGoalSlot = (
   activities: GetActivityResponse[],

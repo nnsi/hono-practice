@@ -1,7 +1,3 @@
-import { GoogleLogin } from "@react-oauth/google";
-
-import { useCreateUser } from "@hooks/feature/root/useCreateUser";
-
 import {
   Button,
   Card,
@@ -15,6 +11,8 @@ import {
   FormMessage,
   Input,
 } from "@components/ui";
+import { useCreateUser } from "@hooks/feature/root/useCreateUser";
+import { GoogleLogin } from "@react-oauth/google";
 
 export const CreateUserForm: React.FC = () => {
   const { form, onSubmit, handleGoogleSuccess, handleGoogleError } =

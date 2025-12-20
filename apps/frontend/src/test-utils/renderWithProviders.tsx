@@ -20,7 +20,7 @@ export function renderWithProviders(
         {children}
       </>
     ) : (
-      <>{children}</>
+      children
     );
   };
 

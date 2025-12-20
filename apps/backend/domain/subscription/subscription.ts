@@ -1,5 +1,5 @@
-import type { SubscriptionId } from "./subscriptionId";
 import type { UserId } from "../user/userId";
+import type { SubscriptionId } from "./subscriptionId";
 
 export type SubscriptionPlan = "free" | "premium" | "enterprise";
 export type SubscriptionStatus =

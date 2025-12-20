@@ -1,13 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-
+import type { AppType } from "@backend/app";
 import {
   GetActivitiesResponseSchema,
   type GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
   type GetActivityResponse,
 } from "@dtos/response";
-
-import type { AppType } from "@backend/app";
+import { useQuery } from "@tanstack/react-query";
 
 export type UseActivitiesOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;

@@ -1,12 +1,10 @@
-import React, { useState } from "react";
-
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useTaskActions } from "../../hooks";
-
 import { TaskEditDialog } from "./TaskEditDialog";
 
 type TaskItem = {

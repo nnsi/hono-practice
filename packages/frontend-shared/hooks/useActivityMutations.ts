@@ -1,11 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
+import type { AppType } from "@backend/app";
 import type {
   CreateActivityRequest,
   UpdateActivityRequest,
 } from "@dtos/request";
-
-import type { AppType } from "@backend/app";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type UseActivityMutationsOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;

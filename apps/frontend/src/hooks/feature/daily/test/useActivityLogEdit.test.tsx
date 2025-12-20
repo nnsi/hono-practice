@@ -1,17 +1,15 @@
 import type React from "react";
 
+import * as toast from "@components/ui";
+import type {
+  GetActivitiesResponse,
+  GetActivityLogResponse,
+} from "@dtos/response";
 import * as syncedActivityLog from "@frontend/hooks/api/useActivityLogs";
 import * as apiClient from "@frontend/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type {
-  GetActivitiesResponse,
-  GetActivityLogResponse,
-} from "@dtos/response";
-
-import * as toast from "@components/ui";
 
 import { useActivityLogEdit } from "../useActivityLogEdit";
 

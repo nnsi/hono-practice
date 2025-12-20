@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useAuth } from "../../src/contexts/AuthContext";
 import { Alert } from "../../src/utils/AlertWrapper";
@@ -24,7 +23,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await login(loginId, password);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert(
         "ログインエラー",
         "ログインIDまたはパスワードが間違っています",

@@ -1,10 +1,9 @@
 import type { Next } from "hono";
 
+import type { HonoContext } from "../context";
 import { createUserId } from "../domain";
 import { UnauthorizedError } from "../error";
 import { newApiKeyRepository, newApiKeyUsecase } from "../feature/apiKey";
-
-import type { HonoContext } from "../context";
 
 export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
   // Get token from Authorization header

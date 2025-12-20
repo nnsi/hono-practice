@@ -1,6 +1,14 @@
 import { useState } from "react";
 
 import {
+  type CreateActivityRequest,
+  CreateActivityRequestSchema,
+} from "@dtos/request/CreateActivityRequest";
+import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import {
   Modal,
   ScrollView,
   Switch,
@@ -10,27 +18,19 @@ import {
   View,
 } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-
-import {
-  type CreateActivityRequest,
-  CreateActivityRequestSchema,
-} from "@dtos/request/CreateActivityRequest";
-
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 import { getApiUrl } from "../../utils/getApiUrl";
 import { resizeImage } from "../../utils/imageResizer";
-
 import { IconTypeSelector } from "./IconTypeSelector";
 
 export function NewActivityDialog({
   open,
   onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [iconFile, setIconFile] = useState<{ uri: string } | undefined>();
   const [iconPreview, setIconPreview] = useState<string | undefined>();
 

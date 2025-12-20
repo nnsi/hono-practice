@@ -1,10 +1,9 @@
 import type { Next } from "hono";
 import { verify } from "hono/jwt";
 
+import type { HonoContext } from "../context";
 import { createUserId } from "../domain";
 import { UnauthorizedError } from "../error";
-
-import type { HonoContext } from "../context";
 
 export function verifyToken(jwt: string, secret: string) {
   return verify(jwt, secret);
@@ -45,7 +44,7 @@ export async function authMiddleware(c: HonoContext, next: Next) {
 
     c.set("jwtPayload", payload);
     c.set("userId", createUserId(userId));
-  } catch (e) {
+  } catch (_e) {
     throw new UnauthorizedError("unauthorized");
   }
 

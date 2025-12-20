@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
 
+import type {
+  GetActivityLogsResponse,
+  GetActivityResponse,
+} from "@dtos/response";
+import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import {
   Dimensions,
   Pressable,
@@ -8,14 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-import { StatusBar } from "expo-status-bar";
-
-import type {
-  GetActivityLogsResponse,
-  GetActivityResponse,
-} from "@dtos/response";
 
 import {
   ActivityEditDialog,

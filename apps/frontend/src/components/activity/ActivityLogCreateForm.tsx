@@ -1,6 +1,3 @@
-import type { CreateActivityLogRequest } from "@dtos/request/CreateActivityLogRequest";
-import type { GetActivityResponse } from "@dtos/response";
-
 import {
   Button,
   Form,
@@ -13,7 +10,8 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@components/ui";
-
+import type { CreateActivityLogRequest } from "@dtos/request/CreateActivityLogRequest";
+import type { GetActivityResponse } from "@dtos/response";
 import type { UseFormReturn } from "react-hook-form";
 
 export function ActivityLogCreateFormBody({

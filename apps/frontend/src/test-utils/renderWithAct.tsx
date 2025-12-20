@@ -1,11 +1,10 @@
 import { act } from "react";
 
-import { renderHook as originalRenderHook } from "@testing-library/react";
-
 import type {
   RenderHookOptions,
   RenderHookResult,
 } from "@testing-library/react";
+import { renderHook as originalRenderHook } from "@testing-library/react";
 
 /**
  * React 19対応のrenderHookラッパー

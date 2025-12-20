@@ -1,8 +1,7 @@
 import { useState } from "react";
 
-import { cn } from "@frontend/utils";
-
 import type { GetActivityResponse } from "@dtos/response";
+import { cn } from "@frontend/utils";
 
 type ActivityIconProps = {
   activity: GetActivityResponse;

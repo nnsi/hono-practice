@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 type IconType = "emoji" | "upload" | "generate";
 

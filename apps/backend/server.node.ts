@@ -14,7 +14,7 @@ function createInstance() {
   return drizzle(config.DATABASE_URL, { schema });
 }
 
-// biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>
+// biome-ignore lint/suspicious/noShadowRestrictedNames: globalThis拡張のため
 declare const globalThis: {
   drizzleGlobal: ReturnType<typeof createInstance>;
 } & typeof global;

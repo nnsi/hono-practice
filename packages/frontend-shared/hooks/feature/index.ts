@@ -4,85 +4,64 @@
 // Platform-specific dependencies will be injected through adapters
 // to ensure clean separation between business logic and platform code
 
+export type { UseActivityCalendarReturn } from "./useActivityCalendar";
+export { createUseActivityCalendar } from "./useActivityCalendar";
+export type { ActivityEditDependencies } from "./useActivityEdit";
 // Export all feature hooks here as they are implemented
 export { createUseActivityEdit } from "./useActivityEdit";
-export type { ActivityEditDependencies } from "./useActivityEdit";
-
-export { createUseDailyPage } from "./useDailyPage";
-export type { DailyPageDependencies } from "./useDailyPage";
-
-export {
-  createUseTasksPage,
-  groupTasksByTimeline,
-  getTaskStatus,
-} from "./useTasksPage";
 export type {
-  TasksPageDependencies,
-  GroupedTasks,
-  TaskGroupingOptions,
-} from "./useTasksPage";
-
-export { createUseLogin, createLoginValidation } from "./useLogin";
-export type { LoginDependencies, GoogleCredentialResponse } from "./useLogin";
-
-export { createUseUserSettings } from "./useUserSettings";
-export type { UserSettingsDependencies, UserInfo } from "./useUserSettings";
-
+  ActivityLogEditDependencies,
+  UseActivityLogEditReturn,
+} from "./useActivityLogEdit";
+export { createUseActivityLogEdit } from "./useActivityLogEdit";
+export type { ActivityRegistPageDependencies } from "./useActivityRegistPage";
+export { createUseActivityRegistPage } from "./useActivityRegistPage";
+export type {
+  ActivityStatsDependencies,
+  GoalLine,
+  UseActivityStatsReturn,
+} from "./useActivityStats";
 export {
   createUseActivityStats,
   getColorForKind,
   getUniqueColorForKind,
 } from "./useActivityStats";
-export type {
-  ActivityStatsDependencies,
-  UseActivityStatsReturn,
-  GoalLine,
-} from "./useActivityStats";
-
-export { createUseActivityCalendar } from "./useActivityCalendar";
-export type { UseActivityCalendarReturn } from "./useActivityCalendar";
-
-export { createUseTaskGroup } from "./useTaskGroup";
-export type {
-  TaskGroupDependencies,
-  UseTaskGroupReturn,
-  TaskItem,
-} from "./useTaskGroup";
-
-export { createUseActivityLogEdit } from "./useActivityLogEdit";
-export type {
-  ActivityLogEditDependencies,
-  UseActivityLogEditReturn,
-} from "./useActivityLogEdit";
-
-export { createUseActivityRegistPage } from "./useActivityRegistPage";
-export type { ActivityRegistPageDependencies } from "./useActivityRegistPage";
-
-export { createUseNewGoalPage } from "./useNewGoalPage";
-export type { GoalPageDependencies } from "./useNewGoalPage";
-
-export { createUseTaskActions } from "./useTaskActions";
-
+export { createUseAppSettings } from "./useAppSettings";
+export { createUseAuthInitializer } from "./useAuthInitializer";
+export { createUseCreateUser } from "./useCreateUser";
+export { createUseDailyActivityCreate } from "./useDailyActivityCreate";
+export type { DailyPageDependencies } from "./useDailyPage";
+export { createUseDailyPage } from "./useDailyPage";
 export { createUseDailyTaskActions } from "./useDailyTaskActions";
-
+export { createUseGoalDetailModal } from "./useGoalDetailModal";
+export type { GoogleCredentialResponse, LoginDependencies } from "./useLogin";
+export { createLoginValidation, createUseLogin } from "./useLogin";
+export { createUseNewGoalCard } from "./useNewGoalCard";
+export { type GoalFormData, createUseNewGoalDialog } from "./useNewGoalDialog";
+export type { GoalPageDependencies } from "./useNewGoalPage";
+export { createUseNewGoalPage } from "./useNewGoalPage";
+export { createUseNewGoalSlot } from "./useNewGoalSlot";
+export { createUseTaskActions } from "./useTaskActions";
 export {
+  type UpdateTaskFormData,
   createUseTaskEditForm,
   updateTaskSchema,
-  type UpdateTaskFormData,
 } from "./useTaskEditForm";
-
-export { createUseDailyActivityCreate } from "./useDailyActivityCreate";
-
-export { createUseAppSettings } from "./useAppSettings";
-
-export { createUseNewGoalCard } from "./useNewGoalCard";
-
-export { createUseNewGoalDialog, type GoalFormData } from "./useNewGoalDialog";
-
-export { createUseNewGoalSlot } from "./useNewGoalSlot";
-
-export { createUseGoalDetailModal } from "./useGoalDetailModal";
-
-export { createUseCreateUser } from "./useCreateUser";
-
-export { createUseAuthInitializer } from "./useAuthInitializer";
+export type {
+  TaskGroupDependencies,
+  TaskItem,
+  UseTaskGroupReturn,
+} from "./useTaskGroup";
+export { createUseTaskGroup } from "./useTaskGroup";
+export type {
+  GroupedTasks,
+  TaskGroupingOptions,
+  TasksPageDependencies,
+} from "./useTasksPage";
+export {
+  createUseTasksPage,
+  getTaskStatus,
+  groupTasksByTimeline,
+} from "./useTasksPage";
+export type { UserInfo, UserSettingsDependencies } from "./useUserSettings";
+export { createUseUserSettings } from "./useUserSettings";

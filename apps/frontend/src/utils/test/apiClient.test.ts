@@ -1,3 +1,8 @@
+import type {
+  EventBus,
+  HttpClient,
+  TokenManager,
+} from "@frontend/services/abstractions";
 import {
   AppEvents,
   createInMemoryEventBus,
@@ -5,12 +10,6 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createApiClient } from "../apiClient";
-
-import type {
-  EventBus,
-  HttpClient,
-  TokenManager,
-} from "@frontend/services/abstractions";
 
 // モックHTTPクライアントの作成
 const createMockHttpClient = (): HttpClient & {

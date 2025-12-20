@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-
 import { ActivityDailyPage } from "@components/daily";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/daily")({
   component: RouteComponent,

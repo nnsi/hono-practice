@@ -1,5 +1,6 @@
-import type { KeyValueStore } from "./kv";
 import type { RedisClientType } from "redis";
+
+import type { KeyValueStore } from "./kv";
 
 export function newRedisStore<T>(
   redisClient: RedisClientType,
@@ -9,7 +10,7 @@ export function newRedisStore<T>(
       const raw = await redisClient.get(key);
       try {
         return raw ? (JSON.parse(raw) as T) : undefined;
-      } catch (error) {
+      } catch (_error) {
         await redisClient.del(key);
         return undefined;
       }

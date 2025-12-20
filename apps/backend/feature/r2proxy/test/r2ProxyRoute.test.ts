@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 
+import type { R2Bucket } from "@cloudflare/workers-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { r2ProxyRoute } from "../r2ProxyRoute";
-
-import type { R2Bucket } from "@cloudflare/workers-types";
 
 // R2Bucketのモックを作成
 const createMockR2Bucket = (): R2Bucket => {

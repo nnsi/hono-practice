@@ -1,6 +1,15 @@
 import { useState } from "react";
 
 import {
+  type CreateActivityLogRequest,
+  CreateActivityLogRequestSchema,
+} from "@dtos/request/CreateActivityLogRequest";
+import type { GetActivityResponse } from "@dtos/response";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { Controller, useForm } from "react-hook-form";
+import {
   Modal,
   ScrollView,
   Text,
@@ -9,22 +18,10 @@ import {
   View,
 } from "react-native";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { Controller, useForm } from "react-hook-form";
-
-import {
-  type CreateActivityLogRequest,
-  CreateActivityLogRequestSchema,
-} from "@dtos/request/CreateActivityLogRequest";
-import type { GetActivityResponse } from "@dtos/response";
-
 import { useTimer } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
 import { ActivityIcon } from "../common/ActivityIcon";
-
 import { TimerControls } from "./TimerControls";
 import { TimerDisplay } from "./TimerDisplay";
 

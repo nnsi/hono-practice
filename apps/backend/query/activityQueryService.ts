@@ -1,11 +1,9 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { GetActivityStatsResponse } from "@dtos/response";
 import { activities, activityKinds, activityLogs } from "@infra/drizzle/schema";
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
-import type { GetActivityStatsResponse } from "@dtos/response";
-
 import dayjs from "../lib/dayjs";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityQueryService = {
   activityStatsQuery: (

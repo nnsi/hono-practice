@@ -1,12 +1,11 @@
 import type React from "react";
 
+import type { GetGoalsResponse } from "@dtos/response";
 import { DateContext } from "@frontend/providers/DateProvider";
 import { createMockApiClient } from "@frontend/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetGoalsResponse } from "@dtos/response";
 
 import { useActivityStats } from "../useActivityStats";
 

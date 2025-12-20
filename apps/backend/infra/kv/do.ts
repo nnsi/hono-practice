@@ -1,5 +1,6 @@
-import type { KeyValueStore } from "./kv";
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
+
+import type { KeyValueStore } from "./kv";
 
 export function newDurableObjectStore<T>(
   ns: DurableObjectNamespace,

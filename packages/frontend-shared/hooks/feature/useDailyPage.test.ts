@@ -1,10 +1,9 @@
+import type { NetworkAdapter } from "@packages/frontend-shared/adapters";
+import type { GetActivityLogResponse, GetTasksResponse } from "@packages/types";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createUseDailyPage } from "./useDailyPage";
-
-import type { NetworkAdapter } from "@packages/frontend-shared/adapters";
-import type { GetActivityLogResponse, GetTasksResponse } from "@packages/types";
 
 describe("createUseDailyPage", () => {
   let mockNetwork: NetworkAdapter;

@@ -1,7 +1,3 @@
-import { useNewGoalDialog } from "@frontend/hooks/feature/goal/useNewGoalDialog";
-
-import type { GetActivityResponse } from "@dtos/response";
-
 import {
   Button,
   Dialog,
@@ -21,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui";
+import type { GetActivityResponse } from "@dtos/response";
+import { useNewGoalDialog } from "@frontend/hooks/feature/goal/useNewGoalDialog";
 
 import { ActivityIcon } from "../common/ActivityIcon";
 

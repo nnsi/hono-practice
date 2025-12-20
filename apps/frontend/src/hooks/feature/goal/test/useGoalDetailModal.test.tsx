@@ -123,7 +123,7 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
           daysAchieved: stats?.stats?.achievedDays || 0,
           daysUntilDeadline: goal?.endDate
             ? Math.ceil(
-                (new Date(goal.endDate).getTime() - new Date().getTime()) /
+                (new Date(goal.endDate).getTime() - Date.now()) /
                   (1000 * 60 * 60 * 24),
               )
             : undefined,

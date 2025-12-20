@@ -1,20 +1,19 @@
 import "@testing-library/jest-dom/vitest";
-import React from "react";
 import type { ReactNode } from "react";
+import React from "react";
 
+import type { EventBus } from "@frontend/services/abstractions";
 import {
   createInMemoryEventBus,
   createMockTimeProvider,
 } from "@frontend/services/abstractions";
 import { createMockApiClient } from "@frontend/test-utils";
+import type { TokenStorage } from "@packages/frontend-shared/types";
 import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthContext, AuthProvider } from "../AuthProvider";
 import { TokenContext, TokenProvider } from "../TokenProvider";
-
-import type { EventBus } from "@frontend/services/abstractions";
-import type { TokenStorage } from "@packages/frontend-shared/types";
 
 // TestWrapper: TokenProviderとAuthProviderを統合
 const TestWrapper = ({
@@ -182,7 +181,7 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
           try {
             await auth?.login(loginData);
             setLoginResult("success");
-          } catch (error) {
+          } catch (_error) {
             setLoginResult("failed");
           }
         };
@@ -246,7 +245,7 @@ describe("AuthProvider + TokenProvider 統合テスト", () => {
               login_id: "test@example.com",
               password: "wrong",
             });
-          } catch (e) {
+          } catch (_e) {
             setError("Login failed");
           }
         };

@@ -12,6 +12,8 @@ import {
   createRefreshToken,
   validateRefreshToken,
 } from "@domain/auth/refreshToken";
+import type { Provider } from "@domain/auth/userProvider";
+import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 import { v7 } from "uuid";
 
 import type { UserRepository } from "../user";
@@ -19,8 +21,6 @@ import type { OAuthVerify, OIDCPayload } from "./oauthVerify";
 import type { PasswordVerifier } from "./passwordVerifier";
 import type { RefreshTokenRepository } from "./refreshTokenRepository";
 import type { UserProviderRepository } from "./userProviderRepository";
-import type { Provider } from "@domain/auth/userProvider";
-import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 
 // アクセストークンの有効期限を15分に設定
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
@@ -209,7 +209,7 @@ function loginWithProvider<T>(
     const providerUserId = payload.sub;
     const name = payload.name ?? `User_${providerUserId.substring(0, 8)}`;
 
-    let userId: UserId | undefined = undefined;
+    let userId: UserId | undefined;
 
     const existingProvider =
       await userProviderRepo.findUserProviderByIdAndProvider(

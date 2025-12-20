@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { NotificationAdapter } from "./index";
 import {
   createReactNativeNotificationAdapter,
   createWebNotificationAdapter,
 } from "./index";
-
-import type { NotificationAdapter } from "./index";
 
 describe("NotificationAdapter", () => {
   describe("WebNotificationAdapter", () => {

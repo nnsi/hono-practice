@@ -1,3 +1,4 @@
+import type { GetActivitiesResponse } from "@dtos/response";
 import { apiClient } from "@frontend/utils";
 import { resizeImage } from "@frontend/utils/imageResizer";
 import { tokenStore } from "@frontend/utils/tokenStore";
@@ -12,8 +13,6 @@ import {
   createUseUpdateActivity,
 } from "@packages/frontend-shared/hooks/useActivityMutations";
 import { getWebApiUrl } from "@packages/frontend-shared/utils/apiUrl";
-
-import type { GetActivitiesResponse } from "@dtos/response";
 
 /**
  * 全アクティビティ一覧を取得するフック

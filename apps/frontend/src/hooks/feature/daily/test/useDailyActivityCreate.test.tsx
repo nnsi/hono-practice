@@ -1,10 +1,9 @@
 import type React from "react";
 
+import type { GetActivityResponse } from "@dtos/response";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 import { useDailyActivityCreate } from "../useDailyActivityCreate";
 

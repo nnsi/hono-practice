@@ -1,9 +1,8 @@
 import type React from "react";
 
+import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 import { apiClient } from "@frontend/utils/apiClient";
 import { createUseDailyTaskActions } from "@packages/frontend-shared/hooks/feature";
-
-import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 
 // 共通フックをインスタンス化
 const useDailyTaskActionsBase = createUseDailyTaskActions({ apiClient });

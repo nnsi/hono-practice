@@ -1,5 +1,5 @@
+import type { ActivityId, UserId } from "@backend/domain";
 import { AppError } from "@backend/error";
-
 import type { CreateActivityRequest } from "@dtos/request/CreateActivityRequest";
 import type {
   UpdateActivityOrderRequest,
@@ -11,7 +11,6 @@ import {
 } from "@dtos/response/GetActivitiesResponse";
 
 import type { ActivityUsecase } from ".";
-import type { ActivityId, UserId } from "@backend/domain";
 
 export function newActivityHandler(uc: ActivityUsecase) {
   return {

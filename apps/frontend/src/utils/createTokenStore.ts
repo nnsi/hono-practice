@@ -1,6 +1,5 @@
-import { createMemoryTokenStore } from "@packages/frontend-shared";
-
 import type { StorageProvider } from "@frontend/services/abstractions";
+import { createMemoryTokenStore } from "@packages/frontend-shared";
 import type { TokenStorage } from "@packages/frontend-shared/types";
 
 /**

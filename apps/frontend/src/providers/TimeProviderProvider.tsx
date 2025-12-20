@@ -1,9 +1,8 @@
-import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-
-import { createBrowserTimeProvider } from "@frontend/services/abstractions";
+import { createContext, useContext } from "react";
 
 import type { TimeProvider } from "@frontend/services/abstractions";
+import { createBrowserTimeProvider } from "@frontend/services/abstractions";
 
 type TimeProviderContextValue = {
   timeProvider: TimeProvider;

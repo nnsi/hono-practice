@@ -1,6 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-
+import type { AppType } from "@backend/app";
 import type {
   CreateActivityLogBatchRequest,
   CreateActivityLogRequest,
@@ -12,8 +10,8 @@ import {
   type GetActivityStatsResponse,
   GetActivityStatsResponseSchema,
 } from "@dtos/response";
-
-import type { AppType } from "@backend/app";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
 
 export type UseActivityLogsOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;

@@ -1,9 +1,8 @@
 import type { Next } from "hono";
 
+import type { HonoContext } from "@backend/context";
 import { UnauthorizedError } from "@backend/error";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
-
-import type { HonoContext } from "@backend/context";
 
 export async function premiumMiddleware(c: HonoContext, next: Next) {
   // 既にauthMiddlewareを通過していることを前提とする

@@ -1,6 +1,10 @@
-import { useState } from "react";
 import type React from "react";
+import { useState } from "react";
 
+import {
+  type CreateApiKeyRequest,
+  CreateApiKeyRequestSchema,
+} from "@dtos/request";
 import {
   Button,
   Dialog,
@@ -22,11 +26,6 @@ import { useToast } from "@frontend/components/ui/use-toast";
 import { useCreateApiKey } from "@frontend/hooks/api/apiKey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
-import {
-  type CreateApiKeyRequest,
-  CreateApiKeyRequestSchema,
-} from "@dtos/request";
 
 export const CreateApiKeyDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -50,7 +49,7 @@ export const CreateApiKeyDialog: React.FC = () => {
         title: "成功",
         description: "APIキーを作成しました",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "エラー",
         description: "APIキーの作成に失敗しました",

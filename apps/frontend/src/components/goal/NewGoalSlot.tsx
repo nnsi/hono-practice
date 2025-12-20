@@ -1,8 +1,3 @@
-import { useNewGoalSlot } from "@frontend/hooks/feature/goal/useNewGoalSlot";
-import { PlusIcon } from "@radix-ui/react-icons";
-
-import type { GetActivityResponse } from "@dtos/response";
-
 import {
   Button,
   Card,
@@ -18,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui";
+import type { GetActivityResponse } from "@dtos/response";
+import { useNewGoalSlot } from "@frontend/hooks/feature/goal/useNewGoalSlot";
+import { PlusIcon } from "@radix-ui/react-icons";
 
 import { ActivityIcon } from "../common/ActivityIcon";
 

@@ -1,17 +1,14 @@
 import type React from "react";
 import { useState } from "react";
 
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 import { Ionicons } from "@expo/vector-icons";
 import { Controller, useForm } from "react-hook-form";
-
-import type { GetActivityResponse, GoalResponse } from "@dtos/response";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useDeleteGoal, useUpdateGoal } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";
 import { ActivityIcon } from "../common/ActivityIcon";
-
 import { GoalDetailModal } from "./GoalDetailModal";
 
 type GoalCardProps = {

@@ -7,15 +7,13 @@ import {
   useState,
 } from "react";
 
+import type { LoginRequest } from "@dtos/request/LoginRequest";
+import type { GetUserResponse } from "@dtos/response/GetUserResponse";
+import type { EventBus } from "@frontend/services/abstractions";
 import { AppEvents } from "@frontend/services/abstractions";
 import { apiClient as defaultApiClient } from "@frontend/utils/apiClient";
 
-import type { LoginRequest } from "@dtos/request/LoginRequest";
-import type { GetUserResponse } from "@dtos/response/GetUserResponse";
-
 import { TokenContext } from "./TokenProvider";
-
-import type { EventBus } from "@frontend/services/abstractions";
 
 type UserState = GetUserResponse | null;
 
@@ -80,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         return;
       }
       setUser(userInfo);
-    } catch (e) {
+    } catch (_e) {
       setRequestStatus("idle");
       setUser(null);
       setIsGettingUser(false);
@@ -153,7 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const logout = async () => {
     try {
       await apiClient.auth.logout.$post({});
-    } catch (e) {
+    } catch (_e) {
     } finally {
       setUser(null);
       clearTokens();
@@ -184,7 +182,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
             await getUser();
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // User is not logged in
       } finally {
         // Mark as initialized after the initial token check

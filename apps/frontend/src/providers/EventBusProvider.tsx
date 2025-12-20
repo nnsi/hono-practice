@@ -1,9 +1,8 @@
-import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-
-import { createWindowEventBus } from "@frontend/services/abstractions";
+import { createContext, useContext } from "react";
 
 import type { EventBus } from "@frontend/services/abstractions";
+import { createWindowEventBus } from "@frontend/services/abstractions";
 
 type EventBusContextValue = {
   eventBus: EventBus;

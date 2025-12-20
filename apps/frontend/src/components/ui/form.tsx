@@ -5,7 +5,9 @@ import type {
 } from "react";
 import { createContext, forwardRef, useContext, useId } from "react";
 
+import { Label } from "@components/ui/label";
 import { cn } from "@frontend/utils/cn";
+import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
   Controller,
@@ -15,10 +17,6 @@ import {
   FormProvider,
   useFormContext,
 } from "react-hook-form";
-
-import { Label } from "@components/ui/label";
-
-import type * as LabelPrimitive from "@radix-ui/react-label";
 
 const Form = FormProvider;
 

@@ -15,7 +15,7 @@ export const googleVerify: OAuthVerify = async (credential, clientId) => {
       maxTokenAge: "10m",
     });
     return payload as OIDCPayload;
-  } catch (error) {
+  } catch (_error) {
     throw new AuthError("Invalid token");
   }
 };

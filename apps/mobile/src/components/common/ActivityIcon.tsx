@@ -1,8 +1,7 @@
 import { useState } from "react";
 
-import { ActivityIndicator, Image, Text, View } from "react-native";
-
 import type { GetActivityResponse } from "@dtos/response";
+import { ActivityIndicator, Image, Text, View } from "react-native";
 
 interface ActivityIconProps {
   activity: GetActivityResponse;

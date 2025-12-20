@@ -1,10 +1,3 @@
-import {
-  formatDateInTimezone,
-  getCurrentDateInTimezone,
-  getDaysBetweenInTimezone,
-} from "@backend/utils/timezone";
-
-import type { ActivityLogRepository } from "../activityLog";
 import type {
   ActivityGoal,
   ActivityId,
@@ -12,6 +5,13 @@ import type {
   GoalBalance,
   UserId,
 } from "@backend/domain";
+import {
+  formatDateInTimezone,
+  getCurrentDateInTimezone,
+  getDaysBetweenInTimezone,
+} from "@backend/utils/timezone";
+
+import type { ActivityLogRepository } from "../activityLog";
 
 export type ActivityGoalService = {
   calculateCurrentBalance(

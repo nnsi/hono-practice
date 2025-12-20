@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import dayjs from "dayjs";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -11,10 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import dayjs from "dayjs";
 
 import { useDeleteTask, useUpdateTask } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";

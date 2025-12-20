@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-import dayjs from "dayjs";
-
 import type {
   GetActivityLogResponse,
   GetActivityResponse,
 } from "@dtos/response";
-
 import type { NotificationAdapter } from "@packages/frontend-shared/adapters";
+import dayjs from "dayjs";
 
 export type ActivityLogEditDependencies = {
   activities: GetActivityResponse[] | undefined;
@@ -24,10 +22,7 @@ export type ActivityLogEditDependencies = {
     isPending?: boolean;
   };
   deleteActivityLog: {
-    mutateAsync: (params: {
-      id: string;
-      date: string;
-    }) => Promise<void>;
+    mutateAsync: (params: { id: string; date: string }) => Promise<void>;
     isPending?: boolean;
   };
   notification: NotificationAdapter;
@@ -111,7 +106,7 @@ export function createUseActivityLogEdit(
 
         notification.toast({ title: "保存しました", variant: "default" });
         onOpenChange(false);
-      } catch (error) {
+      } catch (_error) {
         notification.toast({
           title: "エラー",
           description: "保存に失敗しました",
@@ -142,7 +137,7 @@ export function createUseActivityLogEdit(
 
       notification.toast({ title: "削除しました", variant: "default" });
       onOpenChange(false);
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "エラー",
         description: "削除に失敗しました",

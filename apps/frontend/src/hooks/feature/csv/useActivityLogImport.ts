@@ -189,9 +189,7 @@ export function useActivityLogImport() {
           ...result.results
             .filter((r) => !r.success)
             .map((r, idx) => ({
-              index: validatedLogs.findIndex(
-                (log) => log === logsToImport[idx],
-              ),
+              index: validatedLogs.indexOf(logsToImport[idx]),
               message: r.error || "不明なエラー",
             })),
           ...logsWithErrors.map((log) => ({

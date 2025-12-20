@@ -1,9 +1,8 @@
 import { type ReactNode, createContext, useState } from "react";
 
-import { vi } from "vitest";
-
 import type { LoginRequest } from "@dtos/request/LoginRequest";
 import type { GetUserResponse } from "@dtos/response/GetUserResponse";
+import { vi } from "vitest";
 
 type UserState = GetUserResponse | null;
 type RequestStatus = "idle" | "loading";

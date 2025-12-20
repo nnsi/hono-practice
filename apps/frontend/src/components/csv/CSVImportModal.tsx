@@ -11,15 +11,14 @@ import {
 } from "@frontend/components/ui/dialog";
 import { Progress } from "@frontend/components/ui/progress";
 import { useActivityLogImport } from "@frontend/hooks/feature/csv/useActivityLogImport";
+import type { ValidatedActivityLog } from "@frontend/hooks/feature/csv/useActivityLogValidator";
 import { useActivityLogValidator } from "@frontend/hooks/feature/csv/useActivityLogValidator";
 import { useCSVParser } from "@frontend/hooks/feature/csv/useCSVParser";
 import { Download, FileText, Upload } from "lucide-react";
 
+import type { ColumnMapping } from "./CSVColumnMapper";
 import { CSVColumnMapper } from "./CSVColumnMapper";
 import { CSVImportPreview } from "./CSVImportPreview";
-
-import type { ColumnMapping } from "./CSVColumnMapper";
-import type { ValidatedActivityLog } from "@frontend/hooks/feature/csv/useActivityLogValidator";
 
 type Props = {
   isOpen: boolean;

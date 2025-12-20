@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createReactNativeTimerAdapter, createWebTimerAdapter } from "./index";
-
 import type { TimerAdapter } from "./index";
+import { createReactNativeTimerAdapter, createWebTimerAdapter } from "./index";
 
 describe("TimerAdapter", () => {
   describe("WebTimerAdapter", () => {

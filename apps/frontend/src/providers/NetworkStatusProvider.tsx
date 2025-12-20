@@ -1,9 +1,8 @@
-import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-
-import { useNetworkStatus } from "@frontend/hooks/useNetworkStatus";
+import { createContext, useContext } from "react";
 
 import type { NetworkStatus } from "@frontend/hooks/useNetworkStatus";
+import { useNetworkStatus } from "@frontend/hooks/useNetworkStatus";
 
 const NetworkStatusContext = createContext<NetworkStatus | undefined>(
   undefined,

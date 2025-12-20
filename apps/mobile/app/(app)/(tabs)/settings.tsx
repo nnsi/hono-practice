@@ -1,6 +1,5 @@
-import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
+import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useAppSettings, useSubscription } from "../../../src/hooks";

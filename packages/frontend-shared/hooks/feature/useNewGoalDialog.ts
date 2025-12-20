@@ -1,8 +1,7 @@
+import type { GetActivityResponse } from "@dtos/response";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 import { createUseCreateGoal } from "../";
 

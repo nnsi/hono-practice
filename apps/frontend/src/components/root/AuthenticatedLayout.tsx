@@ -33,7 +33,7 @@ export const AuthenticatedLayout: React.FC = () => {
       navigate({
         to: "/",
       });
-    } catch (e) {
+    } catch (_e) {
       toast({
         title: "エラー",
         description: "ログアウトに失敗しました",

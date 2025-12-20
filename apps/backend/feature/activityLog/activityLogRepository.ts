@@ -5,11 +5,10 @@ import {
   createActivityEntity,
   createActivityLogEntity,
 } from "@backend/domain";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import dayjs from "@backend/lib/dayjs";
 import { activities, activityLogs } from "@infra/drizzle/schema";
 import { and, between, eq, gt, isNull } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityLogRepository<T = any> = {
   getActivityLogsByUserIdAndDate: (

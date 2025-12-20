@@ -1,8 +1,8 @@
 import { hc } from "hono/client";
 
-import { tokenStore } from "./tokenStore";
-
 import type { AppType } from "@backend/app";
+
+import { tokenStore } from "./tokenStore";
 
 type ApiClientConfig = {
   baseUrl: string;

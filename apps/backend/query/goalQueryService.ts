@@ -1,10 +1,9 @@
+import type { GoalStatsResponse } from "@dtos/response";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import utc from "dayjs/plugin/utc";
 import { and, between, eq, isNull, sql } from "drizzle-orm";
-
-import type { GoalStatsResponse } from "@dtos/response";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);

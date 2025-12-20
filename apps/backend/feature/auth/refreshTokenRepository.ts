@@ -1,4 +1,6 @@
+import type { UserId } from "@backend/domain";
 import { DomainValidateError } from "@backend/error";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   type RefreshToken,
@@ -6,9 +8,6 @@ import {
 } from "@domain/auth/refreshToken";
 import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
-
-import type { UserId } from "@backend/domain";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type RefreshTokenRepository<T = any> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;

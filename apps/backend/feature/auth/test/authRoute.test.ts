@@ -14,13 +14,12 @@ import { eq } from "drizzle-orm";
 import { v7 } from "uuid";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { createAuthRoute, newAuthHandler } from "..";
 import { newUserRepository } from "../../user";
-import { newAuthUsecase } from "../authUsecase";
-import { SHA256PasswordVerifier } from "../passwordVerifier";
-
+import { createAuthRoute, newAuthHandler } from "..";
 import type { OAuthVerifierMap } from "../authUsecase";
+import { newAuthUsecase } from "../authUsecase";
 import type { OIDCPayload } from "../oauthVerify";
+import { SHA256PasswordVerifier } from "../passwordVerifier";
 
 const mockGoogleToken = "mock-google-id-token";
 const mockGoogleSub = "google-user-id-123";

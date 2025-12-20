@@ -1,16 +1,14 @@
 import { Hono } from "hono";
 
+import type { AppContext } from "@backend/context";
 import { mockPremiumMiddleware } from "@backend/middleware/mockPremiumMiddleware";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
-import { zValidator } from "@hono/zod-validator";
-
 import { CreateApiKeyRequestSchema } from "@dtos/request";
+import { zValidator } from "@hono/zod-validator";
 
 import { newApiKeyHandler } from "./apiKeyHandler";
 import { newApiKeyRepository } from "./apiKeyRepository";
 import { newApiKeyUsecase } from "./apiKeyUsecase";
-
-import type { AppContext } from "@backend/context";
 
 export function createApiKeyRoute() {
   const app = new Hono<

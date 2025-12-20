@@ -1,10 +1,8 @@
+import { Card, CardContent } from "@components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { useTasksPage } from "@frontend/hooks/feature/tasks/useTasksPage";
 import { PlusCircledIcon } from "@radix-ui/react-icons";
-
-import { Card, CardContent } from "@components/ui";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 
 import { EmptyState } from "./EmptyState";
 import { TaskGroup } from "./TaskGroup";

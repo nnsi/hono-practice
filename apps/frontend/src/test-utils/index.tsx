@@ -1,8 +1,8 @@
-export * from "./testData";
 export * from "./MockAuthProvider";
-export * from "./MockTokenProvider";
 export * from "./MockNetworkStatusProvider";
+export * from "./MockTokenProvider";
 export { renderHookWithAct, renderHookWithActSync } from "./renderWithAct";
+export * from "./testData";
 export * from "./waitForWithAct";
 
 import type { ReactElement, ReactNode } from "react";
@@ -28,7 +28,7 @@ export function renderWithProviders(
         {children}
       </>
     ) : (
-      <>{children}</>
+      children
     );
   };
 

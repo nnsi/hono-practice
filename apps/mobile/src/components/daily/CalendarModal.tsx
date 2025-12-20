@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 
-import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
+import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 type CalendarModalProps = {
   isOpen: boolean;
@@ -70,7 +69,7 @@ export default React.memo(function CalendarModal({
           </View>
 
           <View className="flex-wrap flex-row">
-            {days.map((day, index) => {
+            {days.map((day, _index) => {
               const isCurrentMonth =
                 dayjs(day).month() === dayjs(viewDate).month();
               const isSelected = dayjs(day).isSame(selectedDate, "day");

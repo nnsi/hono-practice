@@ -2,21 +2,18 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import { createUserRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
 
-import { createUserRequestSchema } from "@dtos/request";
-
+import type { AppContext } from "../../context";
 import { newAuthHandler } from "../auth/authHandler";
 import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
-
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
 import { newUserUsecase } from "./userUsecase";
-
-import type { AppContext } from "../../context";
 
 export function createUserRoute() {
   const app = new Hono<
@@ -82,7 +79,7 @@ export function createUserRoute() {
         const userId = c.get("userId");
         const user = await c.var.h.getMe(userId);
         return c.json(user);
-      } catch (e) {
+      } catch (_e) {
         return c.json({ message: "unauthorized" }, 401);
       }
     });

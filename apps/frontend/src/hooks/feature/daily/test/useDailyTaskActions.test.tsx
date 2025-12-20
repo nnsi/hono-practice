@@ -1,11 +1,10 @@
 import type React from "react";
 
+import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 import * as useSyncedTask from "@frontend/hooks/api/useTasks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 
 import { useDailyTaskActions } from "../useDailyTaskActions";
 

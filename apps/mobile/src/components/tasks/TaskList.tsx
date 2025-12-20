@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
+import { Ionicons } from "@expo/vector-icons";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,10 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
-
 import { useTasks } from "../../hooks/useTasks";
-
 import { EmptyState } from "./EmptyState";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskGroup } from "./TaskGroup";

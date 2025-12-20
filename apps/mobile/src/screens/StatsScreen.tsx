@@ -2,6 +2,14 @@ import type React from "react";
 import { useState } from "react";
 
 import {
+  type GetActivityStatsResponse,
+  GetActivityStatsResponseSchema,
+} from "@dtos/response";
+import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+import { scaleBand, scaleLinear } from "d3-scale";
+import dayjs from "dayjs";
+import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
@@ -10,17 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
-import { scaleBand, scaleLinear } from "d3-scale";
-import dayjs from "dayjs";
-import Svg, { Line, Text as SvgText, G, Rect } from "react-native-svg";
-
-import {
-  type GetActivityStatsResponse,
-  GetActivityStatsResponseSchema,
-} from "@dtos/response";
+import Svg, { G, Line, Rect, Text as SvgText } from "react-native-svg";
 
 import { useGoals } from "../hooks";
 import { apiClient } from "../utils/apiClient";
@@ -129,7 +127,7 @@ export const StatsScreen: React.FC = () => {
       }
 
       // ラベルを5日ごとに表示
-      const labels = allDates.map((date, index) => {
+      const _labels = allDates.map((date, _index) => {
         const day = dayjs(date).date();
         return day % 5 === 1 || day === daysInMonth ? `${day}日` : "";
       });
@@ -219,7 +217,7 @@ export const StatsScreen: React.FC = () => {
                 let cumulativeHeight = 0;
                 return (
                   <G key={`day-${allDates[dayIndex]}`}>
-                    {kindDataMap.map(({ kind, dailyData }, kindIndex) => {
+                    {kindDataMap.map(({ kind, dailyData }, _kindIndex) => {
                       const value = dailyData[dayIndex];
                       if (value === 0) return null;
 

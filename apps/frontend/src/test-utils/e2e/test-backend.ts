@@ -1,12 +1,11 @@
 import app from "@backend/app";
-import { serve } from "@hono/node-server";
-
-import { createTestDb } from "./test-db";
-
 import type { Config } from "@backend/config";
 import type { PGlite } from "@electric-sql/pglite";
+import { serve } from "@hono/node-server";
 import type * as schema from "@infra/drizzle/schema";
 import type { drizzle } from "drizzle-orm/pglite";
+
+import { createTestDb } from "./test-db";
 
 let server: any = null; // Use any type to avoid server type issues
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
@@ -70,7 +69,7 @@ export async function stopTestBackend() {
         require("node:child_process").execSync(killCommand, {
           stdio: "ignore",
         });
-      } catch (e) {
+      } catch (_e) {
         // エラーは無視
       }
     }
@@ -78,7 +77,7 @@ export async function stopTestBackend() {
     if (pglite) {
       try {
         await pglite.close();
-      } catch (e) {
+      } catch (_e) {
         // エラーは無視
       }
     }

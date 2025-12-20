@@ -1,21 +1,18 @@
 import { Hono } from "hono";
 
 import { newGoalQueryService } from "@backend/query/goalQueryService";
-import { zValidator } from "@hono/zod-validator";
-
 import {
   CreateGoalRequestSchema,
   UpdateGoalRequestSchema,
 } from "@dtos/request";
+import { zValidator } from "@hono/zod-validator";
 
+import type { AppContext } from "../../context";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
-
 import { newGoalHandler } from "./goalHandler";
 import { newGoalUsecase } from "./goalUsecase";
-
-import type { AppContext } from "../../context";
 
 export function createGoalRoute() {
   const app = new Hono<

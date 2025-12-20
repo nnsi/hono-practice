@@ -1,12 +1,10 @@
 import type React from "react";
 import { useMemo } from "react";
 
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
-
+import { GetActivitiesResponseSchema, type GoalResponse } from "@dtos/response";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-
-import { GetActivitiesResponseSchema, type GoalResponse } from "@dtos/response";
+import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { useGoal, useGoalStats } from "../../hooks";
 import { apiClient } from "../../utils/apiClient";

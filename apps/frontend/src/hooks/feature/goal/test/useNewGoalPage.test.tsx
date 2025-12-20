@@ -1,12 +1,11 @@
 import type React from "react";
 
+import type { GetActivitiesResponse, GetGoalsResponse } from "@dtos/response";
 import { useActivities } from "@frontend/hooks/api/useActivities";
 import { useGoals } from "@frontend/hooks/api/useGoals";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetActivitiesResponse, GetGoalsResponse } from "@dtos/response";
 
 import { useNewGoalPage } from "../useNewGoalPage";
 

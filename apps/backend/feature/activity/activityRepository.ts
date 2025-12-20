@@ -6,10 +6,9 @@ import {
   type UserId,
   createActivityEntity,
 } from "@backend/domain";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityRepository<T = any> = {
   getActivitiesByUserId(userId: UserId): Promise<Activity[]>;

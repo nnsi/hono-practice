@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom";
 
-import { CSVImportPreview } from "./CSVImportPreview";
-
 import type { ValidatedActivityLog } from "@frontend/hooks/feature/csv/useActivityLogValidator";
+
+import { CSVImportPreview } from "./CSVImportPreview";
 
 // useActivitiesをモック
 vi.mock("@frontend/hooks/api/useActivities", () => ({

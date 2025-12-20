@@ -1,8 +1,7 @@
+import type { R2Bucket, R2Object } from "@cloudflare/workers-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newR2StorageService } from "../r2StorageService";
-
-import type { R2Bucket, R2Object } from "@cloudflare/workers-types";
 
 // R2Bucketのモックを作成
 const createMockR2Bucket = (): R2Bucket => {

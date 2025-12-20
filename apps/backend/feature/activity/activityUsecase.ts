@@ -7,8 +7,8 @@ import {
   createActivityKindId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { generateOrder } from "@backend/lib/lexicalOrder";
-
 import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
@@ -16,7 +16,6 @@ import type {
 } from "@dtos/request";
 
 import type { ActivityRepository } from ".";
-import type { TransactionRunner } from "@backend/infra/rdb/db";
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;

@@ -1,16 +1,13 @@
 import { useState } from "react";
 
+import type { GoalResponse } from "@dtos/response";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import type { GoalResponse } from "@dtos/response";
-
-import { createUseDeleteGoal, createUseUpdateGoal } from "../";
-import { calculateDebtBalance } from "../../goals";
-
-import { createUseAppSettings } from "./useAppSettings";
-
 import type { StorageAdapter } from "../../adapters/types";
+import { calculateDebtBalance } from "../../goals";
+import { createUseDeleteGoal, createUseUpdateGoal } from "../";
+import { createUseAppSettings } from "./useAppSettings";
 
 type EditFormData = {
   dailyTargetQuantity: number;

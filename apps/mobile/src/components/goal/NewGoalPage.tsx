@@ -1,14 +1,12 @@
 import type React from "react";
 import { useState } from "react";
 
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-
 import { GetActivitiesResponseSchema } from "@packages/types/response/GetActivitiesResponse";
 import { useQuery } from "@tanstack/react-query";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { useGoals } from "../../hooks";
 import { apiClient } from "../../utils/apiClient";
-
 import { NewGoalCard } from "./NewGoalCard";
 import { NewGoalSlot } from "./NewGoalSlot";
 

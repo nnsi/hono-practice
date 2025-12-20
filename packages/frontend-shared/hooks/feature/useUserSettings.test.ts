@@ -1,13 +1,12 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { createUseUserSettings } from "./useUserSettings";
-
-import type { UserInfo } from "./useUserSettings";
 import type {
   NavigationAdapter,
   NotificationAdapter,
 } from "@packages/frontend-shared/adapters";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { UserInfo } from "./useUserSettings";
+import { createUseUserSettings } from "./useUserSettings";
 
 describe("createUseUserSettings", () => {
   let mockNavigation: NavigationAdapter;
@@ -312,7 +311,7 @@ describe("createUseUserSettings", () => {
     await act(async () => {
       try {
         await result.current.handleMobileGoogleLink();
-      } catch (error) {
+      } catch (_error) {
         // Expected to fail
       }
     });

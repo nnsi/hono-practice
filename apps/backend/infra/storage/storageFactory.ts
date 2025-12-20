@@ -1,8 +1,8 @@
-import { newLocalStorageService } from "./localStorageService";
-import { newR2StorageService } from "./r2StorageService";
+import type { AppContext } from "@backend/context";
 
 import type { StorageService } from ".";
-import type { AppContext } from "@backend/context";
+import { newLocalStorageService } from "./localStorageService";
+import { newR2StorageService } from "./r2StorageService";
 
 export function createStorageService(
   env: AppContext["Bindings"],

@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from "react";
 
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import type { GetTaskResponse } from "@dtos/index";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import type { GetTaskResponse } from "@dtos/index";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";
@@ -24,7 +22,10 @@ export default React.memo(function TaskList({ tasks, date }: TaskListProps) {
     mutationFn: async ({
       id,
       doneDate,
-    }: { id: string; doneDate: string | null }) => {
+    }: {
+      id: string;
+      doneDate: string | null;
+    }) => {
       await apiClient.users.tasks[":id"].$put({
         param: { id },
         json: { doneDate },

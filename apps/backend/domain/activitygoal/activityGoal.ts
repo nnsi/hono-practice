@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { activityIdSchema } from "../activity";
 import { userIdSchema } from "../user";
-
 import { activityGoalIdSchema } from "./activityGoalId";
 
 const BaseActivityGoalSchema = z.object({

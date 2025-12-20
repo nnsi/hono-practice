@@ -1,11 +1,4 @@
-import {
-  type UseMutationResult,
-  type UseQueryResult,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-
+import type { AppType } from "@backend/app";
 import {
   type CreateGoalRequest,
   CreateGoalRequestSchema,
@@ -19,8 +12,13 @@ import {
   type GoalStatsResponse,
   GoalStatsResponseSchema,
 } from "@dtos/response";
-
-import type { AppType } from "@backend/app";
+import {
+  type UseMutationResult,
+  type UseQueryResult,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 export type GoalFilters = {
   activityId?: string;

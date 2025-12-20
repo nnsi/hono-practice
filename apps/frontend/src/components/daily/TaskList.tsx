@@ -1,5 +1,7 @@
 import type React from "react";
 
+import { Button, Card, CardContent } from "@components/ui";
+import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
 import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { useDailyTaskActions } from "@frontend/hooks/feature/daily/useDailyTaskActions";
 import {
@@ -8,10 +10,6 @@ import {
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-
-import type { GetTaskResponse } from "@dtos/response/GetTasksResponse";
-
-import { Button, Card, CardContent } from "@components/ui";
 
 interface TaskListProps {
   tasks: GetTaskResponse[] | undefined;

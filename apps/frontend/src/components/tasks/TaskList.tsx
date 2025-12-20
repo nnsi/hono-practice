@@ -1,5 +1,6 @@
 import type React from "react";
 
+import { Button, Card, CardContent } from "@components/ui";
 import { TaskCreateDialog } from "@frontend/components/tasks/TaskCreateDialog";
 import { TaskEditDialog } from "@frontend/components/tasks/TaskEditDialog";
 import { useTaskActions } from "@frontend/hooks/feature/tasks/useTaskActions";
@@ -10,8 +11,6 @@ import {
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-
-import { Button, Card, CardContent } from "@components/ui";
 
 type TaskItem = {
   id: string;

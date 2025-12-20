@@ -33,7 +33,7 @@ export function createUseLogin(dependencies: LoginDependencies) {
       await auth.login(data);
       // Navigate to home on success
       navigation.navigate("/");
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "ログインエラー",
         description: "ログインIDまたはパスワードが間違っています",
@@ -67,7 +67,7 @@ export function createUseLogin(dependencies: LoginDependencies) {
       setTimeout(() => {
         navigation.navigate("/");
       }, 0);
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "エラー",
         description: "Google認証に失敗しました",
@@ -94,7 +94,7 @@ export function createUseLogin(dependencies: LoginDependencies) {
       if (credential) {
         await handleGoogleSuccess({ credential });
       }
-    } catch (error) {
+    } catch (_error) {
       handleGoogleError();
     }
   };

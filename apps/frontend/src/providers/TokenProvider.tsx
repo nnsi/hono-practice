@@ -7,10 +7,9 @@ import {
   useState,
 } from "react";
 
+import type { EventBus, TimeProvider } from "@frontend/services/abstractions";
 import { AppEvents } from "@frontend/services/abstractions";
 import { tokenStore as defaultTokenStore } from "@frontend/utils/tokenStore";
-
-import type { EventBus, TimeProvider } from "@frontend/services/abstractions";
 import type { TokenStorage } from "@packages/frontend-shared/types";
 
 type TokenState = {

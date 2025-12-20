@@ -1,16 +1,5 @@
 import { useState } from "react";
 
-import { useCreateActivity } from "@frontend/hooks/api";
-import { resizeImage } from "@frontend/utils/imageResizer";
-import { tokenStore } from "@frontend/utils/tokenStore";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
-
-import {
-  type CreateActivityRequest,
-  CreateActivityRequestSchema,
-} from "@dtos/request/CreateActivityRequest";
-
 import {
   Button,
   Dialog,
@@ -28,13 +17,25 @@ import {
   Input,
   useToast,
 } from "@components/ui";
+import {
+  type CreateActivityRequest,
+  CreateActivityRequestSchema,
+} from "@dtos/request/CreateActivityRequest";
+import { useCreateActivity } from "@frontend/hooks/api";
+import { resizeImage } from "@frontend/utils/imageResizer";
+import { tokenStore } from "@frontend/utils/tokenStore";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import { IconTypeSelector } from "./IconTypeSelector";
 
 export function NewActivityDialog({
   open,
   onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [iconFile, setIconFile] = useState<File | undefined>();
   const [iconPreview, setIconPreview] = useState<string | undefined>();
 
@@ -116,7 +117,7 @@ export function NewActivityDialog({
         description: "アクティビティを作成しました",
         variant: "default",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "エラー",
         description: "アクティビティの作成に失敗しました",

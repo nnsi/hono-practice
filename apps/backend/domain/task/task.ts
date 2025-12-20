@@ -2,7 +2,6 @@ import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
 import { userIdSchema } from "../user";
-
 import { taskIdSchema } from "./taskId";
 
 const BaseTaskSchema = z.object({
