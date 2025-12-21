@@ -29,7 +29,7 @@ export const ApiKeyList: React.FC = () => {
         title: "成功",
         description: `APIキー「${name}」を削除しました`,
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "エラー",
         description: "APIキーの削除に失敗しました",

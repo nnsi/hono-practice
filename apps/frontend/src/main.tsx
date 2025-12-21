@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import "../main.css";
+
 import { useAuth } from "@hooks/useAuth";
 
 import { AuthProvider } from "./providers/AuthProvider";

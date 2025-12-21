@@ -1,8 +1,8 @@
+import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 import { createApiKeyId, generateApiKey } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 
 import type { ApiKeyRepository } from "./apiKeyRepository";
-import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 
 export type ApiKeyUsecase = {
   createApiKey: (data: CreateApiKeyData) => Promise<ApiKey>; // throwする：DomainValidateError, SqlExecutionError

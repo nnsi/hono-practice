@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-import { useActivityEdit } from "@frontend/hooks/feature/activity/useActivityEdit";
-
-import type { GetActivityResponse } from "@dtos/response";
-
 import {
   Button,
   Dialog,
@@ -20,6 +16,8 @@ import {
   FormMessage,
   Input,
 } from "@components/ui";
+import type { GetActivityResponse } from "@dtos/response";
+import { useActivityEdit } from "@frontend/hooks/feature/activity/useActivityEdit";
 
 import { IconTypeSelector } from "./IconTypeSelector";
 

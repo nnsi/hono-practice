@@ -3,10 +3,9 @@ import {
   type UserProvider,
   createUserProviderEntity,
 } from "@backend/domain";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { userProviders } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type UserProviderRepository<T = any> = {
   findUserProviderByIdAndProvider(

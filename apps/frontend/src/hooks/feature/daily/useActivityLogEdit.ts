@@ -1,3 +1,5 @@
+import { useToast } from "@components/ui";
+import type { GetActivityLogResponse } from "@dtos/response";
 import { useActivities } from "@frontend/hooks/api";
 import {
   useDeleteActivityLog,
@@ -6,10 +8,6 @@ import {
 import { createWebNotificationAdapter } from "@packages/frontend-shared/adapters";
 import { createUseActivityLogEdit } from "@packages/frontend-shared/hooks/feature";
 import { useQueryClient } from "@tanstack/react-query";
-
-import type { GetActivityLogResponse } from "@dtos/response";
-
-import { useToast } from "@components/ui";
 
 export const useActivityLogEdit = (
   _open: boolean,

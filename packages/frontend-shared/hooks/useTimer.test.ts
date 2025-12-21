@@ -1,14 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createUseTimer } from "./useTimer";
-
 import type {
   EventBusAdapter,
   NotificationAdapter,
   StorageAdapter,
   TimerAdapter,
 } from "../adapters";
+import { createUseTimer } from "./useTimer";
 
 // モックAdapters作成
 const createMockStorageAdapter = (): StorageAdapter => {

@@ -9,9 +9,8 @@ import {
 import { AppError, ConflictError } from "@backend/error";
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
-
-import type { UserRepository } from "./userRepository";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
+import type { UserRepository } from "./userRepository";
 
 export type CreateUserInputParams = {
   loginId: string;

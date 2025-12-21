@@ -1,6 +1,5 @@
-import { PlusCircledIcon } from "@radix-ui/react-icons";
-
 import { Card, CardContent } from "@components/ui";
+import { PlusCircledIcon } from "@radix-ui/react-icons";
 
 type EmptyStateProps = {
   onCreateClick: () => void;

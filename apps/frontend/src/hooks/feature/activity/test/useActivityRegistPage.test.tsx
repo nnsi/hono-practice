@@ -1,12 +1,11 @@
 import type React from "react";
 
+import type { GetActivityResponse } from "@dtos/response";
 import { EventBusProvider } from "@frontend/providers/EventBusProvider";
 import { createWindowEventBus } from "@frontend/services/abstractions/EventBus";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 import { useActivityRegistPage } from "../useActivityRegistPage";
 

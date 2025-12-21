@@ -1,13 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { NetworkAdapter, StorageAdapter } from "../adapters";
 import {
   createUseNetworkStatus,
   getSimulatedOffline,
   setSimulatedOffline,
 } from "./useNetworkStatus";
-
-import type { NetworkAdapter, StorageAdapter } from "../adapters";
 
 // モックAdapters作成
 const createMockNetworkAdapter = (

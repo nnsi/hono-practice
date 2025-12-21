@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createWebEventBusAdapter } from "./index";
-
 import type { EventBusAdapter } from "./index";
+import { createWebEventBusAdapter } from "./index";
 
 describe("EventBusAdapter", () => {
   describe("WebEventBusAdapter", () => {

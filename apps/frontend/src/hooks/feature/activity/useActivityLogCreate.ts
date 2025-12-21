@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 
+import { useToast } from "@components/ui";
+import {
+  type CreateActivityLogRequest,
+  CreateActivityLogRequestSchema,
+} from "@dtos/request/CreateActivityLogRequest";
+import type { GetActivityResponse } from "@dtos/response";
 import { useCreateActivityLog } from "@frontend/hooks/api/useActivityLogs";
 import { useTimer } from "@frontend/hooks/useTimer";
 import {
@@ -11,14 +17,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
-
-import {
-  type CreateActivityLogRequest,
-  CreateActivityLogRequestSchema,
-} from "@dtos/request/CreateActivityLogRequest";
-import type { GetActivityResponse } from "@dtos/response";
-
-import { useToast } from "@components/ui";
 
 export const useActivityLogCreate = (
   activity: GetActivityResponse,
@@ -120,7 +118,7 @@ export const useActivityLogCreate = (
         // ダイアログを閉じる
         onOpenChange(false);
       }, 100);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "エラー",
         description: "アクティビティの記録に失敗しました",

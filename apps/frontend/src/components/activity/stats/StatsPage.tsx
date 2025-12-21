@@ -62,7 +62,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
   const weeklyData = data.reduce(
     (acc, day) => {
       // 月の日付を再構築（dataのdateは"1日", "2日"形式なので、渡された月を使って完全な日付を生成）
-      const dayNumber = Number.parseInt(day.date.replace("日", ""));
+      const dayNumber = Number.parseInt(day.date.replace("日", ""), 10);
       const date = dayjs(month).date(dayNumber);
       const weekStart = date.startOf("week");
       const weekKey = weekStart.format("YYYY-MM-DD");

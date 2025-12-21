@@ -1,8 +1,7 @@
+import type { GetActivityResponse } from "@dtos/response";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 import { useActivityLogCreate } from "../useActivityLogCreate";
 

@@ -1,14 +1,13 @@
 import { hc } from "hono/client";
 
+import type { AppType } from "@backend/app";
+import type { ApiClientConfig } from "@frontend/services/abstractions";
 import { AppEvents } from "@frontend/services/abstractions";
 import { createLocalStorageProvider } from "@frontend/services/abstractions/StorageProvider";
 import { getWebApiUrl } from "@packages/frontend-shared/utils/apiUrl";
 
 import { createTokenStore } from "./createTokenStore";
 import { tokenStore } from "./tokenStore";
-
-import type { AppType } from "@backend/app";
-import type { ApiClientConfig } from "@frontend/services/abstractions";
 
 const API_URL = getWebApiUrl({
   isDevelopment: import.meta.env.MODE === "development",
@@ -133,7 +132,7 @@ export function createApiClient(config?: Partial<ApiClientConfig>) {
               try {
                 const result = await customFetch(input, init, true);
                 resolve(result);
-              } catch (error) {
+              } catch (_error) {
                 resolve(new Response(JSON.stringify(json), { status: 401 }));
               }
             });

@@ -1,16 +1,15 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
+import {
   type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
-import { AppState, type AppStateStatus } from "react-native";
-
 import { calculateRefreshTime, tokenStore } from "@packages/frontend-shared";
+import { AppState, type AppStateStatus } from "react-native";
 
 import { eventBus } from "../utils/eventBus";
 

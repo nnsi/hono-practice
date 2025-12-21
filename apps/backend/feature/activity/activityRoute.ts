@@ -7,20 +7,18 @@ import { createActivityId } from "@backend/domain";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
 import { generateIconKey } from "@backend/utils/imageValidator";
-import { zValidator } from "@hono/zod-validator";
-
 import {
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@dtos/request";
 import type { GetActivityResponse } from "@dtos/response";
+import { zValidator } from "@hono/zod-validator";
 
+import type { AppContext } from "../../context";
 import { newActivityHandler } from "./activityHandler";
 import { newActivityRepository } from "./activityRepository";
 import { newActivityUsecase } from "./activityUsecase";
-
-import type { AppContext } from "../../context";
 
 // ローカル環境で画像URLをBase64に変換する関数
 async function convertImageUrlsToBase64(

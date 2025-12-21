@@ -1,11 +1,10 @@
+import type { UserId } from "@backend/domain";
 import type { CreateUserRequest } from "@dtos/request";
 import { type GetUserResponse, GetUserResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";
-
-import type { UserUsecase } from ".";
 import type { AuthHandler } from "../auth/authHandler";
-import type { UserId } from "@backend/domain";
+import type { UserUsecase } from ".";
 
 export function newUserHandler(uc: UserUsecase, authH: AuthHandler) {
   return {

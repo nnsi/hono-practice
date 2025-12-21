@@ -65,7 +65,7 @@ describe.sequential("Login E2E Tests", () => {
           localStorage.clear();
         });
       }
-    } catch (e) {
+    } catch (_e) {
       // ページがまだロードされていない場合は無視
     }
   });

@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { StorageAdapter } from "./index";
 import {
   createReactNativeStorageAdapter,
   createWebStorageAdapter,
 } from "./index";
-
-import type { StorageAdapter } from "./index";
 
 describe("StorageAdapter", () => {
   describe("WebStorageAdapter", () => {

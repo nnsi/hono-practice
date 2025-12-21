@@ -1,10 +1,9 @@
+import type { UserId } from "@backend/domain";
 import { AppError } from "@backend/error";
-
 import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
 
 import type { GoalFilters, GoalUsecase } from "./goalUsecase";
-import type { UserId } from "@backend/domain";
 
 export function newGoalHandler(uc: GoalUsecase) {
   return {

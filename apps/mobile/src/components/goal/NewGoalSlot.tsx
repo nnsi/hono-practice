@@ -1,13 +1,11 @@
 import type React from "react";
 import { useState } from "react";
 
-import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import type { GetActivityResponse } from "@dtos/response";
 import { Ionicons } from "@expo/vector-icons";
 import { Controller, useForm } from "react-hook-form";
+import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DatePicker from "react-native-date-picker";
-
-import type { GetActivityResponse } from "@dtos/response";
 
 import { useCreateGoal } from "../../hooks";
 import { Alert } from "../../utils/AlertWrapper";

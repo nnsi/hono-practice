@@ -53,7 +53,7 @@ export const createUseAuthInitializer = (
         try {
           // トークンリフレッシュを試みる
           await refreshToken();
-        } catch (e) {
+        } catch (_e) {
           // リフレッシュに失敗した場合のみログインページにリダイレクト
           navigation.navigate("/");
         }

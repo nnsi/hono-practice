@@ -1,17 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
 import {
   type CreateUserRequest,
   createUserRequestSchema,
 } from "@dtos/request/CreateUserRequest";
-
-import { createUseCreateUserApi, createUseGoogleAuth } from "../";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 import type {
   NavigationAdapter,
   NotificationAdapter,
 } from "../../adapters/types";
+import { createUseCreateUserApi, createUseGoogleAuth } from "../";
 
 type UseCreateUserDependencies = {
   apiClient: any;
@@ -49,7 +47,7 @@ export const createUseCreateUser = (deps: UseCreateUserDependencies) => {
         await getUser();
         // ユーザー作成成功時にホームページにリダイレクト
         navigation.navigate("/");
-      } catch (e) {
+      } catch (_e) {
         notification.toast({
           title: "エラー",
           description: "ユーザー作成に失敗しました",
@@ -76,7 +74,7 @@ export const createUseCreateUser = (deps: UseCreateUserDependencies) => {
         scheduleTokenRefresh();
         await getUser();
         navigation.navigate("/");
-      } catch (e) {
+      } catch (_e) {
         notification.toast({
           title: "エラー",
           description: "Google認証に失敗しました",

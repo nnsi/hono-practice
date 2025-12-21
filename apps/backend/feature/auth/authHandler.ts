@@ -1,12 +1,10 @@
+import type { Provider, UserId } from "@backend/domain";
 import { createUserId } from "@backend/domain/user/userId";
-
 import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";
-
 import type { AuthUsecase } from "./authUsecase";
-import type { Provider, UserId } from "@backend/domain";
 
 export type AuthHandler = {
   login(params: LoginRequest): Promise<{

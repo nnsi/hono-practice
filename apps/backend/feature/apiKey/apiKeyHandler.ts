@@ -1,5 +1,5 @@
+import type { UserId } from "@backend/domain";
 import { AppError } from "@backend/error";
-
 import type { CreateApiKeyRequest } from "@dtos/request";
 import {
   CreateApiKeyResponseSchema,
@@ -7,7 +7,6 @@ import {
 } from "@dtos/response";
 
 import type { ApiKeyUsecase } from "./apiKeyUsecase";
-import type { UserId } from "@backend/domain";
 
 export function newApiKeyHandler(uc: ApiKeyUsecase) {
   return {

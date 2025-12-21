@@ -1,9 +1,8 @@
+import type { UserId } from "@backend/domain";
 import { AppError } from "@backend/error";
-
 import { SubscriptionResponseSchema } from "@dtos/response";
 
 import type { SubscriptionUsecase } from "./subscriptionUsecase";
-import type { UserId } from "@backend/domain";
 
 export type SubscriptionHandler = {
   getSubscription: (userId: UserId) => Promise<{

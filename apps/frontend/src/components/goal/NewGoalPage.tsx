@@ -1,8 +1,7 @@
+import { Card, CardContent } from "@components/ui";
 import { useNewGoalPage } from "@frontend/hooks/feature/goal/useNewGoalPage";
 import { useAppSettings } from "@frontend/hooks/feature/setting/useAppSettings";
 import { PlusCircledIcon } from "@radix-ui/react-icons";
-
-import { Card, CardContent } from "@components/ui";
 
 import { NewGoalCard } from "./NewGoalCard";
 import { NewGoalDialog } from "./NewGoalDialog";

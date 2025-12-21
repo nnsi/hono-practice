@@ -1,10 +1,8 @@
+import { useToast } from "@components/ui";
 import { apiClient } from "@frontend/utils/apiClient";
+import { useAuth } from "@hooks/useAuth";
 import { createUseCreateUser } from "@packages/frontend-shared/hooks/feature";
 import { useNavigate } from "@tanstack/react-router";
-
-import { useAuth } from "@hooks/useAuth";
-
-import { useToast } from "@components/ui";
 
 export const useCreateUser = () => {
   const navigate = useNavigate();

@@ -1,7 +1,3 @@
-import { useGoalDetailModal } from "@frontend/hooks/feature/goal/useGoalDetailModal";
-
-import type { GoalResponse } from "@dtos/response";
-
 import {
   Dialog,
   DialogContent,
@@ -9,6 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@components/ui";
+import type { GoalResponse } from "@dtos/response";
+import { useGoalDetailModal } from "@frontend/hooks/feature/goal/useGoalDetailModal";
 
 import { ActivityIcon } from "../common/ActivityIcon";
 

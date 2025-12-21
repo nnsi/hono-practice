@@ -2,7 +2,6 @@ import { DomainValidateError } from "@backend/error";
 import { expect, test } from "vitest";
 
 import { createUserId } from "../user";
-
 import { TaskSchema, createTaskEntity } from "./task";
 import { createTaskId } from "./taskId";
 

@@ -9,8 +9,6 @@ import { ResourceNotFoundError } from "@backend/error";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { newGoalUsecase } from "../goalUsecase";
-
 import type { ActivityGoalRepository } from "../../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../../activitygoal/activityGoalService";
 import type {
@@ -18,6 +16,7 @@ import type {
   GoalFilters,
   UpdateGoalRequest,
 } from "../goalUsecase";
+import { newGoalUsecase } from "../goalUsecase";
 
 describe("GoalUsecase", () => {
   let activityGoalRepo: ActivityGoalRepository;

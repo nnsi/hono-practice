@@ -1,13 +1,11 @@
 import { useCallback, useState } from "react";
 
-import dayjs from "dayjs";
-
 import type {
   GetActivityStatsResponse,
   GetGoalsResponse,
 } from "@dtos/response";
-
 import type { UseQueryResult } from "@tanstack/react-query";
+import dayjs from "dayjs";
 
 // kind名から固定的な色を取得する関数（色覚バリアフリー対応）
 export const getColorForKind = (kindName: string): string => {

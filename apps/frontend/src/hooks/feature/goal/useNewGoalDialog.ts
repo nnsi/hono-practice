@@ -1,9 +1,7 @@
+import { useToast } from "@components/ui";
+import type { GetActivityResponse } from "@dtos/response";
 import { apiClient } from "@frontend/utils/apiClient";
 import { createUseNewGoalDialog } from "@packages/frontend-shared/hooks/feature";
-
-import type { GetActivityResponse } from "@dtos/response";
-
-import { useToast } from "@components/ui";
 
 export const useNewGoalDialog = (
   onOpenChange: (open: boolean) => void,

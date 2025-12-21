@@ -1,3 +1,4 @@
+import type { AppType } from "@backend/app";
 import {
   type UseMutationResult,
   type UseQueryResult,
@@ -18,8 +19,6 @@ import {
   type GetTasksResponse,
   GetTasksResponseSchema,
 } from "../../types/response";
-
-import type { AppType } from "@backend/app";
 
 export type UseTasksOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;

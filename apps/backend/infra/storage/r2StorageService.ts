@@ -1,5 +1,6 @@
-import type { StorageService } from ".";
 import type { R2Bucket } from "@cloudflare/workers-types";
+
+import type { StorageService } from ".";
 
 export function newR2StorageService(bucket: R2Bucket): StorageService {
   return {

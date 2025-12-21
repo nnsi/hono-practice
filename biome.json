@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["**/*.gen.ts", "**/*.js", ".expo/**", "db-data", "db-data/**"]
+    "includes": [
+      "**",
+      "!**/*.gen.ts",
+      "!**/*.js",
+      "!**/.expo",
+      "!**/db-data",
+      "!**/stats.html"
+    ]
   },
   "formatter": {
     "formatWithErrors": true,
@@ -15,8 +22,45 @@
     "indentStyle": "space",
     "indentWidth": 2
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [
+                "react",
+                "react-dom",
+                "react-dom/**",
+                "react-router-dom",
+                "hono",
+                "hono/**"
+              ],
+              ":BLANK_LINE:",
+              ":NODE:",
+              ":BLANK_LINE:",
+              ":PACKAGE:",
+              ":BLANK_LINE:",
+              ["@/**", "@frontend/**", "@backend/**", "@infra/**"],
+              ":BLANK_LINE:",
+              "@dtos/**",
+              ":BLANK_LINE:",
+              "@hooks/**",
+              ":BLANK_LINE:",
+              ["@components/ui", "@components/ui/**"],
+              ":BLANK_LINE:",
+              "@components/**",
+              ":BLANK_LINE:",
+              ":PATH:",
+              ":BLANK_LINE:",
+              { "type": true }
+            ],
+            "identifierOrder": "lexicographic"
+          }
+        }
+      }
+    }
   },
   "linter": {
     "enabled": true,
@@ -27,11 +71,13 @@
         "useSelfClosingElements": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "off"
+        "useExhaustiveDependencies": "off",
+        "noUnusedVariables": "off"
       },
       "suspicious": {
         "noExplicitAny": "off",
-        "noConfusingVoidType": "off"
+        "noConfusingVoidType": "off",
+        "useIterableCallbackReturn": "off"
       },
       "complexity": {
         "noForEach": "off",
@@ -45,6 +91,14 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    },
+    "linter": {
+      "enabled": false
     }
   }
 }

@@ -1,8 +1,7 @@
 import { useState } from "react";
 
-import { useForm } from "react-hook-form";
-
 import type { GetActivityResponse } from "@dtos/response";
+import { useForm } from "react-hook-form";
 
 import { createUseCreateGoal } from "../";
 

@@ -1,8 +1,3 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { createUseActivityEdit } from "./useActivityEdit";
-
 import type {
   FileAdapter,
   FormAdapterWithFieldArray,
@@ -12,6 +7,10 @@ import type {
   GetActivityResponse,
   UpdateActivityRequest,
 } from "@packages/types";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { createUseActivityEdit } from "./useActivityEdit";
 
 describe("createUseActivityEdit", () => {
   let mockForm: FormAdapterWithFieldArray<UpdateActivityRequest>;

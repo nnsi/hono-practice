@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
+import type { AppContext } from "@backend/context";
+
 import { newSubscriptionHandler } from "./subscriptionHandler";
 import { newSubscriptionRepository } from "./subscriptionRepository";
 import { newSubscriptionUsecase } from "./subscriptionUsecase";
-
-import type { AppContext } from "@backend/context";
 
 export function createSubscriptionRoute() {
   const app = new Hono<

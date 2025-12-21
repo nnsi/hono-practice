@@ -7,9 +7,8 @@ import {
 import { anything, instance, mock, reset, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { newActivityGoalService } from "../activityGoalService";
-
 import type { ActivityLogRepository } from "../../activityLog";
+import { newActivityGoalService } from "../activityGoalService";
 
 describe("ActivityGoalService", () => {
   let activityLogRepo: ActivityLogRepository;

@@ -1,8 +1,7 @@
 import { act } from "react";
 
-import { waitFor as originalWaitFor } from "@testing-library/react";
-
 import type { waitForOptions } from "@testing-library/react";
+import { waitFor as originalWaitFor } from "@testing-library/react";
 
 /**
  * React 19対応のwaitForラッパー

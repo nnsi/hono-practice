@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { ActivityKindSchema, ActivitySchema } from "../activity";
 import { userIdSchema } from "../user";
-
 import { activityLogIdSchema } from "./activityLogId";
 
 const BaseActivityLogSchema = z.object({

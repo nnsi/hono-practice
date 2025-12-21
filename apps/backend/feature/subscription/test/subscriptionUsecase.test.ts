@@ -8,9 +8,8 @@ import { ResourceNotFoundError } from "@backend/error";
 import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { newSubscriptionUsecase } from "..";
-
 import type { SubscriptionRepository } from "..";
+import { newSubscriptionUsecase } from "..";
 
 describe("SubscriptionUsecase", () => {
   let repo: SubscriptionRepository;

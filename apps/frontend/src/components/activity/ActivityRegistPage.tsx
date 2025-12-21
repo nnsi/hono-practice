@@ -1,11 +1,8 @@
 import type React from "react";
 
+import type { GetActivityResponse } from "@dtos/response";
 import { useActivityRegistPage } from "@frontend/hooks/feature/activity/useActivityRegistPage";
 import { Pencil1Icon, PlusCircledIcon } from "@radix-ui/react-icons";
-
-import type { GetActivityResponse } from "@dtos/response";
-
-import { ActivityDateHeader } from "./ActivityDateHeader";
 
 import {
   ActivityCard,
@@ -13,6 +10,7 @@ import {
   ActivityLogCreateDialog,
   NewActivityDialog,
 } from ".";
+import { ActivityDateHeader } from "./ActivityDateHeader";
 
 export const ActivityRegistPage: React.FC = () => {
   const {

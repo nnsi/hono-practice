@@ -1,19 +1,17 @@
 import { Hono } from "hono";
 
 import { createTaskId } from "@backend/domain";
-import { zValidator } from "@hono/zod-validator";
-
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@dtos/request";
 import { getTasksRequestSchema } from "@dtos/request/GetTasksRequest";
+import { zValidator } from "@hono/zod-validator";
 
+import type { AppContext } from "../../context";
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";
 import { newTaskUsecase } from "./taskUsecase";
-
-import type { AppContext } from "../../context";
 
 export function createTaskRoute() {
   const app = new Hono<

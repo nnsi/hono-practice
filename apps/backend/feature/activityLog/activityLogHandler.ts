@@ -6,7 +6,6 @@ import {
 } from "@backend/domain";
 import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
-
 import type {
   CreateActivityLogBatchRequest,
   CreateActivityLogRequest,

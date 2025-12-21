@@ -1,12 +1,11 @@
 import { useCallback } from "react";
 
+import type { ColumnMapping } from "@frontend/components/csv/CSVColumnMapper";
 import { useActivities } from "@frontend/hooks/api/useActivities";
 import {
   validateDate as validateDateUtil,
   validateQuantity as validateQuantityUtil,
 } from "@packages/frontend-shared/utils/validation";
-
-import type { ColumnMapping } from "@frontend/components/csv/CSVColumnMapper";
 
 export type ActivityLogValidationError = {
   field: string;

@@ -1,17 +1,16 @@
 import { useMemo } from "react";
 
+import type { NetworkStatusManager } from "@frontend/services/abstractions";
 import {
   createWebNetworkAdapter,
   createWebStorageAdapter,
 } from "@packages/frontend-shared/adapters";
+import type { UseNetworkStatusReturn } from "@packages/frontend-shared/hooks";
 import {
   createUseNetworkStatus,
   getSimulatedOffline as getSharedSimulatedOffline,
   setSimulatedOffline as setSharedSimulatedOffline,
 } from "@packages/frontend-shared/hooks";
-
-import type { NetworkStatusManager } from "@frontend/services/abstractions";
-import type { UseNetworkStatusReturn } from "@packages/frontend-shared/hooks";
 
 export type NetworkStatus = UseNetworkStatusReturn;
 

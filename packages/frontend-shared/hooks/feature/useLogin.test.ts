@@ -1,14 +1,13 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { createLoginValidation, createUseLogin } from "./useLogin";
-
 import type {
   FormAdapter,
   NavigationAdapter,
   NotificationAdapter,
 } from "@packages/frontend-shared/adapters";
 import type { LoginRequest } from "@packages/types";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { createLoginValidation, createUseLogin } from "./useLogin";
 
 describe("createUseLogin", () => {
   let mockForm: FormAdapter<LoginRequest>;
@@ -267,7 +266,7 @@ describe("createUseLogin", () => {
     await act(async () => {
       try {
         await result.current.handleMobileGoogleLogin();
-      } catch (error) {
+      } catch (_error) {
         // Expected to fail
       }
     });

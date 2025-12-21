@@ -1,11 +1,10 @@
 import type { Next } from "hono";
 
+import type { HonoContext } from "@backend/context";
 import {
   createSubscriptionId,
   newSubscription,
 } from "@backend/domain/subscription";
-
-import type { HonoContext } from "@backend/context";
 
 export async function mockPremiumMiddleware(c: HonoContext, next: Next) {
   // テスト用のプレミアムサブスクリプションを常に持っていることにする

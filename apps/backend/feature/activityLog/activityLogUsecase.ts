@@ -10,7 +10,8 @@ import {
   createActivityLogId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
-
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { ActivityQueryService } from "@backend/query";
 import type {
   CreateActivityLogBatchResponse,
   GetActivityStatsResponse,
@@ -18,8 +19,6 @@ import type {
 
 import type { ActivityRepository } from "../activity";
 import type { ActivityLogRepository } from "./activityLogRepository";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import type { ActivityQueryService } from "@backend/query";
 
 export type GetActivityLogsParams = {
   from: Date;

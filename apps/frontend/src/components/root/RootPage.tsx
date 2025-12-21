@@ -1,8 +1,3 @@
-import { AuthenticatedLayout } from "@frontend/components";
-import { CreateUserForm } from "@frontend/components/root/CreateUserForm";
-import { LoginForm } from "@frontend/components/root/LoginForm";
-import { useAuthInitializer } from "@frontend/hooks/feature/auth/useAuthInitializer";
-
 import {
   Tabs,
   TabsContent,
@@ -10,6 +5,10 @@ import {
   TabsTrigger,
   Toaster,
 } from "@components/ui";
+import { AuthenticatedLayout } from "@frontend/components";
+import { CreateUserForm } from "@frontend/components/root/CreateUserForm";
+import { LoginForm } from "@frontend/components/root/LoginForm";
+import { useAuthInitializer } from "@frontend/hooks/feature/auth/useAuthInitializer";
 
 export const RootPage: React.FC = () => {
   const { isInitialized, user, requestStatus } = useAuthInitializer();

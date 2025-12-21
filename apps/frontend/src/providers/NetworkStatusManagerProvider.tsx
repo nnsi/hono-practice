@@ -1,9 +1,8 @@
-import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-
-import { createSimulatedNetworkStatusManager } from "@frontend/services/abstractions";
+import { createContext, useContext } from "react";
 
 import type { NetworkStatusManager } from "@frontend/services/abstractions";
+import { createSimulatedNetworkStatusManager } from "@frontend/services/abstractions";
 
 type NetworkStatusManagerContextValue = {
   networkStatusManager: NetworkStatusManager;

@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-import { TestTube, Upload } from "lucide-react";
-
 import {
   Button,
   EmojiPicker,
@@ -10,6 +8,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@components/ui";
+import { TestTube, Upload } from "lucide-react";
 
 type IconType = "emoji" | "upload" | "generate";
 

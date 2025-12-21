@@ -11,7 +11,6 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivityLogImport } from "./useActivityLogImport";
-
 import type { ValidatedActivityLog } from "./useActivityLogValidator";
 
 // モック

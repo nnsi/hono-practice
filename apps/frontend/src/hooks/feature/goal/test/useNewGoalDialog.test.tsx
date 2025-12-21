@@ -1,10 +1,9 @@
 import type React from "react";
 
+import { useToast } from "@components/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { useToast } from "@components/ui";
 
 import { useNewGoalDialog } from "../useNewGoalDialog";
 

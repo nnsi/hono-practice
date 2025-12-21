@@ -1,20 +1,19 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
+import {
   type ReactNode,
+  createContext,
   useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 
+import type { User } from "@packages/frontend-shared";
 import { tokenStore } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useToken } from "../providers/TokenProvider";
 import { apiClient } from "../utils/apiClient";
 import { eventBus } from "../utils/eventBus";
-
-import type { User } from "@packages/frontend-shared";
 
 type AuthContextType = {
   user: User | null;
@@ -121,14 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           try {
             await getUser();
-          } catch (error) {
+          } catch (_error) {
             // トークンが無効な場合はリフレッシュを試みる
             console.log("Initial user fetch failed, trying to refresh token");
             await refreshTokenFunc();
             await getUser();
           }
         }
-      } catch (error) {
+      } catch (_error) {
         console.log("Auth initialization failed, user needs to login");
       } finally {
         setIsInitialized(true);

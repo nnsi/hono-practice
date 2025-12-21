@@ -1,5 +1,10 @@
 import { useCallback, useState } from "react";
 
+import type { GetActivityLogResponse } from "@dtos/response";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import {
   ActivityIndicator,
   ScrollView,
@@ -7,13 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
-import { useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-
-import type { GetActivityLogResponse } from "@dtos/response";
 
 import ActivityDateHeader from "../../../src/components/daily/ActivityDateHeader";
 import ActivityLogEditDialog from "../../../src/components/daily/ActivityLogEditDialog";

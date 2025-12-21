@@ -21,20 +21,24 @@ export async function startTestFrontend(
     const frontendDir = path.resolve(__dirname, "../..");
 
     console.log("Starting Vite dev server...");
-    viteProcess = spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "dev"], {
-      cwd: frontendDir,
-      env: {
-        ...process.env,
-        VITE_PORT: String(port),
-        VITE_API_URL: `http://localhost:${apiPort}/`,
-        VITE_E2E_TEST: "true",
-        VITE_GOOGLE_OAUTH_CLIENT_ID: "test-client-id",
+    viteProcess = spawn(
+      process.platform === "win32" ? "npm.cmd" : "npm",
+      ["run", "dev"],
+      {
+        cwd: frontendDir,
+        env: {
+          ...process.env,
+          VITE_PORT: String(port),
+          VITE_API_URL: `http://localhost:${apiPort}/`,
+          VITE_E2E_TEST: "true",
+          VITE_GOOGLE_OAUTH_CLIENT_ID: "test-client-id",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+        shell: process.platform === "win32",
+        // プロセスグループを作成して、子プロセスも含めて終了できるようにする
+        detached: process.platform !== "win32",
       },
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: process.platform === "win32",
-      // プロセスグループを作成して、子プロセスも含めて終了できるようにする
-      detached: process.platform !== "win32",
-    });
+    );
 
     let started = false;
 
@@ -49,7 +53,7 @@ export async function startTestFrontend(
         started = true;
         // Extract the actual port from the output
         const portMatch = output.match(/http:\/\/localhost:(\d+)/);
-        actualPort = portMatch ? Number.parseInt(portMatch[1]) : port;
+        actualPort = portMatch ? Number.parseInt(portMatch[1], 10) : port;
         console.log(`Vite actually started on port ${actualPort}`);
         // Give it a bit more time to fully start
         setTimeout(() => resolve(actualPort || port), 1000);
@@ -91,7 +95,7 @@ export async function stopTestFrontend(): Promise<void> {
             require("node:child_process").execSync(killCommand, {
               stdio: "ignore",
             });
-          } catch (e) {
+          } catch (_e) {
             // エラーは無視
           }
         }
@@ -108,7 +112,7 @@ export async function stopTestFrontend(): Promise<void> {
         if (process.platform !== "win32" && viteProcess.pid) {
           try {
             process.kill(-viteProcess.pid, "SIGKILL");
-          } catch (e) {
+          } catch (_e) {
             // プロセスが既に終了している場合は無視
           }
         } else {

@@ -10,6 +10,7 @@ import {
 
 // Re-export utility functions from shared
 export { getColorForKind, getUniqueColorForKind };
+
 export type { GoalLine } from "@packages/frontend-shared/hooks/feature";
 
 export const useActivityStats = () => {

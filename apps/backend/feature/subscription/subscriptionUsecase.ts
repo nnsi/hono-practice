@@ -1,8 +1,8 @@
+import type { Subscription, UserId } from "@backend/domain";
 import { createSubscriptionId, newSubscription } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 
 import type { SubscriptionRepository } from "./subscriptionRepository";
-import type { Subscription, UserId } from "@backend/domain";
 
 export type SubscriptionUsecase = {
   getSubscriptionByUserId: (userId: UserId) => Promise<Subscription>;

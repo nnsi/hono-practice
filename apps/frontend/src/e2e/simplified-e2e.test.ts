@@ -84,7 +84,7 @@ describe.sequential("Simplified E2E Tests", () => {
           } else {
             console.log("WARNING: No Set-Cookie header in signup response!");
           }
-        } catch (e) {
+        } catch (_e) {
           console.log("Could not read response body");
         }
       }
@@ -499,7 +499,7 @@ describe.sequential("Simplified E2E Tests", () => {
         timeout: 5000,
       });
       console.log("Dialog closed successfully");
-    } catch (e) {
+    } catch (_e) {
       console.log("Dialog did not close within timeout");
     }
 
@@ -720,7 +720,7 @@ describe.sequential("Simplified E2E Tests", () => {
       await page.keyboard.press("Escape");
       await page.waitForSelector('[role="dialog"]', { state: "hidden" });
       console.log("Goal detail displayed!");
-    } catch (error) {
+    } catch (_error) {
       console.log("Goal detail modal test skipped - modal did not open");
       console.log("This may be due to implementation differences");
       // モーダルが開かなくても、ゴールが作成されたことは確認できたのでテストを続行

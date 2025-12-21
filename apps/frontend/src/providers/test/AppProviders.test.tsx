@@ -1,5 +1,5 @@
-import { act, useContext } from "react";
 import type { ReactNode } from "react";
+import { act, useContext } from "react";
 
 import { useAuth } from "@frontend/hooks/useAuth";
 import { useNetworkStatusContext } from "@frontend/providers/NetworkStatusProvider";

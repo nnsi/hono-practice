@@ -2,7 +2,6 @@ import { DomainValidateError } from "@backend/error";
 import { z } from "zod";
 
 import { userIdSchema } from "../user/userId";
-
 import { userProviderIdSchema } from "./userProviderId";
 
 // Define Provider literal type

@@ -5,10 +5,9 @@ import {
   type UserId,
   createActivityGoalEntity,
 } from "@backend/domain";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activityGoals } from "@infra/drizzle/schema";
 import { and, asc, eq, gt, isNull } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type ActivityGoalRepository<T = any> = {
   getActivityGoalsByUserId(userId: UserId): Promise<ActivityGoal[]>;

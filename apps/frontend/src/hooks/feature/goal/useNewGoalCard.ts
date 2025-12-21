@@ -1,8 +1,7 @@
+import type { GoalResponse } from "@dtos/response";
 import { apiClient } from "@frontend/utils/apiClient";
 import { createWebStorageAdapter } from "@packages/frontend-shared/adapters/web";
 import { createUseNewGoalCard } from "@packages/frontend-shared/hooks/feature";
-
-import type { GoalResponse } from "@dtos/response";
 
 // Webアダプターのインスタンスを作成
 const storage = createWebStorageAdapter();

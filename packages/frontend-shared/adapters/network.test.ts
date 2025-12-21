@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { NetworkAdapter } from "./index";
 import {
   createReactNativeNetworkAdapter,
   createWebNetworkAdapter,
 } from "./index";
-
-import type { NetworkAdapter } from "./index";
 
 describe("NetworkAdapter", () => {
   describe("WebNetworkAdapter", () => {

@@ -1,5 +1,9 @@
+import type { UserId } from "@backend/domain";
+import type { RefreshToken } from "@backend/domain/auth/refreshToken";
 import { createUserEntity } from "@backend/domain/user/user";
 import { createUserId } from "@backend/domain/user/userId";
+import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
+import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { hashWithSHA256 } from "@backend/lib/hash";
 // Use only ts-mockito imports for mocking repos and verifier
 import { anything, instance, mock, verify, when } from "ts-mockito";
@@ -8,16 +12,11 @@ import { v7 } from "uuid";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { AuthError } from "../../../error";
-import { newAuthUsecase } from "../authUsecase";
-
 import type { UserRepository } from "../../user/userRepository";
 import type { AuthUsecase } from "../authUsecase";
+import { newAuthUsecase } from "../authUsecase";
 import type { OAuthVerify } from "../oauthVerify";
 import type { PasswordVerifier } from "../passwordVerifier";
-import type { UserId } from "@backend/domain";
-import type { RefreshToken } from "@backend/domain/auth/refreshToken";
-import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
-import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 
 // Restore the helper function and add selector
 const createMockRefreshToken = (
@@ -47,6 +46,7 @@ describe("AuthUsecase", () => {
   let passwordVerifier: PasswordVerifier;
   let mockVerifier: OAuthVerify;
   const JWT_SECRET = "test-secret";
+  const JWT_AUDIENCE = "test-audience";
 
   beforeEach(() => {
     userRepo = mock<UserRepository>();
@@ -60,6 +60,7 @@ describe("AuthUsecase", () => {
       instance(userProviderRepo),
       instance(passwordVerifier),
       JWT_SECRET,
+      JWT_AUDIENCE,
       { google: mockVerifier },
     );
   });

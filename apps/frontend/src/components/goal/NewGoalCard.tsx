@@ -1,3 +1,12 @@
+import {
+  Button,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  Input,
+} from "@components/ui";
+import type { GetActivityResponse, GoalResponse } from "@dtos/response";
 import { useNewGoalCard } from "@frontend/hooks/feature/goal/useNewGoalCard";
 import {
   CheckIcon,
@@ -7,20 +16,8 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 
-import type { GetActivityResponse, GoalResponse } from "@dtos/response";
-
-import {
-  Button,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  Input,
-} from "@components/ui";
-
 import { ActivityLogCreateDialog } from "../activity/ActivityLogCreateDialog";
 import { ActivityIcon } from "../common/ActivityIcon";
-
 import { GoalDetailModal } from "./GoalDetailModal";
 
 type GoalCardProps = {

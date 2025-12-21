@@ -1,15 +1,13 @@
 import React, { useCallback, useState } from "react";
 
-import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-
 import type {
   GetActivityLogResponse,
   GetActivityResponse,
 } from "@dtos/response";
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { Alert } from "../../utils/AlertWrapper";
 import { apiClient } from "../../utils/apiClient";

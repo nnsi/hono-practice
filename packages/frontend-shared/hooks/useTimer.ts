@@ -82,7 +82,7 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
             });
           }
         }
-      } catch (e) {
+      } catch (_e) {
         await storage.removeItem(storageKey);
       } finally {
         setIsInitialized(true);
@@ -128,7 +128,7 @@ export function createUseTimer(options: UseTimerOptions): UseTimerReturn {
               return;
             }
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore errors
         }
       }

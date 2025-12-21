@@ -6,10 +6,9 @@ import {
   createTaskEntity,
 } from "@backend/domain";
 import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { tasks } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, gt, gte, isNull, lte, not, or } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type TaskRepository<T = any> = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;

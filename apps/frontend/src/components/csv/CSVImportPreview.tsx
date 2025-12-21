@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@frontend/components/ui/table";
 import { useActivities } from "@frontend/hooks/api/useActivities";
+import type { ValidatedActivityLog } from "@frontend/hooks/feature/csv/useActivityLogValidator";
 import {
   AlertCircle,
   CheckCircle,
@@ -27,8 +28,6 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-
-import type { ValidatedActivityLog } from "@frontend/hooks/feature/csv/useActivityLogValidator";
 
 type Props = {
   validatedLogs: ValidatedActivityLog[];

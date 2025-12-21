@@ -1,9 +1,8 @@
 import { memo } from "react";
 
-import { Text, TouchableOpacity, View } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import CalendarModal from "./CalendarModal";
 

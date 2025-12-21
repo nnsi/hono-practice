@@ -123,7 +123,7 @@ export const createInMemoryStorageProvider = (): StorageProvider => {
         url: window.location.href,
       });
       listeners.forEach((listener) => listener(event));
-    } catch (e) {
+    } catch (_e) {
       // StorageEventの構築に失敗した場合、カスタムイベントを使用
       const customEvent = {
         key,

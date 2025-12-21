@@ -1,11 +1,10 @@
+import type { ColumnMapping } from "@frontend/components/csv/CSVColumnMapper";
 import { useActivities } from "@frontend/hooks/api/useActivities";
 import { renderHook } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivityLogValidator } from "./useActivityLogValidator";
-
-import type { ColumnMapping } from "@frontend/components/csv/CSVColumnMapper";
 
 // useActivitiesをモック
 vi.mock("@frontend/hooks/api/useActivities", () => ({

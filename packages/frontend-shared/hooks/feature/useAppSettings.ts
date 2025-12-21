@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { type AppSettings, defaultSettings } from "../../types/settings";
-
 import type { StorageAdapter } from "../../adapters/types";
+import { type AppSettings, defaultSettings } from "../../types/settings";
 
 // Re-export for external use
 export type { AppSettings };

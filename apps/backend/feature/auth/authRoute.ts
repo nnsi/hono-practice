@@ -3,22 +3,19 @@ import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import { googleLoginRequestSchema, loginRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
 
-import { googleLoginRequestSchema, loginRequestSchema } from "@dtos/request";
-
+import type { AppContext } from "../../context";
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
-
 import { newAuthHandler } from "./authHandler";
+import type { OAuthVerifierMap } from "./authUsecase";
 import { newAuthUsecase } from "./authUsecase";
 import { googleVerify } from "./googleVerify";
 import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
-
-import type { OAuthVerifierMap } from "./authUsecase";
-import type { AppContext } from "../../context";
 
 export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   const app = new Hono<
@@ -31,7 +28,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
-    const { JWT_SECRET } = c.env;
+    const { JWT_SECRET, JWT_AUDIENCE } = c.env;
 
     const repo = newUserRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
@@ -43,6 +40,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       userProviderRepo,
       passwordVerifier,
       JWT_SECRET,
+      JWT_AUDIENCE,
       oauthVerifiers,
     );
     const h = newAuthHandler(uc);
@@ -101,7 +99,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         });
 
         return c.json({ token, refreshToken });
-      } catch (error) {
+      } catch (_error) {
         // Let the error bubble up to be handled by the global error handler
         throw new UnauthorizedError("invalid refresh token");
       }

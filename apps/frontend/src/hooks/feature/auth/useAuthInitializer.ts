@@ -1,8 +1,7 @@
+import { useToast } from "@components/ui";
 import { useAuth } from "@frontend/hooks/useAuth";
 import { createUseAuthInitializer } from "@packages/frontend-shared/hooks/feature";
 import { useNavigate } from "@tanstack/react-router";
-
-import { useToast } from "@components/ui";
 
 export const useAuthInitializer = () => {
   const navigate = useNavigate();

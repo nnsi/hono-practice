@@ -3,23 +3,20 @@ import { Hono } from "hono";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import type { AppContext } from "@backend/context";
 import { newActivityQueryService } from "@backend/query";
-import { zValidator } from "@hono/zod-validator";
-
 import {
   CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
 } from "@dtos/request";
 import type { GetActivityLogResponse } from "@dtos/response";
+import { zValidator } from "@hono/zod-validator";
 
 import { newActivityRepository } from "../activity";
-
 import { newActivityLogHandler } from "./activityLogHandler";
 import { newActivityLogRepository } from "./activityLogRepository";
 import { newActivityLogUsecase } from "./activityLogUsecase";
-
-import type { AppContext } from "@backend/context";
 
 // ローカル環境で画像URLをBase64に変換する関数
 async function convertActivityIconUrlsToBase64(

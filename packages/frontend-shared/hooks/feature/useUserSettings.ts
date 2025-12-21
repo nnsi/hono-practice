@@ -1,8 +1,9 @@
-import type { GoogleCredentialResponse } from "./useLogin";
 import type {
   NavigationAdapter,
   NotificationAdapter,
 } from "@packages/frontend-shared/adapters";
+
+import type { GoogleCredentialResponse } from "./useLogin";
 
 export type UserInfo = {
   id: string;
@@ -41,7 +42,7 @@ export function createUseUserSettings(dependencies: UserSettingsDependencies) {
     try {
       await auth.logout();
       navigation.navigate("/");
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "エラー",
         description: "ログアウトに失敗しました",
@@ -78,7 +79,7 @@ export function createUseUserSettings(dependencies: UserSettingsDependencies) {
       if (api.invalidateUserCache) {
         await api.invalidateUserCache();
       }
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "Error",
         description: "Failed to link Google account",
@@ -104,7 +105,7 @@ export function createUseUserSettings(dependencies: UserSettingsDependencies) {
       if (credential) {
         await handleGoogleLink({ credential });
       }
-    } catch (error) {
+    } catch (_error) {
       handleGoogleLinkError();
     }
   };
@@ -133,7 +134,7 @@ export function createUseUserSettings(dependencies: UserSettingsDependencies) {
         title: "アカウントを削除しました",
         variant: "default",
       });
-    } catch (error) {
+    } catch (_error) {
       notification.toast({
         title: "エラー",
         description: "アカウントの削除に失敗しました",

@@ -1,8 +1,7 @@
-import { NativeModules, Platform } from "react-native";
-
 import { getMobileApiUrl } from "@frontend-shared/utils/apiUrl";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
+import { NativeModules, Platform } from "react-native";
 
 /**
  * プラットフォームと実行環境に応じたAPI URLを取得する

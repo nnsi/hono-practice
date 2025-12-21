@@ -5,10 +5,9 @@ import {
   newSubscription,
 } from "@backend/domain/subscription";
 import { type UserId, createUserId } from "@backend/domain/user";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { userSubscriptions } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type SubscriptionRepository<T = any> = {
   create: (subscription: Subscription) => Promise<Subscription>;

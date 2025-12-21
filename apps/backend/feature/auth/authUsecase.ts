@@ -12,6 +12,8 @@ import {
   createRefreshToken,
   validateRefreshToken,
 } from "@domain/auth/refreshToken";
+import type { Provider } from "@domain/auth/userProvider";
+import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 import { v7 } from "uuid";
 
 import type { UserRepository } from "../user";
@@ -19,8 +21,6 @@ import type { OAuthVerify, OIDCPayload } from "./oauthVerify";
 import type { PasswordVerifier } from "./passwordVerifier";
 import type { RefreshTokenRepository } from "./refreshTokenRepository";
 import type { UserProviderRepository } from "./userProviderRepository";
-import type { Provider } from "@domain/auth/userProvider";
-import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 
 // アクセストークンの有効期限を15分に設定
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
@@ -71,17 +71,25 @@ export function newAuthUsecase<T>(
   userProviderRepo: UserProviderRepository,
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
+  jwtAudience: string,
   oauthVerifiers: OAuthVerifierMap,
 ): AuthUsecase {
   return {
-    login: login(userRepo, refreshTokenRepo, passwordVerifier, jwtSecret),
-    refreshToken: refreshToken(refreshTokenRepo, jwtSecret),
+    login: login(
+      userRepo,
+      refreshTokenRepo,
+      passwordVerifier,
+      jwtSecret,
+      jwtAudience,
+    ),
+    refreshToken: refreshToken(refreshTokenRepo, jwtSecret, jwtAudience),
     logout: logout(refreshTokenRepo),
     loginWithProvider: loginWithProvider(
       userRepo,
       refreshTokenRepo,
       userProviderRepo,
       jwtSecret,
+      jwtAudience,
       oauthVerifiers,
     ),
     linkProvider: linkProvider(userProviderRepo, oauthVerifiers),
@@ -94,6 +102,7 @@ function login<T>(
   refreshTokenRepo: RefreshTokenRepository,
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
+  jwtAudience: string,
 ) {
   return async (input: LoginInput): Promise<AuthOutput> => {
     const { loginId, password } = input;
@@ -110,7 +119,11 @@ function login<T>(
     );
     if (!isValidPassword) throw new AuthError("invalid credentials");
 
-    const accessToken = await generateAccessToken(jwtSecret, user.id);
+    const accessToken = await generateAccessToken(
+      jwtSecret,
+      jwtAudience,
+      user.id,
+    );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
 
     const refreshTokenEntity = createRefreshToken({
@@ -129,6 +142,7 @@ function login<T>(
 function refreshToken(
   refreshTokenRepo: RefreshTokenRepository,
   jwtSecret: string,
+  jwtAudience: string,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
     const storedToken =
@@ -141,6 +155,7 @@ function refreshToken(
 
     const accessToken = await generateAccessToken(
       jwtSecret,
+      jwtAudience,
       storedToken.userId,
     );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
@@ -176,6 +191,7 @@ function loginWithProvider<T>(
   refreshTokenRepo: RefreshTokenRepository,
   userProviderRepo: UserProviderRepository,
   jwtSecret: string,
+  jwtAudience: string,
   oauthVerifiers: OAuthVerifierMap,
 ) {
   return async (
@@ -193,7 +209,7 @@ function loginWithProvider<T>(
     const providerUserId = payload.sub;
     const name = payload.name ?? `User_${providerUserId.substring(0, 8)}`;
 
-    let userId: UserId | undefined = undefined;
+    let userId: UserId | undefined;
 
     const existingProvider =
       await userProviderRepo.findUserProviderByIdAndProvider(
@@ -229,7 +245,11 @@ function loginWithProvider<T>(
         500,
       );
 
-    const accessToken = await generateAccessToken(jwtSecret, userId);
+    const accessToken = await generateAccessToken(
+      jwtSecret,
+      jwtAudience,
+      userId,
+    );
     const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
     const refreshTokenEntity = createRefreshToken({
       userId,
@@ -293,11 +313,17 @@ function linkProvider(
 
 function generateAccessToken(
   jwtSecret: string,
+  jwtAudience: string,
   userId: UserId,
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   return sign(
-    { userId: userId, exp: now + ACCESS_TOKEN_EXPIRES_IN_SECONDS },
+    {
+      userId: userId,
+      aud: jwtAudience,
+      iat: now,
+      exp: now + ACCESS_TOKEN_EXPIRES_IN_SECONDS,
+    },
     jwtSecret,
     "HS256",
   );

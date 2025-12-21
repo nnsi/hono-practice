@@ -77,10 +77,8 @@ export const ActivityDateHeader: React.FC<{
               {Array.from({ length: calendarDays.length / 7 }).map(
                 (_, weekIdx) => (
                   <tr
-                    key={`week-${
-                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                      weekIdx
-                    }`}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: 週インデックスは安定したキー
+                    key={`week-${weekIdx}`}
                   >
                     {calendarDays
                       .slice(weekIdx * 7, weekIdx * 7 + 7)

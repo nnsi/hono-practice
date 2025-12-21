@@ -1,13 +1,12 @@
 import { Hono } from "hono";
 
+import type { AppContext } from "../context";
 import {
   AppError,
   AuthError,
   DomainValidateError,
   UnauthorizedError,
 } from "../error";
-
-import type { AppContext } from "../context";
 
 export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();

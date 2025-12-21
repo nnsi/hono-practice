@@ -7,13 +7,12 @@ import {
   createUserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { newActivityUsecase } from "..";
-
 import type { ActivityRepository } from "..";
-import type { TransactionRunner } from "@backend/infra/rdb/db";
+import { newActivityUsecase } from "..";
 
 describe("ActivityUsecase", () => {
   let repo: ActivityRepository;

@@ -1,12 +1,11 @@
+import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 import { createApiKeyId } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { newApiKeyUsecase } from "../apiKeyUsecase";
-
 import type { ApiKeyRepository } from "../apiKeyRepository";
-import type { ApiKey, CreateApiKeyData } from "@backend/domain";
+import { newApiKeyUsecase } from "../apiKeyUsecase";
 
 describe("ApiKeyUsecase", () => {
   let repo: ApiKeyRepository;

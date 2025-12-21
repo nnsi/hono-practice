@@ -1,14 +1,12 @@
 import type React from "react";
 
+import * as useToastHook from "@components/ui";
+import type { CreateUserRequest } from "@dtos/request/CreateUserRequest";
 import * as useAuthHook from "@frontend/hooks/useAuth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as routerHooks from "@tanstack/react-router";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { CreateUserRequest } from "@dtos/request/CreateUserRequest";
-
-import * as useToastHook from "@components/ui";
 
 import { useCreateUser } from "../useCreateUser";
 

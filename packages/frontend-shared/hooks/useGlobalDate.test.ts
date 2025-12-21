@@ -1,9 +1,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createUseGlobalDate } from "./useGlobalDate";
-
 import type { EventBusAdapter } from "../adapters";
+import { createUseGlobalDate } from "./useGlobalDate";
 
 // モックEventBusAdapter作成
 const createMockEventBusAdapter = (): EventBusAdapter & {
