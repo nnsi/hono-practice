@@ -14,6 +14,9 @@ export default defineConfig(() => {
       port: Number.parseInt(process.env.VITE_PORT || "5173", 10),
       host: true,
     },
+    headers: {
+      "Cross-Origin-Opener-Policy": "unsafe-none",
+    },
     build: {
       outDir: "../../dist-frontend",
       emptyOutDir: true,
