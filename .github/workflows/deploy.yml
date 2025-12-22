@@ -115,6 +115,7 @@ jobs:
           echo "${{ secrets.JWT_SECRET_STG }}"       | npx wrangler secret put JWT_SECRET --env stg
           echo "${{ vars.APP_URL_STG }}"         | npx wrangler secret put APP_URL --env stg
           echo "${{ vars.R2_PUBLIC_URL_STG }}" | npx wrangler secret put R2_PUBLIC_URL --env stg
+          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -126,6 +127,7 @@ jobs:
           echo "${{ secrets.JWT_SECRET_PROD }}"       | npx wrangler secret put JWT_SECRET --env production
           echo "${{ vars.APP_URL_PROD }}"         | npx wrangler secret put APP_URL --env production
           echo "${{ vars.R2_PUBLIC_URL_PROD }}" | npx wrangler secret put R2_PUBLIC_URL --env production
+          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
