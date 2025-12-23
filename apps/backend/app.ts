@@ -12,6 +12,7 @@ import {
 import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
+import { AppError } from "./error";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
 
@@ -73,6 +74,12 @@ const routes = app
   .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
+
+    for (const req of requests) {
+      if (!req.path.startsWith("/users/")) {
+        throw new AppError("Invalid batch request path", 400);
+      }
+    }
 
     const results = await Promise.all(
       requests.map((req) => {
