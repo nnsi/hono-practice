@@ -43,9 +43,7 @@ app.use("*", async (c, next) => {
     }
   }
 
-  const origin = allowedOrigins.some((allowed) =>
-    headerOrigin.includes(allowed),
-  )
+  const origin = allowedOrigins.includes(headerOrigin)
     ? headerOrigin
     : c.env.APP_URL;
 
