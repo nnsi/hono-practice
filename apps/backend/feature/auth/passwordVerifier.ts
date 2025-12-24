@@ -54,7 +54,7 @@ export class MultiHashPasswordVerifier implements PasswordVerifier {
   }
 
   async hash(password: string): Promise<string> {
-    // 新規パスワードはSHA256で保存
-    return this.verifiers[0].hash(password);
+    // 新規パスワードはbcryptで保存（SHA256は後方互換性のため比較時のみ使用）
+    return this.verifiers[1].hash(password);
   }
 }
