@@ -22,6 +22,7 @@ jobs:
         with:
           files: |
             apps/backend/**
+            infra/do/**
             wrangler.toml
 
       - name: Get changed files (frontend)

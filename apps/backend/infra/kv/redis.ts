@@ -1,10 +1,10 @@
-import type { RedisClientType } from "redis";
+import type { createClient } from "redis";
 
 import type { KeyValueStore } from "./kv";
 
-export function newRedisStore<T>(
-  redisClient: RedisClientType,
-): KeyValueStore<T> {
+type RedisClient = ReturnType<typeof createClient>;
+
+export function newRedisStore<T>(redisClient: RedisClient): KeyValueStore<T> {
   return {
     get: async (key: string) => {
       const raw = await redisClient.get(key);

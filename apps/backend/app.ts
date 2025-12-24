@@ -1,6 +1,7 @@
 import { cors } from "hono/cors";
 
 import { apiV1Route } from "./api/v1";
+import { AppError } from "./error";
 import {
   apiKeyRoute,
   authRoute,
@@ -73,6 +74,20 @@ const routes = app
   .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
+
+    for (const req of requests) {
+      // クエリストリングを除いたパスを取得
+      const path = req.path.split("?")[0];
+
+      // パストラバーサル検出（.. や URLエンコードされた %2e/%2E）
+      if (path.includes("..") || path.toLowerCase().includes("%2e")) {
+        throw new AppError("Invalid path: path traversal detected", 400);
+      }
+
+      if (!path.startsWith("/users/")) {
+        throw new AppError("Invalid batch request path", 400);
+      }
+    }
 
     const results = await Promise.all(
       requests.map((req) => {

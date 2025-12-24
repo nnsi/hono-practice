@@ -3,6 +3,11 @@ import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import {
+  createRateLimitMiddleware,
+  loginRateLimitConfig,
+  tokenRateLimitConfig,
+} from "@backend/middleware/rateLimitMiddleware";
 import { googleLoginRequestSchema, loginRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
 
@@ -48,6 +53,25 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     c.set("h", h);
 
     return next();
+  });
+
+  // レートリミットミドルウェア（KVStoreがある場合のみ有効）
+  app.use("/login", async (c, next) => {
+    const kv = c.env.RATE_LIMIT_KV;
+    if (!kv) return next();
+    return createRateLimitMiddleware(kv, loginRateLimitConfig)(c, next);
+  });
+
+  app.use("/token", async (c, next) => {
+    const kv = c.env.RATE_LIMIT_KV;
+    if (!kv) return next();
+    return createRateLimitMiddleware(kv, tokenRateLimitConfig)(c, next);
+  });
+
+  app.use("/google", async (c, next) => {
+    const kv = c.env.RATE_LIMIT_KV;
+    if (!kv) return next();
+    return createRateLimitMiddleware(kv, loginRateLimitConfig)(c, next);
   });
 
   return app
