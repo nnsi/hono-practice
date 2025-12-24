@@ -5,6 +5,7 @@ import type { R2Bucket } from "@cloudflare/workers-types";
 import type { Config } from "../config";
 import type { UserId } from "../domain";
 import type { Subscription } from "../domain/subscription";
+import type { KeyValueStore } from "../infra/kv/kv";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
 
 export type JwtPayload = {
@@ -24,6 +25,8 @@ export type AppContext = {
   Bindings: Config & {
     DB: QueryExecutor;
     R2_BUCKET?: R2Bucket;
+    // レートリミット用KVStore（オプション、未設定時はレートリミット無効）
+    RATE_LIMIT_KV?: KeyValueStore<{ count: number; windowStart: number }>;
   };
 };
 

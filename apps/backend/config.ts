@@ -12,6 +12,8 @@ export const configSchema = z.object({
   GOOGLE_OAUTH_CLIENT_ID: z.string().default("dummy-string"),
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
+  // Redis URL（ローカル開発用、オプション）
+  REDIS_URL: z.string().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

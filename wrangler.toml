@@ -3,6 +3,15 @@ main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 compatibility_flags = ["nodejs_compat"]
 
+# Durable Objects
+[[durable_objects.bindings]]
+name = "RATE_LIMIT_DO"
+class_name = "KeyValueDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["KeyValueDO"]
+
 [env.stg.vars]
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"

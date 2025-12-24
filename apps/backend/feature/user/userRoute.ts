@@ -2,6 +2,10 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import {
+  createRateLimitMiddleware,
+  registerRateLimitConfig,
+} from "@backend/middleware/rateLimitMiddleware";
 import { createUserRequestSchema } from "@dtos/request";
 import { zValidator } from "@hono/zod-validator";
 
@@ -52,6 +56,15 @@ export function createUserRoute() {
     c.set("authH", authH);
 
     return next();
+  });
+
+  // ユーザー登録のレートリミット（KVStoreがある場合のみ有効）
+  app.use("/", async (c, next) => {
+    // GETリクエストはレートリミット対象外
+    if (c.req.method !== "POST") return next();
+    const kv = c.env.RATE_LIMIT_KV;
+    if (!kv) return next();
+    return createRateLimitMiddleware(kv, registerRateLimitConfig)(c, next);
   });
 
   return app

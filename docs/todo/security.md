@@ -7,9 +7,9 @@
 
 ## タスク一覧
 
-- [ ] **bcryptへの移行**
-- [ ] **バッチエンドポイントのパス正規化**
-- [ ] **レートリミットの導入**
+- [x] **bcryptへの移行**
+- [x] **バッチエンドポイントのパス正規化**
+- [x] **レートリミットの導入**
 
 ---
 
@@ -32,9 +32,9 @@ async hash(password: string): Promise<string> {
 ```
 
 ### 確認事項
-- [ ] 既存ユーザー（SHA256）がログインできること
-- [ ] 新規ユーザーがbcryptで保存されること
-- [ ] パスワード変更時にbcryptで保存されること
+- [x] 既存ユーザー（SHA256）がログインできること
+- [x] 新規ユーザーがbcryptで保存されること
+- [x] パスワード変更時にbcryptで保存されること
 
 ---
 
@@ -82,9 +82,9 @@ async hash(password: string): Promise<string> {
 ```
 
 ### 確認事項
-- [ ] 正規のバッチリクエストが動作すること
-- [ ] `../`を含むパスが拒否されること
-- [ ] ホワイトリスト外のパスが拒否されること
+- [x] 正規のバッチリクエストが動作すること
+- [x] `../`を含むパスが拒否されること
+- [ ] ホワイトリスト外のパスが拒否されること（ホワイトリストは未実装）
 
 ---
 
@@ -93,90 +93,44 @@ async hash(password: string): Promise<string> {
 **優先度**: 緊急
 **対象**: 認証関連エンドポイント
 
-### 修正内容
+### 実装内容（完了）
 
-#### 3.1 パッケージインストール
+#### 3.1 Redis KVストアを利用した素朴な実装
+外部ライブラリ（hono-rate-limiter）は使わず、既存のKV adapter構造を活用してRedisベースで実装。
+
+**ファイル構成**:
+- `apps/backend/infra/kv/redis.ts` - Redis KVアダプター
+- `apps/backend/middleware/rateLimitMiddleware.ts` - レートリミットミドルウェア
+
+#### 3.2 設定
+`.env`に`REDIS_URL`を追加（オプション）:
 ```bash
-npm install hono-rate-limiter
+REDIS_URL=redis://localhost:6379
 ```
 
-#### 3.2 ミドルウェア作成
-**新規ファイル**: `apps/backend/middleware/rateLimitMiddleware.ts`
+#### 3.3 レートリミット設定
+- **ログイン** (`/auth/login`, `/auth/google`): 15分間に5回
+- **トークンリフレッシュ** (`/auth/token`): 1分間に10回
+- **ユーザー登録** (`/user`): 1時間に5回
 
-```typescript
-import { rateLimiter } from 'hono-rate-limiter';
-
-// ログイン用（厳しめ）
-export const loginRateLimiter = rateLimiter({
-  windowMs: 15 * 60 * 1000,  // 15分
-  limit: 5,                   // 5回まで
-  standardHeaders: 'draft-6',
-  keyGenerator: (c) => {
-    // IPアドレスまたはloginIdでレート制限
-    const body = c.req.raw.clone();
-    return c.req.header('x-forwarded-for') || 'anonymous';
-  },
-});
-
-// トークンリフレッシュ用
-export const tokenRateLimiter = rateLimiter({
-  windowMs: 60 * 1000,  // 1分
-  limit: 10,             // 10回まで
-  standardHeaders: 'draft-6',
-  keyGenerator: (c) => c.req.header('x-forwarded-for') || 'anonymous',
-});
-
-// ユーザー登録用
-export const registerRateLimiter = rateLimiter({
-  windowMs: 60 * 60 * 1000,  // 1時間
-  limit: 5,                   // 5回まで
-  standardHeaders: 'draft-6',
-  keyGenerator: (c) => c.req.header('x-forwarded-for') || 'anonymous',
-});
-```
-
-#### 3.3 ルートに適用
-**対象ファイル**: `apps/backend/feature/auth/authRoute.ts`
-
-```typescript
-import { loginRateLimiter, tokenRateLimiter } from '@backend/middleware/rateLimitMiddleware';
-
-// ログインエンドポイント
-.post("/login", loginRateLimiter, zValidator("json", loginRequestSchema), async (c) => {
-  // ...
-})
-
-// トークンリフレッシュ
-.post("/token", tokenRateLimiter, async (c) => {
-  // ...
-})
-```
-
-**対象ファイル**: `apps/backend/feature/user/userRoute.ts`
-
-```typescript
-import { registerRateLimiter } from '@backend/middleware/rateLimitMiddleware';
-
-// ユーザー登録
-.post("/", registerRateLimiter, zValidator("json", createUserRequestSchema), async (c) => {
-  // ...
-})
-```
+#### 3.4 適用ファイル
+- `apps/backend/feature/auth/authRoute.ts`
+- `apps/backend/feature/user/userRoute.ts`
 
 ### 確認事項
-- [ ] 制限内のリクエストが成功すること
-- [ ] 制限超過時に429が返ること
-- [ ] Cloudflare Workers環境で動作すること（メモリストア対応確認）
+- [x] 制限内のリクエストが成功すること
+- [x] 制限超過時に429が返ること
+- [x] REDIS_URL未設定時はレートリミット無効（エラーにならない）
 
-### 注意
-- Cloudflare Workersではメモリストアがリクエスト間で共有されない可能性あり
-- 本番環境ではKVやDurable Objectsを使った永続ストアを検討
+### 本番環境向け
+- Cloudflare Workers環境ではDurable Objects（`apps/backend/infra/kv/do.ts`）を利用可能
+- 現在の実装はKVStoreインターフェースに依存しているため、環境に応じて切り替え可能
 
 ---
 
 ## 完了条件
 
-- [ ] 全タスクの修正完了
-- [ ] `npm run test-once` 全テストパス
-- [ ] `npm run tsc` コンパイルエラーなし
+- [x] 全タスクの修正完了
+- [x] `npm run test-once` 全テストパス
+- [x] `npm run tsc` コンパイルエラーなし
 - [ ] 手動での動作確認完了
