@@ -278,24 +278,33 @@ export const NewGoalCard: React.FC<GoalCardProps> = ({
           </div>
         </div>
 
-        {/* やらなかった日付の表示 */}
-        {settings.showInactiveDates && goal.inactiveDates?.length > 0 && (
-          <div className="mt-1 px-3 py-1 text-xs text-gray-500">
-            <span className="font-medium">やらなかった日付: </span>
-            {goal.inactiveDates.slice(0, 3).map((date, index) => (
-              <span key={date}>
-                {index > 0 && ", "}
-                {new Date(date).toLocaleDateString("ja-JP", {
-                  month: "numeric",
-                  day: "numeric",
-                })}
-              </span>
-            ))}
-            {goal.inactiveDates.length > 3 && (
-              <span> 他{goal.inactiveDates.length - 3}日</span>
-            )}
-          </div>
-        )}
+        {/* やらなかった日付の表示（当月のみ） */}
+        {settings.showInactiveDates &&
+          (() => {
+            const now = new Date();
+            const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            const thisMonthInactiveDates = (goal.inactiveDates ?? []).filter(
+              (date) => date.startsWith(currentYearMonth),
+            );
+            if (thisMonthInactiveDates.length === 0) return null;
+            return (
+              <div className="mt-1 px-3 py-1 text-xs text-gray-500">
+                <span className="font-medium">やらなかった日付: </span>
+                {thisMonthInactiveDates.slice(0, 3).map((date, index) => (
+                  <span key={date}>
+                    {index > 0 && ", "}
+                    {new Date(date).toLocaleDateString("ja-JP", {
+                      month: "numeric",
+                      day: "numeric",
+                    })}
+                  </span>
+                ))}
+                {thisMonthInactiveDates.length > 3 && (
+                  <span> 他{thisMonthInactiveDates.length - 3}日</span>
+                )}
+              </div>
+            );
+          })()}
       </div>
 
       <GoalDetailModal
