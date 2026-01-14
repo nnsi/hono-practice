@@ -152,7 +152,7 @@ describe("createUseActivityEdit", () => {
     mockForm.getValues = vi.fn().mockReturnValue(updateData);
 
     await act(async () => {
-      await result.current.onSubmit();
+      await result.current.actions.onSubmit();
     });
 
     expect(mockApi.updateActivity).toHaveBeenCalledWith({
@@ -181,7 +181,7 @@ describe("createUseActivityEdit", () => {
     );
 
     await act(async () => {
-      await result.current.handleDelete();
+      await result.current.actions.onDelete();
     });
 
     expect(mockApi.deleteActivity).toHaveBeenCalledWith("test-id");
@@ -217,18 +217,18 @@ describe("createUseActivityEdit", () => {
 
     // Add kind
     act(() => {
-      result.current.handleAddKind();
+      result.current.actions.onAddKind();
     });
     expect(mockAppend).toHaveBeenCalledWith({ name: "", color: "" });
 
     // Remove kind
     act(() => {
-      result.current.handleRemoveKind(1);
+      result.current.actions.onRemoveKind(1);
     });
     expect(mockRemove).toHaveBeenCalledWith(1);
   });
 
-  it("should handle icon upload for web", async () => {
+  it("should handle icon change to upload", async () => {
     const { result } = renderHook(() =>
       createUseActivityEdit(
         {
@@ -245,7 +245,11 @@ describe("createUseActivityEdit", () => {
     const file = new File(["content"], "test.png", { type: "image/png" });
 
     await act(async () => {
-      await result.current.uploadIcon(file);
+      await result.current.iconProps.onChange({
+        type: "upload",
+        file,
+        preview: "blob:preview",
+      });
     });
 
     expect(mockApi.uploadActivityIcon).toHaveBeenCalledWith({
@@ -258,7 +262,12 @@ describe("createUseActivityEdit", () => {
     });
   });
 
-  it("should handle icon upload for mobile", async () => {
+  it("should handle icon change to emoji and delete uploaded icon", async () => {
+    const activityWithUploadedIcon: GetActivityResponse = {
+      ...mockActivity,
+      iconType: "upload",
+    };
+
     const { result } = renderHook(() =>
       createUseActivityEdit(
         {
@@ -267,41 +276,16 @@ describe("createUseActivityEdit", () => {
           file: mockFile,
           api: mockApi,
         },
-        mockActivity,
-        mockOnClose,
-      ),
-    );
-
-    const mobileFile = { uri: "file://test.jpg", type: "image/jpeg" };
-    const formData = new FormData();
-
-    await act(async () => {
-      await result.current.uploadIcon(mobileFile);
-    });
-
-    expect(mockFile.createFormData).toHaveBeenCalledWith(mobileFile);
-    expect(mockApi.uploadActivityIcon).toHaveBeenCalledWith({
-      id: "test-id",
-      file: formData,
-    });
-  });
-
-  it("should handle icon deletion", async () => {
-    const { result } = renderHook(() =>
-      createUseActivityEdit(
-        {
-          form: mockForm,
-          notification: mockNotification,
-          file: mockFile,
-          api: mockApi,
-        },
-        mockActivity,
+        activityWithUploadedIcon,
         mockOnClose,
       ),
     );
 
     await act(async () => {
-      await result.current.deleteIcon();
+      await result.current.iconProps.onChange({
+        type: "emoji",
+        emoji: "🎉",
+      });
     });
 
     expect(mockApi.deleteActivityIcon).toHaveBeenCalledWith("test-id");
@@ -326,7 +310,7 @@ describe("createUseActivityEdit", () => {
     );
 
     const pickedImage = await act(async () => {
-      return await result.current.pickIcon();
+      return await result.current.iconProps.pick();
     });
 
     expect(mockFile.pickImage).toHaveBeenCalled();
@@ -350,7 +334,7 @@ describe("createUseActivityEdit", () => {
     );
 
     await act(async () => {
-      await result.current.onSubmit();
+      await result.current.actions.onSubmit();
     });
 
     expect(mockNotification.toast).toHaveBeenCalledWith({
@@ -371,7 +355,7 @@ describe("createUseActivityEdit", () => {
     );
 
     const pickedImage = await act(async () => {
-      return await result.current.pickIcon();
+      return await result.current.iconProps.pick();
     });
 
     expect(pickedImage).toBeNull();
