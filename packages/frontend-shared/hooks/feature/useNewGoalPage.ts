@@ -8,6 +8,38 @@ export type GoalPageDependencies = {
   activitiesData: GetActivityResponse[] | null;
 };
 
+// Grouped return types for better organization
+export type NewGoalPageStateProps = {
+  editingGoalId: string | null;
+  createDialogOpen: boolean;
+  goalsLoading: boolean;
+  currentGoals: GoalResponse[];
+  pastGoals: GoalResponse[];
+  activitiesData: GetActivityResponse[];
+};
+
+export type NewGoalPageActions = {
+  onCreateDialogOpenChange: (open: boolean) => void;
+  createEditStartHandler: (goalId: string) => () => void;
+  onEditEnd: () => void;
+  onGoalCreated: () => void;
+  getActivityName: (activityId: string) => string;
+  getActivityEmoji: (activityId: string) => string;
+  getActivityIcon: (activityId: string) => {
+    iconType: string;
+    iconUrl: string | undefined;
+    iconThumbnailUrl: string | undefined;
+    emoji: string;
+  };
+  getActivityUnit: (activityId: string) => string;
+  getActivity: (activityId: string) => GetActivityResponse | undefined;
+};
+
+export type UseNewGoalPageReturn = {
+  stateProps: NewGoalPageStateProps;
+  actions: NewGoalPageActions;
+};
+
 export function createUseNewGoalPage(dependencies: GoalPageDependencies) {
   const { goalsData, goalsLoading, activitiesData } = dependencies;
 
@@ -81,27 +113,24 @@ export function createUseNewGoalPage(dependencies: GoalPageDependencies) {
   };
 
   return {
-    // State
-    editingGoalId,
-    createDialogOpen,
-    setCreateDialogOpen,
-
-    // Data
-    goalsLoading,
-    currentGoals,
-    pastGoals,
-    activitiesData: activities,
-
-    // Getters
-    getActivityName,
-    getActivityEmoji,
-    getActivityIcon,
-    getActivityUnit,
-    getActivity,
-
-    // Handlers
-    createEditStartHandler,
-    handleEditEnd,
-    handleGoalCreated,
+    stateProps: {
+      editingGoalId,
+      createDialogOpen,
+      goalsLoading,
+      currentGoals,
+      pastGoals,
+      activitiesData: activities,
+    } as NewGoalPageStateProps,
+    actions: {
+      onCreateDialogOpenChange: setCreateDialogOpen,
+      createEditStartHandler,
+      onEditEnd: handleEditEnd,
+      onGoalCreated: handleGoalCreated,
+      getActivityName,
+      getActivityEmoji,
+      getActivityIcon,
+      getActivityUnit,
+      getActivity,
+    } as NewGoalPageActions,
   };
 }

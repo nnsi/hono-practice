@@ -28,25 +28,27 @@ export type ActivityLogEditDependencies = {
   notification: NotificationAdapter;
 };
 
-export type UseActivityLogEditReturn = {
-  // State
+// Grouped return types for better organization
+export type ActivityLogEditFormProps = {
   memo: string;
   quantity: number | null;
   activityKindId: string;
-
-  // Data
   activity: GetActivityResponse | undefined;
+  isUpdatePending: boolean;
+  isDeletePending: boolean;
+};
 
-  // Mutations
-  updateActivityLog: ActivityLogEditDependencies["updateActivityLog"];
-  deleteActivityLog: ActivityLogEditDependencies["deleteActivityLog"];
+export type ActivityLogEditActions = {
+  onSubmit: (e?: React.FormEvent) => Promise<void>;
+  onDelete: () => Promise<void>;
+  onQuantityChange: (value: string) => void;
+  onActivityKindChange: (value: string) => void;
+  onMemoChange: (value: string) => void;
+};
 
-  // Handlers
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
-  handleDelete: () => Promise<void>;
-  handleQuantityChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleActivityKindChange: (value: string) => void;
-  handleMemoChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+export type UseActivityLogEditReturn = {
+  formProps: ActivityLogEditFormProps;
+  actions: ActivityLogEditActions;
 };
 
 export function createUseActivityLogEdit(
@@ -89,8 +91,8 @@ export function createUseActivityLogEdit(
 
   // 保存処理
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
       if (!log) return;
 
       try {
@@ -147,12 +149,9 @@ export function createUseActivityLogEdit(
   }, [log, deleteActivityLog, notification, onOpenChange]);
 
   // quantity入力ハンドラ
-  const handleQuantityChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setQuantity(e.target.value ? Number(e.target.value) : null);
-    },
-    [],
-  );
+  const handleQuantityChange = useCallback((value: string) => {
+    setQuantity(value ? Number(value) : null);
+  }, []);
 
   // activityKind選択ハンドラ
   const handleActivityKindChange = useCallback((value: string) => {
@@ -160,31 +159,25 @@ export function createUseActivityLogEdit(
   }, []);
 
   // memo入力ハンドラ
-  const handleMemoChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setMemo(e.target.value);
-    },
-    [],
-  );
+  const handleMemoChange = useCallback((value: string) => {
+    setMemo(value);
+  }, []);
 
   return {
-    // State
-    memo,
-    quantity,
-    activityKindId,
-
-    // Data
-    activity,
-
-    // Mutations
-    updateActivityLog,
-    deleteActivityLog,
-
-    // Handlers
-    handleSubmit,
-    handleDelete,
-    handleQuantityChange,
-    handleActivityKindChange,
-    handleMemoChange,
+    formProps: {
+      memo,
+      quantity,
+      activityKindId,
+      activity,
+      isUpdatePending: updateActivityLog.isPending ?? false,
+      isDeletePending: deleteActivityLog.isPending ?? false,
+    } as ActivityLogEditFormProps,
+    actions: {
+      onSubmit: handleSubmit,
+      onDelete: handleDelete,
+      onQuantityChange: handleQuantityChange,
+      onActivityKindChange: handleActivityKindChange,
+      onMemoChange: handleMemoChange,
+    } as ActivityLogEditActions,
   };
 }

@@ -60,36 +60,41 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => {
             };
 
         return {
-          initialValues,
-          handleUpdateTask: async (data: any) => {
-            if (!task) return;
-            try {
-              await mockUpdateMutateAsync({
-                id: task.id,
-                data: {
-                  ...data,
-                  dueDate: data.dueDate || null,
-                  memo: data.memo || undefined,
-                },
-              });
-              options.onSuccess?.();
-            } catch (error) {
-              console.error("Failed to update task:", error);
-              options.onError?.(error as Error);
-            }
+          stateProps: {
+            task,
+            initialValues,
+            isUpdating: false,
+            isDeleting: false,
           },
-          handleDeleteTask: async () => {
-            if (!task) return;
-            try {
-              await mockDeleteMutateAsync(task.id);
-              options.onSuccess?.();
-            } catch (error) {
-              console.error("Failed to delete task:", error);
-              options.onError?.(error as Error);
-            }
+          actions: {
+            onUpdateTask: async (data: any) => {
+              if (!task) return;
+              try {
+                await mockUpdateMutateAsync({
+                  id: task.id,
+                  data: {
+                    ...data,
+                    dueDate: data.dueDate || null,
+                    memo: data.memo || undefined,
+                  },
+                });
+                options.onSuccess?.();
+              } catch (error) {
+                console.error("Failed to update task:", error);
+                options.onError?.(error as Error);
+              }
+            },
+            onDeleteTask: async () => {
+              if (!task) return;
+              try {
+                await mockDeleteMutateAsync(task.id);
+                options.onSuccess?.();
+              } catch (error) {
+                console.error("Failed to delete task:", error);
+                options.onError?.(error as Error);
+              }
+            },
           },
-          updateTask: { mutateAsync: mockUpdateMutateAsync, isPending: false },
-          deleteTask: { mutateAsync: mockDeleteMutateAsync, isPending: false },
           validationSchema: {},
         };
       };

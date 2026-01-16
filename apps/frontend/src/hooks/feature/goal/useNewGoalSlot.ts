@@ -25,5 +25,22 @@ export const useNewGoalSlot = (
     },
   });
 
-  return useNewGoalSlotBase(activities);
+  const { stateProps, actions, form } = useNewGoalSlotBase(activities);
+
+  // 後方互換性を維持しながら新しいAPIも公開
+  return {
+    ...stateProps,
+    form,
+    // 旧API互換のアクション
+    handleSubmit: actions.onSubmit,
+    handleStartCreating: actions.onStartCreating,
+    handleActivityChange: actions.onActivityChange,
+    handleTargetQuantityChange: actions.onTargetQuantityChange,
+    handleCancel: actions.onCancel,
+    // コンポーネント互換性のためにcreateGoalをシミュレート
+    createGoal: { isPending: stateProps.isPending },
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };

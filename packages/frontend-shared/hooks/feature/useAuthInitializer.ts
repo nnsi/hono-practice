@@ -99,9 +99,11 @@ export const createUseAuthInitializer = (
     }, [user, refreshToken]);
 
     return {
-      isInitialized,
-      user,
-      requestStatus,
+      stateProps: {
+        isInitialized,
+        user,
+        requestStatus,
+      },
     };
   };
 };

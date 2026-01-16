@@ -16,34 +16,24 @@ export const ActivityDateHeader: React.FC<{
   date: Date;
   setDate: (date: Date) => void;
 }> = ({ date, setDate }) => {
-  const {
-    calendarOpen,
-    calendarMonth,
-    calendarDays,
-    handleCalendarOpenChange,
-    handleGoToToday,
-    handleGoToPreviousDay,
-    handleGoToNextDay,
-    handlePreviousMonth,
-    handleNextMonth,
-    handleCalendarDayClick,
-  } = useActivityCalendar(date, setDate);
+  const { stateProps, actions } = useActivityCalendar(date, setDate);
+  const { calendarOpen, calendarMonth, calendarDays } = stateProps;
 
   return (
     <p className="flex items-center justify-center gap-2 mb-3">
-      <button type="button" className="ml-1" onClick={handleGoToToday}>
+      <button type="button" className="ml-1" onClick={actions.onGoToToday}>
         <ClockIcon />
       </button>
-      <button type="button" onClick={handleGoToPreviousDay}>
+      <button type="button" onClick={actions.onGoToPreviousDay}>
         <ChevronLeftIcon />
       </button>
 
       {date.toLocaleDateString()}
-      <button type="button" onClick={handleGoToNextDay}>
+      <button type="button" onClick={actions.onGoToNextDay}>
         <ChevronRightIcon />
       </button>
 
-      <Popover open={calendarOpen} onOpenChange={handleCalendarOpenChange}>
+      <Popover open={calendarOpen} onOpenChange={actions.onCalendarOpenChange}>
         <PopoverTrigger asChild>
           <button type="button" className="ml-1">
             <CalendarIcon />
@@ -53,13 +43,17 @@ export const ActivityDateHeader: React.FC<{
           <div className="flex justify-between items-center mb-2">
             <button
               type="button"
-              onClick={handlePreviousMonth}
+              onClick={actions.onPreviousMonth}
               className="px-2"
             >
               &lt;
             </button>
             <span>{calendarMonth.format("YYYY年MM月")}</span>
-            <button type="button" onClick={handleNextMonth} className="px-2">
+            <button
+              type="button"
+              onClick={actions.onNextMonth}
+              className="px-2"
+            >
               &gt;
             </button>
           </div>
@@ -92,7 +86,7 @@ export const ActivityDateHeader: React.FC<{
                               <button
                                 type="button"
                                 className={`w-7 h-7 rounded-full ${calendarMonth.year() === dayjs(date).year() && calendarMonth.month() === dayjs(date).month() && day === dayjs(date).date() ? "bg-blue-500 text-white" : "hover:bg-gray-200"}`}
-                                onClick={() => handleCalendarDayClick(day)}
+                                onClick={() => actions.onCalendarDayClick(day)}
                               >
                                 {day}
                               </button>

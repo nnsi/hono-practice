@@ -54,5 +54,12 @@ export const useAuthInitializer = () => {
     // eventBusは指定しないので、Webのwindowイベントが使われる
   });
 
-  return useAuthInitializerBase();
+  const { stateProps } = useAuthInitializerBase();
+
+  // 後方互換性を維持
+  return {
+    ...stateProps,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+  };
 };

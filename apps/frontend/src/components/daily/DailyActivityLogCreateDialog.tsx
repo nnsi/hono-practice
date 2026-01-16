@@ -21,14 +21,11 @@ export function DailyActivityLogCreateDialog({
   date: Date;
   onSuccess?: () => void;
 }) {
-  const {
-    selectedActivity,
-    activityDialogOpen,
-    activities,
-    handleActivitySelect,
-    handleActivityDialogClose,
-    handleSuccess,
-  } = useDailyActivityCreate(onOpenChange, onSuccess);
+  const { stateProps, actions } = useDailyActivityCreate(
+    onOpenChange,
+    onSuccess,
+  );
+  const { selectedActivity, activityDialogOpen, activities } = stateProps;
 
   return (
     <>
@@ -44,7 +41,7 @@ export function DailyActivityLogCreateDialog({
             {activities?.map((activity: GetActivityResponse) => (
               <Card
                 key={activity.id}
-                onClick={() => handleActivitySelect(activity)}
+                onClick={() => actions.onActivitySelect(activity)}
                 className="cursor-pointer shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 h-16"
               >
                 <CardContent className="flex items-center gap-4 p-0 px-4 h-full">
@@ -76,10 +73,10 @@ export function DailyActivityLogCreateDialog({
       {selectedActivity && (
         <ActivityLogCreateDialog
           open={activityDialogOpen}
-          onOpenChange={handleActivityDialogClose}
+          onOpenChange={actions.onActivityDialogClose}
           activity={selectedActivity}
           date={date}
-          onSuccess={handleSuccess}
+          onSuccess={actions.onSuccess}
         />
       )}
     </>

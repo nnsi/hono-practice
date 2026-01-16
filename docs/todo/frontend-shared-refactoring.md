@@ -311,40 +311,40 @@ export const {Component} = ({ open, onClose, /* params */ }) => {
 ### 完了
 - [x] useActivityEdit / ActivityEditDialog
 
-### 未対応（要リファクタリング）
+### 完了（要リファクタリング）
 
-#### feature hooks（UIロジックを含む - リファクタリング対象）
+#### feature hooks（UIロジックを含む - リファクタリング完了）
 
 ##### Activity関連
-- [ ] useActivityLogEdit / ActivityLogEditDialog
-- [ ] useActivityRegistPage / ActivityRegistPage
-- [ ] useActivityCalendar / ActivityCalendar
-- [ ] useActivityStats / ActivityStats
-- [ ] useDailyActivityCreate / DailyActivityLogCreateDialog
+- [x] useActivityLogEdit / ActivityLogEditDialog
+- [x] useActivityRegistPage / ActivityRegistPage
+- [x] useActivityCalendar / ActivityCalendar
+- [x] useActivityStats / ActivityStats
+- [x] useDailyActivityCreate / DailyActivityLogCreateDialog
 
 ##### Daily関連
-- [ ] useDailyPage / DailyPage
-- [ ] useDailyTaskActions / DailyTaskActions
+- [x] useDailyPage / DailyPage
+- [x] useDailyTaskActions / DailyTaskActions
 
 ##### Task関連
-- [ ] useTasksPage / TasksPage
-- [ ] useTaskActions / TaskActions
-- [ ] useTaskEditForm / TaskEditForm
-- [ ] useTaskGroup / TaskGroup
+- [x] useTasksPage / TasksPage
+- [x] useTaskActions / TaskActions
+- [x] useTaskEditForm / TaskEditForm
+- [x] useTaskGroup / TaskGroup
 
 ##### Goal関連
-- [ ] useNewGoalPage / NewGoalPage
-- [ ] useNewGoalDialog / NewGoalDialog
-- [ ] useNewGoalCard / NewGoalCard
-- [ ] useNewGoalSlot / NewGoalSlot
-- [ ] useGoalDetailModal / GoalDetailModal
+- [x] useNewGoalPage / NewGoalPage
+- [x] useNewGoalDialog / NewGoalDialog
+- [x] useNewGoalCard / NewGoalCard
+- [x] useNewGoalSlot / NewGoalSlot
+- [x] useGoalDetailModal / GoalDetailModal
 
 ##### Auth/User関連
-- [ ] useLogin / LoginPage
-- [ ] useCreateUser / CreateUserPage
-- [ ] useAuthInitializer / AuthInitializer
-- [ ] useUserSettings / UserSettingsPage
-- [ ] useAppSettings / AppSettings
+- [x] useLogin / LoginPage
+- [x] useCreateUser / CreateUserPage
+- [x] useAuthInitializer / AuthInitializer
+- [x] useUserSettings / UserSettingsPage
+- [x] useAppSettings / AppSettings
 
 ### リファクタリング不要（データフェッチ/ユーティリティ）
 

@@ -10,7 +10,7 @@ import { createUseActivityLogEdit } from "@packages/frontend-shared/hooks/featur
 import { useQueryClient } from "@tanstack/react-query";
 
 export const useActivityLogEdit = (
-  _open: boolean,
+  open: boolean,
   onOpenChange: (open: boolean) => void,
   log: GetActivityLogResponse | null,
 ) => {
@@ -32,7 +32,11 @@ export const useActivityLogEdit = (
   const dependencies = {
     activities,
     updateActivityLog: {
-      mutateAsync: async (params: any) => {
+      mutateAsync: async (params: {
+        id: string;
+        data: { memo?: string; quantity?: number; activityKindId?: string };
+        date: string;
+      }) => {
         await updateActivityLog.mutateAsync(params);
         // 更新後にキャッシュを無効化
         if (params.date) {
@@ -44,7 +48,7 @@ export const useActivityLogEdit = (
       isPending: updateActivityLog.isPending,
     },
     deleteActivityLog: {
-      mutateAsync: async (params: any) => {
+      mutateAsync: async (params: { id: string; date: string }) => {
         await deleteActivityLog.mutateAsync(params);
         // 削除後にキャッシュを無効化
         if (params.date) {
@@ -58,5 +62,24 @@ export const useActivityLogEdit = (
     notification,
   };
 
-  return createUseActivityLogEdit(dependencies, _open, onOpenChange, log);
+  const { formProps, actions } = createUseActivityLogEdit(
+    dependencies,
+    open,
+    onOpenChange,
+    log,
+  );
+
+  // 後方互換性を維持
+  return {
+    ...formProps,
+    // 旧API互換のアクション
+    handleMemoChange: actions.onMemoChange,
+    handleQuantityChange: actions.onQuantityChange,
+    handleActivityKindChange: actions.onActivityKindChange,
+    handleSubmit: actions.onSubmit,
+    handleDelete: actions.onDelete,
+    // 新しいグループ化されたAPIも公開
+    formProps,
+    actions,
+  };
 };

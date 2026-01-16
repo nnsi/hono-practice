@@ -28,6 +28,27 @@ type UseTaskActionsOptions = {
   onArchiveTask?: (task: TaskItem) => void;
 };
 
+// Grouped return types for better organization
+export type TaskActionsStateProps = {
+  selectedTask: TaskItem | null;
+  updateTaskPending: boolean;
+  deleteTaskPending: boolean;
+  archiveTaskPending: boolean;
+};
+
+export type TaskActionsActions = {
+  onToggleTaskDone: (task: TaskItem) => void;
+  onDeleteTask: (task: TaskItem) => void;
+  onArchiveTask: (task: TaskItem) => void;
+  onSelectTask: (task: TaskItem | null) => void;
+  formatDate: (dateStr: string | null) => string | null;
+};
+
+export type UseTaskActionsReturn = {
+  stateProps: TaskActionsStateProps;
+  actions: TaskActionsActions;
+};
+
 export const createUseTaskActions = (options: UseTaskActionsOptions) => {
   return () => {
     const { apiClient, onToggleTaskDone, onDeleteTask, onArchiveTask } =
@@ -82,22 +103,19 @@ export const createUseTaskActions = (options: UseTaskActionsOptions) => {
     };
 
     return {
-      // State
-      selectedTask,
-
-      // Actions
-      handleToggleTaskDone,
-      handleDeleteTask,
-      handleArchiveTask,
-      handleSelectTask,
-
-      // Utilities
-      formatDate,
-
-      // Mutation states
-      updateTaskPending: updateTask.isPending,
-      deleteTaskPending: deleteTask.isPending,
-      archiveTaskPending: archiveTask.isPending,
+      stateProps: {
+        selectedTask,
+        updateTaskPending: updateTask.isPending,
+        deleteTaskPending: deleteTask.isPending,
+        archiveTaskPending: archiveTask.isPending,
+      } as TaskActionsStateProps,
+      actions: {
+        onToggleTaskDone: handleToggleTaskDone,
+        onDeleteTask: handleDeleteTask,
+        onArchiveTask: handleArchiveTask,
+        onSelectTask: handleSelectTask,
+        formatDate,
+      } as TaskActionsActions,
     };
   };
 };

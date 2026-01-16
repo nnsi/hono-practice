@@ -24,6 +24,24 @@ type UseNewGoalDialogDependencies = {
   onErrorMessage?: (title: string, description?: string) => void;
 };
 
+// Grouped return types for better organization
+export type NewGoalDialogStateProps = {
+  selectedActivity: GetActivityResponse | undefined;
+  quantityUnit: string;
+  isPending: boolean;
+};
+
+export type NewGoalDialogActions = {
+  onSubmit: (data: GoalFormData) => void;
+};
+
+export type UseNewGoalDialogReturn = {
+  form: ReturnType<typeof useForm<GoalFormData>>;
+  stateProps: NewGoalDialogStateProps;
+  actions: NewGoalDialogActions;
+  validationSchema: typeof FormSchema;
+};
+
 export const createUseNewGoalDialog = (deps: UseNewGoalDialogDependencies) => {
   const {
     apiClient,
@@ -78,10 +96,14 @@ export const createUseNewGoalDialog = (deps: UseNewGoalDialogDependencies) => {
 
     return {
       form,
-      createGoal,
-      selectedActivity,
-      quantityUnit,
-      handleSubmit,
+      stateProps: {
+        selectedActivity,
+        quantityUnit,
+        isPending: createGoal.isPending,
+      } as NewGoalDialogStateProps,
+      actions: {
+        onSubmit: handleSubmit,
+      } as NewGoalDialogActions,
       validationSchema: FormSchema,
     };
   };

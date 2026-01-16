@@ -10,5 +10,12 @@ export const useGoalDetailModal = (
   goal: GoalResponse,
   open: boolean,
 ) => {
-  return useGoalDetailModalBase(goalId, goal, open);
+  const { stateProps } = useGoalDetailModalBase(goalId, goal, open);
+
+  // 後方互換性を維持
+  return {
+    ...stateProps,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+  };
 };

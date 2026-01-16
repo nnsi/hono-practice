@@ -8,5 +8,7 @@ const storage = createWebStorageAdapter();
 const useAppSettingsBase = createUseAppSettings({ storage });
 
 export const useAppSettings = () => {
-  return useAppSettingsBase();
+  const result = useAppSettingsBase();
+  // 直接アクセス（settings, updateSetting, isLoaded）は共通フックが既に公開しているのでそのまま返す
+  return result;
 };

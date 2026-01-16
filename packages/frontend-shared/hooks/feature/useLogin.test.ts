@@ -84,7 +84,7 @@ describe("createUseLogin", () => {
     );
 
     await act(async () => {
-      await result.current.handleLogin();
+      await result.current.actions.onLogin();
     });
 
     expect(mockAuth.login).toHaveBeenCalledWith({
@@ -108,7 +108,7 @@ describe("createUseLogin", () => {
     );
 
     await act(async () => {
-      await result.current.handleLogin();
+      await result.current.actions.onLogin();
     });
 
     expect(mockNavigation.navigate).not.toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe("createUseLogin", () => {
     const credentialResponse = { credential: "google-credential-token" };
 
     await act(async () => {
-      await result.current.handleGoogleSuccess(credentialResponse);
+      await result.current.actions.onGoogleSuccess(credentialResponse);
     });
 
     expect(mockAuth.googleLogin).toHaveBeenCalledWith(
@@ -167,7 +167,7 @@ describe("createUseLogin", () => {
     const credentialResponse = {};
 
     await act(async () => {
-      await result.current.handleGoogleSuccess(credentialResponse);
+      await result.current.actions.onGoogleSuccess(credentialResponse);
     });
 
     expect(mockAuth.googleLogin).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("createUseLogin", () => {
     const credentialResponse = { credential: "google-credential-token" };
 
     await act(async () => {
-      await result.current.handleGoogleSuccess(credentialResponse);
+      await result.current.actions.onGoogleSuccess(credentialResponse);
     });
 
     expect(mockNavigation.navigate).not.toHaveBeenCalled();
@@ -215,7 +215,7 @@ describe("createUseLogin", () => {
     );
 
     act(() => {
-      result.current.handleGoogleError();
+      result.current.actions.onGoogleError();
     });
 
     expect(mockNotification.toast).toHaveBeenCalledWith({
@@ -243,7 +243,7 @@ describe("createUseLogin", () => {
     const credentialResponse = { credential: "google-credential-token" };
 
     await act(async () => {
-      await result.current.handleGoogleSuccess(credentialResponse);
+      await result.current.actions.onGoogleSuccess(credentialResponse);
     });
 
     expect(mockAuth.setUser).toHaveBeenCalledWith({
@@ -265,7 +265,7 @@ describe("createUseLogin", () => {
 
     await act(async () => {
       try {
-        await result.current.handleMobileGoogleLogin();
+        await result.current.actions.onMobileGoogleLogin();
       } catch (_error) {
         // Expected to fail
       }
@@ -301,7 +301,7 @@ describe("createUseLogin", () => {
       }),
     );
 
-    expect(result.current.isSubmitting).toBe(false);
+    expect(result.current.stateProps.isSubmitting).toBe(false);
   });
 });
 

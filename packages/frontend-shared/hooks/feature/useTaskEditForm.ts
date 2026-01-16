@@ -31,6 +31,25 @@ type UseTaskEditFormOptions = {
   onError?: (error: Error) => void;
 };
 
+// Grouped return types for better organization
+export type TaskEditFormStateProps = {
+  task: TaskItem | null;
+  initialValues: UpdateTaskFormData;
+  isUpdating: boolean;
+  isDeleting: boolean;
+};
+
+export type TaskEditFormActions = {
+  onUpdateTask: (data: UpdateTaskFormData) => Promise<void>;
+  onDeleteTask: () => Promise<void>;
+};
+
+export type UseTaskEditFormReturn = {
+  stateProps: TaskEditFormStateProps;
+  actions: TaskEditFormActions;
+  validationSchema: typeof updateTaskSchema;
+};
+
 export const createUseTaskEditForm = (options: UseTaskEditFormOptions) => {
   return (task: TaskItem | null) => {
     const { apiClient, onSuccess, onError } = options;
@@ -92,21 +111,16 @@ export const createUseTaskEditForm = (options: UseTaskEditFormOptions) => {
     };
 
     return {
-      // Data
-      task,
-      initialValues: getInitialValues(),
-
-      // Actions
-      handleUpdateTask,
-      handleDeleteTask,
-
-      // Mutations
-      updateTask,
-      deleteTask,
-      isUpdating: updateTask.isPending,
-      isDeleting: deleteTask.isPending,
-
-      // Validation
+      stateProps: {
+        task,
+        initialValues: getInitialValues(),
+        isUpdating: updateTask.isPending,
+        isDeleting: deleteTask.isPending,
+      } as TaskEditFormStateProps,
+      actions: {
+        onUpdateTask: handleUpdateTask,
+        onDeleteTask: handleDeleteTask,
+      } as TaskEditFormActions,
       validationSchema: updateTaskSchema,
     };
   };

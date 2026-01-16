@@ -110,14 +110,23 @@ export type ActivityStatsDependencies = {
   useGoals: () => UseQueryResult<GetGoalsResponse>;
 };
 
-export type UseActivityStatsReturn = {
+// Grouped return types for better organization
+export type ActivityStatsStateProps = {
   month: string;
   stats: GetActivityStatsResponse | undefined;
   isLoading: boolean;
-  handlePrevMonth: () => void;
-  handleNextMonth: () => void;
+};
+
+export type ActivityStatsActions = {
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
   getGoalLinesForActivity: (activityId: string) => GoalLine[];
   generateAllDatesForMonth: () => string[];
+};
+
+export type UseActivityStatsReturn = {
+  stateProps: ActivityStatsStateProps;
+  actions: ActivityStatsActions;
 };
 
 export function createUseActivityStats(
@@ -191,12 +200,16 @@ export function createUseActivityStats(
   }, [month]);
 
   return {
-    month,
-    stats,
-    isLoading,
-    handlePrevMonth,
-    handleNextMonth,
-    getGoalLinesForActivity,
-    generateAllDatesForMonth,
+    stateProps: {
+      month,
+      stats,
+      isLoading,
+    } as ActivityStatsStateProps,
+    actions: {
+      onPrevMonth: handlePrevMonth,
+      onNextMonth: handleNextMonth,
+      getGoalLinesForActivity,
+      generateAllDatesForMonth,
+    } as ActivityStatsActions,
   };
 }

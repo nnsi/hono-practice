@@ -68,23 +68,25 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
     return (_goalId: string, goalProp: any | null, open: boolean) => {
       if (!open) {
         return {
-          goal: goalProp,
-          isLoading: false,
-          activity: null,
-          activityName: "不明なアクティビティ",
-          activityEmoji: "🎯",
-          quantityUnit: "",
-          stats: {
-            currentProgress: 0,
-            targetProgress: 0,
-            progressPercentage: 0,
-            activeDays: 0,
-            maxDaily: 0,
-            maxConsecutiveDays: 0,
-            daysAchieved: 0,
-            daysUntilDeadline: undefined,
+          stateProps: {
+            goal: goalProp,
+            isLoading: false,
+            activity: null,
+            activityName: "不明なアクティビティ",
+            activityEmoji: "🎯",
+            quantityUnit: "",
+            stats: {
+              currentProgress: 0,
+              targetProgress: 0,
+              progressPercentage: 0,
+              activeDays: 0,
+              maxDaily: 0,
+              maxConsecutiveDays: 0,
+              daysAchieved: 0,
+              daysUntilDeadline: undefined,
+            },
+            isPastGoal: false,
           },
-          isPastGoal: false,
         };
       }
 
@@ -101,34 +103,37 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
         : false;
 
       return {
-        goal,
-        isLoading: statsData?.isLoading || activitiesData?.isLoading,
-        activity,
-        activityName: activity?.name || "不明なアクティビティ",
-        activityEmoji: activity?.emoji || "🎯",
-        quantityUnit: activity?.quantityUnit || "",
-        stats: {
-          currentProgress: goal?.totalActual || 0,
-          targetProgress: goal?.totalTarget || 0,
-          progressPercentage: goal
-            ? Math.min(
-                100,
-                Math.round((goal.totalActual / goal.totalTarget) * 100),
-              )
-            : 0,
-          activeDays:
-            stats?.dailyRecords?.filter((r: any) => r.quantity > 0).length || 0,
-          maxDaily: stats?.stats?.max || 0,
-          maxConsecutiveDays: stats?.stats?.maxConsecutiveDays || 0,
-          daysAchieved: stats?.stats?.achievedDays || 0,
-          daysUntilDeadline: goal?.endDate
-            ? Math.ceil(
-                (new Date(goal.endDate).getTime() - Date.now()) /
-                  (1000 * 60 * 60 * 24),
-              )
-            : undefined,
+        stateProps: {
+          goal,
+          isLoading: statsData?.isLoading || activitiesData?.isLoading,
+          activity,
+          activityName: activity?.name || "不明なアクティビティ",
+          activityEmoji: activity?.emoji || "🎯",
+          quantityUnit: activity?.quantityUnit || "",
+          stats: {
+            currentProgress: goal?.totalActual || 0,
+            targetProgress: goal?.totalTarget || 0,
+            progressPercentage: goal
+              ? Math.min(
+                  100,
+                  Math.round((goal.totalActual / goal.totalTarget) * 100),
+                )
+              : 0,
+            activeDays:
+              stats?.dailyRecords?.filter((r: any) => r.quantity > 0).length ||
+              0,
+            maxDaily: stats?.stats?.max || 0,
+            maxConsecutiveDays: stats?.stats?.maxConsecutiveDays || 0,
+            daysAchieved: stats?.stats?.achievedDays || 0,
+            daysUntilDeadline: goal?.endDate
+              ? Math.ceil(
+                  (new Date(goal.endDate).getTime() - Date.now()) /
+                    (1000 * 60 * 60 * 24),
+                )
+              : undefined,
+          },
+          isPastGoal,
         },
-        isPastGoal,
       };
     };
   }),

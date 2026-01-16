@@ -60,6 +60,14 @@ export const createUseAppSettings = (deps: UseAppSettingsDependencies) => {
     );
 
     return {
+      stateProps: {
+        settings,
+        isLoaded,
+      },
+      actions: {
+        onUpdateSetting: updateSetting,
+      },
+      // Direct access for compatibility
       settings,
       updateSetting,
       isLoaded,

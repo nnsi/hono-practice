@@ -171,9 +171,7 @@ describe("useActivityLogEdit", () => {
     );
 
     act(() => {
-      result.current.handleMemoChange({
-        target: { value: "Updated memo" },
-      } as React.ChangeEvent<HTMLTextAreaElement>);
+      result.current.handleMemoChange("Updated memo");
     });
 
     expect(result.current.memo).toBe("Updated memo");
@@ -186,9 +184,7 @@ describe("useActivityLogEdit", () => {
     );
 
     act(() => {
-      result.current.handleQuantityChange({
-        target: { value: "75" },
-      } as React.ChangeEvent<HTMLInputElement>);
+      result.current.handleQuantityChange("75");
     });
 
     expect(result.current.quantity).toBe(75);
@@ -201,9 +197,7 @@ describe("useActivityLogEdit", () => {
     );
 
     act(() => {
-      result.current.handleQuantityChange({
-        target: { value: "" },
-      } as React.ChangeEvent<HTMLInputElement>);
+      result.current.handleQuantityChange("");
     });
 
     expect(result.current.quantity).toBeNull();

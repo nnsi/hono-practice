@@ -13,45 +13,35 @@ import {
 import { ActivityDateHeader } from "./ActivityDateHeader";
 
 export const ActivityRegistPage: React.FC = () => {
+  const { stateProps, actions } = useActivityRegistPage();
   const {
-    // 状態
     date,
-    setDate,
     activities,
-    hasActivityLogs,
     open,
     selectedActivity,
     editModalOpen,
     editTargetActivity,
-    // ハンドラー
-    handleActivityClick,
-    handleNewActivityClick,
-    handleEditClick,
-    handleNewActivityDialogChange,
-    handleActivityLogCreateDialogChange,
-    handleActivityLogCreateSuccess,
-    handleActivityEditDialogClose,
-  } = useActivityRegistPage();
+  } = stateProps;
 
   return (
     <>
-      <ActivityDateHeader date={date} setDate={setDate} />
+      <ActivityDateHeader date={date} setDate={actions.onDateChange} />
       <hr className="my-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {activities.map((activity: GetActivityResponse) => {
-          const isDone = hasActivityLogs(activity.id);
+          const isDone = actions.hasActivityLogs(activity.id);
 
           return (
             <ActivityCardWithEdit
               key={activity.id}
               activity={activity}
-              onClick={() => handleActivityClick(activity)}
-              onEditClick={() => handleEditClick(activity)}
+              onClick={() => actions.onActivityClick(activity)}
+              onEditClick={() => actions.onEditClick(activity)}
               isDone={isDone}
             />
           );
         })}
-        <ActivityCard onClick={handleNewActivityClick} isDashed>
+        <ActivityCard onClick={actions.onNewActivityClick} isDashed>
           <div className="text-5xl mb-2">
             <PlusCircledIcon className="w-16 h-16 text-gray-400 group-hover:text-gray-600" />
           </div>
@@ -62,20 +52,20 @@ export const ActivityRegistPage: React.FC = () => {
       </div>
       <NewActivityDialog
         open={open && !selectedActivity}
-        onOpenChange={handleNewActivityDialogChange}
+        onOpenChange={actions.onNewActivityDialogChange}
       />
       {selectedActivity && (
         <ActivityLogCreateDialog
           open={open}
-          onOpenChange={handleActivityLogCreateDialogChange}
+          onOpenChange={actions.onActivityLogCreateDialogChange}
           activity={selectedActivity}
           date={date}
-          onSuccess={handleActivityLogCreateSuccess}
+          onSuccess={actions.onActivityLogCreateSuccess}
         />
       )}
       <ActivityEditDialog
         open={editModalOpen}
-        onClose={handleActivityEditDialogClose}
+        onClose={actions.onActivityEditDialogClose}
         activity={editTargetActivity}
       />
     </>

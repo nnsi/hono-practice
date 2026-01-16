@@ -14,7 +14,6 @@ vi.mock("@frontend/utils/apiClient", () => ({
 
 // モック用の関数
 const mockHandleActivitySelect = vi.fn();
-const mockSetActivityDialogOpen = vi.fn();
 const mockHandleActivityDialogClose = vi.fn();
 const mockHandleSuccess = vi.fn();
 
@@ -56,31 +55,32 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => {
       let activityDialogOpen = false;
 
       return () => ({
-        selectedActivity,
-        activityDialogOpen,
-        activities: mockActivities,
-        handleActivitySelect: mockHandleActivitySelect.mockImplementation(
-          (activity: any) => {
-            selectedActivity = activity;
-            activityDialogOpen = true;
-          },
-        ),
-        setActivityDialogOpen: mockSetActivityDialogOpen.mockImplementation(
-          (open: boolean) => {
-            activityDialogOpen = open;
-          },
-        ),
-        handleActivityDialogClose:
-          mockHandleActivityDialogClose.mockImplementation((open: boolean) => {
-            activityDialogOpen = open;
-            if (!open) {
-              selectedActivity = null;
-            }
+        stateProps: {
+          selectedActivity,
+          activityDialogOpen,
+          activities: mockActivities,
+        },
+        actions: {
+          onActivitySelect: mockHandleActivitySelect.mockImplementation(
+            (activity: any) => {
+              selectedActivity = activity;
+              activityDialogOpen = true;
+            },
+          ),
+          onActivityDialogClose:
+            mockHandleActivityDialogClose.mockImplementation(
+              (open: boolean) => {
+                activityDialogOpen = open;
+                if (!open) {
+                  selectedActivity = null;
+                }
+              },
+            ),
+          onSuccess: mockHandleSuccess.mockImplementation(() => {
+            selectedActivity = null;
+            activityDialogOpen = false;
           }),
-        handleSuccess: mockHandleSuccess.mockImplementation(() => {
-          selectedActivity = null;
-          activityDialogOpen = false;
-        }),
+        },
       });
     }),
   };

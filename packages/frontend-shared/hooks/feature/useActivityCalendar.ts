@@ -2,17 +2,26 @@ import { useCallback, useState } from "react";
 
 import dayjs from "dayjs";
 
-export type UseActivityCalendarReturn = {
+// Grouped return types for better organization
+export type ActivityCalendarStateProps = {
   calendarOpen: boolean;
   calendarMonth: dayjs.Dayjs;
   calendarDays: (number | null)[];
-  handleCalendarOpenChange: (open: boolean) => void;
-  handleGoToToday: () => void;
-  handleGoToPreviousDay: () => void;
-  handleGoToNextDay: () => void;
-  handlePreviousMonth: () => void;
-  handleNextMonth: () => void;
-  handleCalendarDayClick: (day: number) => void;
+};
+
+export type ActivityCalendarActions = {
+  onCalendarOpenChange: (open: boolean) => void;
+  onGoToToday: () => void;
+  onGoToPreviousDay: () => void;
+  onGoToNextDay: () => void;
+  onPreviousMonth: () => void;
+  onNextMonth: () => void;
+  onCalendarDayClick: (day: number) => void;
+};
+
+export type UseActivityCalendarReturn = {
+  stateProps: ActivityCalendarStateProps;
+  actions: ActivityCalendarActions;
 };
 
 export const createUseActivityCalendar = (
@@ -90,15 +99,19 @@ export const createUseActivityCalendar = (
   );
 
   return {
-    calendarOpen,
-    calendarMonth,
-    calendarDays,
-    handleCalendarOpenChange,
-    handleGoToToday,
-    handleGoToPreviousDay,
-    handleGoToNextDay,
-    handlePreviousMonth,
-    handleNextMonth,
-    handleCalendarDayClick,
+    stateProps: {
+      calendarOpen,
+      calendarMonth,
+      calendarDays,
+    } as ActivityCalendarStateProps,
+    actions: {
+      onCalendarOpenChange: handleCalendarOpenChange,
+      onGoToToday: handleGoToToday,
+      onGoToPreviousDay: handleGoToPreviousDay,
+      onGoToNextDay: handleGoToNextDay,
+      onPreviousMonth: handlePreviousMonth,
+      onNextMonth: handleNextMonth,
+      onCalendarDayClick: handleCalendarDayClick,
+    } as ActivityCalendarActions,
   };
 };

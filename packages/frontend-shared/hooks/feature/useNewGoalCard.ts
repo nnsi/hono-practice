@@ -146,38 +146,33 @@ export const createUseNewGoalCard = (deps: UseNewGoalCardDependencies) => {
     const progressColor = getProgressColor(statusInfo);
 
     return {
-      // State
-      showDetailModal,
-      setShowDetailModal,
-      showLogCreateDialog,
-      setShowLogCreateDialog,
-      isAnimating,
-
-      // Form
+      stateProps: {
+        showDetailModal,
+        showLogCreateDialog,
+        isAnimating,
+        statusInfo,
+        progressPercentage,
+        progressColor,
+        isActive,
+        settings,
+        isUpdating: updateGoal.isPending,
+        isDeleting: deleteGoal.isPending,
+      },
+      actions: {
+        onDetailModalOpenChange: setShowDetailModal,
+        onLogCreateDialogOpenChange: setShowLogCreateDialog,
+        onUpdate: handleUpdate,
+        onDelete: handleDelete,
+        onLogCreateSuccess: handleLogCreateSuccess,
+        onTargetQuantityChange: handleTargetQuantityChange,
+        onDeleteClick: handleDeleteClick,
+        onCardClick: handleCardClick,
+        onCardKeyDown: handleCardKeyDown,
+        onLogCreateClick: handleLogCreateClick,
+        onEditClick: handleEditClick,
+        onPastGoalDeleteClick: handlePastGoalDeleteClick,
+      },
       form,
-
-      // Computed
-      statusInfo,
-      progressPercentage,
-      progressColor,
-      isActive,
-      settings,
-
-      // Mutations
-      updateGoal,
-      deleteGoal,
-
-      // Handlers
-      handleUpdate,
-      handleDelete,
-      handleLogCreateSuccess,
-      handleTargetQuantityChange,
-      handleDeleteClick,
-      handleCardClick,
-      handleCardKeyDown,
-      handleLogCreateClick,
-      handleEditClick,
-      handlePastGoalDeleteClick,
     };
   };
 };

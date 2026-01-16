@@ -99,15 +99,15 @@ describe("createUseDailyPage", () => {
       }),
     );
 
-    expect(result.current.date).toEqual(new Date("2024-01-01"));
-    expect(result.current.editDialogOpen).toBe(false);
-    expect(result.current.editTargetLog).toBeNull();
-    expect(result.current.createDialogOpen).toBe(false);
-    expect(result.current.isOnline).toBe(true);
+    expect(result.current.stateProps.date).toEqual(new Date("2024-01-01"));
+    expect(result.current.stateProps.editDialogOpen).toBe(false);
+    expect(result.current.stateProps.editTargetLog).toBeNull();
+    expect(result.current.stateProps.createDialogOpen).toBe(false);
+    expect(result.current.stateProps.isOnline).toBe(true);
 
     // Wait for initial effects to complete
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
   });
 
@@ -123,8 +123,10 @@ describe("createUseDailyPage", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.activityLogs).toEqual(mockActivityLogs);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.mergedActivityLogs).toEqual(
+        mockActivityLogs,
+      );
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
   });
 
@@ -140,8 +142,8 @@ describe("createUseDailyPage", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.tasks).toEqual(mockTasks);
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.tasks).toEqual(mockTasks);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
   });
 
@@ -172,15 +174,17 @@ describe("createUseDailyPage", () => {
 
     // Wait for initial loading to complete
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
 
     act(() => {
-      result.current.handleActivityLogClick(mockActivityLogs[0]);
+      result.current.actions.onActivityLogClick(mockActivityLogs[0]);
     });
 
-    expect(result.current.editTargetLog).toEqual(mockActivityLogs[0]);
-    expect(result.current.editDialogOpen).toBe(true);
+    expect(result.current.stateProps.editTargetLog).toEqual(
+      mockActivityLogs[0],
+    );
+    expect(result.current.stateProps.editDialogOpen).toBe(true);
   });
 
   it("should handle dialog close", async () => {
@@ -195,21 +199,21 @@ describe("createUseDailyPage", () => {
 
     // Wait for initial loading
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
 
     // Open dialog
     act(() => {
-      result.current.handleActivityLogClick(mockActivityLogs[0]);
+      result.current.actions.onActivityLogClick(mockActivityLogs[0]);
     });
 
     // Close dialog
     act(() => {
-      result.current.handleActivityLogEditDialogChange(false);
+      result.current.actions.onActivityLogEditDialogChange(false);
     });
 
-    expect(result.current.editDialogOpen).toBe(false);
-    expect(result.current.editTargetLog).toBeNull();
+    expect(result.current.stateProps.editDialogOpen).toBe(false);
+    expect(result.current.stateProps.editTargetLog).toBeNull();
   });
 
   it("should handle create dialog state", async () => {
@@ -224,20 +228,20 @@ describe("createUseDailyPage", () => {
 
     // Wait for initial loading
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
 
     act(() => {
-      result.current.setCreateDialogOpen(true);
+      result.current.actions.onCreateDialogOpenChange(true);
     });
 
-    expect(result.current.createDialogOpen).toBe(true);
+    expect(result.current.stateProps.createDialogOpen).toBe(true);
 
     act(() => {
-      result.current.setCreateDialogOpen(false);
+      result.current.actions.onCreateDialogOpenChange(false);
     });
 
-    expect(result.current.createDialogOpen).toBe(false);
+    expect(result.current.stateProps.createDialogOpen).toBe(false);
   });
 
   it("should handle date change", async () => {
@@ -252,13 +256,13 @@ describe("createUseDailyPage", () => {
 
     // Wait for initial loading
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.stateProps.isLoading).toBe(false);
     });
 
     const newDate = new Date("2024-01-02");
 
     act(() => {
-      result.current.setDate(newDate);
+      mockDateStore.setDate(newDate);
     });
 
     expect(mockDateStore.setDate).toHaveBeenCalledWith(newDate);
@@ -281,10 +285,10 @@ describe("createUseDailyPage", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.activityLogs).toEqual([]);
-      expect(result.current.tasks).toEqual([]);
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.mergedActivityLogs).toEqual([]);
+      expect(result.current.stateProps.tasks).toEqual([]);
+      expect(result.current.stateProps.isLoading).toBe(false);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
 
     consoleErrorSpy.mockRestore();
@@ -308,7 +312,9 @@ describe("createUseDailyPage", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.mergedActivityLogs).toEqual(mockActivityLogs);
+      expect(result.current.stateProps.mergedActivityLogs).toEqual(
+        mockActivityLogs,
+      );
     });
   });
 });

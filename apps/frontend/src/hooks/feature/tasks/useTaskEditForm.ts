@@ -46,18 +46,11 @@ export const useTaskEditForm = (
 ) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
-  const {
-    initialValues,
-    handleUpdateTask,
-    handleDeleteTask,
-    updateTask,
-    deleteTask,
-    validationSchema,
-  } = useTaskEditFormBase(task);
+  const { stateProps, actions, validationSchema } = useTaskEditFormBase(task);
 
   const form = useForm<UpdateTaskFormData>({
     resolver: zodResolver(validationSchema),
-    defaultValues: initialValues,
+    defaultValues: stateProps.initialValues,
   });
 
   // タスクが変更されたらフォームの値を更新
@@ -73,13 +66,13 @@ export const useTaskEditForm = (
   }, [task?.id, task?.title, task?.startDate, task?.dueDate, task?.memo, form]);
 
   const onSubmit = async (data: UpdateTaskFormData) => {
-    await handleUpdateTask(data);
+    await actions.onUpdateTask(data);
     onOpenChange(false);
     onSuccess?.();
   };
 
   const handleDelete = async () => {
-    await handleDeleteTask();
+    await actions.onDeleteTask();
     setShowDeleteDialog(false);
     onOpenChange(false);
     onSuccess?.();
@@ -91,7 +84,8 @@ export const useTaskEditForm = (
     setShowDeleteDialog,
     onSubmit,
     handleDelete,
-    updateTask,
-    deleteTask,
+    // 後方互換性のためにupdateTask/deleteTaskをシミュレート
+    updateTask: { isPending: stateProps.isUpdating },
+    deleteTask: { isPending: stateProps.isDeleting },
   };
 };

@@ -35,15 +35,20 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
       );
 
       return {
-        showDetailModal: false,
-        setShowDetailModal: vi.fn(),
-        showLogCreateDialog: false,
-        setShowLogCreateDialog: vi.fn(),
-        isAnimating: false,
-        isActive: !isPast && goal.isActive,
-        progressPercentage,
-        handleUpdate: mockHandleUpdate.mockImplementation(
-          async (params: any) => {
+        stateProps: {
+          showDetailModal: false,
+          showLogCreateDialog: false,
+          isAnimating: false,
+          isActive: !isPast && goal.isActive,
+          isUpdating: false,
+          isDeleting: false,
+          progressPercentage,
+          goal,
+        },
+        actions: {
+          onDetailModalOpenChange: vi.fn(),
+          onLogCreateDialogOpenChange: vi.fn(),
+          onUpdate: mockHandleUpdate.mockImplementation(async (params: any) => {
             if (
               params &&
               params.dailyTargetQuantity !== undefined &&
@@ -59,19 +64,35 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
             ) {
               deps.onEditEnd();
             }
-          },
-        ),
-        handleDelete: mockHandleDelete.mockImplementation(async () => {
-          const confirmed = await deps.onConfirm("このゴールを削除しますか？");
-          if (confirmed) {
-            // 削除処理
-            return goal.id;
-          }
-        }),
-        handleToggleActive: mockHandleToggleActive,
-        onCardClick: mockOnCardClick,
-        onEditStart: mockOnEditStart,
-        onLogCreated: mockOnLogCreated,
+          }),
+          onDelete: mockHandleDelete.mockImplementation(async () => {
+            const confirmed = await deps.onConfirm(
+              "このゴールを削除しますか？",
+            );
+            if (confirmed) {
+              // 削除処理
+              return goal.id;
+            }
+          }),
+          onToggleActive: mockHandleToggleActive,
+          onCardClick: mockOnCardClick,
+          onEditStart: mockOnEditStart,
+          onLogCreateSuccess: mockOnLogCreated,
+          onTargetQuantityChange: vi.fn(),
+          onDeleteClick: vi.fn(),
+          onCardKeyDown: vi.fn(),
+          onLogCreateClick: vi.fn(),
+          onEditClick: vi.fn(),
+          onPastGoalDeleteClick: vi.fn(),
+        },
+        form: {
+          register: vi.fn(() => ({})),
+          handleSubmit: vi.fn((fn) => fn),
+          formState: { errors: {} },
+          watch: vi.fn(),
+          setValue: vi.fn(),
+          getValues: vi.fn(),
+        },
       };
     };
   }),

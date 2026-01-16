@@ -16,6 +16,24 @@ type UseDailyTaskActionsOptions = {
   onDeleteTask?: (task: TaskItem) => void;
 };
 
+// Grouped return types for better organization
+export type DailyTaskActionsStateProps = {
+  createDialogOpen: boolean;
+  updateTaskPending: boolean;
+  deleteTaskPending: boolean;
+};
+
+export type DailyTaskActionsActions = {
+  onCreateDialogOpenChange: (open: boolean) => void;
+  onToggleTaskDone: (task: TaskItem) => void;
+  onDeleteTask: (task: TaskItem) => void;
+};
+
+export type UseDailyTaskActionsReturn = {
+  stateProps: DailyTaskActionsStateProps;
+  actions: DailyTaskActionsActions;
+};
+
 export const createUseDailyTaskActions = (
   options: UseDailyTaskActionsOptions,
 ) => {
@@ -51,17 +69,16 @@ export const createUseDailyTaskActions = (
     };
 
     return {
-      // Dialog states (プラットフォーム固有)
-      createDialogOpen,
-      setCreateDialogOpen,
-
-      // Mutations (Web側の互換性のため公開)
-      updateTask,
-      deleteTask,
-
-      // Actions
-      handleToggleTaskDone,
-      handleDeleteTask,
+      stateProps: {
+        createDialogOpen,
+        updateTaskPending: updateTask.isPending,
+        deleteTaskPending: deleteTask.isPending,
+      } as DailyTaskActionsStateProps,
+      actions: {
+        onCreateDialogOpenChange: setCreateDialogOpen,
+        onToggleTaskDone: handleToggleTaskDone,
+        onDeleteTask: handleDeleteTask,
+      } as DailyTaskActionsActions,
     };
   };
 };

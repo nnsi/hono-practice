@@ -112,15 +112,17 @@ export const createUseGoalDetailModal = (
     }, [goal, statsData, isLoading]);
 
     return {
-      goal,
-      stats,
-      isPastGoal,
-      activity,
-      activityName,
-      activityEmoji,
-      quantityUnit,
-      isLoading,
-      statsData,
+      stateProps: {
+        goal,
+        stats,
+        isPastGoal,
+        activity,
+        activityName,
+        activityEmoji,
+        quantityUnit,
+        isLoading,
+        statsData,
+      },
     };
   };
 };
