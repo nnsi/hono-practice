@@ -1,0 +1,9 @@
+name = "actiko-apm"
+main = "index.ts"
+compatibility_date = "2025-01-12"
+compatibility_flags = ["nodejs_compat"]
+
+# Analytics Engine データセット
+[[analytics_engine_datasets]]
+binding = "APM"
+dataset = "actiko_apm"

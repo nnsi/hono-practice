@@ -14,9 +14,13 @@ import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
+import { apmMiddleware } from "./middleware/apmMiddleware";
 import { authMiddleware } from "./middleware/authMiddleware";
 
 export const app = newHonoWithErrorHandling();
+
+// APM: リクエスト計測（Tail Worker経由で Analytics Engine に記録）
+app.use("*", apmMiddleware);
 
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";

@@ -25,3 +25,10 @@ STORAGE_TYPE = "r2"
 [[env.production.durable_objects.bindings]]
 name = "RATE_LIMIT_DO"
 class_name = "KeyValueDO"
+
+# APM: Tail Worker にログを送信
+[[env.stg.tail_consumers]]
+service = "actiko-apm"
+
+[[env.production.tail_consumers]]
+service = "actiko-apm"
