@@ -9,5 +9,13 @@ dataset = "actiko_api_logs"
 [env.stg]
 name = "actiko-tail-worker-stg"
 
+[[env.stg.analytics_engine_datasets]]
+binding = "LOGS"
+dataset = "actiko_api_logs"
+
 [env.production]
 name = "actiko-tail-worker-prod"
+
+[[env.production.analytics_engine_datasets]]
+binding = "LOGS"
+dataset = "actiko_api_logs"
