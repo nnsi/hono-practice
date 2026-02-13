@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 
 import type { KeyValueStore } from "@backend/infra/kv/kv";
+import type { Tracer } from "@backend/lib/tracer";
 
 type RateLimitRecord = {
   count: number;
@@ -19,11 +20,13 @@ type RateLimitConfig = {
 export function createRateLimitMiddleware(
   store: KeyValueStore<RateLimitRecord>,
   config: RateLimitConfig,
+  tracer?: Tracer,
 ): MiddlewareHandler {
   const { windowMs, limit, keyGenerator } = config;
   const windowSeconds = Math.ceil(windowMs / 1000);
 
   return async (c, next) => {
+    const t = tracer;
     const ip =
       c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
       c.req.header("x-real-ip") ||
@@ -33,12 +36,20 @@ export function createRateLimitMiddleware(
     const key = `ratelimit:${keyGenerator({ ip, path })}`;
     const now = Date.now();
 
-    const record = await store.get(key);
+    const record = t
+      ? await t.span("kv.getRateLimit", () => store.get(key))
+      : await store.get(key);
 
     if (!record || now - record.windowStart >= windowMs) {
       // 新しいウィンドウを開始
       const windowStart = now;
-      await store.set(key, { count: 1, windowStart }, windowSeconds);
+      if (t) {
+        await t.span("kv.setRateLimit", () =>
+          store.set(key, { count: 1, windowStart }, windowSeconds),
+        );
+      } else {
+        await store.set(key, { count: 1, windowStart }, windowSeconds);
+      }
 
       c.header("X-RateLimit-Limit", String(limit));
       c.header("X-RateLimit-Remaining", String(limit - 1));
@@ -68,11 +79,21 @@ export function createRateLimitMiddleware(
 
     // カウントを増やす
     const remaining = limit - record.count - 1;
-    await store.set(
-      key,
-      { count: record.count + 1, windowStart: record.windowStart },
-      windowSeconds,
-    );
+    if (t) {
+      await t.span("kv.setRateLimit", () =>
+        store.set(
+          key,
+          { count: record.count + 1, windowStart: record.windowStart },
+          windowSeconds,
+        ),
+      );
+    } else {
+      await store.set(
+        key,
+        { count: record.count + 1, windowStart: record.windowStart },
+        windowSeconds,
+      );
+    }
 
     c.header("X-RateLimit-Limit", String(limit));
     c.header("X-RateLimit-Remaining", String(remaining));

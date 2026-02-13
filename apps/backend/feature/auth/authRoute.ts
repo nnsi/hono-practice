@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
+import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
   createRateLimitMiddleware,
@@ -39,6 +40,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const refreshTokenRepo = newRefreshTokenRepository(db);
     const passwordVerifier = new MultiHashPasswordVerifier();
     const userProviderRepo = newUserProviderRepository(db);
+    const tracer = c.get("tracer") ?? noopTracer;
     const uc = newAuthUsecase(
       repo,
       refreshTokenRepo,
@@ -47,6 +49,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       JWT_SECRET,
       JWT_AUDIENCE,
       oauthVerifiers,
+      tracer,
     );
     const h = newAuthHandler(uc);
 
@@ -59,19 +62,31 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   app.use("/login", async (c, next) => {
     const kv = c.env.RATE_LIMIT_KV;
     if (!kv) return next();
-    return createRateLimitMiddleware(kv, loginRateLimitConfig)(c, next);
+    return createRateLimitMiddleware(
+      kv,
+      loginRateLimitConfig,
+      c.get("tracer"),
+    )(c, next);
   });
 
   app.use("/token", async (c, next) => {
     const kv = c.env.RATE_LIMIT_KV;
     if (!kv) return next();
-    return createRateLimitMiddleware(kv, tokenRateLimitConfig)(c, next);
+    return createRateLimitMiddleware(
+      kv,
+      tokenRateLimitConfig,
+      c.get("tracer"),
+    )(c, next);
   });
 
   app.use("/google", async (c, next) => {
     const kv = c.env.RATE_LIMIT_KV;
     if (!kv) return next();
-    return createRateLimitMiddleware(kv, loginRateLimitConfig)(c, next);
+    return createRateLimitMiddleware(
+      kv,
+      loginRateLimitConfig,
+      c.get("tracer"),
+    )(c, next);
   });
 
   return app
@@ -175,7 +190,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const db = c.env.DB;
         const repo = newUserRepository(db);
         const userProviderRepo = newUserProviderRepository(db);
-        const userUsecase = newUserUsecase(repo, userProviderRepo);
+        const userUsecase = newUserUsecase(
+          repo,
+          userProviderRepo,
+          c.get("tracer") ?? noopTracer,
+        );
         const user = await userUsecase.getUserById(userId);
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";

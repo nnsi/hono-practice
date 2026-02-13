@@ -6,6 +6,7 @@ import {
   createTaskId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 
 import type { TaskRepository } from ".";
 
@@ -38,40 +39,49 @@ export type TaskUsecase = {
   archiveTask: (userId: UserId, taskId: TaskId) => Promise<Task>;
 };
 
-export function newTaskUsecase(repo: TaskRepository): TaskUsecase {
+export function newTaskUsecase(
+  repo: TaskRepository,
+  tracer: Tracer,
+): TaskUsecase {
   return {
-    getTasks: getTasks(repo),
-    getArchivedTasks: getArchivedTasks(repo),
-    getTask: getTask(repo),
-    createTask: createTask(repo),
-    updateTask: updateTask(repo),
-    deleteTask: deleteTask(repo),
-    archiveTask: archiveTask(repo),
+    getTasks: getTasks(repo, tracer),
+    getArchivedTasks: getArchivedTasks(repo, tracer),
+    getTask: getTask(repo, tracer),
+    createTask: createTask(repo, tracer),
+    updateTask: updateTask(repo, tracer),
+    deleteTask: deleteTask(repo, tracer),
+    archiveTask: archiveTask(repo, tracer),
   };
 }
 
-function getTasks(repo: TaskRepository) {
+function getTasks(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, date?: string) => {
-    return await repo.getTasksByUserId(userId, date);
+    return await tracer.span("db.getTasksByUserId", () =>
+      repo.getTasksByUserId(userId, date),
+    );
   };
 }
 
-function getArchivedTasks(repo: TaskRepository) {
+function getArchivedTasks(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId) => {
-    return await repo.getArchivedTasksByUserId(userId);
+    return await tracer.span("db.getArchivedTasksByUserId", () =>
+      repo.getArchivedTasksByUserId(userId),
+    );
   };
 }
 
-function getTask(repo: TaskRepository) {
+function getTask(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, taskId: TaskId) => {
-    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
+    const task = await tracer.span("db.getTaskByUserIdAndTaskId", () =>
+      repo.getTaskByUserIdAndTaskId(userId, taskId),
+    );
     if (!task) throw new ResourceNotFoundError("task not found");
 
     return task;
   };
 }
 
-function createTask(repo: TaskRepository) {
+function createTask(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
     const task = createTaskEntity({
       type: "new",
@@ -85,17 +95,19 @@ function createTask(repo: TaskRepository) {
       archivedAt: null,
     });
 
-    return await repo.createTask(task);
+    return await tracer.span("db.createTask", () => repo.createTask(task));
   };
 }
 
-function updateTask(repo: TaskRepository) {
+function updateTask(repo: TaskRepository, tracer: Tracer) {
   return async (
     userId: UserId,
     taskId: TaskId,
     params: UpdateTaskInputParams,
   ) => {
-    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
+    const task = await tracer.span("db.getTaskByUserIdAndTaskId", () =>
+      repo.getTaskByUserIdAndTaskId(userId, taskId),
+    );
     if (!task)
       throw new ResourceNotFoundError("updateTaskUsecase:task not found");
 
@@ -111,7 +123,9 @@ function updateTask(repo: TaskRepository) {
       ...params,
     });
 
-    const updateTask = await repo.updateTask(newTask);
+    const updateTask = await tracer.span("db.updateTask", () =>
+      repo.updateTask(newTask),
+    );
     if (!updateTask)
       throw new ResourceNotFoundError("updateTaskUsecasetask not found");
 
@@ -119,20 +133,24 @@ function updateTask(repo: TaskRepository) {
   };
 }
 
-function deleteTask(repo: TaskRepository) {
+function deleteTask(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, taskId: TaskId) => {
-    const task = await repo.getTaskByUserIdAndTaskId(userId, taskId);
+    const task = await tracer.span("db.getTaskByUserIdAndTaskId", () =>
+      repo.getTaskByUserIdAndTaskId(userId, taskId),
+    );
     if (!task) throw new ResourceNotFoundError("task not found");
 
-    await repo.deleteTask(task);
+    await tracer.span("db.deleteTask", () => repo.deleteTask(task));
 
     return;
   };
 }
 
-function archiveTask(repo: TaskRepository) {
+function archiveTask(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, taskId: TaskId) => {
-    const archivedTask = await repo.archiveTask(userId, taskId);
+    const archivedTask = await tracer.span("db.archiveTask", () =>
+      repo.archiveTask(userId, taskId),
+    );
     if (!archivedTask) throw new ResourceNotFoundError("task not found");
 
     return archivedTask;

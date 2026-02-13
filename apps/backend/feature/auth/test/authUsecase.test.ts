@@ -12,6 +12,7 @@ import { v7 } from "uuid";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { AuthError } from "../../../error";
+import { noopTracer } from "../../../lib/tracer";
 import type { UserRepository } from "../../user/userRepository";
 import type { AuthUsecase } from "../authUsecase";
 import { newAuthUsecase } from "../authUsecase";
@@ -62,6 +63,7 @@ describe("AuthUsecase", () => {
       JWT_SECRET,
       JWT_AUDIENCE,
       { google: mockVerifier },
+      noopTracer,
     );
   });
 

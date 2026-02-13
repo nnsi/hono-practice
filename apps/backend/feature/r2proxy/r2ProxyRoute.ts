@@ -1,3 +1,5 @@
+import { noopTracer } from "@backend/lib/tracer";
+
 import { newHonoWithErrorHandling } from "../../lib/honoWithErrorHandling";
 
 export const r2ProxyRoute = newHonoWithErrorHandling();
@@ -11,7 +13,8 @@ r2ProxyRoute.get("/:key{.+}", async (c) => {
   const key = c.req.param("key");
 
   // R2から画像を取得
-  const object = await bucket.get(key);
+  const tracer = c.get("tracer") ?? noopTracer;
+  const object = await tracer.span("r2.get", () => bucket.get(key));
 
   if (!object) {
     return c.text("Not Found", 404);

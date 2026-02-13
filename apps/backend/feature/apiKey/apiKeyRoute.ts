@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
+import { noopTracer } from "@backend/lib/tracer";
 import { mockPremiumMiddleware } from "@backend/middleware/mockPremiumMiddleware";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
 import { CreateApiKeyRequestSchema } from "@dtos/request";
@@ -30,8 +31,9 @@ export function createApiKeyRoute() {
   app.use("*", async (c, next) => {
     const db = c.env.DB;
 
+    const tracer = c.get("tracer") ?? noopTracer;
     const repo = newApiKeyRepository(db);
-    const uc = newApiKeyUsecase(repo);
+    const uc = newApiKeyUsecase(repo, tracer);
     const h = newApiKeyHandler(uc);
 
     c.set("h", h);

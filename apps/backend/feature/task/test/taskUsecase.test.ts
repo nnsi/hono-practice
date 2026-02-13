@@ -6,6 +6,7 @@ import {
   createUserId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -17,7 +18,7 @@ describe("TaskUsecase", () => {
 
   beforeEach(() => {
     repo = mock<TaskRepository>();
-    usecase = newTaskUsecase(instance(repo));
+    usecase = newTaskUsecase(instance(repo), noopTracer);
     reset(repo);
   });
 

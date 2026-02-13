@@ -7,6 +7,7 @@ import {
   createUserId,
 } from "@backend/domain";
 import { AppError, ConflictError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
@@ -34,22 +35,26 @@ export type UserUsecase = {
 export function newUserUsecase(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  tracer: Tracer,
 ): UserUsecase {
   const passwordVerifier = new MultiHashPasswordVerifier();
 
   return {
-    createUser: createUser(repo, passwordVerifier),
-    getUserById: getUserById(repo, userProviderRepo),
+    createUser: createUser(repo, passwordVerifier, tracer),
+    getUserById: getUserById(repo, userProviderRepo, tracer),
   };
 }
 
 function createUser(
   repo: UserRepository,
   passwordVerifier: MultiHashPasswordVerifier,
+  tracer: Tracer,
 ) {
   return async (params: CreateUserInputParams, secret: string) => {
     // ログインIDの重複チェック
-    const existingUser = await repo.getUserByLoginId(params.loginId);
+    const existingUser = await tracer.span("db.getUserByLoginId", () =>
+      repo.getUserByLoginId(params.loginId),
+    );
     if (existingUser) {
       throw new ConflictError("このログインIDは既に使用されています");
     }
@@ -63,7 +68,9 @@ function createUser(
       password: cryptedPassword,
     });
 
-    const user = await repo.createUser(newUser);
+    const user = await tracer.span("db.createUser", () =>
+      repo.createUser(newUser),
+    );
 
     const token = await sign(
       { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
@@ -77,12 +84,16 @@ function createUser(
 function getUserById(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<UserWithProviders> => {
-    const user = await repo.getUserById(userId);
+    const user = await tracer.span("db.getUserById", () =>
+      repo.getUserById(userId),
+    );
     if (!user) throw new AppError("user not found", 404);
-    const userProviders =
-      await userProviderRepo.getUserProvidersByUserId(userId);
+    const userProviders = await tracer.span("db.getUserProvidersByUserId", () =>
+      userProviderRepo.getUserProvidersByUserId(userId),
+    );
     const providers = userProviders.map((p) => p.provider);
 
     // providerEmailsオブジェクトを作成

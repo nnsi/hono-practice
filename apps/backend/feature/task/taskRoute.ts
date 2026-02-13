@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { createTaskId } from "@backend/domain";
+import { noopTracer } from "@backend/lib/tracer";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
@@ -25,8 +26,9 @@ export function createTaskRoute() {
   app.use("*", async (c, next) => {
     const db = c.env.DB;
 
+    const tracer = c.get("tracer") ?? noopTracer;
     const repo = newTaskRepository(db);
-    const uc = newTaskUsecase(repo);
+    const uc = newTaskUsecase(repo, tracer);
     const h = newTaskHandler(uc);
 
     c.set("h", h);
