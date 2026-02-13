@@ -257,7 +257,7 @@ describe("useActivityEdit", () => {
       });
 
       await act(async () => {
-        await result.current.onSubmit();
+        await result.current.actions.onSubmit();
       });
 
       await waitFor(() => {
@@ -281,7 +281,7 @@ describe("useActivityEdit", () => {
       });
 
       await act(async () => {
-        await result.current.onSubmit();
+        await result.current.actions.onSubmit();
       });
 
       expect(mockUpdateActivity).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe("useActivityEdit", () => {
       );
 
       await act(async () => {
-        await result.current.handleDelete();
+        await result.current.actions.onDelete();
       });
 
       await waitFor(() => {
@@ -324,7 +324,7 @@ describe("useActivityEdit", () => {
       );
 
       await act(async () => {
-        await result.current.handleDelete();
+        await result.current.actions.onDelete();
       });
 
       await waitFor(() => {
@@ -344,7 +344,7 @@ describe("useActivityEdit", () => {
       });
 
       await act(async () => {
-        await result.current.handleDelete();
+        await result.current.actions.onDelete();
       });
 
       expect(mockDeleteActivity).not.toHaveBeenCalled();
@@ -361,7 +361,7 @@ describe("useActivityEdit", () => {
       );
 
       act(() => {
-        result.current.handleAddKind();
+        result.current.actions.onAddKind();
       });
 
       expect(mockAppend).toHaveBeenCalledWith({ name: "", color: "" });
@@ -376,7 +376,7 @@ describe("useActivityEdit", () => {
       );
 
       act(() => {
-        result.current.handleRemoveKind(0);
+        result.current.actions.onRemoveKind(0);
       });
 
       expect(mockRemove).toHaveBeenCalledWith(0);
@@ -392,7 +392,7 @@ describe("useActivityEdit", () => {
         { wrapper },
       );
 
-      expect(result.current.isPending || false).toBe(false);
+      expect(result.current.formProps.isPending || false).toBe(false);
 
       // Note: 実際のisPendingの挙動はuseMutationの内部実装に依存するため、
       // このテストでは完全な動作を再現できない

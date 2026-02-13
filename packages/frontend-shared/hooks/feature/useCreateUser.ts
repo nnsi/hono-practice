@@ -94,10 +94,14 @@ export const createUseCreateUser = (deps: UseCreateUserDependencies) => {
 
     return {
       form,
-      onSubmit,
-      handleGoogleSuccess,
-      handleGoogleError,
-      isLoading: createUserApi.isPending || googleAuth.isPending,
+      stateProps: {
+        isLoading: createUserApi.isPending || googleAuth.isPending,
+      },
+      actions: {
+        onSubmit,
+        onGoogleSuccess: handleGoogleSuccess,
+        onGoogleError: handleGoogleError,
+      },
     };
   };
 };

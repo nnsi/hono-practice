@@ -76,13 +76,13 @@ describe("createUseTasksPage", () => {
   it("should initialize with default state", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
-    expect(result.current.showCompleted).toBe(true);
-    expect(result.current.showFuture).toBe(false);
-    expect(result.current.createDialogOpen).toBe(false);
-    expect(result.current.activeTab).toBe("active");
+    expect(result.current.stateProps.showCompleted).toBe(true);
+    expect(result.current.stateProps.showFuture).toBe(false);
+    expect(result.current.stateProps.createDialogOpen).toBe(false);
+    expect(result.current.stateProps.activeTab).toBe("active");
 
     await waitFor(() => {
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
   });
 
@@ -90,12 +90,12 @@ describe("createUseTasksPage", () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     act(() => {
-      result.current.refetch();
+      result.current.actions.onRefetch();
     });
 
     await waitFor(() => {
       expect(mockApi.getTasks).toHaveBeenCalledWith({ includeArchived: false });
-      expect(result.current.tasks).toEqual(mockActiveTasks);
+      expect(result.current.stateProps.tasks).toEqual(mockActiveTasks);
     });
   });
 
@@ -103,12 +103,14 @@ describe("createUseTasksPage", () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     act(() => {
-      result.current.setActiveTab("archived");
+      result.current.actions.onActiveTabChange("archived");
     });
 
     await waitFor(() => {
       expect(mockApi.getArchivedTasks).toHaveBeenCalled();
-      expect(result.current.archivedTasks).toEqual(mockArchivedTasks);
+      expect(result.current.stateProps.archivedTasks).toEqual(
+        mockArchivedTasks,
+      );
     });
   });
 
@@ -116,48 +118,48 @@ describe("createUseTasksPage", () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     await waitFor(() => {
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
 
     act(() => {
-      result.current.setShowCompleted(true);
+      result.current.actions.onShowCompletedChange(true);
     });
 
-    expect(result.current.showCompleted).toBe(true);
+    expect(result.current.stateProps.showCompleted).toBe(true);
   });
 
   it("should toggle show future", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     await waitFor(() => {
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
 
     act(() => {
-      result.current.setShowFuture(true);
+      result.current.actions.onShowFutureChange(true);
     });
 
-    expect(result.current.showFuture).toBe(true);
+    expect(result.current.stateProps.showFuture).toBe(true);
   });
 
   it("should manage create dialog state", async () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     await waitFor(() => {
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
 
     act(() => {
-      result.current.setCreateDialogOpen(true);
+      result.current.actions.onCreateDialogOpenChange(true);
     });
 
-    expect(result.current.createDialogOpen).toBe(true);
+    expect(result.current.stateProps.createDialogOpen).toBe(true);
 
     act(() => {
-      result.current.setCreateDialogOpen(false);
+      result.current.actions.onCreateDialogOpenChange(false);
     });
 
-    expect(result.current.createDialogOpen).toBe(false);
+    expect(result.current.stateProps.createDialogOpen).toBe(false);
   });
 
   it("should handle API errors gracefully", async () => {
@@ -171,12 +173,12 @@ describe("createUseTasksPage", () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     act(() => {
-      result.current.refetch();
+      result.current.actions.onRefetch();
     });
 
     await waitFor(() => {
-      expect(result.current.tasks).toEqual([]);
-      expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.stateProps.tasks).toEqual([]);
+      expect(result.current.stateProps.isTasksLoading).toBe(false);
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -191,13 +193,13 @@ describe("createUseTasksPage", () => {
     const { result } = renderHook(() => createUseTasksPage({ api: mockApi }));
 
     await act(async () => {
-      await result.current.refetch();
+      await result.current.actions.onRefetch();
     });
 
     expect(mockApi.getTasks).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      await result.current.refetch();
+      await result.current.actions.onRefetch();
     });
 
     expect(mockApi.getTasks).toHaveBeenCalledTimes(2);

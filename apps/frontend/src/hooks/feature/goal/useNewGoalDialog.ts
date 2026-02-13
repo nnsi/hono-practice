@@ -30,5 +30,21 @@ export const useNewGoalDialog = (
     },
   });
 
-  return useNewGoalDialogBase(activities);
+  const { form, stateProps, actions, validationSchema } =
+    useNewGoalDialogBase(activities);
+
+  // 後方互換性を維持
+  return {
+    form,
+    ...stateProps,
+    // 旧API互換のアクション
+    handleSubmit: actions.onSubmit,
+    // コンポーネント互換性のためにcreateGoalをシミュレート
+    createGoal: { isPending: stateProps.isPending },
+    // 検証スキーマ
+    validationSchema,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };

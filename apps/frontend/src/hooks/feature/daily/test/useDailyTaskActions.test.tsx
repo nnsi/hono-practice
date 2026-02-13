@@ -37,22 +37,26 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => {
         const deleteTaskMock = useSyncedTask.useDeleteTask();
 
         return {
-          createDialogOpen,
-          setCreateDialogOpen,
-          updateTask: updateTaskMock,
-          deleteTask: deleteTaskMock,
-          handleToggleTaskDone: (task: GetTaskResponse) => {
-            const doneDate = task.doneDate
-              ? null
-              : date.toISOString().split("T")[0];
-
-            updateTaskMock.mutate({
-              id: task.id,
-              data: { doneDate },
-            });
+          stateProps: {
+            createDialogOpen,
+            updateTaskPending: updateTaskMock.isPending || false,
+            deleteTaskPending: deleteTaskMock.isPending || false,
           },
-          handleDeleteTask: (task: GetTaskResponse) => {
-            deleteTaskMock.mutate(task.id);
+          actions: {
+            onCreateDialogOpenChange: setCreateDialogOpen,
+            onToggleTaskDone: (task: GetTaskResponse) => {
+              const doneDate = task.doneDate
+                ? null
+                : date.toISOString().split("T")[0];
+
+              updateTaskMock.mutate({
+                id: task.id,
+                data: { doneDate },
+              });
+            },
+            onDeleteTask: (task: GetTaskResponse) => {
+              deleteTaskMock.mutate(task.id);
+            },
           },
         };
       };

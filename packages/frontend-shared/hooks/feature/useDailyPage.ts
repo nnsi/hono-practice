@@ -27,6 +27,33 @@ export type DailyPageDependencies = {
   tasksData?: GetTasksResponse; // React Queryから渡されるタスクデータ
 };
 
+// Grouped return types for better organization
+export type DailyPageStateProps = {
+  date: Date;
+  editDialogOpen: boolean;
+  editTargetLog: GetActivityLogResponse | null;
+  createDialogOpen: boolean;
+  activityLogs: GetActivityLogResponse[];
+  isLoading: boolean;
+  tasks: GetTasksResponse | null;
+  isTasksLoading: boolean;
+  mergedActivityLogs: GetActivityLogResponse[];
+  isOnline: boolean;
+};
+
+export type DailyPageActions = {
+  onDateChange: (date: Date) => void;
+  onActivityLogClick: (log: GetActivityLogResponse) => void;
+  onActivityLogEditDialogChange: (open: boolean) => void;
+  onCreateDialogOpenChange: (open: boolean) => void;
+  isOfflineData: (log: GetActivityLogResponse) => boolean;
+};
+
+export type UseDailyPageReturn = {
+  stateProps: DailyPageStateProps;
+  actions: DailyPageActions;
+};
+
 export function createUseDailyPage(dependencies: DailyPageDependencies) {
   const { network, dateStore, activityLogsData, tasksData } = dependencies;
   const { date, setDate } = dateStore;
@@ -70,25 +97,24 @@ export function createUseDailyPage(dependencies: DailyPageDependencies) {
   };
 
   return {
-    // State
-    date,
-    setDate,
-    editDialogOpen,
-    editTargetLog,
-    createDialogOpen,
-    setCreateDialogOpen,
-
-    // Data
-    activityLogs,
-    isLoading,
-    tasks: mergedTasks,
-    isTasksLoading,
-    mergedActivityLogs,
-    isOfflineData,
-    isOnline,
-
-    // Handlers
-    handleActivityLogClick,
-    handleActivityLogEditDialogChange,
+    stateProps: {
+      date,
+      editDialogOpen,
+      editTargetLog,
+      createDialogOpen,
+      activityLogs,
+      isLoading,
+      tasks: mergedTasks,
+      isTasksLoading,
+      mergedActivityLogs,
+      isOnline,
+    } as DailyPageStateProps,
+    actions: {
+      onDateChange: setDate,
+      onActivityLogClick: handleActivityLogClick,
+      onActivityLogEditDialogChange: handleActivityLogEditDialogChange,
+      onCreateDialogOpenChange: setCreateDialogOpen,
+      isOfflineData,
+    } as DailyPageActions,
   };
 }

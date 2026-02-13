@@ -93,21 +93,20 @@ export const createUseNewGoalSlot = (deps: UseNewGoalSlotDependencies) => {
     };
 
     return {
-      // State
-      isCreating,
+      stateProps: {
+        isCreating,
+        selectedActivity,
+        quantityUnit,
+        isPending: createGoal.isPending,
+      },
+      actions: {
+        onSubmit: handleSubmit,
+        onStartCreating: handleStartCreating,
+        onActivityChange: handleActivityChange,
+        onTargetQuantityChange: handleTargetQuantityChange,
+        onCancel: handleCancel,
+      },
       form,
-      selectedActivity,
-      quantityUnit,
-
-      // Mutations
-      createGoal,
-
-      // Handlers
-      handleSubmit,
-      handleStartCreating,
-      handleActivityChange,
-      handleTargetQuantityChange,
-      handleCancel,
     };
   };
 };

@@ -9,6 +9,9 @@ tag = "v1"
 new_sqlite_classes = ["KeyValueDO"]
 
 # stg環境
+[[env.stg.tail_consumers]]
+service = "actiko-tail-worker-stg"
+
 [env.stg.vars]
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"
@@ -18,6 +21,9 @@ name = "RATE_LIMIT_DO"
 class_name = "KeyValueDO"
 
 # production環境
+[[env.production.tail_consumers]]
+service = "actiko-tail-worker-prod"
+
 [env.production.vars]
 NODE_ENV = "production"
 STORAGE_TYPE = "r2"

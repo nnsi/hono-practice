@@ -7,6 +7,8 @@ import type { UserId } from "../domain";
 import type { Subscription } from "../domain/subscription";
 import type { KeyValueStore } from "../infra/kv/kv";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
+import type { Logger } from "../lib/logger";
+import type { Tracer } from "../lib/tracer";
 
 export type JwtPayload = {
   userId: string;
@@ -21,6 +23,8 @@ export type AppContext = {
     userId: UserId;
     user?: { id: string };
     subscription?: Subscription;
+    logger: Logger;
+    tracer: Tracer;
   };
   Bindings: Config & {
     DB: QueryExecutor;

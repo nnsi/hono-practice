@@ -17,6 +17,33 @@ export type ActivityRegistPageDependencies = {
   activities?: GetActivityResponse[]; // 外部から渡されるactivities
 };
 
+// Grouped return types for better organization
+export type ActivityRegistPageStateProps = {
+  date: Date;
+  activities: GetActivityResponse[];
+  open: boolean;
+  selectedActivity: GetActivityResponse | null;
+  editModalOpen: boolean;
+  editTargetActivity: GetActivityResponse | null;
+};
+
+export type ActivityRegistPageActions = {
+  onDateChange: (date: Date) => void;
+  onActivityClick: (activity: GetActivityResponse) => void;
+  onNewActivityClick: () => void;
+  onEditClick: (activity: GetActivityResponse) => void;
+  onNewActivityDialogChange: (open: boolean) => Promise<void>;
+  onActivityLogCreateDialogChange: (open: boolean) => Promise<void>;
+  onActivityLogCreateSuccess: () => void;
+  onActivityEditDialogClose: () => void;
+  hasActivityLogs: (activityId: string) => boolean;
+};
+
+export type UseActivityRegistPageReturn = {
+  stateProps: ActivityRegistPageStateProps;
+  actions: ActivityRegistPageActions;
+};
+
 export function createUseActivityRegistPage(
   dependencies: ActivityRegistPageDependencies,
 ) {
@@ -97,23 +124,24 @@ export function createUseActivityRegistPage(
   );
 
   return {
-    // 状態
-    date,
-    setDate,
-    activities,
-    hasActivityLogs,
-    open,
-    selectedActivity,
-    editModalOpen,
-    editTargetActivity,
-
-    // ハンドラー
-    handleActivityClick,
-    handleNewActivityClick,
-    handleEditClick,
-    handleNewActivityDialogChange,
-    handleActivityLogCreateDialogChange,
-    handleActivityLogCreateSuccess,
-    handleActivityEditDialogClose,
+    stateProps: {
+      date,
+      activities,
+      open,
+      selectedActivity,
+      editModalOpen,
+      editTargetActivity,
+    } as ActivityRegistPageStateProps,
+    actions: {
+      onDateChange: setDate,
+      onActivityClick: handleActivityClick,
+      onNewActivityClick: handleNewActivityClick,
+      onEditClick: handleEditClick,
+      onNewActivityDialogChange: handleNewActivityDialogChange,
+      onActivityLogCreateDialogChange: handleActivityLogCreateDialogChange,
+      onActivityLogCreateSuccess: handleActivityLogCreateSuccess,
+      onActivityEditDialogClose: handleActivityEditDialogClose,
+      hasActivityLogs,
+    } as ActivityRegistPageActions,
   };
 }

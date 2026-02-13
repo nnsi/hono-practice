@@ -14,6 +14,8 @@
     "fix": "biome check . --write --unsafe",
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
+    "deploy:tail-stg": "cd apps/tail-worker && npx wrangler deploy --env stg",
+    "deploy:tail-prod": "cd apps/tail-worker && npx wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",

@@ -29,6 +29,6 @@
       "@packages/types": ["packages/types/index.ts"]
     }
   },
-  "exclude": ["node_modules", "apps/mobile"],
+  "exclude": ["node_modules", "apps/mobile", "apps/tail-worker"],
   "extends": "expo/tsconfig.base"
 }

@@ -203,7 +203,11 @@ describe("useAuthInitializer", () => {
   it("正しい値を返す", () => {
     const { result } = renderHook(() => useAuthInitializer());
 
-    expect(result.current).toEqual({
+    // 後方互換性のためにスプレッドされた値と、新しいstatePropsの両方が含まれる
+    expect(result.current.isInitialized).toBe(true);
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.requestStatus).toBe("idle");
+    expect(result.current.stateProps).toEqual({
       isInitialized: true,
       user: mockUser,
       requestStatus: "idle",

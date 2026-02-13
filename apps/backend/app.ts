@@ -15,8 +15,11 @@ import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import { authMiddleware } from "./middleware/authMiddleware";
+import { loggerMiddleware } from "./middleware/loggerMiddleware";
 
 export const app = newHonoWithErrorHandling();
+
+app.use("*", loggerMiddleware());
 
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";

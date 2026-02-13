@@ -30,30 +30,31 @@ export const useTasksPage = () => {
 
   // Use the common hook
   const commonResult = createUseTasksPage(dependencies);
+  const { stateProps, actions } = commonResult;
 
   // Use React Query data for tasks
   const tasks =
-    commonResult.activeTab === "active" ? activeTasksQuery.data : undefined;
+    stateProps.activeTab === "active" ? activeTasksQuery.data : undefined;
   const archivedTasks =
-    commonResult.activeTab === "archived" ? archivedTasksQuery.data : undefined;
+    stateProps.activeTab === "archived" ? archivedTasksQuery.data : undefined;
 
   // Re-calculate groupedTasks with the actual React Query data
   const groupedTasks = useMemo(() => {
     return groupTasksByTimeline(tasks || [], {
-      showCompleted: commonResult.showCompleted,
-      showFuture: commonResult.showFuture,
+      showCompleted: stateProps.showCompleted,
+      showFuture: stateProps.showFuture,
       completedInTheirCategories: true,
     });
-  }, [tasks, commonResult.showCompleted, commonResult.showFuture]);
+  }, [tasks, stateProps.showCompleted, stateProps.showFuture]);
 
   // 完了済みセクションに表示されるタスク数を計算（表示・非表示に関わらず）
   const allGroupedTasks = useMemo(() => {
     return groupTasksByTimeline(tasks || [], {
       showCompleted: true, // 常に完了済みを含める
-      showFuture: commonResult.showFuture,
+      showFuture: stateProps.showFuture,
       completedInTheirCategories: true,
     });
-  }, [tasks, commonResult.showFuture]);
+  }, [tasks, stateProps.showFuture]);
 
   // Re-calculate hasAnyTasks with the actual groupedTasks
   const hasAnyTasks = Object.values(groupedTasks).some(
@@ -64,7 +65,13 @@ export const useTasksPage = () => {
 
   // Override with React Query data for consistency
   return {
-    ...commonResult,
+    // statePropsからの直接公開（後方互換性）
+    ...stateProps,
+    // 旧API互換のセッター
+    setShowCompleted: actions.onShowCompletedChange,
+    setShowFuture: actions.onShowFutureChange,
+    setCreateDialogOpen: actions.onCreateDialogOpenChange,
+    setActiveTab: actions.onActiveTabChange,
     // Use React Query's loading states
     isTasksLoading: activeTasksQuery.isLoading,
     isArchivedTasksLoading: archivedTasksQuery.isLoading,
@@ -75,5 +82,8 @@ export const useTasksPage = () => {
     allGroupedTasks,
     hasAnyTasks,
     hasAnyArchivedTasks,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
   };
 };

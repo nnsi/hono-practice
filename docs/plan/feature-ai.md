@@ -360,6 +360,195 @@ export const configSchema = z.object({
 
 ---
 
+## プロンプト・ツール詳細設計
+
+### システムプロンプト
+
+```typescript
+const systemPrompt = `あなたはユーザーの活動記録を支援するアシスタントです。
+
+## 役割
+ユーザーの音声入力（自然言語）から活動記録を作成します。
+
+## 処理フロー
+1. 入力テキストから「活動名」「数量」「日時」を抽出
+2. findActivities ツールでユーザーの既存Activity一覧を取得
+3. 最も適切なActivityを選択（見つからなければ候補を提案）
+4. createActivityLog ツールで記録を作成
+
+## 抽出ルール
+- 数量: 「30分」→30、「1時間半」→90、「5km」→5
+- 日時: 「さっき」「今日」→今日、「昨日」→昨日、指定なし→今日
+- 活動名: 動詞を名詞化（「走った」→「ランニング」「読んだ」→「読書」）
+
+## 出力形式
+必ずcreateActivityLogツールを呼び出して記録を作成してください。
+Activityが見つからない場合のみ、ユーザーに確認を返してください。`;
+```
+
+### ツール詳細実装
+
+#### findActivitiesTool
+
+```typescript
+const findActivitiesTool = createTool({
+  id: "find-activities",
+  description: "ユーザーが登録している全Activity一覧を取得し、入力に最も近いものを特定する",
+  inputSchema: z.object({
+    searchKeyword: z.string().describe("検索キーワード（例：ランニング、読書、勉強）"),
+  }),
+  outputSchema: z.object({
+    matchedActivity: z.object({
+      id: z.string(),
+      name: z.string(),
+      quantityLabel: z.string().nullable(),  // "分", "km", "ページ"など
+      kinds: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+      })),
+    }).nullable(),
+    allActivities: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+    })),
+  }),
+  execute: async ({ searchKeyword }, { userId, activityRepo }) => {
+    const activities = await activityRepo.getActivitiesByUserId(userId);
+
+    // 名前マッチング（部分一致、類似度）
+    const matched = activities.find(a =>
+      a.name.includes(searchKeyword) ||
+      searchKeyword.includes(a.name)
+    );
+
+    return {
+      matchedActivity: matched ?? null,
+      allActivities: activities.map(a => ({ id: a.id, name: a.name })),
+    };
+  },
+});
+```
+
+#### createActivityLogTool
+
+```typescript
+const createActivityLogTool = createTool({
+  id: "create-activity-log",
+  description: "活動記録を作成する。findActivitiesで取得したActivityIDを使用すること",
+  inputSchema: z.object({
+    activityId: z.string().describe("Activity ID（findActivitiesで取得）"),
+    activityKindId: z.string().optional().describe("Activity Kind ID"),
+    quantity: z.number().describe("数量（分数、距離、ページ数など）"),
+    date: z.string().describe("日付（YYYY-MM-DD形式、今日なら今日の日付）"),
+    memo: z.string().optional().describe("メモ（元の入力テキストなど）"),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    activityLog: z.object({
+      id: z.string(),
+      activityName: z.string(),
+      quantity: z.number(),
+      date: z.string(),
+    }).optional(),
+    error: z.string().optional(),
+  }),
+  execute: async (input, { userId, activityLogRepo, activityRepo }) => {
+    const activity = await activityRepo.getActivityById(input.activityId);
+    if (!activity) {
+      return { success: false, error: "Activity not found" };
+    }
+
+    const log = await activityLogRepo.createActivityLog({
+      userId,
+      activityId: input.activityId,
+      activityKindId: input.activityKindId,
+      quantity: input.quantity,
+      date: new Date(input.date),
+      memo: input.memo,
+    });
+
+    return {
+      success: true,
+      activityLog: {
+        id: log.id,
+        activityName: activity.name,
+        quantity: input.quantity,
+        date: input.date,
+      },
+    };
+  },
+});
+```
+
+### 入力→出力の例
+
+| 音声入力 | AI解析 | 結果 |
+|---------|--------|------|
+| 「30分ランニングした」 | activity=ランニング, qty=30, date=今日 | ✅ ログ作成 |
+| 「昨日2時間勉強した」 | activity=勉強, qty=120, date=昨日 | ✅ ログ作成 |
+| 「5キロ走った」 | activity=ランニング, qty=5, date=今日 | ✅ ログ作成 |
+| 「本読んだ」 | activity=読書, qty=?, date=今日 | ❓ 数量を確認 |
+| 「泳いだ」 | activity=未登録 | ❓ Activity選択を確認 |
+
+### 設計ポイント
+
+1. **ツールは2つだけ** - シンプルに保つ（検索→作成）
+2. **今日の日付を渡す** - Agentは現在日時を知らないので、contextで渡す
+3. **数量が不明な場合** - Agentが確認を返すようプロンプトで指示
+4. **高速モデル使用** - 音声入力なのでレスポンス速度重視
+
+---
+
+## フロントエンド: 音声認識
+
+### Web Speech API
+
+```typescript
+const useSpeechRecognition = () => {
+  const [transcript, setTranscript] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('お使いのブラウザは音声認識に対応していません');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.interimResults = true;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (e) => {
+      setTranscript(e.results[0][0].transcript);
+    };
+
+    recognition.start();
+  }, []);
+
+  return { transcript, isListening, startListening };
+};
+```
+
+### 対応ブラウザ
+
+| ブラウザ | 対応 |
+|---------|------|
+| Android Chrome | ✅ |
+| iOS Safari | ✅ |
+| デスクトップChrome | ✅ |
+| Firefox | ❌ |
+
+### 注意点
+
+- **HTTPS必須** - ローカル開発時は`localhost`でもOK
+- **マイク許可が必要** - ユーザーに許可ダイアログが表示される
+- **オフライン不可** - Googleの音声認識サーバーを使用
+
+---
+
 ## 修正対象ファイル
 
 ### 新規作成

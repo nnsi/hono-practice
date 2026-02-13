@@ -257,24 +257,17 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
 };
 
 export const ActivityStatsPage: React.FC = () => {
-  const {
-    month,
-    stats,
-    isLoading,
-    handlePrevMonth,
-    handleNextMonth,
-    getGoalLinesForActivity,
-    generateAllDatesForMonth,
-  } = useActivityStats();
+  const { stateProps, actions } = useActivityStats();
+  const { month, stats, isLoading } = stateProps;
 
   return (
     <div>
       <div className="flex items-center justify-center gap-2 mb-3">
-        <button type="button" onClick={handlePrevMonth} className="ml-1">
+        <button type="button" onClick={actions.onPrevMonth} className="ml-1">
           <ChevronLeftIcon />
         </button>
         <span>{dayjs(month).format("YYYY年MM月")}</span>
-        <button type="button" onClick={handleNextMonth}>
+        <button type="button" onClick={actions.onNextMonth}>
           <ChevronRightIcon />
         </button>
       </div>
@@ -282,7 +275,7 @@ export const ActivityStatsPage: React.FC = () => {
       <div className="space-y-6">
         {stats?.map((stat) => {
           // 月の全日付を生成
-          const allDates = generateAllDatesForMonth();
+          const allDates = actions.generateAllDatesForMonth();
 
           // 日付ごとに各kindの合計値を集計
           const data = allDates.map((date) => {
@@ -366,7 +359,7 @@ export const ActivityStatsPage: React.FC = () => {
                     }))}
                     stackId="a"
                     showLegend={stat.kinds[0].name !== "未指定"}
-                    goalLines={getGoalLinesForActivity(stat.id)}
+                    goalLines={actions.getGoalLinesForActivity(stat.id)}
                   />
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
@@ -401,7 +394,7 @@ export const ActivityStatsPage: React.FC = () => {
                             ]}
                             height={250}
                             showLegend={false}
-                            goalLines={getGoalLinesForActivity(stat.id)}
+                            goalLines={actions.getGoalLinesForActivity(stat.id)}
                           />
                         </div>
                       );

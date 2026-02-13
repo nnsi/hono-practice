@@ -10,6 +10,24 @@ type UseDailyActivityCreateOptions = {
   onSuccess?: () => void;
 };
 
+// Grouped return types for better organization
+export type DailyActivityCreateStateProps = {
+  selectedActivity: GetActivityResponse | null;
+  activityDialogOpen: boolean;
+  activities: GetActivityResponse[] | undefined;
+};
+
+export type DailyActivityCreateActions = {
+  onActivitySelect: (activity: GetActivityResponse) => void;
+  onActivityDialogClose: (open: boolean) => void;
+  onSuccess: () => void;
+};
+
+export type UseDailyActivityCreateReturn = {
+  stateProps: DailyActivityCreateStateProps;
+  actions: DailyActivityCreateActions;
+};
+
 export const createUseDailyActivityCreate = (
   options: UseDailyActivityCreateOptions,
 ) => {
@@ -43,12 +61,16 @@ export const createUseDailyActivityCreate = (
     };
 
     return {
-      selectedActivity,
-      activityDialogOpen,
-      activities,
-      handleActivitySelect,
-      handleActivityDialogClose,
-      handleSuccess,
+      stateProps: {
+        selectedActivity,
+        activityDialogOpen,
+        activities,
+      } as DailyActivityCreateStateProps,
+      actions: {
+        onActivitySelect: handleActivitySelect,
+        onActivityDialogClose: handleActivityDialogClose,
+        onSuccess: handleSuccess,
+      } as DailyActivityCreateActions,
     };
   };
 };

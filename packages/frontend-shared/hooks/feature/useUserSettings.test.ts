@@ -67,9 +67,9 @@ describe("createUseUserSettings", () => {
       }),
     );
 
-    expect(result.current.user).toEqual(mockUser);
-    expect(result.current.isGoogleLinked).toBe(false);
-    expect(result.current.googleEmail).toBeUndefined();
+    expect(result.current.stateProps.user).toEqual(mockUser);
+    expect(result.current.stateProps.isGoogleLinked).toBe(false);
+    expect(result.current.stateProps.googleEmail).toBeUndefined();
   });
 
   it("should detect Google linked account", () => {
@@ -84,8 +84,8 @@ describe("createUseUserSettings", () => {
       }),
     );
 
-    expect(result.current.isGoogleLinked).toBe(true);
-    expect(result.current.googleEmail).toBe("test@gmail.com");
+    expect(result.current.stateProps.isGoogleLinked).toBe(true);
+    expect(result.current.stateProps.googleEmail).toBe("test@gmail.com");
   });
 
   it("should handle successful logout", async () => {
@@ -99,7 +99,7 @@ describe("createUseUserSettings", () => {
     );
 
     await act(async () => {
-      await result.current.handleLogout();
+      await result.current.actions.onLogout();
     });
 
     expect(mockAuth.logout).toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe("createUseUserSettings", () => {
     );
 
     await act(async () => {
-      await result.current.handleLogout();
+      await result.current.actions.onLogout();
     });
 
     expect(mockNavigation.navigate).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe("createUseUserSettings", () => {
     const credentialResponse = { credential: "google-credential" };
 
     await act(async () => {
-      await result.current.handleGoogleLink(credentialResponse);
+      await result.current.actions.onGoogleLink(credentialResponse);
     });
 
     expect(mockApi.linkGoogleAccount).toHaveBeenCalledWith("google-credential");
@@ -170,7 +170,7 @@ describe("createUseUserSettings", () => {
     const credentialResponse = {};
 
     await act(async () => {
-      await result.current.handleGoogleLink(credentialResponse);
+      await result.current.actions.onGoogleLink(credentialResponse);
     });
 
     expect(mockApi.linkGoogleAccount).not.toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe("createUseUserSettings", () => {
     const credentialResponse = { credential: "google-credential" };
 
     await act(async () => {
-      await result.current.handleGoogleLink(credentialResponse);
+      await result.current.actions.onGoogleLink(credentialResponse);
     });
 
     expect(mockNotification.toast).toHaveBeenCalledWith({
@@ -218,7 +218,7 @@ describe("createUseUserSettings", () => {
     );
 
     act(() => {
-      result.current.handleGoogleLinkError();
+      result.current.actions.onGoogleLinkError();
     });
 
     expect(mockNotification.toast).toHaveBeenCalledWith({
@@ -239,7 +239,7 @@ describe("createUseUserSettings", () => {
     );
 
     await act(async () => {
-      await result.current.handleDeleteAccount();
+      await result.current.actions.onDeleteAccount();
     });
 
     expect(mockNotification.confirm).toHaveBeenCalledWith(
@@ -267,7 +267,7 @@ describe("createUseUserSettings", () => {
     );
 
     await act(async () => {
-      await result.current.handleDeleteAccount();
+      await result.current.actions.onDeleteAccount();
     });
 
     expect(mockAuth.logout).not.toHaveBeenCalled();
@@ -291,7 +291,7 @@ describe("createUseUserSettings", () => {
     const credentialResponse = { credential: "google-credential" };
 
     await act(async () => {
-      await result.current.handleGoogleLink(credentialResponse);
+      await result.current.actions.onGoogleLink(credentialResponse);
     });
 
     expect(apiWithoutInvalidate.linkGoogleAccount).toHaveBeenCalled();
@@ -310,7 +310,7 @@ describe("createUseUserSettings", () => {
 
     await act(async () => {
       try {
-        await result.current.handleMobileGoogleLink();
+        await result.current.actions.onMobileGoogleLink();
       } catch (_error) {
         // Expected to fail
       }

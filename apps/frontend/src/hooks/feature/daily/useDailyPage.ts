@@ -80,18 +80,28 @@ export const useDailyPage = () => {
   );
 
   // Use the common hook
-  const result = createUseDailyPage(dependencies);
+  const { stateProps, actions } = createUseDailyPage(dependencies);
 
   // Map back to the expected shape with React Query integration
   return {
-    ...result,
+    // Expose state from stateProps
+    date: stateProps.date,
+    setDate,
+    editDialogOpen: stateProps.editDialogOpen,
+    editTargetLog: stateProps.editTargetLog,
+    createDialogOpen: stateProps.createDialogOpen,
+    setCreateDialogOpen: actions.onCreateDialogOpenChange,
     // Use mergedActivityLogs from the common hook instead of raw React Query data
-    // This includes offline data and handles deletions properly
-    activityLogs: result.mergedActivityLogs,
-    // Pass through the original data to ensure compatibility
-    mergedActivityLogs: result.mergedActivityLogs,
+    activityLogs: stateProps.mergedActivityLogs,
+    mergedActivityLogs: stateProps.mergedActivityLogs,
     isLoading: activityLogsQuery.isLoading,
-    tasks: result.tasks, // result.tasksを使用してcreateUseDailyPageの結果を反映
+    tasks: stateProps.tasks,
     isTasksLoading: tasksQuery.isLoading,
+    isOfflineData: actions.isOfflineData,
+    handleActivityLogClick: actions.onActivityLogClick,
+    handleActivityLogEditDialogChange: actions.onActivityLogEditDialogChange,
+    // Also expose the new grouped API for gradual migration
+    stateProps,
+    actions,
   };
 };

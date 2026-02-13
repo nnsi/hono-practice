@@ -42,6 +42,35 @@ export type TaskGroupingOptions = {
   completedInTheirCategories?: boolean; // If true, completed tasks stay in their original categories
 };
 
+// Grouped return types for better organization
+export type TasksPageStateProps = {
+  showCompleted: boolean;
+  showFuture: boolean;
+  createDialogOpen: boolean;
+  activeTab: "active" | "archived";
+  tasks: TaskItem[] | undefined;
+  isTasksLoading: boolean;
+  archivedTasks: TaskItem[];
+  isArchivedTasksLoading: boolean;
+  groupedTasks: GroupedTasks;
+  hasAnyTasks: boolean;
+  hasAnyArchivedTasks: boolean;
+};
+
+export type TasksPageActions = {
+  onShowCompletedChange: (show: boolean) => void;
+  onShowFutureChange: (show: boolean) => void;
+  onCreateDialogOpenChange: (open: boolean) => void;
+  onActiveTabChange: (tab: "active" | "archived") => Promise<void>;
+  onRefetch: () => Promise<void>;
+  onRefetchArchived: () => Promise<void>;
+};
+
+export type UseTasksPageReturn = {
+  stateProps: TasksPageStateProps;
+  actions: TasksPageActions;
+};
+
 export function createUseTasksPage(dependencies: TasksPageDependencies) {
   const { api } = dependencies;
 
@@ -112,28 +141,27 @@ export function createUseTasksPage(dependencies: TasksPageDependencies) {
   const hasAnyArchivedTasks = archivedTasks && archivedTasks.length > 0;
 
   return {
-    // State
-    showCompleted,
-    setShowCompleted,
-    showFuture,
-    setShowFuture,
-    createDialogOpen,
-    setCreateDialogOpen,
-    activeTab,
-    setActiveTab: handleSetActiveTab,
-
-    // Data
-    tasks,
-    isTasksLoading,
-    archivedTasks,
-    isArchivedTasksLoading,
-    groupedTasks,
-    hasAnyTasks,
-    hasAnyArchivedTasks,
-
-    // Actions
-    refetch: fetchActiveTasks,
-    refetchArchived: fetchArchivedTasks,
+    stateProps: {
+      showCompleted,
+      showFuture,
+      createDialogOpen,
+      activeTab,
+      tasks,
+      isTasksLoading,
+      archivedTasks,
+      isArchivedTasksLoading,
+      groupedTasks,
+      hasAnyTasks,
+      hasAnyArchivedTasks,
+    } as TasksPageStateProps,
+    actions: {
+      onShowCompletedChange: setShowCompleted,
+      onShowFutureChange: setShowFuture,
+      onCreateDialogOpenChange: setCreateDialogOpen,
+      onActiveTabChange: handleSetActiveTab,
+      onRefetch: fetchActiveTasks,
+      onRefetchArchived: fetchArchivedTasks,
+    } as TasksPageActions,
   };
 }
 

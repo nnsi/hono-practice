@@ -144,16 +144,17 @@ export function createUseUserSettings(dependencies: UserSettingsDependencies) {
   };
 
   return {
-    // User info
-    user,
-    isGoogleLinked,
-    googleEmail,
-
-    // Handlers
-    handleLogout,
-    handleGoogleLink,
-    handleGoogleLinkError,
-    handleMobileGoogleLink,
-    handleDeleteAccount,
+    stateProps: {
+      user,
+      isGoogleLinked,
+      googleEmail,
+    },
+    actions: {
+      onLogout: handleLogout,
+      onGoogleLink: handleGoogleLink,
+      onGoogleLinkError: handleGoogleLinkError,
+      onMobileGoogleLink: handleMobileGoogleLink,
+      onDeleteAccount: handleDeleteAccount,
+    },
   };
 }

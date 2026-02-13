@@ -12,9 +12,20 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();
 
   app.onError((err, c) => {
-    // アクセストークンの認証エラーはconsole.errorを出力しない
+    // アクセストークンの認証エラーはログ不要
     if (err instanceof UnauthorizedError) {
       return c.json({ message: err.message }, 401);
+    }
+
+    // 構造化ログでエラーを記録（loggerMiddleware適用後のみ）
+    try {
+      const logger = c.get("logger");
+      logger.error("Request error", {
+        error: err.message,
+        type: err.constructor.name,
+      });
+    } catch {
+      // loggerMiddleware適用前のエラーはフォールバック
     }
 
     if (err instanceof AppError) {

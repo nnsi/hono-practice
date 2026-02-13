@@ -61,15 +61,18 @@ export const useLogin = () => {
   };
 
   // Use the common hook
-  const result = createUseLogin(dependencies);
+  const { stateProps, actions } = createUseLogin(dependencies);
 
   // Return the form object separately for compatibility with existing components
   return {
     form,
-    handleLogin: result.handleLogin, // This is already wrapped by handleSubmit in createUseLogin
-    handleGoogleSuccess: result.handleGoogleSuccess,
-    handleGoogleError: result.handleGoogleError,
-    handleMobileGoogleLogin: result.handleMobileGoogleLogin,
-    isSubmitting: result.isSubmitting,
+    handleLogin: actions.onLogin, // This is already wrapped by handleSubmit in createUseLogin
+    handleGoogleSuccess: actions.onGoogleSuccess,
+    handleGoogleError: actions.onGoogleError,
+    handleMobileGoogleLogin: actions.onMobileGoogleLogin,
+    isSubmitting: stateProps.isSubmitting,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
   };
 };

@@ -20,7 +20,7 @@ export const useActivityRegistPage = () => {
     });
   };
 
-  const result = createUseActivityRegistPage({
+  const { stateProps, actions } = createUseActivityRegistPage({
     dateStore: {
       date,
       setDate,
@@ -32,20 +32,29 @@ export const useActivityRegistPage = () => {
     cache: {
       invalidateActivityCache,
     },
-    activities: activities || [], // activitiesを直接渡す
+    activities: activities || [],
   });
 
   // Add handleDeleteActivity which is not in the shared implementation
   const handleDeleteActivity = () => {
-    result.handleActivityEditDialogClose();
+    actions.onActivityEditDialogClose();
     invalidateActivityCache();
   };
 
+  // 後方互換性を維持
   return {
-    ...result,
-    activities: activities || [],
-    hasActivityLogs: (activityId: string) => hasActivityLogs(activityId),
+    ...stateProps,
+    // APIからの追加データ
+    hasActivityLogs,
+    // 旧API互換のアクション
+    handleActivityClick: actions.onActivityClick,
+    handleNewActivityClick: actions.onNewActivityClick,
+    handleActivityEditDialogClose: actions.onActivityEditDialogClose,
+    // 追加のヘルパー
     invalidateActivityCache,
     handleDeleteActivity,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
   };
 };

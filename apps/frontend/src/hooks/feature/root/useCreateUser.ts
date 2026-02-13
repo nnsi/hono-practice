@@ -35,5 +35,18 @@ export const useCreateUser = () => {
     useAuth,
   });
 
-  return useCreateUserBase();
+  const { form, stateProps, actions } = useCreateUserBase();
+
+  // 後方互換性を維持
+  return {
+    form,
+    ...stateProps,
+    // 旧API互換のアクション
+    onSubmit: actions.onSubmit,
+    handleGoogleSuccess: actions.onGoogleSuccess,
+    handleGoogleError: actions.onGoogleError,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };

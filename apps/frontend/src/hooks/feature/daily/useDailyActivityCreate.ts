@@ -9,17 +9,27 @@ export const useDailyActivityCreate = (
   onSuccess?: () => void,
 ) => {
   // 共通のロジックを使用し、Web固有のコールバックを渡す
-  const base = useDailyActivityCreateBase();
+  const { stateProps, actions } = useDailyActivityCreateBase();
 
   // onOpenChangeとonSuccessをオーバーライド
   const handleSuccess = () => {
-    base.handleSuccess();
+    actions.onSuccess();
     onOpenChange(false);
     onSuccess?.();
   };
 
+  // 後方互換性を維持
   return {
-    ...base,
+    ...stateProps,
+    // 旧API互換のアクション
+    handleActivitySelect: actions.onActivitySelect,
+    handleActivityDialogClose: actions.onActivityDialogClose,
     handleSuccess,
+    // 新しいグループ化されたAPI
+    stateProps,
+    actions: {
+      ...actions,
+      onSuccess: handleSuccess,
+    },
   };
 };

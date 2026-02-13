@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type {
   FileAdapter,
@@ -9,6 +9,33 @@ import type {
   GetActivityResponse,
   UpdateActivityRequest,
 } from "@packages/types";
+
+export type IconValue = {
+  type: "emoji" | "upload" | "generate";
+  emoji?: string;
+  file?: File;
+  preview?: string;
+};
+
+// Grouped return types for better organization
+export type ActivityEditFormProps = {
+  form: FormAdapterWithFieldArray<UpdateActivityRequest>;
+  kindFields: { id?: string; name: string; color?: string }[];
+  isPending: boolean;
+};
+
+export type ActivityEditIconProps = {
+  value: IconValue;
+  onChange: (value: IconValue) => Promise<void>;
+  pick: () => Promise<{ uri: string; type?: string; name?: string } | null>;
+};
+
+export type ActivityEditActions = {
+  onSubmit: () => void;
+  onDelete: () => Promise<void>;
+  onAddKind: () => void;
+  onRemoveKind: (index: number) => void;
+};
 
 export type ActivityEditDependencies = {
   form: FormAdapterWithFieldArray<UpdateActivityRequest>;
@@ -37,6 +64,10 @@ export function createUseActivityEdit(
 
   // Track previous activity to avoid unnecessary form resets
   const prevActivityIdRef = useRef<string | null>(null);
+
+  // Icon state management
+  const [iconFile, setIconFile] = useState<File | undefined>();
+  const [iconPreview, setIconPreview] = useState<string | undefined>();
 
   // Initialize form with activity data
   useEffect(() => {
@@ -179,16 +210,68 @@ export function createUseActivityEdit(
     return file.pickImage();
   };
 
+  // Current icon value (derived state)
+  const formValues = form.getValues();
+  const iconValue: IconValue = {
+    type: activity?.iconType ?? "emoji",
+    emoji: formValues.activity?.emoji ?? "",
+    file: iconFile,
+    preview: iconPreview || activity?.iconUrl || undefined,
+  };
+
+  // Icon change handler (business logic)
+  const handleChangeIcon = async (value: IconValue) => {
+    if (!activity) return;
+
+    const currentValues = form.getValues();
+
+    if (value.type === "emoji") {
+      form.setValues({
+        ...currentValues,
+        activity: {
+          ...currentValues.activity,
+          emoji: value.emoji || "",
+        },
+      });
+      setIconFile(undefined);
+      setIconPreview(undefined);
+      // Delete uploaded icon if switching back to emoji
+      if (activity.iconType === "upload") {
+        await deleteIcon();
+      }
+    } else if (value.type === "upload") {
+      form.setValues({
+        ...currentValues,
+        activity: {
+          ...currentValues.activity,
+          emoji: "📷", // Default emoji for uploaded icons
+        },
+      });
+      setIconFile(value.file);
+      setIconPreview(value.preview);
+      // Upload icon immediately if file is selected
+      if (value.file) {
+        await uploadIcon(value.file);
+      }
+    }
+  };
+
   return {
-    form,
-    kindFields: kindFieldArray?.fields || [],
-    isPending: isSubmitting,
-    onSubmit: form.handleSubmit(onSubmit),
-    handleDelete,
-    handleRemoveKind,
-    handleAddKind,
-    uploadIcon,
-    deleteIcon,
-    pickIcon,
+    formProps: {
+      form,
+      kindFields: kindFieldArray?.fields || [],
+      isPending: isSubmitting,
+    } as ActivityEditFormProps,
+    iconProps: {
+      value: iconValue,
+      onChange: handleChangeIcon,
+      pick: pickIcon,
+    } as ActivityEditIconProps,
+    actions: {
+      onSubmit: form.handleSubmit(onSubmit),
+      onDelete: handleDelete,
+      onAddKind: handleAddKind,
+      onRemoveKind: handleRemoveKind,
+    } as ActivityEditActions,
   };
 }

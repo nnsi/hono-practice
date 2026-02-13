@@ -108,11 +108,15 @@ export function createUseLogin(dependencies: LoginDependencies) {
 
   return {
     form,
-    handleLogin: form.handleSubmit(handleLogin),
-    handleGoogleSuccess,
-    handleGoogleError,
-    handleMobileGoogleLogin,
-    isSubmitting: form.formState.isSubmitting,
+    stateProps: {
+      isSubmitting: form.formState.isSubmitting,
+    },
+    actions: {
+      onLogin: form.handleSubmit(handleLogin),
+      onGoogleSuccess: handleGoogleSuccess,
+      onGoogleError: handleGoogleError,
+      onMobileGoogleLogin: handleMobileGoogleLogin,
+    },
   };
 }
 

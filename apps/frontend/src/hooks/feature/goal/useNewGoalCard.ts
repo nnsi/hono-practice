@@ -20,5 +20,32 @@ export const useNewGoalCard = (
     onConfirm: async (message: string) => window.confirm(message),
   });
 
-  return useNewGoalCardBase(goal, isPast);
+  const { stateProps, actions, form } = useNewGoalCardBase(goal, isPast);
+
+  // 後方互換性を維持しながら新しいAPIも公開
+  return {
+    ...stateProps,
+    // 旧API互換のセッター
+    setShowDetailModal: actions.onDetailModalOpenChange,
+    setShowLogCreateDialog: actions.onLogCreateDialogOpenChange,
+    // アクションを旧名でエクスポート
+    handleUpdate: actions.onUpdate,
+    handleDelete: actions.onDelete,
+    handleLogCreateSuccess: actions.onLogCreateSuccess,
+    handleTargetQuantityChange: actions.onTargetQuantityChange,
+    handleDeleteClick: actions.onDeleteClick,
+    handleCardClick: actions.onCardClick,
+    handleCardKeyDown: actions.onCardKeyDown,
+    handleLogCreateClick: actions.onLogCreateClick,
+    handleEditClick: actions.onEditClick,
+    handlePastGoalDeleteClick: actions.onPastGoalDeleteClick,
+    // 後方互換性のためのupdateGoal/deleteGoalシミュレート
+    updateGoal: { isPending: stateProps.isUpdating },
+    deleteGoal: { isPending: stateProps.isDeleting },
+    // フォーム
+    form,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };

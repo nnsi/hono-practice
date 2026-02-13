@@ -76,41 +76,46 @@ vi.mock("@packages/frontend-shared/hooks/feature", () => ({
     let editTargetActivity: any = null;
 
     return {
-      date: mockDate,
-      open,
-      selectedActivity,
-      editModalOpen,
-      editTargetActivity,
-      handleActivityClick: mockHandleActivityClick.mockImplementation(
-        (activity: any) => {
-          selectedActivity = activity;
-          open = true;
-        },
-      ),
-      handleActivityEditDialogClose:
-        mockHandleActivityEditDialogClose.mockImplementation(() => {
-          editModalOpen = false;
-          editTargetActivity = null;
-        }),
-      handleSuccess: mockHandleSuccess.mockImplementation(() => {
-        open = false;
-        selectedActivity = null;
-      }),
-      setOpen: mockSetOpen.mockImplementation((value: boolean) => {
-        open = value;
-      }),
-      handleNewActivityClick: mockHandleNewActivityClick.mockImplementation(
-        () => {
-          open = true;
+      stateProps: {
+        date: mockDate,
+        open,
+        selectedActivity,
+        editModalOpen,
+        editTargetActivity,
+        activities: mockActivities,
+      },
+      actions: {
+        onActivityClick: mockHandleActivityClick.mockImplementation(
+          (activity: any) => {
+            selectedActivity = activity;
+            open = true;
+          },
+        ),
+        onActivityEditDialogClose:
+          mockHandleActivityEditDialogClose.mockImplementation(() => {
+            editModalOpen = false;
+            editTargetActivity = null;
+          }),
+        onSuccess: mockHandleSuccess.mockImplementation(() => {
+          open = false;
           selectedActivity = null;
-        },
-      ),
-      handleActivityEdit: mockHandleActivityEdit.mockImplementation(
-        (activity: any) => {
-          editTargetActivity = activity;
-          editModalOpen = true;
-        },
-      ),
+        }),
+        onOpenChange: mockSetOpen.mockImplementation((value: boolean) => {
+          open = value;
+        }),
+        onNewActivityClick: mockHandleNewActivityClick.mockImplementation(
+          () => {
+            open = true;
+            selectedActivity = null;
+          },
+        ),
+        onActivityEdit: mockHandleActivityEdit.mockImplementation(
+          (activity: any) => {
+            editTargetActivity = activity;
+            editModalOpen = true;
+          },
+        ),
+      },
     };
   }),
 }));

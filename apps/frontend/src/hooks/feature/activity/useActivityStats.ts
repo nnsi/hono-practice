@@ -22,5 +22,19 @@ export const useActivityStats = () => {
     useGoals,
   };
 
-  return createUseActivityStats(dependencies);
+  const { stateProps, actions } = createUseActivityStats(dependencies);
+
+  // 後方互換性を維持
+  return {
+    ...stateProps,
+    // 旧API互換のアクション
+    handlePrevMonth: actions.onPrevMonth,
+    handleNextMonth: actions.onNextMonth,
+    // ヘルパー関数
+    getGoalLinesForActivity: actions.getGoalLinesForActivity,
+    generateAllDatesForMonth: actions.generateAllDatesForMonth,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };

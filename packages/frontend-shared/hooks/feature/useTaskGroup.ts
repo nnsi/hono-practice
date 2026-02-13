@@ -24,15 +24,24 @@ export type TaskGroupDependencies = {
   };
 };
 
-export type UseTaskGroupReturn = {
+// Grouped return types for better organization
+export type TaskGroupStateProps = {
   editDialogOpen: boolean;
   selectedTask: TaskItem | null;
-  setEditDialogOpen: (open: boolean) => void;
-  handleToggleTaskDone: (task: TaskItem) => void;
-  handleMoveToToday: (task: TaskItem) => void;
-  handleArchiveTask: (task: TaskItem) => void;
-  handleTaskClick: (task: TaskItem) => void;
-  handleDialogSuccess: () => void;
+};
+
+export type TaskGroupActions = {
+  onEditDialogOpenChange: (open: boolean) => void;
+  onToggleTaskDone: (task: TaskItem) => void;
+  onMoveToToday: (task: TaskItem) => void;
+  onArchiveTask: (task: TaskItem) => void;
+  onTaskClick: (task: TaskItem) => void;
+  onDialogSuccess: () => void;
+};
+
+export type UseTaskGroupReturn = {
+  stateProps: TaskGroupStateProps;
+  actions: TaskGroupActions;
 };
 
 export function createUseTaskGroup(
@@ -98,13 +107,17 @@ export function createUseTaskGroup(
   }, []);
 
   return {
-    editDialogOpen,
-    selectedTask,
-    setEditDialogOpen,
-    handleToggleTaskDone,
-    handleMoveToToday,
-    handleArchiveTask,
-    handleTaskClick,
-    handleDialogSuccess,
+    stateProps: {
+      editDialogOpen,
+      selectedTask,
+    } as TaskGroupStateProps,
+    actions: {
+      onEditDialogOpenChange: setEditDialogOpen,
+      onToggleTaskDone: handleToggleTaskDone,
+      onMoveToToday: handleMoveToToday,
+      onArchiveTask: handleArchiveTask,
+      onTaskClick: handleTaskClick,
+      onDialogSuccess: handleDialogSuccess,
+    } as TaskGroupActions,
   };
 }

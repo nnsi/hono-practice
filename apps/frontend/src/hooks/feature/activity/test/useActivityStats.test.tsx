@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useActivityStats } from "../useActivityStats";
 
-// useActivityStatsが返すオブジェクトを保持する変数
+// useActivityStatsが返すオブジェクトを保持する変数（beforeEachでリセット）
 let currentMonth = "2025-01";
 
 // getColorForKind export のモック
@@ -42,85 +42,92 @@ vi.mock("../useActivityStats", async () => {
   };
 });
 
+// モジュールレベルの変数で、ハンドラーによる変更を追跡
+let monthWasUpdatedByHandler = false;
+
 // createUseActivityStatsのモック
 vi.mock("@packages/frontend-shared/hooks/feature", () => ({
   createUseActivityStats: vi.fn((dependencies) => {
     const { currentDate, useActivityStatsApi, useGoals } = dependencies;
 
-    // currentDateがある場合はそこから月を取得
-    if (currentDate) {
-      const newMonth = new Date(currentDate).toISOString().slice(0, 7);
-      if (newMonth !== currentMonth) {
-        currentMonth = newMonth;
-      }
+    // ハンドラーで更新されていない場合のみ、currentDateから月を取得
+    if (currentDate && !monthWasUpdatedByHandler) {
+      currentMonth = new Date(currentDate).toISOString().slice(0, 7);
     }
 
-    // 毎回新しいオブジェクトを返すようにして、状態を正しく反映
-    const hook = {
-      get month() {
-        return currentMonth;
-      },
-      get stats() {
-        // API呼び出しをトリガー
-        mockApiClient?.users?.["activity-logs"]?.stats?.$get?.({
-          query: { date: currentMonth },
-        });
-        const result = useActivityStatsApi(currentMonth);
-        return result?.data;
-      },
-      get isLoading() {
-        const result = useActivityStatsApi(currentMonth);
-        return result?.isLoading || false;
-      },
-      handlePrevMonth: () => {
-        const [year, month] = currentMonth.split("-").map(Number);
-        const date = new Date(year, month - 2); // monthは0-indexedなので-2
-        currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      },
-      handleNextMonth: () => {
-        const [year, month] = currentMonth.split("-").map(Number);
-        const date = new Date(year, month); // monthは0-indexedなので調整不要
-        currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      },
-      getGoalLinesForActivity: (activityId: string) => {
-        const goalsData = useGoals();
-        const goals = goalsData?.data?.goals || [];
-        const monthStart = new Date(`${currentMonth}-01`);
-        const monthEnd = new Date(
-          monthStart.getFullYear(),
-          monthStart.getMonth() + 1,
-          0,
-        );
+    const handlePrevMonth = () => {
+      const [year, month] = currentMonth.split("-").map(Number);
+      const date = new Date(year, month - 2); // monthは0-indexedなので-2
+      currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthWasUpdatedByHandler = true;
+    };
 
-        const relevantGoals = goals.filter((goal: any) => {
-          if (goal.activityId !== activityId) return false;
-          const goalStart = new Date(goal.startDate);
-          const goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+    const handleNextMonth = () => {
+      const [year, month] = currentMonth.split("-").map(Number);
+      const date = new Date(year, month); // monthは0-indexedなので調整不要
+      currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthWasUpdatedByHandler = true;
+    };
 
-          if (goalEnd && goalEnd < monthStart) return false;
-          if (goalStart > monthEnd) return false;
-          return true;
-        });
+    const getGoalLinesForActivity = (activityId: string) => {
+      const goalsData = useGoals();
+      const goals = goalsData?.data?.goals || [];
+      const monthStart = new Date(`${currentMonth}-01`);
+      const monthEnd = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth() + 1,
+        0,
+      );
 
-        return relevantGoals.map((goal: any, index: number) => ({
-          id: goal.id,
-          value: goal.dailyTargetQuantity,
-          label: goal.endDate
-            ? `目標${index + 1}: ${goal.dailyTargetQuantity}`
-            : `目標: ${goal.dailyTargetQuantity}`,
-          color: "#ff6b6b",
-        }));
+      const relevantGoals = goals.filter((goal: any) => {
+        if (goal.activityId !== activityId) return false;
+        const goalStart = new Date(goal.startDate);
+        const goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+
+        if (goalEnd && goalEnd < monthStart) return false;
+        if (goalStart > monthEnd) return false;
+        return true;
+      });
+
+      return relevantGoals.map((goal: any, index: number) => ({
+        id: goal.id,
+        value: goal.dailyTargetQuantity,
+        label: goal.endDate
+          ? `目標${index + 1}: ${goal.dailyTargetQuantity}`
+          : `目標: ${goal.dailyTargetQuantity}`,
+        color: "#ff6b6b",
+      }));
+    };
+
+    const generateAllDatesForMonth = () => {
+      const [year, month] = currentMonth.split("-").map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      return Array.from({ length: daysInMonth }, (_, i) => {
+        return `${year}-${String(month).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+      });
+    };
+
+    // API呼び出しをトリガー
+    mockApiClient?.users?.["activity-logs"]?.stats?.$get?.({
+      query: { date: currentMonth },
+    });
+    const statsResult = useActivityStatsApi(currentMonth);
+
+    // Return stateProps and actions structure
+    return {
+      stateProps: {
+        month: currentMonth,
+        stats: statsResult?.data,
+        isLoading: statsResult?.isLoading || false,
       },
-      generateAllDatesForMonth: () => {
-        const [year, month] = currentMonth.split("-").map(Number);
-        const daysInMonth = new Date(year, month, 0).getDate();
-
-        return Array.from({ length: daysInMonth }, (_, i) => {
-          return `${year}-${String(month).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
-        });
+      actions: {
+        onPrevMonth: handlePrevMonth,
+        onNextMonth: handleNextMonth,
+        getGoalLinesForActivity,
+        generateAllDatesForMonth,
       },
     };
-    return hook;
   }),
   getColorForKind: vi.fn((kindName: string) => {
     const colors = [
@@ -294,6 +301,7 @@ describe("useActivityStats", () => {
 
     // Reset month to initial value
     currentMonth = "2025-01";
+    monthWasUpdatedByHandler = false;
 
     queryClient = new QueryClient({
       defaultOptions: {
@@ -319,7 +327,7 @@ describe("useActivityStats", () => {
     });
 
     it("前月に移動できる", () => {
-      const { result } = renderHook(() => useActivityStats(), {
+      const { result, rerender } = renderHook(() => useActivityStats(), {
         wrapper,
       });
 
@@ -327,17 +335,23 @@ describe("useActivityStats", () => {
         result.current.handlePrevMonth();
       });
 
+      // モックはモジュールレベル変数を使うので再レンダリングが必要
+      rerender();
+
       expect(result.current.month).toBe("2024-12");
     });
 
     it("翌月に移動できる", () => {
-      const { result } = renderHook(() => useActivityStats(), {
+      const { result, rerender } = renderHook(() => useActivityStats(), {
         wrapper,
       });
 
       act(() => {
         result.current.handleNextMonth();
       });
+
+      // モックはモジュールレベル変数を使うので再レンダリングが必要
+      rerender();
 
       expect(result.current.month).toBe("2025-02");
     });
@@ -381,13 +395,16 @@ describe("useActivityStats", () => {
     });
 
     it("月を変更すると新しいデータが取得される", async () => {
-      const { result } = renderHook(() => useActivityStats(), {
+      const { result, rerender } = renderHook(() => useActivityStats(), {
         wrapper,
       });
 
       act(() => {
         result.current.handleNextMonth();
       });
+
+      // モックはモジュールレベル変数を使うので再レンダリングが必要
+      rerender();
 
       // statsにアクセスしてAPI呼び出しをトリガー
       await waitFor(async () => {

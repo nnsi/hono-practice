@@ -55,5 +55,19 @@ export const useUserSettings = () => {
   };
 
   // Use the common hook
-  return createUseUserSettings(dependencies);
+  const { stateProps, actions } = createUseUserSettings(dependencies);
+
+  // 後方互換性を維持しながら新しいAPIも公開
+  return {
+    ...stateProps,
+    // 旧API互換のアクション
+    handleLogout: actions.onLogout,
+    handleGoogleLink: actions.onGoogleLink,
+    handleGoogleLinkError: actions.onGoogleLinkError,
+    handleMobileGoogleLink: actions.onMobileGoogleLink,
+    handleDeleteAccount: actions.onDeleteAccount,
+    // 新しいグループ化されたAPIも公開
+    stateProps,
+    actions,
+  };
 };
