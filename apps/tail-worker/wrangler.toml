@@ -1,0 +1,13 @@
+name = "actiko-tail-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-12"
+
+[[analytics_engine_datasets]]
+binding = "LOGS"
+dataset = "actiko_api_logs"
+
+[env.stg]
+name = "actiko-tail-worker-stg"
+
+[env.production]
+name = "actiko-tail-worker-prod"

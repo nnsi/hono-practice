@@ -1,0 +1,12 @@
+{
+  "name": "actiko-tail-worker",
+  "private": true,
+  "scripts": {
+    "deploy:stg": "wrangler deploy --env stg",
+    "deploy:prod": "wrangler deploy --env production"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250422.0",
+    "wrangler": "^4.26.1"
+  }
+}
