@@ -6,6 +6,7 @@ import {
   createActivityGoalId,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
@@ -63,29 +64,37 @@ export type GoalUsecase = {
 export function newGoalUsecase(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
+  tracer: Tracer,
 ): GoalUsecase {
   return {
-    getGoals: getGoals(activityGoalRepo, activityGoalService),
-    getGoal: getGoal(activityGoalRepo, activityGoalService),
-    createGoal: createGoal(activityGoalRepo),
-    updateGoal: updateGoal(activityGoalRepo),
-    deleteGoal: deleteGoal(activityGoalRepo),
+    getGoals: getGoals(activityGoalRepo, activityGoalService, tracer),
+    getGoal: getGoal(activityGoalRepo, activityGoalService, tracer),
+    createGoal: createGoal(activityGoalRepo, tracer),
+    updateGoal: updateGoal(activityGoalRepo, tracer),
+    deleteGoal: deleteGoal(activityGoalRepo, tracer),
   };
 }
 
 function getGoals(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
+  tracer: Tracer,
 ) {
   return async (userId: UserId, filters?: GoalFilters): Promise<Goal[]> => {
-    const goals = await activityGoalRepo.getActivityGoalsByUserId(userId);
+    const goals = await tracer.span("db.getActivityGoalsByUserId", () =>
+      activityGoalRepo.getActivityGoalsByUserId(userId),
+    );
 
     // 並行で計算処理
     const goalsWithBalance = await Promise.all(
       goals.map(async (goal) => {
         const [balance, inactiveDates] = await Promise.all([
-          activityGoalService.calculateCurrentBalance(userId, goal),
-          activityGoalService.getInactiveDates(userId, goal),
+          tracer.span("db.calculateCurrentBalance", () =>
+            activityGoalService.calculateCurrentBalance(userId, goal),
+          ),
+          tracer.span("db.getInactiveDates", () =>
+            activityGoalService.getInactiveDates(userId, goal),
+          ),
         ]);
         return {
           id: goal.id,
@@ -135,17 +144,24 @@ function getGoals(
 function getGoal(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
+  tracer: Tracer,
 ) {
   return async (userId: UserId, goalId: string): Promise<Goal> => {
-    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
-      goalId as ActivityGoalId,
-      userId,
+    const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
+      activityGoalRepo.getActivityGoalByIdAndUserId(
+        goalId as ActivityGoalId,
+        userId,
+      ),
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
     const [balance, inactiveDates] = await Promise.all([
-      activityGoalService.calculateCurrentBalance(userId, goal),
-      activityGoalService.getInactiveDates(userId, goal),
+      tracer.span("db.calculateCurrentBalance", () =>
+        activityGoalService.calculateCurrentBalance(userId, goal),
+      ),
+      tracer.span("db.getInactiveDates", () =>
+        activityGoalService.getInactiveDates(userId, goal),
+      ),
     ]);
     return {
       id: goal.id,
@@ -172,7 +188,7 @@ function getGoal(
   };
 }
 
-function createGoal(activityGoalRepo: ActivityGoalRepository) {
+function createGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   return async (userId: UserId, req: CreateGoalRequest): Promise<Goal> => {
     const goal = createActivityGoalEntity({
       type: "new",
@@ -186,7 +202,9 @@ function createGoal(activityGoalRepo: ActivityGoalRepository) {
       description: req.description || null,
     });
 
-    const created = await activityGoalRepo.createActivityGoal(goal);
+    const created = await tracer.span("db.createActivityGoal", () =>
+      activityGoalRepo.createActivityGoal(goal),
+    );
 
     return {
       id: created.id,
@@ -213,15 +231,17 @@ function createGoal(activityGoalRepo: ActivityGoalRepository) {
   };
 }
 
-function updateGoal(activityGoalRepo: ActivityGoalRepository) {
+function updateGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   return async (
     userId: UserId,
     goalId: string,
     req: UpdateGoalRequest,
   ): Promise<Goal> => {
-    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
-      goalId as ActivityGoalId,
-      userId,
+    const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
+      activityGoalRepo.getActivityGoalByIdAndUserId(
+        goalId as ActivityGoalId,
+        userId,
+      ),
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
@@ -235,7 +255,9 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
       isActive: req.isActive ?? goal.isActive,
     });
 
-    const saved = await activityGoalRepo.updateActivityGoal(updated);
+    const saved = await tracer.span("db.updateActivityGoal", () =>
+      activityGoalRepo.updateActivityGoal(updated),
+    );
 
     return {
       id: saved.id,
@@ -262,14 +284,18 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository) {
   };
 }
 
-function deleteGoal(activityGoalRepo: ActivityGoalRepository) {
+function deleteGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   return async (userId: UserId, goalId: string): Promise<void> => {
-    const goal = await activityGoalRepo.getActivityGoalByIdAndUserId(
-      goalId as ActivityGoalId,
-      userId,
+    const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
+      activityGoalRepo.getActivityGoalByIdAndUserId(
+        goalId as ActivityGoalId,
+        userId,
+      ),
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
-    await activityGoalRepo.deleteActivityGoal(goal);
+    await tracer.span("db.deleteActivityGoal", () =>
+      activityGoalRepo.deleteActivityGoal(goal),
+    );
   };
 }

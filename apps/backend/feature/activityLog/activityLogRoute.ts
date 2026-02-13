@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import type { AppContext } from "@backend/context";
+import { noopTracer } from "@backend/lib/tracer";
 import { newActivityQueryService } from "@backend/query";
 import {
   CreateActivityLogBatchRequestSchema,
@@ -79,10 +80,11 @@ export function createActivityLogRoute() {
   app.use("*", async (c, next) => {
     const db = c.env.DB;
 
+    const tracer = c.get("tracer") ?? noopTracer;
     const repo = newActivityLogRepository(db);
     const acRepo = newActivityRepository(db);
     const qs = newActivityQueryService(db);
-    const uc = newActivityLogUsecase(repo, acRepo, qs, db);
+    const uc = newActivityLogUsecase(repo, acRepo, qs, db, tracer);
     const h = newActivityLogHandler(uc);
 
     c.set("h", h);

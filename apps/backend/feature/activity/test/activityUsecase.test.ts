@@ -8,6 +8,7 @@ import {
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -22,7 +23,7 @@ describe("ActivityUsecase", () => {
   beforeEach(() => {
     repo = mock<ActivityRepository>();
     tx = mock<TransactionRunner>();
-    usecase = newActivityUsecase(instance(repo), instance(tx));
+    usecase = newActivityUsecase(instance(repo), instance(tx), noopTracer);
     reset(repo);
     reset(tx);
   });

@@ -9,6 +9,7 @@ import {
 import { ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { generateOrder } from "@backend/lib/lexicalOrder";
+import type { Tracer } from "@backend/lib/tracer";
 import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
@@ -37,38 +38,50 @@ export type ActivityUsecase = {
 export function newActivityUsecase(
   repo: ActivityRepository,
   tx: TransactionRunner,
+  tracer: Tracer,
 ): ActivityUsecase {
   return {
-    getActivities: getActivities(repo),
-    getActivity: getActivity(repo),
-    createActivity: createActivity(repo, tx),
-    updateActivity: updateActivity(repo, tx),
-    updateActivityOrder: updateActivityOrder(repo, tx),
-    deleteActivity: deleteActivity(repo),
+    getActivities: getActivities(repo, tracer),
+    getActivity: getActivity(repo, tracer),
+    createActivity: createActivity(repo, tx, tracer),
+    updateActivity: updateActivity(repo, tx, tracer),
+    updateActivityOrder: updateActivityOrder(repo, tx, tracer),
+    deleteActivity: deleteActivity(repo, tracer),
   };
 }
 
-function getActivities(repo: ActivityRepository) {
+function getActivities(repo: ActivityRepository, tracer: Tracer) {
   return async (userId: UserId) => {
-    const activity = await repo.getActivitiesByUserId(userId);
+    const activity = await tracer.span("db.getActivitiesByUserId", () =>
+      repo.getActivitiesByUserId(userId),
+    );
 
     return activity;
   };
 }
 
-function getActivity(repo: ActivityRepository) {
+function getActivity(repo: ActivityRepository, tracer: Tracer) {
   return async (userId: UserId, activityId: ActivityId) => {
-    const activity = await repo.getActivityByIdAndUserId(userId, activityId);
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      repo.getActivityByIdAndUserId(userId, activityId),
+    );
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
     return activity;
   };
 }
 
-function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
+function createActivity(
+  repo: ActivityRepository,
+  tx: TransactionRunner,
+  tracer: Tracer,
+) {
   return async (userId: UserId, params: CreateActivityRequest) => {
     return tx.run([repo], async (txRepo) => {
-      const lastOrderIndex = await txRepo.getLastOrderIndexByUserId(userId);
+      const lastOrderIndex = await tracer.span(
+        "db.getLastOrderIndexByUserId",
+        () => txRepo.getLastOrderIndexByUserId(userId),
+      );
 
       const orderIndex = generateOrder(lastOrderIndex ?? "", null);
 
@@ -96,21 +109,26 @@ function createActivity(repo: ActivityRepository, tx: TransactionRunner) {
         type: "new",
       });
 
-      return await txRepo.createActivity(activity);
+      return await tracer.span("db.createActivity", () =>
+        txRepo.createActivity(activity),
+      );
     });
   };
 }
 
-function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
+function updateActivity(
+  repo: ActivityRepository,
+  tx: TransactionRunner,
+  tracer: Tracer,
+) {
   return async (
     userId: UserId,
     activityId: ActivityId,
     params: UpdateActivityRequest,
   ) => {
     return tx.run([repo], async (txRepo) => {
-      const activity = await txRepo.getActivityByIdAndUserId(
-        userId,
-        activityId,
+      const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+        txRepo.getActivityByIdAndUserId(userId, activityId),
       );
       if (!activity) throw new ResourceNotFoundError("activity not found");
 
@@ -132,12 +150,18 @@ function updateActivity(repo: ActivityRepository, tx: TransactionRunner) {
         kinds,
       });
 
-      return await txRepo.updateActivity(newActivity);
+      return await tracer.span("db.updateActivity", () =>
+        txRepo.updateActivity(newActivity),
+      );
     });
   };
 }
 
-function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
+function updateActivityOrder(
+  repo: ActivityRepository,
+  tx: TransactionRunner,
+  tracer: Tracer,
+) {
   return async (
     userId: UserId,
     activityId: ActivityId,
@@ -151,7 +175,10 @@ function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
     ) as ActivityId[];
 
     return tx.run([repo], async (txRepo) => {
-      const activities = await txRepo.getActivitiesByIdsAndUserId(userId, ids);
+      const activities = await tracer.span(
+        "db.getActivitiesByIdsAndUserId",
+        () => txRepo.getActivitiesByIdsAndUserId(userId, ids),
+      );
 
       const activity = activities.find((a) => a.id === activityId);
       if (!activity) throw new ResourceNotFoundError("activity not found");
@@ -166,16 +193,22 @@ function updateActivityOrder(repo: ActivityRepository, tx: TransactionRunner) {
 
       activity.orderIndex = orderIndex;
 
-      return await txRepo.updateActivity(activity);
+      return await tracer.span("db.updateActivity", () =>
+        txRepo.updateActivity(activity),
+      );
     });
   };
 }
 
-function deleteActivity(repo: ActivityRepository) {
+function deleteActivity(repo: ActivityRepository, tracer: Tracer) {
   return async (userId: UserId, activityId: ActivityId) => {
-    const activity = await repo.getActivityByIdAndUserId(userId, activityId);
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      repo.getActivityByIdAndUserId(userId, activityId),
+    );
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
-    return await repo.deleteActivity(activity);
+    return await tracer.span("db.deleteActivity", () =>
+      repo.deleteActivity(activity),
+    );
   };
 }

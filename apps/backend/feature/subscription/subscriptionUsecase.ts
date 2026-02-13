@@ -1,6 +1,7 @@
 import type { Subscription, UserId } from "@backend/domain";
 import { createSubscriptionId, newSubscription } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 
 import type { SubscriptionRepository } from "./subscriptionRepository";
 
@@ -12,18 +13,26 @@ export type SubscriptionUsecase = {
 
 export function newSubscriptionUsecase(
   subscriptionRepo: SubscriptionRepository,
+  tracer: Tracer,
 ): SubscriptionUsecase {
   return {
-    getSubscriptionByUserId: getSubscriptionByUserId(subscriptionRepo),
-    getSubscriptionByUserIdOrDefault:
-      getSubscriptionByUserIdOrDefault(subscriptionRepo),
-    canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo),
+    getSubscriptionByUserId: getSubscriptionByUserId(subscriptionRepo, tracer),
+    getSubscriptionByUserIdOrDefault: getSubscriptionByUserIdOrDefault(
+      subscriptionRepo,
+      tracer,
+    ),
+    canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo, tracer),
   };
 }
 
-function getSubscriptionByUserId(subscriptionRepo: SubscriptionRepository) {
+function getSubscriptionByUserId(
+  subscriptionRepo: SubscriptionRepository,
+  tracer: Tracer,
+) {
   return async (userId: UserId): Promise<Subscription> => {
-    const subscription = await subscriptionRepo.findByUserId(userId);
+    const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
+      subscriptionRepo.findByUserId(userId),
+    );
 
     if (!subscription) {
       throw new ResourceNotFoundError("Subscription not found");
@@ -35,9 +44,12 @@ function getSubscriptionByUserId(subscriptionRepo: SubscriptionRepository) {
 
 function getSubscriptionByUserIdOrDefault(
   subscriptionRepo: SubscriptionRepository,
+  tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<Subscription> => {
-    const subscription = await subscriptionRepo.findByUserId(userId);
+    const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
+      subscriptionRepo.findByUserId(userId),
+    );
 
     if (!subscription) {
       return createDefaultSubscription(userId);
@@ -47,9 +59,14 @@ function getSubscriptionByUserIdOrDefault(
   };
 }
 
-function canUserAccessApiKey(subscriptionRepo: SubscriptionRepository) {
+function canUserAccessApiKey(
+  subscriptionRepo: SubscriptionRepository,
+  tracer: Tracer,
+) {
   return async (userId: UserId): Promise<boolean> => {
-    const subscription = await subscriptionRepo.findByUserId(userId);
+    const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
+      subscriptionRepo.findByUserId(userId),
+    );
 
     if (!subscription) {
       return false;

@@ -5,6 +5,7 @@ import {
   newSubscription,
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
+import { noopTracer } from "@backend/lib/tracer";
 import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -17,7 +18,7 @@ describe("SubscriptionUsecase", () => {
 
   beforeEach(() => {
     repo = mock<SubscriptionRepository>();
-    usecase = newSubscriptionUsecase(instance(repo));
+    usecase = newSubscriptionUsecase(instance(repo), noopTracer);
     reset(repo);
   });
 

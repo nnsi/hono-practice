@@ -11,6 +11,7 @@ import {
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { Tracer } from "@backend/lib/tracer";
 import type { ActivityQueryService } from "@backend/query";
 import type {
   CreateActivityLogBatchResponse,
@@ -84,29 +85,34 @@ export function newActivityLogUsecase(
   acRepo: ActivityRepository,
   qs: ActivityQueryService,
   db: QueryExecutor,
+  tracer: Tracer,
 ): ActivityLogUsecase {
   return {
-    getActivityLogs: getActivityLogs(repo),
-    getActivityLog: getActivityLog(repo),
-    createActivityLog: createActivityLog(repo, acRepo),
-    createActivityLogBatch: createActivityLogBatch(repo, acRepo, db),
-    updateActivityLog: updateActivityLog(repo, acRepo),
-    deleteActivityLog: deleteActivityLog(repo),
-    getStats: getStats(qs),
+    getActivityLogs: getActivityLogs(repo, tracer),
+    getActivityLog: getActivityLog(repo, tracer),
+    createActivityLog: createActivityLog(repo, acRepo, tracer),
+    createActivityLogBatch: createActivityLogBatch(repo, acRepo, db, tracer),
+    updateActivityLog: updateActivityLog(repo, acRepo, tracer),
+    deleteActivityLog: deleteActivityLog(repo, tracer),
+    getStats: getStats(qs, tracer),
   };
 }
 
-function getActivityLogs(repo: ActivityLogRepository) {
+function getActivityLogs(repo: ActivityLogRepository, tracer: Tracer) {
   return async (userId: UserId, params: GetActivityLogsParams) => {
     const { from, to } = params;
 
-    return repo.getActivityLogsByUserIdAndDate(userId, from, to);
+    return tracer.span("db.getActivityLogsByUserIdAndDate", () =>
+      repo.getActivityLogsByUserIdAndDate(userId, from, to),
+    );
   };
 }
 
-function getActivityLog(repo: ActivityLogRepository) {
+function getActivityLog(repo: ActivityLogRepository, tracer: Tracer) {
   return async (userId: UserId, activityLogId: ActivityLogId) => {
-    const aLog = await repo.getActivityLogByIdAndUserId(userId, activityLogId);
+    const aLog = await tracer.span("db.getActivityLogByIdAndUserId", () =>
+      repo.getActivityLogByIdAndUserId(userId, activityLogId),
+    );
     if (!aLog) {
       throw new ResourceNotFoundError("activity log not found");
     }
@@ -118,6 +124,7 @@ function getActivityLog(repo: ActivityLogRepository) {
 function createActivityLog(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
+  tracer: Tracer,
 ) {
   return async (
     userId: UserId,
@@ -125,7 +132,9 @@ function createActivityLog(
     activityKindId: ActivityKindId,
     params: CreateActivityLogParams,
   ) => {
-    const activity = await acRepo.getActivityByIdAndUserId(userId, activityId);
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      acRepo.getActivityByIdAndUserId(userId, activityId),
+    );
     if (!activity) throw new Error("activity not found");
 
     if (!activity.kinds) activity.kinds = [];
@@ -144,31 +153,36 @@ function createActivityLog(
       type: "new",
     });
 
-    return repo.createActivityLog(activityLog);
+    return tracer.span("db.createActivityLog", () =>
+      repo.createActivityLog(activityLog),
+    );
   };
 }
 
 function updateActivityLog(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
+  tracer: Tracer,
 ) {
   return async (
     userId: UserId,
     activityLogId: ActivityLogId,
     params: UpdateActivityLogParams,
   ) => {
-    const activityLog = await repo.getActivityLogByIdAndUserId(
-      userId,
-      activityLogId,
+    const activityLog = await tracer.span(
+      "db.getActivityLogByIdAndUserId",
+      () => repo.getActivityLogByIdAndUserId(userId, activityLogId),
     );
     if (!activityLog) {
       throw new ResourceNotFoundError("activity log not found");
     }
 
     const activityKindParent = params.activityKindId
-      ? await acRepo.getActivityByUserIdAndActivityKindId(
-          userId,
-          createActivityKindId(params.activityKindId),
+      ? await tracer.span("db.getActivityByUserIdAndActivityKindId", () =>
+          acRepo.getActivityByUserIdAndActivityKindId(
+            userId,
+            createActivityKindId(params.activityKindId!),
+          ),
         )
       : { kinds: [activityLog.activityKind] };
     if (!activityKindParent) {
@@ -185,29 +199,35 @@ function updateActivityLog(
       activityKind,
     });
 
-    return repo.updateActivityLog(newActivityLog);
+    return tracer.span("db.updateActivityLog", () =>
+      repo.updateActivityLog(newActivityLog),
+    );
   };
 }
 
-function deleteActivityLog(repo: ActivityLogRepository) {
+function deleteActivityLog(repo: ActivityLogRepository, tracer: Tracer) {
   return async (userId: UserId, activityLogId: ActivityLogId) => {
-    const activityLog = await repo.getActivityLogByIdAndUserId(
-      userId,
-      activityLogId,
+    const activityLog = await tracer.span(
+      "db.getActivityLogByIdAndUserId",
+      () => repo.getActivityLogByIdAndUserId(userId, activityLogId),
     );
     if (!activityLog) {
       throw new ResourceNotFoundError("activity log not found");
     }
 
-    return repo.deleteActivityLog(activityLog);
+    return tracer.span("db.deleteActivityLog", () =>
+      repo.deleteActivityLog(activityLog),
+    );
   };
 }
 
-function getStats(qs: ActivityQueryService) {
+function getStats(qs: ActivityQueryService, tracer: Tracer) {
   return async (userId: UserId, params: GetStatsParams) => {
     const { from, to } = params;
 
-    return qs.activityStatsQuery(userId, from, to);
+    return tracer.span("db.activityStatsQuery", () =>
+      qs.activityStatsQuery(userId, from, to),
+    );
   };
 }
 
@@ -215,6 +235,7 @@ function createActivityLogBatch(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
   db: QueryExecutor,
+  tracer: Tracer,
 ) {
   return async (
     userId: UserId,
@@ -233,9 +254,9 @@ function createActivityLogBatch(
           const activityId = createActivityId(params.activityId);
           const activityKindId = createActivityKindId(params.activityKindId);
 
-          const activity = await txAcRepo.getActivityByIdAndUserId(
-            userId,
-            activityId,
+          const activity = await tracer.span(
+            "db.getActivityByIdAndUserId",
+            () => txAcRepo.getActivityByIdAndUserId(userId, activityId),
           );
           if (!activity) {
             throw new Error(`Activity not found: ${params.activityId}`);
@@ -261,7 +282,9 @@ function createActivityLogBatch(
         }
 
         // バッチ作成
-        return await txRepo.createActivityLogBatch(logsToCreate);
+        return await tracer.span("db.createActivityLogBatch", () =>
+          txRepo.createActivityLogBatch(logsToCreate),
+        );
       });
 
       // 成功レスポンスを作成

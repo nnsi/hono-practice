@@ -20,6 +20,15 @@ type LoggerOptions = {
   bindings?: Record<string, unknown>;
 };
 
+/** テスト用のno-op logger */
+export const noopLogger: Logger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  child: () => noopLogger,
+};
+
 export const createLogger = (options: LoggerOptions = {}): Logger => {
   const minLevel = LOG_LEVEL_PRIORITY[options.level ?? "debug"];
   const bindings = options.bindings ?? {};

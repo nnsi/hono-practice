@@ -13,6 +13,7 @@ import {
 } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { noopTracer } from "@backend/lib/tracer";
 import type { ActivityQueryService } from "@backend/query";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -37,6 +38,7 @@ describe("ActivityLogUsecase", () => {
       instance(acRepo),
       instance(qs),
       instance(db),
+      noopTracer,
     );
     reset(repo);
     reset(acRepo);

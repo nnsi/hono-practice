@@ -6,6 +6,7 @@ import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRep
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
+import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import { testDB } from "@backend/test.setup";
 import { refreshTokens, users } from "@infra/drizzle/schema";
@@ -100,6 +101,7 @@ describe("AuthRoute Integration Tests", () => {
           JWT_SECRET,
           JWT_AUDIENCE,
           oauthVerifiers,
+          noopTracer,
         );
         const h = newAuthHandler(uc);
 

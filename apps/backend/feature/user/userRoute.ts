@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
+import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
   createRateLimitMiddleware,
@@ -39,6 +40,7 @@ export function createUserRoute() {
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
     ).MultiHashPasswordVerifier();
+    const tracer = c.get("tracer") ?? noopTracer;
     const authUc = newAuthUsecase(
       repo,
       refreshTokenRepo,
@@ -47,9 +49,10 @@ export function createUserRoute() {
       JWT_SECRET,
       JWT_AUDIENCE,
       { google: googleVerify },
+      tracer,
     );
     const authH = newAuthHandler(authUc);
-    const uc = newUserUsecase(repo, userProviderRepo);
+    const uc = newUserUsecase(repo, userProviderRepo, tracer);
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);
@@ -64,7 +67,11 @@ export function createUserRoute() {
     if (c.req.method !== "POST") return next();
     const kv = c.env.RATE_LIMIT_KV;
     if (!kv) return next();
-    return createRateLimitMiddleware(kv, registerRateLimitConfig)(c, next);
+    return createRateLimitMiddleware(
+      kv,
+      registerRateLimitConfig,
+      c.get("tracer"),
+    )(c, next);
   });
 
   return app

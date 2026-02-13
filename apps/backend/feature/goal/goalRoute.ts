@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { noopTracer } from "@backend/lib/tracer";
 import { newGoalQueryService } from "@backend/query/goalQueryService";
 import {
   CreateGoalRequestSchema,
@@ -36,7 +37,8 @@ export function createGoalRoute() {
     const goalQueryService = newGoalQueryService(db);
 
     // Usecase and Handler
-    const uc = newGoalUsecase(activityGoalRepo, activityGoalService);
+    const tracer = c.get("tracer") ?? noopTracer;
+    const uc = newGoalUsecase(activityGoalRepo, activityGoalService, tracer);
     const h = newGoalHandler(uc);
 
     c.set("h", h);
@@ -76,7 +78,10 @@ export function createGoalRoute() {
 
         try {
           const goalQueryService = c.var.goalQueryService;
-          const res = await goalQueryService.getGoalStats(userId, id);
+          const tracer = c.get("tracer") ?? noopTracer;
+          const res = await tracer.span("db.getGoalStats", () =>
+            goalQueryService.getGoalStats(userId, id),
+          );
           return c.json(res);
         } catch (error) {
           if (error instanceof Error && error.message === "Goal not found") {

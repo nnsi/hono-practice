@@ -8,6 +8,7 @@ import {
 } from "@backend/domain";
 import { AppError, AuthError } from "@backend/error";
 import { hashWithSHA256 } from "@backend/lib/hash";
+import type { Tracer } from "@backend/lib/tracer";
 import {
   createRefreshToken,
   validateRefreshToken,
@@ -73,6 +74,7 @@ export function newAuthUsecase<T>(
   jwtSecret: string,
   jwtAudience: string,
   oauthVerifiers: OAuthVerifierMap,
+  tracer: Tracer,
 ): AuthUsecase {
   return {
     login: login(
@@ -81,9 +83,15 @@ export function newAuthUsecase<T>(
       passwordVerifier,
       jwtSecret,
       jwtAudience,
+      tracer,
     ),
-    refreshToken: refreshToken(refreshTokenRepo, jwtSecret, jwtAudience),
-    logout: logout(refreshTokenRepo),
+    refreshToken: refreshToken(
+      refreshTokenRepo,
+      jwtSecret,
+      jwtAudience,
+      tracer,
+    ),
+    logout: logout(refreshTokenRepo, tracer),
     loginWithProvider: loginWithProvider(
       userRepo,
       refreshTokenRepo,
@@ -91,8 +99,9 @@ export function newAuthUsecase<T>(
       jwtSecret,
       jwtAudience,
       oauthVerifiers,
+      tracer,
     ),
-    linkProvider: linkProvider(userProviderRepo, oauthVerifiers),
+    linkProvider: linkProvider(userProviderRepo, oauthVerifiers, tracer),
   };
 }
 
@@ -103,10 +112,13 @@ function login<T>(
   passwordVerifier: PasswordVerifier,
   jwtSecret: string,
   jwtAudience: string,
+  tracer: Tracer,
 ) {
   return async (input: LoginInput): Promise<AuthOutput> => {
     const { loginId, password } = input;
-    const user = await userRepo.getUserByLoginId(loginId);
+    const user = await tracer.span("db.getUserByLoginId", () =>
+      userRepo.getUserByLoginId(loginId),
+    );
     if (!user) throw new AuthError("invalid credentials");
     if (!user.password)
       throw new AuthError(
@@ -132,7 +144,9 @@ function login<T>(
       token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
-    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
+    await tracer.span("db.createRefreshToken", () =>
+      refreshTokenRepo.createRefreshToken(refreshTokenEntity),
+    );
     const combinedRefreshToken = `${selector}.${plainRefreshToken}`;
 
     return { accessToken, refreshToken: combinedRefreshToken };
@@ -143,13 +157,17 @@ function refreshToken(
   refreshTokenRepo: RefreshTokenRepository,
   jwtSecret: string,
   jwtAudience: string,
+  tracer: Tracer,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
-    const storedToken =
-      await refreshTokenRepo.getRefreshTokenByToken(combinedToken);
+    const storedToken = await tracer.span("db.getRefreshTokenByToken", () =>
+      refreshTokenRepo.getRefreshTokenByToken(combinedToken),
+    );
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (!validateRefreshToken(storedToken)) {
-      await refreshTokenRepo.revokeRefreshToken(storedToken);
+      await tracer.span("db.revokeRefreshToken", () =>
+        refreshTokenRepo.revokeRefreshToken(storedToken),
+      );
       throw new AuthError("invalid refresh token (validation failed)");
     }
 
@@ -166,23 +184,30 @@ function refreshToken(
       token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
-    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
+    await tracer.span("db.createRefreshToken", () =>
+      refreshTokenRepo.createRefreshToken(refreshTokenEntity),
+    );
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
-    await refreshTokenRepo.revokeRefreshToken(storedToken);
+    await tracer.span("db.revokeRefreshToken", () =>
+      refreshTokenRepo.revokeRefreshToken(storedToken),
+    );
 
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
 }
 
-function logout(refreshTokenRepo: RefreshTokenRepository) {
+function logout(refreshTokenRepo: RefreshTokenRepository, tracer: Tracer) {
   return async (userId: UserId, refreshToken: string): Promise<void> => {
-    const storedToken =
-      await refreshTokenRepo.getRefreshTokenByToken(refreshToken);
+    const storedToken = await tracer.span("db.getRefreshTokenByToken", () =>
+      refreshTokenRepo.getRefreshTokenByToken(refreshToken),
+    );
     if (!storedToken) throw new AuthError("invalid refresh token");
     if (storedToken.userId !== userId)
       throw new AuthError("unauthorized - token does not belong to user");
 
-    await refreshTokenRepo.revokeRefreshToken(storedToken);
+    await tracer.span("db.revokeRefreshToken", () =>
+      refreshTokenRepo.revokeRefreshToken(storedToken),
+    );
   };
 }
 
@@ -193,6 +218,7 @@ function loginWithProvider<T>(
   jwtSecret: string,
   jwtAudience: string,
   oauthVerifiers: OAuthVerifierMap,
+  tracer: Tracer,
 ) {
   return async (
     provider: Provider,
@@ -201,7 +227,10 @@ function loginWithProvider<T>(
   ): Promise<AuthOutput> => {
     const verifier = oauthVerifiers[provider];
     if (!verifier) throw new AppError("未対応のプロバイダーです", 400);
-    const payload: OIDCPayload = await verifier(credential, clientId);
+    const payload: OIDCPayload = await tracer.span(
+      `ext.${provider}.verify`,
+      () => verifier(credential, clientId),
+    );
 
     if (!payload.sub) throw new AuthError("Missing 'sub' in token payload");
     if (!payload.email) throw new AuthError("Missing 'email' in token payload");
@@ -211,23 +240,28 @@ function loginWithProvider<T>(
 
     let userId: UserId | undefined;
 
-    const existingProvider =
-      await userProviderRepo.findUserProviderByIdAndProvider(
-        provider,
-        providerUserId,
-      );
+    const existingProvider = await tracer.span(
+      "db.findUserProviderByIdAndProvider",
+      () =>
+        userProviderRepo.findUserProviderByIdAndProvider(
+          provider,
+          providerUserId,
+        ),
+    );
 
     if (existingProvider) {
       userId = existingProvider.userId;
     } else {
       const newUserId = createUserId();
-      await userRepo.createUser({
-        id: newUserId,
-        loginId: `${provider}|${providerUserId}`,
-        name: name,
-        password: null,
-        type: "new",
-      });
+      await tracer.span("db.createUser", () =>
+        userRepo.createUser({
+          id: newUserId,
+          loginId: `${provider}|${providerUserId}`,
+          name: name,
+          password: null,
+          type: "new",
+        }),
+      );
       userId = newUserId;
       const userProvider = createUserProviderEntity({
         id: createUserProviderId(),
@@ -236,7 +270,9 @@ function loginWithProvider<T>(
         providerId: providerUserId,
         type: "new",
       });
-      await userProviderRepo.createUserProvider(userProvider);
+      await tracer.span("db.createUserProvider", () =>
+        userProviderRepo.createUserProvider(userProvider),
+      );
     }
 
     if (!userId)
@@ -257,7 +293,9 @@ function loginWithProvider<T>(
       token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
-    await refreshTokenRepo.createRefreshToken(refreshTokenEntity);
+    await tracer.span("db.createRefreshToken", () =>
+      refreshTokenRepo.createRefreshToken(refreshTokenEntity),
+    );
     const refreshToken = `${selector}.${plainRefreshToken}`;
 
     return { accessToken, refreshToken, userId };
@@ -267,6 +305,7 @@ function loginWithProvider<T>(
 function linkProvider(
   userProviderRepo: UserProviderRepository,
   oauthVerifiers: OAuthVerifierMap,
+  tracer: Tracer,
 ) {
   return async (
     userId: UserId,
@@ -276,17 +315,23 @@ function linkProvider(
   ): Promise<void> => {
     const verifier = oauthVerifiers[provider];
     if (!verifier) throw new AppError("未対応のプロバイダーです", 400);
-    const payload: OIDCPayload = await verifier(credential, clientId);
+    const payload: OIDCPayload = await tracer.span(
+      `ext.${provider}.verify`,
+      () => verifier(credential, clientId),
+    );
     if (!payload.sub)
       throw new AuthError("Missing 'sub' (subject) in token payload");
     if (!payload.email) throw new AuthError("Missing 'email' in token payload");
 
     const providerUserId = payload.sub;
-    const existingProvider =
-      await userProviderRepo.findUserProviderByIdAndProvider(
-        provider,
-        providerUserId,
-      );
+    const existingProvider = await tracer.span(
+      "db.findUserProviderByIdAndProvider",
+      () =>
+        userProviderRepo.findUserProviderByIdAndProvider(
+          provider,
+          providerUserId,
+        ),
+    );
     if (existingProvider) {
       if (existingProvider.userId !== userId) {
         throw new AppError(
@@ -295,7 +340,9 @@ function linkProvider(
         );
       }
       // 同じユーザーが既に連携している場合は、既存のレコードを論理削除
-      await userProviderRepo.softDeleteByUserIdAndProvider(userId, provider);
+      await tracer.span("db.softDeleteByUserIdAndProvider", () =>
+        userProviderRepo.softDeleteByUserIdAndProvider(userId, provider),
+      );
     }
 
     const userProvider = createUserProviderEntity({
@@ -307,7 +354,9 @@ function linkProvider(
       type: "new",
     });
 
-    await userProviderRepo.createUserProvider(userProvider);
+    await tracer.span("db.createUserProvider", () =>
+      userProviderRepo.createUserProvider(userProvider),
+    );
   };
 }
 

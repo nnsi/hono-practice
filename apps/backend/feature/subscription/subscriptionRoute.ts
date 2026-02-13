@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
+import { noopTracer } from "@backend/lib/tracer";
 
 import { newSubscriptionHandler } from "./subscriptionHandler";
 import { newSubscriptionRepository } from "./subscriptionRepository";
@@ -18,8 +19,9 @@ export function createSubscriptionRoute() {
   app.use("*", async (c, next) => {
     const db = c.env.DB;
 
+    const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionUsecase(repo);
+    const uc = newSubscriptionUsecase(repo, tracer);
     const h = newSubscriptionHandler(uc);
 
     c.set("h", h);

@@ -1,6 +1,7 @@
 import type { ApiKey, CreateApiKeyData } from "@backend/domain";
 import { createApiKeyId } from "@backend/domain";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
+import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -13,7 +14,7 @@ describe("ApiKeyUsecase", () => {
 
   beforeEach(() => {
     repo = mock<ApiKeyRepository>();
-    usecase = newApiKeyUsecase(instance(repo));
+    usecase = newApiKeyUsecase(instance(repo), noopTracer);
     reset(repo);
   });
 
