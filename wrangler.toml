@@ -3,11 +3,6 @@ main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 compatibility_flags = ["nodejs_compat"]
 
-# Durable Objects migrations（全環境共通）
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["KeyValueDO"]
-
 # stg環境
 [[env.stg.tail_consumers]]
 service = "actiko-tail-worker-stg"
@@ -16,10 +11,6 @@ service = "actiko-tail-worker-stg"
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"
 
-[[env.stg.durable_objects.bindings]]
-name = "RATE_LIMIT_DO"
-class_name = "KeyValueDO"
-
 # production環境
 [[env.production.tail_consumers]]
 service = "actiko-tail-worker-prod"
@@ -27,7 +18,3 @@ service = "actiko-tail-worker-prod"
 [env.production.vars]
 NODE_ENV = "production"
 STORAGE_TYPE = "r2"
-
-[[env.production.durable_objects.bindings]]
-name = "RATE_LIMIT_DO"
-class_name = "KeyValueDO"
