@@ -1,14 +1,56 @@
 import type { MiddlewareHandler } from "hono";
 
+import type { AnalyticsEngineDataset } from "@cloudflare/workers-types";
+
 import type { AppContext } from "../context";
 import { createLogger } from "../lib/logger";
+import type { TracerSummary } from "../lib/tracer";
 import { createTracer } from "../lib/tracer";
+
+/** WAEに書き込むデータポイントを生成 */
+const writeToWAE = (
+  wae: AnalyticsEngineDataset,
+  entry: {
+    level: string;
+    requestId: string;
+    method: string;
+    path: string;
+    feature?: string;
+    error?: string;
+    status: number;
+    duration: number;
+    summary: TracerSummary;
+  },
+) => {
+  wae.writeDataPoint({
+    blobs: [
+      entry.level,
+      "Response sent",
+      entry.requestId,
+      entry.method,
+      entry.path,
+      entry.feature ?? "",
+      entry.error ?? "",
+    ],
+    doubles: [
+      entry.status,
+      entry.duration,
+      entry.summary.dbMs,
+      entry.summary.r2Ms,
+      entry.summary.kvMs,
+      entry.summary.extMs,
+      entry.summary.spanCount,
+    ],
+    indexes: [entry.level],
+  });
+};
 
 /**
  * 構造化ロガーミドルウェア
  * - リクエストごとにrequestIdを生成し、全ログに付与
  * - リクエストごとにTracerを生成し、パフォーマンス計測を提供
  * - JSON形式で出力（Cloudflare Workers Logs対応）
+ * - WAEへのメトリクス書き込み（waitUntilでレスポンス後に非同期実行）
  * - 全環境で有効（localだけでなくstg/productionでも動作）
  */
 export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
@@ -33,6 +75,8 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
       await next();
     } catch (error) {
       const duration = Date.now() - start;
+      const summary = tracer.getSummary();
+      const errorMsg = error instanceof Error ? error.message : String(error);
 
       if (error instanceof Error) {
         logger.error("Unhandled error", {
@@ -40,14 +84,33 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
           stack: error.stack,
           ...(error.cause ? { cause: String(error.cause) } : {}),
           duration,
-          ...tracer.getSummary(),
+          ...summary,
         });
       } else {
         logger.error("Unhandled error", {
-          error: String(error),
+          error: errorMsg,
           duration,
-          ...tracer.getSummary(),
+          ...summary,
         });
+      }
+
+      // WAEにエラーログを書き込み
+      const wae = c.env.WAE_LOGS;
+      if (wae) {
+        c.executionCtx.waitUntil(
+          Promise.resolve(
+            writeToWAE(wae, {
+              level: "error",
+              requestId,
+              method,
+              path,
+              error: errorMsg,
+              status: 500,
+              duration,
+              summary,
+            }),
+          ),
+        );
       }
 
       throw error;
@@ -56,10 +119,30 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     const duration = Date.now() - start;
     const status = c.res.status;
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
+    const summary = tracer.getSummary();
+
     logger[level]("Response sent", {
       status,
       duration,
-      ...tracer.getSummary(),
+      ...summary,
     });
+
+    // WAEにメトリクスを書き込み（404はボットトラフィックが大半なので除外）
+    const wae = c.env.WAE_LOGS;
+    if (wae && status !== 404) {
+      c.executionCtx.waitUntil(
+        Promise.resolve(
+          writeToWAE(wae, {
+            level,
+            requestId,
+            method,
+            path,
+            status,
+            duration,
+            summary,
+          }),
+        ),
+      );
+    }
   };
 };

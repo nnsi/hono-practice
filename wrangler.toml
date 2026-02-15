@@ -13,17 +13,19 @@ tag = "v2"
 deleted_classes = ["KeyValueDO"]
 
 # stg環境
-[[env.stg.tail_consumers]]
-service = "actiko-tail-worker-stg"
-
 [env.stg.vars]
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"
 
-# production環境
-[[env.production.tail_consumers]]
-service = "actiko-tail-worker-prod"
+[[env.stg.analytics_engine_datasets]]
+binding = "WAE_LOGS"
+dataset = "actiko_api_logs"
 
+# production環境
 [env.production.vars]
 NODE_ENV = "production"
 STORAGE_TYPE = "r2"
+
+[[env.production.analytics_engine_datasets]]
+binding = "WAE_LOGS"
+dataset = "actiko_api_logs"

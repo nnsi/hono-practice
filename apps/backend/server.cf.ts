@@ -1,6 +1,10 @@
 import type { ExecutionContext } from "hono";
 
-import type { Hyperdrive, KVNamespace } from "@cloudflare/workers-types";
+import type {
+  AnalyticsEngineDataset,
+  Hyperdrive,
+  KVNamespace,
+} from "@cloudflare/workers-types";
 import * as schema from "@infra/drizzle/schema";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -15,6 +19,7 @@ let db: ReturnType<typeof drizzle> | undefined;
 type Env = Config & {
   HYPERDRIVE: Hyperdrive;
   RATE_LIMIT_KV_NS?: KVNamespace;
+  WAE_LOGS?: AnalyticsEngineDataset;
 };
 
 export default {
@@ -39,7 +44,13 @@ export default {
 
     return app.fetch(
       req,
-      { ...env, ...config, DB: db, RATE_LIMIT_KV: rateLimitKv },
+      {
+        ...env,
+        ...config,
+        DB: db,
+        RATE_LIMIT_KV: rateLimitKv,
+        WAE_LOGS: env.WAE_LOGS,
+      },
       ctx,
     );
   },
