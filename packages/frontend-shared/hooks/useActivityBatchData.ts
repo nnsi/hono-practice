@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import type { AppType } from "@backend/app";
 import {
   GetActivitiesResponseSchema,
@@ -5,7 +7,6 @@ import {
 } from "@dtos/response";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { useEffect, useRef } from "react";
 
 export type UseActivityBatchDataOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;

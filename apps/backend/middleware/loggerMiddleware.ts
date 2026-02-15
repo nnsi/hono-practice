@@ -94,23 +94,27 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
         });
       }
 
-      // WAEにエラーログを書き込み
-      const wae = c.env.WAE_LOGS;
-      if (wae) {
-        c.executionCtx.waitUntil(
-          Promise.resolve(
-            writeToWAE(wae, {
-              level: "error",
-              requestId,
-              method,
-              path,
-              error: errorMsg,
-              status: 500,
-              duration,
-              summary,
-            }),
-          ),
-        );
+      // WAEにエラーログを書き込み（app.request()経由のネストリクエストでも安全に動作させる）
+      try {
+        const wae = c.env.WAE_LOGS;
+        if (wae) {
+          c.executionCtx.waitUntil(
+            Promise.resolve(
+              writeToWAE(wae, {
+                level: "error",
+                requestId,
+                method,
+                path,
+                error: errorMsg,
+                status: 500,
+                duration,
+                summary,
+              }),
+            ),
+          );
+        }
+      } catch {
+        // WAE書き込み失敗はリクエスト処理に影響させない
       }
 
       throw error;
@@ -128,21 +132,26 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     });
 
     // WAEにメトリクスを書き込み（404はボットトラフィックが大半なので除外）
-    const wae = c.env.WAE_LOGS;
-    if (wae && status !== 404) {
-      c.executionCtx.waitUntil(
-        Promise.resolve(
-          writeToWAE(wae, {
-            level,
-            requestId,
-            method,
-            path,
-            status,
-            duration,
-            summary,
-          }),
-        ),
-      );
+    // app.request()経由のネストリクエストではWAE書き込みが失敗する可能性があるため、try-catchで保護
+    try {
+      const wae = c.env.WAE_LOGS;
+      if (wae && status !== 404) {
+        c.executionCtx.waitUntil(
+          Promise.resolve(
+            writeToWAE(wae, {
+              level,
+              requestId,
+              method,
+              path,
+              status,
+              duration,
+              summary,
+            }),
+          ),
+        );
+      }
+    } catch {
+      // WAE書き込み失敗はリクエスト処理に影響させない
     }
   };
 };
