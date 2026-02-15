@@ -3,31 +3,29 @@ main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 compatibility_flags = ["nodejs_compat"]
 
-# Durable Objects migrations（全環境共通）
+# DOマイグレーション: v1で作成したKeyValueDOをv2で削除
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["KeyValueDO"]
 
-# stg環境
-[[env.stg.tail_consumers]]
-service = "actiko-tail-worker-stg"
+[[migrations]]
+tag = "v2"
+deleted_classes = ["KeyValueDO"]
 
+# stg環境
 [env.stg.vars]
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"
 
-[[env.stg.durable_objects.bindings]]
-name = "RATE_LIMIT_DO"
-class_name = "KeyValueDO"
+[[env.stg.analytics_engine_datasets]]
+binding = "WAE_LOGS"
+dataset = "actiko_api_logs"
 
 # production環境
-[[env.production.tail_consumers]]
-service = "actiko-tail-worker-prod"
-
 [env.production.vars]
 NODE_ENV = "production"
 STORAGE_TYPE = "r2"
 
-[[env.production.durable_objects.bindings]]
-name = "RATE_LIMIT_DO"
-class_name = "KeyValueDO"
+[[env.production.analytics_engine_datasets]]
+binding = "WAE_LOGS"
+dataset = "actiko_api_logs"

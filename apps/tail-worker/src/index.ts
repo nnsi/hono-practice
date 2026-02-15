@@ -29,7 +29,8 @@ const parseLogMessage = (message: string): LogEntry | null => {
 
 /** WAEに書き込む対象のログかどうかを判定 */
 const shouldWrite = (entry: LogEntry): boolean =>
-  entry.msg === "Response sent" || entry.level === "error";
+  entry.level === "error" ||
+  (entry.msg === "Response sent" && entry.status !== 404);
 
 export default {
   async tail(events: TraceItem[], env: Env): Promise<void> {

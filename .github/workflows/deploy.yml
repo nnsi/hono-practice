@@ -22,7 +22,6 @@ jobs:
         with:
           files: |
             apps/backend/**
-            infra/do/**
             wrangler.toml
 
       - name: Get changed files (frontend)
@@ -92,6 +91,10 @@ jobs:
           [[env.stg.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${{ vars.R2_BUCKET_NAME_STG }}"
+
+          [[env.stg.kv_namespaces]]
+          binding = "RATE_LIMIT_KV_NS"
+          id = "${{ secrets.KV_RATE_LIMIT_ID_STG }}"
           EOF
 
       - name: Configure Hyperdrive and R2 for production
@@ -107,6 +110,10 @@ jobs:
           [[env.production.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${{ vars.R2_BUCKET_NAME_PROD }}"
+
+          [[env.production.kv_namespaces]]
+          binding = "RATE_LIMIT_KV_NS"
+          id = "${{ secrets.KV_RATE_LIMIT_ID_PROD }}"
           EOF
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)

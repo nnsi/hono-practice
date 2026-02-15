@@ -1,6 +1,9 @@
 import type { Context } from "hono";
 
-import type { R2Bucket } from "@cloudflare/workers-types";
+import type {
+  AnalyticsEngineDataset,
+  R2Bucket,
+} from "@cloudflare/workers-types";
 
 import type { Config } from "../config";
 import type { UserId } from "../domain";
@@ -31,6 +34,8 @@ export type AppContext = {
     R2_BUCKET?: R2Bucket;
     // レートリミット用KVStore（オプション、未設定時はレートリミット無効）
     RATE_LIMIT_KV?: KeyValueStore<{ count: number; windowStart: number }>;
+    // Analytics Engine（オプション、ローカル開発時はundefined）
+    WAE_LOGS?: AnalyticsEngineDataset;
   };
 };
 
