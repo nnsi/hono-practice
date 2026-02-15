@@ -38,7 +38,10 @@ export const useActivityLogCreate = (
   const { toast } = useToast();
   const createActivityLogMutation = useCreateActivityLog();
 
-  form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
+  // dateが変わった時にフォームの日付を同期（useEffectでレンダー中のstate更新を防ぐ）
+  useEffect(() => {
+    form.setValue("date", dayjs(date).format("YYYY-MM-DD"));
+  }, [date, form]);
 
   // タイマー機能の有効判定
   const timerEnabled = isTimeUnit(activity.quantityUnit);
