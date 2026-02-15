@@ -5,6 +5,7 @@ import {
 } from "@dtos/response";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { useEffect, useRef } from "react";
 
 export type UseActivityBatchDataOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
@@ -57,10 +58,14 @@ export function createUseActivityBatchData(
     },
   });
 
-  // エラー時のコールバック呼び出し
-  if (query.error && onError) {
-    onError(query.error as Error);
-  }
+  // エラー時のコールバック呼び出し（useEffectで行い、レンダー中のstate更新を防ぐ）
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+  useEffect(() => {
+    if (query.error && onErrorRef.current) {
+      onErrorRef.current(query.error as Error);
+    }
+  }, [query.error]);
 
   const activities = query.data?.activities ?? [];
   const activityLogs = query.data?.activityLogs ?? [];
