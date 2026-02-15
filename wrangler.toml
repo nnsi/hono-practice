@@ -3,6 +3,15 @@ main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 compatibility_flags = ["nodejs_compat"]
 
+# DOマイグレーション: v1で作成したKeyValueDOをv2で削除
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["KeyValueDO"]
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["KeyValueDO"]
+
 # stg環境
 [[env.stg.tail_consumers]]
 service = "actiko-tail-worker-stg"
