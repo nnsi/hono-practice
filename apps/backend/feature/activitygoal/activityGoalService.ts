@@ -18,6 +18,7 @@ export type ActivityGoalService = {
     userId: UserId,
     goal: ActivityGoal,
     calculateDate?: string,
+    prefetchedLogs?: ActivityLog[],
   ): Promise<GoalBalance>;
 
   getBalanceHistory(
@@ -33,7 +34,11 @@ export type ActivityGoalService = {
     effectiveDate: string,
   ): Promise<ActivityGoal>;
 
-  getInactiveDates(userId: UserId, goal: ActivityGoal): Promise<string[]>;
+  getInactiveDates(
+    userId: UserId,
+    goal: ActivityGoal,
+    prefetchedLogs?: ActivityLog[],
+  ): Promise<string[]>;
 };
 
 export function newActivityGoalService(
@@ -47,11 +52,41 @@ export function newActivityGoalService(
   };
 }
 
+/**
+ * 指定ユーザーの全ゴールに必要なactivity-logsを一括取得する。
+ * 各ゴールのstartDate〜todayの最大範囲をカバーする1回のクエリで取得。
+ */
+export async function prefetchActivityLogs(
+  activityLogRepo: ActivityLogRepository,
+  userId: UserId,
+  goals: ActivityGoal[],
+): Promise<ActivityLog[]> {
+  if (goals.length === 0) return [];
+
+  const today = getCurrentDateInTimezone();
+
+  // 全ゴールの最小startDateと最大endDateを算出
+  let minStart = goals[0].startDate;
+  let maxEnd = today;
+  for (const goal of goals) {
+    if (goal.startDate < minStart) minStart = goal.startDate;
+    const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
+    if (endDate > maxEnd) maxEnd = endDate;
+  }
+
+  return activityLogRepo.getActivityLogsByUserIdAndDate(
+    userId,
+    new Date(minStart),
+    new Date(maxEnd),
+  );
+}
+
 function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
   return async (
     userId: UserId,
     goal: ActivityGoal,
     calculateDate: string = getCurrentDateInTimezone(),
+    prefetchedLogs?: ActivityLog[],
   ): Promise<GoalBalance> => {
     // 1. 終了日が設定されていて、計算日が終了日を超えている場合は終了日までで計算
     const effectiveCalculateDate =
@@ -72,13 +107,20 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
     const totalTarget = activeDays * goal.dailyTargetQuantity;
 
     // 4. 実際の活動量を取得（effectiveCalculateDateまでの期間で計算）
-    const actualQuantity = await getActivityQuantityInPeriod(
-      activityLogRepo,
-      userId,
-      goal.activityId,
-      goal.startDate,
-      effectiveCalculateDate,
-    );
+    const actualQuantity = prefetchedLogs
+      ? getActivityQuantityFromLogs(
+          prefetchedLogs,
+          goal.activityId,
+          goal.startDate,
+          effectiveCalculateDate,
+        )
+      : await getActivityQuantityInPeriod(
+          activityLogRepo,
+          userId,
+          goal.activityId,
+          goal.startDate,
+          effectiveCalculateDate,
+        );
 
     // 5. 残高計算（負の値が負債、正の値が貯金）
     const currentBalance = actualQuantity - totalTarget;
@@ -154,6 +196,26 @@ function adjustDailyTarget() {
   };
 }
 
+// Helper function: prefetchedLogsから期間内の活動量を集計（DBアクセスなし）
+function getActivityQuantityFromLogs(
+  logs: ActivityLog[],
+  activityId: ActivityId,
+  startDate: string,
+  endDate: string,
+): number {
+  let total = 0;
+  for (const log of logs) {
+    if (
+      log.activity.id === activityId &&
+      log.date >= startDate &&
+      log.date <= endDate
+    ) {
+      total += log.quantity || 0;
+    }
+  }
+  return total;
+}
+
 // Helper function: 期間内の活動量を集計
 async function getActivityQuantityInPeriod(
   activityLogRepo: ActivityLogRepository,
@@ -186,27 +248,38 @@ async function getActivityQuantityInPeriod(
 }
 
 function getInactiveDates(activityLogRepo: ActivityLogRepository) {
-  return async (userId: UserId, goal: ActivityGoal): Promise<string[]> => {
+  return async (
+    userId: UserId,
+    goal: ActivityGoal,
+    prefetchedLogs?: ActivityLog[],
+  ): Promise<string[]> => {
     // 計算対象の終了日を決定
     const today = getCurrentDateInTimezone();
     const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
 
-    // 期間内のログを取得
-    const logs = await activityLogRepo.getActivityLogsByUserIdAndDate(
-      userId,
-      new Date(goal.startDate),
-      new Date(endDate),
-    );
+    // 期間内のログを取得（prefetchedLogsがあればDBアクセス不要）
+    const logs = prefetchedLogs
+      ? prefetchedLogs
+      : await activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId,
+          new Date(goal.startDate),
+          new Date(endDate),
+        );
 
     // 活動があった日付のセットを作成
     const activeDates = new Set<string>();
     if (logs) {
-      logs
-        .filter((log: ActivityLog) => log.activity.id === goal.activityId)
-        .filter((log: ActivityLog) => log.quantity !== null && log.quantity > 0)
-        .forEach((log: ActivityLog) => {
+      for (const log of logs) {
+        if (
+          log.activity.id === goal.activityId &&
+          log.quantity !== null &&
+          log.quantity > 0 &&
+          log.date >= goal.startDate &&
+          log.date <= endDate
+        ) {
           activeDates.add(log.date);
-        });
+        }
+      }
     }
 
     // 期間内の全日付をチェックして、活動がなかった日付を収集

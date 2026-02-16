@@ -92,6 +92,7 @@ const routes = app
       }
     }
 
+    const userId = c.get("userId");
     const results = await Promise.all(
       requests.map((req) => {
         return app.request(
@@ -102,6 +103,7 @@ const routes = app
           },
           {
             ...c.env,
+            __authenticatedUserId: userId,
           },
         );
       }),

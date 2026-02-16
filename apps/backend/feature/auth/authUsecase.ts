@@ -184,13 +184,17 @@ function refreshToken(
       token: await hashWithSHA256(plainRefreshToken),
       expiresAt,
     });
-    await tracer.span("db.createRefreshToken", () =>
-      refreshTokenRepo.createRefreshToken(refreshTokenEntity),
-    );
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
-    await tracer.span("db.revokeRefreshToken", () =>
-      refreshTokenRepo.revokeRefreshToken(storedToken),
-    );
+
+    // createRefreshToken と revokeRefreshToken を並列実行
+    await Promise.all([
+      tracer.span("db.createRefreshToken", () =>
+        refreshTokenRepo.createRefreshToken(refreshTokenEntity),
+      ),
+      tracer.span("db.revokeRefreshToken", () =>
+        refreshTokenRepo.revokeRefreshToken(storedToken),
+      ),
+    ]);
 
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };

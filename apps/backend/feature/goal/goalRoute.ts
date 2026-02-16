@@ -38,7 +38,12 @@ export function createGoalRoute() {
 
     // Usecase and Handler
     const tracer = c.get("tracer") ?? noopTracer;
-    const uc = newGoalUsecase(activityGoalRepo, activityGoalService, tracer);
+    const uc = newGoalUsecase(
+      activityGoalRepo,
+      activityGoalService,
+      activityLogRepo,
+      tracer,
+    );
     const h = newGoalHandler(uc);
 
     c.set("h", h);

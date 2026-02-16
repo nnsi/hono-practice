@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import type { ActivityGoalRepository } from "../../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../../activitygoal/activityGoalService";
+import type { ActivityLogRepository } from "../../activityLog";
 import type {
   CreateGoalRequest,
   GoalFilters,
@@ -22,18 +23,22 @@ import { newGoalUsecase } from "../goalUsecase";
 describe("GoalUsecase", () => {
   let activityGoalRepo: ActivityGoalRepository;
   let activityGoalService: ActivityGoalService;
+  let activityLogRepo: ActivityLogRepository;
   let usecase: ReturnType<typeof newGoalUsecase>;
 
   beforeEach(() => {
     activityGoalRepo = mock<ActivityGoalRepository>();
     activityGoalService = mock<ActivityGoalService>();
+    activityLogRepo = mock<ActivityLogRepository>();
 
     reset(activityGoalRepo);
     reset(activityGoalService);
+    reset(activityLogRepo);
 
     usecase = newGoalUsecase(
       instance(activityGoalRepo),
       instance(activityGoalService),
+      instance(activityLogRepo),
       noopTracer,
     );
   });
@@ -69,8 +74,23 @@ describe("GoalUsecase", () => {
         goal,
       ]);
       when(
-        activityGoalService.calculateCurrentBalance(userId, goal),
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve([]);
+      when(
+        activityGoalService.calculateCurrentBalance(
+          userId,
+          goal,
+          anything(),
+          anything(),
+        ),
       ).thenResolve(balance);
+      when(
+        activityGoalService.getInactiveDates(userId, goal, anything()),
+      ).thenResolve([]);
 
       const result = await usecase.getGoals(userId);
 
@@ -135,8 +155,23 @@ describe("GoalUsecase", () => {
         goal2,
       ]);
       when(
-        activityGoalService.calculateCurrentBalance(userId, anything()),
+        activityLogRepo.getActivityLogsByUserIdAndDate(
+          userId,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve([]);
+      when(
+        activityGoalService.calculateCurrentBalance(
+          userId,
+          anything(),
+          anything(),
+          anything(),
+        ),
       ).thenResolve(balance);
+      when(
+        activityGoalService.getInactiveDates(userId, anything(), anything()),
+      ).thenResolve([]);
 
       const filters: GoalFilters = { activityId: activityId1 };
       const result = await usecase.getGoals(userId, filters);

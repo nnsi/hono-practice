@@ -247,17 +247,24 @@ function createActivityLogBatch(
         const txRepo = repo.withTx(tx);
         const txAcRepo = acRepo.withTx(tx);
 
+        // ユニークなactivityIdを集めて1回のクエリで一括取得
+        const uniqueActivityIds = [
+          ...new Set(activityLogs.map((p) => createActivityId(p.activityId))),
+        ];
+        const activities = await tracer.span(
+          "db.getActivitiesByIdsAndUserId",
+          () => txAcRepo.getActivitiesByIdsAndUserId(userId, uniqueActivityIds),
+        );
+        const activityMap = new Map(activities.map((a) => [a.id, a]));
+
         const logsToCreate: ActivityLog[] = [];
 
-        // 全てのアクティビティログを準備
+        // 全てのアクティビティログを準備（DBアクセスなし）
         for (const params of activityLogs) {
           const activityId = createActivityId(params.activityId);
           const activityKindId = createActivityKindId(params.activityKindId);
 
-          const activity = await tracer.span(
-            "db.getActivityByIdAndUserId",
-            () => txAcRepo.getActivityByIdAndUserId(userId, activityId),
-          );
+          const activity = activityMap.get(activityId);
           if (!activity) {
             throw new Error(`Activity not found: ${params.activityId}`);
           }
