@@ -87,13 +87,13 @@ function getUserById(
   tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<UserWithProviders> => {
-    const user = await tracer.span("db.getUserById", () =>
-      repo.getUserById(userId),
-    );
+    const [user, userProviders] = await Promise.all([
+      tracer.span("db.getUserById", () => repo.getUserById(userId)),
+      tracer.span("db.getUserProvidersByUserId", () =>
+        userProviderRepo.getUserProvidersByUserId(userId),
+      ),
+    ]);
     if (!user) throw new AppError("user not found", 404);
-    const userProviders = await tracer.span("db.getUserProvidersByUserId", () =>
-      userProviderRepo.getUserProvidersByUserId(userId),
-    );
     const providers = userProviders.map((p) => p.provider);
 
     // providerEmailsオブジェクトを作成

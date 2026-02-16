@@ -742,13 +742,13 @@ describe("ActivityLogUsecase", () => {
           when(repo.withTx(anything())).thenReturn(instance(txRepo));
           when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
 
-          // アクティビティの取得をモック
-          activityLogs.forEach((log, index) => {
-            const activityId = createActivityId(log.activityId);
-            when(
-              txAcRepo.getActivityByIdAndUserId(userId, activityId),
-            ).thenResolve(mockActivities[index]);
-          });
+          // アクティビティの一括取得をモック
+          const validActivities = mockActivities.filter(
+            (a): a is Activity => a !== undefined,
+          );
+          when(
+            txAcRepo.getActivitiesByIdsAndUserId(userId, anything()),
+          ).thenResolve(validActivities);
 
           // バッチ作成のモック
           when(txRepo.createActivityLogBatch(anything())).thenResolve(
@@ -824,9 +824,9 @@ describe("ActivityLogUsecase", () => {
       when(repo.withTx(anything())).thenReturn(instance(txRepo));
       when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
 
-      when(txAcRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
-        activityWithoutKinds,
-      );
+      when(
+        txAcRepo.getActivitiesByIdsAndUserId(userId1, anything()),
+      ).thenResolve([activityWithoutKinds]);
 
       when(txRepo.createActivityLogBatch(anything())).thenResolve([
         mockActivityLog,

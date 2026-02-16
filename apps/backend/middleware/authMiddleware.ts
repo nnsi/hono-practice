@@ -10,6 +10,14 @@ export function verifyToken(jwt: string, secret: string) {
 }
 
 export async function authMiddleware(c: HonoContext, next: Next) {
+  // バッチリクエスト内部からの呼び出し時はJWT検証をスキップ
+  const internalUserId = (c.env as any).__authenticatedUserId;
+  if (internalUserId) {
+    c.set("userId", createUserId(internalUserId));
+    await next();
+    return;
+  }
+
   // Get token from Authorization header
   const authHeader = c.req.header("Authorization");
 

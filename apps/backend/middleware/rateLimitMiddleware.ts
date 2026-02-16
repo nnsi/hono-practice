@@ -15,6 +15,24 @@ type RateLimitConfig = {
 };
 
 /**
+ * KV set を非ブロッキングで実行する。
+ * Workers環境ではwaitUntilでバックグラウンド実行し、テスト環境ではawaitせず破棄。
+ */
+function fireAndForget(c: any, promise: Promise<unknown>) {
+  try {
+    const ctx = c.executionCtx;
+    if (ctx?.waitUntil) {
+      ctx.waitUntil(promise);
+      return;
+    }
+  } catch {
+    // テスト環境では executionCtx がthrowする — 無視
+  }
+  // waitUntilがない環境: unhandled rejectionを防ぐ
+  promise.catch(() => {});
+}
+
+/**
  * 固定ウィンドウ方式のレートリミットミドルウェアを作成
  */
 export function createRateLimitMiddleware(
@@ -41,15 +59,14 @@ export function createRateLimitMiddleware(
       : await store.get(key);
 
     if (!record || now - record.windowStart >= windowMs) {
-      // 新しいウィンドウを開始
+      // 新しいウィンドウを開始 — set は非ブロッキングで実行
       const windowStart = now;
-      if (t) {
-        await t.span("kv.setRateLimit", () =>
-          store.set(key, { count: 1, windowStart }, windowSeconds),
-        );
-      } else {
-        await store.set(key, { count: 1, windowStart }, windowSeconds);
-      }
+      const setPromise = store.set(
+        key,
+        { count: 1, windowStart },
+        windowSeconds,
+      );
+      fireAndForget(c, setPromise);
 
       c.header("X-RateLimit-Limit", String(limit));
       c.header("X-RateLimit-Remaining", String(limit - 1));
@@ -77,23 +94,14 @@ export function createRateLimitMiddleware(
       return c.json({ message: "too many requests" }, 429);
     }
 
-    // カウントを増やす
+    // カウントを増やす — set は非ブロッキングで実行
     const remaining = limit - record.count - 1;
-    if (t) {
-      await t.span("kv.setRateLimit", () =>
-        store.set(
-          key,
-          { count: record.count + 1, windowStart: record.windowStart },
-          windowSeconds,
-        ),
-      );
-    } else {
-      await store.set(
-        key,
-        { count: record.count + 1, windowStart: record.windowStart },
-        windowSeconds,
-      );
-    }
+    const setPromise = store.set(
+      key,
+      { count: record.count + 1, windowStart: record.windowStart },
+      windowSeconds,
+    );
+    fireAndForget(c, setPromise);
 
     c.header("X-RateLimit-Limit", String(limit));
     c.header("X-RateLimit-Remaining", String(remaining));

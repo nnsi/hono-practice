@@ -10,6 +10,8 @@ import type { Tracer } from "@backend/lib/tracer";
 
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
+import { prefetchActivityLogs } from "../activitygoal/activityGoalService";
+import type { ActivityLogRepository } from "../activityLog";
 
 export type Goal = {
   id: string;
@@ -64,10 +66,16 @@ export type GoalUsecase = {
 export function newGoalUsecase(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
+  activityLogRepo: ActivityLogRepository,
   tracer: Tracer,
 ): GoalUsecase {
   return {
-    getGoals: getGoals(activityGoalRepo, activityGoalService, tracer),
+    getGoals: getGoals(
+      activityGoalRepo,
+      activityGoalService,
+      activityLogRepo,
+      tracer,
+    ),
     getGoal: getGoal(activityGoalRepo, activityGoalService, tracer),
     createGoal: createGoal(activityGoalRepo, tracer),
     updateGoal: updateGoal(activityGoalRepo, tracer),
@@ -78,6 +86,7 @@ export function newGoalUsecase(
 function getGoals(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
+  activityLogRepo: ActivityLogRepository,
   tracer: Tracer,
 ) {
   return async (userId: UserId, filters?: GoalFilters): Promise<Goal[]> => {
@@ -85,15 +94,25 @@ function getGoals(
       activityGoalRepo.getActivityGoalsByUserId(userId),
     );
 
-    // 並行で計算処理
+    // activity-logsを1回だけ一括取得（N+1解消）
+    const allLogs = await tracer.span("db.prefetchActivityLogs", () =>
+      prefetchActivityLogs(activityLogRepo, userId, goals),
+    );
+
+    // 並行で計算処理（DBアクセスなし、prefetchedLogsを使用）
     const goalsWithBalance = await Promise.all(
       goals.map(async (goal) => {
         const [balance, inactiveDates] = await Promise.all([
-          tracer.span("db.calculateCurrentBalance", () =>
-            activityGoalService.calculateCurrentBalance(userId, goal),
+          tracer.span("calculateCurrentBalance", () =>
+            activityGoalService.calculateCurrentBalance(
+              userId,
+              goal,
+              undefined,
+              allLogs,
+            ),
           ),
-          tracer.span("db.getInactiveDates", () =>
-            activityGoalService.getInactiveDates(userId, goal),
+          tracer.span("getInactiveDates", () =>
+            activityGoalService.getInactiveDates(userId, goal, allLogs),
           ),
         ]);
         return {
