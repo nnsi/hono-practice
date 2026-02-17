@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 
 import type { NetworkStatus } from "@frontend/hooks/useNetworkStatus";
 import { useNetworkStatus } from "@frontend/hooks/useNetworkStatus";
+import { useQueryClient } from "@tanstack/react-query";
 
 const NetworkStatusContext = createContext<NetworkStatus | undefined>(
   undefined,
@@ -10,6 +11,18 @@ const NetworkStatusContext = createContext<NetworkStatus | undefined>(
 
 export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   const networkStatus = useNetworkStatus();
+  const queryClient = useQueryClient();
+  const prevOnlineRef = useRef(networkStatus.isOnline);
+
+  // オンライン復帰時にpausedなmutationを再開してデータをリフレッシュ
+  useEffect(() => {
+    if (networkStatus.isOnline && !prevOnlineRef.current) {
+      queryClient.resumePausedMutations().then(() => {
+        queryClient.invalidateQueries();
+      });
+    }
+    prevOnlineRef.current = networkStatus.isOnline;
+  }, [networkStatus.isOnline, queryClient]);
 
   return (
     <NetworkStatusContext.Provider value={networkStatus}>

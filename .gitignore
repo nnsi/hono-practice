@@ -10,6 +10,7 @@ public
 *.pkl
 .serena
 tmp
+nul
 
 # Terraform
 terraform/*.tfvars

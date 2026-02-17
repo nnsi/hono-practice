@@ -20,6 +20,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { buildOptimisticGoal } from "../utils/optimisticData";
+
 export type GoalFilters = {
   activityId?: string;
   isActive?: boolean;
@@ -120,6 +122,7 @@ export function createUseCreateGoal(
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["create-goal"],
     mutationFn: async (data: CreateGoalRequest) => {
       const validated = CreateGoalRequestSchema.parse(data);
       const res = await apiClient.users.goals.$post({
@@ -127,7 +130,34 @@ export function createUseCreateGoal(
       });
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (newGoal) => {
+      await queryClient.cancelQueries({ queryKey: ["goals"] });
+      const previousGoals: Map<string, unknown> = new Map();
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key, data]) => {
+          previousGoals.set(JSON.stringify(key), data);
+        });
+      const optimistic = buildOptimisticGoal(newGoal);
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key]) => {
+          queryClient.setQueryData<GetGoalsResponse>(key, (old) =>
+            old
+              ? { ...old, goals: [...old.goals, optimistic] }
+              : { goals: [optimistic] },
+          );
+        });
+      return { previousGoals };
+    },
+    onError: (_err, _newGoal, context) => {
+      if (context?.previousGoals) {
+        context.previousGoals.forEach((data, keyStr) => {
+          queryClient.setQueryData(JSON.parse(keyStr), data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
     },
   });
@@ -143,6 +173,7 @@ export function createUseUpdateGoal(
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["update-goal"],
     mutationFn: async (params: { id: string; data: UpdateGoalRequest }) => {
       const { id, data } = params;
       const validated = UpdateGoalRequestSchema.parse(data);
@@ -152,7 +183,56 @@ export function createUseUpdateGoal(
       });
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["goals"] });
+      await queryClient.cancelQueries({ queryKey: ["goal", variables.id] });
+      const previousGoals: Map<string, unknown> = new Map();
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key, data]) => {
+          previousGoals.set(JSON.stringify(key), data);
+        });
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key]) => {
+          queryClient.setQueryData<GetGoalsResponse>(key, (old) =>
+            old
+              ? {
+                  ...old,
+                  goals: old.goals.map((g) => {
+                    if (g.id !== variables.id) return g;
+                    const updated = {
+                      ...g,
+                      updatedAt: new Date().toISOString(),
+                    };
+                    if (variables.data.dailyTargetQuantity !== undefined)
+                      updated.dailyTargetQuantity =
+                        variables.data.dailyTargetQuantity;
+                    if (variables.data.startDate !== undefined)
+                      updated.startDate = variables.data.startDate;
+                    if (variables.data.endDate !== undefined)
+                      updated.endDate = variables.data.endDate ?? undefined;
+                    if (variables.data.description !== undefined)
+                      updated.description =
+                        variables.data.description ?? undefined;
+                    if (variables.data.isActive !== undefined)
+                      updated.isActive = variables.data.isActive;
+                    return updated;
+                  }),
+                }
+              : old,
+          );
+        });
+      return { previousGoals };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousGoals) {
+        context.previousGoals.forEach((data, keyStr) => {
+          queryClient.setQueryData(JSON.parse(keyStr), data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
       queryClient.invalidateQueries({ queryKey: ["goal"] });
     },
@@ -169,13 +249,39 @@ export function createUseDeleteGoal(
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["delete-goal"],
     mutationFn: async (id: string) => {
       const res = await apiClient.users.goals[":id"].$delete({
         param: { id },
       });
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["goals"] });
+      await queryClient.cancelQueries({ queryKey: ["goal", id] });
+      const previousGoals: Map<string, unknown> = new Map();
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key, data]) => {
+          previousGoals.set(JSON.stringify(key), data);
+        });
+      queryClient
+        .getQueriesData<GetGoalsResponse>({ queryKey: ["goals"] })
+        .forEach(([key]) => {
+          queryClient.setQueryData<GetGoalsResponse>(key, (old) =>
+            old ? { ...old, goals: old.goals.filter((g) => g.id !== id) } : old,
+          );
+        });
+      return { previousGoals };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousGoals) {
+        context.previousGoals.forEach((data, keyStr) => {
+          queryClient.setQueryData(JSON.parse(keyStr), data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
       queryClient.invalidateQueries({ queryKey: ["goal"] });
     },
