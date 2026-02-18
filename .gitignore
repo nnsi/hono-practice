@@ -11,6 +11,7 @@ public
 .serena
 tmp
 nul
+.playwright-mcp
 
 # Terraform
 terraform/*.tfvars
