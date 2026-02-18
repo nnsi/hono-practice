@@ -19,7 +19,10 @@ export type AuthHandler = {
   /** DB読み取りのみ: トークン取得+バリデーション */
   fetchRefreshToken(token: string): Promise<RefreshToken>;
   /** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
-  rotateRefreshToken(storedToken: RefreshToken): Promise<{
+  rotateRefreshToken(
+    storedToken: RefreshToken,
+    fireAndForgetFn?: (p: Promise<unknown>) => void,
+  ): Promise<{
     token: string;
     refreshToken: string;
   }>;
@@ -118,8 +121,11 @@ function fetchRefreshTokenHandler(uc: AuthUsecase) {
 }
 
 function rotateRefreshTokenHandler(uc: AuthUsecase) {
-  return async (storedToken: RefreshToken) => {
-    const result = await uc.rotateRefreshToken(storedToken);
+  return async (
+    storedToken: RefreshToken,
+    fireAndForgetFn?: (p: Promise<unknown>) => void,
+  ) => {
+    const result = await uc.rotateRefreshToken(storedToken, fireAndForgetFn);
     const parsedResponse = authResponseSchema.safeParse({
       token: result.accessToken,
       refreshToken: result.refreshToken,

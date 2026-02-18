@@ -54,7 +54,10 @@ export type AuthUsecase = {
   /** DB読み取りのみ: トークン取得+バリデーション（書き込みなし、ただしバリデーション失敗時はrevoke） */
   fetchRefreshToken(token: string): Promise<RefreshTokenEntity>;
   /** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
-  rotateRefreshToken(storedToken: RefreshTokenEntity): Promise<AuthOutput>;
+  rotateRefreshToken(
+    storedToken: RefreshTokenEntity,
+    fireAndForgetFn?: (p: Promise<unknown>) => void,
+  ): Promise<AuthOutput>;
   logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,
@@ -192,7 +195,10 @@ function rotateRefreshToken(
   jwtAudience: string,
   tracer: Tracer,
 ) {
-  return async (storedToken: RefreshTokenEntity): Promise<AuthOutput> => {
+  return async (
+    storedToken: RefreshTokenEntity,
+    fireAndForgetFn?: (p: Promise<unknown>) => void,
+  ): Promise<AuthOutput> => {
     const accessToken = await generateAccessToken(
       jwtSecret,
       jwtAudience,
@@ -209,7 +215,7 @@ function rotateRefreshToken(
     const newCombinedRefreshToken = `${selector}.${plainRefreshToken}`;
 
     // createRefreshToken と revokeRefreshToken を並列実行
-    await Promise.all([
+    const dbWrites = Promise.all([
       tracer.span("db.createRefreshToken", () =>
         refreshTokenRepo.createRefreshToken(refreshTokenEntity),
       ),
@@ -217,6 +223,12 @@ function rotateRefreshToken(
         refreshTokenRepo.revokeRefreshToken(storedToken),
       ),
     ]);
+
+    if (fireAndForgetFn) {
+      fireAndForgetFn(dbWrites);
+    } else {
+      await dbWrites;
+    }
 
     return { accessToken, refreshToken: newCombinedRefreshToken };
   };
