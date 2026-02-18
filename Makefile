@@ -53,7 +53,7 @@ seed:
 dev:
 	@echo "🚀 開発サーバーを起動中..."
 	@echo "  Backend: http://localhost:3456"
-	@echo "  Frontend: http://localhost:5173"
+	@echo "  Frontend: http://localhost:1357"
 	@echo ""
 	npm run dev & npm run client-dev
 

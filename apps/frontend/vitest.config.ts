@@ -11,7 +11,7 @@ export default defineConfig({
     react() as any,
   ],
   server: {
-    port: Number.parseInt(process.env.VITE_PORT || "5173", 10),
+    port: Number.parseInt(process.env.VITE_PORT || "1357", 10),
     host: true,
   },
   build: {

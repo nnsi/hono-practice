@@ -9,7 +9,7 @@ let viteProcess: ChildProcess | null = null;
 let actualPort: number | null = null;
 
 export async function startTestFrontend(
-  port = 5173,
+  port = 1357,
   apiPort = 3456,
 ): Promise<number> {
   // 既存のプロセスがあれば先に終了
