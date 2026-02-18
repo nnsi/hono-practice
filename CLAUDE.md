@@ -13,9 +13,9 @@
 - **重要: バックエンドAPIサーバーのポートは3456です（4000ではありません）**
 
 ### ブラウザ動作確認
-- **「ブラウザで動作確認して」と言われた場合は、Playwright MCPを使用する**
-- 手動確認を求めるのではなく、必ずPlaywrightで自動的に動作確認を実施すること
-- `mcp__playwright__browser_navigate`でアクセス、`mcp__playwright__browser_snapshot`で状態確認
+- **「ブラウザで動作確認して」と言われた場合は、Claude in Chrome MCPを使用する**
+- 手動確認を求めるのではなく、必ずClaude in Chromeで自動的に動作確認を実施すること
+- `mcp__claude-in-chrome__tabs_context_mcp`でタブ情報取得、`mcp__claude-in-chrome__navigate`でアクセス、`mcp__claude-in-chrome__read_page`で状態確認
 
 ## プロジェクト概要
 
