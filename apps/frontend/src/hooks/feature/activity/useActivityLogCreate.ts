@@ -103,24 +103,14 @@ export const useActivityLogCreate = (
 
       form.reset();
 
-      // キャッシュの更新はuseSyncedActivityLogのonSuccessで行われるため、ここでは不要
-      // オフライン時はカスタムイベントによってUIが更新される
-
       toast({
         title: "登録完了",
         description: "アクティビティを記録しました",
         variant: "default",
       });
 
-      // mutateAsyncが完了した後、少し待機してから画面を更新
-      // オフライン時のlocalStorage書き込みが完了するまでの時間を確保
-      setTimeout(() => {
-        // onSuccessを呼び出してActivityRegistPageにも通知
-        onSuccess?.();
-
-        // ダイアログを閉じる
-        onOpenChange(false);
-      }, 100);
+      onSuccess?.();
+      onOpenChange(false);
     } catch (_error) {
       toast({
         title: "エラー",

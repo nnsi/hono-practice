@@ -2,16 +2,13 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import "../main.css";
 
 import { useAuth } from "@hooks/useAuth";
 
-import { OfflineToggle } from "./components/dev/OfflineToggle";
 import { AuthProvider } from "./providers/AuthProvider";
 import { EventBusProvider } from "./providers/EventBusProvider";
 import { NetworkStatusProvider } from "./providers/NetworkStatusProvider";
@@ -30,32 +27,12 @@ const queryClient = new QueryClient({
       staleTime: 0, // 常に最新データを取得
       refetchOnMount: "always", // 常にマウント時にフェッチ
       refetchOnWindowFocus: true, // ウィンドウフォーカス時にフェッチ
-      networkMode: "offlineFirst", // オフライン時もキャッシュから返す
     },
     mutations: {
       retry: false,
-      networkMode: "offlineFirst", // オフライン時にmutationを自動pause
     },
   },
 });
-
-// クエリキャッシュの永続化設定
-const PERSIST_QUERY_KEYS = new Set([
-  "activity",
-  "activity-logs-daily",
-  "activity-stats-monthly",
-  "tasks",
-  "task",
-  "goals",
-  "goal",
-]);
-
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: "actiko-query-cache",
-});
-
-// onlineManager は apps/frontend/src/utils/onlineManager.ts で管理
 
 const router = createRouter({
   routeTree: routeTree,
@@ -102,39 +79,17 @@ const eventBus = createWindowEventBus();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{
-          persister,
-          maxAge: 1000 * 60 * 60 * 24, // 24時間
-          dehydrateOptions: {
-            shouldDehydrateQuery: (query) => {
-              const key = query.queryKey[0] as string;
-              return PERSIST_QUERY_KEYS.has(key);
-            },
-            shouldDehydrateMutation: (mutation) => {
-              return mutation.state.isPaused;
-            },
-          },
-        }}
-        onSuccess={() => {
-          // アプリ起動時にpausedなmutationを再開
-          queryClient.resumePausedMutations().then(() => {
-            queryClient.invalidateQueries();
-          });
-        }}
-      >
+      <QueryClientProvider client={queryClient}>
         <EventBusProvider eventBus={eventBus}>
           <TokenProvider tokenStore={tokenStore} eventBus={eventBus}>
             <AuthProvider apiClient={apiClient} eventBus={eventBus}>
               <NetworkStatusProvider>
                 <RouterProviderWithAuth />
-                <OfflineToggle />
               </NetworkStatusProvider>
             </AuthProvider>
           </TokenProvider>
         </EventBusProvider>
-      </PersistQueryClientProvider>
+      </QueryClientProvider>
     </GoogleOAuthProvider>
   </StrictMode>,
 );
