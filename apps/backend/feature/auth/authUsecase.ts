@@ -10,6 +10,7 @@ import { AppError, AuthError } from "@backend/error";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Tracer } from "@backend/lib/tracer";
 import {
+  type RefreshToken as RefreshTokenEntity,
   createRefreshToken,
   validateRefreshToken,
 } from "@domain/auth/refreshToken";
@@ -50,6 +51,10 @@ export type JwtVerifyFn = (
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;
   refreshToken(token: string): Promise<AuthOutput>;
+  /** DB読み取りのみ: トークン取得+バリデーション（書き込みなし、ただしバリデーション失敗時はrevoke） */
+  fetchRefreshToken(token: string): Promise<RefreshTokenEntity>;
+  /** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
+  rotateRefreshToken(storedToken: RefreshTokenEntity): Promise<AuthOutput>;
   logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,
@@ -85,7 +90,14 @@ export function newAuthUsecase<T>(
       jwtAudience,
       tracer,
     ),
-    refreshToken: refreshToken(
+    refreshToken: refreshTokenFull(
+      refreshTokenRepo,
+      jwtSecret,
+      jwtAudience,
+      tracer,
+    ),
+    fetchRefreshToken: fetchRefreshToken(refreshTokenRepo, tracer),
+    rotateRefreshToken: rotateRefreshToken(
       refreshTokenRepo,
       jwtSecret,
       jwtAudience,
@@ -153,13 +165,12 @@ function login<T>(
   };
 }
 
-function refreshToken(
+/** DB読み取り: トークン取得 + バリデーション */
+function fetchRefreshToken(
   refreshTokenRepo: RefreshTokenRepository,
-  jwtSecret: string,
-  jwtAudience: string,
   tracer: Tracer,
 ) {
-  return async (combinedToken: string): Promise<AuthOutput> => {
+  return async (combinedToken: string): Promise<RefreshTokenEntity> => {
     const storedToken = await tracer.span("db.getRefreshTokenByToken", () =>
       refreshTokenRepo.getRefreshTokenByToken(combinedToken),
     );
@@ -170,7 +181,18 @@ function refreshToken(
       );
       throw new AuthError("invalid refresh token (validation failed)");
     }
+    return storedToken;
+  };
+}
 
+/** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
+function rotateRefreshToken(
+  refreshTokenRepo: RefreshTokenRepository,
+  jwtSecret: string,
+  jwtAudience: string,
+  tracer: Tracer,
+) {
+  return async (storedToken: RefreshTokenEntity): Promise<AuthOutput> => {
     const accessToken = await generateAccessToken(
       jwtSecret,
       jwtAudience,
@@ -197,6 +219,26 @@ function refreshToken(
     ]);
 
     return { accessToken, refreshToken: newCombinedRefreshToken };
+  };
+}
+
+/** fetch + rotate の一括実行（後方互換） */
+function refreshTokenFull(
+  refreshTokenRepo: RefreshTokenRepository,
+  jwtSecret: string,
+  jwtAudience: string,
+  tracer: Tracer,
+) {
+  const fetch = fetchRefreshToken(refreshTokenRepo, tracer);
+  const rotate = rotateRefreshToken(
+    refreshTokenRepo,
+    jwtSecret,
+    jwtAudience,
+    tracer,
+  );
+  return async (combinedToken: string): Promise<AuthOutput> => {
+    const storedToken = await fetch(combinedToken);
+    return rotate(storedToken);
   };
 }
 

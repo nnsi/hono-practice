@@ -1,5 +1,6 @@
 import type { Provider, UserId } from "@backend/domain";
 import { createUserId } from "@backend/domain/user/userId";
+import type { RefreshToken } from "@domain/auth/refreshToken";
 import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
@@ -12,6 +13,13 @@ export type AuthHandler = {
     refreshToken: string;
   }>;
   refreshToken(token: string): Promise<{
+    token: string;
+    refreshToken: string;
+  }>;
+  /** DB読み取りのみ: トークン取得+バリデーション */
+  fetchRefreshToken(token: string): Promise<RefreshToken>;
+  /** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
+  rotateRefreshToken(storedToken: RefreshToken): Promise<{
     token: string;
     refreshToken: string;
   }>;
@@ -103,10 +111,38 @@ function linkProvider(uc: AuthUsecase) {
   };
 }
 
+function fetchRefreshTokenHandler(uc: AuthUsecase) {
+  return async (token: string) => {
+    return uc.fetchRefreshToken(token);
+  };
+}
+
+function rotateRefreshTokenHandler(uc: AuthUsecase) {
+  return async (storedToken: RefreshToken) => {
+    const result = await uc.rotateRefreshToken(storedToken);
+    const parsedResponse = authResponseSchema.safeParse({
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
+    if (!parsedResponse.success) {
+      throw new AppError(
+        "rotateRefreshTokenHandler: failed to parse response",
+        500,
+      );
+    }
+    return {
+      token: parsedResponse.data.token,
+      refreshToken: parsedResponse.data.refreshToken,
+    };
+  };
+}
+
 export function newAuthHandler(uc: AuthUsecase): AuthHandler {
   return {
     login: login(uc),
     refreshToken: refreshToken(uc),
+    fetchRefreshToken: fetchRefreshTokenHandler(uc),
+    rotateRefreshToken: rotateRefreshTokenHandler(uc),
     logout: logout(uc),
     googleLogin: googleLogin(uc),
     linkProvider: linkProvider(uc),
