@@ -18,11 +18,11 @@ export type ActivityLogEditDependencies = {
         activityKindId?: string;
       };
       date: string;
-    }) => Promise<void>;
+    }) => Promise<unknown>;
     isPending?: boolean;
   };
   deleteActivityLog: {
-    mutateAsync: (params: { id: string; date: string }) => Promise<void>;
+    mutateAsync: (params: { id: string; date: string }) => Promise<unknown>;
     isPending?: boolean;
   };
   notification: NotificationAdapter;

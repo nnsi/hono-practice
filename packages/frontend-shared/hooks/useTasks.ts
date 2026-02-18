@@ -171,7 +171,7 @@ export function createUseCreateTask(
 }
 
 /**
- * タスク更新用の共通フック
+ * タスク更新用の共通フック（楽観的更新対応）
  */
 export function createUseUpdateTask(
   options: MutationOptions,
@@ -194,7 +194,44 @@ export function createUseUpdateTask(
 
       return res.json();
     },
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      await queryClient.cancelQueries({ queryKey: ["task", variables.id] });
+
+      const previousTasksQueries = queryClient.getQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+      );
+      const previousTask = queryClient.getQueryData<GetTaskResponse | null>([
+        "task",
+        variables.id,
+      ]);
+
+      queryClient.setQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+        (old) =>
+          old?.map((task) =>
+            task.id === variables.id ? { ...task, ...variables.data } : task,
+          ),
+      );
+
+      queryClient.setQueryData<GetTaskResponse | null>(
+        ["task", variables.id],
+        (old) => (old ? { ...old, ...variables.data } : old),
+      );
+
+      return { previousTasksQueries, previousTask };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.previousTasksQueries) {
+        for (const [queryKey, data] of context.previousTasksQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+      if (context?.previousTask !== undefined) {
+        queryClient.setQueryData(["task", variables.id], context.previousTask);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
     },
@@ -202,7 +239,7 @@ export function createUseUpdateTask(
 }
 
 /**
- * タスク削除用の共通フック
+ * タスク削除用の共通フック（楽観的更新対応）
  */
 export function createUseDeleteTask(
   options: MutationOptions,
@@ -222,7 +259,30 @@ export function createUseDeleteTask(
 
       return res.json();
     },
-    onSuccess: (_data, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      await queryClient.cancelQueries({ queryKey: ["task", id] });
+
+      const previousTasksQueries = queryClient.getQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+      );
+
+      queryClient.setQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+        (old) => old?.filter((task) => task.id !== id),
+      );
+      queryClient.removeQueries({ queryKey: ["task", id] });
+
+      return { previousTasksQueries };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousTasksQueries) {
+        for (const [queryKey, data] of context.previousTasksQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: (_data, _error, id) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", id] });
     },
@@ -230,7 +290,7 @@ export function createUseDeleteTask(
 }
 
 /**
- * タスクアーカイブ用の共通フック
+ * タスクアーカイブ用の共通フック（楽観的更新対応）
  */
 export function createUseArchiveTask(
   options: MutationOptions,
@@ -251,7 +311,47 @@ export function createUseArchiveTask(
 
       return res.json();
     },
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      await queryClient.cancelQueries({ queryKey: ["tasks", "archived"] });
+      await queryClient.cancelQueries({ queryKey: ["task", variables.id] });
+
+      const previousTasksQueries = queryClient.getQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+      );
+      const previousArchivedTasks = queryClient.getQueryData<GetTasksResponse>([
+        "tasks",
+        "archived",
+      ]);
+
+      // タスクリストの該当タスクに archivedAt を設定
+      // includeArchived: false のクエリではクライアント側フィルタで自動除外される
+      queryClient.setQueriesData<GetTasksResponse>(
+        { queryKey: ["tasks"] },
+        (old) =>
+          old?.map((task) =>
+            task.id === variables.id
+              ? { ...task, archivedAt: new Date() }
+              : task,
+          ),
+      );
+
+      return { previousTasksQueries, previousArchivedTasks };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksQueries) {
+        for (const [queryKey, data] of context.previousTasksQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+      if (context?.previousArchivedTasks !== undefined) {
+        queryClient.setQueryData(
+          ["tasks", "archived"],
+          context.previousArchivedTasks,
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "archived"] });
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });

@@ -7,7 +7,6 @@ import {
 } from "@frontend/hooks/api/useActivityLogs";
 import { createWebNotificationAdapter } from "@packages/frontend-shared/adapters";
 import { createUseActivityLogEdit } from "@packages/frontend-shared/hooks/feature";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const useActivityLogEdit = (
   open: boolean,
@@ -15,9 +14,8 @@ export const useActivityLogEdit = (
   log: GetActivityLogResponse | null,
 ) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // 同期対応のフック
+  // 同期対応のフック（楽観的更新+onSettledでinvalidate済み）
   const updateActivityLog = useUpdateActivityLog();
   const deleteActivityLog = useDeleteActivityLog();
 
@@ -31,34 +29,8 @@ export const useActivityLogEdit = (
 
   const dependencies = {
     activities,
-    updateActivityLog: {
-      mutateAsync: async (params: {
-        id: string;
-        data: { memo?: string; quantity?: number; activityKindId?: string };
-        date: string;
-      }) => {
-        await updateActivityLog.mutateAsync(params);
-        // 更新後にキャッシュを無効化
-        if (params.date) {
-          await queryClient.invalidateQueries({
-            queryKey: ["activity-logs-daily", params.date],
-          });
-        }
-      },
-      isPending: updateActivityLog.isPending,
-    },
-    deleteActivityLog: {
-      mutateAsync: async (params: { id: string; date: string }) => {
-        await deleteActivityLog.mutateAsync(params);
-        // 削除後にキャッシュを無効化
-        if (params.date) {
-          await queryClient.invalidateQueries({
-            queryKey: ["activity-logs-daily", params.date],
-          });
-        }
-      },
-      isPending: deleteActivityLog.isPending,
-    },
+    updateActivityLog,
+    deleteActivityLog,
     notification,
   };
 
