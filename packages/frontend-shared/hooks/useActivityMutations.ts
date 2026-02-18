@@ -3,10 +3,7 @@ import type {
   CreateActivityRequest,
   UpdateActivityRequest,
 } from "@dtos/request";
-import type { GetActivitiesResponse } from "@dtos/response";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { buildOptimisticActivity } from "../utils/optimisticData";
 
 export type UseActivityMutationsOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
@@ -17,7 +14,6 @@ export function createUseCreateActivity(options: UseActivityMutationsOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["create-activity"],
     mutationFn: async (data: CreateActivityRequest) => {
       const res = await apiClient.users.activities.$post({
         json: data,
@@ -27,23 +23,7 @@ export function createUseCreateActivity(options: UseActivityMutationsOptions) {
       }
       return res.json();
     },
-    onMutate: async (newActivity) => {
-      await queryClient.cancelQueries({ queryKey: ["activity"] });
-      const previousActivities =
-        queryClient.getQueryData<GetActivitiesResponse>(["activity"]);
-      const optimistic = buildOptimisticActivity(newActivity);
-      queryClient.setQueryData<GetActivitiesResponse>(["activity"], (old) => [
-        ...(old ?? []),
-        optimistic,
-      ]);
-      return { previousActivities };
-    },
-    onError: (_err, _newActivity, context) => {
-      if (context?.previousActivities) {
-        queryClient.setQueryData(["activity"], context.previousActivities);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
   });
@@ -54,7 +34,6 @@ export function createUseUpdateActivity(options: UseActivityMutationsOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["update-activity"],
     mutationFn: async ({
       id,
       data,
@@ -71,25 +50,7 @@ export function createUseUpdateActivity(options: UseActivityMutationsOptions) {
       }
       return res.json();
     },
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ["activity"] });
-      const previousActivities =
-        queryClient.getQueryData<GetActivitiesResponse>(["activity"]);
-      queryClient.setQueryData<GetActivitiesResponse>(["activity"], (old) =>
-        (old ?? []).map((a) =>
-          a.id === variables.id
-            ? { ...a, ...variables.data.activity, _isOptimistic: true as const }
-            : a,
-        ),
-      );
-      return { previousActivities };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousActivities) {
-        queryClient.setQueryData(["activity"], context.previousActivities);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
   });
@@ -100,7 +61,6 @@ export function createUseDeleteActivity(options: UseActivityMutationsOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["delete-activity"],
     mutationFn: async (id: string) => {
       const res = await apiClient.users.activities[":id"].$delete({
         param: { id },
@@ -109,21 +69,7 @@ export function createUseDeleteActivity(options: UseActivityMutationsOptions) {
         throw new Error("Failed to delete activity");
       }
     },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["activity"] });
-      const previousActivities =
-        queryClient.getQueryData<GetActivitiesResponse>(["activity"]);
-      queryClient.setQueryData<GetActivitiesResponse>(["activity"], (old) =>
-        (old ?? []).filter((a) => a.id !== id),
-      );
-      return { previousActivities };
-    },
-    onError: (_err, _id, context) => {
-      if (context?.previousActivities) {
-        queryClient.setQueryData(["activity"], context.previousActivities);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
   });

@@ -4,17 +4,14 @@ import type {
   CreateActivityLogRequest,
   UpdateActivityLogRequest,
 } from "@dtos/request";
-import type { GetActivitiesResponse } from "@dtos/response";
 import {
   type GetActivityLogsResponse,
   GetActivityLogsResponseSchema,
   type GetActivityStatsResponse,
   GetActivityStatsResponseSchema,
 } from "@dtos/response";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-
-import { buildOptimisticActivityLog } from "../utils/optimisticData";
 
 export type UseActivityLogsOptions = {
   apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
@@ -52,10 +49,8 @@ export type CreateActivityLogOptions = {
 
 export function createUseCreateActivityLog(options: CreateActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["create-activity-log"],
     mutationFn: async (data: CreateActivityLogRequest) => {
       const res = await apiClient.users["activity-logs"].$post({
         json: data,
@@ -65,43 +60,7 @@ export function createUseCreateActivityLog(options: CreateActivityLogOptions) {
       }
       return res.json();
     },
-    onMutate: async (newLog) => {
-      const dateKey = newLog.date;
-      await queryClient.cancelQueries({
-        queryKey: ["activity-logs-daily", dateKey],
-      });
-      const previousLogs = queryClient.getQueryData<GetActivityLogsResponse>([
-        "activity-logs-daily",
-        dateKey,
-      ]);
-      // ["activity"]キーにはオブジェクト{ activities, activityLogs }が格納されている
-      const cachedData = queryClient.getQueryData<{
-        activities: GetActivitiesResponse;
-      }>(["activity"]);
-      const activities = cachedData?.activities ?? [];
-      const optimisticLog = buildOptimisticActivityLog(newLog, activities);
-      queryClient.setQueryData<GetActivityLogsResponse>(
-        ["activity-logs-daily", dateKey],
-        (old) => [...(old ?? []), optimisticLog],
-      );
-      return { previousLogs, dateKey };
-    },
-    onError: (_err, _newLog, context) => {
-      if (context?.dateKey && context?.previousLogs) {
-        queryClient.setQueryData(
-          ["activity-logs-daily", context.dateKey],
-          context.previousLogs,
-        );
-      }
-    },
-    onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-stats-monthly"],
-      });
-    },
+    // onSuccessを削除 - invalidateはuseActivityRegistPageのhandleActivityLogCreateSuccessで一括処理
   });
 }
 
@@ -111,10 +70,8 @@ export type UpdateActivityLogOptions = {
 
 export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["update-activity-log"],
     mutationFn: async ({
       id,
       data,
@@ -133,47 +90,7 @@ export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
       }
       return res.json();
     },
-    onMutate: async (variables) => {
-      const dateKey = variables.date;
-      await queryClient.cancelQueries({
-        queryKey: ["activity-logs-daily", dateKey],
-      });
-      const previousLogs = queryClient.getQueryData<GetActivityLogsResponse>([
-        "activity-logs-daily",
-        dateKey,
-      ]);
-      queryClient.setQueryData<GetActivityLogsResponse>(
-        ["activity-logs-daily", dateKey],
-        (old) =>
-          (old ?? []).map((log) =>
-            log.id === variables.id
-              ? {
-                  ...log,
-                  ...variables.data,
-                  updatedAt: new Date(),
-                  _isOptimistic: true as const,
-                }
-              : log,
-          ),
-      );
-      return { previousLogs, dateKey };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.dateKey && context?.previousLogs) {
-        queryClient.setQueryData(
-          ["activity-logs-daily", context.dateKey],
-          context.previousLogs,
-        );
-      }
-    },
-    onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-stats-monthly"],
-      });
-    },
+    // onSuccessを削除 - invalidateは呼び出し元で一括処理
   });
 }
 
@@ -183,10 +100,8 @@ export type DeleteActivityLogOptions = {
 
 export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["delete-activity-log"],
     mutationFn: async ({ id, date: _date }: { id: string; date: string }) => {
       const res = await apiClient.users["activity-logs"][":id"].$delete({
         param: { id },
@@ -195,37 +110,7 @@ export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
         throw new Error("Failed to delete activity log");
       }
     },
-    onMutate: async (variables) => {
-      const dateKey = variables.date;
-      await queryClient.cancelQueries({
-        queryKey: ["activity-logs-daily", dateKey],
-      });
-      const previousLogs = queryClient.getQueryData<GetActivityLogsResponse>([
-        "activity-logs-daily",
-        dateKey,
-      ]);
-      queryClient.setQueryData<GetActivityLogsResponse>(
-        ["activity-logs-daily", dateKey],
-        (old) => (old ?? []).filter((log) => log.id !== variables.id),
-      );
-      return { previousLogs, dateKey };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.dateKey && context?.previousLogs) {
-        queryClient.setQueryData(
-          ["activity-logs-daily", context.dateKey],
-          context.previousLogs,
-        );
-      }
-    },
-    onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily", variables.date],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-stats-monthly"],
-      });
-    },
+    // onSuccessを削除 - invalidateは呼び出し元で一括処理
   });
 }
 
@@ -270,10 +155,8 @@ export function createUseBatchImportActivityLogs(
   options: UseBatchImportActivityLogsOptions,
 ) {
   const { apiClient } = options;
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["batch-import-activity-logs"],
     mutationFn: async (data: CreateActivityLogBatchRequest) => {
       const res = await apiClient.users["activity-logs"].batch.$post({
         json: data,
@@ -283,13 +166,6 @@ export function createUseBatchImportActivityLogs(
       }
       return res.json();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["activity-logs-daily"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["activity-stats-monthly"],
-      });
-    },
+    // onSuccessを削除 - バッチインポート後のキャッシュ無効化は呼び出し元で管理
   });
 }

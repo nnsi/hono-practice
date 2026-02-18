@@ -75,10 +75,7 @@ export function createUseDailyPage(dependencies: DailyPageDependencies) {
 
   // Use activity logs directly without merging offline data
   const mergedActivityLogs = activityLogs;
-  const isOfflineData = (log: GetActivityLogResponse) =>
-    "_isOptimistic" in log &&
-    (log as GetActivityLogResponse & { _isOptimistic?: boolean })
-      ._isOptimistic === true;
+  const isOfflineData = (_log: GetActivityLogResponse) => false;
 
   // Use tasks directly without merging offline data
   const mergedTasks = tasks;
