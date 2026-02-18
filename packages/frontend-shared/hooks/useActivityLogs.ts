@@ -74,8 +74,11 @@ export function createUseCreateActivityLog(options: CreateActivityLogOptions) {
         "activity-logs-daily",
         dateKey,
       ]);
-      const activities =
-        queryClient.getQueryData<GetActivitiesResponse>(["activity"]) ?? [];
+      // ["activity"]キーにはオブジェクト{ activities, activityLogs }が格納されている
+      const cachedData = queryClient.getQueryData<{
+        activities: GetActivitiesResponse;
+      }>(["activity"]);
+      const activities = cachedData?.activities ?? [];
       const optimisticLog = buildOptimisticActivityLog(newLog, activities);
       queryClient.setQueryData<GetActivityLogsResponse>(
         ["activity-logs-daily", dateKey],
