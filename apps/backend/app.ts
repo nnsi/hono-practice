@@ -14,6 +14,7 @@ import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
+import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { loggerMiddleware } from "./middleware/loggerMiddleware";
 
@@ -108,6 +109,19 @@ const routes = app
         );
       }),
     );
+
+    // サブリクエストのトレーサーサマリーを親トレーサーに集約（観測性改善）
+    const tracer = c.get("tracer");
+    for (const result of results) {
+      const summaryHeader = result.headers.get("X-Tracer-Summary");
+      if (summaryHeader) {
+        const sub = JSON.parse(summaryHeader) as TracerSummary;
+        if (sub.dbMs) tracer.addSpan("db.batch-sub", sub.dbMs);
+        if (sub.r2Ms) tracer.addSpan("r2.batch-sub", sub.r2Ms);
+        if (sub.kvMs) tracer.addSpan("kv.batch-sub", sub.kvMs);
+        if (sub.extMs) tracer.addSpan("ext.batch-sub", sub.extMs);
+      }
+    }
 
     const responses = await Promise.all(
       results.map(async (result) => await result.json()),

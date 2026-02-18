@@ -125,6 +125,17 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
     const summary = tracer.getSummary();
 
+    // 内部リクエスト（batch等）の場合、トレーサーサマリーをレスポンスヘッダーに付与
+    if ((c.env as Record<string, unknown>).__authenticatedUserId) {
+      const newRes = new Response(c.res.body, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers: new Headers(c.res.headers),
+      });
+      newRes.headers.set("X-Tracer-Summary", JSON.stringify(summary));
+      c.res = newRes;
+    }
+
     logger[level]("Response sent", {
       status,
       duration,

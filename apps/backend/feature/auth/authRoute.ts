@@ -5,6 +5,8 @@ import { UnauthorizedError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
+  type RateLimitResult,
+  checkRateLimit,
   createRateLimitMiddleware,
   loginRateLimitConfig,
   tokenRateLimitConfig,
@@ -69,15 +71,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     )(c, next);
   });
 
-  app.use("/token", async (c, next) => {
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) return next();
-    return createRateLimitMiddleware(
-      kv,
-      tokenRateLimitConfig,
-      c.get("tracer"),
-    )(c, next);
-  });
+  // /token のレートリミットはルートハンドラ内でDB読み取りと並列実行する（パフォーマンス改善）
 
   app.use("/google", async (c, next) => {
     const kv = c.env.RATE_LIMIT_KV;
@@ -125,8 +119,53 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       }
 
       try {
+        // KVレートリミットチェックとDB読み取りを並列実行（パフォーマンス改善）
+        const kv = c.env.RATE_LIMIT_KV;
+        const tracer = c.get("tracer");
+        const ip =
+          c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+          c.req.header("x-real-ip") ||
+          "anonymous";
+
+        const fireAndForgetFn = (p: Promise<unknown>) => {
+          try {
+            const ctx = c.executionCtx;
+            if (ctx?.waitUntil) {
+              ctx.waitUntil(p);
+              return;
+            }
+          } catch {
+            // テスト環境では executionCtx がthrowする
+          }
+          p.catch(() => {});
+        };
+
+        const [rateLimitResult, storedToken] = await Promise.all([
+          kv
+            ? checkRateLimit(
+                kv,
+                tokenRateLimitConfig,
+                ip,
+                tracer,
+                fireAndForgetFn,
+              )
+            : (null as RateLimitResult | null),
+          c.var.h.fetchRefreshToken(refreshTokenValue),
+        ]);
+
+        // レートリミット判定（DB書き込み前に検査）
+        if (rateLimitResult) {
+          for (const [key, value] of Object.entries(rateLimitResult.headers)) {
+            c.header(key, value);
+          }
+          if (!rateLimitResult.allowed) {
+            return c.json({ message: "too many requests" }, 429);
+          }
+        }
+
+        // レートリミット通過後にDB書き込み（トークンローテーション）
         const { token, refreshToken } =
-          await c.var.h.refreshToken(refreshTokenValue);
+          await c.var.h.rotateRefreshToken(storedToken);
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";
         // Only set refresh token cookie, access token is returned in response body

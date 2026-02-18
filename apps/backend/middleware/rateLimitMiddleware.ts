@@ -3,9 +3,14 @@ import type { MiddlewareHandler } from "hono";
 import type { KeyValueStore } from "@backend/infra/kv/kv";
 import type { Tracer } from "@backend/lib/tracer";
 
-type RateLimitRecord = {
+export type RateLimitRecord = {
   count: number;
   windowStart: number;
+};
+
+export type RateLimitResult = {
+  allowed: boolean;
+  headers: Record<string, string>;
 };
 
 type RateLimitConfig = {
@@ -111,6 +116,76 @@ export function createRateLimitMiddleware(
     );
 
     await next();
+  };
+}
+
+/**
+ * ミドルウェア外からレートリミットを検査する純粋関数。
+ * KV.get のみ実行し、KV.set は fireAndForgetFn 経由で呼び出し元に委譲する。
+ */
+export async function checkRateLimit(
+  store: KeyValueStore<RateLimitRecord>,
+  config: RateLimitConfig,
+  ip: string,
+  tracer?: Tracer,
+  fireAndForgetFn?: (promise: Promise<unknown>) => void,
+): Promise<RateLimitResult> {
+  const { windowMs, limit, keyGenerator } = config;
+  const windowSeconds = Math.ceil(windowMs / 1000);
+  const key = `ratelimit:${keyGenerator({ ip, path: "" })}`;
+  const now = Date.now();
+
+  const record = tracer
+    ? await tracer.span("kv.getRateLimit", () => store.get(key))
+    : await store.get(key);
+
+  if (!record || now - record.windowStart >= windowMs) {
+    const windowStart = now;
+    const setPromise = store.set(key, { count: 1, windowStart }, windowSeconds);
+    fireAndForgetFn?.(setPromise);
+
+    return {
+      allowed: true,
+      headers: {
+        "X-RateLimit-Limit": String(limit),
+        "X-RateLimit-Remaining": String(limit - 1),
+        "X-RateLimit-Reset": String(Math.ceil((windowStart + windowMs) / 1000)),
+      },
+    };
+  }
+
+  if (record.count >= limit) {
+    const retryAfter = Math.ceil((record.windowStart + windowMs - now) / 1000);
+    return {
+      allowed: false,
+      headers: {
+        "Retry-After": String(retryAfter),
+        "X-RateLimit-Limit": String(limit),
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(
+          Math.ceil((record.windowStart + windowMs) / 1000),
+        ),
+      },
+    };
+  }
+
+  const remaining = limit - record.count - 1;
+  const setPromise = store.set(
+    key,
+    { count: record.count + 1, windowStart: record.windowStart },
+    windowSeconds,
+  );
+  fireAndForgetFn?.(setPromise);
+
+  return {
+    allowed: true,
+    headers: {
+      "X-RateLimit-Limit": String(limit),
+      "X-RateLimit-Remaining": String(remaining),
+      "X-RateLimit-Reset": String(
+        Math.ceil((record.windowStart + windowMs) / 1000),
+      ),
+    },
   };
 }
 

@@ -60,6 +60,32 @@ describe("POST /batch", () => {
       expect(body).toHaveLength(2);
     });
 
+    it("サブリクエストのトレーサーサマリーが親に集約される", async () => {
+      const token = await createJwtToken(TEST_USER_ID);
+
+      // サブリクエスト単体で X-Tracer-Summary ヘッダーが付与されることを確認
+      const subRes = await app.request(
+        "/users/tasks",
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } },
+        {
+          DB: testDB,
+          JWT_SECRET,
+          JWT_AUDIENCE,
+          NODE_ENV: "test",
+          APP_URL: "http://localhost:5173",
+          __authenticatedUserId: TEST_USER_ID,
+        },
+      );
+      expect(subRes.status).toBe(200);
+      const summaryHeader = subRes.headers.get("X-Tracer-Summary");
+      expect(summaryHeader).not.toBeNull();
+      const summary = JSON.parse(summaryHeader!);
+      // DB操作があるためdbMsが0以上
+      expect(summary).toHaveProperty("dbMs");
+      expect(summary).toHaveProperty("spanCount");
+      expect(summary.spanCount).toBeGreaterThan(0);
+    });
+
     it("クエリストリング付きのパスも動作する", async () => {
       const token = await createJwtToken(TEST_USER_ID);
 
