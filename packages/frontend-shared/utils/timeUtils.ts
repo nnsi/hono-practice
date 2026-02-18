@@ -43,6 +43,24 @@ export const convertSecondsToUnit = (
   }
 };
 
+// 時間の値を「X時間Y分」形式にフォーマット
+export const formatHoursAsHoursMinutes = (value: number): string => {
+  const hours = Math.floor(value);
+  const minutes = Math.round((value - hours) * 60);
+  if (hours === 0) return `${minutes}分`;
+  if (minutes === 0) return `${hours}時間`;
+  return `${hours}時間${minutes}分`;
+};
+
+// 数値と単位を適切にフォーマットして表示用文字列を返す
+export const formatQuantityWithUnit = (value: number, unit: string): string => {
+  const unitType = getTimeUnitType(unit);
+  if (unitType === "hour") {
+    return formatHoursAsHoursMinutes(value);
+  }
+  return `${value} ${unit}`;
+};
+
 // 開始・終了時刻のメモを生成
 export const generateTimeMemo = (startTime: Date, endTime: Date): string => {
   const formatTime = (date: Date) => {
