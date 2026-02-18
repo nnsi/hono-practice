@@ -40,7 +40,7 @@ describe("POST /batch", () => {
         JWT_SECRET,
         JWT_AUDIENCE,
         NODE_ENV: "test",
-        APP_URL: "http://localhost:5173",
+        APP_URL: "http://localhost:1357",
       },
     );
   };
@@ -72,7 +72,7 @@ describe("POST /batch", () => {
           JWT_SECRET,
           JWT_AUDIENCE,
           NODE_ENV: "test",
-          APP_URL: "http://localhost:5173",
+          APP_URL: "http://localhost:1357",
           __authenticatedUserId: TEST_USER_ID,
         },
       );

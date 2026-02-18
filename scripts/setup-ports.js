@@ -9,7 +9,7 @@ const execAsync = promisify(exec);
 // デフォルトポート設定
 const DEFAULT_PORTS = {
   API_PORT: 3456,
-  VITE_PORT: 5173,
+  VITE_PORT: 1357,
   EXPO_PORT: 8081,
 };
 

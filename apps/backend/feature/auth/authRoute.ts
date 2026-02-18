@@ -164,8 +164,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         }
 
         // レートリミット通過後にDB書き込み（トークンローテーション）
-        const { token, refreshToken } =
-          await c.var.h.rotateRefreshToken(storedToken);
+        // DB書き込み(create+revoke)はレスポンスに不要なのでfireAndForgetでバックグラウンド実行
+        const { token, refreshToken } = await c.var.h.rotateRefreshToken(
+          storedToken,
+          fireAndForgetFn,
+        );
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";
         // Only set refresh token cookie, access token is returned in response body
