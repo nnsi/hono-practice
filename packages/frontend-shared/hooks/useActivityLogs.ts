@@ -10,7 +10,7 @@ import {
   type GetActivityStatsResponse,
   GetActivityStatsResponseSchema,
 } from "@dtos/response";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 export type UseActivityLogsOptions = {
@@ -70,6 +70,7 @@ export type UpdateActivityLogOptions = {
 
 export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
   const { apiClient } = options;
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -90,7 +91,77 @@ export function createUseUpdateActivityLog(options: UpdateActivityLogOptions) {
       }
       return res.json();
     },
-    // onSuccessを削除 - invalidateは呼び出し元で一括処理
+    onMutate: async (variables) => {
+      const { id, data, date } = variables;
+
+      await queryClient.cancelQueries({
+        queryKey: ["activity-logs-daily", date],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["activity", "activity-logs-daily", date],
+      });
+
+      const previousLogs = queryClient.getQueryData<GetActivityLogsResponse>([
+        "activity-logs-daily",
+        date,
+      ]);
+      const previousBatchData = queryClient.getQueryData<{
+        activities: unknown[];
+        activityLogs: GetActivityLogsResponse;
+      }>(["activity", "activity-logs-daily", date]);
+
+      const updateLogs = (logs: GetActivityLogsResponse | undefined) =>
+        logs?.map((log) =>
+          log.id === id
+            ? {
+                ...log,
+                ...(data.quantity !== undefined && { quantity: data.quantity }),
+                ...(data.memo !== undefined && { memo: data.memo }),
+              }
+            : log,
+        );
+
+      queryClient.setQueryData<GetActivityLogsResponse>(
+        ["activity-logs-daily", date],
+        updateLogs,
+      );
+
+      queryClient.setQueryData<typeof previousBatchData>(
+        ["activity", "activity-logs-daily", date],
+        (old) =>
+          old
+            ? {
+                ...old,
+                activityLogs: updateLogs(old.activityLogs) ?? old.activityLogs,
+              }
+            : old,
+      );
+
+      return { previousLogs, previousBatchData };
+    },
+    onError: (_err, variables, context) => {
+      const { date } = variables;
+      if (context?.previousLogs !== undefined) {
+        queryClient.setQueryData(
+          ["activity-logs-daily", date],
+          context.previousLogs,
+        );
+      }
+      if (context?.previousBatchData !== undefined) {
+        queryClient.setQueryData(
+          ["activity", "activity-logs-daily", date],
+          context.previousBatchData,
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs-daily", variables.date],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["activity", "activity-logs-daily", variables.date],
+      });
+    },
   });
 }
 
@@ -100,6 +171,7 @@ export type DeleteActivityLogOptions = {
 
 export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
   const { apiClient } = options;
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, date: _date }: { id: string; date: string }) => {
@@ -110,7 +182,69 @@ export function createUseDeleteActivityLog(options: DeleteActivityLogOptions) {
         throw new Error("Failed to delete activity log");
       }
     },
-    // onSuccessを削除 - invalidateは呼び出し元で一括処理
+    onMutate: async (variables) => {
+      const { id, date } = variables;
+
+      await queryClient.cancelQueries({
+        queryKey: ["activity-logs-daily", date],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["activity", "activity-logs-daily", date],
+      });
+
+      const previousLogs = queryClient.getQueryData<GetActivityLogsResponse>([
+        "activity-logs-daily",
+        date,
+      ]);
+      const previousBatchData = queryClient.getQueryData<{
+        activities: unknown[];
+        activityLogs: GetActivityLogsResponse;
+      }>(["activity", "activity-logs-daily", date]);
+
+      const filterLogs = (logs: GetActivityLogsResponse | undefined) =>
+        logs?.filter((log) => log.id !== id);
+
+      queryClient.setQueryData<GetActivityLogsResponse>(
+        ["activity-logs-daily", date],
+        filterLogs,
+      );
+
+      queryClient.setQueryData<typeof previousBatchData>(
+        ["activity", "activity-logs-daily", date],
+        (old) =>
+          old
+            ? {
+                ...old,
+                activityLogs: filterLogs(old.activityLogs) ?? [],
+              }
+            : old,
+      );
+
+      return { previousLogs, previousBatchData };
+    },
+    onError: (_err, variables, context) => {
+      const { date } = variables;
+      if (context?.previousLogs !== undefined) {
+        queryClient.setQueryData(
+          ["activity-logs-daily", date],
+          context.previousLogs,
+        );
+      }
+      if (context?.previousBatchData !== undefined) {
+        queryClient.setQueryData(
+          ["activity", "activity-logs-daily", date],
+          context.previousBatchData,
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs-daily", variables.date],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["activity", "activity-logs-daily", variables.date],
+      });
+    },
   });
 }
 

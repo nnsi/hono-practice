@@ -4,10 +4,12 @@ import { testClient } from "hono/testing";
 import { AuthError } from "@backend/error";
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
+import type { KeyValueStore } from "@backend/infra/kv/kv";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import type { RateLimitRecord } from "@backend/middleware/rateLimitMiddleware";
 import { testDB } from "@backend/test.setup";
 import { refreshTokens, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
@@ -66,6 +68,19 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
     };
   },
 };
+
+function createMockKvStore(): KeyValueStore<RateLimitRecord> {
+  const data = new Map<string, RateLimitRecord>();
+  return {
+    get: async (key: string) => data.get(key),
+    set: async (key: string, value: RateLimitRecord) => {
+      data.set(key, value);
+    },
+    delete: async (key: string) => {
+      data.delete(key);
+    },
+  };
+}
 
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
@@ -583,11 +598,20 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     describe("Brute Force Protection", () => {
-      it.skip("異常系：連続した認証失敗 (レート制限機能未実装)", async () => {
-        const client = createTestClient();
-        const attempts = 10;
+      it("異常系：連続した認証失敗でレート制限される", async () => {
+        const rateLimitKv = createMockKvStore();
+        const app = createTestApp();
+        const client = testClient(app, {
+          DB: testDB,
+          JWT_SECRET,
+          JWT_AUDIENCE,
+          NODE_ENV: "test",
+          RATE_LIMIT_KV: rateLimitKv,
+        });
 
-        for (let i = 0; i < attempts; i++) {
+        // loginRateLimitConfig: 15分間に5回まで
+        // 5回の認証失敗（レート制限内）
+        for (let i = 0; i < 5; i++) {
           const res = await client.login.$post({
             json: {
               login_id: testLoginId,
@@ -597,6 +621,7 @@ describe("AuthRoute Integration Tests", () => {
           expect(res.status).toBe(401);
         }
 
+        // 6回目：正しいパスワードでもレート制限で429
         const finalRes = await client.login.$post({
           json: {
             login_id: testLoginId,
@@ -606,7 +631,7 @@ describe("AuthRoute Integration Tests", () => {
 
         expect(finalRes.status).toBe(429);
         expect(await finalRes.json()).toEqual({
-          message: "too many login attempts",
+          message: "too many requests",
         });
       });
     });
