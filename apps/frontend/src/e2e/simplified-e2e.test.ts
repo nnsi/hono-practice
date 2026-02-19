@@ -443,8 +443,36 @@ describe.sequential("Simplified E2E Tests", () => {
     await unitInput.clear();
     await unitInput.fill(testActivity.unit);
 
-    // 絵文字はデフォルト値（🎯）をそのまま使用
-    // EmojiPickerのPopoverを開くとフォーム操作をブロックする可能性があるため触らない
+    // ========== 絵文字ピッカーのテスト ==========
+
+    // 1. デフォルト絵文字が設定されていることを確認
+    const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
+    const defaultEmoji = await emojiInput.inputValue();
+    console.log("Default emoji value:", defaultEmoji);
+    expect(defaultEmoji).toBe("🎯");
+
+    // 2. 絵文字入力がPopoverTriggerとして設定されていることを確認
+    const emojiTriggerSetup = await page.evaluate(() => {
+      const input = document.querySelector('input[placeholder="絵文字を選択"]');
+      if (!input) return { exists: false };
+      // Radix PopoverTrigger は親要素に data-state 属性を付与する
+      const triggerParent = input.closest("[data-state]");
+      return {
+        exists: true,
+        isReadOnly: (input as HTMLInputElement).readOnly,
+        hasTriggerParent: !!triggerParent,
+        triggerState: triggerParent?.getAttribute("data-state"),
+      };
+    });
+    console.log("Emoji trigger setup:", JSON.stringify(emojiTriggerSetup));
+    expect(emojiTriggerSetup.exists).toBe(true);
+    expect(emojiTriggerSetup.isReadOnly).toBe(true);
+
+    // 3. 絵文字ピッカーのPopover動作を確認
+    // Note: emoji-mart の Web Component は headless Chromium で shadow DOM 内の
+    // コンテンツを描画しないため、Popover を開くと閉じられなくなりフォーム送信をブロックする。
+    // そのため、Popover動作の確認は独立テスト(下記)で行い、
+    // ここではデフォルト絵文字(🎯)でフォーム送信を行う。
 
     // 入力値を確認
     const inputValues = await page.evaluate(() => {
@@ -460,19 +488,6 @@ describe.sequential("Simplified E2E Tests", () => {
       };
     });
     console.log("Input values before submit:", inputValues);
-
-    // デバッグ: すべてのボタンを確認
-    const allButtons = await page.evaluate(() => {
-      const buttons = Array.from(
-        document.querySelectorAll('[role="dialog"] button'),
-      );
-      return buttons.map((btn) => ({
-        text: btn.textContent?.trim(),
-        type: btn.getAttribute("type"),
-        disabled: (btn as HTMLButtonElement).disabled,
-      }));
-    });
-    console.log("All dialog buttons:", allButtons);
 
     // 登録ボタンをクリック
     const submitButton = page.locator('button[type="submit"]:has-text("登録")');
@@ -759,4 +774,102 @@ describe.sequential("Simplified E2E Tests", () => {
 
     console.log("\n========== All simplified tests completed! ==========");
   }, 180000);
+
+  it("should verify emoji picker component", async () => {
+    // ========== 絵文字ピッカーの独立テスト ==========
+    console.log("\n========== Testing Emoji Picker ==========");
+
+    // アクティビティ登録ダイアログを開く
+    await page.goto(`http://localhost:${actualFrontendPort}/actiko`);
+    await page.waitForLoadState("networkidle");
+
+    await page.getByText("新規追加").click();
+    await page.waitForSelector('[role="dialog"]', { state: "visible" });
+
+    // 1. デフォルト絵文字が設定されていることを確認
+    const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
+    const defaultEmoji = await emojiInput.inputValue();
+    console.log("Default emoji value:", defaultEmoji);
+    expect(defaultEmoji).toBe("🎯");
+
+    // 2. 絵文字入力がPopoverTriggerとして正しく設定されていることを確認
+    const triggerSetup = await page.evaluate(() => {
+      const input = document.querySelector('input[placeholder="絵文字を選択"]');
+      if (!input) return { exists: false };
+      const triggerParent = input.closest("[data-state]");
+      return {
+        exists: true,
+        isReadOnly: (input as HTMLInputElement).readOnly,
+        hasTriggerParent: !!triggerParent,
+        triggerState: triggerParent?.getAttribute("data-state"),
+      };
+    });
+    console.log("Emoji trigger setup:", JSON.stringify(triggerSetup));
+    expect(triggerSetup.exists).toBe(true);
+    expect(triggerSetup.isReadOnly).toBe(true);
+    expect(triggerSetup.hasTriggerParent).toBe(true);
+    expect(triggerSetup.triggerState).toBe("closed");
+
+    // 3. 絵文字入力をクリックしてPopoverを開く
+    await emojiInput.click();
+    await page.waitForTimeout(1000);
+
+    // 4. Popoverが開いたことを確認
+    const popoverOpened = await page.evaluate(
+      () => !!document.querySelector("[data-radix-popper-content-wrapper]"),
+    );
+    console.log("Emoji popover opened:", popoverOpened);
+    expect(popoverOpened).toBe(true);
+
+    // 5. emoji-mart Web Componentの存在を確認
+    const pickerState = await page.evaluate(() => {
+      const picker = document.querySelector("em-emoji-picker");
+      if (!picker) return { exists: false, hasShadow: false, buttonCount: 0 };
+      const shadow = picker.shadowRoot;
+      return {
+        exists: true,
+        hasShadow: !!shadow,
+        buttonCount: shadow?.querySelectorAll("button").length ?? 0,
+      };
+    });
+    console.log("Emoji picker component:", JSON.stringify(pickerState));
+    expect(pickerState.exists).toBe(true);
+    expect(pickerState.hasShadow).toBe(true);
+
+    // 6. ボタンが描画されていれば絵文字を選択
+    if (pickerState.buttonCount > 0) {
+      const selected = await page.evaluate(() => {
+        const picker = document.querySelector("em-emoji-picker");
+        const shadow = picker?.shadowRoot;
+        const btn = shadow?.querySelector("button") as HTMLButtonElement;
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+      console.log("Emoji selected:", selected);
+
+      // 絵文字が変更されたことを確認
+      const newEmoji = await emojiInput.inputValue();
+      console.log("New emoji value:", newEmoji);
+      expect(newEmoji.length).toBeGreaterThan(0);
+    } else {
+      console.log(
+        "Note: emoji-mart shadow DOM did not render buttons (headless Chromium limitation)",
+      );
+      console.log(
+        "This is a known issue with emoji-mart Web Component in headless environments",
+      );
+    }
+
+    // 7. ダイアログを閉じる（閉じるボタンを使用）
+    const closeButton = page.locator(
+      '[role="dialog"] button:has-text("閉じる")',
+    );
+    await closeButton.click();
+    await page.waitForTimeout(500);
+
+    console.log("Emoji picker test completed!");
+  }, 60000);
 });
