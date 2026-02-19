@@ -18,12 +18,7 @@ export function findChromiumExecutablePath(): string | undefined {
     const entries = fs.readdirSync(cacheDir).sort().reverse();
     for (const entry of entries) {
       if (entry.startsWith("chromium-")) {
-        const chromePath = path.join(
-          cacheDir,
-          entry,
-          "chrome-linux",
-          "chrome",
-        );
+        const chromePath = path.join(cacheDir, entry, "chrome-linux", "chrome");
         if (fs.existsSync(chromePath)) {
           return chromePath;
         }
