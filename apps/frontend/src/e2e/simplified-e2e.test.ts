@@ -1,6 +1,7 @@
 import { type Browser, type Page, chromium } from "@playwright/test";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { findChromiumExecutablePath } from "../test-utils/e2e/playwright-helper";
 import {
   getTestDb,
   startTestBackend,
@@ -32,8 +33,9 @@ describe.sequential("Simplified E2E Tests", () => {
     // バックエンドを実際のフロントエンドポートで起動
     await startTestBackend(TEST_BACKEND_PORT, actualFrontendPort);
 
-    // ブラウザを起動
-    browser = await chromium.launch({ headless: true });
+    // ブラウザを起動（システムのChromiumバイナリを使用）
+    const executablePath = findChromiumExecutablePath();
+    browser = await chromium.launch({ headless: true, executablePath });
     context = await browser.newContext({
       // Cookieを正しく保存するための設定
       acceptDownloads: true,
@@ -441,25 +443,10 @@ describe.sequential("Simplified E2E Tests", () => {
     await unitInput.clear();
     await unitInput.fill(testActivity.unit);
 
-    // 絵文字を設定（EmojiPickerを使う）
-    // まず絵文字入力フィールドをクリックしてピッカーを開く
-    const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
-    await emojiInput.click();
-    await page.waitForTimeout(500); // ポップオーバーが開くのを待つ
+    // 絵文字はデフォルト値（🎯）をそのまま使用
+    // EmojiPickerのPopoverを開くとフォーム操作をブロックする可能性があるため触らない
 
-    // emoji-martピッカーから最初の絵文字を選択
-    // または、JavaScriptを使ってフォームの値を直接設定
-    const firstEmoji = page
-      .locator("em-emoji-picker button[data-emoji]")
-      .first();
-    if ((await firstEmoji.count()) > 0) {
-      await firstEmoji.click();
-    } else {
-      // ピッカーが開かない場合は、デフォルトの絵文字が使われる
-      console.log("Emoji picker not found, using default emoji");
-    }
-
-    // 入力値を確認（絵文字はデフォルト値を使用）
+    // 入力値を確認
     const inputValues = await page.evaluate(() => {
       const nameEl = document.querySelector(
         'input[placeholder="名前"]',

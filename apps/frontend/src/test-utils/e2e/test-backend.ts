@@ -58,21 +58,8 @@ export async function startTestBackend(port = 3457, frontendPort?: number) {
 
 export async function stopTestBackend() {
   const cleanup = async () => {
-    // ポートを使用しているプロセスを強制終了
-    if (serverPort) {
-      try {
-        const killCommand =
-          process.platform === "win32"
-            ? `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${serverPort}') do taskkill /PID %a /F`
-            : `lsof -ti:${serverPort} | xargs -r kill -9 2>/dev/null || true`;
-
-        require("node:child_process").execSync(killCommand, {
-          stdio: "ignore",
-        });
-      } catch (_e) {
-        // エラーは無視
-      }
-    }
+    // Note: lsof/kill -9 でポートを強制終了すると、インプロセスで動作している
+    // vitestワーカー自体を殺してしまうため、server.close() のみで終了する
 
     if (pglite) {
       try {
