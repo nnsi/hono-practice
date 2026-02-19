@@ -10,8 +10,6 @@ import { createTestDb } from "./test-db";
 let server: any = null; // Use any type to avoid server type issues
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let pglite: PGlite | null = null;
-let serverPort: number | null = null;
-
 export async function startTestBackend(port = 3457, frontendPort?: number) {
   // 既存のサーバーがあれば先に終了
   if (server) {
@@ -22,7 +20,6 @@ export async function startTestBackend(port = 3457, frontendPort?: number) {
   const { db, pglite: pgliteInstance } = await createTestDb();
   testDb = db;
   pglite = pgliteInstance;
-  serverPort = port;
 
   // Test configuration
   const testConfig: Config = {
@@ -72,7 +69,6 @@ export async function stopTestBackend() {
     server = null;
     testDb = null;
     pglite = null;
-    serverPort = null;
   };
 
   if (server) {
