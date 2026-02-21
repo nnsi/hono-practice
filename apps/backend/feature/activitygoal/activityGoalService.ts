@@ -1,7 +1,6 @@
 import type {
   ActivityGoal,
   ActivityId,
-  ActivityLog,
   GoalBalance,
   UserId,
 } from "@backend/domain";
@@ -11,14 +10,14 @@ import {
   getDaysBetweenInTimezone,
 } from "@backend/utils/timezone";
 
-import type { ActivityLogRepository } from "../activityLog";
+import type { ActivityLogRepository, ActivityLogSummary } from "../activityLog";
 
 export type ActivityGoalService = {
   calculateCurrentBalance(
     userId: UserId,
     goal: ActivityGoal,
     calculateDate?: string,
-    prefetchedLogs?: ActivityLog[],
+    prefetchedLogs?: ActivityLogSummary[],
   ): Promise<GoalBalance>;
 
   getBalanceHistory(
@@ -37,7 +36,7 @@ export type ActivityGoalService = {
   getInactiveDates(
     userId: UserId,
     goal: ActivityGoal,
-    prefetchedLogs?: ActivityLog[],
+    prefetchedLogs?: ActivityLogSummary[],
   ): Promise<string[]>;
 };
 
@@ -60,7 +59,7 @@ export async function prefetchActivityLogs(
   activityLogRepo: ActivityLogRepository,
   userId: UserId,
   goals: ActivityGoal[],
-): Promise<ActivityLog[]> {
+): Promise<ActivityLogSummary[]> {
   if (goals.length === 0) return [];
 
   const today = getCurrentDateInTimezone();
@@ -74,7 +73,7 @@ export async function prefetchActivityLogs(
     if (endDate > maxEnd) maxEnd = endDate;
   }
 
-  return activityLogRepo.getActivityLogsByUserIdAndDate(
+  return activityLogRepo.getActivityLogSummariesByUserIdAndDate(
     userId,
     new Date(minStart),
     new Date(maxEnd),
@@ -86,7 +85,7 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
     userId: UserId,
     goal: ActivityGoal,
     calculateDate: string = getCurrentDateInTimezone(),
-    prefetchedLogs?: ActivityLog[],
+    prefetchedLogs?: ActivityLogSummary[],
   ): Promise<GoalBalance> => {
     // 1. 終了日が設定されていて、計算日が終了日を超えている場合は終了日までで計算
     const effectiveCalculateDate =
@@ -198,7 +197,7 @@ function adjustDailyTarget() {
 
 // Helper function: prefetchedLogsから期間内の活動量を集計（DBアクセスなし）
 function getActivityQuantityFromLogs(
-  logs: ActivityLog[],
+  logs: ActivityLogSummary[],
   activityId: ActivityId,
   startDate: string,
   endDate: string,
@@ -206,7 +205,7 @@ function getActivityQuantityFromLogs(
   let total = 0;
   for (const log of logs) {
     if (
-      log.activity.id === activityId &&
+      log.activityId === activityId &&
       log.date >= startDate &&
       log.date <= endDate
     ) {
@@ -216,7 +215,7 @@ function getActivityQuantityFromLogs(
   return total;
 }
 
-// Helper function: 期間内の活動量を集計
+// Helper function: 期間内の活動量を集計（date rangeはDB側でフィルタ済み）
 async function getActivityQuantityInPeriod(
   activityLogRepo: ActivityLogRepository,
   userId: UserId,
@@ -224,34 +223,29 @@ async function getActivityQuantityInPeriod(
   startDate: string,
   endDate: string,
 ): Promise<number> {
-  // getActivityLogsByUserIdAndDateメソッドを使用
   const fromDate = new Date(startDate);
   const toDate = new Date(endDate);
 
-  const logs = await activityLogRepo.getActivityLogsByUserIdAndDate(
+  const logs = await activityLogRepo.getActivityLogSummariesByUserIdAndDate(
     userId,
     fromDate,
     toDate,
   );
 
-  // nullチェックを追加
-  if (!logs) {
-    return 0;
+  let total = 0;
+  for (const log of logs) {
+    if (log.activityId === activityId) {
+      total += log.quantity || 0;
+    }
   }
-
-  // 指定されたactivityIdのログのみフィルタリングして、quantityの合計を計算
-  return logs
-    .filter((log: ActivityLog) => log.activity.id === activityId)
-    .reduce((total: number, log: ActivityLog) => {
-      return total + (log.quantity || 0);
-    }, 0);
+  return total;
 }
 
 function getInactiveDates(activityLogRepo: ActivityLogRepository) {
   return async (
     userId: UserId,
     goal: ActivityGoal,
-    prefetchedLogs?: ActivityLog[],
+    prefetchedLogs?: ActivityLogSummary[],
   ): Promise<string[]> => {
     // 計算対象の終了日を決定
     const today = getCurrentDateInTimezone();
@@ -260,7 +254,7 @@ function getInactiveDates(activityLogRepo: ActivityLogRepository) {
     // 期間内のログを取得（prefetchedLogsがあればDBアクセス不要）
     const logs = prefetchedLogs
       ? prefetchedLogs
-      : await activityLogRepo.getActivityLogsByUserIdAndDate(
+      : await activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId,
           new Date(goal.startDate),
           new Date(endDate),
@@ -268,17 +262,15 @@ function getInactiveDates(activityLogRepo: ActivityLogRepository) {
 
     // 活動があった日付のセットを作成
     const activeDates = new Set<string>();
-    if (logs) {
-      for (const log of logs) {
-        if (
-          log.activity.id === goal.activityId &&
-          log.quantity !== null &&
-          log.quantity > 0 &&
-          log.date >= goal.startDate &&
-          log.date <= endDate
-        ) {
-          activeDates.add(log.date);
-        }
+    for (const log of logs) {
+      if (
+        log.activityId === goal.activityId &&
+        log.quantity !== null &&
+        log.quantity > 0 &&
+        log.date >= goal.startDate &&
+        log.date <= endDate
+      ) {
+        activeDates.add(log.date);
       }
     }
 

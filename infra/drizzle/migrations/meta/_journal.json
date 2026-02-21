@@ -169,6 +169,13 @@
       "when": 1754920914469,
       "tag": "0023_shocking_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1771654134184,
+      "tag": "0024_even_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }
