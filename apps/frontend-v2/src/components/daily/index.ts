@@ -1,0 +1,1 @@
+export { DailyPage } from "./DailyPage";

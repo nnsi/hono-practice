@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ActikoPage } from "../components/ActikoPage";
+import { ActikoPage } from "../components/actiko";
 
 export const Route = createFileRoute("/actiko")({
   component: ActikoPage,

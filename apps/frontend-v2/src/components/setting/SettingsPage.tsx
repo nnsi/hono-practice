@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Settings, Database, Info, Trash2 } from "lucide-react";
-import { db } from "../db/schema";
+import { db } from "../../db/schema";
 
 type AppSettings = {
   showGoalOnStartup: boolean;

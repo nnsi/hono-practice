@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useSyncEngine } from "../hooks/useSyncEngine";
-import { LoginForm } from "../components/LoginForm";
+import { LoginForm } from "../components/root";
 import { useState, useRef, useEffect } from "react";
 
 function RootComponent() {
