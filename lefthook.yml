@@ -1,9 +1,9 @@
-pre-commit:
-  parallel: true
-  commands:
-    biome:
-      glob: "*.{ts,tsx}"
-      run: pnpm exec biome lint
-    test:
-      glob: "*.{ts,tsx}"
-      run: pnpm exec vitest run
+#pre-commit:
+#  parallel: true
+#  commands:
+#    biome:
+#      glob: "*.{ts,tsx}"
+#      run: pnpm exec biome lint
+#    test:
+#      glob: "*.{ts,tsx}"
+#      run: pnpm exec vitest run

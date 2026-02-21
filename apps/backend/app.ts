@@ -10,6 +10,7 @@ import {
   taskRoute,
   userRoute,
 } from "./feature";
+import { activityLogV2Route, activityV2Route } from "./feature-v2";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
@@ -36,6 +37,8 @@ app.use("*", async (c, next) => {
       "http://localhost:8081",
       "http://localhost:8082",
       "http://localhost:19006", // Expo Web
+      "http://localhost:2460", // frontend-v2
+      "http://localhost:2461", // frontend-v2 fallback port
     );
 
     // 実機からのアクセス用（同一ネットワーク内のIPアドレス）
@@ -74,6 +77,8 @@ const routes = app
   .route("/users/goals", goalRoute)
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
+  .route("/users/v2", activityLogV2Route)
+  .route("/users/v2", activityV2Route)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {

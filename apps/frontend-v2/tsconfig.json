@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node", "vite/client"],
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "useUnknownInCatchVariables": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@packages/domain": ["../../packages/domain/index.ts"],
+      "@packages/domain/*": ["../../packages/domain/*"],
+      "@packages/types-v2": ["../../packages/types-v2/index.ts"],
+      "@packages/types-v2/*": ["../../packages/types-v2/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

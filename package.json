@@ -2,6 +2,7 @@
   "scripts": {
     "dev": "pnpm --filter actiko-backend dev",
     "client-dev": "pnpm --filter actiko-frontend dev",
+    "client-v2-dev": "pnpm --filter actiko-frontend-v2 dev",
     "build-client-stg": "pnpm --filter actiko-frontend build-stg",
     "build-client": "pnpm --filter actiko-frontend build",
     "test": "vitest --disable-console-intercept",
