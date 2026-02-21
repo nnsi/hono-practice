@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [viteTsConfigPaths() as any],
   esbuild: {
-    target: "es2020",
+    target: "esnext",
     jsx: "automatic",
   },
   test: {

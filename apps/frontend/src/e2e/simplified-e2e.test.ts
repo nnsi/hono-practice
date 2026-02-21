@@ -1,6 +1,7 @@
 import { type Browser, type Page, chromium } from "@playwright/test";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { findChromiumExecutablePath } from "../test-utils/e2e/playwright-helper";
 import {
   getTestDb,
   startTestBackend,
@@ -32,8 +33,9 @@ describe.sequential("Simplified E2E Tests", () => {
     // バックエンドを実際のフロントエンドポートで起動
     await startTestBackend(TEST_BACKEND_PORT, actualFrontendPort);
 
-    // ブラウザを起動
-    browser = await chromium.launch({ headless: true });
+    // ブラウザを起動（システムのChromiumバイナリを使用）
+    const executablePath = findChromiumExecutablePath();
+    browser = await chromium.launch({ headless: true, executablePath });
     context = await browser.newContext({
       // Cookieを正しく保存するための設定
       acceptDownloads: true,
@@ -441,25 +443,57 @@ describe.sequential("Simplified E2E Tests", () => {
     await unitInput.clear();
     await unitInput.fill(testActivity.unit);
 
-    // 絵文字を設定（EmojiPickerを使う）
-    // まず絵文字入力フィールドをクリックしてピッカーを開く
+    // ========== 絵文字ピッカーのテスト ==========
+
+    // デフォルト絵文字が設定されていることを確認
     const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
+    expect(await emojiInput.inputValue()).toBe("🎯");
+
+    // 絵文字ピッカーで絵文字を選択する
     await emojiInput.click();
-    await page.waitForTimeout(500); // ポップオーバーが開くのを待つ
+    await page.waitForTimeout(2000); // emoji-mart の初期化とレンダリングを待つ
 
-    // emoji-martピッカーから最初の絵文字を選択
-    // または、JavaScriptを使ってフォームの値を直接設定
-    const firstEmoji = page
-      .locator("em-emoji-picker button[data-emoji]")
-      .first();
-    if ((await firstEmoji.count()) > 0) {
-      await firstEmoji.click();
-    } else {
-      // ピッカーが開かない場合は、デフォルトの絵文字が使われる
-      console.log("Emoji picker not found, using default emoji");
-    }
+    // Popoverが開き、emoji-mart が描画されていることを確認
+    expect(
+      await page.evaluate(
+        () => !!document.querySelector("[data-radix-popper-content-wrapper]"),
+      ),
+    ).toBe(true);
 
-    // 入力値を確認（絵文字はデフォルト値を使用）
+    const pickerState = await page.evaluate(() => {
+      const picker = document.querySelector("em-emoji-picker");
+      if (!picker) return { exists: false, buttonCount: 0 };
+      const shadow = picker.shadowRoot;
+      return {
+        exists: true,
+        buttonCount: shadow?.querySelectorAll("button").length ?? 0,
+      };
+    });
+    expect(pickerState.exists).toBe(true);
+    expect(pickerState.buttonCount).toBeGreaterThan(0);
+
+    // shadow DOM内の絵文字ボタンをクリック
+    await page.evaluate(() => {
+      const picker = document.querySelector("em-emoji-picker");
+      const shadow = picker?.shadowRoot;
+      if (!shadow) return;
+      const buttons = Array.from(shadow.querySelectorAll("button"));
+      for (const btn of buttons) {
+        const text = btn.textContent?.trim() ?? "";
+        if (text.length > 0 && text.length <= 4 && /\p{Emoji}/u.test(text)) {
+          btn.click();
+          return;
+        }
+      }
+    });
+    await page.waitForTimeout(500); // Popoverが閉じるのを待つ
+
+    // 絵文字が設定されていることを確認
+    const selectedEmoji = await emojiInput.inputValue();
+    console.log("Selected emoji:", selectedEmoji);
+    expect(selectedEmoji.length).toBeGreaterThan(0);
+
+    // 入力値を確認
     const inputValues = await page.evaluate(() => {
       const nameEl = document.querySelector(
         'input[placeholder="名前"]',
@@ -473,19 +507,6 @@ describe.sequential("Simplified E2E Tests", () => {
       };
     });
     console.log("Input values before submit:", inputValues);
-
-    // デバッグ: すべてのボタンを確認
-    const allButtons = await page.evaluate(() => {
-      const buttons = Array.from(
-        document.querySelectorAll('[role="dialog"] button'),
-      );
-      return buttons.map((btn) => ({
-        text: btn.textContent?.trim(),
-        type: btn.getAttribute("type"),
-        disabled: (btn as HTMLButtonElement).disabled,
-      }));
-    });
-    console.log("All dialog buttons:", allButtons);
 
     // 登録ボタンをクリック
     const submitButton = page.locator('button[type="submit"]:has-text("登録")');
@@ -772,4 +793,71 @@ describe.sequential("Simplified E2E Tests", () => {
 
     console.log("\n========== All simplified tests completed! ==========");
   }, 180000);
+
+  it("should verify emoji picker component", async () => {
+    // ========== 絵文字ピッカーの独立テスト ==========
+    console.log("\n========== Testing Emoji Picker ==========");
+
+    // アクティビティ登録ダイアログを開く
+    await page.goto(`http://localhost:${actualFrontendPort}/actiko`);
+    await page.waitForLoadState("networkidle");
+
+    await page.getByText("新規追加").click();
+    await page.waitForSelector('[role="dialog"]', { state: "visible" });
+
+    // デフォルト絵文字が設定されていることを確認
+    const emojiInput = page.locator('input[placeholder="絵文字を選択"]');
+    expect(await emojiInput.inputValue()).toBe("🎯");
+
+    // 絵文字入力をクリックしてPopoverを開く
+    await emojiInput.click();
+    await page.waitForTimeout(2000);
+
+    // Popoverが開いたことを確認
+    expect(
+      await page.evaluate(
+        () => !!document.querySelector("[data-radix-popper-content-wrapper]"),
+      ),
+    ).toBe(true);
+
+    // emoji-mart Web Componentが描画されていることを確認
+    const pickerState = await page.evaluate(() => {
+      const picker = document.querySelector("em-emoji-picker");
+      if (!picker) return { exists: false, hasShadow: false, buttonCount: 0 };
+      const shadow = picker.shadowRoot;
+      return {
+        exists: true,
+        hasShadow: !!shadow,
+        buttonCount: shadow?.querySelectorAll("button").length ?? 0,
+      };
+    });
+    expect(pickerState.exists).toBe(true);
+    expect(pickerState.hasShadow).toBe(true);
+    expect(pickerState.buttonCount).toBeGreaterThan(0);
+
+    // 絵文字ボタンをクリックして選択
+    await page.evaluate(() => {
+      const picker = document.querySelector("em-emoji-picker");
+      const shadow = picker?.shadowRoot;
+      if (!shadow) return;
+      const buttons = Array.from(shadow.querySelectorAll("button"));
+      for (const btn of buttons) {
+        const text = btn.textContent?.trim() ?? "";
+        if (text.length > 0 && text.length <= 4 && /\p{Emoji}/u.test(text)) {
+          btn.click();
+          return;
+        }
+      }
+    });
+    await page.waitForTimeout(500);
+
+    // 絵文字が選択されたことを確認
+    const newEmoji = await emojiInput.inputValue();
+    expect(newEmoji.length).toBeGreaterThan(0);
+    console.log("Emoji picker test completed! Selected:", newEmoji);
+
+    // ダイアログを閉じる
+    await page.locator('[role="dialog"] button:has-text("閉じる")').click();
+    await page.waitForTimeout(500);
+  }, 60000);
 });
