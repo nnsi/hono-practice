@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import data from "@emoji-mart/data";
+import i18n from "@emoji-mart/data/i18n/ja.json";
 import Picker from "@emoji-mart/react";
 import {
   Popover,
@@ -51,6 +52,7 @@ export function EmojiPicker({ onChange, children }: EmojiPickerProps) {
           <Picker
             data={data}
             onEmojiSelect={handleEmojiSelect}
+            i18n={i18n}
             locale="ja"
             theme="light"
             set="native"
