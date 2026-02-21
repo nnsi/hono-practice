@@ -6,6 +6,11 @@ import {
   useActivityStats,
 } from "@frontend/hooks/feature/activity/useActivityStats";
 import {
+  formatHoursAsHoursMinutes,
+  formatQuantityWithUnit,
+  getTimeUnitType,
+} from "@packages/frontend-shared/utils/timeUtils";
+import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -177,7 +182,7 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                       {day.date} ({day.dayOfWeek})
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-right font-medium">
-                      {day.total} {quantityUnit}
+                      {formatQuantityWithUnit(day.total, quantityUnit)}
                     </td>
                     {kinds.length > 1 &&
                       kinds.map((kind) => (
@@ -194,8 +199,10 @@ const SummaryTable: React.FC<SummaryTableProps> = ({
                         className="px-4 py-2 whitespace-nowrap text-sm text-right font-bold bg-gray-50"
                         rowSpan={week.days.length}
                       >
-                        {Math.round(week.weekTotal * 1000) / 1000}{" "}
-                        {quantityUnit}
+                        {formatQuantityWithUnit(
+                          Math.round(week.weekTotal * 1000) / 1000,
+                          quantityUnit,
+                        )}
                       </td>
                     )}
                   </tr>
@@ -317,7 +324,7 @@ export const ActivityStatsPage: React.FC = () => {
               <h2 className="text-xl font-bold mb-4">
                 {stat.name}
                 {stat.showCombinedStats &&
-                  ` (合計: ${stat.total} ${stat.quantityUnit})`}
+                  ` (合計: ${formatQuantityWithUnit(stat.total ?? 0, stat.quantityUnit)})`}
               </h2>
               {!(
                 stat.kinds.length === 1 && stat.kinds[0].name === "未指定"
@@ -338,10 +345,16 @@ export const ActivityStatsPage: React.FC = () => {
                             color: kindColors[kind.name],
                           }}
                         >
-                          {kind.total}
-                          <span className="text-sm font-normal text-gray-500 ml-1">
-                            {stat.quantityUnit}
-                          </span>
+                          {getTimeUnitType(stat.quantityUnit) === "hour" ? (
+                            formatHoursAsHoursMinutes(kind.total)
+                          ) : (
+                            <>
+                              {kind.total}
+                              <span className="text-sm font-normal text-gray-500 ml-1">
+                                {stat.quantityUnit}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -382,7 +395,12 @@ export const ActivityStatsPage: React.FC = () => {
                       return (
                         <div key={kind.id || kind.name}>
                           <h4 className="font-semibold mb-2">
-                            {kind.name} (合計: {kind.total} {stat.quantityUnit})
+                            {kind.name} (合計:{" "}
+                            {formatQuantityWithUnit(
+                              kind.total,
+                              stat.quantityUnit,
+                            )}
+                            )
                           </h4>
                           <ActivityChart
                             data={kindData}
