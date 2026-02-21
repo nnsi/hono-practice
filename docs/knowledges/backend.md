@@ -431,16 +431,16 @@ describe("Task API Integration", () => {
 
 ```bash
 # 単体テスト実行（CIモード）
-npm run test-once
+pnpm run test-once
 
 # ウォッチモードでテスト実行（開発時）
-npm run test
+pnpm run test
 
 # カバレッジレポート生成
-npm run test-once -- --coverage
+pnpm run test-once -- --coverage
 
 # 特定のテストファイルのみ実行
-npm run test-once -- task.usecase.test.ts
+pnpm run test-once -- task.usecase.test.ts
 ```
 
 ### カバレッジ目標
@@ -477,7 +477,7 @@ npm run test-once -- task.usecase.test.ts
 GitHub Actionsでの自動テスト実行設定：
 ```yaml
 - name: Run backend tests
-  run: npm run test-once
+  run: pnpm run test-once
   working-directory: ./apps/backend
 
 - name: Upload coverage
@@ -489,7 +489,7 @@ GitHub Actionsでの自動テスト実行設定：
 ## APIルート仕様
 
 ### 概要
-このバックエンドは、フロントエンドアプリケーション（Web、モバイル）およびサードパーティ開発者向けにREST APIを提供しています。すべてのAPIエンドポイントは`/api/v1`配下に配置されています。
+このバックエンドは、フロントエンドアプリケーションおよびサードパーティ開発者向けにREST APIを提供しています。すべてのAPIエンドポイントは`/api/v1`配下に配置されています。
 
 ### 認証方式
 1. **JWTトークン認証**（メインアプリケーション用）

@@ -3,7 +3,7 @@ pre-commit:
   commands:
     biome:
       glob: "*.{ts,tsx}"
-      run: npx biome lint
+      run: pnpm exec biome lint
     test:
       glob: "*.{ts,tsx}"
-      run: npx vitest run
+      run: pnpm exec vitest run

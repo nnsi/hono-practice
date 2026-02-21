@@ -1,15 +1,4 @@
 // Export all adapter types
-
-// Export React Native adapter factory functions
-export {
-  createReactNativeEventBusAdapter,
-  createReactNativeFormAdapter,
-  createReactNativeNavigationAdapter,
-  createReactNativeNetworkAdapter,
-  createReactNativeNotificationAdapter,
-  createReactNativeStorageAdapter,
-  createReactNativeTimerAdapter,
-} from "./react-native";
 export type {
   AlertOptions,
   EventBusAdapter,

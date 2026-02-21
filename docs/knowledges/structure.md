@@ -1,7 +1,7 @@
 # プロジェクト概要
 
 Actikoは、「どのアプリよりも最速で活動量を記録する」ことを目指す個人向け活動記録アプリケーションです。
-モノレポ構造でWeb、モバイル、バックエンドを統合管理しています。
+モノレポ構造（pnpm workspaces）でWeb、バックエンドを統合管理しています。
 
 ## モノレポ構造
 
@@ -9,8 +9,7 @@ Actikoは、「どのアプリよりも最速で活動量を記録する」こ�
 hono-practice/
 ├── apps/
 │   ├── backend/    # バックエンドAPI (Hono + Cloudflare Workers)
-│   ├── frontend/   # Webフロントエンド (React + Vite)
-│   └── mobile/     # モバイルアプリ (React Native + Expo)
+│   └── frontend/   # Webフロントエンド (React + Vite)
 ├── packages/
 │   ├── types/      # 共有型定義（DTO、Zodスキーマ）
 │   └── frontend-shared/  # フロント共通ユーティリティ
@@ -94,37 +93,3 @@ apps/frontend/
 └── stats.html             # ビルド統計情報
 ```
 
-## プロジェクト構造(モバイル)
-
-```txt
-apps/mobile/
-├── app/                    # ルーティング定義（Expo Router）
-│   ├── (app)/             # アプリメインレイアウト
-│   │   ├── (tabs)/       # タブナビゲーション
-│   │   │   ├── daily.tsx    # 日次記録画面
-│   │   │   ├── goal.tsx     # 目標設定画面
-│   │   │   ├── index.tsx    # ホーム画面
-│   │   │   ├── settings.tsx # 設定画面
-│   │   │   └── stats.tsx    # 統計画面
-│   │   └── _layout.tsx
-│   ├── (auth)/            # 認証関連画面
-│   │   ├── login.tsx      # ログイン画面
-│   │   └── signup.tsx     # ユーザー登録画面
-│   └── _layout.tsx        # ルートレイアウト
-│
-├── src/                   # ソースコード
-│   ├── components/       # UIコンポーネント
-│   │   ├── activity/    # 活動記録関連
-│   │   ├── daily/       # 日次記録関連
-│   │   └── goal/        # 目標設定関連
-│   ├── hooks/            # カスタムフック
-│   ├── providers/        # プロバイダー
-│   └── utils/            # ユーティリティ
-├── app.json             # Expoアプリ設定
-├── global.css           # グローバルCSS（NativeWind）
-├── tailwind.config.js  # Tailwind設定
-├── babel.config.js      # Babel設定
-├── metro.config.js      # Metro設定
-├── tsconfig.json        # TypeScript設定
-└── package.json         # 依存関係管理
-```

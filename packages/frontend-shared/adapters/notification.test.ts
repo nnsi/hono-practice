@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationAdapter } from "./index";
-import {
-  createReactNativeNotificationAdapter,
-  createWebNotificationAdapter,
-} from "./index";
+import { createWebNotificationAdapter } from "./index";
 
 describe("NotificationAdapter", () => {
   describe("WebNotificationAdapter", () => {
@@ -83,95 +80,4 @@ describe("NotificationAdapter", () => {
     });
   });
 
-  describe("ReactNativeNotificationAdapter", () => {
-    let adapter: NotificationAdapter;
-    let mockAlert: any;
-
-    beforeEach(() => {
-      mockAlert = {
-        alert: vi.fn(),
-      };
-      adapter = createReactNativeNotificationAdapter(mockAlert);
-    });
-
-    it("should show toast using Alert", () => {
-      adapter.toast({
-        title: "Toast Title",
-        description: "Toast Description",
-      });
-
-      expect(mockAlert.alert).toHaveBeenCalledWith(
-        "Toast Title",
-        "Toast Description",
-      );
-    });
-
-    it("should show alert and resolve when OK pressed", async () => {
-      mockAlert.alert.mockImplementation(
-        (_title: string, _message: string, buttons: any[]) => {
-          // Call OK button callback
-          buttons[0].onPress();
-        },
-      );
-
-      await adapter.alert("Alert Title", "Alert Message");
-
-      expect(mockAlert.alert).toHaveBeenCalledWith(
-        "Alert Title",
-        "Alert Message",
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: "OK",
-            onPress: expect.any(Function),
-          }),
-        ]),
-      );
-    });
-
-    it("should show confirm and return user choice", async () => {
-      // Test OK press
-      mockAlert.alert.mockImplementation(
-        (_title: string, _message: string, buttons: any[]) => {
-          // Find and press OK button
-          const okButton = buttons.find((b: any) => b.text === "OK");
-          okButton.onPress();
-        },
-      );
-
-      const okResult = await adapter.confirm(
-        "Confirm Title",
-        "Confirm Message",
-      );
-      expect(okResult).toBe(true);
-
-      // Test Cancel press
-      mockAlert.alert.mockImplementation(
-        (_title: string, _message: string, buttons: any[]) => {
-          // Find and press Cancel button
-          const cancelButton = buttons.find((b: any) => b.text === "Cancel");
-          cancelButton.onPress();
-        },
-      );
-
-      const cancelResult = await adapter.confirm("Confirm Title");
-      expect(cancelResult).toBe(false);
-
-      // Verify alert was called with correct buttons
-      expect(mockAlert.alert).toHaveBeenCalledWith(
-        "Confirm Title",
-        expect.any(String),
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: "Cancel",
-            style: "cancel",
-            onPress: expect.any(Function),
-          }),
-          expect.objectContaining({
-            text: "OK",
-            onPress: expect.any(Function),
-          }),
-        ]),
-      );
-    });
-  });
 });

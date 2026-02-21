@@ -29,6 +29,5 @@
       "@packages/types": ["packages/types/index.ts"]
     }
   },
-  "exclude": ["node_modules", "apps/mobile", "apps/tail-worker"],
-  "extends": "expo/tsconfig.base"
+  "exclude": ["node_modules", "apps/tail-worker", "packages/frontend-shared/adapters/react-native.ts"]
 }

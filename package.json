@@ -1,10 +1,9 @@
 {
   "scripts": {
-    "dev": "npm run dev -w actiko-backend",
-    "client-dev": "npm run dev -w actiko-frontend",
-    "mobile-dev": "npm run web -w mobile",
-    "build-client-stg": "npm run build-stg -w actiko-frontend",
-    "build-client": "npm run build -w actiko-frontend",
+    "dev": "pnpm --filter actiko-backend dev",
+    "client-dev": "pnpm --filter actiko-frontend dev",
+    "build-client-stg": "pnpm --filter actiko-frontend build-stg",
+    "build-client": "pnpm --filter actiko-frontend build",
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
@@ -14,18 +13,24 @@
     "fix": "biome check . --write --unsafe",
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production",
-    "deploy:tail-stg": "cd apps/tail-worker && npx wrangler deploy --env stg",
-    "deploy:tail-prod": "cd apps/tail-worker && npx wrangler deploy --env production",
+    "deploy:tail-stg": "cd apps/tail-worker && pnpm exec wrangler deploy --env stg",
+    "deploy:tail-prod": "cd apps/tail-worker && pnpm exec wrangler deploy --env production",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
     "gen-be": "node scripts/gen-be.js"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.27.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "lefthook",
+      "sharp",
+      "workerd"
+    ]
+  },
   "type": "module",
   "dependencies": {
     "@electric-sql/pglite": "^0.3.5",
@@ -44,6 +49,7 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.10.13",
     "jsdom": "^26.1.0",
     "lefthook": "^1.10.1",
     "ts-mockito": "^2.6.1",

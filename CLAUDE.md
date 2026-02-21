@@ -8,7 +8,7 @@
 ### 開発サーバーの起動
 - **開発サーバーは絶対に起動しないでください**
 - ユーザー側で既に起動しているため、Claude Code側での起動は不要です
-- `npm run dev`、`npm run client-dev` などのサーバー起動コマンドは実行しないでください
+- `pnpm run dev`、`pnpm run client-dev` などのサーバー起動コマンドは実行しないでください
 - **重要: 開発サーバーのポートは1357です（3000ではありません）**
 - **重要: バックエンドAPIサーバーのポートは3456です（4000ではありません）**
 
@@ -33,7 +33,6 @@
 - `auth_flow.md` - 認証フロー
 - `backend.md` - バックエンドアーキテクチャ
 - `frontend.md` - フロントエンドアーキテクチャ
-- `mobile.md` - モバイルアプリ
 - `database.md` - データベース設計
 
 ## 必須コマンド
@@ -41,25 +40,25 @@
 ### テストと品質管理
 ```bash
 # テストを一度だけ実行（CIモード） - 常にこれを使用
-npm run test-once
+pnpm run test-once
 
 # TypeScriptコンパイルチェック
-npm run tsc
+pnpm run tsc
 
 # コードフォーマット（biome+eslint）
-npm run fix
+pnpm run fix
 
 # 全てのCIチェックを実行
-npm run ci-check
+pnpm run ci-check
 ```
 
 ### データベース
 ```bash
 # マイグレーション生成
-npm run db-generate
+pnpm run db-generate
 
 # マイグレーション適用
-npm run db-migrate
+pnpm run db-migrate
 ```
 
 ## 重要な開発規約
@@ -76,9 +75,9 @@ npm run db-migrate
 
 ### テスト実行時の注意
 - **型エラーを全て修正してテストも全て通らないとコミットできない**
-- `npm run test-once` で全テスト通過を確認
-- `npm run tsc` でコンパイルエラーなしを確認
-- `npm run fix` でフォーマットを整える
+- `pnpm run test-once` で全テスト通過を確認
+- `pnpm run tsc` でコンパイルエラーなしを確認
+- `pnpm run fix` でフォーマットを整える
 - APIパラメータフォーマット変更に注意（例：mutationのパラメータ構造）
 
 ## 🔧 開発効率化

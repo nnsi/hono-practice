@@ -43,38 +43,53 @@ jobs:
         with:
           node-version: 22
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: test
-        run: npm run ci-check
+        run: pnpm run ci-check
         env:
           CI: true
           NODE_ENV: test
 
       - name: Build (for stg)
         if: github.ref_name == 'master' && steps.changed_frontend.outputs.any_changed == 'true'
-        run: npm run build-client-stg
+        run: pnpm run build-client-stg
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
 
       - name: Build (for release)
         if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
-        run: npm run build-client
+        run: pnpm run build-client
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
 
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master' && steps.changed_db_migrations.outputs.any_changed == 'true'
-        run: npm run db-migrate
+        run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
 
       - name: Migrate Neon DB (prod)
         if: github.ref_name == 'release' && steps.changed_db_migrations.outputs.any_changed == 'true'
-        run: npm run db-migrate
+        run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
@@ -119,11 +134,11 @@ jobs:
       - name: Set DATABASE_URL secret in Cloudflare (stg)
         if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
         run: |
-          echo "${{ secrets.DATABASE_URL_STG }}" | npx wrangler secret put DATABASE_URL --env stg
-          echo "${{ secrets.JWT_SECRET_STG }}"       | npx wrangler secret put JWT_SECRET --env stg
-          echo "${{ vars.APP_URL_STG }}"         | npx wrangler secret put APP_URL --env stg
-          echo "${{ vars.R2_PUBLIC_URL_STG }}" | npx wrangler secret put R2_PUBLIC_URL --env stg
-          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
+          echo "${{ secrets.DATABASE_URL_STG }}" | pnpm exec wrangler secret put DATABASE_URL --env stg
+          echo "${{ secrets.JWT_SECRET_STG }}"       | pnpm exec wrangler secret put JWT_SECRET --env stg
+          echo "${{ vars.APP_URL_STG }}"         | pnpm exec wrangler secret put APP_URL --env stg
+          echo "${{ vars.R2_PUBLIC_URL_STG }}" | pnpm exec wrangler secret put R2_PUBLIC_URL --env stg
+          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -131,25 +146,25 @@ jobs:
       - name: Set DATABASE_URL secret in Cloudflare (prod)
         if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
         run: |
-          echo "${{ secrets.DATABASE_URL_PROD }}" | npx wrangler secret put DATABASE_URL --env production
-          echo "${{ secrets.JWT_SECRET_PROD }}"       | npx wrangler secret put JWT_SECRET --env production
-          echo "${{ vars.APP_URL_PROD }}"         | npx wrangler secret put APP_URL --env production
-          echo "${{ vars.R2_PUBLIC_URL_PROD }}" | npx wrangler secret put R2_PUBLIC_URL --env production
-          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
+          echo "${{ secrets.DATABASE_URL_PROD }}" | pnpm exec wrangler secret put DATABASE_URL --env production
+          echo "${{ secrets.JWT_SECRET_PROD }}"       | pnpm exec wrangler secret put JWT_SECRET --env production
+          echo "${{ vars.APP_URL_PROD }}"         | pnpm exec wrangler secret put APP_URL --env production
+          echo "${{ vars.R2_PUBLIC_URL_PROD }}" | pnpm exec wrangler secret put R2_PUBLIC_URL --env production
+          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (stg)
         if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
-        run: npm run deploy:stg
+        run: pnpm run deploy:stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (release)
         if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
-        run: npm run deploy:prod
+        run: pnpm run deploy:prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

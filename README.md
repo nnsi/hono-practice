@@ -11,7 +11,7 @@ make setup
 ```
 
 このコマンドは以下を実行します：
-1. npm install（依存関係のインストール）
+1. pnpm install（依存関係のインストール）
 2. .envファイルの作成（存在しない場合）
 3. データベースマイグレーション
 4. テストデータの投入
@@ -27,8 +27,8 @@ make dev
 #### DB migration
 
 ```sh
-npm run db-generate
-npm run db-migrate
+pnpm run db-generate
+pnpm run db-migrate
 ```
 
 ## 開発環境のセットアップ
@@ -38,7 +38,7 @@ npm run db-migrate
 開発環境でテストデータが必要な場合は、以下のコマンドで初期データを生成できます：
 
 ```sh
-npm run db-seed
+pnpm run db-seed
 ```
 
 このコマンドは以下のテストデータを生成します：
