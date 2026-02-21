@@ -8,16 +8,17 @@
     "build-stg": "vite build --mode stg"
   },
   "dependencies": {
+    "@tanstack/react-router": "^1.92.9",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
-    "@tanstack/react-router": "^1.92.9",
+    "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "dayjs": "^1.11.13",
-    "uuid": "^11.0.3",
-    "clsx": "^2.1.1",
+    "recharts": "^2.15.4",
     "tailwind-merge": "^2.6.0",
-    "lucide-react": "^0.469.0"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.91.1",

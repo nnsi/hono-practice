@@ -9,9 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoalsRoute = GoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyRoute = DailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ActikoRoute = ActikoRouteImport.update({
   id: '/actiko',
   path: '/actiko',
@@ -26,31 +56,101 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/daily': typeof DailyRoute
+  '/goals': typeof GoalsRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/tasks': typeof TasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/daily': typeof DailyRoute
+  '/goals': typeof GoalsRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/tasks': typeof TasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/daily': typeof DailyRoute
+  '/goals': typeof GoalsRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/tasks': typeof TasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/actiko'
+  fullPaths:
+    | '/'
+    | '/actiko'
+    | '/daily'
+    | '/goals'
+    | '/settings'
+    | '/stats'
+    | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/actiko'
-  id: '__root__' | '/' | '/actiko'
+  to: '/' | '/actiko' | '/daily' | '/goals' | '/settings' | '/stats' | '/tasks'
+  id:
+    | '__root__'
+    | '/'
+    | '/actiko'
+    | '/daily'
+    | '/goals'
+    | '/settings'
+    | '/stats'
+    | '/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActikoRoute: typeof ActikoRoute
+  DailyRoute: typeof DailyRoute
+  GoalsRoute: typeof GoalsRoute
+  SettingsRoute: typeof SettingsRoute
+  StatsRoute: typeof StatsRoute
+  TasksRoute: typeof TasksRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goals': {
+      id: '/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof GoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/actiko': {
       id: '/actiko'
       path: '/actiko'
@@ -71,6 +171,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActikoRoute: ActikoRoute,
+  DailyRoute: DailyRoute,
+  GoalsRoute: GoalsRoute,
+  SettingsRoute: SettingsRoute,
+  StatsRoute: StatsRoute,
+  TasksRoute: TasksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
