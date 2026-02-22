@@ -21,7 +21,14 @@
       "@packages/domain": ["../../packages/domain/index.ts"],
       "@packages/domain/*": ["../../packages/domain/*"],
       "@packages/types-v2": ["../../packages/types-v2/index.ts"],
-      "@packages/types-v2/*": ["../../packages/types-v2/*"]
+      "@packages/types-v2/*": ["../../packages/types-v2/*"],
+      "@packages/types": ["../../packages/types/index.ts"],
+      "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
+      "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
+      "@backend/*": ["../../apps/backend/*"],
+      "@infra/*": ["../../infra/*"],
+      "@dtos/*": ["../../packages/types/*"],
+      "@domain/*": ["../../apps/backend/domain/*"]
     }
   },
   "include": ["src"],

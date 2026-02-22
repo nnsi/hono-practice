@@ -5,10 +5,10 @@ import type { AppContext } from "../context";
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { SyncActivitiesRequestSchema } from "@packages/types-v2";
 
-export const activityV2Route = new Hono<AppContext>();
+export const activityV2Route = new Hono<AppContext>()
 
 // activities 取得（activityKinds 含む）
-activityV2Route.get("/activities", async (c) => {
+.get("/activities", async (c) => {
   const userId = c.get("userId");
   const db = c.env.DB;
 
@@ -33,10 +33,10 @@ activityV2Route.get("/activities", async (c) => {
       : [];
 
   return c.json({ activities: result, activityKinds: kinds });
-});
+})
 
 // POST /activities/sync - バッチ同期（activities + activityKinds）
-activityV2Route.post("/activities/sync", async (c) => {
+.post("/activities/sync", async (c) => {
   const body = await c.req.json();
   const parsed = SyncActivitiesRequestSchema.safeParse(body);
   if (!parsed.success) {

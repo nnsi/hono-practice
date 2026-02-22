@@ -36,6 +36,7 @@ export function GoalCard({
   onDelete: () => Promise<void>;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const totalDays = useMemo(() => {
     const start = dayjs(goal.startDate);
@@ -61,12 +62,12 @@ export function GoalCard({
   const balanceLabel = goal.currentBalance < 0 ? "負債" : "貯金";
 
   const handleDelete = async () => {
-    if (!confirm("この目標を削除しますか？")) return;
     setDeleting(true);
     try {
       await onDelete();
     } finally {
       setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -135,18 +136,36 @@ export function GoalCard({
               <Pencil size={14} className="text-gray-400" />
             </button>
           )}
-          {isPast && (
+          {isPast && !showDeleteConfirm && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete();
+                setShowDeleteConfirm(true);
               }}
-              disabled={deleting}
               className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
             >
               <Trash2 size={14} className="text-gray-400" />
             </button>
+          )}
+          {isPast && showDeleteConfirm && (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+              >
+                削除
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
+              >
+                取消
+              </button>
+            </div>
           )}
           {isExpanded ? (
             <ChevronUp size={16} className="text-gray-400" />
@@ -172,7 +191,7 @@ export function GoalCard({
 
       {/* 展開時: 統計詳細 */}
       {isExpanded && (
-        <GoalStatsDetail goalId={goal.id} activity={activity} />
+        <GoalStatsDetail goal={goal} activity={activity} />
       )}
     </div>
   );

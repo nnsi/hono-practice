@@ -3,7 +3,7 @@ import { activityLogRepository } from "../db/activityLogRepository";
 import { goalRepository } from "../db/goalRepository";
 import { taskRepository } from "../db/taskRepository";
 import { db } from "../db/schema";
-import { apiFetch } from "../utils/apiClient";
+import { apiClient } from "../utils/apiClient";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -23,14 +23,12 @@ export async function performInitialSync(userId: string) {
   });
 
   const lastSyncedAt = localStorage.getItem(LAST_SYNCED_KEY);
-  const sinceParam = lastSyncedAt
-    ? `?since=${encodeURIComponent(lastSyncedAt)}`
-    : "";
+  const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
   let allSynced = true;
 
   // activities + activityKinds を取得
-  const activitiesRes = await apiFetch("/users/v2/activities");
+  const activitiesRes = await apiClient.users.v2.activities.$get();
   if (activitiesRes.ok) {
     const data = await activitiesRes.json();
     await activityRepository.upsertActivities(
@@ -46,8 +44,9 @@ export async function performInitialSync(userId: string) {
   }
 
   // activityLogs を取得（差分同期対応）
-  const logsUrl = `/users/v2/activity-logs${sinceParam}`;
-  const logsRes = await apiFetch(logsUrl);
+  const logsRes = await apiClient.users.v2["activity-logs"].$get({
+    query: sinceQuery,
+  });
   if (logsRes.ok) {
     const data = await logsRes.json();
     if (data.logs?.length > 0) {
@@ -60,8 +59,9 @@ export async function performInitialSync(userId: string) {
   }
 
   // goals を取得（差分同期対応）
-  const goalsUrl = `/users/v2/goals${sinceParam}`;
-  const goalsRes = await apiFetch(goalsUrl);
+  const goalsRes = await apiClient.users.v2.goals.$get({
+    query: sinceQuery,
+  });
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
@@ -74,8 +74,9 @@ export async function performInitialSync(userId: string) {
   }
 
   // tasks を取得（差分同期対応）
-  const tasksUrl = `/users/v2/tasks${sinceParam}`;
-  const tasksRes = await apiFetch(tasksUrl);
+  const tasksRes = await apiClient.users.v2.tasks.$get({
+    query: sinceQuery,
+  });
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {

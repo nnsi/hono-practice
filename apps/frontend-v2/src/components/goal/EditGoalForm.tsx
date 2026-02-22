@@ -21,6 +21,8 @@ export function EditGoalForm({
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
   const [saving, setSaving] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +39,12 @@ export function EditGoalForm({
   };
 
   const handleDeactivate = async () => {
-    if (!confirm("この目標を終了しますか？")) return;
     setSaving(true);
     try {
       await onSave({ isActive: false });
     } finally {
       setSaving(false);
+      setShowDeactivateConfirm(false);
     }
   };
 
@@ -117,22 +119,44 @@ export function EditGoalForm({
           >
             保存
           </button>
-          <button
-            type="button"
-            onClick={handleDeactivate}
-            disabled={saving}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
-          >
-            終了
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={saving}
-            className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 disabled:opacity-50 transition-colors"
-          >
-            <Trash2 size={14} />
-          </button>
+          {!showDeactivateConfirm ? (
+            <button
+              type="button"
+              onClick={() => setShowDeactivateConfirm(true)}
+              disabled={saving}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            >
+              終了
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleDeactivate}
+              disabled={saving}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              本当に終了
+            </button>
+          )}
+          {!showDeleteConfirm ? (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={saving}
+              className="px-3 py-2 border border-red-300 text-red-500 rounded-lg text-sm hover:bg-red-50 disabled:opacity-50 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={saving}
+              className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              削除
+            </button>
+          )}
         </div>
       </form>
     </div>

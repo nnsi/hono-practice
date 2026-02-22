@@ -69,6 +69,9 @@ export function groupTasksByTimeline(
       groups.notStarted.push(task);
     } else if (options.showFuture) {
       groups.future.push(task);
+    } else {
+      // startDate/dueDateが未設定のタスクは「進行中」に分類
+      groups.inProgress.push(task);
     }
   }
 

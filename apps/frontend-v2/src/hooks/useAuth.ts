@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../db/schema";
-import { apiLogin, clearToken, setToken, apiFetch } from "../utils/apiClient";
+import { apiLogin, clearToken, setToken, apiClient } from "../utils/apiClient";
 import { performInitialSync } from "../sync/initialSync";
 
 type AuthState = {
@@ -18,19 +18,29 @@ export function useAuth(): AuthState {
 
   // 起動時の認証チェック
   useEffect(() => {
+    const tryOfflineAuth = async () => {
+      const authState = await db.authState.get("current");
+      if (authState) {
+        const lastLogin = new Date(authState.lastLoginAt);
+        const hoursAgo =
+          (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60);
+        if (hoursAgo < 24) {
+          setUserId(authState.userId);
+          setIsLoggedIn(true);
+        }
+      }
+    };
+
     const init = async () => {
       try {
         // まずトークンリフレッシュを試みる
-        const res = await apiFetch("/auth/token", {
-          method: "POST",
-          credentials: "include",
-        });
+        const res = await apiClient.auth.token.$post();
         if (res.ok) {
           const data = await res.json();
           setToken(data.token);
 
           // ユーザー情報を取得
-          const userRes = await apiFetch("/user/me");
+          const userRes = await apiClient.user.me.$get();
           if (userRes.ok) {
             const user = await userRes.json();
             setUserId(user.id);
@@ -38,30 +48,12 @@ export function useAuth(): AuthState {
             await performInitialSync(user.id);
           }
         } else {
-          // オフラインまたはトークン無効 → Dexie authState チェック
-          const authState = await db.authState.get("current");
-          if (authState) {
-            const lastLogin = new Date(authState.lastLoginAt);
-            const hoursAgo =
-              (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60);
-            if (hoursAgo < 24) {
-              setUserId(authState.userId);
-              setIsLoggedIn(true);
-            }
-          }
+          // トークン無効 → Dexie authState でオフライン認証
+          await tryOfflineAuth();
         }
       } catch {
         // ネットワークエラー → オフラインモード
-        const authState = await db.authState.get("current");
-        if (authState) {
-          const lastLogin = new Date(authState.lastLoginAt);
-          const hoursAgo =
-            (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60);
-          if (hoursAgo < 24) {
-            setUserId(authState.userId);
-            setIsLoggedIn(true);
-          }
-        }
+        await tryOfflineAuth();
       } finally {
         setIsLoading(false);
       }
@@ -72,7 +64,7 @@ export function useAuth(): AuthState {
   const login = useCallback(async (loginId: string, password: string) => {
     await apiLogin(loginId, password);
     // ユーザー情報を取得
-    const userRes = await apiFetch("/user/me");
+    const userRes = await apiClient.user.me.$get();
     if (!userRes.ok) {
       throw new Error("Failed to fetch user after login");
     }
@@ -84,9 +76,7 @@ export function useAuth(): AuthState {
 
   const logout = useCallback(() => {
     // サーバーサイドのセッション無効化（fire-and-forget）
-    apiFetch("/auth/logout", { method: "POST", credentials: "include" }).catch(
-      () => {},
-    );
+    apiClient.auth.logout.$post().catch(() => {});
     clearToken();
     setIsLoggedIn(false);
     setUserId(null);

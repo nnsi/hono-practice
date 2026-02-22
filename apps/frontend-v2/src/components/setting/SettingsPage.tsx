@@ -11,9 +11,14 @@ type AppSettings = {
 function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const stored = localStorage.getItem("actiko-v2-settings");
-    return stored
-      ? JSON.parse(stored)
-      : { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };
+    if (stored) {
+      try {
+        return JSON.parse(stored) as AppSettings;
+      } catch {
+        localStorage.removeItem("actiko-v2-settings");
+      }
+    }
+    return { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };
   });
 
   const updateSetting = (key: keyof AppSettings, value: boolean) => {

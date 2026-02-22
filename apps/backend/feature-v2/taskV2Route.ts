@@ -5,10 +5,10 @@ import type { AppContext } from "../context";
 import { tasks } from "@infra/drizzle/schema";
 import { SyncTasksRequestSchema } from "@packages/types-v2";
 
-export const taskV2Route = new Hono<AppContext>();
+export const taskV2Route = new Hono<AppContext>()
 
 // GET /tasks - 全タスク取得
-taskV2Route.get("/tasks", async (c) => {
+.get("/tasks", async (c) => {
   const userId = c.get("userId");
   const db = c.env.DB;
   const since = c.req.query("since");
@@ -24,10 +24,10 @@ taskV2Route.get("/tasks", async (c) => {
     .where(and(...conditions));
 
   return c.json({ tasks: result });
-});
+})
 
 // POST /tasks/sync - バッチ同期（upsert）
-taskV2Route.post("/tasks/sync", async (c) => {
+.post("/tasks/sync", async (c) => {
   const body = await c.req.json();
   const parsed = SyncTasksRequestSchema.safeParse(body);
   if (!parsed.success) {

@@ -9,10 +9,10 @@ import {
 } from "@infra/drizzle/schema";
 import { SyncGoalsRequestSchema } from "@packages/types-v2";
 
-export const goalV2Route = new Hono<AppContext>();
+export const goalV2Route = new Hono<AppContext>()
 
 // GET /goals - 全ゴール取得（計算済みステータス付き）
-goalV2Route.get("/goals", async (c) => {
+.get("/goals", async (c) => {
   const userId = c.get("userId");
   const db = c.env.DB;
   const since = c.req.query("since");
@@ -73,10 +73,10 @@ goalV2Route.get("/goals", async (c) => {
   );
 
   return c.json({ goals: goalsWithStats });
-});
+})
 
 // POST /goals/sync - バッチ同期（upsert）
-goalV2Route.post("/goals/sync", async (c) => {
+.post("/goals/sync", async (c) => {
   const body = await c.req.json();
   const parsed = SyncGoalsRequestSchema.safeParse(body);
   if (!parsed.success) {

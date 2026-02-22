@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { X } from "lucide-react";
 import type { DexieActivity } from "../../db/schema";
 import type { CreateGoalPayload } from "./types";
 import { getActivityEmoji } from "./activityHelpers";
@@ -66,9 +67,9 @@ export function CreateGoalDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            &times;
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 

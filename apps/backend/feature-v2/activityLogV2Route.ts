@@ -5,10 +5,10 @@ import type { AppContext } from "../context";
 import { activities, activityLogs } from "@infra/drizzle/schema";
 import { SyncActivityLogsRequestSchema } from "@packages/types-v2";
 
-export const activityLogV2Route = new Hono<AppContext>();
+export const activityLogV2Route = new Hono<AppContext>()
 
 // バッチ同期（upsert）
-activityLogV2Route.post("/activity-logs/sync", async (c) => {
+.post("/activity-logs/sync", async (c) => {
   const body = await c.req.json();
   const parsed = SyncActivityLogsRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -104,10 +104,10 @@ activityLogV2Route.post("/activity-logs/sync", async (c) => {
   }
 
   return c.json({ syncedIds, serverWins, skippedIds });
-});
+})
 
 // データ取得（初回同期 / 差分取得用）
-activityLogV2Route.get("/activity-logs", async (c) => {
+.get("/activity-logs", async (c) => {
   const userId = c.get("userId");
   const since = c.req.query("since");
   const db = c.env.DB;

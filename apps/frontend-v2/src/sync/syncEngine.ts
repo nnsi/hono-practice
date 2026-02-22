@@ -2,16 +2,23 @@ import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import { goalRepository } from "../db/goalRepository";
 import { taskRepository } from "../db/taskRepository";
-import { apiFetch } from "../utils/apiClient";
-import type { SyncActivityLogsResponse } from "@packages/types-v2";
-
+import { apiClient } from "../utils/apiClient";
+import {
+  mapApiActivity,
+  mapApiActivityKind,
+  mapApiActivityLog,
+  mapApiGoal,
+  mapApiTask,
+} from "../utils/apiMappers";
 let isSyncing = false;
 let retryCount = 0;
 const BASE_DELAY_MS = 1000;
 
+type ServerEntity = Record<string, unknown> & { id: string };
+
 type SyncResult = {
   syncedIds: string[];
-  serverWins: Record<string, unknown>[];
+  serverWins: ServerEntity[];
   skippedIds: string[];
 };
 
@@ -22,17 +29,16 @@ export const syncEngine = {
 
     const logs = pending.map(({ _syncStatus, ...log }) => log);
 
-    const res = await apiFetch("/users/v2/activity-logs/sync", {
-      method: "POST",
-      body: JSON.stringify({ logs }),
+    const res = await apiClient.users.v2["activity-logs"].sync.$post({
+      json: { logs },
     });
 
     if (res.ok) {
-      const data: SyncActivityLogsResponse = await res.json();
+      const data: SyncResult = await res.json();
       await activityLogRepository.markActivityLogsSynced(data.syncedIds);
       if (data.serverWins.length > 0) {
         await activityLogRepository.upsertActivityLogsFromServer(
-          data.serverWins,
+          data.serverWins.map(mapApiActivityLog),
         );
       }
       await activityLogRepository.markActivityLogsFailed(data.skippedIds);
@@ -52,12 +58,11 @@ export const syncEngine = {
     );
     const kindsData = pendingKinds.map(({ _syncStatus, ...k }) => k);
 
-    const res = await apiFetch("/users/v2/activities/sync", {
-      method: "POST",
-      body: JSON.stringify({
+    const res = await apiClient.users.v2.activities.sync.$post({
+      json: {
         activities: activitiesData,
         activityKinds: kindsData,
-      }),
+      },
     });
 
     if (res.ok) {
@@ -74,9 +79,7 @@ export const syncEngine = {
       );
       if (data.activities.serverWins.length > 0) {
         await activityRepository.upsertActivities(
-          data.activities.serverWins as Parameters<
-            typeof activityRepository.upsertActivities
-          >[0],
+          data.activities.serverWins.map(mapApiActivity),
         );
       }
 
@@ -88,9 +91,7 @@ export const syncEngine = {
       );
       if (data.activityKinds.serverWins.length > 0) {
         await activityRepository.upsertActivityKinds(
-          data.activityKinds.serverWins as Parameters<
-            typeof activityRepository.upsertActivityKinds
-          >[0],
+          data.activityKinds.serverWins.map(mapApiActivityKind),
         );
       }
     }
@@ -104,9 +105,8 @@ export const syncEngine = {
       ({ _syncStatus, currentBalance, totalTarget, totalActual, ...g }) => g,
     );
 
-    const res = await apiFetch("/users/v2/goals/sync", {
-      method: "POST",
-      body: JSON.stringify({ goals }),
+    const res = await apiClient.users.v2.goals.sync.$post({
+      json: { goals },
     });
 
     if (res.ok) {
@@ -115,9 +115,7 @@ export const syncEngine = {
       await goalRepository.markGoalsFailed(data.skippedIds);
       if (data.serverWins.length > 0) {
         await goalRepository.upsertGoalsFromServer(
-          data.serverWins as Parameters<
-            typeof goalRepository.upsertGoalsFromServer
-          >[0],
+          data.serverWins.map(mapApiGoal),
         );
       }
     }
@@ -129,9 +127,8 @@ export const syncEngine = {
 
     const tasks = pending.map(({ _syncStatus, ...t }) => t);
 
-    const res = await apiFetch("/users/v2/tasks/sync", {
-      method: "POST",
-      body: JSON.stringify({ tasks }),
+    const res = await apiClient.users.v2.tasks.sync.$post({
+      json: { tasks },
     });
 
     if (res.ok) {
@@ -140,9 +137,7 @@ export const syncEngine = {
       await taskRepository.markTasksFailed(data.skippedIds);
       if (data.serverWins.length > 0) {
         await taskRepository.upsertTasksFromServer(
-          data.serverWins as Parameters<
-            typeof taskRepository.upsertTasksFromServer
-          >[0],
+          data.serverWins.map(mapApiTask),
         );
       }
     }

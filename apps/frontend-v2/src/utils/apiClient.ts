@@ -1,3 +1,6 @@
+import { hc } from "hono/client";
+import type { AppType } from "@backend/app";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
 
 let accessToken: string | null = null;
@@ -14,54 +17,75 @@ export function clearToken() {
   accessToken = null;
 }
 
+// トークンリフレッシュの排他制御
+let refreshPromise: Promise<string | null> | null = null;
+
 async function refreshAccessToken(): Promise<string | null> {
-  const res = await fetch(`${API_URL}/auth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  setToken(data.token);
-  return data.token;
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      setToken(data.token);
+      return data.token;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
-export async function apiFetch(
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
+// hcに渡すcustom fetch（トークン付与、credentials制御、401リトライ）
+const customFetch: typeof fetch = async (input, init) => {
   const token = getToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const url = path.startsWith("http") ? path : `${API_URL}${path}`;
+  const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
+  const credentials: RequestCredentials = url.includes("/auth/")
+    ? "include"
+    : "omit";
 
-  let res = await fetch(url, {
-    ...options,
+  let res = await fetch(input, {
+    ...init,
     headers,
-    credentials: url.includes("/auth/") ? "include" : "omit",
+    credentials,
   });
 
-  // 401 → トークンリフレッシュ → 1回リトライ
+  // 401 → トークンリフレッシュ（排他制御付き） → 1回リトライ
   if (res.status === 401) {
     const newToken = await refreshAccessToken();
     if (newToken) {
-      headers.Authorization = `Bearer ${newToken}`;
-      res = await fetch(url, {
-        ...options,
+      headers.set("Authorization", `Bearer ${newToken}`);
+      res = await fetch(input, {
+        ...init,
         headers,
-        credentials: url.includes("/auth/") ? "include" : "omit",
+        credentials,
       });
     }
   }
 
   return res;
-}
+};
+
+// Hono RPC クライアント
+export const apiClient = hc<AppType>(API_URL, {
+  fetch: customFetch,
+});
 
 export async function apiLogin(loginId: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {

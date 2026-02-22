@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../db/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -37,9 +37,9 @@ export function CreateLogDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            &times;
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
         <div className="overflow-y-auto px-6 pb-6 space-y-2">
@@ -142,9 +142,9 @@ function CreateLogFormDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            &times;
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 

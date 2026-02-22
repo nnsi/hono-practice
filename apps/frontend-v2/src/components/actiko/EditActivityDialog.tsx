@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -84,9 +85,9 @@ export function EditActivityDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            &times;
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 

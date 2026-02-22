@@ -1,32 +1,8 @@
-export type StatsKindLog = {
-  date: string;
-  quantity: number;
-};
+import type { GetActivityStatsResponse } from "../../../../../packages/types/response/GetActivityStatsResponse";
 
-export type StatsKind = {
-  id: string | null;
-  name: string;
-  color: string | null | undefined;
-  total: number;
-  logs: StatsKindLog[];
-};
-
-export type ActivityStat = {
-  id: string;
-  name: string;
-  total: number | null;
-  quantityUnit: string;
-  showCombinedStats: boolean;
-  kinds: StatsKind[];
-};
-
-export type GoalData = {
-  id: string;
-  activityId: string;
-  dailyTargetQuantity: number;
-  startDate: string;
-  endDate: string | null;
-};
+export type ActivityStat = GetActivityStatsResponse[number];
+export type StatsKind = ActivityStat["kinds"][number];
+export type StatsKindLog = StatsKind["logs"][number];
 
 export type GoalLine = {
   id: string;
