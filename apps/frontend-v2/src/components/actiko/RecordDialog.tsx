@@ -27,7 +27,7 @@ export function RecordDialog({
 
     const q = Number(quantity);
     if (selectedKindId || memo) {
-      await activityLogRepository.create({
+      await activityLogRepository.createActivityLog({
         activityId: activity.id,
         activityKindId: selectedKindId,
         quantity: q,

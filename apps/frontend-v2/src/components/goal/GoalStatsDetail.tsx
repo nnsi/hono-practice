@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import type { DexieActivity } from "../../db/schema";
 import type { GoalStats } from "./types";
-import { fetchGoalStats } from "./goalApi";
+import { fetchGoalStats } from "../../api/goalApi";
 
 function StatCard({
   icon,

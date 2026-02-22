@@ -26,23 +26,29 @@ export function TasksPage() {
   // Fetch active tasks
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
-    const res = await apiFetch("/users/tasks");
-    if (res.ok) {
-      const data: TaskItem[] = await res.json();
-      setTasks(data.filter((t) => !t.archivedAt));
+    try {
+      const res = await apiFetch("/users/tasks");
+      if (res.ok) {
+        const data: TaskItem[] = await res.json();
+        setTasks(data.filter((t) => !t.archivedAt));
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   // Fetch archived tasks
   const fetchArchivedTasks = useCallback(async () => {
     setIsArchivedLoading(true);
-    const res = await apiFetch("/users/tasks/archived");
-    if (res.ok) {
-      const data: TaskItem[] = await res.json();
-      setArchivedTasks(data);
+    try {
+      const res = await apiFetch("/users/tasks/archived");
+      if (res.ok) {
+        const data: TaskItem[] = await res.json();
+        setArchivedTasks(data);
+      }
+    } finally {
+      setIsArchivedLoading(false);
     }
-    setIsArchivedLoading(false);
   }, []);
 
   useEffect(() => {
@@ -55,7 +61,18 @@ export function TasksPage() {
     }
   }, [activeTab, fetchArchivedTasks]);
 
-  // Grouping
+  // Single grouping with everything visible (for counts)
+  const allGrouped = useMemo(
+    () =>
+      groupTasksByTimeline(tasks, {
+        showCompleted: true,
+        showFuture: true,
+        completedInTheirCategories: true,
+      }),
+    [tasks],
+  );
+
+  // Filtered view based on toggle state
   const groupedTasks = useMemo(
     () =>
       groupTasksByTimeline(tasks, {
@@ -66,24 +83,8 @@ export function TasksPage() {
     [tasks, showCompleted, showFuture],
   );
 
-  // Count completed tasks for toggle label (always count regardless of showCompleted)
-  const completedCount = useMemo(() => {
-    const allGrouped = groupTasksByTimeline(tasks, {
-      showCompleted: true,
-      showFuture,
-      completedInTheirCategories: true,
-    });
-    return allGrouped.completed.length;
-  }, [tasks, showFuture]);
-
-  const futureCount = useMemo(() => {
-    const allGrouped = groupTasksByTimeline(tasks, {
-      showCompleted,
-      showFuture: true,
-      completedInTheirCategories: true,
-    });
-    return allGrouped.notStarted.length + allGrouped.future.length;
-  }, [tasks, showCompleted]);
+  const completedCount = allGrouped.completed.length;
+  const futureCount = allGrouped.notStarted.length + allGrouped.future.length;
 
   // Actions
   const handleToggleDone = async (task: TaskItem) => {

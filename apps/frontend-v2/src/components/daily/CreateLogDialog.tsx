@@ -107,7 +107,7 @@ function CreateLogFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await activityLogRepository.create({
+    await activityLogRepository.createActivityLog({
       activityId: activity.id,
       activityKindId: selectedKindId,
       quantity: quantity !== "" ? Number(quantity) : null,

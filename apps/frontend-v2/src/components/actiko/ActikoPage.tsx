@@ -8,6 +8,7 @@ import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { apiFetch } from "../../utils/apiClient";
 import type { DexieActivity } from "../../db/schema";
+import { mapApiActivity, mapApiActivityKind } from "../../utils/apiMappers";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
@@ -47,7 +48,7 @@ export function ActikoPage() {
     activity: DexieActivity,
     quantity: number,
   ) => {
-    await activityLogRepository.create({
+    await activityLogRepository.createActivityLog({
       activityId: activity.id,
       activityKindId: null,
       quantity,
@@ -63,56 +64,15 @@ export function ActikoPage() {
   // API→Dexie同期ヘルパー
   const refreshActivities = async () => {
     const res = await apiFetch("/users/v2/activities");
-    if (res.ok) {
-      const data = await res.json();
-      const mapped = data.activities.map(
-        (a: Record<string, unknown>) => ({
-          id: a.id,
-          userId: a.userId ?? a.user_id,
-          name: a.name ?? "",
-          label: a.label ?? "",
-          emoji: a.emoji ?? "",
-          iconType: a.iconType ?? a.icon_type ?? "emoji",
-          iconUrl: a.iconUrl ?? a.icon_url ?? null,
-          iconThumbnailUrl: a.iconThumbnailUrl ?? a.icon_thumbnail_url ?? null,
-          description: a.description ?? "",
-          quantityUnit: a.quantityUnit ?? a.quantity_unit ?? "",
-          orderIndex: a.orderIndex ?? a.order_index ?? "",
-          showCombinedStats:
-            a.showCombinedStats ?? a.show_combined_stats ?? true,
-          createdAt:
-            typeof a.createdAt === "string"
-              ? a.createdAt
-              : ((a.created_at as string) ?? new Date().toISOString()),
-          updatedAt:
-            typeof a.updatedAt === "string"
-              ? a.updatedAt
-              : ((a.updated_at as string) ?? new Date().toISOString()),
-          deletedAt: a.deletedAt ?? a.deleted_at ?? null,
-        }),
+    if (!res.ok) return;
+    const data = await res.json();
+    await activityRepository.upsertActivities(
+      data.activities.map(mapApiActivity),
+    );
+    if (data.activityKinds?.length > 0) {
+      await activityRepository.upsertActivityKinds(
+        data.activityKinds.map(mapApiActivityKind),
       );
-      await activityRepository.upsertActivities(mapped);
-      if (data.activityKinds?.length > 0) {
-        const kinds = data.activityKinds.map(
-          (k: Record<string, unknown>) => ({
-            id: k.id,
-            activityId: k.activityId ?? k.activity_id,
-            name: k.name ?? "",
-            color: k.color ?? null,
-            orderIndex: k.orderIndex ?? k.order_index ?? "",
-            createdAt:
-              typeof k.createdAt === "string"
-                ? k.createdAt
-                : ((k.created_at as string) ?? new Date().toISOString()),
-            updatedAt:
-              typeof k.updatedAt === "string"
-                ? k.updatedAt
-                : ((k.updated_at as string) ?? new Date().toISOString()),
-            deletedAt: k.deletedAt ?? k.deleted_at ?? null,
-          }),
-        );
-        await activityRepository.upsertActivityKinds(kinds);
-      }
     }
   };
 

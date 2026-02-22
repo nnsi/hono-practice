@@ -1,15 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
 
+let accessToken: string | null = null;
+
 function getToken(): string | null {
-  return localStorage.getItem("actiko-v2-token");
+  return accessToken;
 }
 
 export function setToken(token: string) {
-  localStorage.setItem("actiko-v2-token", token);
+  accessToken = token;
 }
 
 export function clearToken() {
-  localStorage.removeItem("actiko-v2-token");
+  accessToken = null;
 }
 
 async function refreshAccessToken(): Promise<string | null> {

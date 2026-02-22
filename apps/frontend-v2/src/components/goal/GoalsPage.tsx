@@ -7,7 +7,7 @@ import {
 import { useActivities } from "../../hooks/useActivities";
 import type { DexieActivity } from "../../db/schema";
 import type { CreateGoalPayload, Goal, UpdateGoalPayload } from "./types";
-import { createGoalApi, deleteGoalApi, fetchGoals, updateGoalApi } from "./goalApi";
+import { createGoalApi, deleteGoalApi, fetchGoals, updateGoalApi } from "../../api/goalApi";
 import { GoalCard } from "./GoalCard";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 
@@ -61,14 +61,22 @@ export function GoalsPage() {
   };
 
   const handleGoalUpdated = async (goalId: string, payload: UpdateGoalPayload) => {
-    const updated = await updateGoalApi(goalId, payload);
-    setGoals((prev) => prev.map((g) => (g.id === goalId ? updated : g)));
-    setEditingGoalId(null);
+    try {
+      const updated = await updateGoalApi(goalId, payload);
+      setGoals((prev) => prev.map((g) => (g.id === goalId ? updated : g)));
+      setEditingGoalId(null);
+    } catch {
+      setError("目標の更新に失敗しました");
+    }
   };
 
   const handleGoalDeleted = async (goalId: string) => {
-    await deleteGoalApi(goalId);
-    setGoals((prev) => prev.filter((g) => g.id !== goalId));
+    try {
+      await deleteGoalApi(goalId);
+      setGoals((prev) => prev.filter((g) => g.id !== goalId));
+    } catch {
+      setError("目標の削除に失敗しました");
+    }
   };
 
   const handleToggleExpand = (goalId: string) => {

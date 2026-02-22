@@ -73,15 +73,20 @@ export function useAuth(): AuthState {
     await apiLogin(loginId, password);
     // ユーザー情報を取得
     const userRes = await apiFetch("/user/me");
-    if (userRes.ok) {
-      const user = await userRes.json();
-      setUserId(user.id);
-      setIsLoggedIn(true);
-      await performInitialSync(user.id);
+    if (!userRes.ok) {
+      throw new Error("Failed to fetch user after login");
     }
+    const user = await userRes.json();
+    setUserId(user.id);
+    setIsLoggedIn(true);
+    await performInitialSync(user.id);
   }, []);
 
   const logout = useCallback(() => {
+    // サーバーサイドのセッション無効化（fire-and-forget）
+    apiFetch("/auth/logout", { method: "POST", credentials: "include" }).catch(
+      () => {},
+    );
     clearToken();
     setIsLoggedIn(false);
     setUserId(null);

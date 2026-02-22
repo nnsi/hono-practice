@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { apiFetch } from "../../utils/apiClient";
 import type { DexieActivity } from "../../db/schema";
@@ -22,26 +22,21 @@ export function EditActivityDialog({
   const [kinds, setKinds] = useState<
     { id?: string; name: string; color: string }[]
   >([]);
-  const [kindsLoaded, setKindsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // existingKindsが読み込まれたら初期化
-  if (!kindsLoaded && existingKinds.length > 0) {
-    setKinds(
-      existingKinds.map((k) => ({
-        id: k.id,
-        name: k.name,
-        color: k.color || "#3b82f6",
-      })),
-    );
-    setKindsLoaded(true);
-  }
-  if (!kindsLoaded && existingKinds.length === 0) {
-    // 一度チェックしてkindsが空の場合もフラグ立て
-    // ただしliveQueryの初回undefinedの場合は待つ
-    setKindsLoaded(true);
-  }
+  useEffect(() => {
+    if (existingKinds.length > 0) {
+      setKinds(
+        existingKinds.map((k) => ({
+          id: k.id,
+          name: k.name,
+          color: k.color || "#3b82f6",
+        })),
+      );
+    }
+  }, [existingKinds]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

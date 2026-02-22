@@ -7,7 +7,7 @@ type CreateInput = Pick<
 >;
 
 export const activityLogRepository = {
-  async create(input: CreateInput) {
+  async createActivityLog(input: CreateInput) {
     const now = new Date().toISOString();
     const log: DexieActivityLog = {
       ...input,
@@ -21,7 +21,7 @@ export const activityLogRepository = {
     return log;
   },
 
-  async getByDate(date: string) {
+  async getActivityLogsByDate(date: string) {
     return db.activityLogs
       .where("date")
       .equals(date)
@@ -29,7 +29,7 @@ export const activityLogRepository = {
       .toArray();
   },
 
-  async update(
+  async updateActivityLog(
     id: string,
     changes: Partial<
       Pick<
@@ -46,7 +46,7 @@ export const activityLogRepository = {
     });
   },
 
-  async softDelete(id: string) {
+  async softDeleteActivityLog(id: string) {
     const now = new Date().toISOString();
     await db.activityLogs.update(id, {
       deletedAt: now,
@@ -55,11 +55,11 @@ export const activityLogRepository = {
     });
   },
 
-  async getPendingSync() {
+  async getPendingSyncActivityLogs() {
     return db.activityLogs.where("_syncStatus").equals("pending").toArray();
   },
 
-  async markSynced(ids: string[]) {
+  async markActivityLogsSynced(ids: string[]) {
     if (ids.length === 0) return;
     await db.activityLogs
       .where("id")
@@ -67,7 +67,7 @@ export const activityLogRepository = {
       .modify({ _syncStatus: "synced" as const });
   },
 
-  async markFailed(ids: string[]) {
+  async markActivityLogsFailed(ids: string[]) {
     if (ids.length === 0) return;
     await db.activityLogs
       .where("id")
@@ -75,7 +75,7 @@ export const activityLogRepository = {
       .modify({ _syncStatus: "failed" as const });
   },
 
-  async upsertFromServer(
+  async upsertActivityLogsFromServer(
     logs: Omit<DexieActivityLog, "_syncStatus">[],
   ) {
     await db.activityLogs.bulkPut(

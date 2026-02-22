@@ -12,7 +12,7 @@ export const syncEngine = {
     isSyncing = true;
 
     try {
-      const pending = await activityLogRepository.getPendingSync();
+      const pending = await activityLogRepository.getPendingSyncActivityLogs();
       if (pending.length === 0) return;
 
       // _syncStatus はサーバーに送らない
@@ -26,13 +26,13 @@ export const syncEngine = {
       if (res.ok) {
         const data: SyncActivityLogsResponse = await res.json();
 
-        await activityLogRepository.markSynced(data.syncedIds);
+        await activityLogRepository.markActivityLogsSynced(data.syncedIds);
 
         if (data.serverWins.length > 0) {
-          await activityLogRepository.upsertFromServer(data.serverWins);
+          await activityLogRepository.upsertActivityLogsFromServer(data.serverWins);
         }
 
-        await activityLogRepository.markFailed(data.skippedIds);
+        await activityLogRepository.markActivityLogsFailed(data.skippedIds);
 
         retryCount = 0;
       } else if (res.status === 401) {

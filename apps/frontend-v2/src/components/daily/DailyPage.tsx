@@ -51,7 +51,10 @@ export function DailyPage() {
   useEffect(() => {
     setIsTasksLoading(true);
     apiFetch(`/users/tasks?date=${date}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch tasks");
+        return res.json();
+      })
       .then((data) => setTasks(data))
       .catch(() => setTasks([]))
       .finally(() => setIsTasksLoading(false));
@@ -75,10 +78,11 @@ export function DailyPage() {
       const newDoneDate = task.doneDate
         ? null
         : new Date().toISOString().split("T")[0];
-      await apiFetch(`/users/tasks/${task.id}`, {
+      const res = await apiFetch(`/users/tasks/${task.id}`, {
         method: "PUT",
-        body: JSON.stringify({ done_date: newDoneDate }),
+        body: JSON.stringify({ doneDate: newDoneDate }),
       });
+      if (!res.ok) return;
       setTasks((prev) =>
         prev.map((t) =>
           t.id === task.id ? { ...t, doneDate: newDoneDate } : t,

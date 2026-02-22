@@ -29,7 +29,7 @@ export function EditLogDialog({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await activityLogRepository.update(log.id, {
+    await activityLogRepository.updateActivityLog(log.id, {
       quantity: quantity !== "" ? Number(quantity) : null,
       memo,
       activityKindId: selectedKindId,
@@ -41,7 +41,7 @@ export function EditLogDialog({
 
   const handleDelete = async () => {
     setIsSubmitting(true);
-    await activityLogRepository.softDelete(log.id);
+    await activityLogRepository.softDeleteActivityLog(log.id);
     syncEngine.syncActivityLogs();
     setIsSubmitting(false);
     onClose();
