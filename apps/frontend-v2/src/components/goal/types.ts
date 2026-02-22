@@ -4,13 +4,12 @@ export type Goal = {
   activityId: string;
   dailyTargetQuantity: number;
   startDate: string;
-  endDate?: string;
+  endDate: string | null;
   isActive: boolean;
-  description?: string;
+  description: string;
   currentBalance: number;
   totalTarget: number;
   totalActual: number;
-  inactiveDates: string[];
   createdAt: string;
   updatedAt: string;
 };

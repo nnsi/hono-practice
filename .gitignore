@@ -4,6 +4,7 @@ db-data
 dist
 dist-backend
 dist-frontend
+dist-frontend-v2
 .husky
 stats.html
 public

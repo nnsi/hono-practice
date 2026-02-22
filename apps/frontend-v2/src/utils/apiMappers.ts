@@ -2,6 +2,8 @@ import type {
   DexieActivity,
   DexieActivityKind,
   DexieActivityLog,
+  DexieGoal,
+  DexieTask,
 } from "../db/schema";
 
 // API responses may use snake_case or camelCase
@@ -68,11 +70,64 @@ type ApiActivityLog = {
   deleted_at?: string | null;
 };
 
+type ApiGoal = {
+  id: string;
+  userId?: string;
+  user_id?: string;
+  activityId?: string;
+  activity_id?: string;
+  dailyTargetQuantity?: number;
+  daily_target_quantity?: number;
+  startDate?: string;
+  start_date?: string;
+  endDate?: string | null;
+  end_date?: string | null;
+  isActive?: boolean;
+  is_active?: boolean;
+  description?: string;
+  currentBalance?: number;
+  current_balance?: number;
+  totalTarget?: number;
+  total_target?: number;
+  totalActual?: number;
+  total_actual?: number;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+  deletedAt?: string | null;
+  deleted_at?: string | null;
+};
+
+type ApiTask = {
+  id: string;
+  userId?: string;
+  user_id?: string;
+  title?: string;
+  startDate?: string | null;
+  start_date?: string | null;
+  dueDate?: string | null;
+  due_date?: string | null;
+  doneDate?: string | null;
+  done_date?: string | null;
+  memo?: string | null;
+  archivedAt?: string | null;
+  archived_at?: string | null;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+  deletedAt?: string | null;
+  deleted_at?: string | null;
+};
+
 function toISOString(value: string | undefined | null): string {
   return typeof value === "string" ? value : new Date().toISOString();
 }
 
-export function mapApiActivity(a: ApiActivity): Omit<DexieActivity, never> {
+export function mapApiActivity(
+  a: ApiActivity,
+): Omit<DexieActivity, "_syncStatus"> {
   return {
     id: a.id,
     userId: a.userId ?? a.user_id ?? "",
@@ -95,7 +150,7 @@ export function mapApiActivity(a: ApiActivity): Omit<DexieActivity, never> {
 
 export function mapApiActivityKind(
   k: ApiActivityKind,
-): Omit<DexieActivityKind, never> {
+): Omit<DexieActivityKind, "_syncStatus"> {
   return {
     id: k.id,
     activityId: k.activityId ?? k.activity_id ?? "",
@@ -122,5 +177,46 @@ export function mapApiActivityLog(
     createdAt: toISOString(l.createdAt ?? l.created_at),
     updatedAt: toISOString(l.updatedAt ?? l.updated_at),
     deletedAt: l.deletedAt ?? l.deleted_at ?? null,
+  };
+}
+
+export function mapApiGoal(
+  g: ApiGoal,
+): Omit<DexieGoal, "_syncStatus"> {
+  return {
+    id: g.id,
+    userId: g.userId ?? g.user_id ?? "",
+    activityId: g.activityId ?? g.activity_id ?? "",
+    dailyTargetQuantity: Number(
+      g.dailyTargetQuantity ?? g.daily_target_quantity ?? 0,
+    ),
+    startDate: g.startDate ?? g.start_date ?? "",
+    endDate: g.endDate ?? g.end_date ?? null,
+    isActive: g.isActive ?? g.is_active ?? true,
+    description: g.description ?? "",
+    currentBalance: Number(g.currentBalance ?? g.current_balance ?? 0),
+    totalTarget: Number(g.totalTarget ?? g.total_target ?? 0),
+    totalActual: Number(g.totalActual ?? g.total_actual ?? 0),
+    createdAt: toISOString(g.createdAt ?? g.created_at),
+    updatedAt: toISOString(g.updatedAt ?? g.updated_at),
+    deletedAt: g.deletedAt ?? g.deleted_at ?? null,
+  };
+}
+
+export function mapApiTask(
+  t: ApiTask,
+): Omit<DexieTask, "_syncStatus"> {
+  return {
+    id: t.id,
+    userId: t.userId ?? t.user_id ?? "",
+    title: t.title ?? "",
+    startDate: t.startDate ?? t.start_date ?? null,
+    dueDate: t.dueDate ?? t.due_date ?? null,
+    doneDate: t.doneDate ?? t.done_date ?? null,
+    memo: t.memo ?? "",
+    archivedAt: t.archivedAt ?? t.archived_at ?? null,
+    createdAt: toISOString(t.createdAt ?? t.created_at),
+    updatedAt: toISOString(t.updatedAt ?? t.updated_at),
+    deletedAt: t.deletedAt ?? t.deleted_at ?? null,
   };
 }

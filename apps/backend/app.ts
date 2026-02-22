@@ -10,7 +10,12 @@ import {
   taskRoute,
   userRoute,
 } from "./feature";
-import { activityLogV2Route, activityV2Route } from "./feature-v2";
+import {
+  activityLogV2Route,
+  activityV2Route,
+  goalV2Route,
+  taskV2Route,
+} from "./feature-v2";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
@@ -79,6 +84,8 @@ const routes = app
   .route("/users/subscription", subscriptionRoute)
   .route("/users/v2", activityLogV2Route)
   .route("/users/v2", activityV2Route)
+  .route("/users/v2", goalV2Route)
+  .route("/users/v2", taskV2Route)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {

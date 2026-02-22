@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { apiFetch } from "../../utils/apiClient";
+import { useTasksByDate } from "../../hooks/useTasks";
+import { taskRepository } from "../../db/taskRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import { db } from "../../db/schema";
 import type {
   DexieActivity,
@@ -21,6 +23,7 @@ export function DailyPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const { activities } = useActivities();
   const { logs } = useActivityLogsByDate(date);
+  const { tasks: dexieTasks } = useTasksByDate(date);
 
   // 全kinds取得（ログ表示用）
   const allKinds = useLiveQuery(
@@ -44,21 +47,19 @@ export function DailyPage() {
     return map;
   }, [activities]);
 
-  // タスク取得
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isTasksLoading, setIsTasksLoading] = useState(false);
-
-  useEffect(() => {
-    setIsTasksLoading(true);
-    apiFetch(`/users/tasks?date=${date}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch tasks");
-        return res.json();
-      })
-      .then((data) => setTasks(data))
-      .catch(() => setTasks([]))
-      .finally(() => setIsTasksLoading(false));
-  }, [date]);
+  // DexieTask -> TaskList Task mapping
+  const tasks: Task[] = useMemo(
+    () =>
+      dexieTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        doneDate: t.doneDate,
+        memo: t.memo,
+        startDate: t.startDate,
+        dueDate: t.dueDate,
+      })),
+    [dexieTasks],
+  );
 
   // ダイアログ状態
   const [editingLog, setEditingLog] = useState<DexieActivityLog | null>(null);
@@ -73,24 +74,13 @@ export function DailyPage() {
   const isToday = date === dayjs().format("YYYY-MM-DD");
 
   // タスクトグル
-  const handleToggleTask = useCallback(
-    async (task: Task) => {
-      const newDoneDate = task.doneDate
-        ? null
-        : new Date().toISOString().split("T")[0];
-      const res = await apiFetch(`/users/tasks/${task.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ doneDate: newDoneDate }),
-      });
-      if (!res.ok) return;
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === task.id ? { ...t, doneDate: newDoneDate } : t,
-        ),
-      );
-    },
-    [],
-  );
+  const handleToggleTask = useCallback(async (task: Task) => {
+    const newDoneDate = task.doneDate
+      ? null
+      : new Date().toISOString().split("T")[0];
+    await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
+    syncEngine.syncTasks();
+  }, []);
 
   return (
     <div className="bg-white">
@@ -174,7 +164,7 @@ export function DailyPage() {
           </h2>
           <TaskList
             tasks={tasks}
-            isLoading={isTasksLoading}
+            isLoading={false}
             onToggle={handleToggleTask}
           />
         </section>

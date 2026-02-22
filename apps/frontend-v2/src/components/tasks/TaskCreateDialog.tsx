@@ -1,7 +1,8 @@
 import { useState } from "react";
 import dayjs from "dayjs";
 import { X } from "lucide-react";
-import { apiFetch } from "../../utils/apiClient";
+import { taskRepository } from "../../db/taskRepository";
+import { syncEngine } from "../../sync/syncEngine";
 
 export function TaskCreateDialog({
   onClose,
@@ -21,22 +22,15 @@ export function TaskCreateDialog({
     if (!title.trim()) return;
 
     setIsSubmitting(true);
-    const body: Record<string, string> = {
+    await taskRepository.createTask({
       title: title.trim(),
-      startDate,
-    };
-    if (dueDate) body.dueDate = dueDate;
-    if (memo.trim()) body.memo = memo.trim();
-
-    const res = await apiFetch("/users/tasks", {
-      method: "POST",
-      body: JSON.stringify(body),
+      startDate: startDate || null,
+      dueDate: dueDate || null,
+      memo: memo.trim(),
     });
     setIsSubmitting(false);
-
-    if (res.ok) {
-      onSuccess();
-    }
+    syncEngine.syncTasks();
+    onSuccess();
   };
 
   return (

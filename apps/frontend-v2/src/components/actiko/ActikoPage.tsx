@@ -4,11 +4,8 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { activityLogRepository } from "../../db/activityLogRepository";
-import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import { apiFetch } from "../../utils/apiClient";
 import type { DexieActivity } from "../../db/schema";
-import { mapApiActivity, mapApiActivityKind } from "../../utils/apiMappers";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
@@ -61,19 +58,9 @@ export function ActikoPage() {
     syncEngine.syncActivityLogs();
   };
 
-  // API→Dexie同期ヘルパー
-  const refreshActivities = async () => {
-    const res = await apiFetch("/users/v2/activities");
-    if (!res.ok) return;
-    const data = await res.json();
-    await activityRepository.upsertActivities(
-      data.activities.map(mapApiActivity),
-    );
-    if (data.activityKinds?.length > 0) {
-      await activityRepository.upsertActivityKinds(
-        data.activityKinds.map(mapApiActivityKind),
-      );
-    }
+  // Dexie useLiveQueryで自動更新されるため、refreshは不要
+  const handleActivityChanged = () => {
+    // useLiveQuery が自動でUIを更新するため、何もしなくてOK
   };
 
   return (
@@ -151,7 +138,7 @@ export function ActikoPage() {
       {createActivityOpen && (
         <CreateActivityDialog
           onClose={() => setCreateActivityOpen(false)}
-          onCreated={refreshActivities}
+          onCreated={handleActivityChanged}
         />
       )}
 
@@ -160,7 +147,7 @@ export function ActikoPage() {
         <EditActivityDialog
           activity={editActivity}
           onClose={() => setEditActivity(null)}
-          onUpdated={refreshActivities}
+          onUpdated={handleActivityChanged}
         />
       )}
     </div>

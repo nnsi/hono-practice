@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { apiFetch } from "../../utils/apiClient";
+import { taskRepository } from "../../db/taskRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import type { TaskItem } from "./types";
 
 export function TaskEditDialog({
@@ -27,23 +28,15 @@ export function TaskEditDialog({
     if (!title.trim()) return;
 
     setIsSubmitting(true);
-    const body: Record<string, string | null | undefined> = {};
-    if (title.trim() !== task.title) body.title = title.trim();
-    if (startDate !== (task.startDate || ""))
-      body.startDate = startDate || undefined;
-    if (dueDate !== (task.dueDate || ""))
-      body.dueDate = dueDate || null;
-    if (memo.trim() !== (task.memo || "")) body.memo = memo.trim() || undefined;
-
-    const res = await apiFetch(`/users/tasks/${task.id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
+    await taskRepository.updateTask(task.id, {
+      title: title.trim(),
+      startDate: startDate || null,
+      dueDate: dueDate || null,
+      memo: memo.trim(),
     });
     setIsSubmitting(false);
-
-    if (res.ok) {
-      onSuccess();
-    }
+    syncEngine.syncTasks();
+    onSuccess();
   };
 
   return (

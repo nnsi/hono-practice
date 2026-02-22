@@ -5,10 +5,10 @@ export type TaskItem = {
   startDate: string | null;
   dueDate: string | null;
   doneDate: string | null;
-  memo: string | null;
+  memo: string;
   archivedAt: string | null;
   createdAt: string;
-  updatedAt: string | null;
+  updatedAt: string;
 };
 
 export type GroupedTasks = {

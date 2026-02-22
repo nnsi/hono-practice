@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { apiFetch } from "../../utils/apiClient";
+import { activityRepository } from "../../db/activityRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import type { DexieActivity } from "../../db/schema";
 
 export function EditActivityDialog({
@@ -10,7 +11,7 @@ export function EditActivityDialog({
 }: {
   activity: DexieActivity;
   onClose: () => void;
-  onUpdated: () => Promise<void>;
+  onUpdated: () => void;
 }) {
   const [name, setName] = useState(activity.name);
   const [quantityUnit, setQuantityUnit] = useState(activity.quantityUnit);
@@ -43,41 +44,35 @@ export function EditActivityDialog({
     if (!name.trim()) return;
     setIsSubmitting(true);
 
-    const res = await apiFetch(`/users/activities/${activity.id}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        activity: {
-          name: name.trim(),
-          quantityUnit,
-          emoji,
-          showCombinedStats,
-        },
-        kinds: kinds
-          .filter((k) => k.name.trim())
-          .map((k) => ({
-            id: k.id,
-            name: k.name,
-            color: k.color,
-          })),
-      }),
-    });
+    await activityRepository.updateActivity(
+      activity.id,
+      {
+        name: name.trim(),
+        quantityUnit,
+        emoji,
+        showCombinedStats,
+      },
+      kinds
+        .filter((k) => k.name.trim())
+        .map((k) => ({
+          id: k.id,
+          name: k.name,
+          color: k.color,
+        })),
+    );
 
-    if (res.ok) {
-      await onUpdated();
-      onClose();
-    }
+    syncEngine.syncActivities();
+    onUpdated();
+    onClose();
     setIsSubmitting(false);
   };
 
   const handleDelete = async () => {
     setIsSubmitting(true);
-    const res = await apiFetch(`/users/activities/${activity.id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      await onUpdated();
-      onClose();
-    }
+    await activityRepository.softDeleteActivity(activity.id);
+    syncEngine.syncActivities();
+    onUpdated();
+    onClose();
     setIsSubmitting(false);
   };
 
@@ -151,7 +146,10 @@ export function EditActivityDialog({
           <div>
             <div className="text-sm font-medium text-gray-600 mb-2">種類</div>
             {kinds.map((kind, i) => (
-              <div key={kind.id ?? i} className="flex gap-2 mb-2 items-center">
+              <div
+                key={kind.id ?? i}
+                className="flex gap-2 mb-2 items-center"
+              >
                 <input
                   type="text"
                   value={kind.name}

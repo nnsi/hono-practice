@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { apiFetch } from "../../utils/apiClient";
+import { activityRepository } from "../../db/activityRepository";
+import { syncEngine } from "../../sync/syncEngine";
 
 export function CreateActivityDialog({
   onClose,
   onCreated,
 }: {
   onClose: () => void;
-  onCreated: () => Promise<void>;
+  onCreated: () => void;
 }) {
   const [name, setName] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("");
-  const [emoji, setEmoji] = useState("🎯");
+  const [emoji, setEmoji] = useState("\uD83C\uDFAF");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kinds, setKinds] = useState<{ name: string; color: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,22 +21,17 @@ export function CreateActivityDialog({
     if (!name.trim()) return;
     setIsSubmitting(true);
 
-    const res = await apiFetch("/users/activities", {
-      method: "POST",
-      body: JSON.stringify({
-        name: name.trim(),
-        quantityUnit,
-        emoji,
-        iconType: "emoji",
-        showCombinedStats,
-        kinds: kinds.filter((k) => k.name.trim()),
-      }),
+    await activityRepository.createActivity({
+      name: name.trim(),
+      quantityUnit,
+      emoji,
+      showCombinedStats,
+      kinds: kinds.filter((k) => k.name.trim()),
     });
 
-    if (res.ok) {
-      await onCreated();
-      onClose();
-    }
+    syncEngine.syncActivities();
+    onCreated();
+    onClose();
     setIsSubmitting(false);
   };
 
@@ -150,7 +146,9 @@ export function CreateActivityDialog({
             ))}
             <button
               type="button"
-              onClick={() => setKinds((prev) => [...prev, { name: "", color: "#3b82f6" }])}
+              onClick={() =>
+                setKinds((prev) => [...prev, { name: "", color: "#3b82f6" }])
+              }
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               + 種類を追加

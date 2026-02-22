@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import dayjs from "dayjs";
+import { useState, useMemo } from "react";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
-import { apiFetch } from "../../utils/apiClient";
+import { useActiveTasks, useArchivedTasks } from "../../hooks/useTasks";
+import { taskRepository } from "../../db/taskRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import type { TaskItem } from "./types";
 import { groupTasksByTimeline } from "./taskGrouping";
 import { TaskGroup } from "./TaskGroup";
@@ -11,10 +12,8 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 export function TasksPage() {
   const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [archivedTasks, setArchivedTasks] = useState<TaskItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isArchivedLoading, setIsArchivedLoading] = useState(false);
+  const { tasks: activeTasks } = useActiveTasks();
+  const { tasks: archivedTasks } = useArchivedTasks();
 
   const [showCompleted, setShowCompleted] = useState(false);
   const [showFuture, setShowFuture] = useState(false);
@@ -23,43 +22,8 @@ export function TasksPage() {
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Fetch active tasks
-  const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiFetch("/users/tasks");
-      if (res.ok) {
-        const data: TaskItem[] = await res.json();
-        setTasks(data.filter((t) => !t.archivedAt));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch archived tasks
-  const fetchArchivedTasks = useCallback(async () => {
-    setIsArchivedLoading(true);
-    try {
-      const res = await apiFetch("/users/tasks/archived");
-      if (res.ok) {
-        const data: TaskItem[] = await res.json();
-        setArchivedTasks(data);
-      }
-    } finally {
-      setIsArchivedLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
-
-  useEffect(() => {
-    if (activeTab === "archived") {
-      fetchArchivedTasks();
-    }
-  }, [activeTab, fetchArchivedTasks]);
+  // DexieTask -> TaskItem mapping (structural compatibility)
+  const tasks: TaskItem[] = activeTasks;
 
   // Single grouping with everything visible (for counts)
   const allGrouped = useMemo(
@@ -88,42 +52,30 @@ export function TasksPage() {
 
   // Actions
   const handleToggleDone = async (task: TaskItem) => {
-    const newDoneDate = task.doneDate ? null : dayjs().format("YYYY-MM-DD");
-    const res = await apiFetch(`/users/tasks/${task.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ doneDate: newDoneDate }),
-    });
-    if (res.ok) {
-      fetchTasks();
-    }
+    const newDoneDate = task.doneDate
+      ? null
+      : new Date().toISOString().split("T")[0];
+    await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
+    syncEngine.syncTasks();
   };
 
   const handleDelete = async (id: string) => {
-    const res = await apiFetch(`/users/tasks/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setDeleteConfirmId(null);
-      fetchTasks();
-      fetchArchivedTasks();
-    }
+    await taskRepository.softDeleteTask(id);
+    setDeleteConfirmId(null);
+    syncEngine.syncTasks();
   };
 
   const handleArchive = async (task: TaskItem) => {
-    const res = await apiFetch(`/users/tasks/${task.id}/archive`, {
-      method: "POST",
-    });
-    if (res.ok) {
-      fetchTasks();
-    }
+    await taskRepository.archiveTask(task.id);
+    syncEngine.syncTasks();
   };
 
   const handleCreateSuccess = () => {
     setCreateDialogOpen(false);
-    fetchTasks();
   };
 
   const handleEditSuccess = () => {
     setEditingTask(null);
-    fetchTasks();
   };
 
   const hasAnyTasks =
@@ -164,13 +116,7 @@ export function TasksPage() {
       <div className="p-4">
         {activeTab === "active" && (
           <div className="space-y-6">
-            {isLoading && tasks.length === 0 && (
-              <div className="text-center text-gray-400 py-12">
-                読み込み中...
-              </div>
-            )}
-
-            {!isLoading && !hasAnyTasks && (
+            {!hasAnyTasks && (
               <div className="text-center py-12">
                 <p className="text-gray-500 mb-4">タスクがありません</p>
                 <button
@@ -350,12 +296,7 @@ export function TasksPage() {
 
         {activeTab === "archived" && (
           <div>
-            {isArchivedLoading && archivedTasks.length === 0 && (
-              <div className="text-center text-gray-400 py-12">
-                読み込み中...
-              </div>
-            )}
-            {!isArchivedLoading && archivedTasks.length === 0 && (
+            {archivedTasks.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500">
                   アーカイブ済みのタスクはありません

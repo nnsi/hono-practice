@@ -1,11 +1,15 @@
 import { activityRepository } from "../db/activityRepository";
 import { activityLogRepository } from "../db/activityLogRepository";
+import { goalRepository } from "../db/goalRepository";
+import { taskRepository } from "../db/taskRepository";
 import { db } from "../db/schema";
 import { apiFetch } from "../utils/apiClient";
 import {
   mapApiActivity,
   mapApiActivityKind,
   mapApiActivityLog,
+  mapApiGoal,
+  mapApiTask,
 } from "../utils/apiMappers";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
@@ -18,8 +22,12 @@ export async function performInitialSync(userId: string) {
     lastLoginAt: new Date().toISOString(),
   });
 
-  let activitiesSynced = false;
-  let logsSynced = false;
+  const lastSyncedAt = localStorage.getItem(LAST_SYNCED_KEY);
+  const sinceParam = lastSyncedAt
+    ? `?since=${encodeURIComponent(lastSyncedAt)}`
+    : "";
+
+  let allSynced = true;
 
   // activities + activityKinds を取得
   const activitiesRes = await apiFetch("/users/v2/activities");
@@ -33,15 +41,12 @@ export async function performInitialSync(userId: string) {
         data.activityKinds.map(mapApiActivityKind),
       );
     }
-    activitiesSynced = true;
+  } else {
+    allSynced = false;
   }
 
   // activityLogs を取得（差分同期対応）
-  const lastSyncedAt = localStorage.getItem(LAST_SYNCED_KEY);
-  const logsUrl = lastSyncedAt
-    ? `/users/v2/activity-logs?since=${encodeURIComponent(lastSyncedAt)}`
-    : "/users/v2/activity-logs";
-
+  const logsUrl = `/users/v2/activity-logs${sinceParam}`;
   const logsRes = await apiFetch(logsUrl);
   if (logsRes.ok) {
     const data = await logsRes.json();
@@ -50,11 +55,40 @@ export async function performInitialSync(userId: string) {
         data.logs.map(mapApiActivityLog),
       );
     }
-    logsSynced = true;
+  } else {
+    allSynced = false;
   }
 
-  // Only update lastSyncedAt if both synced
-  if (activitiesSynced && logsSynced) {
+  // goals を取得（差分同期対応）
+  const goalsUrl = `/users/v2/goals${sinceParam}`;
+  const goalsRes = await apiFetch(goalsUrl);
+  if (goalsRes.ok) {
+    const data = await goalsRes.json();
+    if (data.goals?.length > 0) {
+      await goalRepository.upsertGoalsFromServer(
+        data.goals.map(mapApiGoal),
+      );
+    }
+  } else {
+    allSynced = false;
+  }
+
+  // tasks を取得（差分同期対応）
+  const tasksUrl = `/users/v2/tasks${sinceParam}`;
+  const tasksRes = await apiFetch(tasksUrl);
+  if (tasksRes.ok) {
+    const data = await tasksRes.json();
+    if (data.tasks?.length > 0) {
+      await taskRepository.upsertTasksFromServer(
+        data.tasks.map(mapApiTask),
+      );
+    }
+  } else {
+    allSynced = false;
+  }
+
+  // Only update lastSyncedAt if all synced
+  if (allSynced) {
     localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
   }
 }
