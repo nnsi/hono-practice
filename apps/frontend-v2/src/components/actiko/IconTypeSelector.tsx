@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { FlaskConical, Upload } from "lucide-react";
+import { EmojiPicker } from "../common/EmojiPicker";
 
 export type IconSelectorValue = {
   type: "emoji" | "upload";
@@ -151,13 +152,18 @@ export function IconTypeSelector({
       </div>
 
       {value.type === "emoji" ? (
-        <input
-          type="text"
+        <EmojiPicker
           value={value.emoji}
-          onChange={(e) => onChange({ ...value, emoji: e.target.value })}
-          disabled={disabled}
-          className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          onChange={(emoji) => onChange({ ...value, emoji })}
+        >
+          <button
+            type="button"
+            disabled={disabled}
+            className="w-20 h-12 border border-gray-300 rounded-lg text-2xl text-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+          >
+            {value.emoji || "😀"}
+          </button>
+        </EmojiPicker>
       ) : (
         <div className="flex items-center gap-3">
           <input

@@ -11,11 +11,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useSyncEngine } from "../hooks/useSyncEngine";
-import { LoginForm } from "../components/root";
+import { LoginForm, CreateUserForm } from "../components/root";
 import { useState, useRef, useEffect } from "react";
 
+type AuthTab = "login" | "register";
+
 function RootComponent() {
-  const { isLoggedIn, isLoading, login, googleLogin, logout } = useAuth();
+  const { isLoggedIn, isLoading, login, googleLogin, register, logout } = useAuth();
+  const [authTab, setAuthTab] = useState<AuthTab>("login");
 
   useSyncEngine(isLoggedIn);
 
@@ -28,7 +31,45 @@ function RootComponent() {
   }
 
   if (!isLoggedIn) {
-    return <LoginForm onLogin={login} onGoogleLogin={googleLogin} />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-sm">
+          <h1 className="text-3xl font-bold text-center mb-8">Actiko</h1>
+
+          {/* タブ切替 */}
+          <div className="flex mb-6 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => setAuthTab("login")}
+              className={`flex-1 py-2 text-sm font-medium text-center transition-colors ${
+                authTab === "login"
+                  ? "text-black border-b-2 border-black"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              ログイン
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthTab("register")}
+              className={`flex-1 py-2 text-sm font-medium text-center transition-colors ${
+                authTab === "register"
+                  ? "text-black border-b-2 border-black"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              新規登録
+            </button>
+          </div>
+
+          {authTab === "login" ? (
+            <LoginForm onLogin={login} onGoogleLogin={googleLogin} />
+          ) : (
+            <CreateUserForm onRegister={register} onGoogleLogin={googleLogin} />
+          )}
+        </div>
+      </div>
+    );
   }
 
   return <AuthenticatedLayout onLogout={logout} />;

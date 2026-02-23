@@ -8,6 +8,8 @@
     "build-stg": "vite build --mode stg"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.92.9",
     "clsx": "^2.1.1",

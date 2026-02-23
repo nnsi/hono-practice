@@ -9,6 +9,7 @@ type AuthState = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -95,6 +96,26 @@ export function useAuth(): AuthState {
     await performInitialSync(user.id);
   }, []);
 
+  const register = useCallback(async (name: string, loginId: string, password: string) => {
+    const res = await apiClient.user.$post({
+      json: { name: name || undefined, loginId, password },
+    });
+    if (!res.ok) {
+      throw new Error("Registration failed");
+    }
+    const data = await res.json();
+    setToken(data.token);
+    // ユーザー情報を取得
+    const userRes = await apiClient.user.me.$get();
+    if (!userRes.ok) {
+      throw new Error("Failed to fetch user after registration");
+    }
+    const user = await userRes.json();
+    setUserId(user.id);
+    setIsLoggedIn(true);
+    await performInitialSync(user.id);
+  }, []);
+
   const logout = useCallback(() => {
     // サーバーサイドのセッション無効化（fire-and-forget）
     apiClient.auth.logout.$post().catch(() => {});
@@ -104,5 +125,5 @@ export function useAuth(): AuthState {
     db.authState.delete("current");
   }, []);
 
-  return { isLoggedIn, isLoading, userId, login, googleLogin, logout };
+  return { isLoggedIn, isLoading, userId, login, googleLogin, register, logout };
 }

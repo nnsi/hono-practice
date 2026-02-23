@@ -33,6 +33,7 @@ app.use("*", async (c, next) => {
 
   // 開発環境でのモバイルアプリからのアクセスを許可
   const allowedOrigins = [c.env.APP_URL];
+  if (c.env.APP_URL_V2) allowedOrigins.push(c.env.APP_URL_V2);
 
   if (c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test") {
     // ローカル開発環境のポート

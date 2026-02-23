@@ -1,25 +1,38 @@
 import { useState } from "react";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
-type LoginFormProps = {
-  onLogin: (loginId: string, password: string) => Promise<void>;
+type CreateUserFormProps = {
+  onRegister: (name: string, loginId: string, password: string) => Promise<void>;
   onGoogleLogin: (credential: string) => Promise<void>;
 };
 
-export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
+export function CreateUserForm({ onRegister, onGoogleLogin }: CreateUserFormProps) {
+  const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const validate = (): string | null => {
+    if (!loginId.trim()) return "ログインIDを入力してください";
+    if (!password) return "パスワードを入力してください";
+    if (password.length < 8) return "パスワードは8文字以上で入力してください";
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError("");
     setIsSubmitting(true);
     try {
-      await onLogin(loginId, password);
+      await onRegister(name, loginId, password);
     } catch {
-      setError("ログインに失敗しました");
+      setError("ユーザー登録に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -31,14 +44,14 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
     try {
       await onGoogleLogin(credential);
     } catch {
-      setError("Googleログインに失敗しました");
+      setError("Googleアカウントでの登録に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoogleError = () => {
-    setError("Googleログインに失敗しました");
+    setError("Googleアカウントでの登録に失敗しました");
   };
 
   return (
@@ -63,13 +76,30 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
-            htmlFor="loginId"
+            htmlFor="register-name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            ユーザー名
+            <span className="text-gray-400 text-xs ml-1">(任意)</span>
+          </label>
+          <input
+            id="register-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="表示名"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="register-loginId"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             ログインID
           </label>
           <input
-            id="loginId"
+            id="register-loginId"
             type="text"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
@@ -80,18 +110,20 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
         </div>
         <div>
           <label
-            htmlFor="password"
+            htmlFor="register-password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             パスワード
+            <span className="text-gray-400 text-xs ml-1">(8文字以上)</span>
           </label>
           <input
-            id="password"
+            id="register-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            minLength={8}
           />
         </div>
         {error && (
@@ -102,7 +134,7 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
           disabled={isSubmitting}
           className="w-full py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isSubmitting ? "ログイン中..." : "ログイン"}
+          {isSubmitting ? "登録中..." : "新規登録"}
         </button>
       </form>
     </div>
