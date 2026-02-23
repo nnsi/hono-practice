@@ -6,7 +6,7 @@ import { createUserId } from "../domain";
 import { UnauthorizedError } from "../error";
 
 export function verifyToken(jwt: string, secret: string) {
-  return verify(jwt, secret);
+  return verify(jwt, secret, "HS256");
 }
 
 export async function authMiddleware(c: HonoContext, next: Next) {

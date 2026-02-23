@@ -1,4 +1,5 @@
 import {
+  type ActivityId,
   type ActivityLog,
   type ActivityLogId,
   type UserId,
@@ -7,8 +8,14 @@ import {
 } from "@backend/domain";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import dayjs from "@backend/lib/dayjs";
-import { activities, activityLogs } from "@infra/drizzle/schema";
+import { activityLogs } from "@infra/drizzle/schema";
 import { and, between, eq, gt, isNull } from "drizzle-orm";
+
+export type ActivityLogSummary = {
+  activityId: ActivityId;
+  quantity: number | null;
+  date: string;
+};
 
 export type ActivityLogRepository<T = any> = {
   getActivityLogsByUserIdAndDate: (
@@ -16,6 +23,11 @@ export type ActivityLogRepository<T = any> = {
     from: Date,
     to: Date,
   ) => Promise<ActivityLog[]>;
+  getActivityLogSummariesByUserIdAndDate: (
+    userId: UserId,
+    from: Date,
+    to: Date,
+  ) => Promise<ActivityLogSummary[]>;
   getActivityLogByIdAndUserId: (
     userId: UserId,
     activityLogId: ActivityLogId,
@@ -39,6 +51,8 @@ export function newActivityLogRepository(
 ): ActivityLogRepository<QueryExecutor> {
   return {
     getActivityLogsByUserIdAndDate: getActivityLogsByUserIdAndDate(db),
+    getActivityLogSummariesByUserIdAndDate:
+      getActivityLogSummariesByUserIdAndDate(db),
     getActivityLogByIdAndUserId: getActivityLogByIdAndUserId(db),
     createActivityLog: createActivityLog(db),
     createActivityLogBatch: createActivityLogBatch(db),
@@ -60,7 +74,7 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
         activityKind: true,
       },
       where: and(
-        eq(activities.userId, userId),
+        eq(activityLogs.userId, userId),
         isNull(activityLogs.deletedAt),
         between(activityLogs.date, fromStr, toStr),
       ),
@@ -80,6 +94,34 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
         type: "persisted",
       });
     });
+  };
+}
+
+function getActivityLogSummariesByUserIdAndDate(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    from: Date,
+    to: Date,
+  ): Promise<ActivityLogSummary[]> => {
+    const fromStr = dayjs(from).format("YYYY-MM-DD");
+    const toStr = dayjs(to).format("YYYY-MM-DD");
+
+    const rows = await db
+      .select({
+        activityId: activityLogs.activityId,
+        quantity: activityLogs.quantity,
+        date: activityLogs.date,
+      })
+      .from(activityLogs)
+      .where(
+        and(
+          eq(activityLogs.userId, userId),
+          isNull(activityLogs.deletedAt),
+          between(activityLogs.date, fromStr, toStr),
+        ),
+      );
+
+    return rows as ActivityLogSummary[];
   };
 }
 

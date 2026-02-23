@@ -1,7 +1,6 @@
 import {
   createActivityGoalEntity,
   createActivityId,
-  createActivityLogId,
   createUserId,
 } from "@backend/domain";
 import { anything, instance, mock, reset, when } from "ts-mockito";
@@ -38,82 +37,28 @@ describe("ActivityGoalService", () => {
     updatedAt: new Date("2024-01-01T00:00:00Z"),
   });
 
-  const mockActivityLogs = [
+  const mockActivityLogSummaries = [
     {
-      type: "persisted" as const,
-      id: createActivityLogId("00000000-0000-4000-8000-000000000003"),
-      userId: userId1,
-      activity: {
-        type: "persisted" as const,
-        id: activityId1,
-        userId: userId1,
-        name: "Test Activity",
-        label: "",
-        emoji: "",
-        description: "",
-        quantityUnit: "",
-        orderIndex: "",
-        kinds: [],
-        showCombinedStats: true,
-        iconType: "emoji" as const,
-        iconUrl: null,
-        iconThumbnailUrl: null,
-        createdAt: new Date("2024-01-01T00:00:00Z"),
-        updatedAt: new Date("2024-01-01T00:00:00Z"),
-      },
       activityId: activityId1,
-      activityKind: null,
-      activityKindId: null,
       quantity: 5,
-      memo: "",
       date: "2024-01-01",
-      time: null,
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-      updatedAt: new Date("2024-01-01T00:00:00Z"),
     },
     {
-      type: "persisted" as const,
-      id: createActivityLogId("00000000-0000-4000-8000-000000000004"),
-      userId: userId1,
-      activity: {
-        type: "persisted" as const,
-        id: activityId1,
-        userId: userId1,
-        name: "Test Activity",
-        label: "",
-        emoji: "",
-        description: "",
-        quantityUnit: "",
-        orderIndex: "",
-        kinds: [],
-        showCombinedStats: true,
-        iconType: "emoji" as const,
-        iconUrl: null,
-        iconThumbnailUrl: null,
-        createdAt: new Date("2024-01-01T00:00:00Z"),
-        updatedAt: new Date("2024-01-01T00:00:00Z"),
-      },
       activityId: activityId1,
-      activityKind: null,
-      activityKindId: null,
       quantity: 15,
-      memo: "",
       date: "2024-01-02",
-      time: null,
-      createdAt: new Date("2024-01-02T00:00:00Z"),
-      updatedAt: new Date("2024-01-02T00:00:00Z"),
     },
   ];
 
   describe("calculateCurrentBalance", () => {
     it("should calculate balance correctly when actual < target", async () => {
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId1,
           anything(),
           anything(),
         ),
-      ).thenResolve(mockActivityLogs);
+      ).thenResolve(mockActivityLogSummaries);
 
       const balance = await service.calculateCurrentBalance(
         userId1,
@@ -136,26 +81,16 @@ describe("ActivityGoalService", () => {
 
     it("should calculate balance correctly when actual > target", async () => {
       const highActivityLogs = [
-        ...mockActivityLogs,
+        ...mockActivityLogSummaries,
         {
-          type: "persisted" as const,
-          id: createActivityLogId("00000000-0000-4000-8000-000000000005"),
-          userId: userId1,
-          activity: mockActivityLogs[0].activity,
           activityId: activityId1,
-          activityKind: null,
-          activityKindId: null,
           quantity: 100,
-          memo: "",
           date: "2024-01-03",
-          time: null,
-          createdAt: new Date("2024-01-03T00:00:00Z"),
-          updatedAt: new Date("2024-01-03T00:00:00Z"),
         },
       ];
 
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId1,
           anything(),
           anything(),
@@ -188,12 +123,12 @@ describe("ActivityGoalService", () => {
       });
 
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId1,
           anything(),
           anything(),
         ),
-      ).thenResolve(mockActivityLogs);
+      ).thenResolve(mockActivityLogSummaries);
 
       const balance = await service.calculateCurrentBalance(
         userId1,
@@ -211,12 +146,12 @@ describe("ActivityGoalService", () => {
     it("should return daily balance history", async () => {
       // 全ての呼び出しに対して同じデータを返す
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId1,
           anything(),
           anything(),
         ),
-      ).thenResolve(mockActivityLogs);
+      ).thenResolve(mockActivityLogSummaries);
 
       const history = await service.getBalanceHistory(
         userId1,

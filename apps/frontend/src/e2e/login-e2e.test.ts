@@ -1,6 +1,7 @@
 import { type Browser, type Page, chromium } from "@playwright/test";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { findChromiumExecutablePath } from "../test-utils/e2e/playwright-helper";
 import {
   getTestDb,
   startTestBackend,
@@ -32,8 +33,9 @@ describe.sequential("Login E2E Tests", () => {
     // バックエンドを実際のフロントエンドポートで起動
     await startTestBackend(TEST_BACKEND_PORT, actualFrontendPort);
 
-    // ブラウザを起動
-    browser = await chromium.launch({ headless: true });
+    // ブラウザを起動（システムのChromiumバイナリを使用）
+    const executablePath = findChromiumExecutablePath();
+    browser = await chromium.launch({ headless: true, executablePath });
     context = await browser.newContext({
       // Cookieを正しく保存するための設定
       acceptDownloads: true,

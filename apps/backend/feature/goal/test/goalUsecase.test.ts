@@ -74,7 +74,7 @@ describe("GoalUsecase", () => {
         goal,
       ]);
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId,
           anything(),
           anything(),
@@ -155,7 +155,7 @@ describe("GoalUsecase", () => {
         goal2,
       ]);
       when(
-        activityLogRepo.getActivityLogsByUserIdAndDate(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
           userId,
           anything(),
           anything(),

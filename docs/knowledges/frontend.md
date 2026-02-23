@@ -529,13 +529,13 @@ src/
 ### テスト実行コマンド
 ```bash
 # 単体テスト実行（CIモード）
-npm run test-once
+pnpm run test-once
 
 # カバレッジレポート生成
-npm run test-once -- --coverage
+pnpm run test-once -- --coverage
 
 # 特定のファイルのみテスト
-npm run test-once -- useLogin.test.tsx
+pnpm run test-once -- useLogin.test.tsx
 ```
 
 ### ベストプラクティス
@@ -622,7 +622,7 @@ export const use{Feature}Page = () => {
 
 ##### Step 2: 共通ロジックの抽出（必要な場合）
 
-Web版とモバイル版で共通化できるロジックは`packages/frontend-shared/hooks/feature/`に配置します。
+共通化できるロジックは`packages/frontend-shared/hooks/feature/`に配置します。
 
 ```typescript
 // packages/frontend-shared/hooks/feature/use{Feature}Page.ts
@@ -790,9 +790,7 @@ export const {Feature}Card: React.FC<{Feature}CardProps> = ({
 };
 ```
 
-#### 3. Web版とモバイル版の実装
-
-##### Web版（React + Tailwind CSS）
+#### 3. コンポーネント実装例
 
 ```typescript
 // apps/frontend/src/components/activity/ActivityCard.tsx
@@ -813,31 +811,6 @@ export function ActivityCard({
         <p className="mt-2 text-center">{activity.name}</p>
       </CardContent>
     </Card>
-  );
-}
-```
-
-##### モバイル版（React Native + NativeWind）
-
-```typescript
-// apps/mobile/src/components/activity/ActivityCard.tsx
-export function ActivityCard({
-  activity,
-  onPress,
-  isDone,
-}: ActivityCardProps) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`bg-white rounded-lg p-4 ${
-        isDone ? "bg-green-50" : ""
-      }`}
-    >
-      <View className="items-center">
-        <ActivityIcon activity={activity} size="large" />
-        <Text className="mt-2 text-center">{activity.name}</Text>
-      </View>
-    </TouchableOpacity>
   );
 }
 ```
@@ -1178,6 +1151,6 @@ const useTasksPage = () => {
 
 ### ビルド
 ```bash
-npm run build-client     # 本番ビルド
-npm run build-client-stg # ステージングビルド
+pnpm run build-client     # 本番ビルド
+pnpm run build-client-stg # ステージングビルド
 ```

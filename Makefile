@@ -26,7 +26,7 @@ setup: install setup-env setup-db
 # 依存関係のインストール
 install:
 	@echo "📦 依存関係をインストール中..."
-	npm install
+	pnpm install
 
 # 環境変数ファイルのセットアップ
 setup-env:
@@ -41,13 +41,13 @@ setup-db: migrate seed
 # データベースマイグレーション
 migrate:
 	@echo "🗄️  データベースマイグレーションを実行中..."
-	npm run db-generate
-	npm run db-migrate
+	pnpm run db-generate
+	pnpm run db-migrate
 
 # テストデータの投入
 seed:
 	@echo "🌱 テストデータを投入中..."
-	npm run db-seed
+	pnpm run db-seed
 
 # 開発サーバーの起動
 dev:
@@ -55,7 +55,7 @@ dev:
 	@echo "  Backend: http://localhost:3456"
 	@echo "  Frontend: http://localhost:1357"
 	@echo ""
-	npm run dev & npm run client-dev
+	pnpm run dev & pnpm run client-dev
 
 # データベースをリセット（全データ削除＋再構築）
 reset-db: clean-db setup-db
@@ -68,7 +68,7 @@ clean-db:
 	@read -p "続行しますか？ (y/N): " confirm; \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		echo "全テーブルのデータを削除しています..."; \
-		npm run db-clean; \
+		pnpm run db-clean; \
 	else \
 		echo "操作がキャンセルされました"; \
 		exit 1; \

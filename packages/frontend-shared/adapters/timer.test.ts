@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TimerAdapter } from "./index";
-import { createReactNativeTimerAdapter, createWebTimerAdapter } from "./index";
+import { createWebTimerAdapter } from "./index";
 
 describe("TimerAdapter", () => {
   describe("WebTimerAdapter", () => {
@@ -60,48 +60,4 @@ describe("TimerAdapter", () => {
     });
   });
 
-  describe("ReactNativeTimerAdapter", () => {
-    let adapter: TimerAdapter<number>;
-
-    beforeEach(() => {
-      adapter = createReactNativeTimerAdapter();
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it("should set and clear intervals using Node timers", () => {
-      const callback = vi.fn();
-      const id = adapter.setInterval(callback, 100);
-
-      expect(callback).not.toHaveBeenCalled();
-
-      // Advance time by 100ms
-      vi.advanceTimersByTime(100);
-      expect(callback).toHaveBeenCalledTimes(1);
-
-      // Advance time by another 100ms
-      vi.advanceTimersByTime(100);
-      expect(callback).toHaveBeenCalledTimes(2);
-
-      // Clear interval
-      adapter.clearInterval(id);
-
-      // Advance time and verify no more calls
-      vi.advanceTimersByTime(200);
-      expect(callback).toHaveBeenCalledTimes(2);
-    });
-
-    it("should return NodeJS.Timeout type", () => {
-      const callback = vi.fn();
-      const id = adapter.setInterval(callback, 100);
-
-      // In test environment, this will be a number, but the type system
-      // should treat it as NodeJS.Timeout
-      expect(typeof id).toBe("object");
-      adapter.clearInterval(id);
-    });
-  });
 });

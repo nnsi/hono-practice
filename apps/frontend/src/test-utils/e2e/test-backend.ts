@@ -10,8 +10,6 @@ import { createTestDb } from "./test-db";
 let server: any = null; // Use any type to avoid server type issues
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let pglite: PGlite | null = null;
-let serverPort: number | null = null;
-
 export async function startTestBackend(port = 3457, frontendPort?: number) {
   // 既存のサーバーがあれば先に終了
   if (server) {
@@ -22,7 +20,6 @@ export async function startTestBackend(port = 3457, frontendPort?: number) {
   const { db, pglite: pgliteInstance } = await createTestDb();
   testDb = db;
   pglite = pgliteInstance;
-  serverPort = port;
 
   // Test configuration
   const testConfig: Config = {
@@ -58,21 +55,8 @@ export async function startTestBackend(port = 3457, frontendPort?: number) {
 
 export async function stopTestBackend() {
   const cleanup = async () => {
-    // ポートを使用しているプロセスを強制終了
-    if (serverPort) {
-      try {
-        const killCommand =
-          process.platform === "win32"
-            ? `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${serverPort}') do taskkill /PID %a /F`
-            : `lsof -ti:${serverPort} | xargs -r kill -9 2>/dev/null || true`;
-
-        require("node:child_process").execSync(killCommand, {
-          stdio: "ignore",
-        });
-      } catch (_e) {
-        // エラーは無視
-      }
-    }
+    // Note: lsof/kill -9 でポートを強制終了すると、インプロセスで動作している
+    // vitestワーカー自体を殺してしまうため、server.close() のみで終了する
 
     if (pglite) {
       try {
@@ -85,7 +69,6 @@ export async function stopTestBackend() {
     server = null;
     testDb = null;
     pglite = null;
-    serverPort = null;
   };
 
   if (server) {

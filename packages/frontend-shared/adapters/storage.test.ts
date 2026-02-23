@@ -1,10 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { StorageAdapter } from "./index";
-import {
-  createReactNativeStorageAdapter,
-  createWebStorageAdapter,
-} from "./index";
+import { createWebStorageAdapter } from "./index";
 
 describe("StorageAdapter", () => {
   describe("WebStorageAdapter", () => {
@@ -55,68 +52,4 @@ describe("StorageAdapter", () => {
     });
   });
 
-  describe("ReactNativeStorageAdapter", () => {
-    let adapter: StorageAdapter;
-    let mockAsyncStorage: any;
-
-    beforeEach(() => {
-      // Mock AsyncStorage
-      mockAsyncStorage = {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-        getAllKeys: vi.fn(),
-      };
-      adapter = createReactNativeStorageAdapter(mockAsyncStorage);
-    });
-
-    it("should get items from AsyncStorage", async () => {
-      mockAsyncStorage.getItem.mockResolvedValue("test-value");
-      const value = await adapter.getItem("test-key");
-      expect(value).toBe("test-value");
-      expect(mockAsyncStorage.getItem).toHaveBeenCalledWith("test-key");
-    });
-
-    it("should set items in AsyncStorage", async () => {
-      mockAsyncStorage.setItem.mockResolvedValue(undefined);
-      await adapter.setItem("test-key", "test-value");
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
-        "test-key",
-        "test-value",
-      );
-    });
-
-    it("should remove items from AsyncStorage", async () => {
-      mockAsyncStorage.removeItem.mockResolvedValue(undefined);
-      await adapter.removeItem("test-key");
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("test-key");
-    });
-
-    it("should get all keys from AsyncStorage", async () => {
-      mockAsyncStorage.getAllKeys.mockResolvedValue(["key1", "key2"]);
-      const keys = await adapter.getAllKeys();
-      expect(keys).toEqual(["key1", "key2"]);
-      expect(mockAsyncStorage.getAllKeys).toHaveBeenCalled();
-    });
-
-    it("should handle AsyncStorage errors gracefully", async () => {
-      mockAsyncStorage.getItem.mockRejectedValue(
-        new Error("AsyncStorage error"),
-      );
-      const value = await adapter.getItem("test-key");
-      expect(value).toBeNull();
-    });
-
-    it("should clear all items from AsyncStorage", async () => {
-      mockAsyncStorage.getAllKeys.mockResolvedValue(["key1", "key2", "key3"]);
-      mockAsyncStorage.removeItem.mockResolvedValue(undefined);
-
-      await adapter.clear?.();
-
-      expect(mockAsyncStorage.getAllKeys).toHaveBeenCalled();
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key1");
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key2");
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("key3");
-    });
-  });
 });

@@ -49,7 +49,7 @@ function activityStatsQuery(db: QueryExecutor) {
       )
       .where(
         and(
-          eq(activities.userId, userId),
+          eq(activityLogs.userId, userId),
           between(activityLogs.date, startDateStr, endDateStr),
           isNull(activityLogs.deletedAt),
         ),

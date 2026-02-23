@@ -32,6 +32,14 @@ export default defineConfig({
       "**/mobile/**",
       "**/e2e/**",
     ],
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        minForks: 1,
+        maxForks: 4,
+      },
+    },
+    maxConcurrency: 5,
     environment: "node",
     environmentMatchGlobs: [
       // フロントエンドのテストはjsdom環境で実行

@@ -26,9 +26,13 @@
       "@components/*": ["apps/frontend/src/components/*"],
       "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["packages/frontend-shared/*"],
-      "@packages/types": ["packages/types/index.ts"]
+      "@packages/types": ["packages/types/index.ts"],
+      "@packages/domain": ["packages/domain/index.ts"],
+      "@packages/domain/*": ["packages/domain/*"],
+      "@packages/types-v2": ["packages/types-v2/index.ts"],
+      "@packages/types-v2/*": ["packages/types-v2/*"],
+      "@frontend-v2/*": ["apps/frontend-v2/src/*"]
     }
   },
-  "exclude": ["node_modules", "apps/mobile", "apps/tail-worker"],
-  "extends": "expo/tsconfig.base"
+  "exclude": ["node_modules", "apps/tail-worker", "apps/frontend-v2", "packages/frontend-shared/adapters/react-native.ts"]
 }

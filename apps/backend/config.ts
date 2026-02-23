@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const configSchema = z.object({
   APP_URL: z.string(),
+  APP_URL_V2: z.string().optional(),
   // この API（リソース）向けに発行されたトークンだけを受け付けるための識別子
   // 例: "actiko-backend"
   JWT_AUDIENCE: z.string().min(1).default("actiko-backend"),

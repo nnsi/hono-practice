@@ -127,8 +127,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           p.catch(() => {});
         };
 
-        const storedToken =
-          await c.var.h.fetchRefreshToken(refreshTokenValue);
+        const storedToken = await c.var.h.fetchRefreshToken(refreshTokenValue);
 
         const { token, refreshToken } = await c.var.h.rotateRefreshToken(
           storedToken,

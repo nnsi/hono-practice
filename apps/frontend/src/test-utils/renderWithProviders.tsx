@@ -28,7 +28,6 @@ export function renderWithProviders(
   return render(ui, {
     wrapper: Wrapper,
     ...renderOptions,
-    // @ts-expect-error - React 19の新しいオプション
     onCaughtError: () => {},
   });
 }

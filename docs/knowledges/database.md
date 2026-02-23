@@ -247,10 +247,10 @@
 ### 実行コマンド
 ```bash
 # マイグレーションファイル生成
-npm run db-generate
+pnpm run db-generate
 
 # マイグレーション適用
-npm run db-migrate
+pnpm run db-migrate
 ```
 
 ### マイグレーションファイル

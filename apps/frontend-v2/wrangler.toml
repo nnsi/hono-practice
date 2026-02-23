@@ -1,0 +1,12 @@
+name = "actiko-frontend-v2"
+compatibility_date = "2025-01-12"
+
+[assets]
+directory = "../../dist-frontend-v2"
+not_found_handling = "single-page-application"
+
+[env.stg]
+name = "actiko-frontend-v2-stg"
+
+[env.production]
+name = "actiko-frontend-v2-prod"
