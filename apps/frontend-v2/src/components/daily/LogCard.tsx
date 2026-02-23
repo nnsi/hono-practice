@@ -22,10 +22,10 @@ export function LogCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-150 active:scale-[0.98] hover:shadow-md text-left ${
+      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98] press-effect text-left ${
         isPending
-          ? "border-orange-200 bg-orange-50/50"
-          : "border-gray-200 bg-white hover:bg-gray-50"
+          ? "border border-amber-200 bg-amber-50/50 shadow-soft"
+          : "bg-white shadow-soft hover:shadow-lifted border border-gray-200/50"
       }`}
     >
       {/* アイコン */}
@@ -52,7 +52,7 @@ export function LogCard({
             {activity?.name ?? "不明"}
           </span>
           {kind && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0">
               {kind.color && (
                 <span
                   className="inline-block w-2 h-2 rounded-full"

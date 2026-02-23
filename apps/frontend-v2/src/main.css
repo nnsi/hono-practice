@@ -2,9 +2,176 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ──────────────────────────────────────────
+   Base layer — global defaults
+   ────────────────────────────────────────── */
+@layer base {
+  body {
+    margin: 0;
+    font-family: "Outfit", "Zen Kaku Gothic New", system-ui, -apple-system,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f5f5f4;
+    color: #1c1917;
+  }
+
+  /* Warm selection highlight */
+  ::selection {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+
+  /* Minimal scrollbar */
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d6d3d1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a29e;
+  }
+
+  /* Amber focus ring */
+  *:focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fef3c7, 0 0 0 4px #f59e0b;
+    border-color: #f59e0b;
+  }
+}
+
+/* ──────────────────────────────────────────
+   Component layer — reusable design patterns
+   ────────────────────────────────────────── */
+@layer components {
+  /* ── Frosted glass bottom nav ── */
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid rgba(231, 229, 228, 0.5);
+  }
+
+  /* ── Nav pill active indicator ── */
+  .nav-pill {
+    position: relative;
+  }
+  .nav-pill::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 16px;
+    height: 2.5px;
+    background: #f59e0b;
+    border-radius: 9999px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-pill-active::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  /* ── Modal backdrop with blur ── */
+  .modal-backdrop {
+    background: rgba(28, 25, 23, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* ── Frosted sticky header ── */
+  .sticky-header {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(231, 229, 228, 0.6);
+  }
+
+  /* ── Activity done glow ── */
+  .activity-done {
+    background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+    border-color: #99f6e4;
+  }
+
+  /* ── Stagger animation for lists / grids ── */
+  .stagger > * {
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .stagger > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: 35ms;
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: 70ms;
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: 105ms;
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: 140ms;
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: 175ms;
+  }
+  .stagger > *:nth-child(7) {
+    animation-delay: 210ms;
+  }
+  .stagger > *:nth-child(8) {
+    animation-delay: 245ms;
+  }
+  .stagger > *:nth-child(9) {
+    animation-delay: 280ms;
+  }
+  .stagger > *:nth-child(10) {
+    animation-delay: 315ms;
+  }
+  .stagger > *:nth-child(11) {
+    animation-delay: 350ms;
+  }
+  .stagger > *:nth-child(12) {
+    animation-delay: 385ms;
+  }
+
+  /* ── Auth page brand gradient ── */
+  .brand-text {
+    background: linear-gradient(135deg, #1c1917 40%, #78716c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Date pill (today) ── */
+  .date-pill-today {
+    background: #1c1917;
+    color: #fafaf9;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(28, 25, 23, 0.2);
+  }
+}
+
+/* ──────────────────────────────────────────
+   Utility layer — atomic helpers
+   ────────────────────────────────────────── */
+@layer utilities {
+  .press-effect:active {
+    transform: scale(0.97);
+    transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .page-enter {
+    animation: fadeIn 0.2s ease-out;
+  }
 }

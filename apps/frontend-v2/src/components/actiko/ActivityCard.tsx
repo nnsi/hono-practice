@@ -24,7 +24,7 @@ export function ActivityCard({
           <img
             src={`data:${iconBlob.mimeType};base64,${iconBlob.base64}`}
             alt=""
-            className="w-8 h-8 rounded object-cover"
+            className="w-8 h-8 rounded-lg object-cover"
             onError={() => setImageError(true)}
           />
         );
@@ -34,29 +34,33 @@ export function ActivityCard({
           <img
             src={activity.iconThumbnailUrl || activity.iconUrl || ""}
             alt=""
-            className="w-8 h-8 rounded object-cover"
+            className="w-8 h-8 rounded-lg object-cover"
             onError={() => setImageError(true)}
           />
         );
       }
     }
-    return <span>{activity.emoji || "📝"}</span>;
+    return <span>{activity.emoji || "\ud83d\udcdd"}</span>;
   };
 
   return (
-    <div className="relative">
+    <div className="relative group">
       <button
         type="button"
         onClick={onClick}
         className={`
-          w-full flex flex-col items-center justify-center p-4 rounded-xl border
-          min-h-[120px] select-none transition-all duration-150
-          active:scale-95 hover:shadow-md
-          ${isDone ? "bg-green-50 border-green-200" : "bg-white border-gray-200 hover:bg-gray-50"}
+          w-full flex flex-col items-center justify-center p-4 rounded-2xl
+          min-h-[120px] select-none transition-all duration-200
+          active:scale-[0.96] press-effect
+          ${
+            isDone
+              ? "activity-done shadow-soft"
+              : "bg-white shadow-soft hover:shadow-lifted border border-gray-200/50"
+          }
         `}
       >
         <span className="text-3xl mb-2">{renderIcon()}</span>
-        <span className="text-sm font-medium text-center leading-tight">
+        <span className="text-sm font-medium text-center leading-tight text-gray-800">
           {activity.name}
         </span>
         {activity.quantityUnit && (
@@ -65,14 +69,14 @@ export function ActivityCard({
           </span>
         )}
       </button>
-      {/* 編集ボタン */}
+      {/* Edit button */}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onEdit();
         }}
-        className="absolute top-1 right-1 p-1.5 rounded-full bg-white/80 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+        className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white/80 text-gray-400 active:bg-gray-200 transition-colors"
       >
         <Pencil size={12} />
       </button>

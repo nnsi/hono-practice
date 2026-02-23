@@ -61,7 +61,7 @@ export function CreateGoalDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">新しい目標を作成</h2>

@@ -187,14 +187,14 @@ export function StatsPage() {
   return (
     <div className="bg-white min-h-full">
       {/* Month navigation header */}
-      <header className="sticky top-0 bg-white border-b z-10">
+      <header className="sticky top-0 sticky-header z-10">
         <div className="flex items-center justify-center gap-3 px-4 pr-14 py-3">
           <button
             type="button"
             onClick={goToPrevMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} className="text-gray-500" />
           </button>
           <span className="text-base font-medium min-w-[100px] text-center">
             {dayjs(month).format("YYYY年M月")}
@@ -202,9 +202,9 @@ export function StatsPage() {
           <button
             type="button"
             onClick={goToNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} className="text-gray-500" />
           </button>
         </div>
       </header>

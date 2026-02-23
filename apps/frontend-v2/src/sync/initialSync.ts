@@ -25,10 +25,17 @@ export async function performInitialSync(userId: string) {
   const lastSyncedAt = localStorage.getItem(LAST_SYNCED_KEY);
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
+  // 全APIを並列で取得（直列→並列で2-3秒短縮）
+  const [activitiesRes, logsRes, goalsRes, tasksRes] = await Promise.all([
+    apiClient.users.v2.activities.$get(),
+    apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+    apiClient.users.v2.goals.$get({ query: sinceQuery }),
+    apiClient.users.v2.tasks.$get({ query: sinceQuery }),
+  ]);
+
   let allSynced = true;
 
-  // activities + activityKinds を取得
-  const activitiesRes = await apiClient.users.v2.activities.$get();
+  // activities + activityKinds を処理
   if (activitiesRes.ok) {
     const data = await activitiesRes.json();
     await activityRepository.upsertActivities(
@@ -43,10 +50,7 @@ export async function performInitialSync(userId: string) {
     allSynced = false;
   }
 
-  // activityLogs を取得（差分同期対応）
-  const logsRes = await apiClient.users.v2["activity-logs"].$get({
-    query: sinceQuery,
-  });
+  // activityLogs を処理
   if (logsRes.ok) {
     const data = await logsRes.json();
     if (data.logs?.length > 0) {
@@ -58,10 +62,7 @@ export async function performInitialSync(userId: string) {
     allSynced = false;
   }
 
-  // goals を取得（差分同期対応）
-  const goalsRes = await apiClient.users.v2.goals.$get({
-    query: sinceQuery,
-  });
+  // goals を処理
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
@@ -73,10 +74,7 @@ export async function performInitialSync(userId: string) {
     allSynced = false;
   }
 
-  // tasks を取得（差分同期対応）
-  const tasksRes = await apiClient.users.v2.tasks.$get({
-    query: sinceQuery,
-  });
+  // tasks を処理
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {

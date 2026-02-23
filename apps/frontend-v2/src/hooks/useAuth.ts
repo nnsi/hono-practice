@@ -20,7 +20,7 @@ export function useAuth(): AuthState {
 
   // 起動時の認証チェック
   useEffect(() => {
-    const tryOfflineAuth = async () => {
+    const tryOfflineAuth = async (): Promise<boolean> => {
       const authState = await db.authState.get("current");
       if (authState) {
         const lastLogin = new Date(authState.lastLoginAt);
@@ -29,35 +29,41 @@ export function useAuth(): AuthState {
         if (hoursAgo < 24) {
           setUserId(authState.userId);
           setIsLoggedIn(true);
+          return true;
         }
       }
+      return false;
+    };
+
+    const serverRefreshAndSync = async () => {
+      const res = await apiClient.auth.token.$post();
+      if (!res.ok) return;
+      const data = await res.json();
+      setToken(data.token);
+
+      const userRes = await apiClient.user.me.$get();
+      if (!userRes.ok) return;
+      const user = await userRes.json();
+      setUserId(user.id);
+      setIsLoggedIn(true);
+      await performInitialSync(user.id);
     };
 
     const init = async () => {
-      try {
-        // まずトークンリフレッシュを試みる
-        const res = await apiClient.auth.token.$post();
-        if (res.ok) {
-          const data = await res.json();
-          setToken(data.token);
-
-          // ユーザー情報を取得
-          const userRes = await apiClient.user.me.$get();
-          if (userRes.ok) {
-            const user = await userRes.json();
-            setUserId(user.id);
-            setIsLoggedIn(true);
-            await performInitialSync(user.id);
-          }
-        } else {
-          // トークン無効 → Dexie authState でオフライン認証
-          await tryOfflineAuth();
-        }
-      } catch {
-        // ネットワークエラー → オフラインモード
-        await tryOfflineAuth();
-      } finally {
+      const offlineOk = await tryOfflineAuth();
+      if (offlineOk) {
+        // ローカルキャッシュで即UI表示 → サーバー同期はバックグラウンド
         setIsLoading(false);
+        serverRefreshAndSync().catch(console.error);
+      } else {
+        // オフライン認証なし → サーバー認証を待つ
+        try {
+          await serverRefreshAndSync();
+        } catch {
+          // ネットワークエラー
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
     init();

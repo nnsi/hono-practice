@@ -143,7 +143,7 @@ export function EditActivityDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">アクティビティ編集</h2>
           <button

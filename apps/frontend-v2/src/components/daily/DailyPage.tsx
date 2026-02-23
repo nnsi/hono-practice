@@ -18,6 +18,7 @@ import { TaskList } from "./TaskList";
 import type { Task } from "./TaskList";
 import { EditLogDialog } from "./EditLogDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
+import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
 import { CalendarPopover } from "../common/CalendarPopover";
 
 export function DailyPage() {
@@ -65,6 +66,7 @@ export function DailyPage() {
   // ダイアログ状態
   const [editingLog, setEditingLog] = useState<DexieActivityLog | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [taskCreateDialogOpen, setTaskCreateDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   // 日付ナビゲーション
@@ -86,20 +88,20 @@ export function DailyPage() {
   return (
     <div className="bg-white">
       {/* 日付ヘッダー */}
-      <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-2 relative">
+      <header className="sticky top-0 sticky-header z-10">
+        <div className="flex items-center justify-between px-4 pr-14 py-2.5 relative">
           <button
             type="button"
             onClick={goToPrev}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} className="text-gray-500" />
           </button>
           <button
             type="button"
             onClick={() => setCalendarOpen(!calendarOpen)}
-            className={`text-base font-medium px-3 py-1 rounded-lg ${
-              isToday ? "bg-black text-white" : "hover:bg-gray-100"
+            className={`text-base font-medium px-4 py-1 rounded-xl transition-all ${
+              isToday ? "date-pill-today" : "hover:bg-gray-100"
             }`}
           >
             {dayjs(date).format("M/D (ddd)")}
@@ -107,9 +109,9 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToNext}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} className="text-gray-500" />
           </button>
           <CalendarPopover
             selectedDate={date}
@@ -166,9 +168,19 @@ export function DailyPage() {
 
         {/* タスク一覧 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            タスク
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+              タスク
+            </h2>
+            <button
+              type="button"
+              onClick={() => setTaskCreateDialogOpen(true)}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <Plus size={16} />
+              追加
+            </button>
+          </div>
           <TaskList
             tasks={tasks}
             isLoading={false}
@@ -192,6 +204,15 @@ export function DailyPage() {
           date={date}
           activities={activities}
           onClose={() => setCreateDialogOpen(false)}
+        />
+      )}
+
+      {/* タスク作成ダイアログ */}
+      {taskCreateDialogOpen && (
+        <TaskCreateDialog
+          defaultDate={date}
+          onClose={() => setTaskCreateDialogOpen(false)}
+          onSuccess={() => setTaskCreateDialogOpen(false)}
         />
       )}
     </div>

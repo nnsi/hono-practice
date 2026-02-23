@@ -92,15 +92,15 @@ export function TasksPage() {
   return (
     <div className="bg-white min-h-full">
       {/* タブ */}
-      <div className="sticky top-0 bg-white border-b z-10">
-        <div className="flex pr-12">
+      <div className="sticky top-0 sticky-header z-10">
+        <div className="flex pr-12 px-1 py-1.5">
           <button
             type="button"
             onClick={() => setActiveTab("active")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-medium text-center rounded-xl transition-all mx-0.5 ${
               activeTab === "active"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-gray-900 bg-white shadow-soft"
+                : "text-gray-400 hover:text-gray-600"
             }`}
           >
             アクティブ
@@ -108,10 +108,10 @@ export function TasksPage() {
           <button
             type="button"
             onClick={() => setActiveTab("archived")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-medium text-center rounded-xl transition-all mx-0.5 ${
               activeTab === "archived"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-gray-900 bg-white shadow-soft"
+                : "text-gray-400 hover:text-gray-600"
             }`}
           >
             アーカイブ済み

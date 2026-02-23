@@ -19,7 +19,7 @@ export function CreateLogDialog({
   if (selectedActivity) {
     return (
       <ModalOverlay onClose={onClose}>
-        <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6">
+        <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <button
@@ -58,7 +58,7 @@ export function CreateLogDialog({
   // アクティビティ選択画面
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl max-h-[80vh] flex flex-col">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-3">
           <h2 className="text-lg font-bold">アクティビティを選択</h2>
           <button

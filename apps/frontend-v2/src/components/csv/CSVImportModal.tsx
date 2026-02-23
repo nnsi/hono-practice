@@ -12,8 +12,8 @@ export function CSVImportModal({ onClose }: Props) {
   const csv = useCSVImport(onClose);
 
   return (
-    <ModalOverlay onClose={csv.isImporting ? () => {} : onClose} centered>
-      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-xl shadow-xl flex flex-col mx-4">
+    <ModalOverlay onClose={csv.isImporting ? () => {} : onClose}>
+      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-modal flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
           <div>
