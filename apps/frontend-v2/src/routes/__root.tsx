@@ -15,7 +15,7 @@ import { LoginForm } from "../components/root";
 import { useState, useRef, useEffect } from "react";
 
 function RootComponent() {
-  const { isLoggedIn, isLoading, login, logout } = useAuth();
+  const { isLoggedIn, isLoading, login, googleLogin, logout } = useAuth();
 
   useSyncEngine(isLoggedIn);
 
@@ -28,7 +28,7 @@ function RootComponent() {
   }
 
   if (!isLoggedIn) {
-    return <LoginForm onLogin={login} />;
+    return <LoginForm onLogin={login} onGoogleLogin={googleLogin} />;
   }
 
   return <AuthenticatedLayout onLogout={logout} />;

@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Settings, Database, Info, Key, Trash2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings, Database, Info, Key, Trash2, UserCircle, Check } from "lucide-react";
 import { db } from "../../db/schema";
 import { ApiKeyManager } from "./ApiKeyManager";
+import { GoogleSignInButton } from "../root/GoogleSignInButton";
+import { apiClient } from "../../utils/apiClient";
 
 type AppSettings = {
   showGoalOnStartup: boolean;
@@ -33,9 +35,46 @@ function useAppSettings() {
   return { settings, updateSetting };
 }
 
+function useGoogleAccount() {
+  const [isGoogleLinked, setIsGoogleLinked] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [isLinking, setIsLinking] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const fetchUserInfo = useCallback(async () => {
+    const res = await apiClient.user.me.$get();
+    if (!res.ok) return;
+    const user = await res.json();
+    setIsGoogleLinked(user.providers?.includes("google") ?? false);
+    setGoogleEmail(user.providerEmails?.google ?? null);
+  }, []);
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, [fetchUserInfo]);
+
+  const linkGoogle = async (credential: string) => {
+    setIsLinking(true);
+    setMessage(null);
+    const res = await apiClient.auth.google.link.$post({
+      json: { credential },
+    });
+    setIsLinking(false);
+    if (!res.ok) {
+      setMessage({ type: "error", text: "Google連携に失敗しました" });
+      return;
+    }
+    setMessage({ type: "success", text: "Google連携が完了しました" });
+    await fetchUserInfo();
+  };
+
+  return { isGoogleLinked, googleEmail, isLinking, message, linkGoogle };
+}
+
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const google = useGoogleAccount();
 
   const handleClearData = async () => {
     await db.delete();
@@ -81,6 +120,46 @@ export function SettingsPage() {
               checked={settings.showInactiveDates}
               onChange={(v) => updateSetting("showInactiveDates", v)}
             />
+          </div>
+        </section>
+
+        {/* アカウント設定 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <UserCircle size={14} />
+            アカウント設定
+          </h2>
+          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+            {google.isGoogleLinked && (
+              <div className="flex items-center gap-2">
+                <Check size={16} className="text-green-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-green-700">Google連携済み</p>
+                  {google.googleEmail && (
+                    <p className="text-xs text-gray-500 truncate">{google.googleEmail}</p>
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              {!google.isGoogleLinked && (
+                <p className="text-sm text-gray-600">
+                  Googleアカウントを連携すると、Googleでログインできるようになります。
+                </p>
+              )}
+              <GoogleSignInButton
+                onSuccess={google.linkGoogle}
+                onError={() => {}}
+              />
+              {google.isLinking && (
+                <p className="text-xs text-gray-500">連携中...</p>
+              )}
+            </div>
+            {google.message && (
+              <p className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}>
+                {google.message.text}
+              </p>
+            )}
           </div>
         </section>
 

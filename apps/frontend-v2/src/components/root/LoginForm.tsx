@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type LoginFormProps = {
   onLogin: (loginId: string, password: string) => Promise<void>;
+  onGoogleLogin: (credential: string) => Promise<void>;
 };
 
-export function LoginForm({ onLogin }: LoginFormProps) {
+export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,10 +25,44 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     }
   };
 
+  const handleGoogleSuccess = async (credential: string) => {
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await onGoogleLogin(credential);
+    } catch {
+      setError("Googleログインに失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Googleログインに失敗しました");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-3xl font-bold text-center mb-8">Actiko</h1>
+
+        {/* Google Sign-In */}
+        <div className="mb-6">
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+        </div>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-gray-50 px-2 text-gray-500">または</span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label

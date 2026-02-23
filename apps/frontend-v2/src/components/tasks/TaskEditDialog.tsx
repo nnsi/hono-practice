@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { taskRepository } from "../../db/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import type { TaskItem } from "./types";
@@ -40,7 +41,7 @@ export function TaskEditDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+    <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">タスクを編集</h2>
@@ -145,6 +146,6 @@ export function TaskEditDialog({
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

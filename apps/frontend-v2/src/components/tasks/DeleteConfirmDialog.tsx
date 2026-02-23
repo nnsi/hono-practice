@@ -1,3 +1,5 @@
+import { ModalOverlay } from "../common/ModalOverlay";
+
 export function DeleteConfirmDialog({
   taskTitle,
   onConfirm,
@@ -8,7 +10,7 @@ export function DeleteConfirmDialog({
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <ModalOverlay onClose={onCancel} centered>
       <div className="bg-white w-[90%] max-w-sm rounded-xl p-5">
         <h2 className="text-lg font-bold mb-2">タスクを削除しますか？</h2>
         <p className="text-sm text-gray-500 mb-4">
@@ -31,6 +33,6 @@ export function DeleteConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

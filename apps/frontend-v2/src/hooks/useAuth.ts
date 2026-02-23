@@ -8,6 +8,7 @@ type AuthState = {
   isLoading: boolean;
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -74,6 +75,26 @@ export function useAuth(): AuthState {
     await performInitialSync(user.id);
   }, []);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    const res = await apiClient.auth.google.$post({
+      json: { credential },
+    });
+    if (!res.ok) {
+      throw new Error("Google login failed");
+    }
+    const data = await res.json();
+    setToken(data.token);
+    // ユーザー情報を取得
+    const userRes = await apiClient.user.me.$get();
+    if (!userRes.ok) {
+      throw new Error("Failed to fetch user after Google login");
+    }
+    const user = await userRes.json();
+    setUserId(user.id);
+    setIsLoggedIn(true);
+    await performInitialSync(user.id);
+  }, []);
+
   const logout = useCallback(() => {
     // サーバーサイドのセッション無効化（fire-and-forget）
     apiClient.auth.logout.$post().catch(() => {});
@@ -83,5 +104,5 @@ export function useAuth(): AuthState {
     db.authState.delete("current");
   }, []);
 
-  return { isLoggedIn, isLoading, userId, login, logout };
+  return { isLoggedIn, isLoading, userId, login, googleLogin, logout };
 }

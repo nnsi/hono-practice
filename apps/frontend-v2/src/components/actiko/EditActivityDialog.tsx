@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -141,7 +142,7 @@ export function EditActivityDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+    <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">アクティビティ編集</h2>
@@ -294,6 +295,6 @@ export function EditActivityDialog({
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

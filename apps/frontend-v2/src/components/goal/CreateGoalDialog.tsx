@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { X } from "lucide-react";
+import { ModalOverlay } from "../common/ModalOverlay";
 import type { DexieActivity } from "../../db/schema";
 import type { CreateGoalPayload } from "./types";
 import { getActivityEmoji } from "./activityHelpers";
@@ -59,7 +60,7 @@ export function CreateGoalDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+    <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-4">
@@ -177,6 +178,6 @@ export function CreateGoalDialog({
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

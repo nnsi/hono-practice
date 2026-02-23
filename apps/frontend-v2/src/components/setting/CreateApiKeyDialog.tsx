@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Copy, Check } from "lucide-react";
+import { ModalOverlay } from "../common/ModalOverlay";
 import type { CreateApiKeyRequest } from "@dtos/request";
 import type { CreateApiKeyResponse } from "@dtos/response";
 
@@ -40,7 +41,7 @@ export function CreateApiKeyDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+    <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">
@@ -117,6 +118,6 @@ export function CreateApiKeyDialog({
           </form>
         )}
       </div>
-    </div>
+    </ModalOverlay>
   );
 }
