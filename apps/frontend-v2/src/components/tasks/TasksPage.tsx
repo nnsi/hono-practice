@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import dayjs from "dayjs";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { useActiveTasks, useArchivedTasks } from "../../hooks/useTasks";
 import { taskRepository } from "../../db/taskRepository";
@@ -67,6 +68,12 @@ export function TasksPage() {
 
   const handleArchive = async (task: TaskItem) => {
     await taskRepository.archiveTask(task.id);
+    syncEngine.syncTasks();
+  };
+
+  const handleMoveToToday = async (task: TaskItem) => {
+    const today = dayjs().format("YYYY-MM-DD");
+    await taskRepository.updateTask(task.id, { startDate: today });
     syncEngine.syncTasks();
   };
 
@@ -140,6 +147,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
 
@@ -153,6 +161,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
 
@@ -166,6 +175,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
 
@@ -179,6 +189,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
 
@@ -192,6 +203,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
 
@@ -313,6 +325,7 @@ export function TasksPage() {
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
                 onArchive={handleArchive}
+                onMoveToToday={handleMoveToToday}
               />
             )}
           </div>

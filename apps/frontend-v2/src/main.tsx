@@ -14,6 +14,18 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// ピンチズーム防止
+document.addEventListener("gesturestart", (e) => e.preventDefault());
+document.addEventListener(
+  "touchmove",
+  (e) => {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  },
+  { passive: false },
+);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

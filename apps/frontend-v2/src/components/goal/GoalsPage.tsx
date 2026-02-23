@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { Target, Plus } from "lucide-react";
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
@@ -8,6 +9,7 @@ import type { DexieActivity } from "../../db/schema";
 import type { CreateGoalPayload, UpdateGoalPayload } from "./types";
 import { GoalCard } from "./GoalCard";
 import { CreateGoalDialog } from "./CreateGoalDialog";
+import { RecordDialog } from "../actiko/RecordDialog";
 
 export function GoalsPage() {
   const { activities } = useActivities();
@@ -15,6 +17,8 @@ export function GoalsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+  // A. RecordDialog用state
+  const [recordActivity, setRecordActivity] = useState<DexieActivity | null>(null);
 
   const activityMap = useMemo(() => {
     const map = new Map<string, DexieActivity>();
@@ -81,20 +85,24 @@ export function GoalsPage() {
           </div>
         )}
 
-        {currentGoals.map((goal) => (
-          <GoalCard
-            key={goal.id}
-            goal={goal}
-            activity={activityMap.get(goal.activityId)}
-            isExpanded={expandedGoalId === goal.id}
-            isEditing={editingGoalId === goal.id}
-            onToggleExpand={() => handleToggleExpand(goal.id)}
-            onEditStart={() => setEditingGoalId(goal.id)}
-            onEditEnd={() => setEditingGoalId(null)}
-            onUpdate={(payload) => handleGoalUpdated(goal.id, payload)}
-            onDelete={() => handleGoalDeleted(goal.id)}
-          />
-        ))}
+        {currentGoals.map((goal) => {
+          const act = activityMap.get(goal.activityId);
+          return (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              activity={act}
+              isExpanded={expandedGoalId === goal.id}
+              isEditing={editingGoalId === goal.id}
+              onToggleExpand={() => handleToggleExpand(goal.id)}
+              onEditStart={() => setEditingGoalId(goal.id)}
+              onEditEnd={() => setEditingGoalId(null)}
+              onUpdate={(payload) => handleGoalUpdated(goal.id, payload)}
+              onDelete={() => handleGoalDeleted(goal.id)}
+              onRecordOpen={act ? () => setRecordActivity(act) : undefined}
+            />
+          );
+        })}
 
         {/* 新規目標を追加 */}
         <button
@@ -144,6 +152,15 @@ export function GoalsPage() {
           activities={activities}
           onClose={() => setCreateDialogOpen(false)}
           onCreate={handleGoalCreated}
+        />
+      )}
+
+      {/* A. ログ作成ダイアログ */}
+      {recordActivity && (
+        <RecordDialog
+          activity={recordActivity}
+          date={dayjs().format("YYYY-MM-DD")}
+          onClose={() => setRecordActivity(null)}
         />
       )}
     </div>

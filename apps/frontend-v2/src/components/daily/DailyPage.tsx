@@ -18,6 +18,7 @@ import { TaskList } from "./TaskList";
 import type { Task } from "./TaskList";
 import { EditLogDialog } from "./EditLogDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
+import { CalendarPopover } from "../common/CalendarPopover";
 
 export function DailyPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -64,13 +65,13 @@ export function DailyPage() {
   // ダイアログ状態
   const [editingLog, setEditingLog] = useState<DexieActivityLog | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // 日付ナビゲーション
   const goToPrev = () =>
     setDate(dayjs(date).subtract(1, "day").format("YYYY-MM-DD"));
   const goToNext = () =>
     setDate(dayjs(date).add(1, "day").format("YYYY-MM-DD"));
-  const goToToday = () => setDate(dayjs().format("YYYY-MM-DD"));
   const isToday = date === dayjs().format("YYYY-MM-DD");
 
   // タスクトグル
@@ -86,7 +87,7 @@ export function DailyPage() {
     <div className="bg-white">
       {/* 日付ヘッダー */}
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-2">
+        <div className="flex items-center justify-between px-4 pr-14 py-2 relative">
           <button
             type="button"
             onClick={goToPrev}
@@ -96,7 +97,7 @@ export function DailyPage() {
           </button>
           <button
             type="button"
-            onClick={goToToday}
+            onClick={() => setCalendarOpen(!calendarOpen)}
             className={`text-base font-medium px-3 py-1 rounded-lg ${
               isToday ? "bg-black text-white" : "hover:bg-gray-100"
             }`}
@@ -110,6 +111,12 @@ export function DailyPage() {
           >
             <ChevronRight size={20} />
           </button>
+          <CalendarPopover
+            selectedDate={date}
+            onDateSelect={setDate}
+            isOpen={calendarOpen}
+            onClose={() => setCalendarOpen(false)}
+          />
         </div>
       </header>
 

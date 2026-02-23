@@ -12,6 +12,7 @@ export function TaskGroup({
   onEdit,
   onDelete,
   onArchive,
+  onMoveToToday,
 }: {
   title: string;
   tasks: TaskItem[];
@@ -23,6 +24,7 @@ export function TaskGroup({
   onEdit: (task: TaskItem) => void;
   onDelete: (id: string) => void;
   onArchive: (task: TaskItem) => void;
+  onMoveToToday?: (task: TaskItem) => void;
 }) {
   if (tasks.length === 0) return null;
 
@@ -46,6 +48,9 @@ export function TaskGroup({
             onEdit={() => onEdit(task)}
             onDelete={() => onDelete(task.id)}
             onArchive={() => onArchive(task)}
+            onMoveToToday={
+              onMoveToToday ? () => onMoveToToday(task) : undefined
+            }
           />
         ))}
       </div>

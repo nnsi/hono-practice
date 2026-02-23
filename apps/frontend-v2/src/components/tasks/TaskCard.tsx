@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Circle,
   Archive,
+  CalendarCheck,
   Pencil,
   Trash2,
   CalendarDays,
@@ -19,6 +20,7 @@ export function TaskCard({
   onEdit,
   onDelete,
   onArchive,
+  onMoveToToday,
 }: {
   task: TaskItem;
   highlight?: boolean;
@@ -28,7 +30,11 @@ export function TaskCard({
   onEdit: () => void;
   onDelete: () => void;
   onArchive: () => void;
+  onMoveToToday?: () => void;
 }) {
+  const today = dayjs().format("YYYY-MM-DD");
+  const showMoveToToday =
+    !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
   return (
     <div
       className={`
@@ -95,6 +101,20 @@ export function TaskCard({
 
       {/* アクションボタン */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
+        {/* 今日に移動ボタン */}
+        {showMoveToToday && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveToToday();
+            }}
+            className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+            title="今日に移動"
+          >
+            <CalendarCheck size={16} />
+          </button>
+        )}
         {/* 完了済みタスクのアーカイブボタン */}
         {task.doneDate && !archived && (
           <button

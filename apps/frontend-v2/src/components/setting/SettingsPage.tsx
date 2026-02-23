@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Database, Info, Key, Trash2, UserCircle, Check } from "lucide-react";
+import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload } from "lucide-react";
 import { db } from "../../db/schema";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
+import { CSVImportModal } from "../csv/CSVImportModal";
 import { apiClient } from "../../utils/apiClient";
 
 type AppSettings = {
@@ -74,6 +75,7 @@ function useGoogleAccount() {
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
@@ -179,6 +181,15 @@ export function SettingsPage() {
             データ管理
           </h2>
           <div className="rounded-xl border border-gray-200 p-4 space-y-4">
+            <button
+              type="button"
+              onClick={() => setShowCSVImport(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <Upload size={16} />
+              CSVから活動記録をインポート
+            </button>
+            <div className="border-t border-gray-100" />
             <p className="text-sm text-gray-600 leading-relaxed">
               アクティビティや記録データはブラウザのローカルストレージ（IndexedDB）に保存されています。サーバーとの同期によりデータは復元可能です。
             </p>
@@ -228,6 +239,10 @@ export function SettingsPage() {
           </div>
         </section>
       </div>
+
+      {showCSVImport && (
+        <CSVImportModal onClose={() => setShowCSVImport(false)} />
+      )}
     </div>
   );
 }

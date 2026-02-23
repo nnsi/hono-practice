@@ -9,6 +9,7 @@ import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
+import { CalendarPopover } from "../common/CalendarPopover";
 
 export function ActikoPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -29,12 +30,12 @@ export function ActikoPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createActivityOpen, setCreateActivityOpen] = useState(false);
   const [editActivity, setEditActivity] = useState<DexieActivity | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const goToPrev = () =>
     setDate(dayjs(date).subtract(1, "day").format("YYYY-MM-DD"));
   const goToNext = () =>
     setDate(dayjs(date).add(1, "day").format("YYYY-MM-DD"));
-  const goToToday = () => setDate(dayjs().format("YYYY-MM-DD"));
 
   const isToday = date === dayjs().format("YYYY-MM-DD");
 
@@ -58,7 +59,7 @@ export function ActikoPage() {
     <div className="bg-white">
       {/* ヘッダー */}
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-2">
+        <div className="flex items-center justify-between px-4 pr-14 py-2 relative">
           <button
             type="button"
             onClick={goToPrev}
@@ -68,7 +69,7 @@ export function ActikoPage() {
           </button>
           <button
             type="button"
-            onClick={goToToday}
+            onClick={() => setCalendarOpen(!calendarOpen)}
             className={`text-base font-medium px-3 py-1 rounded-lg ${isToday ? "bg-black text-white" : "hover:bg-gray-100"}`}
           >
             {dayjs(date).format("M/D (ddd)")}
@@ -80,6 +81,12 @@ export function ActikoPage() {
           >
             <ChevronRight size={20} />
           </button>
+          <CalendarPopover
+            selectedDate={date}
+            onDateSelect={setDate}
+            isOpen={calendarOpen}
+            onClose={() => setCalendarOpen(false)}
+          />
         </div>
       </header>
 
