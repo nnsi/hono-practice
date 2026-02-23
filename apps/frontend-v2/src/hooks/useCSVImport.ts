@@ -16,18 +16,56 @@ function detectEncoding(buffer: ArrayBuffer): string {
   if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
     return "UTF-8";
   }
+  let utf8Count = 0;
   let sjisCount = 0;
-  const len = Math.min(bytes.length - 1, 1024);
+  const len = Math.min(bytes.length, 1024);
+
   for (let i = 0; i < len; i++) {
-    const b1 = bytes[i];
-    const b2 = bytes[i + 1];
-    if ((b1 >= 0x81 && b1 <= 0x9f) || (b1 >= 0xe0 && b1 <= 0xfc)) {
-      if ((b2 >= 0x40 && b2 <= 0x7e) || (b2 >= 0x80 && b2 <= 0xfc)) {
-        sjisCount++;
+    const b = bytes[i];
+    // UTF-8 multi-byte sequences
+    if (b >= 0xc2 && b <= 0xdf && i + 1 < len) {
+      if (bytes[i + 1] >= 0x80 && bytes[i + 1] <= 0xbf) {
+        utf8Count++;
+        i += 1;
+        continue;
+      }
+    } else if (b >= 0xe0 && b <= 0xef && i + 2 < len) {
+      if (
+        bytes[i + 1] >= 0x80 &&
+        bytes[i + 1] <= 0xbf &&
+        bytes[i + 2] >= 0x80 &&
+        bytes[i + 2] <= 0xbf
+      ) {
+        utf8Count++;
+        i += 2;
+        continue;
+      }
+    } else if (b >= 0xf0 && b <= 0xf4 && i + 3 < len) {
+      if (
+        bytes[i + 1] >= 0x80 &&
+        bytes[i + 1] <= 0xbf &&
+        bytes[i + 2] >= 0x80 &&
+        bytes[i + 2] <= 0xbf &&
+        bytes[i + 3] >= 0x80 &&
+        bytes[i + 3] <= 0xbf
+      ) {
+        utf8Count++;
+        i += 3;
+        continue;
+      }
+    }
+    // Shift-JIS multi-byte sequences
+    if ((b >= 0x81 && b <= 0x9f) || (b >= 0xe0 && b <= 0xfc)) {
+      if (i + 1 < len) {
+        const b2 = bytes[i + 1];
+        if ((b2 >= 0x40 && b2 <= 0x7e) || (b2 >= 0x80 && b2 <= 0xfc)) {
+          sjisCount++;
+          i += 1;
+        }
       }
     }
   }
-  return sjisCount > 5 ? "Shift-JIS" : "UTF-8";
+  return sjisCount > utf8Count ? "Shift-JIS" : "UTF-8";
 }
 
 function parseCSVText(text: string): CSVParseResult {

@@ -9,92 +9,73 @@
 - **開発サーバーは絶対に起動しないでください**
 - ユーザー側で既に起動しているため、Claude Code側での起動は不要です
 - `pnpm run dev`、`pnpm run client-dev` などのサーバー起動コマンドは実行しないでください
-- **重要: 開発サーバーのポートは1357です（3000ではありません）**
-- **重要: バックエンドAPIサーバーのポートは3456です（4000ではありません）**
+- **ポート: frontend(v1)=1357, frontend-v2=2460, backend API=3456**
 
 ### ブラウザ動作確認
 - **「ブラウザで動作確認して」と言われた場合は、Claude in Chrome MCPを使用する**
 - 手動確認を求めるのではなく、必ずClaude in Chromeで自動的に動作確認を実施すること
-- `mcp__claude-in-chrome__tabs_context_mcp`でタブ情報取得、`mcp__claude-in-chrome__navigate`でアクセス、`mcp__claude-in-chrome__read_page`で状態確認
 
 ## プロジェクト概要
 
-**Actiko** - どのアプリよりも最速で活動量を記録することを目指し、極限までシンプルに研ぎ澄ませたUXを実現する個人向け活動記録アプリケーション。
+**Actiko** - 最速で活動量を記録する、極限までシンプルなUXの個人向け活動記録アプリ。
 
 ### 最重要原則
 - **パフォーマンス**: 「最速で活動量を記録する」ことが最優先目標
-- **UX**: 極限までシンプルに研ぎ澄ませたUX、操作回数を最小限に
+- **UX**: 極限までシンプル、操作回数を最小限に
 - **検証**: タスクが実際に完了していない場合は絶対に完了としない
+
+## 技術スタック
+
+- **DB: Neon Postgres**（Cloudflare D1ではない。絶対に間違えないこと）
+- Cloudflare Workers + Hono
+- R2（画像ストレージ）、KV（レートリミット等）
+- frontend(v1): React + TanStack Query + TanStack Router
+- frontend-v2: React + Dexie.js + useLiveQuery + TanStack Router（オフラインファースト）
 
 ## 📚 詳細ドキュメント
 
-詳細は `/docs/knowledges/` を参照：
-- `structure.md` - プロジェクト構造
-- `auth_flow.md` - 認証フロー
-- `backend.md` - バックエンドアーキテクチャ
-- `frontend.md` - フロントエンドアーキテクチャ
-- `database.md` - データベース設計
+- `/docs/knowledges/` — 設計ドキュメント（構造, 認証, DB, フロント, バックエンド）
+- `apps/backend/CLAUDE.md` — バックエンド固有のルール（Honoの罠, APIパス規約）
+- `apps/frontend-v2/CLAUDE.md` — フロントエンドv2固有のルール（オフラインファースト設計, UI規約）
 
 ## 必須コマンド
 
-### テストと品質管理
 ```bash
-# テストを一度だけ実行（CIモード） - 常にこれを使用
-pnpm run test-once
-
-# TypeScriptコンパイルチェック
-pnpm run tsc
-
-# コードフォーマット（biome+eslint）
-pnpm run fix
-
-# 全てのCIチェックを実行
-pnpm run ci-check
-```
-
-### データベース
-```bash
-# マイグレーション生成
-pnpm run db-generate
-
-# マイグレーション適用
-pnpm run db-migrate
+pnpm run test-once   # テスト実行（CIモード）
+pnpm run tsc         # TypeScriptコンパイルチェック
+pnpm run fix         # コードフォーマット（biome+eslint）
+pnpm run ci-check    # 全CIチェック
+pnpm run db-generate # マイグレーション生成
+pnpm run db-migrate  # マイグレーション適用
 ```
 
 ## 重要な開発規約
 
-### リポジトリメソッド名規則
-**重要**: Repositoryのメソッド名には必ずドメイン名を含める
-- 例：`createApiKey`、`findApiKeyById`（❌ `create`、`findById`）
-- `withTx`でトランザクション内で複数リポジトリ使用時の名前衝突を防ぐため
-
-### TypeScript基本ルール
+### TypeScript共通ルール
 - **型定義は `type` を使用**（`interface`は使わない）
 - **ファクトリ関数パターン**: `newXXX`関数で依存注入
-- **エラーハンドリング**: try-catchは使わず、`throw`で例外をスロー
+- **Repository命名**: メソッド名にドメイン名を含める（`createGoal` ✓ / `create` ✗）
 
-### テスト実行時の注意
-- **型エラーを全て修正してテストも全て通らないとコミットできない**
-- `pnpm run test-once` で全テスト通過を確認
-- `pnpm run tsc` でコンパイルエラーなしを確認
-- `pnpm run fix` でフォーマットを整える
-- APIパラメータフォーマット変更に注意（例：mutationのパラメータ構造）
+### テスト・コミット前チェック
+- 型エラーを全て修正し、テストも全て通らないとコミットできない
+- `pnpm run test-once` → `pnpm run tsc` → `pnpm run fix` の順で確認
 
 ## 並列エージェント運用ルール
-- サブエージェントを並列起動する際は、**共通ルールを事前にプロンプトへ明示する**
-- 最低限含めるべき項目: ファイル削除/残存の方針、命名規則、エクスポートパターン、APIパスの注意点
-- 状況依存の注意点（末尾スラッシュ、snake_case変換の要否など）もその都度追加する
 
-## 🔧 開発効率化
+サブエージェントを並列起動する際は、**共通ルールを事前にプロンプトへ明示する**。
 
-### Serena MCPの活用
-コードベース解析・検索には **Serena MCP** を積極的に使用：
-- `find_symbol` - シンボル定義を素早く検索
-- `find_referencing_symbols` - 参照箇所を網羅的に発見
-- `search_for_pattern` - 正規表現による高度な検索
-- `get_symbols_overview` - ファイル構造を俯瞰
+### 必須共通ルール（全エージェントのプロンプトに含める）
+```
+- APIパス: 末尾スラッシュなし
+- DB: Neon Postgres（D1ではない）
+- ファイル分割: 1ファイル200行以内目安、ドメインフォルダに配置
+- 古いファイル: 削除する（プロキシ/再エクスポートとして残さない）
+- エクスポート: バレルindex.tsでまとめる
+- Repository命名: メソッド名にドメイン名を含める（createGoal ✓ / create ✗）
+- 型定義: interfaceではなくtypeを使う
+```
 
-通常のgrep/findより優れている点：
-- TypeScript/JavaScriptの構文を理解した正確な検索
-- 大規模コードベースでも高速
-- 依存関係やリファレンスの追跡が容易
+### ファイル競合防止
+- 並列エージェント間で**編集対象ファイルが重複しないよう分割**する
+- 事前にGlobで対象ファイルを確認し、排他的にグループ分けする
+- frontend-v2の作業では `apps/frontend-v2/CLAUDE.md` の追加ルールもプロンプトに含める
