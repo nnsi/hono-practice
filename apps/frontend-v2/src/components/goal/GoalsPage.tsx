@@ -61,7 +61,7 @@ export function GoalsPage() {
     <div className="bg-white">
       {/* ヘッダー */}
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 pr-14 py-3">
           <h1 className="text-lg font-bold flex items-center gap-2">
             <Target size={20} />
             目標

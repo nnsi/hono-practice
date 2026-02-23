@@ -86,7 +86,7 @@ export function TasksPage() {
     <div className="bg-white min-h-full">
       {/* タブ */}
       <div className="sticky top-0 bg-white border-b z-10">
-        <div className="flex">
+        <div className="flex pr-12">
           <button
             type="button"
             onClick={() => setActiveTab("active")}

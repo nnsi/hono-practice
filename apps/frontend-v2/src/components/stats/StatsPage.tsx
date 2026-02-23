@@ -188,7 +188,7 @@ export function StatsPage() {
     <div className="bg-white min-h-full">
       {/* Month navigation header */}
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-center gap-3 px-4 py-3">
+        <div className="flex items-center justify-center gap-3 px-4 pr-14 py-3">
           <button
             type="button"
             onClick={goToPrevMonth}

@@ -86,7 +86,7 @@ export function DailyPage() {
     <div className="bg-white">
       {/* 日付ヘッダー */}
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center justify-between px-4 pr-14 py-2">
           <button
             type="button"
             onClick={goToPrev}

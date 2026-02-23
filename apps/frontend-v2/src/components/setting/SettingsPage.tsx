@@ -44,7 +44,7 @@ export function SettingsPage() {
   return (
     <div className="bg-white">
       <header className="sticky top-0 bg-white border-b z-10">
-        <div className="flex items-center gap-2 px-4 py-3">
+        <div className="flex items-center gap-2 px-4 pr-14 py-3">
           <Settings size={20} />
           <h1 className="text-base font-medium">設定</h1>
         </div>
