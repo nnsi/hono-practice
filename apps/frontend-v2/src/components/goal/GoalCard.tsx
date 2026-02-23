@@ -174,14 +174,16 @@ export function GoalCard({
 
   return (
     <div
-      className={`rounded-xl border ${isPast ? "border-gray-200 bg-gray-50 opacity-75" : "border-gray-200"} shadow-sm overflow-hidden transition-all duration-500`}
+      className={`rounded-2xl ${isPast ? "border border-gray-200 bg-gray-50 opacity-75" : "border border-gray-200/50 shadow-soft"} overflow-hidden transition-all duration-500`}
       style={cardBg}
     >
       {/* カードヘッダー */}
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onToggleExpand}
-        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50/50 transition-colors"
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggleExpand(); }}
+        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50/50 transition-colors cursor-pointer"
       >
         {/* アクティビティアイコン */}
         <div className="flex-shrink-0">{getActivityIcon(activity)}</div>
@@ -194,7 +196,7 @@ export function GoalCard({
             </span>
             {/* C. ステータスバッジ */}
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusBadge.className}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.className}`}
             >
               {statusBadge.label}
             </span>
@@ -241,13 +243,11 @@ export function GoalCard({
         </div>
 
         {/* 右側 */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="text-right">
-            <span className={`text-xs font-medium ${balanceColor}`}>
-              {balanceLabel}: {Math.abs(goal.currentBalance).toLocaleString()}
-              {activity?.quantityUnit ?? ""}
-            </span>
-          </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className={`text-xs font-medium whitespace-nowrap ${balanceColor}`}>
+            {balanceLabel}{Math.abs(goal.currentBalance).toLocaleString()}
+            {activity?.quantityUnit ?? ""}
+          </span>
           {/* A. 直接ログ作成ボタン */}
           {!isPast && onRecordOpen && (
             <button
@@ -311,7 +311,7 @@ export function GoalCard({
             <ChevronDown size={16} className="text-gray-400" />
           )}
         </div>
-      </button>
+      </div>
 
       {/* プログレスバー */}
       <div className="px-4 pb-2">

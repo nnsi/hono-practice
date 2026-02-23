@@ -84,7 +84,7 @@ export function CalendarPopover({
   return (
     <div
       ref={ref}
-      className="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-50 w-[280px]"
+      className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 z-50 w-[280px] animate-scale-in origin-top"
     >
       {/* 月ナビ */}
       <div className="flex items-center justify-between mb-2">
@@ -136,8 +136,8 @@ export function CalendarPopover({
               className={`
                 w-9 h-9 flex items-center justify-center text-xs rounded-full mx-auto transition-colors
                 ${!cell.currentMonth ? "text-gray-300" : "text-gray-700"}
-                ${isSelected ? "bg-blue-600 text-white font-bold" : ""}
-                ${isToday && !isSelected ? "bg-blue-100 text-blue-600 font-bold" : ""}
+                ${isSelected ? "bg-gray-900 text-white font-bold" : ""}
+                ${isToday && !isSelected ? "bg-amber-100 text-amber-700 font-bold" : ""}
                 ${!isSelected && cell.currentMonth ? "hover:bg-gray-100" : ""}
               `}
             >
@@ -155,7 +155,7 @@ export function CalendarPopover({
             onDateSelect(today);
             onClose();
           }}
-          className="w-full mt-2 py-1.5 text-xs text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors"
+          className="w-full mt-2 py-1.5 text-xs text-amber-600 font-medium hover:bg-amber-50 rounded-xl transition-colors"
         >
           今日に移動
         </button>

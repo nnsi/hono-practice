@@ -64,10 +64,10 @@ export function GoalsPage() {
   return (
     <div className="bg-white">
       {/* ヘッダー */}
-      <header className="sticky top-0 bg-white border-b z-10">
+      <header className="sticky top-0 sticky-header z-10">
         <div className="flex items-center justify-between px-4 pr-14 py-3">
           <h1 className="text-lg font-bold flex items-center gap-2">
-            <Target size={20} />
+            <Target size={20} className="text-amber-500" />
             目標
           </h1>
           <span className="text-sm text-gray-500">

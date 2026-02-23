@@ -8,12 +8,14 @@ import { syncEngine } from "../../sync/syncEngine";
 export function TaskCreateDialog({
   onClose,
   onSuccess,
+  defaultDate,
 }: {
   onClose: () => void;
   onSuccess: () => void;
+  defaultDate?: string;
 }) {
   const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(defaultDate ?? dayjs().format("YYYY-MM-DD"));
   const [dueDate, setDueDate] = useState("");
   const [memo, setMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +38,7 @@ export function TaskCreateDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-5">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">新しいタスクを作成</h2>
           <button

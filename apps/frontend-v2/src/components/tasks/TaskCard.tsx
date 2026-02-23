@@ -38,9 +38,9 @@ export function TaskCard({
   return (
     <div
       className={`
-        flex items-center gap-3 p-3 rounded-xl border transition-all duration-150
-        ${highlight ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}
-        ${!completed && !archived ? "hover:shadow-md" : ""}
+        flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200
+        ${highlight ? "border border-red-200 bg-red-50/80" : "bg-white shadow-soft border border-gray-200/50"}
+        ${!completed && !archived ? "hover:shadow-lifted" : ""}
         ${completed ? "opacity-70" : ""}
       `}
     >

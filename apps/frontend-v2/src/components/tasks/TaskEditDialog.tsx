@@ -42,7 +42,7 @@ export function TaskEditDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl p-5">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">タスクを編集</h2>
           <button
