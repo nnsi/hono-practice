@@ -4,8 +4,6 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { activityLogRepository } from "../../db/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
 import { db, type DexieActivity, type DexieActivityIconBlob } from "../../db/schema";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
@@ -50,22 +48,6 @@ export function ActikoPage() {
     setDialogOpen(true);
   };
 
-  const handleQuickRecord = async (
-    activity: DexieActivity,
-    quantity: number,
-  ) => {
-    await activityLogRepository.createActivityLog({
-      activityId: activity.id,
-      activityKindId: null,
-      quantity,
-      memo: "",
-      date,
-      time: null,
-    });
-    setDialogOpen(false);
-    setSelectedActivity(null);
-    syncEngine.syncActivityLogs();
-  };
 
   // Dexie useLiveQueryで自動更新されるため、refreshは不要
   const handleActivityChanged = () => {
@@ -136,7 +118,6 @@ export function ActikoPage() {
         <RecordDialog
           activity={selectedActivity}
           date={date}
-          onRecord={handleQuickRecord}
           onClose={() => {
             setDialogOpen(false);
             setSelectedActivity(null);

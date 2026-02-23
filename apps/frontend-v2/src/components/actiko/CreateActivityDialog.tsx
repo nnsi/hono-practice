@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { resizeImage } from "../../utils/imageResizer";
+import { COLOR_PALETTE } from "../stats/colorUtils";
 import {
   IconTypeSelector,
   type IconSelectorValue,
@@ -165,7 +166,11 @@ export function CreateActivityDialog({
             <button
               type="button"
               onClick={() =>
-                setKinds((prev) => [...prev, { name: "", color: "#3b82f6" }])
+                setKinds((prev) => {
+                  const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
+                  const nextColor = COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ?? COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
+                  return [...prev, { name: "", color: nextColor }];
+                })
               }
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
