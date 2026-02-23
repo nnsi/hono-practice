@@ -263,6 +263,9 @@ importers:
 
   apps/frontend-v2:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.90.21(react@19.0.0)
       '@tanstack/react-router':
         specifier: ^1.92.9
         version: 1.161.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)

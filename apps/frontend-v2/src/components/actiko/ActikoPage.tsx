@@ -1,11 +1,12 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { activityLogRepository } from "../../db/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import type { DexieActivity } from "../../db/schema";
+import { db, type DexieActivity, type DexieActivityIconBlob } from "../../db/schema";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
@@ -15,6 +16,14 @@ export function ActikoPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const { activities } = useActivities();
   const { logs } = useActivityLogsByDate(date);
+  const iconBlobs = useLiveQuery(() => db.activityIconBlobs.toArray());
+  const iconBlobMap = useMemo(() => {
+    const map = new Map<string, DexieActivityIconBlob>();
+    for (const blob of iconBlobs ?? []) {
+      map.set(blob.activityId, blob);
+    }
+    return map;
+  }, [iconBlobs]);
 
   // ダイアログ状態
   const [selectedActivity, setSelectedActivity] =
@@ -100,6 +109,7 @@ export function ActikoPage() {
               key={activity.id}
               activity={activity}
               isDone={hasLogsForActivity(activity.id)}
+              iconBlob={iconBlobMap.get(activity.id)}
               onClick={() => handleActivityClick(activity)}
               onEdit={() => setEditActivity(activity)}
             />

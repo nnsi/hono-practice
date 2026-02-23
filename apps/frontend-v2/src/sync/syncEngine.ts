@@ -2,7 +2,8 @@ import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import { goalRepository } from "../db/goalRepository";
 import { taskRepository } from "../db/taskRepository";
-import { apiClient } from "../utils/apiClient";
+import { db } from "../db/schema";
+import { apiClient, customFetch } from "../utils/apiClient";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -10,6 +11,8 @@ import {
   mapApiGoal,
   mapApiTask,
 } from "../utils/apiMappers";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
 let isSyncing = false;
 let retryCount = 0;
 const BASE_DELAY_MS = 1000;
@@ -143,13 +146,66 @@ export const syncEngine = {
     }
   },
 
+  async syncActivityIconDeletions(): Promise<void> {
+    const queue = await activityRepository.getPendingIconDeletes();
+    if (queue.length === 0) return;
+
+    for (const item of queue) {
+      const res = await customFetch(
+        `${API_URL}/users/activities/${item.activityId}/icon`,
+        { method: "DELETE" },
+      );
+      if (res.ok || res.status === 404) {
+        await activityRepository.removeIconDeleteQueue(item.activityId);
+      }
+    }
+  },
+
+  async syncActivityIcons(): Promise<void> {
+    const blobs = await activityRepository.getPendingIconBlobs();
+    if (blobs.length === 0) return;
+
+    for (const blob of blobs) {
+      const activity = await db.activities.get(blob.activityId);
+      if (!activity || activity._syncStatus !== "synced") continue;
+
+      const res = await customFetch(
+        `${API_URL}/users/activities/${blob.activityId}/icon`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            base64: blob.base64,
+            mimeType: blob.mimeType,
+          }),
+        },
+      );
+
+      if (res.ok) {
+        const data = (await res.json()) as {
+          iconUrl: string;
+          iconThumbnailUrl: string;
+        };
+        await activityRepository.completeActivityIconSync(
+          blob.activityId,
+          data.iconUrl,
+          data.iconThumbnailUrl,
+        );
+      }
+    }
+  },
+
   async syncAll(): Promise<void> {
     if (isSyncing) return;
     isSyncing = true;
 
     try {
+      // Icon deletions first (before activity sync overwrites server URLs)
+      await syncEngine.syncActivityIconDeletions();
       // Sync in dependency order: activities first, then others
       await syncEngine.syncActivities();
+      // Upload icons after activity sync (activity must exist on server)
+      await syncEngine.syncActivityIcons();
       await Promise.all([
         syncEngine.syncActivityLogs(),
         syncEngine.syncGoals(),

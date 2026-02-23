@@ -45,7 +45,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 // hcに渡すcustom fetch（トークン付与、credentials制御、401リトライ）
-const customFetch: typeof fetch = async (input, init) => {
+export const customFetch: typeof fetch = async (input, init) => {
   const token = getToken();
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type")) {

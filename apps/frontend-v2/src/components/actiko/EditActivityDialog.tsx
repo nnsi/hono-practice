@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
+import { resizeImage } from "../../utils/imageResizer";
 import type { DexieActivity } from "../../db/schema";
+import { db } from "../../db/schema";
+import {
+  IconTypeSelector,
+  type IconSelectorValue,
+} from "./IconTypeSelector";
 
 export function EditActivityDialog({
   activity,
@@ -16,7 +23,6 @@ export function EditActivityDialog({
 }) {
   const [name, setName] = useState(activity.name);
   const [quantityUnit, setQuantityUnit] = useState(activity.quantityUnit);
-  const [emoji, setEmoji] = useState(activity.emoji);
   const [showCombinedStats, setShowCombinedStats] = useState(
     activity.showCombinedStats,
   );
@@ -26,6 +32,43 @@ export function EditActivityDialog({
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [iconChanged, setIconChanged] = useState(false);
+
+  // 既存のローカルblob取得
+  const existingBlob = useLiveQuery(
+    () => db.activityIconBlobs.get(activity.id),
+    [activity.id],
+  );
+
+  // アイコン初期値を構築
+  const buildInitialPreview = () => {
+    if (existingBlob) {
+      return `data:${existingBlob.mimeType};base64,${existingBlob.base64}`;
+    }
+    if (
+      activity.iconType === "upload" &&
+      (activity.iconThumbnailUrl || activity.iconUrl)
+    ) {
+      return activity.iconThumbnailUrl || activity.iconUrl || undefined;
+    }
+    return undefined;
+  };
+
+  const [icon, setIcon] = useState<IconSelectorValue>({
+    type: activity.iconType === "upload" ? "upload" : "emoji",
+    emoji: activity.emoji,
+    preview: buildInitialPreview(),
+  });
+
+  // existingBlobが後から読み込まれた場合にpreviewを更新
+  useEffect(() => {
+    if (existingBlob && !icon.file && icon.type === "upload" && !icon.preview) {
+      setIcon((prev) => ({
+        ...prev,
+        preview: `data:${existingBlob.mimeType};base64,${existingBlob.base64}`,
+      }));
+    }
+  }, [existingBlob, icon.file, icon.type, icon.preview]);
 
   // existingKindsが読み込まれたら初期化
   useEffect(() => {
@@ -40,6 +83,11 @@ export function EditActivityDialog({
     }
   }, [existingKinds]);
 
+  const handleIconChange = (newIcon: IconSelectorValue) => {
+    setIcon(newIcon);
+    setIconChanged(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -50,8 +98,9 @@ export function EditActivityDialog({
       {
         name: name.trim(),
         quantityUnit,
-        emoji,
+        emoji: icon.emoji,
         showCombinedStats,
+        iconType: icon.type,
       },
       kinds
         .filter((k) => k.name.trim())
@@ -61,6 +110,19 @@ export function EditActivityDialog({
           color: k.color,
         })),
     );
+
+    if (iconChanged) {
+      if (icon.type === "upload" && icon.file) {
+        const { base64, mimeType } = await resizeImage(icon.file, 256, 256);
+        await activityRepository.saveActivityIconBlob(
+          activity.id,
+          base64,
+          mimeType,
+        );
+      } else if (icon.type === "emoji" && activity.iconType === "upload") {
+        await activityRepository.clearActivityIcon(activity.id);
+      }
+    }
 
     syncEngine.syncActivities();
     onUpdated();
@@ -92,16 +154,15 @@ export function EditActivityDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 絵文字 */}
+          {/* アイコン */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              絵文字
+              アイコン
             </label>
-            <input
-              type="text"
-              value={emoji}
-              onChange={(e) => setEmoji(e.target.value)}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <IconTypeSelector
+              value={icon}
+              onChange={handleIconChange}
+              disabled={isSubmitting}
             />
           </div>
 

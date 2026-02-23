@@ -80,6 +80,16 @@ export type DexieTask = {
   _syncStatus: SyncStatus;
 };
 
+export type DexieActivityIconBlob = {
+  activityId: string;
+  base64: string;
+  mimeType: string;
+};
+
+export type DexieActivityIconDeleteQueue = {
+  activityId: string;
+};
+
 export type DexieAuthState = {
   id: "current";
   userId: string;
@@ -92,6 +102,8 @@ export class ActikoDatabase extends Dexie {
   activityKinds!: Table<DexieActivityKind, string>;
   goals!: Table<DexieGoal, string>;
   tasks!: Table<DexieTask, string>;
+  activityIconBlobs!: Table<DexieActivityIconBlob, string>;
+  activityIconDeleteQueue!: Table<DexieActivityIconDeleteQueue, string>;
   authState!: Table<DexieAuthState, string>;
 
   constructor() {
@@ -127,6 +139,16 @@ export class ActikoDatabase extends Dexie {
             }),
         ]);
       });
+    this.version(3).stores({
+      activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
+      activities: "id, orderIndex, _syncStatus",
+      activityKinds: "id, activityId, _syncStatus",
+      goals: "id, activityId, _syncStatus",
+      tasks: "id, _syncStatus, startDate, dueDate",
+      activityIconBlobs: "activityId",
+      activityIconDeleteQueue: "activityId",
+      authState: "id",
+    });
   }
 }
 

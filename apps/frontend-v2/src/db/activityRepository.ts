@@ -10,6 +10,7 @@ type CreateActivityInput = {
   quantityUnit: string;
   emoji: string;
   showCombinedStats: boolean;
+  iconType?: "emoji" | "upload";
   kinds?: { name: string; color: string }[];
 };
 
@@ -51,7 +52,7 @@ export const activityRepository = {
       name: input.name,
       label: "",
       emoji: input.emoji,
-      iconType: "emoji",
+      iconType: input.iconType ?? "emoji",
       iconUrl: null,
       iconThumbnailUrl: null,
       description: "",
@@ -90,7 +91,7 @@ export const activityRepository = {
     changes: Partial<
       Pick<
         DexieActivity,
-        "name" | "quantityUnit" | "emoji" | "showCombinedStats"
+        "name" | "quantityUnit" | "emoji" | "showCombinedStats" | "iconType"
       >
     >,
     updatedKinds?: { id?: string; name: string; color: string }[],
@@ -210,6 +211,69 @@ export const activityRepository = {
       .where("id")
       .anyOf(ids)
       .modify({ _syncStatus: "failed" as const });
+  },
+
+  // Icon blob management
+  async saveActivityIconBlob(
+    activityId: string,
+    base64: string,
+    mimeType: string,
+  ) {
+    await db.activityIconBlobs.put({ activityId, base64, mimeType });
+  },
+
+  async getActivityIconBlob(activityId: string) {
+    return db.activityIconBlobs.get(activityId);
+  },
+
+  async deleteActivityIconBlob(activityId: string) {
+    await db.activityIconBlobs.delete(activityId);
+  },
+
+  async getPendingIconBlobs() {
+    return db.activityIconBlobs.toArray();
+  },
+
+  async completeActivityIconSync(
+    activityId: string,
+    iconUrl: string,
+    iconThumbnailUrl: string,
+  ) {
+    await db.transaction(
+      "rw",
+      [db.activities, db.activityIconBlobs],
+      async () => {
+        await db.activities.update(activityId, { iconUrl, iconThumbnailUrl });
+        await db.activityIconBlobs.delete(activityId);
+      },
+    );
+  },
+
+  async clearActivityIcon(activityId: string) {
+    const now = new Date().toISOString();
+    await db.transaction(
+      "rw",
+      [db.activities, db.activityIconBlobs, db.activityIconDeleteQueue],
+      async () => {
+        await db.activities.update(activityId, {
+          iconType: "emoji" as const,
+          iconUrl: null,
+          iconThumbnailUrl: null,
+          updatedAt: now,
+          _syncStatus: "pending" as const,
+        });
+        await db.activityIconBlobs.delete(activityId);
+        await db.activityIconDeleteQueue.put({ activityId });
+      },
+    );
+  },
+
+  async getPendingIconDeletes() {
+    return db.activityIconDeleteQueue.toArray();
+  },
+
+  async removeIconDeleteQueue(activityId: string) {
+    await db.activityIconDeleteQueue.delete(activityId);
   },
 
   // Server upsert (used by initialSync and syncEngine)

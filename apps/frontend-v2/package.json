@@ -8,6 +8,7 @@
     "build-stg": "vite build --mode stg"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.92.9",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",

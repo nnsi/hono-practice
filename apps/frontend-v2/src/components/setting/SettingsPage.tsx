@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Settings, Database, Info, Trash2 } from "lucide-react";
+import { Settings, Database, Info, Key, Trash2 } from "lucide-react";
 import { db } from "../../db/schema";
+import { ApiKeyManager } from "./ApiKeyManager";
 
 type AppSettings = {
   showGoalOnStartup: boolean;
@@ -81,6 +82,15 @@ export function SettingsPage() {
               onChange={(v) => updateSetting("showInactiveDates", v)}
             />
           </div>
+        </section>
+
+        {/* APIキー管理 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <Key size={14} />
+            APIキー管理
+          </h2>
+          <ApiKeyManager />
         </section>
 
         {/* データ管理 */}
