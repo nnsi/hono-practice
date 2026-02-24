@@ -118,7 +118,7 @@ function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="h-svh w-full max-w-3xl mx-auto flex flex-col relative bg-white">
       {/* Header menu */}
-      <div className="absolute top-3 right-3 z-50" ref={menuRef}>
+      <div className="absolute top-0 right-3 h-12 flex items-center z-50" ref={menuRef}>
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -128,7 +128,7 @@ function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
           <Menu size={20} className="text-gray-500" />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lifted border border-gray-200/60 py-1 z-50 animate-scale-in origin-top-right">
+          <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lifted border border-gray-200/60 py-1 z-50 animate-scale-in origin-top-right">
             <Link
               to="/settings"
               onClick={() => setMenuOpen(false)}

@@ -10,5 +10,5 @@ export function formatQuantityWithUnit(
     return `${hours}時間${minutes}分`;
   }
   const rounded = Math.round(quantity * 100) / 100;
-  return `${rounded}${unit}`;
+  return `${rounded.toLocaleString()}${unit}`;
 }

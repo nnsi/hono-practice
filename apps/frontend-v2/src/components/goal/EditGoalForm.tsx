@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
+import { DatePickerField } from "../common/DatePickerField";
 import type { DexieActivity } from "../../db/schema";
 import type { Goal, UpdateGoalPayload } from "./types";
 import { getActivityIcon } from "./activityHelpers";
@@ -92,22 +93,22 @@ export function EditGoalForm({
             <label className="block text-xs font-medium text-gray-600 mb-1">
               開始日
             </label>
-            <input
-              type="date"
+            <DatePickerField
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setStartDate}
+              popoverAlign="left"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
               終了日
             </label>
-            <input
-              type="date"
+            <DatePickerField
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setEndDate}
+              placeholder="未設定"
+              allowClear
+              popoverAlign="right"
             />
           </div>
         </div>

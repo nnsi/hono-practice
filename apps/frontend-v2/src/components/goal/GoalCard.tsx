@@ -201,12 +201,12 @@ export function GoalCard({
               {statusBadge.label}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5 min-w-0">
             {/* B. インライン編集 */}
             {inlineEditing ? (
               <span
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center"
+                className="inline-flex items-center shrink-0"
               >
                 <input
                   ref={inlineInputRef}
@@ -227,15 +227,15 @@ export function GoalCard({
             ) : (
               <span
                 onClick={!isPast ? startInlineEdit : undefined}
-                className={!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}
+                className={`truncate ${!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}`}
                 title={!isPast ? "クリックで編集" : undefined}
               >
-                {goal.dailyTargetQuantity}
+                {goal.dailyTargetQuantity.toLocaleString()}
                 {activity?.quantityUnit ?? ""}/日
               </span>
             )}
-            <span className="text-gray-300">|</span>
-            <span>
+            <span className="text-gray-300 shrink-0">|</span>
+            <span className="whitespace-nowrap shrink-0">
               {dayjs(goal.startDate).format("M/D")}〜
               {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
             </span>
@@ -244,7 +244,7 @@ export function GoalCard({
 
         {/* 右側 */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className={`text-xs font-medium whitespace-nowrap ${balanceColor}`}>
+          <span className={`text-[11px] font-medium whitespace-nowrap ${balanceColor}`}>
             {balanceLabel}{Math.abs(goal.currentBalance).toLocaleString()}
             {activity?.quantityUnit ?? ""}
           </span>
