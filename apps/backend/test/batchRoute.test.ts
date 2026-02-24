@@ -208,11 +208,82 @@ describe("POST /batch", () => {
     });
   });
 
+  describe("リクエスト上限", () => {
+    it("6件以上のバッチリクエストが拒否される", async () => {
+      const token = await createJwtToken(TEST_USER_ID);
+
+      const res = await makeRequest(
+        [
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+        ],
+        token,
+      );
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body).toEqual({
+        message: "Too many batch requests (max 5)",
+      });
+    });
+
+    it("5件のバッチリクエストは許可される", async () => {
+      const token = await createJwtToken(TEST_USER_ID);
+
+      const res = await makeRequest(
+        [
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+          { path: "/users/tasks" },
+        ],
+        token,
+      );
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toHaveLength(5);
+    });
+
+    it("空のバッチリクエストは許可される", async () => {
+      const token = await createJwtToken(TEST_USER_ID);
+
+      const res = await makeRequest([], token);
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toHaveLength(0);
+    });
+  });
+
   describe("認証", () => {
     it("認証なしでリクエストすると401が返される", async () => {
       const res = await makeRequest([{ path: "/users/tasks" }]);
 
       expect(res.status).toBe(401);
     });
+  });
+});
+
+describe("secureHeaders", () => {
+  it("レスポンスにセキュリティヘッダーが含まれる", async () => {
+    const res = await app.request("/", {
+      method: "GET",
+    }, {
+      DB: testDB,
+      NODE_ENV: "test",
+      APP_URL: "http://localhost:1357",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
+    expect(res.headers.get("Referrer-Policy")).toBe("no-referrer");
+    expect(res.headers.get("X-Permitted-Cross-Domain-Policies")).toBe("none");
   });
 });

@@ -112,6 +112,58 @@ test("GET tasks / with valid date query", async () => {
   expect(res.status).toEqual(200);
 });
 
+test("POST task / タイトルが200文字を超えると400", async () => {
+  const route = createTaskRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$post({
+    json: {
+      title: "a".repeat(201),
+      startDate: "2021-01-01",
+    },
+  });
+
+  expect(res.status).toEqual(400);
+});
+
+test("POST task / メモが2000文字を超えると400", async () => {
+  const route = createTaskRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$post({
+    json: {
+      title: "test",
+      startDate: "2021-01-01",
+      memo: "a".repeat(2001),
+    },
+  });
+
+  expect(res.status).toEqual(400);
+});
+
+test("POST task / 上限ギリギリ(200文字タイトル)は成功", async () => {
+  const route = createTaskRoute();
+  const app = new Hono().use(mockAuthMiddleware).route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$post({
+    json: {
+      title: "a".repeat(200),
+      startDate: "2021-01-01",
+    },
+  });
+
+  expect(res.status).toEqual(200);
+});
+
 test("GET tasks/archived / success", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
