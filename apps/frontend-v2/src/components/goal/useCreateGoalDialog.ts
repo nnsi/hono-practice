@@ -30,7 +30,8 @@ export function useCreateGoalDialog(
       setErrorMsg("アクティビティを選択してください");
       return;
     }
-    if (Number(target) <= 0) {
+    const parsedTarget = Number(target);
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
       setErrorMsg("日次目標は0より大きい数値を入力してください");
       return;
     }
@@ -43,7 +44,7 @@ export function useCreateGoalDialog(
     try {
       await onCreate({
         activityId,
-        dailyTargetQuantity: Number(target),
+        dailyTargetQuantity: parsedTarget,
         startDate,
         ...(endDate ? { endDate } : {}),
       });

@@ -26,10 +26,12 @@ export function EditGoalForm({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsedTarget = Number(target);
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) return;
     setSaving(true);
     try {
       await onSave({
-        dailyTargetQuantity: Number(target),
+        dailyTargetQuantity: parsedTarget,
         startDate,
         endDate: endDate || null,
       });
