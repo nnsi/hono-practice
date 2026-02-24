@@ -80,8 +80,8 @@ export function ApiKeyList({
               </button>
             )}
           </div>
-          <div className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
-            {apiKey.key}
+          <div className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded select-none">
+            {apiKey.key.startsWith("api_") ? apiKey.key : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
           </div>
           <div className="flex gap-3 text-xs text-gray-400">
             <span>作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}</span>

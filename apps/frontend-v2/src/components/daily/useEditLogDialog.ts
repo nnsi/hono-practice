@@ -25,9 +25,11 @@ export function useEditLogDialog(
   // handlers
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const parsed = quantity !== "" ? Number(quantity) : null;
+    if (parsed !== null && !Number.isFinite(parsed)) return;
     setIsSubmitting(true);
     await activityLogRepository.updateActivityLog(log.id, {
-      quantity: quantity !== "" ? Number(quantity) : null,
+      quantity: parsed,
       memo,
       activityKindId: selectedKindId,
     });

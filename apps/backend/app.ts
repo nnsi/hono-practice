@@ -1,4 +1,5 @@
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 
 import { apiV1Route } from "./api/v1";
 import { AppError } from "./error";
@@ -27,6 +28,7 @@ import { loggerMiddleware } from "./middleware/loggerMiddleware";
 export const app = newHonoWithErrorHandling();
 
 app.use("*", loggerMiddleware());
+app.use("*", secureHeaders());
 
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";
@@ -91,6 +93,10 @@ const routes = app
   .route("/r2", r2ProxyRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
+
+    if (requests.length > 5) {
+      throw new AppError("Too many batch requests (max 5)", 400);
+    }
 
     for (const req of requests) {
       // クエリストリングを除いたパスを取得

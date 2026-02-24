@@ -13,6 +13,7 @@ public
 tmp
 nul
 .playwright-mcp
+.playwright-cli
 
 # Terraform
 terraform/*.tfvars

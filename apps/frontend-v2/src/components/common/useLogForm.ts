@@ -56,9 +56,11 @@ export function useLogForm(
 
   const handleManualSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const parsed = quantity !== "" ? Number(quantity) : null;
+    if (parsed !== null && !Number.isFinite(parsed)) return;
     setIsSubmitting(true);
     await saveLog({
-      quantity: quantity !== "" ? Number(quantity) : null,
+      quantity: parsed,
       memo,
       selectedKindId,
     });

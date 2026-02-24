@@ -14,6 +14,18 @@ import {
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
+export async function clearLocalDataForUserSwitch() {
+  await db.activityLogs.clear();
+  await db.activities.clear();
+  await db.activityKinds.clear();
+  await db.goals.clear();
+  await db.tasks.clear();
+  await db.activityIconBlobs.clear();
+  await db.activityIconDeleteQueue.clear();
+  await db.authState.clear();
+  localStorage.removeItem(LAST_SYNCED_KEY);
+}
+
 export async function performInitialSync(userId: string) {
   // authState を更新
   await db.authState.put({

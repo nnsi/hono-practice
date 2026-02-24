@@ -1,28 +1,35 @@
 import { useState, useEffect, useCallback } from "react";
 import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload } from "lucide-react";
+import { z } from "zod";
 import { db } from "../../db/schema";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { apiClient } from "../../utils/apiClient";
 
-type AppSettings = {
-  showGoalOnStartup: boolean;
-  hideGoalGraph: boolean;
-  showInactiveDates: boolean;
-};
+const AppSettingsSchema = z.object({
+  showGoalOnStartup: z.boolean(),
+  hideGoalGraph: z.boolean(),
+  showInactiveDates: z.boolean(),
+});
+
+type AppSettings = z.infer<typeof AppSettingsSchema>;
+
+const defaultSettings: AppSettings = { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };
 
 function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const stored = localStorage.getItem("actiko-v2-settings");
     if (stored) {
       try {
-        return JSON.parse(stored) as AppSettings;
+        const parsed = AppSettingsSchema.safeParse(JSON.parse(stored));
+        if (parsed.success) return parsed.data;
+        localStorage.removeItem("actiko-v2-settings");
       } catch {
         localStorage.removeItem("actiko-v2-settings");
       }
     }
-    return { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };
+    return defaultSettings;
   });
 
   const updateSetting = (key: keyof AppSettings, value: boolean) => {
