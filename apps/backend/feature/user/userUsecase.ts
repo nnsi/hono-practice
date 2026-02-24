@@ -30,6 +30,7 @@ export type UserUsecase = {
     secret: string,
   ) => Promise<string>;
   getUserById: (userId: UserId) => Promise<UserWithProviders>;
+  deleteUser: (userId: UserId) => Promise<void>;
 };
 
 export function newUserUsecase(
@@ -42,6 +43,7 @@ export function newUserUsecase(
   return {
     createUser: createUser(repo, passwordVerifier, tracer),
     getUserById: getUserById(repo, userProviderRepo, tracer),
+    deleteUser: deleteUser(repo, tracer),
   };
 }
 
@@ -110,5 +112,11 @@ function getUserById(
       providerEmails:
         Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
     };
+  };
+}
+
+function deleteUser(repo: UserRepository, tracer: Tracer) {
+  return async (userId: UserId): Promise<void> => {
+    await tracer.span("db.deleteUser", () => repo.deleteUser(userId));
   };
 }

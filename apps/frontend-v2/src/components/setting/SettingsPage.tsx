@@ -92,6 +92,11 @@ export function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
+    try {
+      await apiClient.user.me.$delete();
+    } catch {
+      // オフライン時もローカル削除は続行
+    }
     await db.delete();
     clearToken();
     localStorage.removeItem("actiko-v2-settings");

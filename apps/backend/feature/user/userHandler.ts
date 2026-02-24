@@ -10,6 +10,7 @@ export function newUserHandler(uc: UserUsecase, authH: AuthHandler) {
   return {
     createUser: createUser(uc, authH),
     getMe: getMe(uc),
+    deleteMe: deleteMe(uc),
   };
 }
 
@@ -32,5 +33,11 @@ function getMe(uc: UserUsecase) {
       throw new AppError("failed to parse user", 500);
     }
     return parsedUser.data;
+  };
+}
+
+function deleteMe(uc: UserUsecase) {
+  return async (userId: UserId): Promise<void> => {
+    await uc.deleteUser(userId);
   };
 }
