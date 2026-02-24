@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload } from "lucide-react";
+import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { db } from "../../db/schema";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
 import { CSVImportModal } from "../csv/CSVImportModal";
-import { apiClient } from "../../utils/apiClient";
+import { apiClient, clearToken } from "../../utils/apiClient";
 
 const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
@@ -82,12 +82,20 @@ function useGoogleAccount() {
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
     await db.delete();
     window.location.reload();
+  };
+
+  const handleDeleteAccount = async () => {
+    await db.delete();
+    clearToken();
+    localStorage.removeItem("actiko-v2-settings");
+    window.location.href = "/";
   };
 
   return (
@@ -169,6 +177,40 @@ export function SettingsPage() {
                 {google.message.text}
               </p>
             )}
+            <div className="border-t border-gray-100 mt-3 pt-3">
+              {!showDeleteAccountConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteAccountConfirm(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <AlertTriangle size={16} />
+                  アカウントを削除
+                </button>
+              ) : (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                  <p className="text-sm text-red-700 font-medium">
+                    アカウントを削除すると、ローカルに保存されたデータが全て削除されます。この操作は取り消せません。
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      削除する
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteAccountConfirm(false)}
+                      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
