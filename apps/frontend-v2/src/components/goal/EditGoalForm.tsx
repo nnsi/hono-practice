@@ -52,7 +52,7 @@ export function EditGoalForm({
   };
 
   return (
-    <div className="rounded-xl border-2 border-blue-300 bg-blue-50/30 shadow-sm overflow-hidden">
+    <div className="rounded-xl border-2 border-blue-300 bg-blue-50/30 shadow-sm">
       <form onSubmit={handleSave} className="p-4 space-y-3">
         {/* ヘッダー */}
         <div className="flex items-center gap-2 justify-between">
