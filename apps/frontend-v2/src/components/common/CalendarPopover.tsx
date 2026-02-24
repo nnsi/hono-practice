@@ -7,6 +7,8 @@ type CalendarPopoverProps = {
   onDateSelect: (date: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  /** Override the outer positioning classes (default: centered below trigger) */
+  popoverClassName?: string;
 };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -16,6 +18,7 @@ export function CalendarPopover({
   onDateSelect,
   isOpen,
   onClose,
+  popoverClassName,
 }: CalendarPopoverProps) {
   const [viewMonth, setViewMonth] = useState(() =>
     dayjs(selectedDate).startOf("month"),
@@ -84,8 +87,12 @@ export function CalendarPopover({
   return (
     <div
       ref={ref}
-      className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 z-50 w-[280px] animate-scale-in origin-top"
+      className={
+        popoverClassName ??
+        "absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 w-[280px]"
+      }
     >
+      <div className="bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 animate-scale-in origin-top">
       {/* 月ナビ */}
       <div className="flex items-center justify-between mb-2">
         <button
@@ -160,6 +167,7 @@ export function CalendarPopover({
           今日に移動
         </button>
       )}
+      </div>
     </div>
   );
 }

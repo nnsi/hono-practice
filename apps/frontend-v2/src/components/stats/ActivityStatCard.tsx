@@ -92,13 +92,13 @@ export function ActivityStatCard({
             {stat.kinds.map((kind) => (
               <div
                 key={kind.id || kind.name}
-                className="bg-white rounded-lg p-3 border shadow-sm"
+                className="bg-white rounded-lg p-3 border shadow-sm min-w-0"
               >
-                <div className="text-xs text-gray-500 mb-0.5">
+                <div className="text-xs text-gray-500 mb-0.5 truncate">
                   {kind.name}
                 </div>
                 <div
-                  className="text-lg font-bold"
+                  className="text-sm font-bold leading-tight break-all"
                   style={{ color: kindColors[kind.name] }}
                 >
                   {formatQuantityWithUnit(kind.total, stat.quantityUnit)}
