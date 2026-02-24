@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { useLiveQuery } from "dexie-react-hooks";
+
 import {
   ChevronDown,
   ChevronUp,
@@ -16,17 +18,20 @@ import { getActivityIcon } from "./activityHelpers";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatsDetail } from "./GoalStatsDetail";
 
+dayjs.extend(isSameOrBefore);
+
 // --- C. ステータスバッジ ---
 type StatusBadge = { label: string; className: string };
 
 function getStatusBadge(
   goal: Goal,
   hasTodayLog: boolean,
+  balance: number,
 ): StatusBadge {
   if (!goal.isActive) {
     return { label: "終了", className: "bg-gray-200 text-gray-600" };
   }
-  if (goal.currentBalance < 0) {
+  if (balance < 0) {
     return { label: "負債あり", className: "bg-red-100 text-red-700" };
   }
   if (hasTodayLog) {
@@ -36,11 +41,13 @@ function getStatusBadge(
 }
 
 // --- D. グラデーション背景 ---
-function progressGradient(percent: number): string {
-  if (percent <= 50) {
-    return "linear-gradient(to right, white, #eff6ff)"; // white -> blue-50
-  }
-  return "linear-gradient(to right, white, #dbeafe)"; // white -> blue-100
+function progressGradient(completionPercent: number, balance: number): string {
+  const color = balance > 0
+    ? "rgba(34, 197, 94, 0.2)"
+    : balance < 0
+      ? "rgba(239, 68, 68, 0.2)"
+      : "rgba(156, 163, 175, 0.2)";
+  return `linear-gradient(to right, ${color} ${completionPercent}%, white ${completionPercent}%)`;
 }
 
 export function GoalCard({
@@ -109,10 +116,89 @@ export function GoalCard({
   );
   const hasTodayLog = (todayLogs ?? 0) > 0;
 
-  const statusBadge = getStatusBadge(goal, hasTodayLog);
+  // --- 完了率（背景グラデーション用、ローカルデータから算出） ---
+  const today = dayjs().format("YYYY-MM-DD");
+  const actualEndDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
 
-  const balanceColor = goal.currentBalance < 0 ? "text-red-600" : "text-blue-600";
-  const balanceLabel = goal.currentBalance < 0 ? "負債" : "貯金";
+  const periodLogs = useLiveQuery(
+    () =>
+      db.activityLogs
+        .where("date")
+        .between(goal.startDate, actualEndDate, true, true)
+        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
+        .toArray(),
+    [goal.activityId, goal.startDate, actualEndDate],
+  );
+
+  const { completionPercent, localBalance } = useMemo(() => {
+    const localTargetSoFar = goal.dailyTargetQuantity * elapsedDays;
+    const localTargetTotal = goal.dailyTargetQuantity * totalDays;
+    const localActual = (periodLogs ?? []).reduce((sum, l) => sum + (l.quantity ?? 0), 0);
+    const balance = localActual - localTargetSoFar;
+    if (localTargetTotal <= 0) return { completionPercent: 0, localBalance: balance };
+    return {
+      completionPercent: Math.min((localActual / localTargetTotal) * 100, 100),
+      localBalance: balance,
+    };
+  }, [goal.dailyTargetQuantity, elapsedDays, totalDays, periodLogs]);
+
+  // --- やらなかった日付（showInactiveDates設定時） ---
+  const showInactiveDates = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("actiko-v2-settings");
+      if (!raw) return false;
+      const settings = JSON.parse(raw);
+      return settings.showInactiveDates === true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const monthStart = useMemo(() => dayjs().startOf("month").format("YYYY-MM-DD"), []);
+  const monthEnd = useMemo(() => dayjs().endOf("month").format("YYYY-MM-DD"), []);
+
+  const effectiveStart = useMemo(
+    () => (goal.startDate > monthStart ? goal.startDate : monthStart),
+    [goal.startDate, monthStart],
+  );
+  const effectiveEnd = useMemo(() => {
+    const end = goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
+    return end > todayStr ? todayStr : end;
+  }, [goal.endDate, monthEnd, todayStr]);
+
+  const monthLogs = useLiveQuery(
+    () => {
+      if (!showInactiveDates) return [];
+      return db.activityLogs
+        .where("date")
+        .between(effectiveStart, effectiveEnd, true, true)
+        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
+        .toArray();
+    },
+    [goal.activityId, effectiveStart, effectiveEnd, showInactiveDates],
+  );
+
+  const inactiveDates = useMemo(() => {
+    if (!showInactiveDates || !monthLogs) return [];
+    const activeDates = new Set(
+      monthLogs.filter((l) => (l.quantity ?? 0) > 0).map((l) => l.date),
+    );
+    const result: string[] = [];
+    let d = dayjs(effectiveStart);
+    while (d.isSameOrBefore(effectiveEnd)) {
+      const dateStr = d.format("YYYY-MM-DD");
+      if (!activeDates.has(dateStr)) {
+        result.push(dateStr);
+      }
+      d = d.add(1, "day");
+    }
+    return result;
+  }, [showInactiveDates, monthLogs, effectiveStart, effectiveEnd]);
+
+  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
+
+  const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
+  const balanceLabel = localBalance < 0 ? "負債" : "貯金";
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -170,7 +256,7 @@ export function GoalCard({
   // --- D. 背景スタイル ---
   const cardBg = isPast
     ? undefined
-    : { background: progressGradient(progressPercent) };
+    : { background: progressGradient(completionPercent, localBalance) };
 
   return (
     <div
@@ -245,7 +331,7 @@ export function GoalCard({
         {/* 右側 */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <span className={`text-[11px] font-medium whitespace-nowrap ${balanceColor}`}>
-            {balanceLabel}{Math.abs(goal.currentBalance).toLocaleString()}
+            {balanceLabel}{Math.abs(localBalance).toLocaleString()}
             {activity?.quantityUnit ?? ""}
           </span>
           {/* A. 直接ログ作成ボタン */}
@@ -326,6 +412,20 @@ export function GoalCard({
           <span>全{totalDays}日</span>
         </div>
       </div>
+
+      {/* やらなかった日付 */}
+      {showInactiveDates && inactiveDates.length > 0 && (
+        <div className="mt-1 px-3 py-1 text-xs text-gray-500">
+          <span className="font-medium">やらなかった日付: </span>
+          {inactiveDates.slice(0, 3).map((date, index) => (
+            <span key={date}>
+              {index > 0 && ", "}
+              {new Date(date).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+            </span>
+          ))}
+          {inactiveDates.length > 3 && <span> 他{inactiveDates.length - 3}日</span>}
+        </div>
+      )}
 
       {/* 展開時: 統計詳細 */}
       {isExpanded && (

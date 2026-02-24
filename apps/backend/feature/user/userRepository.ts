@@ -2,12 +2,13 @@ import { type User, type UserId, createUserEntity } from "@backend/domain";
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { users } from "@infra/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 export type UserRepository<T = any> = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
+  deleteUser: (userId: UserId) => Promise<void>;
   withTx: (tx: T) => UserRepository<T>;
 };
 
@@ -18,6 +19,7 @@ export function newUserRepository(
     createUser: createUser(db),
     getUserById: getUserById(db),
     getUserByLoginId: getUserByLoginId(db),
+    deleteUser: deleteUser(db),
     withTx: (tx) => newUserRepository(tx),
   };
 }
@@ -54,7 +56,7 @@ function createUser(db: QueryExecutor) {
 function getUserById(db: QueryExecutor) {
   return async (userId: string) => {
     const result = await db.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: and(eq(users.id, userId), isNull(users.deletedAt)),
     });
 
     if (!result) {
@@ -70,7 +72,7 @@ function getUserById(db: QueryExecutor) {
 function getUserByLoginId(db: QueryExecutor) {
   return async (loginId: string) => {
     const result = await db.query.users.findFirst({
-      where: eq(users.loginId, loginId),
+      where: and(eq(users.loginId, loginId), isNull(users.deletedAt)),
     });
 
     if (!result) {
@@ -80,5 +82,14 @@ function getUserByLoginId(db: QueryExecutor) {
     const user = createUserEntity({ ...result, type: "persisted" });
 
     return user;
+  };
+}
+
+function deleteUser(db: QueryExecutor) {
+  return async (userId: string) => {
+    await db
+      .update(users)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
   };
 }

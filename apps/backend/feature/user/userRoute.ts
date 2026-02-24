@@ -102,6 +102,11 @@ export function createUserRoute() {
       } catch (_e) {
         return c.json({ message: "unauthorized" }, 401);
       }
+    })
+    .delete("/me", authMiddleware, async (c) => {
+      const userId = c.get("userId");
+      await c.var.h.deleteMe(userId);
+      return c.body(null, 204);
     });
 }
 
