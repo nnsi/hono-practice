@@ -1,71 +1,34 @@
-import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { Target, Plus } from "lucide-react";
-import { useActivities } from "../../hooks/useActivities";
-import { useGoals } from "../../hooks/useGoals";
-import { goalRepository } from "../../db/goalRepository";
-import { syncEngine } from "../../sync/syncEngine";
-import type { DexieActivity } from "../../db/schema";
-import type { CreateGoalPayload, UpdateGoalPayload } from "./types";
 import { GoalCard } from "./GoalCard";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { RecordDialog } from "../actiko/RecordDialog";
+import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
-  const { activities } = useActivities();
-  const { goals } = useGoals();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
-  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
-  // A. RecordDialog用state
-  const [recordActivity, setRecordActivity] = useState<DexieActivity | null>(null);
-
-  const activityMap = useMemo(() => {
-    const map = new Map<string, DexieActivity>();
-    for (const a of activities) {
-      map.set(a.id, a);
-    }
-    return map;
-  }, [activities]);
-
-  const currentGoals = useMemo(
-    () => goals.filter((g) => g.isActive),
-    [goals],
-  );
-  const pastGoals = useMemo(
-    () => goals.filter((g) => !g.isActive),
-    [goals],
-  );
-
-  const handleGoalCreated = async (payload: CreateGoalPayload) => {
-    await goalRepository.createGoal(payload);
-    setCreateDialogOpen(false);
-    syncEngine.syncGoals();
-  };
-
-  const handleGoalUpdated = async (
-    goalId: string,
-    payload: UpdateGoalPayload,
-  ) => {
-    await goalRepository.updateGoal(goalId, payload);
-    setEditingGoalId(null);
-    syncEngine.syncGoals();
-  };
-
-  const handleGoalDeleted = async (goalId: string) => {
-    await goalRepository.softDeleteGoal(goalId);
-    syncEngine.syncGoals();
-  };
-
-  const handleToggleExpand = (goalId: string) => {
-    setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
-  };
+  const {
+    activities,
+    activityMap,
+    currentGoals,
+    pastGoals,
+    createDialogOpen,
+    setCreateDialogOpen,
+    editingGoalId,
+    setEditingGoalId,
+    expandedGoalId,
+    recordActivity,
+    setRecordActivity,
+    handleGoalCreated,
+    handleGoalUpdated,
+    handleGoalDeleted,
+    handleToggleExpand,
+  } = useGoalsPage();
 
   return (
     <div className="bg-white">
       {/* ヘッダー */}
       <header className="sticky top-0 sticky-header z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-3">
+        <div className="flex items-center justify-between px-4 pr-14 h-12">
           <h1 className="text-lg font-bold flex items-center gap-2">
             <Target size={20} className="text-amber-500" />
             目標

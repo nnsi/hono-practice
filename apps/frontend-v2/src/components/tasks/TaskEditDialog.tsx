@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { X } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { taskRepository } from "../../db/taskRepository";
-import { syncEngine } from "../../sync/syncEngine";
 import type { TaskItem } from "./types";
+import { useTaskEditDialog } from "./useTaskEditDialog";
 
 export function TaskEditDialog({
   task,
@@ -16,29 +14,19 @@ export function TaskEditDialog({
   onSuccess: () => void;
   onDelete: (id: string) => void;
 }) {
-  const [title, setTitle] = useState(task.title);
-  const [startDate, setStartDate] = useState(task.startDate || "");
-  const [dueDate, setDueDate] = useState(task.dueDate || "");
-  const [memo, setMemo] = useState(task.memo || "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isArchived = !!task.archivedAt;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
-    setIsSubmitting(true);
-    await taskRepository.updateTask(task.id, {
-      title: title.trim(),
-      startDate: startDate || null,
-      dueDate: dueDate || null,
-      memo: memo.trim(),
-    });
-    setIsSubmitting(false);
-    syncEngine.syncTasks();
-    onSuccess();
-  };
+  const {
+    title,
+    setTitle,
+    startDate,
+    setStartDate,
+    dueDate,
+    setDueDate,
+    memo,
+    setMemo,
+    isSubmitting,
+    isArchived,
+    handleSubmit,
+  } = useTaskEditDialog(task, onSuccess);
 
   return (
     <ModalOverlay onClose={onClose}>

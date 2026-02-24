@@ -1,99 +1,43 @@
-import { useState, useMemo } from "react";
-import dayjs from "dayjs";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
-import { useActiveTasks, useArchivedTasks } from "../../hooks/useTasks";
-import { taskRepository } from "../../db/taskRepository";
-import { syncEngine } from "../../sync/syncEngine";
-import type { TaskItem } from "./types";
-import { groupTasksByTimeline } from "./taskGrouping";
 import { TaskGroup } from "./TaskGroup";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
-  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
-  const { tasks: activeTasks } = useActiveTasks();
-  const { tasks: archivedTasks } = useArchivedTasks();
-
-  const [showCompleted, setShowCompleted] = useState(false);
-  const [showFuture, setShowFuture] = useState(false);
-
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  // DexieTask -> TaskItem mapping (structural compatibility)
-  const tasks: TaskItem[] = activeTasks;
-
-  // Single grouping with everything visible (for counts)
-  const allGrouped = useMemo(
-    () =>
-      groupTasksByTimeline(tasks, {
-        showCompleted: true,
-        showFuture: true,
-        completedInTheirCategories: true,
-      }),
-    [tasks],
-  );
-
-  // Filtered view based on toggle state
-  const groupedTasks = useMemo(
-    () =>
-      groupTasksByTimeline(tasks, {
-        showCompleted,
-        showFuture,
-        completedInTheirCategories: true,
-      }),
-    [tasks, showCompleted, showFuture],
-  );
-
-  const completedCount = allGrouped.completed.length;
-  const futureCount = allGrouped.notStarted.length + allGrouped.future.length;
-
-  // Actions
-  const handleToggleDone = async (task: TaskItem) => {
-    const newDoneDate = task.doneDate
-      ? null
-      : new Date().toISOString().split("T")[0];
-    await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
-    syncEngine.syncTasks();
-  };
-
-  const handleDelete = async (id: string) => {
-    await taskRepository.softDeleteTask(id);
-    setDeleteConfirmId(null);
-    syncEngine.syncTasks();
-  };
-
-  const handleArchive = async (task: TaskItem) => {
-    await taskRepository.archiveTask(task.id);
-    syncEngine.syncTasks();
-  };
-
-  const handleMoveToToday = async (task: TaskItem) => {
-    const today = dayjs().format("YYYY-MM-DD");
-    await taskRepository.updateTask(task.id, { startDate: today });
-    syncEngine.syncTasks();
-  };
-
-  const handleCreateSuccess = () => {
-    setCreateDialogOpen(false);
-  };
-
-  const handleEditSuccess = () => {
-    setEditingTask(null);
-  };
-
-  const hasAnyTasks =
-    tasks.length > 0 ||
-    Object.values(groupedTasks).some((g) => g.length > 0);
+  const {
+    activeTab,
+    setActiveTab,
+    showCompleted,
+    setShowCompleted,
+    showFuture,
+    setShowFuture,
+    tasks,
+    archivedTasks,
+    groupedTasks,
+    completedCount,
+    futureCount,
+    hasAnyTasks,
+    createDialogOpen,
+    setCreateDialogOpen,
+    editingTask,
+    setEditingTask,
+    deleteConfirmId,
+    setDeleteConfirmId,
+    handleToggleDone,
+    handleDelete,
+    handleArchive,
+    handleMoveToToday,
+    handleCreateSuccess,
+    handleEditSuccess,
+  } = useTasksPage();
 
   return (
     <div className="bg-white min-h-full">
       {/* タブ */}
       <div className="sticky top-0 sticky-header z-10">
-        <div className="flex pr-12 px-1 py-1.5">
+        <div className="flex items-center px-1 pr-14 h-12">
           <button
             type="button"
             onClick={() => setActiveTab("active")}

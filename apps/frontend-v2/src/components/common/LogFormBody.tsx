@@ -1,18 +1,11 @@
-import { useState } from "react";
 import { Play, Square, RotateCcw } from "lucide-react";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { useTimer } from "../../hooks/useTimer";
-import { activityLogRepository } from "../../db/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
 import type { DexieActivity } from "../../db/schema";
 import {
-  isTimeUnit,
-  getTimeUnitType,
   convertSecondsToUnit,
   formatElapsedTime,
-  generateTimeMemo,
   type TimeUnitType,
 } from "../../utils/timeUtils";
+import { useLogForm, type UseTimerReturn } from "./useLogForm";
 
 /**
  * Activity記録のフォーム本体（タブ切り替え + 手動入力 + タイマー）
@@ -27,67 +20,23 @@ export function LogFormBody({
   date: string;
   onDone: () => void;
 }) {
-  const timerEnabled = isTimeUnit(activity.quantityUnit);
-  const timeUnitType = getTimeUnitType(activity.quantityUnit);
-  const [activeTab, setActiveTab] = useState<"manual" | "timer">(
-    timerEnabled ? "timer" : "manual",
-  );
-  const [quantity, setQuantity] = useState("1");
-  const [memo, setMemo] = useState("");
-  const [selectedKindId, setSelectedKindId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { kinds } = useActivityKinds(activity.id);
-  const timer = useTimer(activity.id);
-
-  const effectiveTab =
-    timerEnabled && timer.isRunning ? "timer" : activeTab;
-
-  const saveLog = async (params: {
-    quantity: number | null;
-    memo: string;
-    selectedKindId: string | null;
-  }) => {
-    await activityLogRepository.createActivityLog({
-      activityId: activity.id,
-      activityKindId: params.selectedKindId,
-      quantity: params.quantity,
-      memo: params.memo,
-      date,
-      time: null,
-    });
-    syncEngine.syncActivityLogs();
-  };
-
-  const handleManualSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    await saveLog({
-      quantity: quantity !== "" ? Number(quantity) : null,
-      memo,
-      selectedKindId,
-    });
-    setIsSubmitting(false);
-    onDone();
-  };
-
-  const handleTimerSave = async () => {
-    setIsSubmitting(true);
-    const seconds = timer.getElapsedSeconds();
-    const convertedQuantity = convertSecondsToUnit(seconds, timeUnitType);
-    const startDate = timer.getStartDate();
-    const endDate = new Date();
-    const timerMemo = startDate ? generateTimeMemo(startDate, endDate) : "";
-
-    await saveLog({
-      quantity: convertedQuantity,
-      memo: timerMemo,
-      selectedKindId,
-    });
-    timer.reset();
-    setIsSubmitting(false);
-    onDone();
-  };
+  const {
+    timerEnabled,
+    effectiveTab,
+    setActiveTab,
+    quantity,
+    setQuantity,
+    memo,
+    setMemo,
+    selectedKindId,
+    setSelectedKindId,
+    isSubmitting,
+    kinds,
+    timer,
+    timeUnitType,
+    handleManualSubmit,
+    handleTimerSave,
+  } = useLogForm(activity, date, onDone);
 
   return (
     <>
@@ -151,7 +100,6 @@ export function LogFormBody({
               onChange={(e) => setQuantity(e.target.value)}
               onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
               min="0"
               step="any"
             />
@@ -195,7 +143,7 @@ function TimerPanel({
   isSubmitting,
   onSave,
 }: {
-  timer: ReturnType<typeof useTimer>;
+  timer: UseTimerReturn;
   activity: DexieActivity;
   kinds: { id: string; name: string; color: string | null }[];
   selectedKindId: string | null;

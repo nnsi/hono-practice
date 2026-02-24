@@ -1,69 +1,45 @@
-import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useActivities } from "../../hooks/useActivities";
-import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { db, type DexieActivity, type DexieActivityIconBlob } from "../../db/schema";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
 import { CalendarPopover } from "../common/CalendarPopover";
+import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
-  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const { activities } = useActivities();
-  const { logs } = useActivityLogsByDate(date);
-  const iconBlobs = useLiveQuery(() => db.activityIconBlobs.toArray());
-  const iconBlobMap = useMemo(() => {
-    const map = new Map<string, DexieActivityIconBlob>();
-    for (const blob of iconBlobs ?? []) {
-      map.set(blob.activityId, blob);
-    }
-    return map;
-  }, [iconBlobs]);
-
-  // ダイアログ状態
-  const [selectedActivity, setSelectedActivity] =
-    useState<DexieActivity | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [createActivityOpen, setCreateActivityOpen] = useState(false);
-  const [editActivity, setEditActivity] = useState<DexieActivity | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const goToPrev = () =>
-    setDate(dayjs(date).subtract(1, "day").format("YYYY-MM-DD"));
-  const goToNext = () =>
-    setDate(dayjs(date).add(1, "day").format("YYYY-MM-DD"));
-
-  const isToday = date === dayjs().format("YYYY-MM-DD");
-
-  const hasLogsForActivity = useCallback(
-    (activityId: string) => logs.some((l) => l.activityId === activityId),
-    [logs],
-  );
-
-  const handleActivityClick = (activity: DexieActivity) => {
-    setSelectedActivity(activity);
-    setDialogOpen(true);
-  };
-
-
-  // Dexie useLiveQueryで自動更新されるため、refreshは不要
-  const handleActivityChanged = () => {
-    // useLiveQuery が自動でUIを更新するため、何もしなくてOK
-  };
+  const {
+    date,
+    setDate,
+    goToPrev,
+    goToNext,
+    isToday,
+    activities,
+    iconBlobMap,
+    selectedActivity,
+    setSelectedActivity,
+    dialogOpen,
+    setDialogOpen,
+    createActivityOpen,
+    setCreateActivityOpen,
+    editActivity,
+    setEditActivity,
+    calendarOpen,
+    setCalendarOpen,
+    hasLogsForActivity,
+    handleActivityClick,
+    handleActivityChanged,
+  } = useActikoPage();
 
   return (
     <div className="bg-white">
       {/* ヘッダー */}
       <header className="sticky top-0 sticky-header z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-2.5 relative">
+        <div className="relative flex items-center justify-center h-12">
           <button
             type="button"
             onClick={goToPrev}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="absolute left-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
           </button>
@@ -77,7 +53,7 @@ export function ActikoPage() {
           <button
             type="button"
             onClick={goToNext}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="absolute right-14 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
           </button>
