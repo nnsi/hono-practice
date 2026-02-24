@@ -198,7 +198,6 @@ export function GoalCard({
   const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
 
   const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
-  const balanceLabel = localBalance < 0 ? "負債" : "貯金";
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -330,9 +329,10 @@ export function GoalCard({
 
         {/* 右側 */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className={`text-[11px] font-medium whitespace-nowrap ${balanceColor}`}>
-            {balanceLabel}{Math.abs(localBalance).toLocaleString()}
-            {activity?.quantityUnit ?? ""}
+          <span className={`text-[11px] font-medium text-right leading-tight ${balanceColor}`}>
+            <span className="whitespace-nowrap">{localBalance < 0 ? "-" : "+"}{Math.abs(localBalance).toLocaleString()}</span>
+            <br className="sm:hidden" />
+            <span className="text-[10px] sm:ml-0.5">{activity?.quantityUnit ?? ""}</span>
           </span>
           {/* A. 直接ログ作成ボタン */}
           {!isPast && onRecordOpen && (
@@ -427,9 +427,11 @@ export function GoalCard({
         </div>
       )}
 
-      {/* 展開時: 統計詳細 */}
+      {/* 展開時: 統計詳細（グラデーション背景を適用しない） */}
       {isExpanded && (
-        <GoalStatsDetail goal={goal} activity={activity} />
+        <div className="bg-white rounded-b-2xl">
+          <GoalStatsDetail goal={goal} activity={activity} />
+        </div>
       )}
     </div>
   );
