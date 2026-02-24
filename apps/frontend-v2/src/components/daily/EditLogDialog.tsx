@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { activityLogRepository } from "../../db/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
 import type { DexieActivity, DexieActivityLog } from "../../db/schema";
+import { useEditLogDialog } from "./useEditLogDialog";
 
 export function EditLogDialog({
   log,
@@ -15,38 +12,20 @@ export function EditLogDialog({
   activity: DexieActivity | null;
   onClose: () => void;
 }) {
-  const [quantity, setQuantity] = useState(
-    log.quantity !== null ? String(log.quantity) : "",
-  );
-  const [memo, setMemo] = useState(log.memo);
-  const [selectedKindId, setSelectedKindId] = useState<string | null>(
-    log.activityKindId,
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const { kinds } = useActivityKinds(log.activityId);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    await activityLogRepository.updateActivityLog(log.id, {
-      quantity: quantity !== "" ? Number(quantity) : null,
-      memo,
-      activityKindId: selectedKindId,
-    });
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  const handleDelete = async () => {
-    setIsSubmitting(true);
-    await activityLogRepository.softDeleteActivityLog(log.id);
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
+  const {
+    quantity,
+    setQuantity,
+    memo,
+    setMemo,
+    selectedKindId,
+    setSelectedKindId,
+    isSubmitting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    kinds,
+    handleSave,
+    handleDelete,
+  } = useEditLogDialog(log, onClose);
 
   return (
     <ModalOverlay onClose={onClose}>

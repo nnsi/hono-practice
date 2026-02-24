@@ -1,18 +1,9 @@
-import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { activityRepository } from "../../db/activityRepository";
-import { syncEngine } from "../../sync/syncEngine";
-import { resizeImage } from "../../utils/imageResizer";
 import { COLOR_PALETTE } from "../stats/colorUtils";
 import type { DexieActivity } from "../../db/schema";
-import { db } from "../../db/schema";
-import {
-  IconTypeSelector,
-  type IconSelectorValue,
-} from "./IconTypeSelector";
+import { IconTypeSelector } from "./IconTypeSelector";
+import { useEditActivityDialog } from "./useEditActivityDialog";
 
 export function EditActivityDialog({
   activity,
@@ -23,123 +14,23 @@ export function EditActivityDialog({
   onClose: () => void;
   onUpdated: () => void;
 }) {
-  const [name, setName] = useState(activity.name);
-  const [quantityUnit, setQuantityUnit] = useState(activity.quantityUnit);
-  const [showCombinedStats, setShowCombinedStats] = useState(
-    activity.showCombinedStats,
-  );
-  const { kinds: existingKinds } = useActivityKinds(activity.id);
-  const [kinds, setKinds] = useState<
-    { id?: string; name: string; color: string }[]
-  >([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [iconChanged, setIconChanged] = useState(false);
-
-  // 既存のローカルblob取得
-  const existingBlob = useLiveQuery(
-    () => db.activityIconBlobs.get(activity.id),
-    [activity.id],
-  );
-
-  // アイコン初期値を構築
-  const buildInitialPreview = () => {
-    if (existingBlob) {
-      return `data:${existingBlob.mimeType};base64,${existingBlob.base64}`;
-    }
-    if (
-      activity.iconType === "upload" &&
-      (activity.iconThumbnailUrl || activity.iconUrl)
-    ) {
-      return activity.iconThumbnailUrl || activity.iconUrl || undefined;
-    }
-    return undefined;
-  };
-
-  const [icon, setIcon] = useState<IconSelectorValue>({
-    type: activity.iconType === "upload" ? "upload" : "emoji",
-    emoji: activity.emoji,
-    preview: buildInitialPreview(),
-  });
-
-  // existingBlobが後から読み込まれた場合にpreviewを更新
-  useEffect(() => {
-    if (existingBlob && !icon.file && icon.type === "upload" && !icon.preview) {
-      setIcon((prev) => ({
-        ...prev,
-        preview: `data:${existingBlob.mimeType};base64,${existingBlob.base64}`,
-      }));
-    }
-  }, [existingBlob, icon.file, icon.type, icon.preview]);
-
-  // existingKindsが読み込まれたら初期化
-  useEffect(() => {
-    if (existingKinds.length > 0) {
-      setKinds(
-        existingKinds.map((k) => ({
-          id: k.id,
-          name: k.name,
-          color: k.color || "#3b82f6",
-        })),
-      );
-    }
-  }, [existingKinds]);
-
-  const handleIconChange = (newIcon: IconSelectorValue) => {
-    setIcon(newIcon);
-    setIconChanged(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setIsSubmitting(true);
-
-    await activityRepository.updateActivity(
-      activity.id,
-      {
-        name: name.trim(),
-        quantityUnit,
-        emoji: icon.emoji,
-        showCombinedStats,
-        iconType: icon.type,
-      },
-      kinds
-        .filter((k) => k.name.trim())
-        .map((k) => ({
-          id: k.id,
-          name: k.name,
-          color: k.color,
-        })),
-    );
-
-    if (iconChanged) {
-      if (icon.type === "upload" && icon.file) {
-        const { base64, mimeType } = await resizeImage(icon.file, 256, 256);
-        await activityRepository.saveActivityIconBlob(
-          activity.id,
-          base64,
-          mimeType,
-        );
-      } else if (icon.type === "emoji" && activity.iconType === "upload") {
-        await activityRepository.clearActivityIcon(activity.id);
-      }
-    }
-
-    syncEngine.syncActivities();
-    onUpdated();
-    onClose();
-    setIsSubmitting(false);
-  };
-
-  const handleDelete = async () => {
-    setIsSubmitting(true);
-    await activityRepository.softDeleteActivity(activity.id);
-    syncEngine.syncActivities();
-    onUpdated();
-    onClose();
-    setIsSubmitting(false);
-  };
+  const {
+    name,
+    setName,
+    quantityUnit,
+    setQuantityUnit,
+    showCombinedStats,
+    setShowCombinedStats,
+    kinds,
+    setKinds,
+    icon,
+    isSubmitting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    handleIconChange,
+    handleSubmit,
+    handleDelete,
+  } = useEditActivityDialog(activity, onUpdated, onClose);
 
   return (
     <ModalOverlay onClose={onClose}>

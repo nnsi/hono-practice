@@ -1,99 +1,45 @@
-import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useActivities } from "../../hooks/useActivities";
-import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { useTasksByDate } from "../../hooks/useTasks";
-import { taskRepository } from "../../db/taskRepository";
-import { syncEngine } from "../../sync/syncEngine";
-import { db } from "../../db/schema";
-import type {
-  DexieActivity,
-  DexieActivityLog,
-  DexieActivityKind,
-} from "../../db/schema";
 import { LogCard } from "./LogCard";
 import { TaskList } from "./TaskList";
-import type { Task } from "./TaskList";
 import { EditLogDialog } from "./EditLogDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
 import { CalendarPopover } from "../common/CalendarPopover";
+import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
-  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const { activities } = useActivities();
-  const { logs } = useActivityLogsByDate(date);
-  const { tasks: dexieTasks } = useTasksByDate(date);
-
-  // 全kinds取得（ログ表示用）
-  const allKinds = useLiveQuery(
-    () => db.activityKinds.filter((k) => !k.deletedAt).toArray(),
-    [],
-  );
-  const kindsMap = useMemo(() => {
-    const map = new Map<string, DexieActivityKind>();
-    for (const k of allKinds ?? []) {
-      map.set(k.id, k);
-    }
-    return map;
-  }, [allKinds]);
-
-  // アクティビティマップ
-  const activitiesMap = useMemo(() => {
-    const map = new Map<string, DexieActivity>();
-    for (const a of activities) {
-      map.set(a.id, a);
-    }
-    return map;
-  }, [activities]);
-
-  // DexieTask -> TaskList Task mapping
-  const tasks: Task[] = useMemo(
-    () =>
-      dexieTasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        doneDate: t.doneDate,
-        memo: t.memo,
-        startDate: t.startDate,
-        dueDate: t.dueDate,
-      })),
-    [dexieTasks],
-  );
-
-  // ダイアログ状態
-  const [editingLog, setEditingLog] = useState<DexieActivityLog | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [taskCreateDialogOpen, setTaskCreateDialogOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  // 日付ナビゲーション
-  const goToPrev = () =>
-    setDate(dayjs(date).subtract(1, "day").format("YYYY-MM-DD"));
-  const goToNext = () =>
-    setDate(dayjs(date).add(1, "day").format("YYYY-MM-DD"));
-  const isToday = date === dayjs().format("YYYY-MM-DD");
-
-  // タスクトグル
-  const handleToggleTask = useCallback(async (task: Task) => {
-    const newDoneDate = task.doneDate
-      ? null
-      : new Date().toISOString().split("T")[0];
-    await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
-    syncEngine.syncTasks();
-  }, []);
+  const {
+    date,
+    setDate,
+    goToPrev,
+    goToNext,
+    isToday,
+    activities,
+    logs,
+    kindsMap,
+    activitiesMap,
+    tasks,
+    editingLog,
+    setEditingLog,
+    createDialogOpen,
+    setCreateDialogOpen,
+    taskCreateDialogOpen,
+    setTaskCreateDialogOpen,
+    calendarOpen,
+    setCalendarOpen,
+    handleToggleTask,
+  } = useDailyPage();
 
   return (
     <div className="bg-white">
       {/* 日付ヘッダー */}
       <header className="sticky top-0 sticky-header z-10">
-        <div className="flex items-center justify-between px-4 pr-14 py-2.5 relative">
+        <div className="relative flex items-center justify-center h-12">
           <button
             type="button"
             onClick={goToPrev}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="absolute left-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
           </button>
@@ -109,7 +55,7 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToNext}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="absolute right-14 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
           </button>

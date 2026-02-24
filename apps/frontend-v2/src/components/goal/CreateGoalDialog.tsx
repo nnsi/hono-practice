@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react";
-import dayjs from "dayjs";
 import { X } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";
 import type { DexieActivity } from "../../db/schema";
 import type { CreateGoalPayload } from "./types";
 import { getActivityEmoji } from "./activityHelpers";
+import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
 export function CreateGoalDialog({
   activities,
@@ -15,49 +14,20 @@ export function CreateGoalDialog({
   onClose: () => void;
   onCreate: (payload: CreateGoalPayload) => Promise<void>;
 }) {
-  const [activityId, setActivityId] = useState("");
-  const [target, setTarget] = useState("1");
-  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [endDate, setEndDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const selectedActivity = useMemo(
-    () => activities.find((a) => a.id === activityId),
-    [activities, activityId],
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-
-    if (!activityId) {
-      setErrorMsg("アクティビティを選択してください");
-      return;
-    }
-    if (Number(target) <= 0) {
-      setErrorMsg("日次目標は0より大きい数値を入力してください");
-      return;
-    }
-    if (!startDate) {
-      setErrorMsg("開始日を入力してください");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await onCreate({
-        activityId,
-        dailyTargetQuantity: Number(target),
-        startDate,
-        ...(endDate ? { endDate } : {}),
-      });
-    } catch {
-      setErrorMsg("作成に失敗しました");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const {
+    activityId,
+    setActivityId,
+    target,
+    setTarget,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    submitting,
+    errorMsg,
+    selectedActivity,
+    handleSubmit,
+  } = useCreateGoalDialog(activities, onCreate);
 
   return (
     <ModalOverlay onClose={onClose}>
