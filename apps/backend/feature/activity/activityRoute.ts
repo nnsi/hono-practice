@@ -7,7 +7,6 @@ import { createActivityId } from "@packages/domain/activity/activitySchema";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
 import { noopTracer } from "@backend/lib/tracer";
-import { generateIconKey } from "@backend/utils/imageValidator";
 import {
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
@@ -81,7 +80,8 @@ export function createActivityRoute() {
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newActivityRepository(db);
     const tx = newDrizzleTransactionRunner(db);
-    const uc = newActivityUsecase(repo, tx, tracer);
+    const storage = createStorageService(c.env);
+    const uc = newActivityUsecase(repo, tx, tracer, storage);
     const h = newActivityHandler(uc);
 
     c.set("h", h);
@@ -161,133 +161,29 @@ export function createActivityRoute() {
       const userId = c.get("userId");
       const { id } = c.req.param();
       const activityId = createActivityId(id);
+      const { base64, mimeType } =
+        await c.req.json<{ base64: string; mimeType: string }>();
 
-      const body = await c.req.json<{ base64: string; mimeType: string }>();
-      const { base64, mimeType } = body;
-
-      // Validate mime type
-      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-      if (!ALLOWED_TYPES.includes(mimeType)) {
-        return c.json({ error: "Invalid image type" }, 400);
-      }
-
-      // Get activity to check ownership
-      const activity = await c.var.h.getActivity(userId, activityId);
-      if (!activity) {
-        return c.json({ error: "Activity not found" }, 404);
-      }
-
-      // Create storage service
-      const storageService = createStorageService(c.env);
-
-      // Generate unique key for image
-      const mainKey = generateIconKey(userId, activityId);
-
-      // Convert base64 to Uint8Array
-      const binaryString = atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      // Create file from bytes
-      const file = new File([bytes], "icon.webp", {
-        type: mimeType,
-      });
-
-      // Upload image
-      const tracer = c.get("tracer") ?? noopTracer;
-      const uploaded = await tracer.span("r2.upload", () =>
-        storageService.upload(file, mainKey, {
-          contentType: mimeType,
-        }),
-      );
-
-      // Convert relative URLs to absolute URLs using the request host
       const protocol = c.req.header("x-forwarded-proto") || "http";
       const host = c.req.header("host") || "localhost";
       const apiBaseUrl = `${protocol}://${host}`;
 
-      // Convert relative URLs to absolute URLs
-      const iconUrl = uploaded.url.startsWith("/")
-        ? `${apiBaseUrl}${uploaded.url}`
-        : uploaded.url;
-      const iconThumbnailUrl = iconUrl; // Same URL since already resized
-
-      // Update activity with new icon
-      const db = c.env.DB;
-      const repo = newActivityRepository(db);
-      await tracer.span("db.updateActivityIcon", () =>
-        repo.updateActivityIcon(
-          activityId,
-          "upload",
-          iconUrl,
-          iconThumbnailUrl,
-        ),
+      const res = await c.var.h.uploadActivityIcon(
+        userId,
+        activityId,
+        base64,
+        mimeType,
+        apiBaseUrl,
       );
-
-      return c.json({
-        iconUrl,
-        iconThumbnailUrl,
-      });
+      return c.json(res);
     })
     .delete("/:id/icon", async (c) => {
       const userId = c.get("userId");
       const { id } = c.req.param();
       const activityId = createActivityId(id);
 
-      // Get activity to check ownership and get current icon URLs
-      const activity = await c.var.h.getActivity(userId, activityId);
-      if (!activity) {
-        return c.json({ error: "Activity not found" }, 404);
-      }
-
-      // Create storage service
-      const storageService = createStorageService(c.env);
-      const tracer = c.get("tracer") ?? noopTracer;
-
-      // Delete files from storage if they exist
-      if (activity.iconUrl && typeof activity.iconUrl === "string") {
-        // Extract key from URL
-        // URLが絶対URLの場合は /r2/ 以降を取得
-        const match = activity.iconUrl.match(/\/r2\/(.+)$/);
-        const key = match
-          ? match[1]
-          : activity.iconUrl.split("/").slice(-4).join("/");
-
-        try {
-          await tracer.span("r2.delete", () => storageService.delete(key));
-        } catch (error) {
-          console.error("Failed to delete main icon:", error);
-        }
-      }
-
-      if (
-        activity.iconThumbnailUrl &&
-        typeof activity.iconThumbnailUrl === "string" &&
-        activity.iconThumbnailUrl !== activity.iconUrl
-      ) {
-        // Extract key from URL
-        const match = activity.iconThumbnailUrl.match(/\/r2\/(.+)$/);
-        const key = match
-          ? match[1]
-          : activity.iconThumbnailUrl.split("/").slice(-4).join("/");
-
-        try {
-          await tracer.span("r2.delete", () => storageService.delete(key));
-        } catch (error) {
-          console.error("Failed to delete thumbnail icon:", error);
-        }
-      }
-
-      // Update activity to reset icon to emoji
-      const db = c.env.DB;
-      const repo = newActivityRepository(db);
-      await tracer.span("db.updateActivityIcon", () =>
-        repo.updateActivityIcon(activityId, "emoji", null, null),
-      );
-
-      return c.json({ success: true });
+      const res = await c.var.h.deleteActivityIcon(userId, activityId);
+      return c.json(res);
     });
 }
 

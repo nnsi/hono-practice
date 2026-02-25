@@ -199,7 +199,7 @@ test("POST activities/:id/icon / invalid file type", async () => {
 
   expect(res.status).toEqual(400);
   const resJson = await res.json();
-  expect(resJson.error).toContain("Invalid image type");
+  expect(resJson.message).toContain("Invalid image type");
 });
 
 test("POST activities/:id/icon / activity not found", async () => {

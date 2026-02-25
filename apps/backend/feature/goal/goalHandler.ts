@@ -1,17 +1,24 @@
 import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
+import type { GoalQueryService } from "@backend/query/goalQueryService";
 import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
 
 import type { GoalFilters, GoalUsecase } from "./goalUsecase";
 
-export function newGoalHandler(uc: GoalUsecase) {
+export function newGoalHandler(
+  uc: GoalUsecase,
+  goalQueryService: GoalQueryService,
+  tracer: Tracer,
+) {
   return {
     getGoals: getGoals(uc),
     getGoal: getGoal(uc),
     createGoal: createGoal(uc),
     updateGoal: updateGoal(uc),
     deleteGoal: deleteGoal(uc),
+    getGoalStats: getGoalStats(goalQueryService, tracer),
   };
 }
 
@@ -73,5 +80,13 @@ function deleteGoal(uc: GoalUsecase) {
   return async (userId: UserId, goalId: string) => {
     await uc.deleteGoal(userId, goalId);
     return { success: true };
+  };
+}
+
+function getGoalStats(goalQueryService: GoalQueryService, tracer: Tracer) {
+  return async (userId: UserId, goalId: string) => {
+    return await tracer.span("db.getGoalStats", () =>
+      goalQueryService.getGoalStats(userId, goalId),
+    );
   };
 }

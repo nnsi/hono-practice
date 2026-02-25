@@ -22,6 +22,7 @@ import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
+
 export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   const app = new Hono<
     AppContext & {
@@ -50,7 +51,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       oauthVerifiers,
       tracer,
     );
-    const h = newAuthHandler(uc);
+    const userUc = newUserUsecase(repo, userProviderRepo, tracer);
+    const h = newAuthHandler(uc, userUc.getUserById);
 
     c.set("h", h);
 
@@ -187,24 +189,10 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID } = c.env;
         const body = c.req.valid("json");
 
-        const { token, refreshToken, userId } = await c.var.h.googleLogin(
-          body,
-          GOOGLE_OAUTH_CLIENT_ID,
-        );
-
-        // user情報を取得
-        const db = c.env.DB;
-        const repo = newUserRepository(db);
-        const userProviderRepo = newUserProviderRepository(db);
-        const userUsecase = newUserUsecase(
-          repo,
-          userProviderRepo,
-          c.get("tracer") ?? noopTracer,
-        );
-        const user = await userUsecase.getUserById(userId);
+        const { user, token, refreshToken } =
+          await c.var.h.googleLoginWithUser(body, GOOGLE_OAUTH_CLIENT_ID);
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-        // Only set refresh token cookie, access token is returned in response body
         setCookie(c, "refresh_token", refreshToken, {
           httpOnly: true,
           secure: !isDev,

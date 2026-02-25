@@ -21,6 +21,8 @@ export function newActivityHandler(uc: ActivityUsecase) {
     updateActivity: updateActivity(uc),
     deleteActivity: deleteActivity(uc),
     updateActivityOrder: updateActivityOrder(uc),
+    uploadActivityIcon: uploadActivityIcon(uc),
+    deleteActivityIcon: deleteActivityIcon(uc),
   };
 }
 
@@ -96,5 +98,31 @@ function updateActivityOrder(uc: ActivityUsecase) {
     await uc.updateActivityOrder(userId, activityId, params);
 
     return { message: "success" };
+  };
+}
+
+function uploadActivityIcon(uc: ActivityUsecase) {
+  return async (
+    userId: UserId,
+    activityId: ActivityId,
+    base64: string,
+    mimeType: string,
+    apiBaseUrl: string,
+  ) => {
+    return await uc.uploadActivityIcon(
+      userId,
+      activityId,
+      base64,
+      mimeType,
+      apiBaseUrl,
+    );
+  };
+}
+
+function deleteActivityIcon(uc: ActivityUsecase) {
+  return async (userId: UserId, activityId: ActivityId) => {
+    await uc.deleteActivityIcon(userId, activityId);
+
+    return { success: true };
   };
 }

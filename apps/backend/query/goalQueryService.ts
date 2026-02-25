@@ -4,6 +4,7 @@ import {
   generateDailyRecords,
   calculateGoalStats,
 } from "@packages/domain/goal/goalStats";
+import { ResourceNotFoundError } from "@backend/error";
 import dayjs from "dayjs";
 import { and, between, eq, isNull, sql } from "drizzle-orm";
 
@@ -37,7 +38,7 @@ function getGoalStats(db: QueryExecutor) {
       .execute();
 
     if (goal.length === 0) {
-      throw new Error("Goal not found");
+      throw new ResourceNotFoundError("Goal not found");
     }
 
     const activityGoal = goal[0];
