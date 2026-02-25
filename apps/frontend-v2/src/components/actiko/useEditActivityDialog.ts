@@ -118,7 +118,7 @@ export function useEditActivityDialog(
       }
     }
 
-    syncEngine.syncActivities();
+    syncEngine.syncAll();
     onUpdated();
     onClose();
     setIsSubmitting(false);

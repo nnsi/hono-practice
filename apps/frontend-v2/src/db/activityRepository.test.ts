@@ -547,6 +547,7 @@ describe("activityRepository", () => {
       expect(mockDb.activities.update).toHaveBeenCalledWith("act-1", {
         iconUrl: "https://example.com/icon.png",
         iconThumbnailUrl: "https://example.com/icon-thumb.png",
+        _syncStatus: "pending",
       });
       expect(mockDb.activityIconBlobs.delete).toHaveBeenCalledWith("act-1");
     });

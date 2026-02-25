@@ -43,7 +43,7 @@ export function useCreateActivityDialog(
       );
     }
 
-    syncEngine.syncActivities();
+    syncEngine.syncAll();
     onCreated();
     onClose();
     setIsSubmitting(false);

@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import type { AppContext } from "../context";
@@ -88,8 +88,10 @@ export const activityV2Route = new Hono<AppContext>()
           label: activity.label,
           emoji: activity.emoji,
           iconType: activity.iconType,
-          iconUrl: activity.iconUrl,
-          iconThumbnailUrl: activity.iconThumbnailUrl,
+          iconUrl: activity.iconUrl ?? sql`${activities.iconUrl}`,
+          iconThumbnailUrl:
+            activity.iconThumbnailUrl ??
+            sql`${activities.iconThumbnailUrl}`,
           description: activity.description,
           quantityUnit: activity.quantityUnit,
           orderIndex: activity.orderIndex,
