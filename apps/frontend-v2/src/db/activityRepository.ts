@@ -243,7 +243,11 @@ export const activityRepository = {
       "rw",
       [db.activities, db.activityIconBlobs],
       async () => {
-        await db.activities.update(activityId, { iconUrl, iconThumbnailUrl });
+        await db.activities.update(activityId, {
+          iconUrl,
+          iconThumbnailUrl,
+          _syncStatus: "pending" as const,
+        });
         await db.activityIconBlobs.delete(activityId);
       },
     );
