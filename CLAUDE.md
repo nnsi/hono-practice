@@ -2,14 +2,10 @@
 
 ## 🚫 最重要制限事項
 
-### 使用言語
-日本語を利用すること。
-
 ### 開発サーバーの起動
 - **開発サーバーは絶対に起動しないでください**
 - ユーザー側で既に起動しているため、Claude Code側での起動は不要です
-- `pnpm run dev`、`pnpm run client-dev` などのサーバー起動コマンドは実行しないでください
-- **ポート: frontend(v1)=1357, frontend-v2=2460, backend API=3456**
+- **ポート: frontend=2460, backend API=3456**
 
 ### ブラウザ動作確認
 - **「ブラウザで動作確認して」と言われた場合は、Claude in Chrome MCPを使用する**
@@ -29,14 +25,13 @@
 - **DB: Neon Postgres**（Cloudflare D1ではない。絶対に間違えないこと）
 - Cloudflare Workers + Hono
 - R2（画像ストレージ）、KV（レートリミット等）
-- frontend(v1): React + TanStack Query + TanStack Router
-- frontend-v2: React + Dexie.js + useLiveQuery + TanStack Router（オフラインファースト）
+- frontend: React + Dexie.js + useLiveQuery + TanStack Router（オフラインファースト）
 
 ## 📚 詳細ドキュメント
 
 - `/docs/knowledges/` — 設計ドキュメント（構造, 認証, DB, フロント, バックエンド）
 - `apps/backend/CLAUDE.md` — バックエンド固有のルール（Honoの罠, APIパス規約）
-- `apps/frontend-v2/CLAUDE.md` — フロントエンドv2固有のルール（オフラインファースト設計, UI規約）
+- `apps/frontend-v2/CLAUDE.md` — フロントエンド固有のルール（オフラインファースト設計, UI規約）
 
 ## 必須コマンド
 
