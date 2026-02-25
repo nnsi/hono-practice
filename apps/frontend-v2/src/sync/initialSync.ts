@@ -1,3 +1,4 @@
+import type { StorageAdapter } from "@packages/domain/sync/platformAdapters";
 import { activityRepository } from "../db/activityRepository";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { goalRepository } from "../db/goalRepository";
@@ -10,11 +11,12 @@ import {
   mapApiActivityLog,
   mapApiGoal,
   mapApiTask,
-} from "../utils/apiMappers";
+} from "@packages/domain/sync/apiMappers";
+import { webStorageAdapter } from "./webPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
-export async function clearLocalDataForUserSwitch() {
+export async function clearLocalDataForUserSwitch(storage: StorageAdapter = webStorageAdapter) {
   await db.activityLogs.clear();
   await db.activities.clear();
   await db.activityKinds.clear();
@@ -23,10 +25,10 @@ export async function clearLocalDataForUserSwitch() {
   await db.activityIconBlobs.clear();
   await db.activityIconDeleteQueue.clear();
   await db.authState.clear();
-  localStorage.removeItem(LAST_SYNCED_KEY);
+  storage.removeItem(LAST_SYNCED_KEY);
 }
 
-export async function performInitialSync(userId: string) {
+export async function performInitialSync(userId: string, storage: StorageAdapter = webStorageAdapter) {
   // authState を更新
   await db.authState.put({
     id: "current",
@@ -34,7 +36,7 @@ export async function performInitialSync(userId: string) {
     lastLoginAt: new Date().toISOString(),
   });
 
-  const lastSyncedAt = localStorage.getItem(LAST_SYNCED_KEY);
+  const lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
   // 全APIを並列で取得（直列→並列で2-3秒短縮）
@@ -100,6 +102,6 @@ export async function performInitialSync(userId: string) {
 
   // Only update lastSyncedAt if all synced
   if (allSynced) {
-    localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
+    storage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
   }
 }

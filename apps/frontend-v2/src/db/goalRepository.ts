@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import { db, type DexieGoal } from "./schema";
 
 type CreateGoalInput = {
@@ -92,4 +93,4 @@ export const goalRepository = {
       goals.map((g) => ({ ...g, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies GoalRepository;

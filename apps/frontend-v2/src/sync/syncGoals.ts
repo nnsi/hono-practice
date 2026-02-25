@@ -1,6 +1,6 @@
 import { goalRepository } from "../db/goalRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiGoal } from "../utils/apiMappers";
+import { mapApiGoal } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "./types";
 
 export async function syncGoals(): Promise<void> {

@@ -1,10 +1,10 @@
 import type {
-  DexieActivity,
-  DexieActivityKind,
-  DexieActivityLog,
-  DexieGoal,
-  DexieTask,
-} from "../db/schema";
+  ActivityRecord,
+  ActivityKindRecord,
+} from "../activity/activityRecord";
+import type { ActivityLogRecord } from "../activityLog/activityLogRecord";
+import type { GoalRecord } from "../goal/goalRecord";
+import type { TaskRecord } from "../task/taskRecord";
 
 // Loose record type for API responses — mappers use `??` to handle both null and undefined
 type ApiRecord = Record<string, unknown> & { id: string };
@@ -21,18 +21,35 @@ function toISOString(v: unknown): string {
   return typeof v === "string" ? v : new Date().toISOString();
 }
 
-const VALID_ICON_TYPES = new Set(["emoji", "upload", "generate"]);
+function toBool(v: unknown, defaultValue: boolean): boolean {
+  if (typeof v === "boolean") return v;
+  return defaultValue;
+}
 
-function toIconType(value: unknown): "emoji" | "upload" | "generate" {
+function toNum(v: unknown, defaultValue: number): number {
+  if (typeof v === "number") return v;
+  const n = Number(v);
+  return Number.isNaN(n) ? defaultValue : n;
+}
+
+function toNumOrNull(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === "number") return v;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+}
+
+const VALID_ICON_TYPES = new Set(["emoji", "upload", "generate"]);
+type IconType = "emoji" | "upload" | "generate";
+
+function toIconType(value: unknown): IconType {
   if (typeof value === "string" && VALID_ICON_TYPES.has(value)) {
-    return value as "emoji" | "upload" | "generate";
+    return value as IconType;
   }
   return "emoji";
 }
 
-export function mapApiActivity(
-  a: ApiRecord,
-): Omit<DexieActivity, "_syncStatus"> {
+export function mapApiActivity(a: ApiRecord): ActivityRecord {
   return {
     id: a.id,
     userId: str(a.userId ?? a.user_id),
@@ -45,16 +62,17 @@ export function mapApiActivity(
     description: str(a.description),
     quantityUnit: str(a.quantityUnit ?? a.quantity_unit),
     orderIndex: str(a.orderIndex ?? a.order_index),
-    showCombinedStats: (a.showCombinedStats ?? a.show_combined_stats ?? true) as boolean,
+    showCombinedStats: toBool(
+      a.showCombinedStats ?? a.show_combined_stats,
+      true,
+    ),
     createdAt: toISOString(a.createdAt ?? a.created_at),
     updatedAt: toISOString(a.updatedAt ?? a.updated_at),
     deletedAt: strOrNull(a.deletedAt ?? a.deleted_at),
   };
 }
 
-export function mapApiActivityKind(
-  k: ApiRecord,
-): Omit<DexieActivityKind, "_syncStatus"> {
+export function mapApiActivityKind(k: ApiRecord): ActivityKindRecord {
   return {
     id: k.id,
     activityId: str(k.activityId ?? k.activity_id),
@@ -69,12 +87,12 @@ export function mapApiActivityKind(
 
 export function mapApiActivityLog(
   l: ApiRecord,
-): Omit<DexieActivityLog, "_syncStatus"> {
+): Omit<ActivityLogRecord, "userId"> {
   return {
     id: l.id,
     activityId: str(l.activityId ?? l.activity_id),
     activityKindId: strOrNull(l.activityKindId ?? l.activity_kind_id),
-    quantity: (l.quantity ?? null) as number | null,
+    quantity: toNumOrNull(l.quantity),
     memo: str(l.memo),
     date: str(l.date),
     time: strOrNull(l.time ?? l.done_hour),
@@ -84,30 +102,29 @@ export function mapApiActivityLog(
   };
 }
 
-export function mapApiGoal(
-  g: ApiRecord,
-): Omit<DexieGoal, "_syncStatus"> {
+export function mapApiGoal(g: ApiRecord): GoalRecord {
   return {
     id: g.id,
     userId: str(g.userId ?? g.user_id),
     activityId: str(g.activityId ?? g.activity_id),
-    dailyTargetQuantity: Number(g.dailyTargetQuantity ?? g.daily_target_quantity ?? 0),
+    dailyTargetQuantity: toNum(
+      g.dailyTargetQuantity ?? g.daily_target_quantity,
+      0,
+    ),
     startDate: str(g.startDate ?? g.start_date),
     endDate: strOrNull(g.endDate ?? g.end_date),
-    isActive: (g.isActive ?? g.is_active ?? true) as boolean,
+    isActive: toBool(g.isActive ?? g.is_active, true),
     description: str(g.description),
-    currentBalance: Number(g.currentBalance ?? g.current_balance ?? 0),
-    totalTarget: Number(g.totalTarget ?? g.total_target ?? 0),
-    totalActual: Number(g.totalActual ?? g.total_actual ?? 0),
+    currentBalance: toNum(g.currentBalance ?? g.current_balance, 0),
+    totalTarget: toNum(g.totalTarget ?? g.total_target, 0),
+    totalActual: toNum(g.totalActual ?? g.total_actual, 0),
     createdAt: toISOString(g.createdAt ?? g.created_at),
     updatedAt: toISOString(g.updatedAt ?? g.updated_at),
     deletedAt: strOrNull(g.deletedAt ?? g.deleted_at),
   };
 }
 
-export function mapApiTask(
-  t: ApiRecord,
-): Omit<DexieTask, "_syncStatus"> {
+export function mapApiTask(t: ApiRecord): TaskRecord {
   return {
     id: t.id,
     userId: str(t.userId ?? t.user_id),

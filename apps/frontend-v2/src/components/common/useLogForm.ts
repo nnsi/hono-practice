@@ -9,7 +9,7 @@ import {
   getTimeUnitType,
   convertSecondsToUnit,
   generateTimeMemo,
-} from "../../utils/timeUtils";
+} from "@packages/domain/time/timeUtils";
 
 export type UseTimerReturn = ReturnType<typeof useTimer>;
 

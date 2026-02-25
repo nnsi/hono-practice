@@ -1,6 +1,6 @@
 import { taskRepository } from "../db/taskRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiTask } from "../utils/apiMappers";
+import { mapApiTask } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "./types";
 
 export async function syncTasks(): Promise<void> {

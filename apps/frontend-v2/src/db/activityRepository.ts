@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
 import {
   db,
   type DexieActivity,
@@ -296,4 +297,4 @@ export const activityRepository = {
       kinds.map((k) => ({ ...k, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies ActivityRepository;

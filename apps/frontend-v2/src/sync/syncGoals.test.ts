@@ -5,13 +5,13 @@ const { mockApiClientObj } = vi.hoisted(() => ({
 }));
 
 vi.mock("../db/goalRepository");
-vi.mock("../utils/apiMappers");
+vi.mock("@packages/domain/sync/apiMappers");
 vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
 import { goalRepository } from "../db/goalRepository";
-import { mapApiGoal } from "../utils/apiMappers";
+import { mapApiGoal } from "@packages/domain/sync/apiMappers";
 import { syncGoals } from "./syncGoals";
 
 const mockGoalRepo = vi.mocked(goalRepository);

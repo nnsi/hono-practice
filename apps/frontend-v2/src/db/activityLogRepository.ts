@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
 import { db, type DexieActivityLog } from "./schema";
 
 type CreateInput = Pick<
@@ -82,4 +83,4 @@ export const activityLogRepository = {
       logs.map((log) => ({ ...log, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies ActivityLogRepository;

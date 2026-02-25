@@ -1,6 +1,6 @@
 import { activityLogRepository } from "../db/activityLogRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiActivityLog } from "../utils/apiMappers";
+import { mapApiActivityLog } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "./types";
 
 export async function syncActivityLogs(): Promise<void> {

@@ -1,7 +1,1 @@
-export type ServerEntity = Record<string, unknown> & { id: string };
-
-export type SyncResult = {
-  syncedIds: string[];
-  serverWins: ServerEntity[];
-  skippedIds: string[];
-};
+export type { SyncResult, ServerEntity } from "@packages/domain/sync/syncResult";

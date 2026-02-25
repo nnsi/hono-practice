@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCSVContent, escapeCSVField } from "./useCSVExport";
+import { buildCSVContent, escapeCSVField } from "@packages/domain/csv/csvExport";
 import type {
   DexieActivity,
   DexieActivityKind,

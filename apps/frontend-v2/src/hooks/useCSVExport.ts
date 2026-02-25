@@ -1,42 +1,6 @@
 import { useCallback, useState } from "react";
+import { buildCSVContent } from "@packages/domain/csv/csvExport";
 import { db } from "../db/schema";
-import type {
-  DexieActivity,
-  DexieActivityKind,
-  DexieActivityLog,
-} from "../db/schema";
-
-export function escapeCSVField(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-export function buildCSVContent(
-  logs: DexieActivityLog[],
-  activityMap: Map<string, DexieActivity>,
-  kindMap: Map<string, DexieActivityKind>,
-): string {
-  const BOM = "\uFEFF";
-  const headers = ["date", "activity", "kind", "quantity", "memo"];
-  const rows = logs.map((log) => {
-    const activity = activityMap.get(log.activityId);
-    const kind = log.activityKindId
-      ? kindMap.get(log.activityKindId)
-      : undefined;
-    return [
-      log.date,
-      activity?.name ?? "",
-      kind?.name ?? "",
-      log.quantity?.toString() ?? "0",
-      log.memo ?? "",
-    ]
-      .map(escapeCSVField)
-      .join(",");
-  });
-  return BOM + [headers.join(","), ...rows].join("\n");
-}
 
 type ExportResult = { count: number };
 

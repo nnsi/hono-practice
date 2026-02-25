@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { TaskRepository } from "@packages/domain/task/taskRepository";
 import { db, type DexieTask } from "./schema";
 
 type CreateTaskInput = {
@@ -104,4 +105,4 @@ export const taskRepository = {
       tasks.map((t) => ({ ...t, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies TaskRepository;
