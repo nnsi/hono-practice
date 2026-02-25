@@ -16,10 +16,10 @@ export default defineConfig({
     include: [
       // バックエンドのテスト
       "**/apps/backend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-      // フロントエンドのテスト
-      "**/apps/frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // 共通パッケージのテスト
       "**/packages/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // frontend-v2のテスト
+      "**/apps/frontend-v2/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
     exclude: [
       "**/node_modules/**",
@@ -42,12 +42,12 @@ export default defineConfig({
     maxConcurrency: 5,
     environment: "node",
     environmentMatchGlobs: [
-      // フロントエンドのテストはjsdom環境で実行
-      ["**/apps/frontend/**", "jsdom"],
       // frontend-shared/adaptersのテストもDOM環境が必要
       ["**/packages/frontend-shared/adapters/**", "jsdom"],
       // frontend-shared/hooksのテストもDOM環境が必要
       ["**/packages/frontend-shared/hooks/**", "jsdom"],
+      // frontend-v2のテストはjsdom環境が必要（React hooks, DOM API）
+      ["**/apps/frontend-v2/**", "jsdom"],
     ],
     coverage: {
       provider: "v8",
@@ -69,6 +69,7 @@ export default defineConfig({
       "@frontend": path.resolve(__dirname, "./apps/frontend/src"),
       "@dtos": path.resolve(__dirname, "./packages/types"),
       "@packages": path.resolve(__dirname, "./packages"),
+      "@/*": path.resolve(__dirname, "./apps/frontend-v2/src/*"),
     },
   },
 });

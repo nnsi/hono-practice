@@ -11,7 +11,7 @@ type CSVParseResult = {
   headers: string[];
 };
 
-function detectEncoding(buffer: ArrayBuffer): string {
+export function detectEncoding(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
     return "UTF-8";
@@ -68,7 +68,7 @@ function detectEncoding(buffer: ArrayBuffer): string {
   return sjisCount > utf8Count ? "Shift-JIS" : "UTF-8";
 }
 
-function parseCSVText(text: string): CSVParseResult {
+export function parseCSVText(text: string): CSVParseResult {
   const lines: string[] = [];
   let current = "";
   let inQuotes = false;
@@ -76,18 +76,18 @@ function parseCSVText(text: string): CSVParseResult {
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (inQuotes) {
+      current += ch;
       if (ch === '"') {
         if (i + 1 < text.length && text[i + 1] === '"') {
-          current += '"';
+          current += text[i + 1];
           i++;
         } else {
           inQuotes = false;
         }
-      } else {
-        current += ch;
       }
     } else if (ch === '"') {
       inQuotes = true;
+      current += ch;
     } else if (ch === "\n" || ch === "\r") {
       lines.push(current);
       current = "";
@@ -187,7 +187,7 @@ export type ValidatedActivityLog = {
   errors: ActivityLogValidationError[];
 };
 
-function validateDate(dateStr: string): string | null {
+export function validateDate(dateStr: string): string | null {
   if (!dateStr) return "日付は必須です";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "日付の形式が不正です";
@@ -195,7 +195,7 @@ function validateDate(dateStr: string): string | null {
   return null;
 }
 
-function validateQuantity(str: string): { value: number; error: string | null } {
+export function validateQuantity(str: string): { value: number; error: string | null } {
   if (str === "" || str == null) return { value: 0, error: "数量は必須です" };
   const num = Number(str);
   if (Number.isNaN(num)) return { value: 0, error: "数量は数値で入力してください" };
