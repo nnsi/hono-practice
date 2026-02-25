@@ -3,8 +3,8 @@ import {
   type SubscriptionId,
   createSubscriptionId,
   newSubscription,
-} from "@backend/domain/subscription";
-import { type UserId, createUserId } from "@backend/domain/user";
+} from "@packages/domain/subscription/subscriptionSchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { userSubscriptions } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";

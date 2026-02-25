@@ -1,5 +1,9 @@
-import type { Subscription, UserId } from "@backend/domain";
-import { createSubscriptionId, newSubscription } from "@backend/domain";
+import {
+  type Subscription,
+  createSubscriptionId,
+  newSubscription,
+} from "@packages/domain/subscription/subscriptionSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 

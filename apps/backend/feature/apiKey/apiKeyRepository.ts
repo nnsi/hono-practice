@@ -3,8 +3,8 @@ import type {
   ApiKeyId,
   CreateApiKeyData,
   UpdateApiKeyData,
-} from "@backend/domain";
-import { createApiKeyId, hashApiKey } from "@backend/domain";
+} from "@packages/domain/apiKey/apiKeySchema";
+import { createApiKeyId, hashApiKey } from "@packages/domain/apiKey/apiKeySchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { apiKeys } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";

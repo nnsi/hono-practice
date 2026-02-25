@@ -1,9 +1,14 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/schema";
+import {
+  isActiveTask,
+  isArchivedTask,
+  isTaskVisibleOnDate,
+} from "@packages/domain/task/taskPredicates";
 
 export function useActiveTasks() {
   const tasks = useLiveQuery(() =>
-    db.tasks.filter((t) => !t.deletedAt && !t.archivedAt).toArray(),
+    db.tasks.filter((t) => isActiveTask(t)).toArray(),
   );
 
   return { tasks: tasks ?? [] };
@@ -11,7 +16,10 @@ export function useActiveTasks() {
 
 export function useArchivedTasks() {
   const tasks = useLiveQuery(() =>
-    db.tasks.filter((t) => !t.deletedAt && !!t.archivedAt).toArray(),
+    db.tasks
+      .filter((t) => isArchivedTask(t))
+      .sortBy("archivedAt")
+      .then((arr) => arr.reverse()),
   );
 
   return { tasks: tasks ?? [] };
@@ -21,11 +29,7 @@ export function useTasksByDate(date: string) {
   const tasks = useLiveQuery(
     () =>
       db.tasks
-        .filter((t) => {
-          if (t.deletedAt || t.archivedAt) return false;
-          if (t.startDate && t.startDate > date) return false;
-          return true;
-        })
+        .filter((t) => isTaskVisibleOnDate(t, date))
         .toArray(),
     [date],
   );

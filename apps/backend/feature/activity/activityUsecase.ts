@@ -1,11 +1,11 @@
 import {
   type Activity,
   type ActivityId,
-  type UserId,
   createActivityEntity,
   createActivityId,
   createActivityKindId,
-} from "@backend/domain";
+} from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { generateOrder } from "@backend/lib/lexicalOrder";

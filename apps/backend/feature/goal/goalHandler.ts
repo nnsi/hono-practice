@@ -1,4 +1,4 @@
-import type { UserId } from "@backend/domain";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError } from "@backend/error";
 import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
 import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";

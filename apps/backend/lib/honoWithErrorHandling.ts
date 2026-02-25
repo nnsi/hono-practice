@@ -1,12 +1,8 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "../context";
-import {
-  AppError,
-  AuthError,
-  DomainValidateError,
-  UnauthorizedError,
-} from "../error";
+import { DomainValidateError } from "@packages/domain/errors";
+import { AppError, AuthError, UnauthorizedError } from "../error";
 
 export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();
@@ -37,7 +33,7 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
     }
 
     if (err instanceof DomainValidateError) {
-      return c.json({ message: err.message }, err.status);
+      return c.json({ message: err.message }, 400);
     }
 
     return c.json(

@@ -1,9 +1,9 @@
 import {
   type Subscription,
   createSubscriptionId,
-  createUserId,
   newSubscription,
-} from "@backend/domain";
+} from "@packages/domain/subscription/subscriptionSchema";
+import { createUserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import { instance, mock, reset, verify, when } from "ts-mockito";

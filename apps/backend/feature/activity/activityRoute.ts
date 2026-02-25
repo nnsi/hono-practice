@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { createActivityId } from "@backend/domain";
+import { createActivityId } from "@packages/domain/activity/activitySchema";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
 import { noopTracer } from "@backend/lib/tracer";

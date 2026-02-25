@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import {
@@ -10,6 +9,8 @@ import {
   PlusCircle,
   Trash2,
 } from "lucide-react";
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import { getInactiveDates } from "@packages/domain/goal/goalStats";
 import { db, type DexieActivity } from "../../db/schema";
 import { goalRepository } from "../../db/goalRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -17,8 +18,6 @@ import type { Goal, UpdateGoalPayload } from "./types";
 import { getActivityIcon } from "./activityHelpers";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatsDetail } from "./GoalStatsDetail";
-
-dayjs.extend(isSameOrBefore);
 
 // --- C. ステータスバッジ ---
 type StatusBadge = { label: string; className: string };
@@ -83,43 +82,28 @@ export function GoalCard({
   const [inlineValue, setInlineValue] = useState("");
   const inlineInputRef = useRef<HTMLInputElement>(null);
 
+  const today = dayjs().format("YYYY-MM-DD");
+  const actualEndDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
+
   const totalDays = useMemo(() => {
     const start = dayjs(goal.startDate);
     const end = goal.endDate ? dayjs(goal.endDate) : dayjs();
     return Math.max(end.diff(start, "day") + 1, 1);
   }, [goal.startDate, goal.endDate]);
 
-  const elapsedDays = useMemo(() => {
-    const start = dayjs(goal.startDate);
-    const today = dayjs();
-    const end = goal.endDate ? dayjs(goal.endDate) : today;
-    const effectiveEnd = today.isBefore(end) ? today : end;
-    return Math.max(effectiveEnd.diff(start, "day") + 1, 0);
-  }, [goal.startDate, goal.endDate]);
-
-  const progressPercent = useMemo(() => {
-    if (totalDays === 0) return 0;
-    const pct = (elapsedDays / totalDays) * 100;
-    return Math.min(pct, 100);
-  }, [elapsedDays, totalDays]);
-
   // --- C. 今日のログがあるか確認 ---
-  const todayStr = dayjs().format("YYYY-MM-DD");
   const todayLogs = useLiveQuery(
     () =>
       db.activityLogs
         .where("[date+activityId]")
-        .equals([todayStr, goal.activityId])
+        .equals([today, goal.activityId])
         .filter((log) => !log.deletedAt)
         .count(),
-    [todayStr, goal.activityId],
+    [today, goal.activityId],
   );
   const hasTodayLog = (todayLogs ?? 0) > 0;
 
   // --- 完了率（背景グラデーション用、ローカルデータから算出） ---
-  const today = dayjs().format("YYYY-MM-DD");
-  const actualEndDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
-
   const periodLogs = useLiveQuery(
     () =>
       db.activityLogs
@@ -130,20 +114,26 @@ export function GoalCard({
     [goal.activityId, goal.startDate, actualEndDate],
   );
 
-  const { completionPercent, localBalance } = useMemo(() => {
-    const localTargetSoFar = goal.dailyTargetQuantity * elapsedDays;
-    const localTargetTotal = goal.dailyTargetQuantity * totalDays;
-    const localActual = (periodLogs ?? []).reduce((sum, l) => sum + (l.quantity ?? 0), 0);
-    const balance = localActual - localTargetSoFar;
-    if (localTargetTotal <= 0) return { completionPercent: 0, localBalance: balance };
-    return {
-      completionPercent: Math.min((localActual / localTargetTotal) * 100, 100),
-      localBalance: balance,
-    };
-  }, [goal.dailyTargetQuantity, elapsedDays, totalDays, periodLogs]);
+  const balance = useMemo(() => {
+    return calculateGoalBalance(goal, periodLogs ?? [], today);
+  }, [goal, periodLogs, today]);
+
+  const localBalance = balance.currentBalance;
+  const elapsedDays = balance.daysActive;
+
+  const completionPercent = useMemo(() => {
+    if (balance.totalTarget <= 0) return 0;
+    return Math.min((balance.totalActual / balance.totalTarget) * 100, 100);
+  }, [balance.totalActual, balance.totalTarget]);
+
+  const progressPercent = useMemo(() => {
+    if (totalDays === 0) return 0;
+    const pct = (elapsedDays / totalDays) * 100;
+    return Math.min(pct, 100);
+  }, [elapsedDays, totalDays]);
 
   // --- やらなかった日付（showInactiveDates設定時） ---
-  const showInactiveDates = useMemo(() => {
+  const showInactiveDatesEnabled = useMemo(() => {
     try {
       const raw = localStorage.getItem("actiko-v2-settings");
       if (!raw) return false;
@@ -163,37 +153,26 @@ export function GoalCard({
   );
   const effectiveEnd = useMemo(() => {
     const end = goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
-    return end > todayStr ? todayStr : end;
-  }, [goal.endDate, monthEnd, todayStr]);
+    return end > today ? today : end;
+  }, [goal.endDate, monthEnd, today]);
 
   const monthLogs = useLiveQuery(
     () => {
-      if (!showInactiveDates) return [];
+      if (!showInactiveDatesEnabled) return [];
       return db.activityLogs
         .where("date")
         .between(effectiveStart, effectiveEnd, true, true)
         .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
         .toArray();
     },
-    [goal.activityId, effectiveStart, effectiveEnd, showInactiveDates],
+    [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled],
   );
 
   const inactiveDates = useMemo(() => {
-    if (!showInactiveDates || !monthLogs) return [];
-    const activeDates = new Set(
-      monthLogs.filter((l) => (l.quantity ?? 0) > 0).map((l) => l.date),
-    );
-    const result: string[] = [];
-    let d = dayjs(effectiveStart);
-    while (d.isSameOrBefore(effectiveEnd)) {
-      const dateStr = d.format("YYYY-MM-DD");
-      if (!activeDates.has(dateStr)) {
-        result.push(dateStr);
-      }
-      d = d.add(1, "day");
-    }
-    return result;
-  }, [showInactiveDates, monthLogs, effectiveStart, effectiveEnd]);
+    if (!showInactiveDatesEnabled || !monthLogs) return [];
+    const monthGoal = { ...goal, startDate: effectiveStart, endDate: effectiveEnd };
+    return getInactiveDates(monthGoal, monthLogs, today);
+  }, [showInactiveDatesEnabled, monthLogs, effectiveStart, effectiveEnd, goal, today]);
 
   const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
 
@@ -414,7 +393,7 @@ export function GoalCard({
       </div>
 
       {/* やらなかった日付 */}
-      {showInactiveDates && inactiveDates.length > 0 && (
+      {showInactiveDatesEnabled && inactiveDates.length > 0 && (
         <div className="mt-1 px-3 py-1 text-xs text-gray-500">
           <span className="font-medium">やらなかった日付: </span>
           {inactiveDates.slice(0, 3).map((date, index) => (

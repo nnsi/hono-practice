@@ -1,9 +1,9 @@
-// Re-export types from backend domain
-export type { Activity } from "@backend/domain/activity";
-export type { ActivityGoal as Goal } from "@backend/domain/activitygoal/activityGoal";
-export type { ActivityLog } from "@backend/domain/activityLog";
-export type { Task } from "@backend/domain/task";
-export type { User } from "@backend/domain/user";
+// Re-export types from packages domain
+export type { Activity } from "@packages/domain/activity/activitySchema";
+export type { ActivityGoal as Goal } from "@packages/domain/goal/goalSchema";
+export type { ActivityLog } from "@packages/domain/activityLog/activityLogSchema";
+export type { Task } from "@packages/domain/task/taskSchema";
+export type { User } from "@packages/domain/user/userSchema";
 
 export * from "./request";
 export * from "./response";

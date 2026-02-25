@@ -29,13 +29,6 @@ jobs:
         uses: tj-actions/changed-files@v41
         with:
           files: |
-            apps/frontend/**
-
-      - name: Get changed files (frontend-v2)
-        id: changed_frontend_v2
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
             apps/frontend-v2/**
 
       - name: Get changed files (db migrations)
@@ -74,7 +67,7 @@ jobs:
           CI: true
           NODE_ENV: test
 
-      # --- frontend v1 ---
+      # --- frontend ---
       - name: Build frontend (stg)
         if: github.ref_name == 'master' && steps.changed_frontend.outputs.any_changed == 'true'
         run: pnpm run build-client-stg
@@ -85,21 +78,6 @@ jobs:
       - name: Build frontend (release)
         if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
         run: pnpm run build-client
-        env:
-          VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
-          VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
-
-      # --- frontend-v2 ---
-      - name: Build frontend-v2 (stg)
-        if: github.ref_name == 'master' && steps.changed_frontend_v2.outputs.any_changed == 'true'
-        run: pnpm run build-client-v2-stg
-        env:
-          VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
-          VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
-
-      - name: Build frontend-v2 (release)
-        if: github.ref_name == 'release' && steps.changed_frontend_v2.outputs.any_changed == 'true'
-        run: pnpm run build-client-v2
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
@@ -196,28 +174,17 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
-      # --- frontend v1 (Cloudflare Pages) ---
-      - name: Publish to Cloudflare Pages
-        if: steps.changed_frontend.outputs.any_changed == 'true'
-        uses: cloudflare/pages-action@1
-        with:
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CF_PAGES_TOKEN }}
-          projectName: ${{ vars.CF_PAGES_PJ_NAME }}
-          directory: ./dist-frontend
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-      # --- frontend-v2 (Cloudflare Workers Static Assets) ---
-      - name: Deploy frontend-v2 (stg)
-        if: github.ref_name == 'master' && steps.changed_frontend_v2.outputs.any_changed == 'true'
-        run: pnpm run deploy:fe-v2-stg
+      # --- frontend (Cloudflare Workers Static Assets) ---
+      - name: Deploy frontend (stg)
+        if: github.ref_name == 'master' && steps.changed_frontend.outputs.any_changed == 'true'
+        run: pnpm run deploy:fe-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
-      - name: Deploy frontend-v2 (release)
-        if: github.ref_name == 'release' && steps.changed_frontend_v2.outputs.any_changed == 'true'
-        run: pnpm run deploy:fe-v2-prod
+      - name: Deploy frontend (release)
+        if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
+        run: pnpm run deploy:fe-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

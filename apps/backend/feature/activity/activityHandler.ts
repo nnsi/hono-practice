@@ -1,4 +1,5 @@
-import type { ActivityId, UserId } from "@backend/domain";
+import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError } from "@backend/error";
 import type { CreateActivityRequest } from "@dtos/request/CreateActivityRequest";
 import type {

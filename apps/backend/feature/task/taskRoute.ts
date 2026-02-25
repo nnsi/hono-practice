@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { createTaskId } from "@backend/domain";
+import { createTaskId } from "@packages/domain/task/taskSchema";
 import { noopTracer } from "@backend/lib/tracer";
 import {
   createTaskRequestSchema,

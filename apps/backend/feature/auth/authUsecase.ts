@@ -1,11 +1,10 @@
 import { sign } from "hono/jwt";
 
 import {
-  type UserId,
-  createUserId,
   createUserProviderEntity,
   createUserProviderId,
-} from "@backend/domain";
+} from "@packages/domain/auth/userProviderSchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { AppError, AuthError } from "@backend/error";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Tracer } from "@backend/lib/tracer";
@@ -13,8 +12,8 @@ import {
   type RefreshToken as RefreshTokenEntity,
   createRefreshToken,
   validateRefreshToken,
-} from "@domain/auth/refreshToken";
-import type { Provider } from "@domain/auth/userProvider";
+} from "@packages/domain/auth/refreshTokenSchema";
+import type { Provider } from "@packages/domain/auth/userProviderSchema";
 import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 import { v7 } from "uuid";
 

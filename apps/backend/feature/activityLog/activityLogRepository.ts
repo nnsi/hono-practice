@@ -1,11 +1,10 @@
+import { type ActivityId, createActivityEntity } from "@packages/domain/activity/activitySchema";
 import {
-  type ActivityId,
   type ActivityLog,
   type ActivityLogId,
-  type UserId,
-  createActivityEntity,
   createActivityLogEntity,
-} from "@backend/domain";
+} from "@packages/domain/activityLog/activityLogSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import dayjs from "@backend/lib/dayjs";
 import { activityLogs } from "@infra/drizzle/schema";

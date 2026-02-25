@@ -1,10 +1,10 @@
 import {
   type Task,
   type TaskId,
-  type UserId,
   createTaskEntity,
   createTaskId,
-} from "@backend/domain";
+} from "@packages/domain/task/taskSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 

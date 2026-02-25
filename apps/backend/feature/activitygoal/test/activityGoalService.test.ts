@@ -1,8 +1,6 @@
-import {
-  createActivityGoalEntity,
-  createActivityId,
-  createUserId,
-} from "@backend/domain";
+import { createActivityId } from "@packages/domain/activity/activitySchema";
+import { createActivityGoalEntity } from "@packages/domain/goal/goalSchema";
+import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -162,17 +160,17 @@ describe("ActivityGoalService", () => {
 
       expect(history).toHaveLength(3);
 
-      // Day 1: target 10, actual 20 (全データ), balance 10
+      // Day 1: target 10, actual 5 (1/1のログのみ), balance -5
       expect(history[0]).toEqual({
-        currentBalance: 10,
+        currentBalance: -5,
         totalTarget: 10,
-        totalActual: 20,
+        totalActual: 5,
         dailyTarget: 10,
         daysActive: 1,
         lastCalculatedDate: "2024-01-01",
       });
 
-      // Day 2: target 20, actual 20, balance 0
+      // Day 2: target 20, actual 20 (1/1 + 1/2のログ), balance 0
       expect(history[1]).toEqual({
         currentBalance: 0,
         totalTarget: 20,
@@ -182,7 +180,7 @@ describe("ActivityGoalService", () => {
         lastCalculatedDate: "2024-01-02",
       });
 
-      // Day 3: target 30, actual 20, balance -10
+      // Day 3: target 30, actual 20 (1/1 + 1/2のログ), balance -10
       expect(history[2]).toEqual({
         currentBalance: -10,
         totalTarget: 30,

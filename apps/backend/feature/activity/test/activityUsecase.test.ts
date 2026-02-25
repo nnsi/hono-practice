@@ -1,11 +1,10 @@
 import {
   type Activity,
   type ActivityId,
-  type UserId,
   createActivityId,
   createActivityKindId,
-  createUserId,
-} from "@backend/domain";
+} from "@packages/domain/activity/activitySchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { noopTracer } from "@backend/lib/tracer";

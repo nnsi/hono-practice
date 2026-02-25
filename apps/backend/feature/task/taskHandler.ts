@@ -1,4 +1,5 @@
-import type { TaskId, UserId } from "@backend/domain";
+import type { TaskId } from "@packages/domain/task/taskSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateTaskRequest, UpdateTaskRequest } from "@dtos/request";
 import { GetTaskResponseSchema, GetTasksResponseSchema } from "@dtos/response";
 

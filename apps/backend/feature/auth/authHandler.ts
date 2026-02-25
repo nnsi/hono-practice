@@ -1,6 +1,6 @@
-import type { Provider, UserId } from "@backend/domain";
-import { createUserId } from "@backend/domain/user/userId";
-import type { RefreshToken } from "@domain/auth/refreshToken";
+import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
+import type { Provider } from "@packages/domain/auth/userProviderSchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
