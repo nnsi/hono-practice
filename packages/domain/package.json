@@ -2,5 +2,10 @@
   "name": "@packages/domain",
   "type": "module",
   "main": "index.ts",
-  "types": "index.ts"
+  "types": "index.ts",
+  "dependencies": {
+    "zod": "^3.x",
+    "uuid": "^11.x",
+    "dayjs": "^1.x"
+  }
 }

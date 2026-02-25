@@ -6,8 +6,8 @@ import type {
 } from "@cloudflare/workers-types";
 
 import type { Config } from "../config";
-import type { UserId } from "../domain";
-import type { Subscription } from "../domain/subscription";
+import type { UserId } from "@packages/domain/user/userSchema";
+import type { Subscription } from "@packages/domain/subscription/subscriptionSchema";
 import type { KeyValueStore } from "../infra/kv/kv";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
 import type { Logger } from "../lib/logger";

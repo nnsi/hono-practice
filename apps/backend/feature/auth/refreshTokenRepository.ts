@@ -1,11 +1,11 @@
-import type { UserId } from "@backend/domain";
-import { DomainValidateError } from "@backend/error";
+import { DomainValidateError } from "@packages/domain/errors";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import {
   type RefreshToken,
   refreshTokenSchema,
-} from "@domain/auth/refreshToken";
+} from "@packages/domain/auth/refreshTokenSchema";
 import { refreshTokens } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 

@@ -5,7 +5,7 @@ import {
   type UserId,
   createUserEntity,
   createUserId,
-} from "@backend/domain";
+} from "@packages/domain/user/userSchema";
 import { AppError, ConflictError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 

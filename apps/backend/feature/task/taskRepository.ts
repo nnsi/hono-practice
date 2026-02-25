@@ -2,10 +2,11 @@ import {
   type Task,
   type TaskId,
   TaskSchema,
-  type UserId,
   createTaskEntity,
-} from "@backend/domain";
-import { DomainValidateError, ResourceNotFoundError } from "@backend/error";
+} from "@packages/domain/task/taskSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
+import { DomainValidateError } from "@packages/domain/errors";
+import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { tasks } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, gt, gte, isNull, lte, not, or } from "drizzle-orm";

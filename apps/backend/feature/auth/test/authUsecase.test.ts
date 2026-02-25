@@ -1,7 +1,5 @@
-import type { UserId } from "@backend/domain";
-import type { RefreshToken } from "@backend/domain/auth/refreshToken";
-import { createUserEntity } from "@backend/domain/user/user";
-import { createUserId } from "@backend/domain/user/userId";
+import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
+import { type UserId, createUserEntity, createUserId } from "@packages/domain/user/userSchema";
 import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { hashWithSHA256 } from "@backend/lib/hash";

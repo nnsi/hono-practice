@@ -2,7 +2,7 @@ import {
   type Provider,
   type UserProvider,
   createUserProviderEntity,
-} from "@backend/domain";
+} from "@packages/domain/auth/userProviderSchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { userProviders } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";

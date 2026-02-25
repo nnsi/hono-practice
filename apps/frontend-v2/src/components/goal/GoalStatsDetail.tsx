@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   Calendar,
@@ -10,11 +9,10 @@ import {
   BarChart3,
   Loader2,
 } from "lucide-react";
+import { generateDailyRecords, calculateGoalStats } from "@packages/domain/goal/goalStats";
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
 import type { Goal } from "./types";
-
-dayjs.extend(isSameOrBefore);
 
 function StatCard({
   icon,
@@ -67,75 +65,14 @@ export function GoalStatsDetail({
   const stats = useMemo(() => {
     if (!logs) return null;
 
-    // 日付ごとに数量を集計
-    const dateMap = new Map<string, number>();
-    for (const log of logs) {
-      const qty = log.quantity ?? 0;
-      dateMap.set(log.date, (dateMap.get(log.date) ?? 0) + qty);
-    }
-
-    // 期間内の全日の日次記録を生成
-    const dailyRecords: {
-      date: string;
-      quantity: number;
-      achieved: boolean;
-    }[] = [];
-    let current = dayjs(goal.startDate);
-    const end = dayjs(actualEndDate);
-    while (current.isSameOrBefore(end)) {
-      const dateStr = current.format("YYYY-MM-DD");
-      const quantity = dateMap.get(dateStr) ?? 0;
-      dailyRecords.push({
-        date: dateStr,
-        quantity,
-        achieved: quantity >= goal.dailyTargetQuantity,
-      });
-      current = current.add(1, "day");
-    }
-
-    // 活動があった日のみで平均・最大を計算
-    const activeQuantities = dailyRecords
-      .filter((r) => r.quantity > 0)
-      .map((r) => r.quantity);
-    const total = activeQuantities.reduce((sum, q) => sum + q, 0);
-    const average =
-      activeQuantities.length > 0
-        ? Math.round((total / activeQuantities.length) * 10) / 10
-        : 0;
-    const max =
-      activeQuantities.length > 0 ? Math.max(...activeQuantities) : 0;
-    const achievedDays = dailyRecords.filter((r) => r.achieved).length;
-
-    // 最大連続活動日数
-    let maxConsecutive = 0;
-    let currentConsecutive = 0;
-    let lastDate: dayjs.Dayjs | null = null;
-    for (const record of dailyRecords) {
-      if (record.quantity > 0) {
-        const d = dayjs(record.date);
-        if (lastDate === null || d.diff(lastDate, "day") === 1) {
-          currentConsecutive++;
-          maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
-        } else {
-          currentConsecutive = 1;
-        }
-        lastDate = d;
-      } else {
-        currentConsecutive = 0;
-        lastDate = null;
-      }
-    }
+    const dailyRecords = generateDailyRecords(goal, logs, today);
+    const goalStats = calculateGoalStats(dailyRecords);
 
     return {
       dailyRecords,
-      stats: {
-        average,
-        max,
-        maxConsecutiveDays: maxConsecutive,
-        achievedDays,
-      },
+      stats: goalStats,
     };
-  }, [logs, goal.startDate, actualEndDate, goal.dailyTargetQuantity]);
+  }, [logs, goal, today]);
 
   if (!stats) {
     return (
@@ -148,7 +85,7 @@ export function GoalStatsDetail({
 
   const unit = activity?.quantityUnit ?? "";
   const totalDays = stats.dailyRecords.length;
-  const activeDays = stats.dailyRecords.filter((r) => r.quantity > 0).length;
+  const activeDays = stats.stats.activeDays;
   const achieveRate =
     totalDays > 0 ? (stats.stats.achievedDays / totalDays) * 100 : 0;
 

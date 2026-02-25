@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { isGoalActive } from "@packages/domain/goal/goalPredicates";
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
 import { goalRepository } from "../../db/goalRepository";
@@ -29,11 +30,11 @@ export function useGoalsPage() {
   }, [activities]);
 
   const currentGoals = useMemo(
-    () => goals.filter((g) => g.isActive),
+    () => goals.filter((g) => isGoalActive(g)),
     [goals],
   );
   const pastGoals = useMemo(
-    () => goals.filter((g) => !g.isActive),
+    () => goals.filter((g) => !isGoalActive(g)),
     [goals],
   );
 

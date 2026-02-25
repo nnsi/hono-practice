@@ -1,10 +1,9 @@
 import {
   type Task,
   type TaskId,
-  type UserId,
   createTaskId,
-  createUserId,
-} from "@backend/domain";
+} from "@packages/domain/task/taskSchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";

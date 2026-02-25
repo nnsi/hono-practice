@@ -1,14 +1,16 @@
 import {
   type ActivityId,
   type ActivityKindId,
-  type ActivityLog,
-  type ActivityLogId,
-  type UserId,
   createActivityId,
   createActivityKindId,
+} from "@packages/domain/activity/activitySchema";
+import {
+  type ActivityLog,
+  type ActivityLogId,
   createActivityLogEntity,
   createActivityLogId,
-} from "@backend/domain";
+} from "@packages/domain/activityLog/activityLogSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { Tracer } from "@backend/lib/tracer";

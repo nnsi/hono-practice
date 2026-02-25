@@ -3,9 +3,9 @@ import {
   type ActivityId,
   type ActivityKindId,
   ActivityKindsSchema,
-  type UserId,
   createActivityEntity,
-} from "@backend/domain";
+} from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";

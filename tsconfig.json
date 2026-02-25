@@ -22,7 +22,6 @@
       "@dtos/*": ["packages/types/*"],
       "@hooks/*": ["apps/frontend/src/hooks/*"],
       "@infra/*": ["infra/*"],
-      "@domain/*": ["apps/backend/domain/*"],
       "@components/*": ["apps/frontend/src/components/*"],
       "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["packages/frontend-shared/*"],

@@ -3,14 +3,15 @@ import {
   type ActivityId,
   type ActivityKind,
   type ActivityKindId,
-  type ActivityLog,
-  type ActivityLogId,
-  type UserId,
   createActivityId,
   createActivityKindId,
+} from "@packages/domain/activity/activitySchema";
+import {
+  type ActivityLog,
+  type ActivityLogId,
   createActivityLogId,
-  createUserId,
-} from "@backend/domain";
+} from "@packages/domain/activityLog/activityLogSchema";
+import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { noopTracer } from "@backend/lib/tracer";

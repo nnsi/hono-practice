@@ -1,10 +1,10 @@
+import type { ActivityId } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityGoalId,
-  type ActivityId,
-  type UserId,
   createActivityGoalEntity,
   createActivityGoalId,
-} from "@backend/domain";
+} from "@packages/domain/goal/goalSchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 

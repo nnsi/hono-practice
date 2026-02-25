@@ -1,7 +1,7 @@
 import type { Next } from "hono";
 
 import type { HonoContext } from "../context";
-import { createUserId } from "../domain";
+import { createUserId } from "@packages/domain/user/userSchema";
 import { UnauthorizedError } from "../error";
 import { newApiKeyRepository, newApiKeyUsecase } from "../feature/apiKey";
 import { noopTracer } from "../lib/tracer";

@@ -1,4 +1,4 @@
-import { type User, type UserId, createUserEntity } from "@backend/domain";
+import { type User, type UserId, createUserEntity } from "@packages/domain/user/userSchema";
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { users } from "@infra/drizzle/schema";

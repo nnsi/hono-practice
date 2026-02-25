@@ -1,4 +1,4 @@
-import { createUserId } from "@backend/domain";
+import { createUserId } from "@packages/domain/user/userSchema";
 import { noopTracer } from "@backend/lib/tracer";
 import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";

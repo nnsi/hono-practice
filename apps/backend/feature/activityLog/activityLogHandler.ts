@@ -1,9 +1,6 @@
-import {
-  type UserId,
-  createActivityId,
-  createActivityKindId,
-  createActivityLogId,
-} from "@backend/domain";
+import type { UserId } from "@packages/domain/user/userSchema";
+import { createActivityId, createActivityKindId } from "@packages/domain/activity/activitySchema";
+import { createActivityLogId } from "@packages/domain/activityLog/activityLogSchema";
 import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
 import type {
