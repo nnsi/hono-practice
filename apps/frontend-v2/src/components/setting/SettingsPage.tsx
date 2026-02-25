@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload, AlertTriangle } from "lucide-react";
+import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload, Download, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { db } from "../../db/schema";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
 import { CSVImportModal } from "../csv/CSVImportModal";
+import { CSVExportModal } from "../csv/CSVExportModal";
 import { apiClient, clearToken } from "../../utils/apiClient";
 
 const AppSettingsSchema = z.object({
@@ -84,6 +85,7 @@ export function SettingsPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showCSVExport, setShowCSVExport] = useState(false);
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
@@ -243,6 +245,14 @@ export function SettingsPage() {
               <Upload size={16} />
               CSVから活動記録をインポート
             </button>
+            <button
+              type="button"
+              onClick={() => setShowCSVExport(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <Download size={16} />
+              活動記録をCSVにエクスポート
+            </button>
             <div className="border-t border-gray-100" />
             <p className="text-sm text-gray-600 leading-relaxed">
               アクティビティや記録データはブラウザのローカルストレージ（IndexedDB）に保存されています。サーバーとの同期によりデータは復元可能です。
@@ -296,6 +306,9 @@ export function SettingsPage() {
 
       {showCSVImport && (
         <CSVImportModal onClose={() => setShowCSVImport(false)} />
+      )}
+      {showCSVExport && (
+        <CSVExportModal onClose={() => setShowCSVExport(false)} />
       )}
     </div>
   );
