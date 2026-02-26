@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Actiko",
+    "slug": "actiko",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "actiko",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.actiko.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.actiko.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
+  }
+}
