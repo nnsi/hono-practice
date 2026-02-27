@@ -29,6 +29,7 @@
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "~15.0.10",
+    "hono": "^4.12.1",
     "lucide-react-native": "~0.575.0",
     "nativewind": "^4.1.23",
     "react": "19.1.0",

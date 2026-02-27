@@ -15,11 +15,21 @@ config.resolver.nodeModulesPaths = [
 ];
 
 // On web, redirect expo-sqlite to our web shim (native module not available)
+// Metro can't resolve hono/client exports map — point it to the dist file directly
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === "web" && moduleName === "expo-sqlite") {
     return {
       type: "sourceFile",
       filePath: path.resolve(projectRoot, "src/db/expo-sqlite-web-shim.ts"),
+    };
+  }
+  if (moduleName === "hono/client") {
+    return {
+      type: "sourceFile",
+      filePath: path.resolve(
+        monorepoRoot,
+        "node_modules/hono/dist/client/index.js",
+      ),
     };
   }
   return context.resolveRequest(context, moduleName, platform);

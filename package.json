@@ -32,7 +32,10 @@
       "lefthook",
       "sharp",
       "workerd"
-    ]
+    ],
+    "overrides": {
+      "hono": "4.12.1"
+    }
   },
   "type": "module",
   "dependencies": {

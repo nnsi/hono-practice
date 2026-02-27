@@ -1,5 +1,5 @@
 import { taskRepository } from "../repositories/taskRepository";
-import { apiSyncTasks } from "../utils/apiClient";
+import { apiClient } from "../utils/apiClient";
 import { mapApiTask } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "@packages/domain/sync/syncResult";
 
@@ -10,7 +10,9 @@ export async function syncTasks(): Promise<void> {
   // Strip _syncStatus before sending to server
   const tasks = pending.map(({ _syncStatus, ...t }) => t);
 
-  const res = await apiSyncTasks({ tasks });
+  const res = await apiClient.users.v2.tasks.sync.$post({
+    json: { tasks },
+  });
   if (!res.ok) return;
 
   const data: SyncResult = await res.json();

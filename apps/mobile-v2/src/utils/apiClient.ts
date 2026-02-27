@@ -1,6 +1,8 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
+import { hc } from "hono/client";
+import type { AppType } from "@backend/app";
 
 function resolveApiUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
@@ -100,7 +102,12 @@ export const customFetch: typeof fetch = async (input, init) => {
   return res;
 };
 
-// Auth APIs
+// Hono RPC client — type-safe API access
+export const apiClient = hc<AppType>(API_URL, {
+  fetch: customFetch,
+});
+
+// Auth APIs (manual — these manage token state)
 export async function apiLogin(loginId: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
@@ -162,77 +169,6 @@ export async function apiLogout() {
   }
   clearToken();
   await clearRefreshToken();
-}
-
-// Sync APIs
-export async function apiSyncActivities(body: unknown) {
-  return customFetch(`${API_URL}/users/v2/activities/sync`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export async function apiSyncActivityLogs(body: unknown) {
-  return customFetch(`${API_URL}/users/v2/activity-logs/sync`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export async function apiSyncGoals(body: unknown) {
-  return customFetch(`${API_URL}/users/v2/goals/sync`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export async function apiSyncTasks(body: unknown) {
-  return customFetch(`${API_URL}/users/v2/tasks/sync`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-// Fetch APIs
-export async function apiFetchActivities() {
-  return customFetch(`${API_URL}/users/v2/activities`);
-}
-
-export async function apiFetchActivityLogs(since?: string) {
-  const q = since ? `?since=${since}` : "";
-  return customFetch(`${API_URL}/users/v2/activity-logs${q}`);
-}
-
-export async function apiFetchGoals(since?: string) {
-  const q = since ? `?since=${since}` : "";
-  return customFetch(`${API_URL}/users/v2/goals${q}`);
-}
-
-export async function apiFetchTasks(since?: string) {
-  const q = since ? `?since=${since}` : "";
-  return customFetch(`${API_URL}/users/v2/tasks${q}`);
-}
-
-// Icon APIs
-export async function apiDeleteActivityIcon(activityId: string) {
-  return customFetch(
-    `${API_URL}/users/activities/${activityId}/icon`,
-    { method: "DELETE" },
-  );
-}
-
-export async function apiUploadActivityIcon(
-  activityId: string,
-  base64: string,
-  mimeType: string,
-) {
-  return customFetch(
-    `${API_URL}/users/activities/${activityId}/icon`,
-    {
-      method: "POST",
-      body: JSON.stringify({ base64, mimeType }),
-    },
-  );
 }
 
 // Google auth

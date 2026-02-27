@@ -11,12 +11,7 @@ import { activityLogRepository } from "../repositories/activityLogRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { getDatabase } from "../db/database";
-import {
-  apiFetchActivities,
-  apiFetchActivityLogs,
-  apiFetchGoals,
-  apiFetchTasks,
-} from "../utils/apiClient";
+import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
@@ -51,13 +46,14 @@ export async function performInitialSync(
   );
 
   const lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+  const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
   // Fetch all data in parallel
   const [activitiesRes, logsRes, goalsRes, tasksRes] = await Promise.all([
-    apiFetchActivities(),
-    apiFetchActivityLogs(lastSyncedAt ?? undefined),
-    apiFetchGoals(lastSyncedAt ?? undefined),
-    apiFetchTasks(lastSyncedAt ?? undefined),
+    apiClient.users.v2.activities.$get(),
+    apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+    apiClient.users.v2.goals.$get({ query: sinceQuery }),
+    apiClient.users.v2.tasks.$get({ query: sinceQuery }),
   ]);
 
   let allSynced = true;

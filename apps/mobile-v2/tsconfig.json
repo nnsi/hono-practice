@@ -12,6 +12,18 @@
       ],
       "@/*": [
         "./src/*"
+      ],
+      "@backend/*": [
+        "../../apps/backend/*"
+      ],
+      "@infra/*": [
+        "../../infra/*"
+      ],
+      "@dtos/*": [
+        "../../packages/types/*"
+      ],
+      "@domain/*": [
+        "../../apps/backend/domain/*"
       ]
     }
   },

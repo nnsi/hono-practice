@@ -4,13 +4,16 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  hono: 4.12.1
+
 importers:
 
   .:
     dependencies:
       '@hono/node-server':
         specifier: ^1.18.2
-        version: 1.19.9(hono@4.12.1)
+        version: 1.19.9(hono@4.12.3)
       biome:
         specifier: ^0.3.3
         version: 0.3.3
@@ -85,7 +88,7 @@ importers:
         specifier: ^0.44.2
         version: 0.44.7(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@neondatabase/serverless@1.0.2)(@types/pg@8.16.0)(expo-sqlite@55.0.10(expo@55.0.3)(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.0))(react@19.1.0))(postgres@3.4.8)(sql.js@1.14.0)
       hono:
-        specifier: ^4.9.1
+        specifier: 4.12.1
         version: 4.12.1
       jose:
         specifier: ^6.0.10
@@ -143,7 +146,7 @@ importers:
         specifier: ^1.1.7
         version: 1.1.7(@types/react@19.2.14)(dexie@4.3.0)(react@19.0.0)
       hono:
-        specifier: ^4.12.1
+        specifier: 4.12.1
         version: 4.12.1
       lucide-react:
         specifier: ^0.469.0
@@ -254,6 +257,9 @@ importers:
       expo-web-browser:
         specifier: ~15.0.10
         version: 15.0.10(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))
+      hono:
+        specifier: 4.12.1
+        version: 4.12.1
       lucide-react-native:
         specifier: ~0.575.0
         version: 0.575.0(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -2065,12 +2071,12 @@ packages:
     resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4
+      hono: 4.12.1
 
   '@hono/zod-validator@0.7.6':
     resolution: {integrity: sha512-Io1B6d011Gj1KknV4rXYz4le5+5EubcWEU/speUjuw9XMMIaP3n78yXLhjd2A3PXaXaUwEAluOiAyLqhBEJgsw==}
     peerDependencies:
-      hono: '>=3.9.0'
+      hono: 4.12.1
       zod: ^3.25.0 || ^4.0.0
 
   '@img/colour@1.0.0':
@@ -4893,6 +4899,10 @@ packages:
 
   hono@4.12.1:
     resolution: {integrity: sha512-hi9afu8g0lfJVLolxElAZGANCTTl6bewIdsRNhaywfP9K8BPf++F2z6OLrYGIinUwpRKzbZHMhPwvc0ZEpAwGw==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.12.3:
+    resolution: {integrity: sha512-SFsVSjp8sj5UumXOOFlkZOG6XS9SJDKw0TbwFeV+AJ8xlST8kxK5Z/5EYa111UY8732lK2S/xB653ceuaoGwpg==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@7.0.2:
@@ -9614,6 +9624,10 @@ snapshots:
     dependencies:
       hono: 4.12.1
 
+  '@hono/node-server@1.19.9(hono@4.12.3)':
+    dependencies:
+      hono: 4.12.3
+
   '@hono/zod-validator@0.7.6(hono@4.12.1)(zod@4.3.6)':
     dependencies:
       hono: 4.12.1
@@ -12987,6 +13001,8 @@ snapshots:
       react-is: 16.13.1
 
   hono@4.12.1: {}
+
+  hono@4.12.3: {}
 
   hosted-git-info@7.0.2:
     dependencies:

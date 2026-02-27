@@ -5,6 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "actiko",
+    "icon": null,
+    "splash": null,
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,6 +15,7 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": null,
         "backgroundColor": "#ffffff"
       },
       "package": "com.actiko.app"

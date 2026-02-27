@@ -1,5 +1,5 @@
 import { goalRepository } from "../repositories/goalRepository";
-import { apiSyncGoals } from "../utils/apiClient";
+import { apiClient } from "../utils/apiClient";
 import { mapApiGoal } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "@packages/domain/sync/syncResult";
 
@@ -12,7 +12,9 @@ export async function syncGoals(): Promise<void> {
     ({ _syncStatus, currentBalance, totalTarget, totalActual, ...g }) => g,
   );
 
-  const res = await apiSyncGoals({ goals });
+  const res = await apiClient.users.v2.goals.sync.$post({
+    json: { goals },
+  });
   if (!res.ok) return;
 
   const data: SyncResult = await res.json();

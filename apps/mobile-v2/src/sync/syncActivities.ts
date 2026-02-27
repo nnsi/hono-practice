@@ -1,15 +1,13 @@
 import { activityRepository } from "../repositories/activityRepository";
-import {
-  apiSyncActivities,
-  apiDeleteActivityIcon,
-  apiUploadActivityIcon,
-} from "../utils/apiClient";
+import { apiClient, customFetch, getApiUrl } from "../utils/apiClient";
 import { getDatabase } from "../db/database";
 import {
   mapApiActivity,
   mapApiActivityKind,
 } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "@packages/domain/sync/syncResult";
+
+const API_URL = getApiUrl();
 
 export async function syncActivities(): Promise<void> {
   const pendingActivities =
@@ -25,9 +23,11 @@ export async function syncActivities(): Promise<void> {
   );
   const kindsData = pendingKinds.map(({ _syncStatus, ...k }) => k);
 
-  const res = await apiSyncActivities({
-    activities: activitiesData,
-    activityKinds: kindsData,
+  const res = await apiClient.users.v2.activities.sync.$post({
+    json: {
+      activities: activitiesData,
+      activityKinds: kindsData,
+    },
   });
 
   if (!res.ok) return;
@@ -63,7 +63,10 @@ export async function syncActivityIconDeletions(): Promise<void> {
   if (queue.length === 0) return;
 
   for (const item of queue) {
-    const res = await apiDeleteActivityIcon(item.activityId);
+    const res = await customFetch(
+      `${API_URL}/users/activities/${item.activityId}/icon`,
+      { method: "DELETE" },
+    );
     if (res.ok || res.status === 404) {
       await activityRepository.removeIconDeleteQueue(item.activityId);
     }
@@ -82,10 +85,12 @@ export async function syncActivityIcons(): Promise<void> {
     );
     if (!activity || activity.sync_status !== "synced") continue;
 
-    const res = await apiUploadActivityIcon(
-      blob.activityId,
-      blob.base64,
-      blob.mimeType,
+    const res = await customFetch(
+      `${API_URL}/users/activities/${blob.activityId}/icon`,
+      {
+        method: "POST",
+        body: JSON.stringify({ base64: blob.base64, mimeType: blob.mimeType }),
+      },
     );
 
     if (res.ok) {
