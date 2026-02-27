@@ -18,6 +18,7 @@ export type UpdateGoalInput = Partial<
 
 export type GoalRepository = {
   createGoal(input: CreateGoalInput): Promise<Syncable<GoalRecord>>;
+  /** Returns goals sorted by startDate descending (newest first). */
   getAllGoals(): Promise<Syncable<GoalRecord>[]>;
   updateGoal(id: string, changes: UpdateGoalInput): Promise<void>;
   softDeleteGoal(id: string): Promise<void>;

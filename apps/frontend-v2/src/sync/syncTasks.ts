@@ -1,7 +1,7 @@
 import { taskRepository } from "../db/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { mapApiTask } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "./types";
+import type { SyncResult } from "@packages/domain/sync/syncResult";
 
 export async function syncTasks(): Promise<void> {
   const pending = await taskRepository.getPendingSyncTasks();
@@ -13,14 +13,14 @@ export async function syncTasks(): Promise<void> {
     json: { tasks },
   });
 
-  if (res.ok) {
-    const data: SyncResult = await res.json();
-    await taskRepository.markTasksSynced(data.syncedIds);
-    await taskRepository.markTasksFailed(data.skippedIds);
-    if (data.serverWins.length > 0) {
-      await taskRepository.upsertTasksFromServer(
-        data.serverWins.map(mapApiTask),
-      );
-    }
+  if (!res.ok) return;
+
+  const data: SyncResult = await res.json();
+  await taskRepository.markTasksSynced(data.syncedIds);
+  await taskRepository.markTasksFailed(data.skippedIds);
+  if (data.serverWins.length > 0) {
+    await taskRepository.upsertTasksFromServer(
+      data.serverWins.map(mapApiTask),
+    );
   }
 }

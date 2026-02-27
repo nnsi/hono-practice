@@ -1,8 +1,7 @@
-import { useState, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import dayjs from "dayjs";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DatePickerField } from "../common/DatePickerField";
+import { useCreateGoalDialog } from "./useCreateGoalDialog";
 import type { CreateGoalPayload } from "./types";
 
 type ActivityItem = {
@@ -25,62 +24,25 @@ export function CreateGoalDialog({
   onClose,
   onCreate,
 }: CreateGoalDialogProps) {
-  const [activityId, setActivityId] = useState("");
-  const [target, setTarget] = useState("1");
-  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [endDate, setEndDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const selectedActivity = useMemo(
-    () => activities.find((a) => a.id === activityId),
-    [activities, activityId],
-  );
-
-  const resetForm = () => {
-    setActivityId("");
-    setTarget("1");
-    setStartDate(dayjs().format("YYYY-MM-DD"));
-    setEndDate("");
-    setErrorMsg("");
-  };
+  const {
+    activityId,
+    setActivityId,
+    target,
+    setTarget,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    submitting,
+    errorMsg,
+    selectedActivity,
+    resetForm,
+    handleSubmit,
+  } = useCreateGoalDialog(activities, onCreate);
 
   const handleClose = () => {
     resetForm();
     onClose();
-  };
-
-  const handleSubmit = async () => {
-    setErrorMsg("");
-
-    if (!activityId) {
-      setErrorMsg("アクティビティを選択してください");
-      return;
-    }
-    const parsedTarget = Number(target);
-    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
-      setErrorMsg("日次目標は0より大きい数値を入力してください");
-      return;
-    }
-    if (!startDate) {
-      setErrorMsg("開始日を入力してください");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await onCreate({
-        activityId,
-        dailyTargetQuantity: parsedTarget,
-        startDate,
-        ...(endDate ? { endDate } : {}),
-      });
-      resetForm();
-    } catch {
-      setErrorMsg("作成に失敗しました");
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   return (

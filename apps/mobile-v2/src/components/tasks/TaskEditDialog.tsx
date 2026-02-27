@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DatePickerField } from "../common/DatePickerField";
-import { taskRepository } from "../../repositories/taskRepository";
-import { syncEngine } from "../../sync/syncEngine";
+import { useTaskEditDialog } from "./useTaskEditDialog";
 import type { TaskItem } from "./types";
 import dayjs from "dayjs";
 
@@ -18,28 +16,19 @@ export function TaskEditDialog({
   onSuccess: () => void;
   onDelete: (id: string) => void;
 }) {
-  const [title, setTitle] = useState(task.title);
-  const [startDate, setStartDate] = useState(task.startDate || "");
-  const [dueDate, setDueDate] = useState(task.dueDate || "");
-  const [memo, setMemo] = useState(task.memo || "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isArchived = !!task.archivedAt;
-
-  const handleSave = async () => {
-    if (!title.trim()) return;
-
-    setIsSubmitting(true);
-    await taskRepository.updateTask(task.id, {
-      title: title.trim(),
-      startDate: startDate || null,
-      dueDate: dueDate || null,
-      memo: memo.trim(),
-    });
-    setIsSubmitting(false);
-    syncEngine.syncTasks();
-    onSuccess();
-  };
+  const {
+    title,
+    setTitle,
+    startDate,
+    setStartDate,
+    dueDate,
+    setDueDate,
+    memo,
+    setMemo,
+    isSubmitting,
+    isArchived,
+    handleSave,
+  } = useTaskEditDialog(task, onSuccess);
 
   return (
     <ModalOverlay visible onClose={onClose} title="タスクを編集">

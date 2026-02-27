@@ -8,12 +8,22 @@ export type CreateActivityLogInput = Pick<
   "activityId" | "activityKindId" | "quantity" | "memo" | "date" | "time"
 >;
 
+/**
+ * The input type for upsertActivityLogsFromServer.
+ * Server sends full record data without userId (local-only) and without _syncStatus.
+ */
+export type UpsertActivityLogFromServerInput = LocalActivityLogRecord;
+
 export type ActivityLogRepository = {
   createActivityLog(
     input: CreateActivityLogInput,
   ): Promise<Syncable<LocalActivityLogRecord>>;
   getActivityLogsByDate(
     date: string,
+  ): Promise<Syncable<LocalActivityLogRecord>[]>;
+  getActivityLogsBetween(
+    startDate: string,
+    endDate: string,
   ): Promise<Syncable<LocalActivityLogRecord>[]>;
   updateActivityLog(
     id: string,
@@ -28,5 +38,7 @@ export type ActivityLogRepository = {
   getPendingSyncActivityLogs(): Promise<Syncable<LocalActivityLogRecord>[]>;
   markActivityLogsSynced(ids: string[]): Promise<void>;
   markActivityLogsFailed(ids: string[]): Promise<void>;
-  upsertActivityLogsFromServer(logs: LocalActivityLogRecord[]): Promise<void>;
+  upsertActivityLogsFromServer(
+    logs: UpsertActivityLogFromServerInput[],
+  ): Promise<void>;
 };

@@ -81,7 +81,7 @@ export function DailyPage() {
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}
         selectedDate={date}
-        onSelectDate={setDate}
+        onDateSelect={setDate}
       />
 
       <ScrollView

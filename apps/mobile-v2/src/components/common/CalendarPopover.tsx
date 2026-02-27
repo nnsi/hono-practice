@@ -7,7 +7,7 @@ type CalendarPopoverProps = {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: string; // YYYY-MM-DD
-  onSelectDate: (date: string) => void;
+  onDateSelect: (date: string) => void;
 };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -16,7 +16,7 @@ export function CalendarPopover({
   isOpen,
   onClose,
   selectedDate,
-  onSelectDate,
+  onDateSelect,
 }: CalendarPopoverProps) {
   const [viewMonth, setViewMonth] = useState(() =>
     dayjs(selectedDate).startOf("month"),
@@ -71,7 +71,7 @@ export function CalendarPopover({
   }
 
   const handleSelectDate = (date: string) => {
-    onSelectDate(date);
+    onDateSelect(date);
     onClose();
   };
 

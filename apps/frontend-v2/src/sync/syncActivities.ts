@@ -2,7 +2,7 @@ import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
 import { apiClient, customFetch } from "../utils/apiClient";
 import { mapApiActivity, mapApiActivityKind } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "./types";
+import type { SyncResult } from "@packages/domain/sync/syncResult";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
 
@@ -26,35 +26,35 @@ export async function syncActivities(): Promise<void> {
     },
   });
 
-  if (res.ok) {
-    const data: {
-      activities: SyncResult;
-      activityKinds: SyncResult;
-    } = await res.json();
+  if (!res.ok) return;
 
-    await activityRepository.markActivitiesSynced(
-      data.activities.syncedIds,
-    );
-    await activityRepository.markActivitiesFailed(
-      data.activities.skippedIds,
-    );
-    if (data.activities.serverWins.length > 0) {
-      await activityRepository.upsertActivities(
-        data.activities.serverWins.map(mapApiActivity),
-      );
-    }
+  const data: {
+    activities: SyncResult;
+    activityKinds: SyncResult;
+  } = await res.json();
 
-    await activityRepository.markActivityKindsSynced(
-      data.activityKinds.syncedIds,
+  await activityRepository.markActivitiesSynced(
+    data.activities.syncedIds,
+  );
+  await activityRepository.markActivitiesFailed(
+    data.activities.skippedIds,
+  );
+  if (data.activities.serverWins.length > 0) {
+    await activityRepository.upsertActivities(
+      data.activities.serverWins.map(mapApiActivity),
     );
-    await activityRepository.markActivityKindsFailed(
-      data.activityKinds.skippedIds,
+  }
+
+  await activityRepository.markActivityKindsSynced(
+    data.activityKinds.syncedIds,
+  );
+  await activityRepository.markActivityKindsFailed(
+    data.activityKinds.skippedIds,
+  );
+  if (data.activityKinds.serverWins.length > 0) {
+    await activityRepository.upsertActivityKinds(
+      data.activityKinds.serverWins.map(mapApiActivityKind),
     );
-    if (data.activityKinds.serverWins.length > 0) {
-      await activityRepository.upsertActivityKinds(
-        data.activityKinds.serverWins.map(mapApiActivityKind),
-      );
-    }
   }
 }
 
@@ -93,16 +93,16 @@ export async function syncActivityIcons(): Promise<void> {
       },
     );
 
-    if (res.ok) {
-      const data = (await res.json()) as {
-        iconUrl: string;
-        iconThumbnailUrl: string;
-      };
-      await activityRepository.completeActivityIconSync(
-        blob.activityId,
-        data.iconUrl,
-        data.iconThumbnailUrl,
-      );
-    }
+    if (!res.ok) continue;
+
+    const data = (await res.json()) as {
+      iconUrl: string;
+      iconThumbnailUrl: string;
+    };
+    await activityRepository.completeActivityIconSync(
+      blob.activityId,
+      data.iconUrl,
+      data.iconThumbnailUrl,
+    );
   }
 }

@@ -89,6 +89,7 @@ export async function syncActivityIcons(): Promise<void> {
       `${API_URL}/users/activities/${blob.activityId}/icon`,
       {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ base64: blob.base64, mimeType: blob.mimeType }),
       },
     );

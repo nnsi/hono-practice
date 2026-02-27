@@ -1,16 +1,9 @@
 import { useEffect, useRef } from "react";
+import { createUseSyncEngine } from "@packages/frontend-shared/hooks/useSyncEngine";
 import { syncEngine } from "../sync/syncEngine";
 
-export function useSyncEngine(isLoggedIn: boolean) {
-  const cleanupRef = useRef<(() => void) | null>(null);
+const useSyncEngineShared = createUseSyncEngine({ useEffect, useRef });
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      cleanupRef.current = syncEngine.startAutoSync();
-    }
-    return () => {
-      cleanupRef.current?.();
-      cleanupRef.current = null;
-    };
-  }, [isLoggedIn]);
+export function useSyncEngine(isLoggedIn: boolean) {
+  useSyncEngineShared(syncEngine, isLoggedIn);
 }

@@ -120,7 +120,7 @@ export const goalRepository = {
   async getAllGoals(): Promise<GoalWithSync[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM goals WHERE deleted_at IS NULL",
+      "SELECT * FROM goals WHERE deleted_at IS NULL ORDER BY start_date DESC",
     );
     return rows.map(mapGoalRow);
   },

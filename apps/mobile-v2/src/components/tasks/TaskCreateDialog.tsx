@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DatePickerField } from "../common/DatePickerField";
-import { taskRepository } from "../../repositories/taskRepository";
-import { syncEngine } from "../../sync/syncEngine";
+import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
 export function TaskCreateDialog({
   onClose,
@@ -15,28 +13,18 @@ export function TaskCreateDialog({
   onSuccess: () => void;
   defaultDate?: string;
 }) {
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState(
-    defaultDate ?? dayjs().format("YYYY-MM-DD"),
-  );
-  const [dueDate, setDueDate] = useState("");
-  const [memo, setMemo] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCreate = async () => {
-    if (!title.trim()) return;
-
-    setIsSubmitting(true);
-    await taskRepository.createTask({
-      title: title.trim(),
-      startDate: startDate || null,
-      dueDate: dueDate || null,
-      memo: memo.trim(),
-    });
-    setIsSubmitting(false);
-    syncEngine.syncTasks();
-    onSuccess();
-  };
+  const {
+    title,
+    setTitle,
+    startDate,
+    setStartDate,
+    dueDate,
+    setDueDate,
+    memo,
+    setMemo,
+    isSubmitting,
+    handleCreate,
+  } = useTaskCreateDialog(onSuccess, defaultDate);
 
   return (
     <ModalOverlay visible onClose={onClose} title="新しいタスクを作成">

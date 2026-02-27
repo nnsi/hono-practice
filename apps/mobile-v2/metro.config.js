@@ -14,6 +14,11 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
+// Pin shared deps so packages/ outside projectRoot resolve the app's copy
+config.resolver.extraNodeModules = {
+  react: path.resolve(projectRoot, "node_modules/react"),
+};
+
 // On web, redirect expo-sqlite to our web shim (native module not available)
 // Metro can't resolve hono/client exports map — point it to the dist file directly
 config.resolver.resolveRequest = (context, moduleName, platform) => {

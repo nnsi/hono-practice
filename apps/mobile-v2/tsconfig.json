@@ -10,6 +10,9 @@
       "@packages/types-v2/*": [
         "../../packages/types-v2/*"
       ],
+      "@packages/frontend-shared/*": [
+        "../../packages/frontend-shared/*"
+      ],
       "@/*": [
         "./src/*"
       ],

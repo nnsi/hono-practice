@@ -1,7 +1,7 @@
 import { goalRepository } from "../db/goalRepository";
 import { apiClient } from "../utils/apiClient";
 import { mapApiGoal } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "./types";
+import type { SyncResult } from "@packages/domain/sync/syncResult";
 
 export async function syncGoals(): Promise<void> {
   const pending = await goalRepository.getPendingSyncGoals();
@@ -15,14 +15,14 @@ export async function syncGoals(): Promise<void> {
     json: { goals },
   });
 
-  if (res.ok) {
-    const data: SyncResult = await res.json();
-    await goalRepository.markGoalsSynced(data.syncedIds);
-    await goalRepository.markGoalsFailed(data.skippedIds);
-    if (data.serverWins.length > 0) {
-      await goalRepository.upsertGoalsFromServer(
-        data.serverWins.map(mapApiGoal),
-      );
-    }
+  if (!res.ok) return;
+
+  const data: SyncResult = await res.json();
+  await goalRepository.markGoalsSynced(data.syncedIds);
+  await goalRepository.markGoalsFailed(data.skippedIds);
+  if (data.serverWins.length > 0) {
+    await goalRepository.upsertGoalsFromServer(
+      data.serverWins.map(mapApiGoal),
+    );
   }
 }

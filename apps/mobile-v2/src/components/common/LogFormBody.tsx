@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import {
   convertSecondsToUnit,
@@ -21,6 +22,8 @@ export function LogFormBody({
   date: string;
   onDone: () => void;
 }) {
+  const quantityRef = useRef<TextInput>(null);
+
   const {
     timerEnabled,
     effectiveTab,
@@ -101,10 +104,26 @@ export function LogFormBody({
               数量{activity.quantityUnit ? ` (${activity.quantityUnit})` : ""}
             </Text>
             <TextInput
+              ref={quantityRef}
               className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
               value={quantity}
               onChangeText={setQuantity}
               keyboardType="decimal-pad"
+              onFocus={() => {
+                setTimeout(() => {
+                  const node = quantityRef.current as unknown as {
+                    select?: () => void;
+                    setSelection?: (start: number, end: number) => void;
+                  } | null;
+                  if (node?.select) {
+                    // Web: DOM input.select()
+                    node.select();
+                  } else if (node?.setSelection) {
+                    // Native: RN TextInput.setSelection()
+                    node.setSelection(0, quantity.length);
+                  }
+                }, 0);
+              }}
             />
           </View>
 

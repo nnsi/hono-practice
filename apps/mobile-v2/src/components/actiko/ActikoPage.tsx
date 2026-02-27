@@ -97,7 +97,7 @@ export function ActikoPage() {
       {/* Calendar popover */}
       <CalendarPopover
         selectedDate={date}
-        onSelectDate={setDate}
+        onDateSelect={setDate}
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}
       />

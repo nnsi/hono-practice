@@ -10,7 +10,7 @@ export type { TaskRecord } from "./task/taskRecord";
 
 // Repository types
 export type { ActivityRepository, CreateActivityInput, ActivityIconBlob, ActivityIconDeleteQueueItem } from "./activity/activityRepository";
-export type { ActivityLogRepository, CreateActivityLogInput } from "./activityLog/activityLogRepository";
+export type { ActivityLogRepository, CreateActivityLogInput, UpsertActivityLogFromServerInput } from "./activityLog/activityLogRepository";
 export type { GoalRepository, CreateGoalInput, UpdateGoalInput } from "./goal/goalRepository";
 export type { TaskRepository, CreateTaskInput, UpdateTaskInput } from "./task/taskRepository";
 

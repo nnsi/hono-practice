@@ -1,5 +1,8 @@
 import { v7 as uuidv7 } from "uuid";
-import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
+import type {
+  ActivityLogRepository,
+  UpsertActivityLogFromServerInput,
+} from "@packages/domain/activityLog/activityLogRepository";
 import { db, type DexieActivityLog } from "./schema";
 
 type CreateInput = Pick<
@@ -26,6 +29,14 @@ export const activityLogRepository = {
     return db.activityLogs
       .where("date")
       .equals(date)
+      .filter((log) => log.deletedAt === null)
+      .toArray();
+  },
+
+  async getActivityLogsBetween(startDate: string, endDate: string) {
+    return db.activityLogs
+      .where("date")
+      .between(startDate, endDate, true, true)
       .filter((log) => log.deletedAt === null)
       .toArray();
   },
@@ -77,7 +88,7 @@ export const activityLogRepository = {
   },
 
   async upsertActivityLogsFromServer(
-    logs: Omit<DexieActivityLog, "_syncStatus">[],
+    logs: UpsertActivityLogFromServerInput[],
   ) {
     await db.activityLogs.bulkPut(
       logs.map((log) => ({ ...log, _syncStatus: "synced" as const })),

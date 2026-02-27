@@ -1,5 +1,8 @@
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
-import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
+import type {
+  ActivityLogRepository,
+  UpsertActivityLogFromServerInput,
+} from "@packages/domain/activityLog/activityLogRepository";
 import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -209,7 +212,7 @@ export const activityLogRepository = {
   // --- Server upsert ---
 
   async upsertActivityLogsFromServer(
-    logs: Omit<LocalActivityLog, never>[],
+    logs: UpsertActivityLogFromServerInput[],
   ): Promise<void> {
     const db = await getDatabase();
     try {
@@ -239,4 +242,4 @@ export const activityLogRepository = {
     }
     dbEvents.emit("activity_logs");
   },
-} satisfies ActivityLogRepository & Record<string, unknown>;
+} satisfies ActivityLogRepository;

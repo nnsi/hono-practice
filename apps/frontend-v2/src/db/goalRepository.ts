@@ -47,7 +47,8 @@ export const goalRepository = {
   },
 
   async getAllGoals() {
-    return db.goals.filter((g) => !g.deletedAt).toArray();
+    const goals = await db.goals.filter((g) => !g.deletedAt).toArray();
+    return goals.sort((a, b) => b.startDate.localeCompare(a.startDate));
   },
 
   async updateGoal(id: string, changes: UpdateGoalInput) {

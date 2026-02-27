@@ -1,7 +1,7 @@
 import { activityLogRepository } from "../db/activityLogRepository";
 import { apiClient } from "../utils/apiClient";
 import { mapApiActivityLog } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "./types";
+import type { SyncResult } from "@packages/domain/sync/syncResult";
 
 export async function syncActivityLogs(): Promise<void> {
   const pending = await activityLogRepository.getPendingSyncActivityLogs();
@@ -13,14 +13,14 @@ export async function syncActivityLogs(): Promise<void> {
     json: { logs },
   });
 
-  if (res.ok) {
-    const data: SyncResult = await res.json();
-    await activityLogRepository.markActivityLogsSynced(data.syncedIds);
-    if (data.serverWins.length > 0) {
-      await activityLogRepository.upsertActivityLogsFromServer(
-        data.serverWins.map(mapApiActivityLog),
-      );
-    }
-    await activityLogRepository.markActivityLogsFailed(data.skippedIds);
+  if (!res.ok) return;
+
+  const data: SyncResult = await res.json();
+  await activityLogRepository.markActivityLogsSynced(data.syncedIds);
+  if (data.serverWins.length > 0) {
+    await activityLogRepository.upsertActivityLogsFromServer(
+      data.serverWins.map(mapApiActivityLog),
+    );
   }
+  await activityLogRepository.markActivityLogsFailed(data.skippedIds);
 }

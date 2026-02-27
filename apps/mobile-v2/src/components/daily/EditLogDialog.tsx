@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Trash2 } from "lucide-react-native";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { activityLogRepository } from "../../repositories/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
+import { useEditLogDialog } from "./useEditLogDialog";
 
 type Log = {
   id: string;
@@ -32,45 +29,20 @@ export function EditLogDialog({
   activity: Activity | null;
   onClose: () => void;
 }) {
-  const { kinds } = useActivityKinds(log.activityId);
-  const [quantity, setQuantity] = useState(
-    log.quantity !== null ? String(log.quantity) : "",
-  );
-  const [memo, setMemo] = useState(log.memo);
-  const [selectedKindId, setSelectedKindId] = useState<string | null>(
-    log.activityKindId,
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  useEffect(() => {
-    setQuantity(log.quantity !== null ? String(log.quantity) : "");
-    setMemo(log.memo);
-    setSelectedKindId(log.activityKindId);
-    setShowDeleteConfirm(false);
-  }, [log]);
-
-  const handleSave = async () => {
-    const parsed = quantity !== "" ? Number(quantity) : null;
-    if (parsed !== null && !Number.isFinite(parsed)) return;
-    setIsSubmitting(true);
-    await activityLogRepository.updateActivityLog(log.id, {
-      quantity: parsed,
-      memo,
-      activityKindId: selectedKindId,
-    });
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  const handleDelete = async () => {
-    setIsSubmitting(true);
-    await activityLogRepository.softDeleteActivityLog(log.id);
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
+  const {
+    quantity,
+    setQuantity,
+    memo,
+    setMemo,
+    selectedKindId,
+    setSelectedKindId,
+    isSubmitting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    kinds,
+    handleSave,
+    handleDelete,
+  } = useEditLogDialog(log, onClose);
 
   return (
     <ModalOverlay
@@ -131,7 +103,7 @@ export function EditLogDialog({
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
-            onFocus={(e) => {
+            onFocus={() => {
               // Select all on focus is not directly supported in RN TextInput
             }}
           />
