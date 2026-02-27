@@ -1,31 +1,43 @@
-import { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { Plus, Timer, Square, X } from "lucide-react-native";
-import { useActivities } from "../../hooks/useActivities";
+import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Timer,
+  Square,
+  X,
+} from "lucide-react-native";
+import dayjs from "dayjs";
 import { useTimer } from "../../hooks/useTimer";
+import { useActikoPage } from "./useActikoPage";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
-
-type SelectedActivity = {
-  id: string;
-  name: string;
-  emoji: string;
-  iconType: "emoji" | "upload" | "generate";
-  quantityUnit: string;
-  showCombinedStats: boolean;
-};
+import { useState } from "react";
 
 export function ActikoPage() {
-  const { activities } = useActivities();
+  const {
+    date,
+    goToPrev,
+    goToNext,
+    isToday,
+    activities,
+    selectedActivity,
+    setSelectedActivity,
+    dialogOpen,
+    setDialogOpen,
+    createActivityOpen,
+    setCreateActivityOpen,
+    editActivity,
+    setEditActivity,
+    hasLogsForActivity,
+    handleActivityClick,
+    handleActivityChanged,
+  } = useActikoPage();
+
   const timer = useTimer();
-  const [recordActivity, setRecordActivity] =
-    useState<SelectedActivity | null>(null);
-  const [editActivity, setEditActivity] = useState<SelectedActivity | null>(
-    null
-  );
-  const [showCreate, setShowCreate] = useState(false);
   const [timerInitialQuantity, setTimerInitialQuantity] = useState<
     string | undefined
   >(undefined);
@@ -39,7 +51,8 @@ export function ActikoPage() {
       );
       if (timedActivity) {
         setTimerInitialQuantity(elapsedMinutes);
-        setRecordActivity(timedActivity);
+        setSelectedActivity(timedActivity);
+        setDialogOpen(true);
       }
     }
   };
@@ -49,7 +62,8 @@ export function ActikoPage() {
   };
 
   const handleRecordClose = () => {
-    setRecordActivity(null);
+    setDialogOpen(false);
+    setSelectedActivity(null);
     setTimerInitialQuantity(undefined);
   };
 
@@ -57,29 +71,70 @@ export function ActikoPage() {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    if (h > 0)
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
+  const dateLabel = dayjs(date).format("M/D (ddd)");
+
+  type GridItem =
+    | (typeof activities)[number]
+    | { id: "__add__"; name?: never };
+
+  const gridData: GridItem[] = [
+    ...activities,
+    { id: "__add__" as const },
+  ];
+
   return (
     <View className="flex-1 bg-gray-50">
+      {/* Date navigation header */}
+      <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
+        <TouchableOpacity
+          className="absolute left-4 p-2"
+          onPress={goToPrev}
+        >
+          <ChevronLeft size={20} color="#78716c" />
+        </TouchableOpacity>
+
+        {isToday ? (
+          <View className="bg-gray-900 rounded-xl px-4 py-1">
+            <Text className="text-white text-base font-medium">
+              {dateLabel}
+            </Text>
+          </View>
+        ) : (
+          <Text className="text-base font-medium text-gray-800">
+            {dateLabel}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          className="absolute right-4 p-2"
+          onPress={goToNext}
+        >
+          <ChevronRight size={20} color="#78716c" />
+        </TouchableOpacity>
+      </View>
+
       {/* Timer indicator */}
       {timer.isRunning ? (
-        <View className="mx-4 mt-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
+        <View className="mx-4 mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
-              <Timer size={18} color="#3b82f6" />
-              <Text className="ml-2 text-sm text-blue-700 font-medium">
+              <Timer size={18} color="#f59e0b" />
+              <Text className="ml-2 text-sm text-amber-700 font-medium">
                 {timer.activityName}
               </Text>
             </View>
-            <Text className="text-blue-700 font-bold text-base">
+            <Text className="text-amber-700 font-bold text-base">
               {formatElapsed(timer.elapsed)}
             </Text>
           </View>
           <View className="flex-row mt-2 gap-2">
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-2 rounded-lg bg-blue-500"
+              className="flex-1 flex-row items-center justify-center py-2 rounded-lg bg-amber-500"
               onPress={handleTimerStop}
             >
               <Square size={14} color="#ffffff" />
@@ -105,49 +160,79 @@ export function ActikoPage() {
           <Text className="text-lg font-medium text-gray-600 text-center">
             アクティビティがありません
           </Text>
-          <Text className="text-sm text-gray-400 text-center mt-1">
-            右下の＋ボタンから追加しましょう
-          </Text>
+          <TouchableOpacity onPress={() => setCreateActivityOpen(true)}>
+            <Text className="text-sm text-amber-600 text-center mt-2">
+              タップして追加しましょう
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={activities}
+          data={gridData}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 8, paddingBottom: 100 }}
-          renderItem={({ item }) => (
-            <ActivityCard
-              activity={item}
-              onPress={() => setRecordActivity(item)}
-            />
-          )}
+          renderItem={({ item, index }) => {
+            if (item.id === "__add__") {
+              return (
+                <TouchableOpacity
+                  className="flex-1 m-1 rounded-2xl border-2 border-dashed border-gray-300 items-center justify-center min-h-[120px]"
+                  onPress={() => setCreateActivityOpen(true)}
+                  activeOpacity={0.7}
+                >
+                  <Plus size={28} color="#a8a29e" />
+                  <Text className="text-xs text-gray-400 mt-1">追加</Text>
+                </TouchableOpacity>
+              );
+            }
+            const activity = item as (typeof activities)[number];
+            const card = (
+              <ActivityCard
+                activity={activity}
+                isDone={hasLogsForActivity(activity.id)}
+                onPress={() => handleActivityClick(activity)}
+                onEdit={() => setEditActivity(activity)}
+              />
+            );
+            if (Platform.OS === "web") {
+              return card;
+            }
+            return (
+              <Animated.View
+                entering={FadeInDown.delay(index * 35)
+                  .duration(350)
+                  .springify()}
+                style={{ flex: 1 }}
+              >
+                {card}
+              </Animated.View>
+            );
+          }}
         />
       )}
 
-      {/* FAB */}
-      <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-blue-500 rounded-full items-center justify-center shadow-lg"
-        onPress={() => setShowCreate(true)}
-        activeOpacity={0.8}
-      >
-        <Plus size={28} color="#ffffff" />
-      </TouchableOpacity>
-
-      {/* Dialogs */}
+      {/* Record dialog */}
       <RecordDialog
-        visible={recordActivity !== null}
+        visible={dialogOpen && selectedActivity !== null}
         onClose={handleRecordClose}
-        activity={recordActivity}
+        activity={selectedActivity}
+        date={date}
         initialQuantity={timerInitialQuantity}
       />
+
+      {/* Create activity dialog */}
       <CreateActivityDialog
-        visible={showCreate}
-        onClose={() => setShowCreate(false)}
+        visible={createActivityOpen}
+        onClose={() => setCreateActivityOpen(false)}
+        onCreated={handleActivityChanged}
       />
+
+      {/* Edit activity dialog */}
       <EditActivityDialog
         visible={editActivity !== null}
         onClose={() => setEditActivity(null)}
         activity={editActivity}
+        onUpdated={handleActivityChanged}
       />
     </View>
   );

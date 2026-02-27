@@ -5,9 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   Switch,
-  Alert,
 } from "react-native";
-import { Trash2, Plus, ImagePlus, ImageOff } from "lucide-react-native";
+import { ImagePlus, ImageOff } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -15,6 +14,7 @@ import { ModalOverlay } from "../common/ModalOverlay";
 import { EmojiPicker } from "../common/EmojiPicker";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
+import { COLOR_PALETTE } from "../stats/colorUtils";
 
 type Activity = {
   id: string;
@@ -25,22 +25,24 @@ type Activity = {
   showCombinedStats: boolean;
 };
 
-type EditActivityDialogProps = {
-  visible: boolean;
-  onClose: () => void;
-  activity: Activity | null;
-};
-
 type KindEntry = {
   id?: string;
   name: string;
   color: string;
 };
 
+type EditActivityDialogProps = {
+  visible: boolean;
+  onClose: () => void;
+  activity: Activity | null;
+  onUpdated: () => void;
+};
+
 export function EditActivityDialog({
   visible,
   onClose,
   activity,
+  onUpdated,
 }: EditActivityDialogProps) {
   const { kinds: existingKinds } = useActivityKinds(activity?.id);
   const [name, setName] = useState("");
@@ -48,12 +50,13 @@ export function EditActivityDialog({
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kindEntries, setKindEntries] = useState<KindEntry[]>([]);
-  const [newKindName, setNewKindName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [currentIconType, setCurrentIconType] = useState<
     "emoji" | "upload" | "generate"
   >("emoji");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (activity) {
@@ -62,8 +65,22 @@ export function EditActivityDialog({
       setQuantityUnit(activity.quantityUnit);
       setShowCombinedStats(activity.showCombinedStats);
       setCurrentIconType(activity.iconType);
+      setShowDeleteConfirm(false);
+      setError("");
     }
   }, [activity]);
+
+  useEffect(() => {
+    if (existingKinds.length > 0) {
+      setKindEntries(
+        existingKinds.map((k) => ({
+          id: k.id,
+          name: k.name,
+          color: k.color || "#3b82f6",
+        }))
+      );
+    }
+  }, [existingKinds]);
 
   const handlePickImage = async () => {
     if (!activity) return;
@@ -98,7 +115,7 @@ export function EditActivityDialog({
       });
       setCurrentIconType("upload");
     } catch {
-      Alert.alert("エラー", "画像の選択に失敗しました");
+      setError("画像の選択に失敗しました");
     } finally {
       setIsUploadingImage(false);
     }
@@ -110,84 +127,76 @@ export function EditActivityDialog({
       await activityRepository.clearActivityIcon(activity.id);
       setCurrentIconType("emoji");
     } catch {
-      Alert.alert("エラー", "画像の削除に失敗しました");
+      setError("画像の削除に失敗しました");
     }
   };
-
-  useEffect(() => {
-    if (existingKinds.length > 0) {
-      setKindEntries(
-        existingKinds.map((k) => ({
-          id: k.id,
-          name: k.name,
-          color: k.color || "",
-        }))
-      );
-    }
-  }, [existingKinds]);
 
   const handleSave = async () => {
     if (!activity) return;
     if (!name.trim()) {
-      Alert.alert("エラー", "名前を入力してください");
+      setError("名前を入力してください");
       return;
     }
     setIsSubmitting(true);
+    setError("");
     try {
       await activityRepository.updateActivity(
         activity.id,
         {
           name: name.trim(),
-          emoji: emoji || "📝",
+          emoji: emoji || "\ud83d\udcdd",
           quantityUnit: quantityUnit.trim(),
           showCombinedStats,
         },
-        kindEntries
+        kindEntries.filter((k) => k.name.trim())
       );
+      onUpdated();
       onClose();
-    } catch (e) {
-      Alert.alert("エラー", "更新に失敗しました");
+    } catch {
+      setError("更新に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!activity) return;
-    Alert.alert("削除確認", `「${activity.name}」を削除しますか？`, [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          await activityRepository.softDeleteActivity(activity.id);
-          onClose();
-        },
-      },
-    ]);
+    setIsSubmitting(true);
+    try {
+      await activityRepository.softDeleteActivity(activity.id);
+      onUpdated();
+      onClose();
+    } catch {
+      setError("削除に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const addKind = () => {
-    if (!newKindName.trim()) return;
-    setKindEntries((prev) => [
-      ...prev,
-      { name: newKindName.trim(), color: "" },
-    ]);
-    setNewKindName("");
+    setKindEntries((prev) => {
+      const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
+      const nextColor =
+        COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ??
+        COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
+      return [...prev, { name: "", color: nextColor }];
+    });
   };
 
   const removeKind = (index: number) => {
     setKindEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const updateKindName = (index: number, text: string) => {
+    setKindEntries((prev) =>
+      prev.map((k, i) => (i === index ? { ...k, name: text } : k))
+    );
+  };
+
   if (!activity) return null;
 
   return (
-    <ModalOverlay
-      visible={visible}
-      onClose={onClose}
-      title="アクティビティ編集"
-    >
+    <ModalOverlay visible={visible} onClose={onClose} title="アクティビティ編集">
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
 
@@ -222,7 +231,10 @@ export function EditActivityDialog({
           <TextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={name}
-            onChangeText={setName}
+            onChangeText={(t) => {
+              setName(t);
+              if (error) setError("");
+            }}
           />
         </View>
 
@@ -241,70 +253,85 @@ export function EditActivityDialog({
           <Switch
             value={showCombinedStats}
             onValueChange={setShowCombinedStats}
-            trackColor={{ false: "#d1d5db", true: "#93c5fd" }}
-            thumbColor={showCombinedStats ? "#3b82f6" : "#f4f4f5"}
+            trackColor={{ false: "#d6d3d1", true: "#fcd34d" }}
+            thumbColor={showCombinedStats ? "#f59e0b" : "#fafaf9"}
           />
         </View>
 
         {/* Kind management */}
         <View>
-          <Text className="text-sm text-gray-500 mb-2">種別</Text>
+          <Text className="text-sm text-gray-500 mb-2">種類</Text>
           {kindEntries.map((kind, index) => (
             <View
               key={kind.id ?? `new-${index}`}
-              className="flex-row items-center mb-2"
+              className="flex-row items-center mb-2 gap-2"
             >
               <TextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
                 value={kind.name}
-                onChangeText={(text) =>
-                  setKindEntries((prev) =>
-                    prev.map((k, i) =>
-                      i === index ? { ...k, name: text } : k
-                    )
-                  )
-                }
+                onChangeText={(t) => updateKindName(index, t)}
+                placeholder="種類名"
+              />
+              <View
+                className="w-8 h-8 rounded"
+                style={{ backgroundColor: kind.color }}
               />
               <TouchableOpacity
                 onPress={() => removeKind(index)}
-                className="ml-2 p-1.5"
+                className="px-2 py-1"
               >
-                <Trash2 size={16} color="#ef4444" />
+                <Text className="text-red-500 text-base">-</Text>
               </TouchableOpacity>
             </View>
           ))}
-          <View className="flex-row items-center">
-            <TextInput
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-              value={newKindName}
-              onChangeText={setNewKindName}
-              placeholder="種別を追加..."
-              onSubmitEditing={addKind}
-            />
-            <TouchableOpacity onPress={addKind} className="ml-2 p-1.5">
-              <Plus size={16} color="#3b82f6" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={addKind}>
+            <Text className="text-sm text-blue-600 font-medium">
+              + 種類を追加
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          className={`mt-2 py-3 rounded-xl items-center ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500"
-          }`}
-          onPress={handleSave}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? "保存中..." : "保存"}
-          </Text>
-        </TouchableOpacity>
+        {error ? (
+          <Text className="text-red-500 text-sm">{error}</Text>
+        ) : null}
 
-        <TouchableOpacity
-          className="mb-4 py-3 rounded-xl items-center border border-red-300"
-          onPress={handleDelete}
-        >
-          <Text className="text-red-500 font-medium text-base">削除</Text>
-        </TouchableOpacity>
+        {/* Save + Delete buttons */}
+        <View className="flex-row gap-2 mt-2">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded-xl items-center ${
+              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
+            }`}
+            onPress={handleSave}
+            disabled={isSubmitting || !name.trim()}
+          >
+            <Text className="text-white font-bold text-base">
+              {isSubmitting ? "保存中..." : "保存"}
+            </Text>
+          </TouchableOpacity>
+
+          {!showDeleteConfirm ? (
+            <TouchableOpacity
+              className="px-4 py-3 rounded-xl items-center border border-red-300"
+              onPress={() => setShowDeleteConfirm(true)}
+            >
+              <Text className="text-red-500 font-medium text-sm">削除</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className={`px-4 py-3 rounded-xl items-center ${
+                isSubmitting ? "bg-red-300" : "bg-red-500"
+              }`}
+              onPress={handleDelete}
+              disabled={isSubmitting}
+            >
+              <Text className="text-white font-medium text-sm">
+                本当に削除
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View className="h-4" />
       </View>
     </ModalOverlay>
   );

@@ -1,43 +1,58 @@
-import { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { ChevronDown, ChevronRight } from "lucide-react-native";
-
-type TaskGroupProps = {
-  title: string;
-  count: number;
-  children: React.ReactNode;
-  defaultCollapsed?: boolean;
-};
+import { View, Text } from "react-native";
+import { TaskCard } from "./TaskCard";
+import type { TaskItem } from "./types";
 
 export function TaskGroup({
   title,
-  count,
-  children,
-  defaultCollapsed = false,
-}: TaskGroupProps) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
-
-  if (count === 0) return null;
+  tasks,
+  titleColor = "text-gray-700",
+  highlight = false,
+  completed = false,
+  archived = false,
+  onToggleDone,
+  onEdit,
+  onDelete,
+  onArchive,
+  onMoveToToday,
+}: {
+  title: string;
+  tasks: TaskItem[];
+  titleColor?: string;
+  highlight?: boolean;
+  completed?: boolean;
+  archived?: boolean;
+  onToggleDone: (task: TaskItem) => void;
+  onEdit: (task: TaskItem) => void;
+  onDelete: (id: string) => void;
+  onArchive: (task: TaskItem) => void;
+  onMoveToToday?: (task: TaskItem) => void;
+}) {
+  if (tasks.length === 0) return null;
 
   return (
-    <View className="mb-2">
-      <TouchableOpacity
-        className="flex-row items-center px-4 py-2 bg-gray-50"
-        onPress={() => setCollapsed((v) => !v)}
-      >
-        {collapsed ? (
-          <ChevronRight size={16} color="#9ca3af" />
-        ) : (
-          <ChevronDown size={16} color="#9ca3af" />
-        )}
-        <Text className="text-sm font-medium text-gray-600 ml-1">
-          {title}
-        </Text>
-        <View className="ml-2 px-1.5 py-0.5 bg-gray-200 rounded-full">
-          <Text className="text-xs text-gray-500">{count}</Text>
-        </View>
-      </TouchableOpacity>
-      {!collapsed ? children : null}
+    <View>
+      <View className="flex-row items-center mb-2">
+        <Text className={`text-sm font-semibold ${titleColor}`}>{title} </Text>
+        <Text className="text-xs text-gray-400">({tasks.length})</Text>
+      </View>
+      <View className="gap-2">
+        {tasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            highlight={highlight}
+            completed={completed}
+            archived={archived}
+            onToggleDone={() => onToggleDone(task)}
+            onEdit={() => onEdit(task)}
+            onDelete={() => onDelete(task.id)}
+            onArchive={() => onArchive(task)}
+            onMoveToToday={
+              onMoveToToday ? () => onMoveToToday(task) : undefined
+            }
+          />
+        ))}
+      </View>
     </View>
   );
 }

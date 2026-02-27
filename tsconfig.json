@@ -33,5 +33,5 @@
       "@frontend-v2/*": ["apps/frontend-v2/src/*"]
     }
   },
-  "exclude": ["node_modules", "apps/tail-worker", "apps/frontend-v2", "packages/frontend-shared/adapters/react-native.ts"]
+  "exclude": ["node_modules", "apps/tail-worker", "apps/frontend-v2", "apps/mobile-v2", "packages/frontend-shared/adapters/react-native.ts"]
 }

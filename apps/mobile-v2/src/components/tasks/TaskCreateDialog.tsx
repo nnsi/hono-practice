@@ -1,119 +1,116 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { DatePickerField } from "../common/DatePickerField";
 import { taskRepository } from "../../repositories/taskRepository";
-
-type TaskCreateDialogProps = {
-  visible: boolean;
-  onClose: () => void;
-};
+import { syncEngine } from "../../sync/syncEngine";
 
 export function TaskCreateDialog({
-  visible,
   onClose,
-}: TaskCreateDialogProps) {
+  onSuccess,
+  defaultDate,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+  defaultDate?: string;
+}) {
   const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState(
+    defaultDate ?? dayjs().format("YYYY-MM-DD"),
+  );
   const [dueDate, setDueDate] = useState("");
   const [memo, setMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const resetForm = () => {
-    setTitle("");
-    setStartDate("");
-    setDueDate("");
-    setMemo("");
-  };
-
   const handleCreate = async () => {
-    if (!title.trim()) {
-      Alert.alert("エラー", "タイトルを入力してください");
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await taskRepository.createTask({
-        title: title.trim(),
-        startDate: startDate || null,
-        dueDate: dueDate || null,
-        memo,
-      });
-      resetForm();
-      onClose();
-    } catch (e) {
-      Alert.alert("エラー", "タスクの作成に失敗しました");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    if (!title.trim()) return;
 
-  const handleClose = () => {
-    resetForm();
-    onClose();
+    setIsSubmitting(true);
+    await taskRepository.createTask({
+      title: title.trim(),
+      startDate: startDate || null,
+      dueDate: dueDate || null,
+      memo: memo.trim(),
+    });
+    setIsSubmitting(false);
+    syncEngine.syncTasks();
+    onSuccess();
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={handleClose} title="タスク作成">
-      <View className="gap-4">
+    <ModalOverlay visible onClose={onClose} title="新しいタスクを作成">
+      <View className="gap-4 pb-4">
+        {/* Title */}
         <View>
-          <Text className="text-sm text-gray-500 mb-1">タイトル</Text>
+          <Text className="text-sm font-medium text-gray-700 mb-1">
+            タイトル <Text className="text-red-500">*</Text>
+          </Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={title}
             onChangeText={setTitle}
-            placeholder="タスク名"
+            placeholder="タスクのタイトルを入力"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             autoFocus
           />
         </View>
 
-        <View>
-          <Text className="text-sm text-gray-500 mb-1">
-            開始日（任意 YYYY-MM-DD）
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="YYYY-MM-DD"
-          />
+        {/* Dates */}
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <DatePickerField
+              value={startDate || dayjs().format("YYYY-MM-DD")}
+              onChange={setStartDate}
+              label="開始日"
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm text-gray-500 mb-1">期限（任意）</Text>
+            <TextInput
+              value={dueDate}
+              onChangeText={setDueDate}
+              placeholder="YYYY-MM-DD"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          </View>
         </View>
 
+        {/* Memo */}
         <View>
-          <Text className="text-sm text-gray-500 mb-1">
-            期限日（任意 YYYY-MM-DD）
+          <Text className="text-sm font-medium text-gray-700 mb-1">
+            メモ（任意）
           </Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
-            value={dueDate}
-            onChangeText={setDueDate}
-            placeholder="YYYY-MM-DD"
-          />
-        </View>
-
-        <View>
-          <Text className="text-sm text-gray-500 mb-1">メモ（任意）</Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={memo}
             onChangeText={setMemo}
-            placeholder="メモ"
+            placeholder="タスクに関するメモを入力"
             multiline
             numberOfLines={3}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            style={{ textAlignVertical: "top" }}
           />
         </View>
 
-        <TouchableOpacity
-          className={`mt-2 mb-4 py-3 rounded-xl items-center ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500"
-          }`}
-          onPress={handleCreate}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? "作成中..." : "作成"}
-          </Text>
-        </TouchableOpacity>
+        {/* Buttons */}
+        <View className="flex-row gap-2 pt-2">
+          <TouchableOpacity
+            onPress={onClose}
+            className="flex-1 py-2.5 border border-gray-300 rounded-lg items-center"
+          >
+            <Text className="text-sm text-gray-700">キャンセル</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleCreate}
+            disabled={isSubmitting || !title.trim()}
+            className={`flex-1 py-2.5 rounded-lg items-center ${
+              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
+            }`}
+          >
+            <Text className="text-sm text-white font-medium">
+              {isSubmitting ? "作成中..." : "作成"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ModalOverlay>
   );

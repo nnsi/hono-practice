@@ -1,175 +1,173 @@
-import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from "react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { X, Trash2 } from "lucide-react-native";
 import { DatePickerField } from "../common/DatePickerField";
-import { goalRepository } from "../../repositories/goalRepository";
+import type { Activity, UpdateGoalPayload } from "./types";
 
-type Goal = {
+type GoalForEdit = {
   id: string;
   activityId: string;
   dailyTargetQuantity: number;
   startDate: string;
   endDate: string | null;
   isActive: boolean;
-  description: string;
-};
-
-type EditGoalFormProps = {
-  visible: boolean;
-  onClose: () => void;
-  goal: Goal | null;
-  activityName: string;
 };
 
 export function EditGoalForm({
-  visible,
-  onClose,
   goal,
-  activityName,
-}: EditGoalFormProps) {
-  const [dailyTarget, setDailyTarget] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [isActive, setIsActive] = useState(true);
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (goal) {
-      setDailyTarget(String(goal.dailyTargetQuantity));
-      setStartDate(goal.startDate);
-      setEndDate(goal.endDate || "");
-      setIsActive(goal.isActive);
-      setDescription(goal.description);
-    }
-  }, [goal]);
+  activity,
+  onCancel,
+  onSave,
+  onDelete,
+}: {
+  goal: GoalForEdit;
+  activity: Activity | null;
+  onCancel: () => void;
+  onSave: (payload: UpdateGoalPayload) => Promise<void>;
+  onDelete: () => Promise<void>;
+}) {
+  const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
+  const [startDate, setStartDate] = useState(goal.startDate);
+  const [endDate, setEndDate] = useState(goal.endDate ?? "");
+  const [saving, setSaving] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = async () => {
-    if (!goal) return;
-    if (!dailyTarget || Number(dailyTarget) <= 0) {
-      Alert.alert("エラー", "日間目標を入力してください");
-      return;
-    }
-    setIsSubmitting(true);
+    const parsedTarget = Number(target);
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) return;
+    setSaving(true);
     try {
-      await goalRepository.updateGoal(goal.id, {
-        dailyTargetQuantity: Number(dailyTarget),
+      await onSave({
+        dailyTargetQuantity: parsedTarget,
         startDate,
         endDate: endDate || null,
-        isActive,
-        description,
       });
-      onClose();
-    } catch (e) {
-      Alert.alert("エラー", "更新に失敗しました");
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
-  const handleDelete = () => {
-    if (!goal) return;
-    Alert.alert("削除確認", "この目標を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          await goalRepository.softDeleteGoal(goal.id);
-          onClose();
-        },
-      },
-    ]);
+  const handleDeactivate = async () => {
+    setSaving(true);
+    try {
+      await onSave({ isActive: false });
+    } finally {
+      setSaving(false);
+      setShowDeactivateConfirm(false);
+    }
   };
 
-  if (!goal) return null;
+  const handleDelete = async () => {
+    setSaving(true);
+    try {
+      await onDelete();
+    } finally {
+      setSaving(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title="目標編集">
-      <View className="gap-4">
-        <View className="p-3 bg-gray-50 rounded-lg">
-          <Text className="text-sm text-gray-500">アクティビティ</Text>
-          <Text className="text-base font-medium text-gray-800">
-            {activityName}
+    <View className="rounded-xl border-2 border-blue-300 bg-blue-50/30 mb-3 p-4">
+      {/* Header */}
+      <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center gap-2">
+          <Text className="text-xl">{activity?.emoji ?? "🎯"}</Text>
+          <Text className="font-semibold text-sm text-gray-900">
+            {activity?.name ?? "不明なアクティビティ"}
           </Text>
         </View>
-
-        <View>
-          <Text className="text-sm text-gray-500 mb-1">日間目標数量</Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
-            value={dailyTarget}
-            onChangeText={setDailyTarget}
-            keyboardType="numeric"
-          />
-        </View>
-
-        <DatePickerField
-          value={startDate}
-          onChange={setStartDate}
-          label="開始日"
-        />
-
-        <View>
-          <Text className="text-sm text-gray-500 mb-1">
-            終了日（任意 YYYY-MM-DD）
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
-            value={endDate}
-            onChangeText={setEndDate}
-            placeholder="YYYY-MM-DD（空欄で無期限）"
-          />
-        </View>
-
-        <View className="flex-row items-center justify-between py-2">
-          <Text className="text-sm text-gray-700">有効</Text>
-          <Switch
-            value={isActive}
-            onValueChange={setIsActive}
-            trackColor={{ false: "#d1d5db", true: "#93c5fd" }}
-            thumbColor={isActive ? "#3b82f6" : "#f4f4f5"}
-          />
-        </View>
-
-        <View>
-          <Text className="text-sm text-gray-500 mb-1">説明（任意）</Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-2 text-base"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="目標の説明"
-            multiline
-            numberOfLines={2}
-          />
-        </View>
-
-        <TouchableOpacity
-          className={`mt-2 py-3 rounded-xl items-center ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500"
-          }`}
-          onPress={handleSave}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? "保存中..." : "保存"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="mb-4 py-3 rounded-xl items-center border border-red-300"
-          onPress={handleDelete}
-        >
-          <Text className="text-red-500 font-medium text-base">削除</Text>
+        <TouchableOpacity className="p-1" onPress={onCancel}>
+          <X size={16} color="#6b7280" />
         </TouchableOpacity>
       </View>
-    </ModalOverlay>
+
+      {/* Daily target */}
+      <View className="mb-3">
+        <Text className="text-xs font-medium text-gray-600 mb-1">
+          日次目標{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
+        </Text>
+        <TextInput
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          value={target}
+          onChangeText={setTarget}
+          keyboardType="numeric"
+          selectTextOnFocus
+        />
+      </View>
+
+      {/* Dates */}
+      <View className="flex-row gap-3 mb-3">
+        <View className="flex-1">
+          <DatePickerField
+            value={startDate}
+            onChange={setStartDate}
+            label="開始日"
+          />
+        </View>
+        <View className="flex-1">
+          <Text className="text-xs font-medium text-gray-600 mb-1">終了日</Text>
+          <TextInput
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+            value={endDate}
+            onChangeText={setEndDate}
+            placeholder="未設定"
+          />
+        </View>
+      </View>
+
+      {/* Buttons */}
+      <View className="flex-row gap-2 pt-1">
+        {/* Save */}
+        <TouchableOpacity
+          className={`flex-1 py-2 rounded-lg items-center ${
+            saving ? "bg-gray-400" : "bg-gray-900"
+          }`}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          <Text className="text-white text-sm font-medium">保存</Text>
+        </TouchableOpacity>
+
+        {/* Deactivate (2-step) */}
+        {!showDeactivateConfirm ? (
+          <TouchableOpacity
+            className="px-4 py-2 bg-orange-500 rounded-lg items-center"
+            onPress={() => setShowDeactivateConfirm(true)}
+            disabled={saving}
+          >
+            <Text className="text-white text-sm font-medium">終了</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className="px-4 py-2 bg-red-600 rounded-lg items-center"
+            onPress={handleDeactivate}
+            disabled={saving}
+          >
+            <Text className="text-white text-sm font-medium">本当に終了</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Delete (2-step) */}
+        {!showDeleteConfirm ? (
+          <TouchableOpacity
+            className="px-3 py-2 border border-red-300 rounded-lg items-center justify-center"
+            onPress={() => setShowDeleteConfirm(true)}
+            disabled={saving}
+          >
+            <Trash2 size={14} color="#ef4444" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className="px-3 py-2 bg-red-500 rounded-lg items-center justify-center"
+            onPress={handleDelete}
+            disabled={saving}
+          >
+            <Text className="text-white text-sm">削除</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 }

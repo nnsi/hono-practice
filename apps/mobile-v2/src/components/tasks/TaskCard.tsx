@@ -1,76 +1,148 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import { Circle, CheckCircle2 } from "lucide-react-native";
 import dayjs from "dayjs";
-
-type TaskCardProps = {
-  task: {
-    id: string;
-    title: string;
-    dueDate: string | null;
-    doneDate: string | null;
-    memo: string;
-  };
-  onPress: () => void;
-  onLongPress: () => void;
-  onToggleDone: () => void;
-};
+import {
+  CheckCircle2,
+  Circle,
+  Archive,
+  CalendarCheck,
+  Pencil,
+  Trash2,
+  CalendarDays,
+  FileText,
+} from "lucide-react-native";
+import type { TaskItem } from "./types";
 
 export function TaskCard({
   task,
-  onPress,
-  onLongPress,
+  highlight = false,
+  completed = false,
+  archived = false,
   onToggleDone,
-}: TaskCardProps) {
-  const isDone = task.doneDate !== null;
-  const isOverdue =
-    !isDone &&
-    task.dueDate !== null &&
-    dayjs(task.dueDate).isBefore(dayjs(), "day");
+  onEdit,
+  onDelete,
+  onArchive,
+  onMoveToToday,
+}: {
+  task: TaskItem;
+  highlight?: boolean;
+  completed?: boolean;
+  archived?: boolean;
+  onToggleDone: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onArchive: () => void;
+  onMoveToToday?: () => void;
+}) {
+  const today = dayjs().format("YYYY-MM-DD");
+  const showMoveToToday =
+    !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
 
   return (
-    <TouchableOpacity
-      className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100"
-      onPress={onPress}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
+    <View
+      className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
+        highlight
+          ? "border border-red-200 bg-red-50"
+          : "bg-white border border-gray-100"
+      } ${completed ? "opacity-70" : ""}`}
+      style={
+        !highlight
+          ? {
+              shadowColor: "#1c1917",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.06,
+              shadowRadius: 3,
+              elevation: 2,
+            }
+          : undefined
+      }
     >
       {/* Checkbox */}
-      <TouchableOpacity onPress={onToggleDone} className="mr-3 p-0.5">
-        {isDone ? (
-          <CheckCircle2 size={22} color="#10b981" />
-        ) : (
-          <Circle size={22} color="#d1d5db" />
-        )}
-      </TouchableOpacity>
+      {!archived && (
+        <TouchableOpacity
+          onPress={onToggleDone}
+          className="p-0.5"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          {task.doneDate ? (
+            <CheckCircle2 size={22} color="#22c55e" />
+          ) : (
+            <Circle size={22} color="#9ca3af" />
+          )}
+        </TouchableOpacity>
+      )}
 
-      {/* Content */}
-      <View className="flex-1">
+      {/* Task body */}
+      <TouchableOpacity className="flex-1 min-w-0" onPress={onEdit}>
         <Text
-          className={`text-base ${
-            isDone
-              ? "text-gray-400 line-through"
-              : "text-gray-800"
+          className={`text-sm font-medium ${
+            completed || task.doneDate
+              ? "line-through text-gray-500"
+              : "text-gray-900"
           }`}
           numberOfLines={1}
         >
           {task.title}
         </Text>
-        {task.dueDate ? (
-          <Text
-            className={`text-xs mt-0.5 ${
-              isOverdue ? "text-red-500 font-medium" : "text-gray-400"
-            }`}
-          >
-            {isOverdue ? "期限切れ: " : "期限: "}
-            {dayjs(task.dueDate).format("MM/DD")}
-          </Text>
-        ) : null}
+        {(task.startDate || task.dueDate) && (
+          <View className="flex-row items-center gap-1 mt-0.5">
+            <CalendarDays size={12} color="#9ca3af" />
+            <Text className="text-xs text-gray-500">
+              {task.startDate && dayjs(task.startDate).format("MM/DD")}
+              {task.startDate && task.dueDate && " - "}
+              {task.dueDate && dayjs(task.dueDate).format("MM/DD")}
+            </Text>
+            {task.doneDate && (
+              <Text className="text-xs text-green-600 ml-2">
+                完了: {dayjs(task.doneDate).format("MM/DD")}
+              </Text>
+            )}
+          </View>
+        )}
         {task.memo ? (
-          <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
-            {task.memo}
-          </Text>
+          <View className="flex-row items-center gap-1 mt-0.5">
+            <FileText size={12} color="#9ca3af" />
+            <Text className="text-xs text-gray-400 flex-1" numberOfLines={1}>
+              {task.memo}
+            </Text>
+          </View>
         ) : null}
+      </TouchableOpacity>
+
+      {/* Action buttons */}
+      <View className="flex-row items-center gap-0.5">
+        {showMoveToToday && (
+          <TouchableOpacity
+            onPress={onMoveToToday}
+            className="p-1.5"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <CalendarCheck size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+        {task.doneDate && !archived && (
+          <TouchableOpacity
+            onPress={onArchive}
+            className="p-1.5"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <Archive size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={onEdit}
+          className="p-1.5"
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
+          <Pencil size={16} color="#9ca3af" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onDelete}
+          className="p-1.5"
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
+          <Trash2 size={16} color="#9ca3af" />
+        </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }

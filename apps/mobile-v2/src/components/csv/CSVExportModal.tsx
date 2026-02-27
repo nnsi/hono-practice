@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { CheckCircle, Download } from "lucide-react-native";
 import dayjs from "dayjs";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DatePickerField } from "../common/DatePickerField";
@@ -16,10 +17,12 @@ type CSVExportModalProps = {
 export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
   const { activities } = useActivities();
   const [startDate, setStartDate] = useState(
-    dayjs().subtract(30, "day").format("YYYY-MM-DD")
+    dayjs().subtract(30, "day").format("YYYY-MM-DD"),
   );
   const [endDate, setEndDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resultCount, setResultCount] = useState<number | null>(null);
 
   const activityMap = useMemo(() => {
     const map = new Map<string, { name: string; emoji: string }>();
@@ -31,8 +34,10 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
 
   const handleExport = async () => {
     setIsExporting(true);
+    setError(null);
+    setResultCount(null);
+
     try {
-      // Collect logs for each date in the range
       const allLogs: Array<{
         date: string;
         time: string | null;
@@ -63,20 +68,18 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
       }
 
       if (allLogs.length === 0) {
-        Alert.alert("情報", "エクスポートするデータがありません");
+        setError("エクスポートするデータがありません");
         setIsExporting(false);
         return;
       }
 
-      // Build CSV
       const header = "日付,時刻,アクティビティ,数量,メモ";
       const rows = allLogs.map(
         (l) =>
-          `"${l.date}","${l.time || ""}","${l.activityName}","${l.quantity ?? ""}","${(l.memo || "").replace(/"/g, '""')}"`
+          `"${l.date}","${l.time || ""}","${l.activityName}","${l.quantity ?? ""}","${(l.memo || "").replace(/"/g, '""')}"`,
       );
       const csv = [header, ...rows].join("\n");
 
-      // Write to temp file and share
       const fileUri = `${FileSystem.cacheDirectory}actiko-export-${dayjs().format("YYYYMMDD-HHmmss")}.csv`;
       await FileSystem.writeAsStringAsync(fileUri, csv, {
         encoding: FileSystem.EncodingType.UTF8,
@@ -88,11 +91,12 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           mimeType: "text/csv",
           dialogTitle: "CSVエクスポート",
         });
+        setResultCount(allLogs.length);
       } else {
-        Alert.alert("エラー", "共有機能が利用できません");
+        setError("共有機能が利用できません");
       }
-    } catch (e) {
-      Alert.alert("エラー", "エクスポートに失敗しました");
+    } catch {
+      setError("エクスポートに失敗しました");
     } finally {
       setIsExporting(false);
     }
@@ -100,7 +104,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
 
   return (
     <ModalOverlay visible={visible} onClose={onClose} title="CSVエクスポート">
-      <View className="gap-4">
+      <View className="gap-4 pb-4">
         <DatePickerField
           value={startDate}
           onChange={setStartDate}
@@ -113,23 +117,39 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           label="終了日"
         />
 
-        <View className="p-3 bg-gray-50 rounded-lg">
-          <Text className="text-xs text-gray-500">
-            選択期間のすべてのアクティビティログをCSV形式でエクスポートします。
-          </Text>
-        </View>
+        {/* Error */}
+        {error && (
+          <View className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <Text className="text-sm text-red-700">{error}</Text>
+          </View>
+        )}
+
+        {/* Success */}
+        {resultCount !== null && (
+          <View className="p-3 bg-green-50 border border-green-200 rounded-lg flex-row items-center">
+            <CheckCircle size={16} color="#16a34a" />
+            <Text className="text-sm text-green-700 ml-2">
+              {resultCount}件の活動記録をエクスポートしました
+            </Text>
+          </View>
+        )}
 
         <TouchableOpacity
-          className={`mt-2 mb-4 py-3 rounded-xl items-center ${
-            isExporting ? "bg-blue-300" : "bg-blue-500"
+          className={`py-3 rounded-xl items-center flex-row justify-center ${
+            isExporting ? "bg-gray-400" : "bg-gray-900"
           }`}
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Text className="text-white font-bold text-base">
-            {isExporting ? "エクスポート中..." : "エクスポート"}
+          <Download size={16} color="#ffffff" />
+          <Text className="text-white font-bold text-base ml-2">
+            {isExporting ? "エクスポート中..." : "CSVをエクスポート"}
           </Text>
         </TouchableOpacity>
+
+        <Text className="text-xs text-gray-400 text-center">
+          形式: date, time, activity, quantity, memo（CSVインポート互換）
+        </Text>
       </View>
     </ModalOverlay>
   );

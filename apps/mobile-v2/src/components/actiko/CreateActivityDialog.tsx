@@ -1,48 +1,69 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Switch, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Switch,
+} from "react-native";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { EmojiPicker } from "../common/EmojiPicker";
 import { activityRepository } from "../../repositories/activityRepository";
+import { COLOR_PALETTE } from "../stats/colorUtils";
+
+type KindEntry = {
+  name: string;
+  color: string;
+};
 
 type CreateActivityDialogProps = {
   visible: boolean;
   onClose: () => void;
+  onCreated: () => void;
 };
 
 export function CreateActivityDialog({
   visible,
   onClose,
+  onCreated,
 }: CreateActivityDialogProps) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
+  const [kinds, setKinds] = useState<KindEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const resetForm = () => {
     setName("");
     setEmoji("");
     setQuantityUnit("");
     setShowCombinedStats(false);
+    setKinds([]);
+    setError("");
   };
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      Alert.alert("エラー", "名前を入力してください");
+      setError("名前を入力してください");
       return;
     }
     setIsSubmitting(true);
+    setError("");
     try {
       await activityRepository.createActivity({
         name: name.trim(),
-        emoji: emoji || "📝",
+        emoji: emoji || "\ud83d\udcdd",
         quantityUnit: quantityUnit.trim(),
         showCombinedStats,
+        kinds: kinds.filter((k) => k.name.trim()),
       });
       resetForm();
+      onCreated();
       onClose();
-    } catch (e) {
-      Alert.alert("エラー", "アクティビティの作成に失敗しました");
+    } catch {
+      setError("アクティビティの作成に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -53,12 +74,28 @@ export function CreateActivityDialog({
     onClose();
   };
 
+  const addKind = () => {
+    setKinds((prev) => {
+      const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
+      const nextColor =
+        COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ??
+        COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
+      return [...prev, { name: "", color: nextColor }];
+    });
+  };
+
+  const removeKind = (index: number) => {
+    setKinds((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateKindName = (index: number, text: string) => {
+    setKinds((prev) =>
+      prev.map((k, i) => (i === index ? { ...k, name: text } : k))
+    );
+  };
+
   return (
-    <ModalOverlay
-      visible={visible}
-      onClose={handleClose}
-      title="アクティビティ作成"
-    >
+    <ModalOverlay visible={visible} onClose={handleClose} title="アクティビティ作成">
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
 
@@ -67,7 +104,10 @@ export function CreateActivityDialog({
           <TextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={name}
-            onChangeText={setName}
+            onChangeText={(t) => {
+              setName(t);
+              if (error) setError("");
+            }}
             placeholder="例: ランニング"
             autoFocus
           />
@@ -88,17 +128,54 @@ export function CreateActivityDialog({
           <Switch
             value={showCombinedStats}
             onValueChange={setShowCombinedStats}
-            trackColor={{ false: "#d1d5db", true: "#93c5fd" }}
-            thumbColor={showCombinedStats ? "#3b82f6" : "#f4f4f5"}
+            trackColor={{ false: "#d6d3d1", true: "#fcd34d" }}
+            thumbColor={showCombinedStats ? "#f59e0b" : "#fafaf9"}
           />
         </View>
 
+        {/* Kinds management */}
+        <View>
+          <Text className="text-sm text-gray-500 mb-2">種類</Text>
+          {kinds.map((kind, index) => (
+            <View
+              key={index}
+              className="flex-row items-center mb-2 gap-2"
+            >
+              <TextInput
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+                value={kind.name}
+                onChangeText={(t) => updateKindName(index, t)}
+                placeholder="種類名"
+              />
+              <View
+                className="w-8 h-8 rounded"
+                style={{ backgroundColor: kind.color }}
+              />
+              <TouchableOpacity
+                onPress={() => removeKind(index)}
+                className="px-2 py-1"
+              >
+                <Text className="text-red-500 text-base">-</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+          <TouchableOpacity onPress={addKind}>
+            <Text className="text-sm text-blue-600 font-medium">
+              + 種類を追加
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {error ? (
+          <Text className="text-red-500 text-sm">{error}</Text>
+        ) : null}
+
         <TouchableOpacity
           className={`mt-2 mb-4 py-3 rounded-xl items-center ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500"
+            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
           }`}
           onPress={handleCreate}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !name.trim()}
         >
           <Text className="text-white font-bold text-base">
             {isSubmitting ? "作成中..." : "作成"}

@@ -13,67 +13,69 @@ type Kind = {
   color: string | null;
 };
 
-type LogCardProps = {
+export function LogCard({
+  log,
+  activity,
+  kind,
+  onPress,
+}: {
   log: {
     id: string;
     activityId: string;
     activityKindId: string | null;
     quantity: number | null;
     memo: string;
-    time: string | null;
   };
-  activity: Activity | undefined;
-  kind: Kind | undefined;
+  activity: Activity | null;
+  kind: Kind | null;
   onPress: () => void;
-  onLongPress: () => void;
-};
-
-export function LogCard({
-  log,
-  activity,
-  kind,
-  onPress,
-  onLongPress,
-}: LogCardProps) {
+}) {
   return (
     <TouchableOpacity
-      className="mx-4 mb-2 p-3 bg-white rounded-xl border border-gray-200"
+      className="flex-row items-center gap-3 p-3.5 bg-white rounded-2xl border border-gray-200"
+      style={{
+        shadowColor: "#1c1917",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+        elevation: 2,
+      }}
       onPress={onPress}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
+      activeOpacity={0.95}
     >
-      <View className="flex-row items-center">
-        <Text className="text-2xl mr-3">{activity?.emoji || "📝"}</Text>
-        <View className="flex-1">
-          <View className="flex-row items-center">
-            <Text className="text-base font-medium text-gray-800">
-              {activity?.name || "不明"}
-            </Text>
-            {kind ? (
-              <View className="ml-2 px-2 py-0.5 bg-gray-100 rounded-full">
-                <Text className="text-xs text-gray-600">{kind.name}</Text>
-              </View>
-            ) : null}
-          </View>
-          <View className="flex-row items-center mt-0.5">
-            {log.quantity != null && activity?.quantityUnit ? (
-              <Text className="text-sm text-gray-500">
-                {log.quantity} {activity.quantityUnit}
-              </Text>
-            ) : null}
-            {log.time ? (
-              <Text className="text-sm text-gray-400 ml-2">{log.time}</Text>
-            ) : null}
-          </View>
-          {log.memo ? (
-            <Text
-              className="text-xs text-gray-400 mt-1"
-              numberOfLines={1}
-            >
-              {log.memo}
-            </Text>
-          ) : null}
+      {/* Icon */}
+      <View className="w-10 h-10 items-center justify-center shrink-0">
+        <Text className="text-2xl">{activity?.emoji || "\u{1f4dd}"}</Text>
+      </View>
+
+      {/* Content */}
+      <View className="flex-1 min-w-0">
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-base font-semibold text-gray-800" numberOfLines={1}>
+            {activity?.name ?? "\u4e0d\u660e"}
+          </Text>
+          {kind && (
+            <View className="flex-row items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-lg shrink-0">
+              {kind.color && (
+                <View
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: kind.color }}
+                />
+              )}
+              <Text className="text-xs text-gray-500">{kind.name}</Text>
+            </View>
+          )}
         </View>
+        <Text className="text-sm text-gray-500">
+          {log.quantity !== null
+            ? `${log.quantity}${activity?.quantityUnit ?? ""}`
+            : "-"}
+        </Text>
+        {log.memo ? (
+          <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
+            {log.memo}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
