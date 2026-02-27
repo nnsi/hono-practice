@@ -1,16 +1,18 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react-native";
 import dayjs from "dayjs";
 import { LogCard } from "./LogCard";
 import { TaskList } from "./TaskList";
 import { EditLogDialog } from "./EditLogDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
+import { CalendarPopover } from "../common/CalendarPopover";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
   const {
     date,
+    setDate,
     goToPrev,
     goToNext,
     isToday,
@@ -24,6 +26,8 @@ export function DailyPage() {
     setCreateDialogOpen,
     taskCreateDialogOpen,
     setTaskCreateDialogOpen,
+    calendarOpen,
+    setCalendarOpen,
     handleToggleTask,
   } = useDailyPage();
 
@@ -40,25 +44,45 @@ export function DailyPage() {
           <ChevronLeft size={20} color="#78716c" />
         </TouchableOpacity>
 
-        {isToday ? (
-          <View className="bg-gray-900 rounded-xl px-4 py-1">
-            <Text className="text-white text-base font-medium">
+        <TouchableOpacity
+          onPress={() => setCalendarOpen(!calendarOpen)}
+          activeOpacity={0.7}
+        >
+          {isToday ? (
+            <View className="bg-gray-900 rounded-xl px-4 py-1">
+              <Text className="text-white text-base font-medium">
+                {dateLabel}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-base font-medium text-gray-800">
               {dateLabel}
             </Text>
-          </View>
-        ) : (
-          <Text className="text-base font-medium text-gray-800">
-            {dateLabel}
-          </Text>
-        )}
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity
-          className="absolute right-4 p-2"
+          className="absolute right-14 p-2"
           onPress={goToNext}
         >
           <ChevronRight size={20} color="#78716c" />
         </TouchableOpacity>
+
+        <TouchableOpacity
+          className="absolute right-4 p-2"
+          onPress={() => setCalendarOpen(true)}
+        >
+          <Calendar size={18} color="#78716c" />
+        </TouchableOpacity>
       </View>
+
+      {/* Calendar popover */}
+      <CalendarPopover
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        selectedDate={date}
+        onSelectDate={setDate}
+      />
 
       <ScrollView
         className="flex-1"

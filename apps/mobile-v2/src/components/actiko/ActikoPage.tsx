@@ -4,26 +4,25 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Timer,
-  Square,
-  X,
+  Calendar,
 } from "lucide-react-native";
 import dayjs from "dayjs";
-import { useTimer } from "../../hooks/useTimer";
 import { useActikoPage } from "./useActikoPage";
 import { ActivityCard } from "./ActivityCard";
 import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
-import { useState } from "react";
+import { CalendarPopover } from "../common/CalendarPopover";
 
 export function ActikoPage() {
   const {
     date,
+    setDate,
     goToPrev,
     goToNext,
     isToday,
     activities,
+    iconBlobMap,
     selectedActivity,
     setSelectedActivity,
     dialogOpen,
@@ -32,48 +31,16 @@ export function ActikoPage() {
     setCreateActivityOpen,
     editActivity,
     setEditActivity,
+    calendarOpen,
+    setCalendarOpen,
     hasLogsForActivity,
     handleActivityClick,
     handleActivityChanged,
   } = useActikoPage();
 
-  const timer = useTimer();
-  const [timerInitialQuantity, setTimerInitialQuantity] = useState<
-    string | undefined
-  >(undefined);
-
-  const handleTimerStop = async () => {
-    const result = await timer.stopTimer();
-    if (result) {
-      const elapsedMinutes = (result.elapsed / 60).toFixed(1);
-      const timedActivity = activities.find(
-        (a) => a.id === result.activityId
-      );
-      if (timedActivity) {
-        setTimerInitialQuantity(elapsedMinutes);
-        setSelectedActivity(timedActivity);
-        setDialogOpen(true);
-      }
-    }
-  };
-
-  const handleTimerCancel = async () => {
-    await timer.cancelTimer();
-  };
-
   const handleRecordClose = () => {
     setDialogOpen(false);
     setSelectedActivity(null);
-    setTimerInitialQuantity(undefined);
-  };
-
-  const formatElapsed = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0)
-      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    return `${m}:${String(s).padStart(2, "0")}`;
   };
 
   const dateLabel = dayjs(date).format("M/D (ddd)");
@@ -98,17 +65,26 @@ export function ActikoPage() {
           <ChevronLeft size={20} color="#78716c" />
         </TouchableOpacity>
 
-        {isToday ? (
-          <View className="bg-gray-900 rounded-xl px-4 py-1">
-            <Text className="text-white text-base font-medium">
-              {dateLabel}
-            </Text>
-          </View>
-        ) : (
-          <Text className="text-base font-medium text-gray-800">
-            {dateLabel}
-          </Text>
-        )}
+        <TouchableOpacity
+          onPress={() => setCalendarOpen(!calendarOpen)}
+          className="flex-row items-center"
+        >
+          {isToday ? (
+            <View className="bg-gray-900 rounded-xl px-4 py-1 flex-row items-center">
+              <Text className="text-white text-base font-medium">
+                {dateLabel}
+              </Text>
+              <Calendar size={14} color="#ffffff" style={{ marginLeft: 6 }} />
+            </View>
+          ) : (
+            <View className="flex-row items-center px-4 py-1">
+              <Text className="text-base font-medium text-gray-800">
+                {dateLabel}
+              </Text>
+              <Calendar size={14} color="#78716c" style={{ marginLeft: 6 }} />
+            </View>
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity
           className="absolute right-4 p-2"
@@ -118,40 +94,13 @@ export function ActikoPage() {
         </TouchableOpacity>
       </View>
 
-      {/* Timer indicator */}
-      {timer.isRunning ? (
-        <View className="mx-4 mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <Timer size={18} color="#f59e0b" />
-              <Text className="ml-2 text-sm text-amber-700 font-medium">
-                {timer.activityName}
-              </Text>
-            </View>
-            <Text className="text-amber-700 font-bold text-base">
-              {formatElapsed(timer.elapsed)}
-            </Text>
-          </View>
-          <View className="flex-row mt-2 gap-2">
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-2 rounded-lg bg-amber-500"
-              onPress={handleTimerStop}
-            >
-              <Square size={14} color="#ffffff" />
-              <Text className="ml-1.5 text-white text-sm font-medium">
-                停止して記録
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-row items-center justify-center px-4 py-2 rounded-lg border border-gray-300"
-              onPress={handleTimerCancel}
-            >
-              <X size={14} color="#6b7280" />
-              <Text className="ml-1 text-gray-600 text-sm">取消</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : null}
+      {/* Calendar popover */}
+      <CalendarPopover
+        selectedDate={date}
+        onSelectDate={setDate}
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+      />
 
       {/* Activity grid */}
       {activities.length === 0 ? (
@@ -190,6 +139,7 @@ export function ActikoPage() {
               <ActivityCard
                 activity={activity}
                 isDone={hasLogsForActivity(activity.id)}
+                iconBlob={iconBlobMap.get(activity.id)}
                 onPress={() => handleActivityClick(activity)}
                 onEdit={() => setEditActivity(activity)}
               />
@@ -217,7 +167,6 @@ export function ActikoPage() {
         onClose={handleRecordClose}
         activity={selectedActivity}
         date={date}
-        initialQuantity={timerInitialQuantity}
       />
 
       {/* Create activity dialog */}

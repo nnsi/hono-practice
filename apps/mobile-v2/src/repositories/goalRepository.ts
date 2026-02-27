@@ -1,4 +1,6 @@
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import type { GoalRepository } from "@packages/domain/goal/goalRepository";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";
@@ -24,7 +26,12 @@ function num(v: unknown, defaultValue: number): number {
 // Goals in the local DB do NOT store currentBalance/totalTarget/totalActual
 // (they are computed from logs). We include them as 0 in the mapped type
 // for compatibility with GoalRecord.
-type GoalWithSync = GoalRecord & { _syncStatus: string };
+type GoalWithSync = GoalRecord & { _syncStatus: SyncStatus };
+
+function toSyncStatus(v: unknown): SyncStatus {
+  if (v === "pending" || v === "synced" || v === "failed") return v;
+  return "synced";
+}
 
 function mapGoalRow(row: SqlRow): GoalWithSync {
   return {
@@ -42,7 +49,7 @@ function mapGoalRow(row: SqlRow): GoalWithSync {
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: str(row.sync_status),
+    _syncStatus: toSyncStatus(row.sync_status),
   };
 }
 
@@ -106,7 +113,7 @@ export const goalRepository = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      _syncStatus: "pending",
+      _syncStatus: "pending" as const,
     };
   },
 
@@ -203,25 +210,32 @@ export const goalRepository = {
 
   async upsertGoalsFromServer(goals: GoalRecord[]): Promise<void> {
     const db = await getDatabase();
-    for (const g of goals) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
-        [
-          g.id,
-          g.userId,
-          g.activityId,
-          g.dailyTargetQuantity,
-          g.startDate,
-          g.endDate,
-          g.isActive ? 1 : 0,
-          g.description,
-          g.deletedAt,
-          g.createdAt,
-          g.updatedAt,
-        ],
-      );
+    try {
+      await db.execAsync("BEGIN");
+      for (const g of goals) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          [
+            g.id,
+            g.userId,
+            g.activityId,
+            g.dailyTargetQuantity,
+            g.startDate,
+            g.endDate,
+            g.isActive ? 1 : 0,
+            g.description,
+            g.deletedAt,
+            g.createdAt,
+            g.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
     }
     dbEvents.emit("goals");
   },
-};
+} satisfies GoalRepository;

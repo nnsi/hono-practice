@@ -1,213 +1,170 @@
-# mobile-v2 ↔ frontend-v2 統一レポート
+# frontend-v2 vs mobile-v2 差分一覧
 
-## 概要
-
-statsページを除く全mobile-v2ページについて、frontend-v2（Web版）とロジック・UIをコードレベルで統一した。
-
-## 対象ページ一覧
-
-| ページ | ファイル数 | 主な変更 |
-|--------|-----------|---------|
-| Actiko | 6ファイル | useActikoPageフック新規作成、ActivityCard/RecordDialog/CreateActivityDialog/EditActivityDialog書き換え |
-| Daily | 7ファイル | useDailyPageフック新規作成、TaskList新規作成、DailyPage/LogCard/CreateLogDialog/EditLogDialog書き換え |
-| Goals | 6ファイル | useGoalsPageフック新規作成、types.ts新規作成、GoalsPage/GoalCard/CreateGoalDialog/EditGoalForm書き換え |
-| Tasks | 8ファイル | useTasksPageフック新規作成、taskGrouping.ts/types.ts/DeleteConfirmDialog新規作成、TasksPage/TaskCard/TaskGroup/TaskCreateDialog/TaskEditDialog書き換え |
-| Settings | 1ファイル | SettingsPage全面書き換え |
-| CSV | 2ファイル | CSVImportModal/CSVExportModal書き換え |
-| 共通 | 2ファイル | LogFormBody全面書き換え（useLogFormフック連携）、ModalOverlay維持 |
+> 凡例: 🔧 今回修正 / ⏳ 別途対応 / ✅ 許容
 
 ---
 
-## ページ別差分と修正内容
+## 1. 潜在バグ / 重大な差異
 
-### 1. Actiko ページ
+| # | 箇所 | 内容 | 方針 |
+|---|------|------|------|
+| **B1** | `mobile-v2/sync/rnPlatformAdapters.ts` `isOnline()` | **常に`true`を返す。** `NetInfo.fetch().then()`がローカル変数を非同期で更新するが、関数はその前に`true`を返してしまう。結果、オフライン時でもsyncを試みる | 🔧 修正 |
+| **B2** | `mobile-v2/hooks/useAuth.ts` logout | **`clearToken()`を呼んでいない。** frontend-v2はlogout時にメモリ上のJWTをクリアするが、mobile-v2はDBのauth_stateだけ削除してトークンが残る | 🔧 修正 |
+| **B3** | `mobile-v2/hooks/useActivityKinds.ts` | `activityId`未指定時、frontend-v2は空配列を返すが、mobile-v2は**全ActivityKindsを返す**（`getAllActivityKinds()`） | 🔧 Webに合わせる（空配列を返す） |
 
-#### ActikoPage.tsx
-- **差分**: モバイルはロジックがコンポーネント内にベタ書き。Webはコロケーション型フック（useActikoPage）でロジック分離
-- **修正**: `useActikoPage.ts` を新規作成し、Web版と同じ構造に変更（date, activities, selectedActivity, dialogOpen, editActivity等のステート管理）
-- **差分**: モバイルにはタイマー表示がなかった
-- **修正**: Web版同様のタイマーインジケータ（Timer/Square/Xアイコン、「停止して記録」「取消」ボタン）を追加
-- **差分**: FlatListのgridData型が不正確
-- **修正**: GridItem型を定義してsentinelアイテム(`__add__`)と通常アクティビティを型安全に扱うよう修正
+## 2. useTimer — 設計が根本的に異なる → 🔧 Webに合わせる
 
-#### ActivityCard.tsx
-- **差分**: モバイルにはisDone（記録済み）表示とonEdit（編集ボタン）がなかった
-- **修正**: `isDone` prop追加（emerald背景で記録済み表示）、Pencilアイコンの編集ボタンを右上に追加
+| 観点 | frontend-v2 | mobile-v2 |
+|------|-------------|-----------|
+| スコープ | Activity単位（`useTimer(activityId)`） | グローバルシングルトン（`useTimer()`） |
+| 一時停止/再開 | 対応（stop→start で再開） | 非対応（stopで結果返却して終了） |
+| 更新間隔 | 100ms | 1000ms |
+| 永続化 | localStorage（per-activity key） | AsyncStorage（単一key） |
+| activityName保存 | なし | あり |
+| cancelTimer | なし | あり（結果を返さず破棄） |
+| useLogForm内 | 外部hookをimport | **inline実装**（`useActivityTimer()`を同ファイル内に定義） |
 
-#### RecordDialog.tsx
-- **差分**: モバイルは個別フィールド管理、WebはLogFormBody共通コンポーネントに委譲
-- **修正**: LogFormBody（`{activity, date, onDone}`インターフェース）に委譲する構造に変更。内部のuseLogFormがタイマー・手動入力の切り替えや種別選択を一元管理
+## 3. useTasks — API設計が異なる → 🔧 Webに合わせる
 
-#### CreateActivityDialog.tsx
-- **差分**: モバイルにはkinds（種別）管理機能とカラー設定がなかった
-- **修正**: Web版と同様のkinds追加UIとCOLOR_PALETTEによる自動カラー割り当てを追加
+| 観点 | frontend-v2 | mobile-v2 |
+|------|-------------|-----------|
+| Hook数 | 3つ（`useActiveTasks`, `useArchivedTasks`, `useTasksByDate`） | 1つ（`useTasks()`→ `{ activeTasks, archivedTasks }`） |
+| 日付フィルタ | `useTasksByDate(date)` あり | **なし** |
 
-#### EditActivityDialog.tsx
-- **差分**: モバイルのconfirm()呼び出しによる削除確認、showCombinedStats/kinds編集なし
-- **修正**: confirm()をインライン2段階確認UIに変更（「削除」→「本当に削除」）。showCombinedStatsトグル、kinds管理UI（追加・削除・カラー表示）を追加。画像アップロード機能は維持
+## 4. taskRepository — タスク表示日付フィルタロジック → 🔧 Mobileの方が筋良い。Webをmobileに合わせる
 
----
+| 観点 | frontend-v2 | mobile-v2 |
+|------|-------------|-----------|
+| `getTasksByDate` | **簡易フィルタ**: `deletedAt`, `archivedAt`, `startDate > date` のみチェック | `isTaskVisibleOnDate(t, date)` ドメイン述語を使用（`doneDate`, `dueDate`も考慮） |
 
-### 2. Daily ページ
+frontend-v2側で `isTaskVisibleOnDate` ドメイン述語を使うように修正する。
 
-#### DailyPage.tsx
-- **差分**: モバイルはアクティビティログのみ表示。Webは「アクティビティ」セクションと「タスク」セクションの2セクション構成
-- **修正**: `useDailyPage.ts` を新規作成。Web版と同じ2セクション構成（アクティビティ + タスク）に変更。各セクションに「+ 追加」ボタン
+## 5. syncActivityLogs — 処理順序の違い → 🔧 Webに合わせる
 
-#### TaskList.tsx（新規作成）
-- **差分**: モバイルにはDailyページ内のタスクリストがなかった
-- **修正**: Web版TaskListと同等のチェックボックス付きタスクリストコンポーネントを新規作成
+| frontend-v2 | mobile-v2 |
+|-------------|-----------|
+| `markSynced` → `upsertServerWins` → `markFailed` | `markSynced` → `markFailed` → `upsertServerWins` |
 
-#### LogCard.tsx
-- **差分**: モバイルはonLongPressで編集、WebはonPressで編集
-- **修正**: onLongPressをonPressに変更。syncStatusインジケータ表示を維持
+通常は問題ないが、IDが`skippedIds`と`serverWins`両方に含まれる場合に挙動が変わる可能性あり。
 
-#### CreateLogDialog.tsx
-- **差分**: モバイルはModalOverlay内にフォーム直接配置。Webは2ステップフロー（アクティビティ選択 → フォーム入力）
-- **修正**: Web版と同じ2ステップフロー。Step1でアクティビティリスト表示、Step2でLogFormBodyに委譲。戻るボタン（ChevronLeft）付き
+## 6. apiClient — アーキテクチャが大きく異なる → ⏳ Hono RPC Client移行として別途対応
 
-#### EditLogDialog.tsx
-- **差分**: モバイルはAlert.alert()で削除確認
-- **修正**: インライン2段階確認UIに変更（Trash2アイコン → 「削除」ボタン）。種別セレクターにカラードット表示を追加
+| 観点 | frontend-v2 | mobile-v2 |
+|------|-------------|-----------|
+| API呼び出し | Hono RPC client（`hc<AppType>`）で型安全 | 手動fetch wrapper関数（型安全でない） |
+| トークン管理 | `@packages/domain/sync/authenticatedFetch` に委譲 | 独自実装（inline 401リトライ） |
+| リフレッシュトークン | cookie-based（`credentials: "include"`） | `expo-secure-store` / localStorage |
+| login時 | `credentials: "include"` あり | なし（cookie非対応） |
 
----
+## 7. activityRepository — トランザクションの有無 → 🔧 Webに合わせる
 
-### 3. Goals ページ
+| 操作 | frontend-v2 | mobile-v2 |
+|------|-------------|-----------|
+| `completeActivityIconSync` | `db.transaction("rw", ...)` でアトミック | トランザクションなし（2つのSQL個別実行） |
+| `clearActivityIcon` | `db.transaction` で3テーブルまとめて | 3つのSQL個別実行 |
+| バッチupsert | `db.activities.bulkPut()` | `for...of` ループで個別INSERT |
 
-#### GoalsPage.tsx
-- **差分**: モバイルはgoals一覧のみ。Webはcurrent/past分離、展開可能カード、目標からの記録機能
-- **修正**: `useGoalsPage.ts` 新規作成。Web版と同じcurrentGoals/pastGoals分離、GoalCardの展開、RecordDialogへの連携
+mobile-v2でもSQLiteトランザクション（`BEGIN/COMMIT`）を使うようにする。
 
-#### GoalCard.tsx
-- **差分**: モバイルは簡素なカード表示。Webはステータスバッジ、残高表示、進捗バー、展開可能な詳細、アクションボタン
-- **修正**: Web版と同等の機能を実装:
-  - ステータスバッジ（順調/負債あり/終了/達成ペース）
-  - 残高表示（+/- 数値、色分け）
-  - 進捗バー（経過日数/全日数）
-  - 展開可能な詳細（目標合計、実績合計、残高）
-  - アクションボタン（PlusCircle=記録、Pencil=編集、Trash2=削除）
-  - インライン2段階削除確認
+## 8. useActikoPage — 返却値の差異 → 🔧 Webに合わせる
 
-#### CreateGoalDialog.tsx
-- **差分**: モバイルはセレクトUI。Webはグリッド形式のアクティビティ選択
-- **修正**: Web版と同じグリッド形式のアクティビティ選択UI、DatePickerField、バリデーションエラー表示
+frontend-v2のみにある返却値:
+- `iconBlobMap`（アイコンblobのMap）
+- `calendarOpen` / `setCalendarOpen`
+- `setDate`
 
-#### EditGoalForm.tsx
-- **差分**: モバイルはモーダル形式。Webはインラインフォーム
-- **修正**: Web版と同じインラインフォーム形式に変更。日次目標、日付範囲、終了・削除の2段階確認を実装
+**確認済み**: mobile-v2はDBにアイコンデータがあるが**UIではemojiしか表示していない**。uploadedアイコン表示を実装する。
 
----
+## 9. useDailyPage — 微細な差異 → 🔧 Webに合わせる
 
-### 4. Tasks ページ
+- frontend-v2: `calendarOpen`/`setCalendarOpen`あり、mobile-v2: なし
+- frontend-v2: `kindsMap`に`DexieActivityKind`全体を格納、mobile-v2: `{ id, name, color }` のみ
 
-#### TasksPage.tsx
-- **差分**: モバイルは単純リスト。Webはアクティブ/アーカイブタブ、タイムライン別グループ化、完了済み/未来タスクのトグル
-- **修正**: `useTasksPage.ts` 新規作成。Web版と同等の構造:
-  - アクティブ/アーカイブ済みタブ
-  - タイムライン別グループ（期限切れ、今日締切、今日開始、進行中、今週締切）
-  - 「未来のタスク」「完了済み」の折りたたみトグル
-  - DeleteConfirmDialog（インライン2段階確認）
+**確認済み**: mobile-v2はprev/next矢印のみでCalendarPopoverがない。カレンダー選択UIを追加する。
 
-#### TaskCard.tsx
-- **差分**: モバイルはonLongPressメニュー方式。Webはインラインアクションボタン
-- **修正**: onLongPressを廃止。Web版と同じインラインアクションボタン:
-  - CheckCircle2/Circle: 完了トグル
-  - CalendarCheck: 今日に移動
-  - Archive: アーカイブ
-  - Pencil: 編集
-  - Trash2: 削除
-  - 日付表示（CalendarDays）、メモプレビュー（FileText）
+## 10. useStatsPage — フィールド名の違い → ✅ 一旦許容
 
-#### TaskGroup.tsx
-- **差分**: モバイルはchildren prop方式。Webはtasks prop方式でTaskCardを内部レンダリング
-- **修正**: Web版と同じtasks prop方式に変更。title, titleColor, highlight, completed, archived props、各種ハンドラをTaskCardに伝播
+- frontend-v2: `log.activityId`, `log.activityKindId`（camelCase）
+- mobile-v2: `log.activity_id`, `log.activity_kind_id`（snake_case・生SQLの結果直接参照）
 
-#### TaskCreateDialog.tsx
-- **差分**: Web版にはdefaultDateとDatePickerFieldがある
-- **修正**: defaultDate prop、DatePickerFieldの使用を維持
+DB層の違いに起因するため、Hono RPC Client移行やリポジトリ層統一時にまとめて対応。
 
-#### TaskEditDialog.tsx
-- **差分**: モバイルにはonDeleteやisArchived対応がなかった
-- **修正**: onDelete prop、isArchived表示を追加
+## 11. useGoalsPage — activityMapの粒度 → 🔧 Webに合わせる
 
-#### taskGrouping.ts（新規作成）
-- Web版の `groupTasksByTimeline` 関数をそのまま移植
+- frontend-v2: `Map<string, DexieActivity>`（全フィールド格納）
+- mobile-v2: `Map<string, { id, name, emoji, quantityUnit }>`（4フィールドのみ）
 
-#### types.ts（新規作成）
-- `@packages/domain/task/types` からTaskItem, GroupedTasks, GroupingOptionsを再エクスポート
+mobile-v2もActivityRecord全体を格納するように修正。
 
-#### DeleteConfirmDialog.tsx（新規作成）
-- インライン2段階削除確認ダイアログ
+## 12. useAuth — 初期化の違い → ✅ 許容
+
+- mobile-v2は初期化時に`loadStorageCache()`を呼ぶ（AsyncStorageのキャッシュロード）
+- frontend-v2はlocalStorageで同期アクセスのため不要
+
+プラットフォーム差異のため許容。
+
+## 13. hook名の不一致 → 🔧 Webに合わせる
+
+| frontend-v2 | mobile-v2 |
+|-------------|-----------|
+| `useActivityLogsByDate(date)` | `useActivityLogs(date)` |
+
+mobile-v2を `useActivityLogsByDate` にリネーム。
+
+## 14. IconType値の違い → 🔧 Webに合わせる
+
+- frontend-v2: `"emoji" | "upload"`
+- mobile-v2: `"emoji" | "upload" | "generate"`（`"generate"`が追加）
+
+mobile-v2の `"generate"` を削除し、Webと統一する。
 
 ---
 
-### 5. Settings ページ
+## packages/domainを参照しているのにmobile-v2で未参照のもの → 🔧 全てdomain参照する
 
-#### SettingsPage.tsx
-- **差分**: モバイルはログアウトのみ。Webにはアプリ設定（3つのトグル）、データ管理（CSV、ローカルデータ削除）、アカウント管理が完備
-- **修正**: Web版と同等の全機能を実装:
-  - ユーザーID表示
-  - アプリ設定セクション（起動時目標表示、目標グラフ非表示、やらなかった日付表示のトグル）
-  - データ管理セクション（CSVインポート/エクスポート、ローカルデータ削除）
-  - アカウントセクション（アカウント削除、ログアウト）
-  - 全削除操作にインライン2段階確認UI
+### `@packages/domain/` 系
 
----
+| モジュール | frontend-v2での用途 | mobile-v2の状況 | 方針 |
+|-----------|-------------------|---------------|------|
+| `goal/goalStats` (`getInactiveDates`, `generateDailyRecords`, `calculateGoalStats`) | `GoalCard.tsx`, `GoalStatsDetail.tsx` でゴール統計計算 | 独自の`useGoalStats.ts`で直接SQLクエリ | 🔧 domain参照に変更 |
+| `sync/tokenStorage` (`TokenStorage`) | `apiClient.ts` でトークン管理インターフェース | 独自のin-memory変数で管理 | ⏳ Hono RPC移行時 |
+| `sync/authenticatedFetch` (`createAuthenticatedFetch`) | `apiClient.ts` で認証付きfetch生成 | 独自の`customFetch`をinline実装 | ⏳ Hono RPC移行時 |
+| `activity/activityRepository` (`ActivityRepository`型) | `db/activityRepository.ts` で `satisfies` 制約 | 型制約なしで実装 | 🔧 `satisfies`追加 |
+| `activityLog/activityLogRepository` (`ActivityLogRepository`型) | 同上 | 同上 | 🔧 `satisfies`追加 |
+| `goal/goalRepository` (`GoalRepository`型) | 同上 | 同上 | 🔧 `satisfies`追加 |
+| `task/taskRepository` (`TaskRepository`型) | 同上 | 同上 | 🔧 `satisfies`追加 |
+| `sync/syncableRecord` (`Syncable`, `SyncStatus`型) | `db/schema.ts` でDexieスキーマ定義 | SQLiteでは直接`sync_status`カラム | 🔧 型参照追加 |
+| `csv/csvParser` (`autoDetectMapping`, `ColumnMapping`型) | `useCSVImport.ts`, `CSVColumnMapper.tsx` で高度なCSVマッピング | 簡易版のCSVインポートのみ | 🔧 domain参照に変更 |
 
-### 6. CSV
+### `@packages/frontend-shared/` 系 → ⏳ 別途対応（実装が必要）
 
-#### CSVImportModal.tsx
-- **差分**: UI構造がWeb版と異なっていた
-- **修正**: Web版と同じステップインジケータ（ファイル選択 → プレビュー）、プログレスバー、成功/エラーメッセージ表示に統一
+| モジュール | frontend-v2での用途 | mobile-v2の状況 |
+|-----------|-------------------|---------------|
+| `hooks/useApiKeys` | APIキー管理UI全体 | APIキー機能自体がない |
+| `hooks/useSubscription` | サブスクリプション状態表示 | サブスクリプション機能自体がない |
 
-#### CSVExportModal.tsx
-- **差分**: 成功/エラー表示がなかった
-- **修正**: CheckCircleアイコン付き成功メッセージ、エラー表示を追加。Download アイコン付きボタンに統一
+### `@backend/` 系 → ⏳ Hono RPC Client移行時に対応
 
----
+| モジュール | frontend-v2での用途 | mobile-v2の状況 |
+|-----------|-------------------|---------------|
+| `@backend/app` (`AppType`) | Hono RPCクライアントの型パラメータ | 手動fetch wrapperのため不要 |
 
-### 7. 共通コンポーネント
+### frontend-v2にのみ存在するローカルファイル → ⏳ ロジック共通化時に移動検討
 
-#### LogFormBody.tsx
-- **差分**: モバイルは個別フィールドのprops（quantityUnit, kinds, quantity, ...）。Webは`{activity, date, onDone}` インターフェースでuseLogFormフック内部管理
-- **修正**: Web版と同じ `{activity, date, onDone}` インターフェースに変更。内部で `useLogForm` フックを使用してタイマー/手動入力タブ切り替え、種別セレクター、数量・メモフィールドを一元管理
+| ファイル | 内容 |
+|---------|------|
+| `components/goal/GoalStatsDetail.tsx` | `@packages/domain/goal/goalStats`を使ったゴール詳細統計UI |
+| `components/goal/activityHelpers.tsx` | `getActivityEmoji()`, `getActivityIcon()` UIヘルパー |
+| `utils/imageResizer.ts` | Canvas APIでアイコン画像リサイズ（mobile-v2に相当機能なし） |
+| `hooks/useCSVImport.ts` | 高度なCSVインポートワークフロー |
+| `hooks/useCSVExport.ts` | CSVエクスポートワークフロー |
+| `hooks/useApiKeys.ts` | APIキー管理hook |
+| `hooks/useSubscription.ts` | サブスクリプション管理hook |
+| `components/csv/CSVColumnMapper.tsx` | CSVカラムマッピングUI |
+| `components/setting/ApiKeyManager.tsx` 等 | APIキー管理UI群 |
 
-#### useLogForm.ts（新規作成）
-- Web版のuseLogFormをRN用に移植。タイマー制御、手動入力、種別選択、保存処理を統合
+### mobile-v2にのみ存在するローカルファイル → 🔧 domain参照に変更
 
----
-
-## 横断的な修正パターン
-
-### confirm()/Alert.alert() → インライン2段階確認
-- 全ての `confirm()` / `Alert.alert()` をインライン2段階確認UIに置換
-- パターン: 「削除」ボタン → 「本当に削除」ボタンに切り替わる
-- 対象: EditActivityDialog, EditLogDialog, EditGoalForm, GoalCard, TasksPage, SettingsPage
-
-### onLongPress → onPress + インラインアクション
-- TaskCard, LogCardの `onLongPress` を `onPress` に変更
-- TaskCardにインラインアクションボタン（編集、削除、アーカイブ等）を追加
-
-### ロジック分離（コロケーション型フック）
-- 全ページでロジックを `use*.ts` フックに分離
-- 新規作成: useActikoPage, useDailyPage, useGoalsPage, useTasksPage
-- パターン: フック = 状態・ハンドラ・データ取得、コンポーネント = JSX表示のみ
-
-### 型定義の整理
-- `types.ts` ファイルを新規作成（Goal, Tasks）
-- `@packages/domain` の共有型を再エクスポート
-- ページ固有の型はページディレクトリ内で定義
-
----
-
-## 既知の残課題
-
-### LucideIcon JSX型エラー（75件）
-- React 19 と lucide-react-native の型互換性問題
-- `'X' cannot be used as a JSX component` 系のエラー
-- **ランタイムには影響なし**（実行時は正常動作）
-- 根本修正: lucide-react-native のReact 19対応バージョンリリース待ち、またはtsconfig.jsonへの `skipLibCheck: true` 追加
-
-### tsconfig.json 変更
-- ルートtsconfig.jsonのexcludeに `apps/mobile-v2` を追加（React型バージョン競合を回避）
-- mobile-v2は独自のtsconfig.json（expo/tsconfig.base拡張）で型チェック
+| ファイル | 内容 | 方針 |
+|---------|------|------|
+| `hooks/useGoalStats.ts` | 独自SQLベースのゴール統計計算 | `@packages/domain/goal/goalStats`を使うように書き換え |

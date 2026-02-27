@@ -16,10 +16,10 @@ export async function syncActivityLogs(): Promise<void> {
   const data: SyncResult = await res.json();
 
   await activityLogRepository.markActivityLogsSynced(data.syncedIds);
-  await activityLogRepository.markActivityLogsFailed(data.skippedIds);
   if (data.serverWins.length > 0) {
     await activityLogRepository.upsertActivityLogsFromServer(
       data.serverWins.map(mapApiActivityLog),
     );
   }
+  await activityLogRepository.markActivityLogsFailed(data.skippedIds);
 }

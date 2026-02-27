@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import type { ChartData, StatsKind } from "./types";
@@ -97,94 +97,93 @@ export function SummaryTable({
       </TouchableOpacity>
 
       {isExpanded && (
-        <ScrollView horizontal showsHorizontalScrollIndicator>
-          <View>
-            {/* Header */}
-            <View className="flex-row bg-gray-50 border-b border-gray-200">
-              <View className="w-24 px-3 py-2">
-                <Text className="text-xs font-medium text-gray-500">
-                  日付
-                </Text>
-              </View>
-              <View className="w-20 px-3 py-2 items-end">
-                <Text className="text-xs font-medium text-gray-500">
-                  日合計
-                </Text>
-              </View>
-              {hasMultipleKinds &&
-                kinds.map((kind) => (
-                  <View key={kind.name} className="w-20 px-3 py-2 items-end">
-                    <Text
-                      className="text-xs font-medium"
-                      style={{ color: kindColors[kind.name] || "#6b7280" }}
-                      numberOfLines={1}
-                    >
-                      {kind.name}
-                    </Text>
-                  </View>
-                ))}
-              <View className="w-20 px-3 py-2 items-end">
-                <Text className="text-xs font-medium text-gray-500">
-                  週合計
-                </Text>
-              </View>
+        <View>
+          {/* Header */}
+          <View className="flex-row bg-gray-50 border-b border-gray-200">
+            <View className="flex-1 px-3 py-2" style={{ minWidth: 88 }}>
+              <Text className="text-xs font-medium text-gray-500">
+                日付
+              </Text>
             </View>
+            <View className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
+              <Text className="text-xs font-medium text-gray-500">
+                日合計
+              </Text>
+            </View>
+            {hasMultipleKinds &&
+              kinds.map((kind) => (
+                <View key={kind.name} className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
+                  <Text
+                    className="text-xs font-medium"
+                    style={{ color: kindColors[kind.name] || "#6b7280" }}
+                    numberOfLines={1}
+                  >
+                    {kind.name}
+                  </Text>
+                </View>
+              ))}
+            <View className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
+              <Text className="text-xs font-medium text-gray-500">
+                週合計
+              </Text>
+            </View>
+          </View>
 
-            {/* Body */}
-            {weeks.map((week, weekIndex) =>
-              week.days.map((day, dayIndex) => (
-                <View
-                  key={`${weekIndex}-${day.date}`}
-                  className="flex-row border-b border-gray-100 bg-white"
-                >
-                  <View className="w-24 px-3 py-1.5">
-                    <Text className="text-sm text-gray-900">
-                      {day.date} ({day.dayOfWeek})
-                    </Text>
-                  </View>
-                  <View className="w-20 px-3 py-1.5 items-end">
-                    <Text className="text-sm font-medium text-gray-900">
-                      {day.total > 0
-                        ? formatQuantityWithUnit(day.total, quantityUnit)
-                        : "-"}
-                    </Text>
-                  </View>
-                  {hasMultipleKinds &&
-                    kinds.map((kind) => (
-                      <View
-                        key={kind.name}
-                        className="w-20 px-3 py-1.5 items-end"
+          {/* Body */}
+          {weeks.map((week, weekIndex) =>
+            week.days.map((day, dayIndex) => (
+              <View
+                key={`${weekIndex}-${day.date}`}
+                className="flex-row border-b border-gray-100 bg-white"
+              >
+                <View className="flex-1 px-3 py-1.5" style={{ minWidth: 88 }}>
+                  <Text className="text-sm text-gray-900">
+                    {day.date} ({day.dayOfWeek})
+                  </Text>
+                </View>
+                <View className="flex-1 px-3 py-1.5 items-end" style={{ minWidth: 64 }}>
+                  <Text className="text-sm font-medium text-gray-900">
+                    {day.total > 0
+                      ? formatQuantityWithUnit(day.total, quantityUnit)
+                      : "-"}
+                  </Text>
+                </View>
+                {hasMultipleKinds &&
+                  kinds.map((kind) => (
+                    <View
+                      key={kind.name}
+                      className="flex-1 px-3 py-1.5 items-end"
+                      style={{ minWidth: 64 }}
+                    >
+                      <Text
+                        className="text-sm"
+                        style={{ color: kindColors[kind.name] || "#374151" }}
                       >
-                        <Text
-                          className="text-sm"
-                          style={{ color: kindColors[kind.name] || "#374151" }}
-                        >
-                          {day.breakdown[kind.name]
-                            ? formatQuantityWithUnit(
-                                day.breakdown[kind.name],
-                                quantityUnit,
-                              )
-                            : "-"}
-                        </Text>
-                      </View>
-                    ))}
-                  {dayIndex === 0 ? (
-                    <View className="w-20 px-3 py-1.5 items-end bg-gray-50">
-                      <Text className="text-sm font-bold text-gray-900">
-                        {formatQuantityWithUnit(
-                          Math.round(week.weekTotal * 1000) / 1000,
-                          quantityUnit,
-                        )}
+                        {day.breakdown[kind.name]
+                          ? formatQuantityWithUnit(
+                              day.breakdown[kind.name],
+                              quantityUnit,
+                            )
+                          : "-"}
                       </Text>
                     </View>
-                  ) : (
-                    <View className="w-20 px-3 py-1.5 bg-gray-50" />
-                  )}
-                </View>
-              )),
-            )}
-          </View>
-        </ScrollView>
+                  ))}
+                {dayIndex === 0 ? (
+                  <View className="flex-1 px-3 py-1.5 items-end bg-gray-50" style={{ minWidth: 64 }}>
+                    <Text className="text-sm font-bold text-gray-900">
+                      {formatQuantityWithUnit(
+                        Math.round(week.weekTotal * 1000) / 1000,
+                        quantityUnit,
+                      )}
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="flex-1 px-3 py-1.5 bg-gray-50" style={{ minWidth: 64 }} />
+                )}
+              </View>
+            )),
+          )}
+        </View>
       )}
     </View>
   );

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import dayjs from "dayjs";
-import { useTasks } from "../../hooks/useTasks";
+import { useActiveTasks, useArchivedTasks } from "../../hooks/useTasks";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import type { TaskItem } from "./types";
@@ -16,7 +16,8 @@ export function useTasksPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // data
-  const { activeTasks, archivedTasks } = useTasks();
+  const { tasks: activeTasks } = useActiveTasks();
+  const { tasks: archivedTasks } = useArchivedTasks();
 
   // computed
   const tasks: TaskItem[] = activeTasks;

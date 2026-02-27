@@ -1,10 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { useActivities } from "../../hooks/useActivities";
-import { useActivityLogs } from "../../hooks/useActivityLogs";
+import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
+import { useLiveQuery } from "../../db/useLiveQuery";
+import { activityRepository } from "../../repositories/activityRepository";
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
 
 type Activity = ActivityRecord & { _syncStatus: string };
+
+type IconBlob = {
+  activityId: string;
+  base64: string;
+  mimeType: string;
+};
 
 export function useActikoPage() {
   // state
@@ -15,12 +23,26 @@ export function useActikoPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createActivityOpen, setCreateActivityOpen] = useState(false);
   const [editActivity, setEditActivity] = useState<Activity | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // data
   const { activities } = useActivities();
-  const { logs } = useActivityLogs(date);
+  const { logs } = useActivityLogsByDate(date);
+  const iconBlobs = useLiveQuery(
+    "activity_icon_blobs",
+    () => activityRepository.getPendingIconBlobs(),
+    []
+  );
 
   // computed
+  const iconBlobMap = useMemo(() => {
+    const map = new Map<string, IconBlob>();
+    for (const blob of iconBlobs ?? []) {
+      map.set(blob.activityId, blob);
+    }
+    return map;
+  }, [iconBlobs]);
+
   const isToday = date === dayjs().format("YYYY-MM-DD");
 
   // handlers
@@ -49,11 +71,13 @@ export function useActikoPage() {
   return {
     // date
     date,
+    setDate,
     goToPrev,
     goToNext,
     isToday,
     // data
     activities,
+    iconBlobMap,
     // dialog state
     selectedActivity,
     setSelectedActivity,
@@ -63,6 +87,8 @@ export function useActikoPage() {
     setCreateActivityOpen,
     editActivity,
     setEditActivity,
+    calendarOpen,
+    setCalendarOpen,
     // handlers
     hasLogsForActivity,
     handleActivityClick,

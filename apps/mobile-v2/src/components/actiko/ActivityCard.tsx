@@ -1,9 +1,25 @@
-import { View, TouchableOpacity, Text } from "react-native";
+import { useState } from "react";
+import { View, TouchableOpacity, Text, Image } from "react-native";
 import { Pencil } from "lucide-react-native";
 
+type IconBlob = {
+  activityId: string;
+  base64: string;
+  mimeType: string;
+};
+
 type ActivityCardProps = {
-  activity: { id: string; name: string; emoji: string; quantityUnit: string };
+  activity: {
+    id: string;
+    name: string;
+    emoji: string;
+    quantityUnit: string;
+    iconType?: "emoji" | "upload" | "generate";
+    iconUrl?: string | null;
+    iconThumbnailUrl?: string | null;
+  };
   isDone: boolean;
+  iconBlob?: IconBlob;
   onPress: () => void;
   onEdit: () => void;
 };
@@ -21,9 +37,41 @@ const doneBg = { backgroundColor: "#f0fdfa" };
 export function ActivityCard({
   activity,
   isDone,
+  iconBlob,
   onPress,
   onEdit,
 }: ActivityCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  const renderIcon = () => {
+    if (activity.iconType === "upload" && !imageError) {
+      if (iconBlob) {
+        return (
+          <Image
+            source={{
+              uri: `data:${iconBlob.mimeType};base64,${iconBlob.base64}`,
+            }}
+            style={{ width: 32, height: 32, borderRadius: 8 }}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        );
+      }
+      const remoteUrl = activity.iconThumbnailUrl || activity.iconUrl;
+      if (remoteUrl) {
+        return (
+          <Image
+            source={{ uri: remoteUrl }}
+            style={{ width: 32, height: 32, borderRadius: 8 }}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        );
+      }
+    }
+    return <Text className="text-3xl">{activity.emoji || "\ud83d\udcdd"}</Text>;
+  };
+
   return (
     <View className="flex-1 m-1 relative">
       <TouchableOpacity
@@ -34,7 +82,7 @@ export function ActivityCard({
         onPress={onPress}
         activeOpacity={0.95}
       >
-        <Text className="text-3xl mb-2">{activity.emoji || "\ud83d\udcdd"}</Text>
+        <View className="mb-2">{renderIcon()}</View>
         <Text
           className="text-sm font-medium text-gray-800 text-center"
           numberOfLines={1}

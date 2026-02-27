@@ -5,15 +5,13 @@ import type {
   StorageAdapter,
 } from "@packages/domain/sync/platformAdapters";
 
+let cachedOnline = true;
+NetInfo.addEventListener((state) => {
+  cachedOnline = !!state.isConnected;
+});
+
 export const rnNetworkAdapter: NetworkAdapter = {
-  isOnline: () => {
-    // NetInfo is async but this interface expects sync - use cached state
-    let online = true;
-    NetInfo.fetch().then((state) => {
-      online = !!state.isConnected;
-    });
-    return online;
-  },
+  isOnline: () => cachedOnline,
   onOnline: (callback) => {
     const unsub = NetInfo.addEventListener((state) => {
       if (state.isConnected) callback();

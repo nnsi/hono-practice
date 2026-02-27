@@ -8,6 +8,7 @@ import {
   apiLogout,
   apiGoogleLogin,
   setToken,
+  clearToken,
 } from "../utils/apiClient";
 import {
   performInitialSync,
@@ -135,6 +136,7 @@ export function useAuth(): AuthState {
 
   const logout = useCallback(async () => {
     await apiLogout();
+    clearToken();
     setIsLoggedIn(false);
     setUserId(null);
     const db = await getDatabase();

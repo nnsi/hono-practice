@@ -2,6 +2,8 @@ import type {
   ActivityRecord,
   ActivityKindRecord,
 } from "@packages/domain/activity/activityRecord";
+import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";
@@ -18,16 +20,21 @@ function strOrNull(v: unknown): string | null {
   return typeof v === "string" ? v : null;
 }
 
-type IconType = "emoji" | "upload" | "generate";
-const VALID_ICON_TYPES = new Set<string>(["emoji", "upload", "generate"]);
+type IconType = "emoji" | "upload";
+const VALID_ICON_TYPES = new Set<string>(["emoji", "upload"]);
 
 function toIconType(v: unknown): IconType {
   if (typeof v === "string" && VALID_ICON_TYPES.has(v)) return v as IconType;
   return "emoji";
 }
 
-type ActivityWithSync = ActivityRecord & { _syncStatus: string };
-type ActivityKindWithSync = ActivityKindRecord & { _syncStatus: string };
+type ActivityWithSync = ActivityRecord & { _syncStatus: SyncStatus };
+type ActivityKindWithSync = ActivityKindRecord & { _syncStatus: SyncStatus };
+
+function toSyncStatus(v: unknown): SyncStatus {
+  if (v === "pending" || v === "synced" || v === "failed") return v;
+  return "synced";
+}
 
 function mapActivityRow(row: SqlRow): ActivityWithSync {
   return {
@@ -46,7 +53,7 @@ function mapActivityRow(row: SqlRow): ActivityWithSync {
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: str(row.sync_status),
+    _syncStatus: toSyncStatus(row.sync_status),
   };
 }
 
@@ -60,7 +67,7 @@ function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: str(row.sync_status),
+    _syncStatus: toSyncStatus(row.sync_status),
   };
 }
 
@@ -83,7 +90,7 @@ type CreateActivityInput = {
   quantityUnit: string;
   emoji: string;
   showCombinedStats: boolean;
-  iconType?: string;
+  iconType?: "emoji" | "upload";
   kinds?: Array<{ name: string; color: string }>;
 };
 
@@ -181,7 +188,7 @@ export const activityRepository = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      _syncStatus: "pending",
+      _syncStatus: "pending" as const,
     };
   },
 
@@ -371,13 +378,13 @@ export const activityRepository = {
     );
   },
 
-  async getActivityIconBlob(activityId: string): Promise<IconBlob | null> {
+  async getActivityIconBlob(activityId: string): Promise<IconBlob | undefined> {
     const db = await getDatabase();
     const row = await db.getFirstAsync<SqlRow>(
       "SELECT * FROM activity_icon_blobs WHERE activity_id = ?",
       [activityId],
     );
-    if (!row) return null;
+    if (!row) return undefined;
     return {
       activityId: str(row.activity_id),
       base64: str(row.base64),
@@ -411,14 +418,21 @@ export const activityRepository = {
     iconThumbnailUrl: string,
   ): Promise<void> {
     const db = await getDatabase();
-    await db.runAsync(
-      "UPDATE activities SET icon_url = ?, icon_thumbnail_url = ?, sync_status = 'pending' WHERE id = ?",
-      [iconUrl, iconThumbnailUrl, activityId],
-    );
-    await db.runAsync(
-      "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
-      [activityId],
-    );
+    try {
+      await db.execAsync("BEGIN");
+      await db.runAsync(
+        "UPDATE activities SET icon_url = ?, icon_thumbnail_url = ?, sync_status = 'pending' WHERE id = ?",
+        [iconUrl, iconThumbnailUrl, activityId],
+      );
+      await db.runAsync(
+        "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
+        [activityId],
+      );
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
     dbEvents.emit("activities");
   },
 
@@ -426,18 +440,25 @@ export const activityRepository = {
     const db = await getDatabase();
     const now = new Date().toISOString();
 
-    await db.runAsync(
-      "UPDATE activities SET icon_type = 'emoji', icon_url = NULL, icon_thumbnail_url = NULL, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, activityId],
-    );
-    await db.runAsync(
-      "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
-      [activityId],
-    );
-    await db.runAsync(
-      "INSERT OR REPLACE INTO activity_icon_delete_queue (activity_id) VALUES (?)",
-      [activityId],
-    );
+    try {
+      await db.execAsync("BEGIN");
+      await db.runAsync(
+        "UPDATE activities SET icon_type = 'emoji', icon_url = NULL, icon_thumbnail_url = NULL, updated_at = ?, sync_status = 'pending' WHERE id = ?",
+        [now, activityId],
+      );
+      await db.runAsync(
+        "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
+        [activityId],
+      );
+      await db.runAsync(
+        "INSERT OR REPLACE INTO activity_icon_delete_queue (activity_id) VALUES (?)",
+        [activityId],
+      );
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
 
     dbEvents.emit("activities");
   },
@@ -464,50 +485,64 @@ export const activityRepository = {
 
   async upsertActivities(activities: ActivityRecord[]): Promise<void> {
     const db = await getDatabase();
-    for (const a of activities) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
-        [
-          a.id,
-          a.userId,
-          a.name,
-          a.label,
-          a.emoji,
-          a.iconType,
-          a.iconUrl,
-          a.iconThumbnailUrl,
-          a.description,
-          a.quantityUnit,
-          a.orderIndex,
-          a.showCombinedStats ? 1 : 0,
-          a.deletedAt,
-          a.createdAt,
-          a.updatedAt,
-        ],
-      );
+    try {
+      await db.execAsync("BEGIN");
+      for (const a of activities) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          [
+            a.id,
+            a.userId,
+            a.name,
+            a.label,
+            a.emoji,
+            a.iconType,
+            a.iconUrl,
+            a.iconThumbnailUrl,
+            a.description,
+            a.quantityUnit,
+            a.orderIndex,
+            a.showCombinedStats ? 1 : 0,
+            a.deletedAt,
+            a.createdAt,
+            a.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
     }
     dbEvents.emit("activities");
   },
 
   async upsertActivityKinds(kinds: ActivityKindRecord[]): Promise<void> {
     const db = await getDatabase();
-    for (const k of kinds) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
-        [
-          k.id,
-          k.activityId,
-          k.name,
-          k.color,
-          k.orderIndex,
-          k.deletedAt,
-          k.createdAt,
-          k.updatedAt,
-        ],
-      );
+    try {
+      await db.execAsync("BEGIN");
+      for (const k of kinds) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          [
+            k.id,
+            k.activityId,
+            k.name,
+            k.color,
+            k.orderIndex,
+            k.deletedAt,
+            k.createdAt,
+            k.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
     }
     dbEvents.emit("activity_kinds");
   },
-};
+} satisfies ActivityRepository;

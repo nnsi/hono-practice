@@ -1,4 +1,6 @@
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";
@@ -24,7 +26,12 @@ function numOrNull(v: unknown): number | null {
 
 // Local DB omits userId (it's implicit from auth_state)
 type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
-type ActivityLogWithSync = LocalActivityLog & { _syncStatus: string };
+type ActivityLogWithSync = LocalActivityLog & { _syncStatus: SyncStatus };
+
+function toSyncStatus(v: unknown): SyncStatus {
+  if (v === "pending" || v === "synced" || v === "failed") return v;
+  return "synced";
+}
 
 function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
   return {
@@ -38,7 +45,7 @@ function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: str(row.sync_status),
+    _syncStatus: toSyncStatus(row.sync_status),
   };
 }
 
@@ -88,7 +95,7 @@ export const activityLogRepository = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      _syncStatus: "pending",
+      _syncStatus: "pending" as const,
     };
   },
 
@@ -205,24 +212,31 @@ export const activityLogRepository = {
     logs: Omit<LocalActivityLog, never>[],
   ): Promise<void> {
     const db = await getDatabase();
-    for (const log of logs) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
-        [
-          log.id,
-          log.activityId,
-          log.activityKindId,
-          log.quantity,
-          log.memo,
-          log.date,
-          log.time,
-          log.deletedAt,
-          log.createdAt,
-          log.updatedAt,
-        ],
-      );
+    try {
+      await db.execAsync("BEGIN");
+      for (const log of logs) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          [
+            log.id,
+            log.activityId,
+            log.activityKindId,
+            log.quantity,
+            log.memo,
+            log.date,
+            log.time,
+            log.deletedAt,
+            log.createdAt,
+            log.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
     }
     dbEvents.emit("activity_logs");
   },
-};
+} satisfies ActivityLogRepository & Record<string, unknown>;

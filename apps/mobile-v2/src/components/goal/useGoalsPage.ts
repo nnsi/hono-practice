@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 import { isGoalActive } from "@packages/domain/goal/goalPredicates";
+import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
 import { goalRepository } from "../../repositories/goalRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import type { Activity, CreateGoalPayload, UpdateGoalPayload } from "./types";
+import type { CreateGoalPayload, UpdateGoalPayload } from "./types";
 
 export function useGoalsPage() {
   // --- state ---
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
-  const [recordActivity, setRecordActivity] = useState<Activity | null>(null);
+  const [recordActivity, setRecordActivity] = useState<ActivityRecord | null>(
+    null,
+  );
 
   // --- data ---
   const { activities } = useActivities();
@@ -19,14 +22,9 @@ export function useGoalsPage() {
 
   // --- computed ---
   const activityMap = useMemo(() => {
-    const map = new Map<string, Activity>();
+    const map = new Map<string, ActivityRecord>();
     for (const a of activities) {
-      map.set(a.id, {
-        id: a.id,
-        name: a.name,
-        emoji: a.emoji,
-        quantityUnit: a.quantityUnit,
-      });
+      map.set(a.id, a);
     }
     return map;
   }, [activities]);

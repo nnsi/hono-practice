@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { readAsStringAsync, EncodingType } from "expo-file-system/legacy";
 import { FileText, Upload } from "lucide-react-native";
-import { parseCSVText } from "@packages/domain/csv/csvParser";
+import { parseCSVText, autoDetectMapping } from "@packages/domain/csv/csvParser";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useActivities } from "../../hooks/useActivities";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
@@ -65,21 +65,29 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         return;
       }
 
-      // Map parsed records to rows using header-based lookup
-      const rows: ParsedRow[] = csvResult.data.map((record) => {
-        // Auto-detect columns by header name
-        const dateCol = findColumn(csvResult.headers, ["date", "日付"]);
-        const timeCol = findColumn(csvResult.headers, ["time", "時刻"]);
-        const quantityCol = findColumn(csvResult.headers, ["quantity", "数量", "回数", "時間", "count", "cnt"]);
-        const memoCol = findColumn(csvResult.headers, ["memo", "メモ", "備考"]);
+      // Use domain autoDetectMapping for column detection
+      const mapping = autoDetectMapping(csvResult.headers);
 
-        return {
-          date: (dateCol ? record[dateCol] : record[csvResult.headers[0]]) || dayjs().format("YYYY-MM-DD"),
-          time: (timeCol ? record[timeCol] : record[csvResult.headers[1]]) || "",
-          quantity: (quantityCol ? record[quantityCol] : record[csvResult.headers[2]]) || "",
-          memo: (memoCol ? record[memoCol] : record[csvResult.headers[3]]) || "",
-        };
+      // Also detect time column (not covered by domain autoDetectMapping)
+      const timeCol = csvResult.headers.find((h) => {
+        const lower = h.toLowerCase();
+        return lower.includes("time") || lower.includes("時刻");
       });
+
+      // Map parsed records to rows using detected mapping
+      const rows: ParsedRow[] = csvResult.data.map((record) => ({
+        date:
+          (mapping.date ? record[mapping.date] : record[csvResult.headers[0]]) ||
+          dayjs().format("YYYY-MM-DD"),
+        time: (timeCol ? record[timeCol] : "") || "",
+        quantity:
+          (mapping.quantity
+            ? record[mapping.quantity]
+            : record[csvResult.headers[2]]) || "",
+        memo:
+          (mapping.memo ? record[mapping.memo] : record[csvResult.headers[3]]) ||
+          "",
+      }));
 
       setParsedRows(rows);
       setStep("preview");
@@ -246,13 +254,6 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 }
 
 // --- Helpers ---
-
-function findColumn(headers: string[], keywords: string[]): string | undefined {
-  return headers.find((h) => {
-    const lower = h.toLowerCase();
-    return keywords.some((kw) => lower.includes(kw));
-  });
-}
 
 function StepIndicator({ current }: { current: Step }) {
   const steps: Array<{ key: Step; label: string }> = [

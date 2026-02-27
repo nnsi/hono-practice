@@ -1,12 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { useActivities } from "../../hooks/useActivities";
-import { useActivityLogs } from "../../hooks/useActivityLogs";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
+import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { useLiveQuery } from "../../db/useLiveQuery";
+import { activityRepository } from "../../repositories/activityRepository";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
+import type { ActivityKindRecord } from "@packages/domain/activity/activityRecord";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import type { Task } from "./TaskList";
+
+type ActivityKindWithSync = ActivityKindRecord & { _syncStatus: SyncStatus };
 
 export function useDailyPage() {
   // state
@@ -22,11 +26,17 @@ export function useDailyPage() {
   } | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [taskCreateDialogOpen, setTaskCreateDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // data
   const { activities } = useActivities();
-  const { logs } = useActivityLogs(date);
-  const { kinds: allKinds } = useActivityKinds();
+  const { logs } = useActivityLogsByDate(date);
+
+  const allKinds = useLiveQuery(
+    "activity_kinds",
+    () => activityRepository.getAllActivityKinds(),
+    [],
+  );
 
   const rawTasks = useLiveQuery(
     "tasks",
@@ -34,10 +44,10 @@ export function useDailyPage() {
     [date],
   );
 
-  // computed
+  // computed — store full ActivityKindRecord (matching frontend-v2)
   const kindsMap = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; color: string | null }>();
-    for (const k of allKinds) {
+    const map = new Map<string, ActivityKindWithSync>();
+    for (const k of allKinds ?? []) {
       map.set(k.id, k);
     }
     return map;
@@ -103,6 +113,8 @@ export function useDailyPage() {
     setCreateDialogOpen,
     taskCreateDialogOpen,
     setTaskCreateDialogOpen,
+    calendarOpen,
+    setCalendarOpen,
     // handlers
     handleToggleTask,
   };

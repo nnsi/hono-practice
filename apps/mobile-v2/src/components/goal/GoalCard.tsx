@@ -1,17 +1,27 @@
 import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import {
+  BarChart3,
+  Calendar,
   ChevronDown,
   ChevronUp,
+  Flame,
+  Loader2,
   Pencil,
   PlusCircle,
   Trash2,
+  Trophy,
+  TrendingUp,
 } from "lucide-react-native";
 import dayjs from "dayjs";
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import {
+  generateDailyRecords,
+  calculateGoalStats,
+} from "@packages/domain/goal/goalStats";
+import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { getDatabase } from "../../db/database";
-import type { Activity, UpdateGoalPayload } from "./types";
 
 type GoalForCard = {
   id: string;
@@ -68,7 +78,7 @@ export function GoalCard({
   onRecordOpen,
 }: {
   goal: GoalForCard;
-  activity: Activity | null;
+  activity: ActivityRecord | null;
   isExpanded: boolean;
   isPast?: boolean;
   onToggleExpand: () => void;
@@ -282,31 +292,167 @@ export function GoalCard({
 
       {/* Expanded detail */}
       {isExpanded && (
-        <View className="bg-white px-4 py-3 border-t border-gray-100">
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-xs text-gray-500">目標合計</Text>
-            <Text className="text-xs text-gray-700">
-              {balance.totalTarget.toLocaleString()}
-              {activity?.quantityUnit ?? ""}
+        <View className="bg-white rounded-b-2xl">
+          <GoalStatsDetail goal={goal} activity={activity} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// --- GoalStatsDetail (expanded panel) ---
+
+function GoalStatsDetail({
+  goal,
+  activity,
+}: {
+  goal: GoalForCard;
+  activity: ActivityRecord | null;
+}) {
+  const today = dayjs().format("YYYY-MM-DD");
+  const endDate = goal.endDate || today;
+  const actualEndDate = endDate < today ? endDate : today;
+
+  const periodLogs = useLiveQuery(
+    ["activity_logs"],
+    async () => {
+      const db = await getDatabase();
+      return db.getAllAsync<{ date: string; quantity: number | null }>(
+        `SELECT date, quantity FROM activity_logs
+         WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
+        [goal.activityId, goal.startDate, actualEndDate],
+      );
+    },
+    [goal.activityId, goal.startDate, actualEndDate],
+  );
+
+  const statsData = useMemo(() => {
+    if (!periodLogs) return null;
+    const dailyRecords = generateDailyRecords(goal, periodLogs, today);
+    const stats = calculateGoalStats(dailyRecords);
+    return { dailyRecords, stats };
+  }, [periodLogs, goal, today]);
+
+  const unit = activity?.quantityUnit ?? "";
+
+  if (!statsData) {
+    return (
+      <View className="px-4 pb-4 py-6 flex-row items-center justify-center">
+        <Loader2 size={16} color="#9ca3af" />
+        <Text className="ml-2 text-xs text-gray-400">統計を読み込み中...</Text>
+      </View>
+    );
+  }
+
+  const totalDays = statsData.dailyRecords.length;
+  const achieveRate =
+    totalDays > 0 ? (statsData.stats.achievedDays / totalDays) * 100 : 0;
+
+  return (
+    <View className="px-4 pb-4 border-t border-gray-100">
+      {/* Stats grid (2 columns) */}
+      <View className="flex-row flex-wrap gap-2 mt-3">
+        <StatCard
+          icon={<Calendar size={14} color="#6b7280" />}
+          label="活動日数"
+          value={`${statsData.stats.activeDays}日`}
+          sub={`/ ${totalDays}日`}
+        />
+        <StatCard
+          icon={<Trophy size={14} color="#6b7280" />}
+          label="達成日数"
+          value={`${statsData.stats.achievedDays}日`}
+          sub={`${achieveRate.toFixed(0)}%`}
+        />
+        <StatCard
+          icon={<Flame size={14} color="#6b7280" />}
+          label="最大連続日数"
+          value={`${statsData.stats.maxConsecutiveDays}日`}
+        />
+        <StatCard
+          icon={<TrendingUp size={14} color="#6b7280" />}
+          label="平均活動量"
+          value={`${statsData.stats.average}${unit}`}
+        />
+        <StatCard
+          icon={<BarChart3 size={14} color="#6b7280" />}
+          label="最大活動量"
+          value={`${statsData.stats.max}${unit}`}
+        />
+      </View>
+
+      {/* Daily records heatmap (last 14 days) */}
+      {statsData.dailyRecords.length > 0 && (
+        <View className="mt-3">
+          <Text className="text-xs font-medium text-gray-500 mb-1.5">
+            直近の記録
+          </Text>
+          <View className="flex-row gap-1">
+            {statsData.dailyRecords.slice(-14).map((record) => (
+              <View
+                key={record.date}
+                className={`flex-1 h-6 rounded-sm ${
+                  record.achieved
+                    ? "bg-green-400"
+                    : record.quantity > 0
+                      ? "bg-yellow-300"
+                      : "bg-gray-200"
+                }`}
+              />
+            ))}
+          </View>
+          <View className="flex-row justify-between mt-1">
+            <Text className="text-[10px] text-gray-400">
+              {dayjs(statsData.dailyRecords.slice(-14)[0]?.date).format("M/D")}
+            </Text>
+            <Text className="text-[10px] text-gray-400">
+              {dayjs(
+                statsData.dailyRecords[statsData.dailyRecords.length - 1]?.date,
+              ).format("M/D")}
             </Text>
           </View>
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-xs text-gray-500">実績合計</Text>
-            <Text className="text-xs text-gray-700">
-              {balance.totalActual.toLocaleString()}
-              {activity?.quantityUnit ?? ""}
-            </Text>
-          </View>
-          <View className="flex-row justify-between">
-            <Text className="text-xs text-gray-500">残高</Text>
-            <Text className={`text-xs font-medium ${balanceColor}`}>
-              {localBalance < 0 ? "-" : "+"}
-              {Math.abs(localBalance).toLocaleString()}
-              {activity?.quantityUnit ? ` ${activity.quantityUnit}` : ""}
-            </Text>
+          {/* Legend */}
+          <View className="flex-row gap-3 mt-1">
+            <View className="flex-row items-center gap-1">
+              <View className="w-2 h-2 rounded-sm bg-green-400" />
+              <Text className="text-[10px] text-gray-400">達成</Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <View className="w-2 h-2 rounded-sm bg-yellow-300" />
+              <Text className="text-[10px] text-gray-400">活動あり</Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <View className="w-2 h-2 rounded-sm bg-gray-200" />
+              <Text className="text-[10px] text-gray-400">未活動</Text>
+            </View>
           </View>
         </View>
       )}
+    </View>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <View className="bg-gray-50 rounded-lg p-2.5" style={{ width: "48%" }}>
+      <View className="flex-row items-center gap-1.5 mb-1">
+        {icon}
+        <Text className="text-[10px] text-gray-500">{label}</Text>
+      </View>
+      <View className="flex-row items-baseline gap-1">
+        <Text className="text-sm font-bold text-gray-900">{value}</Text>
+        {sub && <Text className="text-[10px] text-gray-400">{sub}</Text>}
+      </View>
     </View>
   );
 }

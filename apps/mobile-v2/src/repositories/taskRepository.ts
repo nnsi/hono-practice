@@ -1,4 +1,6 @@
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import type { TaskRepository } from "@packages/domain/task/taskRepository";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -16,7 +18,12 @@ function strOrNull(v: unknown): string | null {
   return typeof v === "string" ? v : null;
 }
 
-type TaskWithSync = TaskRecord & { _syncStatus: string };
+type TaskWithSync = TaskRecord & { _syncStatus: SyncStatus };
+
+function toSyncStatus(v: unknown): SyncStatus {
+  if (v === "pending" || v === "synced" || v === "failed") return v;
+  return "synced";
+}
 
 function mapTaskRow(row: SqlRow): TaskWithSync {
   return {
@@ -31,7 +38,7 @@ function mapTaskRow(row: SqlRow): TaskWithSync {
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: str(row.sync_status),
+    _syncStatus: toSyncStatus(row.sync_status),
   };
 }
 
@@ -87,7 +94,7 @@ export const taskRepository = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      _syncStatus: "pending",
+      _syncStatus: "pending" as const,
     };
   },
 
@@ -214,25 +221,32 @@ export const taskRepository = {
 
   async upsertTasksFromServer(tasks: TaskRecord[]): Promise<void> {
     const db = await getDatabase();
-    for (const t of tasks) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
-        [
-          t.id,
-          t.userId,
-          t.title,
-          t.startDate,
-          t.dueDate,
-          t.doneDate,
-          t.memo,
-          t.archivedAt,
-          t.deletedAt,
-          t.createdAt,
-          t.updatedAt,
-        ],
-      );
+    try {
+      await db.execAsync("BEGIN");
+      for (const t of tasks) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          [
+            t.id,
+            t.userId,
+            t.title,
+            t.startDate,
+            t.dueDate,
+            t.doneDate,
+            t.memo,
+            t.archivedAt,
+            t.deletedAt,
+            t.createdAt,
+            t.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
     }
     dbEvents.emit("tasks");
   },
-};
+} satisfies TaskRepository;

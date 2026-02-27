@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
+import { useTimer } from "../../hooks/useTimer";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import {
@@ -7,7 +8,6 @@ import {
   getTimeUnitType,
   convertSecondsToUnit,
   generateTimeMemo,
-  type TimeUnitType,
 } from "@packages/domain/time/timeUtils";
 
 type Activity = {
@@ -17,79 +17,7 @@ type Activity = {
   quantityUnit: string;
 };
 
-type TimerState = {
-  isRunning: boolean;
-  elapsedMs: number;
-  startedAt: number | null;
-};
-
-function useActivityTimer() {
-  const [state, setState] = useState<TimerState>({
-    isRunning: false,
-    elapsedMs: 0,
-    startedAt: null,
-  });
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
-  useEffect(() => {
-    if (state.isRunning && state.startedAt != null) {
-      intervalRef.current = setInterval(() => {
-        if (stateRef.current.startedAt != null) {
-          setState((s) => ({
-            ...s,
-            elapsedMs: Date.now() - s.startedAt!,
-          }));
-        }
-      }, 100);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [state.isRunning, state.startedAt]);
-
-  const start = useCallback(() => {
-    setState((s) => {
-      const now = Date.now();
-      const newStart = now - s.elapsedMs;
-      return { isRunning: true, elapsedMs: s.elapsedMs, startedAt: newStart };
-    });
-  }, []);
-
-  const stop = useCallback(() => {
-    setState((s) => ({ ...s, isRunning: false }));
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
-
-  const reset = useCallback(() => {
-    setState({ isRunning: false, elapsedMs: 0, startedAt: null });
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
-
-  const getElapsedSeconds = useCallback(
-    () => Math.floor(stateRef.current.elapsedMs / 1000),
-    [],
-  );
-
-  const getStartDate = useCallback(
-    () =>
-      stateRef.current.startedAt != null
-        ? new Date(stateRef.current.startedAt)
-        : null,
-    [],
-  );
-
-  return {
-    isRunning: state.isRunning,
-    elapsedTime: state.elapsedMs,
-    start,
-    stop,
-    reset,
-    getElapsedSeconds,
-    getStartDate,
-  };
-}
+export type UseTimerReturn = ReturnType<typeof useTimer>;
 
 export function useLogForm(
   activity: Activity,
@@ -107,7 +35,7 @@ export function useLogForm(
 
   // data
   const { kinds } = useActivityKinds(activity.id);
-  const timer = useActivityTimer();
+  const timer = useTimer(activity.id);
 
   // computed
   const timerEnabled = isTimeUnit(activity.quantityUnit);

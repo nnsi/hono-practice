@@ -28,9 +28,7 @@ export type UpdateGoalPayload = {
   isActive?: boolean;
 };
 
-export type Activity = {
-  id: string;
-  name: string;
-  emoji: string;
-  quantityUnit: string;
-};
+export type {
+  ActivityRecord,
+  ActivityRecord as Activity,
+} from "@packages/domain/activity/activityRecord";

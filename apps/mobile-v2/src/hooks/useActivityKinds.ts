@@ -7,7 +7,7 @@ export function useActivityKinds(activityId?: string) {
     () =>
       activityId
         ? activityRepository.getActivityKindsByActivityId(activityId)
-        : activityRepository.getAllActivityKinds(),
+        : Promise.resolve([]),
     [activityId]
   );
   return { kinds: kinds ?? [] };
