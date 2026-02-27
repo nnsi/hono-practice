@@ -92,6 +92,15 @@ export const activityLogRepository = {
     };
   },
 
+  async getActivityLogsBetween(startDate: string, endDate: string): Promise<ActivityLogWithSync[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL ORDER BY date",
+      [startDate, endDate],
+    );
+    return rows.map(mapActivityLogRow);
+  },
+
   async getActivityLogsByDate(date: string): Promise<ActivityLogWithSync[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(

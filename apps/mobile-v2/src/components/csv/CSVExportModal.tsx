@@ -1,12 +1,14 @@
 import { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import * as FileSystem from "expo-file-system";
+import { writeAsStringAsync, EncodingType, cacheDirectory } from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { CheckCircle, Download } from "lucide-react-native";
 import dayjs from "dayjs";
+import { buildCSVContent } from "@packages/domain/csv/csvExport";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DatePickerField } from "../common/DatePickerField";
 import { useActivities } from "../../hooks/useActivities";
+import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 
 type CSVExportModalProps = {
@@ -16,6 +18,7 @@ type CSVExportModalProps = {
 
 export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
   const { activities } = useActivities();
+  const { kinds: allKinds } = useActivityKinds();
   const [startDate, setStartDate] = useState(
     dayjs().subtract(30, "day").format("YYYY-MM-DD"),
   );
@@ -25,64 +28,61 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
   const [resultCount, setResultCount] = useState<number | null>(null);
 
   const activityMap = useMemo(() => {
-    const map = new Map<string, { name: string; emoji: string }>();
+    const map = new Map<string, { name: string }>();
     for (const a of activities) {
-      map.set(a.id, { name: a.name, emoji: a.emoji });
+      map.set(a.id, { name: a.name });
     }
     return map;
   }, [activities]);
 
+  const kindMap = useMemo(() => {
+    const map = new Map<string, { name: string }>();
+    for (const k of allKinds) {
+      map.set(k.id, { name: k.name });
+    }
+    return map;
+  }, [allKinds]);
+
   const handleExport = async () => {
+    // Date range validation
+    if (!startDate || !endDate) {
+      setError("開始日と終了日を指定してください");
+      return;
+    }
+    if (startDate > endDate) {
+      setError("開始日は終了日より前にしてください");
+      return;
+    }
+
     setIsExporting(true);
     setError(null);
     setResultCount(null);
 
     try {
-      const allLogs: Array<{
-        date: string;
-        time: string | null;
-        activityName: string;
-        quantity: number | null;
-        memo: string;
-      }> = [];
+      const logs = await activityLogRepository.getActivityLogsBetween(startDate, endDate);
 
-      let current = dayjs(startDate);
-      const end = dayjs(endDate);
-
-      while (current.isBefore(end, "day") || current.isSame(end, "day")) {
-        const dateStr = current.format("YYYY-MM-DD");
-        const logs =
-          await activityLogRepository.getActivityLogsByDate(dateStr);
-
-        for (const log of logs) {
-          const activity = activityMap.get(log.activityId);
-          allLogs.push({
-            date: log.date,
-            time: log.time,
-            activityName: activity?.name || "不明",
-            quantity: log.quantity,
-            memo: log.memo,
-          });
-        }
-        current = current.add(1, "day");
-      }
-
-      if (allLogs.length === 0) {
+      if (logs.length === 0) {
         setError("エクスポートするデータがありません");
         setIsExporting(false);
         return;
       }
 
-      const header = "日付,時刻,アクティビティ,数量,メモ";
-      const rows = allLogs.map(
-        (l) =>
-          `"${l.date}","${l.time || ""}","${l.activityName}","${l.quantity ?? ""}","${(l.memo || "").replace(/"/g, '""')}"`,
+      // Use domain buildCSVContent for proper escaping and kind data
+      const csvContent = buildCSVContent(
+        logs.map((l) => ({
+          activityId: l.activityId,
+          activityKindId: l.activityKindId,
+          date: l.date,
+          quantity: l.quantity,
+          memo: l.memo,
+        })),
+        activityMap,
+        kindMap,
       );
-      const csv = [header, ...rows].join("\n");
 
-      const fileUri = `${FileSystem.cacheDirectory}actiko-export-${dayjs().format("YYYYMMDD-HHmmss")}.csv`;
-      await FileSystem.writeAsStringAsync(fileUri, csv, {
-        encoding: FileSystem.EncodingType.UTF8,
+      const fileUri = `${cacheDirectory}actiko-export-${dayjs().format("YYYYMMDD-HHmmss")}.csv`;
+      await writeAsStringAsync(fileUri, csvContent, {
+        encoding: EncodingType.UTF8,
       });
 
       const isAvailable = await Sharing.isAvailableAsync();
@@ -91,7 +91,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           mimeType: "text/csv",
           dialogTitle: "CSVエクスポート",
         });
-        setResultCount(allLogs.length);
+        setResultCount(logs.length);
       } else {
         setError("共有機能が利用できません");
       }
@@ -148,7 +148,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
         </TouchableOpacity>
 
         <Text className="text-xs text-gray-400 text-center">
-          形式: date, time, activity, quantity, memo（CSVインポート互換）
+          形式: date, activity, kind, quantity, memo（CSVインポート互換）
         </Text>
       </View>
     </ModalOverlay>

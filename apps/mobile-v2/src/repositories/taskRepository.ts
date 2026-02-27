@@ -1,4 +1,5 @@
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";
@@ -108,11 +109,12 @@ export const taskRepository = {
 
   async getTasksByDate(date: string): Promise<TaskWithSync[]> {
     const db = await getDatabase();
+    // Fetch all non-deleted/non-archived tasks, then filter in JS
+    // using the domain predicate (handles doneDate, startDate, dueDate logic)
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM tasks WHERE deleted_at IS NULL AND archived_at IS NULL AND (start_date IS NULL OR start_date <= ?)",
-      [date],
+      "SELECT * FROM tasks WHERE deleted_at IS NULL AND archived_at IS NULL",
     );
-    return rows.map(mapTaskRow);
+    return rows.map(mapTaskRow).filter((t) => isTaskVisibleOnDate(t, date));
   },
 
   async updateTask(id: string, changes: UpdateTaskInput): Promise<void> {

@@ -1,6 +1,6 @@
 import { Tabs, useRouter } from "expo-router";
 import {
-  Zap,
+  LayoutGrid,
   CalendarDays,
   Target,
   BarChart3,
@@ -16,7 +16,7 @@ const TAB_ITEMS: {
   title: string;
   icon: LucideIcon;
 }[] = [
-  { name: "index", title: "Actiko", icon: Zap },
+  { name: "index", title: "Actiko", icon: LayoutGrid },
   { name: "daily", title: "Daily", icon: CalendarDays },
   { name: "stats", title: "Stats", icon: BarChart3 },
   { name: "goals", title: "Goal", icon: Target },

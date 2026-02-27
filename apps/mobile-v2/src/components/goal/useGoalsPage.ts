@@ -3,6 +3,7 @@ import { isGoalActive } from "@packages/domain/goal/goalPredicates";
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
 import { goalRepository } from "../../repositories/goalRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import type { Activity, CreateGoalPayload, UpdateGoalPayload } from "./types";
 
 export function useGoalsPage() {
@@ -43,6 +44,7 @@ export function useGoalsPage() {
   const handleGoalCreated = async (payload: CreateGoalPayload) => {
     await goalRepository.createGoal(payload);
     setCreateDialogOpen(false);
+    syncEngine.syncGoals();
   };
 
   const handleGoalUpdated = async (
@@ -51,10 +53,12 @@ export function useGoalsPage() {
   ) => {
     await goalRepository.updateGoal(goalId, payload);
     setEditingGoalId(null);
+    syncEngine.syncGoals();
   };
 
   const handleGoalDeleted = async (goalId: string) => {
     await goalRepository.softDeleteGoal(goalId);
+    syncEngine.syncGoals();
   };
 
   const handleToggleExpand = (goalId: string) => {

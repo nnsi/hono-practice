@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { ImagePlus, ImageOff } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
+import { readAsStringAsync, EncodingType } from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { EmojiPicker } from "../common/EmojiPicker";
@@ -101,8 +101,8 @@ export function EditActivityDialog({
         { compress: 0.8, format: ImageManipulator.SaveFormat.PNG }
       );
 
-      const base64 = await FileSystem.readAsStringAsync(manipulated.uri, {
-        encoding: FileSystem.EncodingType.Base64,
+      const base64 = await readAsStringAsync(manipulated.uri, {
+        encoding: EncodingType.Base64,
       });
 
       await activityRepository.saveActivityIconBlob(

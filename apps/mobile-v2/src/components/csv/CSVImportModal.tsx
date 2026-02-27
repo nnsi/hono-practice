@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
+import { readAsStringAsync, EncodingType } from "expo-file-system/legacy";
 import { FileText, Upload } from "lucide-react-native";
+import { parseCSVText } from "@packages/domain/csv/csvParser";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useActivities } from "../../hooks/useActivities";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import dayjs from "dayjs";
 
 type CSVImportModalProps = { visible: boolean; onClose: () => void };
@@ -20,7 +22,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [progress, setProgress] = useState({ processed: 0, total: 0 });
+  const [progress, setProgress] = useState({ processed: 0, total: 0, succeeded: 0, failed: 0 });
   const [error, setError] = useState<string | null>(null);
   const [successCount, setSuccessCount] = useState<number | null>(null);
 
@@ -31,7 +33,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
     setFileName(null);
     setIsParsing(false);
     setIsImporting(false);
-    setProgress({ processed: 0, total: 0 });
+    setProgress({ processed: 0, total: 0, succeeded: 0, failed: 0 });
     setError(null);
     setSuccessCount(null);
   };
@@ -51,25 +53,34 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       const asset = result.assets[0];
       setFileName(asset.name);
 
-      const content = await FileSystem.readAsStringAsync(asset.uri, {
-        encoding: FileSystem.EncodingType.UTF8,
+      const content = await readAsStringAsync(asset.uri, {
+        encoding: EncodingType.UTF8,
       });
-      const lines = content.split("\n").filter((line) => line.trim());
-      if (lines.length <= 1) {
+
+      // Use domain parseCSVText for proper CSV parsing (handles quoted fields)
+      const csvResult = parseCSVText(content);
+      if (csvResult.data.length === 0) {
         setError("CSVデータが空です");
         setIsParsing(false);
         return;
       }
-      const rows: ParsedRow[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-        rows.push({
-          date: cols[0] || dayjs().format("YYYY-MM-DD"),
-          time: cols[1] || "",
-          quantity: cols[2] || "",
-          memo: cols[3] || "",
-        });
-      }
+
+      // Map parsed records to rows using header-based lookup
+      const rows: ParsedRow[] = csvResult.data.map((record) => {
+        // Auto-detect columns by header name
+        const dateCol = findColumn(csvResult.headers, ["date", "日付"]);
+        const timeCol = findColumn(csvResult.headers, ["time", "時刻"]);
+        const quantityCol = findColumn(csvResult.headers, ["quantity", "数量", "回数", "時間", "count", "cnt"]);
+        const memoCol = findColumn(csvResult.headers, ["memo", "メモ", "備考"]);
+
+        return {
+          date: (dateCol ? record[dateCol] : record[csvResult.headers[0]]) || dayjs().format("YYYY-MM-DD"),
+          time: (timeCol ? record[timeCol] : record[csvResult.headers[1]]) || "",
+          quantity: (quantityCol ? record[quantityCol] : record[csvResult.headers[2]]) || "",
+          memo: (memoCol ? record[memoCol] : record[csvResult.headers[3]]) || "",
+        };
+      });
+
       setParsedRows(rows);
       setStep("preview");
     } catch {
@@ -84,21 +95,50 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
     if (parsedRows.length === 0) { setError("インポートするデータがありません"); return; }
     setIsImporting(true);
     setError(null);
-    setProgress({ processed: 0, total: parsedRows.length });
+    setProgress({ processed: 0, total: parsedRows.length, succeeded: 0, failed: 0 });
+
+    let succeeded = 0;
+    let failed = 0;
+
     try {
       for (let i = 0; i < parsedRows.length; i++) {
         const row = parsedRows[i];
-        await activityLogRepository.createActivityLog({
-          activityId: selectedActivityId,
-          activityKindId: null,
-          quantity: row.quantity ? Number(row.quantity) : null,
-          memo: row.memo,
-          date: row.date,
-          time: row.time || null,
-        });
-        setProgress({ processed: i + 1, total: parsedRows.length });
+        try {
+          // Validate quantity
+          const quantity = row.quantity ? Number(row.quantity) : null;
+          if (quantity !== null && !Number.isFinite(quantity)) {
+            failed++;
+            setProgress({ processed: i + 1, total: parsedRows.length, succeeded, failed });
+            continue;
+          }
+
+          // Format date (handle ISO datetime format)
+          const date = row.date.includes("T") ? row.date.split("T")[0] : row.date;
+
+          await activityLogRepository.createActivityLog({
+            activityId: selectedActivityId,
+            activityKindId: null,
+            quantity,
+            memo: row.memo,
+            date,
+            time: row.time || null,
+          });
+          succeeded++;
+        } catch {
+          failed++;
+        }
+        setProgress({ processed: i + 1, total: parsedRows.length, succeeded, failed });
       }
-      setSuccessCount(parsedRows.length);
+
+      // Trigger sync after import
+      syncEngine.syncAll();
+
+      if (failed === 0) {
+        setSuccessCount(succeeded);
+      } else {
+        setSuccessCount(succeeded);
+        setError(`${failed}件のインポートに失敗しました`);
+      }
     } catch {
       setError("インポートに失敗しました");
     } finally {
@@ -168,7 +208,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
             <View className="w-full bg-gray-200 rounded-full h-2">
               <View className="bg-blue-600 h-2 rounded-full" style={{ width: `${(progress.processed / progress.total) * 100}%` }} />
             </View>
-            <Text className="text-xs text-center text-gray-600">{progress.processed} / {progress.total} 件処理中...</Text>
+            <Text className="text-xs text-center text-gray-600">{progress.succeeded} / {progress.total} 件処理中...</Text>
           </View>
         )}
 
@@ -203,6 +243,15 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       </View>
     </ModalOverlay>
   );
+}
+
+// --- Helpers ---
+
+function findColumn(headers: string[], keywords: string[]): string | undefined {
+  return headers.find((h) => {
+    const lower = h.toLowerCase();
+    return keywords.some((kw) => lower.includes(kw));
+  });
 }
 
 function StepIndicator({ current }: { current: Step }) {
