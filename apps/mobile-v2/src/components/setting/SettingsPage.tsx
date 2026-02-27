@@ -4,12 +4,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Upload, Download, LogOut, User, Info, Settings, Database, Trash2, AlertTriangle } from "lucide-react-native";
 import { useAuthContext } from "../../../app/_layout";
 import { clearLocalDataForUserSwitch } from "../../sync/initialSync";
-import { customFetch, clearToken, clearRefreshToken } from "../../utils/apiClient";
+import { customFetch, clearToken, clearRefreshToken, getApiUrl } from "../../utils/apiClient";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 
 const SETTINGS_KEY = "actiko-v2-settings";
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3456";
+const API_URL = getApiUrl();
 
 type AppSettings = { showGoalOnStartup: boolean; hideGoalGraph: boolean; showInactiveDates: boolean };
 const defaultSettings: AppSettings = { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };

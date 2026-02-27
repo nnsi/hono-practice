@@ -1,7 +1,23 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3456";
+function resolveApiUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  // Expo Go: use the same host IP that Metro bundler uses
+  const debuggerHost = Constants.expoGoConfig?.debuggerHost;
+  if (debuggerHost) {
+    const host = debuggerHost.split(":")[0];
+    return `http://${host}:3456`;
+  }
+  return "http://localhost:3456";
+}
+
+const API_URL = resolveApiUrl();
+
+export function getApiUrl(): string {
+  return API_URL;
+}
 
 let accessToken: string | null = null;
 
