@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Switch, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Upload, Download, LogOut, User, Info, Settings, Database, Trash2, AlertTriangle } from "lucide-react-native";
+import { Upload, Download, LogOut, User, Info, Settings, Database, Trash2, AlertTriangle, Key } from "lucide-react-native";
 import { useAuthContext } from "../../../app/_layout";
 import { clearLocalDataForUserSwitch } from "../../sync/initialSync";
 import { customFetch, clearToken, clearRefreshToken, getApiUrl } from "../../utils/apiClient";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
+import { ApiKeyManager } from "./ApiKeyManager";
 
 const SETTINGS_KEY = "actiko-v2-settings";
 const API_URL = getApiUrl();
@@ -74,6 +75,15 @@ export function SettingsPage() {
         <Divider />
         <SettingSwitch label="やらなかった日付をデフォルトで表示" desc="目標詳細で活動がなかった日付を表示します" value={settings.showInactiveDates} onChange={(v) => updateSetting("showInactiveDates", v)} />
       </Section>
+
+      {/* API Key management */}
+      <View className="mx-4 mt-4">
+        <View className="flex-row items-center mb-2 ml-1">
+          <Key size={14} color="#9ca3af" />
+          <Text className="ml-1.5 text-xs text-gray-400 uppercase tracking-wide">APIキー管理</Text>
+        </View>
+        <ApiKeyManager shadow={shadow} />
+      </View>
 
       {/* Data management */}
       <Section icon={Database} label="データ管理" shadow={shadow}>

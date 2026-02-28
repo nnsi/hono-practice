@@ -17,6 +17,7 @@ config.resolver.nodeModulesPaths = [
 // Pin shared deps so packages/ outside projectRoot resolve the app's copy
 config.resolver.extraNodeModules = {
   react: path.resolve(projectRoot, "node_modules/react"),
+  "react-dom": path.resolve(projectRoot, "node_modules/react-dom"),
 };
 
 // On web, redirect expo-sqlite to our web shim (native module not available)

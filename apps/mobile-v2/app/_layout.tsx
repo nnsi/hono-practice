@@ -2,10 +2,13 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
 import { createContext, useContext } from "react";
 import "../global.css";
+
+const queryClient = new QueryClient();
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -63,9 +66,11 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthContext.Provider value={auth}>
-      <StatusBar style="auto" />
-      <Slot />
-    </AuthContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <AuthContext.Provider value={auth}>
+        <StatusBar style="auto" />
+        <Slot />
+      </AuthContext.Provider>
+    </QueryClientProvider>
   );
 }
