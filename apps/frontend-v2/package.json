@@ -18,8 +18,8 @@
     "dexie-react-hooks": "^1.1.7",
     "hono": "^4.12.1",
     "lucide-react": "^0.469.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "tailwind-merge": "^2.6.0",
     "uuid": "^11.0.3",
     "victory": "^37.3.6"
