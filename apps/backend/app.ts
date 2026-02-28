@@ -47,6 +47,7 @@ app.use("*", async (c, next) => {
       "http://localhost:19006", // Expo Web
       "http://localhost:2460", // frontend-v2
       "http://localhost:2461", // frontend-v2 fallback port
+      "http://localhost:8099", // mobile-v2 (Expo Web)
     );
 
     // 実機からのアクセス用（同一ネットワーク内のIPアドレス）

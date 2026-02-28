@@ -6,10 +6,12 @@ import {
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
+import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import type { StorageService } from "@backend/infra/storage";
 import { generateOrder } from "@backend/lib/lexicalOrder";
 import type { Tracer } from "@backend/lib/tracer";
+import { generateIconKey } from "@backend/utils/imageValidator";
 import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
@@ -17,6 +19,11 @@ import type {
 } from "@dtos/request";
 
 import type { ActivityRepository } from ".";
+
+type UploadActivityIconResult = {
+  iconUrl: string;
+  iconThumbnailUrl: string;
+};
 
 export type ActivityUsecase = {
   getActivities(userId: UserId): Promise<Activity[]>;
@@ -33,12 +40,24 @@ export type ActivityUsecase = {
     orderIndexes: UpdateActivityOrderRequest,
   ): Promise<Activity>;
   deleteActivity(userId: UserId, activityId: ActivityId): Promise<void>;
+  uploadActivityIcon(
+    userId: UserId,
+    activityId: ActivityId,
+    base64: string,
+    mimeType: string,
+    apiBaseUrl: string,
+  ): Promise<UploadActivityIconResult>;
+  deleteActivityIcon(
+    userId: UserId,
+    activityId: ActivityId,
+  ): Promise<void>;
 };
 
 export function newActivityUsecase(
   repo: ActivityRepository,
   tx: TransactionRunner,
   tracer: Tracer,
+  storage?: StorageService,
 ): ActivityUsecase {
   return {
     getActivities: getActivities(repo, tracer),
@@ -47,6 +66,8 @@ export function newActivityUsecase(
     updateActivity: updateActivity(repo, tx, tracer),
     updateActivityOrder: updateActivityOrder(repo, tx, tracer),
     deleteActivity: deleteActivity(repo, tracer),
+    uploadActivityIcon: uploadActivityIcon(repo, tracer, storage),
+    deleteActivityIcon: deleteActivityIcon(repo, tracer, storage),
   };
 }
 
@@ -209,6 +230,109 @@ function deleteActivity(repo: ActivityRepository, tracer: Tracer) {
 
     return await tracer.span("db.deleteActivity", () =>
       repo.deleteActivity(activity),
+    );
+  };
+}
+
+const ALLOWED_ICON_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function extractR2Key(url: string): string {
+  const match = url.match(/\/r2\/(.+)$/);
+  return match ? match[1] : url.split("/").slice(-4).join("/");
+}
+
+function uploadActivityIcon(
+  repo: ActivityRepository,
+  tracer: Tracer,
+  storage?: StorageService,
+) {
+  return async (
+    userId: UserId,
+    activityId: ActivityId,
+    base64: string,
+    mimeType: string,
+    apiBaseUrl: string,
+  ): Promise<UploadActivityIconResult> => {
+    if (!storage) throw new AppError("Storage service is not configured", 500);
+
+    if (!ALLOWED_ICON_TYPES.includes(mimeType)) {
+      throw new AppError("Invalid image type", 400);
+    }
+
+    // 所有権チェック
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      repo.getActivityByIdAndUserId(userId, activityId),
+    );
+    if (!activity) throw new ResourceNotFoundError("activity not found");
+
+    // Base64 → バイナリ変換
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const file = new File([bytes], "icon.webp", { type: mimeType });
+    const mainKey = generateIconKey(userId, activityId);
+
+    // R2アップロード
+    const uploaded = await tracer.span("r2.upload", () =>
+      storage.upload(file, mainKey, { contentType: mimeType }),
+    );
+
+    // 相対URLを絶対URLに変換
+    const iconUrl = uploaded.url.startsWith("/")
+      ? `${apiBaseUrl}${uploaded.url}`
+      : uploaded.url;
+    const iconThumbnailUrl = iconUrl;
+
+    // DB更新
+    await tracer.span("db.updateActivityIcon", () =>
+      repo.updateActivityIcon(activityId, "upload", iconUrl, iconThumbnailUrl),
+    );
+
+    return { iconUrl, iconThumbnailUrl };
+  };
+}
+
+function deleteActivityIcon(
+  repo: ActivityRepository,
+  tracer: Tracer,
+  storage?: StorageService,
+) {
+  return async (userId: UserId, activityId: ActivityId): Promise<void> => {
+    if (!storage) throw new AppError("Storage service is not configured", 500);
+
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      repo.getActivityByIdAndUserId(userId, activityId),
+    );
+    if (!activity) throw new ResourceNotFoundError("activity not found");
+
+    // R2からアイコンを削除
+    if (activity.iconUrl) {
+      const key = extractR2Key(activity.iconUrl);
+      try {
+        await tracer.span("r2.delete", () => storage.delete(key));
+      } catch (error) {
+        console.error("Failed to delete main icon:", error);
+      }
+    }
+
+    if (
+      activity.iconThumbnailUrl &&
+      activity.iconThumbnailUrl !== activity.iconUrl
+    ) {
+      const key = extractR2Key(activity.iconThumbnailUrl);
+      try {
+        await tracer.span("r2.delete", () => storage.delete(key));
+      } catch (error) {
+        console.error("Failed to delete thumbnail icon:", error);
+      }
+    }
+
+    // emojiにリセット
+    await tracer.span("db.updateActivityIcon", () =>
+      repo.updateActivityIcon(activityId, "emoji", null, null),
     );
   };
 }

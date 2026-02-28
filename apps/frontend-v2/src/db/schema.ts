@@ -1,84 +1,20 @@
 import Dexie, { type Table } from "dexie";
+import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import type {
+  ActivityRecord,
+  ActivityKindRecord,
+} from "@packages/domain/activity/activityRecord";
+import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import type { TaskRecord } from "@packages/domain/task/taskRecord";
 
-export type SyncStatus = "synced" | "pending" | "failed";
+export type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 
-export type DexieActivityLog = {
-  id: string;
-  activityId: string;
-  activityKindId: string | null;
-  quantity: number | null;
-  memo: string;
-  date: string;
-  time: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  _syncStatus: SyncStatus;
-};
-
-export type DexieActivity = {
-  id: string;
-  userId: string;
-  name: string;
-  label: string;
-  emoji: string;
-  iconType: "emoji" | "upload" | "generate";
-  iconUrl: string | null;
-  iconThumbnailUrl: string | null;
-  description: string;
-  quantityUnit: string;
-  orderIndex: string;
-  showCombinedStats: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  _syncStatus: SyncStatus;
-};
-
-export type DexieActivityKind = {
-  id: string;
-  activityId: string;
-  name: string;
-  color: string | null;
-  orderIndex: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  _syncStatus: SyncStatus;
-};
-
-export type DexieGoal = {
-  id: string;
-  userId: string;
-  activityId: string;
-  dailyTargetQuantity: number;
-  startDate: string;
-  endDate: string | null;
-  isActive: boolean;
-  description: string;
-  currentBalance: number;
-  totalTarget: number;
-  totalActual: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  _syncStatus: SyncStatus;
-};
-
-export type DexieTask = {
-  id: string;
-  userId: string;
-  title: string;
-  startDate: string | null;
-  dueDate: string | null;
-  doneDate: string | null;
-  memo: string;
-  archivedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  _syncStatus: SyncStatus;
-};
+export type DexieActivityLog = Syncable<Omit<ActivityLogRecord, "userId">>;
+export type DexieActivity = Syncable<ActivityRecord>;
+export type DexieActivityKind = Syncable<ActivityKindRecord>;
+export type DexieGoal = Syncable<GoalRecord>;
+export type DexieTask = Syncable<TaskRecord>;
 
 export type DexieActivityIconBlob = {
   activityId: string;

@@ -1,4 +1,6 @@
 import { v7 as uuidv7 } from "uuid";
+import type { TaskRepository } from "@packages/domain/task/taskRepository";
+import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
 import { db, type DexieTask } from "./schema";
 
 type CreateTaskInput = {
@@ -43,12 +45,10 @@ export const taskRepository = {
   },
 
   async getTasksByDate(date: string) {
+    // Fetch all non-deleted/non-archived tasks, then filter in JS
+    // using the domain predicate (handles doneDate, startDate, dueDate logic)
     return db.tasks
-      .filter((t) => {
-        if (t.deletedAt || t.archivedAt) return false;
-        if (t.startDate && t.startDate > date) return false;
-        return true;
-      })
+      .filter((t) => isTaskVisibleOnDate(t, date))
       .toArray();
   },
 
@@ -104,4 +104,4 @@ export const taskRepository = {
       tasks.map((t) => ({ ...t, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies TaskRepository;

@@ -1,3 +1,4 @@
+import type { NetworkAdapter } from "@packages/domain/sync/platformAdapters";
 import {
   syncActivities,
   syncActivityIconDeletions,
@@ -6,6 +7,7 @@ import {
 import { syncActivityLogs } from "./syncActivityLogs";
 import { syncGoals } from "./syncGoals";
 import { syncTasks } from "./syncTasks";
+import { webNetworkAdapter } from "./webPlatformAdapters";
 
 let isSyncing = false;
 let retryCount = 0;
@@ -43,10 +45,9 @@ export const syncEngine = {
     }
   },
 
-  startAutoSync(intervalMs = 30000) {
+  startAutoSync(intervalMs = 30000, network: NetworkAdapter = webNetworkAdapter) {
     const sync = () => syncEngine.syncAll();
-
-    window.addEventListener("online", sync);
+    const removeOnlineListener = network.onOnline(sync);
 
     let timeoutId: ReturnType<typeof setTimeout>;
     const scheduleNext = () => {
@@ -55,17 +56,16 @@ export const syncEngine = {
           ? Math.min(BASE_DELAY_MS * 2 ** retryCount, 5 * 60 * 1000)
           : intervalMs;
       timeoutId = setTimeout(async () => {
-        if (navigator.onLine) await sync();
+        if (network.isOnline()) await sync();
         scheduleNext();
       }, delay);
     };
     scheduleNext();
 
-    // Immediate sync
-    if (navigator.onLine) sync();
+    if (network.isOnline()) sync();
 
     return () => {
-      window.removeEventListener("online", sync);
+      removeOnlineListener();
       clearTimeout(timeoutId);
     };
   },

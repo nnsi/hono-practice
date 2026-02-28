@@ -1,7 +1,7 @@
 import { useMemo } from "react";
+import { autoDetectMapping } from "@packages/domain/csv/csvParser";
+import type { ColumnMapping } from "@packages/domain/csv/csvParser";
 import { useActivities } from "../../hooks/useActivities";
-import type { ColumnMapping } from "../../hooks/useCSVImport";
-import { autoDetectMapping } from "../../hooks/useCSVImport";
 import { ArrowRight, Info } from "lucide-react";
 
 const FIELD_OPTIONS = [

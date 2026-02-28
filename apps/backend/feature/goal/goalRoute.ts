@@ -20,7 +20,6 @@ export function createGoalRoute() {
     AppContext & {
       Variables: {
         h: ReturnType<typeof newGoalHandler>;
-        goalQueryService: ReturnType<typeof newGoalQueryService>;
       };
     }
   >();
@@ -44,10 +43,9 @@ export function createGoalRoute() {
       activityLogRepo,
       tracer,
     );
-    const h = newGoalHandler(uc);
+    const h = newGoalHandler(uc, goalQueryService, tracer);
 
     c.set("h", h);
-    c.set("goalQueryService", goalQueryService);
 
     return next();
   });
@@ -81,19 +79,8 @@ export function createGoalRoute() {
         const userId = c.get("userId");
         const { id } = c.req.param();
 
-        try {
-          const goalQueryService = c.var.goalQueryService;
-          const tracer = c.get("tracer") ?? noopTracer;
-          const res = await tracer.span("db.getGoalStats", () =>
-            goalQueryService.getGoalStats(userId, id),
-          );
-          return c.json(res);
-        } catch (error) {
-          if (error instanceof Error && error.message === "Goal not found") {
-            return c.json({ error: "Goal not found" }, 404);
-          }
-          throw error;
-        }
+        const res = await c.var.h.getGoalStats(userId, id);
+        return c.json(res);
       })
       // 目標作成
       .post("/", zValidator("json", CreateGoalRequestSchema), async (c) => {

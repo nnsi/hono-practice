@@ -2,6 +2,30 @@
 export type { ActivityRecord as Activity, ActivityKindRecord as ActivityKind } from "./activity/activityRecord";
 export type { ActivityLogRecord as ActivityLog } from "./activityLog/activityLogRecord";
 
+// Record types
+export type { ActivityRecord, ActivityKindRecord } from "./activity/activityRecord";
+export type { ActivityLogRecord } from "./activityLog/activityLogRecord";
+export type { GoalRecord } from "./goal/goalRecord";
+export type { TaskRecord } from "./task/taskRecord";
+
+// Repository types
+export type { ActivityRepository, CreateActivityInput, ActivityIconBlob, ActivityIconDeleteQueueItem } from "./activity/activityRepository";
+export type { ActivityLogRepository, CreateActivityLogInput, UpsertActivityLogFromServerInput } from "./activityLog/activityLogRepository";
+export type { GoalRepository, CreateGoalInput, UpdateGoalInput } from "./goal/goalRepository";
+export type { TaskRepository, CreateTaskInput, UpdateTaskInput } from "./task/taskRepository";
+
+// Sync types
+export * from "./sync";
+
+// Time utilities
+export * from "./time";
+
+// CSV utilities
+export * from "./csv";
+
+// Image types
+export * from "./image";
+
 // Predicates / Sorters / Grouping
 export * from "./task/taskPredicates";
 export * from "./task/taskSorters";

@@ -5,7 +5,7 @@ import {
   parseCSVText,
   validateDate,
   validateQuantity,
-} from "./useCSVImport";
+} from "@packages/domain/csv/csvParser";
 
 describe("autoDetectMapping", () => {
   // --- 英語ヘッダー ---

@@ -1,11 +1,14 @@
 import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
+import type { User } from "@packages/domain/user/userSchema";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
 import { authResponseSchema } from "@dtos/response";
 
 import { AppError } from "../../error";
 import type { AuthUsecase } from "./authUsecase";
+
+type GetUserById = (userId: UserId) => Promise<User>;
 
 export type AuthHandler = {
   login(params: LoginRequest): Promise<{
@@ -34,6 +37,14 @@ export type AuthHandler = {
     token: string;
     refreshToken: string;
     userId: UserId;
+  }>;
+  googleLoginWithUser(
+    params: GoogleLoginRequest,
+    clientId: string,
+  ): Promise<{
+    user: User;
+    token: string;
+    refreshToken: string;
   }>;
   linkProvider(
     userId: UserId,
@@ -103,6 +114,23 @@ function googleLogin(uc: AuthUsecase) {
   };
 }
 
+function googleLoginWithUser(
+  googleLoginFn: ReturnType<typeof googleLogin>,
+  getUserById?: GetUserById,
+) {
+  return async (params: GoogleLoginRequest, clientId: string) => {
+    const { token, refreshToken, userId } = await googleLoginFn(
+      params,
+      clientId,
+    );
+    if (!getUserById) {
+      throw new AppError("getUserById is not configured", 500);
+    }
+    const user = await getUserById(userId);
+    return { user, token, refreshToken };
+  };
+}
+
 function linkProvider(uc: AuthUsecase) {
   return async (
     userId: UserId,
@@ -143,14 +171,19 @@ function rotateRefreshTokenHandler(uc: AuthUsecase) {
   };
 }
 
-export function newAuthHandler(uc: AuthUsecase): AuthHandler {
+export function newAuthHandler(
+  uc: AuthUsecase,
+  getUserById?: GetUserById,
+): AuthHandler {
+  const googleLoginFn = googleLogin(uc);
   return {
     login: login(uc),
     refreshToken: refreshToken(uc),
     fetchRefreshToken: fetchRefreshTokenHandler(uc),
     rotateRefreshToken: rotateRefreshTokenHandler(uc),
     logout: logout(uc),
-    googleLogin: googleLogin(uc),
+    googleLogin: googleLoginFn,
+    googleLoginWithUser: googleLoginWithUser(googleLoginFn, getUserById),
     linkProvider: linkProvider(uc),
   };
 }

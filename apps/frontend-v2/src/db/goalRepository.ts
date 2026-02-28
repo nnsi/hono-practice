@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import { db, type DexieGoal } from "./schema";
 
 type CreateGoalInput = {
@@ -46,7 +47,8 @@ export const goalRepository = {
   },
 
   async getAllGoals() {
-    return db.goals.filter((g) => !g.deletedAt).toArray();
+    const goals = await db.goals.filter((g) => !g.deletedAt).toArray();
+    return goals.sort((a, b) => b.startDate.localeCompare(a.startDate));
   },
 
   async updateGoal(id: string, changes: UpdateGoalInput) {
@@ -92,4 +94,4 @@ export const goalRepository = {
       goals.map((g) => ({ ...g, _syncStatus: "synced" as const })),
     );
   },
-};
+} satisfies GoalRepository;

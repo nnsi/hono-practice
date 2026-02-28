@@ -4,7 +4,7 @@ import {
   convertSecondsToUnit,
   formatElapsedTime,
   type TimeUnitType,
-} from "../../utils/timeUtils";
+} from "@packages/domain/time/timeUtils";
 import { useLogForm, type UseTimerReturn } from "./useLogForm";
 
 /**
