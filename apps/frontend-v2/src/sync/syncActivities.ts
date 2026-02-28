@@ -3,6 +3,7 @@ import { db } from "../db/schema";
 import { apiClient, customFetch } from "../utils/apiClient";
 import { mapApiActivity, mapApiActivityKind } from "@packages/domain/sync/apiMappers";
 import type { SyncResult } from "@packages/domain/sync/syncResult";
+import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
 
@@ -19,41 +20,45 @@ export async function syncActivities(): Promise<void> {
   );
   const kindsData = pendingKinds.map(({ _syncStatus, ...k }) => k);
 
-  const res = await apiClient.users.v2.activities.sync.$post({
-    json: {
-      activities: activitiesData,
-      activityKinds: kindsData,
-    },
-  });
+  const activityChunks = chunkArray(activitiesData);
+  const kindChunks = chunkArray(kindsData, 500);
 
-  if (!res.ok) return;
+  const maxChunks = Math.max(activityChunks.length, kindChunks.length);
+  const activityResults: SyncResult[] = [];
+  const kindResults: SyncResult[] = [];
 
-  const data: {
-    activities: SyncResult;
-    activityKinds: SyncResult;
-  } = await res.json();
+  for (let i = 0; i < maxChunks; i++) {
+    const res = await apiClient.users.v2.activities.sync.$post({
+      json: {
+        activities: activityChunks[i] ?? [],
+        activityKinds: kindChunks[i] ?? [],
+      },
+    });
+    if (!res.ok) return;
 
-  await activityRepository.markActivitiesSynced(
-    data.activities.syncedIds,
-  );
-  await activityRepository.markActivitiesFailed(
-    data.activities.skippedIds,
-  );
-  if (data.activities.serverWins.length > 0) {
+    const data = await res.json() as {
+      activities: SyncResult;
+      activityKinds: SyncResult;
+    };
+    activityResults.push(data.activities);
+    kindResults.push(data.activityKinds);
+  }
+
+  const activityData = mergeSyncResults(activityResults);
+  await activityRepository.markActivitiesSynced(activityData.syncedIds);
+  await activityRepository.markActivitiesFailed(activityData.skippedIds);
+  if (activityData.serverWins.length > 0) {
     await activityRepository.upsertActivities(
-      data.activities.serverWins.map(mapApiActivity),
+      activityData.serverWins.map(mapApiActivity),
     );
   }
 
-  await activityRepository.markActivityKindsSynced(
-    data.activityKinds.syncedIds,
-  );
-  await activityRepository.markActivityKindsFailed(
-    data.activityKinds.skippedIds,
-  );
-  if (data.activityKinds.serverWins.length > 0) {
+  const kindData = mergeSyncResults(kindResults);
+  await activityRepository.markActivityKindsSynced(kindData.syncedIds);
+  await activityRepository.markActivityKindsFailed(kindData.skippedIds);
+  if (kindData.serverWins.length > 0) {
     await activityRepository.upsertActivityKinds(
-      data.activityKinds.serverWins.map(mapApiActivityKind),
+      kindData.serverWins.map(mapApiActivityKind),
     );
   }
 }
