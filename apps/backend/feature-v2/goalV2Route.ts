@@ -106,24 +106,28 @@ export const goalV2Route = new Hono<AppContext>()
       : [];
   const ownedActivityIdSet = new Set(ownedActivities.map((a) => a.id));
 
-  const syncedIds: string[] = [];
-  const serverWins: (typeof activityGoals.$inferSelect)[] = [];
   const skippedIds: string[] = [];
   const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
 
-  for (const goal of goals) {
-    // バリデーション: activityId 所有チェック + updatedAt 未来制限
+  const validGoals = goals.filter((goal) => {
     if (
       !ownedActivityIdSet.has(goal.activityId) ||
       new Date(goal.updatedAt) > maxAllowed
     ) {
       skippedIds.push(goal.id);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    const result = await db
-      .insert(activityGoals)
-      .values({
+  if (validGoals.length === 0) {
+    return c.json({ syncedIds: [], serverWins: [], skippedIds });
+  }
+
+  const upserted = await db
+    .insert(activityGoals)
+    .values(
+      validGoals.map((goal) => ({
         id: goal.id,
         userId,
         activityId: goal.activityId,
@@ -135,44 +139,49 @@ export const goalV2Route = new Hono<AppContext>()
         createdAt: new Date(goal.createdAt),
         updatedAt: new Date(goal.updatedAt),
         deletedAt: goal.deletedAt ? new Date(goal.deletedAt) : null,
-      })
-      .onConflictDoUpdate({
-        target: activityGoals.id,
-        set: {
-          activityId: goal.activityId,
-          dailyTargetQuantity: goal.dailyTargetQuantity,
-          startDate: goal.startDate,
-          endDate: goal.endDate,
-          isActive: goal.isActive,
-          description: goal.description,
-          updatedAt: new Date(goal.updatedAt),
-          deletedAt: goal.deletedAt ? new Date(goal.deletedAt) : null,
-        },
-        setWhere: and(
-          lt(activityGoals.updatedAt, new Date(goal.updatedAt)),
+      })),
+    )
+    .onConflictDoUpdate({
+      target: activityGoals.id,
+      set: {
+        activityId: sql`excluded.activity_id`,
+        dailyTargetQuantity: sql`excluded.daily_target_quantity`,
+        startDate: sql`excluded.start_date`,
+        endDate: sql`excluded.end_date`,
+        isActive: sql`excluded.is_active`,
+        description: sql`excluded.description`,
+        updatedAt: sql`excluded.updated_at`,
+        deletedAt: sql`excluded.deleted_at`,
+      },
+      setWhere: and(
+        lt(activityGoals.updatedAt, sql`excluded.updated_at`),
+        eq(activityGoals.userId, userId),
+      ),
+    })
+    .returning();
+
+  const syncedIdSet = new Set(upserted.map((r) => r.id));
+  const syncedIds = [...syncedIdSet];
+
+  const missedIds = validGoals
+    .map((g) => g.id)
+    .filter((id) => !syncedIdSet.has(id));
+
+  let serverWins: (typeof activityGoals.$inferSelect)[] = [];
+  if (missedIds.length > 0) {
+    serverWins = await db
+      .select()
+      .from(activityGoals)
+      .where(
+        and(
+          inArray(activityGoals.id, missedIds),
           eq(activityGoals.userId, userId),
         ),
-      })
-      .returning();
-
-    if (result.length > 0) {
-      syncedIds.push(goal.id);
-    } else {
-      // サーバーが勝った or 他ユーザーの行
-      const serverGoal = await db
-        .select()
-        .from(activityGoals)
-        .where(
-          and(
-            eq(activityGoals.id, goal.id),
-            eq(activityGoals.userId, userId),
-          ),
-        )
-        .limit(1);
-      if (serverGoal.length > 0) {
-        serverWins.push(serverGoal[0]);
-      } else {
-        skippedIds.push(goal.id);
+      );
+    const serverWinIdSet = new Set(serverWins.map((s) => s.id));
+    for (const id of missedIds) {
+      if (!serverWinIdSet.has(id)) {
+        skippedIds.push(id);
       }
     }
   }

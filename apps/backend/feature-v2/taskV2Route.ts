@@ -1,4 +1,4 @@
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import type { AppContext } from "../context";
@@ -41,21 +41,25 @@ export const taskV2Route = new Hono<AppContext>()
   const userId = c.get("userId");
   const db = c.env.DB;
 
-  const syncedIds: string[] = [];
-  const serverWins: (typeof tasks.$inferSelect)[] = [];
   const skippedIds: string[] = [];
   const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
 
-  for (const task of taskList) {
-    // バリデーション: updatedAt 未来制限
+  const validTasks = taskList.filter((task) => {
     if (new Date(task.updatedAt) > maxAllowed) {
       skippedIds.push(task.id);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    const result = await db
-      .insert(tasks)
-      .values({
+  if (validTasks.length === 0) {
+    return c.json({ syncedIds: [], serverWins: [], skippedIds });
+  }
+
+  const upserted = await db
+    .insert(tasks)
+    .values(
+      validTasks.map((task) => ({
         id: task.id,
         userId,
         title: task.title,
@@ -67,39 +71,46 @@ export const taskV2Route = new Hono<AppContext>()
         createdAt: new Date(task.createdAt),
         updatedAt: new Date(task.updatedAt),
         deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-      })
-      .onConflictDoUpdate({
-        target: tasks.id,
-        set: {
-          title: task.title,
-          startDate: task.startDate,
-          dueDate: task.dueDate,
-          doneDate: task.doneDate,
-          memo: task.memo,
-          archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
-          updatedAt: new Date(task.updatedAt),
-          deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-        },
-        setWhere: and(
-          lt(tasks.updatedAt, new Date(task.updatedAt)),
-          eq(tasks.userId, userId),
-        ),
-      })
-      .returning();
+      })),
+    )
+    .onConflictDoUpdate({
+      target: tasks.id,
+      set: {
+        title: sql`excluded.title`,
+        startDate: sql`excluded.start_date`,
+        dueDate: sql`excluded.due_date`,
+        doneDate: sql`excluded.done_date`,
+        memo: sql`excluded.memo`,
+        archivedAt: sql`excluded.archived_at`,
+        updatedAt: sql`excluded.updated_at`,
+        deletedAt: sql`excluded.deleted_at`,
+      },
+      setWhere: and(
+        lt(tasks.updatedAt, sql`excluded.updated_at`),
+        eq(tasks.userId, userId),
+      ),
+    })
+    .returning();
 
-    if (result.length > 0) {
-      syncedIds.push(task.id);
-    } else {
-      // サーバーが勝った or 他ユーザーの行
-      const serverTask = await db
-        .select()
-        .from(tasks)
-        .where(and(eq(tasks.id, task.id), eq(tasks.userId, userId)))
-        .limit(1);
-      if (serverTask.length > 0) {
-        serverWins.push(serverTask[0]);
-      } else {
-        skippedIds.push(task.id);
+  const syncedIdSet = new Set(upserted.map((r) => r.id));
+  const syncedIds = [...syncedIdSet];
+
+  const missedIds = validTasks
+    .map((t) => t.id)
+    .filter((id) => !syncedIdSet.has(id));
+
+  let serverWins: (typeof tasks.$inferSelect)[] = [];
+  if (missedIds.length > 0) {
+    serverWins = await db
+      .select()
+      .from(tasks)
+      .where(
+        and(inArray(tasks.id, missedIds), eq(tasks.userId, userId)),
+      );
+    const serverWinIdSet = new Set(serverWins.map((s) => s.id));
+    for (const id of missedIds) {
+      if (!serverWinIdSet.has(id)) {
+        skippedIds.push(id);
       }
     }
   }

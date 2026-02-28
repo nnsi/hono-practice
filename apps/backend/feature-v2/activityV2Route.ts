@@ -52,74 +52,88 @@ export const activityV2Route = new Hono<AppContext>()
   const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
 
   // --- Activities 同期 ---
-  const actSyncedIds: string[] = [];
-  const actServerWins: (typeof activities.$inferSelect)[] = [];
   const actSkippedIds: string[] = [];
 
-  for (const activity of activityList) {
+  const validActivities = activityList.filter((activity) => {
     if (new Date(activity.updatedAt) > maxAllowed) {
       actSkippedIds.push(activity.id);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    const result = await db
+  let actSyncedIds: string[] = [];
+  let actServerWins: (typeof activities.$inferSelect)[] = [];
+
+  if (validActivities.length > 0) {
+    const upserted = await db
       .insert(activities)
-      .values({
-        id: activity.id,
-        userId,
-        name: activity.name,
-        label: activity.label,
-        emoji: activity.emoji,
-        iconType: activity.iconType,
-        iconUrl: activity.iconUrl,
-        iconThumbnailUrl: activity.iconThumbnailUrl,
-        description: activity.description,
-        quantityUnit: activity.quantityUnit,
-        orderIndex: activity.orderIndex,
-        showCombinedStats: activity.showCombinedStats,
-        createdAt: new Date(activity.createdAt),
-        updatedAt: new Date(activity.updatedAt),
-        deletedAt: activity.deletedAt ? new Date(activity.deletedAt) : null,
-      })
-      .onConflictDoUpdate({
-        target: activities.id,
-        set: {
+      .values(
+        validActivities.map((activity) => ({
+          id: activity.id,
+          userId,
           name: activity.name,
           label: activity.label,
           emoji: activity.emoji,
           iconType: activity.iconType,
-          iconUrl: activity.iconUrl ?? sql`${activities.iconUrl}`,
-          iconThumbnailUrl:
-            activity.iconThumbnailUrl ??
-            sql`${activities.iconThumbnailUrl}`,
+          iconUrl: activity.iconUrl,
+          iconThumbnailUrl: activity.iconThumbnailUrl,
           description: activity.description,
           quantityUnit: activity.quantityUnit,
           orderIndex: activity.orderIndex,
           showCombinedStats: activity.showCombinedStats,
+          createdAt: new Date(activity.createdAt),
           updatedAt: new Date(activity.updatedAt),
-          deletedAt: activity.deletedAt ? new Date(activity.deletedAt) : null,
+          deletedAt: activity.deletedAt
+            ? new Date(activity.deletedAt)
+            : null,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: activities.id,
+        set: {
+          name: sql`excluded.name`,
+          label: sql`excluded.label`,
+          emoji: sql`excluded.emoji`,
+          iconType: sql`excluded.icon_type`,
+          iconUrl: sql`COALESCE(excluded.icon_url, ${activities.iconUrl})`,
+          iconThumbnailUrl: sql`COALESCE(excluded.icon_thumbnail_url, ${activities.iconThumbnailUrl})`,
+          description: sql`excluded.description`,
+          quantityUnit: sql`excluded.quantity_unit`,
+          orderIndex: sql`excluded.order_index`,
+          showCombinedStats: sql`excluded.show_combined_stats`,
+          updatedAt: sql`excluded.updated_at`,
+          deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
-          lt(activities.updatedAt, new Date(activity.updatedAt)),
+          lt(activities.updatedAt, sql`excluded.updated_at`),
           eq(activities.userId, userId),
         ),
       })
       .returning();
 
-    if (result.length > 0) {
-      actSyncedIds.push(activity.id);
-    } else {
-      const serverActivity = await db
+    const syncedIdSet = new Set(upserted.map((r) => r.id));
+    actSyncedIds = [...syncedIdSet];
+
+    const missedIds = validActivities
+      .map((a) => a.id)
+      .filter((id) => !syncedIdSet.has(id));
+
+    if (missedIds.length > 0) {
+      actServerWins = await db
         .select()
         .from(activities)
         .where(
-          and(eq(activities.id, activity.id), eq(activities.userId, userId)),
-        )
-        .limit(1);
-      if (serverActivity.length > 0) {
-        actServerWins.push(serverActivity[0]);
-      } else {
-        actSkippedIds.push(activity.id);
+          and(
+            inArray(activities.id, missedIds),
+            eq(activities.userId, userId),
+          ),
+        );
+      const serverWinIdSet = new Set(actServerWins.map((s) => s.id));
+      for (const id of missedIds) {
+        if (!serverWinIdSet.has(id)) {
+          actSkippedIds.push(id);
+        }
       }
     }
   }
@@ -143,57 +157,68 @@ export const activityV2Route = new Hono<AppContext>()
       : [];
   const ownedActivityIdSet = new Set(ownedActivities.map((a) => a.id));
 
-  const kindSyncedIds: string[] = [];
-  const kindServerWins: (typeof activityKinds.$inferSelect)[] = [];
   const kindSkippedIds: string[] = [];
 
-  for (const kind of kindList) {
+  const validKinds = kindList.filter((kind) => {
     if (
       !ownedActivityIdSet.has(kind.activityId) ||
       new Date(kind.updatedAt) > maxAllowed
     ) {
       kindSkippedIds.push(kind.id);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    const result = await db
+  let kindSyncedIds: string[] = [];
+  let kindServerWins: (typeof activityKinds.$inferSelect)[] = [];
+
+  if (validKinds.length > 0) {
+    const upserted = await db
       .insert(activityKinds)
-      .values({
-        id: kind.id,
-        activityId: kind.activityId,
-        name: kind.name,
-        color: kind.color,
-        orderIndex: kind.orderIndex,
-        createdAt: new Date(kind.createdAt),
-        updatedAt: new Date(kind.updatedAt),
-        deletedAt: kind.deletedAt ? new Date(kind.deletedAt) : null,
-      })
-      .onConflictDoUpdate({
-        target: activityKinds.id,
-        set: {
+      .values(
+        validKinds.map((kind) => ({
+          id: kind.id,
           activityId: kind.activityId,
           name: kind.name,
           color: kind.color,
           orderIndex: kind.orderIndex,
+          createdAt: new Date(kind.createdAt),
           updatedAt: new Date(kind.updatedAt),
           deletedAt: kind.deletedAt ? new Date(kind.deletedAt) : null,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: activityKinds.id,
+        set: {
+          activityId: sql`excluded.activity_id`,
+          name: sql`excluded.name`,
+          color: sql`excluded.color`,
+          orderIndex: sql`excluded.order_index`,
+          updatedAt: sql`excluded.updated_at`,
+          deletedAt: sql`excluded.deleted_at`,
         },
-        setWhere: lt(activityKinds.updatedAt, new Date(kind.updatedAt)),
+        setWhere: lt(activityKinds.updatedAt, sql`excluded.updated_at`),
       })
       .returning();
 
-    if (result.length > 0) {
-      kindSyncedIds.push(kind.id);
-    } else {
-      const serverKind = await db
+    const syncedIdSet = new Set(upserted.map((r) => r.id));
+    kindSyncedIds = [...syncedIdSet];
+
+    const missedIds = validKinds
+      .map((k) => k.id)
+      .filter((id) => !syncedIdSet.has(id));
+
+    if (missedIds.length > 0) {
+      kindServerWins = await db
         .select()
         .from(activityKinds)
-        .where(eq(activityKinds.id, kind.id))
-        .limit(1);
-      if (serverKind.length > 0) {
-        kindServerWins.push(serverKind[0]);
-      } else {
-        kindSkippedIds.push(kind.id);
+        .where(inArray(activityKinds.id, missedIds));
+      const serverWinIdSet = new Set(kindServerWins.map((s) => s.id));
+      for (const id of missedIds) {
+        if (!serverWinIdSet.has(id)) {
+          kindSkippedIds.push(id);
+        }
       }
     }
   }

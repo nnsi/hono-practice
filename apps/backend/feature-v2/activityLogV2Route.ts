@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, lt } from "drizzle-orm";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import type { AppContext } from "../context";
@@ -34,24 +34,30 @@ export const activityLogV2Route = new Hono<AppContext>()
       : [];
   const ownedActivityIdSet = new Set(ownedActivities.map((a) => a.id));
 
-  const syncedIds: string[] = [];
-  const serverWins: (typeof activityLogs.$inferSelect)[] = [];
   const skippedIds: string[] = [];
   const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
 
-  for (const log of logs) {
-    // バリデーション: activityId 所有チェック + updatedAt 未来制限
+  // バリデーション: 所有チェック + updatedAt 未来制限
+  const validLogs = logs.filter((log) => {
     if (
       !ownedActivityIdSet.has(log.activityId) ||
       new Date(log.updatedAt) > maxAllowed
     ) {
       skippedIds.push(log.id);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    const result = await db
-      .insert(activityLogs)
-      .values({
+  if (validLogs.length === 0) {
+    return c.json({ syncedIds: [], serverWins: [], skippedIds });
+  }
+
+  // 一括 upsert（updatedAt が新しい場合のみ更新）
+  const upserted = await db
+    .insert(activityLogs)
+    .values(
+      validLogs.map((log) => ({
         id: log.id,
         userId,
         activityId: log.activityId,
@@ -63,42 +69,51 @@ export const activityLogV2Route = new Hono<AppContext>()
         createdAt: new Date(log.createdAt),
         updatedAt: new Date(log.updatedAt),
         deletedAt: log.deletedAt ? new Date(log.deletedAt) : null,
-      })
-      .onConflictDoUpdate({
-        target: activityLogs.id,
-        set: {
-          activityId: log.activityId,
-          activityKindId: log.activityKindId,
-          quantity: log.quantity,
-          memo: log.memo,
-          date: log.date,
-          time: log.time,
-          createdAt: new Date(log.createdAt),
-          updatedAt: new Date(log.updatedAt),
-          deletedAt: log.deletedAt ? new Date(log.deletedAt) : null,
-        },
-        setWhere: and(
-          lt(activityLogs.updatedAt, new Date(log.updatedAt)),
+      })),
+    )
+    .onConflictDoUpdate({
+      target: activityLogs.id,
+      set: {
+        activityId: sql`excluded.activity_id`,
+        activityKindId: sql`excluded.activity_kind_id`,
+        quantity: sql`excluded.quantity`,
+        memo: sql`excluded.memo`,
+        date: sql`excluded.date`,
+        time: sql`excluded.done_hour`,
+        createdAt: sql`excluded.created_at`,
+        updatedAt: sql`excluded.updated_at`,
+        deletedAt: sql`excluded.deleted_at`,
+      },
+      setWhere: and(
+        lt(activityLogs.updatedAt, sql`excluded.updated_at`),
+        eq(activityLogs.userId, userId),
+      ),
+    })
+    .returning();
+
+  const syncedIdSet = new Set(upserted.map((r) => r.id));
+  const syncedIds = [...syncedIdSet];
+
+  // serverWins: upsert で返ってこなかったID（サーバー側が新しい or 別ユーザー）
+  const missedIds = validLogs
+    .map((l) => l.id)
+    .filter((id) => !syncedIdSet.has(id));
+
+  let serverWins: (typeof activityLogs.$inferSelect)[] = [];
+  if (missedIds.length > 0) {
+    serverWins = await db
+      .select()
+      .from(activityLogs)
+      .where(
+        and(
+          inArray(activityLogs.id, missedIds),
           eq(activityLogs.userId, userId),
         ),
-      })
-      .returning();
-
-    if (result.length > 0) {
-      syncedIds.push(log.id);
-    } else {
-      // サーバーが勝った or 他ユーザーの行
-      const serverLog = await db
-        .select()
-        .from(activityLogs)
-        .where(
-          and(eq(activityLogs.id, log.id), eq(activityLogs.userId, userId)),
-        )
-        .limit(1);
-      if (serverLog.length > 0) {
-        serverWins.push(serverLog[0]);
-      } else {
-        skippedIds.push(log.id);
+      );
+    const serverWinIdSet = new Set(serverWins.map((s) => s.id));
+    for (const id of missedIds) {
+      if (!serverWinIdSet.has(id)) {
+        skippedIds.push(id);
       }
     }
   }
