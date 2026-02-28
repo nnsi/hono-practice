@@ -173,6 +173,42 @@ describe("syncActivities", () => {
         mockActivityRepo.markActivitiesFailed,
       ).not.toHaveBeenCalled();
     });
+
+    it("sends activities in chunks of 100", async () => {
+      const pending = Array.from({ length: 150 }, (_, i) => ({
+        id: `a-${i}`,
+        name: `Activity ${i}`,
+        _syncStatus: "pending" as const,
+      })) as any;
+      mockActivityRepo.getPendingSyncActivities.mockResolvedValue(pending);
+      mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
+
+      const mockPost = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            activities: {
+              syncedIds: [],
+              skippedIds: [],
+              serverWins: [],
+            },
+            activityKinds: {
+              syncedIds: [],
+              skippedIds: [],
+              serverWins: [],
+            },
+          }),
+      });
+      mockApiClientObj.users = {
+        v2: { activities: { sync: { $post: mockPost } } },
+      };
+
+      await syncActivities();
+
+      expect(mockPost).toHaveBeenCalledTimes(2);
+      expect(mockPost.mock.calls[0][0].json.activities).toHaveLength(100);
+      expect(mockPost.mock.calls[1][0].json.activities).toHaveLength(50);
+    });
   });
 
   describe("syncActivityIconDeletions()", () => {

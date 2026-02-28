@@ -8,7 +8,8 @@ type AuthenticatedFetchOptions = {
 export function createAuthenticatedFetch(
   options: AuthenticatedFetchOptions,
 ): typeof fetch {
-  const { tokenStorage, apiUrl } = options;
+  const { tokenStorage } = options;
+  const apiUrl = options.apiUrl.replace(/\/+$/, "");
   let refreshPromise: Promise<string | null> | null = null;
 
   async function refreshAccessToken(): Promise<string | null> {

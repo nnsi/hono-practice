@@ -134,4 +134,34 @@ describe("syncGoals", () => {
 
     expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
   });
+
+  it("sends goals in chunks of 100", async () => {
+    const pending = Array.from({ length: 150 }, (_, i) => ({
+      id: `g-${i}`,
+      _syncStatus: "pending",
+      currentBalance: 0,
+      totalTarget: 0,
+      totalActual: 0,
+    })) as any;
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          syncedIds: [],
+          skippedIds: [],
+          serverWins: [],
+        }),
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[0][0].json.goals).toHaveLength(100);
+    expect(mockPost.mock.calls[1][0].json.goals).toHaveLength(50);
+  });
 });

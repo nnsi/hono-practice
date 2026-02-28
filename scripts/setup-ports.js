@@ -160,7 +160,7 @@ async function main() {
     const frontendEnvPath = "apps/frontend/.env";
     const frontendEnvUpdates = {
       VITE_PORT: vitePort.toString(),
-      VITE_API_URL: `http://localhost:${apiPort}/`,
+      VITE_API_URL: `http://localhost:${apiPort}`,
       VITE_API_PORT: apiPort.toString(),
     };
     updateEnvFile(frontendEnvPath, frontendEnvUpdates);

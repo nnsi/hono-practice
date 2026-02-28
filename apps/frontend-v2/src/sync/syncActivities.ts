@@ -5,7 +5,10 @@ import { mapApiActivity, mapApiActivityKind } from "@packages/domain/sync/apiMap
 import type { SyncResult } from "@packages/domain/sync/syncResult";
 import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3456").replace(
+  /\/+$/,
+  "",
+);
 
 export async function syncActivities(): Promise<void> {
   const pendingActivities =
