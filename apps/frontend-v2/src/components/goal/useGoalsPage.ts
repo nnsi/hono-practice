@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { isGoalActive } from "@packages/domain/goal/goalPredicates";
+import dayjs from "dayjs";
+import { isGoalActive, isGoalEnded } from "@packages/domain/goal/goalPredicates";
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
 import { goalRepository } from "../../db/goalRepository";
@@ -9,6 +10,7 @@ import type { CreateGoalPayload, UpdateGoalPayload } from "./types";
 
 export function useGoalsPage() {
   // --- state ---
+  const [activeTab, setActiveTab] = useState<"active" | "ended">("active");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
@@ -21,6 +23,8 @@ export function useGoalsPage() {
   const { goals } = useGoals();
 
   // --- computed ---
+  const today = dayjs().format("YYYY-MM-DD");
+
   const activityMap = useMemo(() => {
     const map = new Map<string, DexieActivity>();
     for (const a of activities) {
@@ -30,12 +34,12 @@ export function useGoalsPage() {
   }, [activities]);
 
   const currentGoals = useMemo(
-    () => goals.filter((g) => isGoalActive(g)),
-    [goals],
+    () => goals.filter((g) => isGoalActive(g) && !isGoalEnded(g, today)),
+    [goals, today],
   );
   const pastGoals = useMemo(
-    () => goals.filter((g) => !isGoalActive(g)),
-    [goals],
+    () => goals.filter((g) => !isGoalActive(g) || isGoalEnded(g, today)),
+    [goals, today],
   );
 
   // --- handlers ---
@@ -65,6 +69,9 @@ export function useGoalsPage() {
 
   // --- return ---
   return {
+    // tab
+    activeTab,
+    setActiveTab,
     // data
     activities,
     goals,

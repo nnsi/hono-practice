@@ -159,4 +159,108 @@ describe("syncActivityLogs", () => {
     expect(mockLogRepo.markActivityLogsSynced).not.toHaveBeenCalled();
     expect(mockLogRepo.markActivityLogsFailed).not.toHaveBeenCalled();
   });
+
+  it("sends logs in chunks of 100", async () => {
+    const pending = Array.from({ length: 150 }, (_, i) => ({
+      id: `l-${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          syncedIds: [],
+          skippedIds: [],
+          serverWins: [],
+        }),
+    });
+    mockApiClientObj.users = {
+      v2: { "activity-logs": { sync: { $post: mockPost } } },
+    };
+
+    await syncActivityLogs();
+
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[0][0].json.logs).toHaveLength(100);
+    expect(mockPost.mock.calls[1][0].json.logs).toHaveLength(50);
+  });
+
+  it("merges results from multiple chunks", async () => {
+    const pending = Array.from({ length: 120 }, (_, i) => ({
+      id: `l-${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue(pending);
+
+    const firstChunkSyncedIds = Array.from(
+      { length: 100 },
+      (_, i) => `l-${i}`,
+    );
+    const secondChunkSyncedIds = Array.from(
+      { length: 10 },
+      (_, i) => `l-${100 + i}`,
+    );
+    const secondChunkSkippedIds = Array.from(
+      { length: 10 },
+      (_, i) => `l-${110 + i}`,
+    );
+
+    const mockPost = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: firstChunkSyncedIds,
+            skippedIds: [],
+            serverWins: [],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: secondChunkSyncedIds,
+            skippedIds: secondChunkSkippedIds,
+            serverWins: [],
+          }),
+      });
+    mockApiClientObj.users = {
+      v2: { "activity-logs": { sync: { $post: mockPost } } },
+    };
+
+    await syncActivityLogs();
+
+    expect(mockLogRepo.markActivityLogsSynced).toHaveBeenCalledWith([
+      ...firstChunkSyncedIds,
+      ...secondChunkSyncedIds,
+    ]);
+    expect(mockLogRepo.markActivityLogsFailed).toHaveBeenCalledWith(
+      secondChunkSkippedIds,
+    );
+  });
+
+  it("stops on first chunk failure", async () => {
+    const pending = Array.from({ length: 200 }, (_, i) => ({
+      id: `l-${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    });
+    mockApiClientObj.users = {
+      v2: { "activity-logs": { sync: { $post: mockPost } } },
+    };
+
+    await syncActivityLogs();
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockLogRepo.markActivityLogsSynced).not.toHaveBeenCalled();
+    expect(mockLogRepo.markActivityLogsFailed).not.toHaveBeenCalled();
+  });
 });

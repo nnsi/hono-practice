@@ -3,7 +3,10 @@ import type { AppType } from "@backend/app";
 import type { TokenStorage } from "@packages/domain/sync/tokenStorage";
 import { createAuthenticatedFetch } from "@packages/domain/sync/authenticatedFetch";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3456";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3456").replace(
+  /\/+$/,
+  "",
+);
 
 let accessToken: string | null = null;
 
