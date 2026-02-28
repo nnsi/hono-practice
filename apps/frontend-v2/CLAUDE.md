@@ -5,6 +5,7 @@
 - 全データはDexie.jsに保存 → `useLiveQuery` でリアクティブ読み取り → syncEngineがバックグラウンド同期
 - Dexieテーブルには `_syncStatus` フィールドで同期状態を管理
 - DB操作は必ずDexie repository経由（直接API fetch禁止）
+- **表示にサーバー同期値を直接使わない**: `goal.totalTarget` 等のサーバー計算値は同期タイミングで古くなる。ローカルのactivityLogsから `calculateGoalBalance()` 等の共有関数で算出する
 
 ## UI規約
 
@@ -43,3 +44,4 @@
 
 - ポート: **2460**（v1の1357と混同しないこと）
 - ブラウザ確認前に `vite.config.ts` でポートを確認する癖をつける
+- **モバイルファースト検証**: 375px幅でのレイアウト崩れ・`autoFocus`によるキーボード表示・hover前提のUI等に注意
