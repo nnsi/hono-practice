@@ -34,7 +34,8 @@
       "workerd"
     ],
     "overrides": {
-      "hono": "4.12.1"
+      "hono": "4.12.1",
+      "drizzle-orm>expo-sqlite": "-"
     }
   },
   "type": "module",

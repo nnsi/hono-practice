@@ -7,6 +7,21 @@
       "@packages/domain/*": [
         "../../packages/domain/*"
       ],
+      "@packages/sync-engine": [
+        "../../packages/sync-engine/index.ts"
+      ],
+      "@packages/sync-engine/*": [
+        "../../packages/sync-engine/*"
+      ],
+      "@packages/platform": [
+        "../../packages/platform/index.ts"
+      ],
+      "@packages/platform/*": [
+        "../../packages/platform/*"
+      ],
+      "@packages/api-contract": [
+        "../../packages/api-contract/index.ts"
+      ],
       "@packages/types-v2/*": [
         "../../packages/types-v2/*"
       ],

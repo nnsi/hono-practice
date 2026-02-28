@@ -1,4 +1,4 @@
-import type { AppType } from "@backend/app";
+import type { AppType } from "@packages/api-contract";
 import {
   type CreateApiKeyRequest,
   CreateApiKeyRequestSchema,
@@ -16,12 +16,14 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+type HonoClient = ReturnType<typeof import("hono/client").hc<AppType>>;
+
 export type UseApiKeysOptions = {
-  apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
+  apiClient: HonoClient;
 };
 
 export type ApiKeyMutationOptions = {
-  apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
+  apiClient: HonoClient;
 };
 
 /**

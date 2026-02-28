@@ -1,6 +1,6 @@
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
-import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+import type { SyncStatus } from "@packages/domain";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";

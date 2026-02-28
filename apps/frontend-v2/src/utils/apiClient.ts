@@ -1,7 +1,7 @@
 import { hc } from "hono/client";
-import type { AppType } from "@backend/app";
-import type { TokenStorage } from "@packages/domain/sync/tokenStorage";
-import { createAuthenticatedFetch } from "@packages/domain/sync/authenticatedFetch";
+import type { AppType } from "@packages/api-contract";
+import type { TokenStorage } from "@packages/platform";
+import { createAuthenticatedFetch } from "@packages/sync-engine";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3456").replace(
   /\/+$/,

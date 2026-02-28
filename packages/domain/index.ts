@@ -1,12 +1,12 @@
-// Sync Records (後方互換: Activity, ActivityKind, ActivityLog の名前で re-export)
-export type { ActivityRecord as Activity, ActivityKindRecord as ActivityKind } from "./activity/activityRecord";
-export type { ActivityLogRecord as ActivityLog } from "./activityLog/activityLogRecord";
-
 // Record types
 export type { ActivityRecord, ActivityKindRecord } from "./activity/activityRecord";
 export type { ActivityLogRecord } from "./activityLog/activityLogRecord";
 export type { GoalRecord } from "./goal/goalRecord";
 export type { TaskRecord } from "./task/taskRecord";
+
+// Backwards compat aliases
+export type { ActivityRecord as Activity, ActivityKindRecord as ActivityKind } from "./activity/activityRecord";
+export type { ActivityLogRecord as ActivityLog } from "./activityLog/activityLogRecord";
 
 // Repository types
 export type { ActivityRepository, CreateActivityInput, ActivityIconBlob, ActivityIconDeleteQueueItem } from "./activity/activityRepository";
@@ -14,8 +14,8 @@ export type { ActivityLogRepository, CreateActivityLogInput, UpsertActivityLogFr
 export type { GoalRepository, CreateGoalInput, UpdateGoalInput } from "./goal/goalRepository";
 export type { TaskRepository, CreateTaskInput, UpdateTaskInput } from "./task/taskRepository";
 
-// Sync types
-export * from "./sync";
+// Sync record types (pure domain types only)
+export * from "./sync/syncableRecord";
 
 // Time utilities
 export * from "./time";

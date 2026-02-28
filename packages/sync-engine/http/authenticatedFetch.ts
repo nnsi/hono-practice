@@ -1,4 +1,4 @@
-import type { TokenStorage } from "./tokenStorage";
+import type { TokenStorage } from "@packages/platform";
 
 type AuthenticatedFetchOptions = {
   tokenStorage: TokenStorage;

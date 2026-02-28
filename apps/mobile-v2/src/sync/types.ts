@@ -1,1 +1,1 @@
-export type { SyncResult, ServerEntity } from "@packages/domain/sync/syncResult";
+export type { SyncResult, ServerEntity } from "@packages/sync-engine";

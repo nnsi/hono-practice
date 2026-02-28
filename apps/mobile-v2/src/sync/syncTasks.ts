@@ -1,8 +1,8 @@
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiTask } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "@packages/domain/sync/syncResult";
-import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
+import { mapApiTask } from "@packages/sync-engine";
+import type { SyncResult } from "@packages/sync-engine";
+import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncTasks(): Promise<void> {
   const pending = await taskRepository.getPendingSyncTasks();

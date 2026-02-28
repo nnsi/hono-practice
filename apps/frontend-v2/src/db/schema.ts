@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import type { Syncable } from "@packages/domain";
 import type {
   ActivityRecord,
   ActivityKindRecord,
@@ -8,7 +8,7 @@ import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLog
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 
-export type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+export type { SyncStatus } from "@packages/domain";
 
 export type DexieActivityLog = Syncable<Omit<ActivityLogRecord, "userId">>;
 export type DexieActivity = Syncable<ActivityRecord>;

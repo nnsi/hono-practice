@@ -1,10 +1,10 @@
 import type {
   ActivityRecord,
   ActivityKindRecord,
-} from "../activity/activityRecord";
-import type { ActivityLogRecord } from "../activityLog/activityLogRecord";
-import type { GoalRecord } from "../goal/goalRecord";
-import type { TaskRecord } from "../task/taskRecord";
+} from "@packages/domain/activity/activityRecord";
+import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import type { TaskRecord } from "@packages/domain/task/taskRecord";
 
 // Loose record type for API responses — mappers use `??` to handle both null and undefined
 type ApiRecord = Record<string, unknown> & { id: string };

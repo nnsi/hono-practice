@@ -1,8 +1,8 @@
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiActivityLog } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "@packages/domain/sync/syncResult";
-import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
+import { mapApiActivityLog } from "@packages/sync-engine";
+import type { SyncResult } from "@packages/sync-engine";
+import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncActivityLogs(): Promise<void> {
   const pending = await activityLogRepository.getPendingSyncActivityLogs();
