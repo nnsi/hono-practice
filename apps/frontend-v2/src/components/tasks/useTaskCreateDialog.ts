@@ -1,50 +1,24 @@
 import { useState } from "react";
-import dayjs from "dayjs";
+import { createUseTaskCreateDialog } from "@packages/frontend-shared/hooks/useTaskCreateDialog";
 import { taskRepository } from "../../db/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
+
+const useTaskCreateDialogBase = createUseTaskCreateDialog({
+  react: { useState },
+  taskRepository,
+  syncEngine,
+});
 
 export function useTaskCreateDialog(
   onSuccess: () => void,
   defaultDate?: string,
 ) {
-  // state
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState(
-    defaultDate ?? dayjs().format("YYYY-MM-DD"),
-  );
-  const [dueDate, setDueDate] = useState("");
-  const [memo, setMemo] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // handlers
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
-    setIsSubmitting(true);
-    await taskRepository.createTask({
-      title: title.trim(),
-      startDate: startDate || null,
-      dueDate: dueDate || null,
-      memo: memo.trim(),
-    });
-    setIsSubmitting(false);
-    syncEngine.syncTasks();
-    onSuccess();
-  };
-
+  const base = useTaskCreateDialogBase(onSuccess, defaultDate);
   return {
-    // form state
-    title,
-    setTitle,
-    startDate,
-    setStartDate,
-    dueDate,
-    setDueDate,
-    memo,
-    setMemo,
-    isSubmitting,
-    // handlers
-    handleSubmit,
+    ...base,
+    handleSubmit: async (e: React.FormEvent) => {
+      e.preventDefault();
+      return base.handleSubmit();
+    },
   };
 }
