@@ -1,66 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createUseEditLogDialog } from "@packages/frontend-shared/hooks/useEditLogDialog";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../db/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import type { DexieActivityLog } from "../../db/schema";
 
-export function useEditLogDialog(
-  log: DexieActivityLog,
-  onClose: () => void,
-) {
-  // state
-  const [quantity, setQuantity] = useState(
-    log.quantity !== null ? String(log.quantity) : "",
-  );
-  const [memo, setMemo] = useState(log.memo);
-  const [selectedKindId, setSelectedKindId] = useState<string | null>(
-    log.activityKindId,
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const useEditLogDialogBase = createUseEditLogDialog({
+  react: { useState, useEffect },
+  useActivityKinds,
+  activityLogRepository,
+  syncEngine,
+});
 
-  // data
-  const { kinds } = useActivityKinds(log.activityId);
-
-  // handlers
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const parsed = quantity !== "" ? Number(quantity) : null;
-    if (parsed !== null && !Number.isFinite(parsed)) return;
-    setIsSubmitting(true);
-    await activityLogRepository.updateActivityLog(log.id, {
-      quantity: parsed,
-      memo,
-      activityKindId: selectedKindId,
-    });
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  const handleDelete = async () => {
-    setIsSubmitting(true);
-    await activityLogRepository.softDeleteActivityLog(log.id);
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
-    onClose();
-  };
-
+export function useEditLogDialog(log: DexieActivityLog, onClose: () => void) {
+  const base = useEditLogDialogBase(log, onClose);
   return {
-    // form state
-    quantity,
-    setQuantity,
-    memo,
-    setMemo,
-    selectedKindId,
-    setSelectedKindId,
-    isSubmitting,
-    showDeleteConfirm,
-    setShowDeleteConfirm,
-    // data
-    kinds,
-    // handlers
-    handleSave,
-    handleDelete,
+    ...base,
+    handleSave: async (e: React.FormEvent) => {
+      e.preventDefault();
+      return base.handleSave();
+    },
   };
 }
