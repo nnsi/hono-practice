@@ -1,4 +1,4 @@
-export { activityLogV2Route } from "./activityLogV2Route";
-export { activityV2Route } from "./activityV2Route";
-export { goalV2Route } from "./goalV2Route";
-export { taskV2Route } from "./taskV2Route";
+export { activityLogV2Route } from "./activity-log";
+export { activityV2Route } from "./activity";
+export { goalV2Route } from "./goal";
+export { taskV2Route } from "./task";

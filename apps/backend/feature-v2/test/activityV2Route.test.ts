@@ -4,7 +4,7 @@ import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
 
-import { activityV2Route } from "../activityV2Route";
+import { activityV2Route } from "../activity";
 
 const SEED_ACTIVITY_ID_1 = "00000000-0000-4000-8000-000000000001";
 const SEED_ACTIVITY_ID_2 = "00000000-0000-4000-8000-000000000002";

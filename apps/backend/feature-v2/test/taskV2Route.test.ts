@@ -4,7 +4,7 @@ import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
 
-import { taskV2Route } from "../taskV2Route";
+import { taskV2Route } from "../task";
 
 const SEED_TASK_ID_1 = "00000000-0000-4000-8000-000000000001";
 const SEED_TASK_ID_2 = "00000000-0000-4000-8000-000000000002";
