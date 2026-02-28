@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -6,18 +6,6 @@ import {
   mapApiGoal,
   mapApiTask,
 } from "./apiMappers";
-
-// toISOString のデフォルト値が new Date().toISOString() なので固定化する
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date("2024-01-01T00:00:00.000Z"));
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-const NOW_ISO = "2024-01-01T00:00:00.000Z";
 
 describe("mapApiActivity", () => {
   it("camelCaseのキーを正しくマッピングする", () => {
@@ -112,8 +100,12 @@ describe("mapApiActivity", () => {
     expect(result.iconType).toBe("generate");
   });
 
-  it("値がない場合にデフォルト値を返す", () => {
-    const result = mapApiActivity({ id: "act-4" });
+  it("日付以外のフィールドが欠損している場合はデフォルト値を返す", () => {
+    const result = mapApiActivity({
+      id: "act-4",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
 
     expect(result.id).toBe("act-4");
     expect(result.userId).toBe("");
@@ -127,25 +119,35 @@ describe("mapApiActivity", () => {
     expect(result.quantityUnit).toBe("");
     expect(result.orderIndex).toBe("");
     expect(result.showCombinedStats).toBe(true);
-    expect(result.createdAt).toBe(NOW_ISO);
-    expect(result.updatedAt).toBe(NOW_ISO);
     expect(result.deletedAt).toBeNull();
   });
 
+  it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
+    const result = mapApiActivity({ id: "act-5" });
+    expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
   it("不正なiconTypeは 'emoji' にフォールバックする", () => {
-    expect(mapApiActivity({ id: "a", iconType: "invalid" }).iconType).toBe("emoji");
-    expect(mapApiActivity({ id: "a", iconType: 123 }).iconType).toBe("emoji");
-    expect(mapApiActivity({ id: "a", iconType: null }).iconType).toBe("emoji");
+    const base = { id: "a", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" };
+    expect(mapApiActivity({ ...base, iconType: "invalid" }).iconType).toBe("emoji");
+    expect(mapApiActivity({ ...base, iconType: 123 }).iconType).toBe("emoji");
+    expect(mapApiActivity({ ...base, iconType: null }).iconType).toBe("emoji");
   });
 
   it("有効なiconTypeはそのまま返す", () => {
-    expect(mapApiActivity({ id: "a", iconType: "emoji" }).iconType).toBe("emoji");
-    expect(mapApiActivity({ id: "a", iconType: "upload" }).iconType).toBe("upload");
-    expect(mapApiActivity({ id: "a", iconType: "generate" }).iconType).toBe("generate");
+    const base = { id: "a", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" };
+    expect(mapApiActivity({ ...base, iconType: "emoji" }).iconType).toBe("emoji");
+    expect(mapApiActivity({ ...base, iconType: "upload" }).iconType).toBe("upload");
+    expect(mapApiActivity({ ...base, iconType: "generate" }).iconType).toBe("generate");
   });
 
   it("_syncStatusフィールドを含まない", () => {
-    const result = mapApiActivity({ id: "act-5" });
+    const result = mapApiActivity({
+      id: "act-6",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
     expect("_syncStatus" in result).toBe(false);
   });
 });
@@ -191,16 +193,23 @@ describe("mapApiActivityKind", () => {
     expect(result.orderIndex).toBe("002");
   });
 
-  it("値がない場合にデフォルト値を返す", () => {
-    const result = mapApiActivityKind({ id: "kind-3" });
+  it("日付以外のフィールドが欠損している場合はデフォルト値を返す", () => {
+    const result = mapApiActivityKind({
+      id: "kind-3",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
 
     expect(result.activityId).toBe("");
     expect(result.name).toBe("");
     expect(result.color).toBeNull();
     expect(result.orderIndex).toBe("");
-    expect(result.createdAt).toBe(NOW_ISO);
-    expect(result.updatedAt).toBe(NOW_ISO);
-    expect(result.deletedAt).toBeNull();
+  });
+
+  it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
+    const result = mapApiActivityKind({ id: "kind-4" });
+    expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 });
 
@@ -299,8 +308,12 @@ describe("mapApiActivityLog", () => {
     expect(result.quantity).toBeNull();
   });
 
-  it("値がない場合にデフォルト値を返す", () => {
-    const result = mapApiActivityLog({ id: "log-6" });
+  it("日付以外のフィールドが欠損している場合はデフォルト値を返す", () => {
+    const result = mapApiActivityLog({
+      id: "log-6",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
 
     expect(result.activityId).toBe("");
     expect(result.activityKindId).toBeNull();
@@ -308,6 +321,12 @@ describe("mapApiActivityLog", () => {
     expect(result.memo).toBe("");
     expect(result.date).toBe("");
     expect(result.time).toBeNull();
+  });
+
+  it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
+    const result = mapApiActivityLog({ id: "log-7" });
+    expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 });
 
@@ -384,6 +403,8 @@ describe("mapApiGoal", () => {
       currentBalance: "100.25",
       totalTarget: "500",
       totalActual: "250.75",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
     });
 
     expect(result.dailyTargetQuantity).toBe(42.5);
@@ -392,8 +413,12 @@ describe("mapApiGoal", () => {
     expect(result.totalActual).toBe(250.75);
   });
 
-  it("値がない場合にデフォルト値を返す", () => {
-    const result = mapApiGoal({ id: "goal-4" });
+  it("日付以外のフィールドが欠損している場合はデフォルト値を返す", () => {
+    const result = mapApiGoal({
+      id: "goal-4",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
 
     expect(result.userId).toBe("");
     expect(result.activityId).toBe("");
@@ -405,6 +430,12 @@ describe("mapApiGoal", () => {
     expect(result.currentBalance).toBe(0);
     expect(result.totalTarget).toBe(0);
     expect(result.totalActual).toBe(0);
+  });
+
+  it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
+    const result = mapApiGoal({ id: "goal-5" });
+    expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 });
 
@@ -483,8 +514,12 @@ describe("mapApiTask", () => {
     expect(result.deletedAt).toBeNull();
   });
 
-  it("値がない場合にデフォルト値を返す", () => {
-    const result = mapApiTask({ id: "task-4" });
+  it("日付以外のフィールドが欠損している場合はデフォルト値を返す", () => {
+    const result = mapApiTask({
+      id: "task-4",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
 
     expect(result.userId).toBe("");
     expect(result.title).toBe("");
@@ -493,13 +528,21 @@ describe("mapApiTask", () => {
     expect(result.doneDate).toBeNull();
     expect(result.memo).toBe("");
     expect(result.archivedAt).toBeNull();
-    expect(result.createdAt).toBe(NOW_ISO);
-    expect(result.updatedAt).toBe(NOW_ISO);
     expect(result.deletedAt).toBeNull();
   });
 
-  it("_syncStatusフィールドを含まない", () => {
+  it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
     const result = mapApiTask({ id: "task-5" });
+    expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("_syncStatusフィールドを含まない", () => {
+    const result = mapApiTask({
+      id: "task-6",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    });
     expect("_syncStatus" in result).toBe(false);
   });
 });

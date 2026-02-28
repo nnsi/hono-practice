@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Plus } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { GoalCard } from "./GoalCard";
 import { CreateGoalDialog } from "./CreateGoalDialog";
@@ -27,6 +28,8 @@ export function GoalsPage() {
     handleGoalDeleted,
     handleToggleExpand,
   } = useGoalsPage();
+
+  const insets = useSafeAreaInsets();
 
   return (
     <View className="flex-1 bg-white">
@@ -62,7 +65,7 @@ export function GoalsPage() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 80 + insets.bottom }}>
         {activeTab === "active" && (
           <View>
             {/* Empty state */}

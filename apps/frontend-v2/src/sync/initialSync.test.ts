@@ -20,7 +20,7 @@ vi.mock("../db/schema", () => ({
     authState: { clear: vi.fn(), put: vi.fn() },
   },
 }));
-vi.mock("@packages/domain/sync/apiMappers");
+vi.mock("@packages/sync-engine/mappers/apiMappers");
 vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
@@ -36,7 +36,7 @@ import {
   mapApiActivityLog,
   mapApiGoal,
   mapApiTask,
-} from "@packages/domain/sync/apiMappers";
+} from "@packages/sync-engine/mappers/apiMappers";
 import {
   clearLocalDataForUserSwitch,
   performInitialSync,

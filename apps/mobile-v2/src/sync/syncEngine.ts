@@ -1,4 +1,4 @@
-import type { NetworkAdapter } from "@packages/domain/sync/platformAdapters";
+import type { NetworkAdapter } from "@packages/platform";
 import {
   syncActivities,
   syncActivityIconDeletions,

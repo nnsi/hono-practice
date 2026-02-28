@@ -1,11 +1,11 @@
-import type { StorageAdapter } from "@packages/domain/sync/platformAdapters";
+import type { StorageAdapter } from "@packages/platform";
 import {
   mapApiActivity,
   mapApiActivityKind,
   mapApiActivityLog,
   mapApiGoal,
   mapApiTask,
-} from "@packages/domain/sync/apiMappers";
+} from "@packages/sync-engine";
 import { activityRepository } from "../repositories/activityRepository";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { goalRepository } from "../repositories/goalRepository";

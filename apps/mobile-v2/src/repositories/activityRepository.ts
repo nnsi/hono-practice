@@ -3,7 +3,7 @@ import type {
   ActivityKindRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+import type { SyncStatus } from "@packages/domain";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { v7 as uuidv7 } from "uuid";

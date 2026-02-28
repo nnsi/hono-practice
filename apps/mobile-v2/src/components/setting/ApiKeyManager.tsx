@@ -8,7 +8,8 @@ import { CreateApiKeyDialog } from "./CreateApiKeyDialog";
 
 export function ApiKeyManager({ shadow }: { shadow: object }) {
   const { data: subscription, isLoading: subLoading } = useSubscription();
-  const { data: apiKeysData, isLoading: keysLoading } = useApiKeys();
+  const canUseApiKey = subscription?.canUseApiKey ?? false;
+  const { data: apiKeysData, isLoading: keysLoading } = useApiKeys({ enabled: canUseApiKey });
   const createApiKey = useCreateApiKey();
   const deleteApiKey = useDeleteApiKey();
   const [showCreateDialog, setShowCreateDialog] = useState(false);

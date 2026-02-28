@@ -1,9 +1,9 @@
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
 import { apiClient, customFetch } from "../utils/apiClient";
-import { mapApiActivity, mapApiActivityKind } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "@packages/domain/sync/syncResult";
-import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
+import { mapApiActivity, mapApiActivityKind } from "@packages/sync-engine";
+import type { SyncResult } from "@packages/sync-engine";
+import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3456").replace(
   /\/+$/,

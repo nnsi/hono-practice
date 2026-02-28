@@ -1,8 +1,8 @@
 import { goalRepository } from "../db/goalRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiGoal } from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "@packages/domain/sync/syncResult";
-import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
+import { mapApiGoal } from "@packages/sync-engine";
+import type { SyncResult } from "@packages/sync-engine";
+import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncGoals(): Promise<void> {
   const pending = await goalRepository.getPendingSyncGoals();

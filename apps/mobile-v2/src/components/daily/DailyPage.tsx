@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs";
 import { LogCard } from "./LogCard";
 import { TaskList } from "./TaskList";
@@ -31,6 +32,7 @@ export function DailyPage() {
     handleToggleTask,
   } = useDailyPage();
 
+  const insets = useSafeAreaInsets();
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
   return (
@@ -86,7 +88,7 @@ export function DailyPage() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 80 + insets.bottom }}
       >
         {/* Activity logs section */}
         <View className="px-4 pt-4">

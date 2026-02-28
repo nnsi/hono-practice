@@ -7,7 +7,7 @@ import { activityRepository } from "../../repositories/activityRepository";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import type { ActivityKindRecord } from "@packages/domain/activity/activityRecord";
-import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+import type { SyncStatus } from "@packages/domain";
 
 type Activity = import("@packages/domain/activity/activityRecord").ActivityRecord & {
   _syncStatus: string;

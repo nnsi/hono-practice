@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { SyncTasksRequestSchema } from "@packages/types-v2";
 
 import { newTaskV2Handler } from "./taskV2Handler";
@@ -18,9 +19,10 @@ export function createTaskV2Route() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
 
     const repo = newTaskV2Repository(db);
-    const uc = newTaskV2Usecase(repo);
+    const uc = newTaskV2Usecase(repo, tracer);
     const h = newTaskV2Handler(uc);
 
     c.set("h", h);

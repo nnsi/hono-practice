@@ -1,4 +1,4 @@
-import type { StorageAdapter } from "@packages/domain/sync/platformAdapters";
+import type { StorageAdapter } from "@packages/platform";
 import { activityRepository } from "../db/activityRepository";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { goalRepository } from "../db/goalRepository";
@@ -11,7 +11,7 @@ import {
   mapApiActivityLog,
   mapApiGoal,
   mapApiTask,
-} from "@packages/domain/sync/apiMappers";
+} from "@packages/sync-engine";
 import { webStorageAdapter } from "./webPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";

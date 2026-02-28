@@ -8,8 +8,8 @@ import {
 
 const opts = { apiClient } as UseApiKeysOptions;
 
-export function useApiKeys() {
-  return createUseApiKeys(opts);
+export function useApiKeys(options?: { enabled?: boolean }) {
+  return createUseApiKeys({ ...opts, enabled: options?.enabled });
 }
 
 export function useCreateApiKey() {

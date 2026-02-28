@@ -4,6 +4,7 @@ import type {
   UpsertActivityRequest,
 } from "@packages/types-v2";
 import { activities, activityKinds } from "@infra/drizzle/schema";
+import type { Tracer } from "../../lib/tracer";
 
 import type { ActivityV2Repository } from "./activityV2Repository";
 
@@ -34,23 +35,29 @@ export type ActivityV2Usecase = {
 
 export function newActivityV2Usecase(
   repo: ActivityV2Repository,
+  tracer: Tracer,
 ): ActivityV2Usecase {
   return {
-    getActivities: getActivities(repo),
-    syncActivities: syncActivities(repo),
+    getActivities: getActivities(repo, tracer),
+    syncActivities: syncActivities(repo, tracer),
   };
 }
 
-function getActivities(repo: ActivityV2Repository) {
+function getActivities(repo: ActivityV2Repository, tracer: Tracer) {
   return async (userId: UserId) => {
-    const activityRows = await repo.getActivitiesByUserId(userId);
+    const activityRows = await tracer.span("db.getActivitiesByUserId", () =>
+      repo.getActivitiesByUserId(userId),
+    );
     const activityIds = activityRows.map((a) => a.id);
-    const kindRows = await repo.getActivityKindsByActivityIds(activityIds);
+    const kindRows = await tracer.span(
+      "db.getActivityKindsByActivityIds",
+      () => repo.getActivityKindsByActivityIds(activityIds),
+    );
     return { activities: activityRows, activityKinds: kindRows };
   };
 }
 
-function syncActivities(repo: ActivityV2Repository) {
+function syncActivities(repo: ActivityV2Repository, tracer: Tracer) {
   return async (
     userId: UserId,
     activityList: UpsertActivityRequest[],
@@ -64,6 +71,7 @@ function syncActivities(repo: ActivityV2Repository) {
       userId,
       activityList,
       maxAllowed,
+      tracer,
     );
 
     // --- ActivityKinds sync ---
@@ -72,6 +80,7 @@ function syncActivities(repo: ActivityV2Repository) {
       userId,
       kindList,
       maxAllowed,
+      tracer,
     );
 
     return {
@@ -86,6 +95,7 @@ async function syncActivityEntities(
   userId: UserId,
   activityList: UpsertActivityRequest[],
   maxAllowed: Date,
+  tracer: Tracer,
 ): Promise<SyncResult<ActivityRow>> {
   const skippedIds: string[] = [];
 
@@ -101,7 +111,9 @@ async function syncActivityEntities(
     return { syncedIds: [], serverWins: [], skippedIds };
   }
 
-  const upserted = await repo.upsertActivities(userId, validActivities);
+  const upserted = await tracer.span("db.upsertActivities", () =>
+    repo.upsertActivities(userId, validActivities),
+  );
 
   const syncedIdSet = new Set(upserted.map((r) => r.id));
   const syncedIds = [...syncedIdSet];
@@ -112,7 +124,9 @@ async function syncActivityEntities(
 
   let serverWins: ActivityRow[] = [];
   if (missedIds.length > 0) {
-    serverWins = await repo.getActivitiesByIds(userId, missedIds);
+    serverWins = await tracer.span("db.getActivitiesByIds", () =>
+      repo.getActivitiesByIds(userId, missedIds),
+    );
     const serverWinIdSet = new Set(serverWins.map((s) => s.id));
     for (const id of missedIds) {
       if (!serverWinIdSet.has(id)) {
@@ -129,11 +143,11 @@ async function syncActivityKindEntities(
   userId: UserId,
   kindList: UpsertActivityKindRequest[],
   maxAllowed: Date,
+  tracer: Tracer,
 ): Promise<SyncResult<ActivityKindRow>> {
   const requestedActivityIds = [...new Set(kindList.map((k) => k.activityId))];
-  const ownedIds = await repo.getOwnedActivityIds(
-    userId,
-    requestedActivityIds,
+  const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
+    repo.getOwnedActivityIds(userId, requestedActivityIds),
   );
   const ownedActivityIdSet = new Set(ownedIds);
 
@@ -154,7 +168,9 @@ async function syncActivityKindEntities(
     return { syncedIds: [], serverWins: [], skippedIds };
   }
 
-  const upserted = await repo.upsertActivityKinds(validKinds);
+  const upserted = await tracer.span("db.upsertActivityKinds", () =>
+    repo.upsertActivityKinds(validKinds),
+  );
 
   const syncedIdSet = new Set(upserted.map((r) => r.id));
   const syncedIds = [...syncedIdSet];
@@ -165,7 +181,9 @@ async function syncActivityKindEntities(
 
   let serverWins: ActivityKindRow[] = [];
   if (missedIds.length > 0) {
-    serverWins = await repo.getActivityKindsByIds(missedIds);
+    serverWins = await tracer.span("db.getActivityKindsByIds", () =>
+      repo.getActivityKindsByIds(missedIds),
+    );
     const serverWinIdSet = new Set(serverWins.map((s) => s.id));
     for (const id of missedIds) {
       if (!serverWinIdSet.has(id)) {

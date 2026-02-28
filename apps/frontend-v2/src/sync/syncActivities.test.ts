@@ -9,7 +9,7 @@ vi.mock("../db/activityRepository");
 vi.mock("../db/schema", () => ({
   db: { activities: { get: vi.fn() } },
 }));
-vi.mock("@packages/domain/sync/apiMappers");
+vi.mock("@packages/sync-engine/mappers/apiMappers");
 vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
   customFetch: mockCustomFetchFn,
@@ -17,7 +17,7 @@ vi.mock("../utils/apiClient", () => ({
 
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
-import { mapApiActivity, mapApiActivityKind } from "@packages/domain/sync/apiMappers";
+import { mapApiActivity, mapApiActivityKind } from "@packages/sync-engine/mappers/apiMappers";
 import {
   syncActivities,
   syncActivityIconDeletions,

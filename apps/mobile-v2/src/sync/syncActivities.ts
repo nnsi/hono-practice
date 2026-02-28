@@ -4,9 +4,9 @@ import { getDatabase } from "../db/database";
 import {
   mapApiActivity,
   mapApiActivityKind,
-} from "@packages/domain/sync/apiMappers";
-import type { SyncResult } from "@packages/domain/sync/syncResult";
-import { chunkArray, mergeSyncResults } from "@packages/domain/sync/chunkedSync";
+} from "@packages/sync-engine";
+import type { SyncResult } from "@packages/sync-engine";
+import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 const API_URL = getApiUrl();
 

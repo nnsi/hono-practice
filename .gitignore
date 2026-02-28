@@ -14,6 +14,7 @@ tmp
 nul
 .playwright-mcp
 .playwright-cli
+*.stackdump
 
 # Terraform
 terraform/*.tfvars

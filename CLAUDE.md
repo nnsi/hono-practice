@@ -1,76 +1,60 @@
 # CLAUDE.md
 
 ## 🚫 最重要制限事項
-
-### 開発サーバーの起動
-- **開発サーバーは絶対に起動しないでください**
-- ユーザー側で既に起動しているため、Claude Code側での起動は不要です
-- **ポート: frontend=2460, backend API=3456**
-
-### ブラウザ動作確認
-- **「ブラウザで動作確認して」と言われた場合は、Claude in Chrome MCPを使用する**
-- 手動確認を求めるのではなく、必ずClaude in Chromeで自動的に動作確認を実施すること
+- **開発サーバーは起動しない**（ユーザー側で起動済み。ポート: frontend=2460, backend=3456）
+- **ブラウザ動作確認はClaude in Chrome MCPを使用する**
 
 ## プロジェクト概要
 
 **Actiko** - 最速で活動量を記録する、極限までシンプルなUXの個人向け活動記録アプリ。
 
-### 最重要原則
-- **パフォーマンス**: 「最速で活動量を記録する」ことが最優先目標
-- **UX**: 極限までシンプル、操作回数を最小限に
-- **検証**: タスクが実際に完了していない場合は絶対に完了としない
-
 ## 技術スタック
-
-- **DB: Neon Postgres**（Cloudflare D1ではない。絶対に間違えないこと）
-- Cloudflare Workers + Hono
-- R2（画像ストレージ）、KV（レートリミット等）
+- **DB: Neon Postgres**（D1ではない。絶対に間違えないこと）
+- Cloudflare Workers + Hono / R2 / KV
 - frontend: React + Dexie.js + useLiveQuery + TanStack Router（オフラインファースト）
+- pnpmモノレポ: バージョン重複→型不一致に注意。`pnpm.overrides`で統一。tsconfig pathsとmodule resolution（`"workspace:*"`宣言）は別物
 
 ## 📚 詳細ドキュメント
-
-- `/docs/knowledges/` — 設計ドキュメント（構造, 認証, DB, フロント, バックエンド）
-- `apps/backend/CLAUDE.md` — バックエンド固有のルール（Honoの罠, APIパス規約）
-- `apps/frontend-v2/CLAUDE.md` — フロントエンド固有のルール（オフラインファースト設計, UI規約）
+- `/docs/knowledges/` — 設計ドキュメント
+- `apps/backend/CLAUDE.md` — バックエンド固有ルール
+- `apps/frontend-v2/CLAUDE.md` — フロントエンド固有ルール
 
 ## 必須コマンド
-
 ```bash
-pnpm run test-once   # テスト実行（CIモード）
-pnpm run tsc         # TypeScriptコンパイルチェック
-pnpm run fix         # コードフォーマット（biome+eslint）
+pnpm run test-once   # テスト実行
+pnpm run tsc         # 型チェック
+pnpm run fix         # フォーマット
 pnpm run ci-check    # 全CIチェック
-pnpm run db-generate # マイグレーション生成
-pnpm run db-migrate  # マイグレーション適用
 ```
 
-## 重要な開発規約
+## 開発規約
 
-### TypeScript共通ルール
-- **型定義は `type` を使用**（`interface`は使わない）
-- **ファクトリ関数パターン**: `newXXX`関数で依存注入
-- **Repository命名**: メソッド名にドメイン名を含める（`createGoal` ✓ / `create` ✗）
+### TypeScript
+- 型定義は `type`（`interface`不可）
+- ファクトリ関数 `newXXX` で依存注入
+- Repository命名: メソッド名にドメイン名を含める（`createGoal` ✓ / `create` ✗）
 
-### テスト・コミット前チェック
-- 型エラーを全て修正し、テストも全て通らないとコミットできない
-- `pnpm run test-once` → `pnpm run tsc` → `pnpm run fix` の順で確認
+### テスト
+- `test-once` → `tsc` → `fix` の順で確認
+- **新ロジック実装時はテストも追加する**（既存テスト通過≠新コードがテスト済み）
+- 計画段階でテストファイルも変更対象に含める
 
-## 並列エージェント運用ルール
+### 問題解決
+- **ワークアラウンドより根本原因を潰す**（設定hackに飛びつかず、依存バージョン統一等の根本対処を先に検討）
+- **方針判断はユーザーの仕事**（選択肢を提示し、「許容」「対応不要」と勝手に判定しない）
 
-サブエージェントを並列起動する際は、**共通ルールを事前にプロンプトへ明示する**。
+## 並列エージェント運用
 
-### 必須共通ルール（全エージェントのプロンプトに含める）
+### エージェントのプロンプトに含める共通ルール
 ```
-- APIパス: 末尾スラッシュなし
-- DB: Neon Postgres（D1ではない）
-- ファイル分割: 1ファイル200行以内目安、ドメインフォルダに配置
-- 古いファイル: 削除する（プロキシ/再エクスポートとして残さない）
-- エクスポート: バレルindex.tsでまとめる
-- Repository命名: メソッド名にドメイン名を含める（createGoal ✓ / create ✗）
-- 型定義: interfaceではなくtypeを使う
+- APIパス末尾スラッシュなし / DB: Neon Postgres
+- 1ファイル200行以内 / バレルindex.tsでエクスポート
+- 古いファイルは削除（再エクスポートとして残さない）
+- Repository命名: ドメイン名を含める / 型定義: type（interfaceではない）
 ```
 
-### ファイル競合防止
-- 並列エージェント間で**編集対象ファイルが重複しないよう分割**する
-- 事前にGlobで対象ファイルを確認し、排他的にグループ分けする
-- frontend-v2の作業では `apps/frontend-v2/CLAUDE.md` の追加ルールもプロンプトに含める
+### 競合防止
+- 編集対象ファイルが重複しないよう事前にGlobで排他的にグループ分け
+- **インターフェース変更は先に直列で実施**し、結果を後続エージェントのプロンプトに含める
+- ファイル移動時は**テストファイルのimportパス更新**もプロンプトに含める
+- frontend-v2の作業では `apps/frontend-v2/CLAUDE.md` のルールも含める

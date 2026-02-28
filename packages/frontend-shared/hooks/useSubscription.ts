@@ -1,4 +1,4 @@
-import type { AppType } from "@backend/app";
+import type { AppType } from "@packages/api-contract";
 import type { SubscriptionResponse } from "@dtos/response";
 import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 

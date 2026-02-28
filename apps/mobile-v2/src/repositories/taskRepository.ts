@@ -1,6 +1,6 @@
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import type { TaskRepository } from "@packages/domain/task/taskRepository";
-import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+import type { SyncStatus } from "@packages/domain";
 import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";

@@ -1,4 +1,4 @@
-import type { NetworkAdapter, StorageAdapter } from "@packages/domain/sync/platformAdapters";
+import type { NetworkAdapter, StorageAdapter } from "@packages/platform";
 
 export const webNetworkAdapter: NetworkAdapter = {
   isOnline: () => navigator.onLine,
