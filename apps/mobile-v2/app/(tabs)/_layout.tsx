@@ -8,6 +8,7 @@ import {
   Settings,
 } from "lucide-react-native";
 import { TouchableOpacity, View, Text, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { LucideIcon } from "lucide-react-native";
 
@@ -24,6 +25,7 @@ const TAB_ITEMS: {
 ];
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
   return (
     <View
       style={{
@@ -31,7 +33,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         justifyContent: "space-around",
         alignItems: "center",
         paddingTop: 8,
-        paddingBottom: 10,
+        paddingBottom: 10 + insets.bottom,
         borderTopWidth: 1,
         borderTopColor: "rgba(231,229,228,0.5)",
         backgroundColor: "rgba(255,255,255,0.82)",

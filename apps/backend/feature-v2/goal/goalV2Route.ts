@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { SyncGoalsRequestSchema } from "@packages/types-v2";
 
 import { newGoalV2Handler } from "./goalV2Handler";
@@ -18,9 +19,10 @@ export function createGoalV2Route() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
 
     const repo = newGoalV2Repository(db);
-    const uc = newGoalV2Usecase(repo);
+    const uc = newGoalV2Usecase(repo, tracer);
     const h = newGoalV2Handler(uc);
 
     c.set("h", h);

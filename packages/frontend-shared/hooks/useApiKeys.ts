@@ -20,6 +20,7 @@ type HonoClient = ReturnType<typeof import("hono/client").hc<AppType>>;
 
 export type UseApiKeysOptions = {
   apiClient: HonoClient;
+  enabled?: boolean;
 };
 
 export type ApiKeyMutationOptions = {
@@ -32,10 +33,12 @@ export type ApiKeyMutationOptions = {
 export function createUseApiKeys(
   options: UseApiKeysOptions,
 ): UseQueryResult<GetApiKeysResponse> {
-  const { apiClient } = options;
+  const { apiClient, enabled } = options;
 
   return useQuery<GetApiKeysResponse>({
     queryKey: ["apiKeys"],
+    enabled,
+    staleTime: 1000 * 60 * 5,
     queryFn: async () => {
       const res = await apiClient.users["api-keys"].$get();
 

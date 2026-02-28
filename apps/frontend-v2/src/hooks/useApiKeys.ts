@@ -5,8 +5,8 @@ import {
   createUseDeleteApiKey,
 } from "@packages/frontend-shared/hooks/useApiKeys";
 
-export function useApiKeys() {
-  return createUseApiKeys({ apiClient });
+export function useApiKeys(options?: { enabled?: boolean }) {
+  return createUseApiKeys({ apiClient, enabled: options?.enabled });
 }
 
 export function useCreateApiKey() {

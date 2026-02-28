@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { SyncActivitiesRequestSchema } from "@packages/types-v2";
 
 import { newActivityV2Handler } from "./activityV2Handler";
@@ -18,9 +19,10 @@ export function createActivityV2Route() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
 
     const repo = newActivityV2Repository(db);
-    const uc = newActivityV2Usecase(repo);
+    const uc = newActivityV2Usecase(repo, tracer);
     const h = newActivityV2Handler(uc);
 
     c.set("h", h);

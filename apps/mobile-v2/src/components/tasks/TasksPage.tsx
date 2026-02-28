@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TaskGroup } from "./TaskGroup";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
@@ -33,6 +34,8 @@ export function TasksPage() {
     handleCreateSuccess,
     handleEditSuccess,
   } = useTasksPage();
+
+  const insets = useSafeAreaInsets();
 
   return (
     <View className="flex-1 bg-white">
@@ -71,7 +74,7 @@ export function TasksPage() {
       {/* Content */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 80 + insets.bottom }}
       >
         {activeTab === "active" && (
           <View className="gap-6">

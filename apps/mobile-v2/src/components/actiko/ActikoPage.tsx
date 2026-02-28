@@ -6,6 +6,7 @@ import {
   Plus,
   Calendar,
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs";
 import { useActikoPage } from "./useActikoPage";
 import { ActivityCard } from "./ActivityCard";
@@ -37,6 +38,8 @@ export function ActikoPage() {
     handleActivityClick,
     handleActivityChanged,
   } = useActikoPage();
+
+  const insets = useSafeAreaInsets();
 
   const handleRecordClose = () => {
     setDialogOpen(false);
@@ -120,7 +123,7 @@ export function ActikoPage() {
           data={gridData}
           numColumns={2}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 8, paddingBottom: 100 }}
+          contentContainerStyle={{ padding: 8, paddingBottom: 80 + insets.bottom }}
           renderItem={({ item, index }) => {
             if (item.id === "__add__") {
               return (

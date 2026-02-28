@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
 import { createContext, useContext } from "react";
@@ -66,11 +67,13 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={auth}>
-        <StatusBar style="auto" />
-        <Slot />
-      </AuthContext.Provider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={auth}>
+          <StatusBar style="auto" />
+          <Slot />
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

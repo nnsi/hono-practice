@@ -1,6 +1,7 @@
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityLogRequest } from "@packages/types-v2";
 import { activityLogs } from "@infra/drizzle/schema";
+import type { Tracer } from "../../lib/tracer";
 
 import type { ActivityLogV2Repository } from "./activityLogV2Repository";
 
@@ -25,24 +26,27 @@ export type ActivityLogV2Usecase = {
 
 export function newActivityLogV2Usecase(
   repo: ActivityLogV2Repository,
+  tracer: Tracer,
 ): ActivityLogV2Usecase {
   return {
-    getActivityLogs: getActivityLogs(repo),
-    syncActivityLogs: syncActivityLogs(repo),
+    getActivityLogs: getActivityLogs(repo, tracer),
+    syncActivityLogs: syncActivityLogs(repo, tracer),
   };
 }
 
-function getActivityLogs(repo: ActivityLogV2Repository) {
+function getActivityLogs(repo: ActivityLogV2Repository, tracer: Tracer) {
   return async (
     userId: UserId,
     since?: string,
   ): Promise<{ logs: ActivityLogRow[] }> => {
-    const logs = await repo.getActivityLogsByUserId(userId, since);
+    const logs = await tracer.span("db.getActivityLogsByUserId", () =>
+      repo.getActivityLogsByUserId(userId, since),
+    );
     return { logs };
   };
 }
 
-function syncActivityLogs(repo: ActivityLogV2Repository) {
+function syncActivityLogs(repo: ActivityLogV2Repository, tracer: Tracer) {
   return async (
     userId: UserId,
     logs: UpsertActivityLogRequest[],
@@ -53,9 +57,8 @@ function syncActivityLogs(repo: ActivityLogV2Repository) {
     const requestedActivityIds = [
       ...new Set(logs.map((l) => l.activityId)),
     ];
-    const ownedIds = await repo.getOwnedActivityIds(
-      userId,
-      requestedActivityIds,
+    const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
+      repo.getOwnedActivityIds(userId, requestedActivityIds),
     );
     const ownedActivityIdSet = new Set(ownedIds);
 
@@ -76,7 +79,9 @@ function syncActivityLogs(repo: ActivityLogV2Repository) {
       return { syncedIds: [], serverWins: [], skippedIds };
     }
 
-    const upserted = await repo.upsertActivityLogs(userId, validLogs);
+    const upserted = await tracer.span("db.upsertActivityLogs", () =>
+      repo.upsertActivityLogs(userId, validLogs),
+    );
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
@@ -87,7 +92,9 @@ function syncActivityLogs(repo: ActivityLogV2Repository) {
 
     let serverWins: ActivityLogRow[] = [];
     if (missedIds.length > 0) {
-      serverWins = await repo.getActivityLogsByIds(userId, missedIds);
+      serverWins = await tracer.span("db.getActivityLogsByIds", () =>
+        repo.getActivityLogsByIds(userId, missedIds),
+      );
       const serverWinIdSet = new Set(serverWins.map((s) => s.id));
       for (const id of missedIds) {
         if (!serverWinIdSet.has(id)) {

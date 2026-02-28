@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { SyncActivityLogsRequestSchema } from "@packages/types-v2";
 
 import { newActivityLogV2Handler } from "./activityLogV2Handler";
@@ -18,9 +19,10 @@ export function createActivityLogV2Route() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
 
     const repo = newActivityLogV2Repository(db);
-    const uc = newActivityLogV2Usecase(repo);
+    const uc = newActivityLogV2Usecase(repo, tracer);
     const h = newActivityLogV2Handler(uc);
 
     c.set("h", h);

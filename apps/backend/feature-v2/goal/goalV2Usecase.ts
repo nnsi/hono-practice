@@ -1,6 +1,7 @@
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types-v2";
 import { activityGoals } from "@infra/drizzle/schema";
+import type { Tracer } from "../../lib/tracer";
 
 import type { GoalV2Repository } from "./goalV2Repository";
 
@@ -29,19 +30,24 @@ export type GoalV2Usecase = {
   ) => Promise<SyncGoalsResult>;
 };
 
-export function newGoalV2Usecase(repo: GoalV2Repository): GoalV2Usecase {
+export function newGoalV2Usecase(
+  repo: GoalV2Repository,
+  tracer: Tracer,
+): GoalV2Usecase {
   return {
-    getGoals: getGoals(repo),
-    syncGoals: syncGoals(repo),
+    getGoals: getGoals(repo, tracer),
+    syncGoals: syncGoals(repo, tracer),
   };
 }
 
-function getGoals(repo: GoalV2Repository) {
+function getGoals(repo: GoalV2Repository, tracer: Tracer) {
   return async (
     userId: UserId,
     since?: string,
   ): Promise<{ goals: GoalWithStats[] }> => {
-    const goals = await repo.getGoalsByUserId(userId, since);
+    const goals = await tracer.span("db.getGoalsByUserId", () =>
+      repo.getGoalsByUserId(userId, since),
+    );
 
     const goalsWithStats = await Promise.all(
       goals.map(async (goal) => {
@@ -64,11 +70,15 @@ function getGoals(repo: GoalV2Repository) {
 
         const totalTarget = days * Number(goal.dailyTargetQuantity);
 
-        const totalActual = await repo.getGoalActualQuantity(
-          userId,
-          goal.activityId,
-          goal.startDate,
-          effectiveEnd,
+        const totalActual = await tracer.span(
+          "db.getGoalActualQuantity",
+          () =>
+            repo.getGoalActualQuantity(
+              userId,
+              goal.activityId,
+              goal.startDate,
+              effectiveEnd,
+            ),
         );
 
         const currentBalance = totalActual - totalTarget;
@@ -81,13 +91,15 @@ function getGoals(repo: GoalV2Repository) {
   };
 }
 
-function syncGoals(repo: GoalV2Repository) {
+function syncGoals(repo: GoalV2Repository, tracer: Tracer) {
   return async (
     userId: UserId,
     goals: UpsertGoalRequest[],
   ): Promise<SyncGoalsResult> => {
     const activityIds = [...new Set(goals.map((g) => g.activityId))];
-    const ownedIds = await repo.getOwnedActivityIds(userId, activityIds);
+    const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
+      repo.getOwnedActivityIds(userId, activityIds),
+    );
     const ownedActivityIdSet = new Set(ownedIds);
 
     const skippedIds: string[] = [];
@@ -108,7 +120,9 @@ function syncGoals(repo: GoalV2Repository) {
       return { syncedIds: [], serverWins: [], skippedIds };
     }
 
-    const upserted = await repo.upsertGoals(userId, validGoals);
+    const upserted = await tracer.span("db.upsertGoals", () =>
+      repo.upsertGoals(userId, validGoals),
+    );
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
@@ -119,7 +133,9 @@ function syncGoals(repo: GoalV2Repository) {
 
     let serverWins: GoalRow[] = [];
     if (missedIds.length > 0) {
-      serverWins = await repo.getGoalsByIds(userId, missedIds);
+      serverWins = await tracer.span("db.getGoalsByIds", () =>
+        repo.getGoalsByIds(userId, missedIds),
+      );
       const serverWinIdSet = new Set(serverWins.map((s) => s.id));
       for (const id of missedIds) {
         if (!serverWinIdSet.has(id)) {
