@@ -12,7 +12,7 @@ import {
 } from "../utils/apiClient";
 import {
   performInitialSync,
-  clearLocalDataForUserSwitch,
+  clearLocalData,
 } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
 
@@ -27,7 +27,7 @@ type AuthState = {
     loginId: string,
     password: string
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export function useAuth(): AuthState {
@@ -42,7 +42,7 @@ export function useAuth(): AuthState {
         "SELECT user_id FROM auth_state WHERE id = 'current'"
       );
       if (authState && authState.user_id !== newUserId) {
-        await clearLocalDataForUserSwitch();
+        await clearLocalData();
       }
       await performInitialSync(newUserId);
     };
@@ -68,7 +68,7 @@ export function useAuth(): AuthState {
         "SELECT user_id, last_login_at FROM auth_state WHERE id = 'current'"
       );
 
-      if (authState) {
+      if (authState && authState.last_login_at) {
         const hoursAgo =
           (Date.now() - new Date(authState.last_login_at).getTime()) /
           (1000 * 60 * 60);
@@ -100,7 +100,7 @@ export function useAuth(): AuthState {
       "SELECT user_id FROM auth_state WHERE id = 'current'"
     );
     if (authState && authState.user_id !== newUserId) {
-      await clearLocalDataForUserSwitch();
+      await clearLocalData();
     }
     setUserId(newUserId);
     setIsLoggedIn(true);
@@ -135,12 +135,15 @@ export function useAuth(): AuthState {
   );
 
   const logout = useCallback(async () => {
-    await apiLogout();
+    apiLogout().catch(console.error);
     clearToken();
     setIsLoggedIn(false);
     setUserId(null);
+    // authStateのuser_idは保持し、last_login_atのみ無効化する。
+    // 削除するとloginWithUserCheckでユーザー切替を検知できず、
+    // 前ユーザーのデータが残る＋LAST_SYNCED_KEYが前ユーザーのタイムスタンプのままになる。
     const db = await getDatabase();
-    await db.runAsync("DELETE FROM auth_state WHERE id = 'current'");
+    await db.runAsync("UPDATE auth_state SET last_login_at = '' WHERE id = 'current'");
   }, []);
 
   return {

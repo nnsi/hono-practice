@@ -38,7 +38,7 @@ import {
   mapApiTask,
 } from "@packages/sync-engine/mappers/apiMappers";
 import {
-  clearLocalDataForUserSwitch,
+  clearLocalData,
   performInitialSync,
 } from "./initialSync";
 
@@ -59,11 +59,11 @@ describe("initialSync", () => {
     vi.mocked(mapApiTask).mockImplementation((t: any) => t);
   });
 
-  describe("clearLocalDataForUserSwitch", () => {
+  describe("clearLocalData", () => {
     it("clears all Dexie tables and localStorage", async () => {
       localStorage.setItem("actiko-v2-lastSyncedAt", "2025-01-01T00:00:00Z");
 
-      await clearLocalDataForUserSwitch();
+      await clearLocalData();
 
       expect(mockDb.activityLogs.clear).toHaveBeenCalled();
       expect(mockDb.activities.clear).toHaveBeenCalled();
@@ -209,11 +209,14 @@ describe("initialSync", () => {
       expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
     });
 
-    it("uses since parameter when lastSyncedAt exists", async () => {
+    it("uses since parameter when lastSyncedAt exists and DB has data", async () => {
       localStorage.setItem(
         "actiko-v2-lastSyncedAt",
         "2025-06-01T00:00:00Z",
       );
+      mockDb.activityLogs.count = vi.fn().mockResolvedValue(5);
+      mockDb.goals.count = vi.fn().mockResolvedValue(2);
+      mockDb.tasks.count = vi.fn().mockResolvedValue(3);
       const { activitiesGet, logsGet, goalsGet, tasksGet } = setupMockApi();
 
       await performInitialSync("user-123");
@@ -231,6 +234,28 @@ describe("initialSync", () => {
 
       // activities does NOT use since query (always full fetch)
       expect(activitiesGet).toHaveBeenCalledWith();
+    });
+
+    it("clears lastSyncedAt and does full sync when DB is empty", async () => {
+      localStorage.setItem(
+        "actiko-v2-lastSyncedAt",
+        "2025-06-01T00:00:00Z",
+      );
+      mockDb.activityLogs.count = vi.fn().mockResolvedValue(0);
+      mockDb.goals.count = vi.fn().mockResolvedValue(0);
+      mockDb.tasks.count = vi.fn().mockResolvedValue(0);
+      const { logsGet, goalsGet, tasksGet } = setupMockApi();
+
+      await performInitialSync("user-123");
+
+      // since parameter should NOT be used (full sync)
+      expect(logsGet).toHaveBeenCalledWith({ query: {} });
+      expect(goalsGet).toHaveBeenCalledWith({ query: {} });
+      expect(tasksGet).toHaveBeenCalledWith({ query: {} });
+
+      // lastSyncedAt should have been cleared
+      // (then re-set after successful sync)
+      expect(localStorage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
     });
 
     it("does not use since parameter on first sync", async () => {

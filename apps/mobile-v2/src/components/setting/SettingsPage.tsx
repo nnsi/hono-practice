@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Switch, Platform } from "reac
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Upload, Download, LogOut, User, Info, Settings, Database, Trash2, AlertTriangle, Key } from "lucide-react-native";
 import { useAuthContext } from "../../../app/_layout";
-import { clearLocalDataForUserSwitch } from "../../sync/initialSync";
+import { clearLocalData } from "../../sync/initialSync";
 import { customFetch, clearToken, clearRefreshToken, getApiUrl } from "../../utils/apiClient";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
@@ -38,11 +38,11 @@ export function SettingsPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleClearData = async () => { await clearLocalDataForUserSwitch(); setShowClearConfirm(false); };
+  const handleClearData = async () => { await clearLocalData(); setShowClearConfirm(false); };
 
   const handleDeleteAccount = async () => {
     try { await customFetch(`${API_URL}/user/me`, { method: "DELETE" }); } catch { /* offline */ }
-    await clearLocalDataForUserSwitch();
+    await clearLocalData();
     clearToken();
     await clearRefreshToken();
     await AsyncStorage.removeItem(SETTINGS_KEY);
