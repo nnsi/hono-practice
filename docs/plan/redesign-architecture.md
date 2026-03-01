@@ -232,50 +232,40 @@ feature統合（T6）後に v1 の設計パターンに合わせて引き上げ�
 
 ---
 
-## T9: オフラインファースト同期アーキテクチャ再設計
+## T9: オフラインファースト同期設計の改善
 
 ### 目的
-現行の同期システムを削除し、シンプルな設計でゼロから再構築する。
+現行の v2 同期設計（Dexie.js + useLiveQuery + per-entity sync endpoints）は正しい判断。
+その上で、sync-engine の仕様散在と LAST_SYNCED_KEY 管理の分散を解消する。
 
-### 現行システムの問題
-- SyncManager, SyncQueue, hooks, adapters が多層的に絡み合い処理フローが追えない
-- オンライン/オフラインで処理パスが分岐し、エラーハンドリングが二重化
-- CustomEvent ベースの通信で状態追跡・デバッグが困難
-- エンティティタイプごとの処理が個別実装で汎用性がない
-- モック対象が多すぎてテスト困難
+### 現行設計の評価
+維持するもの:
+- **Dexie.js**: IndexedDB 直接操作より圧倒的に DX が良い。維持
+- **useLiveQuery**: リアクティブ更新の仕組みとして正しい選択。維持
+- **per-entity sync endpoints**: エンティティ単位の sync API（since + batch upsert + LWW）。維持
 
-### 設計方針
-1. **シンプルさ優先** — 最小限の抽象化
-2. **単一責任** — 各コンポーネントの責務を明確に
-3. **テスタブル** — 依存を最小限に
-4. **デバッガブル** — 処理フローを追いやすく
+### 改善内容
 
-### フェーズ構成
+#### 9-1. sync-engine をプロトコルとして仕様化
+現状の問題: 同期ロジックが散在している。
+- `chunkedSync.ts` が frontend 側（sync-engine パッケージ）にある
+- batch upsert ロジックが backend 側（feature-v2 の各 repository）にある
+- conflict resolution（server wins）のルールが暗黙的
 
-#### Phase A: 既存同期インフラの削除
-- v1 バッチ同期 API（`feature/sync/`）の削除
-- 旧同期関連フック・サービスの削除
-- 同期キュー関連テーブルの削除（sync_metadata, sync_queue）
-- 削除後の状態: 全操作が直接 API 呼び出し。オフライン時はエラー表示。
-- ここで動作確認し、同期なしでアプリが壊れないことを保証
+改善:
+- 「since timestamp + batch upsert + conflict resolution = server wins」をプロトコルドキュメントとして定義
+- 実装がプロトコルに従う形にし、frontend/backend 双方がどのルールで動いているか明示する
 
-#### Phase B: 最小限の同期実装（フロントエンド）
-- Zustand ストアで同期キューを管理（CustomEvent 廃止）
-- 汎用 `useSyncedMutation` フック（エンティティ非依存）
-- SimpleSyncManager（インターバルポーリング + online イベントリスナー）
-- オフライン時: ローカル保存 + 楽観的更新
-- オンライン復帰時: 自動送信
+#### 9-2. LAST_SYNCED_KEY の管理を一元化
+現状の問題: LAST_SYNCED_KEY が localStorage / Dexie / クエリパラメータの3箇所に散在している。
+- initialSync で localStorage から読む
+- クエリパラメータとして API に渡す
+- 同期完了時に localStorage に書く
 
-#### Phase C: バックエンド同期処理のリファクタ
-- EntitySyncStrategy パターン導入（エンティティごとの処理を Strategy に分離）
-- 共通 `processSyncItem` に CREATE/UPDATE/DELETE を集約
-- 冪等性チェック・コンフリクト解決の一元化
-- T8 で整備した LWW / serverWins ロジックを Strategy 内に組み込む
-
-#### Phase D: 段階的な機能追加
-- バッチ処理
-- コンフリクト解決 UI
-- エラーハンドリング改善
+改善:
+- LAST_SYNCED_KEY の read/write を sync-engine 内に閉じ込める
+- フロントエンドのコンポーネントやフックが直接 localStorage を触らない
+- sync-engine が単一の管理ポイントとなる
 
 ---
 
@@ -292,7 +282,7 @@ apps/
 packages/
   domain/              ← 純粋（Entity/VO/Rules）
   types/               ← リクエスト/レスポンススキーマ（旧types-v2 + v1必要分）
-  sync-engine/         ← 同期/mapper/http（T9で再構築）
+  sync-engine/         ← 同期/mapper/http（T9でプロトコル仕様化 + LAST_SYNCED_KEY一元化）
   platform/            ← 環境抽象
   frontend-shared/     ← UI非依存共有ロジック
 
@@ -308,4 +298,4 @@ infra/
 
 - `.npmrc` から `shamefully-hoist=true` が除去されている
 - backend handler は v1 水準の品質（エラーハンドリング・バリデーション・テスト）が統一されている
-- 同期システムは Zustand + SimpleSyncManager のシンプルな構成に置き換わっている
+- sync-engine がプロトコル仕様に基づいた単一管理ポイントとして機能している（Dexie.js + useLiveQuery は維持）
