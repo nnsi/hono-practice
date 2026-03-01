@@ -7,6 +7,7 @@ import { GoogleSignInButton } from "../root/GoogleSignInButton";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { apiClient, clearToken } from "../../utils/apiClient";
+import { clearLocalData } from "../../sync/initialSync";
 
 const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
@@ -89,7 +90,7 @@ export function SettingsPage() {
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
-    await db.delete();
+    await clearLocalData();
     window.location.reload();
   };
 

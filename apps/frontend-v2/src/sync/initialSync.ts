@@ -16,7 +16,7 @@ import { webStorageAdapter } from "./webPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
-export async function clearLocalDataForUserSwitch(storage: StorageAdapter = webStorageAdapter) {
+export async function clearLocalData(storage: StorageAdapter = webStorageAdapter) {
   await db.activityLogs.clear();
   await db.activities.clear();
   await db.activityKinds.clear();
@@ -24,7 +24,9 @@ export async function clearLocalDataForUserSwitch(storage: StorageAdapter = webS
   await db.tasks.clear();
   await db.activityIconBlobs.clear();
   await db.activityIconDeleteQueue.clear();
-  await db.authState.clear();
+  // auth_stateはクリアしない。auth_stateはuseAuthが管理する責務:
+  // - logout() → lastLoginAtを空にして無効化
+  // - performInitialSync() → INSERT OR REPLACEで新ユーザーに更新
   storage.removeItem(LAST_SYNCED_KEY);
 }
 
@@ -36,7 +38,20 @@ export async function performInitialSync(userId: string, storage: StorageAdapter
     lastLoginAt: new Date().toISOString(),
   });
 
-  const lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+  // DBが空なのにLAST_SYNCED_KEYが残っている場合（DB再作成・手動クリア等）、
+  // since付きでAPIを叩くと古いデータが取得されない。全テーブル空ならフル同期にする。
+  let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+  if (lastSyncedAt) {
+    const [logCount, goalCount, taskCount] = await Promise.all([
+      db.activityLogs.count(),
+      db.goals.count(),
+      db.tasks.count(),
+    ]);
+    if (logCount === 0 && goalCount === 0 && taskCount === 0) {
+      storage.removeItem(LAST_SYNCED_KEY);
+      lastSyncedAt = null;
+    }
+  }
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
   // 全APIを並列で取得（直列→並列で2-3秒短縮）

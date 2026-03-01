@@ -16,7 +16,7 @@ import { rnStorageAdapter } from "./rnPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
-export async function clearLocalDataForUserSwitch(
+export async function clearLocalData(
   storage: StorageAdapter = rnStorageAdapter,
 ) {
   const db = await getDatabase();
@@ -28,8 +28,10 @@ export async function clearLocalDataForUserSwitch(
     DELETE FROM tasks;
     DELETE FROM activity_icon_blobs;
     DELETE FROM activity_icon_delete_queue;
-    DELETE FROM auth_state;
   `);
+  // auth_stateはクリアしない。auth_stateはuseAuthが管理する責務:
+  // - logout() → last_login_atを空にして無効化
+  // - performInitialSync() → INSERT OR REPLACEで新ユーザーに更新
   storage.removeItem(LAST_SYNCED_KEY);
 }
 
@@ -45,7 +47,20 @@ export async function performInitialSync(
     [userId, new Date().toISOString()],
   );
 
-  const lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+  // DBが空なのにLAST_SYNCED_KEYが残っている場合（DB再作成・手動クリア等）、
+  // since付きでAPIを叩くと古いデータが取得されない。全テーブル空ならフル同期にする。
+  let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+  if (lastSyncedAt) {
+    const [logRow, goalRow, taskRow] = await Promise.all([
+      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM activity_logs"),
+      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM goals"),
+      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM tasks"),
+    ]);
+    if ((logRow?.count ?? 0) === 0 && (goalRow?.count ?? 0) === 0 && (taskRow?.count ?? 0) === 0) {
+      storage.removeItem(LAST_SYNCED_KEY);
+      lastSyncedAt = null;
+    }
+  }
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
   // Fetch all data in parallel

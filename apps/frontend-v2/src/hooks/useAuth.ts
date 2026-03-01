@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../db/schema";
 import { apiLogin, clearToken, setToken, apiClient } from "../utils/apiClient";
-import { performInitialSync, clearLocalDataForUserSwitch } from "../sync/initialSync";
+import { performInitialSync, clearLocalData } from "../sync/initialSync";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -10,7 +10,7 @@ type AuthState = {
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export function useAuth(): AuthState {
@@ -22,10 +22,9 @@ export function useAuth(): AuthState {
   useEffect(() => {
     const tryOfflineAuth = async (): Promise<boolean> => {
       const authState = await db.authState.get("current");
-      if (authState) {
-        const lastLogin = new Date(authState.lastLoginAt);
+      if (authState && authState.lastLoginAt) {
         const hoursAgo =
-          (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60);
+          (Date.now() - new Date(authState.lastLoginAt).getTime()) / (1000 * 60 * 60);
         if (hoursAgo < 1) {
           setUserId(authState.userId);
           setIsLoggedIn(true);
@@ -38,7 +37,7 @@ export function useAuth(): AuthState {
     const syncWithUserCheck = async (newUserId: string) => {
       const authState = await db.authState.get("current");
       if (authState && authState.userId !== newUserId) {
-        await clearLocalDataForUserSwitch();
+        await clearLocalData();
       }
       await performInitialSync(newUserId);
     };
@@ -80,7 +79,7 @@ export function useAuth(): AuthState {
   const loginWithUserCheck = useCallback(async (newUserId: string) => {
     const authState = await db.authState.get("current");
     if (authState && authState.userId !== newUserId) {
-      await clearLocalDataForUserSwitch();
+      await clearLocalData();
     }
     setUserId(newUserId);
     setIsLoggedIn(true);
@@ -131,13 +130,16 @@ export function useAuth(): AuthState {
     await loginWithUserCheck(user.id);
   }, [loginWithUserCheck]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     // サーバーサイドのセッション無効化（fire-and-forget）
     apiClient.auth.logout.$post().catch(() => {});
     clearToken();
     setIsLoggedIn(false);
     setUserId(null);
-    db.authState.delete("current");
+    // authStateのuserIdは保持し、lastLoginAtのみ無効化する。
+    // 削除するとloginWithUserCheckでユーザー切替を検知できず、
+    // 前ユーザーのデータが残る＋LAST_SYNCED_KEYが前ユーザーのタイムスタンプのままになる。
+    await db.authState.update("current", { lastLoginAt: "" });
   }, []);
 
   return { isLoggedIn, isLoading, userId, login, googleLogin, register, logout };
