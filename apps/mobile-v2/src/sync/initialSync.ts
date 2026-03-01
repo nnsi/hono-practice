@@ -28,8 +28,10 @@ export async function clearLocalData(
     DELETE FROM tasks;
     DELETE FROM activity_icon_blobs;
     DELETE FROM activity_icon_delete_queue;
-    DELETE FROM auth_state;
   `);
+  // auth_stateはクリアしない。auth_stateはuseAuthが管理する責務:
+  // - logout() → last_login_atを空にして無効化
+  // - performInitialSync() → INSERT OR REPLACEで新ユーザーに更新
   storage.removeItem(LAST_SYNCED_KEY);
 }
 

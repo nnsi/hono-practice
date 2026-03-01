@@ -24,7 +24,9 @@ export async function clearLocalData(storage: StorageAdapter = webStorageAdapter
   await db.tasks.clear();
   await db.activityIconBlobs.clear();
   await db.activityIconDeleteQueue.clear();
-  await db.authState.clear();
+  // auth_stateはクリアしない。auth_stateはuseAuthが管理する責務:
+  // - logout() → lastLoginAtを空にして無効化
+  // - performInitialSync() → INSERT OR REPLACEで新ユーザーに更新
   storage.removeItem(LAST_SYNCED_KEY);
 }
 

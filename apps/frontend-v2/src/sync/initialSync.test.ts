@@ -17,7 +17,7 @@ vi.mock("../db/schema", () => ({
     tasks: { clear: vi.fn() },
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
-    authState: { clear: vi.fn(), put: vi.fn() },
+    authState: { put: vi.fn() },
   },
 }));
 vi.mock("@packages/sync-engine/mappers/apiMappers");
@@ -72,7 +72,7 @@ describe("initialSync", () => {
       expect(mockDb.tasks.clear).toHaveBeenCalled();
       expect(mockDb.activityIconBlobs.clear).toHaveBeenCalled();
       expect(mockDb.activityIconDeleteQueue.clear).toHaveBeenCalled();
-      expect(mockDb.authState.clear).toHaveBeenCalled();
+      // authState is NOT cleared — managed by useAuth (logout/performInitialSync)
       expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
     });
   });
