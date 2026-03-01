@@ -1,7 +1,10 @@
 # アーキテクチャ再設計計画
 
-前提: `docs/todo/shared-code.md` の改善計画のうち #1(domain責務分離), #8(platform抽象層) は実施済み。
-本計画はその続きとして、パッケージ構成の最終整理を行う。
+前提:
+- `docs/todo/shared-code.md` の改善計画のうち #1(domain責務分離), #8(platform抽象層) は実施済み
+- `docs/todo/archived/offline-sync-redesign.md` のオフライン同期再設計案を本計画に統合
+
+本計画はパッケージ構成の整理 + backend品質改善 + 同期アーキテクチャ再設計を行う。
 
 ---
 
@@ -20,6 +23,10 @@ Phase 2 (並列可)
 
 Phase 3 (Phase 2 完了後)
   T7: types-v2 リネーム後の旧v1型の統合（必要なもののみ）
+  T8: v2 handler 品質改善（v1水準への引き上げ）
+
+Phase 4 (Phase 3 完了後)
+  T9: オフラインファースト同期アーキテクチャ再設計
 ```
 
 依存:
@@ -27,6 +34,8 @@ Phase 3 (Phase 2 完了後)
 - T3, T4, T5 は並列可だが T5 は T4 完了後が安全
 - T6 は T5 完了後（types-v2 の import パスが確定してから）
 - T7 は T5, T6 完了後
+- T8 は T6 完了後（feature統合後にhandlerを改善する。統合前にやると二重作業）
+- T9 は T8 完了後（handler品質が安定してから同期層を再構築）
 
 ---
 
@@ -170,6 +179,116 @@ v2 の命名規則（`SyncXxxRequest` / `SyncXxxResponse`）に合わせる。
 
 ---
 
+## T8: v2 handler 品質改善（v1水準への引き上げ）
+
+### 目的
+v2 の sync API handler は MVP として実装されたため、v1 と比較して品質差がある。
+feature統合（T6）後に v1 の設計パターンに合わせて引き上げる。
+
+### 現状の品質差（v1 vs v2）
+
+| 観点 | v1 | v2（現状） |
+|---|---|---|
+| エラーハンドリング | 集約（AppError + throw） | 混在（route で JSON返却 / usecase で throw） |
+| レスポンスバリデーション | 双方向 Zod（入力 + 出力） | 入力のみ（出力は未検証） |
+| ドメインエンティティ | 使用（createXxxEntity） | 未使用（raw Drizzle rows） |
+| レイヤー責務 | 厳密分離 | repository にビジネスロジック漏出 |
+| トランザクション | TransactionRunner で明示管理 | 単発 upsert のみ |
+| テスト | CRUD 全操作 + 失敗パス | sync 特化（CRUD テスト不足） |
+| APM スパン | DB + Storage + 計算 | DB のみ |
+
+### 改善内容
+
+#### 8-1. エラーハンドリング統一
+- route 内の `safeParse` + `c.json(error)` パターンを廃止
+- v1 同様 handler 層で Zod パース → 失敗時 `throw AppError`
+- グローバルエラーハンドラで統一的にレスポンス生成
+
+#### 8-2. レスポンスバリデーション追加
+- handler 層で出力を Zod スキーマでパース
+- 不正な出力はサーバー側で検出（500 を返す）
+- レスポンス型を `packages/types` に定義
+
+#### 8-3. ドメインエンティティの使用
+- repository が返す raw rows を handler/usecase でドメインエンティティに変換
+- ドメインエンティティ経由でビジネスルールを適用
+
+#### 8-4. レイヤー責務の修正
+- repository の `getGoalActualQuantity` 等のビジネスロジックを usecase に移動
+- repository は純粋なデータアクセスに限定
+- upsert の `setWhere` 条件（LWW 判定）は sync ロジックとして usecase に移動
+
+#### 8-5. テスト拡充
+- **v1 のテストパターンに準拠**: Drizzle + インメモリ DB でのインテグレーションテスト
+- 各ドメインに route テスト + usecase テストを追加
+- sync 特化テスト（LWW, serverWins）は維持しつつ、通常の CRUD テストを補完
+
+#### 8-6. APM スパン追加
+- 計算処理（goal balance 等）のスパンを追加
+- v1 で実施済みの粒度に合わせる
+
+### v2 の良い設計は維持
+以下は v2 の方が優れており、改善対象にしない:
+- LWW（Last-Write-Wins）コンフリクト解決
+- serverWins 検出と返却
+- 所有権バリデーション（親レコードの所有確認）
+- 時間境界チェック（updatedAt > now + 5min の拒否）
+
+---
+
+## T9: オフラインファースト同期アーキテクチャ再設計
+
+### 目的
+`docs/todo/archived/offline-sync-redesign.md` の提案に基づき、同期アーキテクチャをゼロから再構築する。
+現行の複雑な同期システムをシンプルな設計に置き換える。
+
+### 背景
+現行システムの問題:
+- 多層的アーキテクチャ（SyncManager, SyncQueue, hooks, adapters）の絡み合い
+- オンライン/オフラインで処理パスが分岐し複雑
+- CustomEvent ベースの通信で状態追跡困難
+- エンティティタイプごとの処理が汎用化されていない
+- テスト困難（モック対象が多すぎる）
+
+### 設計方針
+1. **シンプルさ優先** — 最小限の抽象化
+2. **単一責任** — 各コンポーネントの責務を明確に
+3. **テスタブル** — 依存を最小限に
+4. **デバッガブル** — 処理フローを追いやすく
+
+### フェーズ構成
+
+#### Phase A: 既存同期インフラの削除
+- `packages/frontend-shared/sync/` 削除
+- `apps/backend/feature/sync/` 削除（v1 バッチ同期 API）
+- 同期関連フック・サービスの削除
+- 同期キュー関連テーブルの削除（sync_metadata, sync_queue）
+- 削除後: 全操作が直接 API 呼び出し。オフライン時はエラー表示。
+
+#### Phase B: 最小限の同期実装
+- Zustand ストアで同期キューを管理（イベントベース廃止）
+- 汎用 `useSyncedMutation` フック（エンティティ非依存）
+- SimpleSyncManager（インターバル + online イベント）
+- オフライン時: ローカル保存 + 楽観的更新
+- オンライン復帰時: 自動送信
+
+#### Phase C: バックエンド同期処理のリファクタ
+- EntitySyncStrategy パターン導入（エンティティごとの処理を分離）
+- 共通 `processSyncItem` に CREATE/UPDATE/DELETE を集約
+- 冪等性チェック・コンフリクト解決の一元化
+- v2 の LWW / serverWins ロジックは Strategy 内に組み込む
+
+#### Phase D: 段階的な機能追加
+- バッチ処理
+- コンフリクト解決 UI
+- エラーハンドリング改善
+
+### 詳細設計
+`docs/todo/archived/offline-sync-redesign.md` を参照。
+コア型定義・フック設計・バックエンド Strategy パターンの実装例あり。
+
+---
+
 ## 最終到達状態
 
 ```
@@ -200,7 +319,9 @@ infra/
 
 ---
 
-## shared-code.md との対応
+## 関連ドキュメントとの対応
+
+### shared-code.md との対応
 
 | shared-code.md | 状態 | 本計画での対応 |
 |---|---|---|
@@ -213,3 +334,12 @@ infra/
 | #7 v1/v2型統合 | 未着手 | T4, T5, T7 で実施 |
 | #8 platform抽象層 | 実施済み | - |
 | #9 domain index肥大化 | 部分的に解消 | 本計画スコープ外（別途） |
+
+### offline-sync-redesign.md との対応
+
+| 提案内容 | 本計画での対応 |
+|---|---|
+| フロントエンド同期簡素化 | T9 Phase A, B |
+| バックエンド Strategy パターン | T9 Phase C |
+| クリーンスレート移行戦略 | T9 Phase A（削除→検証→再構築） |
+| バッチ同期 API | T9 Phase D |
