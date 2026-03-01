@@ -1,10 +1,6 @@
 # アーキテクチャ再設計計画
 
-前提:
-- `docs/todo/shared-code.md` の改善計画のうち #1(domain責務分離), #8(platform抽象層) は実施済み
-- `docs/todo/archived/offline-sync-redesign.md` のオフライン同期再設計案を本計画に統合
-
-本計画はパッケージ構成の整理 + backend品質改善 + 同期アーキテクチャ再設計を行う。
+「0→1で作り直すなら理想のアーキテクチャはどうなるか」を起点に、現実のコードベースとの差分を埋めるリファクタリング計画。
 
 ---
 
@@ -158,7 +154,7 @@ v2 がデファクトスタンダードになったため、`-v2` サフィッ�
 
 ### 目的
 v1 feature ルート（auth, apiKey, subscription 等）が使うリクエスト/レスポンス型のうち、
-現在 `packages/types`(v1) に定義されていたものを新 `packages/types` に統合する。
+旧 `packages/types`(v1) に定義されていたものを新 `packages/types` に統合する。
 
 ### 対象候補
 v1 feature で外部型を必要とするもの:
@@ -171,7 +167,7 @@ v1 feature で外部型を必要とするもの:
 ### 変更内容
 1. 各v1 feature ルートが型をどこから取得しているか精査
 2. ローカル定義済みならそのまま
-3. `packages/types`(旧v1) を参照していた場合、新 `packages/types` に移植するか feature 内にインライン化
+3. 旧 `packages/types`(v1) を参照していた場合、新 `packages/types` に移植するか feature 内にインライン化
 
 ### 命名方針
 v2 の命名規則（`SyncXxxRequest` / `SyncXxxResponse`）に合わせる。
@@ -219,7 +215,7 @@ feature統合（T6）後に v1 の設計パターンに合わせて引き上げ�
 - upsert の `setWhere` 条件（LWW 判定）は sync ロジックとして usecase に移動
 
 #### 8-5. テスト拡充
-- **v1 のテストパターンに準拠**: Drizzle + インメモリ DB でのインテグレーションテスト
+- v1 のテストパターンに準拠: Drizzle + インメモリ DB でのインテグレーションテスト
 - 各ドメインに route テスト + usecase テストを追加
 - sync 特化テスト（LWW, serverWins）は維持しつつ、通常の CRUD テストを補完
 
@@ -239,16 +235,14 @@ feature統合（T6）後に v1 の設計パターンに合わせて引き上げ�
 ## T9: オフラインファースト同期アーキテクチャ再設計
 
 ### 目的
-`docs/todo/archived/offline-sync-redesign.md` の提案に基づき、同期アーキテクチャをゼロから再構築する。
-現行の複雑な同期システムをシンプルな設計に置き換える。
+現行の同期システムを削除し、シンプルな設計でゼロから再構築する。
 
-### 背景
-現行システムの問題:
-- 多層的アーキテクチャ（SyncManager, SyncQueue, hooks, adapters）の絡み合い
-- オンライン/オフラインで処理パスが分岐し複雑
-- CustomEvent ベースの通信で状態追跡困難
-- エンティティタイプごとの処理が汎用化されていない
-- テスト困難（モック対象が多すぎる）
+### 現行システムの問題
+- SyncManager, SyncQueue, hooks, adapters が多層的に絡み合い処理フローが追えない
+- オンライン/オフラインで処理パスが分岐し、エラーハンドリングが二重化
+- CustomEvent ベースの通信で状態追跡・デバッグが困難
+- エンティティタイプごとの処理が個別実装で汎用性がない
+- モック対象が多すぎてテスト困難
 
 ### 設計方針
 1. **シンプルさ優先** — 最小限の抽象化
@@ -259,33 +253,29 @@ feature統合（T6）後に v1 の設計パターンに合わせて引き上げ�
 ### フェーズ構成
 
 #### Phase A: 既存同期インフラの削除
-- `packages/frontend-shared/sync/` 削除
-- `apps/backend/feature/sync/` 削除（v1 バッチ同期 API）
-- 同期関連フック・サービスの削除
+- v1 バッチ同期 API（`feature/sync/`）の削除
+- 旧同期関連フック・サービスの削除
 - 同期キュー関連テーブルの削除（sync_metadata, sync_queue）
-- 削除後: 全操作が直接 API 呼び出し。オフライン時はエラー表示。
+- 削除後の状態: 全操作が直接 API 呼び出し。オフライン時はエラー表示。
+- ここで動作確認し、同期なしでアプリが壊れないことを保証
 
-#### Phase B: 最小限の同期実装
-- Zustand ストアで同期キューを管理（イベントベース廃止）
+#### Phase B: 最小限の同期実装（フロントエンド）
+- Zustand ストアで同期キューを管理（CustomEvent 廃止）
 - 汎用 `useSyncedMutation` フック（エンティティ非依存）
-- SimpleSyncManager（インターバル + online イベント）
+- SimpleSyncManager（インターバルポーリング + online イベントリスナー）
 - オフライン時: ローカル保存 + 楽観的更新
 - オンライン復帰時: 自動送信
 
 #### Phase C: バックエンド同期処理のリファクタ
-- EntitySyncStrategy パターン導入（エンティティごとの処理を分離）
+- EntitySyncStrategy パターン導入（エンティティごとの処理を Strategy に分離）
 - 共通 `processSyncItem` に CREATE/UPDATE/DELETE を集約
 - 冪等性チェック・コンフリクト解決の一元化
-- v2 の LWW / serverWins ロジックは Strategy 内に組み込む
+- T8 で整備した LWW / serverWins ロジックを Strategy 内に組み込む
 
 #### Phase D: 段階的な機能追加
 - バッチ処理
 - コンフリクト解決 UI
 - エラーハンドリング改善
-
-### 詳細設計
-`docs/todo/archived/offline-sync-redesign.md` を参照。
-コア型定義・フック設計・バックエンド Strategy パターンの実装例あり。
 
 ---
 
@@ -294,15 +284,15 @@ feature統合（T6）後に v1 の設計パターンに合わせて引き上げ�
 ```
 apps/
   backend/
-    feature/           ← 統合済み（v1専用 + v2移行済み）
-  frontend-v2/
+    feature/           ← 統合済み（v1専用 + v2移行済み、handler品質統一）
+  frontend-v2/         ← 同期アーキテクチャ刷新済み
   mobile-v2/
   tail-worker/         ← 維持
 
 packages/
   domain/              ← 純粋（Entity/VO/Rules）
-  types/               ← リクエスト/レスポンススキーマ（旧types-v2）
-  sync-engine/         ← 同期/mapper/http
+  types/               ← リクエスト/レスポンススキーマ（旧types-v2 + v1必要分）
+  sync-engine/         ← 同期/mapper/http（T9で再構築）
   platform/            ← 環境抽象
   frontend-shared/     ← UI非依存共有ロジック
 
@@ -313,33 +303,9 @@ infra/
   packages/api-contract/
   packages/types-v2/   （リネーム済み）
   packages/types/      （旧v1・削除済み）
+  feature-v2/          （feature/ に統合済み）
 ```
 
-`.npmrc` から `shamefully-hoist=true` が除去されている。
-
----
-
-## 関連ドキュメントとの対応
-
-### shared-code.md との対応
-
-| shared-code.md | 状態 | 本計画での対応 |
-|---|---|---|
-| #1 domain責務分離 | 実施済み | - |
-| #2 frontend-shared公開境界 | 未着手 | 本計画スコープ外（別途） |
-| #3 DI統一 | 未着手 | 本計画スコープ外（別途） |
-| #4 backend型逆参照解消 | api-contract経由で存在 | T3 で解消 |
-| #5 Zod重複削除 | 未確認 | 本計画スコープ外（独立実施可） |
-| #6 apiMapperサイレント補正 | 未着手 | 本計画スコープ外（別途） |
-| #7 v1/v2型統合 | 未着手 | T4, T5, T7 で実施 |
-| #8 platform抽象層 | 実施済み | - |
-| #9 domain index肥大化 | 部分的に解消 | 本計画スコープ外（別途） |
-
-### offline-sync-redesign.md との対応
-
-| 提案内容 | 本計画での対応 |
-|---|---|
-| フロントエンド同期簡素化 | T9 Phase A, B |
-| バックエンド Strategy パターン | T9 Phase C |
-| クリーンスレート移行戦略 | T9 Phase A（削除→検証→再構築） |
-| バッチ同期 API | T9 Phase D |
+- `.npmrc` から `shamefully-hoist=true` が除去されている
+- backend handler は v1 水準の品質（エラーハンドリング・バリデーション・テスト）が統一されている
+- 同期システムは Zustand + SimpleSyncManager のシンプルな構成に置き換わっている
