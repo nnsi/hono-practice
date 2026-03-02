@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import { createUseLogForm } from "@packages/frontend-shared/hooks/useLogForm";
+
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { useTimer } from "../../hooks/useTimer";
 import { activityLogRepository } from "../../repositories/activityLogRepository";

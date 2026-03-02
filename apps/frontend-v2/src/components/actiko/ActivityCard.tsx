@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import { Pencil } from "lucide-react";
+
 import type { DexieActivity, DexieActivityIconBlob } from "../../db/schema";
 
 export function ActivityCard({

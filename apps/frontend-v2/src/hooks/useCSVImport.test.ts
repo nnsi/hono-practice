@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   autoDetectMapping,
   detectEncoding,
@@ -6,6 +5,7 @@ import {
   validateDate,
   validateQuantity,
 } from "@packages/domain/csv/csvParser";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("autoDetectMapping", () => {
   // --- 英語ヘッダー ---

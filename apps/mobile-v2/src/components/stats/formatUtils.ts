@@ -3,10 +3,7 @@ export function roundQuantity(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-export function formatQuantityWithUnit(
-  quantity: number,
-  unit: string,
-): string {
+export function formatQuantityWithUnit(quantity: number, unit: string): string {
   if (unit === "時間" || unit === "hour" || unit === "hours") {
     const hours = Math.floor(quantity);
     const minutes = Math.round((quantity - hours) * 60);

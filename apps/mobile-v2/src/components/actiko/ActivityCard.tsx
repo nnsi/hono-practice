@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { View, TouchableOpacity, Text, Image } from "react-native";
+
 import { Pencil } from "lucide-react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 type IconBlob = {
   activityId: string;

@@ -1,4 +1,3 @@
-import type { AppType } from "@packages/api-contract";
 import {
   type CreateApiKeyRequest,
   CreateApiKeyRequestSchema,
@@ -8,6 +7,7 @@ import {
   type GetApiKeysResponse,
   GetApiKeysResponseSchema,
 } from "@dtos/response";
+import type { AppType } from "@packages/api-contract";
 import {
   type UseMutationResult,
   type UseQueryResult,

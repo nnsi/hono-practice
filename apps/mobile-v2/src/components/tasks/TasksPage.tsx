@@ -1,10 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react-native";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TaskGroup } from "./TaskGroup";
+
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { TaskGroup } from "./TaskGroup";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
@@ -74,7 +75,10 @@ export function TasksPage() {
       {/* Content */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 80 + insets.bottom }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 80 + insets.bottom,
+        }}
       >
         {activeTab === "active" && (
           <View className="gap-6">
@@ -85,9 +89,7 @@ export function TasksPage() {
                   onPress={() => setCreateDialogOpen(true)}
                   className="px-4 py-2 bg-blue-600 rounded-lg"
                 >
-                  <Text className="text-white text-sm">
-                    最初のタスクを作成
-                  </Text>
+                  <Text className="text-white text-sm">最初のタスクを作成</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -252,9 +254,7 @@ export function TasksPage() {
                 className="py-5 border-2 border-dashed border-gray-300 rounded-xl bg-white flex-row items-center justify-center gap-2"
               >
                 <Plus size={18} color="#9ca3af" />
-                <Text className="text-sm text-gray-500">
-                  新規タスクを追加
-                </Text>
+                <Text className="text-sm text-gray-500">新規タスクを追加</Text>
               </TouchableOpacity>
             )}
           </View>

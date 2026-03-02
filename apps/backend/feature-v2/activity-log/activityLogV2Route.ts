@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
-import type { AppContext } from "../../context";
-import { noopTracer } from "../../lib/tracer";
 import { SyncActivityLogsRequestSchema } from "@packages/types-v2";
 
+import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { newActivityLogV2Handler } from "./activityLogV2Handler";
 import { newActivityLogV2Repository } from "./activityLogV2Repository";
 import { newActivityLogV2Usecase } from "./activityLogV2Usecase";

@@ -1,7 +1,10 @@
-import type { ApiKey, CreateApiKeyData } from "@packages/domain/apiKey/apiKeySchema";
-import { createApiKeyId } from "@packages/domain/apiKey/apiKeySchema";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 import { noopTracer } from "@backend/lib/tracer";
+import type {
+  ApiKey,
+  CreateApiKeyData,
+} from "@packages/domain/apiKey/apiKeySchema";
+import { createApiKeyId } from "@packages/domain/apiKey/apiKeySchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 

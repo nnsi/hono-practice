@@ -1,6 +1,7 @@
-import { DomainValidateError } from "../errors";
 import { v7 } from "uuid";
 import { z } from "zod";
+
+import { DomainValidateError } from "../errors";
 
 export const userIdSchema = z.string().uuid().brand<"UserId">();
 

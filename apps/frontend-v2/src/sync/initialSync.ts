@@ -1,10 +1,4 @@
 import type { StorageAdapter } from "@packages/platform";
-import { activityRepository } from "../db/activityRepository";
-import { activityLogRepository } from "../db/activityLogRepository";
-import { goalRepository } from "../db/goalRepository";
-import { taskRepository } from "../db/taskRepository";
-import { db } from "../db/schema";
-import { apiClient } from "../utils/apiClient";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -12,11 +6,20 @@ import {
   mapApiGoal,
   mapApiTask,
 } from "@packages/sync-engine";
+
+import { activityLogRepository } from "../db/activityLogRepository";
+import { activityRepository } from "../db/activityRepository";
+import { goalRepository } from "../db/goalRepository";
+import { db } from "../db/schema";
+import { taskRepository } from "../db/taskRepository";
+import { apiClient } from "../utils/apiClient";
 import { webStorageAdapter } from "./webPlatformAdapters";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
-export async function clearLocalData(storage: StorageAdapter = webStorageAdapter) {
+export async function clearLocalData(
+  storage: StorageAdapter = webStorageAdapter,
+) {
   await db.activityLogs.clear();
   await db.activities.clear();
   await db.activityKinds.clear();
@@ -30,7 +33,10 @@ export async function clearLocalData(storage: StorageAdapter = webStorageAdapter
   storage.removeItem(LAST_SYNCED_KEY);
 }
 
-export async function performInitialSync(userId: string, storage: StorageAdapter = webStorageAdapter) {
+export async function performInitialSync(
+  userId: string,
+  storage: StorageAdapter = webStorageAdapter,
+) {
   // authState を更新
   await db.authState.put({
     id: "current",
@@ -95,9 +101,7 @@ export async function performInitialSync(userId: string, storage: StorageAdapter
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
-      await goalRepository.upsertGoalsFromServer(
-        data.goals.map(mapApiGoal),
-      );
+      await goalRepository.upsertGoalsFromServer(data.goals.map(mapApiGoal));
     }
   } else {
     allSynced = false;
@@ -107,9 +111,7 @@ export async function performInitialSync(userId: string, storage: StorageAdapter
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
-      await taskRepository.upsertTasksFromServer(
-        data.tasks.map(mapApiTask),
-      );
+      await taskRepository.upsertTasksFromServer(data.tasks.map(mapApiTask));
     }
   } else {
     allSynced = false;

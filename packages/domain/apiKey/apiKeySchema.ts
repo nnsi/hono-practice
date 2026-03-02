@@ -1,6 +1,7 @@
-import { DomainValidateError } from "../errors";
 import { v7 } from "uuid";
 import { z } from "zod";
+
+import { DomainValidateError } from "../errors";
 
 export const apiKeyIdSchema = z.string().uuid().brand<"ApiKeyId">();
 

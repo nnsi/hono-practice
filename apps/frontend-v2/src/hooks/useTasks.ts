@@ -1,10 +1,11 @@
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/schema";
 import {
   isActiveTask,
   isArchivedTask,
   isTaskVisibleOnDate,
 } from "@packages/domain/task/taskPredicates";
+import { useLiveQuery } from "dexie-react-hooks";
+
+import { db } from "../db/schema";
 
 export function useActiveTasks() {
   const tasks = useLiveQuery(() =>
@@ -27,10 +28,7 @@ export function useArchivedTasks() {
 
 export function useTasksByDate(date: string) {
   const tasks = useLiveQuery(
-    () =>
-      db.tasks
-        .filter((t) => isTaskVisibleOnDate(t, date))
-        .toArray(),
+    () => db.tasks.filter((t) => isTaskVisibleOnDate(t, date)).toArray(),
     [date],
   );
 

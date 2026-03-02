@@ -1,6 +1,7 @@
-import { DomainValidateError } from "../errors";
 import { v7 } from "uuid";
 import { z } from "zod";
+
+import { DomainValidateError } from "../errors";
 import { userIdSchema } from "../user/userSchema";
 
 // TaskId
@@ -78,9 +79,7 @@ export function createArchivedTaskEntity(
 ): ArchivedTask {
   const parsedEntity = ArchivedTaskSchema.safeParse(params);
   if (!parsedEntity.success) {
-    throw new DomainValidateError(
-      "createArchivedTaskEntity: invalid params",
-    );
+    throw new DomainValidateError("createArchivedTaskEntity: invalid params");
   }
 
   return parsedEntity.data;

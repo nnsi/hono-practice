@@ -1,25 +1,18 @@
-import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
-
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { tasks } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskRequest } from "@packages/types-v2";
-import { tasks } from "@infra/drizzle/schema";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type TaskRow = typeof tasks.$inferSelect;
 
 export type TaskV2Repository = {
-  getTasksByUserId: (
-    userId: UserId,
-    since?: string,
-  ) => Promise<TaskRow[]>;
+  getTasksByUserId: (userId: UserId, since?: string) => Promise<TaskRow[]>;
   upsertTasks: (
     userId: UserId,
     validTasks: UpsertTaskRequest[],
   ) => Promise<TaskRow[]>;
-  getTasksByIds: (
-    userId: UserId,
-    ids: string[],
-  ) => Promise<TaskRow[]>;
+  getTasksByIds: (userId: UserId, ids: string[]) => Promise<TaskRow[]>;
 };
 
 export function newTaskV2Repository(db: QueryExecutor): TaskV2Repository {

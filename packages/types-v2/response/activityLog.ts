@@ -1,11 +1,11 @@
-import type { ActivityLog } from "@packages/domain"
+import type { ActivityLog } from "@packages/domain";
 
 export type SyncActivityLogsResponse = {
-  syncedIds: string[]
-  serverWins: ActivityLog[]
-  skippedIds: string[]
-}
+  syncedIds: string[];
+  serverWins: ActivityLog[];
+  skippedIds: string[];
+};
 
 export type GetActivityLogsResponse = {
-  logs: ActivityLog[]
-}
+  logs: ActivityLog[];
+};

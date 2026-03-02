@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type TimerPersistData = {
   activityId: string;
@@ -58,7 +58,10 @@ export function useTimer(activityId: string) {
     // 他のタイマーが動作中かチェック
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith(STORAGE_PREFIX) && key !== getStorageKey(activityId)) {
+      if (
+        key?.startsWith(STORAGE_PREFIX) &&
+        key !== getStorageKey(activityId)
+      ) {
         try {
           const data: TimerPersistData = JSON.parse(
             localStorage.getItem(key) || "",

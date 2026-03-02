@@ -1,12 +1,14 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import type { DexieActivity, SyncStatus } from "../../db/schema";
 
 /** テスト用のフォームイベント。handleManualSubmit が使うのは preventDefault のみ */
-const createFormEvent = () => ({ preventDefault: vi.fn() }) as Pick<
-  React.FormEvent<HTMLFormElement>,
-  "preventDefault"
-> as React.FormEvent<HTMLFormElement>;
+const createFormEvent = () =>
+  ({ preventDefault: vi.fn() }) as Pick<
+    React.FormEvent<HTMLFormElement>,
+    "preventDefault"
+  > as React.FormEvent<HTMLFormElement>;
 
 vi.mock("../../hooks/useActivityKinds", () => ({
   useActivityKinds: vi.fn(() => ({ kinds: [] })),
@@ -36,15 +38,13 @@ vi.mock("../../sync/syncEngine", () => ({
   },
 }));
 
+import { activityLogRepository } from "../../db/activityLogRepository";
+import { useTimer } from "../../hooks/useTimer";
+import { syncEngine } from "../../sync/syncEngine";
 // Import after mocks
 import { useLogForm } from "./useLogForm";
-import { useTimer } from "../../hooks/useTimer";
-import { activityLogRepository } from "../../db/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
 
-function createActivity(
-  overrides: Partial<DexieActivity> = {},
-): DexieActivity {
+function createActivity(overrides: Partial<DexieActivity> = {}): DexieActivity {
   return {
     id: "act-1",
     userId: "user-1",

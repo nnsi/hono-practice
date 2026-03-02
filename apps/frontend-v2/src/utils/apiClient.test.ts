@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock hono/client at top level (hc is called at module level)
 vi.mock("hono/client", () => ({ hc: vi.fn(() => ({})) }));
@@ -8,7 +8,7 @@ vi.mock("@backend/app", () => ({}));
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { setToken, clearToken, customFetch, apiLogin } from "./apiClient";
+import { apiLogin, clearToken, customFetch, setToken } from "./apiClient";
 
 describe("apiClient", () => {
   beforeEach(() => {
@@ -112,9 +112,7 @@ describe("apiClient", () => {
         new Response("unauthorized", { status: 401 }),
       );
       // Token refresh fails
-      mockFetch.mockResolvedValueOnce(
-        new Response("error", { status: 500 }),
-      );
+      mockFetch.mockResolvedValueOnce(new Response("error", { status: 500 }));
 
       const res = await customFetch("http://localhost:3456/users/me", {});
 
@@ -207,9 +205,7 @@ describe("apiClient", () => {
     });
 
     it("failed login throws error", async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response("bad", { status: 401 }),
-      );
+      mockFetch.mockResolvedValueOnce(new Response("bad", { status: 401 }));
 
       await expect(apiLogin("user1", "wrong")).rejects.toThrow("Login failed");
     });

@@ -1,13 +1,8 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Switch,
-} from "react-native";
-import { ImagePlus, ImageOff } from "lucide-react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { ImageOff, ImagePlus } from "lucide-react-native";
+import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { EmojiPicker } from "../common/EmojiPicker";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
 type Activity = {
@@ -61,7 +56,11 @@ export function EditActivityDialog({
   if (!activity) return null;
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title="アクティビティ編集">
+    <ModalOverlay
+      visible={visible}
+      onClose={onClose}
+      title="アクティビティ編集"
+    >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
 
@@ -156,9 +155,7 @@ export function EditActivityDialog({
           </TouchableOpacity>
         </View>
 
-        {error ? (
-          <Text className="text-red-500 text-sm">{error}</Text>
-        ) : null}
+        {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
 
         {/* Save + Delete buttons */}
         <View className="flex-row gap-2 mt-2">
@@ -189,9 +186,7 @@ export function EditActivityDialog({
               onPress={handleDelete}
               disabled={isSubmitting}
             >
-              <Text className="text-white font-medium text-sm">
-                本当に削除
-              </Text>
+              <Text className="text-white font-medium text-sm">本当に削除</Text>
             </TouchableOpacity>
           )}
         </View>

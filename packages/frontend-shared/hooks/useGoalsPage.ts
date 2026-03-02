@@ -1,10 +1,14 @@
+import {
+  isGoalActive,
+  isGoalEnded,
+} from "@packages/domain/goal/goalPredicates";
 import dayjs from "dayjs";
-import { isGoalActive, isGoalEnded } from "@packages/domain/goal/goalPredicates";
+
 import type {
-  ReactHooks,
   ActivityBase,
-  Goal,
   CreateGoalPayload,
+  Goal,
+  ReactHooks,
   UpdateGoalPayload,
 } from "./types";
 

@@ -1,5 +1,1 @@
-export class DomainValidateError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
+export class DomainValidateError extends Error {}

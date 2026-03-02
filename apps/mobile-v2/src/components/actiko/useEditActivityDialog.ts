@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import * as DocumentPicker from "expo-document-picker";
-import { readAsStringAsync, EncodingType } from "expo-file-system/legacy";
+import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
+
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
 import { COLOR_PALETTE } from "../stats/colorUtils";

@@ -1,12 +1,15 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { apiKeys } from "@infra/drizzle/schema";
 import type {
   ApiKey,
   ApiKeyId,
   CreateApiKeyData,
   UpdateApiKeyData,
 } from "@packages/domain/apiKey/apiKeySchema";
-import { createApiKeyId, hashApiKey } from "@packages/domain/apiKey/apiKeySchema";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { apiKeys } from "@infra/drizzle/schema";
+import {
+  createApiKeyId,
+  hashApiKey,
+} from "@packages/domain/apiKey/apiKeySchema";
 import { and, eq, isNull } from "drizzle-orm";
 
 export type ApiKeyRepository<T = any> = {

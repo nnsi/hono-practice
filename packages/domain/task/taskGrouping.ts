@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
+
 import type { GroupedTasks, GroupingOptions, TaskItem } from "./types";
 
 dayjs.extend(isBetween);
@@ -60,10 +61,7 @@ export function groupTasksByTimeline(
       (!dueDate || dueDate.isAfter(todayDate))
     ) {
       groups.inProgress.push(task);
-    } else if (
-      dueDate?.isAfter(todayDate) &&
-      dueDate.isBefore(nextWeek)
-    ) {
+    } else if (dueDate?.isAfter(todayDate) && dueDate.isBefore(nextWeek)) {
       groups.dueThisWeek.push(task);
     } else if (startDate?.isAfter(todayDate)) {
       groups.notStarted.push(task);

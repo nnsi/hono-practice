@@ -1,5 +1,3 @@
-import type { ActivityId } from "@packages/domain/activity/activitySchema";
-import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError } from "@backend/error";
 import type { CreateActivityRequest } from "@dtos/request/CreateActivityRequest";
 import type {
@@ -10,6 +8,8 @@ import {
   GetActivitiesResponseSchema,
   GetActivityResponseSchema,
 } from "@dtos/response/GetActivitiesResponse";
+import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityUsecase } from ".";
 

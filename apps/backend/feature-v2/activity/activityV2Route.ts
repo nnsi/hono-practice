@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
-import type { AppContext } from "../../context";
-import { noopTracer } from "../../lib/tracer";
 import { SyncActivitiesRequestSchema } from "@packages/types-v2";
 
+import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { newActivityV2Handler } from "./activityV2Handler";
 import { newActivityV2Repository } from "./activityV2Repository";
 import { newActivityV2Usecase } from "./activityV2Usecase";
@@ -45,8 +45,7 @@ export function createActivityV2Route() {
           400,
         );
       }
-      const { activities: activityList, activityKinds: kindList } =
-        parsed.data;
+      const { activities: activityList, activityKinds: kindList } = parsed.data;
       const userId = c.get("userId");
       const res = await c.var.h.syncActivities(userId, activityList, kindList);
       return c.json(res);

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./syncActivities", () => ({
   syncActivities: vi.fn().mockResolvedValue(undefined),
@@ -21,9 +21,9 @@ import {
   syncActivityIcons,
 } from "./syncActivities";
 import { syncActivityLogs } from "./syncActivityLogs";
+import { syncEngine } from "./syncEngine";
 import { syncGoals } from "./syncGoals";
 import { syncTasks } from "./syncTasks";
-import { syncEngine } from "./syncEngine";
 
 const mockSyncActivities = vi.mocked(syncActivities);
 const mockSyncActivityIconDeletions = vi.mocked(syncActivityIconDeletions);
@@ -89,9 +89,7 @@ describe("syncEngine", () => {
         resolveFirst = r;
       });
 
-      mockSyncActivityIconDeletions.mockImplementation(
-        () => firstBlocks,
-      );
+      mockSyncActivityIconDeletions.mockImplementation(() => firstBlocks);
 
       // Start first sync (will block on iconDeletions)
       const first = syncEngine.syncAll();
@@ -129,9 +127,7 @@ describe("syncEngine", () => {
 
     it("resets retryCount on success", async () => {
       // First call fails
-      mockSyncActivityIconDeletions.mockRejectedValueOnce(
-        new Error("fail"),
-      );
+      mockSyncActivityIconDeletions.mockRejectedValueOnce(new Error("fail"));
       await syncEngine.syncAll();
 
       // Second call succeeds - retryCount resets

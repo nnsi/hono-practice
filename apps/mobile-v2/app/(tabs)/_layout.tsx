@@ -1,16 +1,16 @@
-import { Tabs, useRouter } from "expo-router";
-import {
-  LayoutGrid,
-  CalendarDays,
-  Target,
-  BarChart3,
-  CheckSquare,
-  Settings,
-} from "lucide-react-native";
-import { TouchableOpacity, View, Text, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { Tabs, useRouter } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
+import {
+  BarChart3,
+  CalendarDays,
+  CheckSquare,
+  LayoutGrid,
+  Settings,
+  Target,
+} from "lucide-react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TAB_ITEMS: {
   name: string;
@@ -60,10 +60,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               paddingVertical: 4,
             }}
           >
-            <Icon
-              size={20}
-              color={isActive ? "#d97706" : "#a8a29e"}
-            />
+            <Icon size={20} color={isActive ? "#d97706" : "#a8a29e"} />
             <Text
               style={{
                 fontSize: 10,

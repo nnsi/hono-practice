@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+
 import { useLiveQuery } from "dexie-react-hooks";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
+
 import { activityRepository } from "../../db/activityRepository";
-import { syncEngine } from "../../sync/syncEngine";
-import { resizeImage } from "../../utils/imageResizer";
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
+import { useActivityKinds } from "../../hooks/useActivityKinds";
+import { syncEngine } from "../../sync/syncEngine";
+import { resizeImage } from "../../utils/imageResizer";
 import type { IconSelectorValue } from "./IconTypeSelector";
 
 export function useEditActivityDialog(

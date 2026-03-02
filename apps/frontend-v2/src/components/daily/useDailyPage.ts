@@ -1,15 +1,20 @@
-import { useState, useMemo, useCallback } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback, useMemo, useState } from "react";
+
 import { createUseDailyPage } from "@packages/frontend-shared/hooks/useDailyPage";
+import { useLiveQuery } from "dexie-react-hooks";
+
+import type { DexieActivity, DexieActivityKind } from "../../db/schema";
+import { db } from "../../db/schema";
+import { taskRepository } from "../../db/taskRepository";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { useTasksByDate } from "../../hooks/useTasks";
-import { taskRepository } from "../../db/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import { db } from "../../db/schema";
-import type { DexieActivity, DexieActivityKind } from "../../db/schema";
 
-export const useDailyPage = createUseDailyPage<DexieActivity, DexieActivityKind>({
+export const useDailyPage = createUseDailyPage<
+  DexieActivity,
+  DexieActivityKind
+>({
   react: { useState, useMemo, useCallback },
   useActivities,
   useActivityLogsByDate,

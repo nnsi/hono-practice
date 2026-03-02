@@ -1,6 +1,6 @@
 import type {
-  ActivityRecord,
   ActivityKindRecord,
+  ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";

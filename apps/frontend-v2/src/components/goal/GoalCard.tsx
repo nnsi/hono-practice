@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import { getInactiveDates } from "@packages/domain/goal/goalStats";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
-
 import {
   ChevronDown,
   ChevronUp,
@@ -9,15 +11,14 @@ import {
   PlusCircle,
   Trash2,
 } from "lucide-react";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import { getInactiveDates } from "@packages/domain/goal/goalStats";
-import { db, type DexieActivity } from "../../db/schema";
+
 import { goalRepository } from "../../db/goalRepository";
+import { type DexieActivity, db } from "../../db/schema";
 import { syncEngine } from "../../sync/syncEngine";
-import type { Goal, UpdateGoalPayload } from "./types";
 import { getActivityIcon } from "./activityHelpers";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatsDetail } from "./GoalStatsDetail";
+import type { Goal, UpdateGoalPayload } from "./types";
 
 // --- C. ステータスバッジ ---
 type StatusBadge = { label: string; className: string };
@@ -41,11 +42,12 @@ function getStatusBadge(
 
 // --- D. グラデーション背景 ---
 function progressGradient(completionPercent: number, balance: number): string {
-  const color = balance > 0
-    ? "rgba(34, 197, 94, 0.2)"
-    : balance < 0
-      ? "rgba(239, 68, 68, 0.2)"
-      : "rgba(156, 163, 175, 0.2)";
+  const color =
+    balance > 0
+      ? "rgba(34, 197, 94, 0.2)"
+      : balance < 0
+        ? "rgba(239, 68, 68, 0.2)"
+        : "rgba(156, 163, 175, 0.2)";
   return `linear-gradient(to right, ${color} ${completionPercent}%, white ${completionPercent}%)`;
 }
 
@@ -83,7 +85,8 @@ export function GoalCard({
   const inlineInputRef = useRef<HTMLInputElement>(null);
 
   const today = dayjs().format("YYYY-MM-DD");
-  const actualEndDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
+  const actualEndDate =
+    goal.endDate && goal.endDate < today ? goal.endDate : today;
 
   const totalDays = useMemo(() => {
     const start = dayjs(goal.startDate);
@@ -144,35 +147,50 @@ export function GoalCard({
     }
   }, []);
 
-  const monthStart = useMemo(() => dayjs().startOf("month").format("YYYY-MM-DD"), []);
-  const monthEnd = useMemo(() => dayjs().endOf("month").format("YYYY-MM-DD"), []);
+  const monthStart = useMemo(
+    () => dayjs().startOf("month").format("YYYY-MM-DD"),
+    [],
+  );
+  const monthEnd = useMemo(
+    () => dayjs().endOf("month").format("YYYY-MM-DD"),
+    [],
+  );
 
   const effectiveStart = useMemo(
     () => (goal.startDate > monthStart ? goal.startDate : monthStart),
     [goal.startDate, monthStart],
   );
   const effectiveEnd = useMemo(() => {
-    const end = goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
+    const end =
+      goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
     return end > today ? today : end;
   }, [goal.endDate, monthEnd, today]);
 
-  const monthLogs = useLiveQuery(
-    () => {
-      if (!showInactiveDatesEnabled) return [];
-      return db.activityLogs
-        .where("date")
-        .between(effectiveStart, effectiveEnd, true, true)
-        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
-        .toArray();
-    },
-    [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled],
-  );
+  const monthLogs = useLiveQuery(() => {
+    if (!showInactiveDatesEnabled) return [];
+    return db.activityLogs
+      .where("date")
+      .between(effectiveStart, effectiveEnd, true, true)
+      .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
+      .toArray();
+  }, [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled]);
 
   const inactiveDates = useMemo(() => {
     if (!showInactiveDatesEnabled || !monthLogs) return [];
-    const monthGoal = { ...goal, startDate: effectiveStart, endDate: effectiveEnd };
+    const monthGoal = {
+      ...goal,
+      startDate: effectiveStart,
+      endDate: effectiveEnd,
+    };
     return getInactiveDates(monthGoal, monthLogs, today);
-  }, [showInactiveDatesEnabled, monthLogs, effectiveStart, effectiveEnd, goal, today]);
+  }, [
+    showInactiveDatesEnabled,
+    monthLogs,
+    effectiveStart,
+    effectiveEnd,
+    goal,
+    today,
+  ]);
 
   const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
 
@@ -203,7 +221,8 @@ export function GoalCard({
   const commitInlineEdit = useCallback(async () => {
     setInlineEditing(false);
     const num = Number(inlineValue);
-    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity) return;
+    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity)
+      return;
     await goalRepository.updateGoal(goal.id, { dailyTargetQuantity: num });
     syncEngine.syncGoals();
   }, [inlineValue, goal.id, goal.dailyTargetQuantity]);
@@ -246,7 +265,9 @@ export function GoalCard({
         role="button"
         tabIndex={0}
         onClick={onToggleExpand}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggleExpand(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onToggleExpand();
+        }}
         className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50/50 transition-colors cursor-pointer"
       >
         {/* アクティビティアイコン */}
@@ -308,10 +329,17 @@ export function GoalCard({
 
         {/* 右側 */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className={`text-[11px] font-medium text-right leading-tight ${balanceColor}`}>
-            <span className="whitespace-nowrap">{localBalance < 0 ? "-" : "+"}{Math.abs(localBalance).toLocaleString()}</span>
+          <span
+            className={`text-[11px] font-medium text-right leading-tight ${balanceColor}`}
+          >
+            <span className="whitespace-nowrap">
+              {localBalance < 0 ? "-" : "+"}
+              {Math.abs(localBalance).toLocaleString()}
+            </span>
             <br className="sm:hidden" />
-            <span className="text-[10px] sm:ml-0.5">{activity?.quantityUnit ?? ""}</span>
+            <span className="text-[10px] sm:ml-0.5">
+              {activity?.quantityUnit ?? ""}
+            </span>
           </span>
           {/* A. 直接ログ作成ボタン */}
           {!isPast && onRecordOpen && (
@@ -352,7 +380,10 @@ export function GoalCard({
             </button>
           )}
           {isPast && showDeleteConfirm && (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 type="button"
                 onClick={handleDelete}
@@ -399,10 +430,15 @@ export function GoalCard({
           {inactiveDates.slice(0, 3).map((date, index) => (
             <span key={date}>
               {index > 0 && ", "}
-              {new Date(date).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+              {new Date(date).toLocaleDateString("ja-JP", {
+                month: "numeric",
+                day: "numeric",
+              })}
             </span>
           ))}
-          {inactiveDates.length > 3 && <span> 他{inactiveDates.length - 3}日</span>}
+          {inactiveDates.length > 3 && (
+            <span> 他{inactiveDates.length - 3}日</span>
+          )}
         </div>
       )}
 

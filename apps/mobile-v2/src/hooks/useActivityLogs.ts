@@ -5,7 +5,7 @@ export function useActivityLogsByDate(date: string) {
   const logs = useLiveQuery(
     "activity_logs",
     () => activityLogRepository.getActivityLogsByDate(date),
-    [date]
+    [date],
   );
   return { logs: logs ?? [] };
 }

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Trash2 } from "lucide-react-native";
+
 import type { ApiKeyResponse } from "@dtos/response";
 import dayjs from "dayjs";
+import { Trash2 } from "lucide-react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 export function ApiKeyList({
   apiKeys,
@@ -49,7 +50,9 @@ export function ApiKeyList({
       {apiKeys.map((apiKey) => (
         <View key={apiKey.id} className="border-t border-gray-100 px-4 py-3">
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-gray-900">{apiKey.name}</Text>
+            <Text className="text-sm font-medium text-gray-900">
+              {apiKey.name}
+            </Text>
             {confirmDeleteId === apiKey.id ? (
               <View className="flex-row items-center gap-1.5">
                 <TouchableOpacity
@@ -82,11 +85,15 @@ export function ApiKeyList({
           </View>
           <View className="mt-1.5 bg-gray-50 px-2 py-1 rounded">
             <Text className="text-xs text-gray-400 font-mono">
-              {apiKey.key.startsWith("api_") ? apiKey.key : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
+              {apiKey.key.startsWith("api_")
+                ? apiKey.key
+                : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
             </Text>
           </View>
           <View className="flex-row gap-3 mt-1.5">
-            <Text className="text-xs text-gray-400">作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}</Text>
+            <Text className="text-xs text-gray-400">
+              作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}
+            </Text>
             {apiKey.lastUsedAt && (
               <Text className="text-xs text-gray-400">
                 最終使用: {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}

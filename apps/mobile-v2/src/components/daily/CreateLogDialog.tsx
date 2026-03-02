@@ -1,15 +1,17 @@
 import { useState } from "react";
+
+import { ChevronLeft, X } from "lucide-react-native";
 import {
-  View,
+  Modal,
+  Pressable,
+  ScrollView,
   Text,
   TouchableOpacity,
-  Modal,
-  ScrollView,
-  Pressable,
+  View,
 } from "react-native";
-import { ChevronLeft, X } from "lucide-react-native";
-import { LogFormBody } from "../common/LogFormBody";
+
 import { useActivities } from "../../hooks/useActivities";
+import { LogFormBody } from "../common/LogFormBody";
 
 type Activity = {
   id: string;
@@ -80,7 +82,10 @@ export function CreateLogDialog({
                   {selectedActivity.name}
                 </Text>
               </View>
-              <TouchableOpacity onPress={handleClose} className="p-1.5 rounded-lg">
+              <TouchableOpacity
+                onPress={handleClose}
+                className="p-1.5 rounded-lg"
+              >
                 <X size={20} color="#78716c" />
               </TouchableOpacity>
             </View>
@@ -126,7 +131,10 @@ export function CreateLogDialog({
             <Text className="text-lg font-bold text-gray-900">
               アクティビティを選択
             </Text>
-            <TouchableOpacity onPress={handleClose} className="p-1.5 rounded-lg">
+            <TouchableOpacity
+              onPress={handleClose}
+              className="p-1.5 rounded-lg"
+            >
               <X size={20} color="#78716c" />
             </TouchableOpacity>
           </View>

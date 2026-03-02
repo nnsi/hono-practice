@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+
 import { useRouter } from "expo-router";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { useAuthContext } from "../../../app/_layout";
 
 export function CreateUserForm() {

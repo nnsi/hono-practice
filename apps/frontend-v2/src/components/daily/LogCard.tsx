@@ -1,8 +1,9 @@
 import { Loader2 } from "lucide-react";
+
 import type {
   DexieActivity,
-  DexieActivityLog,
   DexieActivityKind,
+  DexieActivityLog,
 } from "../../db/schema";
 
 export function LogCard({
@@ -63,7 +64,10 @@ export function LogCard({
             </span>
           )}
           {isPending && (
-            <Loader2 size={14} className="text-orange-500 animate-spin shrink-0" />
+            <Loader2
+              size={14}
+              className="text-orange-500 animate-spin shrink-0"
+            />
           )}
         </div>
         <div className="text-sm text-gray-500">

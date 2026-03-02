@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
+
+import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { COLOR_PALETTE } from "../stats/colorUtils";
-import type { DexieActivity } from "../../db/schema";
 import { IconTypeSelector } from "./IconTypeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
@@ -101,10 +102,7 @@ export function EditActivityDialog({
           <div>
             <div className="text-sm font-medium text-gray-600 mb-2">種類</div>
             {kinds.map((kind, i) => (
-              <div
-                key={kind.id ?? i}
-                className="flex gap-2 mb-2 items-center"
-              >
+              <div key={kind.id ?? i} className="flex gap-2 mb-2 items-center">
                 <input
                   type="text"
                   value={kind.name}
@@ -145,8 +143,13 @@ export function EditActivityDialog({
               type="button"
               onClick={() =>
                 setKinds((prev) => {
-                  const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
-                  const nextColor = COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ?? COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
+                  const usedColors = new Set(
+                    prev.map((k) => k.color.toUpperCase()),
+                  );
+                  const nextColor =
+                    COLOR_PALETTE.find(
+                      (c) => !usedColors.has(c.toUpperCase()),
+                    ) ?? COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
                   return [...prev, { name: "", color: nextColor }];
                 })
               }

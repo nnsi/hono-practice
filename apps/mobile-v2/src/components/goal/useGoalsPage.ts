@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import { createUseGoalsPage } from "@packages/frontend-shared/hooks/useGoalsPage";
+import { useMemo, useState } from "react";
+
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { createUseGoalsPage } from "@packages/frontend-shared/hooks/useGoalsPage";
+
 import { useActivities } from "../../hooks/useActivities";
 import { useGoals } from "../../hooks/useGoals";
 import { goalRepository } from "../../repositories/goalRepository";

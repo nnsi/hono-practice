@@ -1,3 +1,5 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { userSubscriptions } from "@infra/drizzle/schema";
 import {
   type Subscription,
   type SubscriptionId,
@@ -5,8 +7,6 @@ import {
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { userSubscriptions } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export type SubscriptionRepository<T = any> = {

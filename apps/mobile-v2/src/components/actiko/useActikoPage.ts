@@ -1,13 +1,16 @@
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+
 import { createUseActikoPage } from "@packages/frontend-shared/hooks/useActikoPage";
+
+import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { useLiveQuery } from "../../db/useLiveQuery";
 import { activityRepository } from "../../repositories/activityRepository";
 
-type Activity = import("@packages/domain/activity/activityRecord").ActivityRecord & {
-  _syncStatus: string;
-};
+type Activity =
+  import("@packages/domain/activity/activityRecord").ActivityRecord & {
+    _syncStatus: string;
+  };
 
 type IconBlob = {
   activityId: string;

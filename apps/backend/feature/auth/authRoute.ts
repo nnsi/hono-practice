@@ -22,7 +22,6 @@ import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
-
 export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   const app = new Hono<
     AppContext & {
@@ -189,8 +188,10 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID } = c.env;
         const body = c.req.valid("json");
 
-        const { user, token, refreshToken } =
-          await c.var.h.googleLoginWithUser(body, GOOGLE_OAUTH_CLIENT_ID);
+        const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
+          body,
+          GOOGLE_OAUTH_CLIENT_ID,
+        );
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";
         setCookie(c, "refresh_token", refreshToken, {

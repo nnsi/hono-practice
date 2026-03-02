@@ -234,11 +234,18 @@ describe("goalV2Usecase", () => {
     });
 
     test("upsertで返らなかったID → serverWinsとして返す", async () => {
-      const req1 = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000001" });
-      const req2 = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000002" });
+      const req1 = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const req2 = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000002",
+      });
 
       const row1 = makeGoalRow({ id: req1.id });
-      const serverRow2 = makeGoalRow({ id: req2.id, description: "server ver" });
+      const serverRow2 = makeGoalRow({
+        id: req2.id,
+        description: "server ver",
+      });
 
       const repo = createMockRepo({
         upsertGoals: vi.fn().mockResolvedValue([row1]),
@@ -254,7 +261,9 @@ describe("goalV2Usecase", () => {
     });
 
     test("upsertで返らず、getByIdsでも見つからない → skippedIds", async () => {
-      const req = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000099" });
+      const req = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000099",
+      });
       const repo = createMockRepo({
         upsertGoals: vi.fn().mockResolvedValue([]),
         getGoalsByIds: vi.fn().mockResolvedValue([]),
@@ -268,15 +277,22 @@ describe("goalV2Usecase", () => {
     });
 
     test("混合: synced + serverWins + skipped(所有権)", async () => {
-      const reqSynced = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000001" });
-      const reqServerWin = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000002" });
+      const reqSynced = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const reqServerWin = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000002",
+      });
       const reqNotOwned = makeUpsertRequest({
         id: "10000000-0000-4000-8000-000000000003",
         activityId: "99999999-9999-4999-9999-999999999999",
       });
 
       const syncedRow = makeGoalRow({ id: reqSynced.id });
-      const serverWinRow = makeGoalRow({ id: reqServerWin.id, description: "server" });
+      const serverWinRow = makeGoalRow({
+        id: reqServerWin.id,
+        description: "server",
+      });
 
       const repo = createMockRepo({
         getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
@@ -285,10 +301,11 @@ describe("goalV2Usecase", () => {
       });
       const usecase = newGoalV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncGoals(
-        USER_ID,
-        [reqSynced, reqServerWin, reqNotOwned] as never[],
-      );
+      const result = await usecase.syncGoals(USER_ID, [
+        reqSynced,
+        reqServerWin,
+        reqNotOwned,
+      ] as never[]);
 
       expect(result.syncedIds).toContain(reqSynced.id);
       expect(result.serverWins).toHaveLength(1);
@@ -300,7 +317,9 @@ describe("goalV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeUpsertRequest({ updatedAt: "2026-03-01T12:05:00.000Z" });
+        const req = makeUpsertRequest({
+          updatedAt: "2026-03-01T12:05:00.000Z",
+        });
         const row = makeGoalRow();
         const repo = createMockRepo({
           upsertGoals: vi.fn().mockResolvedValue([row]),
@@ -320,7 +339,9 @@ describe("goalV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeUpsertRequest({ updatedAt: "2026-03-01T12:05:00.001Z" });
+        const req = makeUpsertRequest({
+          updatedAt: "2026-03-01T12:05:00.001Z",
+        });
         const repo = createMockRepo();
         const usecase = newGoalV2Usecase(repo, noopTracer);
 

@@ -1,8 +1,8 @@
+import type { tasks } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskRequest } from "@packages/types-v2";
-import { tasks } from "@infra/drizzle/schema";
-import type { Tracer } from "../../lib/tracer";
 
+import type { Tracer } from "../../lib/tracer";
 import type { TaskV2Repository } from "./taskV2Repository";
 
 type TaskRow = typeof tasks.$inferSelect;
@@ -14,10 +14,7 @@ export type SyncResult = {
 };
 
 export type TaskV2Usecase = {
-  getTasks: (
-    userId: UserId,
-    since?: string,
-  ) => Promise<{ tasks: TaskRow[] }>;
+  getTasks: (userId: UserId, since?: string) => Promise<{ tasks: TaskRow[] }>;
   syncTasks: (
     userId: UserId,
     taskList: UpsertTaskRequest[],

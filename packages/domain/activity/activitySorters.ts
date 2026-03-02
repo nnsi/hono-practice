@@ -1,6 +1,6 @@
-export function sortByOrderIndex<
-  T extends { orderIndex?: string | null },
->(items: T[]): T[] {
+export function sortByOrderIndex<T extends { orderIndex?: string | null }>(
+  items: T[],
+): T[] {
   return [...items].sort((a, b) => {
     if (!a.orderIndex && !b.orderIndex) return 0;
     if (!a.orderIndex) return 1;

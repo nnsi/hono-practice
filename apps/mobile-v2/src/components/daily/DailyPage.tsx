@@ -1,13 +1,14 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs";
+import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { CalendarPopover } from "../common/CalendarPopover";
+import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
+import { CreateLogDialog } from "./CreateLogDialog";
+import { EditLogDialog } from "./EditLogDialog";
 import { LogCard } from "./LogCard";
 import { TaskList } from "./TaskList";
-import { EditLogDialog } from "./EditLogDialog";
-import { CreateLogDialog } from "./CreateLogDialog";
-import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
-import { CalendarPopover } from "../common/CalendarPopover";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
@@ -39,10 +40,7 @@ export function DailyPage() {
     <View className="flex-1 bg-gray-50">
       {/* Date navigation header */}
       <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
-        <TouchableOpacity
-          className="absolute left-4 p-2"
-          onPress={goToPrev}
-        >
+        <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>
           <ChevronLeft size={20} color="#78716c" />
         </TouchableOpacity>
 
@@ -63,10 +61,7 @@ export function DailyPage() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          className="absolute right-14 p-2"
-          onPress={goToNext}
-        >
+        <TouchableOpacity className="absolute right-14 p-2" onPress={goToNext}>
           <ChevronRight size={20} color="#78716c" />
         </TouchableOpacity>
 

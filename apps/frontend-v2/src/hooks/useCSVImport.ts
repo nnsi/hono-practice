@@ -1,4 +1,11 @@
 import { useCallback, useState } from "react";
+
+import type {
+  ActivityLogValidationError,
+  CSVParseResult,
+  ColumnMapping,
+  ValidatedActivityLog,
+} from "@packages/domain/csv/csvParser";
 import {
   autoDetectMapping,
   detectEncoding,
@@ -6,12 +13,7 @@ import {
   validateDate,
   validateQuantity,
 } from "@packages/domain/csv/csvParser";
-import type {
-  ColumnMapping,
-  CSVParseResult,
-  ActivityLogValidationError,
-  ValidatedActivityLog,
-} from "@packages/domain/csv/csvParser";
+
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import type { DexieActivity, DexieActivityKind } from "../db/schema";
@@ -64,7 +66,8 @@ function validateRowWithMapping(
     errors.push({ field: "activity", message: "活動名は必須です" });
   }
 
-  const { value: quantity, error: quantityError } = validateQuantity(quantityStr);
+  const { value: quantity, error: quantityError } =
+    validateQuantity(quantityStr);
   if (quantityError) errors.push({ field: "quantity", message: quantityError });
 
   let isNew = false;
@@ -123,7 +126,9 @@ export function useCSVImport(onComplete: () => void) {
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
-  const [validatedLogs, setValidatedLogs] = useState<ValidatedActivityLog[]>([]);
+  const [validatedLogs, setValidatedLogs] = useState<ValidatedActivityLog[]>(
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -179,10 +184,14 @@ export function useCSVImport(onComplete: () => void) {
   const handleMappingConfirm = useCallback(async () => {
     // Validate required mapping
     const mappingErrors: string[] = [];
-    if (!columnMapping.date) mappingErrors.push("日付カラムのマッピングが必要です");
+    if (!columnMapping.date)
+      mappingErrors.push("日付カラムのマッピングが必要です");
     if (!columnMapping.activity && !columnMapping.fixedActivityId)
-      mappingErrors.push("アクティビティカラムまたは固定アクティビティの選択が必要です");
-    if (!columnMapping.quantity) mappingErrors.push("数量カラムのマッピングが必要です");
+      mappingErrors.push(
+        "アクティビティカラムまたは固定アクティビティの選択が必要です",
+      );
+    if (!columnMapping.quantity)
+      mappingErrors.push("数量カラムのマッピングが必要です");
 
     if (mappingErrors.length > 0) {
       setError(mappingErrors.join("\n"));
@@ -201,7 +210,9 @@ export function useCSVImport(onComplete: () => void) {
 
     const totalErrors = validated.filter((l) => l.errors.length > 0).length;
     if (totalErrors > 0) {
-      setError(`${totalErrors}件のエラーが見つかりました。修正してからインポートしてください。`);
+      setError(
+        `${totalErrors}件のエラーが見つかりました。修正してからインポートしてください。`,
+      );
     } else {
       setError(null);
     }
@@ -239,17 +250,28 @@ export function useCSVImport(onComplete: () => void) {
         // Re-validate
         const rowData: Record<string, string> = {};
         if (columnMapping.date) rowData[columnMapping.date] = log.date;
-        if (columnMapping.activity) rowData[columnMapping.activity] = log.activityName;
-        if (columnMapping.kind && log.kindName) rowData[columnMapping.kind] = log.kindName;
-        if (columnMapping.quantity) rowData[columnMapping.quantity] = log.quantity.toString();
-        if (columnMapping.memo && log.memo) rowData[columnMapping.memo] = log.memo;
+        if (columnMapping.activity)
+          rowData[columnMapping.activity] = log.activityName;
+        if (columnMapping.kind && log.kindName)
+          rowData[columnMapping.kind] = log.kindName;
+        if (columnMapping.quantity)
+          rowData[columnMapping.quantity] = log.quantity.toString();
+        if (columnMapping.memo && log.memo)
+          rowData[columnMapping.memo] = log.memo;
 
-        const revalidated = validateRowWithMapping(rowData, columnMapping, activities, allKinds);
+        const revalidated = validateRowWithMapping(
+          rowData,
+          columnMapping,
+          activities,
+          allKinds,
+        );
         updated[index] = revalidated;
 
         const totalErrors = updated.filter((l) => l.errors.length > 0).length;
         if (totalErrors > 0) {
-          setError(`${totalErrors}件のエラーがあります。修正してからインポートしてください。`);
+          setError(
+            `${totalErrors}件のエラーがあります。修正してからインポートしてください。`,
+          );
         } else {
           setError(null);
         }
@@ -274,7 +296,12 @@ export function useCSVImport(onComplete: () => void) {
 
       setIsImporting(true);
       setError(null);
-      setProgress({ total: toImport.length, processed: 0, succeeded: 0, failed: 0 });
+      setProgress({
+        total: toImport.length,
+        processed: 0,
+        succeeded: 0,
+        failed: 0,
+      });
 
       try {
         const activities = await activityRepository.getAllActivities();

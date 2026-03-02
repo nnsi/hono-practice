@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Modal, View, Text, Pressable } from "react-native";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { useEffect, useState } from "react";
+
 import dayjs from "dayjs";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 
 type CalendarPopoverProps = {
   isOpen: boolean;
@@ -136,7 +137,11 @@ export function CalendarPopover({
               const isSelected = cell.date === selectedDate;
 
               return (
-                <View key={cell.date} className="items-center" style={{ width: "14.285%" }}>
+                <View
+                  key={cell.date}
+                  className="items-center"
+                  style={{ width: "14.285%" }}
+                >
                   <Pressable
                     className={`w-9 h-9 items-center justify-center rounded-full ${
                       isSelected ? "bg-gray-900" : ""

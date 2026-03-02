@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
+
 import dayjs from "dayjs";
-import { useLiveQuery } from "../../db/useLiveQuery";
+
 import { getDatabase } from "../../db/database";
+import { useLiveQuery } from "../../db/useLiveQuery";
 import { activityRepository } from "../../repositories/activityRepository";
 import { goalRepository } from "../../repositories/goalRepository";
 import { roundQuantity } from "./formatUtils";
@@ -44,17 +46,13 @@ export function useStatsPage() {
     activityRepository.getAllActivityKinds(),
   );
 
-  const monthLogs = useLiveQuery(
-    "activity_logs",
-    async () => {
-      const db = await getDatabase();
-      return db.getAllAsync<LogRow>(
-        "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL",
-        [startDate, endDate],
-      );
-    },
-    [startDate, endDate],
-  );
+  const monthLogs = useLiveQuery("activity_logs", async () => {
+    const db = await getDatabase();
+    return db.getAllAsync<LogRow>(
+      "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL",
+      [startDate, endDate],
+    );
+  }, [startDate, endDate]);
 
   const goals = useLiveQuery("goals", () => goalRepository.getAllGoals());
 
@@ -95,10 +93,7 @@ export function useStatsPage() {
 
         for (const kind of actKinds) {
           const kindLogs = logsByKind.get(kind.id) ?? [];
-          const total = kindLogs.reduce(
-            (sum, l) => sum + (l.quantity ?? 0),
-            0,
-          );
+          const total = kindLogs.reduce((sum, l) => sum + (l.quantity ?? 0), 0);
           kinds.push({
             id: kind.id,
             name: kind.name,

@@ -1,14 +1,15 @@
 import dayjs from "dayjs";
 import {
-  CheckCircle2,
-  Circle,
   Archive,
   CalendarCheck,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  FileText,
   Pencil,
   Trash2,
-  CalendarDays,
-  FileText,
 } from "lucide-react";
+
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -78,11 +79,9 @@ export function TaskCard({
           <div className="flex items-center gap-1 mt-0.5">
             <CalendarDays size={12} className="text-gray-400 flex-shrink-0" />
             <span className="text-xs text-gray-500">
-              {task.startDate &&
-                `${dayjs(task.startDate).format("MM/DD")}`}
+              {task.startDate && `${dayjs(task.startDate).format("MM/DD")}`}
               {task.startDate && task.dueDate && " - "}
-              {task.dueDate &&
-                `${dayjs(task.dueDate).format("MM/DD")}`}
+              {task.dueDate && `${dayjs(task.dueDate).format("MM/DD")}`}
             </span>
             {task.doneDate && (
               <span className="text-xs text-green-600 ml-2">

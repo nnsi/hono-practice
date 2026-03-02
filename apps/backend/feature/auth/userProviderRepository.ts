@@ -1,10 +1,10 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { userProviders } from "@infra/drizzle/schema";
 import {
   type Provider,
   type UserProvider,
   createUserProviderEntity,
 } from "@packages/domain/auth/userProviderSchema";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { userProviders } from "@infra/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 export type UserProviderRepository<T = any> = {

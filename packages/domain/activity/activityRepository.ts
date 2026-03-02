@@ -1,5 +1,5 @@
-import type { ActivityRecord, ActivityKindRecord } from "./activityRecord";
 import type { Syncable } from "../sync/syncableRecord";
+import type { ActivityKindRecord, ActivityRecord } from "./activityRecord";
 
 export type CreateActivityInput = {
   name: string;
@@ -28,9 +28,7 @@ export type ActivityRepository = {
   ): Promise<Syncable<ActivityKindRecord>[]>;
   getAllActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
   // Create
-  createActivity(
-    input: CreateActivityInput,
-  ): Promise<Syncable<ActivityRecord>>;
+  createActivity(input: CreateActivityInput): Promise<Syncable<ActivityRecord>>;
   // Update
   updateActivity(
     id: string,

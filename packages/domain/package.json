@@ -4,7 +4,8 @@
   "main": "index.ts",
   "types": "index.ts",
   "dependencies": {
-    "uuid": "^11.x",
-    "dayjs": "^1.x"
+    "dayjs": "^1.11.13",
+    "uuid": "^11.0.3",
+    "zod": "^4.0.1"
   }
 }

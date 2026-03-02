@@ -1,14 +1,16 @@
+import {
+  buildCSVContent,
+  escapeCSVField,
+} from "@packages/domain/csv/csvExport";
 import { describe, expect, it } from "vitest";
-import { buildCSVContent, escapeCSVField } from "@packages/domain/csv/csvExport";
+
 import type {
   DexieActivity,
   DexieActivityKind,
   DexieActivityLog,
 } from "../db/schema";
 
-function makeLog(
-  overrides: Partial<DexieActivityLog> = {},
-): DexieActivityLog {
+function makeLog(overrides: Partial<DexieActivityLog> = {}): DexieActivityLog {
   return {
     id: "log-1",
     activityId: "act-1",
@@ -25,9 +27,7 @@ function makeLog(
   };
 }
 
-function makeActivity(
-  overrides: Partial<DexieActivity> = {},
-): DexieActivity {
+function makeActivity(overrides: Partial<DexieActivity> = {}): DexieActivity {
   return {
     id: "act-1",
     userId: "user-1",

@@ -1,10 +1,11 @@
-import { useLiveQuery } from "../db/useLiveQuery";
-import { taskRepository } from "../repositories/taskRepository";
 import {
   isActiveTask,
   isArchivedTask,
   isTaskVisibleOnDate,
 } from "@packages/domain/task/taskPredicates";
+
+import { useLiveQuery } from "../db/useLiveQuery";
+import { taskRepository } from "../repositories/taskRepository";
 
 export function useActiveTasks() {
   const tasks = useLiveQuery("tasks", async () => {
@@ -31,14 +32,10 @@ export function useArchivedTasks() {
 }
 
 export function useTasksByDate(date: string) {
-  const tasks = useLiveQuery(
-    "tasks",
-    async () => {
-      const all = await taskRepository.getAllActiveTasks();
-      return all.filter((t) => isTaskVisibleOnDate(t, date));
-    },
-    [date],
-  );
+  const tasks = useLiveQuery("tasks", async () => {
+    const all = await taskRepository.getAllActiveTasks();
+    return all.filter((t) => isTaskVisibleOnDate(t, date));
+  }, [date]);
 
   return { tasks: tasks ?? [] };
 }

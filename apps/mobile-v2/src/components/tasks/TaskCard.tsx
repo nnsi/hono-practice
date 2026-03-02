@@ -1,15 +1,16 @@
-import { View, Text, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import {
-  CheckCircle2,
-  Circle,
   Archive,
   CalendarCheck,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  FileText,
   Pencil,
   Trash2,
-  CalendarDays,
-  FileText,
 } from "lucide-react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import type { TaskItem } from "./types";
 
 export function TaskCard({

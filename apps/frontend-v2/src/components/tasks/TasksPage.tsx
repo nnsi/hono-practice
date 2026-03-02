@@ -1,8 +1,9 @@
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
-import { TaskGroup } from "./TaskGroup";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
+
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { TaskGroup } from "./TaskGroup";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {

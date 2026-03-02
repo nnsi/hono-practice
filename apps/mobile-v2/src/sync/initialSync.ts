@@ -6,11 +6,12 @@ import {
   mapApiGoal,
   mapApiTask,
 } from "@packages/sync-engine";
-import { activityRepository } from "../repositories/activityRepository";
+
+import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
+import { activityRepository } from "../repositories/activityRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
-import { getDatabase } from "../db/database";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
@@ -52,11 +53,21 @@ export async function performInitialSync(
   let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
   if (lastSyncedAt) {
     const [logRow, goalRow, taskRow] = await Promise.all([
-      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM activity_logs"),
-      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM goals"),
-      db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM tasks"),
+      db.getFirstAsync<{ count: number }>(
+        "SELECT COUNT(*) as count FROM activity_logs",
+      ),
+      db.getFirstAsync<{ count: number }>(
+        "SELECT COUNT(*) as count FROM goals",
+      ),
+      db.getFirstAsync<{ count: number }>(
+        "SELECT COUNT(*) as count FROM tasks",
+      ),
     ]);
-    if ((logRow?.count ?? 0) === 0 && (goalRow?.count ?? 0) === 0 && (taskRow?.count ?? 0) === 0) {
+    if (
+      (logRow?.count ?? 0) === 0 &&
+      (goalRow?.count ?? 0) === 0 &&
+      (taskRow?.count ?? 0) === 0
+    ) {
       storage.removeItem(LAST_SYNCED_KEY);
       lastSyncedAt = null;
     }
@@ -104,9 +115,7 @@ export async function performInitialSync(
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
-      await goalRepository.upsertGoalsFromServer(
-        data.goals.map(mapApiGoal),
-      );
+      await goalRepository.upsertGoalsFromServer(data.goals.map(mapApiGoal));
     }
   } else {
     allSynced = false;
@@ -116,9 +125,7 @@ export async function performInitialSync(
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
-      await taskRepository.upsertTasksFromServer(
-        data.tasks.map(mapApiTask),
-      );
+      await taskRepository.upsertTasksFromServer(data.tasks.map(mapApiTask));
     }
   } else {
     allSynced = false;

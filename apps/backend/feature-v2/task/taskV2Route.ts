@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
-import type { AppContext } from "../../context";
-import { noopTracer } from "../../lib/tracer";
 import { SyncTasksRequestSchema } from "@packages/types-v2";
 
+import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { newTaskV2Handler } from "./taskV2Handler";
 import { newTaskV2Repository } from "./taskV2Repository";
 import { newTaskV2Usecase } from "./taskV2Usecase";

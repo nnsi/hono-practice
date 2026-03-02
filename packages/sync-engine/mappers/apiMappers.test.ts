@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -129,17 +130,33 @@ describe("mapApiActivity", () => {
   });
 
   it("不正なiconTypeは 'emoji' にフォールバックする", () => {
-    const base = { id: "a", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" };
-    expect(mapApiActivity({ ...base, iconType: "invalid" }).iconType).toBe("emoji");
+    const base = {
+      id: "a",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+    expect(mapApiActivity({ ...base, iconType: "invalid" }).iconType).toBe(
+      "emoji",
+    );
     expect(mapApiActivity({ ...base, iconType: 123 }).iconType).toBe("emoji");
     expect(mapApiActivity({ ...base, iconType: null }).iconType).toBe("emoji");
   });
 
   it("有効なiconTypeはそのまま返す", () => {
-    const base = { id: "a", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" };
-    expect(mapApiActivity({ ...base, iconType: "emoji" }).iconType).toBe("emoji");
-    expect(mapApiActivity({ ...base, iconType: "upload" }).iconType).toBe("upload");
-    expect(mapApiActivity({ ...base, iconType: "generate" }).iconType).toBe("generate");
+    const base = {
+      id: "a",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+    expect(mapApiActivity({ ...base, iconType: "emoji" }).iconType).toBe(
+      "emoji",
+    );
+    expect(mapApiActivity({ ...base, iconType: "upload" }).iconType).toBe(
+      "upload",
+    );
+    expect(mapApiActivity({ ...base, iconType: "generate" }).iconType).toBe(
+      "generate",
+    );
   });
 
   it("_syncStatusフィールドを含まない", () => {

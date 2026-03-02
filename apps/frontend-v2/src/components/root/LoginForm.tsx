@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type LoginFormProps = {
@@ -74,7 +75,6 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
-            autoFocus
             required
           />
         </div>
@@ -94,9 +94,7 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
             required
           />
         </div>
-        {error && (
-          <p className="text-red-500 text-sm">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
           disabled={isSubmitting}

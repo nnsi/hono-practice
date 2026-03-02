@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import type { ReactHooks, ActivityBase, IconBlobBase } from "./types";
+
+import type { ActivityBase, IconBlobBase, ReactHooks } from "./types";
 
 type UseActikoPageDeps<
   TActivity extends ActivityBase,
@@ -24,8 +25,9 @@ export function createUseActikoPage<
 
   return function useActikoPage() {
     const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
-    const [selectedActivity, setSelectedActivity] =
-      useState<TActivity | null>(null);
+    const [selectedActivity, setSelectedActivity] = useState<TActivity | null>(
+      null,
+    );
     const [dialogOpen, setDialogOpen] = useState(false);
     const [createActivityOpen, setCreateActivityOpen] = useState(false);
     const [editActivity, setEditActivity] = useState<TActivity | null>(null);

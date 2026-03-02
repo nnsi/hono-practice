@@ -1,10 +1,11 @@
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+
+import { CalendarPopover } from "../common/CalendarPopover";
 import { ActivityCard } from "./ActivityCard";
-import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
-import { CalendarPopover } from "../common/CalendarPopover";
+import { RecordDialog } from "./RecordDialog";
 import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {

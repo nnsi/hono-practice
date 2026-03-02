@@ -272,13 +272,17 @@ describe("POST /batch", () => {
 
 describe("secureHeaders", () => {
   it("レスポンスにセキュリティヘッダーが含まれる", async () => {
-    const res = await app.request("/", {
-      method: "GET",
-    }, {
-      DB: testDB,
-      NODE_ENV: "test",
-      APP_URL: "http://localhost:1357",
-    });
+    const res = await app.request(
+      "/",
+      {
+        method: "GET",
+      },
+      {
+        DB: testDB,
+        NODE_ENV: "test",
+        APP_URL: "http://localhost:1357",
+      },
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");

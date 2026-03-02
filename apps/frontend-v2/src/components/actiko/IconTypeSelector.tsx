@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
+
 import { FlaskConical, Upload } from "lucide-react";
+
 import { EmojiPicker } from "../common/EmojiPicker";
 
 export type IconSelectorValue = {
@@ -24,10 +26,7 @@ export function IconTypeSelector({
   // Cleanup object URLs on unmount or when preview changes
   useEffect(() => {
     return () => {
-      if (
-        prevPreviewRef.current &&
-        prevPreviewRef.current.startsWith("blob:")
-      ) {
+      if (prevPreviewRef.current?.startsWith("blob:")) {
         URL.revokeObjectURL(prevPreviewRef.current);
       }
     };
@@ -84,10 +83,7 @@ export function IconTypeSelector({
       if (!blob) return;
       const file = new File([blob], "test-icon.png", { type: "image/png" });
       const previewUrl = URL.createObjectURL(file);
-      if (
-        prevPreviewRef.current &&
-        prevPreviewRef.current.startsWith("blob:")
-      ) {
+      if (prevPreviewRef.current?.startsWith("blob:")) {
         URL.revokeObjectURL(prevPreviewRef.current);
       }
       prevPreviewRef.current = previewUrl;
@@ -104,10 +100,7 @@ export function IconTypeSelector({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (
-      prevPreviewRef.current &&
-      prevPreviewRef.current.startsWith("blob:")
-    ) {
+    if (prevPreviewRef.current?.startsWith("blob:")) {
       URL.revokeObjectURL(prevPreviewRef.current);
     }
 

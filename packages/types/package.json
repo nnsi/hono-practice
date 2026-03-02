@@ -1,5 +1,5 @@
 {
-  "name": "@packages/types-v2",
+  "name": "@packages/types",
   "type": "module",
   "main": "index.ts",
   "types": "index.ts",

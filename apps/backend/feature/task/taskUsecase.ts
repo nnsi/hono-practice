@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 import {
   type Task,
   type TaskId,
@@ -5,8 +7,6 @@ import {
   createTaskId,
 } from "@packages/domain/task/taskSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
-import type { Tracer } from "@backend/lib/tracer";
 
 import type { TaskRepository } from ".";
 

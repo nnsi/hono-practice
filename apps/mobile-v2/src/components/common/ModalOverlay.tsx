@@ -1,12 +1,12 @@
+import { X } from "lucide-react-native";
 import {
   Modal,
-  View,
+  Pressable,
+  ScrollView,
   Text,
   TouchableOpacity,
-  ScrollView,
-  Pressable,
+  View,
 } from "react-native";
-import { X } from "lucide-react-native";
 
 type ModalOverlayProps = {
   visible: boolean;

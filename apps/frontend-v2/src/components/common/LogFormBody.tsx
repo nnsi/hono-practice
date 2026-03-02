@@ -1,11 +1,12 @@
-import { Play, Square, RotateCcw } from "lucide-react";
-import type { DexieActivity } from "../../db/schema";
 import {
+  type TimeUnitType,
   convertSecondsToUnit,
   formatElapsedTime,
-  type TimeUnitType,
 } from "@packages/domain/time/timeUtils";
-import { useLogForm, type UseTimerReturn } from "./useLogForm";
+import { Play, RotateCcw, Square } from "lucide-react";
+
+import type { DexieActivity } from "../../db/schema";
+import { type UseTimerReturn, useLogForm } from "./useLogForm";
 
 /**
  * Activity記録のフォーム本体（タブ切り替え + 手動入力 + タイマー）
@@ -249,7 +250,9 @@ export function KindSelector({
           <button
             key={kind.id}
             type="button"
-            onClick={() => onSelect(selectedKindId === kind.id ? null : kind.id)}
+            onClick={() =>
+              onSelect(selectedKindId === kind.id ? null : kind.id)
+            }
             className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
               selectedKindId === kind.id
                 ? "bg-black text-white border-black"

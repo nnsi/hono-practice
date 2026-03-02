@@ -1,19 +1,15 @@
-import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Calendar,
-} from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs";
-import { useActikoPage } from "./useActikoPage";
+import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import { FlatList, Platform, Text, TouchableOpacity, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { CalendarPopover } from "../common/CalendarPopover";
 import { ActivityCard } from "./ActivityCard";
-import { RecordDialog } from "./RecordDialog";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
-import { CalendarPopover } from "../common/CalendarPopover";
+import { RecordDialog } from "./RecordDialog";
+import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
   const {
@@ -48,23 +44,15 @@ export function ActikoPage() {
 
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
-  type GridItem =
-    | (typeof activities)[number]
-    | { id: "__add__"; name?: never };
+  type GridItem = (typeof activities)[number] | { id: "__add__"; name?: never };
 
-  const gridData: GridItem[] = [
-    ...activities,
-    { id: "__add__" as const },
-  ];
+  const gridData: GridItem[] = [...activities, { id: "__add__" as const }];
 
   return (
     <View className="flex-1 bg-gray-50">
       {/* Date navigation header */}
       <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
-        <TouchableOpacity
-          className="absolute left-4 p-2"
-          onPress={goToPrev}
-        >
+        <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>
           <ChevronLeft size={20} color="#78716c" />
         </TouchableOpacity>
 
@@ -89,10 +77,7 @@ export function ActikoPage() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          className="absolute right-4 p-2"
-          onPress={goToNext}
-        >
+        <TouchableOpacity className="absolute right-4 p-2" onPress={goToNext}>
           <ChevronRight size={20} color="#78716c" />
         </TouchableOpacity>
       </View>
@@ -123,7 +108,10 @@ export function ActikoPage() {
           data={gridData}
           numColumns={2}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 8, paddingBottom: 80 + insets.bottom }}
+          contentContainerStyle={{
+            padding: 8,
+            paddingBottom: 80 + insets.bottom,
+          }}
           renderItem={({ item, index }) => {
             if (item.id === "__add__") {
               return (

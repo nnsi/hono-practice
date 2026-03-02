@@ -1,8 +1,12 @@
-import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
-import { type UserId, createUserEntity, createUserId } from "@packages/domain/user/userSchema";
 import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { hashWithSHA256 } from "@backend/lib/hash";
+import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
+import {
+  type UserId,
+  createUserEntity,
+  createUserId,
+} from "@packages/domain/user/userSchema";
 // Use only ts-mockito imports for mocking repos and verifier
 import { anything, instance, mock, verify, when } from "ts-mockito";
 // Remove vitest mocking imports, keep test runner imports

@@ -1,10 +1,10 @@
-import dayjs from "dayjs";
 import { groupTasksByTimeline as groupTasksByTimelineCore } from "@packages/domain/task/taskGrouping";
 import type {
-  TaskItem,
-  GroupingOptions,
   GroupedTasks,
+  GroupingOptions,
+  TaskItem,
 } from "@packages/domain/task/types";
+import dayjs from "dayjs";
 
 export function groupTasksByTimeline(
   tasks: TaskItem[],

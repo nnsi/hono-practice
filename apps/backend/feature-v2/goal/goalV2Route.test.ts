@@ -27,9 +27,7 @@ function makeGoal(overrides: Record<string, unknown> = {}) {
 }
 
 function createApp() {
-  return new Hono()
-    .use(mockAuthMiddleware)
-    .route("/users/v2", goalV2Route);
+  return new Hono().use(mockAuthMiddleware).route("/users/v2", goalV2Route);
 }
 
 async function postSync(
@@ -47,10 +45,7 @@ async function postSync(
   );
 }
 
-async function getGoals(
-  app: ReturnType<typeof createApp>,
-  query = "",
-) {
+async function getGoals(app: ReturnType<typeof createApp>, query = "") {
   return app.request(
     `/users/v2/goals${query ? `?${query}` : ""}`,
     { method: "GET" },

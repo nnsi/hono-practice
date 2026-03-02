@@ -1,15 +1,21 @@
-import { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { writeAsStringAsync, EncodingType, cacheDirectory } from "expo-file-system/legacy";
+import { useMemo, useState } from "react";
+
+import { buildCSVContent } from "@packages/domain/csv/csvExport";
+import dayjs from "dayjs";
+import {
+  EncodingType,
+  cacheDirectory,
+  writeAsStringAsync,
+} from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { CheckCircle, Download } from "lucide-react-native";
-import dayjs from "dayjs";
-import { buildCSVContent } from "@packages/domain/csv/csvExport";
-import { ModalOverlay } from "../common/ModalOverlay";
-import { DatePickerField } from "../common/DatePickerField";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { DatePickerField } from "../common/DatePickerField";
+import { ModalOverlay } from "../common/ModalOverlay";
 
 type CSVExportModalProps = {
   visible: boolean;
@@ -59,7 +65,10 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
     setResultCount(null);
 
     try {
-      const logs = await activityLogRepository.getActivityLogsBetween(startDate, endDate);
+      const logs = await activityLogRepository.getActivityLogsBetween(
+        startDate,
+        endDate,
+      );
 
       if (logs.length === 0) {
         setError("エクスポートするデータがありません");
@@ -111,11 +120,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           label="開始日"
         />
 
-        <DatePickerField
-          value={endDate}
-          onChange={setEndDate}
-          label="終了日"
-        />
+        <DatePickerField value={endDate} onChange={setEndDate} label="終了日" />
 
         {/* Error */}
         {error && (

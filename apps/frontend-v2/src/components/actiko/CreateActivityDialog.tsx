@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+
 import { ModalOverlay } from "../common/ModalOverlay";
 import { COLOR_PALETTE } from "../stats/colorUtils";
 import { IconTypeSelector } from "./IconTypeSelector";
@@ -20,6 +21,8 @@ export function CreateActivityDialog({
     setShowCombinedStats,
     kinds,
     setKinds,
+    nextKindId,
+    setNextKindId,
     icon,
     setIcon,
     isSubmitting,
@@ -64,7 +67,6 @@ export function CreateActivityDialog({
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="アクティビティ名"
-              autoFocus
             />
           </div>
 
@@ -96,15 +98,15 @@ export function CreateActivityDialog({
           {/* 種類 */}
           <div>
             <div className="text-sm font-medium text-gray-600 mb-2">種類</div>
-            {kinds.map((kind, i) => (
-              <div key={i} className="flex gap-2 mb-2 items-center">
+            {kinds.map((kind) => (
+              <div key={kind.id} className="flex gap-2 mb-2 items-center">
                 <input
                   type="text"
                   value={kind.name}
                   onChange={(e) =>
                     setKinds((prev) =>
-                      prev.map((k, j) =>
-                        j === i ? { ...k, name: e.target.value } : k,
+                      prev.map((k) =>
+                        k.id === kind.id ? { ...k, name: e.target.value } : k,
                       ),
                     )
                   }
@@ -116,8 +118,8 @@ export function CreateActivityDialog({
                   value={kind.color || "#3b82f6"}
                   onChange={(e) =>
                     setKinds((prev) =>
-                      prev.map((k, j) =>
-                        j === i ? { ...k, color: e.target.value } : k,
+                      prev.map((k) =>
+                        k.id === kind.id ? { ...k, color: e.target.value } : k,
                       ),
                     )
                   }
@@ -126,7 +128,7 @@ export function CreateActivityDialog({
                 <button
                   type="button"
                   onClick={() =>
-                    setKinds((prev) => prev.filter((_, j) => j !== i))
+                    setKinds((prev) => prev.filter((k) => k.id !== kind.id))
                   }
                   className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
                 >
@@ -136,13 +138,22 @@ export function CreateActivityDialog({
             ))}
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setKinds((prev) => {
-                  const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
-                  const nextColor = COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ?? COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
-                  return [...prev, { name: "", color: nextColor }];
-                })
-              }
+                  const usedColors = new Set(
+                    prev.map((k) => k.color.toUpperCase()),
+                  );
+                  const nextColor =
+                    COLOR_PALETTE.find(
+                      (c) => !usedColors.has(c.toUpperCase()),
+                    ) ?? COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
+                  return [
+                    ...prev,
+                    { id: nextKindId, name: "", color: nextColor },
+                  ];
+                });
+                setNextKindId((n) => n + 1);
+              }}
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               + 種類を追加

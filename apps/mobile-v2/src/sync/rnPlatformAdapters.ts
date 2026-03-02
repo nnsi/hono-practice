@@ -1,9 +1,6 @@
-import NetInfo from "@react-native-community/netinfo";
+import type { NetworkAdapter, StorageAdapter } from "@packages/platform";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type {
-  NetworkAdapter,
-  StorageAdapter,
-} from "@packages/platform";
+import NetInfo from "@react-native-community/netinfo";
 
 let cachedOnline = true;
 NetInfo.addEventListener((state) => {

@@ -1,11 +1,13 @@
 import { useMemo } from "react";
+
 import dayjs from "dayjs";
-import type { ActivityStat, ChartData, GoalLine } from "./types";
+
+import { ActivityChart } from "./ActivityChart";
 import { DEFAULT_BAR_COLOR, getUniqueColorForKind } from "./colorUtils";
 import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
-import { ActivityChart } from "./ActivityChart";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
+import type { ActivityStat, ChartData, GoalLine } from "./types";
 
 export function ActivityStatCard({
   stat,
@@ -23,8 +25,7 @@ export function ActivityStatCard({
     const usedColors = new Set<string>();
     const colorMap: Record<string, string> = {};
     for (const kind of stat.kinds) {
-      const color =
-        kind.color || getUniqueColorForKind(kind.name, usedColors);
+      const color = kind.color || getUniqueColorForKind(kind.name, usedColors);
       usedColors.add(color);
       colorMap[kind.name] = color;
     }
@@ -174,10 +175,7 @@ export function ActivityStatCard({
       </div>
 
       {/* Summary */}
-      <SummarySection
-        summary={summary}
-        quantityUnit={stat.quantityUnit}
-      />
+      <SummarySection summary={summary} quantityUnit={stat.quantityUnit} />
 
       {/* Collapsible daily/weekly table */}
       <SummaryTable

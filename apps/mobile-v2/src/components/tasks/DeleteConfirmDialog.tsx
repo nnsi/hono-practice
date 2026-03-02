@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { ModalOverlay } from "../common/ModalOverlay";
 
 export function DeleteConfirmDialog({

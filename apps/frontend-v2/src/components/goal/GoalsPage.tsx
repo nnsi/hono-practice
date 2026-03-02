@@ -1,8 +1,9 @@
 import dayjs from "dayjs";
 import { Plus } from "lucide-react";
-import { GoalCard } from "./GoalCard";
-import { CreateGoalDialog } from "./CreateGoalDialog";
+
 import { RecordDialog } from "../actiko/RecordDialog";
+import { CreateGoalDialog } from "./CreateGoalDialog";
+import { GoalCard } from "./GoalCard";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {

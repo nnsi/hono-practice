@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import { useActivities } from "../../hooks/useActivities";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
-import type { ValidatedActivityLog } from "../../hooks/useCSVImport";
+
 import {
   AlertCircle,
   CheckCircle,
@@ -9,6 +7,10 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+
+import { useActivities } from "../../hooks/useActivities";
+import { useActivityKinds } from "../../hooks/useActivityKinds";
+import type { ValidatedActivityLog } from "../../hooks/useCSVImport";
 
 type Props = {
   validatedLogs: ValidatedActivityLog[];
@@ -189,9 +191,7 @@ export function CSVImportPreview({
                 : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {isImporting
-              ? "インポート中..."
-              : `インポート (${stats.valid}件)`}
+            {isImporting ? "インポート中..." : `インポート (${stats.valid}件)`}
           </button>
         </div>
       </div>
@@ -276,7 +276,9 @@ function PreviewRow({
   const { kinds } = useActivityKinds(selectedActivity?.id ?? null);
 
   return (
-    <tr className={`border-b last:border-0 ${status === "error" ? "bg-red-50" : ""}`}>
+    <tr
+      className={`border-b last:border-0 ${status === "error" ? "bg-red-50" : ""}`}
+    >
       <td className="px-3 py-2">
         <input
           type="checkbox"
@@ -321,9 +323,7 @@ function PreviewRow({
               <input
                 type="text"
                 value={log.activityName}
-                onChange={(e) =>
-                  onEdit(index, "activityName", e.target.value)
-                }
+                onChange={(e) => onEdit(index, "activityName", e.target.value)}
                 placeholder="新規名"
                 className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
                 disabled={isImporting}

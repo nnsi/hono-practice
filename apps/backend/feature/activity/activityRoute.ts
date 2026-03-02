@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { createActivityId } from "@packages/domain/activity/activitySchema";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
 import { noopTracer } from "@backend/lib/tracer";
@@ -14,6 +13,7 @@ import {
 } from "@dtos/request";
 import type { GetActivityResponse } from "@dtos/response";
 import { zValidator } from "@hono/zod-validator";
+import { createActivityId } from "@packages/domain/activity/activitySchema";
 
 import type { AppContext } from "../../context";
 import { newActivityHandler } from "./activityHandler";
@@ -161,8 +161,10 @@ export function createActivityRoute() {
       const userId = c.get("userId");
       const { id } = c.req.param();
       const activityId = createActivityId(id);
-      const { base64, mimeType } =
-        await c.req.json<{ base64: string; mimeType: string }>();
+      const { base64, mimeType } = await c.req.json<{
+        base64: string;
+        mimeType: string;
+      }>();
 
       const protocol = c.req.header("x-forwarded-proto") || "http";
       const host = c.req.header("host") || "localhost";

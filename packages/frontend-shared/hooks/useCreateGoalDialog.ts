@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import type { ReactHooks, ActivityBase, CreateGoalPayload } from "./types";
+
+import type { ActivityBase, CreateGoalPayload, ReactHooks } from "./types";
 
 type UseCreateGoalDialogDeps = {
   react: Pick<ReactHooks, "useState" | "useMemo">;

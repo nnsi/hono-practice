@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import dayjs from "dayjs";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+
 import type { GoalBalanceResult } from "@packages/domain/goal/goalBalance";
-import {
-  generateDailyRecords,
-  calculateGoalStats,
-} from "@packages/domain/goal/goalStats";
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
 import type { DailyRecord } from "@packages/domain/goal/goalStats";
+import {
+  calculateGoalStats,
+  generateDailyRecords,
+} from "@packages/domain/goal/goalStats";
+import dayjs from "dayjs";
+
 import { useLiveQuery } from "../db/useLiveQuery";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 

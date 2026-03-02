@@ -66,7 +66,10 @@ describe("activityLogV2Usecase", () => {
       const result = await usecase.getActivityLogs(USER_ID);
 
       expect(result.logs).toHaveLength(1);
-      expect(repo.getActivityLogsByUserId).toHaveBeenCalledWith(USER_ID, undefined);
+      expect(repo.getActivityLogsByUserId).toHaveBeenCalledWith(
+        USER_ID,
+        undefined,
+      );
     });
 
     test("sinceパラメータをrepoに渡す", async () => {
@@ -138,8 +141,12 @@ describe("activityLogV2Usecase", () => {
     });
 
     test("upsertで返らなかったID → serverWinsとして返す", async () => {
-      const req1 = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000001" });
-      const req2 = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000002" });
+      const req1 = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const req2 = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000002",
+      });
 
       const row1 = makeLogRow({ id: req1.id });
       const serverRow2 = makeLogRow({ id: req2.id, quantity: 999 });
@@ -150,7 +157,10 @@ describe("activityLogV2Usecase", () => {
       });
       const usecase = newActivityLogV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivityLogs(USER_ID, [req1, req2] as never[]);
+      const result = await usecase.syncActivityLogs(USER_ID, [
+        req1,
+        req2,
+      ] as never[]);
 
       expect(result.syncedIds).toContain(req1.id);
       expect(result.serverWins).toHaveLength(1);
@@ -158,7 +168,9 @@ describe("activityLogV2Usecase", () => {
     });
 
     test("upsertで返らず、getByIdsでも見つからない → skippedIds", async () => {
-      const req = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000099" });
+      const req = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000099",
+      });
       const repo = createMockRepo({
         upsertActivityLogs: vi.fn().mockResolvedValue([]),
         getActivityLogsByIds: vi.fn().mockResolvedValue([]),
@@ -172,8 +184,12 @@ describe("activityLogV2Usecase", () => {
     });
 
     test("混合: synced + serverWins + skipped(所有権)", async () => {
-      const reqSynced = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000001" });
-      const reqServerWin = makeUpsertRequest({ id: "10000000-0000-4000-8000-000000000002" });
+      const reqSynced = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const reqServerWin = makeUpsertRequest({
+        id: "10000000-0000-4000-8000-000000000002",
+      });
       const reqNotOwned = makeUpsertRequest({
         id: "10000000-0000-4000-8000-000000000003",
         activityId: "99999999-9999-4999-9999-999999999999",
@@ -189,10 +205,11 @@ describe("activityLogV2Usecase", () => {
       });
       const usecase = newActivityLogV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivityLogs(
-        USER_ID,
-        [reqSynced, reqServerWin, reqNotOwned] as never[],
-      );
+      const result = await usecase.syncActivityLogs(USER_ID, [
+        reqSynced,
+        reqServerWin,
+        reqNotOwned,
+      ] as never[]);
 
       expect(result.syncedIds).toContain(reqSynced.id);
       expect(result.serverWins).toHaveLength(1);
@@ -204,7 +221,9 @@ describe("activityLogV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeUpsertRequest({ updatedAt: "2026-03-01T12:05:00.000Z" });
+        const req = makeUpsertRequest({
+          updatedAt: "2026-03-01T12:05:00.000Z",
+        });
         const row = makeLogRow();
         const repo = createMockRepo({
           upsertActivityLogs: vi.fn().mockResolvedValue([row]),
@@ -224,7 +243,9 @@ describe("activityLogV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeUpsertRequest({ updatedAt: "2026-03-01T12:05:00.001Z" });
+        const req = makeUpsertRequest({
+          updatedAt: "2026-03-01T12:05:00.001Z",
+        });
         const repo = createMockRepo();
         const usecase = newActivityLogV2Usecase(repo, noopTracer);
 

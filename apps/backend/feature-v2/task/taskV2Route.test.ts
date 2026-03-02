@@ -28,9 +28,7 @@ function makeTask(overrides: Record<string, unknown> = {}) {
 }
 
 function createApp() {
-  return new Hono()
-    .use(mockAuthMiddleware)
-    .route("/users/v2", taskV2Route);
+  return new Hono().use(mockAuthMiddleware).route("/users/v2", taskV2Route);
 }
 
 async function postSync(
@@ -48,10 +46,7 @@ async function postSync(
   );
 }
 
-async function getTasks(
-  app: ReturnType<typeof createApp>,
-  query = "",
-) {
+async function getTasks(app: ReturnType<typeof createApp>, query = "") {
   return app.request(
     `/users/v2/tasks${query ? `?${query}` : ""}`,
     { method: "GET" },

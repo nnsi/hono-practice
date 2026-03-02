@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -25,11 +25,6 @@ vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
-import { activityRepository } from "../db/activityRepository";
-import { activityLogRepository } from "../db/activityLogRepository";
-import { goalRepository } from "../db/goalRepository";
-import { taskRepository } from "../db/taskRepository";
-import { db } from "../db/schema";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -37,10 +32,13 @@ import {
   mapApiGoal,
   mapApiTask,
 } from "@packages/sync-engine/mappers/apiMappers";
-import {
-  clearLocalData,
-  performInitialSync,
-} from "./initialSync";
+
+import { activityLogRepository } from "../db/activityLogRepository";
+import { activityRepository } from "../db/activityRepository";
+import { goalRepository } from "../db/goalRepository";
+import { db } from "../db/schema";
+import { taskRepository } from "../db/taskRepository";
+import { clearLocalData, performInitialSync } from "./initialSync";
 
 const mockDb = vi.mocked(db) as any;
 const mockActivityRepo = vi.mocked(activityRepository);
@@ -169,9 +167,9 @@ describe("initialSync", () => {
       expect(mockActivityRepo.upsertActivityKinds).toHaveBeenCalledWith([
         { id: "k1", activityId: "a1", name: "Sprint" },
       ]);
-      expect(
-        mockLogRepo.upsertActivityLogsFromServer,
-      ).toHaveBeenCalledWith([{ id: "l1", activityId: "a1" }]);
+      expect(mockLogRepo.upsertActivityLogsFromServer).toHaveBeenCalledWith([
+        { id: "l1", activityId: "a1" },
+      ]);
       expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith([
         { id: "g1", activityId: "a1" },
       ]);
@@ -185,9 +183,7 @@ describe("initialSync", () => {
 
       await performInitialSync("user-123");
 
-      expect(
-        localStorage.getItem("actiko-v2-lastSyncedAt"),
-      ).not.toBeNull();
+      expect(localStorage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
     });
 
     it("handles partial failures (allSynced = false)", async () => {
@@ -197,9 +193,7 @@ describe("initialSync", () => {
 
       // Activities and logs still processed
       expect(mockActivityRepo.upsertActivities).toHaveBeenCalled();
-      expect(
-        mockLogRepo.upsertActivityLogsFromServer,
-      ).toHaveBeenCalled();
+      expect(mockLogRepo.upsertActivityLogsFromServer).toHaveBeenCalled();
       expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalled();
 
       // Goals not processed (failed)
@@ -210,10 +204,7 @@ describe("initialSync", () => {
     });
 
     it("uses since parameter when lastSyncedAt exists and DB has data", async () => {
-      localStorage.setItem(
-        "actiko-v2-lastSyncedAt",
-        "2025-06-01T00:00:00Z",
-      );
+      localStorage.setItem("actiko-v2-lastSyncedAt", "2025-06-01T00:00:00Z");
       mockDb.activityLogs.count = vi.fn().mockResolvedValue(5);
       mockDb.goals.count = vi.fn().mockResolvedValue(2);
       mockDb.tasks.count = vi.fn().mockResolvedValue(3);
@@ -237,10 +228,7 @@ describe("initialSync", () => {
     });
 
     it("clears lastSyncedAt and does full sync when DB is empty", async () => {
-      localStorage.setItem(
-        "actiko-v2-lastSyncedAt",
-        "2025-06-01T00:00:00Z",
-      );
+      localStorage.setItem("actiko-v2-lastSyncedAt", "2025-06-01T00:00:00Z");
       mockDb.activityLogs.count = vi.fn().mockResolvedValue(0);
       mockDb.goals.count = vi.fn().mockResolvedValue(0);
       mockDb.tasks.count = vi.fn().mockResolvedValue(0);

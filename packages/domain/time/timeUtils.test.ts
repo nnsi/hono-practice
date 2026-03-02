@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
   convertSecondsToUnit,
   formatElapsedTime,
@@ -25,12 +26,16 @@ describe("isTimeUnit", () => {
   });
 
   // 大文字小文字を区別しない
-  it.each(["Hour", "HOUR", "Minutes", "SECONDS", "Min", "SEC"])(
-    '大文字小文字を無視: "%s" → true',
-    (unit) => {
-      expect(isTimeUnit(unit)).toBe(true);
-    },
-  );
+  it.each([
+    "Hour",
+    "HOUR",
+    "Minutes",
+    "SECONDS",
+    "Min",
+    "SEC",
+  ])('大文字小文字を無視: "%s" → true', (unit) => {
+    expect(isTimeUnit(unit)).toBe(true);
+  });
 
   // 時間系でない単位はfalseを返す
   it.each(["回", "km", "個", "歩", "kcal", "ml"])('"%s" → false', (unit) => {
@@ -39,19 +44,21 @@ describe("isTimeUnit", () => {
 
   // includes()による誤検出パターン（"min"を含む語、"sec"を含む語など）
   // isTimeUnit は部分文字列マッチのため、以下は true を返す（既知の制限）
-  it.each(["admin", "examine", "seminary"])(
-    '部分文字列一致の制限: "%s" → true（"min"を含む）',
-    (unit) => {
-      expect(isTimeUnit(unit)).toBe(true);
-    },
-  );
+  it.each([
+    "admin",
+    "examine",
+    "seminary",
+  ])('部分文字列一致の制限: "%s" → true（"min"を含む）', (unit) => {
+    expect(isTimeUnit(unit)).toBe(true);
+  });
 
-  it.each(["security", "insect", "section"])(
-    '部分文字列一致の制限: "%s" → true（"sec"を含む）',
-    (unit) => {
-      expect(isTimeUnit(unit)).toBe(true);
-    },
-  );
+  it.each([
+    "security",
+    "insect",
+    "section",
+  ])('部分文字列一致の制限: "%s" → true（"sec"を含む）', (unit) => {
+    expect(isTimeUnit(unit)).toBe(true);
+  });
 
   // null / undefined / 空文字
   it("null → false", () => {

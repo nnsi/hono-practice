@@ -1,13 +1,13 @@
 import { sign } from "hono/jwt";
 
+import { AppError, ConflictError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 import {
   type User,
   type UserId,
   createUserEntity,
   createUserId,
 } from "@packages/domain/user/userSchema";
-import { AppError, ConflictError } from "@backend/error";
-import type { Tracer } from "@backend/lib/tracer";
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";

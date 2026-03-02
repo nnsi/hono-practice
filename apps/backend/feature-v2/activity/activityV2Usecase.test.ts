@@ -107,7 +107,9 @@ describe("activityV2Usecase", () => {
 
       expect(result.activities).toHaveLength(1);
       expect(result.activityKinds).toHaveLength(1);
-      expect(repo.getActivityKindsByActivityIds).toHaveBeenCalledWith([actRows[0].id]);
+      expect(repo.getActivityKindsByActivityIds).toHaveBeenCalledWith([
+        actRows[0].id,
+      ]);
     });
 
     test("activityなし → kindsクエリにも空配列", async () => {
@@ -161,8 +163,12 @@ describe("activityV2Usecase", () => {
     });
 
     test("upsertで返らなかったID → serverWins", async () => {
-      const req1 = makeActivityRequest({ id: "10000000-0000-4000-8000-000000000001" });
-      const req2 = makeActivityRequest({ id: "10000000-0000-4000-8000-000000000002" });
+      const req1 = makeActivityRequest({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const req2 = makeActivityRequest({
+        id: "10000000-0000-4000-8000-000000000002",
+      });
 
       const row1 = makeActivityRow({ id: req1.id });
       const serverRow2 = makeActivityRow({ id: req2.id, name: "Server ver" });
@@ -173,7 +179,11 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [req1, req2] as never[], []);
+      const result = await usecase.syncActivities(
+        USER_ID,
+        [req1, req2] as never[],
+        [],
+      );
 
       expect(result.activities.syncedIds).toContain(req1.id);
       expect(result.activities.serverWins).toHaveLength(1);
@@ -181,7 +191,9 @@ describe("activityV2Usecase", () => {
     });
 
     test("upsertで返らず、getByIdsでも見つからない → skippedIds", async () => {
-      const req = makeActivityRequest({ id: "10000000-0000-4000-8000-000000000099" });
+      const req = makeActivityRequest({
+        id: "10000000-0000-4000-8000-000000000099",
+      });
       const repo = createMockRepo({
         upsertActivities: vi.fn().mockResolvedValue([]),
         getActivitiesByIds: vi.fn().mockResolvedValue([]),
@@ -199,14 +211,20 @@ describe("activityV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeActivityRequest({ updatedAt: "2026-03-01T12:05:00.000Z" });
+        const req = makeActivityRequest({
+          updatedAt: "2026-03-01T12:05:00.000Z",
+        });
         const row = makeActivityRow();
         const repo = createMockRepo({
           upsertActivities: vi.fn().mockResolvedValue([row]),
         });
         const usecase = newActivityV2Usecase(repo, noopTracer);
 
-        const result = await usecase.syncActivities(USER_ID, [req as never], []);
+        const result = await usecase.syncActivities(
+          USER_ID,
+          [req as never],
+          [],
+        );
 
         expect(result.activities.skippedIds).toHaveLength(0);
         expect(repo.upsertActivities).toHaveBeenCalled();
@@ -219,11 +237,17 @@ describe("activityV2Usecase", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
-        const req = makeActivityRequest({ updatedAt: "2026-03-01T12:05:00.001Z" });
+        const req = makeActivityRequest({
+          updatedAt: "2026-03-01T12:05:00.001Z",
+        });
         const repo = createMockRepo();
         const usecase = newActivityV2Usecase(repo, noopTracer);
 
-        const result = await usecase.syncActivities(USER_ID, [req as never], []);
+        const result = await usecase.syncActivities(
+          USER_ID,
+          [req as never],
+          [],
+        );
 
         expect(result.activities.skippedIds).toContain(req.id);
         expect(repo.upsertActivities).not.toHaveBeenCalled();
@@ -256,7 +280,11 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [], [kindReq as never]);
+      const result = await usecase.syncActivities(
+        USER_ID,
+        [],
+        [kindReq as never],
+      );
 
       expect(result.activityKinds.skippedIds).toContain(kindReq.id);
       expect(result.activityKinds.syncedIds).toHaveLength(0);
@@ -274,7 +302,11 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [], [kindReq as never]);
+      const result = await usecase.syncActivities(
+        USER_ID,
+        [],
+        [kindReq as never],
+      );
 
       expect(result.activityKinds.syncedIds).toContain(kindReq.id);
     });
@@ -291,7 +323,11 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [], [kindReq as never]);
+      const result = await usecase.syncActivities(
+        USER_ID,
+        [],
+        [kindReq as never],
+      );
 
       expect(result.activityKinds.skippedIds).toContain(kindReq.id);
       expect(repo.upsertActivityKinds).not.toHaveBeenCalled();
@@ -318,7 +354,10 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [], [kind1, kind2] as never[]);
+      const result = await usecase.syncActivities(USER_ID, [], [
+        kind1,
+        kind2,
+      ] as never[]);
 
       expect(result.activityKinds.syncedIds).toContain(kind1.id);
       expect(result.activityKinds.serverWins).toHaveLength(1);
@@ -338,7 +377,11 @@ describe("activityV2Usecase", () => {
       });
       const usecase = newActivityV2Usecase(repo, noopTracer);
 
-      const result = await usecase.syncActivities(USER_ID, [], [kindReq as never]);
+      const result = await usecase.syncActivities(
+        USER_ID,
+        [],
+        [kindReq as never],
+      );
 
       expect(result.activityKinds.skippedIds).toContain(kindReq.id);
       expect(result.activityKinds.syncedIds).toHaveLength(0);

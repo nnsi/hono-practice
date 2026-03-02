@@ -1,18 +1,13 @@
-import { DomainValidateError } from "../errors";
-import {
-  ActivityKindSchema,
-  ActivitySchema,
-} from "../activity/activitySchema";
-import { userIdSchema } from "../user/userSchema";
-import { validateActivityLogDate } from "./activityLogValidation";
 import { v7 } from "uuid";
 import { z } from "zod";
 
+import { ActivityKindSchema, ActivitySchema } from "../activity/activitySchema";
+import { DomainValidateError } from "../errors";
+import { userIdSchema } from "../user/userSchema";
+import { validateActivityLogDate } from "./activityLogValidation";
+
 // ActivityLogId
-export const activityLogIdSchema = z
-  .string()
-  .uuid()
-  .brand<"ActivityLogId">();
+export const activityLogIdSchema = z.string().uuid().brand<"ActivityLogId">();
 export type ActivityLogId = z.infer<typeof activityLogIdSchema>;
 
 export function createActivityLogId(id?: string): ActivityLogId {
@@ -58,14 +53,10 @@ export const ActivityLogEntitySchema = z.discriminatedUnion("type", [
 export type ActivityLog = z.infer<typeof ActivityLogEntitySchema>;
 export type ActivityLogInput = z.input<typeof ActivityLogEntitySchema>;
 
-export function createActivityLogEntity(
-  params: ActivityLogInput,
-): ActivityLog {
+export function createActivityLogEntity(params: ActivityLogInput): ActivityLog {
   const parsedEntity = ActivityLogEntitySchema.safeParse(params);
   if (!parsedEntity.success) {
-    throw new DomainValidateError(
-      "createActivityLogEntity: invalid params",
-    );
+    throw new DomainValidateError("createActivityLogEntity: invalid params");
   }
 
   const activityLog = parsedEntity.data;

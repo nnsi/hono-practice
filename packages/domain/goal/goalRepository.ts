@@ -1,5 +1,5 @@
-import type { GoalRecord } from "./goalRecord";
 import type { Syncable } from "../sync/syncableRecord";
+import type { GoalRecord } from "./goalRecord";
 
 export type CreateGoalInput = {
   activityId: string;

@@ -1,14 +1,22 @@
 import { useState } from "react";
+
 import { Loader2, Lock } from "lucide-react";
+
+import {
+  useApiKeys,
+  useCreateApiKey,
+  useDeleteApiKey,
+} from "../../hooks/useApiKeys";
 import { useSubscription } from "../../hooks/useSubscription";
-import { useApiKeys, useCreateApiKey, useDeleteApiKey } from "../../hooks/useApiKeys";
 import { ApiKeyList } from "./ApiKeyList";
 import { CreateApiKeyDialog } from "./CreateApiKeyDialog";
 
 export function ApiKeyManager() {
   const { data: subscription, isLoading: subLoading } = useSubscription();
   const canUseApiKey = subscription?.canUseApiKey ?? false;
-  const { data: apiKeysData, isLoading: keysLoading } = useApiKeys({ enabled: canUseApiKey });
+  const { data: apiKeysData, isLoading: keysLoading } = useApiKeys({
+    enabled: canUseApiKey,
+  });
   const createApiKey = useCreateApiKey();
   const deleteApiKey = useDeleteApiKey();
   const [showCreateDialog, setShowCreateDialog] = useState(false);

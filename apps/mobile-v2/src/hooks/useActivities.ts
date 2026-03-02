@@ -3,7 +3,7 @@ import { activityRepository } from "../repositories/activityRepository";
 
 export function useActivities() {
   const activities = useLiveQuery("activities", () =>
-    activityRepository.getAllActivities()
+    activityRepository.getAllActivities(),
   );
   return { activities: activities ?? [] };
 }

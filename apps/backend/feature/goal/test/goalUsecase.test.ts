@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from "@backend/error";
+import { noopTracer } from "@backend/lib/tracer";
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityGoalId,
@@ -5,8 +7,6 @@ import {
   createActivityGoalEntity,
 } from "@packages/domain/goal/goalSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
-import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 

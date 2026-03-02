@@ -1,8 +1,12 @@
+import type { SyncResult } from "@packages/sync-engine";
+import {
+  chunkArray,
+  mapApiGoal,
+  mergeSyncResults,
+} from "@packages/sync-engine";
+
 import { goalRepository } from "../repositories/goalRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiGoal } from "@packages/sync-engine";
-import type { SyncResult } from "@packages/sync-engine";
-import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncGoals(): Promise<void> {
   const pending = await goalRepository.getPendingSyncGoals();
@@ -19,15 +23,13 @@ export async function syncGoals(): Promise<void> {
       json: { goals: chunk },
     });
     if (!res.ok) return;
-    results.push(await res.json() as SyncResult);
+    results.push((await res.json()) as SyncResult);
   }
 
   const data = mergeSyncResults(results);
   await goalRepository.markGoalsSynced(data.syncedIds);
   await goalRepository.markGoalsFailed(data.skippedIds);
   if (data.serverWins.length > 0) {
-    await goalRepository.upsertGoalsFromServer(
-      data.serverWins.map(mapApiGoal),
-    );
+    await goalRepository.upsertGoalsFromServer(data.serverWins.map(mapApiGoal));
   }
 }

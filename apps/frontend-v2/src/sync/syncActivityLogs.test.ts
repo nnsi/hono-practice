@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -10,8 +10,9 @@ vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
-import { activityLogRepository } from "../db/activityLogRepository";
 import { mapApiActivityLog } from "@packages/sync-engine/mappers/apiMappers";
+
+import { activityLogRepository } from "../db/activityLogRepository";
 import { syncActivityLogs } from "./syncActivityLogs";
 
 const mockLogRepo = vi.mocked(activityLogRepository);
@@ -194,10 +195,7 @@ describe("syncActivityLogs", () => {
     })) as any;
     mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue(pending);
 
-    const firstChunkSyncedIds = Array.from(
-      { length: 100 },
-      (_, i) => `l-${i}`,
-    );
+    const firstChunkSyncedIds = Array.from({ length: 100 }, (_, i) => `l-${i}`);
     const secondChunkSyncedIds = Array.from(
       { length: 10 },
       (_, i) => `l-${100 + i}`,

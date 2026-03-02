@@ -1,26 +1,26 @@
+import type { SyncResult } from "@packages/sync-engine";
+import {
+  chunkArray,
+  mapApiActivity,
+  mapApiActivityKind,
+  mergeSyncResults,
+} from "@packages/sync-engine";
+
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
 import { apiClient, customFetch } from "../utils/apiClient";
-import { mapApiActivity, mapApiActivityKind } from "@packages/sync-engine";
-import type { SyncResult } from "@packages/sync-engine";
-import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3456").replace(
-  /\/+$/,
-  "",
-);
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:3456"
+).replace(/\/+$/, "");
 
 export async function syncActivities(): Promise<void> {
-  const pendingActivities =
-    await activityRepository.getPendingSyncActivities();
-  const pendingKinds =
-    await activityRepository.getPendingSyncActivityKinds();
+  const pendingActivities = await activityRepository.getPendingSyncActivities();
+  const pendingKinds = await activityRepository.getPendingSyncActivityKinds();
 
   if (pendingActivities.length === 0 && pendingKinds.length === 0) return;
 
-  const activitiesData = pendingActivities.map(
-    ({ _syncStatus, ...a }) => a,
-  );
+  const activitiesData = pendingActivities.map(({ _syncStatus, ...a }) => a);
   const kindsData = pendingKinds.map(({ _syncStatus, ...k }) => k);
 
   const activityChunks = chunkArray(activitiesData);
@@ -39,7 +39,7 @@ export async function syncActivities(): Promise<void> {
     });
     if (!res.ok) return;
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       activities: SyncResult;
       activityKinds: SyncResult;
     };

@@ -49,10 +49,7 @@ async function postSync(
   );
 }
 
-async function getActivityLogs(
-  app: ReturnType<typeof createApp>,
-  query = "",
-) {
+async function getActivityLogs(app: ReturnType<typeof createApp>, query = "") {
   return app.request(
     `/users/v2/activity-logs${query ? `?${query}` : ""}`,
     { method: "GET" },
@@ -151,9 +148,18 @@ describe("POST /users/v2/activity-logs/sync", () => {
   test("複数ログの一括同期", async () => {
     const app = createApp();
     const logs = [
-      makeLog({ id: "10000000-0000-4000-8000-000000000001", date: "2025-01-01" }),
-      makeLog({ id: "10000000-0000-4000-8000-000000000002", date: "2025-01-02" }),
-      makeLog({ id: "10000000-0000-4000-8000-000000000003", date: "2025-01-03" }),
+      makeLog({
+        id: "10000000-0000-4000-8000-000000000001",
+        date: "2025-01-01",
+      }),
+      makeLog({
+        id: "10000000-0000-4000-8000-000000000002",
+        date: "2025-01-02",
+      }),
+      makeLog({
+        id: "10000000-0000-4000-8000-000000000003",
+        date: "2025-01-03",
+      }),
     ];
 
     const res = await postSync(app, { logs });

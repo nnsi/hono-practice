@@ -1,3 +1,6 @@
+import { ResourceNotFoundError } from "@backend/error";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
+import { noopTracer } from "@backend/lib/tracer";
 import {
   type Activity,
   type ActivityId,
@@ -5,9 +8,6 @@ import {
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
-import type { TransactionRunner } from "@backend/infra/rdb/db";
-import { noopTracer } from "@backend/lib/tracer";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 

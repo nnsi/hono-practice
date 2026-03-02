@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted で vi.mock ファクトリ内から参照できるモックを作成
 const { mockDb, uuidState } = vi.hoisted(() => {
@@ -305,14 +305,10 @@ describe("activityRepository", () => {
       const mockEquals = vi.fn().mockReturnValue({ filter: mockFilter });
       mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
 
-      await activityRepository.updateActivity(
-        "act-1",
-        { name: "Updated" },
-        [
-          { id: "k1", name: "Updated1", color: "#aaa" },
-          { name: "NewKind", color: "#bbb" },
-        ],
-      );
+      await activityRepository.updateActivity("act-1", { name: "Updated" }, [
+        { id: "k1", name: "Updated1", color: "#aaa" },
+        { name: "NewKind", color: "#bbb" },
+      ]);
 
       // k2がsoft-deleteされる
       expect(mockDb.activityKinds.update).toHaveBeenCalledWith("k2", {

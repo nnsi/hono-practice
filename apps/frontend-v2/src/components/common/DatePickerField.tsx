@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
+
 import dayjs from "dayjs";
 import { Calendar, X } from "lucide-react";
+
 import { CalendarPopover } from "./CalendarPopover";
 
 type DatePickerFieldProps = {
@@ -25,9 +27,7 @@ export function DatePickerField({
   // Prevent re-open when CalendarPopover's outside-click fires before the button click
   const justClosedRef = useRef(false);
 
-  const displayText = value
-    ? dayjs(value).format("YYYY/MM/DD")
-    : placeholder;
+  const displayText = value ? dayjs(value).format("YYYY/MM/DD") : placeholder;
 
   const handleToggle = () => {
     if (disabled) return;
@@ -63,7 +63,9 @@ export function DatePickerField({
           ${isOpen ? "ring-2 ring-blue-500 border-transparent" : "border-gray-300"}`}
       >
         <Calendar size={14} className="text-gray-400 shrink-0" />
-        <span className={`truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
+        <span
+          className={`truncate ${value ? "text-gray-900" : "text-gray-400"}`}
+        >
           {displayText}
         </span>
         {allowClear && value && !disabled && (

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -10,8 +10,9 @@ vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
-import { goalRepository } from "../db/goalRepository";
 import { mapApiGoal } from "@packages/sync-engine/mappers/apiMappers";
+
+import { goalRepository } from "../db/goalRepository";
 import { syncGoals } from "./syncGoals";
 
 const mockGoalRepo = vi.mocked(goalRepository);

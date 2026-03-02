@@ -1,5 +1,5 @@
-import type { TaskRecord } from "./taskRecord";
 import type { Syncable } from "../sync/syncableRecord";
+import type { TaskRecord } from "./taskRecord";
 
 export type CreateTaskInput = {
   title: string;

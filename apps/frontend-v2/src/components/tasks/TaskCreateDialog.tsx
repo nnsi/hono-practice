@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
@@ -51,7 +52,6 @@ export function TaskCreateDialog({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="タスクのタイトルを入力"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              autoFocus
             />
           </div>
 

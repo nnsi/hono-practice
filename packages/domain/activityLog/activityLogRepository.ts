@@ -1,5 +1,5 @@
-import type { ActivityLogRecord } from "./activityLogRecord";
 import type { Syncable } from "../sync/syncableRecord";
+import type { ActivityLogRecord } from "./activityLogRecord";
 
 type LocalActivityLogRecord = Omit<ActivityLogRecord, "userId">;
 

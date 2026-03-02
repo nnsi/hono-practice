@@ -1,12 +1,13 @@
+import type { SyncStatus } from "@packages/domain";
 import type {
-  ActivityRecord,
   ActivityKindRecord,
+  ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import type { SyncStatus } from "@packages/domain";
+import { v7 as uuidv7 } from "uuid";
+
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { v7 as uuidv7 } from "uuid";
 
 // --- Row mapping helpers (snake_case SQL → camelCase TS) ---
 
@@ -137,7 +138,9 @@ export const activityRepository = {
     const lastActivity = await db.getFirstAsync<{ order_index: string }>(
       "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
     );
-    const newIndex = String(Number(lastActivity?.order_index ?? "0") + 1).padStart(6, "0");
+    const newIndex = String(
+      Number(lastActivity?.order_index ?? "0") + 1,
+    ).padStart(6, "0");
 
     await db.runAsync(
       `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
@@ -394,10 +397,9 @@ export const activityRepository = {
 
   async deleteActivityIconBlob(activityId: string): Promise<void> {
     const db = await getDatabase();
-    await db.runAsync(
-      "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
-      [activityId],
-    );
+    await db.runAsync("DELETE FROM activity_icon_blobs WHERE activity_id = ?", [
+      activityId,
+    ]);
   },
 
   async getPendingIconBlobs(): Promise<IconBlob[]> {

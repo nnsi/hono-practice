@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
-import type { ChartData, StatsKind } from "./types";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
+import type { ChartData, StatsKind } from "./types";
 
 type WeekDay = {
   date: string;
@@ -101,18 +103,21 @@ export function SummaryTable({
           {/* Header */}
           <View className="flex-row bg-gray-50 border-b border-gray-200">
             <View className="flex-1 px-3 py-2" style={{ minWidth: 88 }}>
-              <Text className="text-xs font-medium text-gray-500">
-                日付
-              </Text>
+              <Text className="text-xs font-medium text-gray-500">日付</Text>
             </View>
-            <View className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
-              <Text className="text-xs font-medium text-gray-500">
-                日合計
-              </Text>
+            <View
+              className="flex-1 px-3 py-2 items-end"
+              style={{ minWidth: 64 }}
+            >
+              <Text className="text-xs font-medium text-gray-500">日合計</Text>
             </View>
             {hasMultipleKinds &&
               kinds.map((kind) => (
-                <View key={kind.name} className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
+                <View
+                  key={kind.name}
+                  className="flex-1 px-3 py-2 items-end"
+                  style={{ minWidth: 64 }}
+                >
                   <Text
                     className="text-xs font-medium"
                     style={{ color: kindColors[kind.name] || "#6b7280" }}
@@ -122,10 +127,11 @@ export function SummaryTable({
                   </Text>
                 </View>
               ))}
-            <View className="flex-1 px-3 py-2 items-end" style={{ minWidth: 64 }}>
-              <Text className="text-xs font-medium text-gray-500">
-                週合計
-              </Text>
+            <View
+              className="flex-1 px-3 py-2 items-end"
+              style={{ minWidth: 64 }}
+            >
+              <Text className="text-xs font-medium text-gray-500">週合計</Text>
             </View>
           </View>
 
@@ -141,7 +147,10 @@ export function SummaryTable({
                     {day.date} ({day.dayOfWeek})
                   </Text>
                 </View>
-                <View className="flex-1 px-3 py-1.5 items-end" style={{ minWidth: 64 }}>
+                <View
+                  className="flex-1 px-3 py-1.5 items-end"
+                  style={{ minWidth: 64 }}
+                >
                   <Text className="text-sm font-medium text-gray-900">
                     {day.total > 0
                       ? formatQuantityWithUnit(day.total, quantityUnit)
@@ -169,7 +178,10 @@ export function SummaryTable({
                     </View>
                   ))}
                 {dayIndex === 0 ? (
-                  <View className="flex-1 px-3 py-1.5 items-end bg-gray-50" style={{ minWidth: 64 }}>
+                  <View
+                    className="flex-1 px-3 py-1.5 items-end bg-gray-50"
+                    style={{ minWidth: 64 }}
+                  >
                     <Text className="text-sm font-bold text-gray-900">
                       {formatQuantityWithUnit(
                         roundQuantity(week.weekTotal),
@@ -178,7 +190,10 @@ export function SummaryTable({
                     </Text>
                   </View>
                 ) : (
-                  <View className="flex-1 px-3 py-1.5 bg-gray-50" style={{ minWidth: 64 }} />
+                  <View
+                    className="flex-1 px-3 py-1.5 bg-gray-50"
+                    style={{ minWidth: 64 }}
+                  />
                 )}
               </View>
             )),

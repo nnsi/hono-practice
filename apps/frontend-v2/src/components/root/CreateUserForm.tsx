@@ -1,12 +1,20 @@
 import { useState } from "react";
+
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type CreateUserFormProps = {
-  onRegister: (name: string, loginId: string, password: string) => Promise<void>;
+  onRegister: (
+    name: string,
+    loginId: string,
+    password: string,
+  ) => Promise<void>;
   onGoogleLogin: (credential: string) => Promise<void>;
 };
 
-export function CreateUserForm({ onRegister, onGoogleLogin }: CreateUserFormProps) {
+export function CreateUserForm({
+  onRegister,
+  onGoogleLogin,
+}: CreateUserFormProps) {
   const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -104,7 +112,6 @@ export function CreateUserForm({ onRegister, onGoogleLogin }: CreateUserFormProp
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
-            autoFocus
             required
           />
         </div>
@@ -126,9 +133,7 @@ export function CreateUserForm({ onRegister, onGoogleLogin }: CreateUserFormProp
             minLength={8}
           />
         </div>
-        {error && (
-          <p className="text-red-500 text-sm">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
           disabled={isSubmitting}

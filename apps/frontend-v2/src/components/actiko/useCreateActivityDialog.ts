@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { resizeImage } from "../../utils/imageResizer";
@@ -12,7 +13,10 @@ export function useCreateActivityDialog(
   const [name, setName] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
-  const [kinds, setKinds] = useState<{ name: string; color: string }[]>([]);
+  const [kinds, setKinds] = useState<
+    { id: number; name: string; color: string }[]
+  >([]);
+  const [nextKindId, setNextKindId] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [icon, setIcon] = useState<IconSelectorValue>({
     type: "emoji",
@@ -59,6 +63,8 @@ export function useCreateActivityDialog(
     setShowCombinedStats,
     kinds,
     setKinds,
+    nextKindId,
+    setNextKindId,
     icon,
     setIcon,
     isSubmitting,

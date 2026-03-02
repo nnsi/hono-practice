@@ -11,15 +11,15 @@ import {
   taskRoute,
   userRoute,
 } from "./feature";
+import { goalRoute } from "./feature/goal/goalRoute";
+import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
+import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import {
   activityLogV2Route,
   activityV2Route,
   goalV2Route,
   taskV2Route,
 } from "./feature-v2";
-import { goalRoute } from "./feature/goal/goalRoute";
-import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
-import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";

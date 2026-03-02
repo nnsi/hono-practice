@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 
 describe("formatQuantityWithUnit", () => {
@@ -94,24 +95,24 @@ describe("formatQuantityWithUnit", () => {
     });
   });
 
-describe("roundQuantity", () => {
-  it("小数点第1位で四捨五入する", () => {
-    expect(roundQuantity(1.94)).toBe(1.9);
-    expect(roundQuantity(1.95)).toBe(2);
-    expect(roundQuantity(1.99999)).toBe(2);
-    expect(roundQuantity(3.14159)).toBe(3.1);
-  });
+  describe("roundQuantity", () => {
+    it("小数点第1位で四捨五入する", () => {
+      expect(roundQuantity(1.94)).toBe(1.9);
+      expect(roundQuantity(1.95)).toBe(2);
+      expect(roundQuantity(1.99999)).toBe(2);
+      expect(roundQuantity(Math.PI)).toBe(3.1);
+    });
 
-  it("整数はそのまま返す", () => {
-    expect(roundQuantity(5)).toBe(5);
-    expect(roundQuantity(0)).toBe(0);
-  });
+    it("整数はそのまま返す", () => {
+      expect(roundQuantity(5)).toBe(5);
+      expect(roundQuantity(0)).toBe(0);
+    });
 
-  it("浮動小数点の加算誤差を吸収する", () => {
-    // 0.1 + 0.2 = 0.30000000000000004
-    expect(roundQuantity(0.1 + 0.2)).toBe(0.3);
+    it("浮動小数点の加算誤差を吸収する", () => {
+      // 0.1 + 0.2 = 0.30000000000000004
+      expect(roundQuantity(0.1 + 0.2)).toBe(0.3);
+    });
   });
-});
 
   describe("一般的な単位の場合", () => {
     it('5回 → "5回"', () => {
@@ -127,7 +128,7 @@ describe("roundQuantity", () => {
     });
 
     it("小数点第1位で四捨五入する", () => {
-      expect(formatQuantityWithUnit(3.14159, "km")).toBe("3.1km");
+      expect(formatQuantityWithUnit(Math.PI, "km")).toBe("3.1km");
     });
 
     it("0の場合", () => {

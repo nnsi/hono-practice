@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+
+import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import {
+  calculateGoalStats,
+  generateDailyRecords,
+} from "@packages/domain/goal/goalStats";
+import dayjs from "dayjs";
 import {
   BarChart3,
   Calendar,
@@ -10,18 +17,13 @@ import {
   Pencil,
   PlusCircle,
   Trash2,
-  Trophy,
   TrendingUp,
+  Trophy,
 } from "lucide-react-native";
-import dayjs from "dayjs";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import {
-  generateDailyRecords,
-  calculateGoalStats,
-} from "@packages/domain/goal/goalStats";
-import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
-import { useLiveQuery } from "../../db/useLiveQuery";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { getDatabase } from "../../db/database";
+import { useLiveQuery } from "../../db/useLiveQuery";
 
 type GoalForCard = {
   id: string;
@@ -100,34 +102,26 @@ export function GoalCard({
   }, [goal.startDate, goal.endDate]);
 
   // Today's log count
-  const todayLogCount = useLiveQuery(
-    ["activity_logs"],
-    async () => {
-      const db = await getDatabase();
-      const row = await db.getFirstAsync<{ cnt: number }>(
-        `SELECT COUNT(*) as cnt FROM activity_logs
+  const todayLogCount = useLiveQuery(["activity_logs"], async () => {
+    const db = await getDatabase();
+    const row = await db.getFirstAsync<{ cnt: number }>(
+      `SELECT COUNT(*) as cnt FROM activity_logs
          WHERE activity_id = ? AND date = ? AND deleted_at IS NULL`,
-        [goal.activityId, today],
-      );
-      return row?.cnt ?? 0;
-    },
-    [goal.activityId, today],
-  );
+      [goal.activityId, today],
+    );
+    return row?.cnt ?? 0;
+  }, [goal.activityId, today]);
   const hasTodayLog = (todayLogCount ?? 0) > 0;
 
   // Period logs for balance calculation
-  const periodLogs = useLiveQuery(
-    ["activity_logs"],
-    async () => {
-      const db = await getDatabase();
-      return db.getAllAsync<{ date: string; quantity: number | null }>(
-        `SELECT date, quantity FROM activity_logs
+  const periodLogs = useLiveQuery(["activity_logs"], async () => {
+    const db = await getDatabase();
+    return db.getAllAsync<{ date: string; quantity: number | null }>(
+      `SELECT date, quantity FROM activity_logs
          WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
-        [goal.activityId, goal.startDate, actualEndDate],
-      );
-    },
-    [goal.activityId, goal.startDate, actualEndDate],
-  );
+      [goal.activityId, goal.startDate, actualEndDate],
+    );
+  }, [goal.activityId, goal.startDate, actualEndDate]);
 
   const balance = useMemo(() => {
     return calculateGoalBalance(goal, periodLogs ?? [], today);
@@ -193,7 +187,9 @@ export function GoalCard({
               {activity?.name ?? "不明なアクティビティ"}
             </Text>
             <View className={`rounded-full px-2 py-0.5 ${statusBadge.bgClass}`}>
-              <Text className={`text-[10px] font-medium ${statusBadge.textClass}`}>
+              <Text
+                className={`text-[10px] font-medium ${statusBadge.textClass}`}
+              >
                 {statusBadge.label}
               </Text>
             </View>
@@ -220,19 +216,13 @@ export function GoalCard({
           </Text>
 
           {!isPast && onRecordOpen && (
-            <TouchableOpacity
-              className="p-1.5"
-              onPress={onRecordOpen}
-            >
+            <TouchableOpacity className="p-1.5" onPress={onRecordOpen}>
               <PlusCircle size={14} color="#3b82f6" />
             </TouchableOpacity>
           )}
 
           {!isPast && onEditStart && (
-            <TouchableOpacity
-              className="p-1.5"
-              onPress={onEditStart}
-            >
+            <TouchableOpacity className="p-1.5" onPress={onEditStart}>
               <Pencil size={14} color="#9ca3af" />
             </TouchableOpacity>
           )}
@@ -281,12 +271,8 @@ export function GoalCard({
           />
         </View>
         <View className="flex-row justify-between mt-0.5">
-          <Text className="text-[10px] text-gray-400">
-            {elapsedDays}日経過
-          </Text>
-          <Text className="text-[10px] text-gray-400">
-            全{totalDays}日
-          </Text>
+          <Text className="text-[10px] text-gray-400">{elapsedDays}日経過</Text>
+          <Text className="text-[10px] text-gray-400">全{totalDays}日</Text>
         </View>
       </View>
 
@@ -313,18 +299,14 @@ function GoalStatsDetail({
   const endDate = goal.endDate || today;
   const actualEndDate = endDate < today ? endDate : today;
 
-  const periodLogs = useLiveQuery(
-    ["activity_logs"],
-    async () => {
-      const db = await getDatabase();
-      return db.getAllAsync<{ date: string; quantity: number | null }>(
-        `SELECT date, quantity FROM activity_logs
+  const periodLogs = useLiveQuery(["activity_logs"], async () => {
+    const db = await getDatabase();
+    return db.getAllAsync<{ date: string; quantity: number | null }>(
+      `SELECT date, quantity FROM activity_logs
          WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
-        [goal.activityId, goal.startDate, actualEndDate],
-      );
-    },
-    [goal.activityId, goal.startDate, actualEndDate],
-  );
+      [goal.activityId, goal.startDate, actualEndDate],
+    );
+  }, [goal.activityId, goal.startDate, actualEndDate]);
 
   const statsData = useMemo(() => {
     if (!periodLogs) return null;

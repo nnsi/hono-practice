@@ -1,9 +1,10 @@
 import { X } from "lucide-react";
+
+import type { DexieActivity } from "../../db/schema";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
-import type { DexieActivity } from "../../db/schema";
-import type { CreateGoalPayload } from "./types";
 import { getActivityEmoji } from "./activityHelpers";
+import type { CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
 export function CreateGoalDialog({
@@ -126,9 +127,7 @@ export function CreateGoalDialog({
             </div>
           </div>
 
-          {errorMsg && (
-            <p className="text-sm text-red-500">{errorMsg}</p>
-          )}
+          {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
 
           {/* ボタン */}
           <div className="flex gap-2 pt-2">

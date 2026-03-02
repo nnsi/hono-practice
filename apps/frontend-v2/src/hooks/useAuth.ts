@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+
 import { db } from "../db/schema";
-import { apiLogin, clearToken, setToken, apiClient } from "../utils/apiClient";
-import { performInitialSync, clearLocalData } from "../sync/initialSync";
+import { clearLocalData, performInitialSync } from "../sync/initialSync";
+import { apiClient, apiLogin, clearToken, setToken } from "../utils/apiClient";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -22,9 +23,10 @@ export function useAuth(): AuthState {
   useEffect(() => {
     const tryOfflineAuth = async (): Promise<boolean> => {
       const authState = await db.authState.get("current");
-      if (authState && authState.lastLoginAt) {
+      if (authState?.lastLoginAt) {
         const hoursAgo =
-          (Date.now() - new Date(authState.lastLoginAt).getTime()) / (1000 * 60 * 60);
+          (Date.now() - new Date(authState.lastLoginAt).getTime()) /
+          (1000 * 60 * 60);
         if (hoursAgo < 1) {
           setUserId(authState.userId);
           setIsLoggedIn(true);
@@ -86,49 +88,58 @@ export function useAuth(): AuthState {
     await performInitialSync(newUserId);
   }, []);
 
-  const login = useCallback(async (loginId: string, password: string) => {
-    await apiLogin(loginId, password);
-    const userRes = await apiClient.user.me.$get();
-    if (!userRes.ok) {
-      throw new Error("Failed to fetch user after login");
-    }
-    const user = await userRes.json();
-    await loginWithUserCheck(user.id);
-  }, [loginWithUserCheck]);
+  const login = useCallback(
+    async (loginId: string, password: string) => {
+      await apiLogin(loginId, password);
+      const userRes = await apiClient.user.me.$get();
+      if (!userRes.ok) {
+        throw new Error("Failed to fetch user after login");
+      }
+      const user = await userRes.json();
+      await loginWithUserCheck(user.id);
+    },
+    [loginWithUserCheck],
+  );
 
-  const googleLogin = useCallback(async (credential: string) => {
-    const res = await apiClient.auth.google.$post({
-      json: { credential },
-    });
-    if (!res.ok) {
-      throw new Error("Google login failed");
-    }
-    const data = await res.json();
-    setToken(data.token);
-    const userRes = await apiClient.user.me.$get();
-    if (!userRes.ok) {
-      throw new Error("Failed to fetch user after Google login");
-    }
-    const user = await userRes.json();
-    await loginWithUserCheck(user.id);
-  }, [loginWithUserCheck]);
+  const googleLogin = useCallback(
+    async (credential: string) => {
+      const res = await apiClient.auth.google.$post({
+        json: { credential },
+      });
+      if (!res.ok) {
+        throw new Error("Google login failed");
+      }
+      const data = await res.json();
+      setToken(data.token);
+      const userRes = await apiClient.user.me.$get();
+      if (!userRes.ok) {
+        throw new Error("Failed to fetch user after Google login");
+      }
+      const user = await userRes.json();
+      await loginWithUserCheck(user.id);
+    },
+    [loginWithUserCheck],
+  );
 
-  const register = useCallback(async (name: string, loginId: string, password: string) => {
-    const res = await apiClient.user.$post({
-      json: { name: name || undefined, loginId, password },
-    });
-    if (!res.ok) {
-      throw new Error("Registration failed");
-    }
-    const data = await res.json();
-    setToken(data.token);
-    const userRes = await apiClient.user.me.$get();
-    if (!userRes.ok) {
-      throw new Error("Failed to fetch user after registration");
-    }
-    const user = await userRes.json();
-    await loginWithUserCheck(user.id);
-  }, [loginWithUserCheck]);
+  const register = useCallback(
+    async (name: string, loginId: string, password: string) => {
+      const res = await apiClient.user.$post({
+        json: { name: name || undefined, loginId, password },
+      });
+      if (!res.ok) {
+        throw new Error("Registration failed");
+      }
+      const data = await res.json();
+      setToken(data.token);
+      const userRes = await apiClient.user.me.$get();
+      if (!userRes.ok) {
+        throw new Error("Failed to fetch user after registration");
+      }
+      const user = await userRes.json();
+      await loginWithUserCheck(user.id);
+    },
+    [loginWithUserCheck],
+  );
 
   const logout = useCallback(async () => {
     // サーバーサイドのセッション無効化（fire-and-forget）
@@ -142,5 +153,13 @@ export function useAuth(): AuthState {
     await db.authState.update("current", { lastLoginAt: "" });
   }, []);
 
-  return { isLoggedIn, isLoading, userId, login, googleLogin, register, logout };
+  return {
+    isLoggedIn,
+    isLoading,
+    userId,
+    login,
+    googleLogin,
+    register,
+    logout,
+  };
 }

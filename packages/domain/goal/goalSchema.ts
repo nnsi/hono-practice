@@ -1,8 +1,9 @@
-import { DomainValidateError } from "../errors";
-import { activityIdSchema } from "../activity/activitySchema";
-import { userIdSchema } from "../user/userSchema";
 import { v7 } from "uuid";
 import { z } from "zod";
+
+import { activityIdSchema } from "../activity/activitySchema";
+import { DomainValidateError } from "../errors";
+import { userIdSchema } from "../user/userSchema";
 
 // ActivityGoalId
 export const activityGoalIdSchema = z.string().uuid().brand<"ActivityGoalId">();
@@ -18,7 +19,8 @@ export function createActivityGoalId(): ActivityGoalId {
 
 export function createActivityGoalIdFromString(id: string): ActivityGoalId {
   const result = activityGoalIdSchema.safeParse(id);
-  if (!result.success) throw new DomainValidateError("Invalid ActivityGoalId format");
+  if (!result.success)
+    throw new DomainValidateError("Invalid ActivityGoalId format");
   return result.data;
 }
 
@@ -53,7 +55,9 @@ export const ActivityGoalSchema = z.discriminatedUnion("type", [
 export type ActivityGoal = z.infer<typeof ActivityGoalSchema>;
 export type ActivityGoalInput = z.input<typeof ActivityGoalSchema>;
 
-export function createActivityGoalEntity(params: ActivityGoalInput): ActivityGoal {
+export function createActivityGoalEntity(
+  params: ActivityGoalInput,
+): ActivityGoal {
   const parsedEntity = ActivityGoalSchema.safeParse(params);
   if (!parsedEntity.success) {
     throw new DomainValidateError("createActivityGoalEntity: invalid params");

@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
+
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
+
 import { db } from "../../db/schema";
 import { roundQuantity } from "./formatUtils";
 import type { ActivityStat, GoalLine } from "./types";
@@ -59,10 +61,7 @@ export function useStatsPage() {
     if (!activities || !allKinds || !monthLogs) return null;
 
     // ログをアクティビティIDでグループ化
-    const logsByActivity = new Map<
-      string,
-      (typeof monthLogs)[number][]
-    >();
+    const logsByActivity = new Map<string, (typeof monthLogs)[number][]>();
     for (const log of monthLogs) {
       const list = logsByActivity.get(log.activityId) ?? [];
       list.push(log);
@@ -100,10 +99,7 @@ export function useStatsPage() {
 
         for (const kind of actKinds) {
           const kindLogs = logsByKind.get(kind.id) ?? [];
-          const total = kindLogs.reduce(
-            (sum, l) => sum + (l.quantity ?? 0),
-            0,
-          );
+          const total = kindLogs.reduce((sum, l) => sum + (l.quantity ?? 0), 0);
           kinds.push({
             id: kind.id,
             name: kind.name,

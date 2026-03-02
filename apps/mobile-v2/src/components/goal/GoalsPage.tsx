@@ -1,11 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { Plus } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
-import { GoalCard } from "./GoalCard";
+import { Plus } from "lucide-react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
-import { RecordDialog } from "../actiko/RecordDialog";
+import { GoalCard } from "./GoalCard";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
@@ -65,7 +66,13 @@ export function GoalsPage() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 80 + insets.bottom }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 80 + insets.bottom,
+        }}
+      >
         {activeTab === "active" && (
           <View>
             {/* Empty state */}
@@ -100,9 +107,7 @@ export function GoalsPage() {
                   isExpanded={expandedGoalId === goal.id}
                   onToggleExpand={() => handleToggleExpand(goal.id)}
                   onEditStart={() => setEditingGoalId(goal.id)}
-                  onRecordOpen={
-                    act ? () => setRecordActivity(act) : undefined
-                  }
+                  onRecordOpen={act ? () => setRecordActivity(act) : undefined}
                 />
               );
             })}

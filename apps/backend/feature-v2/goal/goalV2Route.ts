@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
-import type { AppContext } from "../../context";
-import { noopTracer } from "../../lib/tracer";
 import { SyncGoalsRequestSchema } from "@packages/types-v2";
 
+import type { AppContext } from "../../context";
+import { noopTracer } from "../../lib/tracer";
 import { newGoalV2Handler } from "./goalV2Handler";
 import { newGoalV2Repository } from "./goalV2Repository";
 import { newGoalV2Usecase } from "./goalV2Usecase";
