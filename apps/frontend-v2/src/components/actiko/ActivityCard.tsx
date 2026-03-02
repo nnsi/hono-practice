@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Pencil } from "lucide-react";
 
+import { activityRepository } from "../../db/activityRepository";
 import type { DexieActivity, DexieActivityIconBlob } from "../../db/schema";
 
 export function ActivityCard({
@@ -18,6 +19,20 @@ export function ActivityCard({
   onEdit: () => void;
 }) {
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    if (activity.iconType !== "upload") return;
+    if (iconBlob) return;
+    const url = activity.iconThumbnailUrl || activity.iconUrl;
+    if (!url) return;
+    activityRepository.cacheRemoteIcon(activity.id, url);
+  }, [
+    activity.id,
+    activity.iconType,
+    activity.iconUrl,
+    activity.iconThumbnailUrl,
+    iconBlob,
+  ]);
 
   const renderIcon = () => {
     if (activity.iconType === "upload" && !imageError) {

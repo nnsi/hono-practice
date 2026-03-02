@@ -517,18 +517,38 @@ describe("activityRepository", () => {
   });
 
   describe("getPendingIconBlobs", () => {
-    it("全てのBlobを返す", async () => {
+    it("syncedでないBlobのみ返す", async () => {
       mockDb.activityIconBlobs.toArray.mockResolvedValue([
-        { activityId: "act-1" },
+        { activityId: "act-1", synced: false },
+        { activityId: "act-2", synced: true },
+        { activityId: "act-3" },
       ]);
 
       const result = await activityRepository.getPendingIconBlobs();
-      expect(result).toEqual([{ activityId: "act-1" }]);
+      expect(result).toEqual([
+        { activityId: "act-1", synced: false },
+        { activityId: "act-3" },
+      ]);
+    });
+  });
+
+  describe("getAllIconBlobs", () => {
+    it("synced含め全Blobを返す", async () => {
+      mockDb.activityIconBlobs.toArray.mockResolvedValue([
+        { activityId: "act-1", synced: true },
+        { activityId: "act-2" },
+      ]);
+
+      const result = await activityRepository.getAllIconBlobs();
+      expect(result).toEqual([
+        { activityId: "act-1", synced: true },
+        { activityId: "act-2" },
+      ]);
     });
   });
 
   describe("completeActivityIconSync", () => {
-    it("トランザクション内でiconUrlを更新しBlobを削除する", async () => {
+    it("トランザクション内でiconUrlを更新しBlobをsynced状態にする", async () => {
       await activityRepository.completeActivityIconSync(
         "act-1",
         "https://example.com/icon.png",
@@ -545,7 +565,9 @@ describe("activityRepository", () => {
         iconThumbnailUrl: "https://example.com/icon-thumb.png",
         _syncStatus: "pending",
       });
-      expect(mockDb.activityIconBlobs.delete).toHaveBeenCalledWith("act-1");
+      expect(mockDb.activityIconBlobs.update).toHaveBeenCalledWith("act-1", {
+        synced: true,
+      });
     });
   });
 

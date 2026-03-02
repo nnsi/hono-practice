@@ -25,7 +25,7 @@ export const useActikoPage = createUseActikoPage<Activity, IconBlob>({
   useIconBlobs: () =>
     useLiveQuery(
       "activity_icon_blobs",
-      () => activityRepository.getPendingIconBlobs(),
+      () => activityRepository.getAllIconBlobs(),
       [],
     ),
 });

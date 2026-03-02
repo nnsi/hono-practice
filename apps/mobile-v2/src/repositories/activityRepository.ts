@@ -402,10 +402,22 @@ export const activityRepository = {
     ]);
   },
 
-  async getPendingIconBlobs(): Promise<IconBlob[]> {
+  async getAllIconBlobs(): Promise<IconBlob[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_icon_blobs",
+    );
+    return rows.map((row) => ({
+      activityId: str(row.activity_id),
+      base64: str(row.base64),
+      mimeType: str(row.mime_type),
+    }));
+  },
+
+  async getPendingIconBlobs(): Promise<IconBlob[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activity_icon_blobs WHERE synced = 0 OR synced IS NULL",
     );
     return rows.map((row) => ({
       activityId: str(row.activity_id),
@@ -427,7 +439,7 @@ export const activityRepository = {
         [iconUrl, iconThumbnailUrl, activityId],
       );
       await db.runAsync(
-        "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
+        "UPDATE activity_icon_blobs SET synced = 1 WHERE activity_id = ?",
         [activityId],
       );
       await db.execAsync("COMMIT");
@@ -436,6 +448,7 @@ export const activityRepository = {
       throw e;
     }
     dbEvents.emit("activities");
+    dbEvents.emit("activity_icon_blobs");
   },
 
   async clearActivityIcon(activityId: string): Promise<void> {
@@ -481,6 +494,34 @@ export const activityRepository = {
       "DELETE FROM activity_icon_delete_queue WHERE activity_id = ?",
       [activityId],
     );
+  },
+
+  async cacheRemoteIcon(activityId: string, url: string): Promise<void> {
+    const db = await getDatabase();
+    const existing = await db.getFirstAsync<SqlRow>(
+      "SELECT activity_id FROM activity_icon_blobs WHERE activity_id = ?",
+      [activityId],
+    );
+    if (existing) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type") || "image/webp";
+      const arrayBuffer = await res.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      await db.runAsync(
+        "INSERT OR REPLACE INTO activity_icon_blobs (activity_id, base64, mime_type, synced) VALUES (?, ?, ?, 1)",
+        [activityId, base64, contentType],
+      );
+      dbEvents.emit("activity_icon_blobs");
+    } catch {
+      // Network error — URL表示のフォールバックがあるため無視
+    }
   },
 
   // --- Server upsert (for initial sync and sync engine) ---

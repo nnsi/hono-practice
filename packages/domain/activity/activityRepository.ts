@@ -59,6 +59,7 @@ export type ActivityRepository = {
     activityId: string,
   ): Promise<ActivityIconBlob | undefined>;
   deleteActivityIconBlob(activityId: string): Promise<void>;
+  getAllIconBlobs(): Promise<ActivityIconBlob[]>;
   getPendingIconBlobs(): Promise<ActivityIconBlob[]>;
   completeActivityIconSync(
     activityId: string,
@@ -68,6 +69,7 @@ export type ActivityRepository = {
   clearActivityIcon(activityId: string): Promise<void>;
   getPendingIconDeletes(): Promise<ActivityIconDeleteQueueItem[]>;
   removeIconDeleteQueue(activityId: string): Promise<void>;
+  cacheRemoteIcon(activityId: string, url: string): Promise<void>;
   // Server upsert
   upsertActivities(activities: ActivityRecord[]): Promise<void>;
   upsertActivityKinds(kinds: ActivityKindRecord[]): Promise<void>;

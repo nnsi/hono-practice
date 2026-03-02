@@ -20,6 +20,7 @@ export type DexieActivityIconBlob = {
   activityId: string;
   base64: string;
   mimeType: string;
+  synced?: boolean;
 };
 
 export type DexieActivityIconDeleteQueue = {
