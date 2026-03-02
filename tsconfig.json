@@ -44,6 +44,5 @@
     "apps/frontend-v2",
     "apps/mobile-v2",
     "packages/frontend-shared/adapters/react-native.ts"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }
