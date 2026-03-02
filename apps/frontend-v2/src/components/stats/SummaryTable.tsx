@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ChartData, StatsKind } from "./types";
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 
 export function SummaryTable({
   quantityUnit,
@@ -54,7 +54,7 @@ export function SummaryTable({
       const dayTotal = kinds.reduce((sum, kind) => {
         return sum + (Number(day[kind.name]) || 0);
       }, 0);
-      const roundedTotal = Math.round(dayTotal * 1000) / 1000;
+      const roundedTotal = roundQuantity(dayTotal);
 
       const breakdown: Record<string, number> = {};
       for (const kind of kinds) {
@@ -147,7 +147,7 @@ export function SummaryTable({
                         rowSpan={week.days.length}
                       >
                         {formatQuantityWithUnit(
-                          Math.round(week.weekTotal * 1000) / 1000,
+                          roundQuantity(week.weekTotal),
                           quantityUnit,
                         )}
                       </td>

@@ -12,6 +12,7 @@ import {
 import { generateDailyRecords, calculateGoalStats } from "@packages/domain/goal/goalStats";
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
+import { roundQuantity } from "../stats/formatUtils";
 import type { Goal } from "./types";
 
 function StatCard({
@@ -139,7 +140,7 @@ export function GoalStatsDetail({
                       ? "bg-yellow-300"
                       : "bg-gray-200"
                 }`}
-                title={`${record.date}: ${record.quantity}${unit}`}
+                title={`${record.date}: ${roundQuantity(record.quantity)}${unit}`}
               />
             ))}
           </div>

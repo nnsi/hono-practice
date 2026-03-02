@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 
 describe("formatQuantityWithUnit", () => {
   describe('単位が "時間" の場合', () => {
@@ -94,21 +94,40 @@ describe("formatQuantityWithUnit", () => {
     });
   });
 
+describe("roundQuantity", () => {
+  it("小数点第1位で四捨五入する", () => {
+    expect(roundQuantity(1.94)).toBe(1.9);
+    expect(roundQuantity(1.95)).toBe(2);
+    expect(roundQuantity(1.99999)).toBe(2);
+    expect(roundQuantity(3.14159)).toBe(3.1);
+  });
+
+  it("整数はそのまま返す", () => {
+    expect(roundQuantity(5)).toBe(5);
+    expect(roundQuantity(0)).toBe(0);
+  });
+
+  it("浮動小数点の加算誤差を吸収する", () => {
+    // 0.1 + 0.2 = 0.30000000000000004
+    expect(roundQuantity(0.1 + 0.2)).toBe(0.3);
+  });
+});
+
   describe("一般的な単位の場合", () => {
     it('5回 → "5回"', () => {
       expect(formatQuantityWithUnit(5, "回")).toBe("5回");
     });
 
-    it('3.14km → "3.14km"', () => {
-      expect(formatQuantityWithUnit(3.14, "km")).toBe("3.14km");
+    it('3.14km → "3.1km" (小数点第1位で四捨五入)', () => {
+      expect(formatQuantityWithUnit(3.14, "km")).toBe("3.1km");
     });
 
     it('100kcal → "100kcal"', () => {
       expect(formatQuantityWithUnit(100, "kcal")).toBe("100kcal");
     });
 
-    it("小数点以下2桁に丸める", () => {
-      expect(formatQuantityWithUnit(3.14159, "km")).toBe("3.14km");
+    it("小数点第1位で四捨五入する", () => {
+      expect(formatQuantityWithUnit(3.14159, "km")).toBe("3.1km");
     });
 
     it("0の場合", () => {

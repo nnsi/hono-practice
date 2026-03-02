@@ -1,3 +1,8 @@
+/** 表示用に小数点第1位で四捨五入する */
+export function roundQuantity(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 export function formatQuantityWithUnit(
   quantity: number,
   unit: string,
@@ -9,6 +14,6 @@ export function formatQuantityWithUnit(
     if (minutes === 0) return `${hours}時間`;
     return `${hours}時間${minutes}分`;
   }
-  const rounded = Math.round(quantity * 100) / 100;
+  const rounded = roundQuantity(quantity);
   return `${rounded.toLocaleString()}${unit}`;
 }

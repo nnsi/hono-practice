@@ -63,7 +63,9 @@ export function calculateGoalStats(dailyRecords: DailyRecord[]): {
       ? Math.round((total / activeQuantities.length) * 10) / 10
       : 0;
   const max =
-    activeQuantities.length > 0 ? Math.max(...activeQuantities) : 0;
+    activeQuantities.length > 0
+      ? Math.round(Math.max(...activeQuantities) * 10) / 10
+      : 0;
   const achievedDays = dailyRecords.filter((r) => r.achieved).length;
   const activeDays = activeQuantities.length;
 

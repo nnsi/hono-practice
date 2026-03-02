@@ -28,7 +28,14 @@ import { loggerMiddleware } from "./middleware/loggerMiddleware";
 export const app = newHonoWithErrorHandling();
 
 app.use("*", loggerMiddleware());
-app.use("*", secureHeaders());
+app.use(
+  "*",
+  secureHeaders({
+    // APIは別オリジンのフロントエンドから利用される前提のため、
+    // デフォルトのsame-originだと<img>等のリソース読み込みがブロックされる
+    crossOriginResourcePolicy: "cross-origin",
+  }),
+);
 
 app.use("*", async (c, next) => {
   const headerOrigin = c.req.header("Origin") ?? "";
