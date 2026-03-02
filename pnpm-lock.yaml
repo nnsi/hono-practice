@@ -169,6 +169,9 @@ importers:
       victory:
         specifier: ^37.3.6
         version: 37.3.6(react@19.1.0)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@tanstack/router-plugin':
         specifier: ^1.91.1
