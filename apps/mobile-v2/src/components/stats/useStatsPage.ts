@@ -4,6 +4,7 @@ import { useLiveQuery } from "../../db/useLiveQuery";
 import { getDatabase } from "../../db/database";
 import { activityRepository } from "../../repositories/activityRepository";
 import { goalRepository } from "../../repositories/goalRepository";
+import { roundQuantity } from "./formatUtils";
 import type { ActivityStat, GoalLine } from "./types";
 
 type LogRow = {
@@ -102,7 +103,7 @@ export function useStatsPage() {
             id: kind.id,
             name: kind.name,
             color: kind.color,
-            total: Math.round(total * 100) / 100,
+            total: roundQuantity(total),
             logs: kindLogs.map((l) => ({
               date: l.date,
               quantity: l.quantity ?? 0,
@@ -120,7 +121,7 @@ export function useStatsPage() {
             id: null,
             name: "未指定",
             color: null,
-            total: Math.round(total * 100) / 100,
+            total: roundQuantity(total),
             logs: unspecifiedLogs.map((l) => ({
               date: l.date,
               quantity: l.quantity ?? 0,
@@ -134,7 +135,7 @@ export function useStatsPage() {
           id: activity.id,
           name: activity.name,
           total: activity.showCombinedStats
-            ? Math.round(overallTotal * 100) / 100
+            ? roundQuantity(overallTotal)
             : null,
           quantityUnit: activity.quantityUnit,
           showCombinedStats: activity.showCombinedStats,
@@ -159,14 +160,17 @@ export function useStatsPage() {
         return true;
       });
 
+      const unit =
+        activities?.find((a) => a.id === activityId)?.quantityUnit ?? "";
+
       return relevant.map((goal, i) => ({
         id: goal.id,
         value: goal.dailyTargetQuantity,
-        label: `目標${relevant.length > 1 ? i + 1 : ""}: ${goal.dailyTargetQuantity}`,
+        label: `目標${relevant.length > 1 ? i + 1 : ""}: ${goal.dailyTargetQuantity}${unit}`,
         color: "#ff6b6b",
       }));
     },
-    [goals, month],
+    [goals, month, activities],
   );
 
   const allDates = useMemo(() => {

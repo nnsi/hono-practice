@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import type { ChartData, StatsKind } from "./types";
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 
 type WeekDay = {
   date: string;
@@ -55,7 +55,7 @@ export function SummaryTable({
       const dayTotal = kinds.reduce((sum, kind) => {
         return sum + (Number(day[kind.name]) || 0);
       }, 0);
-      const roundedTotal = Math.round(dayTotal * 1000) / 1000;
+      const roundedTotal = roundQuantity(dayTotal);
 
       const breakdown: Record<string, number> = {};
       for (const kind of kinds) {
@@ -172,7 +172,7 @@ export function SummaryTable({
                   <View className="flex-1 px-3 py-1.5 items-end bg-gray-50" style={{ minWidth: 64 }}>
                     <Text className="text-sm font-bold text-gray-900">
                       {formatQuantityWithUnit(
-                        Math.round(week.weekTotal * 1000) / 1000,
+                        roundQuantity(week.weekTotal),
                         quantityUnit,
                       )}
                     </Text>

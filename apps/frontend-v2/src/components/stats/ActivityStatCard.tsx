@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import dayjs from "dayjs";
 import type { ActivityStat, ChartData, GoalLine } from "./types";
 import { DEFAULT_BAR_COLOR, getUniqueColorForKind } from "./colorUtils";
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 import { ActivityChart } from "./ActivityChart";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
@@ -39,10 +39,9 @@ export function ActivityStatCard({
         const matchingLogs = kind.logs.filter(
           (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
         );
-        kindsData[kind.name] =
-          Math.round(
-            matchingLogs.reduce((sum, l) => sum + l.quantity, 0) * 100,
-          ) / 100;
+        kindsData[kind.name] = roundQuantity(
+          matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
+        );
       }
       return {
         date: `${dayjs(date).date()}日`,
@@ -61,9 +60,7 @@ export function ActivityStatCard({
     ).size;
     const daysInMonth = allDates.length;
     const avgPerDay =
-      activeDays > 0
-        ? Math.round((totalQuantity / activeDays) * 100) / 100
-        : 0;
+      activeDays > 0 ? roundQuantity(totalQuantity / activeDays) : 0;
 
     return { totalQuantity, activeDays, daysInMonth, avgPerDay };
   }, [stat.kinds, allDates]);
@@ -143,11 +140,9 @@ export function ActivityStatCard({
                 );
                 return {
                   date: `${dayjs(date).date()}日`,
-                  [kind.name]:
-                    Math.round(
-                      matchingLogs.reduce((sum, l) => sum + l.quantity, 0) *
-                        100,
-                    ) / 100,
+                  [kind.name]: roundQuantity(
+                    matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
+                  ),
                 };
               });
               return (

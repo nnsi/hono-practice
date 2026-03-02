@@ -156,6 +156,18 @@ describe("calculateGoalStats", () => {
     expect(stats.maxConsecutiveDays).toBe(2); // 1/3-1/4
   });
 
+  it("maxは小数点第1位で四捨五入する", () => {
+    const records = [
+      { date: "2026-01-01", quantity: 1.99999, achieved: false },
+      { date: "2026-01-02", quantity: 0.3333, achieved: false },
+    ];
+
+    const stats = calculateGoalStats(records);
+
+    expect(stats.max).toBe(2);
+    expect(stats.average).toBe(1.2); // (1.99999 + 0.3333) / 2 ≈ 1.16665 → 1.2
+  });
+
   it("空のレコード配列", () => {
     const stats = calculateGoalStats([]);
 
