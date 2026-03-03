@@ -1,5 +1,5 @@
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertActivityLogRequest } from "@packages/types-v2";
+import type { UpsertActivityLogRequest } from "@packages/types";
 
 import type { ActivityLogV2Usecase } from "./activityLogV2Usecase";
 

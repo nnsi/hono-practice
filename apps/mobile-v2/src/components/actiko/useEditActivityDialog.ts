@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import * as DocumentPicker from "expo-document-picker";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
-import { COLOR_PALETTE } from "../stats/colorUtils";
 
 type Activity = {
   id: string;

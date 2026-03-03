@@ -1,6 +1,6 @@
 import type { activityLogs } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertActivityLogRequest } from "@packages/types-v2";
+import type { UpsertActivityLogRequest } from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
 import type { ActivityLogV2Repository } from "./activityLogV2Repository";

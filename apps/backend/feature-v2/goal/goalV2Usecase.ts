@@ -1,6 +1,6 @@
 import type { activityGoals } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertGoalRequest } from "@packages/types-v2";
+import type { UpsertGoalRequest } from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
 import type { GoalV2Repository } from "./goalV2Repository";

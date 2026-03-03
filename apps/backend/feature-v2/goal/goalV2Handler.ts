@@ -1,5 +1,5 @@
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertGoalRequest } from "@packages/types-v2";
+import type { UpsertGoalRequest } from "@packages/types";
 
 import type { GoalV2Usecase } from "./goalV2Usecase";
 

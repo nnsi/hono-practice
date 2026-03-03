@@ -1,7 +1,8 @@
 import { useState } from "react";
 
+import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
+
 import { activityRepository } from "../../repositories/activityRepository";
-import { COLOR_PALETTE } from "../stats/colorUtils";
 
 type KindEntry = {
   id: number;

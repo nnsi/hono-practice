@@ -11,6 +11,14 @@ export function formatQuantityWithUnit(quantity: number, unit: string): string {
     if (minutes === 0) return `${hours}時間`;
     return `${hours}時間${minutes}分`;
   }
+  if (unit === "分" || unit === "minute" || unit === "minutes") {
+    const totalMinutes = Math.round(quantity);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours === 0) return `${minutes}分`;
+    if (minutes === 0) return `${hours}時間`;
+    return `${hours}時間${minutes}分`;
+  }
   const rounded = roundQuantity(quantity);
   return `${rounded.toLocaleString()}${unit}`;
 }

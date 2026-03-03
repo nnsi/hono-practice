@@ -1,14 +1,24 @@
 import { useMemo } from "react";
 
+import type {
+  ActivityStat,
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
+import {
+  DEFAULT_BAR_COLOR,
+  getUniqueColorForKind,
+} from "@packages/frontend-shared/utils/colorUtils";
+import {
+  formatQuantityWithUnit,
+  roundQuantity,
+} from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 import { Text, View } from "react-native";
 
 import { ActivityChart } from "./ActivityChart";
-import { DEFAULT_BAR_COLOR, getUniqueColorForKind } from "./colorUtils";
-import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
-import type { ActivityStat, ChartData, GoalLine } from "./types";
 
 export function ActivityStatCard({
   stat,

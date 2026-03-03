@@ -3,7 +3,7 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type {
   UpsertActivityKindRequest,
   UpsertActivityRequest,
-} from "@packages/types-v2";
+} from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
 import type { ActivityV2Repository } from "./activityV2Repository";

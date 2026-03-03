@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
 
+import type {
+  ChartData,
+  StatsKind,
+} from "@packages/frontend-shared/types/stats";
+import {
+  formatQuantityWithUnit,
+  roundQuantity,
+} from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react";
-
-import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
-import type { ChartData, StatsKind } from "./types";
 
 export function SummaryTable({
   quantityUnit,

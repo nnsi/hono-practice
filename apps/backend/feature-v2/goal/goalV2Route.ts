@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { SyncGoalsRequestSchema } from "@packages/types-v2";
+import { zValidator } from "@hono/zod-validator";
+import { SyncGoalsRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
@@ -37,20 +38,16 @@ export function createGoalV2Route() {
       const res = await c.var.h.getGoals(userId, since);
       return c.json(res);
     })
-    .post("/goals/sync", async (c) => {
-      const body = await c.req.json();
-      const parsed = SyncGoalsRequestSchema.safeParse(body);
-      if (!parsed.success) {
-        return c.json(
-          { message: "Invalid request", errors: parsed.error.issues },
-          400,
-        );
-      }
-      const { goals } = parsed.data;
-      const userId = c.get("userId");
-      const res = await c.var.h.syncGoals(userId, goals);
-      return c.json(res);
-    });
+    .post(
+      "/goals/sync",
+      zValidator("json", SyncGoalsRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const { goals } = c.req.valid("json");
+        const res = await c.var.h.syncGoals(userId, goals);
+        return c.json(res);
+      },
+    );
 }
 
 export const goalV2Route = createGoalV2Route();

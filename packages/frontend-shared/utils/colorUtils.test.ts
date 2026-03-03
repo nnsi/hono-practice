@@ -40,7 +40,6 @@ describe("getUniqueColorForKind", () => {
   it("異なる名前は異なるカラーを返すことがある", () => {
     const usedColors = new Set<string>();
     const colors = new Set<string>();
-    // 多数の異なる名前を試して、少なくとも2色以上使われることを確認
     const names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     for (const name of names) {
       colors.add(getUniqueColorForKind(name, usedColors));
@@ -50,7 +49,6 @@ describe("getUniqueColorForKind", () => {
 
   it("使用済みカラーをスキップする", () => {
     const hashColor = getUniqueColorForKind("テスト", new Set());
-    // hashColorを使用済みにすると別の色が返る
     const usedColors = new Set([hashColor]);
     const newColor = getUniqueColorForKind("テスト", usedColors);
     expect(newColor).not.toBe(hashColor);
@@ -60,7 +58,6 @@ describe("getUniqueColorForKind", () => {
   it("全色が使用済みの場合、ハッシュで決まるカラーにフォールバックする", () => {
     const allUsed = new Set(COLOR_PALETTE);
     const color = getUniqueColorForKind("何か", allUsed);
-    // 全色使用済みでもパレット内のカラーを返す（フォールバック）
     expect(COLOR_PALETTE).toContain(color);
   });
 
@@ -76,9 +73,7 @@ describe("getUniqueColorForKind", () => {
   });
 
   it("未使用カラーがある場合、使用済みでないカラーを返す", () => {
-    // パレットの最初の8色を使用済みにする
     const usedColors = new Set(COLOR_PALETTE.slice(0, 8));
-    // まだ使われていない色（インデックス8か9）が返るはず
     const color = getUniqueColorForKind("テスト名", usedColors);
     expect(usedColors.has(color)).toBe(false);
   });

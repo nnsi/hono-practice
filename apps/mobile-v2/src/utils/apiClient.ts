@@ -1,6 +1,6 @@
 import { hc } from "hono/client";
 
-import type { AppType } from "@packages/api-contract";
+import type { AppType } from "@backend/app";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";

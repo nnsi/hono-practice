@@ -125,6 +125,29 @@ describe("syncEngine", () => {
       expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(2);
     });
 
+    it("does not call later sync functions if earlier ones throw", async () => {
+      mockSyncActivityIconDeletions.mockResolvedValue(undefined);
+      mockSyncActivities.mockRejectedValueOnce(new Error("fail"));
+
+      await syncEngine.syncAll();
+
+      expect(mockSyncActivityIcons).not.toHaveBeenCalled();
+      expect(mockSyncActivityLogs).not.toHaveBeenCalled();
+      expect(mockSyncGoals).not.toHaveBeenCalled();
+      expect(mockSyncTasks).not.toHaveBeenCalled();
+    });
+
+    it("partial failure in Promise.all does not break mutex", async () => {
+      mockSyncGoals.mockRejectedValueOnce(new Error("goals failed"));
+
+      await syncEngine.syncAll();
+
+      mockSyncGoals.mockResolvedValue(undefined);
+      await syncEngine.syncAll();
+
+      expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(2);
+    });
+
     it("resets retryCount on success", async () => {
       // First call fails
       mockSyncActivityIconDeletions.mockRejectedValueOnce(new Error("fail"));
@@ -213,6 +236,72 @@ describe("syncEngine", () => {
 
       await vi.advanceTimersByTimeAsync(0);
 
+      expect(mockSyncActivityIconDeletions).not.toHaveBeenCalled();
+
+      cleanup();
+    });
+
+    it("triggers syncAll via NetworkAdapter when going online", async () => {
+      let onlineCallback: (() => void) | null = null;
+      const mockNetwork = {
+        isOnline: vi.fn().mockReturnValue(false),
+        onOnline: vi.fn((cb: () => void) => {
+          onlineCallback = cb;
+          return () => {
+            onlineCallback = null;
+          };
+        }),
+      };
+
+      const cleanup = syncEngine.startAutoSync(60000, mockNetwork);
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mockSyncActivityIconDeletions).not.toHaveBeenCalled();
+
+      mockNetwork.isOnline.mockReturnValue(true);
+      onlineCallback!();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(1);
+      expect(mockSyncActivities).toHaveBeenCalledTimes(1);
+
+      cleanup();
+    });
+
+    it("first scheduled timeout uses intervalMs, not backoff", async () => {
+      const mockNetwork = {
+        isOnline: vi.fn().mockReturnValue(true),
+        onOnline: vi.fn(() => () => {}),
+      };
+
+      mockSyncActivityIconDeletions.mockRejectedValueOnce(
+        new Error("network error"),
+      );
+
+      const cleanup = syncEngine.startAutoSync(30000, mockNetwork);
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(29999);
+      expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mockSyncActivityIconDeletions).toHaveBeenCalledTimes(2);
+
+      cleanup();
+    });
+
+    it("does not sync on timer tick when offline (NetworkAdapter)", async () => {
+      const mockNetwork = {
+        isOnline: vi.fn().mockReturnValue(false),
+        onOnline: vi.fn(() => () => {}),
+      };
+
+      const cleanup = syncEngine.startAutoSync(30000, mockNetwork);
+      await vi.advanceTimersByTimeAsync(0);
+
+      await vi.advanceTimersByTimeAsync(30000);
       expect(mockSyncActivityIconDeletions).not.toHaveBeenCalled();
 
       cleanup();

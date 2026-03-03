@@ -1,6 +1,6 @@
 import type { tasks } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertTaskRequest } from "@packages/types-v2";
+import type { UpsertTaskRequest } from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
 import type { TaskV2Repository } from "./taskV2Repository";

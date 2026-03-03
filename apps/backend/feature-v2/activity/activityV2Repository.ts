@@ -4,7 +4,7 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type {
   UpsertActivityKindRequest,
   UpsertActivityRequest,
-} from "@packages/types-v2";
+} from "@packages/types";
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
 type ActivityRow = typeof activities.$inferSelect;

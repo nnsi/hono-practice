@@ -7,3 +7,5 @@ export type { User } from "@packages/domain/user/userSchema";
 
 export * from "./request";
 export * from "./response";
+// V2 sync types (previously in @packages/types-v2)
+export * from "./sync";

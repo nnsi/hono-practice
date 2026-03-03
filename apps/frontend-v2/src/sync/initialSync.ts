@@ -45,7 +45,9 @@ export async function performInitialSync(
   });
 
   // DBが空なのにLAST_SYNCED_KEYが残っている場合（DB再作成・手動クリア等）、
-  // since付きでAPIを叩くと古いデータが取得されない。全テーブル空ならフル同期にする。
+  // since付きでAPIを叩くと古いデータが取得されない。
+  // since対象テーブル（activityLogs, goals, tasks）が全て空ならフル同期にする。
+  // ※ activitiesは常にフル取得（sinceなし）なのでチェック不要。
   let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
   if (lastSyncedAt) {
     const [logCount, goalCount, taskCount] = await Promise.all([

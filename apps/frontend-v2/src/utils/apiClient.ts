@@ -1,6 +1,6 @@
 import { hc } from "hono/client";
 
-import type { AppType } from "@packages/api-contract";
+import type { AppType } from "@backend/app";
 import type { TokenStorage } from "@packages/platform";
 import { createAuthenticatedFetch } from "@packages/sync-engine";
 

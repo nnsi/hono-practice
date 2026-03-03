@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { SyncTasksRequestSchema } from "@packages/types-v2";
+import { zValidator } from "@hono/zod-validator";
+import { SyncTasksRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
@@ -37,20 +38,16 @@ export function createTaskV2Route() {
       const res = await c.var.h.getTasks(userId, since);
       return c.json(res);
     })
-    .post("/tasks/sync", async (c) => {
-      const body = await c.req.json();
-      const parsed = SyncTasksRequestSchema.safeParse(body);
-      if (!parsed.success) {
-        return c.json(
-          { message: "Invalid request", errors: parsed.error.issues },
-          400,
-        );
-      }
-      const { tasks: taskList } = parsed.data;
-      const userId = c.get("userId");
-      const res = await c.var.h.syncTasks(userId, taskList);
-      return c.json(res);
-    });
+    .post(
+      "/tasks/sync",
+      zValidator("json", SyncTasksRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const { tasks } = c.req.valid("json");
+        const res = await c.var.h.syncTasks(userId, tasks);
+        return c.json(res);
+      },
+    );
 }
 
 export const taskV2Route = createTaskV2Route();

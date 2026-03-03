@@ -1,7 +1,7 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityLogs } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertActivityLogRequest } from "@packages/types-v2";
+import type { UpsertActivityLogRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type ActivityLogRow = typeof activityLogs.$inferSelect;

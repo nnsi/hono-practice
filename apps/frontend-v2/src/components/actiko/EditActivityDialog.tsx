@@ -1,8 +1,8 @@
+import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { COLOR_PALETTE } from "../stats/colorUtils";
 import { IconTypeSelector } from "./IconTypeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 

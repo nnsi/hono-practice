@@ -1,5 +1,9 @@
 import { useMemo } from "react";
 
+import type {
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
 import { Text, View, useWindowDimensions } from "react-native";
 import {
   VictoryAxis,
@@ -10,8 +14,6 @@ import {
   VictoryStack,
   VictoryTooltip,
 } from "victory";
-
-import type { ChartData, GoalLine } from "./types";
 
 export function ActivityChart({
   data,

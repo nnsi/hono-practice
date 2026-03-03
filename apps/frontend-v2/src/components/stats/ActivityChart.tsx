@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import type {
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
 import {
   VictoryAxis,
   VictoryBar,
@@ -9,8 +13,6 @@ import {
   VictoryStack,
   VictoryTooltip,
 } from "victory";
-
-import type { ChartData, GoalLine } from "./types";
 
 function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
   const [width, setWidth] = useState(0);

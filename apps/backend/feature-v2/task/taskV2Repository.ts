@@ -1,7 +1,7 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { tasks } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertTaskRequest } from "@packages/types-v2";
+import type { UpsertTaskRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type TaskRow = typeof tasks.$inferSelect;

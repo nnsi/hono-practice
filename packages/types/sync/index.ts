@@ -25,9 +25,6 @@ export {
   UpsertTaskRequestSchema,
 } from "./request/task";
 export type { SyncActivitiesResponse } from "./response/activity";
-export type {
-  GetActivityLogsResponse,
-  SyncActivityLogsResponse,
-} from "./response/activityLog";
+export type { SyncActivityLogsResponse } from "./response/activityLog";
 export type { SyncGoalsResponse } from "./response/goal";
 export type { SyncTasksResponse } from "./response/task";

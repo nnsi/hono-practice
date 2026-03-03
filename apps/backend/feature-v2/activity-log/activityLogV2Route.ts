@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { SyncActivityLogsRequestSchema } from "@packages/types-v2";
+import { zValidator } from "@hono/zod-validator";
+import { SyncActivityLogsRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
@@ -37,20 +38,16 @@ export function createActivityLogV2Route() {
       const res = await c.var.h.getActivityLogs(userId, since);
       return c.json(res);
     })
-    .post("/activity-logs/sync", async (c) => {
-      const body = await c.req.json();
-      const parsed = SyncActivityLogsRequestSchema.safeParse(body);
-      if (!parsed.success) {
-        return c.json(
-          { message: "Invalid request", errors: parsed.error.issues },
-          400,
-        );
-      }
-      const { logs } = parsed.data;
-      const userId = c.get("userId");
-      const res = await c.var.h.syncActivityLogs(userId, logs);
-      return c.json(res);
-    });
+    .post(
+      "/activity-logs/sync",
+      zValidator("json", SyncActivityLogsRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const { logs } = c.req.valid("json");
+        const res = await c.var.h.syncActivityLogs(userId, logs);
+        return c.json(res);
+      },
+    );
 }
 
 export const activityLogV2Route = createActivityLogV2Route();

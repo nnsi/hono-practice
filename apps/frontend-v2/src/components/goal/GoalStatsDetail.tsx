@@ -4,6 +4,7 @@ import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
+import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
@@ -17,7 +18,6 @@ import {
 
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
-import { roundQuantity } from "../stats/formatUtils";
 import type { Goal } from "./types";
 
 function StatCard({

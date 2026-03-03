@@ -1,5 +1,4 @@
-import { Hono } from "hono";
-
+import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
@@ -29,7 +28,7 @@ function makeLog(overrides: Record<string, unknown> = {}) {
 }
 
 function createApp() {
-  return new Hono()
+  return newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/users/v2", activityLogV2Route);
 }

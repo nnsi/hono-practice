@@ -33,7 +33,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return {
       type: "sourceFile",
       filePath: path.resolve(
-        monorepoRoot,
+        projectRoot,
         "node_modules/hono/dist/client/index.js",
       ),
     };

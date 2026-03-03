@@ -73,6 +73,19 @@ describe("initialSync", () => {
       // authState is NOT cleared — managed by useAuth (logout/performInitialSync)
       expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
     });
+
+    it("accepts custom storage adapter", async () => {
+      const customStorage = {
+        getItem: vi.fn().mockReturnValue("2025-01-01"),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      };
+      await clearLocalData(customStorage);
+      expect(customStorage.removeItem).toHaveBeenCalledWith(
+        "actiko-v2-lastSyncedAt",
+      );
+      expect(mockDb.activityLogs.clear).toHaveBeenCalled();
+    });
   });
 
   describe("performInitialSync", () => {
@@ -289,6 +302,73 @@ describe("initialSync", () => {
 
       // lastSyncedAt は保存されない
       expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
+    });
+
+    it("full account switch: clear UserA → login as UserB", async () => {
+      const okRes = (data: any) => ({
+        ok: true,
+        json: () => Promise.resolve(data),
+      });
+      mockApiClientObj.users = {
+        v2: {
+          activities: {
+            $get: vi.fn().mockResolvedValue(
+              okRes({
+                activities: [{ id: "a-userA", name: "UserA Activity" }],
+                activityKinds: [],
+              }),
+            ),
+          },
+          "activity-logs": {
+            $get: vi.fn().mockResolvedValue(okRes({ logs: [] })),
+          },
+          goals: { $get: vi.fn().mockResolvedValue(okRes({ goals: [] })) },
+          tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
+        },
+      };
+
+      await performInitialSync("userA");
+      expect(mockActivityRepo.upsertActivities).toHaveBeenCalledWith([
+        { id: "a-userA", name: "UserA Activity" },
+      ]);
+      expect(mockDb.authState.put).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "userA" }),
+      );
+
+      vi.clearAllMocks();
+      await clearLocalData();
+
+      const userBGoals = [{ id: "g-userB", activityId: "a-userB" }];
+      mockApiClientObj.users = {
+        v2: {
+          activities: {
+            $get: vi.fn().mockResolvedValue(
+              okRes({
+                activities: [{ id: "a-userB", name: "UserB Activity" }],
+                activityKinds: [],
+              }),
+            ),
+          },
+          "activity-logs": {
+            $get: vi.fn().mockResolvedValue(okRes({ logs: [] })),
+          },
+          goals: {
+            $get: vi.fn().mockResolvedValue(okRes({ goals: userBGoals })),
+          },
+          tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
+        },
+      };
+
+      await performInitialSync("userB");
+      expect(mockActivityRepo.upsertActivities).toHaveBeenCalledWith([
+        { id: "a-userB", name: "UserB Activity" },
+      ]);
+      expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith(
+        userBGoals,
+      );
+      expect(mockDb.authState.put).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "userB" }),
+      );
     });
   });
 });
