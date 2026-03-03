@@ -1,6 +1,11 @@
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskRequest } from "@packages/types";
+import {
+  GetTasksV2ResponseSchema,
+  SyncTasksV2ResponseSchema,
+} from "@packages/types";
 
+import { AppError } from "../../error";
 import type { TaskV2Usecase } from "./taskV2Usecase";
 
 export function newTaskV2Handler(uc: TaskV2Usecase) {
@@ -12,12 +17,22 @@ export function newTaskV2Handler(uc: TaskV2Usecase) {
 
 function getTasks(uc: TaskV2Usecase) {
   return async (userId: UserId, since?: string) => {
-    return await uc.getTasks(userId, since);
+    const result = await uc.getTasks(userId, since);
+    const parsed = GetTasksV2ResponseSchema.safeParse(result);
+    if (!parsed.success) {
+      throw new AppError("failed to parse tasks response", 500);
+    }
+    return parsed.data;
   };
 }
 
 function syncTasks(uc: TaskV2Usecase) {
   return async (userId: UserId, taskList: UpsertTaskRequest[]) => {
-    return await uc.syncTasks(userId, taskList);
+    const result = await uc.syncTasks(userId, taskList);
+    const parsed = SyncTasksV2ResponseSchema.safeParse(result);
+    if (!parsed.success) {
+      throw new AppError("failed to parse sync tasks response", 500);
+    }
+    return parsed.data;
   };
 }

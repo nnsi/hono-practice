@@ -107,7 +107,7 @@ export function SettingsPage() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1">
       {/* User info */}
       <View
         className="mx-4 mt-4 p-4 bg-white rounded-2xl border border-gray-200"

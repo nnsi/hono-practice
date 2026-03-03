@@ -60,12 +60,21 @@ export function createUseGoalsPage<TActivity extends ActivityBase>(
       return map;
     }, [activities]);
 
+    const sortByCreatedAt = (a: Goal, b: Goal) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
+
     const currentGoals = useMemo(
-      () => goals.filter((g) => isGoalActive(g) && !isGoalEnded(g, today)),
+      () =>
+        goals
+          .filter((g) => isGoalActive(g) && !isGoalEnded(g, today))
+          .sort(sortByCreatedAt),
       [goals, today],
     );
     const pastGoals = useMemo(
-      () => goals.filter((g) => !isGoalActive(g) || isGoalEnded(g, today)),
+      () =>
+        goals
+          .filter((g) => !isGoalActive(g) || isGoalEnded(g, today))
+          .sort(sortByCreatedAt),
       [goals, today],
     );
 

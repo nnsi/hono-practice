@@ -1,6 +1,13 @@
 import dayjs from "dayjs";
-import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
-import { FlatList, Platform, Text, TouchableOpacity, View } from "react-native";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import {
+  FlatList,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -36,6 +43,9 @@ export function ActikoPage() {
   } = useActikoPage();
 
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const effectiveWidth = Math.min(screenWidth, 768);
+  const numColumns = Math.min(4, Math.max(2, Math.floor(effectiveWidth / 180)));
 
   const handleRecordClose = () => {
     setDialogOpen(false);
@@ -44,12 +54,23 @@ export function ActikoPage() {
 
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
-  type GridItem = (typeof activities)[number] | { id: "__add__"; name?: never };
+  type GridItem =
+    | (typeof activities)[number]
+    | { id: "__add__"; name?: never }
+    | { id: `__spacer_${number}`; name?: never };
 
-  const gridData: GridItem[] = [...activities, { id: "__add__" as const }];
+  const itemsWithAdd: GridItem[] = [...activities, { id: "__add__" as const }];
+  const remainder = itemsWithAdd.length % numColumns;
+  const spacers: GridItem[] =
+    remainder === 0
+      ? []
+      : Array.from({ length: numColumns - remainder }, (_, i) => ({
+          id: `__spacer_${i}` as const,
+        }));
+  const gridData: GridItem[] = [...itemsWithAdd, ...spacers];
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1">
       {/* Date navigation header */}
       <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
         <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>
@@ -61,18 +82,16 @@ export function ActikoPage() {
           className="flex-row items-center"
         >
           {isToday ? (
-            <View className="bg-gray-900 rounded-xl px-4 py-1 flex-row items-center">
+            <View className="bg-gray-900 rounded-xl px-4 py-1">
               <Text className="text-white text-base font-medium">
                 {dateLabel}
               </Text>
-              <Calendar size={14} color="#ffffff" style={{ marginLeft: 6 }} />
             </View>
           ) : (
-            <View className="flex-row items-center px-4 py-1">
+            <View className="px-4 py-1">
               <Text className="text-base font-medium text-gray-800">
                 {dateLabel}
               </Text>
-              <Calendar size={14} color="#78716c" style={{ marginLeft: 6 }} />
             </View>
           )}
         </TouchableOpacity>
@@ -105,14 +124,18 @@ export function ActikoPage() {
         </View>
       ) : (
         <FlatList
+          key={numColumns}
           data={gridData}
-          numColumns={2}
+          numColumns={numColumns}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             padding: 8,
             paddingBottom: 80 + insets.bottom,
           }}
           renderItem={({ item, index }) => {
+            if (item.id.startsWith("__spacer_")) {
+              return <View className="flex-1 m-1" />;
+            }
             if (item.id === "__add__") {
               return (
                 <TouchableOpacity

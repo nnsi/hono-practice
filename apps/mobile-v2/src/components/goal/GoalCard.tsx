@@ -7,6 +7,7 @@ import {
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
 import dayjs from "dayjs";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   BarChart3,
   Calendar,
@@ -130,6 +131,11 @@ export function GoalCard({
   const localBalance = balance.currentBalance;
   const elapsedDays = balance.daysActive;
 
+  const completionPercent = useMemo(() => {
+    if (balance.totalTarget <= 0) return 0;
+    return Math.min((balance.totalActual / balance.totalTarget) * 100, 100);
+  }, [balance.totalActual, balance.totalTarget]);
+
   const progressPercent = useMemo(() => {
     if (totalDays === 0) return 0;
     return Math.min((elapsedDays / totalDays) * 100, 100);
@@ -149,116 +155,130 @@ export function GoalCard({
     }
   };
 
-  return (
-    <View
-      className={`rounded-2xl mb-3 overflow-hidden ${
-        isPast
-          ? "border border-gray-200 bg-gray-50 opacity-75"
-          : "border border-gray-200 bg-white"
-      }`}
-      style={
-        isPast
-          ? undefined
-          : {
-              shadowColor: "#1c1917",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.06,
-              shadowRadius: 3,
-              elevation: 2,
-            }
-      }
-    >
+  const gradientColor = useMemo(() => {
+    if (isPast) return null;
+    return localBalance > 0
+      ? "rgba(34, 197, 94, 0.2)"
+      : localBalance < 0
+        ? "rgba(239, 68, 68, 0.2)"
+        : "rgba(156, 163, 175, 0.2)";
+  }, [isPast, localBalance]);
+
+  const shadowStyle = isPast
+    ? undefined
+    : {
+        shadowColor: "#1c1917",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+        elevation: 2,
+      };
+
+  const stop = completionPercent / 100;
+
+  const cardContent = (
+    <>
       {/* Card header */}
       <TouchableOpacity
-        className="w-full px-4 py-3 flex-row items-center gap-3"
+        className="w-full px-4 py-3"
         onPress={onToggleExpand}
         activeOpacity={0.7}
       >
-        {/* Activity emoji */}
-        <Text className="text-2xl">{activity?.emoji ?? "🎯"}</Text>
+        <View className="flex-row gap-3 items-start">
+          {/* Activity emoji */}
+          <Text className="text-2xl pt-0.5">{activity?.emoji ?? "🎯"}</Text>
 
-        {/* Main info */}
-        <View className="flex-1" style={{ minWidth: 0 }}>
-          <View className="flex-row items-center gap-2">
-            <Text
-              className="font-semibold text-sm text-gray-900"
-              numberOfLines={1}
-            >
-              {activity?.name ?? "不明なアクティビティ"}
-            </Text>
-            <View className={`rounded-full px-2 py-0.5 ${statusBadge.bgClass}`}>
+          {/* Content */}
+          <View className="flex-1" style={{ minWidth: 0 }}>
+            {/* Row 1: Activity name + Balance + Chevron */}
+            <View className="flex-row items-start gap-2">
               <Text
-                className={`text-[10px] font-medium ${statusBadge.textClass}`}
+                className="flex-1 font-semibold text-sm text-gray-900"
+                style={{ minWidth: 80 }}
               >
-                {statusBadge.label}
+                {activity?.name ?? "不明なアクティビティ"}
               </Text>
+              <View className="flex-row items-center gap-1 shrink-0">
+                <Text className={`text-[11px] font-medium ${balanceColor}`}>
+                  {localBalance < 0 ? "-" : "+"}
+                  {Math.abs(localBalance).toLocaleString()}
+                  <Text className="text-[10px]">
+                    {" "}
+                    {activity?.quantityUnit ?? ""}
+                  </Text>
+                </Text>
+                {isExpanded ? (
+                  <ChevronUp size={16} color="#9ca3af" />
+                ) : (
+                  <ChevronDown size={16} color="#9ca3af" />
+                )}
+              </View>
+            </View>
+
+            {/* Row 2: Badge + Meta + Action buttons */}
+            <View className="flex-row items-center gap-1.5 mt-1 flex-wrap">
+              {/* Status badge */}
+              <View
+                className={`rounded-full px-2 py-0.5 shrink-0 ${statusBadge.bgClass}`}
+              >
+                <Text
+                  className={`text-[10px] font-medium ${statusBadge.textClass}`}
+                >
+                  {statusBadge.label}
+                </Text>
+              </View>
+
+              <Text className="text-xs text-gray-500 shrink-0">
+                {goal.dailyTargetQuantity.toLocaleString()}
+                {activity?.quantityUnit ?? ""}/日
+              </Text>
+              <Text className="text-xs text-gray-300 shrink-0">|</Text>
+              <Text className="text-xs text-gray-500 shrink-0">
+                {dayjs(goal.startDate).format("M/D")}〜
+                {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
+              </Text>
+
+              {/* Spacer */}
+              <View className="flex-1" />
+
+              {/* Action buttons */}
+              {!isPast && onRecordOpen && (
+                <TouchableOpacity className="p-1" onPress={onRecordOpen}>
+                  <PlusCircle size={14} color="#3b82f6" />
+                </TouchableOpacity>
+              )}
+              {!isPast && onEditStart && (
+                <TouchableOpacity className="p-1" onPress={onEditStart}>
+                  <Pencil size={14} color="#9ca3af" />
+                </TouchableOpacity>
+              )}
+              {isPast && !showDeleteConfirm && onDelete && (
+                <TouchableOpacity
+                  className="p-1"
+                  onPress={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 size={14} color="#9ca3af" />
+                </TouchableOpacity>
+              )}
+              {isPast && showDeleteConfirm && (
+                <View className="flex-row items-center gap-1">
+                  <TouchableOpacity
+                    className="px-2 py-1 bg-red-500 rounded"
+                    onPress={handleDelete}
+                    disabled={deleting}
+                  >
+                    <Text className="text-xs text-white">削除</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="px-2 py-1 border border-gray-300 rounded"
+                    onPress={() => setShowDeleteConfirm(false)}
+                  >
+                    <Text className="text-xs text-gray-600">取消</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
-          <View className="flex-row items-center gap-1.5 mt-0.5">
-            <Text className="text-xs text-gray-500">
-              {goal.dailyTargetQuantity.toLocaleString()}
-              {activity?.quantityUnit ?? ""}/日
-            </Text>
-            <Text className="text-xs text-gray-300">|</Text>
-            <Text className="text-xs text-gray-500">
-              {dayjs(goal.startDate).format("M/D")}〜
-              {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
-            </Text>
-          </View>
-        </View>
-
-        {/* Right side */}
-        <View className="flex-row items-center gap-1">
-          <Text className={`text-xs font-medium ${balanceColor}`}>
-            {localBalance < 0 ? "-" : "+"}
-            {Math.abs(localBalance).toLocaleString()}
-            {activity?.quantityUnit ? ` ${activity.quantityUnit}` : ""}
-          </Text>
-
-          {!isPast && onRecordOpen && (
-            <TouchableOpacity className="p-1.5" onPress={onRecordOpen}>
-              <PlusCircle size={14} color="#3b82f6" />
-            </TouchableOpacity>
-          )}
-
-          {!isPast && onEditStart && (
-            <TouchableOpacity className="p-1.5" onPress={onEditStart}>
-              <Pencil size={14} color="#9ca3af" />
-            </TouchableOpacity>
-          )}
-
-          {isPast && !showDeleteConfirm && onDelete && (
-            <TouchableOpacity
-              className="p-1.5"
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 size={14} color="#9ca3af" />
-            </TouchableOpacity>
-          )}
-
-          {isPast && showDeleteConfirm && (
-            <View className="flex-row items-center gap-1">
-              <TouchableOpacity
-                className="px-2 py-1 bg-red-500 rounded"
-                onPress={handleDelete}
-                disabled={deleting}
-              >
-                <Text className="text-xs text-white">削除</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="px-2 py-1 border border-gray-300 rounded"
-                onPress={() => setShowDeleteConfirm(false)}
-              >
-                <Text className="text-xs text-gray-600">取消</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {isExpanded ? (
-            <ChevronUp size={16} color="#9ca3af" />
-          ) : (
-            <ChevronDown size={16} color="#9ca3af" />
-          )}
         </View>
       </TouchableOpacity>
 
@@ -281,6 +301,31 @@ export function GoalCard({
         <View className="bg-white rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />
         </View>
+      )}
+    </>
+  );
+
+  return (
+    <View
+      className={`rounded-2xl mb-3 overflow-hidden ${
+        isPast
+          ? "border border-gray-200 bg-gray-50 opacity-75"
+          : "border border-gray-200"
+      }`}
+      style={shadowStyle}
+    >
+      {gradientColor ? (
+        <LinearGradient
+          colors={[gradientColor, "white"]}
+          locations={[stop, stop]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        >
+          {cardContent}
+        </LinearGradient>
+      ) : (
+        cardContent
       )}
     </View>
   );

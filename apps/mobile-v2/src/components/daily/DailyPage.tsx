@@ -37,7 +37,7 @@ export function DailyPage() {
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1">
       {/* Date navigation header */}
       <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
         <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>

@@ -68,7 +68,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthContext.Provider value={auth}>
           <StatusBar style="auto" />
-          <Slot />
+          <View className="flex-1 bg-stone-100">
+            <Slot />
+          </View>
         </AuthContext.Provider>
       </QueryClientProvider>
     </SafeAreaProvider>

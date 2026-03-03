@@ -24,7 +24,27 @@ export {
   type UpsertTaskRequest,
   UpsertTaskRequestSchema,
 } from "./request/task";
-export type { SyncActivitiesResponse } from "./response/activity";
-export type { SyncActivityLogsResponse } from "./response/activityLog";
-export type { SyncGoalsResponse } from "./response/goal";
-export type { SyncTasksResponse } from "./response/task";
+export {
+  type GetActivitiesV2Response,
+  GetActivitiesV2ResponseSchema,
+  type SyncActivitiesResponse,
+  SyncActivitiesV2ResponseSchema,
+} from "./response/activity";
+export {
+  type GetActivityLogsV2Response,
+  GetActivityLogsV2ResponseSchema,
+  type SyncActivityLogsResponse,
+  SyncActivityLogsV2ResponseSchema,
+} from "./response/activityLog";
+export {
+  type GetGoalsV2Response,
+  GetGoalsV2ResponseSchema,
+  type SyncGoalsResponse,
+  SyncGoalsV2ResponseSchema,
+} from "./response/goal";
+export {
+  type GetTasksV2Response,
+  GetTasksV2ResponseSchema,
+  type SyncTasksResponse,
+  SyncTasksV2ResponseSchema,
+} from "./response/task";
