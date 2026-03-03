@@ -1,10 +1,11 @@
 import {
-  isTimeUnit,
-  getTimeUnitType,
   convertSecondsToUnit,
   generateTimeMemo,
+  getTimeUnitType,
+  isTimeUnit,
 } from "@packages/domain/time/timeUtils";
-import type { ReactHooks, ActivityBase } from "./types";
+
+import type { ActivityBase, ReactHooks } from "./types";
 
 /**
  * Timer最小型。共通hookで使うメソッドに加え、
@@ -23,9 +24,9 @@ type TimerReturn = {
 
 type UseLogFormDeps = {
   react: Pick<ReactHooks, "useState">;
-  useActivityKinds: (
-    activityId: string,
-  ) => { kinds: { id: string; name: string; color: string | null }[] };
+  useActivityKinds: (activityId: string) => {
+    kinds: { id: string; name: string; color: string | null }[];
+  };
   useTimer: (activityId: string) => TimerReturn;
   activityLogRepository: {
     createActivityLog: (data: {
@@ -67,8 +68,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
 
     const timerEnabled = isTimeUnit(activity.quantityUnit);
     const timeUnitType = getTimeUnitType(activity.quantityUnit);
-    const effectiveTab =
-      timerEnabled && timer.isRunning ? "timer" : activeTab;
+    const effectiveTab = timerEnabled && timer.isRunning ? "timer" : activeTab;
 
     const saveLog = async (params: {
       quantity: number | null;
@@ -101,9 +101,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
       const convertedQuantity = convertSecondsToUnit(seconds, timeUnitType);
       const startDate = timer.getStartDate();
       const endDate = new Date();
-      const timerMemo = startDate
-        ? generateTimeMemo(startDate, endDate)
-        : "";
+      const timerMemo = startDate ? generateTimeMemo(startDate, endDate) : "";
 
       await saveLog({
         quantity: convertedQuantity,

@@ -1,6 +1,7 @@
 import { Trash2, X } from "lucide-react";
-import { ModalOverlay } from "../common/ModalOverlay";
+
 import type { DexieActivity, DexieActivityLog } from "../../db/schema";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
 
 export function EditLogDialog({
@@ -32,9 +33,7 @@ export function EditLogDialog({
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <span className="text-2xl">
-              {activity?.emoji || "📝"}
-            </span>
+            <span className="text-2xl">{activity?.emoji || "📝"}</span>
             {activity?.name ?? "不明"}
           </h2>
           <button
@@ -85,8 +84,7 @@ export function EditLogDialog({
           {/* 数量入力 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              数量{" "}
-              {activity?.quantityUnit && `(${activity.quantityUnit})`}
+              数量 {activity?.quantityUnit && `(${activity.quantityUnit})`}
             </label>
             <input
               type="number"

@@ -1,7 +1,8 @@
-import { DomainValidateError } from "../errors";
-import { userIdSchema } from "../user/userSchema";
 import { v7 } from "uuid";
 import { z } from "zod";
+
+import { DomainValidateError } from "../errors";
+import { userIdSchema } from "../user/userSchema";
 
 // ActivityId
 export const activityIdSchema = z.string().uuid().brand<"ActivityId">();
@@ -16,10 +17,7 @@ export function createActivityId(id?: string): ActivityId {
 }
 
 // ActivityKindId
-export const activityKindIdSchema = z
-  .string()
-  .uuid()
-  .brand<"ActivityKindId">();
+export const activityKindIdSchema = z.string().uuid().brand<"ActivityKindId">();
 export type ActivityKindId = z.infer<typeof activityKindIdSchema>;
 
 export function createActivityKindId(id?: string): ActivityKindId {

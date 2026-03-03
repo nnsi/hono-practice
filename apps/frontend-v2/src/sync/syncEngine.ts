@@ -1,4 +1,5 @@
 import type { NetworkAdapter } from "@packages/platform";
+
 import {
   syncActivities,
   syncActivityIconDeletions,
@@ -32,11 +33,7 @@ export const syncEngine = {
       await syncActivities();
       // Upload icons after activity sync (activity must exist on server)
       await syncActivityIcons();
-      await Promise.all([
-        syncActivityLogs(),
-        syncGoals(),
-        syncTasks(),
-      ]);
+      await Promise.all([syncActivityLogs(), syncGoals(), syncTasks()]);
       retryCount = 0;
     } catch {
       retryCount++;
@@ -45,7 +42,10 @@ export const syncEngine = {
     }
   },
 
-  startAutoSync(intervalMs = 30000, network: NetworkAdapter = webNetworkAdapter) {
+  startAutoSync(
+    intervalMs = 30000,
+    network: NetworkAdapter = webNetworkAdapter,
+  ) {
     const sync = () => syncEngine.syncAll();
     const removeOnlineListener = network.onOnline(sync);
 

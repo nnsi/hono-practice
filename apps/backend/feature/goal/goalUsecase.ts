@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from "@backend/error";
+import type { Tracer } from "@backend/lib/tracer";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityGoalId,
@@ -5,8 +7,6 @@ import {
   createActivityGoalId,
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
-import type { Tracer } from "@backend/lib/tracer";
 
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";

@@ -1,12 +1,12 @@
-import Dexie, { type Table } from "dexie";
 import type { Syncable } from "@packages/domain";
 import type {
-  ActivityRecord,
   ActivityKindRecord,
+  ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import Dexie, { type Table } from "dexie";
 
 export type { SyncStatus } from "@packages/domain";
 
@@ -20,6 +20,7 @@ export type DexieActivityIconBlob = {
   activityId: string;
   base64: string;
   mimeType: string;
+  synced?: boolean;
 };
 
 export type DexieActivityIconDeleteQueue = {

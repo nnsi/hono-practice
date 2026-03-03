@@ -1,6 +1,6 @@
-import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateUserRequest } from "@dtos/request";
 import { type GetUserResponse, GetUserResponseSchema } from "@dtos/response";
+import type { UserId } from "@packages/domain/user/userSchema";
 
 import { AppError } from "../../error";
 import type { AuthHandler } from "../auth/authHandler";

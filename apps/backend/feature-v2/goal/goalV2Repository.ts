@@ -1,17 +1,13 @@
-import { and, eq, gt, inArray, isNull, lt, sql } from "drizzle-orm";
-
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertGoalRequest } from "@packages/types-v2";
 import { activities, activityGoals, activityLogs } from "@infra/drizzle/schema";
+import type { UserId } from "@packages/domain/user/userSchema";
+import type { UpsertGoalRequest } from "@packages/types";
+import { and, eq, gt, inArray, isNull, lt, sql } from "drizzle-orm";
 
 type GoalRow = typeof activityGoals.$inferSelect;
 
 export type GoalV2Repository = {
-  getGoalsByUserId: (
-    userId: UserId,
-    since?: string,
-  ) => Promise<GoalRow[]>;
+  getGoalsByUserId: (userId: UserId, since?: string) => Promise<GoalRow[]>;
   getGoalActualQuantity: (
     userId: UserId,
     activityId: string,
@@ -26,10 +22,7 @@ export type GoalV2Repository = {
     userId: UserId,
     validGoals: UpsertGoalRequest[],
   ) => Promise<GoalRow[]>;
-  getGoalsByIds: (
-    userId: UserId,
-    ids: string[],
-  ) => Promise<GoalRow[]>;
+  getGoalsByIds: (userId: UserId, ids: string[]) => Promise<GoalRow[]>;
 };
 
 export function newGoalV2Repository(db: QueryExecutor): GoalV2Repository {
@@ -90,10 +83,7 @@ function getOwnedActivityIds(db: QueryExecutor) {
       .select({ id: activities.id })
       .from(activities)
       .where(
-        and(
-          inArray(activities.id, activityIds),
-          eq(activities.userId, userId),
-        ),
+        and(inArray(activities.id, activityIds), eq(activities.userId, userId)),
       );
 
     return rows.map((r) => r.id);
@@ -149,10 +139,7 @@ function getGoalsByIds(db: QueryExecutor) {
       .select()
       .from(activityGoals)
       .where(
-        and(
-          inArray(activityGoals.id, ids),
-          eq(activityGoals.userId, userId),
-        ),
+        and(inArray(activityGoals.id, ids), eq(activityGoals.userId, userId)),
       );
   };
 }

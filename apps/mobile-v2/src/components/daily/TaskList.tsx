@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 export type Task = {
   id: string;
@@ -53,9 +53,7 @@ export function TaskList({
               }`}
             >
               {task.doneDate && (
-                <Text className="text-white text-xs font-bold">
-                  {"\u2713"}
-                </Text>
+                <Text className="text-white text-xs font-bold">{"\u2713"}</Text>
               )}
             </View>
           </TouchableOpacity>

@@ -1,10 +1,10 @@
-import type { ReactHooks, ActivityLogBase } from "./types";
+import type { ActivityLogBase, ReactHooks } from "./types";
 
 type UseEditLogDialogDeps = {
   react: Pick<ReactHooks, "useState" | "useEffect">;
-  useActivityKinds: (
-    activityId: string,
-  ) => { kinds: { id: string; name: string; color: string | null }[] };
+  useActivityKinds: (activityId: string) => {
+    kinds: { id: string; name: string; color: string | null }[];
+  };
   activityLogRepository: {
     updateActivityLog: (
       id: string,

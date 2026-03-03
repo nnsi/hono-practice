@@ -1,7 +1,11 @@
-import { type User, type UserId, createUserEntity } from "@packages/domain/user/userSchema";
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { users } from "@infra/drizzle/schema";
+import {
+  type User,
+  type UserId,
+  createUserEntity,
+} from "@packages/domain/user/userSchema";
 import { and, eq, isNull } from "drizzle-orm";
 
 export type UserRepository<T = any> = {

@@ -1,9 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
+
+import type {
+  ActivityStat,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
+import { generateGoalLines } from "@packages/frontend-shared/utils/goalLineGeneration";
+import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
+
 import { db } from "../../db/schema";
-import { roundQuantity } from "./formatUtils";
-import type { ActivityStat, GoalLine } from "./types";
 
 export function useStatsPage() {
   // --- state ---
@@ -59,10 +65,7 @@ export function useStatsPage() {
     if (!activities || !allKinds || !monthLogs) return null;
 
     // ログをアクティビティIDでグループ化
-    const logsByActivity = new Map<
-      string,
-      (typeof monthLogs)[number][]
-    >();
+    const logsByActivity = new Map<string, (typeof monthLogs)[number][]>();
     for (const log of monthLogs) {
       const list = logsByActivity.get(log.activityId) ?? [];
       list.push(log);
@@ -100,10 +103,7 @@ export function useStatsPage() {
 
         for (const kind of actKinds) {
           const kindLogs = logsByKind.get(kind.id) ?? [];
-          const total = kindLogs.reduce(
-            (sum, l) => sum + (l.quantity ?? 0),
-            0,
-          );
+          const total = kindLogs.reduce((sum, l) => sum + (l.quantity ?? 0), 0);
           kinds.push({
             id: kind.id,
             name: kind.name,
@@ -154,28 +154,15 @@ export function useStatsPage() {
   const getGoalLinesForActivity = useCallback(
     (activityId: string): GoalLine[] => {
       if (!goals?.length) return [];
-
-      const monthStart = dayjs(month).startOf("month");
-      const monthEnd = dayjs(month).endOf("month");
-
-      const relevant = (goals ?? []).filter((goal) => {
-        if (goal.activityId !== activityId) return false;
-        const goalStart = dayjs(goal.startDate);
-        const goalEnd = goal.endDate ? dayjs(goal.endDate) : null;
-        if (goalEnd?.isBefore(monthStart)) return false;
-        if (goalStart.isAfter(monthEnd)) return false;
-        return true;
-      });
-
       const unit =
         activities?.find((a) => a.id === activityId)?.quantityUnit ?? "";
-
-      return relevant.map((goal, i) => ({
-        id: goal.id,
-        value: goal.dailyTargetQuantity,
-        label: `目標${relevant.length > 1 ? i + 1 : ""}: ${goal.dailyTargetQuantity}${unit}`,
-        color: "#ff6b6b",
-      }));
+      return generateGoalLines({
+        activityId,
+        goals,
+        month,
+        quantityUnit: unit,
+        dayjs,
+      });
     },
     [goals, month, activities],
   );

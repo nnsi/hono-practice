@@ -1,8 +1,8 @@
+import type { activityGoals } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertGoalRequest } from "@packages/types-v2";
-import { activityGoals } from "@infra/drizzle/schema";
-import type { Tracer } from "../../lib/tracer";
+import type { UpsertGoalRequest } from "@packages/types";
 
+import type { Tracer } from "../../lib/tracer";
 import type { GoalV2Repository } from "./goalV2Repository";
 
 type GoalRow = typeof activityGoals.$inferSelect;
@@ -70,15 +70,13 @@ function getGoals(repo: GoalV2Repository, tracer: Tracer) {
 
         const totalTarget = days * Number(goal.dailyTargetQuantity);
 
-        const totalActual = await tracer.span(
-          "db.getGoalActualQuantity",
-          () =>
-            repo.getGoalActualQuantity(
-              userId,
-              goal.activityId,
-              goal.startDate,
-              effectiveEnd,
-            ),
+        const totalActual = await tracer.span("db.getGoalActualQuantity", () =>
+          repo.getGoalActualQuantity(
+            userId,
+            goal.activityId,
+            goal.startDate,
+            effectiveEnd,
+          ),
         );
 
         const currentBalance = totalActual - totalTarget;

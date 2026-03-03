@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { useEffect, useState } from "react";
+
+import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { useAuthContext } from "../../../app/_layout";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -16,7 +18,7 @@ export function LoginForm() {
   const [error, setError] = useState("");
 
   const googleDiscovery = AuthSession.useAutoDiscovery(
-    "https://accounts.google.com"
+    "https://accounts.google.com",
   );
 
   const redirectUri = AuthSession.makeRedirectUri();
@@ -29,7 +31,7 @@ export function LoginForm() {
         scopes: ["openid", "profile", "email"],
         responseType: AuthSession.ResponseType.IdToken,
       },
-      googleDiscovery
+      googleDiscovery,
     );
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function LoginForm() {
       const idToken = googleResponse.params.id_token;
       if (idToken) {
         googleLogin(idToken).catch(() =>
-          setError("Googleログインに失敗しました")
+          setError("Googleログインに失敗しました"),
         );
       }
     }

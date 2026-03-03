@@ -1,9 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
-import { DatePickerField } from "../common/DatePickerField";
-import { useTaskEditDialog } from "./useTaskEditDialog";
-import type { TaskItem } from "./types";
 import dayjs from "dayjs";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
+import { DatePickerField } from "../common/DatePickerField";
+import { ModalOverlay } from "../common/ModalOverlay";
+import type { TaskItem } from "./types";
+import { useTaskEditDialog } from "./useTaskEditDialog";
 
 export function TaskEditDialog({
   task,
@@ -62,9 +63,7 @@ export function TaskEditDialog({
               <View>
                 <Text className="text-sm text-gray-500 mb-1">開始日</Text>
                 <Text className="text-sm text-gray-400 px-3 py-2">
-                  {startDate
-                    ? dayjs(startDate).format("YYYY/MM/DD")
-                    : "未設定"}
+                  {startDate ? dayjs(startDate).format("YYYY/MM/DD") : "未設定"}
                 </Text>
               </View>
             ) : (

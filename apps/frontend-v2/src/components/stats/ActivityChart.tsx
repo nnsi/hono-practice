@@ -1,14 +1,18 @@
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import type {
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
 import {
-  VictoryChart,
-  VictoryBar,
   VictoryAxis,
-  VictoryTooltip,
-  VictoryStack,
-  VictoryLine,
+  VictoryBar,
+  VictoryChart,
   VictoryLabel,
+  VictoryLine,
+  VictoryStack,
+  VictoryTooltip,
 } from "victory";
-import type { ChartData, GoalLine } from "./types";
 
 function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
   const [width, setWidth] = useState(0);
@@ -110,7 +114,14 @@ export function ActivityChart({
     const groupDivisor = stackId ? 1 : dataKeys.length;
     const w = (barArea * 0.7) / groupDivisor;
     return Math.max(3, Math.min(24, w));
-  }, [chartWidth, paddingLeft, paddingRight, data.length, dataKeys.length, stackId]);
+  }, [
+    chartWidth,
+    paddingLeft,
+    paddingRight,
+    data.length,
+    dataKeys.length,
+    stackId,
+  ]);
 
   const bars = dataKeys.map((key) => (
     <VictoryBar
@@ -168,7 +179,12 @@ export function ActivityChart({
       <VictoryChart
         width={chartWidth}
         height={height}
-        padding={{ top: 15, right: paddingRight, bottom: 35, left: paddingLeft }}
+        padding={{
+          top: 15,
+          right: paddingRight,
+          bottom: 35,
+          left: paddingLeft,
+        }}
         domainPadding={{ x: barWidth }}
         domain={{ y: [0, yMax] }}
       >
@@ -212,9 +228,7 @@ export function ActivityChart({
                 strokeWidth: 1.5,
               },
             }}
-            labels={({ datum }) =>
-              datum._isLast ? goal.label : ""
-            }
+            labels={({ datum }) => (datum._isLast ? goal.label : "")}
             labelComponent={
               <VictoryLabel
                 textAnchor="end"

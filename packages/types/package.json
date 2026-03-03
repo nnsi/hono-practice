@@ -1,0 +1,9 @@
+{
+  "name": "@packages/types",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "zod": "^4.0.1"
+  }
+}

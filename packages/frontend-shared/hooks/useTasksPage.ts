@@ -1,6 +1,7 @@
-import dayjs from "dayjs";
 import { groupTasksByTimeline as groupTasksByTimelineCore } from "@packages/domain/task/taskGrouping";
 import type { TaskItem } from "@packages/domain/task/types";
+import dayjs from "dayjs";
+
 import type { ReactHooks } from "./types";
 
 type UseTasksPageDeps = {
@@ -48,7 +49,11 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
       () =>
         groupTasksByTimelineCore(
           tasks,
-          { showCompleted: true, showFuture: true, completedInTheirCategories: true },
+          {
+            showCompleted: true,
+            showFuture: true,
+            completedInTheirCategories: true,
+          },
           today,
         ),
       [tasks, today],
@@ -68,8 +73,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
     const futureCount = allGrouped.notStarted.length + allGrouped.future.length;
 
     const hasAnyTasks =
-      tasks.length > 0 ||
-      Object.values(groupedTasks).some((g) => g.length > 0);
+      tasks.length > 0 || Object.values(groupedTasks).some((g) => g.length > 0);
 
     // handlers
     const handleToggleDone = async (task: TaskItem) => {

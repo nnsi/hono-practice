@@ -1,12 +1,10 @@
 import { render } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
-import { getActivityEmoji, getActivityIcon } from "./activityHelpers";
-import type { DexieActivity } from "../../db/schema";
-import type { SyncStatus } from "../../db/schema";
+import { describe, expect, it } from "vitest";
 
-function createActivity(
-  overrides: Partial<DexieActivity> = {},
-): DexieActivity {
+import type { DexieActivity, SyncStatus } from "../../db/schema";
+import { getActivityEmoji, getActivityIcon } from "./activityHelpers";
+
+function createActivity(overrides: Partial<DexieActivity> = {}): DexieActivity {
   return {
     id: "act-1",
     userId: "user-1",
@@ -51,7 +49,7 @@ describe("getActivityEmoji", () => {
 
 describe("getActivityIcon", () => {
   it("returns span with default emoji for undefined activity", () => {
-    const { container } = render(<>{getActivityIcon(undefined)}</>);
+    const { container } = render(getActivityIcon(undefined));
     const span = container.querySelector("span");
     expect(span).not.toBeNull();
     expect(span?.textContent).toBe("📝");
@@ -60,7 +58,7 @@ describe("getActivityIcon", () => {
 
   it("returns span with emoji when iconType is emoji", () => {
     const activity = createActivity({ iconType: "emoji", emoji: "🔥" });
-    const { container } = render(<>{getActivityIcon(activity)}</>);
+    const { container } = render(getActivityIcon(activity));
     const span = container.querySelector("span");
     expect(span).not.toBeNull();
     expect(span?.textContent).toBe("🔥");
@@ -74,7 +72,7 @@ describe("getActivityIcon", () => {
       iconThumbnailUrl: "https://example.com/thumb.jpg",
       iconUrl: "https://example.com/full.jpg",
     });
-    const { container } = render(<>{getActivityIcon(activity)}</>);
+    const { container } = render(getActivityIcon(activity));
     const img = container.querySelector("img");
     expect(img).not.toBeNull();
     expect(img?.getAttribute("src")).toBe("https://example.com/thumb.jpg");
@@ -89,7 +87,7 @@ describe("getActivityIcon", () => {
       iconThumbnailUrl: null,
       iconUrl: "https://example.com/full.jpg",
     });
-    const { container } = render(<>{getActivityIcon(activity)}</>);
+    const { container } = render(getActivityIcon(activity));
     const img = container.querySelector("img");
     expect(img).not.toBeNull();
     expect(img?.getAttribute("src")).toBe("https://example.com/full.jpg");
@@ -102,7 +100,7 @@ describe("getActivityIcon", () => {
       iconThumbnailUrl: null,
       iconUrl: null,
     });
-    const { container } = render(<>{getActivityIcon(activity)}</>);
+    const { container } = render(getActivityIcon(activity));
     const span = container.querySelector("span");
     expect(span).not.toBeNull();
     expect(span?.textContent).toBe("📝");

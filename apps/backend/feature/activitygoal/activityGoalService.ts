@@ -1,11 +1,14 @@
-import type { ActivityGoal, GoalBalance } from "@packages/domain/goal/goalSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import { getInactiveDates as getInactiveDatesShared } from "@packages/domain/goal/goalStats";
 import {
   formatDateInTimezone,
   getCurrentDateInTimezone,
 } from "@backend/utils/timezone";
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import type {
+  ActivityGoal,
+  GoalBalance,
+} from "@packages/domain/goal/goalSchema";
+import { getInactiveDates as getInactiveDatesShared } from "@packages/domain/goal/goalStats";
+import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityLogRepository, ActivityLogSummary } from "../activityLog";
 
@@ -96,7 +99,12 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
     // ログを取得（prefetchedLogsがあればDBアクセス不要）
     const logs = prefetchedLogs
       ? filterLogsByActivity(prefetchedLogs, goal.activityId)
-      : await getActivityLogsForGoal(activityLogRepo, userId, goal, calculateDate);
+      : await getActivityLogsForGoal(
+          activityLogRepo,
+          userId,
+          goal,
+          calculateDate,
+        );
 
     return calculateGoalBalance(goal, logs, calculateDate);
   };

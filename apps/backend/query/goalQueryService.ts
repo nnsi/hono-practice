@@ -1,14 +1,13 @@
+import { ResourceNotFoundError } from "@backend/error";
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { GoalStatsResponse } from "@dtos/response";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import {
-  generateDailyRecords,
   calculateGoalStats,
+  generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
-import { ResourceNotFoundError } from "@backend/error";
 import dayjs from "dayjs";
 import { and, between, eq, isNull, sql } from "drizzle-orm";
-
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 
 export type GoalQueryService = {
   getGoalStats: (userId: string, goalId: string) => Promise<GoalStatsResponse>;

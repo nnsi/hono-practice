@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
+
+import type { DexieActivity } from "../../db/schema";
 import { LogFormBody } from "../common/LogFormBody";
 import { ModalOverlay } from "../common/ModalOverlay";
-import type { DexieActivity } from "../../db/schema";
 
 export function RecordDialog({
   activity,

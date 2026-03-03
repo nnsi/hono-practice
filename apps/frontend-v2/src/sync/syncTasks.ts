@@ -1,8 +1,12 @@
+import type { SyncResult } from "@packages/sync-engine";
+import {
+  chunkArray,
+  mapApiTask,
+  mergeSyncResults,
+} from "@packages/sync-engine";
+
 import { taskRepository } from "../db/taskRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiTask } from "@packages/sync-engine";
-import type { SyncResult } from "@packages/sync-engine";
-import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncTasks(): Promise<void> {
   const pending = await taskRepository.getPendingSyncTasks();
@@ -17,15 +21,13 @@ export async function syncTasks(): Promise<void> {
       json: { tasks: chunk },
     });
     if (!res.ok) return;
-    results.push(await res.json() as SyncResult);
+    results.push((await res.json()) as SyncResult);
   }
 
   const data = mergeSyncResults(results);
   await taskRepository.markTasksSynced(data.syncedIds);
   await taskRepository.markTasksFailed(data.skippedIds);
   if (data.serverWins.length > 0) {
-    await taskRepository.upsertTasksFromServer(
-      data.serverWins.map(mapApiTask),
-    );
+    await taskRepository.upsertTasksFromServer(data.serverWins.map(mapApiTask));
   }
 }

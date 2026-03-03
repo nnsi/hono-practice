@@ -1,15 +1,19 @@
 import { useMemo } from "react";
-import { View, Text, useWindowDimensions } from "react-native";
+
+import type {
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
+import { Text, View, useWindowDimensions } from "react-native";
 import {
-  VictoryChart,
-  VictoryBar,
   VictoryAxis,
-  VictoryTooltip,
-  VictoryStack,
-  VictoryLine,
+  VictoryBar,
+  VictoryChart,
   VictoryLabel,
+  VictoryLine,
+  VictoryStack,
+  VictoryTooltip,
 } from "victory";
-import type { ChartData, GoalLine } from "./types";
 
 export function ActivityChart({
   data,
@@ -84,7 +88,14 @@ export function ActivityChart({
     const groupDivisor = stackId ? 1 : dataKeys.length;
     const w = (barArea * 0.7) / groupDivisor;
     return Math.max(2, Math.min(20, w));
-  }, [chartWidth, paddingLeft, paddingRight, data.length, dataKeys.length, stackId]);
+  }, [
+    chartWidth,
+    paddingLeft,
+    paddingRight,
+    data.length,
+    dataKeys.length,
+    stackId,
+  ]);
 
   const bars = dataKeys.map((key) => (
     <VictoryBar

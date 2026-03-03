@@ -1,8 +1,9 @@
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
-import Constants from "expo-constants";
 import { hc } from "hono/client";
-import type { AppType } from "@packages/api-contract";
+
+import type { AppType } from "@backend/app";
+import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 function resolveApiUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;

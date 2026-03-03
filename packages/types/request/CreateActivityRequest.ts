@@ -10,7 +10,12 @@ export const CreateActivityRequestSchema = z.object({
   quantityOption: z.array(z.number()).optional(),
   showCombinedStats: z.boolean().optional(),
   kinds: z
-    .array(z.object({ name: z.string().max(100), color: z.string().max(20).optional() }))
+    .array(
+      z.object({
+        name: z.string().max(100),
+        color: z.string().max(20).optional(),
+      }),
+    )
     .optional(),
 });
 

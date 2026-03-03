@@ -1,26 +1,24 @@
-import { activityRepository } from "../repositories/activityRepository";
-import { apiClient, customFetch, getApiUrl } from "../utils/apiClient";
-import { getDatabase } from "../db/database";
+import type { SyncResult } from "@packages/sync-engine";
 import {
+  chunkArray,
   mapApiActivity,
   mapApiActivityKind,
+  mergeSyncResults,
 } from "@packages/sync-engine";
-import type { SyncResult } from "@packages/sync-engine";
-import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
+
+import { getDatabase } from "../db/database";
+import { activityRepository } from "../repositories/activityRepository";
+import { apiClient, customFetch, getApiUrl } from "../utils/apiClient";
 
 const API_URL = getApiUrl();
 
 export async function syncActivities(): Promise<void> {
-  const pendingActivities =
-    await activityRepository.getPendingSyncActivities();
-  const pendingKinds =
-    await activityRepository.getPendingSyncActivityKinds();
+  const pendingActivities = await activityRepository.getPendingSyncActivities();
+  const pendingKinds = await activityRepository.getPendingSyncActivityKinds();
 
   if (pendingActivities.length === 0 && pendingKinds.length === 0) return;
 
-  const activitiesData = pendingActivities.map(
-    ({ _syncStatus, ...a }) => a,
-  );
+  const activitiesData = pendingActivities.map(({ _syncStatus, ...a }) => a);
   const kindsData = pendingKinds.map(({ _syncStatus, ...k }) => k);
 
   const activityChunks = chunkArray(activitiesData);
@@ -39,7 +37,7 @@ export async function syncActivities(): Promise<void> {
     });
     if (!res.ok) return;
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       activities: SyncResult;
       activityKinds: SyncResult;
     };

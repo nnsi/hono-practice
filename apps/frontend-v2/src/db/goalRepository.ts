@@ -1,6 +1,7 @@
-import { v7 as uuidv7 } from "uuid";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
-import { db, type DexieGoal } from "./schema";
+import { v7 as uuidv7 } from "uuid";
+
+import { type DexieGoal, db } from "./schema";
 
 type CreateGoalInput = {
   activityId: string;
@@ -13,11 +14,7 @@ type CreateGoalInput = {
 type UpdateGoalInput = Partial<
   Pick<
     DexieGoal,
-    | "dailyTargetQuantity"
-    | "startDate"
-    | "endDate"
-    | "isActive"
-    | "description"
+    "dailyTargetQuantity" | "startDate" | "endDate" | "isActive" | "description"
   >
 >;
 

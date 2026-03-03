@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+
+import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import { getInactiveDates } from "@packages/domain/goal/goalStats";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
-
 import {
   ChevronDown,
   ChevronUp,
@@ -9,15 +11,14 @@ import {
   PlusCircle,
   Trash2,
 } from "lucide-react";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import { getInactiveDates } from "@packages/domain/goal/goalStats";
-import { db, type DexieActivity } from "../../db/schema";
+
 import { goalRepository } from "../../db/goalRepository";
+import { type DexieActivity, db } from "../../db/schema";
 import { syncEngine } from "../../sync/syncEngine";
-import type { Goal, UpdateGoalPayload } from "./types";
 import { getActivityIcon } from "./activityHelpers";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatsDetail } from "./GoalStatsDetail";
+import type { Goal, UpdateGoalPayload } from "./types";
 
 // --- C. ステータスバッジ ---
 type StatusBadge = { label: string; className: string };
@@ -41,11 +42,12 @@ function getStatusBadge(
 
 // --- D. グラデーション背景 ---
 function progressGradient(completionPercent: number, balance: number): string {
-  const color = balance > 0
-    ? "rgba(34, 197, 94, 0.2)"
-    : balance < 0
-      ? "rgba(239, 68, 68, 0.2)"
-      : "rgba(156, 163, 175, 0.2)";
+  const color =
+    balance > 0
+      ? "rgba(34, 197, 94, 0.2)"
+      : balance < 0
+        ? "rgba(239, 68, 68, 0.2)"
+        : "rgba(156, 163, 175, 0.2)";
   return `linear-gradient(to right, ${color} ${completionPercent}%, white ${completionPercent}%)`;
 }
 
@@ -83,7 +85,8 @@ export function GoalCard({
   const inlineInputRef = useRef<HTMLInputElement>(null);
 
   const today = dayjs().format("YYYY-MM-DD");
-  const actualEndDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
+  const actualEndDate =
+    goal.endDate && goal.endDate < today ? goal.endDate : today;
 
   const totalDays = useMemo(() => {
     const start = dayjs(goal.startDate);
@@ -144,35 +147,50 @@ export function GoalCard({
     }
   }, []);
 
-  const monthStart = useMemo(() => dayjs().startOf("month").format("YYYY-MM-DD"), []);
-  const monthEnd = useMemo(() => dayjs().endOf("month").format("YYYY-MM-DD"), []);
+  const monthStart = useMemo(
+    () => dayjs().startOf("month").format("YYYY-MM-DD"),
+    [],
+  );
+  const monthEnd = useMemo(
+    () => dayjs().endOf("month").format("YYYY-MM-DD"),
+    [],
+  );
 
   const effectiveStart = useMemo(
     () => (goal.startDate > monthStart ? goal.startDate : monthStart),
     [goal.startDate, monthStart],
   );
   const effectiveEnd = useMemo(() => {
-    const end = goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
+    const end =
+      goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
     return end > today ? today : end;
   }, [goal.endDate, monthEnd, today]);
 
-  const monthLogs = useLiveQuery(
-    () => {
-      if (!showInactiveDatesEnabled) return [];
-      return db.activityLogs
-        .where("date")
-        .between(effectiveStart, effectiveEnd, true, true)
-        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
-        .toArray();
-    },
-    [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled],
-  );
+  const monthLogs = useLiveQuery(() => {
+    if (!showInactiveDatesEnabled) return [];
+    return db.activityLogs
+      .where("date")
+      .between(effectiveStart, effectiveEnd, true, true)
+      .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
+      .toArray();
+  }, [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled]);
 
   const inactiveDates = useMemo(() => {
     if (!showInactiveDatesEnabled || !monthLogs) return [];
-    const monthGoal = { ...goal, startDate: effectiveStart, endDate: effectiveEnd };
+    const monthGoal = {
+      ...goal,
+      startDate: effectiveStart,
+      endDate: effectiveEnd,
+    };
     return getInactiveDates(monthGoal, monthLogs, today);
-  }, [showInactiveDatesEnabled, monthLogs, effectiveStart, effectiveEnd, goal, today]);
+  }, [
+    showInactiveDatesEnabled,
+    monthLogs,
+    effectiveStart,
+    effectiveEnd,
+    goal,
+    today,
+  ]);
 
   const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
 
@@ -203,7 +221,8 @@ export function GoalCard({
   const commitInlineEdit = useCallback(async () => {
     setInlineEditing(false);
     const num = Number(inlineValue);
-    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity) return;
+    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity)
+      return;
     await goalRepository.updateGoal(goal.id, { dailyTargetQuantity: num });
     syncEngine.syncGoals();
   }, [inlineValue, goal.id, goal.dailyTargetQuantity]);
@@ -246,135 +265,154 @@ export function GoalCard({
         role="button"
         tabIndex={0}
         onClick={onToggleExpand}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggleExpand(); }}
-        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50/50 transition-colors cursor-pointer"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onToggleExpand();
+        }}
+        className="w-full px-4 py-3 hover:bg-gray-50/50 transition-colors cursor-pointer"
       >
-        {/* アクティビティアイコン */}
-        <div className="flex-shrink-0">{getActivityIcon(activity)}</div>
-
-        {/* メイン情報 */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm truncate">
-              {activity?.name ?? "不明なアクティビティ"}
-            </span>
-            {/* C. ステータスバッジ */}
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.className}`}
-            >
-              {statusBadge.label}
-            </span>
+        <div className="flex gap-3 items-start">
+          {/* アクティビティアイコン */}
+          <div className="flex-shrink-0 pt-0.5">
+            {getActivityIcon(activity)}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5 min-w-0">
-            {/* B. インライン編集 */}
-            {inlineEditing ? (
+
+          {/* コンテンツ */}
+          <div className="flex-1 min-w-0">
+            {/* 行1: アクティビティ名 + バランス + シェブロン */}
+            <div className="flex items-start gap-2">
+              <span className="flex-1 font-semibold text-sm min-w-[10em] break-words">
+                {activity?.name ?? "不明なアクティビティ"}
+              </span>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <span
+                  className={`text-[11px] font-medium whitespace-nowrap ${balanceColor}`}
+                >
+                  {localBalance < 0 ? "-" : "+"}
+                  {Math.abs(localBalance).toLocaleString()}
+                  <span className="text-[10px] ml-0.5">
+                    {activity?.quantityUnit ?? ""}
+                  </span>
+                </span>
+                {isExpanded ? (
+                  <ChevronUp size={16} className="text-gray-400" />
+                ) : (
+                  <ChevronDown size={16} className="text-gray-400" />
+                )}
+              </div>
+            </div>
+
+            {/* 行2: バッジ + メタ情報 + アクションボタン */}
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {/* ステータスバッジ */}
               <span
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center shrink-0"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.className}`}
               >
-                <input
-                  ref={inlineInputRef}
-                  type="number"
-                  inputMode="decimal"
-                  value={inlineValue}
-                  onChange={(e) => setInlineValue(e.target.value)}
-                  onBlur={commitInlineEdit}
-                  onKeyDown={handleInlineKeyDown}
-                  className="w-14 px-1 py-0 border border-blue-400 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  min="0"
-                  step="any"
-                />
-                <span className="ml-0.5">
+                {statusBadge.label}
+              </span>
+
+              {/* B. インライン編集 */}
+              {inlineEditing ? (
+                <span
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center shrink-0"
+                >
+                  <input
+                    ref={inlineInputRef}
+                    type="number"
+                    inputMode="decimal"
+                    value={inlineValue}
+                    onChange={(e) => setInlineValue(e.target.value)}
+                    onBlur={commitInlineEdit}
+                    onKeyDown={handleInlineKeyDown}
+                    className="w-14 px-1 py-0 border border-blue-400 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    min="0"
+                    step="any"
+                  />
+                  <span className="ml-0.5 text-xs text-gray-500">
+                    {activity?.quantityUnit ?? ""}/日
+                  </span>
+                </span>
+              ) : (
+                <span
+                  onClick={!isPast ? startInlineEdit : undefined}
+                  className={`text-xs text-gray-500 shrink-0 ${!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}`}
+                  title={!isPast ? "クリックで編集" : undefined}
+                >
+                  {goal.dailyTargetQuantity.toLocaleString()}
                   {activity?.quantityUnit ?? ""}/日
                 </span>
+              )}
+              <span className="text-gray-300 shrink-0 text-xs">|</span>
+              <span className="whitespace-nowrap shrink-0 text-xs text-gray-500">
+                {dayjs(goal.startDate).format("M/D")}〜
+                {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
               </span>
-            ) : (
-              <span
-                onClick={!isPast ? startInlineEdit : undefined}
-                className={`truncate ${!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}`}
-                title={!isPast ? "クリックで編集" : undefined}
-              >
-                {goal.dailyTargetQuantity.toLocaleString()}
-                {activity?.quantityUnit ?? ""}/日
-              </span>
-            )}
-            <span className="text-gray-300 shrink-0">|</span>
-            <span className="whitespace-nowrap shrink-0">
-              {dayjs(goal.startDate).format("M/D")}〜
-              {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
-            </span>
-          </div>
-        </div>
 
-        {/* 右側 */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <span className={`text-[11px] font-medium text-right leading-tight ${balanceColor}`}>
-            <span className="whitespace-nowrap">{localBalance < 0 ? "-" : "+"}{Math.abs(localBalance).toLocaleString()}</span>
-            <br className="sm:hidden" />
-            <span className="text-[10px] sm:ml-0.5">{activity?.quantityUnit ?? ""}</span>
-          </span>
-          {/* A. 直接ログ作成ボタン */}
-          {!isPast && onRecordOpen && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRecordOpen();
-              }}
-              className="p-1.5 hover:bg-blue-100 rounded-md transition-colors"
-              title="活動を記録"
-            >
-              <PlusCircle size={14} className="text-blue-500" />
-            </button>
-          )}
-          {!isPast && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditStart();
-              }}
-              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
-            >
-              <Pencil size={14} className="text-gray-400" />
-            </button>
-          )}
-          {isPast && !showDeleteConfirm && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteConfirm(true);
-              }}
-              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
-            >
-              <Trash2 size={14} className="text-gray-400" />
-            </button>
-          )}
-          {isPast && showDeleteConfirm && (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-              >
-                削除
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
-              >
-                取消
-              </button>
+              {/* スペーサー */}
+              <div className="flex-1" />
+
+              {/* アクションボタン */}
+              {!isPast && onRecordOpen && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRecordOpen();
+                  }}
+                  className="p-1 hover:bg-blue-100 rounded-md transition-colors"
+                  title="活動を記録"
+                >
+                  <PlusCircle size={14} className="text-blue-500" />
+                </button>
+              )}
+              {!isPast && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditStart();
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <Pencil size={14} className="text-gray-400" />
+                </button>
+              )}
+              {isPast && !showDeleteConfirm && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <Trash2 size={14} className="text-gray-400" />
+                </button>
+              )}
+              {isPast && showDeleteConfirm && (
+                <div
+                  className="flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                  >
+                    削除
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                  >
+                    取消
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-          {isExpanded ? (
-            <ChevronUp size={16} className="text-gray-400" />
-          ) : (
-            <ChevronDown size={16} className="text-gray-400" />
-          )}
+          </div>
         </div>
       </div>
 
@@ -399,10 +437,15 @@ export function GoalCard({
           {inactiveDates.slice(0, 3).map((date, index) => (
             <span key={date}>
               {index > 0 && ", "}
-              {new Date(date).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+              {new Date(date).toLocaleDateString("ja-JP", {
+                month: "numeric",
+                day: "numeric",
+              })}
             </span>
           ))}
-          {inactiveDates.length > 3 && <span> 他{inactiveDates.length - 3}日</span>}
+          {inactiveDates.length > 3 && (
+            <span> 他{inactiveDates.length - 3}日</span>
+          )}
         </div>
       )}
 

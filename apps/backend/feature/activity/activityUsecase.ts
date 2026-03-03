@@ -1,11 +1,3 @@
-import {
-  type Activity,
-  type ActivityId,
-  createActivityEntity,
-  createActivityId,
-  createActivityKindId,
-} from "@packages/domain/activity/activitySchema";
-import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { StorageService } from "@backend/infra/storage";
@@ -17,6 +9,14 @@ import type {
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
 } from "@dtos/request";
+import {
+  type Activity,
+  type ActivityId,
+  createActivityEntity,
+  createActivityId,
+  createActivityKindId,
+} from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from ".";
 
@@ -47,10 +47,7 @@ export type ActivityUsecase = {
     mimeType: string,
     apiBaseUrl: string,
   ): Promise<UploadActivityIconResult>;
-  deleteActivityIcon(
-    userId: UserId,
-    activityId: ActivityId,
-  ): Promise<void>;
+  deleteActivityIcon(userId: UserId, activityId: ActivityId): Promise<void>;
 };
 
 export function newActivityUsecase(

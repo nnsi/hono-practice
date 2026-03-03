@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { Copy, Check } from "lucide-react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
+
 import type { CreateApiKeyRequest } from "@dtos/request";
 import type { CreateApiKeyResponse } from "@dtos/response";
+import { Check, Copy } from "lucide-react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
+import { ModalOverlay } from "../common/ModalOverlay";
 
 export function CreateApiKeyDialog({
   onClose,
@@ -94,9 +96,7 @@ export function CreateApiKeyDialog({
             APIキーに識別しやすい名前を付けてください
           </Text>
 
-          {error && (
-            <Text className="text-sm text-red-600 mb-3">{error}</Text>
-          )}
+          {error && <Text className="text-sm text-red-600 mb-3">{error}</Text>}
 
           <TouchableOpacity
             className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting ? "bg-gray-300" : "bg-stone-900"}`}

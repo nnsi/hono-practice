@@ -1,9 +1,8 @@
-import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
-
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertActivityLogRequest } from "@packages/types-v2";
 import { activities, activityLogs } from "@infra/drizzle/schema";
+import type { UserId } from "@packages/domain/user/userSchema";
+import type { UpsertActivityLogRequest } from "@packages/types";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type ActivityLogRow = typeof activityLogs.$inferSelect;
 
@@ -38,10 +37,7 @@ export function newActivityLogV2Repository(
 }
 
 function getActivityLogsByUserId(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    since?: string,
-  ): Promise<ActivityLogRow[]> => {
+  return async (userId: UserId, since?: string): Promise<ActivityLogRow[]> => {
     const conditions = [eq(activityLogs.userId, userId)];
     if (since) {
       conditions.push(gt(activityLogs.updatedAt, new Date(since)));
@@ -55,20 +51,14 @@ function getActivityLogsByUserId(db: QueryExecutor) {
 }
 
 function getOwnedActivityIds(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    activityIds: string[],
-  ): Promise<string[]> => {
+  return async (userId: UserId, activityIds: string[]): Promise<string[]> => {
     if (activityIds.length === 0) return [];
 
     const rows = await db
       .select({ id: activities.id })
       .from(activities)
       .where(
-        and(
-          inArray(activities.id, activityIds),
-          eq(activities.userId, userId),
-        ),
+        and(inArray(activities.id, activityIds), eq(activities.userId, userId)),
       );
 
     return rows.map((a) => a.id);
@@ -120,10 +110,7 @@ function upsertActivityLogs(db: QueryExecutor) {
 }
 
 function getActivityLogsByIds(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    ids: string[],
-  ): Promise<ActivityLogRow[]> => {
+  return async (userId: UserId, ids: string[]): Promise<ActivityLogRow[]> => {
     return await db
       .select()
       .from(activityLogs)

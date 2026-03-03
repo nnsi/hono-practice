@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj, mockCustomFetchFn } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -15,9 +15,13 @@ vi.mock("../utils/apiClient", () => ({
   customFetch: mockCustomFetchFn,
 }));
 
+import {
+  mapApiActivity,
+  mapApiActivityKind,
+} from "@packages/sync-engine/mappers/apiMappers";
+
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
-import { mapApiActivity, mapApiActivityKind } from "@packages/sync-engine/mappers/apiMappers";
 import {
   syncActivities,
   syncActivityIconDeletions,
@@ -41,9 +45,7 @@ describe("syncActivities", () => {
 
       await syncActivities();
 
-      expect(
-        mockActivityRepo.markActivitiesSynced,
-      ).not.toHaveBeenCalled();
+      expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
     });
 
     it("sends data without _syncStatus field", async () => {
@@ -166,12 +168,8 @@ describe("syncActivities", () => {
 
       await syncActivities();
 
-      expect(
-        mockActivityRepo.markActivitiesSynced,
-      ).not.toHaveBeenCalled();
-      expect(
-        mockActivityRepo.markActivitiesFailed,
-      ).not.toHaveBeenCalled();
+      expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
+      expect(mockActivityRepo.markActivitiesFailed).not.toHaveBeenCalled();
     });
 
     it("sends activities in chunks of 100", async () => {
@@ -230,9 +228,7 @@ describe("syncActivities", () => {
 
       await syncActivityIconDeletions();
 
-      expect(mockActivityRepo.removeIconDeleteQueue).toHaveBeenCalledWith(
-        "a1",
-      );
+      expect(mockActivityRepo.removeIconDeleteQueue).toHaveBeenCalledWith("a1");
     });
 
     it("removes from queue on 404", async () => {
@@ -245,9 +241,7 @@ describe("syncActivities", () => {
 
       await syncActivityIconDeletions();
 
-      expect(mockActivityRepo.removeIconDeleteQueue).toHaveBeenCalledWith(
-        "a1",
-      );
+      expect(mockActivityRepo.removeIconDeleteQueue).toHaveBeenCalledWith("a1");
     });
 
     it("does not remove from queue on 500", async () => {
@@ -260,9 +254,7 @@ describe("syncActivities", () => {
 
       await syncActivityIconDeletions();
 
-      expect(
-        mockActivityRepo.removeIconDeleteQueue,
-      ).not.toHaveBeenCalled();
+      expect(mockActivityRepo.removeIconDeleteQueue).not.toHaveBeenCalled();
     });
   });
 
@@ -331,9 +323,7 @@ describe("syncActivities", () => {
         }),
       );
 
-      expect(
-        mockActivityRepo.completeActivityIconSync,
-      ).toHaveBeenCalledWith(
+      expect(mockActivityRepo.completeActivityIconSync).toHaveBeenCalledWith(
         "a1",
         "https://r2.example.com/icon.png",
         "https://r2.example.com/icon-thumb.png",
@@ -356,9 +346,7 @@ describe("syncActivities", () => {
 
       await syncActivityIcons();
 
-      expect(
-        mockActivityRepo.completeActivityIconSync,
-      ).not.toHaveBeenCalled();
+      expect(mockActivityRepo.completeActivityIconSync).not.toHaveBeenCalled();
     });
   });
 });

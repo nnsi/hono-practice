@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, BarChart3 } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 

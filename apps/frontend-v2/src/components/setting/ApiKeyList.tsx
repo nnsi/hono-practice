@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+
 import type { ApiKeyResponse } from "@dtos/response";
 import dayjs from "dayjs";
+import { Loader2, Trash2 } from "lucide-react";
 
 export function ApiKeyList({
   apiKeys,
@@ -36,9 +37,7 @@ export function ApiKeyList({
   }
 
   if (apiKeys.length === 0) {
-    return (
-      <p className="text-sm text-gray-400 py-2">APIキーがありません</p>
-    );
+    return <p className="text-sm text-gray-400 py-2">APIキーがありません</p>;
   }
 
   return (
@@ -81,7 +80,9 @@ export function ApiKeyList({
             )}
           </div>
           <div className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded select-none">
-            {apiKey.key.startsWith("api_") ? apiKey.key : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
+            {apiKey.key.startsWith("api_")
+              ? apiKey.key
+              : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
           </div>
           <div className="flex gap-3 text-xs text-gray-400">
             <span>作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}</span>

@@ -1,5 +1,4 @@
-import { Hono } from "hono";
-
+import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
@@ -49,7 +48,7 @@ function makeKind(overrides: Record<string, unknown> = {}) {
 }
 
 function createApp() {
-  return new Hono()
+  return newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/users/v2", activityV2Route);
 }
@@ -70,11 +69,7 @@ async function postSync(
 }
 
 async function getActivities(app: ReturnType<typeof createApp>) {
-  return app.request(
-    "/users/v2/activities",
-    { method: "GET" },
-    { DB: testDB },
-  );
+  return app.request("/users/v2/activities", { method: "GET" }, { DB: testDB });
 }
 
 describe("POST /users/v2/activities/sync", () => {

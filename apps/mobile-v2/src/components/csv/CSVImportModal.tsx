@@ -1,14 +1,19 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+
+import {
+  autoDetectMapping,
+  parseCSVText,
+} from "@packages/domain/csv/csvParser";
+import dayjs from "dayjs";
 import * as DocumentPicker from "expo-document-picker";
-import { readAsStringAsync, EncodingType } from "expo-file-system/legacy";
+import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 import { FileText, Upload } from "lucide-react-native";
-import { parseCSVText, autoDetectMapping } from "@packages/domain/csv/csvParser";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { useActivities } from "../../hooks/useActivities";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import dayjs from "dayjs";
+import { ModalOverlay } from "../common/ModalOverlay";
 
 type CSVImportModalProps = { visible: boolean; onClose: () => void };
 type ParsedRow = { date: string; time: string; quantity: string; memo: string };
@@ -17,12 +22,19 @@ type Step = "file" | "preview";
 export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   const { activities } = useActivities();
   const [step, setStep] = useState<Step>("file");
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
+    null,
+  );
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [progress, setProgress] = useState({ processed: 0, total: 0, succeeded: 0, failed: 0 });
+  const [progress, setProgress] = useState({
+    processed: 0,
+    total: 0,
+    succeeded: 0,
+    failed: 0,
+  });
   const [error, setError] = useState<string | null>(null);
   const [successCount, setSuccessCount] = useState<number | null>(null);
 
@@ -77,16 +89,18 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       // Map parsed records to rows using detected mapping
       const rows: ParsedRow[] = csvResult.data.map((record) => ({
         date:
-          (mapping.date ? record[mapping.date] : record[csvResult.headers[0]]) ||
-          dayjs().format("YYYY-MM-DD"),
+          (mapping.date
+            ? record[mapping.date]
+            : record[csvResult.headers[0]]) || dayjs().format("YYYY-MM-DD"),
         time: (timeCol ? record[timeCol] : "") || "",
         quantity:
           (mapping.quantity
             ? record[mapping.quantity]
             : record[csvResult.headers[2]]) || "",
         memo:
-          (mapping.memo ? record[mapping.memo] : record[csvResult.headers[3]]) ||
-          "",
+          (mapping.memo
+            ? record[mapping.memo]
+            : record[csvResult.headers[3]]) || "",
       }));
 
       setParsedRows(rows);
@@ -99,11 +113,22 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   };
 
   const handleImport = async () => {
-    if (!selectedActivityId) { setError("アクティビティを選択してください"); return; }
-    if (parsedRows.length === 0) { setError("インポートするデータがありません"); return; }
+    if (!selectedActivityId) {
+      setError("アクティビティを選択してください");
+      return;
+    }
+    if (parsedRows.length === 0) {
+      setError("インポートするデータがありません");
+      return;
+    }
     setIsImporting(true);
     setError(null);
-    setProgress({ processed: 0, total: parsedRows.length, succeeded: 0, failed: 0 });
+    setProgress({
+      processed: 0,
+      total: parsedRows.length,
+      succeeded: 0,
+      failed: 0,
+    });
 
     let succeeded = 0;
     let failed = 0;
@@ -116,12 +141,19 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
           const quantity = row.quantity ? Number(row.quantity) : null;
           if (quantity !== null && !Number.isFinite(quantity)) {
             failed++;
-            setProgress({ processed: i + 1, total: parsedRows.length, succeeded, failed });
+            setProgress({
+              processed: i + 1,
+              total: parsedRows.length,
+              succeeded,
+              failed,
+            });
             continue;
           }
 
           // Format date (handle ISO datetime format)
-          const date = row.date.includes("T") ? row.date.split("T")[0] : row.date;
+          const date = row.date.includes("T")
+            ? row.date.split("T")[0]
+            : row.date;
 
           await activityLogRepository.createActivityLog({
             activityId: selectedActivityId,
@@ -135,7 +167,12 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         } catch {
           failed++;
         }
-        setProgress({ processed: i + 1, total: parsedRows.length, succeeded, failed });
+        setProgress({
+          processed: i + 1,
+          total: parsedRows.length,
+          succeeded,
+          failed,
+        });
       }
 
       // Trigger sync after import
@@ -154,7 +191,12 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
     }
   };
 
-  const handleClose = () => { if (!isImporting) { resetForm(); onClose(); } };
+  const handleClose = () => {
+    if (!isImporting) {
+      resetForm();
+      onClose();
+    }
+  };
 
   return (
     <ModalOverlay visible={visible} onClose={handleClose} title="CSVインポート">
@@ -170,10 +212,14 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 key={a.id}
                 onPress={() => setSelectedActivityId(a.id)}
                 className={`px-3 py-1.5 rounded-full border ${
-                  selectedActivityId === a.id ? "bg-amber-500 border-amber-500" : "bg-white border-gray-300"
+                  selectedActivityId === a.id
+                    ? "bg-amber-500 border-amber-500"
+                    : "bg-white border-gray-300"
                 }`}
               >
-                <Text className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700"}`}>
+                <Text
+                  className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700"}`}
+                >
                   {a.emoji} {a.name}
                 </Text>
               </TouchableOpacity>
@@ -208,29 +254,50 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         )}
         {successCount !== null && (
           <View className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <Text className="text-sm text-green-700">{successCount}件のログをインポートしました</Text>
+            <Text className="text-sm text-green-700">
+              {successCount}件のログをインポートしました
+            </Text>
           </View>
         )}
         {isImporting && progress.total > 0 && (
           <View className="gap-1">
             <View className="w-full bg-gray-200 rounded-full h-2">
-              <View className="bg-blue-600 h-2 rounded-full" style={{ width: `${(progress.processed / progress.total) * 100}%` }} />
+              <View
+                className="bg-blue-600 h-2 rounded-full"
+                style={{
+                  width: `${(progress.processed / progress.total) * 100}%`,
+                }}
+              />
             </View>
-            <Text className="text-xs text-center text-gray-600">{progress.succeeded} / {progress.total} 件処理中...</Text>
+            <Text className="text-xs text-center text-gray-600">
+              {progress.succeeded} / {progress.total} 件処理中...
+            </Text>
           </View>
         )}
 
         {/* Preview step */}
         {step === "preview" && parsedRows.length > 0 && !successCount && (
           <View className="gap-3">
-            <Text className="text-sm text-gray-500">プレビュー（先頭5件 / 全{parsedRows.length}件）</Text>
+            <Text className="text-sm text-gray-500">
+              プレビュー（先頭5件 / 全{parsedRows.length}件）
+            </Text>
             <View className="bg-gray-50 rounded-lg p-2">
-              {parsedRows.slice(0, 5).map((row, i) => (
-                <View key={`row-${i}`} className="flex-row py-1 border-b border-gray-200">
+              {parsedRows.slice(0, 5).map((row) => (
+                <View
+                  key={`${row.date}-${row.time}-${row.quantity}-${row.memo}`}
+                  className="flex-row py-1 border-b border-gray-200"
+                >
                   <Text className="text-xs text-gray-600 w-24">{row.date}</Text>
                   <Text className="text-xs text-gray-600 w-14">{row.time}</Text>
-                  <Text className="text-xs text-gray-600 w-14">{row.quantity}</Text>
-                  <Text className="text-xs text-gray-600 flex-1" numberOfLines={1}>{row.memo}</Text>
+                  <Text className="text-xs text-gray-600 w-14">
+                    {row.quantity}
+                  </Text>
+                  <Text
+                    className="text-xs text-gray-600 flex-1"
+                    numberOfLines={1}
+                  >
+                    {row.memo}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -240,10 +307,19 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               disabled={isImporting || !selectedActivityId}
             >
               <Text className="text-white font-bold text-base">
-                {isImporting ? "インポート中..." : `インポート (${parsedRows.length}件)`}
+                {isImporting
+                  ? "インポート中..."
+                  : `インポート (${parsedRows.length}件)`}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity className="py-2 items-center" onPress={() => { setStep("file"); setParsedRows([]); setFileName(null); }}>
+            <TouchableOpacity
+              className="py-2 items-center"
+              onPress={() => {
+                setStep("file");
+                setParsedRows([]);
+                setFileName(null);
+              }}
+            >
               <Text className="text-sm text-gray-500">ファイルを選び直す</Text>
             </TouchableOpacity>
           </View>
@@ -265,8 +341,12 @@ function StepIndicator({ current }: { current: Step }) {
       {steps.map((s, i) => (
         <View key={s.key} className="flex-row items-center">
           {i > 0 && <View className="w-6 h-px bg-gray-300 mx-1" />}
-          <View className={`px-3 py-1 rounded-full ${current === s.key ? "bg-blue-100" : "bg-gray-100"}`}>
-            <Text className={`text-xs font-medium ${current === s.key ? "text-blue-700" : "text-gray-400"}`}>
+          <View
+            className={`px-3 py-1 rounded-full ${current === s.key ? "bg-blue-100" : "bg-gray-100"}`}
+          >
+            <Text
+              className={`text-xs font-medium ${current === s.key ? "text-blue-700" : "text-gray-400"}`}
+            >
               {i + 1}. {s.label}
             </Text>
           </View>

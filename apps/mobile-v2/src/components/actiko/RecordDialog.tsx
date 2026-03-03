@@ -1,5 +1,5 @@
-import { ModalOverlay } from "../common/ModalOverlay";
 import { LogFormBody } from "../common/LogFormBody";
+import { ModalOverlay } from "../common/ModalOverlay";
 
 type Activity = {
   id: string;

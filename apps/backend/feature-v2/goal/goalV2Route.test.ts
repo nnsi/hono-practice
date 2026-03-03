@@ -1,5 +1,4 @@
-import { Hono } from "hono";
-
+import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
@@ -27,7 +26,7 @@ function makeGoal(overrides: Record<string, unknown> = {}) {
 }
 
 function createApp() {
-  return new Hono()
+  return newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/users/v2", goalV2Route);
 }
@@ -47,10 +46,7 @@ async function postSync(
   );
 }
 
-async function getGoals(
-  app: ReturnType<typeof createApp>,
-  query = "",
-) {
+async function getGoals(app: ReturnType<typeof createApp>, query = "") {
   return app.request(
     `/users/v2/goals${query ? `?${query}` : ""}`,
     { method: "GET" },

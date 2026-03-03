@@ -5,11 +5,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ReactHooks = {
   useState: {
-    <T>(initialState: T | (() => T)): [T, (value: T | ((prev: T) => T)) => void];
-    <T = undefined>(): [T | undefined, (value: T | undefined | ((prev: T | undefined) => T | undefined)) => void];
+    <T>(
+      initialState: T | (() => T),
+    ): [T, (value: T | ((prev: T) => T)) => void];
+    <T = undefined>(): [
+      T | undefined,
+      (value: T | undefined | ((prev: T | undefined) => T | undefined)) => void,
+    ];
   };
   useMemo: <T>(factory: () => T, deps: readonly any[]) => T;
-  useCallback: <T extends (...args: any[]) => any>(callback: T, deps: readonly any[]) => T;
+  useCallback: <T extends (...args: any[]) => any>(
+    callback: T,
+    deps: readonly any[],
+  ) => T;
   useEffect: (effect: () => void | (() => void), deps?: readonly any[]) => void;
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */

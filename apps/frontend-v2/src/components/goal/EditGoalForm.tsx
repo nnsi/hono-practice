@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { X, Trash2 } from "lucide-react";
-import { DatePickerField } from "../common/DatePickerField";
+
+import { Trash2, X } from "lucide-react";
+
 import type { DexieActivity } from "../../db/schema";
-import type { Goal, UpdateGoalPayload } from "./types";
+import { DatePickerField } from "../common/DatePickerField";
 import { getActivityIcon } from "./activityHelpers";
+import type { Goal, UpdateGoalPayload } from "./types";
 
 export function EditGoalForm({
   goal,

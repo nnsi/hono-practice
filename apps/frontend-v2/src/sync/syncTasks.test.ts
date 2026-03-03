@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -10,8 +10,9 @@ vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
-import { taskRepository } from "../db/taskRepository";
 import { mapApiTask } from "@packages/sync-engine/mappers/apiMappers";
+
+import { taskRepository } from "../db/taskRepository";
 import { syncTasks } from "./syncTasks";
 
 const mockTaskRepo = vi.mocked(taskRepository);
@@ -142,5 +143,150 @@ describe("syncTasks", () => {
     expect(mockPost).toHaveBeenCalledTimes(2);
     expect(mockPost.mock.calls[0][0].json.tasks).toHaveLength(100);
     expect(mockPost.mock.calls[1][0].json.tasks).toHaveLength(50);
+  });
+
+  it("handles exactly 100 tasks in a single chunk", async () => {
+    const pending = Array.from({ length: 100 }, (_, i) => ({
+      id: `t-${i}`,
+      title: `Task ${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ syncedIds: [], skippedIds: [], serverWins: [] }),
+    });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockPost.mock.calls[0][0].json.tasks).toHaveLength(100);
+  });
+
+  it("splits 101 tasks into 2 chunks (100 + 1)", async () => {
+    const pending = Array.from({ length: 101 }, (_, i) => ({
+      id: `t-${i}`,
+      title: `Task ${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ syncedIds: [], skippedIds: [], serverWins: [] }),
+    });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[0][0].json.tasks).toHaveLength(100);
+    expect(mockPost.mock.calls[1][0].json.tasks).toHaveLength(1);
+  });
+
+  it("stops on second chunk failure", async () => {
+    const pending = Array.from({ length: 150 }, (_, i) => ({
+      id: `t-${i}`,
+      title: `Task ${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue(pending);
+
+    const mockPost = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: Array.from({ length: 100 }, (_, i) => `t-${i}`),
+            skippedIds: [],
+            serverWins: [],
+          }),
+      })
+      .mockResolvedValueOnce({ ok: false, status: 500 });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockTaskRepo.markTasksSynced).not.toHaveBeenCalled();
+    expect(mockTaskRepo.markTasksFailed).not.toHaveBeenCalled();
+    expect(mockTaskRepo.upsertTasksFromServer).not.toHaveBeenCalled();
+  });
+
+  it("upserts serverWins items via mapApiTask", async () => {
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue([
+      { id: "t-0", title: "Task 0", _syncStatus: "pending" },
+    ] as any);
+
+    const serverWins = [
+      { id: "sw-1", title: "Server Task 1" },
+      { id: "sw-2", title: "Server Task 2" },
+    ];
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          syncedIds: ["t-0"],
+          skippedIds: [],
+          serverWins,
+        }),
+    });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith(serverWins);
+    expect(mockTaskRepo.markTasksSynced).toHaveBeenCalledWith(["t-0"]);
+  });
+
+  it("merges serverWins from multiple chunks", async () => {
+    const pending = Array.from({ length: 120 }, (_, i) => ({
+      id: `t-${i}`,
+      title: `Task ${i}`,
+      _syncStatus: "pending",
+    })) as any;
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue(pending);
+
+    const sw1 = { id: "sw-1", title: "From Chunk 1" };
+    const sw2 = { id: "sw-2", title: "From Chunk 2" };
+    const mockPost = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: [],
+            skippedIds: [],
+            serverWins: [sw1],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: [],
+            skippedIds: [],
+            serverWins: [sw2],
+          }),
+      });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith([sw1, sw2]);
   });
 });

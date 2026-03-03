@@ -1,4 +1,5 @@
 import * as SQLite from "expo-sqlite";
+
 import { migrateDb } from "./migrations";
 
 let _db: SQLite.SQLiteDatabase | null = null;

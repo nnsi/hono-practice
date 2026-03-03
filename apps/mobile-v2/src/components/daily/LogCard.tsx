@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 type Activity = {
   id: string;
@@ -51,7 +51,10 @@ export function LogCard({
       {/* Content */}
       <View className="flex-1 min-w-0">
         <View className="flex-row items-center gap-1.5">
-          <Text className="text-base font-semibold text-gray-800" numberOfLines={1}>
+          <Text
+            className="text-base font-semibold text-gray-800"
+            numberOfLines={1}
+          >
             {activity?.name ?? "\u4e0d\u660e"}
           </Text>
           {kind && (

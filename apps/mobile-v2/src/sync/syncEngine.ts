@@ -1,4 +1,6 @@
 import type { NetworkAdapter } from "@packages/platform";
+
+import { rnNetworkAdapter } from "./rnPlatformAdapters";
 import {
   syncActivities,
   syncActivityIconDeletions,
@@ -7,7 +9,6 @@ import {
 import { syncActivityLogs } from "./syncActivityLogs";
 import { syncGoals } from "./syncGoals";
 import { syncTasks } from "./syncTasks";
-import { rnNetworkAdapter } from "./rnPlatformAdapters";
 
 let isSyncing = false;
 let retryCount = 0;

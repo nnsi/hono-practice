@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { autoDetectMapping } from "@packages/domain/csv/csvParser";
+
 import type { ColumnMapping } from "@packages/domain/csv/csvParser";
-import { useActivities } from "../../hooks/useActivities";
+import { autoDetectMapping } from "@packages/domain/csv/csvParser";
 import { ArrowRight, Info } from "lucide-react";
+
+import { useActivities } from "../../hooks/useActivities";
 
 const FIELD_OPTIONS = [
   { value: "date", label: "日付", required: true },
@@ -157,9 +159,7 @@ export function CSVColumnMapper({
                 <div
                   key={field.value}
                   className={`flex items-center justify-between p-3 border rounded-lg ${
-                    isRequired && !csvColumn
-                      ? "border-red-300 bg-red-50"
-                      : ""
+                    isRequired && !csvColumn ? "border-red-300 bg-red-50" : ""
                   }`}
                 >
                   <span className="text-sm">
@@ -173,9 +173,7 @@ export function CSVColumnMapper({
                   </span>
                   <ArrowRight className="h-4 w-4 text-gray-400 mx-2" />
                   <span className="font-mono text-sm">
-                    {csvColumn || (
-                      <span className="text-gray-400">未設定</span>
-                    )}
+                    {csvColumn || <span className="text-gray-400">未設定</span>}
                   </span>
                 </div>
               );

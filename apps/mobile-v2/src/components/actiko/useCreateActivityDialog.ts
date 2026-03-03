@@ -1,8 +1,11 @@
 import { useState } from "react";
+
+import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
+
 import { activityRepository } from "../../repositories/activityRepository";
-import { COLOR_PALETTE } from "../stats/colorUtils";
 
 type KindEntry = {
+  id: number;
   name: string;
   color: string;
 };
@@ -17,6 +20,7 @@ export function useCreateActivityDialog(
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kinds, setKinds] = useState<KindEntry[]>([]);
+  const [nextKindId, setNextKindId] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,6 +31,7 @@ export function useCreateActivityDialog(
     setQuantityUnit("");
     setShowCombinedStats(false);
     setKinds([]);
+    setNextKindId(0);
     setError("");
   };
 
@@ -66,17 +71,18 @@ export function useCreateActivityDialog(
       const nextColor =
         COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ??
         COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
-      return [...prev, { name: "", color: nextColor }];
+      return [...prev, { id: nextKindId, name: "", color: nextColor }];
     });
+    setNextKindId((n) => n + 1);
   };
 
-  const removeKind = (index: number) => {
-    setKinds((prev) => prev.filter((_, i) => i !== index));
+  const removeKind = (id: number) => {
+    setKinds((prev) => prev.filter((k) => k.id !== id));
   };
 
-  const updateKindName = (index: number, text: string) => {
+  const updateKindName = (id: number, text: string) => {
     setKinds((prev) =>
-      prev.map((k, i) => (i === index ? { ...k, name: text } : k)),
+      prev.map((k) => (k.id === id ? { ...k, name: text } : k)),
     );
   };
 

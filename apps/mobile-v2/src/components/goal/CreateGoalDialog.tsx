@@ -1,8 +1,9 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { DatePickerField } from "../common/DatePickerField";
-import { useCreateGoalDialog } from "./useCreateGoalDialog";
+import { ModalOverlay } from "../common/ModalOverlay";
 import type { CreateGoalPayload } from "./types";
+import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
 type ActivityItem = {
   id: string;
@@ -46,7 +47,11 @@ export function CreateGoalDialog({
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={handleClose} title="新しい目標を作成">
+    <ModalOverlay
+      visible={visible}
+      onClose={handleClose}
+      title="新しい目標を作成"
+    >
       <View className="gap-4">
         {/* Activity selection */}
         <View>
@@ -88,7 +93,8 @@ export function CreateGoalDialog({
             日次目標
             {selectedActivity?.quantityUnit ? (
               <Text className="text-xs text-gray-400">
-                {" "}({selectedActivity.quantityUnit})
+                {" "}
+                ({selectedActivity.quantityUnit})
               </Text>
             ) : null}
           </Text>

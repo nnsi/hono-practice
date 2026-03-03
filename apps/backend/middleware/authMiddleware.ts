@@ -1,8 +1,9 @@
 import type { Next } from "hono";
 import { verify } from "hono/jwt";
 
-import type { HonoContext } from "../context";
 import { createUserId } from "@packages/domain/user/userSchema";
+
+import type { HonoContext } from "../context";
 import { UnauthorizedError } from "../error";
 
 export function verifyToken(jwt: string, secret: string) {

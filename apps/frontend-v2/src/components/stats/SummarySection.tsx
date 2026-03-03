@@ -1,4 +1,4 @@
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit } from "@packages/frontend-shared/utils/statsFormatting";
 
 export function SummarySection({
   summary,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { DomainValidateError } from "../errors";
 
 // Input validation schema (for API input)
@@ -17,8 +18,6 @@ export function validateActivityLogDate(
   const tenYearsAgo = new Date(now);
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
   if (d < tenYearsAgo) {
-    throw new DomainValidateError(
-      "date is too old (more than 10 years ago)",
-    );
+    throw new DomainValidateError("date is too old (more than 10 years ago)");
   }
 }

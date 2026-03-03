@@ -1,11 +1,11 @@
+import { ResourceNotFoundError } from "@backend/error";
+import { noopTracer } from "@backend/lib/tracer";
 import {
   type Subscription,
   createSubscriptionId,
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
-import { ResourceNotFoundError } from "@backend/error";
-import { noopTracer } from "@backend/lib/tracer";
 import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 

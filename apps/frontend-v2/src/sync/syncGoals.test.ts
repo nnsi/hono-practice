@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
   mockApiClientObj: {} as any,
@@ -10,8 +10,9 @@ vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
 
-import { goalRepository } from "../db/goalRepository";
 import { mapApiGoal } from "@packages/sync-engine/mappers/apiMappers";
+
+import { goalRepository } from "../db/goalRepository";
 import { syncGoals } from "./syncGoals";
 
 const mockGoalRepo = vi.mocked(goalRepository);
@@ -163,5 +164,193 @@ describe("syncGoals", () => {
     expect(mockPost).toHaveBeenCalledTimes(2);
     expect(mockPost.mock.calls[0][0].json.goals).toHaveLength(100);
     expect(mockPost.mock.calls[1][0].json.goals).toHaveLength(50);
+  });
+
+  it("handles exactly 100 items in a single chunk", async () => {
+    const pending = Array.from({ length: 100 }, (_, i) => ({
+      id: `g-${i}`,
+      activityId: "a1",
+      _syncStatus: "pending",
+      currentBalance: 0,
+      totalTarget: 0,
+      totalActual: 0,
+    })) as any;
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ syncedIds: [], skippedIds: [], serverWins: [] }),
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockPost.mock.calls[0][0].json.goals).toHaveLength(100);
+  });
+
+  it("splits 101 items into 2 chunks (100 + 1)", async () => {
+    const pending = Array.from({ length: 101 }, (_, i) => ({
+      id: `g-${i}`,
+      activityId: "a1",
+      _syncStatus: "pending",
+      currentBalance: 0,
+      totalTarget: 0,
+      totalActual: 0,
+    })) as any;
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ syncedIds: [], skippedIds: [], serverWins: [] }),
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[0][0].json.goals).toHaveLength(100);
+    expect(mockPost.mock.calls[1][0].json.goals).toHaveLength(1);
+  });
+
+  it("stops processing on second chunk failure", async () => {
+    const pending = Array.from({ length: 200 }, (_, i) => ({
+      id: `g-${i}`,
+      activityId: "a1",
+      _syncStatus: "pending",
+      currentBalance: 0,
+      totalTarget: 0,
+      totalActual: 0,
+    })) as any;
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
+
+    const mockPost = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: Array.from({ length: 100 }, (_, i) => `g-${i}`),
+            skippedIds: [],
+            serverWins: [],
+          }),
+      })
+      .mockResolvedValueOnce({ ok: false, status: 500 });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
+    expect(mockGoalRepo.markGoalsFailed).not.toHaveBeenCalled();
+  });
+
+  it("upserts multiple serverWins from server response", async () => {
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
+      {
+        id: "g-0",
+        activityId: "a1",
+        _syncStatus: "pending",
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+      },
+    ] as any);
+
+    const serverWins = [
+      { id: "sw-1", activityId: "a2", dailyTargetQuantity: 20 },
+      { id: "sw-2", activityId: "a3", dailyTargetQuantity: 30 },
+    ];
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ syncedIds: ["g-0"], skippedIds: [], serverWins }),
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith(serverWins);
+  });
+
+  it("merges serverWins across chunks", async () => {
+    const pending = Array.from({ length: 150 }, (_, i) => ({
+      id: `g-${i}`,
+      activityId: "a1",
+      _syncStatus: "pending",
+      currentBalance: 0,
+      totalTarget: 0,
+      totalActual: 0,
+    })) as any;
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
+
+    const sw1 = { id: "sw-1", activityId: "a2" };
+    const sw2 = { id: "sw-2", activityId: "a3" };
+    const mockPost = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: [],
+            skippedIds: [],
+            serverWins: [sw1],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: [],
+            skippedIds: [],
+            serverWins: [sw2],
+          }),
+      });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith([sw1, sw2]);
+  });
+
+  it("does not call upsertGoalsFromServer when no serverWins", async () => {
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
+      {
+        id: "g-0",
+        activityId: "a1",
+        _syncStatus: "pending",
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+      },
+    ] as any);
+
+    const mockPost = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          syncedIds: ["g-0"],
+          skippedIds: [],
+          serverWins: [],
+        }),
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.upsertGoalsFromServer).not.toHaveBeenCalled();
   });
 });

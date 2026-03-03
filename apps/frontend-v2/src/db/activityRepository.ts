@@ -1,10 +1,7 @@
-import { v7 as uuidv7 } from "uuid";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import {
-  db,
-  type DexieActivity,
-  type DexieActivityKind,
-} from "./schema";
+import { v7 as uuidv7 } from "uuid";
+
+import { type DexieActivity, type DexieActivityKind, db } from "./schema";
 
 type CreateActivityInput = {
   name: string;
@@ -231,8 +228,13 @@ export const activityRepository = {
     await db.activityIconBlobs.delete(activityId);
   },
 
-  async getPendingIconBlobs() {
+  async getAllIconBlobs() {
     return db.activityIconBlobs.toArray();
+  },
+
+  async getPendingIconBlobs() {
+    const all = await db.activityIconBlobs.toArray();
+    return all.filter((b) => !b.synced);
   },
 
   async completeActivityIconSync(
@@ -249,7 +251,7 @@ export const activityRepository = {
           iconThumbnailUrl,
           _syncStatus: "pending" as const,
         });
-        await db.activityIconBlobs.delete(activityId);
+        await db.activityIconBlobs.update(activityId, { synced: true });
       },
     );
   },
@@ -281,18 +283,39 @@ export const activityRepository = {
     await db.activityIconDeleteQueue.delete(activityId);
   },
 
+  async cacheRemoteIcon(activityId: string, url: string) {
+    const existing = await db.activityIconBlobs.get(activityId);
+    if (existing) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type") || "image/webp";
+      const arrayBuffer = await res.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      await db.activityIconBlobs.put({
+        activityId,
+        base64,
+        mimeType: contentType,
+        synced: true,
+      });
+    } catch {
+      // Network error — URL表示のフォールバックがあるため無視
+    }
+  },
+
   // Server upsert (used by initialSync and syncEngine)
-  async upsertActivities(
-    activities: Omit<DexieActivity, "_syncStatus">[],
-  ) {
+  async upsertActivities(activities: Omit<DexieActivity, "_syncStatus">[]) {
     await db.activities.bulkPut(
       activities.map((a) => ({ ...a, _syncStatus: "synced" as const })),
     );
   },
 
-  async upsertActivityKinds(
-    kinds: Omit<DexieActivityKind, "_syncStatus">[],
-  ) {
+  async upsertActivityKinds(kinds: Omit<DexieActivityKind, "_syncStatus">[]) {
     await db.activityKinds.bulkPut(
       kinds.map((k) => ({ ...k, _syncStatus: "synced" as const })),
     );

@@ -1,9 +1,21 @@
 import { useMemo } from "react";
-import { View, Text } from "react-native";
+
+import type {
+  ActivityStat,
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
+import {
+  DEFAULT_BAR_COLOR,
+  getUniqueColorForKind,
+} from "@packages/frontend-shared/utils/colorUtils";
+import {
+  formatQuantityWithUnit,
+  roundQuantity,
+} from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
-import type { ActivityStat, ChartData, GoalLine } from "./types";
-import { DEFAULT_BAR_COLOR, getUniqueColorForKind } from "./colorUtils";
-import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
+import { Text, View } from "react-native";
+
 import { ActivityChart } from "./ActivityChart";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
@@ -23,8 +35,7 @@ export function ActivityStatCard({
     const usedColors = new Set<string>();
     const colorMap: Record<string, string> = {};
     for (const kind of stat.kinds) {
-      const color =
-        kind.color || getUniqueColorForKind(kind.name, usedColors);
+      const color = kind.color || getUniqueColorForKind(kind.name, usedColors);
       usedColors.add(color);
       colorMap[kind.name] = color;
     }
@@ -74,7 +85,8 @@ export function ActivityStatCard({
           {stat.name}
           {stat.showCombinedStats && stat.total != null && (
             <Text className="text-sm font-normal text-gray-500">
-              {"  "}合計: {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
+              {"  "}合計:{" "}
+              {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
             </Text>
           )}
         </Text>

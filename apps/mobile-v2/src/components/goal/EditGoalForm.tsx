@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { X, Trash2 } from "lucide-react-native";
+
+import { Trash2, X } from "lucide-react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { DatePickerField } from "../common/DatePickerField";
 import type { Activity, UpdateGoalPayload } from "./types";
 

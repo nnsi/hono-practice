@@ -1,12 +1,13 @@
+import type { SyncStatus } from "@packages/domain";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type {
   ActivityLogRepository,
   UpsertActivityLogFromServerInput,
 } from "@packages/domain/activityLog/activityLogRepository";
-import type { SyncStatus } from "@packages/domain";
+import { v7 as uuidv7 } from "uuid";
+
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { v7 as uuidv7 } from "uuid";
 
 // --- Row mapping helpers (snake_case SQL → camelCase TS) ---
 
@@ -102,7 +103,10 @@ export const activityLogRepository = {
     };
   },
 
-  async getActivityLogsBetween(startDate: string, endDate: string): Promise<ActivityLogWithSync[]> {
+  async getActivityLogsBetween(
+    startDate: string,
+    endDate: string,
+  ): Promise<ActivityLogWithSync[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL ORDER BY date",

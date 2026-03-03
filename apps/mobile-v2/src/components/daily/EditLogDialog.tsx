@@ -1,5 +1,6 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Trash2 } from "lucide-react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
 
@@ -54,9 +55,7 @@ export function EditLogDialog({
         {/* Kind selector */}
         {kinds.length > 0 && (
           <View>
-            <Text className="text-sm font-medium text-gray-600 mb-2">
-              種類
-            </Text>
+            <Text className="text-sm font-medium text-gray-600 mb-2">種類</Text>
             <View className="flex-row flex-wrap gap-2">
               {kinds.map((kind) => (
                 <TouchableOpacity

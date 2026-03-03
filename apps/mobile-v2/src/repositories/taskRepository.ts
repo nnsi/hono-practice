@@ -1,10 +1,11 @@
-import type { TaskRecord } from "@packages/domain/task/taskRecord";
-import type { TaskRepository } from "@packages/domain/task/taskRepository";
 import type { SyncStatus } from "@packages/domain";
 import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
+import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import type { TaskRepository } from "@packages/domain/task/taskRepository";
+import { v7 as uuidv7 } from "uuid";
+
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { v7 as uuidv7 } from "uuid";
 
 // --- Row mapping helpers (snake_case SQL → camelCase TS) ---
 

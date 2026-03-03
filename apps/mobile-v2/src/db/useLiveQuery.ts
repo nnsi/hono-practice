@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import { dbEvents } from "./dbEvents";
 
 export function useLiveQuery<T>(

@@ -1,8 +1,9 @@
+import { Download, FileText, Upload, X } from "lucide-react";
+
 import { useCSVImport } from "../../hooks/useCSVImport";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CSVColumnMapper } from "./CSVColumnMapper";
 import { CSVImportPreview } from "./CSVImportPreview";
-import { Download, FileText, Upload, X } from "lucide-react";
 
 type Props = {
   onClose: () => void;
@@ -55,9 +56,7 @@ export function CSVImportModal({ onClose }: Props) {
                     disabled={csv.isParsing || csv.isImporting}
                   />
                 </label>
-                <p className="text-xs text-gray-400 mt-2">
-                  .csvファイルに対応
-                </p>
+                <p className="text-xs text-gray-400 mt-2">.csvファイルに対応</p>
               </div>
 
               {csv.file && (

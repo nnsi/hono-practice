@@ -6,7 +6,9 @@ export function getActivityEmoji(activity: DexieActivity | undefined): string {
   return "\u{1F4DD}";
 }
 
-export function getActivityIcon(activity: DexieActivity | undefined): React.ReactNode {
+export function getActivityIcon(
+  activity: DexieActivity | undefined,
+): React.ReactNode {
   if (!activity) return <span className="text-2xl">{"\u{1F4DD}"}</span>;
   if (activity.iconType === "emoji" && activity.emoji) {
     return <span className="text-2xl">{activity.emoji}</span>;

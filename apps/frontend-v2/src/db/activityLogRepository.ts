@@ -1,9 +1,10 @@
-import { v7 as uuidv7 } from "uuid";
 import type {
   ActivityLogRepository,
   UpsertActivityLogFromServerInput,
 } from "@packages/domain/activityLog/activityLogRepository";
-import { db, type DexieActivityLog } from "./schema";
+import { v7 as uuidv7 } from "uuid";
+
+import { type DexieActivityLog, db } from "./schema";
 
 type CreateInput = Pick<
   DexieActivityLog,
@@ -87,9 +88,7 @@ export const activityLogRepository = {
       .modify({ _syncStatus: "failed" as const });
   },
 
-  async upsertActivityLogsFromServer(
-    logs: UpsertActivityLogFromServerInput[],
-  ) {
+  async upsertActivityLogsFromServer(logs: UpsertActivityLogFromServerInput[]) {
     await db.activityLogs.bulkPut(
       logs.map((log) => ({ ...log, _syncStatus: "synced" as const })),
     );

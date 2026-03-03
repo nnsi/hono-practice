@@ -1,23 +1,25 @@
+import { useEffect, useRef, useState } from "react";
+
 import {
-  Outlet,
   Link,
+  Outlet,
   createRootRoute,
   useRouterState,
 } from "@tanstack/react-router";
 import {
-  LayoutGrid,
-  CalendarDays,
   BarChart3,
-  Target,
+  CalendarDays,
   CheckSquare,
-  Settings,
+  LayoutGrid,
   LogOut,
   Menu,
+  Settings,
+  Target,
 } from "lucide-react";
+
+import { CreateUserForm, LoginForm } from "../components/root";
 import { useAuth } from "../hooks/useAuth";
 import { useSyncEngine } from "../hooks/useSyncEngine";
-import { LoginForm, CreateUserForm } from "../components/root";
-import { useState, useRef, useEffect } from "react";
 
 type AuthTab = "login" | "register";
 
@@ -84,10 +86,7 @@ function RootComponent() {
           {authTab === "login" ? (
             <LoginForm onLogin={login} onGoogleLogin={googleLogin} />
           ) : (
-            <CreateUserForm
-              onRegister={register}
-              onGoogleLogin={googleLogin}
-            />
+            <CreateUserForm onRegister={register} onGoogleLogin={googleLogin} />
           )}
         </div>
       </div>
@@ -118,7 +117,10 @@ function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="h-svh w-full max-w-3xl mx-auto flex flex-col relative bg-white">
       {/* Header menu */}
-      <div className="absolute top-0 right-3 h-12 flex items-center z-50" ref={menuRef}>
+      <div
+        className="absolute top-0 right-3 h-12 flex items-center z-50"
+        ref={menuRef}
+      >
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -213,15 +215,10 @@ function NavItem({
     <Link
       to={to}
       className={`nav-pill ${isActive ? "nav-pill-active" : ""} flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-        isActive
-          ? "text-amber-600"
-          : "text-gray-400 hover:text-gray-600"
+        isActive ? "text-amber-600" : "text-gray-400 hover:text-gray-600"
       }`}
     >
-      <Icon
-        size={20}
-        className={isActive ? "drop-shadow-sm" : ""}
-      />
+      <Icon size={20} className={isActive ? "drop-shadow-sm" : ""} />
       <span
         className={`text-[10px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}
       >

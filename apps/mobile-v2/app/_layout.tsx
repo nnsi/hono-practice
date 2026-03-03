@@ -1,12 +1,13 @@
-import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { createContext, useContext, useEffect } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
-import { createContext, useContext } from "react";
 import "../global.css";
 
 const queryClient = new QueryClient();
@@ -17,11 +18,7 @@ type AuthContextType = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
-  register: (
-    name: string,
-    loginId: string,
-    password: string
-  ) => Promise<void>;
+  register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => void;
 };
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { Navigate, createFileRoute } from "@tanstack/react-router";
 
 function IndexRedirect() {
   const stored = localStorage.getItem("actiko-v2-settings");

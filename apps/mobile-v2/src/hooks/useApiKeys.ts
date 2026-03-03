@@ -1,10 +1,11 @@
-import { apiClient } from "../utils/apiClient";
 import {
   type UseApiKeysOptions,
   createUseApiKeys,
   createUseCreateApiKey,
   createUseDeleteApiKey,
 } from "@packages/frontend-shared/hooks/useApiKeys";
+
+import { apiClient } from "../utils/apiClient";
 
 const opts = { apiClient } as UseApiKeysOptions;
 

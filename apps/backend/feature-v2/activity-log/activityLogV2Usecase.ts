@@ -1,8 +1,8 @@
+import type { activityLogs } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertActivityLogRequest } from "@packages/types-v2";
-import { activityLogs } from "@infra/drizzle/schema";
-import type { Tracer } from "../../lib/tracer";
+import type { UpsertActivityLogRequest } from "@packages/types";
 
+import type { Tracer } from "../../lib/tracer";
 import type { ActivityLogV2Repository } from "./activityLogV2Repository";
 
 type ActivityLogRow = typeof activityLogs.$inferSelect;
@@ -54,9 +54,7 @@ function syncActivityLogs(repo: ActivityLogV2Repository, tracer: Tracer) {
     const skippedIds: string[] = [];
 
     // activityId ownership check
-    const requestedActivityIds = [
-      ...new Set(logs.map((l) => l.activityId)),
-    ];
+    const requestedActivityIds = [...new Set(logs.map((l) => l.activityId))];
     const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
       repo.getOwnedActivityIds(userId, requestedActivityIds),
     );

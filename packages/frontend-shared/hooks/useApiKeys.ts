@@ -1,4 +1,4 @@
-import type { AppType } from "@packages/api-contract";
+import type { AppType } from "@backend/app";
 import {
   type CreateApiKeyRequest,
   CreateApiKeyRequestSchema,

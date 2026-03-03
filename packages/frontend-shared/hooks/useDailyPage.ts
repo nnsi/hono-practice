@@ -1,5 +1,11 @@
 import dayjs from "dayjs";
-import type { ReactHooks, ActivityBase, ActivityLogBase, DailyTask } from "./types";
+
+import type {
+  ActivityBase,
+  ActivityLogBase,
+  DailyTask,
+  ReactHooks,
+} from "./types";
 
 type UseDailyPageDeps<
   TActivity extends ActivityBase,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
   isActiveTask,
   isArchivedTask,
@@ -138,9 +139,9 @@ describe("isActiveTask", () => {
 
 describe("isArchivedTask", () => {
   it("未削除・アーカイブ済みはtrue", () => {
-    expect(
-      isArchivedTask({ deletedAt: null, archivedAt: "2026-01-01" }),
-    ).toBe(true);
+    expect(isArchivedTask({ deletedAt: null, archivedAt: "2026-01-01" })).toBe(
+      true,
+    );
   });
 
   it("未削除・未アーカイブはfalse", () => {

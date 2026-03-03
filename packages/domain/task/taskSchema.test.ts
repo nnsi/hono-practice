@@ -1,8 +1,11 @@
 import { DomainValidateError } from "@packages/domain/errors";
-import { expect, test } from "vitest";
-
+import {
+  TaskSchema,
+  createTaskEntity,
+  createTaskId,
+} from "@packages/domain/task/taskSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
-import { TaskSchema, createTaskEntity, createTaskId } from "@packages/domain/task/taskSchema";
+import { expect, test } from "vitest";
 
 test("parse NewTask", async () => {
   const TestData = {

@@ -1,3 +1,5 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { activityGoals } from "@infra/drizzle/schema";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityGoal,
@@ -5,8 +7,6 @@ import {
   createActivityGoalEntity,
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { activityGoals } from "@infra/drizzle/schema";
 import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 export type ActivityGoalRepository<T = any> = {

@@ -1,11 +1,11 @@
+import type { activities, activityKinds } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type {
   UpsertActivityKindRequest,
   UpsertActivityRequest,
-} from "@packages/types-v2";
-import { activities, activityKinds } from "@infra/drizzle/schema";
-import type { Tracer } from "../../lib/tracer";
+} from "@packages/types";
 
+import type { Tracer } from "../../lib/tracer";
 import type { ActivityV2Repository } from "./activityV2Repository";
 
 type ActivityRow = typeof activities.$inferSelect;
@@ -49,9 +49,8 @@ function getActivities(repo: ActivityV2Repository, tracer: Tracer) {
       repo.getActivitiesByUserId(userId),
     );
     const activityIds = activityRows.map((a) => a.id);
-    const kindRows = await tracer.span(
-      "db.getActivityKindsByActivityIds",
-      () => repo.getActivityKindsByActivityIds(activityIds),
+    const kindRows = await tracer.span("db.getActivityKindsByActivityIds", () =>
+      repo.getActivityKindsByActivityIds(activityIds),
     );
     return { activities: activityRows, activityKinds: kindRows };
   };

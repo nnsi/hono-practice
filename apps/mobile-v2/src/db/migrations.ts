@@ -1,6 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const MIGRATION_V1 = `
 CREATE TABLE IF NOT EXISTS activities (
@@ -101,14 +101,23 @@ CREATE TABLE IF NOT EXISTS auth_state (
 );
 `;
 
+const MIGRATION_V2 = `
+ALTER TABLE activity_icon_blobs ADD COLUMN synced INTEGER DEFAULT 0;
+`;
+
 export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version;",
   );
   const currentVersion = result?.user_version ?? 0;
 
-  if (currentVersion < SCHEMA_VERSION) {
+  if (currentVersion < 1) {
     await db.execAsync(MIGRATION_V1);
+  }
+  if (currentVersion < 2) {
+    await db.execAsync(MIGRATION_V2);
+  }
+  if (currentVersion < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 }

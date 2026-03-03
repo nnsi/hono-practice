@@ -1,0 +1,12 @@
+{
+  "name": "@packages/frontend-shared",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "dayjs": "^1.11.13",
+    "hono": "^4.12.3",
+    "react": "^19.1.0"
+  }
+}

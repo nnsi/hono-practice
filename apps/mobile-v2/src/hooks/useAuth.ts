@@ -1,20 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
+
 import { getDatabase } from "../db/database";
-import {
-  apiLogin,
-  apiRegister,
-  apiGetMe,
-  apiRefreshToken,
-  apiLogout,
-  apiGoogleLogin,
-  setToken,
-  clearToken,
-} from "../utils/apiClient";
-import {
-  performInitialSync,
-  clearLocalData,
-} from "../sync/initialSync";
+import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
+import {
+  apiGetMe,
+  apiGoogleLogin,
+  apiLogin,
+  apiLogout,
+  apiRefreshToken,
+  apiRegister,
+  clearToken,
+  setToken,
+} from "../utils/apiClient";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -22,11 +20,7 @@ type AuthState = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
-  register: (
-    name: string,
-    loginId: string,
-    password: string
-  ) => Promise<void>;
+  register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -39,7 +33,7 @@ export function useAuth(): AuthState {
     const syncWithUserCheck = async (newUserId: string) => {
       const db = await getDatabase();
       const authState = await db.getFirstAsync<{ user_id: string }>(
-        "SELECT user_id FROM auth_state WHERE id = 'current'"
+        "SELECT user_id FROM auth_state WHERE id = 'current'",
       );
       if (authState && authState.user_id !== newUserId) {
         await clearLocalData();
@@ -64,11 +58,9 @@ export function useAuth(): AuthState {
       const authState = await db.getFirstAsync<{
         user_id: string;
         last_login_at: string;
-      }>(
-        "SELECT user_id, last_login_at FROM auth_state WHERE id = 'current'"
-      );
+      }>("SELECT user_id, last_login_at FROM auth_state WHERE id = 'current'");
 
-      if (authState && authState.last_login_at) {
+      if (authState?.last_login_at) {
         const hoursAgo =
           (Date.now() - new Date(authState.last_login_at).getTime()) /
           (1000 * 60 * 60);
@@ -97,7 +89,7 @@ export function useAuth(): AuthState {
   const loginWithUserCheck = useCallback(async (newUserId: string) => {
     const db = await getDatabase();
     const authState = await db.getFirstAsync<{ user_id: string }>(
-      "SELECT user_id FROM auth_state WHERE id = 'current'"
+      "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
     if (authState && authState.user_id !== newUserId) {
       await clearLocalData();
@@ -113,7 +105,7 @@ export function useAuth(): AuthState {
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
     },
-    [loginWithUserCheck]
+    [loginWithUserCheck],
   );
 
   const googleLogin = useCallback(
@@ -122,7 +114,7 @@ export function useAuth(): AuthState {
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
     },
-    [loginWithUserCheck]
+    [loginWithUserCheck],
   );
 
   const register = useCallback(
@@ -131,7 +123,7 @@ export function useAuth(): AuthState {
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
     },
-    [loginWithUserCheck]
+    [loginWithUserCheck],
   );
 
   const logout = useCallback(async () => {
@@ -143,7 +135,9 @@ export function useAuth(): AuthState {
     // 削除するとloginWithUserCheckでユーザー切替を検知できず、
     // 前ユーザーのデータが残る＋LAST_SYNCED_KEYが前ユーザーのタイムスタンプのままになる。
     const db = await getDatabase();
-    await db.runAsync("UPDATE auth_state SET last_login_at = '' WHERE id = 'current'");
+    await db.runAsync(
+      "UPDATE auth_state SET last_login_at = '' WHERE id = 'current'",
+    );
   }, []);
 
   return {

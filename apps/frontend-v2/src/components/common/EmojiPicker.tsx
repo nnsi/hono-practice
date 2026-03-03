@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import data from "@emoji-mart/data";
 import i18n from "@emoji-mart/data/i18n/ja.json";
 import Picker from "@emoji-mart/react";

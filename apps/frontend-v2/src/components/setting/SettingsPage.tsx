@@ -1,13 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
-import { Settings, Database, Info, Key, Trash2, UserCircle, Check, Upload, Download, AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+
+import {
+  AlertTriangle,
+  Check,
+  Database,
+  Download,
+  Info,
+  Key,
+  Settings,
+  Trash2,
+  Upload,
+  UserCircle,
+} from "lucide-react";
 import { z } from "zod";
+
 import { db } from "../../db/schema";
-import { ApiKeyManager } from "./ApiKeyManager";
-import { GoogleSignInButton } from "../root/GoogleSignInButton";
-import { CSVImportModal } from "../csv/CSVImportModal";
-import { CSVExportModal } from "../csv/CSVExportModal";
-import { apiClient, clearToken } from "../../utils/apiClient";
 import { clearLocalData } from "../../sync/initialSync";
+import { apiClient, clearToken } from "../../utils/apiClient";
+import { CSVExportModal } from "../csv/CSVExportModal";
+import { CSVImportModal } from "../csv/CSVImportModal";
+import { GoogleSignInButton } from "../root/GoogleSignInButton";
+import { ApiKeyManager } from "./ApiKeyManager";
 
 const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
@@ -17,7 +30,11 @@ const AppSettingsSchema = z.object({
 
 type AppSettings = z.infer<typeof AppSettingsSchema>;
 
-const defaultSettings: AppSettings = { showGoalOnStartup: false, hideGoalGraph: false, showInactiveDates: false };
+const defaultSettings: AppSettings = {
+  showGoalOnStartup: false,
+  hideGoalGraph: false,
+  showInactiveDates: false,
+};
 
 function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -49,7 +66,10 @@ function useGoogleAccount() {
   const [isGoogleLinked, setIsGoogleLinked] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [isLinking, setIsLinking] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const fetchUserInfo = useCallback(async () => {
     const res = await apiClient.user.me.$get();
@@ -84,7 +104,8 @@ function useGoogleAccount() {
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] =
+    useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [showCSVExport, setShowCSVExport] = useState(false);
   const google = useGoogleAccount();
@@ -159,9 +180,13 @@ export function SettingsPage() {
               <div className="flex items-center gap-2">
                 <Check size={16} className="text-green-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-green-700">Google連携済み</p>
+                  <p className="text-sm font-medium text-green-700">
+                    Google連携済み
+                  </p>
                   {google.googleEmail && (
-                    <p className="text-xs text-gray-500 truncate">{google.googleEmail}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {google.googleEmail}
+                    </p>
                   )}
                 </div>
               </div>
@@ -181,7 +206,9 @@ export function SettingsPage() {
               )}
             </div>
             {google.message && (
-              <p className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}>
+              <p
+                className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}
+              >
                 {google.message.text}
               </p>
             )}
@@ -329,7 +356,10 @@ function SettingCheckbox({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label htmlFor={id} className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
+    <label
+      htmlFor={id}
+      className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+    >
       <input
         type="checkbox"
         id={id}

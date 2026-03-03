@@ -1,8 +1,20 @@
 import { useMemo } from "react";
+
+import type {
+  ActivityStat,
+  ChartData,
+  GoalLine,
+} from "@packages/frontend-shared/types/stats";
+import {
+  DEFAULT_BAR_COLOR,
+  getUniqueColorForKind,
+} from "@packages/frontend-shared/utils/colorUtils";
+import {
+  formatQuantityWithUnit,
+  roundQuantity,
+} from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
-import type { ActivityStat, ChartData, GoalLine } from "./types";
-import { DEFAULT_BAR_COLOR, getUniqueColorForKind } from "./colorUtils";
-import { formatQuantityWithUnit, roundQuantity } from "./formatUtils";
+
 import { ActivityChart } from "./ActivityChart";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
@@ -23,8 +35,7 @@ export function ActivityStatCard({
     const usedColors = new Set<string>();
     const colorMap: Record<string, string> = {};
     for (const kind of stat.kinds) {
-      const color =
-        kind.color || getUniqueColorForKind(kind.name, usedColors);
+      const color = kind.color || getUniqueColorForKind(kind.name, usedColors);
       usedColors.add(color);
       colorMap[kind.name] = color;
     }
@@ -174,10 +185,7 @@ export function ActivityStatCard({
       </div>
 
       {/* Summary */}
-      <SummarySection
-        summary={summary}
-        quantityUnit={stat.quantityUnit}
-      />
+      <SummarySection summary={summary} quantityUnit={stat.quantityUnit} />
 
       {/* Collapsible daily/weekly table */}
       <SummaryTable

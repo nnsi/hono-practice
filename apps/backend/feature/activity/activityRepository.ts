@@ -1,3 +1,5 @@
+import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { activities, activityKinds } from "@infra/drizzle/schema";
 import {
   type Activity,
   type ActivityId,
@@ -6,8 +8,6 @@ import {
   createActivityEntity,
 } from "@packages/domain/activity/activitySchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { activities, activityKinds } from "@infra/drizzle/schema";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 
 export type ActivityRepository<T = any> = {

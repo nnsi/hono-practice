@@ -1,10 +1,12 @@
 import { useState } from "react";
+
 import { createUseLogForm } from "@packages/frontend-shared/hooks/useLogForm";
+
+import { activityLogRepository } from "../../db/activityLogRepository";
+import type { DexieActivity } from "../../db/schema";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { useTimer } from "../../hooks/useTimer";
-import { activityLogRepository } from "../../db/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import type { DexieActivity } from "../../db/schema";
 
 export type UseTimerReturn = ReturnType<typeof useTimer>;
 

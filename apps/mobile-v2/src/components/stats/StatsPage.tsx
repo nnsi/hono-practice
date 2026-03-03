@@ -1,11 +1,8 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
-import {
-  ChevronLeft,
-  ChevronRight,
-  BarChart3,
-} from "lucide-react-native";
+import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 
@@ -48,7 +45,11 @@ export function StatsPage() {
       {/* Content */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 80 + insets.bottom, gap: 24 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 80 + insets.bottom,
+          gap: 24,
+        }}
       >
         {isLoading ? (
           <View className="items-center py-16">

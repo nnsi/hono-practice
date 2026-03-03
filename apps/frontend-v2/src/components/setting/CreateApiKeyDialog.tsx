@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { X, Copy, Check } from "lucide-react";
-import { ModalOverlay } from "../common/ModalOverlay";
+
 import type { CreateApiKeyRequest } from "@dtos/request";
 import type { CreateApiKeyResponse } from "@dtos/response";
+import { Check, Copy, X } from "lucide-react";
+
+import { ModalOverlay } from "../common/ModalOverlay";
 
 export function CreateApiKeyDialog({
   onClose,
@@ -96,7 +98,6 @@ export function CreateApiKeyDialog({
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="例: 開発用APIキー"
-                autoFocus
                 maxLength={255}
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -104,9 +105,7 @@ export function CreateApiKeyDialog({
               </p>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"

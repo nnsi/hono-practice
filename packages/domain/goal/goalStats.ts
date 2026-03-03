@@ -103,8 +103,7 @@ export function getInactiveDates(
   logs: LogEntry[],
   today: string,
 ): string[] {
-  const endDate =
-    goal.endDate && goal.endDate < today ? goal.endDate : today;
+  const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
 
   // Build set of active dates
   const activeDates = new Set<string>();

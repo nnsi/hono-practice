@@ -34,27 +34,23 @@
       "workerd"
     ],
     "overrides": {
-      "hono": "4.12.1",
-      "drizzle-orm>expo-sqlite": "-"
+      "drizzle-orm>expo-sqlite": "-",
+      "hono": "4.12.3"
     }
   },
   "type": "module",
-  "dependencies": {
-    "@hono/node-server": "^1.18.2",
-    "biome": "^0.3.3",
-    "dayjs": "^1.11.13",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "uuid": "^11.0.3",
-    "zod": "^4.0.1"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
-    "@tanstack/react-query": "^5.90.21",
+    "@electric-sql/pglite": "^0.3.15",
     "@testing-library/react": "^16.3.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.10.13",
+    "@types/react": "^19.2.14",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.44.7",
     "jsdom": "^26.1.0",
     "lefthook": "^1.10.1",
+    "postgres": "^3.4.8",
     "ts-mockito": "^2.6.1",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",

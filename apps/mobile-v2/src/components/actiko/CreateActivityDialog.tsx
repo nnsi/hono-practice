@@ -1,12 +1,7 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Switch,
-} from "react-native";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { EmojiPicker } from "../common/EmojiPicker";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { useCreateActivityDialog } from "./useCreateActivityDialog";
 
 type CreateActivityDialogProps = {
@@ -41,7 +36,11 @@ export function CreateActivityDialog({
   } = useCreateActivityDialog(onCreated, onClose);
 
   return (
-    <ModalOverlay visible={visible} onClose={handleClose} title="アクティビティ作成">
+    <ModalOverlay
+      visible={visible}
+      onClose={handleClose}
+      title="アクティビティ作成"
+    >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
 
@@ -82,15 +81,12 @@ export function CreateActivityDialog({
         {/* Kinds management */}
         <View>
           <Text className="text-sm text-gray-500 mb-2">種類</Text>
-          {kinds.map((kind, index) => (
-            <View
-              key={index}
-              className="flex-row items-center mb-2 gap-2"
-            >
+          {kinds.map((kind) => (
+            <View key={kind.id} className="flex-row items-center mb-2 gap-2">
               <TextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
                 value={kind.name}
-                onChangeText={(t) => updateKindName(index, t)}
+                onChangeText={(t) => updateKindName(kind.id, t)}
                 placeholder="種類名"
               />
               <View
@@ -98,7 +94,7 @@ export function CreateActivityDialog({
                 style={{ backgroundColor: kind.color }}
               />
               <TouchableOpacity
-                onPress={() => removeKind(index)}
+                onPress={() => removeKind(kind.id)}
                 className="px-2 py-1"
               >
                 <Text className="text-red-500 text-base">-</Text>
@@ -112,9 +108,7 @@ export function CreateActivityDialog({
           </TouchableOpacity>
         </View>
 
-        {error ? (
-          <Text className="text-red-500 text-sm">{error}</Text>
-        ) : null}
+        {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
 
         <TouchableOpacity
           className={`mt-2 mb-4 py-3 rounded-xl items-center ${

@@ -1,5 +1,5 @@
-import type { ActivityRecord, ActivityKindRecord } from "./activityRecord";
 import type { Syncable } from "../sync/syncableRecord";
+import type { ActivityKindRecord, ActivityRecord } from "./activityRecord";
 
 export type CreateActivityInput = {
   name: string;
@@ -28,9 +28,7 @@ export type ActivityRepository = {
   ): Promise<Syncable<ActivityKindRecord>[]>;
   getAllActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
   // Create
-  createActivity(
-    input: CreateActivityInput,
-  ): Promise<Syncable<ActivityRecord>>;
+  createActivity(input: CreateActivityInput): Promise<Syncable<ActivityRecord>>;
   // Update
   updateActivity(
     id: string,
@@ -61,6 +59,7 @@ export type ActivityRepository = {
     activityId: string,
   ): Promise<ActivityIconBlob | undefined>;
   deleteActivityIconBlob(activityId: string): Promise<void>;
+  getAllIconBlobs(): Promise<ActivityIconBlob[]>;
   getPendingIconBlobs(): Promise<ActivityIconBlob[]>;
   completeActivityIconSync(
     activityId: string,
@@ -70,6 +69,7 @@ export type ActivityRepository = {
   clearActivityIcon(activityId: string): Promise<void>;
   getPendingIconDeletes(): Promise<ActivityIconDeleteQueueItem[]>;
   removeIconDeleteQueue(activityId: string): Promise<void>;
+  cacheRemoteIcon(activityId: string, url: string): Promise<void>;
   // Server upsert
   upsertActivities(activities: ActivityRecord[]): Promise<void>;
   upsertActivityKinds(kinds: ActivityKindRecord[]): Promise<void>;

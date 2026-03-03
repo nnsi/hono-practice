@@ -8,7 +8,7 @@ export function useActivityKinds(activityId?: string) {
       activityId
         ? activityRepository.getActivityKindsByActivityId(activityId)
         : Promise.resolve([]),
-    [activityId]
+    [activityId],
   );
   return { kinds: kinds ?? [] };
 }

@@ -1,9 +1,11 @@
 import { useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+
 import {
   convertSecondsToUnit,
   formatElapsedTime,
 } from "@packages/domain/time/timeUtils";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { useLogForm } from "./useLogForm";
 
 type Activity = {
@@ -128,9 +130,7 @@ export function LogFormBody({
           </View>
 
           <View>
-            <Text className="text-sm font-medium text-gray-600 mb-1">
-              メモ
-            </Text>
+            <Text className="text-sm font-medium text-gray-600 mb-1">メモ</Text>
             <TextInput
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
               value={memo}
@@ -191,7 +191,10 @@ function TimerPanel({
   return (
     <View className="gap-5">
       <View className="items-center py-4">
-        <Text className="text-5xl font-bold" style={{ fontVariant: ["tabular-nums"] }}>
+        <Text
+          className="text-5xl font-bold"
+          style={{ fontVariant: ["tabular-nums"] }}
+        >
           {formatElapsedTime(elapsedTime)}
         </Text>
         {isRunning && (

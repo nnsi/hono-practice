@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { View, TouchableOpacity, Text, Image } from "react-native";
+import { useEffect, useState } from "react";
+
 import { Pencil } from "lucide-react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+
+import { activityRepository } from "../../repositories/activityRepository";
 
 type IconBlob = {
   activityId: string;
@@ -42,6 +45,20 @@ export function ActivityCard({
   onEdit,
 }: ActivityCardProps) {
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    if (activity.iconType !== "upload") return;
+    if (iconBlob) return;
+    const url = activity.iconThumbnailUrl || activity.iconUrl;
+    if (!url) return;
+    activityRepository.cacheRemoteIcon(activity.id, url);
+  }, [
+    activity.id,
+    activity.iconType,
+    activity.iconUrl,
+    activity.iconThumbnailUrl,
+    iconBlob,
+  ]);
 
   const renderIcon = () => {
     if (activity.iconType === "upload" && !imageError) {

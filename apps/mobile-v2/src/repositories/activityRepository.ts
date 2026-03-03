@@ -1,12 +1,13 @@
+import type { SyncStatus } from "@packages/domain";
 import type {
-  ActivityRecord,
   ActivityKindRecord,
+  ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import type { SyncStatus } from "@packages/domain";
+import { v7 as uuidv7 } from "uuid";
+
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { v7 as uuidv7 } from "uuid";
 
 // --- Row mapping helpers (snake_case SQL → camelCase TS) ---
 
@@ -137,7 +138,9 @@ export const activityRepository = {
     const lastActivity = await db.getFirstAsync<{ order_index: string }>(
       "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
     );
-    const newIndex = String(Number(lastActivity?.order_index ?? "0") + 1).padStart(6, "0");
+    const newIndex = String(
+      Number(lastActivity?.order_index ?? "0") + 1,
+    ).padStart(6, "0");
 
     await db.runAsync(
       `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
@@ -394,16 +397,27 @@ export const activityRepository = {
 
   async deleteActivityIconBlob(activityId: string): Promise<void> {
     const db = await getDatabase();
-    await db.runAsync(
-      "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
-      [activityId],
+    await db.runAsync("DELETE FROM activity_icon_blobs WHERE activity_id = ?", [
+      activityId,
+    ]);
+  },
+
+  async getAllIconBlobs(): Promise<IconBlob[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activity_icon_blobs",
     );
+    return rows.map((row) => ({
+      activityId: str(row.activity_id),
+      base64: str(row.base64),
+      mimeType: str(row.mime_type),
+    }));
   },
 
   async getPendingIconBlobs(): Promise<IconBlob[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM activity_icon_blobs",
+      "SELECT * FROM activity_icon_blobs WHERE synced = 0 OR synced IS NULL",
     );
     return rows.map((row) => ({
       activityId: str(row.activity_id),
@@ -425,7 +439,7 @@ export const activityRepository = {
         [iconUrl, iconThumbnailUrl, activityId],
       );
       await db.runAsync(
-        "DELETE FROM activity_icon_blobs WHERE activity_id = ?",
+        "UPDATE activity_icon_blobs SET synced = 1 WHERE activity_id = ?",
         [activityId],
       );
       await db.execAsync("COMMIT");
@@ -434,6 +448,7 @@ export const activityRepository = {
       throw e;
     }
     dbEvents.emit("activities");
+    dbEvents.emit("activity_icon_blobs");
   },
 
   async clearActivityIcon(activityId: string): Promise<void> {
@@ -479,6 +494,34 @@ export const activityRepository = {
       "DELETE FROM activity_icon_delete_queue WHERE activity_id = ?",
       [activityId],
     );
+  },
+
+  async cacheRemoteIcon(activityId: string, url: string): Promise<void> {
+    const db = await getDatabase();
+    const existing = await db.getFirstAsync<SqlRow>(
+      "SELECT activity_id FROM activity_icon_blobs WHERE activity_id = ?",
+      [activityId],
+    );
+    if (existing) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type") || "image/webp";
+      const arrayBuffer = await res.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      await db.runAsync(
+        "INSERT OR REPLACE INTO activity_icon_blobs (activity_id, base64, mime_type, synced) VALUES (?, ?, ?, 1)",
+        [activityId, base64, contentType],
+      );
+      dbEvents.emit("activity_icon_blobs");
+    } catch {
+      // Network error — URL表示のフォールバックがあるため無視
+    }
   },
 
   // --- Server upsert (for initial sync and sync engine) ---

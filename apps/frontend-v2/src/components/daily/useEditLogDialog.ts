@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { createUseEditLogDialog } from "@packages/frontend-shared/hooks/useEditLogDialog";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
+
 import { activityLogRepository } from "../../db/activityLogRepository";
-import { syncEngine } from "../../sync/syncEngine";
 import type { DexieActivityLog } from "../../db/schema";
+import { useActivityKinds } from "../../hooks/useActivityKinds";
+import { syncEngine } from "../../sync/syncEngine";
 
 const useEditLogDialogBase = createUseEditLogDialog({
   react: { useState, useEffect },

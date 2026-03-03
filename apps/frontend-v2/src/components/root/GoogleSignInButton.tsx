@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -51,14 +51,18 @@ function loadGisScript(): Promise<void> {
       gisLoaded = true;
       resolve();
     };
-    script.onerror = () => reject(new Error("Failed to load Google Identity Services"));
+    script.onerror = () =>
+      reject(new Error("Failed to load Google Identity Services"));
     document.head.appendChild(script);
   });
 
   return gisLoadPromise;
 }
 
-export function GoogleSignInButton({ onSuccess, onError }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({
+  onSuccess,
+  onError,
+}: GoogleSignInButtonProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef({ onSuccess, onError });
   callbackRef.current = { onSuccess, onError };

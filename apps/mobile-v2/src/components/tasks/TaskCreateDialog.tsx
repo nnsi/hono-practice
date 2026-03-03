@@ -1,7 +1,8 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
-import { ModalOverlay } from "../common/ModalOverlay";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+
 import { DatePickerField } from "../common/DatePickerField";
+import { ModalOverlay } from "../common/ModalOverlay";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
 export function TaskCreateDialog({

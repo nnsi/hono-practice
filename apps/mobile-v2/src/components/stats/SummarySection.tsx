@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import { formatQuantityWithUnit } from "./formatUtils";
+import { formatQuantityWithUnit } from "@packages/frontend-shared/utils/statsFormatting";
+import { Text, View } from "react-native";
 
 type SummarySectionProps = {
   summary: {

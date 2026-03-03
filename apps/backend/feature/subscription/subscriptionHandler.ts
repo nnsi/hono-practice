@@ -1,6 +1,6 @@
-import type { UserId } from "@packages/domain/user/userSchema";
 import { AppError } from "@backend/error";
 import { SubscriptionResponseSchema } from "@dtos/response";
+import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { SubscriptionUsecase } from "./subscriptionUsecase";
 

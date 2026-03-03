@@ -1,7 +1,13 @@
-import type { ApiKey, CreateApiKeyData } from "@packages/domain/apiKey/apiKeySchema";
-import { createApiKeyId, generateApiKey } from "@packages/domain/apiKey/apiKeySchema";
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
 import type { Tracer } from "@backend/lib/tracer";
+import type {
+  ApiKey,
+  CreateApiKeyData,
+} from "@packages/domain/apiKey/apiKeySchema";
+import {
+  createApiKeyId,
+  generateApiKey,
+} from "@packages/domain/apiKey/apiKeySchema";
 
 import type { ApiKeyRepository } from "./apiKeyRepository";
 

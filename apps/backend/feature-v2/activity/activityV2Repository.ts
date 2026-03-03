@@ -1,12 +1,11 @@
-import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
-
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { activities, activityKinds } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type {
   UpsertActivityKindRequest,
   UpsertActivityRequest,
-} from "@packages/types-v2";
-import { activities, activityKinds } from "@infra/drizzle/schema";
+} from "@packages/types";
+import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
 type ActivityRow = typeof activities.$inferSelect;
 type ActivityKindRow = typeof activityKinds.$inferSelect;
@@ -24,10 +23,7 @@ export type ActivityV2Repository = {
     userId: UserId,
     validActivities: UpsertActivityRequest[],
   ) => Promise<ActivityRow[]>;
-  getActivitiesByIds: (
-    userId: UserId,
-    ids: string[],
-  ) => Promise<ActivityRow[]>;
+  getActivitiesByIds: (userId: UserId, ids: string[]) => Promise<ActivityRow[]>;
   upsertActivityKinds: (
     validKinds: UpsertActivityKindRequest[],
   ) => Promise<ActivityKindRow[]>;
@@ -80,10 +76,7 @@ function getOwnedActivityIds(db: QueryExecutor) {
       .select({ id: activities.id })
       .from(activities)
       .where(
-        and(
-          inArray(activities.id, activityIds),
-          eq(activities.userId, userId),
-        ),
+        and(inArray(activities.id, activityIds), eq(activities.userId, userId)),
       );
     return rows.map((r) => r.id);
   };

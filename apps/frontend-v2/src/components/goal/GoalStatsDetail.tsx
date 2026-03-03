@@ -1,18 +1,23 @@
 import { useMemo } from "react";
+
+import {
+  calculateGoalStats,
+  generateDailyRecords,
+} from "@packages/domain/goal/goalStats";
+import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  Calendar,
-  TrendingUp,
-  Flame,
-  Trophy,
   BarChart3,
+  Calendar,
+  Flame,
   Loader2,
+  TrendingUp,
+  Trophy,
 } from "lucide-react";
-import { generateDailyRecords, calculateGoalStats } from "@packages/domain/goal/goalStats";
+
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
-import { roundQuantity } from "../stats/formatUtils";
 import type { Goal } from "./types";
 
 function StatCard({
@@ -56,9 +61,7 @@ export function GoalStatsDetail({
       db.activityLogs
         .where("date")
         .between(goal.startDate, actualEndDate, true, true)
-        .filter(
-          (log) => log.activityId === goal.activityId && !log.deletedAt,
-        )
+        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
         .toArray(),
     [goal.activityId, goal.startDate, actualEndDate],
   );
@@ -126,9 +129,7 @@ export function GoalStatsDetail({
       {/* 直近の日次記録(最新14日分) */}
       {stats.dailyRecords.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-medium text-gray-500 mb-1.5">
-            直近の記録
-          </p>
+          <p className="text-xs font-medium text-gray-500 mb-1.5">直近の記録</p>
           <div className="flex gap-1">
             {stats.dailyRecords.slice(-14).map((record) => (
               <div

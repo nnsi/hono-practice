@@ -1,5 +1,5 @@
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { UpsertTaskRequest } from "@packages/types-v2";
+import type { UpsertTaskRequest } from "@packages/types";
 
 import type { TaskV2Usecase } from "./taskV2Usecase";
 

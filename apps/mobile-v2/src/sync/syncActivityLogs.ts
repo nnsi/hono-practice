@@ -1,8 +1,12 @@
+import type { SyncResult } from "@packages/sync-engine";
+import {
+  chunkArray,
+  mapApiActivityLog,
+  mergeSyncResults,
+} from "@packages/sync-engine";
+
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { apiClient } from "../utils/apiClient";
-import { mapApiActivityLog } from "@packages/sync-engine";
-import type { SyncResult } from "@packages/sync-engine";
-import { chunkArray, mergeSyncResults } from "@packages/sync-engine";
 
 export async function syncActivityLogs(): Promise<void> {
   const pending = await activityLogRepository.getPendingSyncActivityLogs();
@@ -17,7 +21,7 @@ export async function syncActivityLogs(): Promise<void> {
       json: { logs: chunk },
     });
     if (!res.ok) return;
-    results.push(await res.json() as SyncResult);
+    results.push((await res.json()) as SyncResult);
   }
 
   const data = mergeSyncResults(results);
