@@ -4,13 +4,15 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [viteTsConfigPaths() as any],
+  // @ts-expect-error vite-tsconfig-paths plugin type not fully compatible with vite 5
+  plugins: [viteTsConfigPaths()],
   esbuild: {
     target: "esnext",
     jsx: "automatic",
   },
   test: {
     globals: true,
+    globalSetup: ["./e2e/setup/globalSetup.ts"],
     hookTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
     testTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
     include: [
