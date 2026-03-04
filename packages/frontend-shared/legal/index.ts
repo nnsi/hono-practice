@@ -1,3 +1,3 @@
-export type { LegalSection } from "./privacyPolicy";
-export { privacyPolicySections, privacyPolicyTitle } from "./privacyPolicy";
+export type { LegalSection, PrivacyPolicyConfig } from "./privacyPolicy";
+export { createPrivacyPolicySections, privacyPolicyTitle } from "./privacyPolicy";
 export { termsOfServiceSections, termsOfServiceTitle } from "./termsOfService";

@@ -74,6 +74,7 @@ jobs:
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
 
       - name: Build frontend (release)
         if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
@@ -81,6 +82,7 @@ jobs:
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
 
       # --- DB migrations ---
       - name: Migrate Neon DB (stg)

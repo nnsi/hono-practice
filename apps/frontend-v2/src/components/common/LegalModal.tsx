@@ -1,5 +1,5 @@
 import {
-  privacyPolicySections,
+  createPrivacyPolicySections,
   privacyPolicyTitle,
   termsOfServiceSections,
   termsOfServiceTitle,
@@ -7,6 +7,8 @@ import {
 import { X } from "lucide-react";
 
 import { ModalOverlay } from "./ModalOverlay";
+
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 
 type LegalModalProps = {
   type: "privacy" | "terms";
@@ -16,7 +18,9 @@ type LegalModalProps = {
 export function LegalModal({ type, onClose }: LegalModalProps) {
   const title = type === "privacy" ? privacyPolicyTitle : termsOfServiceTitle;
   const sections =
-    type === "privacy" ? privacyPolicySections : termsOfServiceSections;
+    type === "privacy"
+      ? createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL })
+      : termsOfServiceSections;
 
   return (
     <ModalOverlay onClose={onClose}>
