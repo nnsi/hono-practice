@@ -30,6 +30,11 @@ import {
   customFetch,
   getApiUrl,
 } from "../../utils/apiClient";
+import {
+  isGoalNotificationEnabled,
+  requestNotificationPermission,
+  setGoalNotificationEnabled,
+} from "../../utils/notifications";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
@@ -71,9 +76,26 @@ function useAppSettings() {
   return { settings, updateSetting };
 }
 
+function useGoalNotificationSetting() {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    isGoalNotificationEnabled().then(setEnabled);
+  }, []);
+  const toggle = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+    }
+    await setGoalNotificationEnabled(value);
+    setEnabled(value);
+  };
+  return { enabled, toggle };
+}
+
 export function SettingsPage() {
   const { userId, logout } = useAuthContext();
   const { settings, updateSetting } = useAppSettings();
+  const goalNotification = useGoalNotificationSetting();
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -151,6 +173,13 @@ export function SettingsPage() {
           desc="目標詳細で活動がなかった日付を表示します"
           value={settings.showInactiveDates}
           onChange={(v) => updateSetting("showInactiveDates", v)}
+        />
+        <Divider />
+        <SettingSwitch
+          label="目標達成間近の通知"
+          desc="タイマー計測中、日次目標の30分前に通知します"
+          value={goalNotification.enabled}
+          onChange={goalNotification.toggle}
         />
       </Section>
 
