@@ -39,8 +39,8 @@ export function CreateUserForm({
     setIsSubmitting(true);
     try {
       await onRegister(name, loginId, password);
-    } catch {
-      setError("ユーザー登録に失敗しました");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "ユーザー登録に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -51,8 +51,12 @@ export function CreateUserForm({
     setIsSubmitting(true);
     try {
       await onGoogleLogin(credential);
-    } catch {
-      setError("Googleアカウントでの登録に失敗しました");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Googleアカウントでの登録に失敗しました",
+      );
     } finally {
       setIsSubmitting(false);
     }

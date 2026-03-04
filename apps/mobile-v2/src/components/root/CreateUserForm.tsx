@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { LegalModal } from "../common/LegalModal";
 
 export function CreateUserForm() {
   const { register } = useAuthContext();
@@ -13,6 +14,9 @@ export function CreateUserForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
 
   const handleRegister = async () => {
     if (!loginId || !password) {
@@ -23,8 +27,8 @@ export function CreateUserForm() {
     setError("");
     try {
       await register(name, loginId, password);
-    } catch {
-      setError("登録に失敗しました");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "登録に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,25 @@ export function CreateUserForm() {
       >
         <Text className="text-blue-500">ログインに戻る</Text>
       </TouchableOpacity>
+
+      {/* Legal links */}
+      <View className="mt-6 flex-row justify-center gap-3">
+        <TouchableOpacity onPress={() => setLegalModal("privacy")}>
+          <Text className="text-xs text-gray-400 underline">
+            プライバシーポリシー
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setLegalModal("terms")}>
+          <Text className="text-xs text-gray-400 underline">利用規約</Text>
+        </TouchableOpacity>
+      </View>
+      {legalModal && (
+        <LegalModal
+          visible={!!legalModal}
+          type={legalModal}
+          onClose={() => setLegalModal(null)}
+        />
+      )}
     </View>
   );
 }

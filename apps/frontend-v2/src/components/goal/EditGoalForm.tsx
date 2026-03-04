@@ -26,11 +26,20 @@ export function EditGoalForm({
   const [saving, setSaving] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     const parsedTarget = Number(target);
-    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) return;
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
+      setErrorMsg("日次目標は0より大きい数値を入力してください");
+      return;
+    }
+    if (endDate && endDate < startDate) {
+      setErrorMsg("終了日は開始日より後の日付にしてください");
+      return;
+    }
     setSaving(true);
     try {
       await onSave({
@@ -114,6 +123,8 @@ export function EditGoalForm({
             />
           </div>
         </div>
+
+        {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
 
         {/* ボタン */}
         <div className="flex gap-2 pt-1">

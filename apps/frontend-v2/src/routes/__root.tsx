@@ -17,6 +17,7 @@ import {
   Target,
 } from "lucide-react";
 
+import { LegalModal } from "../components/common/LegalModal";
 import { CreateUserForm, LoginForm } from "../components/root";
 import { useAuth } from "../hooks/useAuth";
 import { useSyncEngine } from "../hooks/useSyncEngine";
@@ -27,6 +28,9 @@ function RootComponent() {
   const { isLoggedIn, isLoading, login, googleLogin, register, logout } =
     useAuth();
   const [authTab, setAuthTab] = useState<AuthTab>("login");
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
 
   useSyncEngine(isLoggedIn);
 
@@ -87,6 +91,27 @@ function RootComponent() {
             <LoginForm onLogin={login} onGoogleLogin={googleLogin} />
           ) : (
             <CreateUserForm onRegister={register} onGoogleLogin={googleLogin} />
+          )}
+
+          {/* Legal links */}
+          <div className="mt-6 text-center text-xs text-gray-400 space-x-3">
+            <button
+              type="button"
+              onClick={() => setLegalModal("privacy")}
+              className="hover:text-gray-600 underline"
+            >
+              プライバシーポリシー
+            </button>
+            <button
+              type="button"
+              onClick={() => setLegalModal("terms")}
+              className="hover:text-gray-600 underline"
+            >
+              利用規約
+            </button>
+          </div>
+          {legalModal && (
+            <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />
           )}
         </div>
       </div>

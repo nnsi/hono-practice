@@ -38,14 +38,25 @@ export const apiClient = hc<AppType>(API_URL, {
 });
 
 export async function apiLogin(loginId: string, password: string) {
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ login_id: loginId, password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ login_id: loginId, password }),
+    });
+  } catch {
+    throw new Error("ネットワークに接続できません。接続を確認してください");
+  }
   if (!res.ok) {
-    throw new Error("Login failed");
+    if (res.status === 401)
+      throw new Error("IDまたはパスワードが正しくありません");
+    if (res.status >= 500)
+      throw new Error(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    throw new Error("ログインに失敗しました");
   }
   const data = await res.json();
   setToken(data.token);

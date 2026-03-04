@@ -110,12 +110,25 @@ export const apiClient = hc<AppType>(API_URL, {
 
 // Auth APIs (manual — these manage token state)
 export async function apiLogin(loginId: string, password: string) {
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ login_id: loginId, password }),
-  });
-  if (!res.ok) throw new Error("Login failed");
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login_id: loginId, password }),
+    });
+  } catch {
+    throw new Error("ネットワークに接続できません。接続を確認してください");
+  }
+  if (!res.ok) {
+    if (res.status === 401)
+      throw new Error("IDまたはパスワードが正しくありません");
+    if (res.status >= 500)
+      throw new Error(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    throw new Error("ログインに失敗しました");
+  }
   const data = await res.json();
   setToken(data.token);
   if (data.refreshToken) await setRefreshToken(data.refreshToken);
@@ -127,12 +140,23 @@ export async function apiRegister(
   loginId: string,
   password: string,
 ) {
-  const res = await fetch(`${API_URL}/user`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: name || undefined, loginId, password }),
-  });
-  if (!res.ok) throw new Error("Registration failed");
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name || undefined, loginId, password }),
+    });
+  } catch {
+    throw new Error("ネットワークに接続できません。接続を確認してください");
+  }
+  if (!res.ok) {
+    if (res.status >= 500)
+      throw new Error(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    throw new Error("登録に失敗しました");
+  }
   const data = await res.json();
   setToken(data.token);
   if (data.refreshToken) await setRefreshToken(data.refreshToken);
@@ -174,12 +198,23 @@ export async function apiLogout() {
 
 // Google auth
 export async function apiGoogleLogin(credential: string) {
-  const res = await fetch(`${API_URL}/auth/google`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
-  });
-  if (!res.ok) throw new Error("Google login failed");
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+  } catch {
+    throw new Error("ネットワークに接続できません。接続を確認してください");
+  }
+  if (!res.ok) {
+    if (res.status >= 500)
+      throw new Error(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    throw new Error("Googleログインに失敗しました");
+  }
   const data = await res.json();
   setToken(data.token);
   if (data.refreshToken) await setRefreshToken(data.refreshToken);

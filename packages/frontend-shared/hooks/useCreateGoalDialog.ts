@@ -53,6 +53,10 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
         setErrorMsg("開始日を入力してください");
         return;
       }
+      if (endDate && endDate < startDate) {
+        setErrorMsg("終了日は開始日より後の日付にしてください");
+        return;
+      }
 
       setSubmitting(true);
       try {
