@@ -13,7 +13,7 @@ import {
   VictoryLine,
   VictoryStack,
   VictoryTooltip,
-} from "victory";
+} from "victory-native";
 
 export function ActivityChart({
   data,

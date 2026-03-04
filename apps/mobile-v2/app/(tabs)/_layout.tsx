@@ -98,12 +98,14 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
         sceneStyle: {
+          paddingTop: insets.top,
           maxWidth: 768,
           width: "100%",
           alignSelf: "center",

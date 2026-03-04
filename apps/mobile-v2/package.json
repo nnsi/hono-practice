@@ -48,7 +48,7 @@
     "react-native-worklets": "0.5.1",
     "sql.js": "^1.14.0",
     "uuid": "^11.0.3",
-    "victory": "^37.3.6"
+    "victory-native": "^36.9.2"
   },
   "devDependencies": {
     "@types/react": "~19.1.17",
