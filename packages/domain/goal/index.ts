@@ -1,3 +1,4 @@
+export * from "./goalAchievement";
 export * from "./goalBalance";
 export * from "./goalPredicates";
 export * from "./goalRecord";

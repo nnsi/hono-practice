@@ -17,6 +17,7 @@ import {
   Target,
 } from "lucide-react";
 
+import { GoalAchievementToast } from "../components/common/GoalAchievementToast";
 import { LegalModal } from "../components/common/LegalModal";
 import { CreateUserForm, LoginForm } from "../components/root";
 import { useAuth } from "../hooks/useAuth";
@@ -118,7 +119,12 @@ function RootComponent() {
     );
   }
 
-  return <AuthenticatedLayout onLogout={logout} />;
+  return (
+    <>
+      <AuthenticatedLayout onLogout={logout} />
+      <GoalAchievementToast />
+    </>
+  );
 }
 
 function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
