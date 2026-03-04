@@ -37,7 +37,7 @@ function toSyncStatus(v: unknown): SyncStatus {
   return "synced";
 }
 
-function mapActivityRow(row: SqlRow): ActivityWithSync {
+export function mapActivityRow(row: SqlRow): ActivityWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),
@@ -58,7 +58,7 @@ function mapActivityRow(row: SqlRow): ActivityWithSync {
   };
 }
 
-function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
+export function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
   return {
     id: str(row.id),
     activityId: str(row.activity_id),

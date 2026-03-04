@@ -37,7 +37,7 @@ function toSyncStatus(v: unknown): SyncStatus {
   return "synced";
 }
 
-function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
+export function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
   return {
     id: str(row.id),
     activityId: str(row.activity_id),

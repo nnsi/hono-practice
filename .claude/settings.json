@@ -15,11 +15,10 @@
     ],
     "PreCompact": [
       {
-        "matcher": "auto",
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/scripts/cc-log-to-md.js \"$transcript_path\" -o $CLAUDE_PROJECT_DIR/docs/diary-cc-logs/$(date +%Y%m%d%H%M%S).md"
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact.js"
           }
         ]
       }

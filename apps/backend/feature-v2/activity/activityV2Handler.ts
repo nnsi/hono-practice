@@ -33,7 +33,7 @@ function syncActivities(uc: ActivityV2Usecase) {
   return async (
     userId: UserId,
     activityList: UpsertActivityRequest[],
-    
+
     kindList: UpsertActivityKindRequest[],
   ) => {
     const result = await uc.syncActivities(userId, activityList, kindList);

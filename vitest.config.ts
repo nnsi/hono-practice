@@ -20,6 +20,8 @@ export default defineConfig({
       "**/packages/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // frontend-v2のテスト
       "**/apps/frontend-v2/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // mobile-v2のテスト
+      "**/apps/mobile-v2/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
     exclude: [
       "**/node_modules/**",

@@ -34,7 +34,7 @@ function toSyncStatus(v: unknown): SyncStatus {
   return "synced";
 }
 
-function mapGoalRow(row: SqlRow): GoalWithSync {
+export function mapGoalRow(row: SqlRow): GoalWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),

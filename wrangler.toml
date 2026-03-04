@@ -21,6 +21,10 @@ STORAGE_TYPE = "r2"
 binding = "WAE_LOGS"
 dataset = "actiko_api_logs"
 
+[[env.stg.analytics_engine_datasets]]
+binding = "WAE_CLIENT_ERRORS"
+dataset = "actiko_client_errors"
+
 # production環境
 [env.production.vars]
 NODE_ENV = "production"
@@ -29,3 +33,7 @@ STORAGE_TYPE = "r2"
 [[env.production.analytics_engine_datasets]]
 binding = "WAE_LOGS"
 dataset = "actiko_api_logs"
+
+[[env.production.analytics_engine_datasets]]
+binding = "WAE_CLIENT_ERRORS"
+dataset = "actiko_client_errors"
