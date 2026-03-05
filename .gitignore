@@ -15,6 +15,7 @@ nul
 .playwright-mcp
 .playwright-cli
 *.stackdump
+package-lock.json
 
 # Terraform
 terraform/*.tfvars
