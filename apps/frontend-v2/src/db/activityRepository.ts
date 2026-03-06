@@ -1,4 +1,5 @@
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
+import { generateOrder } from "@packages/domain/activity/lexicalOrder";
 import { v7 as uuidv7 } from "uuid";
 
 import { type DexieActivity, type DexieActivityKind, db } from "./schema";
@@ -41,8 +42,7 @@ export const activityRepository = {
       .orderBy("orderIndex")
       .reverse()
       .first();
-    const maxIndex = lastActivity?.orderIndex ?? "0";
-    const newIndex = String(Number(maxIndex) + 1).padStart(6, "0");
+    const newIndex = generateOrder(lastActivity?.orderIndex ?? null, null);
 
     const activity: DexieActivity = {
       id: uuidv7(),
@@ -156,12 +156,15 @@ export const activityRepository = {
   async reorderActivities(orderedIds: string[]) {
     const now = new Date().toISOString();
     await db.transaction("rw", db.activities, async () => {
-      for (let i = 0; i < orderedIds.length; i++) {
-        await db.activities.update(orderedIds[i], {
-          orderIndex: String(i).padStart(6, "0"),
+      let prev: string | null = null;
+      for (const id of orderedIds) {
+        const orderIndex = generateOrder(prev, null);
+        await db.activities.update(id, {
+          orderIndex,
           updatedAt: now,
           _syncStatus: "pending" as const,
         });
+        prev = orderIndex;
       }
     });
   },

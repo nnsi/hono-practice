@@ -1,7 +1,6 @@
 import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { StorageService } from "@backend/infra/storage";
-import { generateOrder } from "@backend/lib/lexicalOrder";
 import type { Tracer } from "@backend/lib/tracer";
 import { generateIconKey } from "@backend/utils/imageValidator";
 import type {
@@ -16,6 +15,7 @@ import {
   createActivityId,
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
+import { generateOrder } from "@packages/domain/activity/lexicalOrder";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from ".";
