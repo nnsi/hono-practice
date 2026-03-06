@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { LegalModal } from "../common/LegalModal";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -16,6 +17,9 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
 
   const googleDiscovery = AuthSession.useAutoDiscovery(
     "https://accounts.google.com",
@@ -38,8 +42,10 @@ export function LoginForm() {
     if (googleResponse?.type === "success") {
       const idToken = googleResponse.params.id_token;
       if (idToken) {
-        googleLogin(idToken).catch(() =>
-          setError("Googleログインに失敗しました"),
+        googleLogin(idToken).catch((e: unknown) =>
+          setError(
+            e instanceof Error ? e.message : "Googleログインに失敗しました",
+          ),
         );
       }
     }
@@ -54,8 +60,8 @@ export function LoginForm() {
     setError("");
     try {
       await login(loginId, password);
-    } catch {
-      setError("ログインに失敗しました");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "ログインに失敗しました");
     } finally {
       setLoading(false);
     }
@@ -120,6 +126,25 @@ export function LoginForm() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Legal links */}
+      <View className="mt-6 flex-row justify-center gap-3">
+        <TouchableOpacity onPress={() => setLegalModal("privacy")}>
+          <Text className="text-xs text-gray-400 underline">
+            プライバシーポリシー
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setLegalModal("terms")}>
+          <Text className="text-xs text-gray-400 underline">利用規約</Text>
+        </TouchableOpacity>
+      </View>
+      {legalModal && (
+        <LegalModal
+          visible={!!legalModal}
+          type={legalModal}
+          onClose={() => setLegalModal(null)}
+        />
+      )}
     </View>
   );
 }

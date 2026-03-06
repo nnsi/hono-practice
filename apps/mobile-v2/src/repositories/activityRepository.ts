@@ -37,7 +37,7 @@ function toSyncStatus(v: unknown): SyncStatus {
   return "synced";
 }
 
-function mapActivityRow(row: SqlRow): ActivityWithSync {
+export function mapActivityRow(row: SqlRow): ActivityWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),
@@ -58,7 +58,7 @@ function mapActivityRow(row: SqlRow): ActivityWithSync {
   };
 }
 
-function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
+export function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
   return {
     id: str(row.id),
     activityId: str(row.activity_id),
@@ -284,6 +284,27 @@ export const activityRepository = {
 
     dbEvents.emit("activities");
     dbEvents.emit("activity_kinds");
+  },
+
+  // --- Reorder ---
+
+  async reorderActivities(orderedIds: string[]): Promise<void> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    try {
+      await db.execAsync("BEGIN");
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db.runAsync(
+          "UPDATE activities SET order_index = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
+          [String(i).padStart(6, "0"), now, orderedIds[i]],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
+    dbEvents.emit("activities");
   },
 
   // --- Delete ---

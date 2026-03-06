@@ -19,8 +19,8 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
     setIsSubmitting(true);
     try {
       await onLogin(loginId, password);
-    } catch {
-      setError("ログインに失敗しました");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "ログインに失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -31,8 +31,8 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
     setIsSubmitting(true);
     try {
       await onGoogleLogin(credential);
-    } catch {
-      setError("Googleログインに失敗しました");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Googleログインに失敗しました");
     } finally {
       setIsSubmitting(false);
     }

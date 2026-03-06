@@ -36,6 +36,7 @@ export type AppContext = {
     RATE_LIMIT_KV?: KeyValueStore<{ count: number; windowStart: number }>;
     // Analytics Engine（オプション、ローカル開発時はundefined）
     WAE_LOGS?: AnalyticsEngineDataset;
+    WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;
   };
 };
 

@@ -6,8 +6,10 @@ import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
+import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,10 @@ export default function RootLayout() {
   useSyncEngine(auth.isLoggedIn);
 
   useEffect(() => {
+    setupGlobalErrorHandler();
+  }, []);
+
+  useEffect(() => {
     if (auth.isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
@@ -64,13 +70,17 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider value={auth}>
-          <StatusBar style="auto" />
-          <Slot />
-        </AuthContext.Provider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthContext.Provider value={auth}>
+            <StatusBar style="auto" />
+            <View className="flex-1 bg-stone-100">
+              <Slot />
+            </View>
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

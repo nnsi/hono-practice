@@ -20,6 +20,7 @@ type Env = Config & {
   HYPERDRIVE: Hyperdrive;
   RATE_LIMIT_KV_NS?: KVNamespace;
   WAE_LOGS?: AnalyticsEngineDataset;
+  WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;
 };
 
 export default {
@@ -50,6 +51,7 @@ export default {
         DB: db,
         RATE_LIMIT_KV: rateLimitKv,
         WAE_LOGS: env.WAE_LOGS,
+        WAE_CLIENT_ERRORS: env.WAE_CLIENT_ERRORS,
       },
       ctx,
     );

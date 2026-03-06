@@ -30,6 +30,7 @@ import {
   customFetch,
   getApiUrl,
 } from "../../utils/apiClient";
+import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { ApiKeyManager } from "./ApiKeyManager";
@@ -78,6 +79,9 @@ export function SettingsPage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
 
   const handleClearData = async () => {
     await clearLocalData();
@@ -107,7 +111,7 @@ export function SettingsPage() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1">
       {/* User info */}
       <View
         className="mx-4 mt-4 p-4 bg-white rounded-2xl border border-gray-200"
@@ -250,10 +254,20 @@ export function SettingsPage() {
       </Section>
 
       {/* App version */}
-      <View className="items-center mt-8 mb-8">
+      <View className="items-center mt-8 mb-8 gap-2">
         <View className="flex-row items-center">
           <Info size={14} color="#9ca3af" />
           <Text className="ml-1 text-xs text-gray-400">Actiko v2.0</Text>
+        </View>
+        <View className="flex-row gap-3">
+          <TouchableOpacity onPress={() => setLegalModal("privacy")}>
+            <Text className="text-xs text-blue-500 underline">
+              プライバシーポリシー
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setLegalModal("terms")}>
+            <Text className="text-xs text-blue-500 underline">利用規約</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -265,6 +279,13 @@ export function SettingsPage() {
         visible={showExport}
         onClose={() => setShowExport(false)}
       />
+      {legalModal && (
+        <LegalModal
+          visible={!!legalModal}
+          type={legalModal}
+          onClose={() => setLegalModal(null)}
+        />
+      )}
     </ScrollView>
   );
 }

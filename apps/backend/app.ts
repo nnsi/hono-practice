@@ -11,6 +11,7 @@ import {
   taskRoute,
   userRoute,
 } from "./feature";
+import { clientErrorRoute } from "./feature/clientError/clientErrorRoute";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
@@ -99,6 +100,7 @@ const routes = app
   .route("/users/v2", taskV2Route)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
+  .route("/client-errors", clientErrorRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();
 

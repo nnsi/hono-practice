@@ -14,11 +14,11 @@ jobs:
       deployments: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
       - name: Get changed files (backend)
         id: changed_backend
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
         with:
           files: |
             apps/backend/**
@@ -26,32 +26,32 @@ jobs:
 
       - name: Get changed files (frontend)
         id: changed_frontend
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
         with:
           files: |
             apps/frontend-v2/**
 
       - name: Get changed files (db migrations)
         id: changed_db_migrations
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
         with:
           files: |
             infra/drizzle/**
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 22
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
 
       - name: Get pnpm store directory
         shell: bash
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -74,6 +74,7 @@ jobs:
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
 
       - name: Build frontend (release)
         if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
@@ -81,6 +82,7 @@ jobs:
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
 
       # --- DB migrations ---
       - name: Migrate Neon DB (stg)
@@ -104,16 +106,20 @@ jobs:
           [env.stg]
           [[env.stg.hyperdrive]]
           binding = "HYPERDRIVE"
-          id = "${{ secrets.HYPERDRIVE_ID_STG }}"
+          id = "${HYPERDRIVE_ID}"
 
           [[env.stg.r2_buckets]]
           binding = "R2_BUCKET"
-          bucket_name = "${{ vars.R2_BUCKET_NAME_STG }}"
+          bucket_name = "${R2_BUCKET_NAME}"
 
           [[env.stg.kv_namespaces]]
           binding = "RATE_LIMIT_KV_NS"
-          id = "${{ secrets.KV_RATE_LIMIT_ID_STG }}"
+          id = "${KV_RATE_LIMIT_ID}"
           EOF
+        env:
+          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_STG }}
+          R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
 
       - name: Configure Hyperdrive and R2 for production
         if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
@@ -123,42 +129,58 @@ jobs:
           [env.production]
           [[env.production.hyperdrive]]
           binding = "HYPERDRIVE"
-          id = "${{ secrets.HYPERDRIVE_ID_PROD }}"
+          id = "${HYPERDRIVE_ID}"
 
           [[env.production.r2_buckets]]
           binding = "R2_BUCKET"
-          bucket_name = "${{ vars.R2_BUCKET_NAME_PROD }}"
+          bucket_name = "${R2_BUCKET_NAME}"
 
           [[env.production.kv_namespaces]]
           binding = "RATE_LIMIT_KV_NS"
-          id = "${{ secrets.KV_RATE_LIMIT_ID_PROD }}"
+          id = "${KV_RATE_LIMIT_ID}"
           EOF
+        env:
+          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_PROD }}
+          R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)
         if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
         run: |
-          echo "${{ secrets.DATABASE_URL_STG }}" | pnpm exec wrangler secret put DATABASE_URL --env stg
-          echo "${{ secrets.JWT_SECRET_STG }}"       | pnpm exec wrangler secret put JWT_SECRET --env stg
-          echo "${{ vars.APP_URL_STG }}"         | pnpm exec wrangler secret put APP_URL --env stg
-          echo "${{ vars.R2_PUBLIC_URL_STG }}" | pnpm exec wrangler secret put R2_PUBLIC_URL --env stg
-          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
-          echo "${{ vars.APP_URL_V2_STG }}" | pnpm exec wrangler secret put APP_URL_V2 --env stg
+          printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env stg
+          printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env stg
+          printf '%s' "$APP_URL" | pnpm exec wrangler secret put APP_URL --env stg
+          printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env stg
+          printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
+          printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_STG }}
+          APP_URL: ${{ vars.APP_URL_STG }}
+          R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_STG }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
+          APP_URL_V2: ${{ vars.APP_URL_V2_STG }}
 
       - name: Set DATABASE_URL secret in Cloudflare (prod)
         if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
         run: |
-          echo "${{ secrets.DATABASE_URL_PROD }}" | pnpm exec wrangler secret put DATABASE_URL --env production
-          echo "${{ secrets.JWT_SECRET_PROD }}"       | pnpm exec wrangler secret put JWT_SECRET --env production
-          echo "${{ vars.APP_URL_PROD }}"         | pnpm exec wrangler secret put APP_URL --env production
-          echo "${{ vars.R2_PUBLIC_URL_PROD }}" | pnpm exec wrangler secret put R2_PUBLIC_URL --env production
-          echo "${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
-          echo "${{ vars.APP_URL_V2_PROD }}" | pnpm exec wrangler secret put APP_URL_V2 --env production
+          printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env production
+          printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env production
+          printf '%s' "$APP_URL" | pnpm exec wrangler secret put APP_URL --env production
+          printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env production
+          printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
+          printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_PROD }}
+          APP_URL: ${{ vars.APP_URL_PROD }}
+          R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_PROD }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
+          APP_URL_V2: ${{ vars.APP_URL_V2_PROD }}
 
       - name: Deploy to Cloudflare Workers (stg)
         if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'

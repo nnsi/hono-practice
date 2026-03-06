@@ -13,7 +13,7 @@ import {
   VictoryLine,
   VictoryStack,
   VictoryTooltip,
-} from "victory";
+} from "victory-native";
 
 export function ActivityChart({
   data,
@@ -31,7 +31,7 @@ export function ActivityChart({
   goalLines?: GoalLine[];
 }) {
   const { width: screenWidth } = useWindowDimensions();
-  const chartWidth = screenWidth - 48;
+  const chartWidth = Math.min(screenWidth, 768) - 48;
 
   const paddingLeft = 45;
   const hasGoalLines = goalLines.length > 0;

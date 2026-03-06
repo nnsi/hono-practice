@@ -204,10 +204,40 @@ describe("apiClient", () => {
       expect(headers.get("Authorization")).toBe("Bearer login-token");
     });
 
-    it("failed login throws error", async () => {
+    it("failed login with 401 throws auth error", async () => {
       mockFetch.mockResolvedValueOnce(new Response("bad", { status: 401 }));
 
-      await expect(apiLogin("user1", "wrong")).rejects.toThrow("Login failed");
+      await expect(apiLogin("user1", "wrong")).rejects.toThrow(
+        "IDまたはパスワードが正しくありません",
+      );
+    });
+
+    it("failed login with 500 throws server error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("internal error", { status: 500 }),
+      );
+
+      await expect(apiLogin("user1", "pass")).rejects.toThrow(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    });
+
+    it("failed login with other status throws generic error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("forbidden", { status: 403 }),
+      );
+
+      await expect(apiLogin("user1", "pass")).rejects.toThrow(
+        "ログインに失敗しました",
+      );
+    });
+
+    it("network error throws connection error", async () => {
+      mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+      await expect(apiLogin("user1", "pass")).rejects.toThrow(
+        "ネットワークに接続できません。接続を確認してください",
+      );
     });
   });
 });

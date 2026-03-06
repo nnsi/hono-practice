@@ -1,5 +1,5 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import {
   BarChart3,
@@ -22,6 +22,7 @@ const TAB_ITEMS: {
   { name: "stats", title: "Stats", icon: BarChart3 },
   { name: "goals", title: "Goal", icon: Target },
   { name: "tasks", title: "Tasks", icon: CheckSquare },
+  { name: "settings", title: "Settings", icon: Settings },
 ];
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -29,11 +30,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View
       style={{
-        flexDirection: "row",
-        justifyContent: "space-around",
-        alignItems: "center",
-        paddingTop: 8,
-        paddingBottom: 10 + insets.bottom,
         borderTopWidth: 1,
         borderTopColor: "rgba(231,229,228,0.5)",
         backgroundColor: "rgba(255,255,255,0.82)",
@@ -45,73 +41,75 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           : {}),
       }}
     >
-      {TAB_ITEMS.map((tab, index) => {
-        const isActive = state.index === index;
-        const Icon = tab.icon;
-        return (
-          <TouchableOpacity
-            key={tab.name}
-            onPress={() => navigation.navigate(state.routes[index].name)}
-            activeOpacity={0.7}
-            style={{
-              alignItems: "center",
-              gap: 2,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-            }}
-          >
-            <Icon size={20} color={isActive ? "#d97706" : "#a8a29e"} />
-            <Text
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-around",
+          alignItems: "center",
+          paddingTop: 8,
+          paddingBottom: 10 + insets.bottom,
+          maxWidth: 768,
+          width: "100%",
+          alignSelf: "center",
+        }}
+      >
+        {TAB_ITEMS.map((tab, index) => {
+          const isActive = state.index === index;
+          const Icon = tab.icon;
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              onPress={() => navigation.navigate(state.routes[index].name)}
+              activeOpacity={0.7}
               style={{
-                fontSize: 10,
-                letterSpacing: 0.5,
-                color: isActive ? "#d97706" : "#a8a29e",
-                fontWeight: isActive ? "600" : "500",
+                alignItems: "center",
+                gap: 2,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
               }}
             >
-              {tab.title}
-            </Text>
-            {/* Active indicator pill */}
-            <View
-              style={{
-                width: 16,
-                height: 2.5,
-                borderRadius: 9999,
-                backgroundColor: isActive ? "#f59e0b" : "transparent",
-                marginTop: 1,
-              }}
-            />
-          </TouchableOpacity>
-        );
-      })}
+              <Icon size={20} color={isActive ? "#d97706" : "#a8a29e"} />
+              <Text
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                  color: isActive ? "#d97706" : "#a8a29e",
+                  fontWeight: isActive ? "600" : "500",
+                }}
+              >
+                {tab.title}
+              </Text>
+              {/* Active indicator pill */}
+              <View
+                style={{
+                  width: 16,
+                  height: 2.5,
+                  borderRadius: 9999,
+                  backgroundColor: isActive ? "#f59e0b" : "transparent",
+                  marginTop: 1,
+                }}
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 export default function TabLayout() {
-  const router = useRouter();
-
-  const settingsButton = () => (
-    <TouchableOpacity
-      onPress={() => router.push("/(tabs)/settings")}
-      style={{ marginRight: 12, padding: 6 }}
-    >
-      <Settings size={20} color="#a8a29e" />
-    </TouchableOpacity>
-  );
-
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        headerShown: true,
-        headerRight: settingsButton,
-        headerStyle: {
-          backgroundColor: "rgba(255,255,255,0.95)",
-        },
-        headerTitleStyle: {
-          color: "#1c1917",
-          fontWeight: "600",
+        headerShown: false,
+        sceneStyle: {
+          paddingTop: insets.top,
+          maxWidth: 768,
+          width: "100%",
+          alignSelf: "center",
+          backgroundColor: "#ffffff",
         },
       }}
     >
@@ -120,14 +118,7 @@ export default function TabLayout() {
       <Tabs.Screen name="stats" options={{ title: "Stats" }} />
       <Tabs.Screen name="goals" options={{ title: "Goal" }} />
       <Tabs.Screen name="tasks" options={{ title: "Tasks" }} />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-          title: "Settings",
-          headerRight: () => null,
-        }}
-      />
+      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>
   );
 }

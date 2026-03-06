@@ -24,6 +24,8 @@
       "@packages/sync-engine/*": ["../../packages/sync-engine/*"],
       "@packages/platform": ["../../packages/platform/index.ts"],
       "@packages/platform/*": ["../../packages/platform/*"],
+      "@packages/utils": ["../../packages/utils/index.ts"],
+      "@packages/utils/*": ["../../packages/utils/*"],
       "@packages/types": ["../../packages/types/index.ts"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],

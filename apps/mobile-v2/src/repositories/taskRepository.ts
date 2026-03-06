@@ -26,7 +26,7 @@ function toSyncStatus(v: unknown): SyncStatus {
   return "synced";
 }
 
-function mapTaskRow(row: SqlRow): TaskWithSync {
+export function mapTaskRow(row: SqlRow): TaskWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),

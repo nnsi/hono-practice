@@ -17,6 +17,7 @@ import { z } from "zod";
 import { db } from "../../db/schema";
 import { clearLocalData } from "../../sync/initialSync";
 import { apiClient, clearToken } from "../../utils/apiClient";
+import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
@@ -108,6 +109,9 @@ export function SettingsPage() {
     useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [showCSVExport, setShowCSVExport] = useState(false);
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
@@ -326,8 +330,24 @@ export function SettingsPage() {
             <Info size={14} />
             アプリ情報
           </h2>
-          <div className="rounded-xl border border-gray-200 p-4">
+          <div className="rounded-xl border border-gray-200 p-4 space-y-2">
             <p className="text-sm text-gray-600">Actiko v2.0</p>
+            <div className="border-t border-gray-100 pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setLegalModal("privacy")}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                プライバシーポリシー
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModal("terms")}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                利用規約
+              </button>
+            </div>
           </div>
         </section>
       </div>
@@ -337,6 +357,9 @@ export function SettingsPage() {
       )}
       {showCSVExport && (
         <CSVExportModal onClose={() => setShowCSVExport(false)} />
+      )}
+      {legalModal && (
+        <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />
       )}
     </div>
   );

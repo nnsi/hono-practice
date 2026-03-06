@@ -14,7 +14,7 @@ import {
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
-import { Text, View } from "react-native";
+import { Text, View, useWindowDimensions } from "react-native";
 
 import { ActivityChart } from "./ActivityChart";
 import { SummarySection } from "./SummarySection";
@@ -74,6 +74,14 @@ export function ActivityStatCard({
     return { totalQuantity, activeDays, daysInMonth, avgPerDay };
   }, [stat.kinds, allDates]);
 
+  const { width: screenWidth } = useWindowDimensions();
+  const effectiveWidth = Math.min(screenWidth, 768);
+  const gap = 8;
+  const cardPaddingX = 16;
+  const numColumns = 4;
+  const kindCardWidth =
+    (effectiveWidth - cardPaddingX * 2 - gap * (numColumns - 1)) / numColumns;
+
   const isSingleUnnamedKind =
     stat.kinds.length === 1 && stat.kinds[0].name === "未指定";
 
@@ -95,12 +103,12 @@ export function ActivityStatCard({
       {/* Kind summary cards */}
       {!isSingleUnnamedKind && (
         <View className="px-4 pt-3">
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap" style={{ gap }}>
             {stat.kinds.map((kind) => (
               <View
                 key={kind.id || kind.name}
                 className="bg-white rounded-lg p-3 border border-gray-200"
-                style={{ width: "48%" }}
+                style={{ width: kindCardWidth }}
               >
                 <Text
                   className="text-xs text-gray-500 mb-0.5"
