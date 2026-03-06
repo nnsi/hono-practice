@@ -158,7 +158,7 @@ describe("activityRepository", () => {
       expect(result.quantityUnit).toBe("km");
       expect(result.emoji).toBe("🏃");
       expect(result.iconType).toBe("emoji");
-      expect(result.orderIndex).toBe("000001");
+      expect(result.orderIndex).toMatch(/^[a-z]{8}$/);
       expect(result.showCombinedStats).toBe(false);
       expect(result._syncStatus).toBe("pending");
       expect(result.deletedAt).toBeNull();
