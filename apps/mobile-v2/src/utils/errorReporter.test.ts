@@ -14,13 +14,13 @@ vi.mock("./apiClient", () => ({
 const mockFetch = vi.fn().mockResolvedValue({ ok: true });
 vi.stubGlobal("fetch", mockFetch);
 
-describe("reportError", () => {
+describe("reportError (mobile-v2 wrapper)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({ ok: true });
   });
 
-  it("sends error report via fetch", () => {
+  it("sends error report with platform from Platform.OS", () => {
     reportError({
       errorType: "unhandled_error",
       message: "Test error",
@@ -35,54 +35,15 @@ describe("reportError", () => {
       }),
     );
 
-    // Verify body contains required fields
-    const callArgs = mockFetch.mock.calls[0];
-    const body = JSON.parse(callArgs[1].body);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.errorType).toBe("unhandled_error");
     expect(body.message).toBe("Test error");
     expect(body.stack).toBe("at test.ts:1");
     expect(body.platform).toBe("web");
   });
 
-  it("truncates message to 1000 characters", () => {
-    const longMessage = "x".repeat(2000);
-    reportError({
-      errorType: "component_error",
-      message: longMessage,
-      platform: "web" as any, // will be overridden by Platform.OS
-    } as any);
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.message.length).toBe(1000);
-  });
-
-  it("truncates stack to 5000 characters", () => {
-    const longStack = "x".repeat(10000);
-    reportError({
-      errorType: "component_error",
-      message: "error",
-      stack: longStack,
-    });
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.stack.length).toBe(5000);
-  });
-
   it("does not throw when fetch fails", () => {
     mockFetch.mockRejectedValue(new Error("Network error"));
-
-    expect(() => {
-      reportError({
-        errorType: "network_error",
-        message: "test",
-      });
-    }).not.toThrow();
-  });
-
-  it("does not throw when fetch itself throws synchronously", () => {
-    mockFetch.mockImplementation(() => {
-      throw new Error("Sync error");
-    });
 
     expect(() => {
       reportError({
