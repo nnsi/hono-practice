@@ -32,6 +32,8 @@
       "@packages/sync-engine/*": ["packages/sync-engine/*"],
       "@packages/platform": ["packages/platform/index.ts"],
       "@packages/platform/*": ["packages/platform/*"],
+      "@packages/utils": ["packages/utils/index.ts"],
+      "@packages/utils/*": ["packages/utils/*"],
       "@frontend-v2/*": ["apps/frontend-v2/src/*"]
     }
   },

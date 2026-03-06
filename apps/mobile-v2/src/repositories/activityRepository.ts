@@ -286,6 +286,27 @@ export const activityRepository = {
     dbEvents.emit("activity_kinds");
   },
 
+  // --- Reorder ---
+
+  async reorderActivities(orderedIds: string[]): Promise<void> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    try {
+      await db.execAsync("BEGIN");
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db.runAsync(
+          "UPDATE activities SET order_index = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
+          [String(i).padStart(6, "0"), now, orderedIds[i]],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
+    dbEvents.emit("activities");
+  },
+
   // --- Delete ---
 
   async softDeleteActivity(id: string): Promise<void> {

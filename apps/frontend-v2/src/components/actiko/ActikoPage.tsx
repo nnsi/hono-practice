@@ -1,11 +1,12 @@
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { CalendarPopover } from "../common/CalendarPopover";
 import { ActivityCard } from "./ActivityCard";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
 import { RecordDialog } from "./RecordDialog";
+import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
@@ -30,6 +31,8 @@ export function ActikoPage() {
     hasLogsForActivity,
     handleActivityClick,
     handleActivityChanged,
+    reorderOpen,
+    setReorderOpen,
   } = useActikoPage();
 
   return (
@@ -94,6 +97,22 @@ export function ActikoPage() {
               追加
             </span>
           </button>
+          {/* 並び替えカード */}
+          {activities.length >= 2 && (
+            <button
+              type="button"
+              onClick={() => setReorderOpen(true)}
+              className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 min-h-[120px] select-none hover:border-gray-400 hover:bg-gray-50 transition-all group"
+            >
+              <ArrowUpDown
+                size={28}
+                className="text-gray-400 group-hover:text-gray-600 mb-1"
+              />
+              <span className="text-xs text-gray-400 group-hover:text-gray-600">
+                並び替え
+              </span>
+            </button>
+          )}
         </div>
       </main>
 
@@ -123,6 +142,14 @@ export function ActikoPage() {
           activity={editActivity}
           onClose={() => setEditActivity(null)}
           onUpdated={handleActivityChanged}
+        />
+      )}
+
+      {/* 並び替えダイアログ */}
+      {reorderOpen && (
+        <ReorderActivitiesDialog
+          activities={activities}
+          onClose={() => setReorderOpen(false)}
         />
       )}
     </div>

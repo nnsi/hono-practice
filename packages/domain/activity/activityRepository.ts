@@ -40,6 +40,8 @@ export type ActivityRepository = {
     >,
     updatedKinds?: { id?: string; name: string; color: string }[],
   ): Promise<void>;
+  // Reorder
+  reorderActivities(orderedIds: string[]): Promise<void>;
   // Delete
   softDeleteActivity(id: string): Promise<void>;
   // Sync helpers
