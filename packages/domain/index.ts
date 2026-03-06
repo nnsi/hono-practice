@@ -53,5 +53,7 @@ export type {
 } from "./task/taskRepository";
 export * from "./task/taskSorters";
 export * from "./task/types";
+// Ordering utilities
+export * from "./ordering";
 // Time utilities
 export * from "./time";
