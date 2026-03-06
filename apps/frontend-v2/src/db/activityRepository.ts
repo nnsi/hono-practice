@@ -1,5 +1,5 @@
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import { generateOrder } from "@packages/domain/ordering/lexicalOrder";
+import { generateOrder } from "@packages/utils/lexicalOrder";
 import { v7 as uuidv7 } from "uuid";
 
 import { type DexieActivity, type DexieActivityKind, db } from "./schema";

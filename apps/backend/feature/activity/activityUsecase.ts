@@ -15,7 +15,7 @@ import {
   createActivityId,
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
-import { generateOrder } from "@packages/domain/ordering/lexicalOrder";
+import { generateOrder } from "@packages/utils/lexicalOrder";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from ".";
