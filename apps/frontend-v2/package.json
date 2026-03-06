@@ -10,6 +10,7 @@
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
+    "@packages/frontend-shared": "workspace:*",
     "@packages/platform": "workspace:*",
     "@packages/sync-engine": "workspace:*",
     "@tanstack/react-query": "^5.90.21",

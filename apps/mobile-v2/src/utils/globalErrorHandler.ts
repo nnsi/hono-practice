@@ -1,3 +1,4 @@
+import { setupGlobalErrorHandler as setupWebErrorHandler } from "@packages/frontend-shared";
 import { Platform } from "react-native";
 
 import { reportError } from "./errorReporter";
@@ -11,22 +12,7 @@ declare const ErrorUtils: {
 
 export function setupGlobalErrorHandler(): void {
   if (Platform.OS === "web") {
-    window.addEventListener("error", (event) => {
-      reportError({
-        errorType: "unhandled_error",
-        message: event.message || "Unknown error",
-        stack: event.error?.stack,
-      });
-    });
-
-    window.addEventListener("unhandledrejection", (event) => {
-      const reason = event.reason;
-      reportError({
-        errorType: "unhandled_error",
-        message: reason instanceof Error ? reason.message : String(reason),
-        stack: reason instanceof Error ? reason.stack : undefined,
-      });
-    });
+    setupWebErrorHandler((report) => reportError(report));
   } else {
     // React Native: use ErrorUtils global handler
     const originalHandler = ErrorUtils.getGlobalHandler();
