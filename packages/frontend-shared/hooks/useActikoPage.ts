@@ -32,6 +32,7 @@ export function createUseActikoPage<
     const [createActivityOpen, setCreateActivityOpen] = useState(false);
     const [editActivity, setEditActivity] = useState<TActivity | null>(null);
     const [calendarOpen, setCalendarOpen] = useState(false);
+    const [reorderOpen, setReorderOpen] = useState(false);
 
     const { activities } = useActivities();
     const { logs } = useActivityLogsByDate(date);
@@ -87,6 +88,8 @@ export function createUseActikoPage<
       setEditActivity,
       calendarOpen,
       setCalendarOpen,
+      reorderOpen,
+      setReorderOpen,
       hasLogsForActivity,
       handleActivityClick,
       handleActivityChanged,

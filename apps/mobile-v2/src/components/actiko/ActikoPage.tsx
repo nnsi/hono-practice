@@ -1,5 +1,10 @@
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import {
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from "lucide-react-native";
 import {
   FlatList,
   Platform,
@@ -16,6 +21,7 @@ import { ActivityCard } from "./ActivityCard";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
 import { RecordDialog } from "./RecordDialog";
+import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
@@ -40,6 +46,8 @@ export function ActikoPage() {
     hasLogsForActivity,
     handleActivityClick,
     handleActivityChanged,
+    reorderOpen,
+    setReorderOpen,
   } = useActikoPage();
 
   const insets = useSafeAreaInsets();
@@ -57,9 +65,14 @@ export function ActikoPage() {
   type GridItem =
     | (typeof activities)[number]
     | { id: "__add__"; name?: never }
+    | { id: "__reorder__"; name?: never }
     | { id: `__spacer_${number}`; name?: never };
 
-  const itemsWithAdd: GridItem[] = [...activities, { id: "__add__" as const }];
+  const actionItems: GridItem[] = [{ id: "__add__" as const }];
+  if (activities.length >= 2) {
+    actionItems.push({ id: "__reorder__" as const });
+  }
+  const itemsWithAdd: GridItem[] = [...activities, ...actionItems];
   const remainder = itemsWithAdd.length % numColumns;
   const spacers: GridItem[] =
     remainder === 0
@@ -148,6 +161,18 @@ export function ActikoPage() {
                 </TouchableOpacity>
               );
             }
+            if (item.id === "__reorder__") {
+              return (
+                <TouchableOpacity
+                  className="flex-1 m-1 rounded-2xl border-2 border-dashed border-gray-300 items-center justify-center min-h-[120px]"
+                  onPress={() => setReorderOpen(true)}
+                  activeOpacity={0.7}
+                >
+                  <ArrowUpDown size={28} color="#a8a29e" />
+                  <Text className="text-xs text-gray-400 mt-1">並び替え</Text>
+                </TouchableOpacity>
+              );
+            }
             const activity = item as (typeof activities)[number];
             const card = (
               <ActivityCard
@@ -196,6 +221,13 @@ export function ActikoPage() {
         onClose={() => setEditActivity(null)}
         activity={editActivity}
         onUpdated={handleActivityChanged}
+      />
+
+      {/* Reorder dialog */}
+      <ReorderActivitiesDialog
+        visible={reorderOpen}
+        onClose={() => setReorderOpen(false)}
+        activities={activities}
       />
     </View>
   );

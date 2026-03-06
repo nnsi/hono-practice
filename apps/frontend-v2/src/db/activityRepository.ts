@@ -152,6 +152,20 @@ export const activityRepository = {
     }
   },
 
+  // Reorder
+  async reorderActivities(orderedIds: string[]) {
+    const now = new Date().toISOString();
+    await db.transaction("rw", db.activities, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db.activities.update(orderedIds[i], {
+          orderIndex: String(i).padStart(6, "0"),
+          updatedAt: now,
+          _syncStatus: "pending" as const,
+        });
+      }
+    });
+  },
+
   // Delete
   async softDeleteActivity(id: string) {
     const now = new Date().toISOString();
