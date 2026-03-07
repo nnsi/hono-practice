@@ -69,6 +69,18 @@ export function CreateUserForm() {
         secureTextEntry
       />
 
+      <Text className="text-xs text-gray-400 leading-5 mb-4">
+        新規登録することで、
+        <Text className="underline" onPress={() => setLegalModal("terms")}>
+          利用規約
+        </Text>
+        と
+        <Text className="underline" onPress={() => setLegalModal("privacy")}>
+          プライバシーポリシー
+        </Text>
+        に同意したものとみなします。
+      </Text>
+
       <TouchableOpacity
         className={`bg-blue-500 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
         onPress={handleRegister}
@@ -85,18 +97,6 @@ export function CreateUserForm() {
       >
         <Text className="text-blue-500">ログインに戻る</Text>
       </TouchableOpacity>
-
-      {/* Legal links */}
-      <View className="mt-6 flex-row justify-center gap-3">
-        <TouchableOpacity onPress={() => setLegalModal("privacy")}>
-          <Text className="text-xs text-gray-400 underline">
-            プライバシーポリシー
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setLegalModal("terms")}>
-          <Text className="text-xs text-gray-400 underline">利用規約</Text>
-        </TouchableOpacity>
-      </View>
       {legalModal && (
         <LegalModal
           visible={!!legalModal}

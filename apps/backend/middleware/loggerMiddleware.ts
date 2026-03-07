@@ -7,6 +7,13 @@ import { createLogger } from "../lib/logger";
 import type { TracerSummary } from "../lib/tracer";
 import { createTracer } from "../lib/tracer";
 
+/** スタックトレースの最初のフレーム（"at ..."行）を取得 */
+const firstStackFrame = (stack?: string): string => {
+  if (!stack) return "";
+  const line = stack.split("\n").find((l) => l.trimStart().startsWith("at "));
+  return line?.trim() ?? "";
+};
+
 /** WAEに書き込むデータポイントを生成 */
 const writeToWAE = (
   wae: AnalyticsEngineDataset,
@@ -17,6 +24,7 @@ const writeToWAE = (
     path: string;
     feature?: string;
     error?: string;
+    stackFrame?: string;
     status: number;
     duration: number;
     summary: TracerSummary;
@@ -31,6 +39,7 @@ const writeToWAE = (
       entry.path,
       entry.feature ?? "",
       entry.error ?? "",
+      entry.stackFrame ?? "",
     ],
     doubles: [
       entry.status,
@@ -106,6 +115,8 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
                 method,
                 path,
                 error: errorMsg,
+                stackFrame:
+                  error instanceof Error ? firstStackFrame(error.stack) : "",
                 status: 500,
                 duration,
                 summary,

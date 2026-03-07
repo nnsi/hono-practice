@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { LegalModal } from "../common/LegalModal";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type CreateUserFormProps = {
@@ -20,6 +21,9 @@ export function CreateUserForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
+    null,
+  );
 
   const validate = (): string | null => {
     if (!loginId.trim()) return "ログインIDを入力してください";
@@ -73,6 +77,7 @@ export function CreateUserForm({
         <GoogleSignInButton
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
+          text="signup_with"
         />
       </div>
 
@@ -138,6 +143,25 @@ export function CreateUserForm({
           />
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
+        <p className="text-xs text-gray-400 leading-relaxed">
+          新規登録することで、
+          <button
+            type="button"
+            onClick={() => setLegalModal("terms")}
+            className="underline hover:text-gray-600 transition-colors"
+          >
+            利用規約
+          </button>
+          と
+          <button
+            type="button"
+            onClick={() => setLegalModal("privacy")}
+            className="underline hover:text-gray-600 transition-colors"
+          >
+            プライバシーポリシー
+          </button>
+          に同意したものとみなします。
+        </p>
         <button
           type="submit"
           disabled={isSubmitting}
@@ -146,6 +170,9 @@ export function CreateUserForm({
           {isSubmitting ? "登録中..." : "新規登録"}
         </button>
       </form>
+      {legalModal && (
+        <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />
+      )}
     </div>
   );
 }
