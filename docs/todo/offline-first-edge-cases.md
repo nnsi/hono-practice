@@ -132,6 +132,41 @@ async upsertActivityLogsFromServer(logs) {
 
 ---
 
+#### H6: オフライン起動時にsyncReadyが永久にfalseのまま ✅ 修正済み (2026-03-08)
+
+- **即UI表示改修後に大幅悪化**
+- **発見元**: Codex (改修前リスク調査)
+
+**問題**: `serverRefreshAndSync()` は `/auth/token` や `/user/me` が `!res.ok` の場合 `return` するだけで、`setSyncReady(true)` を実行しない。オフラインキャッシュで即UI表示した場合、バックグラウンドの `serverRefreshAndSync()` は fire-and-forget で実行されるため、失敗しても `syncReady` は `false` のまま。
+
+**影響**:
+- `useSyncEngine(syncReady=false)` → `startAutoSync()` が起動しない
+- onlineイベントリスナーも未登録 → ネットワーク復帰してもsyncが一切走らない
+- ユーザーのオフライン操作が永久にサーバーに反映されない
+
+**対象コード**: `useAuth.ts:49-61`, `__root.tsx:42`
+
+**発生条件**: オフラインキャッシュで即UI表示 + サーバー認証失敗（オフライン、サーバーダウン等）
+
+**修正案**: `serverRefreshAndSync` に戻り値（成功/失敗）を追加し、失敗時はonlineイベントリスナーでリトライする。
+
+---
+
+#### H7: React Queryキャッシュがログアウト時に未クリア ✅ 修正済み (2026-03-08)
+
+- **既存バグ**
+- **発見元**: Codex (改修前リスク調査)
+
+**問題**: `QueryClient` はグローバルに1個（`main.tsx:16`）。`useSubscription()` の `queryKey: ["subscription"]` と `useApiKeys()` の `queryKey: ["apiKeys"]` はuserIdを含まず、`staleTime: 5分`。`logout()` で `queryClient.clear()` を呼んでいないため、別ユーザーで再ログインした際に前ユーザーのキャッシュが再利用される。
+
+**影響**: User AのAPIキー一覧やサブスクリプション情報がUser Bに表示される。
+
+**対象コード**: `useAuth.ts:148-159`, `main.tsx:16`, `useSubscription.ts:18`, `useApiKeys.ts:41`
+
+**修正案**: `logout()` で `queryClient.clear()` を呼ぶ。
+
+---
+
 ### MEDIUM: 体験劣化。許容判断が必要
 
 #### M1: initialSyncがテーブルごとに個別書き込み → 中間状態がuseLiveQueryに露出
@@ -183,6 +218,37 @@ async upsertActivityLogsFromServer(logs) {
 **対象コード**: `syncActivities.ts:27`, `syncActivityLogs.ts:16`, `syncGoals.ts:18`
 
 **緩和要因**: 次回syncで再送されるが、バックエンドは冪等なので実害なし。ただしsyncEngine上は成功扱い（H5と関連）。
+
+---
+
+#### M5: performInitialSyncとsyncAllの排他がない
+
+- **既存リスク（改修でウィンドウ拡大）**
+- **発見元**: Codex (改修前リスク調査)
+
+**問題**: `syncEngine.syncAll()` の排他制御（`isSyncing`フラグ）は `syncAll()` 同士にしか効かない。`performInitialSync()` は別系統で、同時実行を防ぐ仕組みがない。
+
+即UI表示後にユーザーがデータを更新し、手動トリガーの `syncAll()` が走ると、`performInitialSync` のAPI取得時点（T1）のスナップショットと競合する:
+1. `performInitialSync` がT1時点のデータをfetch
+2. ユーザーが既存データを更新 → `syncAll` がpush → "synced"に変化
+3. `performInitialSync` がT1データを書き込み → H1フィルタは"pending"のみ除外 → "synced"済みレコードが古い値に上書きされる
+
+**対象コード**: `initialSync.ts:67-131`, `syncEngine.ts:25-42`
+
+**緩和要因**: 発生ウィンドウは `setToken` 〜 `performInitialSync` 完了の数秒間で、かつその間にユーザーが既存データを**更新**する必要がある。新規作成は `bulkPut` が存在しないレコードを消さないので影響なし。既存の1時間パスでも同じ問題がある。
+
+---
+
+#### M6: 設定画面が未取得/失敗を「未連携/非プレミアム」と誤表示
+
+- **即UI表示改修後に表面化**
+- **発見元**: Codex (改修前リスク調査)
+
+**問題**: Google連携状態の初期値が `false/null` で、fetch失敗時もloading/error状態を持たない。APIキー側も `subscription?.canUseApiKey ?? false` で、subscription未取得を「非プレミアム」と同一視している。即UI表示にすると、サーバー認証完了前にSettings画面を開いた場合にこの誤表示が発生する。
+
+**対象コード**: `SettingsPage.tsx:66-85`, `ApiKeyManager.tsx:15-18`
+
+**緩和要因**: Settings画面への遷移はユーザーが明示的に行うため、通常はサーバー認証が先に完了している。オフライン時はサーバー依存の設定項目自体が機能しないため、実害は限定的。
 
 ---
 
@@ -254,5 +320,9 @@ async upsertActivityLogsFromServer(logs) {
 | 3 | H2 | 別アカウントデータ漏洩 | Yes（1h以内） | ウィンドウ拡大 | ✅ 修正済み |
 | 4 | H4 | 飛行中syncの書き戻し | Yes | 変化なし | ✅ 修正済み |
 | 5 | H3 | 空userId書き込み | No | 新規発生 | ✅ 修正済み |
-| 6 | M1-M4 | 体験劣化系 | 部分的 | 頻度増加 | 未着手 |
-| 7 | L1 | フリッカー | 部分的 | 頻度増加 | 未着手 |
+| 6 | H6 | syncReady永久false | No | 大幅悪化 | ✅ 修正済み |
+| 7 | H7 | React Queryキャッシュ漏洩 | Yes | 変化なし | ✅ 修正済み |
+| 8 | M1-M4 | 体験劣化系 | 部分的 | 頻度増加 | 未着手 |
+| 9 | M5 | initialSync/syncAll排他なし | Yes | ウィンドウ拡大 | 未着手 |
+| 10 | M6 | 設定画面の未取得誤表示 | Yes | 表面化 | 未着手 |
+| 11 | L1 | フリッカー | 部分的 | 頻度増加 | 未着手 |
