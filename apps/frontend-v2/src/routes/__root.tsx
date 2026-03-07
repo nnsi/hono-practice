@@ -25,14 +25,21 @@ import { useSyncEngine } from "../hooks/useSyncEngine";
 type AuthTab = "login" | "register";
 
 function RootComponent() {
-  const { isLoggedIn, isLoading, login, googleLogin, register, logout } =
-    useAuth();
+  const {
+    isLoggedIn,
+    isLoading,
+    syncReady,
+    login,
+    googleLogin,
+    register,
+    logout,
+  } = useAuth();
   const [authTab, setAuthTab] = useState<AuthTab>("login");
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
   );
 
-  useSyncEngine(isLoggedIn);
+  useSyncEngine(syncReady);
 
   if (isLoading) {
     return (

@@ -226,6 +226,12 @@ describe("activityLogRepository", () => {
   // ========== Server upsert ==========
   describe("upsertActivityLogsFromServer", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityLogs.where.mockReturnValue({ equals: mockEquals });
+
       const logs = [
         { id: "log-1", activityId: "act-1", date: "2024-06-01" },
         { id: "log-2", activityId: "act-2", date: "2024-06-02" },
@@ -247,6 +253,49 @@ describe("activityLogRepository", () => {
           _syncStatus: "synced",
         },
       ]);
+    });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["log-1"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityLogs.where.mockReturnValue({ equals: mockEquals });
+
+      const logs = [
+        { id: "log-1", activityId: "act-1", date: "2024-06-01" },
+        { id: "log-2", activityId: "act-2", date: "2024-06-02" },
+      ] as any[];
+
+      await activityLogRepository.upsertActivityLogsFromServer(logs);
+
+      expect(mockDb.activityLogs.where).toHaveBeenCalledWith("_syncStatus");
+      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.activityLogs.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "log-2",
+          activityId: "act-2",
+          date: "2024-06-02",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("全レコードがpendingの場合bulkPutをスキップする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["log-1", "log-2"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityLogs.where.mockReturnValue({ equals: mockEquals });
+
+      const logs = [
+        { id: "log-1", activityId: "act-1", date: "2024-06-01" },
+        { id: "log-2", activityId: "act-2", date: "2024-06-02" },
+      ] as any[];
+
+      await activityLogRepository.upsertActivityLogsFromServer(logs);
+
+      expect(mockDb.activityLogs.bulkPut).not.toHaveBeenCalled();
     });
   });
 });

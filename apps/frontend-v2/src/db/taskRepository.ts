@@ -99,8 +99,13 @@ export const taskRepository = {
   },
 
   async upsertTasksFromServer(tasks: Omit<DexieTask, "_syncStatus">[]) {
+    const pendingIds = new Set(
+      await db.tasks.where("_syncStatus").equals("pending").primaryKeys(),
+    );
+    const safe = tasks.filter((t) => !pendingIds.has(t.id));
+    if (safe.length === 0) return;
     await db.tasks.bulkPut(
-      tasks.map((t) => ({ ...t, _syncStatus: "synced" as const })),
+      safe.map((t) => ({ ...t, _syncStatus: "synced" as const })),
     );
   },
 } satisfies TaskRepository;

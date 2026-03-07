@@ -89,8 +89,16 @@ export const activityLogRepository = {
   },
 
   async upsertActivityLogsFromServer(logs: UpsertActivityLogFromServerInput[]) {
+    const pendingIds = new Set(
+      await db.activityLogs
+        .where("_syncStatus")
+        .equals("pending")
+        .primaryKeys(),
+    );
+    const safe = logs.filter((l) => !pendingIds.has(l.id));
+    if (safe.length === 0) return;
     await db.activityLogs.bulkPut(
-      logs.map((log) => ({ ...log, _syncStatus: "synced" as const })),
+      safe.map((log) => ({ ...log, _syncStatus: "synced" as const })),
     );
   },
 } satisfies ActivityLogRepository;

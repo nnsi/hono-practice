@@ -617,6 +617,12 @@ describe("activityRepository", () => {
   // ========== Server upsert ==========
   describe("upsertActivities", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+
       const activities = [
         { id: "a1", name: "Running" },
         { id: "a2", name: "Study" },
@@ -629,10 +635,54 @@ describe("activityRepository", () => {
         { id: "a2", name: "Study", _syncStatus: "synced" },
       ]);
     });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["a1"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+
+      const activities = [
+        { id: "a1", name: "Running" },
+        { id: "a2", name: "Study" },
+      ] as any[];
+
+      await activityRepository.upsertActivities(activities);
+
+      expect(mockDb.activities.where).toHaveBeenCalledWith("_syncStatus");
+      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.activities.bulkPut).toHaveBeenCalledWith([
+        { id: "a2", name: "Study", _syncStatus: "synced" },
+      ]);
+    });
+
+    it("全レコードがpendingの場合bulkPutをスキップする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["a1", "a2"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+
+      const activities = [
+        { id: "a1", name: "Running" },
+        { id: "a2", name: "Study" },
+      ] as any[];
+
+      await activityRepository.upsertActivities(activities);
+
+      expect(mockDb.activities.bulkPut).not.toHaveBeenCalled();
+    });
   });
 
   describe("upsertActivityKinds", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+
       const kinds = [{ id: "k1", name: "Kind1" }] as any[];
 
       await activityRepository.upsertActivityKinds(kinds);
@@ -640,6 +690,41 @@ describe("activityRepository", () => {
       expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
         { id: "k1", name: "Kind1", _syncStatus: "synced" },
       ]);
+    });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["k1"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+
+      const kinds = [
+        { id: "k1", name: "Kind1" },
+        { id: "k2", name: "Kind2" },
+      ] as any[];
+
+      await activityRepository.upsertActivityKinds(kinds);
+
+      expect(mockDb.activityKinds.where).toHaveBeenCalledWith("_syncStatus");
+      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
+        { id: "k2", name: "Kind2", _syncStatus: "synced" },
+      ]);
+    });
+
+    it("全レコードがpendingの場合bulkPutをスキップする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["k1"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+
+      const kinds = [{ id: "k1", name: "Kind1" }] as any[];
+
+      await activityRepository.upsertActivityKinds(kinds);
+
+      expect(mockDb.activityKinds.bulkPut).not.toHaveBeenCalled();
     });
   });
 });

@@ -327,14 +327,27 @@ export const activityRepository = {
 
   // Server upsert (used by initialSync and syncEngine)
   async upsertActivities(activities: Omit<DexieActivity, "_syncStatus">[]) {
+    const pendingIds = new Set(
+      await db.activities.where("_syncStatus").equals("pending").primaryKeys(),
+    );
+    const safe = activities.filter((a) => !pendingIds.has(a.id));
+    if (safe.length === 0) return;
     await db.activities.bulkPut(
-      activities.map((a) => ({ ...a, _syncStatus: "synced" as const })),
+      safe.map((a) => ({ ...a, _syncStatus: "synced" as const })),
     );
   },
 
   async upsertActivityKinds(kinds: Omit<DexieActivityKind, "_syncStatus">[]) {
+    const pendingIds = new Set(
+      await db.activityKinds
+        .where("_syncStatus")
+        .equals("pending")
+        .primaryKeys(),
+    );
+    const safe = kinds.filter((k) => !pendingIds.has(k.id));
+    if (safe.length === 0) return;
     await db.activityKinds.bulkPut(
-      kinds.map((k) => ({ ...k, _syncStatus: "synced" as const })),
+      safe.map((k) => ({ ...k, _syncStatus: "synced" as const })),
     );
   },
 } satisfies ActivityRepository;

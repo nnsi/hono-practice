@@ -223,8 +223,20 @@ export const activityLogRepository = {
       await db.execAsync("BEGIN");
       for (const log of logs) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             activity_id = excluded.activity_id,
+             activity_kind_id = excluded.activity_kind_id,
+             quantity = excluded.quantity,
+             memo = excluded.memo,
+             date = excluded.date,
+             time = excluded.time,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'`,
           [
             log.id,
             log.activityId,

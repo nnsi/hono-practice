@@ -553,8 +553,25 @@ export const activityRepository = {
       await db.execAsync("BEGIN");
       for (const a of activities) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             name = excluded.name,
+             label = excluded.label,
+             emoji = excluded.emoji,
+             icon_type = excluded.icon_type,
+             icon_url = excluded.icon_url,
+             icon_thumbnail_url = excluded.icon_thumbnail_url,
+             description = excluded.description,
+             quantity_unit = excluded.quantity_unit,
+             order_index = excluded.order_index,
+             show_combined_stats = excluded.show_combined_stats,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'`,
           [
             a.id,
             a.userId,
@@ -588,8 +605,18 @@ export const activityRepository = {
       await db.execAsync("BEGIN");
       for (const k of kinds) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             activity_id = excluded.activity_id,
+             name = excluded.name,
+             color = excluded.color,
+             order_index = excluded.order_index,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'`,
           [
             k.id,
             k.activityId,

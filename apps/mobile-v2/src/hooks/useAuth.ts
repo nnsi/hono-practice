@@ -17,6 +17,7 @@ import {
 type AuthState = {
   isLoggedIn: boolean;
   isLoading: boolean;
+  syncReady: boolean;
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
@@ -27,6 +28,7 @@ type AuthState = {
 export function useAuth(): AuthState {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [syncReady, setSyncReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function useAuth(): AuthState {
       setUserId(user.id);
       setIsLoggedIn(true);
       await syncWithUserCheck(user.id);
+      setSyncReady(true);
     };
 
     const init = async () => {
@@ -97,6 +100,7 @@ export function useAuth(): AuthState {
     setUserId(newUserId);
     setIsLoggedIn(true);
     await performInitialSync(newUserId);
+    setSyncReady(true);
   }, []);
 
   const login = useCallback(
@@ -130,6 +134,7 @@ export function useAuth(): AuthState {
     apiLogout().catch(console.error);
     clearToken();
     setIsLoggedIn(false);
+    setSyncReady(false);
     setUserId(null);
     // authStateのuser_idは保持し、last_login_atのみ無効化する。
     // 削除するとloginWithUserCheckでユーザー切替を検知できず、
@@ -143,6 +148,7 @@ export function useAuth(): AuthState {
   return {
     isLoggedIn,
     isLoading,
+    syncReady,
     userId,
     login,
     googleLogin,

@@ -332,6 +332,12 @@ describe("taskRepository", () => {
   // ========== Server upsert ==========
   describe("upsertTasksFromServer", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+
       const tasks = [
         { id: "t1", title: "Task 1" },
         { id: "t2", title: "Task 2" },
@@ -343,6 +349,44 @@ describe("taskRepository", () => {
         { id: "t1", title: "Task 1", _syncStatus: "synced" },
         { id: "t2", title: "Task 2", _syncStatus: "synced" },
       ]);
+    });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["t1"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+
+      const tasks = [
+        { id: "t1", title: "Task 1" },
+        { id: "t2", title: "Task 2" },
+      ] as any[];
+
+      await taskRepository.upsertTasksFromServer(tasks);
+
+      expect(mockDb.tasks.where).toHaveBeenCalledWith("_syncStatus");
+      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.tasks.bulkPut).toHaveBeenCalledWith([
+        { id: "t2", title: "Task 2", _syncStatus: "synced" },
+      ]);
+    });
+
+    it("全レコードがpendingの場合bulkPutをスキップする", async () => {
+      const mockPrimaryKeys = vi.fn().mockResolvedValue(["t1", "t2"]);
+      const mockEquals = vi.fn().mockReturnValue({
+        primaryKeys: mockPrimaryKeys,
+      });
+      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+
+      const tasks = [
+        { id: "t1", title: "Task 1" },
+        { id: "t2", title: "Task 2" },
+      ] as any[];
+
+      await taskRepository.upsertTasksFromServer(tasks);
+
+      expect(mockDb.tasks.bulkPut).not.toHaveBeenCalled();
     });
   });
 });

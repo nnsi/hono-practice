@@ -17,6 +17,7 @@ const queryClient = new QueryClient();
 type AuthContextType = {
   isLoggedIn: boolean;
   isLoading: boolean;
+  syncReady: boolean;
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
@@ -27,6 +28,7 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isLoading: true,
+  syncReady: false,
   userId: null,
   login: async () => {},
   googleLogin: async () => {},
@@ -43,7 +45,7 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  useSyncEngine(auth.isLoggedIn);
+  useSyncEngine(auth.syncReady);
 
   useEffect(() => {
     setupGlobalErrorHandler();
