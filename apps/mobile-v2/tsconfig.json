@@ -12,6 +12,8 @@
       "@packages/platform/*": ["../../packages/platform/*"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
+      "@packages/utils": ["../../packages/utils/index.ts"],
+      "@packages/utils/*": ["../../packages/utils/*"],
       "@/*": ["./src/*"],
       "@backend/*": ["../../apps/backend/*"],
       "@infra/*": ["../../infra/*"],

@@ -32,6 +32,7 @@ const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 type GoogleSignInButtonProps = {
   onSuccess: (credential: string) => void;
   onError: () => void;
+  text?: "signin_with" | "signup_with";
 };
 
 // GIS スクリプトのロード状態管理（複数マウント対策）
@@ -62,6 +63,7 @@ function loadGisScript(): Promise<void> {
 export function GoogleSignInButton({
   onSuccess,
   onError,
+  text = "signin_with",
 }: GoogleSignInButtonProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef({ onSuccess, onError });
@@ -89,7 +91,7 @@ export function GoogleSignInButton({
         theme: "outline",
         size: "large",
         width: buttonRef.current.offsetWidth,
-        text: "signin_with",
+        text,
         locale: "ja",
       });
     }

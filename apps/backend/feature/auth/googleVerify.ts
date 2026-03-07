@@ -13,9 +13,11 @@ export const googleVerify: OAuthVerify = async (credential, clientId) => {
       issuer: GOOGLE_ISSUER,
       audience: clientId,
       maxTokenAge: "10m",
+      clockTolerance: "5m",
     });
     return payload as OIDCPayload;
-  } catch (_error) {
+  } catch (error) {
+    console.error("[googleVerify] JWT verification failed:", error);
     throw new AuthError("Invalid token");
   }
 };
