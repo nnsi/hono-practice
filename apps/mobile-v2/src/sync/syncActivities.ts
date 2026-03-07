@@ -9,10 +9,12 @@ import {
 import { getDatabase } from "../db/database";
 import { activityRepository } from "../repositories/activityRepository";
 import { apiClient, customFetch, getApiUrl } from "../utils/apiClient";
+import { getSyncGeneration } from "./syncState";
 
 const API_URL = getApiUrl();
 
 export async function syncActivities(): Promise<void> {
+  const gen = getSyncGeneration();
   const pendingActivities = await activityRepository.getPendingSyncActivities();
   const pendingKinds = await activityRepository.getPendingSyncActivityKinds();
 
@@ -29,13 +31,14 @@ export async function syncActivities(): Promise<void> {
   const kindResults: SyncResult[] = [];
 
   for (let i = 0; i < maxChunks; i++) {
+    if (gen !== getSyncGeneration()) return;
     const res = await apiClient.users.v2.activities.sync.$post({
       json: {
         activities: activityChunks[i] ?? [],
         activityKinds: kindChunks[i] ?? [],
       },
     });
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`syncActivities failed: ${res.status}`);
 
     const data = (await res.json()) as {
       activities: SyncResult;
@@ -45,18 +48,25 @@ export async function syncActivities(): Promise<void> {
     kindResults.push(data.activityKinds);
   }
 
+  if (gen !== getSyncGeneration()) return;
+
   const activityData = mergeSyncResults(activityResults);
   await activityRepository.markActivitiesSynced(activityData.syncedIds);
+  if (gen !== getSyncGeneration()) return;
   await activityRepository.markActivitiesFailed(activityData.skippedIds);
+  if (gen !== getSyncGeneration()) return;
   if (activityData.serverWins.length > 0) {
     await activityRepository.upsertActivities(
       activityData.serverWins.map(mapApiActivity),
     );
+    if (gen !== getSyncGeneration()) return;
   }
 
   const kindData = mergeSyncResults(kindResults);
   await activityRepository.markActivityKindsSynced(kindData.syncedIds);
+  if (gen !== getSyncGeneration()) return;
   await activityRepository.markActivityKindsFailed(kindData.skippedIds);
+  if (gen !== getSyncGeneration()) return;
   if (kindData.serverWins.length > 0) {
     await activityRepository.upsertActivityKinds(
       kindData.serverWins.map(mapApiActivityKind),
@@ -65,14 +75,17 @@ export async function syncActivities(): Promise<void> {
 }
 
 export async function syncActivityIconDeletions(): Promise<void> {
+  const gen = getSyncGeneration();
   const queue = await activityRepository.getPendingIconDeletes();
   if (queue.length === 0) return;
 
   for (const item of queue) {
+    if (gen !== getSyncGeneration()) return;
     const res = await customFetch(
       `${API_URL}/users/activities/${item.activityId}/icon`,
       { method: "DELETE" },
     );
+    if (gen !== getSyncGeneration()) return;
     if (res.ok || res.status === 404) {
       await activityRepository.removeIconDeleteQueue(item.activityId);
     }
@@ -80,11 +93,13 @@ export async function syncActivityIconDeletions(): Promise<void> {
 }
 
 export async function syncActivityIcons(): Promise<void> {
+  const gen = getSyncGeneration();
   const blobs = await activityRepository.getPendingIconBlobs();
   if (blobs.length === 0) return;
 
   const db = await getDatabase();
   for (const blob of blobs) {
+    if (gen !== getSyncGeneration()) return;
     const activity = await db.getFirstAsync<{ sync_status: string }>(
       "SELECT sync_status FROM activities WHERE id = ?",
       [blob.activityId],
@@ -100,16 +115,17 @@ export async function syncActivityIcons(): Promise<void> {
       },
     );
 
-    if (res.ok) {
-      const data = (await res.json()) as {
-        iconUrl: string;
-        iconThumbnailUrl: string;
-      };
-      await activityRepository.completeActivityIconSync(
-        blob.activityId,
-        data.iconUrl,
-        data.iconThumbnailUrl,
-      );
-    }
+    if (!res.ok) throw new Error(`syncActivityIcons failed: ${res.status}`);
+    if (gen !== getSyncGeneration()) return;
+
+    const data = (await res.json()) as {
+      iconUrl: string;
+      iconThumbnailUrl: string;
+    };
+    await activityRepository.completeActivityIconSync(
+      blob.activityId,
+      data.iconUrl,
+      data.iconThumbnailUrl,
+    );
   }
 }

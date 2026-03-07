@@ -14,6 +14,7 @@ import { mapApiActivityLog } from "@packages/sync-engine/mappers/apiMappers";
 
 import { activityLogRepository } from "../db/activityLogRepository";
 import { syncActivityLogs } from "./syncActivityLogs";
+import { invalidateSync } from "./syncState";
 
 const mockLogRepo = vi.mocked(activityLogRepository);
 
@@ -142,7 +143,7 @@ describe("syncActivityLogs", () => {
     expect(mockLogRepo.markActivityLogsFailed).toHaveBeenCalledWith(["l2"]);
   });
 
-  it("does not process when API returns not ok", async () => {
+  it("throws when API returns not ok (H5)", async () => {
     mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue([
       { id: "l1", _syncStatus: "pending" },
     ] as any);
@@ -155,7 +156,7 @@ describe("syncActivityLogs", () => {
       v2: { "activity-logs": { sync: { $post: mockPost } } },
     };
 
-    await syncActivityLogs();
+    await expect(syncActivityLogs()).rejects.toThrow("syncActivityLogs failed");
 
     expect(mockLogRepo.markActivityLogsSynced).not.toHaveBeenCalled();
     expect(mockLogRepo.markActivityLogsFailed).not.toHaveBeenCalled();
@@ -240,7 +241,7 @@ describe("syncActivityLogs", () => {
     );
   });
 
-  it("stops on first chunk failure", async () => {
+  it("throws on first chunk failure (H5)", async () => {
     const pending = Array.from({ length: 200 }, (_, i) => ({
       id: `l-${i}`,
       _syncStatus: "pending",
@@ -255,9 +256,37 @@ describe("syncActivityLogs", () => {
       v2: { "activity-logs": { sync: { $post: mockPost } } },
     };
 
-    await syncActivityLogs();
+    await expect(syncActivityLogs()).rejects.toThrow("syncActivityLogs failed");
 
     expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockLogRepo.markActivityLogsSynced).not.toHaveBeenCalled();
+    expect(mockLogRepo.markActivityLogsFailed).not.toHaveBeenCalled();
+  });
+
+  it("skips DB writes when sync generation changes (H4)", async () => {
+    mockLogRepo.getPendingSyncActivityLogs.mockResolvedValue([
+      { id: "l1", _syncStatus: "pending" },
+    ] as any);
+
+    const mockPost = vi.fn().mockImplementation(async () => {
+      // Simulate clearLocalData being called during API request
+      invalidateSync();
+      return {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: ["l1"],
+            skippedIds: [],
+            serverWins: [],
+          }),
+      };
+    });
+    mockApiClientObj.users = {
+      v2: { "activity-logs": { sync: { $post: mockPost } } },
+    };
+
+    await syncActivityLogs();
+
     expect(mockLogRepo.markActivityLogsSynced).not.toHaveBeenCalled();
     expect(mockLogRepo.markActivityLogsFailed).not.toHaveBeenCalled();
   });

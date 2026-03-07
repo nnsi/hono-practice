@@ -19,9 +19,12 @@ export const taskRepository = {
   async createTask(input: CreateTaskInput) {
     const now = new Date().toISOString();
     const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create task: userId is not set");
+    }
     const task: DexieTask = {
       id: uuidv7(),
-      userId: authState?.userId ?? "",
+      userId: authState.userId,
       title: input.title,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,

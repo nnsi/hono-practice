@@ -13,6 +13,7 @@ vi.mock("../utils/apiClient", () => ({
 import { mapApiTask } from "@packages/sync-engine/mappers/apiMappers";
 
 import { taskRepository } from "../db/taskRepository";
+import { invalidateSync } from "./syncState";
 import { syncTasks } from "./syncTasks";
 
 const mockTaskRepo = vi.mocked(taskRepository);
@@ -100,7 +101,7 @@ describe("syncTasks", () => {
     ]);
   });
 
-  it("does not process when API returns not ok", async () => {
+  it("throws when API returns not ok (H5)", async () => {
     mockTaskRepo.getPendingSyncTasks.mockResolvedValue([
       { id: "t1", _syncStatus: "pending" },
     ] as any);
@@ -113,7 +114,7 @@ describe("syncTasks", () => {
       v2: { tasks: { sync: { $post: mockPost } } },
     };
 
-    await syncTasks();
+    await expect(syncTasks()).rejects.toThrow("syncTasks failed");
 
     expect(mockTaskRepo.markTasksSynced).not.toHaveBeenCalled();
   });
@@ -192,7 +193,7 @@ describe("syncTasks", () => {
     expect(mockPost.mock.calls[1][0].json.tasks).toHaveLength(1);
   });
 
-  it("stops on second chunk failure", async () => {
+  it("throws on second chunk failure (H5)", async () => {
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `t-${i}`,
       title: `Task ${i}`,
@@ -216,7 +217,7 @@ describe("syncTasks", () => {
       v2: { tasks: { sync: { $post: mockPost } } },
     };
 
-    await syncTasks();
+    await expect(syncTasks()).rejects.toThrow("syncTasks failed");
 
     expect(mockTaskRepo.markTasksSynced).not.toHaveBeenCalled();
     expect(mockTaskRepo.markTasksFailed).not.toHaveBeenCalled();
@@ -288,5 +289,32 @@ describe("syncTasks", () => {
     await syncTasks();
 
     expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith([sw1, sw2]);
+  });
+
+  it("skips DB writes when sync generation changes (H4)", async () => {
+    mockTaskRepo.getPendingSyncTasks.mockResolvedValue([
+      { id: "t1", _syncStatus: "pending" },
+    ] as any);
+
+    const mockPost = vi.fn().mockImplementation(async () => {
+      invalidateSync();
+      return {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: ["t1"],
+            skippedIds: [],
+            serverWins: [{ id: "sw-1" }],
+          }),
+      };
+    });
+    mockApiClientObj.users = {
+      v2: { tasks: { sync: { $post: mockPost } } },
+    };
+
+    await syncTasks();
+
+    expect(mockTaskRepo.markTasksSynced).not.toHaveBeenCalled();
+    expect(mockTaskRepo.upsertTasksFromServer).not.toHaveBeenCalled();
   });
 });

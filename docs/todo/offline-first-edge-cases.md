@@ -93,7 +93,7 @@ async upsertActivityLogsFromServer(logs) {
 
 ---
 
-#### H3: userId空文字 or 旧ユーザーIDでの書き込み
+#### H3: userId空文字 or 旧ユーザーIDでの書き込み ✅ 修正済み (2026-03-08)
 
 - **即UI表示改修後に発生しうる**
 - **発見元**: Codex
@@ -106,7 +106,7 @@ async upsertActivityLogsFromServer(logs) {
 
 ---
 
-#### H4: ログアウト/アカウント切替時に飛行中のsyncがDexieに書き戻す
+#### H4: ログアウト/アカウント切替時に飛行中のsyncがDexieに書き戻す ✅ 修正済み (2026-03-08)
 
 - **既存リスク**
 - **発見元**: Codex
@@ -119,7 +119,7 @@ async upsertActivityLogsFromServer(logs) {
 
 ---
 
-#### H5: push失敗がsyncEngine上は成功扱い
+#### H5: push失敗がsyncEngine上は成功扱い ✅ 修正済み (2026-03-08)
 
 - **既存バグ**
 - **発見元**: Codex
@@ -250,9 +250,9 @@ async upsertActivityLogsFromServer(logs) {
 | 優先 | ID | 内容 | 既存バグ？ | 改修で悪化？ | ステータス |
 |------|----|------|-----------|------------|-----------|
 | 1 | H1 | bulkPutのpending上書き | Yes | ウィンドウ拡大 | ✅ 修正済み |
-| 2 | H5 | push失敗が成功扱い | Yes | 変化なし | 未着手 |
+| 2 | H5 | push失敗が成功扱い | Yes | 変化なし | ✅ 修正済み |
 | 3 | H2 | 別アカウントデータ漏洩 | Yes（1h以内） | ウィンドウ拡大 | ✅ 修正済み |
-| 4 | H4 | 飛行中syncの書き戻し | Yes | 変化なし | 未着手 |
-| 5 | H3 | 空userId書き込み | No | 新規発生 | 未着手 |
+| 4 | H4 | 飛行中syncの書き戻し | Yes | 変化なし | ✅ 修正済み |
+| 5 | H3 | 空userId書き込み | No | 新規発生 | ✅ 修正済み |
 | 6 | M1-M4 | 体験劣化系 | 部分的 | 頻度増加 | 未着手 |
 | 7 | L1 | フリッカー | 部分的 | 頻度増加 | 未着手 |

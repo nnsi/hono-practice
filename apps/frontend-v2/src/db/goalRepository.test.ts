@@ -97,16 +97,16 @@ describe("goalRepository", () => {
       expect(result.description).toBe("毎日5km走る");
     });
 
-    it("authStateがない場合userIdは空文字になる", async () => {
+    it("authStateがない場合エラーを投げる", async () => {
       mockDb.authState.get.mockResolvedValue(undefined);
 
-      const result = await goalRepository.createGoal({
-        activityId: "act-1",
-        dailyTargetQuantity: 10,
-        startDate: "2024-06-01",
-      });
-
-      expect(result.userId).toBe("");
+      await expect(
+        goalRepository.createGoal({
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          startDate: "2024-06-01",
+        }),
+      ).rejects.toThrow("Cannot create goal: userId is not set");
     });
 
     it("endDateにnullを明示的に渡した場合", async () => {

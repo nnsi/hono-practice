@@ -135,6 +135,9 @@ export const activityRepository = {
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
     const lastActivity = await db.getFirstAsync<{ order_index: string }>(
       "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
     );
@@ -147,7 +150,7 @@ export const activityRepository = {
        VALUES (?, ?, ?, '', ?, ?, NULL, NULL, '', ?, ?, ?, 'pending', NULL, ?, ?)`,
       [
         id,
-        auth?.user_id ?? "",
+        auth.user_id,
         input.name,
         input.emoji,
         input.iconType ?? "emoji",
@@ -177,7 +180,7 @@ export const activityRepository = {
 
     return {
       id,
-      userId: auth?.user_id ?? "",
+      userId: auth.user_id,
       name: input.name,
       label: "",
       emoji: input.emoji,

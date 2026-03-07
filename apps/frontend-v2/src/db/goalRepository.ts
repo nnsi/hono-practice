@@ -22,9 +22,12 @@ export const goalRepository = {
   async createGoal(input: CreateGoalInput) {
     const now = new Date().toISOString();
     const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create goal: userId is not set");
+    }
     const goal: DexieGoal = {
       id: uuidv7(),
-      userId: authState?.userId ?? "",
+      userId: authState.userId,
       activityId: input.activityId,
       dailyTargetQuantity: input.dailyTargetQuantity,
       startDate: input.startDate,

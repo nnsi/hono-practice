@@ -38,6 +38,9 @@ export const activityRepository = {
   async createActivity(input: CreateActivityInput) {
     const now = new Date().toISOString();
     const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
     const lastActivity = await db.activities
       .orderBy("orderIndex")
       .reverse()
@@ -46,7 +49,7 @@ export const activityRepository = {
 
     const activity: DexieActivity = {
       id: uuidv7(),
-      userId: authState?.userId ?? "",
+      userId: authState.userId,
       name: input.name,
       label: "",
       emoji: input.emoji,

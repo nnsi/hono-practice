@@ -14,12 +14,14 @@ import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
+import { getSyncGeneration, invalidateSync } from "./syncState";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
 export async function clearLocalData(
   storage: StorageAdapter = rnStorageAdapter,
 ) {
+  invalidateSync();
   const db = await getDatabase();
   await db.execAsync(`
     DELETE FROM activity_logs;
@@ -74,6 +76,8 @@ export async function performInitialSync(
   }
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
+  const gen = getSyncGeneration();
+
   // Fetch all data in parallel
   const [activitiesRes, logsRes, goalsRes, tasksRes] = await Promise.all([
     apiClient.users.v2.activities.$get(),
@@ -81,6 +85,8 @@ export async function performInitialSync(
     apiClient.users.v2.goals.$get({ query: sinceQuery }),
     apiClient.users.v2.tasks.$get({ query: sinceQuery }),
   ]);
+
+  if (gen !== getSyncGeneration()) return;
 
   let allSynced = true;
 
@@ -90,10 +96,12 @@ export async function performInitialSync(
     await activityRepository.upsertActivities(
       data.activities.map(mapApiActivity),
     );
+    if (gen !== getSyncGeneration()) return;
     if (data.activityKinds?.length > 0) {
       await activityRepository.upsertActivityKinds(
         data.activityKinds.map(mapApiActivityKind),
       );
+      if (gen !== getSyncGeneration()) return;
     }
   } else {
     allSynced = false;
@@ -106,6 +114,7 @@ export async function performInitialSync(
       await activityLogRepository.upsertActivityLogsFromServer(
         data.logs.map(mapApiActivityLog),
       );
+      if (gen !== getSyncGeneration()) return;
     }
   } else {
     allSynced = false;
@@ -116,6 +125,7 @@ export async function performInitialSync(
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
       await goalRepository.upsertGoalsFromServer(data.goals.map(mapApiGoal));
+      if (gen !== getSyncGeneration()) return;
     }
   } else {
     allSynced = false;
@@ -126,6 +136,7 @@ export async function performInitialSync(
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
       await taskRepository.upsertTasksFromServer(data.tasks.map(mapApiTask));
+      if (gen !== getSyncGeneration()) return;
     }
   } else {
     allSynced = false;

@@ -29,28 +29,33 @@ export function useCreateActivityDialog(
     if (!name.trim()) return;
     setIsSubmitting(true);
 
-    const activity = await activityRepository.createActivity({
-      name: name.trim(),
-      quantityUnit,
-      emoji: icon.emoji,
-      showCombinedStats,
-      iconType: icon.type,
-      kinds: kinds.filter((k) => k.name.trim()),
-    });
+    try {
+      const activity = await activityRepository.createActivity({
+        name: name.trim(),
+        quantityUnit,
+        emoji: icon.emoji,
+        showCombinedStats,
+        iconType: icon.type,
+        kinds: kinds.filter((k) => k.name.trim()),
+      });
 
-    if (icon.type === "upload" && icon.file) {
-      const { base64, mimeType } = await resizeImage(icon.file, 256, 256);
-      await activityRepository.saveActivityIconBlob(
-        activity.id,
-        base64,
-        mimeType,
-      );
+      if (icon.type === "upload" && icon.file) {
+        const { base64, mimeType } = await resizeImage(icon.file, 256, 256);
+        await activityRepository.saveActivityIconBlob(
+          activity.id,
+          base64,
+          mimeType,
+        );
+      }
+
+      syncEngine.syncAll();
+      onCreated();
+      onClose();
+    } catch (err) {
+      console.error("Failed to create activity:", err);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    syncEngine.syncAll();
-    onCreated();
-    onClose();
-    setIsSubmitting(false);
   };
 
   return {

@@ -251,14 +251,14 @@ describe("activityRepository", () => {
         }),
       });
 
-      const result = await activityRepository.createActivity({
-        name: "Test",
-        quantityUnit: "回",
-        emoji: "🎯",
-        showCombinedStats: false,
-      });
-
-      expect(result.userId).toBe("");
+      await expect(
+        activityRepository.createActivity({
+          name: "Test",
+          quantityUnit: "回",
+          emoji: "🎯",
+          showCombinedStats: false,
+        }),
+      ).rejects.toThrow("Cannot create activity: userId is not set");
     });
 
     it("iconTypeを指定できる", async () => {

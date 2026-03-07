@@ -93,14 +93,14 @@ describe("taskRepository", () => {
       expect(result.memo).toBe("メモ内容");
     });
 
-    it("authStateがない場合userIdは空文字になる", async () => {
+    it("authStateがない場合エラーを投げる", async () => {
       mockDb.authState.get.mockResolvedValue(undefined);
 
-      const result = await taskRepository.createTask({
-        title: "認証なしタスク",
-      });
-
-      expect(result.userId).toBe("");
+      await expect(
+        taskRepository.createTask({
+          title: "認証なしタスク",
+        }),
+      ).rejects.toThrow("Cannot create task: userId is not set");
     });
 
     it("startDateにnullを明示的に渡した場合", async () => {

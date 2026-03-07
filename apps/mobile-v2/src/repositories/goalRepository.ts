@@ -80,13 +80,16 @@ export const goalRepository = {
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create goal: userId is not set");
+    }
 
     await db.runAsync(
       `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 1, ?, 'pending', NULL, ?, ?)`,
       [
         id,
-        auth?.user_id ?? "",
+        auth.user_id,
         input.activityId,
         input.dailyTargetQuantity,
         input.startDate,
@@ -101,7 +104,7 @@ export const goalRepository = {
 
     return {
       id,
-      userId: auth?.user_id ?? "",
+      userId: auth.user_id,
       activityId: input.activityId,
       dailyTargetQuantity: input.dailyTargetQuantity,
       startDate: input.startDate,

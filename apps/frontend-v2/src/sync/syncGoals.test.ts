@@ -14,6 +14,7 @@ import { mapApiGoal } from "@packages/sync-engine/mappers/apiMappers";
 
 import { goalRepository } from "../db/goalRepository";
 import { syncGoals } from "./syncGoals";
+import { invalidateSync } from "./syncState";
 
 const mockGoalRepo = vi.mocked(goalRepository);
 
@@ -112,7 +113,7 @@ describe("syncGoals", () => {
     ]);
   });
 
-  it("does not process when API returns not ok", async () => {
+  it("throws when API returns not ok (H5)", async () => {
     mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
       {
         id: "g1",
@@ -131,7 +132,7 @@ describe("syncGoals", () => {
       v2: { goals: { sync: { $post: mockPost } } },
     };
 
-    await syncGoals();
+    await expect(syncGoals()).rejects.toThrow("syncGoals failed");
 
     expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
   });
@@ -219,7 +220,7 @@ describe("syncGoals", () => {
     expect(mockPost.mock.calls[1][0].json.goals).toHaveLength(1);
   });
 
-  it("stops processing on second chunk failure", async () => {
+  it("throws on second chunk failure (H5)", async () => {
     const pending = Array.from({ length: 200 }, (_, i) => ({
       id: `g-${i}`,
       activityId: "a1",
@@ -246,7 +247,7 @@ describe("syncGoals", () => {
       v2: { goals: { sync: { $post: mockPost } } },
     };
 
-    await syncGoals();
+    await expect(syncGoals()).rejects.toThrow("syncGoals failed");
 
     expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
     expect(mockGoalRepo.markGoalsFailed).not.toHaveBeenCalled();
@@ -351,6 +352,39 @@ describe("syncGoals", () => {
 
     await syncGoals();
 
+    expect(mockGoalRepo.upsertGoalsFromServer).not.toHaveBeenCalled();
+  });
+
+  it("skips DB writes when sync generation changes (H4)", async () => {
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
+      {
+        id: "g1",
+        _syncStatus: "pending",
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+      },
+    ] as any);
+
+    const mockPost = vi.fn().mockImplementation(async () => {
+      invalidateSync();
+      return {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: ["g1"],
+            skippedIds: [],
+            serverWins: [{ id: "sw-1" }],
+          }),
+      };
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
     expect(mockGoalRepo.upsertGoalsFromServer).not.toHaveBeenCalled();
   });
 });

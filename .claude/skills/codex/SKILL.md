@@ -1,6 +1,6 @@
 ---
 name: codex
-description: OpenAI Codex CLIを使ってコードレビュー・分析・質問・実装を実行する。トリガー: "codex", "/codex", "codexで〜", "codexに聞いて"
+description: Codex CLIを使ってコードレビュー・分析・質問・実装を実行する。トリガー: "codex", "/codex", "codexで〜", "codexに聞いて"
 user_invocable: true
 ---
 
