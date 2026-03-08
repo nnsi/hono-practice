@@ -31,14 +31,9 @@ export function useAuth(): AuthState {
     const tryOfflineAuth = async (): Promise<boolean> => {
       const authState = await db.authState.get("current");
       if (authState?.lastLoginAt) {
-        const hoursAgo =
-          (Date.now() - new Date(authState.lastLoginAt).getTime()) /
-          (1000 * 60 * 60);
-        if (hoursAgo < 1) {
-          setUserId(authState.userId);
-          setIsLoggedIn(true);
-          return true;
-        }
+        setUserId(authState.userId);
+        setIsLoggedIn(true);
+        return true;
       }
       return false;
     };

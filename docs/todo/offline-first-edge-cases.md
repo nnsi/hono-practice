@@ -27,9 +27,28 @@ Promise.all([     ← ここから並列
 
 ### 改修案
 
+#### frontend-v2
+
 Dexieにキャッシュがあれば即UI表示し、auth/syncは完全にバックグラウンドで実行する。変更箇所は `useAuth.ts`（1時間制限撤廃）、`__root.tsx`（isLoadingゲート緩和）、`SettingsPage.tsx`（API fetch非同期化）の3ファイル。
 
 既に `tryOfflineAuth` 成功時（キャッシュ<1時間）は即UI表示→バックグラウンドsyncのパスがあるため、そのパスを常時有効にする形。
+
+1. **`useAuth.ts`**: `hoursAgo < 1` の条件を撤廃し、`authState` が存在すれば即 `isLoading=false` + バックグラウンド `serverRefreshAndSync()` に変更
+2. **`__root.tsx`**: `isLoading` ゲートは現状のまま（useAuthが制御するため変更不要の可能性あり。実装時に要確認）
+3. **`SettingsPage.tsx`**: Google連携状態・サブスクリプション情報のfetchがサーバー認証完了前に実行される場合に備え、ローディング状態の表示を追加（`useGoogleAccount` の `isLoading` 対応は M6 で修正済み）
+
+#### mobile-v2
+
+変更箇所は `useAuth.ts`（1時間制限撤廃）の **1ファイルのみ**。
+
+1. **`useAuth.ts`**: frontend-v2と同じく `hoursAgo < 1`（L79）の条件を撤廃。`authState` の `last_login_at` が存在すれば即 `isLoading=false` + バックグラウンド `serverRefreshAndSync()` に変更
+2. **`app/_layout.tsx`**: 変更不要。`isLoading` ゲートは `useAuth` が制御しており、useAuth側の変更だけで即UI表示が有効になる
+3. **`SettingsPage.tsx`**: 変更不要。mobile-v2のSettingsPageはAPIデータを取得せず、`userId` をauth contextから表示するのみ
+
+**frontend-v2との差分**:
+- ネットワーク復帰検知: `window.addEventListener("online")` → `NetInfo.addEventListener`（既にH6修正で実装済み）
+- auth状態の永続化: Dexie `authState` ストア → SQLite `auth_state` テーブル
+- `performInitialSync` が `last_login_at` を `new Date().toISOString()` で更新するため、sync成功後は次回起動でもキャッシュが有効になる
 
 ---
 

@@ -73,40 +73,35 @@ export function useAuth(): AuthState {
       }>("SELECT user_id, last_login_at FROM auth_state WHERE id = 'current'");
 
       if (authState?.last_login_at) {
-        const hoursAgo =
-          (Date.now() - new Date(authState.last_login_at).getTime()) /
-          (1000 * 60 * 60);
-        if (hoursAgo < 1) {
-          setUserId(authState.user_id);
-          setIsLoggedIn(true);
-          setIsLoading(false);
-          // Background server refresh
-          try {
-            await serverRefreshAndSync();
-          } catch {
-            // ネットワークエラー（オフライン等）→ オンライン復帰時にリトライ
-            const unsub = NetInfo.addEventListener((state) => {
-              if (!state.isConnected) return;
-              unsub();
-              serverRefreshAndSync()
-                .then(() => {
-                  onlineRetryRef.current = null;
-                })
-                .catch(() => {
-                  // まだ失敗 → 再登録
-                  if (onlineRetryRef.current) {
-                    const newUnsub = NetInfo.addEventListener((s) => {
-                      if (!s.isConnected) return;
-                      newUnsub();
-                      serverRefreshAndSync().catch(() => {});
-                    });
-                  }
-                });
-            });
-            onlineRetryRef.current = unsub;
-          }
-          return;
+        setUserId(authState.user_id);
+        setIsLoggedIn(true);
+        setIsLoading(false);
+        // Background server refresh
+        try {
+          await serverRefreshAndSync();
+        } catch {
+          // ネットワークエラー（オフライン等）→ オンライン復帰時にリトライ
+          const unsub = NetInfo.addEventListener((state) => {
+            if (!state.isConnected) return;
+            unsub();
+            serverRefreshAndSync()
+              .then(() => {
+                onlineRetryRef.current = null;
+              })
+              .catch(() => {
+                // まだ失敗 → 再登録
+                if (onlineRetryRef.current) {
+                  const newUnsub = NetInfo.addEventListener((s) => {
+                    if (!s.isConnected) return;
+                    newUnsub();
+                    serverRefreshAndSync().catch(() => {});
+                  });
+                }
+              });
+          });
+          onlineRetryRef.current = unsub;
         }
+        return;
       }
 
       // No valid offline session, try server
