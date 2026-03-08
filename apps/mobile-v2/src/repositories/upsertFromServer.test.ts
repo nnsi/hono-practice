@@ -48,7 +48,7 @@ function getSqlFromRunAsync(mockDb: ReturnType<typeof createMockDb>): string[] {
 // ---------------------------------------------------------------------------
 
 describe("activityLogRepository.upsertActivityLogsFromServer", () => {
-  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending'", async () => {
+  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending' AND updatedAt guard", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
 
@@ -73,6 +73,7 @@ describe("activityLogRepository.upsertActivityLogsFromServer", () => {
     const sql = sqls[0];
     expect(sql).toContain("ON CONFLICT(id) DO UPDATE SET");
     expect(sql).toContain("WHERE sync_status <> 'pending'");
+    expect(sql).toContain("updated_at <= excluded.updated_at");
     expect(sql).not.toContain("INSERT OR REPLACE");
   });
 
@@ -188,7 +189,7 @@ describe("activityLogRepository.upsertActivityLogsFromServer", () => {
 // ---------------------------------------------------------------------------
 
 describe("activityRepository.upsertActivities", () => {
-  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending'", async () => {
+  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending' AND updatedAt guard", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
 
@@ -218,6 +219,7 @@ describe("activityRepository.upsertActivities", () => {
     const sql = sqls[0];
     expect(sql).toContain("ON CONFLICT(id) DO UPDATE SET");
     expect(sql).toContain("WHERE sync_status <> 'pending'");
+    expect(sql).toContain("updated_at <= excluded.updated_at");
     expect(sql).not.toContain("INSERT OR REPLACE");
   });
 
@@ -301,7 +303,7 @@ describe("activityRepository.upsertActivities", () => {
 // ---------------------------------------------------------------------------
 
 describe("activityRepository.upsertActivityKinds", () => {
-  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending'", async () => {
+  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending' AND updatedAt guard", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
 
@@ -324,6 +326,7 @@ describe("activityRepository.upsertActivityKinds", () => {
     const sql = sqls[0];
     expect(sql).toContain("ON CONFLICT(id) DO UPDATE SET");
     expect(sql).toContain("WHERE sync_status <> 'pending'");
+    expect(sql).toContain("updated_at <= excluded.updated_at");
     expect(sql).not.toContain("INSERT OR REPLACE");
   });
 
@@ -353,7 +356,7 @@ describe("activityRepository.upsertActivityKinds", () => {
 // ---------------------------------------------------------------------------
 
 describe("goalRepository.upsertGoalsFromServer", () => {
-  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending'", async () => {
+  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending' AND updatedAt guard", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
 
@@ -382,6 +385,7 @@ describe("goalRepository.upsertGoalsFromServer", () => {
     const sql = sqls[0];
     expect(sql).toContain("ON CONFLICT(id) DO UPDATE SET");
     expect(sql).toContain("WHERE sync_status <> 'pending'");
+    expect(sql).toContain("updated_at <= excluded.updated_at");
     expect(sql).not.toContain("INSERT OR REPLACE");
   });
 
@@ -487,7 +491,7 @@ describe("goalRepository.upsertGoalsFromServer", () => {
 // ---------------------------------------------------------------------------
 
 describe("taskRepository.upsertTasksFromServer", () => {
-  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending'", async () => {
+  it("uses ON CONFLICT(id) DO UPDATE with WHERE sync_status <> 'pending' AND updatedAt guard", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
 
@@ -513,6 +517,7 @@ describe("taskRepository.upsertTasksFromServer", () => {
     const sql = sqls[0];
     expect(sql).toContain("ON CONFLICT(id) DO UPDATE SET");
     expect(sql).toContain("WHERE sync_status <> 'pending'");
+    expect(sql).toContain("updated_at <= excluded.updated_at");
     expect(sql).not.toContain("INSERT OR REPLACE");
   });
 

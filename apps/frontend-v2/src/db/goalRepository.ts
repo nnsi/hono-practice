@@ -90,10 +90,17 @@ export const goalRepository = {
   },
 
   async upsertGoalsFromServer(goals: Omit<DexieGoal, "_syncStatus">[]) {
-    const pendingIds = new Set(
-      await db.goals.where("_syncStatus").equals("pending").primaryKeys(),
-    );
-    const safe = goals.filter((g) => !pendingIds.has(g.id));
+    if (goals.length === 0) return;
+    const serverIds = goals.map((g) => g.id);
+    const localRecords = await db.goals.where("id").anyOf(serverIds).toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = goals.filter((g) => {
+      const local = localMap.get(g.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(g.updatedAt)) return false;
+      return true;
+    });
     if (safe.length === 0) return;
     await db.goals.bulkPut(
       safe.map((g) => ({ ...g, _syncStatus: "synced" as const })),

@@ -617,113 +617,233 @@ describe("activityRepository", () => {
   // ========== Server upsert ==========
   describe("upsertActivities", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const activities = [
-        { id: "a1", name: "Running" },
-        { id: "a2", name: "Study" },
+        { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await activityRepository.upsertActivities(activities);
 
+      expect(mockDb.activities.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["a1", "a2"]);
       expect(mockDb.activities.bulkPut).toHaveBeenCalledWith([
-        { id: "a1", name: "Running", _syncStatus: "synced" },
-        { id: "a2", name: "Study", _syncStatus: "synced" },
+        {
+          id: "a1",
+          name: "Running",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+        {
+          id: "a2",
+          name: "Study",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
       ]);
     });
 
     it("pendingレコードを上書きしない", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["a1"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "a1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const activities = [
-        { id: "a1", name: "Running" },
-        { id: "a2", name: "Study" },
+        { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await activityRepository.upsertActivities(activities);
 
-      expect(mockDb.activities.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.activities.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["a1", "a2"]);
       expect(mockDb.activities.bulkPut).toHaveBeenCalledWith([
-        { id: "a2", name: "Study", _syncStatus: "synced" },
+        {
+          id: "a2",
+          name: "Study",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
       ]);
     });
 
     it("全レコードがpendingの場合bulkPutをスキップする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["a1", "a2"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "a1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "a2",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const activities = [
-        { id: "a1", name: "Running" },
-        { id: "a2", name: "Study" },
+        { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await activityRepository.upsertActivities(activities);
 
       expect(mockDb.activities.bulkPut).not.toHaveBeenCalled();
     });
+
+    it("ローカルのupdatedAtが新しいレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "a1",
+          _syncStatus: "synced",
+          updatedAt: "2026-03-05T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const activities = [
+        { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
+      ] as any[];
+
+      await activityRepository.upsertActivities(activities);
+
+      expect(mockDb.activities.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "a2",
+          name: "Study",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("空配列の場合何もしない", async () => {
+      await activityRepository.upsertActivities([]);
+
+      expect(mockDb.activities.where).not.toHaveBeenCalled();
+      expect(mockDb.activities.bulkPut).not.toHaveBeenCalled();
+    });
   });
 
   describe("upsertActivityKinds", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
-
-      const kinds = [{ id: "k1", name: "Kind1" }] as any[];
-
-      await activityRepository.upsertActivityKinds(kinds);
-
-      expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
-        { id: "k1", name: "Kind1", _syncStatus: "synced" },
-      ]);
-    });
-
-    it("pendingレコードを上書きしない", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["k1"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const kinds = [
-        { id: "k1", name: "Kind1" },
-        { id: "k2", name: "Kind2" },
+        { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await activityRepository.upsertActivityKinds(kinds);
 
-      expect(mockDb.activityKinds.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.activityKinds.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["k1"]);
       expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
-        { id: "k2", name: "Kind2", _syncStatus: "synced" },
+        {
+          id: "k1",
+          name: "Kind1",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "k1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const kinds = [
+        { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "k2", name: "Kind2", updatedAt: "2026-03-01T00:00:00Z" },
+      ] as any[];
+
+      await activityRepository.upsertActivityKinds(kinds);
+
+      expect(mockDb.activityKinds.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["k1", "k2"]);
+      expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "k2",
+          name: "Kind2",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
       ]);
     });
 
     it("全レコードがpendingの場合bulkPutをスキップする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["k1"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "k1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      const kinds = [{ id: "k1", name: "Kind1" }] as any[];
+      const kinds = [
+        { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
+      ] as any[];
 
       await activityRepository.upsertActivityKinds(kinds);
 
+      expect(mockDb.activityKinds.bulkPut).not.toHaveBeenCalled();
+    });
+
+    it("ローカルのupdatedAtが新しいレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "k1",
+          _syncStatus: "synced",
+          updatedAt: "2026-03-05T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const kinds = [
+        { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "k2", name: "Kind2", updatedAt: "2026-03-01T00:00:00Z" },
+      ] as any[];
+
+      await activityRepository.upsertActivityKinds(kinds);
+
+      expect(mockDb.activityKinds.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "k2",
+          name: "Kind2",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("空配列の場合何もしない", async () => {
+      await activityRepository.upsertActivityKinds([]);
+
+      expect(mockDb.activityKinds.where).not.toHaveBeenCalled();
       expect(mockDb.activityKinds.bulkPut).not.toHaveBeenCalled();
     });
   });

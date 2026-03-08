@@ -574,7 +574,8 @@ export const activityRepository = {
              deleted_at = excluded.deleted_at,
              created_at = excluded.created_at,
              updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'`,
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             a.id,
             a.userId,
@@ -619,7 +620,8 @@ export const activityRepository = {
              deleted_at = excluded.deleted_at,
              created_at = excluded.created_at,
              updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'`,
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             k.id,
             k.activityId,

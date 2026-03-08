@@ -330,10 +330,20 @@ export const activityRepository = {
 
   // Server upsert (used by initialSync and syncEngine)
   async upsertActivities(activities: Omit<DexieActivity, "_syncStatus">[]) {
-    const pendingIds = new Set(
-      await db.activities.where("_syncStatus").equals("pending").primaryKeys(),
-    );
-    const safe = activities.filter((a) => !pendingIds.has(a.id));
+    if (activities.length === 0) return;
+    const serverIds = activities.map((a) => a.id);
+    const localRecords = await db.activities
+      .where("id")
+      .anyOf(serverIds)
+      .toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = activities.filter((a) => {
+      const local = localMap.get(a.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(a.updatedAt)) return false;
+      return true;
+    });
     if (safe.length === 0) return;
     await db.activities.bulkPut(
       safe.map((a) => ({ ...a, _syncStatus: "synced" as const })),
@@ -341,13 +351,20 @@ export const activityRepository = {
   },
 
   async upsertActivityKinds(kinds: Omit<DexieActivityKind, "_syncStatus">[]) {
-    const pendingIds = new Set(
-      await db.activityKinds
-        .where("_syncStatus")
-        .equals("pending")
-        .primaryKeys(),
-    );
-    const safe = kinds.filter((k) => !pendingIds.has(k.id));
+    if (kinds.length === 0) return;
+    const serverIds = kinds.map((k) => k.id);
+    const localRecords = await db.activityKinds
+      .where("id")
+      .anyOf(serverIds)
+      .toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = kinds.filter((k) => {
+      const local = localMap.get(k.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(k.updatedAt)) return false;
+      return true;
+    });
     if (safe.length === 0) return;
     await db.activityKinds.bulkPut(
       safe.map((k) => ({ ...k, _syncStatus: "synced" as const })),

@@ -231,7 +231,7 @@ async upsertActivityLogsFromServer(logs) {
 
 ---
 
-#### M5: performInitialSyncとsyncAllの排他がない
+#### M5: performInitialSyncとsyncAllの排他がない ✅ 修正済み (2026-03-08) [frontend-v2 / mobile-v2]
 
 - **既存リスク（改修でウィンドウ拡大）**
 - **発見元**: Codex (改修前リスク調査)
@@ -247,9 +247,11 @@ async upsertActivityLogsFromServer(logs) {
 
 **緩和要因**: 発生ウィンドウは `setToken` 〜 `performInitialSync` 完了の数秒間で、かつその間にユーザーが既存データを**更新**する必要がある。新規作成は `bulkPut` が存在しないレコードを消さないので影響なし。既存の1時間パスでも同じ問題がある。
 
+**修正内容**: `upsertFromServer` 系関数で、H1の `_syncStatus: "pending"` フィルタに加え、ローカルレコードの `updatedAt` がサーバー版より新しい場合もスキップするように変更。frontend-v2は `where("id").anyOf(serverIds).toArray()` でローカルレコードを取得し比較。mobile-v2はSQL `WHERE` 句に `AND updated_at <= excluded.updated_at` を追加。
+
 ---
 
-#### M6: 設定画面が未取得/失敗を「未連携/非プレミアム」と誤表示
+#### M6: 設定画面が未取得/失敗を「未連携/非プレミアム」と誤表示 ✅ 修正済み (2026-03-08) [frontend-v2のみ]
 
 - **即UI表示改修後に表面化**
 - **発見元**: Codex (改修前リスク調査)
@@ -259,6 +261,8 @@ async upsertActivityLogsFromServer(logs) {
 **対象コード**: `SettingsPage.tsx:66-85`, `ApiKeyManager.tsx:15-18`
 
 **緩和要因**: Settings画面への遷移はユーザーが明示的に行うため、通常はサーバー認証が先に完了している。オフライン時はサーバー依存の設定項目自体が機能しないため、実害は限定的。
+
+**修正内容**: `useGoogleAccount` フックに `isLoading` 状態を追加。`fetchUserInfo` 完了まで `isLoading: true` を返し、Google連携ステータスとメッセージの表示を抑制。`ApiKeyManager` は既存の `subLoading` スピナーで初期ロードをカバー済み。mobile-v2にはGoogle連携UIがないため対象外。
 
 ---
 
@@ -336,6 +340,6 @@ async upsertActivityLogsFromServer(logs) {
 | 9 | M4 | チャンク途中失敗のmark漏れ | 部分的 | 頻度増加 | ✅ 修正済み | ✅ 修正済み |
 | 10 | M2 | staleキャッシュ表示 | 部分的 | 頻度増加 | 後回し（軽微） | - |
 | 11 | M3 | 複数タブ重複push | 部分的 | 頻度増加 | 後回し（軽微） | N/A |
-| 12 | M5 | initialSync/syncAll排他なし | Yes | ウィンドウ拡大 | 未着手 | 未着手 |
-| 13 | M6 | 設定画面の未取得誤表示 | Yes | 表面化 | 未着手 | - |
+| 12 | M5 | initialSync/syncAll排他なし | Yes | ウィンドウ拡大 | ✅ 修正済み | ✅ 修正済み |
+| 13 | M6 | 設定画面の未取得誤表示 | Yes | 表面化 | ✅ 修正済み | N/A |
 | 14 | L1 | フリッカー | 部分的 | 頻度増加 | 未着手 | - |

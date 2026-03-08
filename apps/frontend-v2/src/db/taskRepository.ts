@@ -102,10 +102,17 @@ export const taskRepository = {
   },
 
   async upsertTasksFromServer(tasks: Omit<DexieTask, "_syncStatus">[]) {
-    const pendingIds = new Set(
-      await db.tasks.where("_syncStatus").equals("pending").primaryKeys(),
-    );
-    const safe = tasks.filter((t) => !pendingIds.has(t.id));
+    if (tasks.length === 0) return;
+    const serverIds = tasks.map((t) => t.id);
+    const localRecords = await db.tasks.where("id").anyOf(serverIds).toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = tasks.filter((t) => {
+      const local = localMap.get(t.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(t.updatedAt)) return false;
+      return true;
+    });
     if (safe.length === 0) return;
     await db.tasks.bulkPut(
       safe.map((t) => ({ ...t, _syncStatus: "synced" as const })),

@@ -332,60 +332,123 @@ describe("taskRepository", () => {
   // ========== Server upsert ==========
   describe("upsertTasksFromServer", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const tasks = [
-        { id: "t1", title: "Task 1" },
-        { id: "t2", title: "Task 2" },
+        { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
+      expect(mockDb.tasks.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["t1", "t2"]);
       expect(mockDb.tasks.bulkPut).toHaveBeenCalledWith([
-        { id: "t1", title: "Task 1", _syncStatus: "synced" },
-        { id: "t2", title: "Task 2", _syncStatus: "synced" },
+        {
+          id: "t1",
+          title: "Task 1",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+        {
+          id: "t2",
+          title: "Task 2",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
       ]);
     });
 
     it("pendingレコードを上書きしない", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["t1"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "t1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const tasks = [
-        { id: "t1", title: "Task 1" },
-        { id: "t2", title: "Task 2" },
+        { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
-      expect(mockDb.tasks.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.tasks.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["t1", "t2"]);
       expect(mockDb.tasks.bulkPut).toHaveBeenCalledWith([
-        { id: "t2", title: "Task 2", _syncStatus: "synced" },
+        {
+          id: "t2",
+          title: "Task 2",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
       ]);
     });
 
     it("全レコードがpendingの場合bulkPutをスキップする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["t1", "t2"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "t1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "t2",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const tasks = [
-        { id: "t1", title: "Task 1" },
-        { id: "t2", title: "Task 2" },
+        { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
       ] as any[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
+      expect(mockDb.tasks.bulkPut).not.toHaveBeenCalled();
+    });
+
+    it("ローカルのupdatedAtが新しいレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "t1",
+          _syncStatus: "synced",
+          updatedAt: "2026-03-05T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const tasks = [
+        { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
+        { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
+      ] as any[];
+
+      await taskRepository.upsertTasksFromServer(tasks);
+
+      expect(mockDb.tasks.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "t2",
+          title: "Task 2",
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("空配列の場合何もしない", async () => {
+      await taskRepository.upsertTasksFromServer([]);
+
+      expect(mockDb.tasks.where).not.toHaveBeenCalled();
       expect(mockDb.tasks.bulkPut).not.toHaveBeenCalled();
     });
   });

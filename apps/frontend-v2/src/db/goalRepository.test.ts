@@ -239,75 +239,167 @@ describe("goalRepository", () => {
   // ========== Server upsert ==========
   describe("upsertGoalsFromServer", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue([]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.goals.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const goals = [
-        { id: "g1", activityId: "act-1", dailyTargetQuantity: 10 },
-        { id: "g2", activityId: "act-2", dailyTargetQuantity: 5 },
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
       ] as any[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
+      expect(mockDb.goals.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["g1", "g2"]);
       expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
         {
           id: "g1",
           activityId: "act-1",
           dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
           _syncStatus: "synced",
         },
         {
           id: "g2",
           activityId: "act-2",
           dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
           _syncStatus: "synced",
         },
       ]);
     });
 
     it("pendingレコードを上書きしない", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["g1"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.goals.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const goals = [
-        { id: "g1", activityId: "act-1", dailyTargetQuantity: 10 },
-        { id: "g2", activityId: "act-2", dailyTargetQuantity: 5 },
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
       ] as any[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
-      expect(mockDb.goals.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockDb.goals.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["g1", "g2"]);
       expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
         {
           id: "g2",
           activityId: "act-2",
           dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
           _syncStatus: "synced",
         },
       ]);
     });
 
     it("全レコードがpendingの場合bulkPutをスキップする", async () => {
-      const mockPrimaryKeys = vi.fn().mockResolvedValue(["g1", "g2"]);
-      const mockEquals = vi.fn().mockReturnValue({
-        primaryKeys: mockPrimaryKeys,
-      });
-      mockDb.goals.where.mockReturnValue({ equals: mockEquals });
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const goals = [
-        { id: "g1", activityId: "act-1", dailyTargetQuantity: 10 },
-        { id: "g2", activityId: "act-2", dailyTargetQuantity: 5 },
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
       ] as any[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
+      expect(mockDb.goals.bulkPut).not.toHaveBeenCalled();
+    });
+
+    it("ローカルのupdatedAtが新しいレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "synced",
+          updatedAt: "2026-03-05T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const goals = [
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ] as any[];
+
+      await goalRepository.upsertGoalsFromServer(goals);
+
+      expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("空配列の場合何もしない", async () => {
+      await goalRepository.upsertGoalsFromServer([]);
+
+      expect(mockDb.goals.where).not.toHaveBeenCalled();
       expect(mockDb.goals.bulkPut).not.toHaveBeenCalled();
     });
   });
