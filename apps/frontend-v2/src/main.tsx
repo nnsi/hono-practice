@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import { ErrorBoundary } from "./components/root";
+import { db } from "./db/schema";
 import { routeTree } from "./routeTree.gen";
 import "./main.css";
 
@@ -19,7 +20,26 @@ const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3456"
 ).replace(/\/+$/, "");
 
-const reportErrorOptions = { apiUrl: API_URL, platform: "web" as const };
+let cachedUserId = "";
+db.authState.get("current").then((state) => {
+  cachedUserId = state?.lastLoginAt ? state.userId : "";
+});
+db.authState.hook("creating", (_primKey, obj) => {
+  cachedUserId = obj.lastLoginAt ? obj.userId : "";
+});
+db.authState.hook("updating", (modifications, _primKey, obj) => {
+  const merged = { ...obj, ...modifications };
+  cachedUserId = merged.lastLoginAt ? merged.userId : "";
+});
+
+const reportErrorOptions = {
+  apiUrl: API_URL,
+  platform: "web" as const,
+  getContext: () => ({
+    screen: window.location.pathname,
+    userId: cachedUserId || undefined,
+  }),
+};
 
 setupGlobalErrorHandler((report) => reportError(report, reportErrorOptions));
 
