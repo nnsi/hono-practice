@@ -1,14 +1,12 @@
 import type { SyncResult } from "@packages/sync-engine";
-import {
-  chunkArray,
-  mapApiGoal,
-  mergeSyncResults,
-} from "@packages/sync-engine";
+import { chunkArray, mapApiGoal } from "@packages/sync-engine";
 
 import { goalRepository } from "../repositories/goalRepository";
 import { apiClient } from "../utils/apiClient";
 import { getSyncGeneration } from "./syncState";
 
+// チャンクごとに即座にmark処理を実行する。
+// 全チャンク完了後の一括markだと、途中チャンク失敗時に成功分のmarkがスキップされる。
 export async function syncGoals(): Promise<void> {
   const gen = getSyncGeneration();
   const pending = await goalRepository.getPendingSyncGoals();
@@ -18,7 +16,6 @@ export async function syncGoals(): Promise<void> {
     ({ _syncStatus, currentBalance, totalTarget, totalActual, ...g }) => g,
   );
   const chunks = chunkArray(goals);
-  const results: SyncResult[] = [];
 
   for (const chunk of chunks) {
     if (gen !== getSyncGeneration()) return;
@@ -26,17 +23,17 @@ export async function syncGoals(): Promise<void> {
       json: { goals: chunk },
     });
     if (!res.ok) throw new Error(`syncGoals failed: ${res.status}`);
-    results.push((await res.json()) as SyncResult);
-  }
 
-  if (gen !== getSyncGeneration()) return;
-
-  const data = mergeSyncResults(results);
-  await goalRepository.markGoalsSynced(data.syncedIds);
-  if (gen !== getSyncGeneration()) return;
-  await goalRepository.markGoalsFailed(data.skippedIds);
-  if (gen !== getSyncGeneration()) return;
-  if (data.serverWins.length > 0) {
-    await goalRepository.upsertGoalsFromServer(data.serverWins.map(mapApiGoal));
+    if (gen !== getSyncGeneration()) return;
+    const data = (await res.json()) as SyncResult;
+    await goalRepository.markGoalsSynced(data.syncedIds);
+    if (gen !== getSyncGeneration()) return;
+    await goalRepository.markGoalsFailed(data.skippedIds);
+    if (gen !== getSyncGeneration()) return;
+    if (data.serverWins.length > 0) {
+      await goalRepository.upsertGoalsFromServer(
+        data.serverWins.map(mapApiGoal),
+      );
+    }
   }
 }

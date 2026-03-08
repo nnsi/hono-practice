@@ -189,7 +189,7 @@ describe("syncActivityLogs", () => {
     expect(mockPost.mock.calls[1][0].json.logs).toHaveLength(50);
   });
 
-  it("merges results from multiple chunks", async () => {
+  it("processes results per chunk", async () => {
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `l-${i}`,
       _syncStatus: "pending",
@@ -232,11 +232,20 @@ describe("syncActivityLogs", () => {
 
     await syncActivityLogs();
 
-    expect(mockLogRepo.markActivityLogsSynced).toHaveBeenCalledWith([
-      ...firstChunkSyncedIds,
-      ...secondChunkSyncedIds,
-    ]);
-    expect(mockLogRepo.markActivityLogsFailed).toHaveBeenCalledWith(
+    // チャンクごとに個別にmark
+    expect(mockLogRepo.markActivityLogsSynced).toHaveBeenCalledTimes(2);
+    expect(mockLogRepo.markActivityLogsSynced).toHaveBeenNthCalledWith(
+      1,
+      firstChunkSyncedIds,
+    );
+    expect(mockLogRepo.markActivityLogsSynced).toHaveBeenNthCalledWith(
+      2,
+      secondChunkSyncedIds,
+    );
+    expect(mockLogRepo.markActivityLogsFailed).toHaveBeenCalledTimes(2);
+    expect(mockLogRepo.markActivityLogsFailed).toHaveBeenNthCalledWith(1, []);
+    expect(mockLogRepo.markActivityLogsFailed).toHaveBeenNthCalledWith(
+      2,
       secondChunkSkippedIds,
     );
   });

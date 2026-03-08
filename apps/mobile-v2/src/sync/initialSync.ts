@@ -88,61 +88,84 @@ export async function performInitialSync(
 
   if (gen !== getSyncGeneration()) return;
 
+  // レスポンスをパースしてデータを収集（DB書き込みはまだ行わない）
   let allSynced = true;
+  let activitiesData: ReturnType<typeof mapApiActivity>[] = [];
+  let kindsData: ReturnType<typeof mapApiActivityKind>[] = [];
+  let logsData: ReturnType<typeof mapApiActivityLog>[] = [];
+  let goalsData: ReturnType<typeof mapApiGoal>[] = [];
+  let tasksData: ReturnType<typeof mapApiTask>[] = [];
 
-  // Process activities + activityKinds
   if (activitiesRes.ok) {
     const data = await activitiesRes.json();
-    await activityRepository.upsertActivities(
-      data.activities.map(mapApiActivity),
-    );
-    if (gen !== getSyncGeneration()) return;
+    activitiesData = data.activities.map(mapApiActivity);
     if (data.activityKinds?.length > 0) {
-      await activityRepository.upsertActivityKinds(
-        data.activityKinds.map(mapApiActivityKind),
-      );
-      if (gen !== getSyncGeneration()) return;
+      kindsData = data.activityKinds.map(mapApiActivityKind);
     }
   } else {
     allSynced = false;
   }
 
-  // Process activityLogs
   if (logsRes.ok) {
     const data = await logsRes.json();
     if (data.logs?.length > 0) {
-      await activityLogRepository.upsertActivityLogsFromServer(
-        data.logs.map(mapApiActivityLog),
-      );
-      if (gen !== getSyncGeneration()) return;
+      logsData = data.logs.map(mapApiActivityLog);
     }
   } else {
     allSynced = false;
   }
 
-  // Process goals
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
-      await goalRepository.upsertGoalsFromServer(data.goals.map(mapApiGoal));
-      if (gen !== getSyncGeneration()) return;
+      goalsData = data.goals.map(mapApiGoal);
     }
   } else {
     allSynced = false;
   }
 
-  // Process tasks
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
-      await taskRepository.upsertTasksFromServer(data.tasks.map(mapApiTask));
-      if (gen !== getSyncGeneration()) return;
+      tasksData = data.tasks.map(mapApiTask);
     }
   } else {
     allSynced = false;
   }
 
-  // Only update lastSyncedAt if all synced successfully
+  if (gen !== getSyncGeneration()) return;
+
+  // 全テーブルをトランザクションでアトミックに書き込み。
+  // テーブルごとに個別書き込みするとリアクティブクエリが中間状態を描画してしまう。
+  const hasData =
+    activitiesData.length > 0 ||
+    kindsData.length > 0 ||
+    logsData.length > 0 ||
+    goalsData.length > 0 ||
+    tasksData.length > 0;
+
+  if (hasData) {
+    await db.withTransactionAsync(async () => {
+      if (activitiesData.length > 0) {
+        await activityRepository.upsertActivities(activitiesData);
+      }
+      if (kindsData.length > 0) {
+        await activityRepository.upsertActivityKinds(kindsData);
+      }
+      if (logsData.length > 0) {
+        await activityLogRepository.upsertActivityLogsFromServer(logsData);
+      }
+      if (goalsData.length > 0) {
+        await goalRepository.upsertGoalsFromServer(goalsData);
+      }
+      if (tasksData.length > 0) {
+        await taskRepository.upsertTasksFromServer(tasksData);
+      }
+    });
+  }
+
+  if (gen !== getSyncGeneration()) return;
+
   if (allSynced) {
     storage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
   }

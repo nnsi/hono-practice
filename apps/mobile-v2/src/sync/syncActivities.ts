@@ -3,7 +3,6 @@ import {
   chunkArray,
   mapApiActivity,
   mapApiActivityKind,
-  mergeSyncResults,
 } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
@@ -26,9 +25,9 @@ export async function syncActivities(): Promise<void> {
   const activityChunks = chunkArray(activitiesData);
   const kindChunks = chunkArray(kindsData, 500);
 
+  // チャンクごとに即座にmark処理を実行する。
+  // 全チャンク完了後の一括markだと、途中チャンク失敗時に成功分のmarkがスキップされる。
   const maxChunks = Math.max(activityChunks.length, kindChunks.length);
-  const activityResults: SyncResult[] = [];
-  const kindResults: SyncResult[] = [];
 
   for (let i = 0; i < maxChunks; i++) {
     if (gen !== getSyncGeneration()) return;
@@ -40,37 +39,36 @@ export async function syncActivities(): Promise<void> {
     });
     if (!res.ok) throw new Error(`syncActivities failed: ${res.status}`);
 
+    if (gen !== getSyncGeneration()) return;
     const data = (await res.json()) as {
       activities: SyncResult;
       activityKinds: SyncResult;
     };
-    activityResults.push(data.activities);
-    kindResults.push(data.activityKinds);
-  }
 
-  if (gen !== getSyncGeneration()) return;
+    await activityRepository.markActivitiesSynced(data.activities.syncedIds);
+    if (gen !== getSyncGeneration()) return;
+    await activityRepository.markActivitiesFailed(data.activities.skippedIds);
+    if (gen !== getSyncGeneration()) return;
+    if (data.activities.serverWins.length > 0) {
+      await activityRepository.upsertActivities(
+        data.activities.serverWins.map(mapApiActivity),
+      );
+      if (gen !== getSyncGeneration()) return;
+    }
 
-  const activityData = mergeSyncResults(activityResults);
-  await activityRepository.markActivitiesSynced(activityData.syncedIds);
-  if (gen !== getSyncGeneration()) return;
-  await activityRepository.markActivitiesFailed(activityData.skippedIds);
-  if (gen !== getSyncGeneration()) return;
-  if (activityData.serverWins.length > 0) {
-    await activityRepository.upsertActivities(
-      activityData.serverWins.map(mapApiActivity),
+    await activityRepository.markActivityKindsSynced(
+      data.activityKinds.syncedIds,
     );
     if (gen !== getSyncGeneration()) return;
-  }
-
-  const kindData = mergeSyncResults(kindResults);
-  await activityRepository.markActivityKindsSynced(kindData.syncedIds);
-  if (gen !== getSyncGeneration()) return;
-  await activityRepository.markActivityKindsFailed(kindData.skippedIds);
-  if (gen !== getSyncGeneration()) return;
-  if (kindData.serverWins.length > 0) {
-    await activityRepository.upsertActivityKinds(
-      kindData.serverWins.map(mapApiActivityKind),
+    await activityRepository.markActivityKindsFailed(
+      data.activityKinds.skippedIds,
     );
+    if (gen !== getSyncGeneration()) return;
+    if (data.activityKinds.serverWins.length > 0) {
+      await activityRepository.upsertActivityKinds(
+        data.activityKinds.serverWins.map(mapApiActivityKind),
+      );
+    }
   }
 }
 

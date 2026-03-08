@@ -70,6 +70,9 @@ function createMockDb() {
     runAsync: vi.fn().mockResolvedValue(undefined),
     getFirstAsync: vi.fn().mockResolvedValue(null),
     getAllAsync: vi.fn().mockResolvedValue([]),
+    withTransactionAsync: vi
+      .fn()
+      .mockImplementation(async (fn: () => Promise<void>) => fn()),
   };
 }
 
@@ -298,9 +301,8 @@ describe("performInitialSync", () => {
 
     await performInitialSync("user-1", mockStorage);
 
-    // activities upsert is always called (no empty guard in source)
-    expect(activityRepository.upsertActivities).toHaveBeenCalledWith([]);
-    // activityKinds, logs, goals, tasks have empty guards
+    // 全データが空の場合、トランザクション自体がスキップされupsertは呼ばれない
+    expect(activityRepository.upsertActivities).not.toHaveBeenCalled();
     expect(activityRepository.upsertActivityKinds).not.toHaveBeenCalled();
     expect(
       activityLogRepository.upsertActivityLogsFromServer,

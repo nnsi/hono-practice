@@ -193,7 +193,7 @@ describe("syncTasks", () => {
     expect(mockPost.mock.calls[1][0].json.tasks).toHaveLength(1);
   });
 
-  it("throws on second chunk failure (H5)", async () => {
+  it("throws on second chunk failure but marks first chunk as synced", async () => {
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `t-${i}`,
       title: `Task ${i}`,
@@ -201,13 +201,14 @@ describe("syncTasks", () => {
     })) as any;
     mockTaskRepo.getPendingSyncTasks.mockResolvedValue(pending);
 
+    const firstChunkIds = Array.from({ length: 100 }, (_, i) => `t-${i}`);
     const mockPost = vi
       .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
-            syncedIds: Array.from({ length: 100 }, (_, i) => `t-${i}`),
+            syncedIds: firstChunkIds,
             skippedIds: [],
             serverWins: [],
           }),
@@ -219,8 +220,11 @@ describe("syncTasks", () => {
 
     await expect(syncTasks()).rejects.toThrow("syncTasks failed");
 
-    expect(mockTaskRepo.markTasksSynced).not.toHaveBeenCalled();
-    expect(mockTaskRepo.markTasksFailed).not.toHaveBeenCalled();
+    // 成功した第1チャンクはmark済み、第2チャンクは失敗でmarkされない
+    expect(mockTaskRepo.markTasksSynced).toHaveBeenCalledTimes(1);
+    expect(mockTaskRepo.markTasksSynced).toHaveBeenCalledWith(firstChunkIds);
+    expect(mockTaskRepo.markTasksFailed).toHaveBeenCalledTimes(1);
+    expect(mockTaskRepo.markTasksFailed).toHaveBeenCalledWith([]);
     expect(mockTaskRepo.upsertTasksFromServer).not.toHaveBeenCalled();
   });
 
@@ -252,7 +256,7 @@ describe("syncTasks", () => {
     expect(mockTaskRepo.markTasksSynced).toHaveBeenCalledWith(["t-0"]);
   });
 
-  it("merges serverWins from multiple chunks", async () => {
+  it("processes serverWins per chunk", async () => {
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `t-${i}`,
       title: `Task ${i}`,
@@ -288,7 +292,14 @@ describe("syncTasks", () => {
 
     await syncTasks();
 
-    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith([sw1, sw2]);
+    // チャンクごとに個別にupsert
+    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledTimes(2);
+    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenNthCalledWith(1, [
+      sw1,
+    ]);
+    expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenNthCalledWith(2, [
+      sw2,
+    ]);
   });
 
   it("skips DB writes when sync generation changes (H4)", async () => {

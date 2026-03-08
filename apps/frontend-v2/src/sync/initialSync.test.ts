@@ -18,6 +18,12 @@ vi.mock("../db/schema", () => ({
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
     authState: { put: vi.fn() },
+    transaction: vi
+      .fn()
+      .mockImplementation(
+        async (_mode: string, _tables: unknown[], fn: () => Promise<void>) =>
+          fn(),
+      ),
   },
 }));
 vi.mock("@packages/sync-engine/mappers/apiMappers");
