@@ -19,9 +19,12 @@ export const taskRepository = {
   async createTask(input: CreateTaskInput) {
     const now = new Date().toISOString();
     const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create task: userId is not set");
+    }
     const task: DexieTask = {
       id: uuidv7(),
-      userId: authState?.userId ?? "",
+      userId: authState.userId,
       title: input.title,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,
@@ -99,8 +102,20 @@ export const taskRepository = {
   },
 
   async upsertTasksFromServer(tasks: Omit<DexieTask, "_syncStatus">[]) {
+    if (tasks.length === 0) return;
+    const serverIds = tasks.map((t) => t.id);
+    const localRecords = await db.tasks.where("id").anyOf(serverIds).toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = tasks.filter((t) => {
+      const local = localMap.get(t.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(t.updatedAt)) return false;
+      return true;
+    });
+    if (safe.length === 0) return;
     await db.tasks.bulkPut(
-      tasks.map((t) => ({ ...t, _syncStatus: "synced" as const })),
+      safe.map((t) => ({ ...t, _syncStatus: "synced" as const })),
     );
   },
 } satisfies TaskRepository;

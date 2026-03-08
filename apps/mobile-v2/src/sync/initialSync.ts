@@ -14,12 +14,14 @@ import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
+import { getSyncGeneration, invalidateSync } from "./syncState";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 
 export async function clearLocalData(
   storage: StorageAdapter = rnStorageAdapter,
 ) {
+  invalidateSync();
   const db = await getDatabase();
   await db.execAsync(`
     DELETE FROM activity_logs;
@@ -74,6 +76,8 @@ export async function performInitialSync(
   }
   const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
 
+  const gen = getSyncGeneration();
+
   // Fetch all data in parallel
   const [activitiesRes, logsRes, goalsRes, tasksRes] = await Promise.all([
     apiClient.users.v2.activities.$get(),
@@ -82,56 +86,86 @@ export async function performInitialSync(
     apiClient.users.v2.tasks.$get({ query: sinceQuery }),
   ]);
 
-  let allSynced = true;
+  if (gen !== getSyncGeneration()) return;
 
-  // Process activities + activityKinds
+  // レスポンスをパースしてデータを収集（DB書き込みはまだ行わない）
+  let allSynced = true;
+  let activitiesData: ReturnType<typeof mapApiActivity>[] = [];
+  let kindsData: ReturnType<typeof mapApiActivityKind>[] = [];
+  let logsData: ReturnType<typeof mapApiActivityLog>[] = [];
+  let goalsData: ReturnType<typeof mapApiGoal>[] = [];
+  let tasksData: ReturnType<typeof mapApiTask>[] = [];
+
   if (activitiesRes.ok) {
     const data = await activitiesRes.json();
-    await activityRepository.upsertActivities(
-      data.activities.map(mapApiActivity),
-    );
+    activitiesData = data.activities.map(mapApiActivity);
     if (data.activityKinds?.length > 0) {
-      await activityRepository.upsertActivityKinds(
-        data.activityKinds.map(mapApiActivityKind),
-      );
+      kindsData = data.activityKinds.map(mapApiActivityKind);
     }
   } else {
     allSynced = false;
   }
 
-  // Process activityLogs
   if (logsRes.ok) {
     const data = await logsRes.json();
     if (data.logs?.length > 0) {
-      await activityLogRepository.upsertActivityLogsFromServer(
-        data.logs.map(mapApiActivityLog),
-      );
+      logsData = data.logs.map(mapApiActivityLog);
     }
   } else {
     allSynced = false;
   }
 
-  // Process goals
   if (goalsRes.ok) {
     const data = await goalsRes.json();
     if (data.goals?.length > 0) {
-      await goalRepository.upsertGoalsFromServer(data.goals.map(mapApiGoal));
+      goalsData = data.goals.map(mapApiGoal);
     }
   } else {
     allSynced = false;
   }
 
-  // Process tasks
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
-      await taskRepository.upsertTasksFromServer(data.tasks.map(mapApiTask));
+      tasksData = data.tasks.map(mapApiTask);
     }
   } else {
     allSynced = false;
   }
 
-  // Only update lastSyncedAt if all synced successfully
+  if (gen !== getSyncGeneration()) return;
+
+  // 全テーブルをトランザクションでアトミックに書き込み。
+  // テーブルごとに個別書き込みするとリアクティブクエリが中間状態を描画してしまう。
+  const hasData =
+    activitiesData.length > 0 ||
+    kindsData.length > 0 ||
+    logsData.length > 0 ||
+    goalsData.length > 0 ||
+    tasksData.length > 0;
+
+  if (hasData) {
+    await db.withTransactionAsync(async () => {
+      if (activitiesData.length > 0) {
+        await activityRepository.upsertActivities(activitiesData);
+      }
+      if (kindsData.length > 0) {
+        await activityRepository.upsertActivityKinds(kindsData);
+      }
+      if (logsData.length > 0) {
+        await activityLogRepository.upsertActivityLogsFromServer(logsData);
+      }
+      if (goalsData.length > 0) {
+        await goalRepository.upsertGoalsFromServer(goalsData);
+      }
+      if (tasksData.length > 0) {
+        await taskRepository.upsertTasksFromServer(tasksData);
+      }
+    });
+  }
+
+  if (gen !== getSyncGeneration()) return;
+
   if (allSynced) {
     storage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
   }

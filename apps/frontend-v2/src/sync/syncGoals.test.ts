@@ -14,6 +14,7 @@ import { mapApiGoal } from "@packages/sync-engine/mappers/apiMappers";
 
 import { goalRepository } from "../db/goalRepository";
 import { syncGoals } from "./syncGoals";
+import { invalidateSync } from "./syncState";
 
 const mockGoalRepo = vi.mocked(goalRepository);
 
@@ -112,7 +113,7 @@ describe("syncGoals", () => {
     ]);
   });
 
-  it("does not process when API returns not ok", async () => {
+  it("throws when API returns not ok (H5)", async () => {
     mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
       {
         id: "g1",
@@ -131,7 +132,7 @@ describe("syncGoals", () => {
       v2: { goals: { sync: { $post: mockPost } } },
     };
 
-    await syncGoals();
+    await expect(syncGoals()).rejects.toThrow("syncGoals failed");
 
     expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
   });
@@ -219,7 +220,7 @@ describe("syncGoals", () => {
     expect(mockPost.mock.calls[1][0].json.goals).toHaveLength(1);
   });
 
-  it("stops processing on second chunk failure", async () => {
+  it("throws on second chunk failure but marks first chunk as synced", async () => {
     const pending = Array.from({ length: 200 }, (_, i) => ({
       id: `g-${i}`,
       activityId: "a1",
@@ -230,13 +231,14 @@ describe("syncGoals", () => {
     })) as any;
     mockGoalRepo.getPendingSyncGoals.mockResolvedValue(pending);
 
+    const firstChunkIds = Array.from({ length: 100 }, (_, i) => `g-${i}`);
     const mockPost = vi
       .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
-            syncedIds: Array.from({ length: 100 }, (_, i) => `g-${i}`),
+            syncedIds: firstChunkIds,
             skippedIds: [],
             serverWins: [],
           }),
@@ -246,10 +248,13 @@ describe("syncGoals", () => {
       v2: { goals: { sync: { $post: mockPost } } },
     };
 
-    await syncGoals();
+    await expect(syncGoals()).rejects.toThrow("syncGoals failed");
 
-    expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
-    expect(mockGoalRepo.markGoalsFailed).not.toHaveBeenCalled();
+    // 成功した第1チャンクはmark済み、第2チャンクは失敗でmarkされない
+    expect(mockGoalRepo.markGoalsSynced).toHaveBeenCalledTimes(1);
+    expect(mockGoalRepo.markGoalsSynced).toHaveBeenCalledWith(firstChunkIds);
+    expect(mockGoalRepo.markGoalsFailed).toHaveBeenCalledTimes(1);
+    expect(mockGoalRepo.markGoalsFailed).toHaveBeenCalledWith([]);
   });
 
   it("upserts multiple serverWins from server response", async () => {
@@ -282,7 +287,7 @@ describe("syncGoals", () => {
     expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith(serverWins);
   });
 
-  it("merges serverWins across chunks", async () => {
+  it("processes serverWins per chunk", async () => {
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `g-${i}`,
       activityId: "a1",
@@ -321,7 +326,14 @@ describe("syncGoals", () => {
 
     await syncGoals();
 
-    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledWith([sw1, sw2]);
+    // チャンクごとに個別にupsert（一括mergeではない）
+    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenCalledTimes(2);
+    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenNthCalledWith(1, [
+      sw1,
+    ]);
+    expect(mockGoalRepo.upsertGoalsFromServer).toHaveBeenNthCalledWith(2, [
+      sw2,
+    ]);
   });
 
   it("does not call upsertGoalsFromServer when no serverWins", async () => {
@@ -351,6 +363,39 @@ describe("syncGoals", () => {
 
     await syncGoals();
 
+    expect(mockGoalRepo.upsertGoalsFromServer).not.toHaveBeenCalled();
+  });
+
+  it("skips DB writes when sync generation changes (H4)", async () => {
+    mockGoalRepo.getPendingSyncGoals.mockResolvedValue([
+      {
+        id: "g1",
+        _syncStatus: "pending",
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+      },
+    ] as any);
+
+    const mockPost = vi.fn().mockImplementation(async () => {
+      invalidateSync();
+      return {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            syncedIds: ["g1"],
+            skippedIds: [],
+            serverWins: [{ id: "sw-1" }],
+          }),
+      };
+    });
+    mockApiClientObj.users = {
+      v2: { goals: { sync: { $post: mockPost } } },
+    };
+
+    await syncGoals();
+
+    expect(mockGoalRepo.markGoalsSynced).not.toHaveBeenCalled();
     expect(mockGoalRepo.upsertGoalsFromServer).not.toHaveBeenCalled();
   });
 });

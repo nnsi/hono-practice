@@ -65,13 +65,16 @@ export const taskRepository = {
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create task: userId is not set");
+    }
 
     await db.runAsync(
       `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, NULL, ?, NULL, 'pending', NULL, ?, ?)`,
       [
         id,
-        auth?.user_id ?? "",
+        auth.user_id,
         input.title,
         input.startDate ?? null,
         input.dueDate ?? null,
@@ -85,7 +88,7 @@ export const taskRepository = {
 
     return {
       id,
-      userId: auth?.user_id ?? "",
+      userId: auth.user_id,
       title: input.title,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,
@@ -226,8 +229,22 @@ export const taskRepository = {
       await db.execAsync("BEGIN");
       for (const t of tasks) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             title = excluded.title,
+             start_date = excluded.start_date,
+             due_date = excluded.due_date,
+             done_date = excluded.done_date,
+             memo = excluded.memo,
+             archived_at = excluded.archived_at,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             t.id,
             t.userId,

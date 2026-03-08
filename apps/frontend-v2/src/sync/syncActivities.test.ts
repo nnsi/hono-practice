@@ -27,6 +27,7 @@ import {
   syncActivityIconDeletions,
   syncActivityIcons,
 } from "./syncActivities";
+import { invalidateSync } from "./syncState";
 
 const mockActivityRepo = vi.mocked(activityRepository);
 const mockDb = vi.mocked(db) as any;
@@ -152,7 +153,7 @@ describe("syncActivities", () => {
       ]);
     });
 
-    it("does not process result when API returns not ok", async () => {
+    it("throws when API returns not ok (H5)", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
         { id: "a1", _syncStatus: "pending" },
       ] as any);
@@ -166,10 +167,44 @@ describe("syncActivities", () => {
         v2: { activities: { sync: { $post: mockPost } } },
       };
 
-      await syncActivities();
+      await expect(syncActivities()).rejects.toThrow("syncActivities failed");
 
       expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
       expect(mockActivityRepo.markActivitiesFailed).not.toHaveBeenCalled();
+    });
+
+    it("skips DB writes when sync generation changes (H4)", async () => {
+      mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
+        { id: "a1", name: "Run", _syncStatus: "pending" },
+      ] as any);
+      mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
+
+      const mockPost = vi.fn().mockImplementation(async () => {
+        invalidateSync();
+        return {
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              activities: {
+                syncedIds: ["a1"],
+                skippedIds: [],
+                serverWins: [],
+              },
+              activityKinds: {
+                syncedIds: [],
+                skippedIds: [],
+                serverWins: [],
+              },
+            }),
+        };
+      });
+      mockApiClientObj.users = {
+        v2: { activities: { sync: { $post: mockPost } } },
+      };
+
+      await syncActivities();
+
+      expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
     });
 
     it("sends activities in chunks of 100", async () => {
@@ -330,7 +365,7 @@ describe("syncActivities", () => {
       );
     });
 
-    it("does not complete sync on upload failure", async () => {
+    it("throws on upload failure (H5)", async () => {
       mockActivityRepo.getPendingIconBlobs.mockResolvedValue([
         { activityId: "a1", base64: "abc123", mimeType: "image/png" },
       ]);
@@ -344,7 +379,9 @@ describe("syncActivities", () => {
         status: 500,
       });
 
-      await syncActivityIcons();
+      await expect(syncActivityIcons()).rejects.toThrow(
+        "syncActivityIcons failed",
+      );
 
       expect(mockActivityRepo.completeActivityIconSync).not.toHaveBeenCalled();
     });

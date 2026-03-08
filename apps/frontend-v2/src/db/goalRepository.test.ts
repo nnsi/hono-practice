@@ -97,16 +97,16 @@ describe("goalRepository", () => {
       expect(result.description).toBe("毎日5km走る");
     });
 
-    it("authStateがない場合userIdは空文字になる", async () => {
+    it("authStateがない場合エラーを投げる", async () => {
       mockDb.authState.get.mockResolvedValue(undefined);
 
-      const result = await goalRepository.createGoal({
-        activityId: "act-1",
-        dailyTargetQuantity: 10,
-        startDate: "2024-06-01",
-      });
-
-      expect(result.userId).toBe("");
+      await expect(
+        goalRepository.createGoal({
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          startDate: "2024-06-01",
+        }),
+      ).rejects.toThrow("Cannot create goal: userId is not set");
     });
 
     it("endDateにnullを明示的に渡した場合", async () => {
@@ -239,27 +239,168 @@ describe("goalRepository", () => {
   // ========== Server upsert ==========
   describe("upsertGoalsFromServer", () => {
     it("サーバーデータをsynced状態でbulkPutする", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
+
       const goals = [
-        { id: "g1", activityId: "act-1", dailyTargetQuantity: 10 },
-        { id: "g2", activityId: "act-2", dailyTargetQuantity: 5 },
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
       ] as any[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
+      expect(mockDb.goals.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["g1", "g2"]);
       expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
         {
           id: "g1",
           activityId: "act-1",
           dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
           _syncStatus: "synced",
         },
         {
           id: "g2",
           activityId: "act-2",
           dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
           _syncStatus: "synced",
         },
       ]);
+    });
+
+    it("pendingレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const goals = [
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ] as any[];
+
+      await goalRepository.upsertGoalsFromServer(goals);
+
+      expect(mockDb.goals.where).toHaveBeenCalledWith("id");
+      expect(mockAnyOf).toHaveBeenCalledWith(["g1", "g2"]);
+      expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("全レコードがpendingの場合bulkPutをスキップする", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          _syncStatus: "pending",
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const goals = [
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ] as any[];
+
+      await goalRepository.upsertGoalsFromServer(goals);
+
+      expect(mockDb.goals.bulkPut).not.toHaveBeenCalled();
+    });
+
+    it("ローカルのupdatedAtが新しいレコードを上書きしない", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        {
+          id: "g1",
+          _syncStatus: "synced",
+          updatedAt: "2026-03-05T00:00:00Z",
+        },
+      ]);
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.where.mockReturnValue({ anyOf: mockAnyOf });
+
+      const goals = [
+        {
+          id: "g1",
+          activityId: "act-1",
+          dailyTargetQuantity: 10,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+        },
+      ] as any[];
+
+      await goalRepository.upsertGoalsFromServer(goals);
+
+      expect(mockDb.goals.bulkPut).toHaveBeenCalledWith([
+        {
+          id: "g2",
+          activityId: "act-2",
+          dailyTargetQuantity: 5,
+          updatedAt: "2026-03-01T00:00:00Z",
+          _syncStatus: "synced",
+        },
+      ]);
+    });
+
+    it("空配列の場合何もしない", async () => {
+      await goalRepository.upsertGoalsFromServer([]);
+
+      expect(mockDb.goals.where).not.toHaveBeenCalled();
+      expect(mockDb.goals.bulkPut).not.toHaveBeenCalled();
     });
   });
 });

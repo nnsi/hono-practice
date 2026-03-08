@@ -80,13 +80,16 @@ export const goalRepository = {
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create goal: userId is not set");
+    }
 
     await db.runAsync(
       `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 1, ?, 'pending', NULL, ?, ?)`,
       [
         id,
-        auth?.user_id ?? "",
+        auth.user_id,
         input.activityId,
         input.dailyTargetQuantity,
         input.startDate,
@@ -101,7 +104,7 @@ export const goalRepository = {
 
     return {
       id,
-      userId: auth?.user_id ?? "",
+      userId: auth.user_id,
       activityId: input.activityId,
       dailyTargetQuantity: input.dailyTargetQuantity,
       startDate: input.startDate,
@@ -215,8 +218,22 @@ export const goalRepository = {
       await db.execAsync("BEGIN");
       for (const g of goals) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             activity_id = excluded.activity_id,
+             daily_target_quantity = excluded.daily_target_quantity,
+             start_date = excluded.start_date,
+             end_date = excluded.end_date,
+             is_active = excluded.is_active,
+             description = excluded.description,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             g.id,
             g.userId,

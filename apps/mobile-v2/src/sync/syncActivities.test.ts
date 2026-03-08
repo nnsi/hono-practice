@@ -185,7 +185,7 @@ describe("syncActivities", () => {
 
     mockPost.mockResolvedValue({ ok: false });
 
-    await syncActivities();
+    await expect(syncActivities()).rejects.toThrow("syncActivities failed");
 
     expect(activityRepository.markActivitiesSynced).not.toHaveBeenCalled();
     expect(activityRepository.markActivitiesFailed).not.toHaveBeenCalled();
@@ -432,7 +432,7 @@ describe("syncActivityIcons", () => {
     );
   });
 
-  it("does not complete sync on upload failure", async () => {
+  it("throws on upload failure (H5)", async () => {
     (activityRepository.getPendingIconBlobs as Mock).mockResolvedValue([
       { activityId: "a1", base64: "abc", mimeType: "image/png" },
     ]);
@@ -444,7 +444,9 @@ describe("syncActivityIcons", () => {
 
     mockCustomFetch.mockResolvedValue({ ok: false });
 
-    await syncActivityIcons();
+    await expect(syncActivityIcons()).rejects.toThrow(
+      "syncActivityIcons failed",
+    );
 
     expect(activityRepository.completeActivityIconSync).not.toHaveBeenCalled();
   });

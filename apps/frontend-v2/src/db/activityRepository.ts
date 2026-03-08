@@ -38,6 +38,9 @@ export const activityRepository = {
   async createActivity(input: CreateActivityInput) {
     const now = new Date().toISOString();
     const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
     const lastActivity = await db.activities
       .orderBy("orderIndex")
       .reverse()
@@ -46,7 +49,7 @@ export const activityRepository = {
 
     const activity: DexieActivity = {
       id: uuidv7(),
-      userId: authState?.userId ?? "",
+      userId: authState.userId,
       name: input.name,
       label: "",
       emoji: input.emoji,
@@ -327,14 +330,44 @@ export const activityRepository = {
 
   // Server upsert (used by initialSync and syncEngine)
   async upsertActivities(activities: Omit<DexieActivity, "_syncStatus">[]) {
+    if (activities.length === 0) return;
+    const serverIds = activities.map((a) => a.id);
+    const localRecords = await db.activities
+      .where("id")
+      .anyOf(serverIds)
+      .toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = activities.filter((a) => {
+      const local = localMap.get(a.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(a.updatedAt)) return false;
+      return true;
+    });
+    if (safe.length === 0) return;
     await db.activities.bulkPut(
-      activities.map((a) => ({ ...a, _syncStatus: "synced" as const })),
+      safe.map((a) => ({ ...a, _syncStatus: "synced" as const })),
     );
   },
 
   async upsertActivityKinds(kinds: Omit<DexieActivityKind, "_syncStatus">[]) {
+    if (kinds.length === 0) return;
+    const serverIds = kinds.map((k) => k.id);
+    const localRecords = await db.activityKinds
+      .where("id")
+      .anyOf(serverIds)
+      .toArray();
+    const localMap = new Map(localRecords.map((r) => [r.id, r]));
+    const safe = kinds.filter((k) => {
+      const local = localMap.get(k.id);
+      if (!local) return true;
+      if (local._syncStatus === "pending") return false;
+      if (new Date(local.updatedAt) > new Date(k.updatedAt)) return false;
+      return true;
+    });
+    if (safe.length === 0) return;
     await db.activityKinds.bulkPut(
-      kinds.map((k) => ({ ...k, _syncStatus: "synced" as const })),
+      safe.map((k) => ({ ...k, _syncStatus: "synced" as const })),
     );
   },
 } satisfies ActivityRepository;

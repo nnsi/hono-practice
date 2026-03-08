@@ -66,6 +66,7 @@ function useAppSettings() {
 function useGoogleAccount() {
   const [isGoogleLinked, setIsGoogleLinked] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -73,11 +74,15 @@ function useGoogleAccount() {
   } | null>(null);
 
   const fetchUserInfo = useCallback(async () => {
-    const res = await apiClient.user.me.$get();
-    if (!res.ok) return;
-    const user = await res.json();
-    setIsGoogleLinked(user.providers?.includes("google") ?? false);
-    setGoogleEmail(user.providerEmails?.google ?? null);
+    try {
+      const res = await apiClient.user.me.$get();
+      if (!res.ok) return;
+      const user = await res.json();
+      setIsGoogleLinked(user.providers?.includes("google") ?? false);
+      setGoogleEmail(user.providerEmails?.google ?? null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -87,19 +92,31 @@ function useGoogleAccount() {
   const linkGoogle = async (credential: string) => {
     setIsLinking(true);
     setMessage(null);
-    const res = await apiClient.auth.google.link.$post({
-      json: { credential },
-    });
-    setIsLinking(false);
-    if (!res.ok) {
+    try {
+      const res = await apiClient.auth.google.link.$post({
+        json: { credential },
+      });
+      if (!res.ok) {
+        setMessage({ type: "error", text: "Google連携に失敗しました" });
+        return;
+      }
+      setMessage({ type: "success", text: "Google連携が完了しました" });
+      await fetchUserInfo();
+    } catch {
       setMessage({ type: "error", text: "Google連携に失敗しました" });
-      return;
+    } finally {
+      setIsLinking(false);
     }
-    setMessage({ type: "success", text: "Google連携が完了しました" });
-    await fetchUserInfo();
   };
 
-  return { isGoogleLinked, googleEmail, isLinking, message, linkGoogle };
+  return {
+    isGoogleLinked,
+    googleEmail,
+    isLoading,
+    isLinking,
+    message,
+    linkGoogle,
+  };
 }
 
 export function SettingsPage() {
@@ -180,35 +197,44 @@ export function SettingsPage() {
             アカウント設定
           </h2>
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-            {google.isGoogleLinked && (
-              <div className="flex items-center gap-2">
-                <Check size={16} className="text-green-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-green-700">
-                    Google連携済み
-                  </p>
-                  {google.googleEmail && (
-                    <p className="text-xs text-gray-500 truncate">
-                      {google.googleEmail}
+            {google.isLoading ? (
+              <div className="animate-pulse space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-32" />
+                <div className="h-3 bg-gray-100 rounded w-48" />
+              </div>
+            ) : (
+              <>
+                {google.isGoogleLinked && (
+                  <div className="flex items-center gap-2">
+                    <Check size={16} className="text-green-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-green-700">
+                        Google連携済み
+                      </p>
+                      {google.googleEmail && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {google.googleEmail}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {!google.isGoogleLinked && (
+                    <p className="text-sm text-gray-600">
+                      Googleアカウントを連携すると、Googleでログインできるようになります。
                     </p>
                   )}
+                  <GoogleSignInButton
+                    onSuccess={google.linkGoogle}
+                    onError={() => {}}
+                  />
+                  {google.isLinking && (
+                    <p className="text-xs text-gray-500">連携中...</p>
+                  )}
                 </div>
-              </div>
+              </>
             )}
-            <div className="space-y-2">
-              {!google.isGoogleLinked && (
-                <p className="text-sm text-gray-600">
-                  Googleアカウントを連携すると、Googleでログインできるようになります。
-                </p>
-              )}
-              <GoogleSignInButton
-                onSuccess={google.linkGoogle}
-                onError={() => {}}
-              />
-              {google.isLinking && (
-                <p className="text-xs text-gray-500">連携中...</p>
-              )}
-            </div>
             {google.message && (
               <p
                 className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}

@@ -135,6 +135,9 @@ export const activityRepository = {
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
     const lastActivity = await db.getFirstAsync<{ order_index: string }>(
       "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
     );
@@ -147,7 +150,7 @@ export const activityRepository = {
        VALUES (?, ?, ?, '', ?, ?, NULL, NULL, '', ?, ?, ?, 'pending', NULL, ?, ?)`,
       [
         id,
-        auth?.user_id ?? "",
+        auth.user_id,
         input.name,
         input.emoji,
         input.iconType ?? "emoji",
@@ -177,7 +180,7 @@ export const activityRepository = {
 
     return {
       id,
-      userId: auth?.user_id ?? "",
+      userId: auth.user_id,
       name: input.name,
       label: "",
       emoji: input.emoji,
@@ -553,8 +556,26 @@ export const activityRepository = {
       await db.execAsync("BEGIN");
       for (const a of activities) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             name = excluded.name,
+             label = excluded.label,
+             emoji = excluded.emoji,
+             icon_type = excluded.icon_type,
+             icon_url = excluded.icon_url,
+             icon_thumbnail_url = excluded.icon_thumbnail_url,
+             description = excluded.description,
+             quantity_unit = excluded.quantity_unit,
+             order_index = excluded.order_index,
+             show_combined_stats = excluded.show_combined_stats,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             a.id,
             a.userId,
@@ -588,8 +609,19 @@ export const activityRepository = {
       await db.execAsync("BEGIN");
       for (const k of kinds) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+          `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             activity_id = excluded.activity_id,
+             name = excluded.name,
+             color = excluded.color,
+             order_index = excluded.order_index,
+             sync_status = 'synced',
+             deleted_at = excluded.deleted_at,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at
+           WHERE sync_status <> 'pending'
+             AND updated_at <= excluded.updated_at`,
           [
             k.id,
             k.activityId,
