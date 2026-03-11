@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { IconTypeSelector } from "./IconTypeSelector";
+import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
 export function EditActivityDialog({
@@ -25,6 +26,10 @@ export function EditActivityDialog({
     kinds,
     setKinds,
     icon,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     showDeleteConfirm,
     setShowDeleteConfirm,
@@ -86,6 +91,14 @@ export function EditActivityDialog({
               placeholder="回, 分, km など"
             />
           </div>
+
+          {/* 記録モード */}
+          <RecordingModeSelector
+            recordingMode={recordingMode}
+            onRecordingModeChange={setRecordingMode}
+            recordingModeConfig={recordingModeConfig}
+            onRecordingModeConfigChange={setRecordingModeConfig}
+          />
 
           {/* 合算統計 */}
           <label className="flex items-center gap-2 cursor-pointer">

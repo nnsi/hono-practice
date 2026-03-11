@@ -3,6 +3,7 @@ import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
 type Activity = {
@@ -12,6 +13,8 @@ type Activity = {
   iconType: "emoji" | "upload" | "generate";
   quantityUnit: string;
   showCombinedStats: boolean;
+  recordingMode?: string;
+  recordingModeConfig?: string | null;
 };
 
 type EditActivityDialogProps = {
@@ -46,6 +49,10 @@ export function EditActivityDialog({
     setError,
     handlePickImage,
     handleClearImage,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     handleSave,
     handleDelete,
     addKind,
@@ -111,6 +118,13 @@ export function EditActivityDialog({
             placeholder="例: km, 回, 分"
           />
         </View>
+
+        <RecordingModeSelector
+          recordingMode={recordingMode}
+          onRecordingModeChange={setRecordingMode}
+          recordingModeConfig={recordingModeConfig}
+          onRecordingModeConfigChange={setRecordingModeConfig}
+        />
 
         <View className="flex-row items-center justify-between py-2">
           <Text className="text-sm text-gray-700">統計を合算表示</Text>

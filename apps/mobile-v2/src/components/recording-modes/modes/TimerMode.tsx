@@ -54,9 +54,7 @@ export function TimerMode(props: RecordingModeProps) {
   );
 }
 
-function TimerPanel({
-  vm,
-}: { vm: ReturnType<typeof useTimerMode> }) {
+function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
   return (
     <View className="gap-5">
       <View className="items-center py-4">
@@ -121,9 +119,7 @@ function TimerPanel({
   );
 }
 
-function ManualPanel({
-  vm,
-}: { vm: ReturnType<typeof useTimerMode> }) {
+function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
   const quantityRef = useRef<TextInput>(null);
 
   return (

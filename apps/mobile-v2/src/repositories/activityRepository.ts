@@ -51,6 +51,8 @@ export function mapActivityRow(row: SqlRow): ActivityWithSync {
     quantityUnit: str(row.quantity_unit),
     orderIndex: str(row.order_index),
     showCombinedStats: row.show_combined_stats === 1,
+    recordingMode: str(row.recording_mode) || "manual",
+    recordingModeConfig: strOrNull(row.recording_mode_config),
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
@@ -92,6 +94,8 @@ type CreateActivityInput = {
   emoji: string;
   showCombinedStats: boolean;
   iconType?: "emoji" | "upload";
+  recordingMode?: string;
+  recordingModeConfig?: string | null;
   kinds?: Array<{ name: string; color: string }>;
 };
 
@@ -146,8 +150,8 @@ export const activityRepository = {
     ).padStart(6, "0");
 
     await db.runAsync(
-      `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, '', ?, ?, NULL, NULL, '', ?, ?, ?, 'pending', NULL, ?, ?)`,
+      `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, '', ?, ?, NULL, NULL, '', ?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
       [
         id,
         auth.user_id,
@@ -157,6 +161,8 @@ export const activityRepository = {
         input.quantityUnit,
         newIndex,
         input.showCombinedStats ? 1 : 0,
+        input.recordingMode ?? "manual",
+        input.recordingModeConfig ?? null,
         now,
         now,
       ],
@@ -191,6 +197,8 @@ export const activityRepository = {
       quantityUnit: input.quantityUnit,
       orderIndex: newIndex,
       showCombinedStats: input.showCombinedStats,
+      recordingMode: input.recordingMode ?? "manual",
+      recordingModeConfig: input.recordingModeConfig ?? null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -205,7 +213,13 @@ export const activityRepository = {
     changes: Partial<
       Pick<
         ActivityRecord,
-        "name" | "quantityUnit" | "emoji" | "showCombinedStats" | "iconType"
+        | "name"
+        | "quantityUnit"
+        | "emoji"
+        | "showCombinedStats"
+        | "iconType"
+        | "recordingMode"
+        | "recordingModeConfig"
       >
     >,
     updatedKinds?: Array<{ id?: string; name: string; color: string }>,
@@ -236,6 +250,14 @@ export const activityRepository = {
     if (changes.iconType !== undefined) {
       setClauses.push("icon_type = ?");
       setValues.push(changes.iconType);
+    }
+    if (changes.recordingMode !== undefined) {
+      setClauses.push("recording_mode = ?");
+      setValues.push(changes.recordingMode);
+    }
+    if (changes.recordingModeConfig !== undefined) {
+      setClauses.push("recording_mode_config = ?");
+      setValues.push(changes.recordingModeConfig ?? null);
     }
 
     setValues.push(id);
@@ -556,8 +578,8 @@ export const activityRepository = {
       await db.execAsync("BEGIN");
       for (const a of activities) {
         await db.runAsync(
-          `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+          `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              user_id = excluded.user_id,
              name = excluded.name,
@@ -570,6 +592,8 @@ export const activityRepository = {
              quantity_unit = excluded.quantity_unit,
              order_index = excluded.order_index,
              show_combined_stats = excluded.show_combined_stats,
+             recording_mode = excluded.recording_mode,
+             recording_mode_config = excluded.recording_mode_config,
              sync_status = 'synced',
              deleted_at = excluded.deleted_at,
              created_at = excluded.created_at,
@@ -589,6 +613,8 @@ export const activityRepository = {
             a.quantityUnit,
             a.orderIndex,
             a.showCombinedStats ? 1 : 0,
+            a.recordingMode,
+            a.recordingModeConfig,
             a.deletedAt,
             a.createdAt,
             a.updatedAt,

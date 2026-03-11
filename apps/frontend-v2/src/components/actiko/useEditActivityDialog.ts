@@ -25,6 +25,12 @@ export function useEditActivityDialog(
   const [kinds, setKinds] = useState<
     { id?: string; name: string; color: string }[]
   >([]);
+  const [recordingMode, setRecordingMode] = useState(
+    activity.recordingMode ?? "manual",
+  );
+  const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
+    activity.recordingModeConfig ?? null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [iconChanged, setIconChanged] = useState(false);
@@ -97,6 +103,8 @@ export function useEditActivityDialog(
         emoji: icon.emoji,
         showCombinedStats,
         iconType: icon.type,
+        recordingMode,
+        recordingModeConfig,
       },
       kinds
         .filter((k) => k.name.trim())
@@ -146,6 +154,10 @@ export function useEditActivityDialog(
     kinds,
     setKinds,
     icon,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     showDeleteConfirm,
     setShowDeleteConfirm,

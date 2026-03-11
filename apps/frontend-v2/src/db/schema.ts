@@ -86,6 +86,39 @@ export class ActikoDatabase extends Dexie {
       activityIconDeleteQueue: "activityId",
       authState: "id",
     });
+    this.version(4)
+      .stores({
+        activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
+        activities: "id, orderIndex, _syncStatus",
+        activityKinds: "id, activityId, _syncStatus",
+        goals: "id, activityId, _syncStatus",
+        tasks: "id, _syncStatus, startDate, dueDate",
+        activityIconBlobs: "activityId",
+        activityIconDeleteQueue: "activityId",
+        authState: "id",
+      })
+      .upgrade((tx) => {
+        return tx
+          .table("activities")
+          .toCollection()
+          .modify((a) => {
+            if (!a.recordingMode) {
+              const timeUnits = [
+                "時",
+                "分",
+                "秒",
+                "hour",
+                "min",
+                "sec",
+                "時間",
+              ];
+              const unit = (a.quantityUnit || "").toLowerCase();
+              const isTime = timeUnits.some((u: string) => unit.includes(u));
+              a.recordingMode = isTime ? "timer" : "manual";
+              a.recordingModeConfig = null;
+            }
+          });
+      });
   }
 }
 

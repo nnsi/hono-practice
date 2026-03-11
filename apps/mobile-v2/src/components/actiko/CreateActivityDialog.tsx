@@ -2,6 +2,7 @@ import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useCreateActivityDialog } from "./useCreateActivityDialog";
 
 type CreateActivityDialogProps = {
@@ -25,6 +26,10 @@ export function CreateActivityDialog({
     showCombinedStats,
     setShowCombinedStats,
     kinds,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     error,
     setError,
@@ -67,6 +72,13 @@ export function CreateActivityDialog({
             placeholder="例: km, 回, 分"
           />
         </View>
+
+        <RecordingModeSelector
+          recordingMode={recordingMode}
+          onRecordingModeChange={setRecordingMode}
+          recordingModeConfig={recordingModeConfig}
+          onRecordingModeConfigChange={setRecordingModeConfig}
+        />
 
         <View className="flex-row items-center justify-between py-2">
           <Text className="text-sm text-gray-700">統計を合算表示</Text>

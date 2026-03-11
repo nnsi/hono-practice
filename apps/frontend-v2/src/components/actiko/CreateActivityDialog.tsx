@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 
 import { ModalOverlay } from "../common/ModalOverlay";
 import { IconTypeSelector } from "./IconTypeSelector";
+import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useCreateActivityDialog } from "./useCreateActivityDialog";
 
 export function CreateActivityDialog({
@@ -25,6 +26,10 @@ export function CreateActivityDialog({
     setNextKindId,
     icon,
     setIcon,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     handleSubmit,
   } = useCreateActivityDialog(onCreated, onClose);
@@ -83,6 +88,14 @@ export function CreateActivityDialog({
               placeholder="回, 分, km など"
             />
           </div>
+
+          {/* 記録モード */}
+          <RecordingModeSelector
+            recordingMode={recordingMode}
+            onRecordingModeChange={setRecordingMode}
+            recordingModeConfig={recordingModeConfig}
+            onRecordingModeConfigChange={setRecordingModeConfig}
+          />
 
           {/* 合算統計 */}
           <label className="flex items-center gap-2 cursor-pointer">

@@ -46,9 +46,7 @@ export function TimerMode(props: RecordingModeProps) {
   );
 }
 
-function TimerPanel({
-  vm,
-}: { vm: ReturnType<typeof useTimerMode> }) {
+function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col items-center py-4">
@@ -113,9 +111,7 @@ function TimerPanel({
   );
 }
 
-function ManualPanel({
-  vm,
-}: { vm: ReturnType<typeof useTimerMode> }) {
+function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
   return (
     <form
       onSubmit={(e) => {

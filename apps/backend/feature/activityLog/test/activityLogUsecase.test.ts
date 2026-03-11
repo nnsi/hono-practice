@@ -75,6 +75,7 @@ describe("ActivityLogUsecase", () => {
     emoji: "🏃",
     iconUrl: null,
     iconThumbnailUrl: null,
+    recordingMode: "manual",
   };
 
   const mockActivityLog: ActivityLog = {

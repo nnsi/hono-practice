@@ -1,6 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const MIGRATION_V1 = `
 CREATE TABLE IF NOT EXISTS activities (
@@ -105,6 +105,22 @@ const MIGRATION_V2 = `
 ALTER TABLE activity_icon_blobs ADD COLUMN synced INTEGER DEFAULT 0;
 `;
 
+const MIGRATION_V3 = `
+ALTER TABLE activities ADD COLUMN recording_mode TEXT NOT NULL DEFAULT 'manual';
+ALTER TABLE activities ADD COLUMN recording_mode_config TEXT;
+UPDATE activities SET recording_mode = 'timer'
+WHERE recording_mode = 'manual'
+  AND (
+    LOWER(quantity_unit) LIKE '%時%'
+    OR LOWER(quantity_unit) LIKE '%分%'
+    OR LOWER(quantity_unit) LIKE '%秒%'
+    OR LOWER(quantity_unit) LIKE '%hour%'
+    OR LOWER(quantity_unit) LIKE '%min%'
+    OR LOWER(quantity_unit) LIKE '%sec%'
+    OR LOWER(quantity_unit) LIKE '%時間%'
+  );
+`;
+
 export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version;",
@@ -116,6 +132,9 @@ export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   }
   if (currentVersion < 2) {
     await db.execAsync(MIGRATION_V2);
+  }
+  if (currentVersion < 3) {
+    await db.execAsync(MIGRATION_V3);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);

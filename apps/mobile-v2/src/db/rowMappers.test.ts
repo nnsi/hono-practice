@@ -36,6 +36,8 @@ describe("mapActivityRow", () => {
       quantity_unit: "km",
       order_index: "000001",
       show_combined_stats: 1,
+      recording_mode: "timer",
+      recording_mode_config: '{"mode":"counter","steps":[1,5]}',
       created_at: "2025-01-01",
       updated_at: "2025-01-02",
       deleted_at: null,
@@ -55,6 +57,8 @@ describe("mapActivityRow", () => {
       quantityUnit: "km",
       orderIndex: "000001",
       showCombinedStats: true,
+      recordingMode: "timer",
+      recordingModeConfig: '{"mode":"counter","steps":[1,5]}',
       createdAt: "2025-01-01",
       updatedAt: "2025-01-02",
       deletedAt: null,
@@ -72,6 +76,8 @@ describe("mapActivityRow", () => {
     expect(result.iconThumbnailUrl).toBeNull();
     expect(result.iconType).toBe("emoji");
     expect(result.showCombinedStats).toBe(false);
+    expect(result.recordingMode).toBe("manual");
+    expect(result.recordingModeConfig).toBeNull();
     expect(result._syncStatus).toBe("synced");
     expect(result.deletedAt).toBeNull();
   });

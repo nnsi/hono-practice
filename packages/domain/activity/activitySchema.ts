@@ -58,6 +58,8 @@ const BaseActivitySchema = z.object({
   orderIndex: z.string().nullish(),
   kinds: z.array(ActivityKindSchema),
   showCombinedStats: z.boolean(),
+  recordingMode: z.string().default("manual"),
+  recordingModeConfig: z.string().nullish(),
 });
 
 const NewActivitySchema = BaseActivitySchema.merge(

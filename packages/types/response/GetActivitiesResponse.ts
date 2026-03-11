@@ -17,6 +17,8 @@ export const GetActivityResponseSchema = z.object({
     }),
   ),
   showCombinedStats: z.boolean(),
+  recordingMode: z.string().optional(),
+  recordingModeConfig: z.string().nullish(),
 });
 
 export const GetActivitiesResponseSchema = z.array(GetActivityResponseSchema);

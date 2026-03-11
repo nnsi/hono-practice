@@ -12,6 +12,8 @@ export const UpsertActivityRequestSchema = z.object({
   quantityUnit: z.string(),
   orderIndex: z.string(),
   showCombinedStats: z.boolean(),
+  recordingMode: z.string().default("manual"),
+  recordingModeConfig: z.string().nullable().default(null),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   deletedAt: z.string().datetime().nullable(),

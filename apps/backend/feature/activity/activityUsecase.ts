@@ -123,6 +123,8 @@ function createActivity(
         quantityUnit: params.quantityUnit,
         orderIndex: orderIndex,
         showCombinedStats: params.showCombinedStats ?? true,
+        recordingMode: params.recordingMode ?? "manual",
+        recordingModeConfig: params.recordingModeConfig,
         kinds,
         type: "new",
       });

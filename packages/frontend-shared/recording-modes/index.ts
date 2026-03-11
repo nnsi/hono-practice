@@ -1,3 +1,5 @@
+export type { CounterModeViewModel } from "./modes/createUseCounterMode";
+export { createUseCounterMode } from "./modes/createUseCounterMode";
 export type { ManualModeViewModel } from "./modes/createUseManualMode";
 export { createUseManualMode } from "./modes/createUseManualMode";
 export type { TimerModeViewModel } from "./modes/createUseTimerMode";

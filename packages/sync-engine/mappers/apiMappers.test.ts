@@ -23,6 +23,8 @@ describe("mapApiActivity", () => {
       quantityUnit: "km",
       orderIndex: "001",
       showCombinedStats: false,
+      recordingMode: "timer",
+      recordingModeConfig: '{"autoStart":true}',
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-02T00:00:00Z",
       deletedAt: null,
@@ -41,6 +43,8 @@ describe("mapApiActivity", () => {
       quantityUnit: "km",
       orderIndex: "001",
       showCombinedStats: false,
+      recordingMode: "timer",
+      recordingModeConfig: '{"autoStart":true}',
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-02T00:00:00Z",
       deletedAt: null,
@@ -61,6 +65,8 @@ describe("mapApiActivity", () => {
       quantity_unit: "ページ",
       order_index: "002",
       show_combined_stats: true,
+      recording_mode: "counter",
+      recording_mode_config: '{"step":5}',
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-02T00:00:00Z",
       deleted_at: null,
@@ -73,6 +79,8 @@ describe("mapApiActivity", () => {
     expect(result.quantityUnit).toBe("ページ");
     expect(result.orderIndex).toBe("002");
     expect(result.showCombinedStats).toBe(true);
+    expect(result.recordingMode).toBe("counter");
+    expect(result.recordingModeConfig).toBe('{"step":5}');
   });
 
   it("camelCaseとsnake_caseが混在する場合、camelCaseが優先される", () => {
@@ -120,6 +128,8 @@ describe("mapApiActivity", () => {
     expect(result.quantityUnit).toBe("");
     expect(result.orderIndex).toBe("");
     expect(result.showCombinedStats).toBe(true);
+    expect(result.recordingMode).toBe("manual");
+    expect(result.recordingModeConfig).toBeNull();
     expect(result.deletedAt).toBeNull();
   });
 
@@ -166,6 +176,50 @@ describe("mapApiActivity", () => {
       updatedAt: "2024-01-01T00:00:00Z",
     });
     expect("_syncStatus" in result).toBe(false);
+  });
+
+  it("recordingModeが未設定の場合は 'manual' にフォールバックする", () => {
+    const result = mapApiActivity({ id: "act-rm-1" });
+    expect(result.recordingMode).toBe("manual");
+    expect(result.recordingModeConfig).toBeNull();
+  });
+
+  it("snake_case recording_mode を正しくマッピングする", () => {
+    const result = mapApiActivity({
+      id: "act-rm-2",
+      recording_mode: "counter",
+      recording_mode_config: '{"step":1}',
+    });
+    expect(result.recordingMode).toBe("counter");
+    expect(result.recordingModeConfig).toBe('{"step":1}');
+  });
+
+  it("camelCase recordingMode を正しくマッピングする", () => {
+    const result = mapApiActivity({
+      id: "act-rm-3",
+      recordingMode: "timer",
+      recordingModeConfig: '{"autoStart":false}',
+    });
+    expect(result.recordingMode).toBe("timer");
+    expect(result.recordingModeConfig).toBe('{"autoStart":false}');
+  });
+
+  it("recording_mode_config に JSON 文字列がそのまま通過する", () => {
+    const config = JSON.stringify({ step: 10, min: 0, max: 100 });
+    const result = mapApiActivity({
+      id: "act-rm-4",
+      recordingMode: "numpad",
+      recordingModeConfig: config,
+    });
+    expect(result.recordingModeConfig).toBe(config);
+  });
+
+  it("recordingModeConfig が null/undefined の場合は null を返す", () => {
+    expect(
+      mapApiActivity({ id: "rm-5", recordingModeConfig: null })
+        .recordingModeConfig,
+    ).toBeNull();
+    expect(mapApiActivity({ id: "rm-6" }).recordingModeConfig).toBeNull();
   });
 });
 
