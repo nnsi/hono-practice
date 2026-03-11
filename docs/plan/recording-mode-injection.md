@@ -9,10 +9,49 @@
 - `LogFormBody` が「手動入力」と「タイマー」の2モードをif分岐で直接描画している
 - モード判定は `quantityUnit` の文字列推論（`isTimeUnit()`）に依存しており、明示的なモード指定がない
 - 新モード（カウンター、バイナリ、テンキー、チェック等）を追加するたびに `LogFormBody` が肥大化する
+- frontend-v2 と mobile-v2 の両方に `LogFormBody` があり、同じ構造の問題がプラットフォームごとに存在する
 
 ---
 
 ## 設計方針
+
+### 全体像: 3層分離
+
+既存の `packages/frontend-shared` ファクトリパターンに合わせ、ロジック共有・UI分離の構成を取る。
+
+```
+packages/domain/activity/
+└── recordingMode.ts              ← 型定義（RecordingMode union type）
+
+packages/frontend-shared/
+└── recording-modes/
+    ├── types.ts                  ← SaveLogParams, RecordingModeProps（UI非依存）
+    └── resolveRecordingMode.ts   ← activity → mode 解決ロジック
+
+apps/frontend-v2/src/components/recording-modes/
+├── registry.ts                   ← Web用 Record<mode, Component>
+├── parts/                        ← 共有UIパーツ（HTML版）
+│   ├── KindSelector.tsx
+│   ├── MemoInput.tsx
+│   └── SaveButton.tsx
+└── modes/                        ← 各モード実装（HTML版）
+    ├── ManualMode.tsx
+    ├── TimerMode.tsx
+    └── ...
+
+apps/mobile-v2/src/components/recording-modes/
+├── registry.ts                   ← Native用 Record<mode, Component>
+├── parts/                        ← 共有UIパーツ（RN版）
+│   ├── KindSelector.tsx
+│   ├── MemoInput.tsx
+│   └── SaveButton.tsx
+└── modes/                        ← 各モード実装（RN版）
+    ├── ManualMode.tsx
+    ├── TimerMode.tsx
+    └── ...
+```
+
+---
 
 ### 1. `recordingMode` フィールドの追加
 
@@ -21,7 +60,6 @@ Activity モデルに明示的な `recordingMode` フィールドを追加する
 ```typescript
 // packages/domain/activity/recordingMode.ts
 
-/** 記録モードの型定義 */
 export type RecordingMode =
   | "manual"    // 現行の手動入力（数量 + メモ）
   | "timer"     // タイマー計測
@@ -35,71 +73,16 @@ export const RECORDING_MODES = [
 ] as const;
 ```
 
-- `ActivityRecord` に `recordingMode: string` を追加
+- `ActivityRecord` / `ActivityBase` に `recordingMode: string` を追加
 - DB マイグレーション: デフォルト `"manual"`、`isTimeUnit(quantityUnit)` が true なら `"timer"` で埋める
-- **既存の `quantityUnit` による推論は廃止しない**（`recordingMode` 未設定の互換性のため fallback として残す）
+- **既存の `quantityUnit` による推論は fallback として残す**（`recordingMode` 未設定の既存データ互換）
 
-### 2. レジストリパターンによるUI注入
-
-```
-┌─────────────────────────────────────────────────┐
-│  RecordDialog / CreateLogDialog                 │
-│  ┌───────────────────────────────────────────┐  │
-│  │  LogFormBody                              │  │
-│  │  ┌─────────────────────────────────────┐  │  │
-│  │  │  resolveRecordingMode(activity)     │  │  │
-│  │  │         ↓                           │  │  │
-│  │  │  recordingModeRegistry[mode]        │  │  │
-│  │  │         ↓                           │  │  │
-│  │  │  <ModeComponent                     │  │  │
-│  │  │    activity={...}                   │  │  │
-│  │  │    context={sharedContext}           │  │  │
-│  │  │  />                                 │  │  │
-│  │  └─────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────┘
-```
-
-#### レジストリ
+### 2. 共通型（プラットフォーム非依存）
 
 ```typescript
-// apps/frontend-v2/src/components/recording-modes/registry.ts
+// packages/frontend-shared/recording-modes/types.ts
 
-import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-import type { RecordingModeComponent } from "./types";
-
-/** モード → コンポーネントの対応表 */
-const registry = new Map<RecordingMode, RecordingModeComponent>();
-
-export function registerRecordingMode(
-  mode: RecordingMode,
-  component: RecordingModeComponent,
-): void {
-  registry.set(mode, component);
-}
-
-export function getRecordingModeComponent(
-  mode: RecordingMode,
-): RecordingModeComponent | undefined {
-  return registry.get(mode);
-}
-```
-
-#### モードコンポーネントの共通型
-
-```typescript
-// apps/frontend-v2/src/components/recording-modes/types.ts
-
-import type { DexieActivity, DexieActivityKind } from "../../db/schema";
-
-/** 全モードコンポーネントが受け取る共通 Props */
-export type RecordingModeProps = {
-  activity: DexieActivity;
-  kinds: { id: string; name: string; color: string | null }[];
-  date: string;
-  onSave: (params: SaveLogParams) => Promise<void>;
-  isSubmitting: boolean;
-};
+import type { ActivityBase } from "../hooks/types";
 
 /** 記録保存時のパラメータ */
 export type SaveLogParams = {
@@ -108,20 +91,84 @@ export type SaveLogParams = {
   activityKindId: string | null;
 };
 
-/** レジストリに登録するコンポーネントの型 */
-export type RecordingModeComponent = React.ComponentType<RecordingModeProps>;
+/** 全モードコンポーネントが受け取る共通 Props */
+export type RecordingModeProps = {
+  activity: ActivityBase;
+  kinds: { id: string; name: string; color: string | null }[];
+  date: string;
+  onSave: (params: SaveLogParams) => Promise<void>;
+  isSubmitting: boolean;
+};
 ```
 
 **ポイント:**
-- 各モードコンポーネントは `onSave(SaveLogParams)` だけを呼べば記録が完了する
-- `quantity` / `memo` / `activityKindId` の管理は各モード内で自由に行える
-- `isSubmitting` で送信中の二重タップを防ぐ
-- タイマーモードのように追加の状態（elapsed time）が必要な場合は、モード内部で独自フックを使う
+- `activity` は `DexieActivity` ではなく `ActivityBase`（プラットフォーム非依存の最小型）
+- 各モードコンポーネントは `onSave(SaveLogParams)` を呼ぶだけで記録完了
+- `quantity` / `memo` / `activityKindId` の管理は各モード内で自由
+- タイマーモードのように追加の状態（elapsed time）が必要な場合はモード内部で独自フックを使う
 
-### 3. LogFormBody のリファクタリング
+### 3. resolveRecordingMode（共有ロジック）
 
 ```typescript
-// LogFormBody.tsx（リファクタリング後）
+// packages/frontend-shared/recording-modes/resolveRecordingMode.ts
+
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
+import { isTimeUnit } from "@packages/domain/time/timeUtils";
+import type { ActivityBase } from "../hooks/types";
+
+type ActivityWithMode = ActivityBase & { recordingMode?: string };
+
+export function resolveRecordingMode(activity: ActivityWithMode): RecordingMode {
+  // 明示的に設定されていればそれを使う
+  if (activity.recordingMode) {
+    return activity.recordingMode as RecordingMode;
+  }
+  // 互換性: quantityUnit から推論（recordingMode 未設定の既存データ向け）
+  if (isTimeUnit(activity.quantityUnit)) {
+    return "timer";
+  }
+  return "manual";
+}
+```
+
+### 4. プラットフォーム別レジストリ（静的 Record）
+
+`Map` + 実行時登録ではなく、型安全な `Record` リテラルを使う。
+
+```typescript
+// apps/frontend-v2/src/components/recording-modes/registry.ts
+
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
+import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { ManualMode } from "./modes/ManualMode";
+import { TimerMode } from "./modes/TimerMode";
+
+/** モード → コンポーネント 静的対応表 */
+const modes: Record<RecordingMode, React.ComponentType<RecordingModeProps>> = {
+  manual: ManualMode,
+  timer: TimerMode,
+  counter: ManualMode,  // 未実装モードは manual にフォールバック
+  binary: ManualMode,
+  numpad: ManualMode,
+  check: ManualMode,
+};
+
+export const getRecordingModeComponent = (
+  mode: RecordingMode,
+): React.ComponentType<RecordingModeProps> => modes[mode];
+```
+
+**なぜ `Map` + 実行時登録ではなく `Record` か:**
+- モードは静的に全て決まっている。動的登録の必要がない
+- `Record<RecordingMode, ...>` にすると、`RecordingMode` に値を追加した時点で全キーの網羅が型エラーで強制される
+- `setup.ts` も `main.tsx` への初期化呼び出しも不要
+
+mobile-v2 にも同じ構造の `registry.ts` を置き、RN コンポーネントを対応させる。
+
+### 5. LogFormBody のリファクタリング
+
+```typescript
+// apps/frontend-v2/src/components/common/LogFormBody.tsx（リファクタリング後）
 
 export function LogFormBody({ activity, date, onDone }: LogFormBodyProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,11 +176,6 @@ export function LogFormBody({ activity, date, onDone }: LogFormBodyProps) {
 
   const mode = resolveRecordingMode(activity);
   const ModeComponent = getRecordingModeComponent(mode);
-
-  if (!ModeComponent) {
-    // フォールバック: 未登録モードは手動入力
-    return <ManualMode activity={activity} kinds={kinds} ... />;
-  }
 
   const handleSave = async (params: SaveLogParams) => {
     setIsSubmitting(true);
@@ -162,108 +204,60 @@ export function LogFormBody({ activity, date, onDone }: LogFormBodyProps) {
 }
 ```
 
-### 4. resolveRecordingMode（互換性付きモード解決）
-
-```typescript
-// apps/frontend-v2/src/components/recording-modes/resolveRecordingMode.ts
-
-import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-import { isTimeUnit } from "@packages/domain/time/timeUtils";
-import type { DexieActivity } from "../../db/schema";
-
-export function resolveRecordingMode(activity: DexieActivity): RecordingMode {
-  // 明示的に設定されていればそれを使う
-  if (activity.recordingMode) {
-    return activity.recordingMode as RecordingMode;
-  }
-  // 互換性: quantityUnit から推論（recordingMode 未設定の既存データ向け）
-  if (isTimeUnit(activity.quantityUnit)) {
-    return "timer";
-  }
-  return "manual";
-}
-```
-
-### 5. 共有UIパーツの切り出し
-
-各モードが共通で使える部品を `recording-modes/parts/` に置く。
-
-```
-src/components/recording-modes/
-├── registry.ts              # レジストリ
-├── types.ts                 # 共通型
-├── resolveRecordingMode.ts  # モード解決
-├── setup.ts                 # 全モードの登録（アプリ起動時に1回呼ぶ）
-├── parts/                   # 共有UIパーツ
-│   ├── KindSelector.tsx     # 既存を移動
-│   ├── MemoInput.tsx
-│   └── SaveButton.tsx
-└── modes/                   # 各モード実装
-    ├── ManualMode.tsx       # 既存の手動入力を切り出し
-    ├── TimerMode.tsx        # 既存のタイマーを切り出し
-    ├── CounterMode.tsx      # 新規
-    ├── BinaryMode.tsx       # 新規
-    ├── NumpadMode.tsx       # 新規
-    └── CheckMode.tsx        # 新規
-```
-
-### 6. モード登録（setup.ts）
-
-```typescript
-// apps/frontend-v2/src/components/recording-modes/setup.ts
-
-import { registerRecordingMode } from "./registry";
-import { ManualMode } from "./modes/ManualMode";
-import { TimerMode } from "./modes/TimerMode";
-// 新モードが増えたらここに追加するだけ
-
-export function setupRecordingModes(): void {
-  registerRecordingMode("manual", ManualMode);
-  registerRecordingMode("timer", TimerMode);
-  // registerRecordingMode("counter", CounterMode);
-  // registerRecordingMode("binary", BinaryMode);
-  // ...
-}
-```
-
-アプリの `main.tsx` で `setupRecordingModes()` を呼ぶ。
+`LogFormBody` の責務は「モード解決 + 保存ロジック」のみ。UI描画は完全にモードコンポーネントに委譲。
 
 ---
 
 ## 段階的な移行戦略
 
-### Phase 1: 基盤整備（今回のスコープ）
+### Phase 1: 基盤整備
 1. `RecordingMode` 型を `packages/domain` に定義
-2. `ActivityRecord` に `recordingMode` フィールド追加
-3. レジストリ・共通型・resolveRecordingMode を作成
-4. 既存の手動入力・タイマーをモードコンポーネントとして切り出し
-5. `LogFormBody` をレジストリ経由の描画に書き換え
-6. 共有パーツ（KindSelector, MemoInput, SaveButton）を `parts/` に移動
+2. `ActivityBase` に `recordingMode` フィールド追加
+3. `packages/frontend-shared/recording-modes/` に共通型 + resolveRecordingMode を作成
+4. **frontend-v2 側:**
+   - 既存の手動入力・タイマーをモードコンポーネントとして `recording-modes/modes/` に切り出し
+   - 共有パーツ（KindSelector, MemoInput, SaveButton）を `recording-modes/parts/` に移動
+   - `LogFormBody` をレジストリ経由の描画に書き換え
+   - レジストリを `Record` リテラルで作成
+5. **mobile-v2 側:**
+   - 同様の構造で `recording-modes/` を作成（RN コンポーネント版）
 
-### Phase 2: 新モード追加（後続）
-- CounterMode, BinaryMode 等を `modes/` に追加し `setup.ts` で登録
+### Phase 2: 新モード追加
+- CounterMode, BinaryMode 等を各プラットフォームの `modes/` に追加
+- レジストリの `Record` でフォールバックを実コンポーネントに差し替え
 - Activity 作成/編集画面にモード選択UIを追加
-- バックエンドに `recordingMode` カラム追加 + マイグレーション
+
+### Phase 3: バックエンド対応
+- `activity` テーブルに `recording_mode` カラム追加 + マイグレーション
+- API の create/update で `recordingMode` を受け取り・返却
+- 同期エンジンで `recordingMode` を双方向同期
 
 ---
 
 ## 設計判断の理由
 
-### なぜレジストリパターンか
+### なぜ3層分離か
 
-- **switch/if文の排除**: `LogFormBody` がモードの詳細を知らなくて済む
-- **独立した追加**: 新モードは `modes/` にファイルを作って `setup.ts` に1行追加するだけ
-- **テスト容易性**: 各モードコンポーネントを単体でテスト可能
-- **遅延読み込み対応**: 将来 `React.lazy()` で動的importに差し替えやすい
+既存の `packages/frontend-shared` ファクトリパターンと一貫させるため。
+
+- `createUseLogForm` がロジック共有 + DI でプラットフォーム差を吸収する既存パターン
+- 記録モードの解決ロジック (`resolveRecordingMode`) もプラットフォーム非依存なので同じ場所に置く
+- UIコンポーネントだけが Web / RN で異なる → 各 app の `recording-modes/modes/` に分離
+
+### なぜ静的 Record か（Map + 実行時登録ではなく）
+
+- モードは全て静的に決まっている。プラグインのような動的拡張は不要
+- `Record<RecordingMode, Component>` は型レベルで全モードの網羅を強制する
+- `setup.ts` + `main.tsx` 初期化呼び出しが不要でシンプル
 
 ### なぜ Props に `onSave` を渡すか（フックではなく）
 
-- 保存ロジック（repository呼び出し + sync）は全モード共通なので `LogFormBody` 側に持つ
+- 保存ロジック（repository 呼び出し + sync）は全モード共通なので `LogFormBody` 側に持つ
 - 各モードは「何を保存するか（quantity, memo, kindId）」だけを決める
-- モード側に repository 依存を持ち込まないことで、モードコンポーネントの関心が純粋なUI操作に限定される
+- モード側に repository 依存を持ち込まないことで、モードコンポーネントの関心が UI 操作に限定される
 
 ### quantityUnit 推論を残す理由
 
-- `recordingMode` フィールド追加はDB変更を伴う
-- バックエンドのマイグレーション前でもフロントが動くように、fallback として `isTimeUnit()` を残す
+- `recordingMode` フィールド追加は DB 変更を伴う
+- バックエンドのマイグレーション前でもフロントが動くように fallback として残す
 - 全データに `recordingMode` が行き渡った時点で削除可能
