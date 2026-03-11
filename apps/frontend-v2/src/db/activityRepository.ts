@@ -11,6 +11,8 @@ type CreateActivityInput = {
   showCombinedStats: boolean;
   iconType?: "emoji" | "upload";
   kinds?: { name: string; color: string }[];
+  recordingMode?: string;
+  recordingModeConfig?: string | null;
 };
 
 export const activityRepository = {
@@ -60,6 +62,8 @@ export const activityRepository = {
       quantityUnit: input.quantityUnit,
       orderIndex: newIndex,
       showCombinedStats: input.showCombinedStats,
+      recordingMode: input.recordingMode ?? "manual",
+      recordingModeConfig: input.recordingModeConfig ?? null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -92,7 +96,13 @@ export const activityRepository = {
     changes: Partial<
       Pick<
         DexieActivity,
-        "name" | "quantityUnit" | "emoji" | "showCombinedStats" | "iconType"
+        | "name"
+        | "quantityUnit"
+        | "emoji"
+        | "showCombinedStats"
+        | "iconType"
+        | "recordingMode"
+        | "recordingModeConfig"
       >
     >,
     updatedKinds?: { id?: string; name: string; color: string }[],

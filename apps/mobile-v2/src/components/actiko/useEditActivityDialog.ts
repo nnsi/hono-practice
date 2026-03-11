@@ -15,6 +15,8 @@ type Activity = {
   iconType: "emoji" | "upload" | "generate";
   quantityUnit: string;
   showCombinedStats: boolean;
+  recordingMode?: string;
+  recordingModeConfig?: string | null;
 };
 
 type KindEntry = {
@@ -39,6 +41,10 @@ export function useEditActivityDialog(
   const [currentIconType, setCurrentIconType] = useState<
     "emoji" | "upload" | "generate"
   >("emoji");
+  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
+    null,
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState("");
 
@@ -50,6 +56,8 @@ export function useEditActivityDialog(
       setQuantityUnit(activity.quantityUnit);
       setShowCombinedStats(activity.showCombinedStats);
       setCurrentIconType(activity.iconType);
+      setRecordingMode(activity.recordingMode ?? "manual");
+      setRecordingModeConfig(activity.recordingModeConfig ?? null);
       setShowDeleteConfirm(false);
       setError("");
     }
@@ -134,6 +142,8 @@ export function useEditActivityDialog(
           emoji: emoji || "\ud83d\udcdd",
           quantityUnit: quantityUnit.trim(),
           showCombinedStats,
+          recordingMode,
+          recordingModeConfig,
         },
         kindEntries.filter((k) => k.name.trim()),
       );
@@ -190,6 +200,10 @@ export function useEditActivityDialog(
     setQuantityUnit,
     showCombinedStats,
     setShowCombinedStats,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     kindEntries,
     isSubmitting,
     isUploadingImage,

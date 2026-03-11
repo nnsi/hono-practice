@@ -21,6 +21,10 @@ export function useCreateActivityDialog(
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kinds, setKinds] = useState<KindEntry[]>([]);
   const [nextKindId, setNextKindId] = useState(0);
+  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,6 +34,8 @@ export function useCreateActivityDialog(
     setEmoji("");
     setQuantityUnit("");
     setShowCombinedStats(false);
+    setRecordingMode("manual");
+    setRecordingModeConfig(null);
     setKinds([]);
     setNextKindId(0);
     setError("");
@@ -48,6 +54,8 @@ export function useCreateActivityDialog(
         emoji: emoji || "\ud83d\udcdd",
         quantityUnit: quantityUnit.trim(),
         showCombinedStats,
+        recordingMode,
+        recordingModeConfig,
         kinds: kinds.filter((k) => k.name.trim()),
       });
       resetForm();
@@ -97,6 +105,10 @@ export function useCreateActivityDialog(
     showCombinedStats,
     setShowCombinedStats,
     kinds,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     error,
     setError,

@@ -22,6 +22,10 @@ export function useCreateActivityDialog(
     type: "emoji",
     emoji: "🎯",
   });
+  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
+    null,
+  );
 
   // handlers
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -37,6 +41,8 @@ export function useCreateActivityDialog(
         showCombinedStats,
         iconType: icon.type,
         kinds: kinds.filter((k) => k.name.trim()),
+        recordingMode,
+        recordingModeConfig,
       });
 
       if (icon.type === "upload" && icon.file) {
@@ -72,6 +78,10 @@ export function useCreateActivityDialog(
     setNextKindId,
     icon,
     setIcon,
+    recordingMode,
+    setRecordingMode,
+    recordingModeConfig,
+    setRecordingModeConfig,
     isSubmitting,
     // handlers
     handleSubmit,

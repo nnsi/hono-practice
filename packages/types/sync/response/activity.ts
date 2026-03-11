@@ -13,6 +13,8 @@ const ActivityRowSchema = z.object({
   quantityUnit: z.string().nullable(),
   orderIndex: z.string().nullable(),
   showCombinedStats: z.boolean(),
+  recordingMode: z.string().nullable(),
+  recordingModeConfig: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),

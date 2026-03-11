@@ -7,6 +7,8 @@ export const UpdateActivityRequestSchema = z.object({
     quantityUnit: z.string().max(50),
     emoji: z.string().min(1, "絵文字は必須です").max(20),
     iconType: z.enum(["emoji", "upload", "generate"]).optional(),
+    recordingMode: z.string().optional(),
+    recordingModeConfig: z.string().nullable().optional(),
     showCombinedStats: z.boolean().optional(),
   }),
   kinds: z.array(

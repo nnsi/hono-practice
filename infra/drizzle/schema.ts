@@ -150,6 +150,8 @@ export const activities = pgTable(
     quantityUnit: text("quantity_unit").default(""),
     orderIndex: text("order_index").default(""),
     showCombinedStats: boolean("show_combined_stats").notNull().default(true),
+    recordingMode: text("recording_mode").default("manual").notNull(),
+    recordingModeConfig: text("recording_mode_config"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

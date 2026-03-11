@@ -66,6 +66,10 @@ export function mapApiActivity(a: ApiRecord): ActivityRecord {
       a.showCombinedStats ?? a.show_combined_stats,
       true,
     ),
+    recordingMode: str(a.recordingMode ?? a.recording_mode) || "manual",
+    recordingModeConfig: strOrNull(
+      a.recordingModeConfig ?? a.recording_mode_config,
+    ),
     createdAt: toISOString(a.createdAt ?? a.created_at),
     updatedAt: toISOString(a.updatedAt ?? a.updated_at),
     deletedAt: strOrNull(a.deletedAt ?? a.deleted_at),

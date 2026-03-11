@@ -51,6 +51,7 @@ describe("ActivityUsecase", () => {
     emoji: "🏃",
     iconUrl: null,
     iconThumbnailUrl: null,
+    recordingMode: "manual",
   };
 
   const mockActivity2: Activity = {
@@ -66,6 +67,7 @@ describe("ActivityUsecase", () => {
     emoji: "🏊",
     iconUrl: null,
     iconThumbnailUrl: null,
+    recordingMode: "manual",
   };
 
   describe("getActivities", () => {
@@ -159,6 +161,7 @@ describe("ActivityUsecase", () => {
         iconType: "emoji" | "upload" | "generate";
         description?: string;
         quantityUnit: string;
+        recordingMode: string;
       };
       mockLastOrderIndex: string | undefined;
       mockReturn: Activity;
@@ -175,6 +178,7 @@ describe("ActivityUsecase", () => {
           emoji: "🏃",
           iconType: "emoji" as const,
           quantityUnit: "km",
+          recordingMode: "manual",
         },
         mockLastOrderIndex: undefined,
         mockReturn: {
@@ -193,6 +197,7 @@ describe("ActivityUsecase", () => {
           iconType: "emoji" as const,
           description: "Swimming practice",
           quantityUnit: "m",
+          recordingMode: "manual",
         },
         mockLastOrderIndex: "a",
         mockReturn: {

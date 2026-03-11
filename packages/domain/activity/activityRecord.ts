@@ -11,6 +11,8 @@ export type ActivityRecord = {
   quantityUnit: string;
   orderIndex: string;
   showCombinedStats: boolean;
+  recordingMode: string;
+  recordingModeConfig: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

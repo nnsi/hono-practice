@@ -176,6 +176,13 @@
       "when": 1771654134184,
       "tag": "0024_even_spencer_smythe",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1773235383944,
+      "tag": "0025_military_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

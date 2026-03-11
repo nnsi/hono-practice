@@ -101,4 +101,71 @@ describe("reportError", () => {
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.stack).toBeUndefined();
   });
+
+  it("includes context from getContext", () => {
+    reportError(
+      { errorType: "unhandled_error", message: "error" },
+      {
+        apiUrl: "http://localhost:3456",
+        platform: "web",
+        getContext: () => ({ userId: "user-123", screen: "/daily" }),
+      },
+    );
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.userId).toBe("user-123");
+    expect(body.screen).toBe("/daily");
+  });
+
+  it("works without getContext", () => {
+    reportError(
+      { errorType: "unhandled_error", message: "error" },
+      { apiUrl: "http://localhost:3456", platform: "web" },
+    );
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.userId).toBeUndefined();
+    expect(body.screen).toBeUndefined();
+  });
+
+  it("still sends report when getContext throws", () => {
+    reportError(
+      { errorType: "unhandled_error", message: "important error" },
+      {
+        apiUrl: "http://localhost:3456",
+        platform: "web",
+        getContext: () => {
+          throw new Error("getContext failed");
+        },
+      },
+    );
+
+    expect(mockFetch).toHaveBeenCalled();
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.errorType).toBe("unhandled_error");
+    expect(body.message).toBe("important error");
+    expect(body.userId).toBeUndefined();
+    expect(body.screen).toBeUndefined();
+  });
+
+  it("getContext does not override errorType or message", () => {
+    reportError(
+      { errorType: "component_error", message: "original" },
+      {
+        apiUrl: "http://localhost:3456",
+        platform: "web",
+        getContext: () =>
+          ({
+            userId: "user-1",
+            errorType: "hacked",
+            message: "overwritten",
+          }) as never,
+      },
+    );
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.errorType).toBe("component_error");
+    expect(body.message).toBe("original");
+    expect(body.userId).toBe("user-1");
+  });
 });
