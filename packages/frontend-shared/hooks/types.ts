@@ -30,6 +30,7 @@ export type ActivityBase = {
   name: string;
   emoji: string;
   quantityUnit: string;
+  recordingMode?: string;
 };
 
 /**
