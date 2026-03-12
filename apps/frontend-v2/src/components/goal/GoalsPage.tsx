@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { GoalCard } from "./GoalCard";
+import { GoalHeatmap } from "./GoalHeatmap";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
@@ -61,6 +62,8 @@ export function GoalsPage() {
       <div className="p-4">
         {activeTab === "active" && (
           <div className="space-y-4">
+            <GoalHeatmap />
+
             {currentGoals.length === 0 && (
               <div className="text-center text-gray-400 py-8">
                 <p className="text-sm">アクティブな目標がありません</p>

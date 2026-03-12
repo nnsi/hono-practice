@@ -19,6 +19,7 @@ export {
 export { createUseCreateGoalDialog } from "./useCreateGoalDialog";
 export { createUseDailyPage } from "./useDailyPage";
 export { createUseEditLogDialog } from "./useEditLogDialog";
+export { createUseGoalHeatmap } from "./useGoalHeatmap";
 export { createUseGoalsPage } from "./useGoalsPage";
 export { createUseLogForm } from "./useLogForm";
 export type { UseSubscriptionOptions } from "./useSubscription";

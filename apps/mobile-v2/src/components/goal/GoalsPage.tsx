@@ -7,6 +7,7 @@ import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalCard } from "./GoalCard";
+import { GoalHeatmap } from "./GoalHeatmap";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
@@ -75,6 +76,8 @@ export function GoalsPage() {
       >
         {activeTab === "active" && (
           <View>
+            <GoalHeatmap />
+
             {/* Empty state */}
             {currentGoals.length === 0 && (
               <View className="items-center py-8">
