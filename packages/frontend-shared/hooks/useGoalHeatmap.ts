@@ -2,7 +2,6 @@ import {
   type HeatmapCell,
   generateHeatmapData,
 } from "@packages/domain/goal/goalHeatmap";
-import { isGoalActive } from "@packages/domain/goal/goalPredicates";
 import dayjs from "dayjs";
 
 import type { ActivityLogBase, Goal, ReactHooks } from "./types";
@@ -113,14 +112,18 @@ export function createUseGoalHeatmap(deps: UseGoalHeatmapDeps) {
 
     const { goals } = useGoals();
 
-    const activeGoals = useMemo(
-      () => goals.filter((g) => isGoalActive(g)),
-      [goals],
+    // 表示期間と重なるゴール（終了済み含む）
+    const relevantGoals = useMemo(
+      () =>
+        goals.filter(
+          (g) => g.startDate <= today && (g.endDate === null || g.endDate >= start),
+        ),
+      [goals, today, start],
     );
 
     const activityIds = useMemo(
-      () => [...new Set(activeGoals.map((g) => g.activityId))],
-      [activeGoals],
+      () => [...new Set(relevantGoals.map((g) => g.activityId))],
+      [relevantGoals],
     );
 
     const logs = useActivityLogsBetween(activityIds, start, today);
@@ -142,12 +145,12 @@ export function createUseGoalHeatmap(deps: UseGoalHeatmapDeps) {
       }
 
       return generateHeatmapData(
-        activeGoals,
+        relevantGoals,
         logsByActivityId,
         { start, end: today },
         today,
       );
-    }, [logs, activeGoals, start, today]);
+    }, [logs, relevantGoals, start, today]);
 
     const grid = useMemo(() => buildGrid(cells, today), [cells, today]);
 

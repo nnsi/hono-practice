@@ -110,7 +110,6 @@ export function CreateGoalDialog({
               <DatePickerField
                 value={startDate}
                 onChange={setStartDate}
-                popoverAlign="left"
               />
             </div>
             <div>
@@ -122,7 +121,6 @@ export function CreateGoalDialog({
                 onChange={setEndDate}
                 placeholder="未設定"
                 allowClear
-                popoverAlign="right"
               />
             </div>
           </div>
