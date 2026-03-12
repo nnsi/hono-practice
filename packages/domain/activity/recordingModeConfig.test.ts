@@ -93,6 +93,13 @@ describe("defaultRecordingModeConfig", () => {
     });
   });
 
+  it("returns binary default", () => {
+    expect(defaultRecordingModeConfig("binary")).toEqual({
+      mode: "binary",
+      labels: ["A", "B"],
+    });
+  });
+
   it("returns null for manual", () => {
     expect(defaultRecordingModeConfig("manual")).toBeNull();
   });

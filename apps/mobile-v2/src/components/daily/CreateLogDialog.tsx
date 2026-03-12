@@ -18,6 +18,8 @@ type Activity = {
   name: string;
   emoji: string;
   quantityUnit: string;
+  recordingMode: string;
+  recordingModeConfig?: string | null;
 };
 
 type CreateLogDialogProps = {

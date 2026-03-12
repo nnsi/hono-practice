@@ -43,6 +43,8 @@ export function defaultRecordingModeConfig(
   switch (mode) {
     case "counter":
       return { mode: "counter", steps: [1, 10, 100] };
+    case "binary":
+      return { mode: "binary", labels: ["A", "B"] };
     default:
       return null;
   }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
 
+import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -13,7 +14,8 @@ type Activity = {
   name: string;
   emoji: string;
   quantityUnit: string;
-  recordingMode?: string;
+  recordingMode: string;
+  recordingModeConfig?: string | null;
 };
 
 export function LogFormBody({
@@ -27,6 +29,15 @@ export function LogFormBody({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { kinds } = useActivityKinds(activity.id);
+
+  const todayLogsRaw = useLiveQuery(
+    "activity_logs",
+    () => activityLogRepository.getActivityLogsByDate(date),
+    [date],
+  );
+  const todayLogs = (todayLogsRaw ?? [])
+    .filter((l) => l.activityId === activity.id)
+    .map((l) => ({ activityKindId: l.activityKindId, quantity: l.quantity }));
 
   const mode = resolveRecordingMode(activity);
   const ModeComponent = getRecordingModeComponent(mode);
@@ -53,6 +64,7 @@ export function LogFormBody({
       date={date}
       onSave={handleSave}
       isSubmitting={isSubmitting}
+      todayLogs={todayLogs}
     />
   );
 }

@@ -16,6 +16,8 @@ export type RecordingModeProps = {
   date: string;
   onSave: (params: SaveLogParams) => Promise<void>;
   isSubmitting: boolean;
+  /** 当日の記録ログ（バイナリモード集計・チェックモード判定用） */
+  todayLogs?: { activityKindId: string | null; quantity: number | null }[];
 };
 
 /**

@@ -1,5 +1,7 @@
+import { useRef } from "react";
+
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -10,7 +12,60 @@ export function CounterMode(props: RecordingModeProps) {
   const vm = useCounterMode(props);
 
   return (
+    <View>
+      {/* タブ切り替え */}
+      <View className="flex-row mb-4 bg-gray-100 rounded-lg p-1">
+        <TouchableOpacity
+          onPress={() => vm.setActiveTab("manual")}
+          className={`flex-1 py-2 rounded-md items-center ${
+            vm.activeTab === "manual" ? "bg-white shadow-sm" : ""
+          }`}
+        >
+          <Text
+            className={`text-sm font-medium ${
+              vm.activeTab === "manual" ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            手動入力
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => vm.setActiveTab("counter")}
+          className={`flex-1 py-2 rounded-md items-center ${
+            vm.activeTab === "counter" ? "bg-white shadow-sm" : ""
+          }`}
+        >
+          <Text
+            className={`text-sm font-medium ${
+              vm.activeTab === "counter" ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            カウンター
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {vm.activeTab === "counter" ? (
+        <CounterPanel vm={vm} />
+      ) : (
+        <ManualPanel vm={vm} />
+      )}
+    </View>
+  );
+}
+
+function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  return (
     <View className="gap-4">
+      {vm.todayTotal > 0 && (
+        <Text className="text-center text-sm text-gray-500">
+          今日の合計:{" "}
+          <Text className="font-semibold text-gray-900">
+            {vm.todayTotal} {vm.quantityUnit}
+          </Text>
+        </Text>
+      )}
+
       {vm.kinds.length > 0 && (
         <KindSelector
           kinds={vm.kinds}
@@ -19,49 +74,63 @@ export function CounterMode(props: RecordingModeProps) {
         />
       )}
 
-      <View className="items-center py-4">
-        <Text className="text-5xl font-bold">{vm.count}</Text>
-        {vm.quantityUnit ? (
-          <Text className="text-sm text-gray-500 mt-1">{vm.quantityUnit}</Text>
-        ) : null}
-      </View>
-
-      <View className="gap-2">
+      <View className="flex-row gap-2">
         {vm.steps.map((step) => (
-          <View key={step} className="flex-row justify-center gap-3">
-            <TouchableOpacity
-              className={`flex-1 py-3 rounded-lg items-center ${
-                vm.count < step ? "bg-gray-200" : "bg-gray-300"
-              }`}
-              onPress={() => vm.decrement(step)}
-              disabled={vm.count < step}
-            >
-              <Text
-                className={`text-lg font-medium ${
-                  vm.count < step ? "text-gray-400" : "text-gray-700"
-                }`}
-              >
-                -{step}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 py-3 rounded-lg items-center bg-blue-500"
-              onPress={() => vm.increment(step)}
-            >
-              <Text className="text-lg font-medium text-white">+{step}</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            key={step}
+            onPress={() => vm.recordStep(step)}
+            disabled={vm.isSubmitting}
+            className={`flex-1 py-3 rounded-lg items-center ${
+              vm.isSubmitting ? "bg-blue-300" : "bg-blue-500"
+            }`}
+          >
+            <Text className="text-lg font-medium text-white">+{step}</Text>
+          </TouchableOpacity>
         ))}
       </View>
+    </View>
+  );
+}
 
-      {vm.count > 0 && (
-        <TouchableOpacity className="items-center py-1" onPress={vm.reset}>
-          <Text className="text-sm text-gray-500 underline">リセット</Text>
-        </TouchableOpacity>
+function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  const quantityRef = useRef<TextInput>(null);
+
+  return (
+    <View className="gap-4">
+      {vm.kinds.length > 0 && (
+        <KindSelector
+          kinds={vm.kinds}
+          selectedKindId={vm.selectedKindId}
+          onSelect={vm.setSelectedKindId}
+        />
       )}
-
+      <View>
+        <Text className="text-sm font-medium text-gray-600 mb-1">
+          数量{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+        </Text>
+        <TextInput
+          ref={quantityRef}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
+          value={vm.quantity}
+          onChangeText={vm.setQuantity}
+          keyboardType="decimal-pad"
+          onFocus={() => {
+            setTimeout(() => {
+              const node = quantityRef.current as unknown as {
+                select?: () => void;
+                setSelection?: (start: number, end: number) => void;
+              } | null;
+              if (node?.select) {
+                node.select();
+              } else if (node?.setSelection) {
+                node.setSelection(0, vm.quantity.length);
+              }
+            }, 0);
+          }}
+        />
+      </View>
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />
-      <SaveButton onPress={vm.submit} disabled={vm.isSubmitting} />
+      <SaveButton onPress={vm.submitManual} disabled={vm.isSubmitting} />
     </View>
   );
 }

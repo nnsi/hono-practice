@@ -10,17 +10,26 @@ type UseCounterModeDeps = {
 };
 
 export type CounterModeViewModel = {
-  count: number;
+  // タブ
+  activeTab: "counter" | "manual";
+  setActiveTab: (tab: "counter" | "manual") => void;
+
+  // カウンタータブ
   steps: number[];
-  increment: (step: number) => void;
-  decrement: (step: number) => void;
-  reset: () => void;
+  recordStep: (step: number) => void;
+  todayTotal: number;
+  isSubmitting: boolean;
+
+  // 手動入力タブ
+  quantity: string;
+  setQuantity: (v: string) => void;
   memo: string;
   setMemo: (v: string) => void;
+  submitManual: () => void;
+
+  // 共通
   selectedKindId: string | null;
   setSelectedKindId: (id: string | null) => void;
-  submit: () => void;
-  isSubmitting: boolean;
   kinds: RecordingModeProps["kinds"];
   quantityUnit: string;
 };
@@ -36,7 +45,11 @@ export function createUseCounterMode(deps: UseCounterModeDeps) {
   return function useCounterMode(
     props: RecordingModeProps,
   ): CounterModeViewModel {
-    const [count, setCount] = deps.react.useState(0);
+    const [activeTab, setActiveTab] = deps.react.useState<"counter" | "manual">(
+      "counter",
+    );
+    const [isSubmitting, setIsSubmitting] = deps.react.useState(false);
+    const [quantity, setQuantity] = deps.react.useState("");
     const [memo, setMemo] = deps.react.useState("");
     const [selectedKindId, setSelectedKindId] = deps.react.useState<
       string | null
@@ -44,31 +57,45 @@ export function createUseCounterMode(deps: UseCounterModeDeps) {
 
     const steps = resolveSteps(props.activity.recordingModeConfig);
 
-    const increment = (step: number) => setCount((c: number) => c + step);
-    const decrement = (step: number) =>
-      setCount((c: number) => Math.max(0, c - step));
-    const reset = () => setCount(0);
+    const todayTotal = (props.todayLogs ?? []).reduce(
+      (sum, log) => sum + (log.quantity ?? 0),
+      0,
+    );
 
-    const submit = () => {
-      props.onSave({
-        quantity: count,
-        memo,
-        activityKindId: selectedKindId,
-      });
+    const recordStep = (step: number) => {
+      if (isSubmitting || props.isSubmitting) return;
+      setIsSubmitting(true);
+      props
+        .onSave({ quantity: step, activityKindId: selectedKindId, memo: "" })
+        .finally(() => setIsSubmitting(false));
+    };
+
+    const submitManual = () => {
+      if (isSubmitting || props.isSubmitting) return;
+      setIsSubmitting(true);
+      props
+        .onSave({
+          quantity: Number(quantity) || 0,
+          activityKindId: selectedKindId,
+          memo,
+        })
+        .finally(() => setIsSubmitting(false));
     };
 
     return {
-      count,
+      activeTab,
+      setActiveTab,
       steps,
-      increment,
-      decrement,
-      reset,
+      recordStep,
+      todayTotal,
+      isSubmitting: isSubmitting || props.isSubmitting,
+      quantity,
+      setQuantity,
       memo,
       setMemo,
+      submitManual,
       selectedKindId,
       setSelectedKindId,
-      submit,
-      isSubmitting: props.isSubmitting,
       kinds: props.kinds,
       quantityUnit: props.activity.quantityUnit,
     };
