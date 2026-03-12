@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,6 +11,8 @@ type CalendarPopoverProps = {
   onClose: () => void;
   /** Override the outer positioning classes (default: centered below trigger) */
   popoverClassName?: string;
+  /** When provided, render via portal with fixed positioning relative to this element */
+  triggerRef?: React.RefObject<HTMLElement | null>;
 };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -20,16 +23,47 @@ export function CalendarPopover({
   isOpen,
   onClose,
   popoverClassName,
+  triggerRef,
 }: CalendarPopoverProps) {
   const [viewMonth, setViewMonth] = useState(() =>
     dayjs(selectedDate).startOf("month"),
   );
   const ref = useRef<HTMLDivElement>(null);
+  const [portalStyle, setPortalStyle] = useState<React.CSSProperties>({});
+
+  const updatePortalPosition = useCallback(() => {
+    if (!triggerRef?.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const calendarHeight = 350;
+    const gap = 6;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openAbove = spaceBelow < calendarHeight && rect.top > spaceBelow;
+
+    setPortalStyle({
+      position: "fixed",
+      zIndex: 9999,
+      width: 280,
+      top: openAbove ? rect.top - calendarHeight - gap : rect.bottom + gap,
+      left: Math.min(rect.left, window.innerWidth - 288),
+    });
+  }, [triggerRef]);
 
   // 選択日が変わったらviewMonthも追従
   useEffect(() => {
     setViewMonth(dayjs(selectedDate).startOf("month"));
   }, [selectedDate]);
+
+  // portal位置の計算・更新
+  useEffect(() => {
+    if (!isOpen || !triggerRef) return;
+    updatePortalPosition();
+    window.addEventListener("scroll", updatePortalPosition, true);
+    window.addEventListener("resize", updatePortalPosition);
+    return () => {
+      window.removeEventListener("scroll", updatePortalPosition, true);
+      window.removeEventListener("resize", updatePortalPosition);
+    };
+  }, [isOpen, triggerRef, updatePortalPosition]);
 
   // 外クリックで閉じる
   useEffect(() => {
@@ -85,13 +119,11 @@ export function CalendarPopover({
     });
   }
 
-  return (
+  const calendarContent = (
     <div
       ref={ref}
-      className={
-        popoverClassName ??
-        "absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 w-[280px]"
-      }
+      className={triggerRef ? undefined : (popoverClassName ?? "absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 w-[280px]")}
+      style={triggerRef ? portalStyle : undefined}
     >
       <div className="bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 animate-scale-in origin-top">
         {/* 月ナビ */}
@@ -171,4 +203,9 @@ export function CalendarPopover({
       </div>
     </div>
   );
+
+  if (triggerRef) {
+    return createPortal(calendarContent, document.body);
+  }
+  return calendarContent;
 }

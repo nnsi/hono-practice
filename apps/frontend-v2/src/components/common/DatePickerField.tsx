@@ -11,8 +11,6 @@ type DatePickerFieldProps = {
   placeholder?: string;
   disabled?: boolean;
   allowClear?: boolean;
-  /** Popover alignment relative to the button */
-  popoverAlign?: "left" | "right";
 };
 
 export function DatePickerField({
@@ -21,9 +19,9 @@ export function DatePickerField({
   placeholder = "未設定",
   disabled = false,
   allowClear = false,
-  popoverAlign = "left",
 }: DatePickerFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   // Prevent re-open when CalendarPopover's outside-click fires before the button click
   const justClosedRef = useRef(false);
 
@@ -46,14 +44,10 @@ export function DatePickerField({
     });
   };
 
-  const positionClass =
-    popoverAlign === "right"
-      ? "absolute right-0 top-full mt-1.5 z-50 w-[280px]"
-      : "absolute left-0 top-full mt-1.5 z-50 w-[280px]";
-
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={handleToggle}
@@ -96,7 +90,7 @@ export function DatePickerField({
         }}
         isOpen={isOpen}
         onClose={handleClose}
-        popoverClassName={positionClass}
+        triggerRef={triggerRef}
       />
     </div>
   );

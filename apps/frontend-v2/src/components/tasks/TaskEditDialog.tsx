@@ -76,7 +76,6 @@ export function TaskEditDialog({
                 value={startDate}
                 onChange={setStartDate}
                 disabled={isArchived}
-                popoverAlign="left"
               />
             </div>
             <div>
@@ -89,7 +88,6 @@ export function TaskEditDialog({
                 placeholder="未設定"
                 allowClear
                 disabled={isArchived}
-                popoverAlign="right"
               />
             </div>
           </div>
