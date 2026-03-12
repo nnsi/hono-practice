@@ -8,21 +8,56 @@ export function CheckMode(props: RecordingModeProps) {
 
   return (
     <div className="flex flex-col items-center space-y-4 py-4">
+      {vm.hasKinds && (
+        <div className="flex flex-wrap gap-2 justify-center">
+          {vm.kindItems.map((kind) => (
+            <button
+              key={kind.id}
+              type="button"
+              onClick={() => vm.selectKind(kind.id)}
+              disabled={kind.isCheckedToday || vm.isSubmitting}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                kind.isCheckedToday
+                  ? "bg-gray-100 text-gray-400"
+                  : vm.selectedKindId === kind.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-white border border-gray-300 text-gray-700"
+              }`}
+            >
+              {kind.name}
+              {kind.isCheckedToday && (
+                <Check size={14} className="text-green-500" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={vm.check}
-        disabled={vm.isSubmitting}
+        disabled={!vm.canCheck || vm.isSubmitting}
         className={`w-24 h-24 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
-          vm.isCheckedToday
+          !vm.hasKinds && vm.isCheckedToday
             ? "bg-green-500 text-white"
-            : "bg-white border-2 border-gray-300 text-gray-400"
+            : vm.canCheck
+              ? "bg-white border-2 border-blue-500 text-blue-500"
+              : "bg-white border-2 border-gray-300 text-gray-400"
         }`}
       >
         <Check size={48} />
       </button>
 
       <p className="text-sm text-gray-500">
-        {vm.isCheckedToday ? "記録済み ✓" : "タップして記録"}
+        {!vm.hasKinds && vm.isCheckedToday
+          ? "記録済み ✓"
+          : vm.hasKinds && !vm.selectedKindId
+            ? "項目を選択してください"
+            : vm.canCheck
+              ? "タップして記録"
+              : vm.hasKinds
+                ? "記録済み ✓"
+                : "タップして記録"}
       </p>
     </div>
   );
