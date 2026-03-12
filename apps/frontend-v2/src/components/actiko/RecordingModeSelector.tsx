@@ -5,7 +5,14 @@ import {
   parseRecordingModeConfig,
   serializeRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
-import { Hash, Pencil, Timer } from "lucide-react";
+import {
+  Calculator,
+  CheckSquare,
+  Hash,
+  Pencil,
+  Timer,
+  ToggleLeft,
+} from "lucide-react";
 
 type RecordingModeSelectorProps = {
   recordingMode: string;
@@ -18,6 +25,9 @@ const VISIBLE_MODES = [
   { value: "manual", label: "手動入力", icon: Pencil },
   { value: "timer", label: "タイマー", icon: Timer },
   { value: "counter", label: "カウンター", icon: Hash },
+  { value: "binary", label: "バイナリ", icon: ToggleLeft },
+  { value: "numpad", label: "テンキー", icon: Calculator },
+  { value: "check", label: "チェック", icon: CheckSquare },
 ] as const;
 
 function stepsFromConfig(config: string | null): number[] {
@@ -62,13 +72,13 @@ export function RecordingModeSelector({
   return (
     <div>
       <div className="text-sm font-medium text-gray-600 mb-2">記録モード</div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {VISIBLE_MODES.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
             type="button"
             onClick={() => handleModeChange(value)}
-            className={`flex-1 flex flex-col items-center gap-1 px-3 py-2 rounded-lg border text-sm transition-colors ${
+            className={`flex-1 min-w-[80px] flex flex-col items-center gap-1 px-3 py-2 rounded-lg border text-sm transition-colors ${
               recordingMode === value
                 ? "border-blue-500 bg-blue-50 text-blue-700"
                 : "border-gray-300 text-gray-600 hover:bg-gray-50"

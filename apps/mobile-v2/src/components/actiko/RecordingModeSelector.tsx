@@ -18,6 +18,9 @@ const VISIBLE_MODES = [
   { value: "manual", label: "手動入力" },
   { value: "timer", label: "タイマー" },
   { value: "counter", label: "カウンター" },
+  { value: "binary", label: "バイナリ" },
+  { value: "numpad", label: "テンキー" },
+  { value: "check", label: "チェック" },
 ] as const;
 
 function stepsFromConfig(config: string | null): number[] {
@@ -62,12 +65,12 @@ export function RecordingModeSelector({
   return (
     <View>
       <Text className="text-sm font-medium text-gray-600 mb-2">記録モード</Text>
-      <View className="flex-row gap-2">
+      <View className="flex-row flex-wrap gap-2">
         {VISIBLE_MODES.map(({ value, label }) => (
           <TouchableOpacity
             key={value}
             onPress={() => handleModeChange(value)}
-            className={`flex-1 items-center py-2 rounded-lg border ${
+            className={`items-center px-3 py-2 rounded-lg border ${
               recordingMode === value
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300"
