@@ -1,30 +1,14 @@
+// @vitest-environment jsdom
+
+import { useState } from "react";
+
+import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { RecordingModeProps } from "../types";
 import { createUseBinaryMode } from "./createUseBinaryMode";
 
-function makeUseState() {
-  function useState<T>(
-    init: T | (() => T),
-  ): [T, (value: T | ((prev: T) => T)) => void];
-  function useState<T = undefined>(): [
-    T | undefined,
-    (value: T | ((prev: T | undefined) => T | undefined) | undefined) => void,
-  ];
-  function useState<T>(init?: T | (() => T)): [T, unknown] {
-    let value: T =
-      init === undefined
-        ? (undefined as T)
-        : typeof init === "function"
-          ? (init as () => T)()
-          : init;
-    const setValue = (v: unknown) => {
-      value = typeof v === "function" ? (v as (prev: T) => T)(value) : (v as T);
-    };
-    return [value, setValue];
-  }
-  return useState;
-}
+const useBinaryMode = createUseBinaryMode({ react: { useState } });
 
 const kinds = [
   { id: "k1", name: "勝ち", color: "#00ff00" },
@@ -54,32 +38,30 @@ function makeProps(
 }
 
 describe("createUseBinaryMode", () => {
-  const useBinaryMode = createUseBinaryMode({
-    react: { useState: makeUseState() },
-  });
-
   it("creates kindTallies from kinds with zero counts", () => {
-    const vm = useBinaryMode(makeProps());
-    expect(vm.kindTallies).toEqual([
+    const { result } = renderHook(() => useBinaryMode(makeProps()));
+    expect(result.current.kindTallies).toEqual([
       { id: "k1", name: "勝ち", color: "#00ff00", count: 0 },
       { id: "k2", name: "負け", color: "#ff0000", count: 0 },
     ]);
   });
 
   it("hasKinds is true when kinds exist", () => {
-    const vm = useBinaryMode(makeProps());
-    expect(vm.hasKinds).toBe(true);
+    const { result } = renderHook(() => useBinaryMode(makeProps()));
+    expect(result.current.hasKinds).toBe(true);
   });
 
   it("hasKinds is false when no kinds", () => {
-    const vm = useBinaryMode(makeProps({ kinds: [] }));
-    expect(vm.hasKinds).toBe(false);
+    const { result } = renderHook(() =>
+      useBinaryMode(makeProps({ kinds: [] })),
+    );
+    expect(result.current.hasKinds).toBe(false);
   });
 
   it("selectKind calls onSave with kindId and quantity 1", () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    const vm = useBinaryMode(makeProps({ onSave }));
-    vm.selectKind("k1");
+    const { result } = renderHook(() => useBinaryMode(makeProps({ onSave })));
+    act(() => result.current.selectKind("k1"));
     expect(onSave).toHaveBeenCalledWith({
       quantity: 1,
       activityKindId: "k1",
@@ -88,23 +70,27 @@ describe("createUseBinaryMode", () => {
   });
 
   it("computes tallies from todayLogs", () => {
-    const vm = useBinaryMode(
-      makeProps({
-        todayLogs: [
-          { activityKindId: "k1", quantity: 1 },
-          { activityKindId: "k1", quantity: 1 },
-          { activityKindId: "k2", quantity: 1 },
-        ],
-      }),
+    const { result } = renderHook(() =>
+      useBinaryMode(
+        makeProps({
+          todayLogs: [
+            { activityKindId: "k1", quantity: 1 },
+            { activityKindId: "k1", quantity: 1 },
+            { activityKindId: "k2", quantity: 1 },
+          ],
+        }),
+      ),
     );
-    expect(vm.kindTallies[0].count).toBe(2);
-    expect(vm.kindTallies[1].count).toBe(1);
+    expect(result.current.kindTallies[0].count).toBe(2);
+    expect(result.current.kindTallies[1].count).toBe(1);
   });
 
   it("tallies are 0 when no todayLogs", () => {
-    const vm = useBinaryMode(makeProps({ todayLogs: undefined }));
-    expect(vm.kindTallies[0].count).toBe(0);
-    expect(vm.kindTallies[1].count).toBe(0);
+    const { result } = renderHook(() =>
+      useBinaryMode(makeProps({ todayLogs: undefined })),
+    );
+    expect(result.current.kindTallies[0].count).toBe(0);
+    expect(result.current.kindTallies[1].count).toBe(0);
   });
 
   it("supports more than 2 kinds", () => {
@@ -113,16 +99,18 @@ describe("createUseBinaryMode", () => {
       { id: "k2", name: "負け", color: "#ff0000" },
       { id: "k3", name: "引分", color: "#888888" },
     ];
-    const vm = useBinaryMode(
-      makeProps({
-        kinds: threeKinds,
-        todayLogs: [
-          { activityKindId: "k3", quantity: 1 },
-          { activityKindId: "k3", quantity: 1 },
-        ],
-      }),
+    const { result } = renderHook(() =>
+      useBinaryMode(
+        makeProps({
+          kinds: threeKinds,
+          todayLogs: [
+            { activityKindId: "k3", quantity: 1 },
+            { activityKindId: "k3", quantity: 1 },
+          ],
+        }),
+      ),
     );
-    expect(vm.kindTallies).toHaveLength(3);
-    expect(vm.kindTallies[2].count).toBe(2);
+    expect(result.current.kindTallies).toHaveLength(3);
+    expect(result.current.kindTallies[2].count).toBe(2);
   });
 });

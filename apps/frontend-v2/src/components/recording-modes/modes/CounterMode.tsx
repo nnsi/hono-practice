@@ -1,5 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -10,10 +10,86 @@ export function CounterMode(props: RecordingModeProps) {
   const vm = useCounterMode(props);
 
   return (
+    <>
+      {/* タブ切り替え */}
+      <div className="flex mb-4 bg-gray-100 rounded-lg p-1">
+        <button
+          type="button"
+          onClick={() => vm.setActiveTab("manual")}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+            vm.activeTab === "manual"
+              ? "bg-white text-black shadow-sm"
+              : "text-gray-500"
+          }`}
+        >
+          手動入力
+        </button>
+        <button
+          type="button"
+          onClick={() => vm.setActiveTab("counter")}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+            vm.activeTab === "counter"
+              ? "bg-white text-black shadow-sm"
+              : "text-gray-500"
+          }`}
+        >
+          カウンター
+        </button>
+      </div>
+
+      {vm.activeTab === "counter" ? (
+        <CounterPanel vm={vm} />
+      ) : (
+        <ManualPanel vm={vm} />
+      )}
+    </>
+  );
+}
+
+function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  return (
+    <div className="space-y-4">
+      {vm.todayTotal > 0 && (
+        <div className="text-center text-sm text-gray-500">
+          今日の合計:{" "}
+          <span className="font-semibold text-black">
+            {vm.todayTotal} {vm.quantityUnit}
+          </span>
+        </div>
+      )}
+
+      {vm.kinds.length > 0 && (
+        <KindSelector
+          kinds={vm.kinds}
+          selectedKindId={vm.selectedKindId}
+          onSelect={vm.setSelectedKindId}
+        />
+      )}
+
+      <div className="flex gap-2">
+        {vm.steps.map((step) => (
+          <button
+            key={step}
+            type="button"
+            onClick={() => vm.recordStep(step)}
+            disabled={vm.isSubmitting}
+            className="flex-1 flex items-center justify-center gap-1 py-3 bg-blue-500 text-white rounded-lg text-lg font-medium hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          >
+            <Plus size={18} />
+            {step}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        vm.submit();
+        vm.submitManual();
       }}
       className="space-y-4"
     >
@@ -24,53 +100,21 @@ export function CounterMode(props: RecordingModeProps) {
           onSelect={vm.setSelectedKindId}
         />
       )}
-
-      <div className="flex flex-col items-center py-4">
-        <div className="text-5xl font-bold tabular-nums tracking-tight">
-          {vm.count}
-        </div>
-        {vm.quantityUnit && (
-          <div className="text-sm text-gray-500 mt-1">{vm.quantityUnit}</div>
-        )}
+      <div>
+        <label className="block text-sm font-medium text-gray-600 mb-1">
+          数量 {vm.quantityUnit && `(${vm.quantityUnit})`}
+        </label>
+        <input
+          type="number"
+          inputMode="decimal"
+          value={vm.quantity}
+          onChange={(e) => vm.setQuantity(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min="0"
+          step="any"
+        />
       </div>
-
-      <div className="space-y-2">
-        {vm.steps.map((step) => (
-          <div key={step} className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => vm.decrement(step)}
-              disabled={vm.count < step}
-              className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <Minus size={16} />
-              {step}
-            </button>
-            <button
-              type="button"
-              onClick={() => vm.increment(step)}
-              className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
-            >
-              <Plus size={16} />
-              {step}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {vm.count > 0 && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={vm.reset}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <RotateCcw size={14} />
-            リセット
-          </button>
-        </div>
-      )}
-
       <MemoInput value={vm.memo} onChange={vm.setMemo} />
       <SaveButton type="submit" disabled={vm.isSubmitting} />
     </form>

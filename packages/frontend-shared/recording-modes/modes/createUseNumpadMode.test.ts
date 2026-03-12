@@ -1,30 +1,14 @@
+// @vitest-environment jsdom
+
+import { useState } from "react";
+
+import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { RecordingModeProps } from "../types";
 import { createUseNumpadMode } from "./createUseNumpadMode";
 
-function makeUseState() {
-  function useState<T>(
-    init: T | (() => T),
-  ): [T, (value: T | ((prev: T) => T)) => void];
-  function useState<T = undefined>(): [
-    T | undefined,
-    (value: T | ((prev: T | undefined) => T | undefined) | undefined) => void,
-  ];
-  function useState<T>(init?: T | (() => T)): [T, unknown] {
-    let value: T =
-      init === undefined
-        ? (undefined as T)
-        : typeof init === "function"
-          ? (init as () => T)()
-          : init;
-    const setValue = (v: unknown) => {
-      value = typeof v === "function" ? (v as (prev: T) => T)(value) : (v as T);
-    };
-    return [value, setValue];
-  }
-  return useState;
-}
+const useNumpadMode = createUseNumpadMode({ react: { useState } });
 
 function makeProps(
   overrides: Partial<RecordingModeProps> = {},
@@ -48,46 +32,81 @@ function makeProps(
 }
 
 describe("createUseNumpadMode", () => {
-  const useNumpadMode = createUseNumpadMode({
-    react: { useState: makeUseState() },
-  });
-
   it("initializes with empty display", () => {
-    const vm = useNumpadMode(makeProps());
-    expect(vm.display).toBe("");
-    expect(vm.formattedDisplay).toBe("0");
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    expect(result.current.display).toBe("");
+    expect(result.current.formattedDisplay).toBe("0");
   });
 
   it("pressKey appends digits", () => {
-    const vm = useNumpadMode(makeProps());
-    vm.pressKey("3");
-    // Note: with our mock useState the value doesn't persist across calls
-    // but the function logic is tested
-    expect(vm.display).toBe("");
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pressKey("3"));
+    expect(result.current.display).toBe("3");
+    act(() => result.current.pressKey("5"));
+    expect(result.current.display).toBe("35");
+    expect(result.current.formattedDisplay).toBe("35");
   });
 
   it("pressKey C clears display", () => {
-    const vm = useNumpadMode(makeProps());
-    vm.pressKey("C");
-    expect(vm.display).toBe("");
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pressKey("3"));
+    act(() => result.current.pressKey("5"));
+    act(() => result.current.pressKey("C"));
+    expect(result.current.display).toBe("");
+  });
+
+  it("pressKey backspace removes last digit", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pressKey("1"));
+    act(() => result.current.pressKey("2"));
+    act(() => result.current.pressKey("3"));
+    act(() => result.current.pressKey("backspace"));
+    expect(result.current.display).toBe("12");
+  });
+
+  it("formats large numbers with commas", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => {
+      result.current.pressKey("1");
+    });
+    act(() => result.current.pressKey("2"));
+    act(() => result.current.pressKey("3"));
+    act(() => result.current.pressKey("4"));
+    act(() => result.current.pressKey("5"));
+    expect(result.current.formattedDisplay).toBe("12,345");
+  });
+
+  it("submit calls onSave with numeric value", () => {
+    const onSave = vi.fn();
+    const { result } = renderHook(() => useNumpadMode(makeProps({ onSave })));
+    act(() => result.current.pressKey("4"));
+    act(() => result.current.pressKey("2"));
+    act(() => result.current.submit());
+    expect(onSave).toHaveBeenCalledWith({
+      quantity: 42,
+      activityKindId: null,
+      memo: "",
+    });
   });
 
   it("submit does not call onSave when display is empty (value=0)", () => {
     const onSave = vi.fn();
-    const vm = useNumpadMode(makeProps({ onSave }));
-    vm.submit();
+    const { result } = renderHook(() => useNumpadMode(makeProps({ onSave })));
+    act(() => result.current.submit());
     expect(onSave).not.toHaveBeenCalled();
   });
 
   it("exposes quantityUnit", () => {
-    const vm = useNumpadMode(makeProps());
-    expect(vm.quantityUnit).toBe("点");
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    expect(result.current.quantityUnit).toBe("点");
   });
 
   it("exposes kinds and isSubmitting", () => {
     const kinds = [{ id: "k1", name: "Type", color: null }];
-    const vm = useNumpadMode(makeProps({ kinds, isSubmitting: true }));
-    expect(vm.kinds).toEqual(kinds);
-    expect(vm.isSubmitting).toBe(true);
+    const { result } = renderHook(() =>
+      useNumpadMode(makeProps({ kinds, isSubmitting: true })),
+    );
+    expect(result.current.kinds).toEqual(kinds);
+    expect(result.current.isSubmitting).toBe(true);
   });
 });
