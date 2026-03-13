@@ -7,6 +7,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   ChevronDown,
   ChevronUp,
+  Pause,
   Pencil,
   PlusCircle,
   Trash2,
@@ -17,6 +18,7 @@ import { type DexieActivity, db } from "../../db/schema";
 import { syncEngine } from "../../sync/syncEngine";
 import { getActivityIcon } from "./activityHelpers";
 import { EditGoalForm } from "./EditGoalForm";
+import { FreezePeriodManager } from "./FreezePeriodManager";
 import { GoalStatsDetail } from "./GoalStatsDetail";
 import type { Goal, UpdateGoalPayload } from "./types";
 
@@ -106,6 +108,25 @@ export function GoalCard({
   );
   const hasTodayLog = (todayLogs ?? 0) > 0;
 
+  // --- フリーズ期間 ---
+  const freezePeriods = useLiveQuery(
+    () =>
+      db.goalFreezePeriods
+        .where("goalId")
+        .equals(goal.id)
+        .filter((fp) => !fp.deletedAt)
+        .toArray(),
+    [goal.id],
+  );
+
+  const isCurrentlyFrozen = useMemo(() => {
+    if (!freezePeriods) return false;
+    return freezePeriods.some(
+      (fp) =>
+        fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
+    );
+  }, [freezePeriods, today]);
+
   // --- 完了率（背景グラデーション用、ローカルデータから算出） ---
   const periodLogs = useLiveQuery(
     () =>
@@ -118,8 +139,13 @@ export function GoalCard({
   );
 
   const balance = useMemo(() => {
-    return calculateGoalBalance(goal, periodLogs ?? [], today);
-  }, [goal, periodLogs, today]);
+    return calculateGoalBalance(
+      goal,
+      periodLogs ?? [],
+      today,
+      freezePeriods ?? [],
+    );
+  }, [goal, periodLogs, today, freezePeriods]);
 
   const localBalance = balance.currentBalance;
   const elapsedDays = balance.daysActive;
@@ -292,6 +318,11 @@ export function GoalCard({
                   <span className="text-[10px] ml-0.5">
                     {activity?.quantityUnit ?? ""}
                   </span>
+                  {balance.debtCapped && (
+                    <span className="text-[9px] ml-0.5 text-orange-500">
+                      (上限)
+                    </span>
+                  )}
                 </span>
                 {isExpanded ? (
                   <ChevronUp size={16} className="text-gray-400" />
@@ -309,6 +340,14 @@ export function GoalCard({
               >
                 {statusBadge.label}
               </span>
+
+              {/* フリーズ中インジケーター */}
+              {isCurrentlyFrozen && (
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 whitespace-nowrap flex-shrink-0">
+                  <Pause size={10} />
+                  一時停止中
+                </span>
+              )}
 
               {/* B. インライン編集 */}
               {inlineEditing ? (
@@ -449,10 +488,11 @@ export function GoalCard({
         </div>
       )}
 
-      {/* 展開時: 統計詳細（グラデーション背景を適用しない） */}
+      {/* 展開時: 統計詳細 + フリーズ管理（グラデーション背景を適用しない） */}
       {isExpanded && (
         <div className="bg-white rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />
+          {!isPast && <FreezePeriodManager goalId={goal.id} />}
         </div>
       )}
     </div>

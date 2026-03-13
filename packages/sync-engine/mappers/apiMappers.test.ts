@@ -429,6 +429,7 @@ describe("mapApiGoal", () => {
       endDate: "2024-12-31",
       isActive: true,
       description: "毎日30分走る",
+      debtCap: null,
       currentBalance: 10,
       totalTarget: 365,
       totalActual: 50,

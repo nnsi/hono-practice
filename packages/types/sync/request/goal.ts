@@ -11,6 +11,7 @@ export const UpsertGoalRequestSchema = z.object({
     .nullable(),
   isActive: z.boolean(),
   description: z.string(),
+  debtCap: z.number().min(0).nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   deletedAt: z.string().datetime().nullable(),

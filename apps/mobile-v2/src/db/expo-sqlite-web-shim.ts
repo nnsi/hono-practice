@@ -48,9 +48,29 @@ function getSqlJs(): Promise<SqlJsStatic> {
 }
 
 class WebSQLiteDatabase {
+  private txDepth = 0;
+  private savepointCounter = 0;
+
   constructor(private db: SqlJsDatabase) {}
 
   async execAsync(sql: string): Promise<void> {
+    const trimmed = sql.trim().toUpperCase();
+    // Handle nested transactions: convert BEGIN/COMMIT/ROLLBACK to SAVEPOINTs
+    if (this.txDepth > 0) {
+      if (trimmed === "BEGIN" || trimmed === "BEGIN TRANSACTION") {
+        this.savepointCounter++;
+        this.db.run(`SAVEPOINT sp_${this.savepointCounter}`);
+        return;
+      }
+      if (trimmed === "COMMIT") {
+        this.db.run(`RELEASE SAVEPOINT sp_${this.savepointCounter}`);
+        return;
+      }
+      if (trimmed === "ROLLBACK") {
+        this.db.run(`ROLLBACK TO SAVEPOINT sp_${this.savepointCounter}`);
+        return;
+      }
+    }
     this.db.run(sql);
   }
 
@@ -97,6 +117,24 @@ class WebSQLiteDatabase {
     const lastInsertRowId =
       lastRow.length > 0 ? (lastRow[0].values[0][0] as number) : 0;
     return { changes, lastInsertRowId };
+  }
+
+  async withTransactionAsync(callback: () => Promise<void>): Promise<void> {
+    this.db.run("BEGIN");
+    this.txDepth++;
+    try {
+      await callback();
+      this.txDepth--;
+      this.db.run("COMMIT");
+    } catch (e) {
+      this.txDepth--;
+      try {
+        this.db.run("ROLLBACK");
+      } catch {
+        // sql.js may auto-rollback on error
+      }
+      throw e;
+    }
   }
 }
 

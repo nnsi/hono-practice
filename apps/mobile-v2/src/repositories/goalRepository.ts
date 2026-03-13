@@ -24,6 +24,12 @@ function num(v: unknown, defaultValue: number): number {
   return Number.isNaN(n) ? defaultValue : n;
 }
 
+function numOrNull(v: unknown): number | null {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+}
+
 // Goals in the local DB do NOT store currentBalance/totalTarget/totalActual
 // (they are computed from logs). We include them as 0 in the mapped type
 // for compatibility with GoalRecord.
@@ -44,6 +50,7 @@ export function mapGoalRow(row: SqlRow): GoalWithSync {
     endDate: strOrNull(row.end_date),
     isActive: row.is_active === 1,
     description: str(row.description),
+    debtCap: numOrNull(row.debt_cap),
     currentBalance: 0,
     totalTarget: 0,
     totalActual: 0,
@@ -62,12 +69,18 @@ type CreateGoalInput = {
   startDate: string;
   endDate?: string | null;
   description?: string;
+  debtCap?: number | null;
 };
 
 type UpdateGoalInput = Partial<
   Pick<
     GoalRecord,
-    "dailyTargetQuantity" | "startDate" | "endDate" | "isActive" | "description"
+    | "dailyTargetQuantity"
+    | "startDate"
+    | "endDate"
+    | "isActive"
+    | "description"
+    | "debtCap"
   >
 >;
 
@@ -85,8 +98,8 @@ export const goalRepository = {
     }
 
     await db.runAsync(
-      `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?, 'pending', NULL, ?, ?)`,
+      `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, 'pending', NULL, ?, ?)`,
       [
         id,
         auth.user_id,
@@ -95,6 +108,7 @@ export const goalRepository = {
         input.startDate,
         input.endDate ?? null,
         input.description ?? "",
+        input.debtCap ?? null,
         now,
         now,
       ],
@@ -111,6 +125,7 @@ export const goalRepository = {
       endDate: input.endDate ?? null,
       isActive: true,
       description: input.description ?? "",
+      debtCap: input.debtCap ?? null,
       currentBalance: 0,
       totalTarget: 0,
       totalActual: 0,
@@ -155,6 +170,10 @@ export const goalRepository = {
     if (changes.description !== undefined) {
       setClauses.push("description = ?");
       values.push(changes.description);
+    }
+    if (changes.debtCap !== undefined) {
+      setClauses.push("debt_cap = ?");
+      values.push(changes.debtCap);
     }
 
     values.push(id);
@@ -218,8 +237,8 @@ export const goalRepository = {
       await db.execAsync("BEGIN");
       for (const g of goals) {
         await db.runAsync(
-          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              user_id = excluded.user_id,
              activity_id = excluded.activity_id,
@@ -228,6 +247,7 @@ export const goalRepository = {
              end_date = excluded.end_date,
              is_active = excluded.is_active,
              description = excluded.description,
+             debt_cap = excluded.debt_cap,
              sync_status = 'synced',
              deleted_at = excluded.deleted_at,
              created_at = excluded.created_at,
@@ -243,6 +263,7 @@ export const goalRepository = {
             g.endDate,
             g.isActive ? 1 : 0,
             g.description,
+            g.debtCap,
             g.deletedAt,
             g.createdAt,
             g.updatedAt,

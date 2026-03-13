@@ -1,4 +1,6 @@
 export * from "./goalBalance";
+export * from "./goalDebtFeedback";
+export * from "./goalFreezePeriod";
 export * from "./goalHeatmap";
 export * from "./goalPredicates";
 export * from "./goalRecord";

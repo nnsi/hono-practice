@@ -6,6 +6,7 @@ import {
   syncActivityIcons,
 } from "./syncActivities";
 import { syncActivityLogs } from "./syncActivityLogs";
+import { syncGoalFreezePeriods } from "./syncGoalFreezePeriods";
 import { syncGoals } from "./syncGoals";
 import { syncTasks } from "./syncTasks";
 import { webNetworkAdapter } from "./webPlatformAdapters";
@@ -20,6 +21,7 @@ export const syncEngine = {
   syncActivityIconDeletions,
   syncActivityIcons,
   syncGoals,
+  syncGoalFreezePeriods,
   syncTasks,
 
   async syncAll(): Promise<void> {
@@ -33,7 +35,12 @@ export const syncEngine = {
       await syncActivities();
       // Upload icons after activity sync (activity must exist on server)
       await syncActivityIcons();
-      await Promise.all([syncActivityLogs(), syncGoals(), syncTasks()]);
+      await Promise.all([
+        syncActivityLogs(),
+        syncGoals(),
+        syncGoalFreezePeriods(),
+        syncTasks(),
+      ]);
       retryCount = 0;
     } catch {
       retryCount++;

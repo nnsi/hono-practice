@@ -7,6 +7,7 @@ export type GoalRecord = {
   endDate: string | null;
   isActive: boolean;
   description: string;
+  debtCap: number | null;
   currentBalance: number;
   totalTarget: number;
   totalActual: number;

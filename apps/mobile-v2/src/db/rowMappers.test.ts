@@ -276,6 +276,7 @@ describe("mapGoalRow", () => {
       endDate: "2025-12-31",
       isActive: true,
       description: "daily goal",
+      debtCap: null,
       currentBalance: 0,
       totalTarget: 0,
       totalActual: 0,

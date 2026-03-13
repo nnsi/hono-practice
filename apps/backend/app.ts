@@ -18,6 +18,7 @@ import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import {
   activityLogV2Route,
   activityV2Route,
+  goalFreezePeriodV2Route,
   goalV2Route,
   taskV2Route,
 } from "./feature-v2";
@@ -97,6 +98,7 @@ const routes = app
   .route("/users/v2", activityLogV2Route)
   .route("/users/v2", activityV2Route)
   .route("/users/v2", goalV2Route)
+  .route("/users/v2", goalFreezePeriodV2Route)
   .route("/users/v2", taskV2Route)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)

@@ -18,6 +18,7 @@ function makeGoal(overrides: Record<string, unknown> = {}) {
     endDate: null,
     isActive: true,
     description: "",
+    debtCap: null,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,

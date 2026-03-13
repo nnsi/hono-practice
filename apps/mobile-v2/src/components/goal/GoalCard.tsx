@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
 import {
   calculateGoalStats,
@@ -25,6 +26,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
+import { FreezePeriodManager } from "./FreezePeriodManager";
 
 type GoalForCard = {
   id: string;
@@ -33,6 +35,7 @@ type GoalForCard = {
   startDate: string;
   endDate: string | null;
   isActive: boolean;
+  debtCap?: number | null;
 };
 
 type StatusBadge = { label: string; bgClass: string; textClass: string };
@@ -124,9 +127,33 @@ export function GoalCard({
     );
   }, [goal.activityId, goal.startDate, actualEndDate]);
 
+  // Freeze periods for this goal
+  const freezePeriods = useLiveQuery(["goal_freeze_periods"], async () => {
+    const db = await getDatabase();
+    return db.getAllAsync<FreezePeriod>(
+      `SELECT start_date as startDate, end_date as endDate
+         FROM goal_freeze_periods
+         WHERE goal_id = ? AND deleted_at IS NULL`,
+      [goal.id],
+    );
+  }, [goal.id]);
+
+  const isCurrentlyFrozen = useMemo(() => {
+    if (!freezePeriods) return false;
+    return freezePeriods.some(
+      (fp) =>
+        fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
+    );
+  }, [freezePeriods, today]);
+
   const balance = useMemo(() => {
-    return calculateGoalBalance(goal, periodLogs ?? [], today);
-  }, [goal, periodLogs, today]);
+    return calculateGoalBalance(
+      goal,
+      periodLogs ?? [],
+      today,
+      freezePeriods ?? [],
+    );
+  }, [goal, periodLogs, today, freezePeriods]);
 
   const localBalance = balance.currentBalance;
   const elapsedDays = balance.daysActive;
@@ -206,6 +233,9 @@ export function GoalCard({
                     {" "}
                     {activity?.quantityUnit ?? ""}
                   </Text>
+                  {balance.debtCapped && (
+                    <Text className="text-[9px] text-orange-500"> (上限)</Text>
+                  )}
                 </Text>
                 {isExpanded ? (
                   <ChevronUp size={16} color="#9ca3af" />
@@ -227,6 +257,15 @@ export function GoalCard({
                   {statusBadge.label}
                 </Text>
               </View>
+
+              {/* Freeze indicator */}
+              {isCurrentlyFrozen && (
+                <View className="rounded-full px-2 py-0.5 shrink-0 bg-blue-100">
+                  <Text className="text-[10px] font-medium text-blue-700">
+                    {"\u23F8"} 一時停止中
+                  </Text>
+                </View>
+              )}
 
               <Text className="text-xs text-gray-500 shrink-0">
                 {goal.dailyTargetQuantity.toLocaleString()}
@@ -300,6 +339,11 @@ export function GoalCard({
       {isExpanded && (
         <View className="bg-white rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />
+          {!isPast && (
+            <View className="px-4 pb-4">
+              <FreezePeriodManager goalId={goal.id} />
+            </View>
+          )}
         </View>
       )}
     </>

@@ -3,6 +3,7 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 
@@ -119,12 +120,26 @@ export function mapApiGoal(g: ApiRecord): GoalRecord {
     endDate: strOrNull(g.endDate ?? g.end_date),
     isActive: toBool(g.isActive ?? g.is_active, true),
     description: str(g.description),
+    debtCap: toNumOrNull(g.debtCap ?? g.debt_cap),
     currentBalance: toNum(g.currentBalance ?? g.current_balance, 0),
     totalTarget: toNum(g.totalTarget ?? g.total_target, 0),
     totalActual: toNum(g.totalActual ?? g.total_actual, 0),
     createdAt: toISOString(g.createdAt ?? g.created_at),
     updatedAt: toISOString(g.updatedAt ?? g.updated_at),
     deletedAt: strOrNull(g.deletedAt ?? g.deleted_at),
+  };
+}
+
+export function mapApiGoalFreezePeriod(fp: ApiRecord): GoalFreezePeriodRecord {
+  return {
+    id: fp.id,
+    goalId: str(fp.goalId ?? fp.goal_id),
+    userId: str(fp.userId ?? fp.user_id),
+    startDate: str(fp.startDate ?? fp.start_date),
+    endDate: strOrNull(fp.endDate ?? fp.end_date),
+    createdAt: toISOString(fp.createdAt ?? fp.created_at),
+    updatedAt: toISOString(fp.updatedAt ?? fp.updated_at),
+    deletedAt: strOrNull(fp.deletedAt ?? fp.deleted_at),
   };
 }
 

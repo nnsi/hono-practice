@@ -122,7 +122,12 @@ export function CalendarPopover({
   const calendarContent = (
     <div
       ref={ref}
-      className={triggerRef ? undefined : (popoverClassName ?? "absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 w-[280px]")}
+      className={
+        triggerRef
+          ? undefined
+          : (popoverClassName ??
+            "absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 w-[280px]")
+      }
       style={triggerRef ? portalStyle : undefined}
     >
       <div className="bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 animate-scale-in origin-top">

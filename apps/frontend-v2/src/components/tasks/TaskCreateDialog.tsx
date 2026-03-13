@@ -61,10 +61,7 @@ export function TaskCreateDialog({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 開始日
               </label>
-              <DatePickerField
-                value={startDate}
-                onChange={setStartDate}
-              />
+              <DatePickerField value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,13 +1,18 @@
 import { useState } from "react";
 
+import { calculateDebtFeedback } from "@packages/domain/goal/goalDebtFeedback";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
+import dayjs from "dayjs";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { goalFreezePeriodRepository } from "../../repositories/goalFreezePeriodRepository";
+import { goalRepository } from "../../repositories/goalRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
+import { emitDebtFeedback } from "./debtFeedbackEvents";
 
 type Activity = {
   id: string;
@@ -44,6 +49,15 @@ export function LogFormBody({
 
   const handleSave = async (params: SaveLogParams) => {
     setIsSubmitting(true);
+
+    // 1. Calculate debt feedback before creating the log
+    const feedbackResult = await computeDebtFeedback(
+      activity.id,
+      params.quantity ?? 0,
+      date,
+    );
+
+    // 2. Create the log
     await activityLogRepository.createActivityLog({
       activityId: activity.id,
       activityKindId: params.activityKindId,
@@ -52,6 +66,11 @@ export function LogFormBody({
       date,
       time: null,
     });
+
+    // 3. Emit feedback if available
+    if (feedbackResult) emitDebtFeedback(feedbackResult);
+
+    // 4. Sync + done
     syncEngine.syncActivityLogs();
     setIsSubmitting(false);
     onDone();
@@ -66,5 +85,56 @@ export function LogFormBody({
       isSubmitting={isSubmitting}
       todayLogs={todayLogs}
     />
+  );
+}
+
+// --- Debt feedback helper ---
+
+async function computeDebtFeedback(
+  activityId: string,
+  quantityRecorded: number,
+  date: string,
+) {
+  const today = dayjs().format("YYYY-MM-DD");
+
+  // Fetch all goals, filter to active ones for this activity
+  const allGoals = await goalRepository.getAllGoals();
+  const activeGoals = allGoals.filter(
+    (g) =>
+      g.activityId === activityId &&
+      g.dailyTargetQuantity > 0 &&
+      g.deletedAt == null &&
+      g.isActive,
+  );
+
+  if (activeGoals.length === 0) return null;
+
+  const goal = activeGoals[0];
+
+  // Fetch logs within the goal's date range (before this new recording)
+  const endDate = goal.endDate ?? today;
+  const logs = await activityLogRepository.getActivityLogsBetween(
+    goal.startDate,
+    endDate,
+  );
+  const goalLogs = logs
+    .filter((l) => l.activityId === activityId)
+    .map((l) => ({ date: l.date, quantity: l.quantity }));
+
+  // Fetch freeze periods
+  const freezePeriods =
+    await goalFreezePeriodRepository.getFreezePeriodsByGoalId(goal.id);
+  const freezePeriodsInput = freezePeriods.map((fp) => ({
+    startDate: fp.startDate,
+    endDate: fp.endDate,
+  }));
+
+  return calculateDebtFeedback(
+    goal,
+    goalLogs,
+    quantityRecorded,
+    date,
+    today,
+    freezePeriodsInput,
   );
 }

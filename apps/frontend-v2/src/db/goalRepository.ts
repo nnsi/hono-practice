@@ -9,12 +9,18 @@ type CreateGoalInput = {
   startDate: string;
   endDate?: string | null;
   description?: string;
+  debtCap?: number | null;
 };
 
 type UpdateGoalInput = Partial<
   Pick<
     DexieGoal,
-    "dailyTargetQuantity" | "startDate" | "endDate" | "isActive" | "description"
+    | "dailyTargetQuantity"
+    | "startDate"
+    | "endDate"
+    | "isActive"
+    | "description"
+    | "debtCap"
   >
 >;
 
@@ -34,6 +40,7 @@ export const goalRepository = {
       endDate: input.endDate ?? null,
       isActive: true,
       description: input.description ?? "",
+      debtCap: input.debtCap ?? null,
       currentBalance: 0,
       totalTarget: 0,
       totalActual: 0,

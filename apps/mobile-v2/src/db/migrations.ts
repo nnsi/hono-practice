@@ -1,6 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 5;
 
 const MIGRATION_V1 = `
 CREATE TABLE IF NOT EXISTS activities (
@@ -121,6 +121,25 @@ WHERE recording_mode = 'manual'
   );
 `;
 
+const MIGRATION_V4 = `
+ALTER TABLE goals ADD COLUMN debt_cap REAL;
+`;
+
+const MIGRATION_V5 = `
+CREATE TABLE IF NOT EXISTS goal_freeze_periods (
+  id TEXT PRIMARY KEY NOT NULL,
+  goal_id TEXT NOT NULL,
+  user_id TEXT NOT NULL DEFAULT '',
+  start_date TEXT NOT NULL,
+  end_date TEXT,
+  sync_status TEXT NOT NULL DEFAULT 'synced',
+  deleted_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_goal_freeze_periods_goal_id ON goal_freeze_periods(goal_id);
+`;
+
 export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version;",
@@ -135,6 +154,12 @@ export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   }
   if (currentVersion < 3) {
     await db.execAsync(MIGRATION_V3);
+  }
+  if (currentVersion < 4) {
+    await db.execAsync(MIGRATION_V4);
+  }
+  if (currentVersion < 5) {
+    await db.execAsync(MIGRATION_V5);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);

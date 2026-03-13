@@ -23,6 +23,10 @@ export function EditGoalForm({
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
+  const [debtCapEnabled, setDebtCapEnabled] = useState(goal.debtCap != null);
+  const [debtCapValue, setDebtCapValue] = useState(
+    String(goal.debtCap ?? goal.dailyTargetQuantity * 7),
+  );
   const [saving, setSaving] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -40,12 +44,20 @@ export function EditGoalForm({
       setErrorMsg("終了日は開始日より後の日付にしてください");
       return;
     }
+    const parsedDebtCap = debtCapEnabled ? Number(debtCapValue) : null;
+    if (debtCapEnabled) {
+      if (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0) {
+        setErrorMsg("負債上限は0より大きい数値を入力してください");
+        return;
+      }
+    }
     setSaving(true);
     try {
       await onSave({
         dailyTargetQuantity: parsedTarget,
         startDate,
         endDate: endDate || null,
+        debtCap: parsedDebtCap,
       });
     } finally {
       setSaving(false);
@@ -104,10 +116,7 @@ export function EditGoalForm({
             <label className="block text-xs font-medium text-gray-600 mb-1">
               開始日
             </label>
-            <DatePickerField
-              value={startDate}
-              onChange={setStartDate}
-            />
+            <DatePickerField value={startDate} onChange={setStartDate} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -120,6 +129,40 @@ export function EditGoalForm({
               allowClear
             />
           </div>
+        </div>
+
+        {/* 負債上限 */}
+        <div>
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+            <input
+              type="checkbox"
+              checked={debtCapEnabled}
+              onChange={(e) => {
+                setDebtCapEnabled(e.target.checked);
+                if (e.target.checked && !debtCapValue) {
+                  setDebtCapValue(String(Number(target) * 7));
+                }
+              }}
+              className="rounded"
+            />
+            負債上限を設定
+          </label>
+          {debtCapEnabled && (
+            <div className="flex items-center gap-1 mt-1">
+              <input
+                type="number"
+                inputMode="decimal"
+                value={debtCapValue}
+                onChange={(e) => setDebtCapValue(e.target.value)}
+                className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="any"
+              />
+              <span className="text-xs text-gray-500">
+                {activity?.quantityUnit ?? ""}
+              </span>
+            </div>
+          )}
         </div>
 
         {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}

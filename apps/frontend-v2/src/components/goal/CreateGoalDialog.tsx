@@ -25,6 +25,10 @@ export function CreateGoalDialog({
     setStartDate,
     endDate,
     setEndDate,
+    debtCapEnabled,
+    setDebtCapEnabled,
+    debtCapValue,
+    setDebtCapValue,
     submitting,
     errorMsg,
     selectedActivity,
@@ -107,10 +111,7 @@ export function CreateGoalDialog({
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 開始日
               </label>
-              <DatePickerField
-                value={startDate}
-                onChange={setStartDate}
-              />
+              <DatePickerField value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -123,6 +124,40 @@ export function CreateGoalDialog({
                 allowClear
               />
             </div>
+          </div>
+
+          {/* 負債上限 */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+              <input
+                type="checkbox"
+                checked={debtCapEnabled}
+                onChange={(e) => {
+                  setDebtCapEnabled(e.target.checked);
+                  if (e.target.checked && !debtCapValue) {
+                    setDebtCapValue(String(Number(target) * 7));
+                  }
+                }}
+                className="rounded"
+              />
+              負債上限を設定
+            </label>
+            {debtCapEnabled && (
+              <div className="flex items-center gap-1 mt-1">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={debtCapValue}
+                  onChange={(e) => setDebtCapValue(e.target.value)}
+                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  step="any"
+                />
+                <span className="text-xs text-gray-500">
+                  {selectedActivity?.quantityUnit ?? ""}
+                </span>
+              </div>
+            )}
           </div>
 
           {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
