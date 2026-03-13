@@ -43,7 +43,11 @@ export function DayTargetsInput({
               <div key={k} className="flex flex-col items-center gap-0.5">
                 <span
                   className={`text-[10px] font-medium ${
-                    i >= 5 ? "text-blue-500" : "text-gray-500"
+                    i === 6
+                      ? "text-red-500"
+                      : i === 5
+                        ? "text-blue-500"
+                        : "text-gray-500"
                   }`}
                 >
                   {DAY_LABELS[i]}
