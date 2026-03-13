@@ -35,12 +35,9 @@ export const syncEngine = {
       await syncActivities();
       // Upload icons after activity sync (activity must exist on server)
       await syncActivityIcons();
-      await Promise.all([
-        syncActivityLogs(),
-        syncGoals(),
-        syncGoalFreezePeriods(),
-        syncTasks(),
-      ]);
+      await Promise.all([syncActivityLogs(), syncGoals(), syncTasks()]);
+      // Freeze periods depend on goals existing on server
+      await syncGoalFreezePeriods();
       retryCount = 0;
     } catch {
       retryCount++;

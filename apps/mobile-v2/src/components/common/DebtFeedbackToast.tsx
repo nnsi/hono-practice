@@ -8,7 +8,20 @@ import { onDebtFeedback } from "./debtFeedbackEvents";
 const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;
 
-function buildMessage(result: DebtFeedbackResult): string {
+function buildMultiGoalMessage(results: DebtFeedbackResult[]): string {
+  const lines: string[] = [];
+
+  for (const result of results) {
+    const msg = buildMessage(result);
+    if (!msg) continue;
+    const prefix = result.goalLabel ? `${result.goalLabel}: ` : "";
+    lines.push(`${prefix}${msg}`);
+  }
+
+  return lines.join("\n");
+}
+
+function buildMessage(result: DebtFeedbackResult): string | null {
   const lines: string[] = [];
 
   if (result.targetAchievedToday && result.debtCleared) {
@@ -27,21 +40,22 @@ function buildMessage(result: DebtFeedbackResult): string {
     lines.push(`(上限により${result.debtCapSaved}回分免除)`);
   }
 
-  return lines.join("\n");
+  return lines.length > 0 ? lines.join("\n") : null;
 }
 
-function shouldShow(result: DebtFeedbackResult): boolean {
-  return (
-    result.targetAchievedToday ||
-    result.debtCleared ||
-    result.debtReduced ||
-    (result.savedAmount > 0 && !result.targetAchievedToday) ||
-    result.debtCapSaved > 0
+function shouldShow(results: DebtFeedbackResult[]): boolean {
+  return results.some(
+    (r) =>
+      r.targetAchievedToday ||
+      r.debtCleared ||
+      r.debtReduced ||
+      (r.savedAmount > 0 && !r.targetAchievedToday) ||
+      r.debtCapSaved > 0,
   );
 }
 
 export function DebtFeedbackToast() {
-  const [result, setResult] = useState<DebtFeedbackResult | null>(null);
+  const [results, setResults] = useState<DebtFeedbackResult[] | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,12 +63,12 @@ export function DebtFeedbackToast() {
   useEffect(() => {
     return onDebtFeedback((r) => {
       if (!shouldShow(r)) return;
-      setResult(r);
+      setResults(r);
     });
   }, []);
 
   useEffect(() => {
-    if (!result) return;
+    if (!results) return;
 
     // Clear any existing timer
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -90,18 +104,18 @@ export function DebtFeedbackToast() {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setResult(null);
+        setResults(null);
       });
     }, DISPLAY_DURATION);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [result]);
+  }, [results]);
 
-  if (!result) return null;
+  if (!results) return null;
 
-  const message = buildMessage(result);
+  const message = buildMultiGoalMessage(results);
   if (!message) return null;
 
   return (

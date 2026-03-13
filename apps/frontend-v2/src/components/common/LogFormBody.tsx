@@ -42,7 +42,7 @@ export function LogFormBody({
     setIsSubmitting(true);
 
     // Compute debt feedback BEFORE creating the log
-    const feedbackResult = await computeDebtFeedbackForActivity(
+    const feedbackResults = await computeDebtFeedbackForActivity(
       activity.id,
       params.quantity ?? 0,
       date,
@@ -57,9 +57,7 @@ export function LogFormBody({
       time: null,
     });
 
-    if (feedbackResult) {
-      emitDebtFeedback(feedbackResult);
-    }
+    emitDebtFeedback(feedbackResults);
 
     syncEngine.syncActivityLogs();
     setIsSubmitting(false);

@@ -5,7 +5,7 @@ import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback"
 import { onDebtFeedback } from "./debtFeedbackEvents";
 
 type ToastState = {
-  result: DebtFeedbackResult;
+  results: DebtFeedbackResult[];
   key: number;
 };
 
@@ -16,12 +16,12 @@ export function DebtFeedbackToast() {
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    return onDebtFeedback((result) => {
-      const message = buildMessage(result);
+    return onDebtFeedback((results) => {
+      const message = buildMultiGoalMessage(results);
       if (!message) return;
 
       keyRef.current += 1;
-      setToast({ result, key: keyRef.current });
+      setToast({ results, key: keyRef.current });
       setVisible(true);
 
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -40,7 +40,7 @@ export function DebtFeedbackToast() {
 
   if (!toast) return null;
 
-  const message = buildMessage(toast.result);
+  const message = buildMultiGoalMessage(toast.results);
   if (!message) return null;
 
   return (
@@ -59,6 +59,19 @@ export function DebtFeedbackToast() {
       </div>
     </div>
   );
+}
+
+function buildMultiGoalMessage(results: DebtFeedbackResult[]): string | null {
+  const lines: string[] = [];
+
+  for (const result of results) {
+    const msg = buildMessage(result);
+    if (!msg) continue;
+    const prefix = result.goalLabel ? `${result.goalLabel}: ` : "";
+    lines.push(`${prefix}${msg}`);
+  }
+
+  return lines.length > 0 ? lines.join("\n") : null;
 }
 
 function buildMessage(result: DebtFeedbackResult): string | null {

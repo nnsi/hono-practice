@@ -10,6 +10,8 @@ type GoalInput = {
 type LogEntry = { date: string; quantity: number | null };
 
 export type DebtFeedbackResult = {
+  /** 複数ゴール時の区別用ラベル（description or target値） */
+  goalLabel: string | null;
   balanceBefore: number;
   balanceAfter: number;
   dailyTarget: number;
@@ -78,6 +80,7 @@ export function calculateDebtFeedback(
     : 0;
 
   return {
+    goalLabel: null,
     balanceBefore,
     balanceAfter,
     dailyTarget: goal.dailyTargetQuantity,
