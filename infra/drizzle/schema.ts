@@ -262,6 +262,7 @@ export const activityGoals = pgTable(
     endDate: date("end_date"),
     isActive: boolean("is_active").notNull().default(true),
     description: text("description"),
+    debtCap: customTypeNumeric("debt_cap"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -287,6 +288,34 @@ export const activityGoalsRelations = relations(activityGoals, ({ one }) => ({
     references: [activities.id],
   }),
 }));
+
+// ActivityGoalFreezePeriod テーブル
+export const activityGoalFreezePeriods = pgTable(
+  "activity_goal_freeze_period",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => activityGoals.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("activity_goal_freeze_period_goal_id_idx").on(t.goalId),
+    index("activity_goal_freeze_period_user_id_idx").on(t.userId),
+  ],
+);
 
 // ApiKey テーブル
 export const apiKeys = pgTable(

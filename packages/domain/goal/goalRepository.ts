@@ -7,12 +7,18 @@ export type CreateGoalInput = {
   startDate: string;
   endDate?: string | null;
   description?: string;
+  debtCap?: number | null;
 };
 
 export type UpdateGoalInput = Partial<
   Pick<
     GoalRecord,
-    "dailyTargetQuantity" | "startDate" | "endDate" | "isActive" | "description"
+    | "dailyTargetQuantity"
+    | "startDate"
+    | "endDate"
+    | "isActive"
+    | "description"
+    | "debtCap"
   >
 >;
 

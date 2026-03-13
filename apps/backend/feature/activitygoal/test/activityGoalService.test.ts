@@ -67,7 +67,7 @@ describe("ActivityGoalService", () => {
       // 10日間 × 10/日 = 100 (目標)
       // 実績: 5 + 15 = 20
       // バランス: 20 - 100 = -80
-      expect(balance).toEqual({
+      expect(balance).toMatchObject({
         currentBalance: -80,
         totalTarget: 100,
         totalActual: 20,
@@ -104,7 +104,7 @@ describe("ActivityGoalService", () => {
       // 3日間 × 10/日 = 30 (目標)
       // 実績: 5 + 15 + 100 = 120
       // バランス: 120 - 30 = 90
-      expect(balance).toEqual({
+      expect(balance).toMatchObject({
         currentBalance: 90,
         totalTarget: 30,
         totalActual: 120,
@@ -161,7 +161,7 @@ describe("ActivityGoalService", () => {
       expect(history).toHaveLength(3);
 
       // Day 1: target 10, actual 5 (1/1のログのみ), balance -5
-      expect(history[0]).toEqual({
+      expect(history[0]).toMatchObject({
         currentBalance: -5,
         totalTarget: 10,
         totalActual: 5,
@@ -171,7 +171,7 @@ describe("ActivityGoalService", () => {
       });
 
       // Day 2: target 20, actual 20 (1/1 + 1/2のログ), balance 0
-      expect(history[1]).toEqual({
+      expect(history[1]).toMatchObject({
         currentBalance: 0,
         totalTarget: 20,
         totalActual: 20,
@@ -181,7 +181,7 @@ describe("ActivityGoalService", () => {
       });
 
       // Day 3: target 30, actual 20 (1/1 + 1/2のログ), balance -10
-      expect(history[2]).toEqual({
+      expect(history[2]).toMatchObject({
         currentBalance: -10,
         totalTarget: 30,
         totalActual: 20,

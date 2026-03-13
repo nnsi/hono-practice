@@ -49,6 +49,8 @@ export function useGoalStats(
         dailyTarget: dailyTargetQuantity,
         daysActive: 0,
         lastCalculatedDate: today,
+        rawBalance: 0,
+        debtCapped: false,
       },
       dailyRecords: [],
       stats: {

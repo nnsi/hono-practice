@@ -17,6 +17,7 @@ import {
   Target,
 } from "lucide-react";
 
+import { DebtFeedbackToast } from "../components/common/DebtFeedbackToast";
 import { LegalModal } from "../components/common/LegalModal";
 import { CreateUserForm, LoginForm } from "../components/root";
 import { useAuth } from "../hooks/useAuth";
@@ -227,6 +228,8 @@ function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
           />
         </div>
       </nav>
+
+      <DebtFeedbackToast />
     </div>
   );
 }

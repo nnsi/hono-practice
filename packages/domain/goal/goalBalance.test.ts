@@ -173,4 +173,183 @@ describe("calculateGoalBalance", () => {
     expect(result.totalActual).toBe(15);
     expect(result.daysActive).toBe(1);
   });
+
+  it("rawBalanceとdebtCappedが返される（capなし）", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-05";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.rawBalance).toBe(-50);
+    expect(result.currentBalance).toBe(-50);
+    expect(result.debtCapped).toBe(false);
+  });
+
+  // --- Debt キャップテスト ---
+
+  it("debtCap: 負債がcapを超えた場合、capでクランプされる", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+      debtCap: 30, // 最大負債 = 30
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-10"; // 10日間 = 目標100、実績0 → rawBalance = -100
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.rawBalance).toBe(-100);
+    expect(result.currentBalance).toBe(-30); // capでクランプ
+    expect(result.debtCapped).toBe(true);
+  });
+
+  it("debtCap: 負債がcap以下の場合、そのまま", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+      debtCap: 100,
+    };
+    const logs = [{ date: "2026-01-01", quantity: 5 }];
+    const today = "2026-01-03"; // 3日間 = 目標30、実績5 → rawBalance = -25
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.rawBalance).toBe(-25);
+    expect(result.currentBalance).toBe(-25); // cap 100 > 25なのでクランプされない
+    expect(result.debtCapped).toBe(false);
+  });
+
+  it("debtCap: プラスバランスにはcapは影響しない", () => {
+    const goal = {
+      dailyTargetQuantity: 5,
+      startDate: "2026-01-01",
+      endDate: null,
+      debtCap: 10,
+    };
+    const logs = [{ date: "2026-01-01", quantity: 50 }];
+    const today = "2026-01-01";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.rawBalance).toBe(45);
+    expect(result.currentBalance).toBe(45);
+    expect(result.debtCapped).toBe(false);
+  });
+
+  it("debtCap: nullの場合、capなしと同じ", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+      debtCap: null,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-10";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.rawBalance).toBe(-100);
+    expect(result.currentBalance).toBe(-100);
+    expect(result.debtCapped).toBe(false);
+  });
+
+  // --- フリーズ期間テスト ---
+
+  it("freezePeriods: フリーズ期間中は目標日数から除外される", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    // 1/3〜1/5 をフリーズ (3日間)
+    const freezePeriods = [{ startDate: "2026-01-03", endDate: "2026-01-05" }];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-07"; // 7日間 - 3日フリーズ = 4日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(4);
+    expect(result.totalTarget).toBe(40); // 4 * 10
+  });
+
+  it("freezePeriods: フリーズ中のログはtotalActualにカウントされる（貯金）", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const freezePeriods = [{ startDate: "2026-01-02", endDate: "2026-01-03" }];
+    const logs = [
+      { date: "2026-01-02", quantity: 15 }, // フリーズ中だが貯金になる
+    ];
+    const today = "2026-01-03"; // 3日間 - 2日フリーズ = 1日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(1);
+    expect(result.totalTarget).toBe(10);
+    expect(result.totalActual).toBe(15);
+    expect(result.currentBalance).toBe(5); // 15 - 10 = +5 貯金
+  });
+
+  it("freezePeriods: endDateがnull（open-ended）の場合、todayまでフリーズ", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const freezePeriods = [{ startDate: "2026-01-03", endDate: null }]; // 1/3以降ずっとフリーズ
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-10"; // 10日間 - 8日フリーズ(1/3〜1/10) = 2日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(2);
+    expect(result.totalTarget).toBe(20);
+  });
+
+  it("freezePeriods: 複数のフリーズ期間", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const freezePeriods = [
+      { startDate: "2026-01-02", endDate: "2026-01-03" }, // 2日
+      { startDate: "2026-01-06", endDate: "2026-01-07" }, // 2日
+    ];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-10"; // 10日 - 4日 = 6日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(6);
+    expect(result.totalTarget).toBe(60);
+  });
+
+  it("freezePeriods + debtCap: 両方が適用される", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+      debtCap: 20,
+    };
+    const freezePeriods = [{ startDate: "2026-01-03", endDate: "2026-01-04" }];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-07"; // 7日 - 2日フリーズ = 5日有効 → 目標50 → rawBalance = -50
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(5);
+    expect(result.rawBalance).toBe(-50);
+    expect(result.currentBalance).toBe(-20); // capでクランプ
+    expect(result.debtCapped).toBe(true);
+  });
 });

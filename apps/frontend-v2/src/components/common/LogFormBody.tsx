@@ -10,6 +10,8 @@ import { db } from "../../db/schema";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
+import { computeDebtFeedbackForActivity } from "./computeDebtFeedback";
+import { emitDebtFeedback } from "./debtFeedbackEvents";
 
 export function LogFormBody({
   activity,
@@ -38,6 +40,14 @@ export function LogFormBody({
 
   const handleSave = async (params: SaveLogParams) => {
     setIsSubmitting(true);
+
+    // Compute debt feedback BEFORE creating the log
+    const feedbackResult = await computeDebtFeedbackForActivity(
+      activity.id,
+      params.quantity ?? 0,
+      date,
+    );
+
     await activityLogRepository.createActivityLog({
       activityId: activity.id,
       activityKindId: params.activityKindId,
@@ -46,6 +56,11 @@ export function LogFormBody({
       date,
       time: null,
     });
+
+    if (feedbackResult) {
+      emitDebtFeedback(feedbackResult);
+    }
+
     syncEngine.syncActivityLogs();
     setIsSubmitting(false);
     onDone();

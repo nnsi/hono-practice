@@ -1,4 +1,6 @@
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+
+import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -25,6 +27,15 @@ export function CreateGoalDialog({
   onClose,
   onCreate,
 }: CreateGoalDialogProps) {
+  const [debtCapEnabled, setDebtCapEnabled] = useState(false);
+  const [debtCapValue, setDebtCapValue] = useState("");
+
+  // Wrap onCreate to inject debtCap into the payload
+  const onCreateWithDebtCap = async (payload: CreateGoalPayload) => {
+    const debtCap = debtCapEnabled ? Number(debtCapValue) : null;
+    await onCreate({ ...payload, debtCap });
+  };
+
   const {
     activityId,
     setActivityId,
@@ -37,9 +48,15 @@ export function CreateGoalDialog({
     submitting,
     errorMsg,
     selectedActivity,
-    resetForm,
+    resetForm: resetFormBase,
     handleSubmit,
-  } = useCreateGoalDialog(activities, onCreate);
+  } = useCreateGoalDialog(activities, onCreateWithDebtCap);
+
+  const resetForm = () => {
+    resetFormBase();
+    setDebtCapEnabled(false);
+    setDebtCapValue("");
+  };
 
   const handleClose = () => {
     resetForm();
@@ -125,6 +142,38 @@ export function CreateGoalDialog({
               placeholder="YYYY-MM-DD"
             />
           </View>
+        </View>
+
+        {/* Debt cap */}
+        <View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm font-medium text-gray-600">
+              負債上限を設定
+            </Text>
+            <Switch
+              value={debtCapEnabled}
+              onValueChange={(v) => {
+                setDebtCapEnabled(v);
+                if (v && !debtCapValue) {
+                  setDebtCapValue(String(Number(target) * 7));
+                }
+              }}
+            />
+          </View>
+          {debtCapEnabled && (
+            <View className="flex-row items-center gap-2 mt-1">
+              <TextInput
+                className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                value={debtCapValue}
+                onChangeText={setDebtCapValue}
+                keyboardType="numeric"
+                selectTextOnFocus
+              />
+              <Text className="text-xs text-gray-500">
+                {selectedActivity?.quantityUnit ?? ""}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Error message */}

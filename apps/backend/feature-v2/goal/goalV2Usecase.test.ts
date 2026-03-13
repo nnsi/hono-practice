@@ -2,6 +2,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import type { UserId } from "@packages/domain/user/userSchema";
 import { describe, expect, test, vi } from "vitest";
 
+import type { GoalFreezePeriodV2Repository } from "../goal-freeze-period/goalFreezePeriodV2Repository";
 import type { GoalV2Repository } from "./goalV2Repository";
 import { newGoalV2Usecase } from "./goalV2Usecase";
 
@@ -19,6 +20,7 @@ function makeGoalRow(overrides: Record<string, unknown> = {}) {
     endDate: null,
     isActive: true,
     description: "",
+    debtCap: null,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
@@ -35,6 +37,7 @@ function makeUpsertRequest(overrides: Record<string, unknown> = {}) {
     endDate: null,
     isActive: true,
     description: "",
+    debtCap: null,
     createdAt: NOW.toISOString(),
     updatedAt: NOW.toISOString(),
     deletedAt: null,
@@ -55,11 +58,25 @@ function createMockRepo(
   };
 }
 
+function createMockFreezeRepo(): GoalFreezePeriodV2Repository {
+  return {
+    getFreezePeriodsByUserId: vi.fn().mockResolvedValue([]),
+    getFreezePeriodsByGoalIds: vi.fn().mockResolvedValue([]),
+    upsertFreezePeriods: vi.fn().mockResolvedValue([]),
+    getFreezePeriodsByIds: vi.fn().mockResolvedValue([]),
+    getOwnedGoalIds: vi.fn().mockResolvedValue([]),
+  };
+}
+
 describe("goalV2Usecase", () => {
   describe("getGoals", () => {
     test("ゴールなし → 空配列", async () => {
       const repo = createMockRepo();
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.getGoals(USER_ID);
 
@@ -75,7 +92,11 @@ describe("goalV2Usecase", () => {
         getGoalsByUserId: vi.fn().mockResolvedValue([row]),
         getGoalActualQuantity: vi.fn().mockResolvedValue(50),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.getGoals(USER_ID);
 
@@ -91,7 +112,11 @@ describe("goalV2Usecase", () => {
       const repo = createMockRepo({
         getGoalsByUserId: vi.fn().mockResolvedValue([row]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.getGoals(USER_ID);
 
@@ -103,7 +128,11 @@ describe("goalV2Usecase", () => {
 
     test("sinceパラメータをrepoに渡す", async () => {
       const repo = createMockRepo();
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       await usecase.getGoals(USER_ID, "2025-06-01T00:00:00.000Z");
 
@@ -126,7 +155,11 @@ describe("goalV2Usecase", () => {
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
           getGoalActualQuantity: vi.fn().mockResolvedValue(5),
         });
-        const usecase = newGoalV2Usecase(repo, noopTracer);
+        const usecase = newGoalV2Usecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
 
         const result = await usecase.getGoals(USER_ID);
 
@@ -158,7 +191,11 @@ describe("goalV2Usecase", () => {
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
           getGoalActualQuantity: vi.fn().mockResolvedValue(10),
         });
-        const usecase = newGoalV2Usecase(repo, noopTracer);
+        const usecase = newGoalV2Usecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
 
         const result = await usecase.getGoals(USER_ID);
 
@@ -181,7 +218,11 @@ describe("goalV2Usecase", () => {
   describe("syncGoals", () => {
     test("空配列 → 早期リターン", async () => {
       const repo = createMockRepo();
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, []);
 
@@ -197,7 +238,11 @@ describe("goalV2Usecase", () => {
       const repo = createMockRepo({
         upsertGoals: vi.fn().mockResolvedValue([row]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -212,7 +257,11 @@ describe("goalV2Usecase", () => {
       const repo = createMockRepo({
         getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -225,7 +274,11 @@ describe("goalV2Usecase", () => {
       const farFuture = new Date(Date.now() + 10 * 60 * 1000).toISOString();
       const req = makeUpsertRequest({ updatedAt: farFuture });
       const repo = createMockRepo();
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -251,7 +304,11 @@ describe("goalV2Usecase", () => {
         upsertGoals: vi.fn().mockResolvedValue([row1]),
         getGoalsByIds: vi.fn().mockResolvedValue([serverRow2]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req1, req2] as never[]);
 
@@ -268,7 +325,11 @@ describe("goalV2Usecase", () => {
         upsertGoals: vi.fn().mockResolvedValue([]),
         getGoalsByIds: vi.fn().mockResolvedValue([]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -299,7 +360,11 @@ describe("goalV2Usecase", () => {
         upsertGoals: vi.fn().mockResolvedValue([syncedRow]),
         getGoalsByIds: vi.fn().mockResolvedValue([serverWinRow]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [
         reqSynced,
@@ -324,7 +389,11 @@ describe("goalV2Usecase", () => {
         const repo = createMockRepo({
           upsertGoals: vi.fn().mockResolvedValue([row]),
         });
-        const usecase = newGoalV2Usecase(repo, noopTracer);
+        const usecase = newGoalV2Usecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
 
         const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -343,7 +412,11 @@ describe("goalV2Usecase", () => {
           updatedAt: "2026-03-01T12:05:00.001Z",
         });
         const repo = createMockRepo();
-        const usecase = newGoalV2Usecase(repo, noopTracer);
+        const usecase = newGoalV2Usecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
 
         const result = await usecase.syncGoals(USER_ID, [req as never]);
 
@@ -360,7 +433,11 @@ describe("goalV2Usecase", () => {
       const repo = createMockRepo({
         upsertGoals: vi.fn().mockResolvedValue([row]),
       });
-      const usecase = newGoalV2Usecase(repo, noopTracer);
+      const usecase = newGoalV2Usecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
 
       const result = await usecase.syncGoals(USER_ID, [req as never]);
 

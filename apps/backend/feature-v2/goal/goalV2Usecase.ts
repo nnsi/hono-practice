@@ -1,8 +1,16 @@
-import type { activityGoals } from "@infra/drizzle/schema";
+import type {
+  activityGoalFreezePeriods,
+  activityGoals,
+} from "@infra/drizzle/schema";
+import {
+  type FreezePeriod,
+  calculateGoalBalance,
+} from "@packages/domain/goal/goalBalance";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
+import type { GoalFreezePeriodV2Repository } from "../goal-freeze-period/goalFreezePeriodV2Repository";
 import type { GoalV2Repository } from "./goalV2Repository";
 
 type GoalRow = typeof activityGoals.$inferSelect;
@@ -32,15 +40,28 @@ export type GoalV2Usecase = {
 
 export function newGoalV2Usecase(
   repo: GoalV2Repository,
+  freezeRepo: GoalFreezePeriodV2Repository,
   tracer: Tracer,
 ): GoalV2Usecase {
   return {
-    getGoals: getGoals(repo, tracer),
+    getGoals: getGoals(repo, freezeRepo, tracer),
     syncGoals: syncGoals(repo, tracer),
   };
 }
 
-function getGoals(repo: GoalV2Repository, tracer: Tracer) {
+type FreezePeriodRow = typeof activityGoalFreezePeriods.$inferSelect;
+
+function toFreezePeriods(rows: FreezePeriodRow[]): FreezePeriod[] {
+  return rows
+    .filter((r) => !r.deletedAt)
+    .map((r) => ({ startDate: r.startDate, endDate: r.endDate }));
+}
+
+function getGoals(
+  repo: GoalV2Repository,
+  freezeRepo: GoalFreezePeriodV2Repository,
+  tracer: Tracer,
+) {
   return async (
     userId: UserId,
     since?: string,
@@ -49,26 +70,32 @@ function getGoals(repo: GoalV2Repository, tracer: Tracer) {
       repo.getGoalsByUserId(userId, since),
     );
 
+    const activeGoalIds = goals.filter((g) => !g.deletedAt).map((g) => g.id);
+
+    const allFreezePeriods =
+      activeGoalIds.length > 0
+        ? await tracer.span("db.getFreezePeriodsByGoalIds", () =>
+            freezeRepo.getFreezePeriodsByGoalIds(userId, activeGoalIds),
+          )
+        : [];
+
+    const freezeByGoalId = new Map<string, FreezePeriodRow[]>();
+    for (const fp of allFreezePeriods) {
+      const existing = freezeByGoalId.get(fp.goalId) ?? [];
+      existing.push(fp);
+      freezeByGoalId.set(fp.goalId, existing);
+    }
+
+    const today = new Date().toISOString().split("T")[0]!;
+
     const goalsWithStats = await Promise.all(
       goals.map(async (goal) => {
         if (goal.deletedAt) {
           return { ...goal, currentBalance: 0, totalTarget: 0, totalActual: 0 };
         }
 
-        const today = new Date().toISOString().split("T")[0];
-        const endDate = goal.endDate ?? today;
-        const effectiveEnd = endDate < today! ? endDate : today!;
-
-        const start = new Date(goal.startDate);
-        const end = new Date(effectiveEnd);
-        const days = Math.max(
-          Math.floor(
-            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-          ) + 1,
-          0,
-        );
-
-        const totalTarget = days * Number(goal.dailyTargetQuantity);
+        const effectiveEnd =
+          goal.endDate && today > goal.endDate ? goal.endDate : today;
 
         const totalActual = await tracer.span("db.getGoalActualQuantity", () =>
           repo.getGoalActualQuantity(
@@ -79,9 +106,28 @@ function getGoals(repo: GoalV2Repository, tracer: Tracer) {
           ),
         );
 
-        const currentBalance = totalActual - totalTarget;
+        const freezePeriods = toFreezePeriods(
+          freezeByGoalId.get(goal.id) ?? [],
+        );
 
-        return { ...goal, currentBalance, totalTarget, totalActual };
+        const result = calculateGoalBalance(
+          {
+            dailyTargetQuantity: Number(goal.dailyTargetQuantity),
+            startDate: goal.startDate,
+            endDate: goal.endDate,
+            debtCap: goal.debtCap != null ? Number(goal.debtCap) : null,
+          },
+          [{ date: goal.startDate, quantity: totalActual }],
+          today,
+          freezePeriods,
+        );
+
+        return {
+          ...goal,
+          currentBalance: result.currentBalance,
+          totalTarget: result.totalTarget,
+          totalActual: result.totalActual,
+        };
       }),
     );
 

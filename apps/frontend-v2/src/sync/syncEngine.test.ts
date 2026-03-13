@@ -11,6 +11,9 @@ vi.mock("./syncActivityLogs", () => ({
 vi.mock("./syncGoals", () => ({
   syncGoals: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("./syncGoalFreezePeriods", () => ({
+  syncGoalFreezePeriods: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("./syncTasks", () => ({
   syncTasks: vi.fn().mockResolvedValue(undefined),
 }));

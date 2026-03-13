@@ -7,6 +7,7 @@ export type Goal = {
   endDate: string | null;
   isActive: boolean;
   description: string;
+  debtCap: number | null;
   currentBalance: number;
   totalTarget: number;
   totalActual: number;
@@ -19,6 +20,7 @@ export type CreateGoalPayload = {
   dailyTargetQuantity: number;
   startDate: string;
   endDate?: string;
+  debtCap?: number | null;
 };
 
 export type UpdateGoalPayload = {
@@ -26,6 +28,7 @@ export type UpdateGoalPayload = {
   startDate?: string;
   endDate?: string | null;
   isActive?: boolean;
+  debtCap?: number | null;
 };
 
 export type {

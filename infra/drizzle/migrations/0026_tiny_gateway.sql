@@ -1,0 +1,1 @@
+ALTER TABLE "activity_goal" ADD COLUMN "debt_cap" numeric;

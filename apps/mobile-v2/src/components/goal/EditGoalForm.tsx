@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Trash2, X } from "lucide-react-native";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
 import type { Activity, UpdateGoalPayload } from "./types";
@@ -13,6 +13,7 @@ type GoalForEdit = {
   startDate: string;
   endDate: string | null;
   isActive: boolean;
+  debtCap?: number | null;
 };
 
 export function EditGoalForm({
@@ -31,6 +32,10 @@ export function EditGoalForm({
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
+  const [debtCapEnabled, setDebtCapEnabled] = useState(goal.debtCap != null);
+  const [debtCapValue, setDebtCapValue] = useState(
+    String(goal.debtCap ?? goal.dailyTargetQuantity * 7),
+  );
   const [saving, setSaving] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -47,12 +52,20 @@ export function EditGoalForm({
       setErrorMsg("終了日は開始日より後の日付にしてください");
       return;
     }
+    const parsedDebtCap = debtCapEnabled ? Number(debtCapValue) : null;
+    if (debtCapEnabled) {
+      if (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0) {
+        setErrorMsg("負債上限は0より大きい数値を入力してください");
+        return;
+      }
+    }
     setSaving(true);
     try {
       await onSave({
         dailyTargetQuantity: parsedTarget,
         startDate,
         endDate: endDate || null,
+        debtCap: parsedDebtCap,
       });
     } finally {
       setSaving(false);
@@ -126,6 +139,38 @@ export function EditGoalForm({
             placeholder="未設定"
           />
         </View>
+      </View>
+
+      {/* Debt cap */}
+      <View className="mb-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xs font-medium text-gray-600">
+            負債上限を設定
+          </Text>
+          <Switch
+            value={debtCapEnabled}
+            onValueChange={(v) => {
+              setDebtCapEnabled(v);
+              if (v && !debtCapValue) {
+                setDebtCapValue(String(Number(target) * 7));
+              }
+            }}
+          />
+        </View>
+        {debtCapEnabled && (
+          <View className="flex-row items-center gap-2 mt-1">
+            <TextInput
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+              value={debtCapValue}
+              onChangeText={setDebtCapValue}
+              keyboardType="numeric"
+              selectTextOnFocus
+            />
+            <Text className="text-xs text-gray-500">
+              {activity?.quantityUnit ?? ""}
+            </Text>
+          </View>
+        )}
       </View>
 
       {errorMsg ? (

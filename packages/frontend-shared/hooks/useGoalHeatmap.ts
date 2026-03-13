@@ -116,7 +116,8 @@ export function createUseGoalHeatmap(deps: UseGoalHeatmapDeps) {
     const relevantGoals = useMemo(
       () =>
         goals.filter(
-          (g) => g.startDate <= today && (g.endDate === null || g.endDate >= start),
+          (g) =>
+            g.startDate <= today && (g.endDate === null || g.endDate >= start),
         ),
       [goals, today, start],
     );

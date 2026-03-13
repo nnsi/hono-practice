@@ -5,6 +5,7 @@ import { SyncGoalsRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
+import { newGoalFreezePeriodV2Repository } from "../goal-freeze-period/goalFreezePeriodV2Repository";
 import { newGoalV2Handler } from "./goalV2Handler";
 import { newGoalV2Repository } from "./goalV2Repository";
 import { newGoalV2Usecase } from "./goalV2Usecase";
@@ -23,7 +24,8 @@ export function createGoalV2Route() {
     const tracer = c.get("tracer") ?? noopTracer;
 
     const repo = newGoalV2Repository(db);
-    const uc = newGoalV2Usecase(repo, tracer);
+    const freezeRepo = newGoalFreezePeriodV2Repository(db);
+    const uc = newGoalV2Usecase(repo, freezeRepo, tracer);
     const h = newGoalV2Handler(uc);
 
     c.set("h", h);

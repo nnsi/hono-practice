@@ -7,6 +7,7 @@ const { mockApiClientObj } = vi.hoisted(() => ({
 vi.mock("../db/activityRepository");
 vi.mock("../db/activityLogRepository");
 vi.mock("../db/goalRepository");
+vi.mock("../db/goalFreezePeriodRepository");
 vi.mock("../db/taskRepository");
 vi.mock("../db/schema", () => ({
   db: {
@@ -14,6 +15,7 @@ vi.mock("../db/schema", () => ({
     activities: { clear: vi.fn() },
     activityKinds: { clear: vi.fn() },
     goals: { clear: vi.fn() },
+    goalFreezePeriods: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     tasks: { clear: vi.fn() },
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
@@ -27,8 +29,15 @@ vi.mock("../db/schema", () => ({
   },
 }));
 vi.mock("@packages/sync-engine/mappers/apiMappers");
+const { mockCustomFetch } = vi.hoisted(() => ({
+  mockCustomFetch: vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ freezePeriods: [] }),
+  }),
+}));
 vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
+  customFetch: mockCustomFetch,
 }));
 
 import {
@@ -36,6 +45,7 @@ import {
   mapApiActivityKind,
   mapApiActivityLog,
   mapApiGoal,
+  mapApiGoalFreezePeriod,
   mapApiTask,
 } from "@packages/sync-engine/mappers/apiMappers";
 
@@ -60,6 +70,7 @@ describe("initialSync", () => {
     vi.mocked(mapApiActivityKind).mockImplementation((k: any) => k);
     vi.mocked(mapApiActivityLog).mockImplementation((l: any) => l);
     vi.mocked(mapApiGoal).mockImplementation((g: any) => g);
+    vi.mocked(mapApiGoalFreezePeriod).mockImplementation((fp: any) => fp);
     vi.mocked(mapApiTask).mockImplementation((t: any) => t);
   });
 
@@ -73,6 +84,7 @@ describe("initialSync", () => {
       expect(mockDb.activities.clear).toHaveBeenCalled();
       expect(mockDb.activityKinds.clear).toHaveBeenCalled();
       expect(mockDb.goals.clear).toHaveBeenCalled();
+      expect(mockDb.goalFreezePeriods.clear).toHaveBeenCalled();
       expect(mockDb.tasks.clear).toHaveBeenCalled();
       expect(mockDb.activityIconBlobs.clear).toHaveBeenCalled();
       expect(mockDb.activityIconDeleteQueue.clear).toHaveBeenCalled();

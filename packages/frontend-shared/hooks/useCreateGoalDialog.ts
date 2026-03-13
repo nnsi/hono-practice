@@ -21,6 +21,8 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
     const [target, setTarget] = useState("1");
     const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
     const [endDate, setEndDate] = useState("");
+    const [debtCapEnabled, setDebtCapEnabled] = useState(false);
+    const [debtCapValue, setDebtCapValue] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -34,6 +36,8 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
       setTarget("1");
       setStartDate(dayjs().format("YYYY-MM-DD"));
       setEndDate("");
+      setDebtCapEnabled(false);
+      setDebtCapValue("");
       setErrorMsg("");
     };
 
@@ -58,6 +62,14 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
         return;
       }
 
+      const parsedDebtCap = debtCapEnabled ? Number(debtCapValue) : null;
+      if (debtCapEnabled) {
+        if (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0) {
+          setErrorMsg("負債上限は0より大きい数値を入力してください");
+          return;
+        }
+      }
+
       setSubmitting(true);
       try {
         await onCreate({
@@ -65,6 +77,7 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
           dailyTargetQuantity: parsedTarget,
           startDate,
           ...(endDate ? { endDate } : {}),
+          debtCap: parsedDebtCap,
         });
         resetForm();
       } catch {
@@ -83,6 +96,10 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
       setStartDate,
       endDate,
       setEndDate,
+      debtCapEnabled,
+      setDebtCapEnabled,
+      debtCapValue,
+      setDebtCapValue,
       submitting,
       errorMsg,
       selectedActivity,

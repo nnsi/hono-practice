@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
@@ -79,6 +80,7 @@ export default function RootLayout() {
             <StatusBar style="auto" />
             <View className="flex-1 bg-stone-100">
               <Slot />
+              <DebtFeedbackToast />
             </View>
           </AuthContext.Provider>
         </QueryClientProvider>
