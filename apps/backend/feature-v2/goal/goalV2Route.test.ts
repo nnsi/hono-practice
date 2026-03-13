@@ -199,6 +199,39 @@ describe("POST /users/v2/goals/sync", () => {
     expect(res.status).toBe(200);
   });
 
+  test("dayTargetsを含む新規ゴールの同期", async () => {
+    const app = createApp();
+    const goal = makeGoal({
+      id: "10000000-0000-4000-8000-000000000060",
+      dayTargets: {
+        "1": 10,
+        "2": 10,
+        "3": 10,
+        "4": 10,
+        "5": 10,
+        "6": 20,
+        "7": 0,
+      },
+    });
+
+    const res = await postSync(app, { goals: [goal] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.syncedIds).toContain(goal.id);
+  });
+
+  test("dayTargets不正キーはバリデーションエラー", async () => {
+    const app = createApp();
+    const goal = makeGoal({
+      id: "10000000-0000-4000-8000-000000000061",
+      dayTargets: { "8": 10, foo: 5 },
+    });
+
+    const res = await postSync(app, { goals: [goal] });
+    expect(res.status).toBe(400);
+  });
+
   test("バリデーションエラー - goalsキー欠損", async () => {
     const app = createApp();
     const res = await postSync(app, {});

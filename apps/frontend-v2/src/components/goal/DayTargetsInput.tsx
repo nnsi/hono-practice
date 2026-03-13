@@ -1,26 +1,7 @@
-import type { DayTargets } from "@packages/domain/goal/dayTargets";
+export { buildDayTargets } from "@packages/domain/goal/dayTargets";
 
 const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 const DAY_KEYS = ["1", "2", "3", "4", "5", "6", "7"] as const;
-const DAY_KEYS_NUM = [1, 2, 3, 4, 5, 6, 7] as const;
-
-export function buildDayTargets(
-  values: Record<string, string>,
-): DayTargets | null {
-  const result: Record<number, number> = {};
-  let hasAny = false;
-  for (const k of DAY_KEYS_NUM) {
-    const v = values[String(k)];
-    if (v !== undefined && v !== "") {
-      const n = Number(v);
-      if (Number.isFinite(n) && n >= 0) {
-        result[k] = n;
-        hasAny = true;
-      }
-    }
-  }
-  return hasAny ? (result as DayTargets) : null;
-}
 
 export function DayTargetsInput({
   enabled,

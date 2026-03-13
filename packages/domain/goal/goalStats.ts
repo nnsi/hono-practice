@@ -45,10 +45,11 @@ export function generateDailyRecords(
       goal.dayTargets,
       dateStr,
     );
+    // target=0 は休日 → 義務なしで常に達成扱い
     dailyRecords.push({
       date: dateStr,
       quantity,
-      achieved: target > 0 ? quantity >= target : quantity > 0,
+      achieved: target > 0 ? quantity >= target : true,
     });
     current = current.add(1, "day");
   }
@@ -132,7 +133,13 @@ export function getInactiveDates(
   const end = dayjs(endDate);
   while (current.isSameOrBefore(end)) {
     const dateStr = current.format("YYYY-MM-DD");
-    if (!activeDates.has(dateStr)) {
+    // dayTargets で target=0 の日は休日 → 非活動日にカウントしない
+    const target = getDailyTargetForDate(
+      goal.dailyTargetQuantity,
+      goal.dayTargets,
+      dateStr,
+    );
+    if (target > 0 && !activeDates.has(dateStr)) {
       inactiveDates.push(dateStr);
     }
     current = current.add(1, "day");

@@ -204,6 +204,51 @@ describe("generateHeatmapData", () => {
     }
   });
 
+  it("dayTargets: 休日(target=0)は達成済みとしてカウントされる", () => {
+    const goals = [
+      {
+        activityId: "a1",
+        dailyTargetQuantity: 10,
+        startDate: "2026-01-05", // Mon
+        endDate: null,
+        dayTargets: { 7: 0 } as const, // Sunday = rest
+      },
+    ];
+    const logsByActivityId = new Map([
+      [
+        "a1",
+        [
+          { date: "2026-01-05", quantity: 10 }, // Mon: achieved
+          { date: "2026-01-06", quantity: 5 }, // Tue: not achieved
+          // Sun 1/11: no activity → rest day → achieved
+        ],
+      ],
+    ]);
+
+    const cells = generateHeatmapData(
+      goals,
+      logsByActivityId,
+      { start: "2026-01-05", end: "2026-01-11" },
+      "2026-01-11",
+    );
+
+    // Mon: achieved
+    expect(cells[0]).toEqual({
+      date: "2026-01-05",
+      achievedCount: 1,
+      activeCount: 1,
+      totalGoals: 1,
+    });
+    // Sun (rest day): achieved=true, no activity
+    const sunday = cells.find((c) => c.date === "2026-01-11");
+    expect(sunday).toEqual({
+      date: "2026-01-11",
+      achievedCount: 1,
+      activeCount: 0,
+      totalGoals: 1,
+    });
+  });
+
   it("未来の日付はtotalGoals=0になる", () => {
     const goals = [
       {

@@ -1,5 +1,8 @@
 import type { SyncStatus } from "@packages/domain";
-import type { DayTargets } from "@packages/domain/goal/dayTargets";
+import {
+  type DayTargets,
+  parseDayTargets,
+} from "@packages/domain/goal/dayTargets";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import { v7 as uuidv7 } from "uuid";
@@ -36,25 +39,7 @@ function numOrNull(v: unknown): number | null {
 // for compatibility with GoalRecord.
 type GoalWithSync = GoalRecord & { _syncStatus: SyncStatus };
 
-function toDayTargetsOrNull(v: unknown): DayTargets | null {
-  if (v == null) return null;
-  if (typeof v === "string") {
-    try {
-      const parsed = JSON.parse(v);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        !Array.isArray(parsed)
-      ) {
-        return parsed as DayTargets;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
+// parseDayTargets imported from domain layer
 
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
@@ -72,7 +57,7 @@ export function mapGoalRow(row: SqlRow): GoalWithSync {
     isActive: row.is_active === 1,
     description: str(row.description),
     debtCap: numOrNull(row.debt_cap),
-    dayTargets: toDayTargetsOrNull(row.day_targets),
+    dayTargets: parseDayTargets(row.day_targets),
     currentBalance: 0,
     totalTarget: 0,
     totalActual: 0,

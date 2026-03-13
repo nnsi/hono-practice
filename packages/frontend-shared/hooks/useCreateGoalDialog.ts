@@ -1,25 +1,7 @@
-import type { DayTargets } from "@packages/domain/goal/dayTargets";
+import { buildDayTargets } from "@packages/domain/goal/dayTargets";
 import dayjs from "dayjs";
 
 import type { ActivityBase, CreateGoalPayload, ReactHooks } from "./types";
-
-const DAY_KEYS = [1, 2, 3, 4, 5, 6, 7] as const;
-
-function buildDayTargets(values: Record<string, string>): DayTargets | null {
-  const result: Record<number, number> = {};
-  let hasAny = false;
-  for (const k of DAY_KEYS) {
-    const v = values[String(k)];
-    if (v !== undefined && v !== "") {
-      const n = Number(v);
-      if (Number.isFinite(n) && n >= 0) {
-        result[k] = n;
-        hasAny = true;
-      }
-    }
-  }
-  return hasAny ? (result as DayTargets) : null;
-}
 
 type UseCreateGoalDialogDeps = {
   react: Pick<ReactHooks, "useState" | "useMemo">;

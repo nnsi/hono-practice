@@ -76,6 +76,44 @@ describe("generateDailyRecords", () => {
     expect(records).toHaveLength(2); // 1/01, 1/02
   });
 
+  it("dayTargets: target=0の休日は achieved: true", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun)
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 7: 0 } as const, // Sunday = rest day
+    };
+    const logs = [
+      { date: "2026-01-05", quantity: 10 }, // Mon: achieved
+      { date: "2026-01-06", quantity: 5 }, // Tue: not achieved
+      // Sun 1/11: no activity, but target=0 → achieved
+    ];
+    const today = "2026-01-11";
+
+    const records = generateDailyRecords(goal, logs, today);
+
+    // Mon
+    expect(records[0]).toEqual({
+      date: "2026-01-05",
+      quantity: 10,
+      achieved: true,
+    });
+    // Tue
+    expect(records[1]).toEqual({
+      date: "2026-01-06",
+      quantity: 5,
+      achieved: false,
+    });
+    // Sun (rest day, no activity → achieved: true)
+    const sunday = records.find((r) => r.date === "2026-01-11");
+    expect(sunday).toEqual({
+      date: "2026-01-11",
+      quantity: 0,
+      achieved: true,
+    });
+  });
+
   it("quantityがnullのログは0として扱う", () => {
     const goal = {
       dailyTargetQuantity: 5,
@@ -241,5 +279,24 @@ describe("getInactiveDates", () => {
     const inactive = getInactiveDates(goal, logs, today);
 
     expect(inactive).toEqual(["2026-01-01", "2026-01-02", "2026-01-03"]);
+  });
+
+  it("dayTargets: target=0の休日は非活動日にカウントしない", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun)
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 7: 0 } as const,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-11";
+
+    const inactive = getInactiveDates(goal, logs, today);
+
+    // Sun (1/11) has target=0 → not included in inactive dates
+    expect(inactive).not.toContain("2026-01-11");
+    // Mon-Sat with no logs → all inactive
+    expect(inactive).toHaveLength(6);
   });
 });

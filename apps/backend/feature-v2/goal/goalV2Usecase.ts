@@ -2,7 +2,7 @@ import type {
   activityGoalFreezePeriods,
   activityGoals,
 } from "@infra/drizzle/schema";
-import type { DayTargets } from "@packages/domain/goal/dayTargets";
+import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import {
   type FreezePeriod,
   calculateGoalBalance,
@@ -92,7 +92,13 @@ function getGoals(
     const goalsWithStats = await Promise.all(
       goals.map(async (goal) => {
         if (goal.deletedAt) {
-          return { ...goal, currentBalance: 0, totalTarget: 0, totalActual: 0 };
+          return {
+            ...goal,
+            dayTargets: parseDayTargets(goal.dayTargets),
+            currentBalance: 0,
+            totalTarget: 0,
+            totalActual: 0,
+          };
         }
 
         const effectiveEnd =
@@ -117,7 +123,7 @@ function getGoals(
             startDate: goal.startDate,
             endDate: goal.endDate,
             debtCap: goal.debtCap != null ? Number(goal.debtCap) : null,
-            dayTargets: goal.dayTargets as DayTargets | null,
+            dayTargets: parseDayTargets(goal.dayTargets),
           },
           [{ date: goal.startDate, quantity: totalActual }],
           today,
@@ -126,6 +132,7 @@ function getGoals(
 
         return {
           ...goal,
+          dayTargets: parseDayTargets(goal.dayTargets),
           currentBalance: result.currentBalance,
           totalTarget: result.totalTarget,
           totalActual: result.totalActual,
