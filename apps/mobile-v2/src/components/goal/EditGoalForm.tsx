@@ -1,15 +1,18 @@
 import { useState } from "react";
 
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import { Trash2, X } from "lucide-react-native";
 import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
+import { DayTargetsInput, buildDayTargets } from "./DayTargetsInput";
 import type { Activity, UpdateGoalPayload } from "./types";
 
 type GoalForEdit = {
   id: string;
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets?: DayTargets | null;
   startDate: string;
   endDate: string | null;
   isActive: boolean;
@@ -32,6 +35,19 @@ export function EditGoalForm({
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
+  const [dayTargetsEnabled, setDayTargetsEnabled] = useState(
+    goal.dayTargets != null,
+  );
+  const [dayTargetValues, setDayTargetValues] = useState<
+    Record<string, string>
+  >(() => {
+    if (!goal.dayTargets) return {};
+    const vals: Record<string, string> = {};
+    for (const [k, v] of Object.entries(goal.dayTargets)) {
+      vals[k] = String(v);
+    }
+    return vals;
+  });
   const [debtCapEnabled, setDebtCapEnabled] = useState(goal.debtCap != null);
   const [debtCapValue, setDebtCapValue] = useState(
     String(goal.debtCap ?? goal.dailyTargetQuantity * 7),
@@ -61,8 +77,12 @@ export function EditGoalForm({
     }
     setSaving(true);
     try {
+      const dayTargets = dayTargetsEnabled
+        ? buildDayTargets(dayTargetValues)
+        : null;
       await onSave({
         dailyTargetQuantity: parsedTarget,
+        dayTargets,
         startDate,
         endDate: endDate || null,
         debtCap: parsedDebtCap,
@@ -139,6 +159,17 @@ export function EditGoalForm({
             placeholder="未設定"
           />
         </View>
+      </View>
+
+      {/* Day targets */}
+      <View className="mb-3">
+        <DayTargetsInput
+          enabled={dayTargetsEnabled}
+          onToggle={setDayTargetsEnabled}
+          values={dayTargetValues}
+          onChange={setDayTargetValues}
+          defaultTarget={target}
+        />
       </View>
 
       {/* Debt cap */}

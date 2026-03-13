@@ -1,3 +1,5 @@
+import type { DayTargets } from "./dayTargets";
+import { getDailyTargetForDate } from "./dayTargets";
 import { type FreezePeriod, calculateGoalBalance } from "./goalBalance";
 
 type GoalInput = {
@@ -5,6 +7,7 @@ type GoalInput = {
   startDate: string;
   endDate: string | null;
   debtCap?: number | null;
+  dayTargets?: DayTargets | null;
 };
 
 type LogEntry = { date: string; quantity: number | null };
@@ -65,7 +68,13 @@ export function calculateDebtFeedback(
     }
   }
 
-  const targetAchievedToday = todayActual >= goal.dailyTargetQuantity;
+  const dailyTargetForDate = getDailyTargetForDate(
+    goal.dailyTargetQuantity,
+    goal.dayTargets,
+    date,
+  );
+  const targetAchievedToday =
+    dailyTargetForDate > 0 ? todayActual >= dailyTargetForDate : true;
   const debtCleared = balanceBefore < 0 && balanceAfter >= 0;
   const debtReduced =
     balanceBefore < 0 && balanceAfter < 0 && balanceAfter > balanceBefore;
@@ -83,7 +92,11 @@ export function calculateDebtFeedback(
     goalLabel: null,
     balanceBefore,
     balanceAfter,
-    dailyTarget: goal.dailyTargetQuantity,
+    dailyTarget: getDailyTargetForDate(
+      goal.dailyTargetQuantity,
+      goal.dayTargets,
+      date,
+    ),
     quantityRecorded,
     targetAchievedToday,
     debtCleared,

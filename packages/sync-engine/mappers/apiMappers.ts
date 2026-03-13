@@ -3,6 +3,7 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
@@ -48,6 +49,27 @@ function toIconType(value: unknown): IconType {
     return value as IconType;
   }
   return "emoji";
+}
+
+function toDayTargetsOrNull(v: unknown): DayTargets | null {
+  if (v == null) return null;
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+      ) {
+        return parsed as DayTargets;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof v === "object" && !Array.isArray(v)) return v as DayTargets;
+  return null;
 }
 
 export function mapApiActivity(a: ApiRecord): ActivityRecord {
@@ -121,6 +143,7 @@ export function mapApiGoal(g: ApiRecord): GoalRecord {
     isActive: toBool(g.isActive ?? g.is_active, true),
     description: str(g.description),
     debtCap: toNumOrNull(g.debtCap ?? g.debt_cap),
+    dayTargets: toDayTargetsOrNull(g.dayTargets ?? g.day_targets),
     currentBalance: toNum(g.currentBalance ?? g.current_balance, 0),
     totalTarget: toNum(g.totalTarget ?? g.total_target, 0),
     totalActual: toNum(g.totalActual ?? g.total_actual, 0),

@@ -1,10 +1,14 @@
 import dayjs from "dayjs";
 
+import type { DayTargets } from "./dayTargets";
+import { getDailyTargetForDate } from "./dayTargets";
+
 type GoalBalanceInput = {
   dailyTargetQuantity: number;
   startDate: string; // YYYY-MM-DD
   endDate: string | null; // YYYY-MM-DD
   debtCap?: number | null; // null or undefined = no cap
+  dayTargets?: DayTargets | null;
 };
 
 type LogEntry = { date: string; quantity: number | null };
@@ -54,6 +58,14 @@ export function countActiveDays(
   return Math.max(totalDays - frozenDays, 0);
 }
 
+function isDateFrozen(date: string, freezePeriods: FreezePeriod[]): boolean {
+  for (const fp of freezePeriods) {
+    const fpEnd = fp.endDate ?? "9999-12-31";
+    if (date >= fp.startDate && date <= fpEnd) return true;
+  }
+  return false;
+}
+
 /** ゴールのバランス（貯金/負債）を計算する純粋関数 */
 export function calculateGoalBalance(
   goal: GoalBalanceInput,
@@ -65,14 +77,33 @@ export function calculateGoalBalance(
   const effectiveEnd =
     goal.endDate && today > goal.endDate ? goal.endDate : today;
 
-  // フリーズ期間を考慮した有効日数
-  const daysActive = countActiveDays(
-    goal.startDate,
-    effectiveEnd,
-    freezePeriods,
-  );
+  let daysActive: number;
+  let totalTarget: number;
 
-  const totalTarget = daysActive * goal.dailyTargetQuantity;
+  if (!goal.dayTargets) {
+    // Fast path: uniform daily target
+    daysActive = countActiveDays(goal.startDate, effectiveEnd, freezePeriods);
+    totalTarget = daysActive * goal.dailyTargetQuantity;
+  } else {
+    // Day-by-day iteration for per-weekday targets
+    daysActive = 0;
+    totalTarget = 0;
+    let current = dayjs(goal.startDate);
+    const end = dayjs(effectiveEnd);
+    while (!current.isAfter(end)) {
+      const dateStr = current.format("YYYY-MM-DD");
+      if (!isDateFrozen(dateStr, freezePeriods)) {
+        const target = getDailyTargetForDate(
+          goal.dailyTargetQuantity,
+          goal.dayTargets,
+          dateStr,
+        );
+        totalTarget += target;
+        if (target > 0) daysActive++;
+      }
+      current = current.add(1, "day");
+    }
+  }
 
   // ログから実績を集計（startDate〜effectiveEnd範囲内のみ）
   // フリーズ中のログも totalActual にカウント（仕様: フリーズ中の記録は貯金）

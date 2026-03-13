@@ -10,6 +10,7 @@ const GoalRowSchema = z.object({
   isActive: z.boolean(),
   description: z.string().nullable(),
   debtCap: z.number().nullable(),
+  dayTargets: z.record(z.string(), z.number()).nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),

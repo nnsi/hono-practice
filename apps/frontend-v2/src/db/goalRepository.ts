@@ -1,3 +1,4 @@
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import { v7 as uuidv7 } from "uuid";
 
@@ -6,6 +7,7 @@ import { type DexieGoal, db } from "./schema";
 type CreateGoalInput = {
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets?: DayTargets | null;
   startDate: string;
   endDate?: string | null;
   description?: string;
@@ -16,6 +18,7 @@ type UpdateGoalInput = Partial<
   Pick<
     DexieGoal,
     | "dailyTargetQuantity"
+    | "dayTargets"
     | "startDate"
     | "endDate"
     | "isActive"
@@ -36,6 +39,7 @@ export const goalRepository = {
       userId: authState.userId,
       activityId: input.activityId,
       dailyTargetQuantity: input.dailyTargetQuantity,
+      dayTargets: input.dayTargets ?? null,
       startDate: input.startDate,
       endDate: input.endDate ?? null,
       isActive: true,

@@ -4,6 +4,7 @@ import {
   customType,
   date,
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -263,6 +264,7 @@ export const activityGoals = pgTable(
     isActive: boolean("is_active").notNull().default(true),
     description: text("description"),
     debtCap: customTypeNumeric("debt_cap"),
+    dayTargets: jsonb("day_targets"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

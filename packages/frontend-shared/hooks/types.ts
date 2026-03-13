@@ -57,11 +57,14 @@ export type IconBlobBase = {
 /**
  * Goal型（frontend-v2 / mobile-v2 で完全同一）
  */
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
+
 export type Goal = {
   id: string;
   userId: string;
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets: DayTargets | null;
   startDate: string;
   endDate: string | null;
   isActive: boolean;
@@ -77,6 +80,7 @@ export type Goal = {
 export type CreateGoalPayload = {
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets?: DayTargets | null;
   startDate: string;
   endDate?: string;
   debtCap?: number | null;
@@ -84,6 +88,7 @@ export type CreateGoalPayload = {
 
 export type UpdateGoalPayload = {
   dailyTargetQuantity?: number;
+  dayTargets?: DayTargets | null;
   startDate?: string;
   endDate?: string | null;
   isActive?: boolean;

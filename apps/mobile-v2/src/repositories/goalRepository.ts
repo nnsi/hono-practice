@@ -1,4 +1,5 @@
 import type { SyncStatus } from "@packages/domain";
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import { v7 as uuidv7 } from "uuid";
@@ -35,6 +36,26 @@ function numOrNull(v: unknown): number | null {
 // for compatibility with GoalRecord.
 type GoalWithSync = GoalRecord & { _syncStatus: SyncStatus };
 
+function toDayTargetsOrNull(v: unknown): DayTargets | null {
+  if (v == null) return null;
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+      ) {
+        return parsed as DayTargets;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
   return "synced";
@@ -51,6 +72,7 @@ export function mapGoalRow(row: SqlRow): GoalWithSync {
     isActive: row.is_active === 1,
     description: str(row.description),
     debtCap: numOrNull(row.debt_cap),
+    dayTargets: toDayTargetsOrNull(row.day_targets),
     currentBalance: 0,
     totalTarget: 0,
     totalActual: 0,
@@ -66,6 +88,7 @@ export function mapGoalRow(row: SqlRow): GoalWithSync {
 type CreateGoalInput = {
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets?: DayTargets | null;
   startDate: string;
   endDate?: string | null;
   description?: string;
@@ -76,6 +99,7 @@ type UpdateGoalInput = Partial<
   Pick<
     GoalRecord,
     | "dailyTargetQuantity"
+    | "dayTargets"
     | "startDate"
     | "endDate"
     | "isActive"
@@ -98,13 +122,14 @@ export const goalRepository = {
     }
 
     await db.runAsync(
-      `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, 'pending', NULL, ?, ?)`,
+      `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, day_targets, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'pending', NULL, ?, ?)`,
       [
         id,
         auth.user_id,
         input.activityId,
         input.dailyTargetQuantity,
+        input.dayTargets ? JSON.stringify(input.dayTargets) : null,
         input.startDate,
         input.endDate ?? null,
         input.description ?? "",
@@ -121,6 +146,7 @@ export const goalRepository = {
       userId: auth.user_id,
       activityId: input.activityId,
       dailyTargetQuantity: input.dailyTargetQuantity,
+      dayTargets: input.dayTargets ?? null,
       startDate: input.startDate,
       endDate: input.endDate ?? null,
       isActive: true,
@@ -174,6 +200,12 @@ export const goalRepository = {
     if (changes.debtCap !== undefined) {
       setClauses.push("debt_cap = ?");
       values.push(changes.debtCap);
+    }
+    if (changes.dayTargets !== undefined) {
+      setClauses.push("day_targets = ?");
+      values.push(
+        changes.dayTargets ? JSON.stringify(changes.dayTargets) : null,
+      );
     }
 
     values.push(id);
@@ -237,12 +269,13 @@ export const goalRepository = {
       await db.execAsync("BEGIN");
       for (const g of goals) {
         await db.runAsync(
-          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, day_targets, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              user_id = excluded.user_id,
              activity_id = excluded.activity_id,
              daily_target_quantity = excluded.daily_target_quantity,
+             day_targets = excluded.day_targets,
              start_date = excluded.start_date,
              end_date = excluded.end_date,
              is_active = excluded.is_active,
@@ -259,6 +292,7 @@ export const goalRepository = {
             g.userId,
             g.activityId,
             g.dailyTargetQuantity,
+            g.dayTargets ? JSON.stringify(g.dayTargets) : null,
             g.startDate,
             g.endDate,
             g.isActive ? 1 : 0,

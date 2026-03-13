@@ -1,3 +1,4 @@
+export * from "./dayTargets";
 export * from "./goalBalance";
 export * from "./goalDebtFeedback";
 export * from "./goalFreezePeriod";

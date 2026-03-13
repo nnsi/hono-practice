@@ -174,4 +174,47 @@ describe("calculateDebtFeedback", () => {
     expect(result.debtReduced).toBe(false);
     expect(result.targetAchievedToday).toBe(true);
   });
+
+  test("dayTargets: 休日（目標0）に記録 → targetAchievedToday: true, 貯金", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05", // Mon
+      dayTargets: { 7: 0 } as const, // Sunday = rest day
+      endDate: null,
+    };
+    const logsBefore: { date: string; quantity: number | null }[] = [];
+    // 2026-01-11 is Sunday (target = 0)
+    const result = calculateDebtFeedback(
+      goal,
+      logsBefore,
+      5,
+      "2026-01-11",
+      "2026-01-11",
+    );
+
+    expect(result.targetAchievedToday).toBe(true);
+    expect(result.dailyTarget).toBe(0);
+    expect(result.balanceAfter).toBeGreaterThan(result.balanceBefore);
+  });
+
+  test("dayTargets: 平日（目標あり）に記録 → 正常に判定", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05", // Mon
+      dayTargets: { 1: 15, 7: 0 } as const,
+      endDate: null,
+    };
+    const logsBefore: { date: string; quantity: number | null }[] = [];
+    // 2026-01-05 is Monday (target = 15)
+    const result = calculateDebtFeedback(
+      goal,
+      logsBefore,
+      10,
+      "2026-01-05",
+      "2026-01-05",
+    );
+
+    expect(result.targetAchievedToday).toBe(false); // 10 < 15
+    expect(result.dailyTarget).toBe(15);
+  });
 });

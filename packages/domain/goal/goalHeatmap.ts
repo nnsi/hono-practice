@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
+import type { DayTargets } from "./dayTargets";
 import { generateDailyRecords } from "./goalStats";
 
 dayjs.extend(isSameOrBefore);
@@ -10,6 +11,7 @@ type HeatmapGoalInput = {
   startDate: string;
   endDate: string | null;
   activityId: string;
+  dayTargets?: DayTargets | null;
 };
 
 type LogEntry = { date: string; quantity: number | null };

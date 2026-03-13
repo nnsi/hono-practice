@@ -1,12 +1,16 @@
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
+import type { DayTargets } from "./dayTargets";
+import { getDailyTargetForDate } from "./dayTargets";
+
 dayjs.extend(isSameOrBefore);
 
 type GoalBalanceInput = {
   dailyTargetQuantity: number;
   startDate: string;
   endDate: string | null;
+  dayTargets?: DayTargets | null;
 };
 
 type LogEntry = { date: string; quantity: number | null };
@@ -36,10 +40,15 @@ export function generateDailyRecords(
   while (current.isSameOrBefore(end)) {
     const dateStr = current.format("YYYY-MM-DD");
     const quantity = dateMap.get(dateStr) ?? 0;
+    const target = getDailyTargetForDate(
+      goal.dailyTargetQuantity,
+      goal.dayTargets,
+      dateStr,
+    );
     dailyRecords.push({
       date: dateStr,
       quantity,
-      achieved: quantity >= goal.dailyTargetQuantity,
+      achieved: target > 0 ? quantity >= target : quantity > 0,
     });
     current = current.add(1, "day");
   }

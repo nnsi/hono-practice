@@ -4,6 +4,7 @@ import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { DayTargetsInput } from "./DayTargetsInput";
 import type { CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
@@ -45,6 +46,10 @@ export function CreateGoalDialog({
     setStartDate,
     endDate,
     setEndDate,
+    dayTargetsEnabled,
+    setDayTargetsEnabled,
+    dayTargetValues,
+    setDayTargetValues,
     submitting,
     errorMsg,
     selectedActivity,
@@ -143,6 +148,15 @@ export function CreateGoalDialog({
             />
           </View>
         </View>
+
+        {/* Day targets */}
+        <DayTargetsInput
+          enabled={dayTargetsEnabled}
+          onToggle={setDayTargetsEnabled}
+          values={dayTargetValues}
+          onChange={setDayTargetValues}
+          defaultTarget={target}
+        />
 
         {/* Debt cap */}
         <View>

@@ -2,6 +2,7 @@ import type {
   activityGoalFreezePeriods,
   activityGoals,
 } from "@infra/drizzle/schema";
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import {
   type FreezePeriod,
   calculateGoalBalance,
@@ -116,6 +117,7 @@ function getGoals(
             startDate: goal.startDate,
             endDate: goal.endDate,
             debtCap: goal.debtCap != null ? Number(goal.debtCap) : null,
+            dayTargets: goal.dayTargets as DayTargets | null,
           },
           [{ date: goal.startDate, quantity: totalActual }],
           today,
