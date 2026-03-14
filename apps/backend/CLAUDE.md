@@ -11,6 +11,7 @@
 - `c.executionCtx` のgetterはプロパティアクセス自体がthrowする（optional chainingが効かない）
 - テストで `c.get("tracer")` は undefined → `?? noopTracer` フォールバック必須
 - `waitUntil` を使うコードは `fireAndForget` ヘルパーでtry-catch包装すること
+- テストファイルでは `import { describe, expect, it } from "vitest"` を明示的に書く（tsconfigにvitest globalsの型参照がないため）
 
 ## アーキテクチャ
 
