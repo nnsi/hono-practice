@@ -4,12 +4,16 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
-import { v7 as uuidv7 } from "uuid";
+import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import {
+  type ActivityDbAdapter,
+  newActivityRepository,
+} from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 
-// --- Row mapping helpers (snake_case SQL → camelCase TS) ---
+// --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
 
@@ -29,15 +33,12 @@ function toIconType(v: unknown): IconType {
   return "emoji";
 }
 
-type ActivityWithSync = ActivityRecord & { _syncStatus: SyncStatus };
-type ActivityKindWithSync = ActivityKindRecord & { _syncStatus: SyncStatus };
-
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
   return "synced";
 }
 
-export function mapActivityRow(row: SqlRow): ActivityWithSync {
+export function mapActivityRow(row: SqlRow): Syncable<ActivityRecord> {
   return {
     id: str(row.id),
     userId: str(row.user_id),
@@ -60,7 +61,7 @@ export function mapActivityRow(row: SqlRow): ActivityWithSync {
   };
 }
 
-export function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
+export function mapActivityKindRow(row: SqlRow): Syncable<ActivityKindRecord> {
   return {
     id: str(row.id),
     activityId: str(row.activity_id),
@@ -74,35 +75,85 @@ export function mapActivityKindRow(row: SqlRow): ActivityKindWithSync {
   };
 }
 
-// --- Icon blob types ---
+// --- Adapter ---
 
-type IconBlob = {
-  activityId: string;
-  base64: string;
-  mimeType: string;
+const activityColumnMap: Record<string, string> = {
+  name: "name",
+  label: "label",
+  emoji: "emoji",
+  iconType: "icon_type",
+  iconUrl: "icon_url",
+  iconThumbnailUrl: "icon_thumbnail_url",
+  description: "description",
+  quantityUnit: "quantity_unit",
+  orderIndex: "order_index",
+  showCombinedStats: "show_combined_stats",
+  recordingMode: "recording_mode",
+  recordingModeConfig: "recording_mode_config",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+  deletedAt: "deleted_at",
 };
 
-type IconDeleteEntry = {
-  activityId: string;
+const kindColumnMap: Record<string, string> = {
+  name: "name",
+  color: "color",
+  orderIndex: "order_index",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+  deletedAt: "deleted_at",
 };
 
-// --- Repository ---
+const adapter: ActivityDbAdapter = {
+  async getUserId() {
+    const db = await getDatabase();
+    const auth = await db.getFirstAsync<{ user_id: string }>(
+      "SELECT user_id FROM auth_state WHERE id = 'current'",
+    );
+    if (!auth?.user_id) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
+    return auth.user_id;
+  },
 
-type CreateActivityInput = {
-  name: string;
-  quantityUnit: string;
-  emoji: string;
-  showCombinedStats: boolean;
-  iconType?: "emoji" | "upload";
-  recordingMode?: string;
-  recordingModeConfig?: string | null;
-  kinds?: Array<{ name: string; color: string }>;
-};
+  async getNextOrderIndex() {
+    const db = await getDatabase();
+    const last = await db.getFirstAsync<{ order_index: string }>(
+      "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
+    );
+    return String(Number(last?.order_index ?? "0") + 1).padStart(6, "0");
+  },
 
-export const activityRepository = {
-  // --- Read ---
+  async insertActivity(activity) {
+    const db = await getDatabase();
+    await db.runAsync(
+      `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        activity.id,
+        activity.userId,
+        activity.name,
+        activity.label,
+        activity.emoji,
+        activity.iconType,
+        activity.iconUrl,
+        activity.iconThumbnailUrl,
+        activity.description,
+        activity.quantityUnit,
+        activity.orderIndex,
+        activity.showCombinedStats ? 1 : 0,
+        activity.recordingMode,
+        activity.recordingModeConfig,
+        activity._syncStatus,
+        activity.deletedAt,
+        activity.createdAt,
+        activity.updatedAt,
+      ],
+    );
+    dbEvents.emit("activities");
+  },
 
-  async getAllActivities(): Promise<ActivityWithSync[]> {
+  async getAllActivities() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activities WHERE deleted_at IS NULL ORDER BY order_index",
@@ -110,9 +161,69 @@ export const activityRepository = {
     return rows.map(mapActivityRow);
   },
 
-  async getActivityKindsByActivityId(
-    activityId: string,
-  ): Promise<ActivityKindWithSync[]> {
+  async updateActivity(id, changes) {
+    const db = await getDatabase();
+    const setClauses: string[] = [];
+    const values: (string | number | null)[] = [];
+
+    for (const [key, value] of Object.entries(changes)) {
+      const col = activityColumnMap[key];
+      if (!col) continue;
+      if (key === "showCombinedStats") {
+        setClauses.push(`${col} = ?`);
+        values.push(value ? 1 : 0);
+      } else {
+        setClauses.push(`${col} = ?`);
+        values.push(value as string | number | null);
+      }
+    }
+
+    if (setClauses.length === 0) return;
+    values.push(id);
+    await db.runAsync(
+      `UPDATE activities SET ${setClauses.join(", ")} WHERE id = ?`,
+      values,
+    );
+    dbEvents.emit("activities");
+  },
+
+  async softDeleteActivityAndKinds(id, timestamp) {
+    const db = await getDatabase();
+    await db.runAsync(
+      "UPDATE activities SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
+      [timestamp, timestamp, id],
+    );
+    await db.runAsync(
+      "UPDATE activity_kinds SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE activity_id = ?",
+      [timestamp, timestamp, id],
+    );
+    dbEvents.emit("activities");
+    dbEvents.emit("activity_kinds");
+  },
+
+  async insertKinds(kinds) {
+    const db = await getDatabase();
+    for (const k of kinds) {
+      await db.runAsync(
+        `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          k.id,
+          k.activityId,
+          k.name,
+          k.color,
+          k.orderIndex,
+          k._syncStatus,
+          k.deletedAt,
+          k.createdAt,
+          k.updatedAt,
+        ],
+      );
+    }
+    dbEvents.emit("activity_kinds");
+  },
+
+  async getKindsByActivityId(activityId) {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_kinds WHERE activity_id = ? AND deleted_at IS NULL ORDER BY order_index",
@@ -121,7 +232,7 @@ export const activityRepository = {
     return rows.map(mapActivityKindRow);
   },
 
-  async getAllActivityKinds(): Promise<ActivityKindWithSync[]> {
+  async getAllKinds() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_kinds WHERE deleted_at IS NULL ORDER BY order_index",
@@ -129,191 +240,48 @@ export const activityRepository = {
     return rows.map(mapActivityKindRow);
   },
 
-  // --- Create ---
-
-  async createActivity(input: CreateActivityInput) {
+  async updateKind(id, changes) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-    const id = uuidv7();
+    const setClauses: string[] = [];
+    const values: (string | number | null)[] = [];
 
-    const auth = await db.getFirstAsync<{ user_id: string }>(
-      "SELECT user_id FROM auth_state WHERE id = 'current'",
-    );
-    if (!auth?.user_id) {
-      throw new Error("Cannot create activity: userId is not set");
+    for (const [key, value] of Object.entries(changes)) {
+      const col = kindColumnMap[key];
+      if (!col) continue;
+      setClauses.push(`${col} = ?`);
+      values.push(value as string | number | null);
     }
-    const lastActivity = await db.getFirstAsync<{ order_index: string }>(
-      "SELECT order_index FROM activities ORDER BY order_index DESC LIMIT 1",
-    );
-    const newIndex = String(
-      Number(lastActivity?.order_index ?? "0") + 1,
-    ).padStart(6, "0");
 
+    if (setClauses.length === 0) return;
+    values.push(id);
     await db.runAsync(
-      `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, '', ?, ?, NULL, NULL, '', ?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
+      `UPDATE activity_kinds SET ${setClauses.join(", ")} WHERE id = ?`,
+      values,
+    );
+    dbEvents.emit("activity_kinds");
+  },
+
+  async insertKind(kind) {
+    const db = await getDatabase();
+    await db.runAsync(
+      `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        auth.user_id,
-        input.name,
-        input.emoji,
-        input.iconType ?? "emoji",
-        input.quantityUnit,
-        newIndex,
-        input.showCombinedStats ? 1 : 0,
-        input.recordingMode ?? "manual",
-        input.recordingModeConfig ?? null,
-        now,
-        now,
+        kind.id,
+        kind.activityId,
+        kind.name,
+        kind.color,
+        kind.orderIndex,
+        kind._syncStatus,
+        kind.deletedAt,
+        kind.createdAt,
+        kind.updatedAt,
       ],
     );
-
-    if (input.kinds && input.kinds.length > 0) {
-      for (let i = 0; i < input.kinds.length; i++) {
-        const kind = input.kinds[i];
-        const kindId = uuidv7();
-        const kindIndex = String(i).padStart(6, "0");
-        await db.runAsync(
-          `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
-          [kindId, id, kind.name, kind.color || null, kindIndex, now, now],
-        );
-      }
-    }
-
-    dbEvents.emit("activities");
-    dbEvents.emit("activity_kinds");
-
-    return {
-      id,
-      userId: auth.user_id,
-      name: input.name,
-      label: "",
-      emoji: input.emoji,
-      iconType: (input.iconType ?? "emoji") as ActivityRecord["iconType"],
-      iconUrl: null,
-      iconThumbnailUrl: null,
-      description: "",
-      quantityUnit: input.quantityUnit,
-      orderIndex: newIndex,
-      showCombinedStats: input.showCombinedStats,
-      recordingMode: input.recordingMode ?? "manual",
-      recordingModeConfig: input.recordingModeConfig ?? null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending" as const,
-    };
-  },
-
-  // --- Update ---
-
-  async updateActivity(
-    id: string,
-    changes: Partial<
-      Pick<
-        ActivityRecord,
-        | "name"
-        | "quantityUnit"
-        | "emoji"
-        | "showCombinedStats"
-        | "iconType"
-        | "recordingMode"
-        | "recordingModeConfig"
-      >
-    >,
-    updatedKinds?: Array<{ id?: string; name: string; color: string }>,
-  ): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    // Build dynamic SET clause for activity
-    const setClauses: string[] = ["updated_at = ?", "sync_status = 'pending'"];
-    const setValues: (string | number | null)[] = [now];
-
-    if (changes.name !== undefined) {
-      setClauses.push("name = ?");
-      setValues.push(changes.name);
-    }
-    if (changes.quantityUnit !== undefined) {
-      setClauses.push("quantity_unit = ?");
-      setValues.push(changes.quantityUnit);
-    }
-    if (changes.emoji !== undefined) {
-      setClauses.push("emoji = ?");
-      setValues.push(changes.emoji);
-    }
-    if (changes.showCombinedStats !== undefined) {
-      setClauses.push("show_combined_stats = ?");
-      setValues.push(changes.showCombinedStats ? 1 : 0);
-    }
-    if (changes.iconType !== undefined) {
-      setClauses.push("icon_type = ?");
-      setValues.push(changes.iconType);
-    }
-    if (changes.recordingMode !== undefined) {
-      setClauses.push("recording_mode = ?");
-      setValues.push(changes.recordingMode);
-    }
-    if (changes.recordingModeConfig !== undefined) {
-      setClauses.push("recording_mode_config = ?");
-      setValues.push(changes.recordingModeConfig ?? null);
-    }
-
-    setValues.push(id);
-    await db.runAsync(
-      `UPDATE activities SET ${setClauses.join(", ")} WHERE id = ?`,
-      setValues,
-    );
-
-    if (updatedKinds !== undefined) {
-      // Get existing non-deleted kinds for this activity
-      const existing = await db.getAllAsync<SqlRow>(
-        "SELECT id FROM activity_kinds WHERE activity_id = ? AND deleted_at IS NULL",
-        [id],
-      );
-      const existingIds = existing.map((r: SqlRow) => str(r.id));
-      const updatedIdSet = new Set(
-        updatedKinds.filter((k) => k.id).map((k) => k.id!),
-      );
-
-      // Soft-delete removed kinds
-      for (const existingId of existingIds) {
-        if (!updatedIdSet.has(existingId)) {
-          await db.runAsync(
-            "UPDATE activity_kinds SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-            [now, now, existingId],
-          );
-        }
-      }
-
-      // Update existing and add new kinds
-      for (let i = 0; i < updatedKinds.length; i++) {
-        const kind = updatedKinds[i];
-        const kindIndex = String(i).padStart(6, "0");
-        if (kind.id) {
-          await db.runAsync(
-            "UPDATE activity_kinds SET name = ?, color = ?, order_index = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-            [kind.name, kind.color || null, kindIndex, now, kind.id],
-          );
-        } else {
-          const kindId = uuidv7();
-          await db.runAsync(
-            `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
-            [kindId, id, kind.name, kind.color || null, kindIndex, now, now],
-          );
-        }
-      }
-    }
-
-    dbEvents.emit("activities");
     dbEvents.emit("activity_kinds");
   },
 
-  // --- Reorder ---
-
-  async reorderActivities(orderedIds: string[]): Promise<void> {
+  async reorderActivities(orderedIds) {
     const db = await getDatabase();
     const now = new Date().toISOString();
     try {
@@ -332,28 +300,7 @@ export const activityRepository = {
     dbEvents.emit("activities");
   },
 
-  // --- Delete ---
-
-  async softDeleteActivity(id: string): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE activities SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-    await db.runAsync(
-      "UPDATE activity_kinds SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE activity_id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("activities");
-    dbEvents.emit("activity_kinds");
-  },
-
-  // --- Sync helpers ---
-
-  async getPendingSyncActivities(): Promise<ActivityWithSync[]> {
+  async getPendingSyncActivities() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activities WHERE sync_status = 'pending'",
@@ -361,7 +308,7 @@ export const activityRepository = {
     return rows.map(mapActivityRow);
   },
 
-  async getPendingSyncActivityKinds(): Promise<ActivityKindWithSync[]> {
+  async getPendingSyncActivityKinds() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_kinds WHERE sync_status = 'pending'",
@@ -369,57 +316,122 @@ export const activityRepository = {
     return rows.map(mapActivityKindRow);
   },
 
-  async markActivitiesSynced(ids: string[]): Promise<void> {
+  async updateActivitiesSyncStatus(ids, status) {
     if (ids.length === 0) return;
     const db = await getDatabase();
     const placeholders = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE activities SET sync_status = 'synced' WHERE id IN (${placeholders})`,
-      ids,
+      `UPDATE activities SET sync_status = ? WHERE id IN (${placeholders})`,
+      [status, ...ids],
     );
     dbEvents.emit("activities");
   },
 
-  async markActivityKindsSynced(ids: string[]): Promise<void> {
+  async updateKindsSyncStatus(ids, status) {
     if (ids.length === 0) return;
     const db = await getDatabase();
     const placeholders = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE activity_kinds SET sync_status = 'synced' WHERE id IN (${placeholders})`,
-      ids,
+      `UPDATE activity_kinds SET sync_status = ? WHERE id IN (${placeholders})`,
+      [status, ...ids],
     );
     dbEvents.emit("activity_kinds");
   },
 
-  async markActivitiesFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+  async getActivitiesByIds(ids) {
+    if (ids.length === 0) return [];
     const db = await getDatabase();
     const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE activities SET sync_status = 'failed' WHERE id IN (${placeholders})`,
+    const rows = await db.getAllAsync<SqlRow>(
+      `SELECT * FROM activities WHERE id IN (${placeholders})`,
       ids,
     );
+    return rows.map(mapActivityRow);
+  },
+
+  async getKindsByIds(ids) {
+    if (ids.length === 0) return [];
+    const db = await getDatabase();
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = await db.getAllAsync<SqlRow>(
+      `SELECT * FROM activity_kinds WHERE id IN (${placeholders})`,
+      ids,
+    );
+    return rows.map(mapActivityKindRow);
+  },
+
+  async bulkUpsertActivities(activities) {
+    if (activities.length === 0) return;
+    const db = await getDatabase();
+    try {
+      await db.execAsync("BEGIN");
+      for (const a of activities) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            a.id,
+            a.userId,
+            a.name,
+            a.label,
+            a.emoji,
+            a.iconType,
+            a.iconUrl,
+            a.iconThumbnailUrl,
+            a.description,
+            a.quantityUnit,
+            a.orderIndex,
+            a.showCombinedStats ? 1 : 0,
+            a.recordingMode,
+            a.recordingModeConfig,
+            a._syncStatus,
+            a.deletedAt,
+            a.createdAt,
+            a.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
     dbEvents.emit("activities");
   },
 
-  async markActivityKindsFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+  async bulkUpsertKinds(kinds) {
+    if (kinds.length === 0) return;
     const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE activity_kinds SET sync_status = 'failed' WHERE id IN (${placeholders})`,
-      ids,
-    );
+    try {
+      await db.execAsync("BEGIN");
+      for (const k of kinds) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            k.id,
+            k.activityId,
+            k.name,
+            k.color,
+            k.orderIndex,
+            k._syncStatus,
+            k.deletedAt,
+            k.createdAt,
+            k.updatedAt,
+          ],
+        );
+      }
+      await db.execAsync("COMMIT");
+    } catch (e) {
+      await db.execAsync("ROLLBACK");
+      throw e;
+    }
     dbEvents.emit("activity_kinds");
   },
 
-  // --- Icon blob management ---
+  // --- Icon blob management (passthrough) ---
 
-  async saveActivityIconBlob(
-    activityId: string,
-    base64: string,
-    mimeType: string,
-  ): Promise<void> {
+  async saveActivityIconBlob(activityId, base64, mimeType) {
     const db = await getDatabase();
     await db.runAsync(
       "INSERT OR REPLACE INTO activity_icon_blobs (activity_id, base64, mime_type) VALUES (?, ?, ?)",
@@ -427,7 +439,7 @@ export const activityRepository = {
     );
   },
 
-  async getActivityIconBlob(activityId: string): Promise<IconBlob | undefined> {
+  async getActivityIconBlob(activityId) {
     const db = await getDatabase();
     const row = await db.getFirstAsync<SqlRow>(
       "SELECT * FROM activity_icon_blobs WHERE activity_id = ?",
@@ -441,14 +453,14 @@ export const activityRepository = {
     };
   },
 
-  async deleteActivityIconBlob(activityId: string): Promise<void> {
+  async deleteActivityIconBlob(activityId) {
     const db = await getDatabase();
     await db.runAsync("DELETE FROM activity_icon_blobs WHERE activity_id = ?", [
       activityId,
     ]);
   },
 
-  async getAllIconBlobs(): Promise<IconBlob[]> {
+  async getAllIconBlobs() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_icon_blobs",
@@ -460,7 +472,7 @@ export const activityRepository = {
     }));
   },
 
-  async getPendingIconBlobs(): Promise<IconBlob[]> {
+  async getPendingIconBlobs() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_icon_blobs WHERE synced = 0 OR synced IS NULL",
@@ -472,11 +484,7 @@ export const activityRepository = {
     }));
   },
 
-  async completeActivityIconSync(
-    activityId: string,
-    iconUrl: string,
-    iconThumbnailUrl: string,
-  ): Promise<void> {
+  async completeActivityIconSync(activityId, iconUrl, iconThumbnailUrl) {
     const db = await getDatabase();
     try {
       await db.execAsync("BEGIN");
@@ -497,10 +505,9 @@ export const activityRepository = {
     dbEvents.emit("activity_icon_blobs");
   },
 
-  async clearActivityIcon(activityId: string): Promise<void> {
+  async clearActivityIcon(activityId) {
     const db = await getDatabase();
     const now = new Date().toISOString();
-
     try {
       await db.execAsync("BEGIN");
       await db.runAsync(
@@ -520,11 +527,10 @@ export const activityRepository = {
       await db.execAsync("ROLLBACK");
       throw e;
     }
-
     dbEvents.emit("activities");
   },
 
-  async getPendingIconDeletes(): Promise<IconDeleteEntry[]> {
+  async getPendingIconDeletes() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_icon_delete_queue",
@@ -534,7 +540,7 @@ export const activityRepository = {
     }));
   },
 
-  async removeIconDeleteQueue(activityId: string): Promise<void> {
+  async removeIconDeleteQueue(activityId) {
     const db = await getDatabase();
     await db.runAsync(
       "DELETE FROM activity_icon_delete_queue WHERE activity_id = ?",
@@ -542,7 +548,7 @@ export const activityRepository = {
     );
   },
 
-  async cacheRemoteIcon(activityId: string, url: string): Promise<void> {
+  async cacheRemoteIcon(activityId, url) {
     const db = await getDatabase();
     const existing = await db.getFirstAsync<SqlRow>(
       "SELECT activity_id FROM activity_icon_blobs WHERE activity_id = ?",
@@ -566,105 +572,11 @@ export const activityRepository = {
       );
       dbEvents.emit("activity_icon_blobs");
     } catch {
-      // Network error — URL表示のフォールバックがあるため無視
+      // Network error -- URL表示のフォールバックがあるため無視
     }
   },
+};
 
-  // --- Server upsert (for initial sync and sync engine) ---
-
-  async upsertActivities(activities: ActivityRecord[]): Promise<void> {
-    const db = await getDatabase();
-    try {
-      await db.execAsync("BEGIN");
-      for (const a of activities) {
-        await db.runAsync(
-          `INSERT INTO activities (id, user_id, name, label, emoji, icon_type, icon_url, icon_thumbnail_url, description, quantity_unit, order_index, show_combined_stats, recording_mode, recording_mode_config, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             user_id = excluded.user_id,
-             name = excluded.name,
-             label = excluded.label,
-             emoji = excluded.emoji,
-             icon_type = excluded.icon_type,
-             icon_url = excluded.icon_url,
-             icon_thumbnail_url = excluded.icon_thumbnail_url,
-             description = excluded.description,
-             quantity_unit = excluded.quantity_unit,
-             order_index = excluded.order_index,
-             show_combined_stats = excluded.show_combined_stats,
-             recording_mode = excluded.recording_mode,
-             recording_mode_config = excluded.recording_mode_config,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
-          [
-            a.id,
-            a.userId,
-            a.name,
-            a.label,
-            a.emoji,
-            a.iconType,
-            a.iconUrl,
-            a.iconThumbnailUrl,
-            a.description,
-            a.quantityUnit,
-            a.orderIndex,
-            a.showCombinedStats ? 1 : 0,
-            a.recordingMode,
-            a.recordingModeConfig,
-            a.deletedAt,
-            a.createdAt,
-            a.updatedAt,
-          ],
-        );
-      }
-      await db.execAsync("COMMIT");
-    } catch (e) {
-      await db.execAsync("ROLLBACK");
-      throw e;
-    }
-    dbEvents.emit("activities");
-  },
-
-  async upsertActivityKinds(kinds: ActivityKindRecord[]): Promise<void> {
-    const db = await getDatabase();
-    try {
-      await db.execAsync("BEGIN");
-      for (const k of kinds) {
-        await db.runAsync(
-          `INSERT INTO activity_kinds (id, activity_id, name, color, order_index, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             activity_id = excluded.activity_id,
-             name = excluded.name,
-             color = excluded.color,
-             order_index = excluded.order_index,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
-          [
-            k.id,
-            k.activityId,
-            k.name,
-            k.color,
-            k.orderIndex,
-            k.deletedAt,
-            k.createdAt,
-            k.updatedAt,
-          ],
-        );
-      }
-      await db.execAsync("COMMIT");
-    } catch (e) {
-      await db.execAsync("ROLLBACK");
-      throw e;
-    }
-    dbEvents.emit("activity_kinds");
-  },
-} satisfies ActivityRepository;
+export const activityRepository = newActivityRepository(
+  adapter,
+) satisfies ActivityRepository;

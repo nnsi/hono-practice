@@ -1,172 +1,83 @@
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
+import {
+  type ActivityDbAdapter,
+  newActivityRepository,
+} from "@packages/frontend-shared/repositories";
 import { generateOrder } from "@packages/utils/lexicalOrder";
-import { v7 as uuidv7 } from "uuid";
 
-import { type DexieActivity, type DexieActivityKind, db } from "./schema";
+import { db } from "./schema";
 
-type CreateActivityInput = {
-  name: string;
-  quantityUnit: string;
-  emoji: string;
-  showCombinedStats: boolean;
-  iconType?: "emoji" | "upload";
-  kinds?: { name: string; color: string }[];
-  recordingMode?: string;
-  recordingModeConfig?: string | null;
-};
+const adapter: ActivityDbAdapter = {
+  // Auth
+  async getUserId() {
+    const authState = await db.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
+    return authState.userId;
+  },
 
-export const activityRepository = {
-  // Read
+  // Order
+  async getNextOrderIndex() {
+    const lastActivity = await db.activities
+      .orderBy("orderIndex")
+      .reverse()
+      .first();
+    return generateOrder(lastActivity?.orderIndex ?? null, null);
+  },
+
+  // Activity CRUD
+  async insertActivity(activity) {
+    await db.activities.add(activity);
+  },
   async getAllActivities() {
     return db.activities
       .orderBy("orderIndex")
       .filter((a) => !a.deletedAt)
       .toArray();
   },
+  async updateActivity(id, changes) {
+    await db.activities.update(id, changes);
+  },
+  async softDeleteActivityAndKinds(id, timestamp) {
+    await db.activities.update(id, {
+      deletedAt: timestamp,
+      updatedAt: timestamp,
+      _syncStatus: "pending",
+    });
+    await db.activityKinds
+      .where("activityId")
+      .equals(id)
+      .modify({
+        deletedAt: timestamp,
+        updatedAt: timestamp,
+        _syncStatus: "pending" as const,
+      });
+  },
 
-  async getActivityKindsByActivityId(activityId: string) {
+  // ActivityKind CRUD
+  async insertKinds(kinds) {
+    await db.activityKinds.bulkAdd(kinds);
+  },
+  async getKindsByActivityId(activityId) {
     return db.activityKinds
       .where("activityId")
       .equals(activityId)
       .filter((k) => !k.deletedAt)
       .toArray();
   },
-
-  async getAllActivityKinds() {
+  async getAllKinds() {
     return db.activityKinds.filter((k) => !k.deletedAt).toArray();
   },
-
-  // Create
-  async createActivity(input: CreateActivityInput) {
-    const now = new Date().toISOString();
-    const authState = await db.authState.get("current");
-    if (!authState?.userId) {
-      throw new Error("Cannot create activity: userId is not set");
-    }
-    const lastActivity = await db.activities
-      .orderBy("orderIndex")
-      .reverse()
-      .first();
-    const newIndex = generateOrder(lastActivity?.orderIndex ?? null, null);
-
-    const activity: DexieActivity = {
-      id: uuidv7(),
-      userId: authState.userId,
-      name: input.name,
-      label: "",
-      emoji: input.emoji,
-      iconType: input.iconType ?? "emoji",
-      iconUrl: null,
-      iconThumbnailUrl: null,
-      description: "",
-      quantityUnit: input.quantityUnit,
-      orderIndex: newIndex,
-      showCombinedStats: input.showCombinedStats,
-      recordingMode: input.recordingMode ?? "manual",
-      recordingModeConfig: input.recordingModeConfig ?? null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending",
-    };
-
-    await db.activities.add(activity);
-
-    if (input.kinds && input.kinds.length > 0) {
-      const kinds: DexieActivityKind[] = input.kinds.map((k, i) => ({
-        id: uuidv7(),
-        activityId: activity.id,
-        name: k.name,
-        color: k.color || null,
-        orderIndex: String(i).padStart(6, "0"),
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-        _syncStatus: "pending" as const,
-      }));
-      await db.activityKinds.bulkAdd(kinds);
-    }
-
-    return activity;
+  async updateKind(id, changes) {
+    await db.activityKinds.update(id, changes);
   },
-
-  // Update
-  async updateActivity(
-    id: string,
-    changes: Partial<
-      Pick<
-        DexieActivity,
-        | "name"
-        | "quantityUnit"
-        | "emoji"
-        | "showCombinedStats"
-        | "iconType"
-        | "recordingMode"
-        | "recordingModeConfig"
-      >
-    >,
-    updatedKinds?: { id?: string; name: string; color: string }[],
-  ) {
-    const now = new Date().toISOString();
-    await db.activities.update(id, {
-      ...changes,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-
-    if (updatedKinds !== undefined) {
-      const existing = await db.activityKinds
-        .where("activityId")
-        .equals(id)
-        .filter((k) => !k.deletedAt)
-        .toArray();
-
-      const updatedIds = new Set(
-        updatedKinds.filter((k) => k.id).map((k) => k.id!),
-      );
-
-      // Soft-delete removed kinds
-      for (const existingKind of existing) {
-        if (!updatedIds.has(existingKind.id)) {
-          await db.activityKinds.update(existingKind.id, {
-            deletedAt: now,
-            updatedAt: now,
-            _syncStatus: "pending",
-          });
-        }
-      }
-
-      // Update existing and add new kinds
-      for (let i = 0; i < updatedKinds.length; i++) {
-        const kind = updatedKinds[i];
-        if (kind.id) {
-          await db.activityKinds.update(kind.id, {
-            name: kind.name,
-            color: kind.color || null,
-            orderIndex: String(i).padStart(6, "0"),
-            updatedAt: now,
-            _syncStatus: "pending",
-          });
-        } else {
-          const newKind: DexieActivityKind = {
-            id: uuidv7(),
-            activityId: id,
-            name: kind.name,
-            color: kind.color || null,
-            orderIndex: String(i).padStart(6, "0"),
-            createdAt: now,
-            updatedAt: now,
-            deletedAt: null,
-            _syncStatus: "pending",
-          };
-          await db.activityKinds.add(newKind);
-        }
-      }
-    }
+  async insertKind(kind) {
+    await db.activityKinds.add(kind);
   },
 
   // Reorder
-  async reorderActivities(orderedIds: string[]) {
+  async reorderActivities(orderedIds) {
     const now = new Date().toISOString();
     await db.transaction("rw", db.activities, async () => {
       let prev: string | null = null;
@@ -182,96 +93,53 @@ export const activityRepository = {
     });
   },
 
-  // Delete
-  async softDeleteActivity(id: string) {
-    const now = new Date().toISOString();
-    await db.activities.update(id, {
-      deletedAt: now,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-    await db.activityKinds
-      .where("activityId")
-      .equals(id)
-      .modify({
-        deletedAt: now,
-        updatedAt: now,
-        _syncStatus: "pending" as const,
-      });
-  },
-
-  // Sync helpers
+  // Sync
   async getPendingSyncActivities() {
     return db.activities.where("_syncStatus").equals("pending").toArray();
   },
-
   async getPendingSyncActivityKinds() {
     return db.activityKinds.where("_syncStatus").equals("pending").toArray();
   },
-
-  async markActivitiesSynced(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.activities
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "synced" as const });
+  async updateActivitiesSyncStatus(ids, status) {
+    await db.activities.where("id").anyOf(ids).modify({ _syncStatus: status });
   },
-
-  async markActivityKindsSynced(ids: string[]) {
-    if (ids.length === 0) return;
+  async updateKindsSyncStatus(ids, status) {
     await db.activityKinds
       .where("id")
       .anyOf(ids)
-      .modify({ _syncStatus: "synced" as const });
+      .modify({ _syncStatus: status });
   },
-
-  async markActivitiesFailed(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.activities
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "failed" as const });
+  async getActivitiesByIds(ids) {
+    return db.activities.where("id").anyOf(ids).toArray();
   },
-
-  async markActivityKindsFailed(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.activityKinds
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "failed" as const });
+  async getKindsByIds(ids) {
+    return db.activityKinds.where("id").anyOf(ids).toArray();
+  },
+  async bulkUpsertActivities(activities) {
+    await db.activities.bulkPut(activities);
+  },
+  async bulkUpsertKinds(kinds) {
+    await db.activityKinds.bulkPut(kinds);
   },
 
   // Icon blob management
-  async saveActivityIconBlob(
-    activityId: string,
-    base64: string,
-    mimeType: string,
-  ) {
+  async saveActivityIconBlob(activityId, base64, mimeType) {
     await db.activityIconBlobs.put({ activityId, base64, mimeType });
   },
-
-  async getActivityIconBlob(activityId: string) {
+  async getActivityIconBlob(activityId) {
     return db.activityIconBlobs.get(activityId);
   },
-
-  async deleteActivityIconBlob(activityId: string) {
+  async deleteActivityIconBlob(activityId) {
     await db.activityIconBlobs.delete(activityId);
   },
-
   async getAllIconBlobs() {
     return db.activityIconBlobs.toArray();
   },
-
   async getPendingIconBlobs() {
     const all = await db.activityIconBlobs.toArray();
     return all.filter((b) => !b.synced);
   },
-
-  async completeActivityIconSync(
-    activityId: string,
-    iconUrl: string,
-    iconThumbnailUrl: string,
-  ) {
+  async completeActivityIconSync(activityId, iconUrl, iconThumbnailUrl) {
     await db.transaction(
       "rw",
       [db.activities, db.activityIconBlobs],
@@ -285,8 +153,7 @@ export const activityRepository = {
       },
     );
   },
-
-  async clearActivityIcon(activityId: string) {
+  async clearActivityIcon(activityId) {
     const now = new Date().toISOString();
     await db.transaction(
       "rw",
@@ -304,16 +171,13 @@ export const activityRepository = {
       },
     );
   },
-
   async getPendingIconDeletes() {
     return db.activityIconDeleteQueue.toArray();
   },
-
-  async removeIconDeleteQueue(activityId: string) {
+  async removeIconDeleteQueue(activityId) {
     await db.activityIconDeleteQueue.delete(activityId);
   },
-
-  async cacheRemoteIcon(activityId: string, url: string) {
+  async cacheRemoteIcon(activityId, url) {
     const existing = await db.activityIconBlobs.get(activityId);
     if (existing) return;
     try {
@@ -334,50 +198,11 @@ export const activityRepository = {
         synced: true,
       });
     } catch {
-      // Network error — URL表示のフォールバックがあるため無視
+      // Network error -- URL表示のフォールバックがあるため無視
     }
   },
+};
 
-  // Server upsert (used by initialSync and syncEngine)
-  async upsertActivities(activities: Omit<DexieActivity, "_syncStatus">[]) {
-    if (activities.length === 0) return;
-    const serverIds = activities.map((a) => a.id);
-    const localRecords = await db.activities
-      .where("id")
-      .anyOf(serverIds)
-      .toArray();
-    const localMap = new Map(localRecords.map((r) => [r.id, r]));
-    const safe = activities.filter((a) => {
-      const local = localMap.get(a.id);
-      if (!local) return true;
-      if (local._syncStatus === "pending") return false;
-      if (new Date(local.updatedAt) > new Date(a.updatedAt)) return false;
-      return true;
-    });
-    if (safe.length === 0) return;
-    await db.activities.bulkPut(
-      safe.map((a) => ({ ...a, _syncStatus: "synced" as const })),
-    );
-  },
-
-  async upsertActivityKinds(kinds: Omit<DexieActivityKind, "_syncStatus">[]) {
-    if (kinds.length === 0) return;
-    const serverIds = kinds.map((k) => k.id);
-    const localRecords = await db.activityKinds
-      .where("id")
-      .anyOf(serverIds)
-      .toArray();
-    const localMap = new Map(localRecords.map((r) => [r.id, r]));
-    const safe = kinds.filter((k) => {
-      const local = localMap.get(k.id);
-      if (!local) return true;
-      if (local._syncStatus === "pending") return false;
-      if (new Date(local.updatedAt) > new Date(k.updatedAt)) return false;
-      return true;
-    });
-    if (safe.length === 0) return;
-    await db.activityKinds.bulkPut(
-      safe.map((k) => ({ ...k, _syncStatus: "synced" as const })),
-    );
-  },
-} satisfies ActivityRepository;
+export const activityRepository = newActivityRepository(
+  adapter,
+) satisfies ActivityRepository;

@@ -1,120 +1,39 @@
-import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
-import { v7 as uuidv7 } from "uuid";
+import {
+  type GoalDbAdapter,
+  newGoalRepository,
+} from "@packages/frontend-shared/repositories";
 
-import { type DexieGoal, db } from "./schema";
+import { db } from "./schema";
 
-type CreateGoalInput = {
-  activityId: string;
-  dailyTargetQuantity: number;
-  dayTargets?: DayTargets | null;
-  startDate: string;
-  endDate?: string | null;
-  description?: string;
-  debtCap?: number | null;
-};
-
-type UpdateGoalInput = Partial<
-  Pick<
-    DexieGoal,
-    | "dailyTargetQuantity"
-    | "dayTargets"
-    | "startDate"
-    | "endDate"
-    | "isActive"
-    | "description"
-    | "debtCap"
-  >
->;
-
-export const goalRepository = {
-  async createGoal(input: CreateGoalInput) {
-    const now = new Date().toISOString();
+const adapter: GoalDbAdapter = {
+  async getUserId() {
     const authState = await db.authState.get("current");
     if (!authState?.userId) {
       throw new Error("Cannot create goal: userId is not set");
     }
-    const goal: DexieGoal = {
-      id: uuidv7(),
-      userId: authState.userId,
-      activityId: input.activityId,
-      dailyTargetQuantity: input.dailyTargetQuantity,
-      dayTargets: input.dayTargets ?? null,
-      startDate: input.startDate,
-      endDate: input.endDate ?? null,
-      isActive: true,
-      description: input.description ?? "",
-      debtCap: input.debtCap ?? null,
-      currentBalance: 0,
-      totalTarget: 0,
-      totalActual: 0,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending",
-    };
+    return authState.userId;
+  },
+  async insert(goal) {
     await db.goals.add(goal);
-    return goal;
   },
+  async getAll(filter) {
+    return db.goals.filter(filter).toArray();
+  },
+  async update(id, changes) {
+    await db.goals.update(id, changes);
+  },
+  async getByIds(ids) {
+    return db.goals.where("id").anyOf(ids).toArray();
+  },
+  async updateSyncStatus(ids, status) {
+    await db.goals.where("id").anyOf(ids).modify({ _syncStatus: status });
+  },
+  async bulkUpsertSynced(goals) {
+    await db.goals.bulkPut(goals);
+  },
+};
 
-  async getAllGoals() {
-    const goals = await db.goals.filter((g) => !g.deletedAt).toArray();
-    return goals.sort((a, b) => b.startDate.localeCompare(a.startDate));
-  },
-
-  async updateGoal(id: string, changes: UpdateGoalInput) {
-    const now = new Date().toISOString();
-    await db.goals.update(id, {
-      ...changes,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-  },
-
-  async softDeleteGoal(id: string) {
-    const now = new Date().toISOString();
-    await db.goals.update(id, {
-      deletedAt: now,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-  },
-
-  async getPendingSyncGoals() {
-    return db.goals.where("_syncStatus").equals("pending").toArray();
-  },
-
-  async markGoalsSynced(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.goals
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "synced" as const });
-  },
-
-  async markGoalsFailed(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.goals
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "failed" as const });
-  },
-
-  async upsertGoalsFromServer(goals: Omit<DexieGoal, "_syncStatus">[]) {
-    if (goals.length === 0) return;
-    const serverIds = goals.map((g) => g.id);
-    const localRecords = await db.goals.where("id").anyOf(serverIds).toArray();
-    const localMap = new Map(localRecords.map((r) => [r.id, r]));
-    const safe = goals.filter((g) => {
-      const local = localMap.get(g.id);
-      if (!local) return true;
-      if (local._syncStatus === "pending") return false;
-      if (new Date(local.updatedAt) > new Date(g.updatedAt)) return false;
-      return true;
-    });
-    if (safe.length === 0) return;
-    await db.goals.bulkPut(
-      safe.map((g) => ({ ...g, _syncStatus: "synced" as const })),
-    );
-  },
-} satisfies GoalRepository;
+export const goalRepository = newGoalRepository(
+  adapter,
+) satisfies GoalRepository;

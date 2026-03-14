@@ -1,126 +1,39 @@
-import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
 import type { TaskRepository } from "@packages/domain/task/taskRepository";
-import { v7 as uuidv7 } from "uuid";
+import {
+  type TaskDbAdapter,
+  newTaskRepository,
+} from "@packages/frontend-shared/repositories";
 
-import { type DexieTask, db } from "./schema";
+import { db } from "./schema";
 
-type CreateTaskInput = {
-  title: string;
-  activityId?: string | null;
-  startDate?: string | null;
-  dueDate?: string | null;
-  memo?: string;
-};
-
-type UpdateTaskInput = Partial<
-  Pick<
-    DexieTask,
-    "title" | "activityId" | "startDate" | "dueDate" | "doneDate" | "memo"
-  >
->;
-
-export const taskRepository = {
-  async createTask(input: CreateTaskInput) {
-    const now = new Date().toISOString();
+const adapter: TaskDbAdapter = {
+  async getUserId() {
     const authState = await db.authState.get("current");
     if (!authState?.userId) {
       throw new Error("Cannot create task: userId is not set");
     }
-    const task: DexieTask = {
-      id: uuidv7(),
-      userId: authState.userId,
-      activityId: input.activityId ?? null,
-      title: input.title,
-      startDate: input.startDate ?? null,
-      dueDate: input.dueDate ?? null,
-      doneDate: null,
-      memo: input.memo ?? "",
-      archivedAt: null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending",
-    };
+    return authState.userId;
+  },
+  async insert(task) {
     await db.tasks.add(task);
-    return task;
   },
+  async getAll(filter) {
+    return db.tasks.filter(filter).toArray();
+  },
+  async update(id, changes) {
+    await db.tasks.update(id, changes);
+  },
+  async getByIds(ids) {
+    return db.tasks.where("id").anyOf(ids).toArray();
+  },
+  async updateSyncStatus(ids, status) {
+    await db.tasks.where("id").anyOf(ids).modify({ _syncStatus: status });
+  },
+  async bulkUpsertSynced(tasks) {
+    await db.tasks.bulkPut(tasks);
+  },
+};
 
-  async getAllActiveTasks() {
-    return db.tasks.filter((t) => !t.deletedAt && !t.archivedAt).toArray();
-  },
-
-  async getArchivedTasks() {
-    return db.tasks.filter((t) => !t.deletedAt && !!t.archivedAt).toArray();
-  },
-
-  async getTasksByDate(date: string) {
-    // Fetch all non-deleted/non-archived tasks, then filter in JS
-    // using the domain predicate (handles doneDate, startDate, dueDate logic)
-    return db.tasks.filter((t) => isTaskVisibleOnDate(t, date)).toArray();
-  },
-
-  async updateTask(id: string, changes: UpdateTaskInput) {
-    const now = new Date().toISOString();
-    await db.tasks.update(id, {
-      ...changes,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-  },
-
-  async archiveTask(id: string) {
-    const now = new Date().toISOString();
-    await db.tasks.update(id, {
-      archivedAt: now,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-  },
-
-  async softDeleteTask(id: string) {
-    const now = new Date().toISOString();
-    await db.tasks.update(id, {
-      deletedAt: now,
-      updatedAt: now,
-      _syncStatus: "pending",
-    });
-  },
-
-  async getPendingSyncTasks() {
-    return db.tasks.where("_syncStatus").equals("pending").toArray();
-  },
-
-  async markTasksSynced(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.tasks
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "synced" as const });
-  },
-
-  async markTasksFailed(ids: string[]) {
-    if (ids.length === 0) return;
-    await db.tasks
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: "failed" as const });
-  },
-
-  async upsertTasksFromServer(tasks: Omit<DexieTask, "_syncStatus">[]) {
-    if (tasks.length === 0) return;
-    const serverIds = tasks.map((t) => t.id);
-    const localRecords = await db.tasks.where("id").anyOf(serverIds).toArray();
-    const localMap = new Map(localRecords.map((r) => [r.id, r]));
-    const safe = tasks.filter((t) => {
-      const local = localMap.get(t.id);
-      if (!local) return true;
-      if (local._syncStatus === "pending") return false;
-      if (new Date(local.updatedAt) > new Date(t.updatedAt)) return false;
-      return true;
-    });
-    if (safe.length === 0) return;
-    await db.tasks.bulkPut(
-      safe.map((t) => ({ ...t, _syncStatus: "synced" as const })),
-    );
-  },
-} satisfies TaskRepository;
+export const taskRepository = newTaskRepository(
+  adapter,
+) satisfies TaskRepository;

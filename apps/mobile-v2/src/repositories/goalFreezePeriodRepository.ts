@@ -1,6 +1,9 @@
 import type { SyncStatus } from "@packages/domain";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
-import { v7 as uuidv7 } from "uuid";
+import {
+  type GoalFreezePeriodDbAdapter,
+  newGoalFreezePeriodRepository,
+} from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -40,63 +43,38 @@ export function mapFreezePeriodRow(row: SqlRow): FreezePeriodWithSync {
   };
 }
 
-// --- Repository ---
+// --- Adapter ---
 
-type CreateFreezePeriodInput = {
-  goalId: string;
-  startDate: string;
-  endDate?: string | null;
-};
-
-type UpdateFreezePeriodInput = Partial<
-  Pick<GoalFreezePeriodRecord, "startDate" | "endDate">
->;
-
-export const goalFreezePeriodRepository = {
-  async createGoalFreezePeriod(input: CreateFreezePeriodInput) {
+const adapter: GoalFreezePeriodDbAdapter = {
+  async getUserId() {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-    const id = uuidv7();
-
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
-    if (!auth?.user_id) {
+    if (!auth?.user_id)
       throw new Error("Cannot create freeze period: userId is not set");
-    }
-
+    return auth.user_id;
+  },
+  async insert(period) {
+    const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO goal_freeze_periods (id, goal_id, user_id, start_date, end_date, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        input.goalId,
-        auth.user_id,
-        input.startDate,
-        input.endDate ?? null,
-        now,
-        now,
+        period.id,
+        period.goalId,
+        period.userId,
+        period.startDate,
+        period.endDate,
+        period._syncStatus,
+        period.deletedAt,
+        period.createdAt,
+        period.updatedAt,
       ],
     );
-
     dbEvents.emit("goal_freeze_periods");
-
-    return {
-      id,
-      goalId: input.goalId,
-      userId: auth.user_id,
-      startDate: input.startDate,
-      endDate: input.endDate ?? null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending" as const,
-    };
   },
-
-  async getFreezePeriodsByGoalId(
-    goalId: string,
-  ): Promise<FreezePeriodWithSync[]> {
+  async getByGoalId(goalId) {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM goal_freeze_periods WHERE goal_id = ? AND deleted_at IS NULL",
@@ -104,108 +82,71 @@ export const goalFreezePeriodRepository = {
     );
     return rows.map(mapFreezePeriodRow);
   },
-
-  async updateGoalFreezePeriod(
-    id: string,
-    changes: UpdateFreezePeriodInput,
-  ): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    const setClauses: string[] = ["updated_at = ?", "sync_status = 'pending'"];
-    const values: (string | null)[] = [now];
-
-    if (changes.startDate !== undefined) {
-      setClauses.push("start_date = ?");
-      values.push(changes.startDate);
-    }
-    if (changes.endDate !== undefined) {
-      setClauses.push("end_date = ?");
-      values.push(changes.endDate);
-    }
-
-    values.push(id);
-    await db.runAsync(
-      `UPDATE goal_freeze_periods SET ${setClauses.join(", ")} WHERE id = ?`,
-      values,
-    );
-
-    dbEvents.emit("goal_freeze_periods");
-  },
-
-  async softDeleteGoalFreezePeriod(id: string): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE goal_freeze_periods SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("goal_freeze_periods");
-  },
-
-  // --- Sync helpers ---
-
-  async getPendingSyncFreezePeriods(): Promise<FreezePeriodWithSync[]> {
+  async getAll(filter) {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM goal_freeze_periods WHERE sync_status = 'pending'",
+      "SELECT * FROM goal_freeze_periods",
+    );
+    return rows.map(mapFreezePeriodRow).filter(filter);
+  },
+  async update(id, changes) {
+    const db = await getDatabase();
+    const columnMap: Record<string, string> = {
+      startDate: "start_date",
+      endDate: "end_date",
+      updatedAt: "updated_at",
+      _syncStatus: "sync_status",
+      deletedAt: "deleted_at",
+    };
+    const sets: string[] = [];
+    const vals: (string | null)[] = [];
+    for (const [key, val] of Object.entries(changes)) {
+      const col = columnMap[key];
+      if (col) {
+        sets.push(`${col} = ?`);
+        vals.push(val as string | null);
+      }
+    }
+    vals.push(id);
+    await db.runAsync(
+      `UPDATE goal_freeze_periods SET ${sets.join(", ")} WHERE id = ?`,
+      vals,
+    );
+    dbEvents.emit("goal_freeze_periods");
+  },
+  async getByIds(ids) {
+    const db = await getDatabase();
+    const ph = ids.map(() => "?").join(",");
+    const rows = await db.getAllAsync<SqlRow>(
+      `SELECT * FROM goal_freeze_periods WHERE id IN (${ph})`,
+      ids,
     );
     return rows.map(mapFreezePeriodRow);
   },
-
-  async markFreezePeriodsSynced(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+  async updateSyncStatus(ids, status) {
     const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
+    const ph = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE goal_freeze_periods SET sync_status = 'synced' WHERE id IN (${placeholders})`,
-      ids,
+      `UPDATE goal_freeze_periods SET sync_status = ? WHERE id IN (${ph})`,
+      [status, ...ids],
     );
     dbEvents.emit("goal_freeze_periods");
   },
-
-  async markFreezePeriodsFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE goal_freeze_periods SET sync_status = 'failed' WHERE id IN (${placeholders})`,
-      ids,
-    );
-    dbEvents.emit("goal_freeze_periods");
-  },
-
-  // --- Server upsert ---
-
-  async upsertFreezePeriodsFromServer(
-    periods: GoalFreezePeriodRecord[],
-  ): Promise<void> {
+  async bulkUpsertSynced(periods) {
     const db = await getDatabase();
     try {
       await db.execAsync("BEGIN");
       for (const fp of periods) {
         await db.runAsync(
-          `INSERT INTO goal_freeze_periods (id, goal_id, user_id, start_date, end_date, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             goal_id = excluded.goal_id,
-             user_id = excluded.user_id,
-             start_date = excluded.start_date,
-             end_date = excluded.end_date,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
+          `INSERT OR REPLACE INTO goal_freeze_periods (id, goal_id, user_id, start_date, end_date, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             fp.id,
             fp.goalId,
             fp.userId,
             fp.startDate,
             fp.endDate,
+            fp._syncStatus,
             fp.deletedAt,
             fp.createdAt,
             fp.updatedAt,
@@ -220,3 +161,6 @@ export const goalFreezePeriodRepository = {
     dbEvents.emit("goal_freeze_periods");
   },
 };
+
+export const goalFreezePeriodRepository =
+  newGoalFreezePeriodRepository(adapter);

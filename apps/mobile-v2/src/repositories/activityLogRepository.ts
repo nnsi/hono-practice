@@ -1,17 +1,19 @@
 import type { SyncStatus } from "@packages/domain";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
-import type {
-  ActivityLogRepository,
-  UpsertActivityLogFromServerInput,
-} from "@packages/domain/activityLog/activityLogRepository";
-import { v7 as uuidv7 } from "uuid";
+import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
+import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import {
+  type ActivityLogDbAdapter,
+  newActivityLogRepository,
+} from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 
-// --- Row mapping helpers (snake_case SQL → camelCase TS) ---
+// --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
+type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
 
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -28,16 +30,12 @@ function numOrNull(v: unknown): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-// Local DB omits userId (it's implicit from auth_state)
-type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
-type ActivityLogWithSync = LocalActivityLog & { _syncStatus: SyncStatus };
-
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
   return "synced";
 }
 
-export function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
+export function mapActivityLogRow(row: SqlRow): Syncable<LocalActivityLog> {
   return {
     id: str(row.id),
     activityId: str(row.activity_id),
@@ -53,69 +51,49 @@ export function mapActivityLogRow(row: SqlRow): ActivityLogWithSync {
   };
 }
 
-// --- Repository ---
+// --- Adapter ---
 
-type CreateActivityLogInput = {
-  activityId: string;
-  activityKindId: string | null;
-  quantity: number | null;
-  memo: string;
-  date: string;
-  time: string | null;
+const columnMap: Record<string, string> = {
+  quantity: "quantity",
+  memo: "memo",
+  activityKindId: "activity_kind_id",
+  date: "date",
+  time: "time",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+  deletedAt: "deleted_at",
 };
 
-export const activityLogRepository = {
-  async createActivityLog(input: CreateActivityLogInput) {
+const adapter: ActivityLogDbAdapter = {
+  async insert(log) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-    const id = uuidv7();
-
     await db.runAsync(
       `INSERT INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        input.activityId,
-        input.activityKindId,
-        input.quantity,
-        input.memo,
-        input.date,
-        input.time,
-        now,
-        now,
+        log.id,
+        log.activityId,
+        log.activityKindId,
+        log.quantity,
+        log.memo,
+        log.date,
+        log.time,
+        log._syncStatus,
+        log.deletedAt,
+        log.createdAt,
+        log.updatedAt,
       ],
     );
-
     dbEvents.emit("activity_logs");
-
-    return {
-      id,
-      activityId: input.activityId,
-      activityKindId: input.activityKindId,
-      quantity: input.quantity,
-      memo: input.memo,
-      date: input.date,
-      time: input.time,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending" as const,
-    };
   },
 
-  async getActivityLogsBetween(
-    startDate: string,
-    endDate: string,
-  ): Promise<ActivityLogWithSync[]> {
+  async getAll(filter) {
     const db = await getDatabase();
-    const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL ORDER BY date",
-      [startDate, endDate],
-    );
-    return rows.map(mapActivityLogRow);
+    const rows = await db.getAllAsync<SqlRow>("SELECT * FROM activity_logs");
+    return rows.map(mapActivityLogRow).filter(filter);
   },
 
-  async getActivityLogsByDate(date: string): Promise<ActivityLogWithSync[]> {
+  async getByDate(date) {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
       "SELECT * FROM activity_logs WHERE date = ? AND deleted_at IS NULL",
@@ -124,120 +102,67 @@ export const activityLogRepository = {
     return rows.map(mapActivityLogRow);
   },
 
-  async updateActivityLog(
-    id: string,
-    changes: Partial<
-      Pick<
-        LocalActivityLog,
-        "quantity" | "memo" | "activityKindId" | "date" | "time"
-      >
-    >,
-  ): Promise<void> {
+  async getByDateRange(startDate, endDate) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL ORDER BY date",
+      [startDate, endDate],
+    );
+    return rows.map(mapActivityLogRow);
+  },
 
-    const setClauses: string[] = ["updated_at = ?", "sync_status = 'pending'"];
-    const values: (string | number | null)[] = [now];
+  async update(id, changes) {
+    const db = await getDatabase();
+    const setClauses: string[] = [];
+    const values: (string | number | null)[] = [];
 
-    if (changes.quantity !== undefined) {
-      setClauses.push("quantity = ?");
-      values.push(changes.quantity);
-    }
-    if (changes.memo !== undefined) {
-      setClauses.push("memo = ?");
-      values.push(changes.memo);
-    }
-    if (changes.activityKindId !== undefined) {
-      setClauses.push("activity_kind_id = ?");
-      values.push(changes.activityKindId);
-    }
-    if (changes.date !== undefined) {
-      setClauses.push("date = ?");
-      values.push(changes.date);
-    }
-    if (changes.time !== undefined) {
-      setClauses.push("time = ?");
-      values.push(changes.time);
+    for (const [key, value] of Object.entries(changes)) {
+      const col = columnMap[key];
+      if (!col) continue;
+      setClauses.push(`${col} = ?`);
+      values.push(value as string | number | null);
     }
 
+    if (setClauses.length === 0) return;
     values.push(id);
     await db.runAsync(
       `UPDATE activity_logs SET ${setClauses.join(", ")} WHERE id = ?`,
       values,
     );
-
     dbEvents.emit("activity_logs");
   },
 
-  async softDeleteActivityLog(id: string): Promise<void> {
+  async getByIds(ids) {
+    if (ids.length === 0) return [];
     const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE activity_logs SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("activity_logs");
-  },
-
-  // --- Sync helpers ---
-
-  async getPendingSyncActivityLogs(): Promise<ActivityLogWithSync[]> {
-    const db = await getDatabase();
+    const placeholders = ids.map(() => "?").join(",");
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM activity_logs WHERE sync_status = 'pending'",
+      `SELECT * FROM activity_logs WHERE id IN (${placeholders})`,
+      ids,
     );
     return rows.map(mapActivityLogRow);
   },
 
-  async markActivityLogsSynced(ids: string[]): Promise<void> {
+  async updateSyncStatus(ids, status) {
     if (ids.length === 0) return;
     const db = await getDatabase();
     const placeholders = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE activity_logs SET sync_status = 'synced' WHERE id IN (${placeholders})`,
-      ids,
+      `UPDATE activity_logs SET sync_status = ? WHERE id IN (${placeholders})`,
+      [status, ...ids],
     );
     dbEvents.emit("activity_logs");
   },
 
-  async markActivityLogsFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE activity_logs SET sync_status = 'failed' WHERE id IN (${placeholders})`,
-      ids,
-    );
-    dbEvents.emit("activity_logs");
-  },
-
-  // --- Server upsert ---
-
-  async upsertActivityLogsFromServer(
-    logs: UpsertActivityLogFromServerInput[],
-  ): Promise<void> {
+  async bulkUpsertSynced(logs) {
+    if (logs.length === 0) return;
     const db = await getDatabase();
     try {
       await db.execAsync("BEGIN");
       for (const log of logs) {
         await db.runAsync(
-          `INSERT INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             activity_id = excluded.activity_id,
-             activity_kind_id = excluded.activity_kind_id,
-             quantity = excluded.quantity,
-             memo = excluded.memo,
-             date = excluded.date,
-             time = excluded.time,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
+          `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             log.id,
             log.activityId,
@@ -246,6 +171,7 @@ export const activityLogRepository = {
             log.memo,
             log.date,
             log.time,
+            log._syncStatus,
             log.deletedAt,
             log.createdAt,
             log.updatedAt,
@@ -259,4 +185,8 @@ export const activityLogRepository = {
     }
     dbEvents.emit("activity_logs");
   },
-} satisfies ActivityLogRepository;
+};
+
+export const activityLogRepository = newActivityLogRepository(
+  adapter,
+) satisfies ActivityLogRepository;

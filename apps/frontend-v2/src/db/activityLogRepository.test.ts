@@ -171,17 +171,18 @@ describe("activityLogRepository", () => {
   // ========== Sync helpers ==========
   describe("getPendingSyncActivityLogs", () => {
     it("_syncStatus=pendingのログを返す", async () => {
-      const mockToArray = vi
-        .fn()
-        .mockResolvedValue([{ id: "log-1", _syncStatus: "pending" }]);
-      const mockEquals = vi.fn().mockReturnValue({ toArray: mockToArray });
-      mockDb.activityLogs.where.mockReturnValue({ equals: mockEquals });
+      const pendingLog = { id: "log-1", _syncStatus: "pending" };
+      const syncedLog = { id: "log-2", _syncStatus: "synced" };
+      const mockToArray = vi.fn().mockResolvedValue([pendingLog]);
+      const mockFilter = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityLogs.filter.mockImplementation(mockFilter);
 
       const result = await activityLogRepository.getPendingSyncActivityLogs();
 
-      expect(mockDb.activityLogs.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
-      expect(result).toEqual([{ id: "log-1", _syncStatus: "pending" }]);
+      expect(result).toEqual([pendingLog]);
+      const filterFn = mockFilter.mock.calls[0][0];
+      expect(filterFn(pendingLog)).toBe(true);
+      expect(filterFn(syncedLog)).toBe(false);
     });
   });
 

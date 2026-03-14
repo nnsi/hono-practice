@@ -1,11 +1,11 @@
 import type { SyncStatus } from "@packages/domain";
-import {
-  type DayTargets,
-  parseDayTargets,
-} from "@packages/domain/goal/dayTargets";
+import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
-import { v7 as uuidv7 } from "uuid";
+import {
+  type GoalDbAdapter,
+  newGoalRepository,
+} from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -39,8 +39,6 @@ function numOrNull(v: unknown): number | null {
 // for compatibility with GoalRecord.
 type GoalWithSync = GoalRecord & { _syncStatus: SyncStatus };
 
-// parseDayTargets imported from domain layer
-
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
   return "synced";
@@ -68,210 +66,107 @@ export function mapGoalRow(row: SqlRow): GoalWithSync {
   };
 }
 
-// --- Repository ---
+// --- Adapter ---
 
-type CreateGoalInput = {
-  activityId: string;
-  dailyTargetQuantity: number;
-  dayTargets?: DayTargets | null;
-  startDate: string;
-  endDate?: string | null;
-  description?: string;
-  debtCap?: number | null;
-};
-
-type UpdateGoalInput = Partial<
-  Pick<
-    GoalRecord,
-    | "dailyTargetQuantity"
-    | "dayTargets"
-    | "startDate"
-    | "endDate"
-    | "isActive"
-    | "description"
-    | "debtCap"
-  >
->;
-
-export const goalRepository = {
-  async createGoal(input: CreateGoalInput) {
+const adapter: GoalDbAdapter = {
+  async getUserId() {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-    const id = uuidv7();
-
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
-    if (!auth?.user_id) {
+    if (!auth?.user_id)
       throw new Error("Cannot create goal: userId is not set");
-    }
-
+    return auth.user_id;
+  },
+  async insert(goal) {
+    const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, day_targets, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'pending', NULL, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        auth.user_id,
-        input.activityId,
-        input.dailyTargetQuantity,
-        input.dayTargets ? JSON.stringify(input.dayTargets) : null,
-        input.startDate,
-        input.endDate ?? null,
-        input.description ?? "",
-        input.debtCap ?? null,
-        now,
-        now,
+        goal.id,
+        goal.userId,
+        goal.activityId,
+        goal.dailyTargetQuantity,
+        goal.dayTargets ? JSON.stringify(goal.dayTargets) : null,
+        goal.startDate,
+        goal.endDate,
+        goal.isActive ? 1 : 0,
+        goal.description,
+        goal.debtCap,
+        goal._syncStatus,
+        goal.deletedAt,
+        goal.createdAt,
+        goal.updatedAt,
       ],
     );
-
     dbEvents.emit("goals");
-
-    return {
-      id,
-      userId: auth.user_id,
-      activityId: input.activityId,
-      dailyTargetQuantity: input.dailyTargetQuantity,
-      dayTargets: input.dayTargets ?? null,
-      startDate: input.startDate,
-      endDate: input.endDate ?? null,
-      isActive: true,
-      description: input.description ?? "",
-      debtCap: input.debtCap ?? null,
-      currentBalance: 0,
-      totalTarget: 0,
-      totalActual: 0,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending" as const,
+  },
+  async getAll(filter) {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>("SELECT * FROM goals");
+    return rows.map(mapGoalRow).filter(filter);
+  },
+  async update(id, changes) {
+    const db = await getDatabase();
+    const columnMap: Record<string, string> = {
+      dailyTargetQuantity: "daily_target_quantity",
+      startDate: "start_date",
+      endDate: "end_date",
+      isActive: "is_active",
+      description: "description",
+      debtCap: "debt_cap",
+      dayTargets: "day_targets",
+      updatedAt: "updated_at",
+      _syncStatus: "sync_status",
+      deletedAt: "deleted_at",
     };
+    const sets: string[] = [];
+    const vals: (string | number | null)[] = [];
+    for (const [key, val] of Object.entries(changes)) {
+      const col = columnMap[key];
+      if (!col) continue;
+      if (key === "isActive") {
+        sets.push(`${col} = ?`);
+        vals.push(val ? 1 : 0);
+      } else if (key === "dayTargets") {
+        sets.push(`${col} = ?`);
+        vals.push(val ? JSON.stringify(val) : null);
+      } else {
+        sets.push(`${col} = ?`);
+        vals.push(val as string | number | null);
+      }
+    }
+    vals.push(id);
+    await db.runAsync(`UPDATE goals SET ${sets.join(", ")} WHERE id = ?`, vals);
+    dbEvents.emit("goals");
   },
-
-  async getAllGoals(): Promise<GoalWithSync[]> {
+  async getByIds(ids) {
     const db = await getDatabase();
+    const ph = ids.map(() => "?").join(",");
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM goals WHERE deleted_at IS NULL",
+      `SELECT * FROM goals WHERE id IN (${ph})`,
+      ids,
     );
     return rows.map(mapGoalRow);
   },
-
-  async updateGoal(id: string, changes: UpdateGoalInput): Promise<void> {
+  async updateSyncStatus(ids, status) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    const setClauses: string[] = ["updated_at = ?", "sync_status = 'pending'"];
-    const values: (string | number | null)[] = [now];
-
-    if (changes.dailyTargetQuantity !== undefined) {
-      setClauses.push("daily_target_quantity = ?");
-      values.push(changes.dailyTargetQuantity);
-    }
-    if (changes.startDate !== undefined) {
-      setClauses.push("start_date = ?");
-      values.push(changes.startDate);
-    }
-    if (changes.endDate !== undefined) {
-      setClauses.push("end_date = ?");
-      values.push(changes.endDate);
-    }
-    if (changes.isActive !== undefined) {
-      setClauses.push("is_active = ?");
-      values.push(changes.isActive ? 1 : 0);
-    }
-    if (changes.description !== undefined) {
-      setClauses.push("description = ?");
-      values.push(changes.description);
-    }
-    if (changes.debtCap !== undefined) {
-      setClauses.push("debt_cap = ?");
-      values.push(changes.debtCap);
-    }
-    if (changes.dayTargets !== undefined) {
-      setClauses.push("day_targets = ?");
-      values.push(
-        changes.dayTargets ? JSON.stringify(changes.dayTargets) : null,
-      );
-    }
-
-    values.push(id);
-    await db.runAsync(
-      `UPDATE goals SET ${setClauses.join(", ")} WHERE id = ?`,
-      values,
-    );
-
+    const ph = ids.map(() => "?").join(",");
+    await db.runAsync(`UPDATE goals SET sync_status = ? WHERE id IN (${ph})`, [
+      status,
+      ...ids,
+    ]);
     dbEvents.emit("goals");
   },
-
-  async softDeleteGoal(id: string): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE goals SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("goals");
-  },
-
-  // --- Sync helpers ---
-
-  async getPendingSyncGoals(): Promise<GoalWithSync[]> {
-    const db = await getDatabase();
-    const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM goals WHERE sync_status = 'pending'",
-    );
-    return rows.map(mapGoalRow);
-  },
-
-  async markGoalsSynced(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE goals SET sync_status = 'synced' WHERE id IN (${placeholders})`,
-      ids,
-    );
-    dbEvents.emit("goals");
-  },
-
-  async markGoalsFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE goals SET sync_status = 'failed' WHERE id IN (${placeholders})`,
-      ids,
-    );
-    dbEvents.emit("goals");
-  },
-
-  // --- Server upsert ---
-
-  async upsertGoalsFromServer(goals: GoalRecord[]): Promise<void> {
+  async bulkUpsertSynced(goals) {
     const db = await getDatabase();
     try {
       await db.execAsync("BEGIN");
       for (const g of goals) {
         await db.runAsync(
-          `INSERT INTO goals (id, user_id, activity_id, daily_target_quantity, day_targets, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             user_id = excluded.user_id,
-             activity_id = excluded.activity_id,
-             daily_target_quantity = excluded.daily_target_quantity,
-             day_targets = excluded.day_targets,
-             start_date = excluded.start_date,
-             end_date = excluded.end_date,
-             is_active = excluded.is_active,
-             description = excluded.description,
-             debt_cap = excluded.debt_cap,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
+          `INSERT OR REPLACE INTO goals (id, user_id, activity_id, daily_target_quantity, day_targets, start_date, end_date, is_active, description, debt_cap, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             g.id,
             g.userId,
@@ -283,6 +178,7 @@ export const goalRepository = {
             g.isActive ? 1 : 0,
             g.description,
             g.debtCap,
+            g._syncStatus,
             g.deletedAt,
             g.createdAt,
             g.updatedAt,
@@ -296,4 +192,8 @@ export const goalRepository = {
     }
     dbEvents.emit("goals");
   },
-} satisfies GoalRepository;
+};
+
+export const goalRepository = newGoalRepository(
+  adapter,
+) satisfies GoalRepository;
