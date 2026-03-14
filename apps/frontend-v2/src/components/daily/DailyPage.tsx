@@ -40,6 +40,7 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToPrev}
+            aria-label="前の日"
             className="absolute left-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
@@ -56,6 +57,7 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToNext}
+            aria-label="次の日"
             className="absolute right-14 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />

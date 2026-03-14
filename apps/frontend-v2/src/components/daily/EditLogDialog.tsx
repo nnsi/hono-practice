@@ -125,6 +125,7 @@ export function EditLogDialog({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
+                aria-label="削除"
                 className="px-4 py-3 border border-red-300 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={18} />
@@ -134,6 +135,7 @@ export function EditLogDialog({
                 type="button"
                 onClick={handleDelete}
                 disabled={isSubmitting}
+                aria-label="削除を確認"
                 className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
                 削除

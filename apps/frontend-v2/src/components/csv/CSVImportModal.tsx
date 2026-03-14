@@ -27,6 +27,7 @@ export function CSVImportModal({ onClose }: Props) {
             type="button"
             onClick={onClose}
             disabled={csv.isImporting}
+            aria-label="閉じる"
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-40"
           >
             <X size={18} />

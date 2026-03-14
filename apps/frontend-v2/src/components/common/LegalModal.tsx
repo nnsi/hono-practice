@@ -30,6 +30,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
           <button
             type="button"
             onClick={onClose}
+            aria-label="閉じる"
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X size={20} className="text-gray-500" />
