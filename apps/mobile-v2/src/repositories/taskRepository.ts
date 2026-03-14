@@ -33,6 +33,8 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
     id: str(row.id),
     userId: str(row.user_id),
     activityId: strOrNull(row.activity_id),
+    activityKindId: strOrNull(row.activity_kind_id),
+    quantity: row.quantity != null ? Number(row.quantity) : null,
     title: str(row.title),
     startDate: strOrNull(row.start_date),
     dueDate: strOrNull(row.due_date),
@@ -61,13 +63,15 @@ const adapter: TaskDbAdapter = {
   async insert(task) {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         task.id,
         task.userId,
         task.title,
         task.activityId,
+        task.activityKindId,
+        task.quantity,
         task.startDate,
         task.dueDate,
         task.doneDate,
@@ -91,6 +95,8 @@ const adapter: TaskDbAdapter = {
     const columnMap: Record<string, string> = {
       title: "title",
       activityId: "activity_id",
+      activityKindId: "activity_kind_id",
+      quantity: "quantity",
       startDate: "start_date",
       dueDate: "due_date",
       doneDate: "done_date",
@@ -101,12 +107,12 @@ const adapter: TaskDbAdapter = {
       _syncStatus: "sync_status",
     };
     const sets: string[] = [];
-    const vals: (string | null)[] = [];
+    const vals: (string | number | null)[] = [];
     for (const [key, val] of Object.entries(changes)) {
       const col = columnMap[key];
       if (col) {
         sets.push(`${col} = ?`);
-        vals.push(val as string | null);
+        vals.push(val as string | number | null);
       }
     }
     vals.push(id);
@@ -137,13 +143,15 @@ const adapter: TaskDbAdapter = {
       await db.execAsync("BEGIN");
       for (const t of tasks) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR REPLACE INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             t.id,
             t.userId,
             t.title,
             t.activityId,
+            t.activityKindId,
+            t.quantity,
             t.startDate,
             t.dueDate,
             t.doneDate,

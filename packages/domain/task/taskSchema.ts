@@ -24,6 +24,8 @@ const BaseTaskSchema = z.object({
   id: taskIdSchema,
   userId: userIdSchema,
   activityId: z.string().uuid().nullish(),
+  activityKindId: z.string().uuid().nullish(),
+  quantity: z.number().nullish(),
   title: z.string(),
   memo: z.string().nullable(),
   startDate: z.string().nullish(),

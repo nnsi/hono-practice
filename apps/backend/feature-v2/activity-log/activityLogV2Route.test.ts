@@ -20,6 +20,7 @@ function makeLog(overrides: Record<string, unknown> = {}) {
     memo: "",
     date: "2025-01-01",
     time: null,
+    taskId: null,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,

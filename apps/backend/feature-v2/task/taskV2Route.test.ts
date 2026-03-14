@@ -14,6 +14,8 @@ function makeTask(overrides: Record<string, unknown> = {}) {
   return {
     id: "10000000-0000-4000-8000-000000000001",
     activityId: null,
+    activityKindId: null,
+    quantity: null,
     title: "Test task",
     startDate: null,
     dueDate: null,

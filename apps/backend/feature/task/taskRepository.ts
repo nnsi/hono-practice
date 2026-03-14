@@ -169,6 +169,8 @@ function updateTask(db: QueryExecutor) {
       .set({
         title: task.title,
         activityId: task.activityId ?? null,
+        activityKindId: task.activityKindId ?? null,
+        quantity: task.quantity ?? null,
         startDate: task.startDate,
         dueDate: task.dueDate,
         doneDate: task.doneDate,

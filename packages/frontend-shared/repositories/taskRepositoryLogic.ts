@@ -34,6 +34,8 @@ export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
         id: uuidv7(),
         userId,
         activityId: input.activityId ?? null,
+        activityKindId: input.activityKindId ?? null,
+        quantity: input.quantity ?? null,
         title: input.title,
         startDate: input.startDate ?? null,
         dueDate: input.dueDate ?? null,

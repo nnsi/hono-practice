@@ -2,6 +2,8 @@ export type TaskItem = {
   id: string;
   userId: string;
   activityId: string | null;
+  activityKindId: string | null;
+  quantity: number | null;
   title: string;
   startDate: string | null;
   dueDate: string | null;

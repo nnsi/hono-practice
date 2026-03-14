@@ -49,6 +49,8 @@ function upsertTasks(db: QueryExecutor) {
           id: task.id,
           userId,
           activityId: task.activityId,
+          activityKindId: task.activityKindId,
+          quantity: task.quantity,
           title: task.title,
           startDate: task.startDate,
           dueDate: task.dueDate,
@@ -65,6 +67,8 @@ function upsertTasks(db: QueryExecutor) {
         set: {
           title: sql`excluded.title`,
           activityId: sql`excluded.activity_id`,
+          activityKindId: sql`excluded.activity_kind_id`,
+          quantity: sql`excluded.quantity`,
           startDate: sql`excluded.start_date`,
           dueDate: sql`excluded.due_date`,
           doneDate: sql`excluded.done_date`,

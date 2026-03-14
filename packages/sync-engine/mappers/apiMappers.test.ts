@@ -294,6 +294,7 @@ describe("mapApiActivityLog", () => {
       memo: "朝のランニング",
       date: "2024-01-01",
       time: "09:00",
+      taskId: null,
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
       deletedAt: null,
@@ -307,6 +308,7 @@ describe("mapApiActivityLog", () => {
       memo: "朝のランニング",
       date: "2024-01-01",
       time: "09:00",
+      taskId: null,
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
       deletedAt: null,
@@ -322,6 +324,7 @@ describe("mapApiActivityLog", () => {
       memo: "テスト",
       date: "2024-01-02",
       time: null,
+      task_id: null,
       created_at: "2024-01-02T00:00:00Z",
       updated_at: "2024-01-02T00:00:00Z",
       deleted_at: null,
@@ -392,6 +395,7 @@ describe("mapApiActivityLog", () => {
     expect(result.memo).toBe("");
     expect(result.date).toBe("");
     expect(result.time).toBeNull();
+    expect(result.taskId).toBeNull();
   });
 
   it("日付フィールドが欠損している場合はISO文字列にフォールバックする", () => {
@@ -533,6 +537,8 @@ describe("mapApiTask", () => {
       id: "task-1",
       userId: "user-1",
       activityId: null,
+      activityKindId: null,
+      quantity: null,
       title: "買い物に行く",
       startDate: "2024-01-01",
       dueDate: "2024-01-05",

@@ -7,6 +7,7 @@ export type ActivityLogRecord = {
   memo: string;
   date: string;
   time: string | null;
+  taskId: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

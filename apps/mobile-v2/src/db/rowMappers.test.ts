@@ -189,6 +189,7 @@ describe("mapActivityLogRow", () => {
       memo: "morning run",
       date: "2025-03-01",
       time: "08:00",
+      task_id: "t1",
       created_at: "2025-03-01T08:00:00Z",
       updated_at: "2025-03-01T08:00:00Z",
       deleted_at: null,
@@ -203,6 +204,7 @@ describe("mapActivityLogRow", () => {
       memo: "morning run",
       date: "2025-03-01",
       time: "08:00",
+      taskId: "t1",
       createdAt: "2025-03-01T08:00:00Z",
       updatedAt: "2025-03-01T08:00:00Z",
       deletedAt: null,
@@ -219,6 +221,7 @@ describe("mapActivityLogRow", () => {
     expect(result.memo).toBe("");
     expect(result.date).toBe("");
     expect(result.time).toBeNull();
+    expect(result.taskId).toBeNull();
     expect(result._syncStatus).toBe("synced");
   });
 
@@ -365,6 +368,8 @@ describe("mapTaskRow", () => {
       id: "t1",
       user_id: "u1",
       title: "Buy groceries",
+      activity_kind_id: "k1",
+      quantity: 3.5,
       start_date: "2025-03-01",
       due_date: "2025-03-05",
       done_date: "2025-03-04",
@@ -380,6 +385,8 @@ describe("mapTaskRow", () => {
       id: "t1",
       userId: "u1",
       activityId: null,
+      activityKindId: "k1",
+      quantity: 3.5,
       title: "Buy groceries",
       startDate: "2025-03-01",
       dueDate: "2025-03-05",
@@ -398,6 +405,8 @@ describe("mapTaskRow", () => {
     expect(result.id).toBe("");
     expect(result.userId).toBe("");
     expect(result.activityId).toBeNull();
+    expect(result.activityKindId).toBeNull();
+    expect(result.quantity).toBeNull();
     expect(result.title).toBe("");
     expect(result.startDate).toBeNull();
     expect(result.dueDate).toBeNull();
