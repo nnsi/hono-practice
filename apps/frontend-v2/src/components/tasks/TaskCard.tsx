@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { db } from "../../db/schema";
+import { type DexieActivityKind, db } from "../../db/schema";
 import { useActivities } from "../../hooks/useActivities";
 import type { TaskItem } from "./types";
 
@@ -47,11 +47,11 @@ export function TaskCard({
     ? activityMap.get(task.activityId)
     : undefined;
 
-  const rawKind = useLiveQuery(
+  const rawKind = useLiveQuery<DexieActivityKind | undefined>(
     () =>
       task.activityKindId
         ? db.activityKinds.get(task.activityKindId)
-        : Promise.resolve(undefined),
+        : undefined,
     [task.activityKindId],
   );
   const linkedKind = rawKind && !rawKind.deletedAt ? rawKind : undefined;
