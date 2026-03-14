@@ -399,6 +399,13 @@ importers:
       react:
         specifier: ^19.1.0
         version: 19.1.0
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
+    devDependencies:
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
 
   packages/platform: {}
 
