@@ -57,6 +57,8 @@ describe("GoalUsecase", () => {
         endDate: null,
         isActive: true,
         description: "Test goal",
+        debtCap: null,
+        dayTargets: null,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
       });
@@ -105,7 +107,67 @@ describe("GoalUsecase", () => {
         currentBalance: balance.currentBalance,
         totalTarget: balance.totalTarget,
         totalActual: balance.totalActual,
+        debtCap: null,
+        dayTargets: null,
       });
+    });
+
+    it("should return goals with debtCap and dayTargets", async () => {
+      const userId = createUserId();
+      const activityId = createActivityId();
+      const dayTargets = { 1: 5, 2: 10, 3: 15 } as const;
+      const goal = createActivityGoalEntity({
+        type: "persisted",
+        id: "00000000-0000-4000-8000-000000000001" as ActivityGoalId,
+        userId,
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        endDate: null,
+        isActive: true,
+        description: "Test goal",
+        debtCap: 50,
+        dayTargets,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+      });
+
+      const balance: GoalBalance = {
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+        dailyTarget: 10,
+        daysActive: 0,
+        lastCalculatedDate: "2024-01-01",
+      };
+
+      when(activityGoalRepo.getActivityGoalsByUserId(userId)).thenResolve([
+        goal,
+      ]);
+      when(
+        activityLogRepo.getActivityLogSummariesByUserIdAndDate(
+          userId,
+          anything(),
+          anything(),
+        ),
+      ).thenResolve([]);
+      when(
+        activityGoalService.calculateCurrentBalance(
+          userId,
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(balance);
+      when(
+        activityGoalService.getInactiveDates(userId, anything(), anything()),
+      ).thenResolve([]);
+
+      const result = await usecase.getGoals(userId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].debtCap).toBe(50);
+      expect(result[0].dayTargets).toEqual(dayTargets);
     });
 
     it("should filter goals by activityId", async () => {
@@ -123,6 +185,8 @@ describe("GoalUsecase", () => {
         endDate: null,
         isActive: true,
         description: null,
+        debtCap: null,
+        dayTargets: null,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
       });
@@ -137,6 +201,8 @@ describe("GoalUsecase", () => {
         endDate: null,
         isActive: true,
         description: null,
+        debtCap: null,
+        dayTargets: null,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
       });
@@ -204,6 +270,8 @@ describe("GoalUsecase", () => {
           endDate: request.endDate ?? null,
           isActive: true,
           description: request.description ?? null,
+          debtCap: null,
+          dayTargets: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         }),
@@ -215,6 +283,42 @@ describe("GoalUsecase", () => {
       expect(result.dailyTargetQuantity).toBe(10);
       expect(result.startDate).toBe("2024-01-01");
       expect(result.endDate).toBe("2024-12-31");
+      verify(activityGoalRepo.createActivityGoal(anything())).once();
+    });
+
+    it("should create a goal with debtCap and dayTargets", async () => {
+      const userId = createUserId();
+      const activityId = createActivityId();
+      const request: CreateGoalRequest = {
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        debtCap: 30,
+        dayTargets: { "1": 5, "2": 10 },
+      };
+
+      when(activityGoalRepo.createActivityGoal(anything())).thenResolve(
+        createActivityGoalEntity({
+          type: "persisted",
+          id: "00000000-0000-4000-8000-000000000001" as ActivityGoalId,
+          userId,
+          activityId,
+          dailyTargetQuantity: 10,
+          startDate: "2024-01-01",
+          endDate: null,
+          isActive: true,
+          description: null,
+          debtCap: 30,
+          dayTargets: { 1: 5, 2: 10 },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const result = await usecase.createGoal(userId, request);
+
+      expect(result.debtCap).toBe(30);
+      expect(result.dayTargets).toEqual({ 1: 5, 2: 10 });
       verify(activityGoalRepo.createActivityGoal(anything())).once();
     });
   });
@@ -235,6 +339,8 @@ describe("GoalUsecase", () => {
         endDate: null,
         isActive: true,
         description: "Old description",
+        debtCap: null,
+        dayTargets: null,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
       });
@@ -259,6 +365,8 @@ describe("GoalUsecase", () => {
           startDate: existingGoal.startDate,
           endDate: existingGoal.endDate,
           isActive: existingGoal.isActive,
+          debtCap: null,
+          dayTargets: null,
           createdAt:
             existingGoal.type === "persisted"
               ? existingGoal.createdAt
@@ -272,6 +380,60 @@ describe("GoalUsecase", () => {
       expect(result.dailyTargetQuantity).toBe(20);
       expect(result.description).toBe("Updated description");
       verify(activityGoalRepo.updateActivityGoal(anything())).once();
+    });
+
+    it("should update debtCap and dayTargets", async () => {
+      const userId = createUserId();
+      const goalId = "00000000-0000-4000-8000-000000000001";
+      const activityId = createActivityId();
+
+      const existingGoal = createActivityGoalEntity({
+        type: "persisted",
+        id: goalId as ActivityGoalId,
+        userId,
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        endDate: null,
+        isActive: true,
+        description: null,
+        debtCap: null,
+        dayTargets: null,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+      });
+
+      const updateRequest: UpdateGoalRequest = {
+        debtCap: 50,
+        dayTargets: { "1": 5, "3": 15 },
+      };
+
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(existingGoal);
+
+      when(activityGoalRepo.updateActivityGoal(anything())).thenResolve(
+        createActivityGoalEntity({
+          type: "persisted",
+          id: existingGoal.id,
+          userId: existingGoal.userId,
+          activityId: existingGoal.activityId,
+          dailyTargetQuantity: existingGoal.dailyTargetQuantity,
+          startDate: existingGoal.startDate,
+          endDate: existingGoal.endDate,
+          isActive: existingGoal.isActive,
+          description: existingGoal.description,
+          debtCap: 50,
+          dayTargets: { 1: 5, 3: 15 },
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const result = await usecase.updateGoal(userId, goalId, updateRequest);
+
+      expect(result.debtCap).toBe(50);
+      expect(result.dayTargets).toEqual({ 1: 5, 3: 15 });
     });
 
     it("should throw error if goal not found", async () => {
@@ -304,6 +466,8 @@ describe("GoalUsecase", () => {
         endDate: null,
         isActive: true,
         description: null,
+        debtCap: null,
+        dayTargets: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

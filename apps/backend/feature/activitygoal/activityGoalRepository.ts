@@ -1,6 +1,7 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activityGoals } from "@infra/drizzle/schema";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import {
   type ActivityGoal,
   type ActivityGoalId,
@@ -50,6 +51,24 @@ export function newActivityGoalRepository(
   };
 }
 
+function rowToEntity(row: typeof activityGoals.$inferSelect): ActivityGoal {
+  return createActivityGoalEntity({
+    id: row.id,
+    userId: row.userId,
+    activityId: row.activityId,
+    dailyTargetQuantity: row.dailyTargetQuantity,
+    startDate: row.startDate || "",
+    endDate: row.endDate,
+    isActive: row.isActive,
+    description: row.description,
+    debtCap: row.debtCap ?? null,
+    dayTargets: parseDayTargets(row.dayTargets),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    type: "persisted",
+  });
+}
+
 function getActivityGoalsByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<ActivityGoal[]> => {
     const rows = await db.query.activityGoals.findMany({
@@ -60,21 +79,7 @@ function getActivityGoalsByUserId(db: QueryExecutor) {
       orderBy: (goals, { desc }) => [desc(goals.createdAt)],
     });
 
-    return rows.map((row) =>
-      createActivityGoalEntity({
-        id: row.id,
-        userId: row.userId,
-        activityId: row.activityId,
-        dailyTargetQuantity: row.dailyTargetQuantity,
-        startDate: row.startDate || "",
-        endDate: row.endDate,
-        isActive: row.isActive,
-        description: row.description,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        type: "persisted",
-      }),
-    );
+    return rows.map(rowToEntity);
   };
 }
 
@@ -93,19 +98,7 @@ function getActivityGoalByIdAndUserId(db: QueryExecutor) {
 
     if (!row) return undefined;
 
-    return createActivityGoalEntity({
-      id: row.id,
-      userId: row.userId,
-      activityId: row.activityId,
-      dailyTargetQuantity: row.dailyTargetQuantity,
-      startDate: row.startDate || "",
-      endDate: row.endDate,
-      isActive: row.isActive,
-      description: row.description,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      type: "persisted",
-    });
+    return rowToEntity(row);
   };
 }
 
@@ -123,21 +116,7 @@ function getActivityGoalsByActivityId(db: QueryExecutor) {
       orderBy: (goals, { desc }) => [desc(goals.createdAt)],
     });
 
-    return rows.map((row) =>
-      createActivityGoalEntity({
-        id: row.id,
-        userId: row.userId,
-        activityId: row.activityId,
-        dailyTargetQuantity: row.dailyTargetQuantity,
-        startDate: row.startDate || "",
-        endDate: row.endDate,
-        isActive: row.isActive,
-        description: row.description,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        type: "persisted",
-      }),
-    );
+    return rows.map(rowToEntity);
   };
 }
 
@@ -158,19 +137,7 @@ function getActiveActivityGoalByActivityId(db: QueryExecutor) {
 
     if (!row) return undefined;
 
-    return createActivityGoalEntity({
-      id: row.id,
-      userId: row.userId,
-      activityId: row.activityId,
-      dailyTargetQuantity: row.dailyTargetQuantity,
-      startDate: row.startDate || "",
-      endDate: row.endDate,
-      isActive: row.isActive,
-      description: row.description,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      type: "persisted",
-    });
+    return rowToEntity(row);
   };
 }
 
@@ -191,22 +158,12 @@ function createActivityGoal(db: QueryExecutor) {
         endDate: goal.endDate,
         isActive: goal.isActive,
         description: goal.description,
+        debtCap: goal.debtCap ?? null,
+        dayTargets: goal.dayTargets ?? null,
       })
       .returning();
 
-    return createActivityGoalEntity({
-      id: row.id,
-      userId: row.userId,
-      activityId: row.activityId,
-      dailyTargetQuantity: row.dailyTargetQuantity,
-      startDate: row.startDate || "",
-      endDate: row.endDate,
-      isActive: row.isActive,
-      description: row.description,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      type: "persisted",
-    });
+    return rowToEntity(row);
   };
 }
 
@@ -224,24 +181,14 @@ function updateActivityGoal(db: QueryExecutor) {
         endDate: goal.endDate,
         isActive: goal.isActive,
         description: goal.description,
+        debtCap: goal.debtCap ?? null,
+        dayTargets: goal.dayTargets ?? null,
         updatedAt: new Date(),
       })
       .where(eq(activityGoals.id, goal.id))
       .returning();
 
-    return createActivityGoalEntity({
-      id: row.id,
-      userId: row.userId,
-      activityId: row.activityId,
-      dailyTargetQuantity: row.dailyTargetQuantity,
-      startDate: row.startDate || "",
-      endDate: row.endDate,
-      isActive: row.isActive,
-      description: row.description,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      type: "persisted",
-    });
+    return rowToEntity(row);
   };
 }
 
@@ -282,24 +229,8 @@ function getActivityGoalChangesAfter(db: QueryExecutor) {
     const hasMore = rows.length > limit;
     const goalsData = rows.slice(0, limit);
 
-    const result = goalsData.map((row) =>
-      createActivityGoalEntity({
-        type: "persisted",
-        id: row.id,
-        userId: row.userId,
-        activityId: row.activityId,
-        dailyTargetQuantity: row.dailyTargetQuantity,
-        startDate: row.startDate || "",
-        endDate: row.endDate,
-        isActive: row.isActive,
-        description: row.description,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      }),
-    );
-
     return {
-      goals: result,
+      goals: goalsData.map(rowToEntity),
       hasMore,
     };
   };

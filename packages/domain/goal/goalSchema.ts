@@ -4,6 +4,7 @@ import { z } from "zod";
 import { activityIdSchema } from "../activity/activitySchema";
 import { DomainValidateError } from "../errors";
 import { userIdSchema } from "../user/userSchema";
+import type { DayTargets } from "./dayTargets";
 
 // ActivityGoalId
 export const activityGoalIdSchema = z.string().uuid().brand<"ActivityGoalId">();
@@ -34,6 +35,8 @@ const BaseActivityGoalSchema = z.object({
   endDate: z.string().nullable(),
   isActive: z.boolean(),
   description: z.string().nullable(),
+  debtCap: z.number().nullable().optional(),
+  dayTargets: z.custom<DayTargets>().nullable().optional(),
 });
 
 const NewActivityGoalSchema = BaseActivityGoalSchema.merge(

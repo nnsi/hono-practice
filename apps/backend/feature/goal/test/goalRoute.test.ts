@@ -58,6 +58,31 @@ test("POST goals / success", async () => {
   expect(res.status).toEqual(201);
 });
 
+test("POST goals / with debtCap and dayTargets", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+  });
+
+  const res = await client.index.$post({
+    json: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      dailyTargetQuantity: 10,
+      startDate: "2024-01-01",
+      debtCap: 30,
+      dayTargets: { "1": 5, "2": 10 },
+    },
+  });
+
+  expect(res.status).toEqual(201);
+  const body = await res.json();
+  expect(body.debtCap).toBe(30);
+  expect(body.dayTargets).toEqual({ "1": 5, "2": 10 });
+});
+
 test("GET goals/:id / success", async () => {
   const route = createGoalRoute();
   const app = newHonoWithErrorHandling()

@@ -31,6 +31,8 @@ describe("ActivityGoalService", () => {
     endDate: null,
     isActive: true,
     description: null,
+    debtCap: null,
+    dayTargets: null,
     createdAt: new Date("2024-01-01T00:00:00Z"),
     updatedAt: new Date("2024-01-01T00:00:00Z"),
   });

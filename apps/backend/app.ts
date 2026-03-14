@@ -13,6 +13,7 @@ import {
 } from "./feature";
 import { clientErrorRoute } from "./feature/clientError/clientErrorRoute";
 import { goalRoute } from "./feature/goal/goalRoute";
+import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeriodRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import {
@@ -93,6 +94,7 @@ const routes = app
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
   .route("/users/goals", goalRoute)
+  .route("/users/goals", goalFreezePeriodRoute)
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
   .route("/users/v2", activityLogV2Route)
