@@ -3,6 +3,7 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
+import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
@@ -49,6 +50,8 @@ function toIconType(value: unknown): IconType {
   }
   return "emoji";
 }
+
+// parseDayTargets imported from domain layer handles JSON parsing + key validation
 
 export function mapApiActivity(a: ApiRecord): ActivityRecord {
   return {
@@ -121,6 +124,7 @@ export function mapApiGoal(g: ApiRecord): GoalRecord {
     isActive: toBool(g.isActive ?? g.is_active, true),
     description: str(g.description),
     debtCap: toNumOrNull(g.debtCap ?? g.debt_cap),
+    dayTargets: parseDayTargets(g.dayTargets ?? g.day_targets),
     currentBalance: toNum(g.currentBalance ?? g.current_balance, 0),
     totalTarget: toNum(g.totalTarget ?? g.total_target, 0),
     totalActual: toNum(g.totalActual ?? g.total_actual, 0),

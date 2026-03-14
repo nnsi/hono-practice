@@ -29,6 +29,8 @@ export * from "./activityLog/activityLogValidation";
 export * from "./csv";
 // Errors
 export { DomainValidateError } from "./errors";
+export type { DayTargets } from "./goal/dayTargets";
+export { getDailyTargetForDate } from "./goal/dayTargets";
 export * from "./goal/goalBalance";
 export * from "./goal/goalPredicates";
 export type { GoalRecord } from "./goal/goalRecord";

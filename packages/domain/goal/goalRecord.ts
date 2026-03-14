@@ -1,8 +1,11 @@
+import type { DayTargets } from "./dayTargets";
+
 export type GoalRecord = {
   id: string;
   userId: string;
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets: DayTargets | null;
   startDate: string;
   endDate: string | null;
   isActive: boolean;

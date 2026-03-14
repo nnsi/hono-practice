@@ -352,4 +352,99 @@ describe("calculateGoalBalance", () => {
     expect(result.currentBalance).toBe(-20); // capでクランプ
     expect(result.debtCapped).toBe(true);
   });
+
+  // --- dayTargets テスト ---
+
+  it("dayTargets: 曜日別目標で totalTarget を計算する", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun) = 1 week
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 20, 7: 0 } as const,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-11";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    // Mon-Fri: 10*5=50, Sat: 20, Sun: 0 → total 70
+    expect(result.totalTarget).toBe(70);
+    // daysActive = 6 (Sun has target 0, so not counted)
+    expect(result.daysActive).toBe(6);
+    expect(result.currentBalance).toBe(-70);
+  });
+
+  it("dayTargets: 一部のみ指定 → 未指定曜日は dailyTargetQuantity", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun)
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 7: 0 } as const, // only Sunday override
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-11";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    // Mon-Sat: 10*6=60, Sun: 0 → total 60
+    expect(result.totalTarget).toBe(60);
+    expect(result.daysActive).toBe(6);
+  });
+
+  it("dayTargets + freezePeriods: フリーズ日は曜日別目標も加算されない", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun), freeze 1/7 (Wed) to 1/8 (Thu)
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 20, 7: 0 } as const,
+    };
+    const freezePeriods = [{ startDate: "2026-01-07", endDate: "2026-01-08" }];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-11";
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    // Mon 10, Tue 10, Wed FROZEN, Thu FROZEN, Fri 10, Sat 20, Sun 0 → total 50
+    expect(result.totalTarget).toBe(50);
+    expect(result.daysActive).toBe(4); // Mon, Tue, Fri, Sat (Sun=0, Wed/Thu frozen)
+  });
+
+  it("dayTargets + debtCap: 両方適用される", () => {
+    // 2026-01-05 (Mon) to 2026-01-11 (Sun)
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-05",
+      endDate: null,
+      dayTargets: { 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 20, 7: 0 } as const,
+      debtCap: 30,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-11";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.totalTarget).toBe(70);
+    expect(result.rawBalance).toBe(-70);
+    expect(result.currentBalance).toBe(-30); // capped
+    expect(result.debtCapped).toBe(true);
+  });
+
+  it("dayTargets null: 既存動作と同一", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+      dayTargets: null,
+    };
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-03";
+
+    const result = calculateGoalBalance(goal, logs, today);
+
+    expect(result.daysActive).toBe(3);
+    expect(result.totalTarget).toBe(30);
+  });
 });

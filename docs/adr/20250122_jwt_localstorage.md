@@ -2,7 +2,7 @@
 
 ## ステータス
 
-決定
+廃止（frontend-v1削除に伴い無効。v2はインメモリトークン + Cookie refresh + Dexie authStateで認証管理）
 
 ## コンテキスト
 

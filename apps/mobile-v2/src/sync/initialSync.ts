@@ -4,12 +4,14 @@ import {
   mapApiActivityKind,
   mapApiActivityLog,
   mapApiGoal,
+  mapApiGoalFreezePeriod,
   mapApiTask,
 } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
+import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
@@ -28,6 +30,7 @@ export async function clearLocalData(
     DELETE FROM activities;
     DELETE FROM activity_kinds;
     DELETE FROM goals;
+    DELETE FROM goal_freeze_periods;
     DELETE FROM tasks;
     DELETE FROM activity_icon_blobs;
     DELETE FROM activity_icon_delete_queue;
@@ -79,12 +82,16 @@ export async function performInitialSync(
   const gen = getSyncGeneration();
 
   // Fetch all data in parallel
-  const [activitiesRes, logsRes, goalsRes, tasksRes] = await Promise.all([
-    apiClient.users.v2.activities.$get(),
-    apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-    apiClient.users.v2.goals.$get({ query: sinceQuery }),
-    apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-  ]);
+  const [activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes] =
+    await Promise.all([
+      apiClient.users.v2.activities.$get(),
+      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+      apiClient.users.v2.goals.$get({ query: sinceQuery }),
+      apiClient.users.v2["goal-freeze-periods"]
+        .$get({ query: sinceQuery })
+        .catch(() => null),
+      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
+    ]);
 
   if (gen !== getSyncGeneration()) return;
 
@@ -94,6 +101,7 @@ export async function performInitialSync(
   let kindsData: ReturnType<typeof mapApiActivityKind>[] = [];
   let logsData: ReturnType<typeof mapApiActivityLog>[] = [];
   let goalsData: ReturnType<typeof mapApiGoal>[] = [];
+  let freezePeriodsData: ReturnType<typeof mapApiGoalFreezePeriod>[] = [];
   let tasksData: ReturnType<typeof mapApiTask>[] = [];
 
   if (activitiesRes.ok) {
@@ -124,6 +132,15 @@ export async function performInitialSync(
     allSynced = false;
   }
 
+  if (freezePeriodsRes?.ok) {
+    const data = (await freezePeriodsRes.json()) as {
+      freezePeriods?: (Record<string, unknown> & { id: string })[];
+    };
+    if (data.freezePeriods && data.freezePeriods.length > 0) {
+      freezePeriodsData = data.freezePeriods.map(mapApiGoalFreezePeriod);
+    }
+  }
+
   if (tasksRes.ok) {
     const data = await tasksRes.json();
     if (data.tasks?.length > 0) {
@@ -142,6 +159,7 @@ export async function performInitialSync(
     kindsData.length > 0 ||
     logsData.length > 0 ||
     goalsData.length > 0 ||
+    freezePeriodsData.length > 0 ||
     tasksData.length > 0;
 
   if (hasData) {
@@ -157,6 +175,11 @@ export async function performInitialSync(
       }
       if (goalsData.length > 0) {
         await goalRepository.upsertGoalsFromServer(goalsData);
+      }
+      if (freezePeriodsData.length > 0) {
+        await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
+          freezePeriodsData,
+        );
       }
       if (tasksData.length > 0) {
         await taskRepository.upsertTasksFromServer(tasksData);

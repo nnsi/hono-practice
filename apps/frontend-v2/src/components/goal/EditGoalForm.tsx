@@ -5,6 +5,7 @@ import { Trash2, X } from "lucide-react";
 import type { DexieActivity } from "../../db/schema";
 import { DatePickerField } from "../common/DatePickerField";
 import { getActivityIcon } from "./activityHelpers";
+import { DayTargetsInput, buildDayTargets } from "./DayTargetsInput";
 import type { Goal, UpdateGoalPayload } from "./types";
 
 export function EditGoalForm({
@@ -23,6 +24,19 @@ export function EditGoalForm({
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
+  const [dayTargetsEnabled, setDayTargetsEnabled] = useState(
+    goal.dayTargets != null,
+  );
+  const [dayTargetValues, setDayTargetValues] = useState<
+    Record<string, string>
+  >(() => {
+    if (!goal.dayTargets) return {};
+    const vals: Record<string, string> = {};
+    for (const [k, v] of Object.entries(goal.dayTargets)) {
+      vals[k] = String(v);
+    }
+    return vals;
+  });
   const [debtCapEnabled, setDebtCapEnabled] = useState(goal.debtCap != null);
   const [debtCapValue, setDebtCapValue] = useState(
     String(goal.debtCap ?? goal.dailyTargetQuantity * 7),
@@ -53,8 +67,12 @@ export function EditGoalForm({
     }
     setSaving(true);
     try {
+      const dayTargets = dayTargetsEnabled
+        ? buildDayTargets(dayTargetValues)
+        : null;
       await onSave({
         dailyTargetQuantity: parsedTarget,
+        dayTargets,
         startDate,
         endDate: endDate || null,
         debtCap: parsedDebtCap,
@@ -130,6 +148,15 @@ export function EditGoalForm({
             />
           </div>
         </div>
+
+        {/* 曜日別目標 */}
+        <DayTargetsInput
+          enabled={dayTargetsEnabled}
+          onToggle={setDayTargetsEnabled}
+          values={dayTargetValues}
+          onChange={setDayTargetValues}
+          defaultTarget={target}
+        />
 
         {/* 負債上限 */}
         <div>

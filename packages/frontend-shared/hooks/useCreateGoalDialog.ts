@@ -1,3 +1,4 @@
+import { buildDayTargets } from "@packages/domain/goal/dayTargets";
 import dayjs from "dayjs";
 
 import type { ActivityBase, CreateGoalPayload, ReactHooks } from "./types";
@@ -21,6 +22,10 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
     const [target, setTarget] = useState("1");
     const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
     const [endDate, setEndDate] = useState("");
+    const [dayTargetsEnabled, setDayTargetsEnabled] = useState(false);
+    const [dayTargetValues, setDayTargetValues] = useState<
+      Record<string, string>
+    >({});
     const [debtCapEnabled, setDebtCapEnabled] = useState(false);
     const [debtCapValue, setDebtCapValue] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -36,6 +41,8 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
       setTarget("1");
       setStartDate(dayjs().format("YYYY-MM-DD"));
       setEndDate("");
+      setDayTargetsEnabled(false);
+      setDayTargetValues({});
       setDebtCapEnabled(false);
       setDebtCapValue("");
       setErrorMsg("");
@@ -75,6 +82,9 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
         await onCreate({
           activityId,
           dailyTargetQuantity: parsedTarget,
+          dayTargets: dayTargetsEnabled
+            ? buildDayTargets(dayTargetValues)
+            : null,
           startDate,
           ...(endDate ? { endDate } : {}),
           debtCap: parsedDebtCap,
@@ -96,6 +106,10 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
       setStartDate,
       endDate,
       setEndDate,
+      dayTargetsEnabled,
+      setDayTargetsEnabled,
+      dayTargetValues,
+      setDayTargetValues,
       debtCapEnabled,
       setDebtCapEnabled,
       debtCapValue,

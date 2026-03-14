@@ -1,6 +1,9 @@
 import { useState } from "react";
 
-import { calculateDebtFeedback } from "@packages/domain/goal/goalDebtFeedback";
+import {
+  type DebtFeedbackResult,
+  calculateDebtFeedback,
+} from "@packages/domain/goal/goalDebtFeedback";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
 import dayjs from "dayjs";
@@ -51,7 +54,7 @@ export function LogFormBody({
     setIsSubmitting(true);
 
     // 1. Calculate debt feedback before creating the log
-    const feedbackResult = await computeDebtFeedback(
+    const feedbackResults = await computeDebtFeedbackForAllGoals(
       activity.id,
       params.quantity ?? 0,
       date,
@@ -68,7 +71,7 @@ export function LogFormBody({
     });
 
     // 3. Emit feedback if available
-    if (feedbackResult) emitDebtFeedback(feedbackResult);
+    emitDebtFeedback(feedbackResults);
 
     // 4. Sync + done
     syncEngine.syncActivityLogs();
@@ -90,14 +93,15 @@ export function LogFormBody({
 
 // --- Debt feedback helper ---
 
-async function computeDebtFeedback(
+async function computeDebtFeedbackForAllGoals(
   activityId: string,
   quantityRecorded: number,
   date: string,
-) {
+): Promise<DebtFeedbackResult[]> {
+  if (quantityRecorded <= 0) return [];
+
   const today = dayjs().format("YYYY-MM-DD");
 
-  // Fetch all goals, filter to active ones for this activity
   const allGoals = await goalRepository.getAllGoals();
   const activeGoals = allGoals.filter(
     (g) =>
@@ -107,34 +111,43 @@ async function computeDebtFeedback(
       g.isActive,
   );
 
-  if (activeGoals.length === 0) return null;
+  if (activeGoals.length === 0) return [];
 
-  const goal = activeGoals[0];
+  const results: DebtFeedbackResult[] = [];
 
-  // Fetch logs within the goal's date range (before this new recording)
-  const endDate = goal.endDate ?? today;
-  const logs = await activityLogRepository.getActivityLogsBetween(
-    goal.startDate,
-    endDate,
-  );
-  const goalLogs = logs
-    .filter((l) => l.activityId === activityId)
-    .map((l) => ({ date: l.date, quantity: l.quantity }));
+  for (const goal of activeGoals) {
+    const endDate = goal.endDate ?? today;
+    const logs = await activityLogRepository.getActivityLogsBetween(
+      goal.startDate,
+      endDate,
+    );
+    const goalLogs = logs
+      .filter((l) => l.activityId === activityId)
+      .map((l) => ({ date: l.date, quantity: l.quantity }));
 
-  // Fetch freeze periods
-  const freezePeriods =
-    await goalFreezePeriodRepository.getFreezePeriodsByGoalId(goal.id);
-  const freezePeriodsInput = freezePeriods.map((fp) => ({
-    startDate: fp.startDate,
-    endDate: fp.endDate,
-  }));
+    const freezePeriods =
+      await goalFreezePeriodRepository.getFreezePeriodsByGoalId(goal.id);
+    const freezePeriodsInput = freezePeriods.map((fp) => ({
+      startDate: fp.startDate,
+      endDate: fp.endDate,
+    }));
 
-  return calculateDebtFeedback(
-    goal,
-    goalLogs,
-    quantityRecorded,
-    date,
-    today,
-    freezePeriodsInput,
-  );
+    const result = calculateDebtFeedback(
+      goal,
+      goalLogs,
+      quantityRecorded,
+      date,
+      today,
+      freezePeriodsInput,
+    );
+
+    result.goalLabel =
+      activeGoals.length > 1
+        ? goal.description || `目標${goal.dailyTargetQuantity}/日`
+        : null;
+
+    results.push(result);
+  }
+
+  return results;
 }

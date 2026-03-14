@@ -1,9 +1,11 @@
 import type { Syncable } from "../sync/syncableRecord";
+import type { DayTargets } from "./dayTargets";
 import type { GoalRecord } from "./goalRecord";
 
 export type CreateGoalInput = {
   activityId: string;
   dailyTargetQuantity: number;
+  dayTargets?: DayTargets | null;
   startDate: string;
   endDate?: string | null;
   description?: string;
@@ -14,6 +16,7 @@ export type UpdateGoalInput = Partial<
   Pick<
     GoalRecord,
     | "dailyTargetQuantity"
+    | "dayTargets"
     | "startDate"
     | "endDate"
     | "isActive"

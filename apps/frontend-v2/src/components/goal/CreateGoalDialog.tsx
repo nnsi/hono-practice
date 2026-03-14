@@ -4,6 +4,7 @@ import type { DexieActivity } from "../../db/schema";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { getActivityEmoji } from "./activityHelpers";
+import { DayTargetsInput } from "./DayTargetsInput";
 import type { CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
@@ -25,6 +26,10 @@ export function CreateGoalDialog({
     setStartDate,
     endDate,
     setEndDate,
+    dayTargetsEnabled,
+    setDayTargetsEnabled,
+    dayTargetValues,
+    setDayTargetValues,
     debtCapEnabled,
     setDebtCapEnabled,
     debtCapValue,
@@ -125,6 +130,15 @@ export function CreateGoalDialog({
               />
             </div>
           </div>
+
+          {/* 曜日別目標 */}
+          <DayTargetsInput
+            enabled={dayTargetsEnabled}
+            onToggle={setDayTargetsEnabled}
+            values={dayTargetValues}
+            onChange={setDayTargetValues}
+            defaultTarget={target}
+          />
 
           {/* 負債上限 */}
           <div>

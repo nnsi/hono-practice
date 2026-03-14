@@ -2,7 +2,7 @@
 
 ## ステータス
 
-決定
+廃止（[20260221_frontend_v2_offline_first.md](./20260221_frontend_v2_offline_first.md) で置き換え）
 
 ## コンテキスト
 
