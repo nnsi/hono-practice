@@ -1,8 +1,10 @@
-import type { SyncStatus } from "@packages/domain";
-import { isTaskVisibleOnDate } from "@packages/domain/task/taskPredicates";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import type { TaskRepository } from "@packages/domain/task/taskRepository";
-import { v7 as uuidv7 } from "uuid";
+import {
+  type TaskDbAdapter,
+  newTaskRepository,
+} from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -30,6 +32,7 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),
+    activityId: strOrNull(row.activity_id),
     title: str(row.title),
     startDate: strOrNull(row.start_date),
     dueDate: strOrNull(row.due_date),
@@ -43,217 +46,110 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
   };
 }
 
-// --- Repository ---
+// --- Adapter ---
 
-type CreateTaskInput = {
-  title: string;
-  startDate?: string | null;
-  dueDate?: string | null;
-  memo?: string;
-};
-
-type UpdateTaskInput = Partial<
-  Pick<TaskRecord, "title" | "startDate" | "dueDate" | "doneDate" | "memo">
->;
-
-export const taskRepository = {
-  async createTask(input: CreateTaskInput) {
+const adapter: TaskDbAdapter = {
+  async getUserId() {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-    const id = uuidv7();
-
     const auth = await db.getFirstAsync<{ user_id: string }>(
       "SELECT user_id FROM auth_state WHERE id = 'current'",
     );
-    if (!auth?.user_id) {
+    if (!auth?.user_id)
       throw new Error("Cannot create task: userId is not set");
-    }
-
+    return auth.user_id;
+  },
+  async insert(task) {
+    const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, NULL, ?, NULL, 'pending', NULL, ?, ?)`,
+      `INSERT INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        auth.user_id,
-        input.title,
-        input.startDate ?? null,
-        input.dueDate ?? null,
-        input.memo ?? "",
-        now,
-        now,
+        task.id,
+        task.userId,
+        task.title,
+        task.activityId,
+        task.startDate,
+        task.dueDate,
+        task.doneDate,
+        task.memo,
+        task.archivedAt,
+        task._syncStatus,
+        task.deletedAt,
+        task.createdAt,
+        task.updatedAt,
       ],
     );
-
     dbEvents.emit("tasks");
-
-    return {
-      id,
-      userId: auth.user_id,
-      title: input.title,
-      startDate: input.startDate ?? null,
-      dueDate: input.dueDate ?? null,
-      doneDate: null,
-      memo: input.memo ?? "",
-      archivedAt: null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-      _syncStatus: "pending" as const,
+  },
+  async getAll(filter) {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>("SELECT * FROM tasks");
+    return rows.map(mapTaskRow).filter(filter);
+  },
+  async update(id, changes) {
+    const db = await getDatabase();
+    const columnMap: Record<string, string> = {
+      title: "title",
+      activityId: "activity_id",
+      startDate: "start_date",
+      dueDate: "due_date",
+      doneDate: "done_date",
+      memo: "memo",
+      archivedAt: "archived_at",
+      deletedAt: "deleted_at",
+      updatedAt: "updated_at",
+      _syncStatus: "sync_status",
     };
-  },
-
-  async getAllActiveTasks(): Promise<TaskWithSync[]> {
-    const db = await getDatabase();
-    const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM tasks WHERE deleted_at IS NULL AND archived_at IS NULL",
-    );
-    return rows.map(mapTaskRow);
-  },
-
-  async getArchivedTasks(): Promise<TaskWithSync[]> {
-    const db = await getDatabase();
-    const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM tasks WHERE deleted_at IS NULL AND archived_at IS NOT NULL",
-    );
-    return rows.map(mapTaskRow);
-  },
-
-  async getTasksByDate(date: string): Promise<TaskWithSync[]> {
-    const db = await getDatabase();
-    // Fetch all non-deleted/non-archived tasks, then filter in JS
-    // using the domain predicate (handles doneDate, startDate, dueDate logic)
-    const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM tasks WHERE deleted_at IS NULL AND archived_at IS NULL",
-    );
-    return rows.map(mapTaskRow).filter((t) => isTaskVisibleOnDate(t, date));
-  },
-
-  async updateTask(id: string, changes: UpdateTaskInput): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    const setClauses: string[] = ["updated_at = ?", "sync_status = 'pending'"];
-    const values: (string | number | null)[] = [now];
-
-    if (changes.title !== undefined) {
-      setClauses.push("title = ?");
-      values.push(changes.title);
+    const sets: string[] = [];
+    const vals: (string | null)[] = [];
+    for (const [key, val] of Object.entries(changes)) {
+      const col = columnMap[key];
+      if (col) {
+        sets.push(`${col} = ?`);
+        vals.push(val as string | null);
+      }
     }
-    if (changes.startDate !== undefined) {
-      setClauses.push("start_date = ?");
-      values.push(changes.startDate);
-    }
-    if (changes.dueDate !== undefined) {
-      setClauses.push("due_date = ?");
-      values.push(changes.dueDate);
-    }
-    if (changes.doneDate !== undefined) {
-      setClauses.push("done_date = ?");
-      values.push(changes.doneDate);
-    }
-    if (changes.memo !== undefined) {
-      setClauses.push("memo = ?");
-      values.push(changes.memo);
-    }
-
-    values.push(id);
-    await db.runAsync(
-      `UPDATE tasks SET ${setClauses.join(", ")} WHERE id = ?`,
-      values,
-    );
-
+    vals.push(id);
+    await db.runAsync(`UPDATE tasks SET ${sets.join(", ")} WHERE id = ?`, vals);
     dbEvents.emit("tasks");
   },
-
-  async archiveTask(id: string): Promise<void> {
+  async getByIds(ids) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE tasks SET archived_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("tasks");
-  },
-
-  async softDeleteTask(id: string): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    await db.runAsync(
-      "UPDATE tasks SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?",
-      [now, now, id],
-    );
-
-    dbEvents.emit("tasks");
-  },
-
-  // --- Sync helpers ---
-
-  async getPendingSyncTasks(): Promise<TaskWithSync[]> {
-    const db = await getDatabase();
+    const ph = ids.map(() => "?").join(",");
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM tasks WHERE sync_status = 'pending'",
-    );
-    return rows.map(mapTaskRow);
-  },
-
-  async markTasksSynced(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE tasks SET sync_status = 'synced' WHERE id IN (${placeholders})`,
+      `SELECT * FROM tasks WHERE id IN (${ph})`,
       ids,
     );
-    dbEvents.emit("tasks");
+    return rows.map(mapTaskRow);
   },
-
-  async markTasksFailed(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+  async updateSyncStatus(ids, status) {
     const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE tasks SET sync_status = 'failed' WHERE id IN (${placeholders})`,
-      ids,
-    );
+    const ph = ids.map(() => "?").join(",");
+    await db.runAsync(`UPDATE tasks SET sync_status = ? WHERE id IN (${ph})`, [
+      status,
+      ...ids,
+    ]);
     dbEvents.emit("tasks");
   },
-
-  // --- Server upsert ---
-
-  async upsertTasksFromServer(tasks: TaskRecord[]): Promise<void> {
+  async bulkUpsertSynced(tasks) {
     const db = await getDatabase();
     try {
       await db.execAsync("BEGIN");
       for (const t of tasks) {
         await db.runAsync(
-          `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
-             user_id = excluded.user_id,
-             title = excluded.title,
-             start_date = excluded.start_date,
-             due_date = excluded.due_date,
-             done_date = excluded.done_date,
-             memo = excluded.memo,
-             archived_at = excluded.archived_at,
-             sync_status = 'synced',
-             deleted_at = excluded.deleted_at,
-             created_at = excluded.created_at,
-             updated_at = excluded.updated_at
-           WHERE sync_status <> 'pending'
-             AND updated_at <= excluded.updated_at`,
+          `INSERT OR REPLACE INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             t.id,
             t.userId,
             t.title,
+            t.activityId,
             t.startDate,
             t.dueDate,
             t.doneDate,
             t.memo,
             t.archivedAt,
+            t._syncStatus,
             t.deletedAt,
             t.createdAt,
             t.updatedAt,
@@ -267,4 +163,8 @@ export const taskRepository = {
     }
     dbEvents.emit("tasks");
   },
-} satisfies TaskRepository;
+};
+
+export const taskRepository = newTaskRepository(
+  adapter,
+) satisfies TaskRepository;

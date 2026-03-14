@@ -144,6 +144,21 @@ async function seedE2EUser(db: DrizzleInstance, hashedPassword: string) {
     date: formatDate(new Date()),
     quantity: 5,
   });
+
+  // プレミアムサブスクリプション（APIキー管理のテスト用）
+  await db.insert(userSubscriptions).values({
+    id: "e2e00000-0000-4000-8000-000000000003",
+    userId: E2E_USER_ID,
+    plan: "premium",
+    status: "active",
+    paymentProvider: "stripe",
+    paymentProviderId: "sub_e2e_test",
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    cancelAtPeriodEnd: false,
+    priceAmount: 1980,
+    priceCurrency: "JPY",
+  });
 }
 
 async function seedUserActivitiesAndTasks(

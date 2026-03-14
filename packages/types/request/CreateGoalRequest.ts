@@ -13,6 +13,11 @@ export const CreateGoalRequestSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   description: z.string().max(500).optional(),
+  debtCap: z.number().nonnegative().nullable().optional(),
+  dayTargets: z
+    .record(z.string(), z.number().nonnegative())
+    .nullable()
+    .optional(),
 });
 
 export type CreateGoalRequest = z.infer<typeof CreateGoalRequestSchema>;

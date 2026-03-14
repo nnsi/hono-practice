@@ -184,17 +184,18 @@ describe("goalRepository", () => {
   // ========== Sync helpers ==========
   describe("getPendingSyncGoals", () => {
     it("_syncStatus=pendingのGoalsを返す", async () => {
-      const mockToArray = vi
-        .fn()
-        .mockResolvedValue([{ id: "g1", _syncStatus: "pending" }]);
-      const mockEquals = vi.fn().mockReturnValue({ toArray: mockToArray });
-      mockDb.goals.where.mockReturnValue({ equals: mockEquals });
+      const pendingGoal = { id: "g1", _syncStatus: "pending" };
+      const syncedGoal = { id: "g2", _syncStatus: "synced" };
+      const mockToArray = vi.fn().mockResolvedValue([pendingGoal]);
+      const mockFilter = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.goals.filter.mockImplementation(mockFilter);
 
       const result = await goalRepository.getPendingSyncGoals();
 
-      expect(mockDb.goals.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
-      expect(result).toEqual([{ id: "g1", _syncStatus: "pending" }]);
+      expect(result).toEqual([pendingGoal]);
+      const filterFn = mockFilter.mock.calls[0][0];
+      expect(filterFn(pendingGoal)).toBe(true);
+      expect(filterFn(syncedGoal)).toBe(false);
     });
   });
 

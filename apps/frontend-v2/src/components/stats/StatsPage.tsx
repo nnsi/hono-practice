@@ -23,6 +23,7 @@ export function StatsPage() {
           <button
             type="button"
             onClick={goToPrevMonth}
+            aria-label="前の月"
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
@@ -33,6 +34,7 @@ export function StatsPage() {
           <button
             type="button"
             onClick={goToNextMonth}
+            aria-label="次の月"
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />

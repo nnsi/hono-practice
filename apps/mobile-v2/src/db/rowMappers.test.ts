@@ -379,6 +379,7 @@ describe("mapTaskRow", () => {
     expect(result).toEqual({
       id: "t1",
       userId: "u1",
+      activityId: null,
       title: "Buy groceries",
       startDate: "2025-03-01",
       dueDate: "2025-03-05",
@@ -396,6 +397,7 @@ describe("mapTaskRow", () => {
     const result = mapTaskRow({});
     expect(result.id).toBe("");
     expect(result.userId).toBe("");
+    expect(result.activityId).toBeNull();
     expect(result.title).toBe("");
     expect(result.startDate).toBeNull();
     expect(result.dueDate).toBeNull();

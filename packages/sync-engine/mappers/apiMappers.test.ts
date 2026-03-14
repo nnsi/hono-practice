@@ -532,6 +532,7 @@ describe("mapApiTask", () => {
     expect(result).toEqual({
       id: "task-1",
       userId: "user-1",
+      activityId: null,
       title: "買い物に行く",
       startDate: "2024-01-01",
       dueDate: "2024-01-05",
@@ -596,6 +597,7 @@ describe("mapApiTask", () => {
     });
 
     expect(result.userId).toBe("");
+    expect(result.activityId).toBeNull();
     expect(result.title).toBe("");
     expect(result.startDate).toBeNull();
     expect(result.dueDate).toBeNull();

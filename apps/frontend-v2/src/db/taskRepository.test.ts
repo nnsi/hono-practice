@@ -277,17 +277,18 @@ describe("taskRepository", () => {
   // ========== Sync helpers ==========
   describe("getPendingSyncTasks", () => {
     it("_syncStatus=pendingのTasksを返す", async () => {
-      const mockToArray = vi
-        .fn()
-        .mockResolvedValue([{ id: "t1", _syncStatus: "pending" }]);
-      const mockEquals = vi.fn().mockReturnValue({ toArray: mockToArray });
-      mockDb.tasks.where.mockReturnValue({ equals: mockEquals });
+      const pendingTask = { id: "t1", _syncStatus: "pending" };
+      const syncedTask = { id: "t2", _syncStatus: "synced" };
+      const mockToArray = vi.fn().mockResolvedValue([pendingTask]);
+      const mockFilter = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.tasks.filter.mockImplementation(mockFilter);
 
       const result = await taskRepository.getPendingSyncTasks();
 
-      expect(mockDb.tasks.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
-      expect(result).toEqual([{ id: "t1", _syncStatus: "pending" }]);
+      expect(result).toEqual([pendingTask]);
+      const filterFn = mockFilter.mock.calls[0][0];
+      expect(filterFn(pendingTask)).toBe(true);
+      expect(filterFn(syncedTask)).toBe(false);
     });
   });
 

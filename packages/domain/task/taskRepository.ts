@@ -3,13 +3,17 @@ import type { TaskRecord } from "./taskRecord";
 
 export type CreateTaskInput = {
   title: string;
+  activityId?: string | null;
   startDate?: string | null;
   dueDate?: string | null;
   memo?: string;
 };
 
 export type UpdateTaskInput = Partial<
-  Pick<TaskRecord, "title" | "startDate" | "dueDate" | "doneDate" | "memo">
+  Pick<
+    TaskRecord,
+    "title" | "activityId" | "startDate" | "dueDate" | "doneDate" | "memo"
+  >
 >;
 
 export type TaskRepository = {

@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import dayjs from "dayjs";
 import {
   Archive,
@@ -10,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useActivities } from "../../hooks/useActivities";
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -33,6 +36,15 @@ export function TaskCard({
   onArchive: () => void;
   onMoveToToday?: () => void;
 }) {
+  const { activities } = useActivities();
+  const activityMap = useMemo(
+    () => new Map(activities.map((a) => [a.id, a])),
+    [activities],
+  );
+  const linkedActivity = task.activityId
+    ? activityMap.get(task.activityId)
+    : undefined;
+
   const today = dayjs().format("YYYY-MM-DD");
   const showMoveToToday =
     !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
@@ -75,6 +87,11 @@ export function TaskCard({
         >
           {task.title}
         </div>
+        {linkedActivity && (
+          <span className="text-xs text-gray-500">
+            {linkedActivity.emoji} {linkedActivity.name}
+          </span>
+        )}
         {(task.startDate || task.dueDate) && (
           <div className="flex items-center gap-1 mt-0.5">
             <CalendarDays size={12} className="text-gray-400 flex-shrink-0" />

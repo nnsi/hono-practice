@@ -3,6 +3,7 @@ import { z } from "zod";
 export const GetTaskResponseSchema = z.object({
   id: z.string(),
   userId: z.string(),
+  activityId: z.string().nullable(),
   title: z.string(),
   startDate: z.string().nullable(),
   dueDate: z.string().nullable(),

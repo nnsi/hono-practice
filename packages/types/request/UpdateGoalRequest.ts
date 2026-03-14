@@ -15,6 +15,11 @@ export const UpdateGoalRequestSchema = z.object({
     .nullable(),
   description: z.string().max(500).optional().nullable(),
   isActive: z.boolean().optional(),
+  debtCap: z.number().nonnegative().optional().nullable(),
+  dayTargets: z
+    .record(z.string(), z.number().nonnegative())
+    .optional()
+    .nullable(),
 });
 
 export type UpdateGoalRequest = z.infer<typeof UpdateGoalRequestSchema>;

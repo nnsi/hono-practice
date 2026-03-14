@@ -3,6 +3,7 @@ import { z } from "zod";
 const TaskRowSchema = z.object({
   id: z.string(),
   userId: z.string(),
+  activityId: z.string().nullable(),
   title: z.string(),
   doneDate: z.string().nullable(),
   memo: z.string().nullable(),

@@ -1,7 +1,10 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import type { DayTargets } from "@packages/domain/goal/dayTargets";
+import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import {
+  type ActivityGoal,
   type ActivityGoalId,
   createActivityGoalEntity,
   createActivityGoalId,
@@ -24,10 +27,12 @@ export type Goal = {
   dailyTargetQuantity: number;
   startDate: string;
   endDate?: string;
-  currentBalance: number; // 現在の進捗バランス
-  totalTarget: number; // 累積目標量
-  totalActual: number; // 累積実績
-  inactiveDates: string[]; // やらなかった日付のリスト
+  currentBalance: number;
+  totalTarget: number;
+  totalActual: number;
+  inactiveDates: string[];
+  debtCap?: number | null;
+  dayTargets?: DayTargets | null;
 };
 
 export type CreateGoalRequest = {
@@ -36,6 +41,8 @@ export type CreateGoalRequest = {
   startDate: string;
   endDate?: string;
   description?: string;
+  debtCap?: number | null;
+  dayTargets?: Record<string, number> | null;
 };
 
 export type UpdateGoalRequest = {
@@ -44,6 +51,8 @@ export type UpdateGoalRequest = {
   endDate?: string | null;
   description?: string | null;
   isActive?: boolean;
+  debtCap?: number | null;
+  dayTargets?: Record<string, number> | null;
 };
 
 export type GoalFilters = {
@@ -83,6 +92,37 @@ export function newGoalUsecase(
   };
 }
 
+function goalEntityToResponse(
+  goal: ActivityGoal,
+  balance: { currentBalance: number; totalTarget: number; totalActual: number },
+  inactiveDates: string[],
+): Goal {
+  return {
+    id: goal.id,
+    userId: goal.userId,
+    activityId: goal.activityId,
+    isActive: goal.isActive,
+    description: goal.description || undefined,
+    createdAt:
+      goal.type === "persisted"
+        ? goal.createdAt.toISOString()
+        : new Date().toISOString(),
+    updatedAt:
+      goal.type === "persisted"
+        ? goal.updatedAt.toISOString()
+        : new Date().toISOString(),
+    dailyTargetQuantity: goal.dailyTargetQuantity,
+    startDate: goal.startDate,
+    endDate: goal.endDate || undefined,
+    currentBalance: balance.currentBalance,
+    totalTarget: balance.totalTarget,
+    totalActual: balance.totalActual,
+    inactiveDates,
+    debtCap: goal.debtCap ?? null,
+    dayTargets: goal.dayTargets ?? null,
+  };
+}
+
 function getGoals(
   activityGoalRepo: ActivityGoalRepository,
   activityGoalService: ActivityGoalService,
@@ -115,28 +155,7 @@ function getGoals(
             activityGoalService.getInactiveDates(userId, goal, allLogs),
           ),
         ]);
-        return {
-          id: goal.id,
-          userId: goal.userId,
-          activityId: goal.activityId,
-          isActive: goal.isActive,
-          description: goal.description || undefined,
-          createdAt:
-            goal.type === "persisted"
-              ? goal.createdAt.toISOString()
-              : new Date().toISOString(),
-          updatedAt:
-            goal.type === "persisted"
-              ? goal.updatedAt.toISOString()
-              : new Date().toISOString(),
-          dailyTargetQuantity: goal.dailyTargetQuantity,
-          startDate: goal.startDate,
-          endDate: goal.endDate || undefined,
-          currentBalance: balance.currentBalance,
-          totalTarget: balance.totalTarget,
-          totalActual: balance.totalActual,
-          inactiveDates,
-        } satisfies Goal;
+        return goalEntityToResponse(goal, balance, inactiveDates);
       }),
     );
 
@@ -182,28 +201,7 @@ function getGoal(
         activityGoalService.getInactiveDates(userId, goal),
       ),
     ]);
-    return {
-      id: goal.id,
-      userId: goal.userId,
-      activityId: goal.activityId,
-      isActive: goal.isActive,
-      description: goal.description || undefined,
-      createdAt:
-        goal.type === "persisted"
-          ? goal.createdAt.toISOString()
-          : new Date().toISOString(),
-      updatedAt:
-        goal.type === "persisted"
-          ? goal.updatedAt.toISOString()
-          : new Date().toISOString(),
-      dailyTargetQuantity: goal.dailyTargetQuantity,
-      startDate: goal.startDate,
-      endDate: goal.endDate || undefined,
-      currentBalance: balance.currentBalance,
-      totalTarget: balance.totalTarget,
-      totalActual: balance.totalActual,
-      inactiveDates,
-    };
+    return goalEntityToResponse(goal, balance, inactiveDates);
   };
 }
 
@@ -219,34 +217,19 @@ function createGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
       endDate: req.endDate || null,
       isActive: true,
       description: req.description || null,
+      debtCap: req.debtCap ?? null,
+      dayTargets: parseDayTargets(req.dayTargets),
     });
 
     const created = await tracer.span("db.createActivityGoal", () =>
       activityGoalRepo.createActivityGoal(goal),
     );
 
-    return {
-      id: created.id,
-      userId: created.userId,
-      activityId: created.activityId,
-      isActive: created.isActive,
-      description: created.description || undefined,
-      createdAt:
-        created.type === "persisted"
-          ? created.createdAt.toISOString()
-          : new Date().toISOString(),
-      updatedAt:
-        created.type === "persisted"
-          ? created.updatedAt.toISOString()
-          : new Date().toISOString(),
-      dailyTargetQuantity: created.dailyTargetQuantity,
-      startDate: created.startDate,
-      endDate: created.endDate || undefined,
-      currentBalance: 0,
-      totalTarget: 0,
-      totalActual: 0,
-      inactiveDates: [], // 新規作成時は空配列
-    };
+    return goalEntityToResponse(
+      created,
+      { currentBalance: 0, totalTarget: 0, totalActual: 0 },
+      [],
+    );
   };
 }
 
@@ -272,34 +255,24 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
       description:
         req.description === null ? null : (req.description ?? goal.description),
       isActive: req.isActive ?? goal.isActive,
+      debtCap: req.debtCap === null ? null : (req.debtCap ?? goal.debtCap),
+      dayTargets:
+        req.dayTargets === null
+          ? null
+          : req.dayTargets
+            ? parseDayTargets(req.dayTargets)
+            : goal.dayTargets,
     });
 
     const saved = await tracer.span("db.updateActivityGoal", () =>
       activityGoalRepo.updateActivityGoal(updated),
     );
 
-    return {
-      id: saved.id,
-      userId: saved.userId,
-      activityId: saved.activityId,
-      isActive: saved.isActive,
-      description: saved.description || undefined,
-      createdAt:
-        saved.type === "persisted"
-          ? saved.createdAt.toISOString()
-          : new Date().toISOString(),
-      updatedAt:
-        saved.type === "persisted"
-          ? saved.updatedAt.toISOString()
-          : new Date().toISOString(),
-      dailyTargetQuantity: saved.dailyTargetQuantity,
-      startDate: saved.startDate,
-      endDate: saved.endDate || undefined,
-      currentBalance: 0,
-      totalTarget: 0,
-      totalActual: 0,
-      inactiveDates: [], // 更新時は一旦空配列
-    };
+    return goalEntityToResponse(
+      saved,
+      { currentBalance: 0, totalTarget: 0, totalActual: 0 },
+      [],
+    );
   };
 }
 

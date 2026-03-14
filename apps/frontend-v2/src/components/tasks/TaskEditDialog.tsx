@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 
+import { useActivities } from "../../hooks/useActivities";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import type { TaskItem } from "./types";
@@ -19,6 +20,8 @@ export function TaskEditDialog({
   const {
     title,
     setTitle,
+    activityId,
+    setActivityId,
     startDate,
     setStartDate,
     dueDate,
@@ -29,6 +32,7 @@ export function TaskEditDialog({
     isArchived,
     handleSubmit,
   } = useTaskEditDialog(task, onSuccess);
+  const { activities } = useActivities();
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -64,6 +68,26 @@ export function TaskEditDialog({
               disabled={isArchived}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
             />
+          </div>
+
+          {/* アクティビティ */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              アクティビティ（任意）
+            </label>
+            <select
+              value={activityId ?? ""}
+              onChange={(e) => setActivityId(e.target.value || null)}
+              disabled={isArchived}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              <option value="">なし</option>
+              {activities.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.emoji} {a.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* 日付 */}
