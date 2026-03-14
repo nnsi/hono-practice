@@ -1,6 +1,13 @@
 import dayjs from "dayjs";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
+import { useActivities } from "../../hooks/useActivities";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
@@ -17,6 +24,8 @@ export function TaskCreateDialog({
   const {
     title,
     setTitle,
+    activityId,
+    setActivityId,
     startDate,
     setStartDate,
     dueDate,
@@ -26,6 +35,8 @@ export function TaskCreateDialog({
     isSubmitting,
     handleCreate,
   } = useTaskCreateDialog(onSuccess, defaultDate);
+
+  const { activities } = useActivities();
 
   return (
     <ModalOverlay visible onClose={onClose} title="新しいタスクを作成">
@@ -43,6 +54,65 @@ export function TaskCreateDialog({
             autoFocus
           />
         </View>
+
+        {/* Activity */}
+        {activities.length > 0 && (
+          <View>
+            <Text className="text-sm font-medium text-gray-700 mb-1">
+              アクティビティ（任意）
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-row"
+            >
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setActivityId(null)}
+                  className={`px-3 py-1.5 rounded-full border ${
+                    activityId === null
+                      ? "bg-gray-900 border-gray-900"
+                      : "bg-white border-gray-300"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm ${
+                      activityId === null
+                        ? "text-white font-medium"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    なし
+                  </Text>
+                </TouchableOpacity>
+                {activities.map((a) => (
+                  <TouchableOpacity
+                    key={a.id}
+                    onPress={() =>
+                      setActivityId(activityId === a.id ? null : a.id)
+                    }
+                    className={`flex-row items-center px-3 py-1.5 rounded-full border ${
+                      activityId === a.id
+                        ? "bg-gray-900 border-gray-900"
+                        : "bg-white border-gray-300"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm ${
+                        activityId === a.id
+                          ? "text-white font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {a.emoji ? `${a.emoji} ` : ""}
+                      {a.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
 
         {/* Dates */}
         <View className="flex-row gap-3">

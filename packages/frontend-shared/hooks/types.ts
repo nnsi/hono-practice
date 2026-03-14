@@ -100,6 +100,7 @@ export type UpdateGoalPayload = {
  */
 export type DailyTask = {
   id: string;
+  activityId: string | null;
   title: string;
   doneDate: string | null;
   memo: string;

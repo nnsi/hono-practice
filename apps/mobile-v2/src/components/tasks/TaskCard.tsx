@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import dayjs from "dayjs";
 import {
   Archive,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useActivities } from "../../hooks/useActivities";
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -34,6 +37,19 @@ export function TaskCard({
   onArchive: () => void;
   onMoveToToday?: () => void;
 }) {
+  const { activities } = useActivities();
+  const activityMap = useMemo(() => {
+    const map = new Map<string, { name: string; emoji: string }>();
+    for (const a of activities) {
+      map.set(a.id, { name: a.name, emoji: a.emoji });
+    }
+    return map;
+  }, [activities]);
+
+  const linkedActivity = task.activityId
+    ? activityMap.get(task.activityId)
+    : null;
+
   const today = dayjs().format("YYYY-MM-DD");
   const showMoveToToday =
     !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
@@ -84,6 +100,12 @@ export function TaskCard({
         >
           {task.title}
         </Text>
+        {linkedActivity && (
+          <Text className="text-xs text-blue-600 mt-0.5">
+            {linkedActivity.emoji ? `${linkedActivity.emoji} ` : ""}
+            {linkedActivity.name}
+          </Text>
+        )}
         {(task.startDate || task.dueDate) && (
           <View className="flex-row items-center gap-1 mt-0.5">
             <CalendarDays size={12} color="#9ca3af" />

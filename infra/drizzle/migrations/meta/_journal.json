@@ -204,6 +204,13 @@
       "when": 1773412845384,
       "tag": "0028_low_young_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1773473012936,
+      "tag": "0029_little_naoko",
+      "breakpoints": true
     }
   ]
 }

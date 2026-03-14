@@ -67,6 +67,7 @@ export function createUseDailyPage<
       () =>
         (rawTasks ?? []).map((t) => ({
           id: t.id,
+          activityId: t.activityId,
           title: t.title,
           doneDate: t.doneDate,
           memo: t.memo,

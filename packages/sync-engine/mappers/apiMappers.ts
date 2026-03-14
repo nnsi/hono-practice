@@ -151,6 +151,7 @@ export function mapApiTask(t: ApiRecord): TaskRecord {
   return {
     id: t.id,
     userId: str(t.userId ?? t.user_id),
+    activityId: strOrNull(t.activityId ?? t.activity_id),
     title: str(t.title),
     startDate: strOrNull(t.startDate ?? t.start_date),
     dueDate: strOrNull(t.dueDate ?? t.due_date),

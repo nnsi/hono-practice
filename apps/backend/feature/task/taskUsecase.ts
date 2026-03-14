@@ -12,6 +12,7 @@ import type { TaskRepository } from ".";
 
 export type CreateTaskInputParams = {
   title: string;
+  activityId?: string;
   startDate?: string;
   dueDate?: string;
   memo?: string;
@@ -19,6 +20,7 @@ export type CreateTaskInputParams = {
 
 export type UpdateTaskInputParams = {
   title?: string;
+  activityId?: string | null;
   doneDate?: string | null;
   memo?: string | null;
   startDate?: string;
@@ -87,6 +89,7 @@ function createTask(repo: TaskRepository, tracer: Tracer) {
       type: "new",
       id: createTaskId(),
       userId: userId,
+      activityId: params.activityId || null,
       title: params.title,
       startDate: params.startDate || null,
       dueDate: params.dueDate || null,

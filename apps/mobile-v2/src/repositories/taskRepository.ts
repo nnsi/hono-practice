@@ -30,6 +30,7 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
   return {
     id: str(row.id),
     userId: str(row.user_id),
+    activityId: strOrNull(row.activity_id),
     title: str(row.title),
     startDate: strOrNull(row.start_date),
     dueDate: strOrNull(row.due_date),
@@ -47,13 +48,17 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
 
 type CreateTaskInput = {
   title: string;
+  activityId?: string | null;
   startDate?: string | null;
   dueDate?: string | null;
   memo?: string;
 };
 
 type UpdateTaskInput = Partial<
-  Pick<TaskRecord, "title" | "startDate" | "dueDate" | "doneDate" | "memo">
+  Pick<
+    TaskRecord,
+    "title" | "activityId" | "startDate" | "dueDate" | "doneDate" | "memo"
+  >
 >;
 
 export const taskRepository = {
@@ -70,12 +75,13 @@ export const taskRepository = {
     }
 
     await db.runAsync(
-      `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, NULL, ?, NULL, 'pending', NULL, ?, ?)`,
+      `INSERT INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, NULL, ?, NULL, 'pending', NULL, ?, ?)`,
       [
         id,
         auth.user_id,
         input.title,
+        input.activityId ?? null,
         input.startDate ?? null,
         input.dueDate ?? null,
         input.memo ?? "",
@@ -89,6 +95,7 @@ export const taskRepository = {
     return {
       id,
       userId: auth.user_id,
+      activityId: input.activityId ?? null,
       title: input.title,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,
@@ -138,6 +145,10 @@ export const taskRepository = {
     if (changes.title !== undefined) {
       setClauses.push("title = ?");
       values.push(changes.title);
+    }
+    if (changes.activityId !== undefined) {
+      setClauses.push("activity_id = ?");
+      values.push(changes.activityId);
     }
     if (changes.startDate !== undefined) {
       setClauses.push("start_date = ?");
@@ -229,11 +240,12 @@ export const taskRepository = {
       await db.execAsync("BEGIN");
       for (const t of tasks) {
         await db.runAsync(
-          `INSERT INTO tasks (id, user_id, title, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
+          `INSERT INTO tasks (id, user_id, title, activity_id, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              user_id = excluded.user_id,
              title = excluded.title,
+             activity_id = excluded.activity_id,
              start_date = excluded.start_date,
              due_date = excluded.due_date,
              done_date = excluded.done_date,
@@ -249,6 +261,7 @@ export const taskRepository = {
             t.id,
             t.userId,
             t.title,
+            t.activityId,
             t.startDate,
             t.dueDate,
             t.doneDate,

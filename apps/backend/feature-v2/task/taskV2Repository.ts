@@ -48,6 +48,7 @@ function upsertTasks(db: QueryExecutor) {
         validTasks.map((task) => ({
           id: task.id,
           userId,
+          activityId: task.activityId,
           title: task.title,
           startDate: task.startDate,
           dueDate: task.dueDate,
@@ -63,6 +64,7 @@ function upsertTasks(db: QueryExecutor) {
         target: tasks.id,
         set: {
           title: sql`excluded.title`,
+          activityId: sql`excluded.activity_id`,
           startDate: sql`excluded.start_date`,
           dueDate: sql`excluded.due_date`,
           doneDate: sql`excluded.done_date`,

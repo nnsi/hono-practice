@@ -134,6 +134,7 @@ export function DailyPage() {
             tasks={tasks}
             isLoading={false}
             onToggle={handleToggleTask}
+            activitiesMap={activitiesMap}
           />
         </section>
       </main>

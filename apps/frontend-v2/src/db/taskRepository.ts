@@ -6,13 +6,17 @@ import { type DexieTask, db } from "./schema";
 
 type CreateTaskInput = {
   title: string;
+  activityId?: string | null;
   startDate?: string | null;
   dueDate?: string | null;
   memo?: string;
 };
 
 type UpdateTaskInput = Partial<
-  Pick<DexieTask, "title" | "startDate" | "dueDate" | "doneDate" | "memo">
+  Pick<
+    DexieTask,
+    "title" | "activityId" | "startDate" | "dueDate" | "doneDate" | "memo"
+  >
 >;
 
 export const taskRepository = {
@@ -25,6 +29,7 @@ export const taskRepository = {
     const task: DexieTask = {
       id: uuidv7(),
       userId: authState.userId,
+      activityId: input.activityId ?? null,
       title: input.title,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,

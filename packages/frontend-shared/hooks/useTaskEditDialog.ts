@@ -9,6 +9,7 @@ type UseTaskEditDialogDeps = {
       id: string,
       data: {
         title: string;
+        activityId: string | null;
         startDate: string | null;
         dueDate: string | null;
         memo: string;
@@ -27,6 +28,9 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
 
   return function useTaskEditDialog(task: TaskItem, onSuccess: () => void) {
     const [title, setTitle] = useState(task.title);
+    const [activityId, setActivityId] = useState<string | null>(
+      task.activityId,
+    );
     const [startDate, setStartDate] = useState(task.startDate || "");
     const [dueDate, setDueDate] = useState(task.dueDate || "");
     const [memo, setMemo] = useState(task.memo || "");
@@ -40,6 +44,7 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
       setIsSubmitting(true);
       await taskRepository.updateTask(task.id, {
         title: title.trim(),
+        activityId,
         startDate: startDate || null,
         dueDate: dueDate || null,
         memo: memo.trim(),
@@ -52,6 +57,8 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
     return {
       title,
       setTitle,
+      activityId,
+      setActivityId,
       startDate,
       setStartDate,
       dueDate,

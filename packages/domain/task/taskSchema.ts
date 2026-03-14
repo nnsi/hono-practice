@@ -23,6 +23,7 @@ export function createTaskId(id?: string): TaskId {
 const BaseTaskSchema = z.object({
   id: taskIdSchema,
   userId: userIdSchema,
+  activityId: z.string().uuid().nullish(),
   title: z.string(),
   memo: z.string().nullable(),
   startDate: z.string().nullish(),

@@ -112,6 +112,7 @@ export const tasks = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
+    activityId: uuid("activity_id").references(() => activities.id),
     title: text("title").notNull(),
     doneDate: date("done_date"),
     memo: text("memo").default(""),

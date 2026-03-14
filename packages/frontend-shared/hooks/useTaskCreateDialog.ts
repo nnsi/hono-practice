@@ -7,6 +7,7 @@ type UseTaskCreateDialogDeps = {
   taskRepository: {
     createTask: (data: {
       title: string;
+      activityId: string | null;
       startDate: string | null;
       dueDate: string | null;
       memo: string;
@@ -27,6 +28,7 @@ export function createUseTaskCreateDialog(deps: UseTaskCreateDialogDeps) {
     defaultDate?: string,
   ) {
     const [title, setTitle] = useState("");
+    const [activityId, setActivityId] = useState<string | null>(null);
     const [startDate, setStartDate] = useState(
       defaultDate ?? dayjs().format("YYYY-MM-DD"),
     );
@@ -40,6 +42,7 @@ export function createUseTaskCreateDialog(deps: UseTaskCreateDialogDeps) {
       setIsSubmitting(true);
       await taskRepository.createTask({
         title: title.trim(),
+        activityId,
         startDate: startDate || null,
         dueDate: dueDate || null,
         memo: memo.trim(),
@@ -52,6 +55,8 @@ export function createUseTaskCreateDialog(deps: UseTaskCreateDialogDeps) {
     return {
       title,
       setTitle,
+      activityId,
+      setActivityId,
       startDate,
       setStartDate,
       dueDate,

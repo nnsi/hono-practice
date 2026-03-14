@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { noopTracer } from "@backend/lib/tracer";
 import {
   CreateFreezePeriodRequestSchema,
   UpdateFreezePeriodRequestSchema,
@@ -22,8 +23,9 @@ export function createGoalFreezePeriodRoute() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
     const repo = newGoalFreezePeriodRepository(db);
-    const uc = newGoalFreezePeriodUsecase(repo);
+    const uc = newGoalFreezePeriodUsecase(repo, tracer);
     const h = newGoalFreezePeriodHandler(uc);
     c.set("h", h);
     return next();
