@@ -28,7 +28,7 @@ function computeKindTallies(
       if (log.activityKindId) {
         countMap.set(
           log.activityKindId,
-          (countMap.get(log.activityKindId) ?? 0) + 1,
+          (countMap.get(log.activityKindId) ?? 0) + (log.quantity ?? 1),
         );
       }
     }

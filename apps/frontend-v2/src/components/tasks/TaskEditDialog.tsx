@@ -1,5 +1,7 @@
+import { useLiveQuery } from "dexie-react-hooks";
 import { X } from "lucide-react";
 
+import { db } from "../../db/schema";
 import { useActivities } from "../../hooks/useActivities";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -22,6 +24,10 @@ export function TaskEditDialog({
     setTitle,
     activityId,
     setActivityId,
+    activityKindId,
+    setActivityKindId,
+    quantity,
+    setQuantity,
     startDate,
     setStartDate,
     dueDate,
@@ -33,6 +39,23 @@ export function TaskEditDialog({
     handleSubmit,
   } = useTaskEditDialog(task, onSuccess);
   const { activities } = useActivities();
+
+  const selectedActivity = activityId
+    ? activities.find((a) => a.id === activityId)
+    : undefined;
+
+  const activityKinds =
+    useLiveQuery(
+      () =>
+        activityId
+          ? db.activityKinds
+              .where("activityId")
+              .equals(activityId)
+              .filter((k) => !k.deletedAt)
+              .toArray()
+          : [],
+      [activityId],
+    ) ?? [];
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -77,7 +100,11 @@ export function TaskEditDialog({
             </label>
             <select
               value={activityId ?? ""}
-              onChange={(e) => setActivityId(e.target.value || null)}
+              onChange={(e) => {
+                setActivityId(e.target.value || null);
+                setActivityKindId(null);
+                setQuantity(null);
+              }}
               disabled={isArchived}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
             >
@@ -89,6 +116,78 @@ export function TaskEditDialog({
               ))}
             </select>
           </div>
+
+          {/* ActivityKind選択 */}
+          {activityId && activityKinds && activityKinds.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                種類（任意）
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={isArchived}
+                  onClick={() => setActivityKindId(null)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
+                    activityKindId === null
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  なし
+                </button>
+                {activityKinds.map((kind) => (
+                  <button
+                    key={kind.id}
+                    type="button"
+                    disabled={isArchived}
+                    onClick={() => setActivityKindId(kind.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
+                      activityKindId === kind.id
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                    style={
+                      activityKindId === kind.id && kind.color
+                        ? { backgroundColor: kind.color, color: "#fff" }
+                        : kind.color
+                          ? { borderColor: kind.color, borderWidth: 1 }
+                          : undefined
+                    }
+                  >
+                    {kind.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 数量 */}
+          {activityId && selectedActivity && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                数量
+                {selectedActivity.quantityUnit && (
+                  <span className="ml-1 text-gray-500">
+                    ({selectedActivity.quantityUnit})
+                  </span>
+                )}
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={quantity ?? ""}
+                onChange={(e) =>
+                  setQuantity(
+                    e.target.value !== "" ? Number(e.target.value) : null,
+                  )
+                }
+                placeholder="数量を入力（任意）"
+                disabled={isArchived}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+              />
+            </div>
+          )}
 
           {/* 日付 */}
           <div className="grid grid-cols-2 gap-3">

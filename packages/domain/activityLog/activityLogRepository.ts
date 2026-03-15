@@ -5,7 +5,13 @@ type LocalActivityLogRecord = Omit<ActivityLogRecord, "userId">;
 
 export type CreateActivityLogInput = Pick<
   LocalActivityLogRecord,
-  "activityId" | "activityKindId" | "quantity" | "memo" | "date" | "time"
+  | "activityId"
+  | "activityKindId"
+  | "quantity"
+  | "memo"
+  | "date"
+  | "time"
+  | "taskId"
 >;
 
 /**
@@ -35,6 +41,7 @@ export type ActivityLogRepository = {
     >,
   ): Promise<void>;
   softDeleteActivityLog(id: string): Promise<void>;
+  softDeleteActivityLogByTaskId(taskId: string): Promise<void>;
   getPendingSyncActivityLogs(): Promise<Syncable<LocalActivityLogRecord>[]>;
   markActivityLogsSynced(ids: string[]): Promise<void>;
   markActivityLogsFailed(ids: string[]): Promise<void>;

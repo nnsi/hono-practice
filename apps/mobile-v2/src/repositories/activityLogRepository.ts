@@ -44,6 +44,7 @@ export function mapActivityLogRow(row: SqlRow): Syncable<LocalActivityLog> {
     memo: str(row.memo),
     date: str(row.date),
     time: strOrNull(row.time),
+    taskId: strOrNull(row.task_id),
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),
     deletedAt: strOrNull(row.deleted_at),
@@ -57,6 +58,7 @@ const columnMap: Record<string, string> = {
   quantity: "quantity",
   memo: "memo",
   activityKindId: "activity_kind_id",
+  taskId: "task_id",
   date: "date",
   time: "time",
   updatedAt: "updated_at",
@@ -68,8 +70,8 @@ const adapter: ActivityLogDbAdapter = {
   async insert(log) {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, task_id, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         log.id,
         log.activityId,
@@ -78,6 +80,7 @@ const adapter: ActivityLogDbAdapter = {
         log.memo,
         log.date,
         log.time,
+        log.taskId,
         log._syncStatus,
         log.deletedAt,
         log.createdAt,
@@ -161,8 +164,8 @@ const adapter: ActivityLogDbAdapter = {
       await db.execAsync("BEGIN");
       for (const log of logs) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR REPLACE INTO activity_logs (id, activity_id, activity_kind_id, quantity, memo, date, time, task_id, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             log.id,
             log.activityId,
@@ -171,6 +174,7 @@ const adapter: ActivityLogDbAdapter = {
             log.memo,
             log.date,
             log.time,
+            log.taskId,
             log._syncStatus,
             log.deletedAt,
             log.createdAt,

@@ -9,6 +9,7 @@ import { getSyncGeneration } from "./syncState";
 // 全チャンク完了後の一括markだと、途中チャンク失敗時に成功分のmarkがスキップされる。
 export async function syncActivityLogs(): Promise<void> {
   const gen = getSyncGeneration();
+
   const pending = await activityLogRepository.getPendingSyncActivityLogs();
   if (pending.length === 0) return;
 

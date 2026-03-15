@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { ClipboardPaste } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { KindSelector } from "../parts/KindSelector";
@@ -29,8 +30,24 @@ function keyTextStyle(key: string): string {
   return "text-xl font-medium text-gray-800";
 }
 
+async function readClipboard(): Promise<string | null> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+      return await navigator.clipboard.readText();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function NumpadMode(props: RecordingModeProps) {
   const vm = useNumpadMode(props);
+
+  const handlePaste = async () => {
+    const text = await readClipboard();
+    if (text) vm.pasteFromClipboard(text);
+  };
 
   return (
     <View className="gap-4">
@@ -42,13 +59,18 @@ export function NumpadMode(props: RecordingModeProps) {
         />
       )}
 
-      <View className="items-end px-2 py-3">
-        <Text className="text-4xl font-bold text-gray-900">
-          {vm.formattedDisplay}
-          {vm.quantityUnit ? (
-            <Text className="text-lg text-gray-500"> {vm.quantityUnit}</Text>
-          ) : null}
-        </Text>
+      <View className="flex-row items-center px-2 py-3">
+        <TouchableOpacity onPress={handlePaste} className="p-2">
+          <ClipboardPaste size={20} color="#9ca3af" />
+        </TouchableOpacity>
+        <View className="flex-1 items-end">
+          <Text className="text-4xl font-bold text-gray-900">
+            {vm.formattedDisplay}
+            {vm.quantityUnit ? (
+              <Text className="text-lg text-gray-500"> {vm.quantityUnit}</Text>
+            ) : null}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-2">

@@ -85,6 +85,20 @@ export function newActivityLogRepository(
       });
     },
 
+    async softDeleteActivityLogByTaskId(taskId: string) {
+      const now = new Date().toISOString();
+      const targets = await adapter.getAll(
+        (l) => l.taskId === taskId && !l.deletedAt,
+      );
+      for (const log of targets) {
+        await adapter.update(log.id, {
+          deletedAt: now,
+          updatedAt: now,
+          _syncStatus: "pending",
+        });
+      }
+    },
+
     async getPendingSyncActivityLogs() {
       return adapter.getAll((l) => l._syncStatus === "pending");
     },

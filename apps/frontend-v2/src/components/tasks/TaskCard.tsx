@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import dayjs from "dayjs";
+import { useLiveQuery } from "dexie-react-hooks";
 import {
   Archive,
   CalendarCheck,
@@ -12,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { type DexieActivityKind, db } from "../../db/schema";
 import { useActivities } from "../../hooks/useActivities";
 import type { TaskItem } from "./types";
 
@@ -44,6 +46,15 @@ export function TaskCard({
   const linkedActivity = task.activityId
     ? activityMap.get(task.activityId)
     : undefined;
+
+  const rawKind = useLiveQuery<DexieActivityKind | undefined>(
+    () =>
+      task.activityKindId
+        ? db.activityKinds.get(task.activityKindId)
+        : undefined,
+    [task.activityKindId],
+  );
+  const linkedKind = rawKind && !rawKind.deletedAt ? rawKind : undefined;
 
   const today = dayjs().format("YYYY-MM-DD");
   const showMoveToToday =
@@ -90,7 +101,14 @@ export function TaskCard({
         {linkedActivity && (
           <span className="text-xs text-gray-500">
             {linkedActivity.emoji} {linkedActivity.name}
+            {linkedKind && ` / ${linkedKind.name}`}
           </span>
+        )}
+        {linkedActivity && task.quantity != null && (
+          <div className="text-xs text-gray-500 mt-0.5">
+            {task.quantity}
+            {linkedActivity.quantityUnit && ` ${linkedActivity.quantityUnit}`}
+          </div>
         )}
         {(task.startDate || task.dueDate) && (
           <div className="flex items-center gap-1 mt-0.5">

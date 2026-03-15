@@ -8,9 +8,13 @@ import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
 import dayjs from "dayjs";
 
+import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { activityLogRepository } from "../../repositories/activityLogRepository";
+import {
+  activityLogRepository,
+  mapActivityLogRow,
+} from "../../repositories/activityLogRepository";
 import { goalFreezePeriodRepository } from "../../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../../repositories/goalRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -60,15 +64,58 @@ export function LogFormBody({
       date,
     );
 
-    // 2. Create the log
-    await activityLogRepository.createActivityLog({
-      activityId: activity.id,
-      activityKindId: params.activityKindId,
-      quantity: params.quantity,
-      memo: params.memo,
-      date,
-      time: null,
-    });
+    // 2. Create or aggregate the log
+    // バイナリモードの場合、同一キー（date+activityId+activityKindId）の既存ログがあればquantityを加算
+    if (activity.recordingMode === "binary") {
+      const sqlDb = await getDatabase();
+      type SqlRow = Record<string, unknown>;
+      const kindFilter =
+        params.activityKindId != null
+          ? "AND activity_kind_id = ?"
+          : "AND activity_kind_id IS NULL";
+      const queryParams =
+        params.activityKindId != null
+          ? [date, activity.id, params.activityKindId]
+          : [date, activity.id];
+      const rows = await sqlDb.getAllAsync<SqlRow>(
+        `SELECT * FROM activity_logs WHERE date = ? AND activity_id = ? ${kindFilter} AND deleted_at IS NULL LIMIT 1`,
+        queryParams,
+      );
+      const existingLog = rows.length > 0 ? mapActivityLogRow(rows[0]) : null;
+
+      if (existingLog) {
+        const now = new Date().toISOString();
+        await sqlDb.runAsync(
+          "UPDATE activity_logs SET quantity = ?, updated_at = ?, sync_status = ? WHERE id = ?",
+          [
+            (existingLog.quantity ?? 0) + (params.quantity ?? 1),
+            now,
+            "pending",
+            existingLog.id,
+          ],
+        );
+      } else {
+        await activityLogRepository.createActivityLog({
+          activityId: activity.id,
+          activityKindId: params.activityKindId,
+          quantity: params.quantity,
+          memo: params.memo,
+          date,
+          time: null,
+          taskId: null,
+        });
+      }
+    } else {
+      await activityLogRepository.createActivityLog({
+        activityId: activity.id,
+        activityKindId: params.activityKindId,
+        quantity: params.quantity,
+        memo: params.memo,
+        date,
+        time: null,
+        taskId: null,
+      });
+    }
 
     // 3. Emit feedback if available
     emitDebtFeedback(feedbackResults);

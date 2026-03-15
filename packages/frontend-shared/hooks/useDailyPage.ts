@@ -22,7 +22,19 @@ type UseDailyPageDeps<
       data: { doneDate: string | null },
     ) => Promise<unknown>;
   };
-  syncEngine: { syncTasks: () => void };
+  activityLogRepository: {
+    createActivityLog: (input: {
+      activityId: string;
+      activityKindId: string | null;
+      quantity: number | null;
+      memo: string;
+      date: string;
+      time: string | null;
+      taskId: string | null;
+    }) => Promise<unknown>;
+    softDeleteActivityLogByTaskId: (taskId: string) => Promise<void>;
+  };
+  syncEngine: { syncTasks: () => void; syncActivityLogs: () => void };
 };
 
 export function createUseDailyPage<
@@ -36,6 +48,7 @@ export function createUseDailyPage<
     useTasksByDate,
     useAllKinds,
     taskRepository,
+    activityLogRepository,
     syncEngine,
   } = deps;
 
@@ -68,6 +81,8 @@ export function createUseDailyPage<
         (rawTasks ?? []).map((t) => ({
           id: t.id,
           activityId: t.activityId,
+          activityKindId: t.activityKindId ?? null,
+          quantity: t.quantity ?? null,
           title: t.title,
           doneDate: t.doneDate,
           memo: t.memo,
@@ -88,10 +103,29 @@ export function createUseDailyPage<
     const isToday = date === dayjs().format("YYYY-MM-DD");
 
     const handleToggleTask = useCallback(async (task: DailyTask) => {
-      const newDoneDate = task.doneDate
-        ? null
-        : new Date().toISOString().split("T")[0];
+      const newDoneDate = task.doneDate ? null : dayjs().format("YYYY-MM-DD");
       await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
+      if (
+        !task.doneDate &&
+        newDoneDate &&
+        task.activityId &&
+        task.quantity != null
+      ) {
+        await activityLogRepository.createActivityLog({
+          activityId: task.activityId,
+          activityKindId: task.activityKindId ?? null,
+          quantity: task.quantity ?? null,
+          memo: "",
+          date: newDoneDate,
+          time: null,
+          taskId: task.id,
+        });
+        syncEngine.syncActivityLogs();
+      }
+      if (task.doneDate && !newDoneDate) {
+        await activityLogRepository.softDeleteActivityLogByTaskId(task.id);
+        syncEngine.syncActivityLogs();
+      }
       syncEngine.syncTasks();
     }, []);
 

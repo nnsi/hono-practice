@@ -13,7 +13,9 @@ import {
 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
+import { activityRepository } from "../../repositories/activityRepository";
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -39,15 +41,34 @@ export function TaskCard({
 }) {
   const { activities } = useActivities();
   const activityMap = useMemo(() => {
-    const map = new Map<string, { name: string; emoji: string }>();
+    const map = new Map<
+      string,
+      { name: string; emoji: string; quantityUnit: string }
+    >();
     for (const a of activities) {
-      map.set(a.id, { name: a.name, emoji: a.emoji });
+      map.set(a.id, {
+        name: a.name,
+        emoji: a.emoji,
+        quantityUnit: a.quantityUnit,
+      });
     }
     return map;
   }, [activities]);
 
   const linkedActivity = task.activityId
     ? activityMap.get(task.activityId)
+    : null;
+
+  const allKinds = useLiveQuery(
+    "activity_kinds",
+    () =>
+      task.activityId && task.activityKindId
+        ? activityRepository.getActivityKindsByActivityId(task.activityId)
+        : Promise.resolve([]),
+    [task.activityId, task.activityKindId],
+  );
+  const linkedKind = task.activityKindId
+    ? (allKinds ?? []).find((k) => k.id === task.activityKindId && !k.deletedAt)
     : null;
 
   const today = dayjs().format("YYYY-MM-DD");
@@ -104,6 +125,10 @@ export function TaskCard({
           <Text className="text-xs text-blue-600 mt-0.5">
             {linkedActivity.emoji ? `${linkedActivity.emoji} ` : ""}
             {linkedActivity.name}
+            {linkedKind ? ` · ${linkedKind.name}` : ""}
+            {task.quantity !== null
+              ? ` · ${task.quantity}${linkedActivity.quantityUnit ? ` ${linkedActivity.quantityUnit}` : ""}`
+              : ""}
           </Text>
         )}
         {(task.startDate || task.dueDate) && (

@@ -16,7 +16,19 @@ type UseTasksPageDeps = {
     softDeleteTask: (id: string) => Promise<unknown>;
     archiveTask: (id: string) => Promise<unknown>;
   };
-  syncEngine: { syncTasks: () => void };
+  activityLogRepository: {
+    createActivityLog: (input: {
+      activityId: string;
+      activityKindId: string | null;
+      quantity: number | null;
+      memo: string;
+      date: string;
+      time: string | null;
+      taskId: string | null;
+    }) => Promise<unknown>;
+    softDeleteActivityLogByTaskId: (taskId: string) => Promise<void>;
+  };
+  syncEngine: { syncTasks: () => void; syncActivityLogs: () => void };
 };
 
 export function createUseTasksPage(deps: UseTasksPageDeps) {
@@ -25,6 +37,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
     useActiveTasks,
     useArchivedTasks,
     taskRepository,
+    activityLogRepository,
     syncEngine,
   } = deps;
 
@@ -77,10 +90,31 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
 
     // handlers
     const handleToggleDone = async (task: TaskItem) => {
-      const newDoneDate = task.doneDate
-        ? null
-        : new Date().toISOString().split("T")[0];
+      const newDoneDate = task.doneDate ? null : dayjs().format("YYYY-MM-DD");
       await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
+      // タスク完了時にactivityId+quantityがあればActivityLogを自動作成
+      if (
+        !task.doneDate &&
+        newDoneDate &&
+        task.activityId &&
+        task.quantity != null
+      ) {
+        await activityLogRepository.createActivityLog({
+          activityId: task.activityId,
+          activityKindId: task.activityKindId ?? null,
+          quantity: task.quantity ?? null,
+          memo: "",
+          date: newDoneDate,
+          time: null,
+          taskId: task.id,
+        });
+        syncEngine.syncActivityLogs();
+      }
+      // タスク未完了に戻す時は自動作成したActivityLogを削除
+      if (task.doneDate && !newDoneDate) {
+        await activityLogRepository.softDeleteActivityLogByTaskId(task.id);
+        syncEngine.syncActivityLogs();
+      }
       syncEngine.syncTasks();
     };
 

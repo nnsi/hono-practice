@@ -101,6 +101,8 @@ export type UpdateGoalPayload = {
 export type DailyTask = {
   id: string;
   activityId: string | null;
+  activityKindId: string | null;
+  quantity: number | null;
   title: string;
   doneDate: string | null;
   memo: string;

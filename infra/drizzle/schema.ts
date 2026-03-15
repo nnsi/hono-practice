@@ -113,6 +113,8 @@ export const tasks = pgTable(
       .notNull()
       .references(() => users.id),
     activityId: uuid("activity_id").references(() => activities.id),
+    activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
+    quantity: customTypeNumeric("quantity"),
     title: text("title").notNull(),
     doneDate: date("done_date"),
     memo: text("memo").default(""),
@@ -190,6 +192,7 @@ export const activityLogs = pgTable(
     memo: text("memo").default(""),
     date: date("date").notNull(),
     time: time("done_hour"),
+    taskId: uuid("task_id").references(() => tasks.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -204,6 +207,7 @@ export const activityLogs = pgTable(
     index("activity_log_activity_kind_id_idx").on(t.activityKindId),
     index("activity_log_date_idx").on(t.date),
     index("activity_log_user_id_date_idx").on(t.userId, t.date),
+    index("activity_log_task_id_idx").on(t.taskId),
   ],
 );
 

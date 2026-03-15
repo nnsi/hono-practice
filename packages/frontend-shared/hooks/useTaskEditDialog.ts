@@ -10,6 +10,8 @@ type UseTaskEditDialogDeps = {
       data: {
         title: string;
         activityId: string | null;
+        activityKindId: string | null;
+        quantity: number | null;
         startDate: string | null;
         dueDate: string | null;
         memo: string;
@@ -31,6 +33,10 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
     const [activityId, setActivityId] = useState<string | null>(
       task.activityId,
     );
+    const [activityKindId, setActivityKindId] = useState<string | null>(
+      task.activityKindId,
+    );
+    const [quantity, setQuantity] = useState<number | null>(task.quantity);
     const [startDate, setStartDate] = useState(task.startDate || "");
     const [dueDate, setDueDate] = useState(task.dueDate || "");
     const [memo, setMemo] = useState(task.memo || "");
@@ -45,6 +51,8 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
       await taskRepository.updateTask(task.id, {
         title: title.trim(),
         activityId,
+        activityKindId,
+        quantity,
         startDate: startDate || null,
         dueDate: dueDate || null,
         memo: memo.trim(),
@@ -59,6 +67,10 @@ export function createUseTaskEditDialog(deps: UseTaskEditDialogDeps) {
       setTitle,
       activityId,
       setActivityId,
+      activityKindId,
+      setActivityKindId,
+      quantity,
+      setQuantity,
       startDate,
       setStartDate,
       dueDate,

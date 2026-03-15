@@ -1,5 +1,6 @@
 import type { Syncable } from "../sync/syncableRecord";
 import type { ActivityKindRecord, ActivityRecord } from "./activityRecord";
+import type { RecordingMode } from "./recordingMode";
 
 export type CreateActivityInput = {
   name: string;
@@ -7,6 +8,8 @@ export type CreateActivityInput = {
   emoji: string;
   showCombinedStats: boolean;
   iconType?: "emoji" | "upload";
+  recordingMode?: RecordingMode;
+  recordingModeConfig?: string | null;
   kinds?: { name: string; color: string }[];
 };
 

@@ -7,6 +7,7 @@ export const UpsertActivityLogRequestSchema = z.object({
   quantity: z.number().min(0).nullable(),
   memo: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taskId: z.string().uuid().nullish(),
   time: z
     .string()
     .regex(/^\d{2}:\d{2}(:\d{2})?$/)

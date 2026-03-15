@@ -211,6 +211,20 @@
       "when": 1773473012936,
       "tag": "0029_little_naoko",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1773560000000,
+      "tag": "0030_closed_warbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1773494353863,
+      "tag": "0031_elite_fenris",
+      "breakpoints": true
     }
   ]
 }

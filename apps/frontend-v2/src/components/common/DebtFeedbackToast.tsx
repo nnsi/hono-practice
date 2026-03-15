@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
+import {
+  buildDebtFeedbackMessage,
+  isMajorAchievement,
+} from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
 
 import { onDebtFeedback } from "./debtFeedbackEvents";
@@ -7,21 +11,34 @@ import { onDebtFeedback } from "./debtFeedbackEvents";
 type ToastState = {
   results: DebtFeedbackResult[];
   key: number;
+  praiseMode: boolean;
 };
+
+function isPraiseModeEnabled(): boolean {
+  try {
+    const stored = localStorage.getItem("actiko-v2-settings");
+    if (!stored) return false;
+    const parsed = JSON.parse(stored);
+    return parsed.praiseMode === true;
+  } catch {
+    return false;
+  }
+}
 
 export function DebtFeedbackToast() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [visible, setVisible] = useState(false);
   const keyRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     return onDebtFeedback((results) => {
-      const message = buildMultiGoalMessage(results);
+      const praise = isPraiseModeEnabled();
+      const message = buildDebtFeedbackMessage(results, praise);
       if (!message) return;
 
       keyRef.current += 1;
-      setToast({ results, key: keyRef.current });
+      setToast({ results, key: keyRef.current, praiseMode: praise });
       setVisible(true);
 
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -40,58 +57,58 @@ export function DebtFeedbackToast() {
 
   if (!toast) return null;
 
-  const message = buildMultiGoalMessage(toast.results);
+  const message = buildDebtFeedbackMessage(toast.results, toast.praiseMode);
   if (!message) return null;
 
+  const praise = toast.praiseMode;
+  const major = praise && isMajorAchievement(toast.results);
+
+  const bgClass = praise
+    ? "bg-gradient-to-r from-amber-500 to-emerald-500"
+    : "bg-gray-900";
+
+  const animationStyle = praise
+    ? {
+        animation: major
+          ? "celebrate 0.5s ease-out"
+          : "pulse-scale 0.3s ease-out",
+      }
+    : {};
+
   return (
-    <div
-      key={toast.key}
-      className="fixed left-1/2 z-50 pointer-events-none"
-      style={{
-        bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-        transform: `translateX(-50%) translateY(${visible ? "0" : "20px"})`,
-        opacity: visible ? 1 : 0,
-        transition: "transform 0.3s ease, opacity 0.3s ease",
-      }}
-    >
-      <div className="bg-gray-900 text-white text-sm px-5 py-3 rounded-2xl shadow-lg max-w-[320px] text-center leading-relaxed whitespace-pre-line pointer-events-auto">
-        {message}
+    <>
+      <style>{celebrateKeyframes}</style>
+      <div
+        key={toast.key}
+        className="fixed left-1/2 z-50 pointer-events-none"
+        style={{
+          bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+          transform: `translateX(-50%) translateY(${visible ? "0" : "20px"})`,
+          opacity: visible ? 1 : 0,
+          transition: "transform 0.3s ease, opacity 0.3s ease",
+        }}
+      >
+        <div
+          className={`${bgClass} text-white text-sm px-5 py-3 rounded-2xl shadow-lg max-w-[320px] text-center leading-relaxed whitespace-pre-line pointer-events-auto`}
+          style={animationStyle}
+        >
+          {message}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-function buildMultiGoalMessage(results: DebtFeedbackResult[]): string | null {
-  const lines: string[] = [];
-
-  for (const result of results) {
-    const msg = buildMessage(result);
-    if (!msg) continue;
-    const prefix = result.goalLabel ? `${result.goalLabel}: ` : "";
-    lines.push(`${prefix}${msg}`);
-  }
-
-  return lines.length > 0 ? lines.join("\n") : null;
+const celebrateKeyframes = `
+@keyframes celebrate {
+  0% { transform: scale(0.95); opacity: 0; }
+  15% { transform: scale(1.08); opacity: 1; }
+  30% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
-
-function buildMessage(result: DebtFeedbackResult): string | null {
-  const lines: string[] = [];
-
-  if (result.targetAchievedToday && result.debtCleared) {
-    lines.push("目標達成 & 負債完済！");
-  } else if (result.targetAchievedToday) {
-    lines.push("今日の目標達成！");
-  } else if (result.debtCleared) {
-    lines.push(`負債完済！ (${result.balanceBefore} → 0)`);
-  } else if (result.debtReduced) {
-    lines.push(`負債軽減: ${result.balanceBefore} → ${result.balanceAfter}`);
-  } else if (result.savedAmount > 0 && !result.targetAchievedToday) {
-    lines.push(`部分達成: ${result.savedAmount}回分の負債を回避`);
-  }
-
-  if (result.debtCapSaved > 0) {
-    lines.push(`(上限により${result.debtCapSaved}回分免除)`);
-  }
-
-  return lines.length > 0 ? lines.join("\n") : null;
+@keyframes pulse-scale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
+`;

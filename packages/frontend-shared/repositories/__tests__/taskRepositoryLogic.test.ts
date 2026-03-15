@@ -63,6 +63,8 @@ function createTask(
     id: "task-default",
     userId: "user-1",
     activityId: null,
+    activityKindId: null,
+    quantity: null,
     title: "デフォルトタスク",
     startDate: null,
     dueDate: null,

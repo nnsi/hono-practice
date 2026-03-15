@@ -48,14 +48,45 @@ export function LogFormBody({
       date,
     );
 
-    await activityLogRepository.createActivityLog({
-      activityId: activity.id,
-      activityKindId: params.activityKindId,
-      quantity: params.quantity,
-      memo: params.memo,
-      date,
-      time: null,
-    });
+    // バイナリモードの場合、同一キー（date+activityId+activityKindId）の既存ログがあればquantityを加算
+    if (activity.recordingMode === "binary") {
+      const existingLog = await db.activityLogs
+        .where("[date+activityId]")
+        .equals([date, activity.id])
+        .filter(
+          (l) =>
+            l.activityKindId === params.activityKindId && l.deletedAt === null,
+        )
+        .first();
+
+      if (existingLog) {
+        await db.activityLogs.update(existingLog.id, {
+          quantity: (existingLog.quantity ?? 0) + (params.quantity ?? 1),
+          updatedAt: new Date().toISOString(),
+          _syncStatus: "pending" as const,
+        });
+      } else {
+        await activityLogRepository.createActivityLog({
+          activityId: activity.id,
+          activityKindId: params.activityKindId,
+          quantity: params.quantity,
+          memo: params.memo,
+          date,
+          time: null,
+          taskId: null,
+        });
+      }
+    } else {
+      await activityLogRepository.createActivityLog({
+        activityId: activity.id,
+        activityKindId: params.activityKindId,
+        quantity: params.quantity,
+        memo: params.memo,
+        date,
+        time: null,
+        taskId: null,
+      });
+    }
 
     emitDebtFeedback(feedbackResults);
 

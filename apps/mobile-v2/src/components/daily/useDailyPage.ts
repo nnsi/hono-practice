@@ -7,6 +7,7 @@ import { createUseDailyPage } from "@packages/frontend-shared/hooks/useDailyPage
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
+import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { activityRepository } from "../../repositories/activityRepository";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -30,5 +31,6 @@ export const useDailyPage = createUseDailyPage<Activity, ActivityKindWithSync>({
       [],
     ),
   taskRepository,
+  activityLogRepository,
   syncEngine,
 });

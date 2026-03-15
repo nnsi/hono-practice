@@ -5,12 +5,17 @@ const { mockApiClientObj } = vi.hoisted(() => ({
 }));
 
 vi.mock("../db/activityLogRepository");
-vi.mock("@packages/sync-engine/mappers/apiMappers");
+vi.mock("@packages/sync-engine", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@packages/sync-engine")>();
+  return {
+    ...original,
+    mapApiActivityLog: vi.fn((l: any) => l),
+  };
+});
 vi.mock("../utils/apiClient", () => ({
   apiClient: mockApiClientObj,
 }));
-
-import { mapApiActivityLog } from "@packages/sync-engine/mappers/apiMappers";
 
 import { activityLogRepository } from "../db/activityLogRepository";
 import { syncActivityLogs } from "./syncActivityLogs";
@@ -21,7 +26,6 @@ const mockLogRepo = vi.mocked(activityLogRepository);
 describe("syncActivityLogs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(mapApiActivityLog).mockImplementation((l: any) => l);
   });
 
   it("skips when no pending logs", async () => {

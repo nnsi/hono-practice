@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 
+import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
+import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
@@ -26,6 +28,10 @@ export function TaskCreateDialog({
     setTitle,
     activityId,
     setActivityId,
+    activityKindId,
+    setActivityKindId,
+    quantity,
+    setQuantity,
     startDate,
     setStartDate,
     dueDate,
@@ -37,6 +43,26 @@ export function TaskCreateDialog({
   } = useTaskCreateDialog(onSuccess, defaultDate);
 
   const { activities } = useActivities();
+
+  const kinds = useLiveQuery(
+    "activity_kinds",
+    () =>
+      activityId
+        ? activityRepository.getActivityKindsByActivityId(activityId)
+        : Promise.resolve([]),
+    [activityId],
+  );
+  const activeKinds = (kinds ?? []).filter((k) => !k.deletedAt);
+
+  const selectedActivity = activityId
+    ? activities.find((a) => a.id === activityId)
+    : null;
+
+  const handleSetActivityId = (id: string | null) => {
+    setActivityId(id);
+    setActivityKindId(null);
+    setQuantity(null);
+  };
 
   return (
     <ModalOverlay visible onClose={onClose} title="新しいタスクを作成">
@@ -68,7 +94,7 @@ export function TaskCreateDialog({
             >
               <View className="flex-row gap-2">
                 <TouchableOpacity
-                  onPress={() => setActivityId(null)}
+                  onPress={() => handleSetActivityId(null)}
                   className={`px-3 py-1.5 rounded-full border ${
                     activityId === null
                       ? "bg-gray-900 border-gray-900"
@@ -89,7 +115,7 @@ export function TaskCreateDialog({
                   <TouchableOpacity
                     key={a.id}
                     onPress={() =>
-                      setActivityId(activityId === a.id ? null : a.id)
+                      handleSetActivityId(activityId === a.id ? null : a.id)
                     }
                     className={`flex-row items-center px-3 py-1.5 rounded-full border ${
                       activityId === a.id
@@ -111,6 +137,88 @@ export function TaskCreateDialog({
                 ))}
               </View>
             </ScrollView>
+          </View>
+        )}
+
+        {/* ActivityKind */}
+        {activityId && activeKinds.length > 0 && (
+          <View>
+            <Text className="text-sm font-medium text-gray-700 mb-1">
+              種類（任意）
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-row"
+            >
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setActivityKindId(null)}
+                  className={`px-3 py-1.5 rounded-full border ${
+                    activityKindId === null
+                      ? "bg-gray-900 border-gray-900"
+                      : "bg-white border-gray-300"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm ${
+                      activityKindId === null
+                        ? "text-white font-medium"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    なし
+                  </Text>
+                </TouchableOpacity>
+                {activeKinds.map((k) => (
+                  <TouchableOpacity
+                    key={k.id}
+                    onPress={() =>
+                      setActivityKindId(activityKindId === k.id ? null : k.id)
+                    }
+                    className={`px-3 py-1.5 rounded-full border ${
+                      activityKindId === k.id
+                        ? "bg-gray-900 border-gray-900"
+                        : "bg-white border-gray-300"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm ${
+                        activityKindId === k.id
+                          ? "text-white font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {k.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Quantity */}
+        {activityId && (
+          <View>
+            <Text className="text-sm font-medium text-gray-700 mb-1">
+              数量（任意）
+              {selectedActivity?.quantityUnit
+                ? `（${selectedActivity.quantityUnit}）`
+                : ""}
+            </Text>
+            <TextInput
+              value={quantity !== null ? String(quantity) : ""}
+              onChangeText={(v) => {
+                const parsed = parseFloat(v);
+                setQuantity(
+                  v === "" ? null : Number.isNaN(parsed) ? null : parsed,
+                );
+              }}
+              placeholder="数量を入力"
+              keyboardType="decimal-pad"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
           </View>
         )}
 

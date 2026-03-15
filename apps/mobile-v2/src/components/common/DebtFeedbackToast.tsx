@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
+import {
+  buildDebtFeedbackMessage,
+  isMajorAchievement,
+  shouldShowDebtFeedback,
+} from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, Text, View } from "react-native";
 
 import { onDebtFeedback } from "./debtFeedbackEvents";
@@ -8,61 +14,32 @@ import { onDebtFeedback } from "./debtFeedbackEvents";
 const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;
 
-function buildMultiGoalMessage(results: DebtFeedbackResult[]): string {
-  const lines: string[] = [];
-
-  for (const result of results) {
-    const msg = buildMessage(result);
-    if (!msg) continue;
-    const prefix = result.goalLabel ? `${result.goalLabel}: ` : "";
-    lines.push(`${prefix}${msg}`);
-  }
-
-  return lines.join("\n");
-}
-
-function buildMessage(result: DebtFeedbackResult): string | null {
-  const lines: string[] = [];
-
-  if (result.targetAchievedToday && result.debtCleared) {
-    lines.push("目標達成 & 負債完済！");
-  } else if (result.targetAchievedToday) {
-    lines.push("今日の目標達成！");
-  } else if (result.debtCleared) {
-    lines.push(`負債完済！ (${result.balanceBefore} → 0)`);
-  } else if (result.debtReduced) {
-    lines.push(`負債軽減: ${result.balanceBefore} → ${result.balanceAfter}`);
-  } else if (result.savedAmount > 0 && !result.targetAchievedToday) {
-    lines.push(`部分達成: ${result.savedAmount}回分の負債を回避`);
-  }
-
-  if (result.debtCapSaved > 0) {
-    lines.push(`(上限により${result.debtCapSaved}回分免除)`);
-  }
-
-  return lines.length > 0 ? lines.join("\n") : null;
-}
-
-function shouldShow(results: DebtFeedbackResult[]): boolean {
-  return results.some(
-    (r) =>
-      r.targetAchievedToday ||
-      r.debtCleared ||
-      r.debtReduced ||
-      (r.savedAmount > 0 && !r.targetAchievedToday) ||
-      r.debtCapSaved > 0,
-  );
-}
-
 export function DebtFeedbackToast() {
   const [results, setResults] = useState<DebtFeedbackResult[] | null>(null);
+  const [praiseMode, setPraiseMode] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
+  const scale = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const praiseModeRef = useRef(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
+      if (!raw) return;
+      try {
+        const val = JSON.parse(raw).praiseMode === true;
+        praiseModeRef.current = val;
+      } catch {
+        /* ignore */
+      }
+    });
+  }, []);
 
   useEffect(() => {
     return onDebtFeedback((r) => {
-      if (!shouldShow(r)) return;
+      const praise = praiseModeRef.current;
+      if (!shouldShowDebtFeedback(r, praise)) return;
+      setPraiseMode(praise);
       setResults(r);
     });
   }, []);
@@ -70,14 +47,13 @@ export function DebtFeedbackToast() {
   useEffect(() => {
     if (!results) return;
 
-    // Clear any existing timer
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    // Reset and animate in
     opacity.setValue(0);
     translateY.setValue(30);
+    scale.setValue(1);
 
-    Animated.parallel([
+    const fadeIn = Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
         duration: FADE_DURATION,
@@ -88,9 +64,27 @@ export function DebtFeedbackToast() {
         duration: FADE_DURATION,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
 
-    // Auto-dismiss
+    if (praiseMode) {
+      const pulseScale = Animated.sequence([
+        Animated.timing(scale, {
+          toValue: isMajorAchievement(results) ? 1.08 : 1.05,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]);
+
+      Animated.sequence([fadeIn, pulseScale]).start();
+    } else {
+      fadeIn.start();
+    }
+
     timerRef.current = setTimeout(() => {
       Animated.parallel([
         Animated.timing(opacity, {
@@ -115,14 +109,19 @@ export function DebtFeedbackToast() {
 
   if (!results) return null;
 
-  const message = buildMultiGoalMessage(results);
+  const message = buildDebtFeedbackMessage(results, praiseMode);
   if (!message) return null;
+
+  const bgClass = praiseMode ? "bg-amber-500" : "bg-emerald-600";
 
   return (
     <View className="absolute bottom-24 left-4 right-4" pointerEvents="none">
       <Animated.View
-        style={{ opacity, transform: [{ translateY }] }}
-        className="rounded-xl bg-emerald-600 px-5 py-4 shadow-lg"
+        style={{
+          opacity,
+          transform: [{ translateY }, { scale }],
+        }}
+        className={`rounded-xl ${bgClass} px-5 py-4 shadow-lg`}
       >
         <Text className="text-center text-base font-bold text-white">
           {message}

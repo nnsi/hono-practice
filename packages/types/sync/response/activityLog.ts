@@ -9,6 +9,7 @@ const ActivityLogRowSchema = z.object({
   memo: z.string().nullable(),
   date: z.string(),
   time: z.string().nullable(),
+  taskId: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),

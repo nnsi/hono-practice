@@ -27,6 +27,7 @@ const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
   hideGoalGraph: z.boolean(),
   showInactiveDates: z.boolean(),
+  praiseMode: z.boolean().default(false),
 });
 
 type AppSettings = z.infer<typeof AppSettingsSchema>;
@@ -35,6 +36,7 @@ const defaultSettings: AppSettings = {
   showGoalOnStartup: false,
   hideGoalGraph: false,
   showInactiveDates: false,
+  praiseMode: false,
 };
 
 function useAppSettings() {
@@ -186,6 +188,14 @@ export function SettingsPage() {
               description="目標詳細で活動がなかった日付を表示します"
               checked={settings.showInactiveDates}
               onChange={(v) => updateSetting("showInactiveDates", v)}
+            />
+            <div className="border-t border-gray-100 mx-4" />
+            <SettingCheckbox
+              id="praise-mode"
+              label="褒めモード"
+              description="記録時のフィードバックに褒めメッセージと演出を追加します"
+              checked={settings.praiseMode}
+              onChange={(v) => updateSetting("praiseMode", v)}
             />
           </div>
         </section>

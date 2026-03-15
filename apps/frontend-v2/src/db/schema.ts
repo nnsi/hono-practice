@@ -133,6 +133,18 @@ export class ActikoDatabase extends Dexie {
       activityIconDeleteQueue: "activityId",
       authState: "id",
     });
+    this.version(6).stores({
+      activityLogs:
+        "id, activityId, date, _syncStatus, [date+activityId], taskId",
+      activities: "id, orderIndex, _syncStatus",
+      activityKinds: "id, activityId, _syncStatus",
+      goals: "id, activityId, _syncStatus",
+      goalFreezePeriods: "id, goalId, _syncStatus",
+      tasks: "id, _syncStatus, startDate, dueDate",
+      activityIconBlobs: "activityId",
+      activityIconDeleteQueue: "activityId",
+      authState: "id",
+    });
   }
 }
 

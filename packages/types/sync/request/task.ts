@@ -3,6 +3,8 @@ import { z } from "zod";
 export const UpsertTaskRequestSchema = z.object({
   id: z.string().uuid(),
   activityId: z.string().uuid().nullable(),
+  activityKindId: z.string().uuid().nullable(),
+  quantity: z.number().nullable(),
   title: z.string().min(1),
   startDate: z
     .string()
