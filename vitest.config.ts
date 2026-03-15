@@ -18,10 +18,10 @@ export default defineConfig({
       "**/apps/backend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // 共通パッケージのテスト
       "**/packages/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-      // frontend-v2のテスト
-      "**/apps/frontend-v2/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-      // mobile-v2のテスト
-      "**/apps/mobile-v2/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // frontendのテスト
+      "**/apps/frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // mobileのテスト
+      "**/apps/mobile/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
     exclude: [
       "**/node_modules/**",
@@ -31,7 +31,6 @@ export default defineConfig({
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/db-data/**",
       "**/dist-frontend/**",
-      "**/mobile/**",
       "**/e2e/**",
     ],
     pool: "forks",
@@ -48,8 +47,8 @@ export default defineConfig({
       ["**/packages/frontend-shared/adapters/**", "jsdom"],
       // frontend-shared/hooksのテストもDOM環境が必要
       ["**/packages/frontend-shared/hooks/**", "jsdom"],
-      // frontend-v2のテストはjsdom環境が必要（React hooks, DOM API）
-      ["**/apps/frontend-v2/**", "jsdom"],
+      // frontendのテストはjsdom環境が必要（React hooks, DOM API）
+      ["**/apps/frontend/**", "jsdom"],
     ],
     coverage: {
       provider: "v8",
@@ -71,7 +70,7 @@ export default defineConfig({
       "@frontend": path.resolve(__dirname, "./apps/frontend/src"),
       "@dtos": path.resolve(__dirname, "./packages/types"),
       "@packages": path.resolve(__dirname, "./packages"),
-      "@/*": path.resolve(__dirname, "./apps/frontend-v2/src/*"),
+      "@/*": path.resolve(__dirname, "./apps/frontend/src/*"),
     },
   },
 });

@@ -1,9 +1,9 @@
-# モバイルアプリ（mobile-v2）の構造について
+# モバイルアプリ（mobile）の構造について
 
 ## 概要
 
 ActikoのモバイルアプリはReact Native + Expoで開発。
-frontend-v2と同じオフラインファースト設計を採用し、共有パッケージ（`@packages/domain`, `@packages/sync-engine`等）で80%以上のロジックを共有している。
+frontendと同じオフラインファースト設計を採用し、共有パッケージ（`@packages/domain`, `@packages/sync-engine`等）で80%以上のロジックを共有している。
 
 ## 技術スタック
 
@@ -33,7 +33,7 @@ frontend-v2と同じオフラインファースト設計を採用し、共有パ
 ## ディレクトリ構造
 
 ```txt
-apps/mobile-v2/
+apps/mobile/
 ├── app/                       # Expo Routerルーティング
 │   ├── _layout.tsx           # ルートレイアウト
 │   ├── (auth)/               # 認証画面群
@@ -49,7 +49,7 @@ apps/mobile-v2/
 │       ├── tasks.tsx         # タスク管理画面
 │       └── settings.tsx      # 設定画面
 ├── src/
-│   ├── components/           # UIコンポーネント（frontend-v2と同構成）
+│   ├── components/           # UIコンポーネント（frontendと同構成）
 │   │   ├── actiko/          # 活動記録メイン
 │   │   ├── common/          # 共通UI
 │   │   ├── csv/             # CSVインポート/エクスポート
@@ -91,7 +91,7 @@ apps/mobile-v2/
 
 ## アーキテクチャ: オフラインファースト
 
-frontend-v2と同じオフラインファースト設計:
+frontendと同じオフラインファースト設計:
 
 ```
 [ユーザー操作]
@@ -103,8 +103,8 @@ frontend-v2と同じオフラインファースト設計:
 [syncEngine] → バックグラウンドでサーバー同期
 ```
 
-### frontend-v2との違い
-| 項目 | frontend-v2 | mobile-v2 |
+### frontendとの違い
+| 項目 | frontend | mobile |
 |------|-------------|-----------|
 | ローカルDB | Dexie.js (IndexedDB) | expo-sqlite (ネイティブSQLite) |
 | リアクティブ読み取り | `useLiveQuery` (Dexie) | `useLiveQuery` (カスタム実装) |
@@ -121,7 +121,7 @@ frontend-v2と同じオフラインファースト設計:
 
 ## コンポーネント設計
 
-frontend-v2と同じ**コロケーション型フック**パターン:
+frontendと同じ**コロケーション型フック**パターン:
 
 ```txt
 components/daily/
@@ -178,4 +178,4 @@ eas build --platform android --profile production
 ## セキュリティ
 - **Expo Secure Store**: トークン等の機密情報を暗号化保存
 - **HTTPS**: 全API通信を暗号化
-- 認証フローはfrontend-v2と共通（`@packages/platform`のアダプター経由）
+- 認証フローはfrontendと共通（`@packages/platform`のアダプター経由）

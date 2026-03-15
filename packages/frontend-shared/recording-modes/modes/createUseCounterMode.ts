@@ -3,7 +3,11 @@ import {
   parseRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
 
-import type { ReactHooks, RecordingModeProps } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseCounterModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -41,7 +45,9 @@ function resolveSteps(configRaw: string | null | undefined): number[] {
   return fallback?.mode === "counter" ? fallback.steps : [1, 10, 100];
 }
 
-export function createUseCounterMode(deps: UseCounterModeDeps) {
+export function createUseCounterMode(
+  deps: UseCounterModeDeps,
+): UseRecordingModeHook<"counter"> {
   return function useCounterMode(
     props: RecordingModeProps,
   ): CounterModeViewModel {

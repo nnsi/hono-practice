@@ -2,6 +2,10 @@ import type {
   ActivityKindRecord,
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
+import {
+  RECORDING_MODES,
+  type RecordingMode,
+} from "@packages/domain/activity/recordingMode";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
@@ -51,6 +55,15 @@ function toIconType(value: unknown): IconType {
   return "emoji";
 }
 
+const VALID_RECORDING_MODES: ReadonlySet<string> = new Set(RECORDING_MODES);
+
+function toRecordingMode(value: unknown): RecordingMode {
+  if (typeof value === "string" && VALID_RECORDING_MODES.has(value)) {
+    return value as RecordingMode;
+  }
+  return "manual";
+}
+
 // parseDayTargets imported from domain layer handles JSON parsing + key validation
 
 export function mapApiActivity(a: ApiRecord): ActivityRecord {
@@ -70,7 +83,7 @@ export function mapApiActivity(a: ApiRecord): ActivityRecord {
       a.showCombinedStats ?? a.show_combined_stats,
       true,
     ),
-    recordingMode: str(a.recordingMode ?? a.recording_mode) || "manual",
+    recordingMode: toRecordingMode(a.recordingMode ?? a.recording_mode),
     recordingModeConfig: strOrNull(
       a.recordingModeConfig ?? a.recording_mode_config,
     ),

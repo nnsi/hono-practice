@@ -5,7 +5,12 @@ import {
   getTimeUnitType,
 } from "@packages/domain/time/timeUtils";
 
-import type { ReactHooks, RecordingModeProps, TimerReturn } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  TimerReturn,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseTimerModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -41,7 +46,9 @@ export type TimerModeViewModel = {
   kinds: RecordingModeProps["kinds"];
 };
 
-export function createUseTimerMode(deps: UseTimerModeDeps) {
+export function createUseTimerMode(
+  deps: UseTimerModeDeps,
+): UseRecordingModeHook<"timer"> {
   return function useTimerMode(props: RecordingModeProps): TimerModeViewModel {
     const timer = deps.useTimer(props.activity.id);
     const [activeTab, setActiveTab] = deps.react.useState<"manual" | "timer">(

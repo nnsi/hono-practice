@@ -3,14 +3,14 @@
 ## 概要
 
 JWT形式のアクセストークンとリフレッシュトークンを組み合わせた認証方式を採用。
-Google OAuth認証もサポート。frontend-v2ではオフライン認証にも対応。
+Google OAuth認証もサポート。frontendではオフライン認証にも対応。
 
 ### トークンの仕様
 
 - アクセストークン
   - 形式: JWT
   - 有効期限: 15分
-  - 保存場所: メモリ（frontend-v2）/ Expo Secure Store（mobile-v2）
+  - 保存場所: メモリ（frontend）/ Expo Secure Store（mobile）
   - 用途: APIリクエスト時の認証
   - 送信方法: Authorizationヘッダー（Bearer トークン）
 
@@ -24,7 +24,7 @@ Google OAuth認証もサポート。frontend-v2ではオフライン認証にも
 
 ### 1. 起動時の認証状態確認（オフラインファースト）
 
-frontend-v2では2段階の認証チェックを行う:
+frontendでは2段階の認証チェックを行う:
 
 **Step 1: オフライン認証（即座に完了）**
 1. Dexieの`authState`テーブルから`lastLoginAt`を取得

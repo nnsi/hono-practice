@@ -28,8 +28,7 @@ playwright-cli open http://localhost:2460
 ポート番号はCLAUDE.mdに従う:
 | アプリ | ポート |
 |--------|--------|
-| frontend (v1) | 1357 |
-| frontend-v2 | 2460 |
+| frontend | 2460 |
 | backend API | 3456 |
 
 ### Step 2: スナップショットで要素参照を取得

@@ -17,12 +17,12 @@ import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeri
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
 import {
-  activityLogV2Route,
-  activityV2Route,
-  goalFreezePeriodV2Route,
-  goalV2Route,
-  taskV2Route,
-} from "./feature-v2";
+  activityLogSyncRoute,
+  activitySyncRoute,
+  goalFreezePeriodSyncRoute,
+  goalSyncRoute,
+  taskSyncRoute,
+} from "./feature-sync";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";
@@ -55,9 +55,9 @@ app.use("*", async (c, next) => {
       "http://localhost:8081",
       "http://localhost:8082",
       "http://localhost:19006", // Expo Web
-      "http://localhost:2460", // frontend-v2
-      "http://localhost:2461", // frontend-v2 fallback port
-      "http://localhost:8081", // mobile-v2 (Expo Web)
+      "http://localhost:2460", // frontend
+      "http://localhost:2461", // frontend fallback port
+      "http://localhost:8081", // mobile (Expo Web)
     );
 
     // 実機からのアクセス用（同一ネットワーク内のIPアドレス）
@@ -97,11 +97,11 @@ const routes = app
   .route("/users/goals", goalFreezePeriodRoute)
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
-  .route("/users/v2", activityLogV2Route)
-  .route("/users/v2", activityV2Route)
-  .route("/users/v2", goalV2Route)
-  .route("/users/v2", goalFreezePeriodV2Route)
-  .route("/users/v2", taskV2Route)
+  .route("/users/v2", activityLogSyncRoute)
+  .route("/users/v2", activitySyncRoute)
+  .route("/users/v2", goalSyncRoute)
+  .route("/users/v2", goalFreezePeriodSyncRoute)
+  .route("/users/v2", taskSyncRoute)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
   .route("/client-errors", clientErrorRoute)

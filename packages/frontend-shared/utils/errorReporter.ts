@@ -1,7 +1,12 @@
 const MAX_STACK_LENGTH = 5000;
 
 export type ErrorReport = {
-  errorType: "component_error" | "unhandled_error" | "network_error";
+  errorType:
+    | "component_error"
+    | "unhandled_error"
+    | "network_error"
+    | "db_query_error"
+    | "storage_error";
   message: string;
   stack?: string;
   userId?: string;

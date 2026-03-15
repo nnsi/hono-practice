@@ -1,4 +1,4 @@
-# フロントエンド（frontend-v2）の構造について
+# フロントエンド（frontend）の構造について
 
 ## 技術スタック
 
@@ -23,7 +23,7 @@
 
 ## アーキテクチャ: オフラインファースト
 
-frontend-v2の最大の特徴は**オフラインファースト設計**。全データはローカルDB（Dexie.js/IndexedDB）を唯一の真実の源とし、バックグラウンドでサーバーと同期する。
+frontendの最大の特徴は**オフラインファースト設計**。全データはローカルDB（Dexie.js/IndexedDB）を唯一の真実の源とし、バックグラウンドでサーバーと同期する。
 
 ### データフロー
 
@@ -64,7 +64,7 @@ class ActikoDatabase extends Dexie {
 ## ディレクトリ構造
 
 ```txt
-apps/frontend-v2/src/
+apps/frontend/src/
 ├── components/           # UIコンポーネント（機能別）
 │   ├── actiko/          # 活動記録メイン画面
 │   ├── common/          # 共通UI（ModalOverlay, DatePicker, EmojiPicker）

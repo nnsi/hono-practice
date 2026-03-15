@@ -16,7 +16,7 @@
   "@packages/sync-engine/*": ["packages/sync-engine/*"],
   "@packages/platform": ["packages/platform/index.ts"],
   "@packages/platform/*": ["packages/platform/*"],
-  "@frontend-v2/*": ["apps/frontend-v2/src/*"]
+  "@frontend/*": ["apps/frontend/src/*"]
 }
 ```
 
@@ -87,7 +87,7 @@ HTTP Request → Route (DI, Validation) → Handler (Transform) → Usecase (Bus
 
 ### CORS設定
 - 本番: `APP_URL`、`APP_URL_V2`（任意）
-- 開発: localhost:2460（frontend-v2）、8081（mobile-v2 Expo Web）、5176/5177（E2E）等
+- 開発: localhost:2460（frontend）、8081（mobile Expo Web）、5176/5177（E2E）等
 - ローカルネットワーク: 192.168.x.x, 10.x.x.x 等（開発時のみ）
 
 ## ミドルウェア
@@ -205,14 +205,14 @@ feature/
        └─ index.ts
 ```
 
-v2同期対応エンドポイントは `feature-v2/` に配置:
+同期対応エンドポイントは `feature-sync/` に配置:
 ```txt
-feature-v2/
+feature-sync/
   └─ task/
-       ├─ TaskV2Route.ts
-       ├─ TaskV2Handler.ts
-       ├─ TaskV2Usecase.ts
-       └─ TaskV2Repository.ts
+       ├─ TaskSyncRoute.ts
+       ├─ TaskSyncHandler.ts
+       ├─ TaskSyncUsecase.ts
+       └─ TaskSyncRepository.ts
 ```
 
 ## テスト

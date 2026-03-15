@@ -1,4 +1,8 @@
-import type { ReactHooks, RecordingModeProps } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseNumpadModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -26,7 +30,9 @@ function formatNumber(s: string): string {
   return Number(s).toLocaleString();
 }
 
-export function createUseNumpadMode(deps: UseNumpadModeDeps) {
+export function createUseNumpadMode(
+  deps: UseNumpadModeDeps,
+): UseRecordingModeHook<"numpad"> {
   return function useNumpadMode(
     props: RecordingModeProps,
   ): NumpadModeViewModel {

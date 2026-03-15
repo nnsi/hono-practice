@@ -1,4 +1,8 @@
-import type { ReactHooks, RecordingModeProps } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseBinaryModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -41,7 +45,9 @@ function computeKindTallies(
   }));
 }
 
-export function createUseBinaryMode(deps: UseBinaryModeDeps) {
+export function createUseBinaryMode(
+  deps: UseBinaryModeDeps,
+): UseRecordingModeHook<"binary"> {
   return function useBinaryMode(
     props: RecordingModeProps,
   ): BinaryModeViewModel {
