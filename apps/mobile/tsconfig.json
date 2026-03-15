@@ -12,6 +12,8 @@
       "@packages/platform/*": ["../../packages/platform/*"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
+      "@packages/types": ["../../packages/types/index.ts"],
+      "@packages/types/*": ["../../packages/types/*"],
       "@packages/utils": ["../../packages/utils/index.ts"],
       "@packages/utils/*": ["../../packages/utils/*"],
       "@/*": ["./src/*"],

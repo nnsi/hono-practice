@@ -1,4 +1,8 @@
-import type { ReactHooks, RecordingModeProps } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseManualModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -17,7 +21,9 @@ export type ManualModeViewModel = {
   quantityUnit: string;
 };
 
-export function createUseManualMode(deps: UseManualModeDeps) {
+export function createUseManualMode(
+  deps: UseManualModeDeps,
+): UseRecordingModeHook<"manual"> {
   return function useManualMode(
     props: RecordingModeProps,
   ): ManualModeViewModel {

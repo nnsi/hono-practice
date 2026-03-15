@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 
 import { activityRepository } from "../../repositories/activityRepository";
@@ -21,7 +22,7 @@ export function useCreateActivityDialog(
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kinds, setKinds] = useState<KindEntry[]>([]);
   const [nextKindId, setNextKindId] = useState(0);
-  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
     null,
   );

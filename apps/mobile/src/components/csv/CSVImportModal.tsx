@@ -162,6 +162,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
             memo: row.memo,
             date,
             time: row.time || null,
+            taskId: null,
           });
           succeeded++;
         } catch {

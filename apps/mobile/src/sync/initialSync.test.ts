@@ -55,7 +55,7 @@ vi.mock("./rnPlatformAdapters", () => ({
   },
 }));
 
-vi.mock("@packages/sync-engine", () => ({
+vi.mock("@packages/sync-engine/mappers/apiMappers", () => ({
   mapApiActivity: vi.fn((x: unknown) => x),
   mapApiActivityKind: vi.fn((x: unknown) => x),
   mapApiActivityLog: vi.fn((x: unknown) => x),

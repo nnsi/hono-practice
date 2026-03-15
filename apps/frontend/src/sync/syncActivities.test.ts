@@ -15,6 +15,7 @@ vi.mock("../utils/apiClient", () => ({
   customFetch: mockCustomFetchFn,
 }));
 
+import { invalidateSync } from "@packages/sync-engine";
 import {
   mapApiActivity,
   mapApiActivityKind,
@@ -27,7 +28,6 @@ import {
   syncActivityIconDeletions,
   syncActivityIcons,
 } from "./syncActivities";
-import { invalidateSync } from "./syncState";
 
 const mockActivityRepo = vi.mocked(activityRepository);
 const mockDb = vi.mocked(db) as any;

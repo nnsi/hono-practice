@@ -1,4 +1,8 @@
-import type { ReactHooks, RecordingModeProps } from "../types";
+import type {
+  ReactHooks,
+  RecordingModeProps,
+  UseRecordingModeHook,
+} from "../types";
 
 type UseCheckModeDeps = {
   react: Pick<ReactHooks, "useState">;
@@ -49,7 +53,9 @@ function buildKindItems(
   }));
 }
 
-export function createUseCheckMode(deps: UseCheckModeDeps) {
+export function createUseCheckMode(
+  deps: UseCheckModeDeps,
+): UseRecordingModeHook<"check"> {
   return function useCheckMode(props: RecordingModeProps): CheckModeViewModel {
     const [isSubmitting, setIsSubmitting] = deps.react.useState(false);
     const [selectedKindId, setSelectedKindId] = deps.react.useState<

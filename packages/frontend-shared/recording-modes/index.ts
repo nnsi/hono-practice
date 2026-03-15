@@ -13,6 +13,11 @@ export { createUseTimerMode } from "./modes/createUseTimerMode";
 export { resolveRecordingMode } from "./resolveRecordingMode";
 export type {
   RecordingModeProps,
+  RecordingModeViewModel,
+  RecordingModeViewModelBase,
+  RecordingModeViewModelMap,
   SaveLogParams,
   TimerReturn,
+  UncoveredRecordingModes,
+  UseRecordingModeHook,
 } from "./types";

@@ -31,7 +31,6 @@ export default defineConfig({
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/db-data/**",
       "**/dist-frontend/**",
-      "**/mobile/**",
       "**/e2e/**",
     ],
     pool: "forks",

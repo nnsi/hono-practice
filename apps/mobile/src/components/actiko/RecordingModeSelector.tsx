@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import {
   defaultRecordingModeConfig,
   parseRecordingModeConfig,
@@ -8,8 +9,8 @@ import {
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 type RecordingModeSelectorProps = {
-  recordingMode: string;
-  onRecordingModeChange: (mode: string) => void;
+  recordingMode: RecordingMode;
+  onRecordingModeChange: (mode: RecordingMode) => void;
   recordingModeConfig: string | null;
   onRecordingModeConfigChange: (config: string | null) => void;
 };
@@ -38,11 +39,9 @@ export function RecordingModeSelector({
     stepsFromConfig(recordingModeConfig).join(", "),
   );
 
-  const handleModeChange = (mode: string) => {
+  const handleModeChange = (mode: RecordingMode) => {
     onRecordingModeChange(mode);
-    const config = defaultRecordingModeConfig(
-      mode as Parameters<typeof defaultRecordingModeConfig>[0],
-    );
+    const config = defaultRecordingModeConfig(mode);
     const serialized = serializeRecordingModeConfig(config);
     onRecordingModeConfigChange(serialized);
     if (mode === "counter") {

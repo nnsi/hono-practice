@@ -1,12 +1,4 @@
-import type { StorageAdapter } from "@packages/platform";
-import {
-  mapApiActivity,
-  mapApiActivityKind,
-  mapApiActivityLog,
-  mapApiGoal,
-  mapApiGoalFreezePeriod,
-  mapApiTask,
-} from "@packages/sync-engine";
+import { createInitialSync } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
@@ -16,48 +8,31 @@ import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
-import { getSyncGeneration, invalidateSync } from "./syncState";
 
-const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
-
-export async function clearLocalData(
-  storage: StorageAdapter = rnStorageAdapter,
-) {
-  invalidateSync();
-  const db = await getDatabase();
-  await db.execAsync(`
-    DELETE FROM activity_logs;
-    DELETE FROM activities;
-    DELETE FROM activity_kinds;
-    DELETE FROM goals;
-    DELETE FROM goal_freeze_periods;
-    DELETE FROM tasks;
-    DELETE FROM activity_icon_blobs;
-    DELETE FROM activity_icon_delete_queue;
-  `);
-  // auth_stateはクリアしない。auth_stateはuseAuthが管理する責務:
-  // - logout() → last_login_atを空にして無効化
-  // - performInitialSync() → INSERT OR REPLACEで新ユーザーに更新
-  storage.removeItem(LAST_SYNCED_KEY);
-}
-
-export async function performInitialSync(
-  userId: string,
-  storage: StorageAdapter = rnStorageAdapter,
-) {
-  const db = await getDatabase();
-
-  // Update auth state
-  await db.runAsync(
-    "INSERT OR REPLACE INTO auth_state (id, user_id, last_login_at) VALUES ('current', ?, ?)",
-    [userId, new Date().toISOString()],
-  );
-
-  // DBが空なのにLAST_SYNCED_KEYが残っている場合（DB再作成・手動クリア等）、
-  // since付きでAPIを叩くと古いデータが取得されない。全テーブル空ならフル同期にする。
-  let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
-  if (lastSyncedAt) {
-    const [logRow, goalRow, taskRow] = await Promise.all([
+const { clearLocalData, performInitialSync } = createInitialSync({
+  clearAllTables: async () => {
+    const db = await getDatabase();
+    await db.execAsync(`
+      DELETE FROM activity_logs;
+      DELETE FROM activities;
+      DELETE FROM activity_kinds;
+      DELETE FROM goals;
+      DELETE FROM goal_freeze_periods;
+      DELETE FROM tasks;
+      DELETE FROM activity_icon_blobs;
+      DELETE FROM activity_icon_delete_queue;
+    `);
+  },
+  updateAuthState: async (userId) => {
+    const db = await getDatabase();
+    await db.runAsync(
+      "INSERT OR REPLACE INTO auth_state (id, user_id, last_login_at) VALUES ('current', ?, ?)",
+      [userId, new Date().toISOString()],
+    );
+  },
+  isLocalDataEmpty: async () => {
+    const db = await getDatabase();
+    const [logRow, goalRow, taskRow, freezePeriodRow] = await Promise.all([
       db.getFirstAsync<{ count: number }>(
         "SELECT COUNT(*) as count FROM activity_logs",
       ),
@@ -67,129 +42,62 @@ export async function performInitialSync(
       db.getFirstAsync<{ count: number }>(
         "SELECT COUNT(*) as count FROM tasks",
       ),
+      db.getFirstAsync<{ count: number }>(
+        "SELECT COUNT(*) as count FROM goal_freeze_periods",
+      ),
     ]);
-    if (
+    return (
       (logRow?.count ?? 0) === 0 &&
       (goalRow?.count ?? 0) === 0 &&
-      (taskRow?.count ?? 0) === 0
-    ) {
-      storage.removeItem(LAST_SYNCED_KEY);
-      lastSyncedAt = null;
-    }
-  }
-  const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
-
-  const gen = getSyncGeneration();
-
-  // Fetch all data in parallel
-  const [activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes] =
-    await Promise.all([
-      apiClient.users.v2.activities.$get(),
-      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-      apiClient.users.v2.goals.$get({ query: sinceQuery }),
-      apiClient.users.v2["goal-freeze-periods"]
-        .$get({ query: sinceQuery })
-        .catch(() => null),
-      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-    ]);
-
-  if (gen !== getSyncGeneration()) return;
-
-  // レスポンスをパースしてデータを収集（DB書き込みはまだ行わない）
-  let allSynced = true;
-  let activitiesData: ReturnType<typeof mapApiActivity>[] = [];
-  let kindsData: ReturnType<typeof mapApiActivityKind>[] = [];
-  let logsData: ReturnType<typeof mapApiActivityLog>[] = [];
-  let goalsData: ReturnType<typeof mapApiGoal>[] = [];
-  let freezePeriodsData: ReturnType<typeof mapApiGoalFreezePeriod>[] = [];
-  let tasksData: ReturnType<typeof mapApiTask>[] = [];
-
-  if (activitiesRes.ok) {
-    const data = await activitiesRes.json();
-    activitiesData = data.activities.map(mapApiActivity);
-    if (data.activityKinds?.length > 0) {
-      kindsData = data.activityKinds.map(mapApiActivityKind);
-    }
-  } else {
-    allSynced = false;
-  }
-
-  if (logsRes.ok) {
-    const data = await logsRes.json();
-    if (data.logs?.length > 0) {
-      logsData = data.logs.map(mapApiActivityLog);
-    }
-  } else {
-    allSynced = false;
-  }
-
-  if (goalsRes.ok) {
-    const data = await goalsRes.json();
-    if (data.goals?.length > 0) {
-      goalsData = data.goals.map(mapApiGoal);
-    }
-  } else {
-    allSynced = false;
-  }
-
-  if (freezePeriodsRes?.ok) {
-    const data = (await freezePeriodsRes.json()) as {
-      freezePeriods?: (Record<string, unknown> & { id: string })[];
+      (taskRow?.count ?? 0) === 0 &&
+      (freezePeriodRow?.count ?? 0) === 0
+    );
+  },
+  fetchAllApis: async (sinceQuery) => {
+    const [activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes] =
+      await Promise.all([
+        apiClient.users.v2.activities.$get(),
+        apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+        apiClient.users.v2.goals.$get({ query: sinceQuery }),
+        apiClient.users.v2["goal-freeze-periods"]
+          .$get({ query: sinceQuery })
+          .catch(() => null),
+        apiClient.users.v2.tasks.$get({ query: sinceQuery }),
+      ]);
+    return {
+      activitiesRes,
+      logsRes,
+      goalsRes,
+      freezePeriodsRes,
+      tasksRes,
     };
-    if (data.freezePeriods && data.freezePeriods.length > 0) {
-      freezePeriodsData = data.freezePeriods.map(mapApiGoalFreezePeriod);
-    }
-  }
-
-  if (tasksRes.ok) {
-    const data = await tasksRes.json();
-    if (data.tasks?.length > 0) {
-      tasksData = data.tasks.map(mapApiTask);
-    }
-  } else {
-    allSynced = false;
-  }
-
-  if (gen !== getSyncGeneration()) return;
-
-  // 全テーブルをトランザクションでアトミックに書き込み。
-  // テーブルごとに個別書き込みするとリアクティブクエリが中間状態を描画してしまう。
-  const hasData =
-    activitiesData.length > 0 ||
-    kindsData.length > 0 ||
-    logsData.length > 0 ||
-    goalsData.length > 0 ||
-    freezePeriodsData.length > 0 ||
-    tasksData.length > 0;
-
-  if (hasData) {
+  },
+  writeAllData: async (data) => {
+    const db = await getDatabase();
     await db.withTransactionAsync(async () => {
-      if (activitiesData.length > 0) {
-        await activityRepository.upsertActivities(activitiesData);
+      if (data.activities.length > 0) {
+        await activityRepository.upsertActivities(data.activities);
       }
-      if (kindsData.length > 0) {
-        await activityRepository.upsertActivityKinds(kindsData);
+      if (data.activityKinds.length > 0) {
+        await activityRepository.upsertActivityKinds(data.activityKinds);
       }
-      if (logsData.length > 0) {
-        await activityLogRepository.upsertActivityLogsFromServer(logsData);
+      if (data.logs.length > 0) {
+        await activityLogRepository.upsertActivityLogsFromServer(data.logs);
       }
-      if (goalsData.length > 0) {
-        await goalRepository.upsertGoalsFromServer(goalsData);
+      if (data.goals.length > 0) {
+        await goalRepository.upsertGoalsFromServer(data.goals);
       }
-      if (freezePeriodsData.length > 0) {
+      if (data.freezePeriods.length > 0) {
         await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
-          freezePeriodsData,
+          data.freezePeriods,
         );
       }
-      if (tasksData.length > 0) {
-        await taskRepository.upsertTasksFromServer(tasksData);
+      if (data.tasks.length > 0) {
+        await taskRepository.upsertTasksFromServer(data.tasks);
       }
     });
-  }
+  },
+  defaultStorage: rnStorageAdapter,
+});
 
-  if (gen !== getSyncGeneration()) return;
-
-  if (allSynced) {
-    storage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
-  }
-}
+export { clearLocalData, performInitialSync };

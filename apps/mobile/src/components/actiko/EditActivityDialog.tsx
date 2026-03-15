@@ -1,3 +1,4 @@
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { ImageOff, ImagePlus } from "lucide-react-native";
 import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -13,7 +14,7 @@ type Activity = {
   iconType: "emoji" | "upload" | "generate";
   quantityUnit: string;
   showCombinedStats: boolean;
-  recordingMode?: string;
+  recordingMode?: RecordingMode;
   recordingModeConfig?: string | null;
 };
 

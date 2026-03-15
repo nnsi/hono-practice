@@ -5,19 +5,12 @@ import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DayTargetsInput } from "./DayTargetsInput";
-import type { CreateGoalPayload } from "./types";
+import type { Activity, CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
-
-type ActivityItem = {
-  id: string;
-  name: string;
-  emoji: string;
-  quantityUnit: string;
-};
 
 type CreateGoalDialogProps = {
   visible: boolean;
-  activities: ActivityItem[];
+  activities: Activity[];
   onClose: () => void;
   onCreate: (payload: CreateGoalPayload) => Promise<void>;
 };

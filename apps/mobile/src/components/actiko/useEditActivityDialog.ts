@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import * as DocumentPicker from "expo-document-picker";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
@@ -15,7 +16,7 @@ type Activity = {
   iconType: "emoji" | "upload" | "generate";
   quantityUnit: string;
   showCombinedStats: boolean;
-  recordingMode?: string;
+  recordingMode?: RecordingMode;
   recordingModeConfig?: string | null;
 };
 
@@ -41,7 +42,7 @@ export function useEditActivityDialog(
   const [currentIconType, setCurrentIconType] = useState<
     "emoji" | "upload" | "generate"
   >("emoji");
-  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
     null,
   );
@@ -135,16 +136,17 @@ export function useEditActivityDialog(
     setIsSubmitting(true);
     setError("");
     try {
+      const changes = {
+        name: name.trim(),
+        emoji: emoji || "\ud83d\udcdd",
+        quantityUnit: quantityUnit.trim(),
+        showCombinedStats,
+        recordingMode,
+        recordingModeConfig,
+      };
       await activityRepository.updateActivity(
         activity.id,
-        {
-          name: name.trim(),
-          emoji: emoji || "\ud83d\udcdd",
-          quantityUnit: quantityUnit.trim(),
-          showCombinedStats,
-          recordingMode,
-          recordingModeConfig,
-        },
+        changes,
         kindEntries.filter((k) => k.name.trim()),
       );
       onUpdated();

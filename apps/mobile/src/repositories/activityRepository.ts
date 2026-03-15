@@ -4,6 +4,10 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
+import {
+  RECORDING_MODES,
+  type RecordingMode,
+} from "@packages/domain/activity/recordingMode";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
 import {
   type ActivityDbAdapter,
@@ -33,6 +37,14 @@ function toIconType(v: unknown): IconType {
   return "emoji";
 }
 
+const VALID_RECORDING_MODES: ReadonlySet<string> = new Set(RECORDING_MODES);
+
+function toRecordingMode(v: unknown): RecordingMode {
+  if (typeof v === "string" && VALID_RECORDING_MODES.has(v))
+    return v as RecordingMode;
+  return "manual";
+}
+
 function toSyncStatus(v: unknown): SyncStatus {
   if (v === "pending" || v === "synced" || v === "failed") return v;
   return "synced";
@@ -52,7 +64,7 @@ export function mapActivityRow(row: SqlRow): Syncable<ActivityRecord> {
     quantityUnit: str(row.quantity_unit),
     orderIndex: str(row.order_index),
     showCombinedStats: row.show_combined_stats === 1,
-    recordingMode: str(row.recording_mode) || "manual",
+    recordingMode: toRecordingMode(row.recording_mode),
     recordingModeConfig: strOrNull(row.recording_mode_config),
     createdAt: str(row.created_at),
     updatedAt: str(row.updated_at),

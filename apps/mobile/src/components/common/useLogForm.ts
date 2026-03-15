@@ -13,6 +13,9 @@ export const useLogForm = createUseLogForm({
   react: { useState },
   useActivityKinds,
   useTimer,
-  activityLogRepository,
+  activityLogRepository: {
+    createActivityLog: (data) =>
+      activityLogRepository.createActivityLog({ ...data, taskId: null }),
+  },
   syncEngine,
 });

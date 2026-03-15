@@ -1,3 +1,5 @@
+import type { RecordingMode } from "./recordingMode";
+
 export type ActivityRecord = {
   id: string;
   userId: string;
@@ -11,7 +13,7 @@ export type ActivityRecord = {
   quantityUnit: string;
   orderIndex: string;
   showCombinedStats: boolean;
-  recordingMode: string;
+  recordingMode: RecordingMode;
   recordingModeConfig: string | null;
   createdAt: string;
   updatedAt: string;
