@@ -17,7 +17,7 @@
 ### Warning
 
 - [x] **エラーメッセージの詳細化**
-  - Web: `apps/frontend-v2/src/` / Mobile: `apps/mobile-v2/src/utils/apiClient.ts`
+  - Web: `apps/frontend/src/` / Mobile: `apps/mobile/src/utils/apiClient.ts`
   - 両方とも API通信エラーが汎用メッセージ（"Login failed" 等）
   - ネットワーク障害 vs 認証エラー vs サーバーエラーを区別してユーザーに伝える
 
@@ -36,11 +36,11 @@
 
 ### Critical
 
-- [ ] **fetch timeout の設定** (`apps/mobile-v2/src/utils/apiClient.ts`)
+- [ ] **fetch timeout の設定** (`apps/mobile/src/utils/apiClient.ts`)
   - 現在タイムアウト未設定 → 不安定なモバイル回線で無限待機の可能性
   - `AbortController` + setTimeout で 10-15秒のタイムアウトを追加
 
-- [ ] **本番API URLフォールバックの安全策** (`apps/mobile-v2/src/utils/apiClient.ts`)
+- [ ] **本番API URLフォールバックの安全策** (`apps/mobile/src/utils/apiClient.ts`)
   - `EXPO_PUBLIC_API_URL` 未設定時に `http://localhost:3456` に接続する
   - 実機ビルドでは確実に失敗するため、環境変数必須チェックまたは安全なデフォルトに変更
 
@@ -55,7 +55,7 @@
     2. `KeyboardAvoidingView` で ModalOverlay をラップ
     3. タスク/ログのメモ欄の高さを動的調整
 
-- [ ] **console.error を reportError() に置き換え** (`apps/mobile-v2/src/hooks/useAuth.ts:72,130`)
+- [ ] **console.error を reportError() に置き換え** (`apps/mobile/src/hooks/useAuth.ts:72,130`)
   - 本番環境では `errorReporter` に送信すべき
 
 ### Info

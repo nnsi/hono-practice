@@ -29,7 +29,7 @@ jobs:
         uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
         with:
           files: |
-            apps/frontend-v2/**
+            apps/frontend/**
 
       - name: Get changed files (db migrations)
         id: changed_db_migrations

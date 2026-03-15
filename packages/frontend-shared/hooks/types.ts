@@ -55,7 +55,7 @@ export type IconBlobBase = {
 };
 
 /**
- * Goal型（frontend-v2 / mobile-v2 で完全同一）
+ * Goal型（frontend / mobile で完全同一）
  */
 import type { DayTargets } from "@packages/domain/goal/dayTargets";
 

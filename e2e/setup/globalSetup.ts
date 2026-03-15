@@ -50,8 +50,8 @@ export async function setup() {
 
   // 3. Vite frontend on port 5176 with proxy
   viteServer = await createServer({
-    configFile: "./apps/frontend-v2/vite.config.ts",
-    root: "./apps/frontend-v2",
+    configFile: "./apps/frontend/vite.config.ts",
+    root: "./apps/frontend",
     server: {
       port: FRONTEND_PORT,
       host: "127.0.0.1",

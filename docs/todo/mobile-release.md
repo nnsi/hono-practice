@@ -1,6 +1,6 @@
 # Actiko モバイルアプリ ストアリリース チェックリスト
 
-> 対象: `apps/mobile-v2` (Expo SDK 54, Managed Workflow)
+> 対象: `apps/mobile` (Expo SDK 54, Managed Workflow)
 > Bundle ID: `com.actiko.app` (iOS / Android 共通)
 
 ---
@@ -20,7 +20,7 @@
 
 - [ ] `eas-cli` をグローバルインストール: `npm install -g eas-cli`
 - [ ] Expo アカウントでログイン: `eas login`
-- [ ] プロジェクトを Expo に紐付け: `eas init` （`apps/mobile-v2/` 内で実行）
+- [ ] プロジェクトを Expo に紐付け: `eas init` （`apps/mobile/` 内で実行）
 - [ ] `eas.json` を作成（下記テンプレート参照）
 - [ ] Apple Developer アカウントを EAS に接続: `eas credentials`
 
@@ -64,7 +64,7 @@
 
 - [ ] Preview ビルド実行
   ```bash
-  cd apps/mobile-v2
+  cd apps/mobile
   eas build --platform all --profile preview
   ```
 - [ ] ビルド完了後、Expo ダッシュボードの QR コード / URL を端末で開いてインストール

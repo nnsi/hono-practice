@@ -17,7 +17,7 @@
 ## 📚 詳細ドキュメント
 - `/docs/knowledges/` — 設計ドキュメント
 - `apps/backend/CLAUDE.md` — バックエンド固有ルール
-- `apps/frontend-v2/CLAUDE.md` — フロントエンド固有ルール
+- `apps/frontend/CLAUDE.md` — フロントエンド固有ルール
 
 ## 必須コマンド
 ```bash
@@ -72,11 +72,11 @@ pnpm run ci-check    # 全CIチェック
 ```
 
 ### 計画時のチェック
-- **「Webでやることは Mobile でもやる必要があるか？」を必ず自問する**（計画段階でmobile-v2のUI・sync・リポジトリへの影響を確認。漏れが4セッション連続で発生した教訓）
+- **「Webでやることは Mobile でもやる必要があるか？」を必ず自問する**（計画段階でmobileのUI・sync・リポジトリへの影響を確認。漏れが4セッション連続で発生した教訓）
 - 提案・比較テーブルを出す際は、Web/Mobile両方の影響をデフォルトで含める
 
 ### 競合防止
 - 編集対象ファイルが重複しないよう事前にGlobで排他的にグループ分け
 - **インターフェース変更は先に直列で実施**し、結果を後続エージェントのプロンプトに含める
 - ファイル移動時は**テストファイルのimportパス更新**もプロンプトに含める
-- frontend-v2の作業では `apps/frontend-v2/CLAUDE.md` のルールも含める
+- frontendの作業では `apps/frontend/CLAUDE.md` のルールも含める

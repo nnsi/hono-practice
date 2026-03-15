@@ -40,7 +40,7 @@ export function createUseEditLogDialog(deps: UseEditLogDialogDeps) {
 
     const { kinds } = useActivityKinds(log.activityId);
 
-    // sync state when log changes (from mobile-v2's improvement)
+    // sync state when log changes (from mobile's improvement)
     useEffect(() => {
       setQuantity(log.quantity !== null ? String(log.quantity) : "");
       setMemo(log.memo);
