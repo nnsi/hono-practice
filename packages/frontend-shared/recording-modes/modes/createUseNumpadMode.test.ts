@@ -101,6 +101,39 @@ describe("createUseNumpadMode", () => {
     expect(result.current.quantityUnit).toBe("点");
   });
 
+  it("pasteFromClipboard sets display from text with digits only", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pasteFromClipboard("12,345"));
+    expect(result.current.display).toBe("12345");
+    expect(result.current.formattedDisplay).toBe("12,345");
+  });
+
+  it("pasteFromClipboard strips leading zeros", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pasteFromClipboard("00123"));
+    expect(result.current.display).toBe("123");
+  });
+
+  it("pasteFromClipboard ignores empty or non-numeric input", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pressKey("5"));
+    act(() => result.current.pasteFromClipboard("abc"));
+    expect(result.current.display).toBe("5");
+  });
+
+  it("pasteFromClipboard truncates to MAX_DIGITS", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pasteFromClipboard("12345678901234"));
+    expect(result.current.display).toBe("1234567890");
+  });
+
+  it("pasteFromClipboard ignores all-zero input", () => {
+    const { result } = renderHook(() => useNumpadMode(makeProps()));
+    act(() => result.current.pressKey("3"));
+    act(() => result.current.pasteFromClipboard("000"));
+    expect(result.current.display).toBe("3");
+  });
+
   it("exposes kinds and isSubmitting", () => {
     const kinds = [{ id: "k1", name: "Type", color: null }];
     const { result } = renderHook(() =>

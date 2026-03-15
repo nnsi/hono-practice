@@ -93,6 +93,21 @@ describe("createUseBinaryMode", () => {
     expect(result.current.kindTallies[1].count).toBe(0);
   });
 
+  it("computes tallies using quantity sum (aggregated logs)", () => {
+    const { result } = renderHook(() =>
+      useBinaryMode(
+        makeProps({
+          todayLogs: [
+            { activityKindId: "k1", quantity: 5 },
+            { activityKindId: "k2", quantity: 3 },
+          ],
+        }),
+      ),
+    );
+    expect(result.current.kindTallies[0].count).toBe(5);
+    expect(result.current.kindTallies[1].count).toBe(3);
+  });
+
   it("supports more than 2 kinds", () => {
     const threeKinds = [
       { id: "k1", name: "勝ち", color: "#00ff00" },

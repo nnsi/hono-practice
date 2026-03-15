@@ -42,11 +42,13 @@ type AppSettings = {
   showGoalOnStartup: boolean;
   hideGoalGraph: boolean;
   showInactiveDates: boolean;
+  praiseMode: boolean;
 };
 const defaultSettings: AppSettings = {
   showGoalOnStartup: false,
   hideGoalGraph: false,
   showInactiveDates: false,
+  praiseMode: false,
 };
 
 function useAppSettings() {
@@ -151,6 +153,13 @@ export function SettingsPage() {
           desc="目標詳細で活動がなかった日付を表示します"
           value={settings.showInactiveDates}
           onChange={(v) => updateSetting("showInactiveDates", v)}
+        />
+        <Divider />
+        <SettingSwitch
+          label="褒めモード"
+          desc="記録時のフィードバックに褒めメッセージと演出を追加します"
+          value={settings.praiseMode}
+          onChange={(v) => updateSetting("praiseMode", v)}
         />
       </Section>
 

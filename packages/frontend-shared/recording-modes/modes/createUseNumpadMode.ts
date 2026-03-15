@@ -14,6 +14,7 @@ export type NumpadModeViewModel = {
   setMemo: (v: string) => void;
   selectedKindId: string | null;
   setSelectedKindId: (id: string | null) => void;
+  pasteFromClipboard: (text: string) => void;
   submit: () => void;
   isSubmitting: boolean;
   kinds: RecordingModeProps["kinds"];
@@ -53,6 +54,14 @@ export function createUseNumpadMode(deps: UseNumpadModeDeps) {
       }
     };
 
+    const pasteFromClipboard = (text: string) => {
+      const digits = text
+        .replace(/[^0-9]/g, "")
+        .replace(/^0+/, "")
+        .slice(0, MAX_DIGITS);
+      if (digits) setDisplay(digits);
+    };
+
     const submit = () => {
       const value = Number(display) || 0;
       if (value === 0) return;
@@ -67,6 +76,7 @@ export function createUseNumpadMode(deps: UseNumpadModeDeps) {
       display,
       formattedDisplay: formatNumber(display),
       pressKey,
+      pasteFromClipboard,
       memo,
       setMemo,
       selectedKindId,

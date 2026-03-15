@@ -1,3 +1,4 @@
+export * from "./core/aggregateBinaryLogs";
 export * from "./core/chunkedSync";
 export * from "./core/syncResult";
 export * from "./http/authenticatedFetch";

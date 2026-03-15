@@ -1,5 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
-import { Delete } from "lucide-react";
+import { ClipboardPaste, Delete } from "lucide-react";
 
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -13,8 +13,20 @@ const NUMPAD_KEYS = [
   ["C", "0", "backspace"],
 ] as const;
 
+const canPaste =
+  typeof navigator !== "undefined" && !!navigator.clipboard?.readText;
+
 export function NumpadMode(props: RecordingModeProps) {
   const vm = useNumpadMode(props);
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      vm.pasteFromClipboard(text);
+    } catch {
+      // clipboard permission denied or unavailable — ignore silently
+    }
+  };
 
   return (
     <form
@@ -32,13 +44,24 @@ export function NumpadMode(props: RecordingModeProps) {
         />
       )}
 
-      <div className="flex items-baseline justify-end gap-1 px-2 py-3 bg-gray-50 rounded-lg">
-        <span className="text-4xl font-bold tabular-nums">
-          {vm.formattedDisplay}
-        </span>
-        {vm.quantityUnit && (
-          <span className="text-sm text-gray-500">{vm.quantityUnit}</span>
+      <div className="flex items-center gap-1 px-2 py-3 bg-gray-50 rounded-lg">
+        {canPaste && (
+          <button
+            type="button"
+            onClick={handlePaste}
+            className="p-2 text-gray-400 hover:text-gray-600"
+          >
+            <ClipboardPaste size={20} />
+          </button>
         )}
+        <div className="flex-1 flex items-baseline justify-end gap-1">
+          <span className="text-4xl font-bold tabular-nums">
+            {vm.formattedDisplay}
+          </span>
+          {vm.quantityUnit && (
+            <span className="text-sm text-gray-500">{vm.quantityUnit}</span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">

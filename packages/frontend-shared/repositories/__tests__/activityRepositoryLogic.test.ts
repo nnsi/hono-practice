@@ -305,6 +305,37 @@ describe("activityRepositoryLogic", () => {
       ).rejects.toThrow("Cannot create activity: userId is not set");
     });
 
+    it("recordingModeを指定できる", async () => {
+      const result = await repo.createActivity({
+        name: "Counter",
+        quantityUnit: "回",
+        emoji: "🔢",
+        showCombinedStats: false,
+        recordingMode: "counter",
+        recordingModeConfig: JSON.stringify({
+          mode: "counter",
+          steps: [1, 5, 10],
+        }),
+      });
+
+      expect(result.recordingMode).toBe("counter");
+      expect(result.recordingModeConfig).toBe(
+        JSON.stringify({ mode: "counter", steps: [1, 5, 10] }),
+      );
+    });
+
+    it("recordingMode未指定時はmanualになる", async () => {
+      const result = await repo.createActivity({
+        name: "Default",
+        quantityUnit: "回",
+        emoji: "📝",
+        showCombinedStats: false,
+      });
+
+      expect(result.recordingMode).toBe("manual");
+      expect(result.recordingModeConfig).toBeNull();
+    });
+
     it("iconTypeを指定できる", async () => {
       const result = await repo.createActivity({
         name: "Photo",
