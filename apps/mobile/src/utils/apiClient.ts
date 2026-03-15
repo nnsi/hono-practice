@@ -220,3 +220,16 @@ export async function apiGoogleLogin(credential: string) {
   if (data.refreshToken) await setRefreshToken(data.refreshToken);
   return data;
 }
+
+export async function apiGoogleLink(credential: string) {
+  const res = await customFetch(`${API_URL}/auth/google/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  if (!res.ok) {
+    if (res.status === 409)
+      throw new Error("このGoogleアカウントは別のユーザーに連携済みです");
+    throw new Error("Google連携に失敗しました");
+  }
+}

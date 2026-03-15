@@ -2,6 +2,9 @@ import { useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
+import * as DocumentPicker from "expo-document-picker";
+import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import { activityRepository } from "../../repositories/activityRepository";
 
@@ -28,6 +31,12 @@ export function useCreateActivityDialog(
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [iconType, setIconType] = useState<"emoji" | "upload">("emoji");
+  const [pendingImage, setPendingImage] = useState<{
+    base64: string;
+    mimeType: string;
+  } | null>(null);
+  const [isPickingImage, setIsPickingImage] = useState(false);
 
   // handlers
   const resetForm = () => {
@@ -40,6 +49,40 @@ export function useCreateActivityDialog(
     setKinds([]);
     setNextKindId(0);
     setError("");
+    setIconType("emoji");
+    setPendingImage(null);
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/png", "image/jpeg", "image/webp"],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || result.assets.length === 0) return;
+
+      setIsPickingImage(true);
+      const asset = result.assets[0];
+      const manipulated = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 512, height: 512 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.PNG },
+      );
+      const base64 = await readAsStringAsync(manipulated.uri, {
+        encoding: EncodingType.Base64,
+      });
+      setPendingImage({ base64, mimeType: "image/png" });
+      setIconType("upload");
+    } catch {
+      setError("画像の選択に失敗しました");
+    } finally {
+      setIsPickingImage(false);
+    }
+  };
+
+  const handleClearImage = () => {
+    setPendingImage(null);
+    setIconType("emoji");
   };
 
   const handleCreate = async () => {
@@ -50,15 +93,23 @@ export function useCreateActivityDialog(
     setIsSubmitting(true);
     setError("");
     try {
-      await activityRepository.createActivity({
+      const activity = await activityRepository.createActivity({
         name: name.trim(),
         emoji: emoji || "\ud83d\udcdd",
         quantityUnit: quantityUnit.trim(),
         showCombinedStats,
+        iconType,
         recordingMode,
         recordingModeConfig,
         kinds: kinds.filter((k) => k.name.trim()),
       });
+      if (iconType === "upload" && pendingImage) {
+        await activityRepository.saveActivityIconBlob(
+          activity.id,
+          pendingImage.base64,
+          pendingImage.mimeType,
+        );
+      }
       resetForm();
       onCreated();
       onClose();
@@ -113,9 +164,14 @@ export function useCreateActivityDialog(
     isSubmitting,
     error,
     setError,
+    iconType,
+    pendingImage,
+    isPickingImage,
     // handlers
     handleCreate,
     handleClose,
+    handlePickImage,
+    handleClearImage,
     addKind,
     removeKind,
     updateKindName,

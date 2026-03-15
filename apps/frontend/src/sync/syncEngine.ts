@@ -1,3 +1,4 @@
+import { UpsertGoalRequestSchema } from "@dtos/sync/request/goal";
 import type { SyncResult } from "@packages/sync-engine";
 import {
   createSyncActivityLogs,
@@ -6,7 +7,6 @@ import {
   createSyncGoals,
   createSyncTasks,
 } from "@packages/sync-engine";
-import { UpsertGoalRequestSchema } from "@dtos/sync/request/goal";
 
 import { activityLogRepository } from "../db/activityLogRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";

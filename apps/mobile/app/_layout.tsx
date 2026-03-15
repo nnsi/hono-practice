@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect } from "react";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -60,7 +61,18 @@ export default function RootLayout() {
     if (!auth.isLoggedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (auth.isLoggedIn && inAuthGroup) {
-      router.replace("/(tabs)");
+      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
+        let showGoal = false;
+        if (raw) {
+          try {
+            const settings = JSON.parse(raw);
+            showGoal = settings.showGoalOnStartup === true;
+          } catch {
+            // ignore parse error
+          }
+        }
+        router.replace(showGoal ? "/(tabs)/goals" : "/(tabs)");
+      });
     }
   }, [auth.isLoggedIn, auth.isLoading, segments]);
 

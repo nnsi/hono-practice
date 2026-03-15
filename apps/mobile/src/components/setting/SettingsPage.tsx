@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 import {
   AlertTriangle,
   Database,
   Download,
   Info,
   Key,
+  Link,
   LogOut,
   Settings,
   Trash2,
@@ -25,6 +28,8 @@ import {
 import { useAuthContext } from "../../../app/_layout";
 import { clearLocalData } from "../../sync/initialSync";
 import {
+  apiGetMe,
+  apiGoogleLink,
   clearRefreshToken,
   clearToken,
   customFetch,
@@ -51,6 +56,86 @@ const defaultSettings: AppSettings = {
   praiseMode: false,
 };
 
+WebBrowser.maybeCompleteAuthSession();
+
+function useGoogleAccount() {
+  const [isGoogleLinked, setIsGoogleLinked] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLinking, setIsLinking] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const googleDiscovery = AuthSession.useAutoDiscovery(
+    "https://accounts.google.com",
+  );
+  const redirectUri = AuthSession.makeRedirectUri();
+  const [googleRequest, googleResponse, googlePromptAsync] =
+    AuthSession.useAuthRequest(
+      {
+        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        redirectUri,
+        scopes: ["openid", "profile", "email"],
+        responseType: AuthSession.ResponseType.IdToken,
+      },
+      googleDiscovery,
+    );
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
+  useEffect(() => {
+    if (googleResponse?.type === "success") {
+      const idToken = googleResponse.params.id_token;
+      if (idToken) {
+        linkGoogle(idToken);
+      }
+    }
+  }, [googleResponse]);
+
+  const fetchUserInfo = async () => {
+    try {
+      const user = await apiGetMe();
+      setIsGoogleLinked(user.providers?.includes("google") ?? false);
+      setGoogleEmail(user.providerEmails?.google ?? null);
+    } catch {
+      // ignore
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const linkGoogle = async (credential: string) => {
+    setIsLinking(true);
+    setMessage(null);
+    try {
+      await apiGoogleLink(credential);
+      await fetchUserInfo();
+      setMessage({ type: "success", text: "Googleアカウントを連携しました" });
+    } catch (e) {
+      setMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "連携に失敗しました",
+      });
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  return {
+    isGoogleLinked,
+    googleEmail,
+    isLoading,
+    isLinking,
+    message,
+    googleRequest,
+    googlePromptAsync,
+  };
+}
+
 function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   useEffect(() => {
@@ -76,6 +161,7 @@ function useAppSettings() {
 export function SettingsPage() {
   const { userId, logout } = useAuthContext();
   const { settings, updateSetting } = useAppSettings();
+  const google = useGoogleAccount();
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -131,6 +217,61 @@ export function SettingsPage() {
           </View>
         </View>
       </View>
+
+      {/* Google account linking */}
+      <Section icon={Link} label="Google連携" shadow={shadow}>
+        {google.isLoading ? (
+          <View className="px-4 py-3">
+            <Text className="text-sm text-gray-500">読み込み中...</Text>
+          </View>
+        ) : (
+          <View className="px-4 py-3 gap-2">
+            {google.isGoogleLinked ? (
+              <View className="flex-row items-center gap-2">
+                <Text className="text-sm text-green-700 font-medium">
+                  Google連携済み
+                </Text>
+                {google.googleEmail && (
+                  <Text className="text-xs text-gray-500">
+                    {google.googleEmail}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Text className="text-xs text-gray-500">
+                Googleアカウントを連携すると、Googleログインでもこのアカウントにアクセスできます。
+              </Text>
+            )}
+            <TouchableOpacity
+              className={`flex-row items-center justify-center py-2.5 rounded-lg border border-gray-300 bg-white ${
+                google.isLinking || !google.googleRequest ? "opacity-50" : ""
+              }`}
+              onPress={() => google.googlePromptAsync()}
+              disabled={google.isLinking || !google.googleRequest}
+            >
+              <Text className="text-sm font-medium text-gray-700">
+                {google.isLinking
+                  ? "連携中..."
+                  : google.isGoogleLinked
+                    ? "Googleアカウントを変更"
+                    : "Googleアカウントを連携"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {google.message && (
+          <>
+            <Divider />
+            <View className="px-4 py-2">
+              <Text
+                className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}
+              >
+                {google.message.text}
+              </Text>
+            </View>
+          </>
+        )}
+      </Section>
 
       {/* App settings */}
       <Section icon={Settings} label="アプリ設定" shadow={shadow}>
@@ -266,7 +407,7 @@ export function SettingsPage() {
       <View className="items-center mt-8 mb-8 gap-2">
         <View className="flex-row items-center">
           <Info size={14} color="#9ca3af" />
-          <Text className="ml-1 text-xs text-gray-400">Actiko v2.0</Text>
+          <Text className="ml-1 text-xs text-gray-400">Actiko v1.0.0</Text>
         </View>
         <View className="flex-row gap-3">
           <TouchableOpacity onPress={() => setLegalModal("privacy")}>

@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   autoDetectMapping,
   parseCSVText,
+  validateDate,
+  validateQuantity,
 } from "@packages/domain/csv/csvParser";
 import dayjs from "dayjs";
 import * as DocumentPicker from "expo-document-picker";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
-import { FileText, Upload } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import {
+  AlertCircle,
+  CheckCircle,
+  Download,
+  FileText,
+  Upload,
+} from "lucide-react-native";
+import {
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useActivities } from "../../hooks/useActivities";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
@@ -18,6 +32,31 @@ import { ModalOverlay } from "../common/ModalOverlay";
 type CSVImportModalProps = { visible: boolean; onClose: () => void };
 type ParsedRow = { date: string; time: string; quantity: string; memo: string };
 type Step = "file" | "preview";
+
+function validateRow(row: ParsedRow): string[] {
+  const errors: string[] = [];
+  const dateError = validateDate(
+    row.date.includes("T") ? row.date.split("T")[0] : row.date,
+  );
+  if (dateError) errors.push(dateError);
+  if (row.quantity) {
+    const { error } = validateQuantity(row.quantity);
+    if (error) errors.push(error);
+  }
+  return errors;
+}
+
+function downloadTemplateWeb() {
+  const template =
+    "date,activity,kind,quantity,memo\n2024-01-01,ランニング,ジョギング,5,朝ラン\n2024-01-02,読書,技術書,60,TypeScript本";
+  const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "activity_log_template.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   const { activities } = useActivities();
@@ -37,6 +76,14 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   });
   const [error, setError] = useState<string | null>(null);
   const [successCount, setSuccessCount] = useState<number | null>(null);
+
+  const validationResults = useMemo(() => {
+    if (parsedRows.length === 0) return [];
+    return parsedRows.map((row) => validateRow(row));
+  }, [parsedRows]);
+
+  const validCount = validationResults.filter((e) => e.length === 0).length;
+  const errorCount = validationResults.filter((e) => e.length > 0).length;
 
   const resetForm = () => {
     setStep("file");
@@ -121,11 +168,21 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       setError("インポートするデータがありません");
       return;
     }
+
+    // Only import valid rows
+    const validRows = parsedRows.filter(
+      (_, i) => validationResults[i].length === 0,
+    );
+    if (validRows.length === 0) {
+      setError("有効なデータがありません");
+      return;
+    }
+
     setIsImporting(true);
     setError(null);
     setProgress({
       processed: 0,
-      total: parsedRows.length,
+      total: validRows.length,
       succeeded: 0,
       failed: 0,
     });
@@ -134,21 +191,10 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
     let failed = 0;
 
     try {
-      for (let i = 0; i < parsedRows.length; i++) {
-        const row = parsedRows[i];
+      for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
         try {
-          // Validate quantity
           const quantity = row.quantity ? Number(row.quantity) : null;
-          if (quantity !== null && !Number.isFinite(quantity)) {
-            failed++;
-            setProgress({
-              processed: i + 1,
-              total: parsedRows.length,
-              succeeded,
-              failed,
-            });
-            continue;
-          }
 
           // Format date (handle ISO datetime format)
           const date = row.date.includes("T")
@@ -170,7 +216,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         }
         setProgress({
           processed: i + 1,
-          total: parsedRows.length,
+          total: validRows.length,
           succeeded,
           failed,
         });
@@ -230,22 +276,35 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 
         {/* File step */}
         {step === "file" && (
-          <TouchableOpacity
-            className="py-6 border-2 border-dashed border-gray-300 rounded-xl items-center"
-            onPress={handlePickAndParse}
-            disabled={isParsing}
-          >
-            <Upload size={28} color="#9ca3af" />
-            <Text className="text-sm text-gray-500 mt-2">
-              {isParsing ? "解析中..." : "CSVファイルを選択して解析"}
-            </Text>
-            {fileName && (
-              <View className="flex-row items-center mt-1">
-                <FileText size={12} color="#6b7280" />
-                <Text className="text-xs text-gray-400 ml-1">{fileName}</Text>
-              </View>
+          <View className="gap-3">
+            <TouchableOpacity
+              className="py-6 border-2 border-dashed border-gray-300 rounded-xl items-center"
+              onPress={handlePickAndParse}
+              disabled={isParsing}
+            >
+              <Upload size={28} color="#9ca3af" />
+              <Text className="text-sm text-gray-500 mt-2">
+                {isParsing ? "解析中..." : "CSVファイルを選択して解析"}
+              </Text>
+              {fileName && (
+                <View className="flex-row items-center mt-1">
+                  <FileText size={12} color="#6b7280" />
+                  <Text className="text-xs text-gray-400 ml-1">{fileName}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            {Platform.OS === "web" && (
+              <TouchableOpacity
+                className="flex-row items-center justify-center gap-2 py-2 border border-gray-300 rounded-lg"
+                onPress={downloadTemplateWeb}
+              >
+                <Download size={14} color="#6b7280" />
+                <Text className="text-sm text-gray-600">
+                  CSVテンプレートをダウンロード
+                </Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+          </View>
         )}
 
         {error && (
@@ -279,38 +338,105 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         {/* Preview step */}
         {step === "preview" && parsedRows.length > 0 && !successCount && (
           <View className="gap-3">
-            <Text className="text-sm text-gray-500">
-              プレビュー（先頭5件 / 全{parsedRows.length}件）
-            </Text>
-            <View className="bg-gray-50 rounded-lg p-2">
-              {parsedRows.slice(0, 5).map((row) => (
-                <View
-                  key={`${row.date}-${row.time}-${row.quantity}-${row.memo}`}
-                  className="flex-row py-1 border-b border-gray-200"
-                >
-                  <Text className="text-xs text-gray-600 w-24">{row.date}</Text>
-                  <Text className="text-xs text-gray-600 w-14">{row.time}</Text>
-                  <Text className="text-xs text-gray-600 w-14">
-                    {row.quantity}
-                  </Text>
-                  <Text
-                    className="text-xs text-gray-600 flex-1"
-                    numberOfLines={1}
-                  >
-                    {row.memo}
+            {/* Summary badges */}
+            <View className="flex-row gap-2">
+              <View className="px-2 py-1 bg-gray-100 rounded">
+                <Text className="text-xs text-gray-600">
+                  全{parsedRows.length}件
+                </Text>
+              </View>
+              <View className="px-2 py-1 bg-green-100 rounded">
+                <Text className="text-xs text-green-700">
+                  有効 {validCount}件
+                </Text>
+              </View>
+              {errorCount > 0 && (
+                <View className="px-2 py-1 bg-red-100 rounded">
+                  <Text className="text-xs text-red-700">
+                    エラー {errorCount}件
                   </Text>
                 </View>
-              ))}
+              )}
             </View>
+
+            {/* Preview rows */}
+            <ScrollView
+              className="bg-gray-50 rounded-lg p-2"
+              style={{ maxHeight: 240 }}
+            >
+              {/* Header */}
+              <View className="flex-row py-1 border-b border-gray-300">
+                <Text className="text-xs font-medium text-gray-500 w-6" />
+                <Text className="text-xs font-medium text-gray-500 w-24">
+                  日付
+                </Text>
+                <Text className="text-xs font-medium text-gray-500 w-14">
+                  時刻
+                </Text>
+                <Text className="text-xs font-medium text-gray-500 w-14">
+                  数量
+                </Text>
+                <Text className="text-xs font-medium text-gray-500 flex-1">
+                  メモ
+                </Text>
+              </View>
+              {parsedRows.map((row, i) => {
+                const errors = validationResults[i] ?? [];
+                const hasError = errors.length > 0;
+                return (
+                  <View
+                    key={`${i}-${row.date}-${row.quantity}`}
+                    className={`py-1 border-b border-gray-200 ${hasError ? "bg-red-50" : ""}`}
+                  >
+                    <View className="flex-row items-center">
+                      <View className="w-6 items-center">
+                        {hasError ? (
+                          <AlertCircle size={12} color="#ef4444" />
+                        ) : (
+                          <CheckCircle size={12} color="#22c55e" />
+                        )}
+                      </View>
+                      <Text className="text-xs text-gray-600 w-24">
+                        {row.date}
+                      </Text>
+                      <Text className="text-xs text-gray-600 w-14">
+                        {row.time}
+                      </Text>
+                      <Text className="text-xs text-gray-600 w-14">
+                        {row.quantity}
+                      </Text>
+                      <Text
+                        className="text-xs text-gray-600 flex-1"
+                        numberOfLines={1}
+                      >
+                        {row.memo}
+                      </Text>
+                    </View>
+                    {hasError && (
+                      <Text className="text-xs text-red-500 ml-6 mt-0.5">
+                        {errors.join(", ")}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            {errorCount > 0 && (
+              <Text className="text-xs text-gray-500">
+                エラーのある行はスキップされます
+              </Text>
+            )}
+
             <TouchableOpacity
-              className={`py-3 rounded-xl items-center ${isImporting || !selectedActivityId ? "bg-gray-400" : "bg-gray-900"}`}
+              className={`py-3 rounded-xl items-center ${isImporting || !selectedActivityId || validCount === 0 ? "bg-gray-400" : "bg-gray-900"}`}
               onPress={handleImport}
-              disabled={isImporting || !selectedActivityId}
+              disabled={isImporting || !selectedActivityId || validCount === 0}
             >
               <Text className="text-white font-bold text-base">
                 {isImporting
                   ? "インポート中..."
-                  : `インポート (${parsedRows.length}件)`}
+                  : `インポート (${validCount}件)`}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

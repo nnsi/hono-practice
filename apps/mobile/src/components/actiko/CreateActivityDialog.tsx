@@ -1,3 +1,4 @@
+import { ImageOff, ImagePlus } from "lucide-react-native";
 import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
@@ -33,8 +34,13 @@ export function CreateActivityDialog({
     isSubmitting,
     error,
     setError,
+    iconType,
+    pendingImage,
+    isPickingImage,
     handleCreate,
     handleClose,
+    handlePickImage,
+    handleClearImage,
     addKind,
     removeKind,
     updateKindName,
@@ -48,6 +54,36 @@ export function CreateActivityDialog({
     >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
+
+        {/* Image upload section */}
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg border border-gray-300 ${
+              isPickingImage ? "opacity-50" : ""
+            }`}
+            onPress={handlePickImage}
+            disabled={isPickingImage}
+          >
+            <ImagePlus size={16} color="#6b7280" />
+            <Text className="ml-1.5 text-sm text-gray-700">
+              {isPickingImage
+                ? "処理中..."
+                : pendingImage
+                  ? "画像を変更"
+                  : "画像を選択"}
+            </Text>
+          </TouchableOpacity>
+
+          {iconType === "upload" ? (
+            <TouchableOpacity
+              className="flex-1 flex-row items-center justify-center py-2.5 rounded-lg border border-red-300"
+              onPress={handleClearImage}
+            >
+              <ImageOff size={16} color="#ef4444" />
+              <Text className="ml-1.5 text-sm text-red-500">画像を削除</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
