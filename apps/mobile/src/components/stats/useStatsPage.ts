@@ -8,19 +8,10 @@ import { generateGoalLines } from "@packages/frontend-shared/utils/goalLineGener
 import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
 
-import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
+import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { activityRepository } from "../../repositories/activityRepository";
 import { goalRepository } from "../../repositories/goalRepository";
-
-type LogRow = {
-  id: string;
-  activity_id: string;
-  activity_kind_id: string | null;
-  quantity: number | null;
-  date: string;
-  deleted_at: string | null;
-};
 
 export function useStatsPage() {
   const [month, setMonth] = useState(() => dayjs().format("YYYY-MM"));
@@ -50,13 +41,11 @@ export function useStatsPage() {
     activityRepository.getAllActivityKinds(),
   );
 
-  const monthLogs = useLiveQuery("activity_logs", async () => {
-    const db = await getDatabase();
-    return db.getAllAsync<LogRow>(
-      "SELECT * FROM activity_logs WHERE date >= ? AND date <= ? AND deleted_at IS NULL",
-      [startDate, endDate],
-    );
-  }, [startDate, endDate]);
+  const monthLogs = useLiveQuery(
+    "activity_logs",
+    () => activityLogRepository.getActivityLogsBetween(startDate, endDate),
+    [startDate, endDate],
+  );
 
   const goals = useLiveQuery("goals", () => goalRepository.getAllGoals());
 
@@ -65,11 +54,12 @@ export function useStatsPage() {
   const stats: ActivityStat[] | null = useMemo(() => {
     if (!activities || !allKinds || !monthLogs) return null;
 
-    const logsByActivity = new Map<string, LogRow[]>();
+    type LogEntry = (typeof monthLogs)[number];
+    const logsByActivity = new Map<string, LogEntry[]>();
     for (const log of monthLogs) {
-      const list = logsByActivity.get(log.activity_id) ?? [];
+      const list = logsByActivity.get(log.activityId) ?? [];
       list.push(log);
-      logsByActivity.set(log.activity_id, list);
+      logsByActivity.set(log.activityId, list);
     }
 
     return activities
@@ -82,11 +72,11 @@ export function useStatsPage() {
 
         const validKindIds = new Set(actKinds.map((k) => k.id));
 
-        const logsByKind = new Map<string | null, LogRow[]>();
+        const logsByKind = new Map<string | null, LogEntry[]>();
         for (const log of actLogs) {
           const key =
-            log.activity_kind_id && validKindIds.has(log.activity_kind_id)
-              ? log.activity_kind_id
+            log.activityKindId && validKindIds.has(log.activityKindId)
+              ? log.activityKindId
               : null;
           const list = logsByKind.get(key) ?? [];
           list.push(log);

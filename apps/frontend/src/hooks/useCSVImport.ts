@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 
+import { buildDedupKey, buildDedupSet } from "@packages/domain/csv/csvDedup";
 import type {
   ActivityLogValidationError,
   CSVParseResult,
@@ -108,12 +109,18 @@ export type ImportProgress = {
   total: number;
   processed: number;
   succeeded: number;
+  skipped: number;
   failed: number;
 };
 
 export type ImportResult = {
   success: boolean;
-  summary: { total: number; succeeded: number; failed: number };
+  summary: {
+    total: number;
+    succeeded: number;
+    skipped: number;
+    failed: number;
+  };
 };
 
 // --- Main Hook ---
@@ -151,7 +158,13 @@ export function useCSVImport(onComplete: () => void) {
     setIsParsing(false);
     setIsImporting(false);
     setImportSuccess(false);
-    setProgress({ total: 0, processed: 0, succeeded: 0, failed: 0 });
+    setProgress({
+      total: 0,
+      processed: 0,
+      succeeded: 0,
+      skipped: 0,
+      failed: 0,
+    });
   }, []);
 
   const handleFileSelect = useCallback((f: File) => {
@@ -300,6 +313,7 @@ export function useCSVImport(onComplete: () => void) {
         total: toImport.length,
         processed: 0,
         succeeded: 0,
+        skipped: 0,
         failed: 0,
       });
 
@@ -327,7 +341,20 @@ export function useCSVImport(onComplete: () => void) {
           createdActivityMap.set(name, created.id);
         }
 
+        // 重複チェック: インポート対象日の既存ログを取得してdedupSetを構築
+        const dates = toImport.map((l) =>
+          l.date.includes("T") ? l.date.split("T")[0] : l.date,
+        );
+        const minDate = dates.reduce((a, b) => (a < b ? a : b));
+        const maxDate = dates.reduce((a, b) => (a > b ? a : b));
+        const existingLogs = await activityLogRepository.getActivityLogsBetween(
+          minDate,
+          maxDate,
+        );
+        const dedupSet = buildDedupSet(existingLogs);
+
         let succeeded = 0;
+        let skipped = 0;
         let failed = 0;
 
         for (let i = 0; i < toImport.length; i++) {
@@ -359,14 +386,29 @@ export function useCSVImport(onComplete: () => void) {
               ? log.date.split("T")[0]
               : log.date;
 
+            const memo = log.memo ?? "";
+            const dedupKey = buildDedupKey({
+              date,
+              activityId,
+              quantity: log.quantity,
+              memo,
+            });
+            if (dedupSet.has(dedupKey)) {
+              skipped++;
+              continue;
+            }
+
             await activityLogRepository.createActivityLog({
               activityId,
               activityKindId,
               quantity: log.quantity,
-              memo: log.memo ?? "",
+              memo,
               date,
               time: null,
+              taskId: null,
             });
+            // 新たに作成したログもdedupSetに追加（CSV内での重複防止）
+            dedupSet.add(dedupKey);
             succeeded++;
           } catch {
             failed++;
@@ -376,6 +418,7 @@ export function useCSVImport(onComplete: () => void) {
             total: toImport.length,
             processed: i + 1,
             succeeded,
+            skipped,
             failed,
           });
         }
@@ -383,14 +426,26 @@ export function useCSVImport(onComplete: () => void) {
         // Trigger sync
         syncEngine.syncAll();
 
-        if (failed === 0) {
+        const messages: string[] = [];
+        if (skipped > 0)
+          messages.push(`${skipped}件は既存データと重複のためスキップ`);
+        if (failed > 0) messages.push(`${failed}件のインポートに失敗`);
+
+        if (messages.length === 0) {
           setImportSuccess(true);
           setTimeout(() => {
             onComplete();
             reset();
           }, 1500);
+        } else if (failed === 0) {
+          setImportSuccess(true);
+          setError(messages.join("、"));
+          setTimeout(() => {
+            onComplete();
+            reset();
+          }, 2500);
         } else {
-          setError(`${failed}件のインポートに失敗しました`);
+          setError(messages.join("、"));
         }
       } catch {
         setError("インポート中にエラーが発生しました");

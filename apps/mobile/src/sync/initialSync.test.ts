@@ -317,6 +317,14 @@ describe("performInitialSync", () => {
     expect(mockStorage.setItem).not.toHaveBeenCalled();
   });
 
+  it("does NOT update lastSyncedAt when freeze periods API fails", async () => {
+    vi.mocked(freezePeriodsApi).mockRejectedValue(new Error("network"));
+
+    await performInitialSync("user-1", mockStorage);
+
+    expect(mockStorage.setItem).not.toHaveBeenCalled();
+  });
+
   it("handles empty data arrays gracefully", async () => {
     vi.mocked(activitiesApi).mockResolvedValue(
       okResponse({ activities: [], activityKinds: [] }) as never,

@@ -6,7 +6,13 @@ import { z } from "zod";
 import type { AppContext } from "../../context";
 
 const clientErrorSchema = z.object({
-  errorType: z.enum(["component_error", "unhandled_error", "network_error"]),
+  errorType: z.enum([
+    "component_error",
+    "unhandled_error",
+    "network_error",
+    "db_query_error",
+    "storage_error",
+  ]),
   message: z.string().min(1).max(1000),
   stack: z.string().max(5000).optional(),
   userId: z.string().optional(),

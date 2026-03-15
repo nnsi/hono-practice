@@ -11,6 +11,7 @@ import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
+import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
 
@@ -24,7 +25,7 @@ type AuthContextType = {
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -35,7 +36,7 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   googleLogin: async () => {},
   register: async () => {},
-  logout: () => {},
+  logout: async () => {},
 });
 
 export function useAuthContext() {
@@ -85,7 +86,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary onRecover={clearLocalData}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthContext.Provider value={auth}>

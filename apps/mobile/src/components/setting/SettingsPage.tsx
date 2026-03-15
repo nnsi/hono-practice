@@ -167,6 +167,8 @@ export function SettingsPage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
   );
@@ -177,17 +179,23 @@ export function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
+    setDeleteError("");
+    setIsDeleting(true);
     try {
-      await customFetch(`${API_URL}/user/me`, { method: "DELETE" });
+      const res = await customFetch(`${API_URL}/user/me`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+      await clearLocalData();
+      clearToken();
+      await clearRefreshToken();
+      await AsyncStorage.removeItem(SETTINGS_KEY);
+      setShowDeleteConfirm(false);
+      await logout();
     } catch {
-      /* offline */
+      setDeleteError(
+        "アカウント削除に失敗しました。ネットワーク接続を確認してください。",
+      );
+      setIsDeleting(false);
     }
-    await clearLocalData();
-    clearToken();
-    await clearRefreshToken();
-    await AsyncStorage.removeItem(SETTINGS_KEY);
-    setShowDeleteConfirm(false);
-    logout();
   };
 
   const shadow = {
@@ -378,7 +386,12 @@ export function SettingsPage() {
           <InlineConfirm
             message="アカウントを削除すると全データが失われます。この操作は取り消せません。"
             onConfirm={handleDeleteAccount}
-            onCancel={() => setShowDeleteConfirm(false)}
+            onCancel={() => {
+              setShowDeleteConfirm(false);
+              setDeleteError("");
+            }}
+            error={deleteError}
+            disabled={isDeleting}
           />
         )}
         <Divider />
@@ -440,16 +453,21 @@ export function SettingsPage() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Section({
   icon: Icon,
   label,
   shadow,
   children,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ size: number; color: string }>;
   label: string;
-  shadow: object;
+  shadow: {
+    shadowColor: string;
+    shadowOffset: { width: number; height: number };
+    shadowOpacity: number;
+    shadowRadius: number;
+    elevation: number;
+  };
   children: React.ReactNode;
 }) {
   return (
@@ -506,25 +524,36 @@ function InlineConfirm({
   onConfirm,
   onCancel,
   confirmLabel = "削除する",
+  error,
+  disabled = false,
 }: {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel?: string;
+  error?: string;
+  disabled?: boolean;
 }) {
   return (
     <View className="mx-3 my-2 bg-red-50 border border-red-200 rounded-lg p-4">
       <Text className="text-sm text-red-700 font-medium mb-3">{message}</Text>
+      {error ? (
+        <Text className="text-xs text-red-600 mb-2">{error}</Text>
+      ) : null}
       <View className="flex-row gap-2">
         <TouchableOpacity
-          className="px-4 py-2 bg-red-600 rounded-lg"
+          className={`px-4 py-2 bg-red-600 rounded-lg ${disabled ? "opacity-50" : ""}`}
           onPress={onConfirm}
+          disabled={disabled}
         >
-          <Text className="text-sm text-white font-medium">{confirmLabel}</Text>
+          <Text className="text-sm text-white font-medium">
+            {disabled ? "処理中..." : confirmLabel}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="px-4 py-2 border border-gray-300 rounded-lg"
           onPress={onCancel}
+          disabled={disabled}
         >
           <Text className="text-sm text-gray-700">キャンセル</Text>
         </TouchableOpacity>

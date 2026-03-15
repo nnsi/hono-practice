@@ -5,24 +5,12 @@
 
 ---
 
-## 1. Apple Developer / Google Play アカウント準備
-
-- [ ] Apple Developer Program に登録（年額 $99）
-  - https://developer.apple.com/programs/
-- [ ] Google Play Console に登録（一回 $25）
-  - https://play.google.com/console/
-- [ ] Apple: App ID (`com.actiko.app`) を Apple Developer Portal で登録
-- [ ] Google: Google Play Console でアプリを新規作成
-
----
-
-## 2. EAS (Expo Application Services) セットアップ
+## 1. EAS (Expo Application Services) セットアップ
 
 - [ ] `eas-cli` をグローバルインストール: `npm install -g eas-cli`
 - [ ] Expo アカウントでログイン: `eas login`
 - [ ] プロジェクトを Expo に紐付け: `eas init` （`apps/mobile/` 内で実行）
 - [ ] `eas.json` を作成（下記テンプレート参照）
-- [ ] Apple Developer アカウントを EAS に接続: `eas credentials`
 
 ### eas.json テンプレート
 
@@ -53,7 +41,7 @@
 
 ---
 
-## 3. まず実機で試す（ストア掲載不要）
+## 2. 実機テスト（ストア掲載不要・アイコン不要）
 
 > アイコンやストア情報がなくても、ここまでで実機インストールできる。
 > ストアに出す前にまず動作確認したい場合はここまでやればOK。
@@ -72,34 +60,6 @@
   - `eas device:create` でデバイス登録（初回のみ）
 - [ ] Android の場合: APK が直接生成されるのでそのままインストール
 
-### iOS: TestFlight（ベータ配布）
-
-Apple 公式のベータ配布。ストア掲載情報・スクリーンショット不要。
-
-- [ ] Production プロファイルでビルド: `eas build --platform ios --profile production`
-- [ ] App Store Connect にアップロード: `eas submit --platform ios`
-- [ ] **内部テスター**（審査なし・即配布）
-  - [ ] App Store Connect → TestFlight → 内部テスターにチームメンバーを追加（最大100人）
-  - [ ] テスターに自動で招待メールが届く → TestFlight アプリからインストール
-- [ ] **外部テスター**（初回のみ簡易審査、通常1日以内）
-  - [ ] テストグループを作成し、メールアドレス or 公開リンクで招待（最大10,000人）
-  - [ ] 審査提出 → 承認後に配布開始
-- [ ] ビルドの有効期限: 90日（期限切れ前に再ビルド）
-
-### Android: テストトラック（ベータ配布）
-
-Google Play Console の段階的テスト配布。ストア掲載前でも配布可能。
-
-- [ ] Production プロファイルでビルド: `eas build --platform android --profile production`
-- [ ] Google Play Console にアップロード: `eas submit --platform android`
-- [ ] **内部テスト**（審査なし・即配布）
-  - [ ] Google Play Console → テスト → 内部テストでテスターリストにメールアドレス追加（最大100人）
-  - [ ] 招待リンクを共有 → Play ストアからインストール
-- [ ] **クローズドテスト**（審査あり・人数制限なし）
-  - [ ] テスターグループを作成して招待
-- [ ] **オープンテスト**（審査あり・誰でも参加可能）
-  - [ ] Play ストアに「ベータ版」として公開
-
 ### 実機テスト確認項目
 
 - [ ] ログイン / ユーザー作成
@@ -108,6 +68,20 @@ Google Play Console の段階的テスト配布。ストア掲載前でも配布
 - [ ] オフライン動作 → オンライン復帰時の同期
 - [ ] 各タブ画面の表示・遷移
 - [ ] 設定画面
+
+---
+
+## 3. Apple Developer / Google Play アカウント準備
+
+> 審査に時間がかかることがあるため、実機テストと並行して早めに進める。
+
+- [ ] Apple Developer Program に登録（年額 $99）
+  - https://developer.apple.com/programs/
+- [ ] Google Play Console に登録（一回 $25）
+  - https://play.google.com/console/
+- [ ] Apple: App ID (`com.actiko.app`) を Apple Developer Portal で登録
+- [ ] Google: Google Play Console でアプリを新規作成
+- [ ] Apple Developer アカウントを EAS に接続: `eas credentials`
 
 ---
 
@@ -200,15 +174,41 @@ Google Play Console の段階的テスト配布。ストア掲載前でも配布
 
 ---
 
-## 8. Production ビルド（ストア提出用）
+## 8. ベータ配布（TestFlight / Google テストトラック）
 
-- [ ] iOS: `eas build --platform ios --profile production`
-- [ ] Android: `eas build --platform android --profile production`
-- [ ] ビルド成果物を実機で最終確認（セクション3のテスト確認項目を再実施）
+### iOS: TestFlight
+
+Apple 公式のベータ配布。ストア掲載情報・スクリーンショット不要。
+
+- [ ] Production プロファイルでビルド: `eas build --platform ios --profile production`
+- [ ] App Store Connect にアップロード: `eas submit --platform ios`
+- [ ] **内部テスター**（審査なし・即配布）
+  - [ ] App Store Connect → TestFlight → 内部テスターにチームメンバーを追加（最大100人）
+  - [ ] テスターに自動で招待メールが届く → TestFlight アプリからインストール
+- [ ] **外部テスター**（初回のみ簡易審査、通常1日以内）
+  - [ ] テストグループを作成し、メールアドレス or 公開リンクで招待（最大10,000人）
+  - [ ] 審査提出 → 承認後に配布開始
+- [ ] ビルドの有効期限: 90日（期限切れ前に再ビルド）
+
+### Android: テストトラック
+
+Google Play Console の段階的テスト配布。ストア掲載前でも配布可能。
+
+- [ ] Production プロファイルでビルド: `eas build --platform android --profile production`
+- [ ] Google Play Console にアップロード: `eas submit --platform android`
+- [ ] **内部テスト**（審査なし・即配布）
+  - [ ] Google Play Console → テスト → 内部テストでテスターリストにメールアドレス追加（最大100人）
+  - [ ] 招待リンクを共有 → Play ストアからインストール
+- [ ] **クローズドテスト**（審査あり・人数制限なし）
+- [ ] **オープンテスト**（審査あり・誰でも参加可能）
 
 ---
 
-## 9. ストア申請（Submit）
+## 9. Production ビルド & ストア申請
+
+- [ ] iOS: `eas build --platform ios --profile production`
+- [ ] Android: `eas build --platform android --profile production`
+- [ ] ビルド成果物を実機で最終確認（セクション2のテスト確認項目を再実施）
 
 ### iOS
 

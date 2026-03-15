@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { buildDedupKey, buildDedupSet } from "@packages/domain/csv/csvDedup";
 import {
   autoDetectMapping,
   parseCSVText,
@@ -188,9 +189,22 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
     });
 
     let succeeded = 0;
+    let skipped = 0;
     let failed = 0;
 
     try {
+      // 重複チェック: インポート対象日の既存ログを取得してdedupSetを構築
+      const dates = validRows.map((r) =>
+        r.date.includes("T") ? r.date.split("T")[0] : r.date,
+      );
+      const minDate = dates.reduce((a, b) => (a < b ? a : b));
+      const maxDate = dates.reduce((a, b) => (a > b ? a : b));
+      const existingLogs = await activityLogRepository.getActivityLogsBetween(
+        minDate,
+        maxDate,
+      );
+      const dedupSet = buildDedupSet(existingLogs);
+
       for (let i = 0; i < validRows.length; i++) {
         const row = validRows[i];
         try {
@@ -201,15 +215,28 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
             ? row.date.split("T")[0]
             : row.date;
 
+          const memo = row.memo;
+          const dedupKey = buildDedupKey({
+            date,
+            activityId: selectedActivityId,
+            quantity,
+            memo,
+          });
+          if (dedupSet.has(dedupKey)) {
+            skipped++;
+            continue;
+          }
+
           await activityLogRepository.createActivityLog({
             activityId: selectedActivityId,
             activityKindId: null,
             quantity,
-            memo: row.memo,
+            memo,
             date,
             time: row.time || null,
             taskId: null,
           });
+          dedupSet.add(dedupKey);
           succeeded++;
         } catch {
           failed++;
@@ -225,11 +252,13 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       // Trigger sync after import
       syncEngine.syncAll();
 
-      if (failed === 0) {
-        setSuccessCount(succeeded);
-      } else {
-        setSuccessCount(succeeded);
-        setError(`${failed}件のインポートに失敗しました`);
+      const messages: string[] = [];
+      if (skipped > 0) messages.push(`${skipped}件は重複のためスキップ`);
+      if (failed > 0) messages.push(`${failed}件のインポートに失敗`);
+
+      setSuccessCount(succeeded);
+      if (messages.length > 0) {
+        setError(messages.join("、"));
       }
     } catch {
       setError("インポートに失敗しました");

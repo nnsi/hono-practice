@@ -26,27 +26,23 @@
   - Mobile: `CreateGoalDialog` / 目標編集
   - 両方とも「終了日 < 開始日」の検証がない（CSVエクスポートにはある）
 
-### Info
-
-- [ ] Google OAuth が implicit flow（PKCE推奨だが現時点で動作する）
-
 ---
 
 ## Mobile 単体タスク
 
 ### Critical
 
-- [ ] **fetch timeout の設定** (`apps/mobile/src/utils/apiClient.ts`)
+- [x] **fetch timeout の設定** (`apps/mobile/src/utils/apiClient.ts`)
   - 現在タイムアウト未設定 → 不安定なモバイル回線で無限待機の可能性
   - `AbortController` + setTimeout で 10-15秒のタイムアウトを追加
 
-- [ ] **本番API URLフォールバックの安全策** (`apps/mobile/src/utils/apiClient.ts`)
+- [x] **本番API URLフォールバックの安全策** (`apps/mobile/src/utils/apiClient.ts`)
   - `EXPO_PUBLIC_API_URL` 未設定時に `http://localhost:3456` に接続する
   - 実機ビルドでは確実に失敗するため、環境変数必須チェックまたは安全なデフォルトに変更
 
 ### Warning
 
-- [ ] **KeyboardAvoidingView の実装** (モバイル固有)
+- [x] **KeyboardAvoidingView の実装** (モバイル固有)
   - `ModalOverlay` 内の `ScrollView` にキーボード対応が未設定
   - 高リスク: タスク作成/編集（multilineメモ欄がモーダル下部）
   - 中リスク: ログ記録/編集、アクティビティ作成/編集
@@ -55,13 +51,14 @@
     2. `KeyboardAvoidingView` で ModalOverlay をラップ
     3. タスク/ログのメモ欄の高さを動的調整
 
-- [ ] **console.error を reportError() に置き換え** (`apps/mobile/src/hooks/useAuth.ts:72,130`)
+- [x] **console.error を reportError() に置き換え** (`apps/mobile/src/hooks/useAuth.ts:72,130`)
   - 本番環境では `errorReporter` に送信すべき
+
+- [x] **CSVインポート時の重複チェック** (Web + Mobile)
+  - 同じCSVを2回インポートすると二重登録される
+  - `(date, activityId, quantity, memo)` 完全一致で既存レコードがあればスキップ
 
 ### Info
 
 - [ ] アクセシビリティ（testID / accessibilityLabel）がほぼゼロ
 - [ ] UIコンポーネントのテストなし（現在はsync/repository/dbEventsのみ）
-- [ ] ディープリンク未実装（scheme定義のみ、routing hooks なし）
-- [ ] icon URL caching 戦略の改善（Cache-Control / ETag）
-- [ ] CSV I/O のバージョン管理・重複チェック仕様の定義

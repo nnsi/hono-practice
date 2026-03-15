@@ -164,6 +164,8 @@ async function parseResponses(
     if (raw.freezePeriods && raw.freezePeriods.length > 0) {
       data.freezePeriods = raw.freezePeriods.map(mapApiGoalFreezePeriod);
     }
+  } else if (freezePeriodsRes === null || !freezePeriodsRes?.ok) {
+    allSynced = false;
   }
 
   if (tasksRes.ok) {

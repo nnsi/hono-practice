@@ -5,15 +5,23 @@ import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
 function resolveApiUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
-  // Expo Go: use the same host IP that Metro bundler uses
-  const debuggerHost = Constants.expoGoConfig?.debuggerHost;
-  if (debuggerHost) {
-    const host = debuggerHost.split(":")[0];
-    return `http://${host}:3456`;
+  // Expo Go / dev client: use the same host IP that Metro bundler uses
+  if (__DEV__) {
+    const debuggerHost = Constants.expoGoConfig?.debuggerHost;
+    if (debuggerHost) {
+      const host = debuggerHost.split(":")[0];
+      return `http://${host}:3456`;
+    }
+    return "http://localhost:3456";
   }
-  return "http://localhost:3456";
+  // 本番ビルドで EXPO_PUBLIC_API_URL が未設定 → 起動時にクラッシュさせて気付けるようにする
+  throw new Error(
+    "EXPO_PUBLIC_API_URL is not set. Production builds require this environment variable.",
+  );
 }
 
 const API_URL = resolveApiUrl();
@@ -64,7 +72,7 @@ async function refreshAccessToken(): Promise<string | null> {
     try {
       const rt = await getRefreshToken();
       if (!rt) return null;
-      const res = await fetch(`${API_URL}/auth/token`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,19 +93,35 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const existingSignal = init?.signal;
+  // 呼び出し元が既にAbortControllerを渡している場合はそちらも尊重
+  if (existingSignal) {
+    existingSignal.addEventListener("abort", () => controller.abort());
+  }
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() =>
+    clearTimeout(timeoutId),
+  );
+}
+
 export const customFetch: typeof fetch = async (input, init) => {
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type"))
     headers.set("Content-Type", "application/json");
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
-  let res = await fetch(input, { ...init, headers });
+  let res = await fetchWithTimeout(input, { ...init, headers });
 
   if (res.status === 401) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
-      res = await fetch(input, { ...init, headers });
+      res = await fetchWithTimeout(input, { ...init, headers });
     }
   }
   return res;
@@ -112,7 +136,7 @@ export const apiClient = hc<AppType>(API_URL, {
 export async function apiLogin(loginId: string, password: string) {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/auth/login`, {
+    res = await fetchWithTimeout(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ login_id: loginId, password }),
@@ -142,7 +166,7 @@ export async function apiRegister(
 ) {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/user`, {
+    res = await fetchWithTimeout(`${API_URL}/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name || undefined, loginId, password }),
@@ -172,7 +196,7 @@ export async function apiGetMe() {
 export async function apiRefreshToken() {
   const rt = await getRefreshToken();
   if (!rt) throw new Error("No refresh token");
-  const res = await fetch(`${API_URL}/auth/token`, {
+  const res = await fetchWithTimeout(`${API_URL}/auth/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -200,7 +224,7 @@ export async function apiLogout() {
 export async function apiGoogleLogin(credential: string) {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/auth/google`, {
+    res = await fetchWithTimeout(`${API_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ credential }),
