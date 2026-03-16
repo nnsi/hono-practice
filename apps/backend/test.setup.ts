@@ -1,6 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
 import * as schema from "@infra/drizzle/schema";
-import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
@@ -13,6 +12,10 @@ export let testDB: ReturnType<typeof drizzle<typeof schema>>;
 export const TEST_USER_ID = "00000000-0000-4000-8000-000000000000";
 const migrationsFolder = "./infra/drizzle/migrations";
 
+// bcrypt.hash("test-refresh-token-plain", 10) の事前計算結果
+const SEED_HASHED_TOKEN =
+  "$2a$10$Q7VSQL2ziRk0jHKxFmOOQePwGJvGbMPOmBjaSMqOjh1OLmqGFGWbW";
+
 beforeAll(async () => {
   pglite = new PGlite();
   testDB = drizzle(pglite, { schema });
@@ -22,11 +25,19 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await testDB.execute(sql`drop schema if exists public cascade`);
-  await testDB.execute(sql`create schema public`);
-  await testDB.execute(sql`drop schema if exists drizzle cascade`);
-  await testDB.execute(sql`create schema drizzle`);
-  await migrate(testDB, { migrationsFolder });
+  await testDB.execute(sql`TRUNCATE TABLE
+    activity_log,
+    activity_kind,
+    activity_goal_freeze_period,
+    activity_goal,
+    activity,
+    task,
+    api_key,
+    user_subscription,
+    refresh_token,
+    user_provider,
+    "user"
+    CASCADE`);
   await seed();
 });
 
@@ -44,15 +55,11 @@ async function seed() {
     name: "test",
   });
 
-  const seedSelector = "00000000-0000-4000-8000-selector0001";
-  const seedPlainToken = "test-refresh-token-plain";
-  const seedHashedToken = await bcrypt.hash(seedPlainToken, 10);
-
   await testDB.insert(schema.refreshTokens).values({
     id: "00000000-0000-4000-8000-000000000001",
     userId: TEST_USER_ID,
-    selector: seedSelector,
-    token: seedHashedToken,
+    selector: "00000000-0000-4000-8000-selector0001",
+    token: SEED_HASHED_TOKEN,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     revokedAt: null,
     createdAt: new Date(),
