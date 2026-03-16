@@ -7,7 +7,7 @@
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
     "ci-check": "vitest run --reporter=dot && biome lint && pnpm run tsc",
-    "tsc": "tsc --noEmit && pnpm --filter actiko-frontend typecheck",
+    "tsc": "tsc --noEmit",
     "tsc:mobile": "pnpm --filter actiko-mobile typecheck",
     "lint": "biome lint",
     "fix": "biome check . --write --unsafe",

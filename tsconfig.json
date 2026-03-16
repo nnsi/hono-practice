@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@backend/*": ["apps/backend/*"],
+      "@/*": ["apps/frontend/src/*"],
       "@frontend/*": ["apps/frontend/src/*"],
       "@dtos/*": ["packages/types/*"],
       "@hooks/*": ["apps/frontend/src/hooks/*"],
@@ -39,7 +40,6 @@
   "exclude": [
     "node_modules",
     "apps/tail-worker",
-    "apps/frontend",
     "apps/mobile",
     "packages/frontend-shared/adapters/react-native.ts"
   ]
