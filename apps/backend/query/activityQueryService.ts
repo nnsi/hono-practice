@@ -1,5 +1,5 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import type { GetActivityStatsResponse } from "@dtos/response";
+import type { GetActivityStatsResponse } from "@packages/types/response";
 import { activities, activityKinds, activityLogs } from "@infra/drizzle/schema";
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 

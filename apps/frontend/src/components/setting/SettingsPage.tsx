@@ -6,7 +6,6 @@ import {
   Database,
   Download,
   Info,
-  Key,
   Settings,
   Trash2,
   Upload,
@@ -21,7 +20,6 @@ import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
-import { ApiKeyManager } from "./ApiKeyManager";
 
 const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
@@ -287,15 +285,6 @@ export function SettingsPage() {
               )}
             </div>
           </div>
-        </section>
-
-        {/* APIキー管理 */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-            <Key size={14} />
-            APIキー管理
-          </h2>
-          <ApiKeyManager />
         </section>
 
         {/* データ管理 */}

@@ -1,5 +1,5 @@
-import type { CreateTaskRequest, UpdateTaskRequest } from "@dtos/request";
-import { GetTaskResponseSchema, GetTasksResponseSchema } from "@dtos/response";
+import type { CreateTaskRequest, UpdateTaskRequest } from "@packages/types/request";
+import { GetTaskResponseSchema, GetTasksResponseSchema } from "@packages/types/response";
 import type { TaskId } from "@packages/domain/task/taskSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 

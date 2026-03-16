@@ -14,6 +14,9 @@
 
 ### eas.json テンプレート
 
+preview（stg）/ production で環境変数とチャンネルを分離する。
+OTA Update は channel に紐付くため、preview ビルドに production の OTA が配信されることはない。
+
 ```json
 {
   "cli": { "version": ">= 15.0.0" },
@@ -24,10 +27,22 @@
     },
     "preview": {
       "distribution": "internal",
-      "ios": { "simulator": false }
+      "channel": "preview",
+      "ios": { "simulator": false },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://stg-api.actiko.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<STG_GOOGLE_CLIENT_ID>",
+        "EXPO_PUBLIC_CONTACT_EMAIL": "<CONTACT_EMAIL>"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.actiko.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<PROD_GOOGLE_CLIENT_ID>",
+        "EXPO_PUBLIC_CONTACT_EMAIL": "<CONTACT_EMAIL>"
+      }
     }
   },
   "submit": {
@@ -38,6 +53,16 @@
   }
 }
 ```
+
+### 環境変数一覧
+
+| 変数名 | 用途 | 参照箇所 |
+|--------|------|----------|
+| `EXPO_PUBLIC_API_URL` | バックエンド API のベース URL | `apiClient.ts` — 未設定で本番ビルド時はクラッシュ |
+| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth のクライアント ID | `LoginForm.tsx`, `SettingsPage.tsx` |
+| `EXPO_PUBLIC_CONTACT_EMAIL` | 法的情報画面の問い合わせ先メール | `LegalModal.tsx` |
+
+> **Note:** 開発時（`__DEV__`）は `EXPO_PUBLIC_API_URL` 未設定でも Metro bundler のホスト IP から `http://<host>:3456` を自動解決する。
 
 ---
 
@@ -236,6 +261,7 @@ Google Play Console の段階的テスト配布。ストア掲載前でも配布
 - [ ] Sentry 等のクラッシュレポート導入（任意）
 - [ ] バージョン管理ルールの策定（semver）
 - [ ] CI/CD パイプライン構築（GitHub Actions + EAS Build）
+  - ADR: [workflow_dispatch による手動デプロイ](/docs/adr/20260316_mobile_cicd_workflow_dispatch.md)
 
 ---
 

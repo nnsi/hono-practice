@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
+import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
 import { createUseEditLogDialog } from "@packages/frontend-shared/hooks/useEditLogDialog";
 
 import { activityLogRepository } from "../../db/activityLogRepository";
-import type { DexieActivityLog } from "../../db/schema";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { syncEngine } from "../../sync/syncEngine";
 
@@ -14,7 +14,7 @@ const useEditLogDialogBase = createUseEditLogDialog({
   syncEngine,
 });
 
-export function useEditLogDialog(log: DexieActivityLog, onClose: () => void) {
+export function useEditLogDialog(log: ActivityLogBase, onClose: () => void) {
   const base = useEditLogDialogBase(log, onClose);
   return {
     ...base,

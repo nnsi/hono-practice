@@ -17,7 +17,6 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
       "@packages/domain": ["../../packages/domain/index.ts"],
       "@packages/domain/*": ["../../packages/domain/*"],
       "@packages/sync-engine": ["../../packages/sync-engine/index.ts"],
@@ -27,12 +26,11 @@
       "@packages/utils": ["../../packages/utils/index.ts"],
       "@packages/utils/*": ["../../packages/utils/*"],
       "@packages/types": ["../../packages/types/index.ts"],
+      "@packages/types/*": ["../../packages/types/*"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
       "@backend/*": ["../../apps/backend/*"],
-      "@infra/*": ["../../infra/*"],
-      "@dtos/*": ["../../packages/types/*"],
-      "@domain/*": ["../../apps/backend/domain/*"]
+      "@infra/*": ["../../infra/*"]
     }
   },
   "include": ["src"],

@@ -1,9 +1,9 @@
 import { AppError } from "@backend/error";
-import type { CreateApiKeyRequest } from "@dtos/request";
+import type { CreateApiKeyRequest } from "@packages/types/request";
 import {
   CreateApiKeyResponseSchema,
   GetApiKeysResponseSchema,
-} from "@dtos/response";
+} from "@packages/types/response";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ApiKeyUsecase } from "./apiKeyUsecase";

@@ -15,6 +15,9 @@ export const configSchema = z.object({
   UPLOAD_DIR: z.string().default("public/uploads"),
   // Redis URL（ローカル開発用、オプション）
   REDIS_URL: z.string().optional(),
+  // AI連携（OpenRouter）
+  OPENROUTER_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().default("openai/gpt-4o-mini"),
 });
 
 export type Config = z.infer<typeof configSchema>;

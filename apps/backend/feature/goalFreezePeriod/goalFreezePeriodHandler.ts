@@ -2,11 +2,11 @@ import { AppError } from "@backend/error";
 import type {
   CreateFreezePeriodRequest,
   UpdateFreezePeriodRequest,
-} from "@dtos/request";
+} from "@packages/types/request";
 import {
   FreezePeriodResponseSchema,
   GetFreezePeriodsResponseSchema,
-} from "@dtos/response";
+} from "@packages/types/response";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { GoalFreezePeriodUsecase } from "./goalFreezePeriodUsecase";

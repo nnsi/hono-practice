@@ -10,8 +10,8 @@ import {
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
-} from "@dtos/request";
-import type { GetActivityResponse } from "@dtos/response";
+} from "@packages/types/request";
+import type { GetActivityResponse } from "@packages/types/response";
 import { zValidator } from "@hono/zod-validator";
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 

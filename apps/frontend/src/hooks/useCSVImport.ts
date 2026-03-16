@@ -144,6 +144,7 @@ export function useCSVImport(onComplete: () => void) {
     total: 0,
     processed: 0,
     succeeded: 0,
+    skipped: 0,
     failed: 0,
   });
 

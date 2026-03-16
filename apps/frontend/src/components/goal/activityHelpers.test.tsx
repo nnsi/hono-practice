@@ -18,6 +18,8 @@ function createActivity(overrides: Partial<DexieActivity> = {}): DexieActivity {
     quantityUnit: "回",
     orderIndex: "000001",
     showCombinedStats: false,
+    recordingMode: "manual",
+    recordingModeConfig: null,
     createdAt: "2025-01-01T00:00:00Z",
     updatedAt: "2025-01-01T00:00:00Z",
     deletedAt: null,

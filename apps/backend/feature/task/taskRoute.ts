@@ -4,8 +4,8 @@ import { noopTracer } from "@backend/lib/tracer";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
-} from "@dtos/request";
-import { getTasksRequestSchema } from "@dtos/request/GetTasksRequest";
+} from "@packages/types/request";
+import { getTasksRequestSchema } from "@packages/types/request/GetTasksRequest";
 import { zValidator } from "@hono/zod-validator";
 import { createTaskId } from "@packages/domain/task/taskSchema";
 

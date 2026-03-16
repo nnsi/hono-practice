@@ -4,12 +4,12 @@ import type {
   CreateActivityLogBatchRequest,
   CreateActivityLogRequest,
   UpdateActivityLogRequest,
-} from "@dtos/request";
+} from "@packages/types/request";
 import {
   CreateActivityLogBatchResponseSchema,
   GetActivityLogResponseSchema,
   GetActivityLogsResponseSchema,
-} from "@dtos/response";
+} from "@packages/types/response";
 import {
   createActivityId,
   createActivityKindId,

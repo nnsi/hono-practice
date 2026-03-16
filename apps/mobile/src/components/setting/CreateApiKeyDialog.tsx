@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import type { CreateApiKeyRequest } from "@dtos/request";
-import type { CreateApiKeyResponse } from "@dtos/response";
+import type { CreateApiKeyRequest } from "@packages/types/request";
+import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy } from "lucide-react-native";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 

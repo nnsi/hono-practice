@@ -4,6 +4,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { apiV1Route } from "./api/v1";
 import { AppError } from "./error";
 import {
+  aiActivityLogRoute,
   apiKeyRoute,
   authRoute,
   newActivityLogRoute,
@@ -93,6 +94,7 @@ const routes = app
   .route("/users/tasks", taskRoute)
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
+  .route("/users/ai/activity-logs", aiActivityLogRoute)
   .route("/users/goals", goalRoute)
   .route("/users/goals", goalFreezePeriodRoute)
   .route("/users/api-keys", apiKeyRoute)

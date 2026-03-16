@@ -2,12 +2,12 @@ import type { AppType } from "@backend/app";
 import {
   type CreateApiKeyRequest,
   CreateApiKeyRequestSchema,
-} from "@dtos/request";
+} from "@packages/types/request";
 import {
   type CreateApiKeyResponse,
   type GetApiKeysResponse,
   GetApiKeysResponseSchema,
-} from "@dtos/response";
+} from "@packages/types/response";
 import {
   type UseMutationResult,
   type UseQueryResult,

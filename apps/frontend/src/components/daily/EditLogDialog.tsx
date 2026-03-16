@@ -1,6 +1,7 @@
+import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
 import { Trash2, X } from "lucide-react";
 
-import type { DexieActivity, DexieActivityLog } from "../../db/schema";
+import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
 
@@ -9,7 +10,7 @@ export function EditLogDialog({
   activity,
   onClose,
 }: {
-  log: DexieActivityLog;
+  log: ActivityLogBase;
   activity: DexieActivity | null;
   onClose: () => void;
 }) {

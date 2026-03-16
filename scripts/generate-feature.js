@@ -39,7 +39,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import {
   create${EntityName}RequestSchema,
   update${EntityName}RequestSchema,
-} from "@dtos/request";
+} from "@packages/types/request";
 
 import type { AppContext } from "../../context";
 import { new${EntityName}Handler } from "./${entityName}Handler";
@@ -120,8 +120,8 @@ export const new${EntityName}Route = create${EntityName}Route();
 function generateHandler() {
   const content = `import type { ${EntityName}Id } from "@packages/domain/${entityName}/${entityName}Schema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { Create${EntityName}Request, Update${EntityName}Request } from "@dtos/request";
-import { Get${EntityName}ResponseSchema, Get${EntityName}sResponseSchema } from "@dtos/response";
+import type { Create${EntityName}Request, Update${EntityName}Request } from "@packages/types/request";
+import { Get${EntityName}ResponseSchema, Get${EntityName}sResponseSchema } from "@packages/types/response";
 
 import { AppError } from "../../error";
 import type { ${EntityName}Usecase } from ".";

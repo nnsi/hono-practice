@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -18,14 +18,11 @@
     "baseUrl": ".",
     "paths": {
       "@backend/*": ["apps/backend/*"],
-      "@frontend/*": ["apps/frontend/src/*"],
-      "@dtos/*": ["packages/types/*"],
-      "@hooks/*": ["apps/frontend/src/hooks/*"],
       "@infra/*": ["infra/*"],
-      "@components/*": ["apps/frontend/src/components/*"],
       "@packages/frontend-shared": ["packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["packages/frontend-shared/*"],
       "@packages/types": ["packages/types/index.ts"],
+      "@packages/types/*": ["packages/types/*"],
       "@packages/domain": ["packages/domain/index.ts"],
       "@packages/domain/*": ["packages/domain/*"],
       "@packages/sync-engine": ["packages/sync-engine/index.ts"],
@@ -39,8 +36,6 @@
   "exclude": [
     "node_modules",
     "apps/tail-worker",
-    "apps/frontend",
-    "apps/mobile",
-    "packages/frontend-shared/adapters/react-native.ts"
+    "apps/mobile"
   ]
 }

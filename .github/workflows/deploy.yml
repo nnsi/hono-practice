@@ -153,6 +153,7 @@ jobs:
           printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env stg
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env stg
+          if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env stg; fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -162,6 +163,7 @@ jobs:
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_STG }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           APP_URL_V2: ${{ vars.APP_URL_V2_STG }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Set DATABASE_URL secret in Cloudflare (prod)
         if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
@@ -172,6 +174,7 @@ jobs:
           printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env production
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env production
+          if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env production; fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -181,6 +184,7 @@ jobs:
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_PROD }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           APP_URL_V2: ${{ vars.APP_URL_V2_PROD }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Deploy to Cloudflare Workers (stg)
         if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'

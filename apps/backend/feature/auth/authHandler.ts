@@ -1,5 +1,5 @@
-import type { GoogleLoginRequest, LoginRequest } from "@dtos/request";
-import { authResponseSchema } from "@dtos/response";
+import type { GoogleLoginRequest, LoginRequest } from "@packages/types/request";
+import { authResponseSchema } from "@packages/types/response";
 import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
 import type { User } from "@packages/domain/user/userSchema";

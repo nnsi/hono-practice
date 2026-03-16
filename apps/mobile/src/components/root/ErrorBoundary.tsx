@@ -22,7 +22,12 @@ const MAX_RETRIES = 2;
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, retryKey: 0, retryCount: 0, isRecovering: false };
+    this.state = {
+      hasError: false,
+      retryKey: 0,
+      retryCount: 0,
+      isRecovering: false,
+    };
   }
 
   static getDerivedStateFromError(_error: Error): Partial<State> {
@@ -41,7 +46,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidUpdate(_prevProps: Props, prevState: State): void {
     // リトライ後に正常描画できたらカウントリセット
-    if (prevState.hasError && !this.state.hasError && this.state.retryCount > 0) {
+    if (
+      prevState.hasError &&
+      !this.state.hasError &&
+      this.state.retryCount > 0
+    ) {
       this.setState({ retryCount: 0 });
     }
   }
@@ -57,7 +66,8 @@ export class ErrorBoundary extends Component<Props, State> {
   handleRecover = (): void => {
     if (!this.props.onRecover) return;
     this.setState({ isRecovering: true });
-    this.props.onRecover()
+    this.props
+      .onRecover()
       .then(() => {
         this.setState({
           hasError: false,
@@ -129,7 +139,9 @@ export class ErrorBoundary extends Component<Props, State> {
               onPress={this.handleRecover}
               disabled={this.state.isRecovering}
               style={{
-                backgroundColor: this.state.isRecovering ? "#57534e" : "#3b82f6",
+                backgroundColor: this.state.isRecovering
+                  ? "#57534e"
+                  : "#3b82f6",
                 paddingHorizontal: 24,
                 paddingVertical: 12,
                 borderRadius: 8,
@@ -139,9 +151,22 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.isRecovering ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#fff", textAlign: "center" }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: "#fff",
+                    textAlign: "center",
+                  }}
+                >
                   ローカルデータを復旧{"\n"}
-                  <Text style={{ fontSize: 11, fontWeight: "400", color: "#d1d5db" }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: "400",
+                      color: "#d1d5db",
+                    }}
+                  >
                     インターネット接続が必要です
                   </Text>
                 </Text>
