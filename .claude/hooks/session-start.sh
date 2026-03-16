@@ -11,9 +11,9 @@ echo "Setting up development environment for Claude Code on the web..."
 # Change to project directory
 cd "$CLAUDE_PROJECT_DIR"
 
-# Install npm dependencies
-echo "Installing npm dependencies..."
-npm install
+# Install dependencies with pnpm (NOT npm - npm hoists react@latest which conflicts with pnpm-managed react@19.1.0)
+echo "Installing pnpm dependencies..."
+pnpm install --frozen-lockfile || pnpm install
 
 # Install Playwright browsers for E2E tests (optional, may fail in restricted environments)
 echo "Installing Playwright chromium browser..."
