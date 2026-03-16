@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { ApiKeyResponse } from "@dtos/response";
+import type { ApiKeyResponse } from "@packages/types/response";
 import dayjs from "dayjs";
 import { Trash2 } from "lucide-react-native";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";

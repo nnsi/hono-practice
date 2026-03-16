@@ -5,7 +5,7 @@ import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { newAIClient } from "@backend/infra/ai";
 import { noopTracer } from "@backend/lib/tracer";
-import { CreateAIActivityLogRequestSchema } from "@dtos/request";
+import { CreateAIActivityLogRequestSchema } from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
 
 import { newActivityRepository } from "../activity";

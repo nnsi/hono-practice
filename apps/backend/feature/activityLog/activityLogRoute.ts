@@ -10,8 +10,8 @@ import {
   CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
-} from "@dtos/request";
-import type { GetActivityLogResponse } from "@dtos/response";
+} from "@packages/types/request";
+import type { GetActivityLogResponse } from "@packages/types/response";
 import { zValidator } from "@hono/zod-validator";
 
 import { newActivityRepository } from "../activity";

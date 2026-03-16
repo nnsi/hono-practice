@@ -1,8 +1,8 @@
 import { AppError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import type { GoalQueryService } from "@backend/query/goalQueryService";
-import type { CreateGoalRequest, UpdateGoalRequest } from "@dtos/request";
-import { GetGoalsResponseSchema, GoalResponseSchema } from "@dtos/response";
+import type { CreateGoalRequest, UpdateGoalRequest } from "@packages/types/request";
+import { GetGoalsResponseSchema, GoalResponseSchema } from "@packages/types/response";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { GoalFilters, GoalUsecase } from "./goalUsecase";

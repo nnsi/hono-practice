@@ -1,4 +1,4 @@
-import { UpsertGoalRequestSchema } from "@dtos/sync/request/goal";
+import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
 import type { SyncResult } from "@packages/sync-engine";
 import {
   createSyncActivityLogs,

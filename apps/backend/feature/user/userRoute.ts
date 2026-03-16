@@ -7,7 +7,7 @@ import {
   createRateLimitMiddleware,
   registerRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
-import { createUserRequestSchema } from "@dtos/request";
+import { createUserRequestSchema } from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
 
 import type { AppContext } from "../../context";

@@ -7,7 +7,7 @@ import type {
   CreateActivityRequest,
   UpdateActivityOrderRequest,
   UpdateActivityRequest,
-} from "@dtos/request";
+} from "@packages/types/request";
 import {
   type Activity,
   type ActivityId,

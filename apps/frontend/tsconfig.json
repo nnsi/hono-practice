@@ -26,12 +26,11 @@
       "@packages/utils": ["../../packages/utils/index.ts"],
       "@packages/utils/*": ["../../packages/utils/*"],
       "@packages/types": ["../../packages/types/index.ts"],
+      "@packages/types/*": ["../../packages/types/*"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
       "@backend/*": ["../../apps/backend/*"],
-      "@infra/*": ["../../infra/*"],
-      "@dtos/*": ["../../packages/types/*"],
-      "@domain/*": ["../../apps/backend/domain/*"]
+      "@infra/*": ["../../infra/*"]
     }
   },
   "include": ["src"],

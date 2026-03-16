@@ -5,7 +5,7 @@ import { newGoalQueryService } from "@backend/query/goalQueryService";
 import {
   CreateGoalRequestSchema,
   UpdateGoalRequestSchema,
-} from "@dtos/request";
+} from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
 
 import type { AppContext } from "../../context";

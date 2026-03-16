@@ -18,9 +18,7 @@
       "@packages/utils/*": ["../../packages/utils/*"],
       "@/*": ["./src/*"],
       "@backend/*": ["../../apps/backend/*"],
-      "@infra/*": ["../../infra/*"],
-      "@dtos/*": ["../../packages/types/*"],
-      "@domain/*": ["../../apps/backend/domain/*"]
+      "@infra/*": ["../../infra/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"]

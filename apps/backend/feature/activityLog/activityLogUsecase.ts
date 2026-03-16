@@ -5,7 +5,7 @@ import type { ActivityQueryService } from "@backend/query";
 import type {
   CreateActivityLogBatchResponse,
   GetActivityStatsResponse,
-} from "@dtos/response";
+} from "@packages/types/response";
 import {
   type ActivityId,
   type ActivityKindId,
