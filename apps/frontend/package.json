@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "vite --host --port 2460",
     "build": "vite build",
-    "build-stg": "vite build --mode stg",
-    "typecheck": "tsc --noEmit"
+    "build-stg": "vite build --mode stg"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
