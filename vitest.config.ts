@@ -28,17 +28,18 @@ export default defineConfig({
       "**/dist/**",
       "**/cypress/**",
       "**/.{idea,git,cache,output,temp}/**",
+      "**/.claude/worktrees/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/db-data/**",
       "**/dist-frontend/**",
       "**/e2e/**",
     ],
     silent: true,
-    pool: "forks",
+    pool: "vmThreads",
     poolOptions: {
-      forks: {
-        minForks: 1,
-        maxForks: 4,
+      vmThreads: {
+        minThreads: 1,
+        maxThreads: 4,
       },
     },
     maxConcurrency: 5,
