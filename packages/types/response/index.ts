@@ -2,6 +2,7 @@ export * from "./ApiKeyResponse";
 export * from "./AuthResponse";
 export * from "./CheckDuplicatesResponse";
 export * from "./CreateActivityLogBatchResponse";
+export * from "./CreateAIActivityLogResponse";
 export * from "./EnqueueSyncResponse";
 export * from "./GetActivitiesResponse";
 export * from "./GetActivityLogsResponse";

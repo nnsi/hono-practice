@@ -1,6 +1,7 @@
 export * from "./activity";
 export * from "./activitygoal";
 export * from "./activityLog";
+export * from "./aiActivityLog";
 export * from "./apiKey";
 export * from "./auth";
 export * from "./goal";

@@ -2,6 +2,7 @@ export * from "./CheckDuplicatesRequest";
 export * from "./CreateActivityLogBatchRequest";
 export * from "./CreateActivityLogRequest";
 export * from "./CreateActivityRequest";
+export * from "./CreateAIActivityLogRequest";
 export * from "./CreateApiKeyRequest";
 export * from "./CreateFreezePeriodRequest";
 export * from "./CreateGoalRequest";
