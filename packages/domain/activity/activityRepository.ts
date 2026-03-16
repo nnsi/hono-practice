@@ -38,7 +38,13 @@ export type ActivityRepository = {
     changes: Partial<
       Pick<
         ActivityRecord,
-        "name" | "quantityUnit" | "emoji" | "showCombinedStats" | "iconType"
+        | "name"
+        | "quantityUnit"
+        | "emoji"
+        | "showCombinedStats"
+        | "iconType"
+        | "recordingMode"
+        | "recordingModeConfig"
       >
     >,
     updatedKinds?: { id?: string; name: string; color: string }[],

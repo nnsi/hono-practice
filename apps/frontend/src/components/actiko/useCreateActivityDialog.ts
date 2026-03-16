@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
+
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { resizeImage } from "../../utils/imageResizer";
@@ -22,7 +24,7 @@ export function useCreateActivityDialog(
     type: "emoji",
     emoji: "🎯",
   });
-  const [recordingMode, setRecordingMode] = useState("manual");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
     null,
   );

@@ -66,6 +66,7 @@ describe("activityLogRepository", () => {
         memo: "朝ラン",
         date: "2024-06-01",
         time: "08:00",
+        taskId: null,
       };
 
       const result = await activityLogRepository.createActivityLog(input);
@@ -92,6 +93,7 @@ describe("activityLogRepository", () => {
         memo: "",
         date: "2024-06-01",
         time: null,
+        taskId: null,
       };
 
       const result = await activityLogRepository.createActivityLog(input);

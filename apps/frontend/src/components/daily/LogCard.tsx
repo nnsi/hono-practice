@@ -1,10 +1,13 @@
+import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
 import { Loader2 } from "lucide-react";
 
 import type {
   DexieActivity,
   DexieActivityKind,
-  DexieActivityLog,
+  SyncStatus,
 } from "../../db/schema";
+
+type LogCardLog = ActivityLogBase & { _syncStatus?: SyncStatus };
 
 export function LogCard({
   log,
@@ -12,7 +15,7 @@ export function LogCard({
   kind,
   onClick,
 }: {
-  log: DexieActivityLog;
+  log: LogCardLog;
   activity: DexieActivity | null;
   kind: DexieActivityKind | null;
   onClick: () => void;

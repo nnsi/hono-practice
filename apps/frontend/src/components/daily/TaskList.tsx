@@ -1,17 +1,8 @@
+import type { DailyTask } from "@packages/frontend-shared/hooks/types";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
 import { getActivityIcon } from "../goal/activityHelpers";
-
-export type Task = {
-  id: string;
-  activityId: string | null;
-  title: string;
-  doneDate: string | null;
-  memo: string;
-  startDate: string | null;
-  dueDate: string | null;
-};
 
 export function TaskList({
   tasks,
@@ -19,9 +10,9 @@ export function TaskList({
   onToggle,
   activitiesMap,
 }: {
-  tasks: Task[];
+  tasks: DailyTask[];
   isLoading: boolean;
-  onToggle: (task: Task) => void;
+  onToggle: (task: DailyTask) => void | Promise<void>;
   activitiesMap?: Map<string, DexieActivity>;
 }) {
   if (isLoading) {
