@@ -36,6 +36,7 @@ type UseLogFormDeps = {
       memo: string;
       date: string;
       time: string | null;
+      taskId: string | null;
     }) => Promise<unknown>;
   };
   syncEngine: { syncActivityLogs: () => void };
@@ -82,6 +83,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
         memo: params.memo,
         date,
         time: null,
+        taskId: null,
       });
       syncEngine.syncActivityLogs();
     };

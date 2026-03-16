@@ -17,7 +17,6 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
       "@packages/domain": ["../../packages/domain/index.ts"],
       "@packages/domain/*": ["../../packages/domain/*"],
       "@packages/sync-engine": ["../../packages/sync-engine/index.ts"],

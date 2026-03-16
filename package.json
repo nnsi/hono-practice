@@ -6,7 +6,7 @@
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
-    "ci-check": "vitest run --reporter=dot && biome lint && tsc --noEmit",
+    "ci-check": "vitest run --reporter=dot && biome lint && pnpm run tsc",
     "tsc": "tsc --noEmit",
     "tsc:mobile": "pnpm --filter actiko-mobile typecheck",
     "lint": "biome lint",
