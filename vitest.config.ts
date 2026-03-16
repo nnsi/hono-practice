@@ -33,6 +33,7 @@ export default defineConfig({
       "**/dist-frontend/**",
       "**/e2e/**",
     ],
+    silent: true,
     pool: "forks",
     poolOptions: {
       forks: {
