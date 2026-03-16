@@ -18,7 +18,6 @@
     "baseUrl": ".",
     "paths": {
       "@backend/*": ["apps/backend/*"],
-      "@/*": ["apps/frontend/src/*"],
       "@frontend/*": ["apps/frontend/src/*"],
       "@dtos/*": ["packages/types/*"],
       "@hooks/*": ["apps/frontend/src/hooks/*"],
