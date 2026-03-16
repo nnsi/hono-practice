@@ -8,7 +8,6 @@ import {
   Database,
   Download,
   Info,
-  Key,
   Link,
   LogOut,
   Settings,
@@ -38,7 +37,6 @@ import {
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
-import { ApiKeyManager } from "./ApiKeyManager";
 
 const SETTINGS_KEY = "actiko-v2-settings";
 const API_URL = getApiUrl();
@@ -311,17 +309,6 @@ export function SettingsPage() {
           onChange={(v) => updateSetting("praiseMode", v)}
         />
       </Section>
-
-      {/* API Key management */}
-      <View className="mx-4 mt-4">
-        <View className="flex-row items-center mb-2 ml-1">
-          <Key size={14} color="#9ca3af" />
-          <Text className="ml-1.5 text-xs text-gray-400 uppercase tracking-wide">
-            APIキー管理
-          </Text>
-        </View>
-        <ApiKeyManager shadow={shadow} />
-      </View>
 
       {/* Data management */}
       <Section icon={Database} label="データ管理" shadow={shadow}>
