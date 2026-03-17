@@ -1,6 +1,7 @@
 import "../src/polyfills/crypto";
 
 import { createContext, useContext, useEffect } from "react";
+import * as Updates from "expo-updates";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -58,6 +59,28 @@ export default function RootLayout() {
 
   useEffect(() => {
     setupGlobalErrorHandler();
+
+    // Debug: expo-updates state
+    console.log("[updates] channel:", Updates.channel);
+    console.log("[updates] runtimeVersion:", Updates.runtimeVersion);
+    console.log("[updates] isEmbeddedLaunch:", Updates.isEmbeddedLaunch);
+    console.log("[updates] updateId:", Updates.updateId);
+    console.log("[updates] isEnabled:", Updates.isEnabled);
+
+    if (!__DEV__) {
+      Updates.checkForUpdateAsync()
+        .then((result) => {
+          console.log("[updates] checkForUpdate:", JSON.stringify(result));
+          if (result.isAvailable) {
+            return Updates.fetchUpdateAsync().then((fetchResult) => {
+              console.log("[updates] fetched:", JSON.stringify(fetchResult));
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("[updates] check failed:", err);
+        });
+    }
   }, []);
 
   useEffect(() => {

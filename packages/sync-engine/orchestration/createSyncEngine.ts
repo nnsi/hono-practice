@@ -10,9 +10,12 @@ type SyncFunctions = {
   syncTasks: () => Promise<void>;
 };
 
+export type SyncErrorHandler = (error: unknown, phase: string) => void;
+
 export function createSyncEngine(
   fns: SyncFunctions,
   defaultNetwork: NetworkAdapter,
+  onSyncError?: SyncErrorHandler,
 ) {
   let isSyncing = false;
   let retryCount = 0;
@@ -46,8 +49,9 @@ export function createSyncEngine(
         // Freeze periods depend on goals existing on server
         await fns.syncGoalFreezePeriods();
         retryCount = 0;
-      } catch {
+      } catch (err) {
         retryCount++;
+        onSyncError?.(err, `syncAll (retry ${retryCount})`);
       } finally {
         isSyncing = false;
       }
