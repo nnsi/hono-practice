@@ -67,7 +67,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
 
     const gen = getSyncGeneration();
 
-    let responses;
+    let responses: Awaited<ReturnType<FetchAllApis>>;
     try {
       responses = await deps.fetchAllApis(sinceQuery);
     } catch (err) {
@@ -88,7 +88,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
       tasksRes.ok,
     );
 
-    let parsed;
+    let parsed: { allSynced: boolean; data: ParsedSyncData };
     try {
       parsed = await parseResponses(
         activitiesRes,
