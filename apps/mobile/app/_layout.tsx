@@ -1,12 +1,12 @@
 import "../src/polyfills/crypto";
 
 import { createContext, useContext, useEffect } from "react";
-import * as Updates from "expo-updates";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
 import { ActivityIndicator, LogBox, View } from "react-native";
 
 LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
@@ -19,6 +19,7 @@ import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
 import { clearLocalData } from "../src/sync/initialSync";
+import { reportError } from "../src/utils/errorReporter";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
 
@@ -61,24 +62,47 @@ export default function RootLayout() {
     setupGlobalErrorHandler();
 
     // Debug: expo-updates state
-    console.log("[updates] channel:", Updates.channel);
-    console.log("[updates] runtimeVersion:", Updates.runtimeVersion);
-    console.log("[updates] isEmbeddedLaunch:", Updates.isEmbeddedLaunch);
-    console.log("[updates] updateId:", Updates.updateId);
-    console.log("[updates] isEnabled:", Updates.isEnabled);
+    const updatesState = {
+      channel: Updates.channel,
+      runtimeVersion: Updates.runtimeVersion,
+      isEmbeddedLaunch: Updates.isEmbeddedLaunch,
+      updateId: Updates.updateId,
+      isEnabled: Updates.isEnabled,
+    };
+    console.log("[updates] state:", JSON.stringify(updatesState));
+    reportError({
+      errorType: "unhandled_error",
+      message: `[updates] state: ${JSON.stringify(updatesState)}`,
+    });
 
     if (!__DEV__) {
       Updates.checkForUpdateAsync()
         .then((result) => {
           console.log("[updates] checkForUpdate:", JSON.stringify(result));
+          reportError({
+            errorType: "unhandled_error",
+            message: `[updates] checkForUpdate: ${JSON.stringify(result)}`,
+          });
           if (result.isAvailable) {
-            return Updates.fetchUpdateAsync().then((fetchResult) => {
+            return Updates.fetchUpdateAsync().then(async (fetchResult) => {
               console.log("[updates] fetched:", JSON.stringify(fetchResult));
+              reportError({
+                errorType: "unhandled_error",
+                message: `[updates] fetched: ${JSON.stringify(fetchResult)}`,
+              });
+              if (fetchResult.isNew) {
+                await Updates.reloadAsync();
+              }
             });
           }
         })
         .catch((err) => {
           console.error("[updates] check failed:", err);
+          reportError({
+            errorType: "unhandled_error",
+            message: `[updates] check failed: ${err instanceof Error ? err.message : String(err)}`,
+            stack: err instanceof Error ? err.stack : undefined,
+          });
         });
     }
   }, []);
