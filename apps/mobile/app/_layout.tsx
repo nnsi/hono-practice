@@ -1,13 +1,19 @@
+import "../src/polyfills/crypto";
+
 import { createContext, useContext, useEffect } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, LogBox, View } from "react-native";
+
+LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
+
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
+import { OverlayHost } from "../src/components/common/overlayPortal";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
@@ -94,6 +100,7 @@ export default function RootLayout() {
             <View className="flex-1 bg-stone-100">
               <Slot />
               <DebtFeedbackToast />
+              <OverlayHost />
             </View>
           </AuthContext.Provider>
         </QueryClientProvider>

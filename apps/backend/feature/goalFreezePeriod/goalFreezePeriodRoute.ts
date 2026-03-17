@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 
 import { noopTracer } from "@backend/lib/tracer";
+import { zValidator } from "@hono/zod-validator";
 import {
   CreateFreezePeriodRequestSchema,
   UpdateFreezePeriodRequestSchema,
 } from "@packages/types/request";
-import { zValidator } from "@hono/zod-validator";
 
 import type { AppContext } from "../../context";
 import { newGoalFreezePeriodHandler } from "./goalFreezePeriodHandler";

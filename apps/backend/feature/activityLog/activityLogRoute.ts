@@ -6,13 +6,13 @@ import { join } from "node:path";
 import type { AppContext } from "@backend/context";
 import { noopTracer } from "@backend/lib/tracer";
 import { newActivityQueryService } from "@backend/query";
+import { zValidator } from "@hono/zod-validator";
 import {
   CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
 } from "@packages/types/request";
 import type { GetActivityLogResponse } from "@packages/types/response";
-import { zValidator } from "@hono/zod-validator";
 
 import { newActivityRepository } from "../activity";
 import { newActivityLogHandler } from "./activityLogHandler";

@@ -2,11 +2,11 @@ import { Hono } from "hono";
 
 import { noopTracer } from "@backend/lib/tracer";
 import { newGoalQueryService } from "@backend/query/goalQueryService";
+import { zValidator } from "@hono/zod-validator";
 import {
   CreateGoalRequestSchema,
   UpdateGoalRequestSchema,
 } from "@packages/types/request";
-import { zValidator } from "@hono/zod-validator";
 
 import type { AppContext } from "../../context";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";

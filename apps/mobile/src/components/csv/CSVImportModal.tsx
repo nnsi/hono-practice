@@ -392,6 +392,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
             <ScrollView
               className="bg-gray-50 rounded-lg p-2"
               style={{ maxHeight: 240 }}
+              nestedScrollEnabled
             >
               {/* Header */}
               <View className="flex-row py-1 border-b border-gray-300">

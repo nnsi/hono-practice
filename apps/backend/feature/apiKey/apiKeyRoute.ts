@@ -4,8 +4,8 @@ import type { AppContext } from "@backend/context";
 import { noopTracer } from "@backend/lib/tracer";
 import { mockPremiumMiddleware } from "@backend/middleware/mockPremiumMiddleware";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
-import { CreateApiKeyRequestSchema } from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
+import { CreateApiKeyRequestSchema } from "@packages/types/request";
 
 import { newApiKeyHandler } from "./apiKeyHandler";
 import { newApiKeyRepository } from "./apiKeyRepository";

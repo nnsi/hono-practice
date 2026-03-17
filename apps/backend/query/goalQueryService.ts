@@ -1,11 +1,11 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import type { GoalStatsResponse } from "@packages/types/response";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
+import type { GoalStatsResponse } from "@packages/types/response";
 import dayjs from "dayjs";
 import { and, between, eq, isNull, sql } from "drizzle-orm";
 

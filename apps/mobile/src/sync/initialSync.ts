@@ -73,29 +73,28 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     };
   },
   writeAllData: async (data) => {
-    const db = await getDatabase();
-    await db.withTransactionAsync(async () => {
-      if (data.activities.length > 0) {
-        await activityRepository.upsertActivities(data.activities);
-      }
-      if (data.activityKinds.length > 0) {
-        await activityRepository.upsertActivityKinds(data.activityKinds);
-      }
-      if (data.logs.length > 0) {
-        await activityLogRepository.upsertActivityLogsFromServer(data.logs);
-      }
-      if (data.goals.length > 0) {
-        await goalRepository.upsertGoalsFromServer(data.goals);
-      }
-      if (data.freezePeriods.length > 0) {
-        await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
-          data.freezePeriods,
-        );
-      }
-      if (data.tasks.length > 0) {
-        await taskRepository.upsertTasksFromServer(data.tasks);
-      }
-    });
+    // 各 repository が独自に BEGIN/COMMIT を管理しているため
+    // ここで withTransactionAsync を使うとネストして失敗する
+    if (data.activities.length > 0) {
+      await activityRepository.upsertActivities(data.activities);
+    }
+    if (data.activityKinds.length > 0) {
+      await activityRepository.upsertActivityKinds(data.activityKinds);
+    }
+    if (data.logs.length > 0) {
+      await activityLogRepository.upsertActivityLogsFromServer(data.logs);
+    }
+    if (data.goals.length > 0) {
+      await goalRepository.upsertGoalsFromServer(data.goals);
+    }
+    if (data.freezePeriods.length > 0) {
+      await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
+        data.freezePeriods,
+      );
+    }
+    if (data.tasks.length > 0) {
+      await taskRepository.upsertTasksFromServer(data.tasks);
+    }
   },
   defaultStorage: rnStorageAdapter,
 });

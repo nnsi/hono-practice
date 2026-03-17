@@ -8,8 +8,11 @@ import {
   createRateLimitMiddleware,
   loginRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
-import { googleLoginRequestSchema, loginRequestSchema } from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
+import {
+  googleLoginRequestSchema,
+  loginRequestSchema,
+} from "@packages/types/request";
 
 import type { AppContext } from "../../context";
 import { newUserRepository } from "../user";

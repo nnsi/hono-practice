@@ -5,8 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "actiko",
-    "icon": null,
-    "splash": null,
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -14,10 +12,6 @@
       "bundleIdentifier": "com.actiko.app"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": null,
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.actiko.app"
     },
     "web": {
@@ -29,7 +23,21 @@
       "expo-router",
       "expo-sqlite",
       "expo-secure-store",
-      "expo-web-browser"
-    ]
+      "expo-web-browser",
+      "expo-updates"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7ad87f25-5808-4934-a5d1-7a532ab827df"
+      }
+    },
+    "owner": "nnsi",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7ad87f25-5808-4934-a5d1-7a532ab827df"
+    }
   }
 }

@@ -1,4 +1,6 @@
 import { AppError } from "@backend/error";
+import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateActivityRequest } from "@packages/types/request/CreateActivityRequest";
 import type {
   UpdateActivityOrderRequest,
@@ -8,8 +10,6 @@ import {
   GetActivitiesResponseSchema,
   GetActivityResponseSchema,
 } from "@packages/types/response/GetActivitiesResponse";
-import type { ActivityId } from "@packages/domain/activity/activitySchema";
-import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityUsecase } from ".";
 

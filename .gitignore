@@ -17,6 +17,7 @@ nul
 .playwright-cli
 *.stackdump
 *.tsbuildinfo
+.expo
 
 # Terraform
 terraform/*.tfvars

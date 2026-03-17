@@ -67,18 +67,40 @@ export function createInitialSync(deps: InitialSyncDeps) {
 
     const gen = getSyncGeneration();
 
+    let responses;
+    try {
+      responses = await deps.fetchAllApis(sinceQuery);
+    } catch (err) {
+      console.error("[sync] fetchAllApis failed:", err);
+      throw err;
+    }
     const { activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes } =
-      await deps.fetchAllApis(sinceQuery);
+      responses;
 
     if (gen !== getSyncGeneration()) return;
 
-    const parsed = await parseResponses(
-      activitiesRes,
-      logsRes,
-      goalsRes,
-      freezePeriodsRes,
-      tasksRes,
+    console.log(
+      "[sync] API responses ok:",
+      activitiesRes.ok,
+      logsRes.ok,
+      goalsRes.ok,
+      freezePeriodsRes?.ok ?? "null",
+      tasksRes.ok,
     );
+
+    let parsed;
+    try {
+      parsed = await parseResponses(
+        activitiesRes,
+        logsRes,
+        goalsRes,
+        freezePeriodsRes,
+        tasksRes,
+      );
+    } catch (err) {
+      console.error("[sync] parseResponses failed:", err);
+      throw err;
+    }
     const allSynced = parsed.allSynced;
 
     if (gen !== getSyncGeneration()) return;
@@ -91,8 +113,22 @@ export function createInitialSync(deps: InitialSyncDeps) {
       parsed.data.freezePeriods.length > 0 ||
       parsed.data.tasks.length > 0;
 
+    console.log("[sync] hasData:", hasData, {
+      activities: parsed.data.activities.length,
+      activityKinds: parsed.data.activityKinds.length,
+      logs: parsed.data.logs.length,
+      goals: parsed.data.goals.length,
+      freezePeriods: parsed.data.freezePeriods.length,
+      tasks: parsed.data.tasks.length,
+    });
+
     if (hasData) {
-      await deps.writeAllData(parsed.data);
+      try {
+        await deps.writeAllData(parsed.data);
+      } catch (err) {
+        console.error("[sync] writeAllData failed:", err);
+        throw err;
+      }
     }
 
     if (gen !== getSyncGeneration()) return;
