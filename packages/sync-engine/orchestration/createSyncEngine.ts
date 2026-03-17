@@ -41,11 +41,9 @@ export function createSyncEngine(
         await fns.syncActivities();
         // Upload icons after activity sync (activity must exist on server)
         await fns.syncActivityIcons();
-        await Promise.all([
-          fns.syncActivityLogs(),
-          fns.syncGoals(),
-          fns.syncTasks(),
-        ]);
+        await fns.syncActivityLogs();
+        await fns.syncGoals();
+        await fns.syncTasks();
         // Freeze periods depend on goals existing on server
         await fns.syncGoalFreezePeriods();
         retryCount = 0;
