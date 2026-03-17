@@ -4,16 +4,45 @@ import type {
   ChartData,
   GoalLine,
 } from "@packages/frontend-shared/types/stats";
-import { Text, View, useWindowDimensions } from "react-native";
 import {
-  VictoryAxis,
-  VictoryBar,
-  VictoryChart,
-  VictoryLabel,
-  VictoryLine,
-  VictoryStack,
-  VictoryTooltip,
-} from "victory-native";
+  barHeightPct,
+  computeChartScale,
+  computeXLabelStep,
+  computeYAxisWidth,
+  formatTickValue,
+  shouldShowXLabel,
+  stackedTotal,
+  tickBottomPct,
+} from "@packages/frontend-shared/utils/chartUtils";
+import { Text, View, useWindowDimensions } from "react-native";
+
+function DashedLine({
+  color,
+  dashWidth = 5,
+  dashGap = 4,
+  thickness = 1.5,
+}: {
+  color: string;
+  dashWidth?: number;
+  dashGap?: number;
+  thickness?: number;
+}) {
+  return (
+    <View style={{ flexDirection: "row", overflow: "hidden", height: thickness }}>
+      {Array.from({ length: 80 }, (_, i) => (
+        <View
+          key={i}
+          style={{
+            width: dashWidth,
+            height: thickness,
+            backgroundColor: i % 2 === 0 ? color : "transparent",
+            marginRight: i % 2 === 0 ? dashGap : 0,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
 
 export function ActivityChart({
   data,
@@ -31,102 +60,28 @@ export function ActivityChart({
   goalLines?: GoalLine[];
 }) {
   const { width: screenWidth } = useWindowDimensions();
-  const chartWidth = Math.min(screenWidth, 768) - 48;
+  const containerWidth = Math.min(screenWidth, 768) - 48;
 
-  const paddingLeft = 45;
-  const hasGoalLines = goalLines.length > 0;
-  const paddingRight = hasGoalLines ? 20 : 15;
-
-  const allTickValues = useMemo(
-    () => data.map((d) => d.date as string),
-    [data],
+  const { yTicks, effectiveYMax } = useMemo(
+    () => computeChartScale(data, dataKeys, goalLines, !!stackId),
+    [data, dataKeys, goalLines, stackId],
   );
 
-  const tickStep = useMemo(() => {
-    if (data.length === 0 || chartWidth === 0) return 1;
-    const available = chartWidth - paddingLeft - paddingRight;
-    const maxLabels = Math.max(2, Math.floor(available / 36));
-    return Math.max(1, Math.ceil(data.length / maxLabels));
-  }, [data.length, chartWidth, paddingLeft, paddingRight]);
+  const yAxisWidth = 7 * 6 + 4; // 7文字幅で固定（例: "300,000"）
 
-  const tickFormat = useMemo(() => {
-    return (tick: string, index: number) => {
-      if (index === 0 || index === data.length - 1) return tick;
-      if (index % tickStep === 0 && data.length - 1 - index >= tickStep) {
-        return tick;
-      }
-      return "";
-    };
-  }, [data.length, tickStep]);
+  const tickStep = useMemo(
+    () => computeXLabelStep(data.length, containerWidth, yAxisWidth, 40),
+    [data.length, containerWidth, yAxisWidth],
+  );
 
-  const yMax = useMemo(() => {
-    let max = 0;
-    if (stackId) {
-      for (const d of data) {
-        let sum = 0;
-        for (const key of dataKeys) {
-          sum += (d[key.name] as number) || 0;
-        }
-        max = Math.max(max, sum);
-      }
-    } else {
-      for (const d of data) {
-        for (const key of dataKeys) {
-          max = Math.max(max, (d[key.name] as number) || 0);
-        }
-      }
-    }
-    for (const goal of goalLines) {
-      max = Math.max(max, goal.value);
-    }
-    return max === 0 ? 10 : Math.ceil(max * 1.15);
-  }, [data, dataKeys, stackId, goalLines]);
-
-  const barWidth = useMemo(() => {
-    const available = chartWidth - paddingLeft - paddingRight;
-    const barArea = available / data.length;
-    const groupDivisor = stackId ? 1 : dataKeys.length;
-    const w = (barArea * 0.7) / groupDivisor;
-    return Math.max(2, Math.min(20, w));
-  }, [
-    chartWidth,
-    paddingLeft,
-    paddingRight,
-    data.length,
-    dataKeys.length,
-    stackId,
-  ]);
-
-  const bars = dataKeys.map((key) => (
-    <VictoryBar
-      key={key.name}
-      data={data}
-      x="date"
-      y={key.name}
-      style={{ data: { fill: key.color, width: barWidth } }}
-      cornerRadius={{ top: 2 }}
-      labels={({ datum }) => {
-        const val = datum[key.name] ?? datum._y ?? 0;
-        return val > 0 ? `${key.name}: ${val}` : "";
-      }}
-      labelComponent={
-        <VictoryTooltip
-          cornerRadius={8}
-          flyoutStyle={{
-            stroke: "#e5e7eb",
-            strokeWidth: 1,
-            fill: "white",
-          }}
-          style={{ fontSize: 10, fill: "#374151" }}
-          flyoutPadding={{ top: 4, bottom: 4, left: 8, right: 8 }}
-          renderInPortal={false}
-        />
-      }
-    />
-  ));
+  const chartAreaHeight = height - 28;
 
   return (
-    <View className="bg-white rounded-lg border border-gray-200 p-2">
+    <View
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+      style={{ padding: 8 }}
+    >
+      {/* Legend */}
       {showLegend && dataKeys.length > 1 && (
         <View className="flex-row flex-wrap gap-3 px-2 pb-1">
           {dataKeys.map((key) => (
@@ -140,63 +95,210 @@ export function ActivityChart({
           ))}
         </View>
       )}
-      <VictoryChart
-        width={chartWidth}
-        height={height}
-        padding={{
-          top: 15,
-          right: paddingRight,
-          bottom: 35,
-          left: paddingLeft,
-        }}
-        domainPadding={{ x: barWidth }}
-        domain={{ y: [0, yMax] }}
-      >
-        <VictoryAxis
-          tickValues={allTickValues}
-          tickFormat={tickFormat}
-          style={{
-            axis: { stroke: "#e5e7eb" },
-            tickLabels: { fontSize: 9, fill: "#6b7280", padding: 5 },
-            grid: { stroke: "none" },
-          }}
-        />
-        <VictoryAxis
-          dependentAxis
-          style={{
-            axis: { stroke: "#e5e7eb" },
-            tickLabels: { fontSize: 10, fill: "#6b7280", padding: 5 },
-            grid: { stroke: "#f3f4f6", strokeDasharray: "4 4" },
-          }}
-        />
-        {stackId ? <VictoryStack>{bars}</VictoryStack> : bars}
-        {goalLines.map((goal) => (
-          <VictoryLine
-            key={`goal-${goal.id}`}
-            data={data.map((d, i) => ({
-              x: d.date as string,
-              y: goal.value,
-              _isLast: i === data.length - 1,
-            }))}
+
+      <View style={{ height }}>
+        {/* Chart area with Y-axis */}
+        <View style={{ height: chartAreaHeight, position: "relative" }}>
+          {/* Y-axis labels + grid lines */}
+          {yTicks.map((tick) => {
+            const pct = tickBottomPct(tick, effectiveYMax);
+            return (
+              <View
+                key={`tick-${tick}`}
+                style={{
+                  position: "absolute",
+                  bottom: `${pct}%`,
+                  left: 0,
+                  right: 0,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  transform: [{ translateY: 6 }],
+                }}
+              >
+                <Text
+                  style={{
+                    width: yAxisWidth,
+                    textAlign: "right",
+                    paddingRight: 4,
+                    fontSize: 9,
+                    color: "#6b7280",
+                  }}
+                  numberOfLines={1}
+                >
+                  {formatTickValue(tick)}
+                </Text>
+                {tick > 0 && (
+                  <View style={{ flex: 1 }}>
+                    <DashedLine color="#e5e7eb" thickness={1} />
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+          {/* Bars + goal lines area */}
+          <View
             style={{
-              data: {
-                stroke: goal.color,
-                strokeDasharray: "5 5",
-                strokeWidth: 1.5,
-              },
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              right: 0,
+              left: yAxisWidth,
             }}
-            labels={({ datum }) => (datum._isLast ? goal.label : "")}
-            labelComponent={
-              <VictoryLabel
-                textAnchor="end"
-                dx={-5}
-                dy={-10}
-                style={{ fill: goal.color, fontSize: 10 }}
-              />
-            }
-          />
-        ))}
-      </VictoryChart>
+          >
+            {/* Goal lines */}
+            {goalLines.map((goal) => {
+              const pct = Math.min(
+                tickBottomPct(goal.value, effectiveYMax),
+                100,
+              );
+              return (
+                <View
+                  key={goal.id}
+                  style={{
+                    position: "absolute",
+                    bottom: `${pct}%`,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1,
+                  }}
+                >
+                  <DashedLine color={goal.color} />
+                  <Text
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      bottom: 4,
+                      fontSize: 9,
+                      color: goal.color,
+                    }}
+                  >
+                    {goal.label}
+                  </Text>
+                </View>
+              );
+            })}
+
+            {/* Bars */}
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                flexDirection: "row",
+                alignItems: "flex-end",
+              }}
+            >
+              {data.map((d) => {
+                const dateLabel = d.date as string;
+
+                if (stackId) {
+                  const total = stackedTotal(d, dataKeys);
+                  const totalPct = barHeightPct(total, effectiveYMax);
+
+                  return (
+                    <View
+                      key={dateLabel}
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        height: "100%",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: "60%",
+                          maxWidth: 20,
+                          height: `${totalPct}%`,
+                          borderTopLeftRadius: 2,
+                          borderTopRightRadius: 2,
+                          overflow: "hidden",
+                          flexDirection: "column-reverse",
+                        }}
+                      >
+                        {dataKeys.map((key) => {
+                          const value = (d[key.name] as number) || 0;
+                          if (value === 0 || total === 0) return null;
+                          return (
+                            <View
+                              key={key.name}
+                              style={{
+                                backgroundColor: key.color,
+                                height: `${(value / total) * 100}%`,
+                              }}
+                            />
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                }
+
+                return (
+                  <View
+                    key={dateLabel}
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      alignItems: "flex-end",
+                      justifyContent: "center",
+                      gap: 1,
+                      height: "100%",
+                    }}
+                  >
+                    {dataKeys.map((key) => {
+                      const value = (d[key.name] as number) || 0;
+                      const barPct = barHeightPct(value, effectiveYMax);
+                      return (
+                        <View
+                          key={key.name}
+                          style={{
+                            backgroundColor: key.color,
+                            height: `${barPct}%`,
+                            width: `${Math.floor(60 / dataKeys.length)}%`,
+                            maxWidth: 20,
+                            minWidth: 2,
+                            borderTopLeftRadius: 2,
+                            borderTopRightRadius: 2,
+                          }}
+                        />
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        {/* X-axis */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            height: 24,
+            marginLeft: yAxisWidth,
+            borderTopWidth: 1,
+            borderColor: "#e5e7eb",
+            alignItems: "center",
+          }}
+        >
+          {data
+            .map((d, i) => ({ label: d.date as string, index: i }))
+            .filter((d) => shouldShowXLabel(d.index, data.length, tickStep))
+            .map((d) => (
+              <Text
+                key={d.label}
+                style={{ fontSize: 9, color: "#6b7280" }}
+              >
+                {d.label}
+              </Text>
+            ))}
+        </View>
+      </View>
     </View>
   );
 }

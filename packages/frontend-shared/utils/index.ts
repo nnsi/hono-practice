@@ -12,3 +12,14 @@ export { reportError } from "./errorReporter";
 export { setupGlobalErrorHandler } from "./globalErrorHandler";
 export { generateGoalLines } from "./goalLineGeneration";
 export { formatQuantityWithUnit, roundQuantity } from "./statsFormatting";
+export {
+  barHeightPct,
+  computeChartScale,
+  computeXLabelStep,
+  computeYAxisWidth,
+  formatTickValue,
+  generateYTicks,
+  shouldShowXLabel,
+  stackedTotal,
+  tickBottomPct,
+} from "./chartUtils";
