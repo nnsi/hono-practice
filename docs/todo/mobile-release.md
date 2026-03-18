@@ -75,19 +75,20 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 アイコン・スプラッシュが未設定でもビルド可能。QR / URL で直接インストール。
 
-- [ ] Preview ビルド実行
+- [x] Preview ビルド実行
   ```bash
   cd apps/mobile
   eas build --platform all --profile preview
   ```
-- [ ] ビルド完了後、Expo ダッシュボードの QR コード / URL を端末で開いてインストール
-- [ ] iOS の場合: 端末の UDID を事前に EAS に登録する必要あり
+- [x] ビルド完了後、Expo ダッシュボードの QR コード / URL を端末で開いてインストール
+- [x] iOS の場合: 端末の UDID を事前に EAS に登録する必要あり
   - `eas device:create` でデバイス登録（初回のみ）
-- [ ] Android の場合: APK が直接生成されるのでそのままインストール
+- [x] Android の場合: APK が直接生成されるのでそのままインストール
 
 ### 実機テスト確認項目
 
-- [ ] ログイン / ユーザー作成
+- [x] ログイン / ユーザー作成
+- [ ] Google認証によるログイン / ユーザー作成
 - [ ] アクティビティ記録（メイン機能）
 - [ ] データ同期（サーバーとの通信）
 - [ ] オフライン動作 → オンライン復帰時の同期
@@ -100,13 +101,13 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 > 審査に時間がかかることがあるため、実機テストと並行して早めに進める。
 
-- [ ] Apple Developer Program に登録（年額 $99）
+- [x] Apple Developer Program に登録（年額 $99）
   - https://developer.apple.com/programs/
 - [ ] Google Play Console に登録（一回 $25）
   - https://play.google.com/console/
-- [ ] Apple: App ID (`com.actiko.app`) を Apple Developer Portal で登録
+- [x] Apple: App ID (`com.actiko.app`) を Apple Developer Portal で登録
 - [ ] Google: Google Play Console でアプリを新規作成
-- [ ] Apple Developer アカウントを EAS に接続: `eas credentials`
+- [x] Apple Developer アカウントを EAS に接続: `eas credentials`
 
 ---
 
@@ -144,7 +145,7 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 - [ ] EAS の production 環境変数を登録:
   ```bash
   cd apps/mobile
-  eas env:create --environment production --name EXPO_PUBLIC_API_URL --value "https://api.actiko.app" --visibility plaintext
+  eas env:create --environment production --name EXPO_PUBLIC_API_URL --value "<値>" --visibility plaintext
   eas env:create --environment production --name EXPO_PUBLIC_GOOGLE_CLIENT_ID --value "<値>" --visibility plaintext
   eas env:create --environment production --name EXPO_PUBLIC_CONTACT_EMAIL --value "<値>" --visibility plaintext
   ```
