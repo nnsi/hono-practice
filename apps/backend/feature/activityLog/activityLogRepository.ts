@@ -19,7 +19,7 @@ export type ActivityLogSummary = {
   date: string;
 };
 
-export type ActivityLogRepository<T = any> = {
+export type ActivityLogRepository<T = QueryExecutor> = {
   getActivityLogsByUserIdAndDate: (
     userId: UserId,
     from: Date,

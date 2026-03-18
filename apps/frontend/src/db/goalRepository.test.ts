@@ -48,6 +48,8 @@ vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
+import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+
 import { goalRepository } from "./goalRepository";
 
 describe("goalRepository", () => {
@@ -257,7 +259,7 @@ describe("goalRepository", () => {
           dailyTargetQuantity: 5,
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as GoalRecord[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
@@ -305,7 +307,7 @@ describe("goalRepository", () => {
           dailyTargetQuantity: 5,
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as GoalRecord[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
@@ -351,7 +353,7 @@ describe("goalRepository", () => {
           dailyTargetQuantity: 5,
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as GoalRecord[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 
@@ -382,7 +384,7 @@ describe("goalRepository", () => {
           dailyTargetQuantity: 5,
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as GoalRecord[];
 
       await goalRepository.upsertGoalsFromServer(goals);
 

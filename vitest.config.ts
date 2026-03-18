@@ -1,10 +1,10 @@
 import path from "node:path";
 
 import viteTsConfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from "vitest/config";
+import { type Plugin, defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [viteTsConfigPaths() as any],
+  plugins: [viteTsConfigPaths() as unknown as Plugin],
   esbuild: {
     target: "es2020",
     jsx: "automatic",

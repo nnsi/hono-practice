@@ -65,6 +65,11 @@ vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
+import type {
+  ActivityKindRecord,
+  ActivityRecord,
+} from "@packages/domain/activity/activityRecord";
+
 import { activityRepository } from "./activityRepository";
 import { db } from "./schema";
 
@@ -624,7 +629,7 @@ describe("activityRepository", () => {
       const activities = [
         { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityRecord[];
 
       await activityRepository.upsertActivities(activities);
 
@@ -660,7 +665,7 @@ describe("activityRepository", () => {
       const activities = [
         { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityRecord[];
 
       await activityRepository.upsertActivities(activities);
 
@@ -695,7 +700,7 @@ describe("activityRepository", () => {
       const activities = [
         { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityRecord[];
 
       await activityRepository.upsertActivities(activities);
 
@@ -716,7 +721,7 @@ describe("activityRepository", () => {
       const activities = [
         { id: "a1", name: "Running", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "a2", name: "Study", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityRecord[];
 
       await activityRepository.upsertActivities(activities);
 
@@ -746,7 +751,7 @@ describe("activityRepository", () => {
 
       const kinds = [
         { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityKindRecord[];
 
       await activityRepository.upsertActivityKinds(kinds);
 
@@ -776,7 +781,7 @@ describe("activityRepository", () => {
       const kinds = [
         { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "k2", name: "Kind2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityKindRecord[];
 
       await activityRepository.upsertActivityKinds(kinds);
 
@@ -805,7 +810,7 @@ describe("activityRepository", () => {
 
       const kinds = [
         { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityKindRecord[];
 
       await activityRepository.upsertActivityKinds(kinds);
 
@@ -826,7 +831,7 @@ describe("activityRepository", () => {
       const kinds = [
         { id: "k1", name: "Kind1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "k2", name: "Kind2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as ActivityKindRecord[];
 
       await activityRepository.upsertActivityKinds(kinds);
 

@@ -9,7 +9,7 @@ import {
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { eq } from "drizzle-orm";
 
-export type SubscriptionRepository<T = any> = {
+export type SubscriptionRepository<T = QueryExecutor> = {
   create: (subscription: Subscription) => Promise<Subscription>;
   findById: (id: SubscriptionId) => Promise<Subscription | undefined>;
   findByUserId: (userId: UserId) => Promise<Subscription | undefined>;
@@ -115,7 +115,9 @@ function update(db: QueryExecutor) {
   };
 }
 
-function mapToSubscription(row: any): Subscription {
+function mapToSubscription(
+  row: typeof userSubscriptions.$inferSelect,
+): Subscription {
   return newSubscription({
     id: createSubscriptionId(row.id),
     userId: createUserId(row.userId),
@@ -130,7 +132,7 @@ function mapToSubscription(row: any): Subscription {
     trialStart: row.trialStart,
     trialEnd: row.trialEnd,
     priceAmount: row.priceAmount,
-    priceCurrency: row.priceCurrency,
+    priceCurrency: row.priceCurrency ?? "JPY",
     metadata: row.metadata ? JSON.parse(row.metadata) : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

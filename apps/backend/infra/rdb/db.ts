@@ -1,5 +1,7 @@
+import type { QueryExecutor } from "./drizzle";
+
 type Repository = {
-  withTx: <T>(tx: T) => Repository;
+  withTx: (tx: QueryExecutor) => Repository;
   [key: string]: unknown;
 };
 

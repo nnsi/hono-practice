@@ -2,7 +2,6 @@
  * React hooks DI型（Metro + pnpm 環境で packages/ から react を
  * 直接 import すると CJS 初期化問題が起きるため）。
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type ReactHooks = {
   useState: {
     <T>(
@@ -13,14 +12,16 @@ export type ReactHooks = {
       (value: T | undefined | ((prev: T | undefined) => T | undefined)) => void,
     ];
   };
+  // biome-ignore lint/suspicious/noExplicitAny: React.useMemo deps type
   useMemo: <T>(factory: () => T, deps: readonly any[]) => T;
-  useCallback: <T extends (...args: any[]) => any>(
+  useCallback: <T extends (...args: never[]) => unknown>(
     callback: T,
+    // biome-ignore lint/suspicious/noExplicitAny: React.useCallback deps type
     deps: readonly any[],
   ) => T;
+  // biome-ignore lint/suspicious/noExplicitAny: React.useEffect deps type
   useEffect: (effect: () => void | (() => void), deps?: readonly any[]) => void;
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Activity最小型（DexieActivity / ActivityRecord の両方が満たす）

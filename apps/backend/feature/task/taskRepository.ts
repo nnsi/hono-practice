@@ -9,9 +9,21 @@ import {
   createTaskEntity,
 } from "@packages/domain/task/taskSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { and, asc, desc, eq, gt, gte, isNull, lte, not, or } from "drizzle-orm";
+import {
+  type SQL,
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  isNull,
+  lte,
+  not,
+  or,
+} from "drizzle-orm";
 
-export type TaskRepository<T = any> = {
+export type TaskRepository<T = QueryExecutor> = {
   getTasksByUserId: (userId: UserId, date?: string) => Promise<Task[]>;
   getArchivedTasksByUserId: (userId: UserId) => Promise<Task[]>;
   getTaskByUserIdAndTaskId: (
@@ -48,7 +60,7 @@ export function newTaskRepository(
 
 function getTasksByUserId(db: QueryExecutor) {
   return async (userId: UserId, date?: string) => {
-    let whereClause: any;
+    let whereClause: SQL | undefined;
     if (date) {
       whereClause = and(
         eq(tasks.userId, userId),

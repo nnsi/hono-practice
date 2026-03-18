@@ -9,7 +9,7 @@ import { DomainValidateError } from "@packages/domain/errors";
 import type { UserId } from "@packages/domain/user/userSchema";
 import { eq } from "drizzle-orm";
 
-export type RefreshTokenRepository<T = any> = {
+export type RefreshTokenRepository<T = QueryExecutor> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
   getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
   revokeRefreshToken(token: RefreshToken): Promise<void>;

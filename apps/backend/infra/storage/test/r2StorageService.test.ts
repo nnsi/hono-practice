@@ -110,7 +110,9 @@ describe("r2StorageService", () => {
       const mockFile = new File(["test content"], "test.webp");
       const key = "uploads/test.webp";
 
-      vi.mocked(mockR2Bucket.put).mockResolvedValue(null as any);
+      vi.mocked(mockR2Bucket.put).mockResolvedValue(
+        null as unknown as R2Object,
+      );
 
       await expect(storageService.upload(mockFile, key)).rejects.toThrow(
         "Failed to upload file to R2",

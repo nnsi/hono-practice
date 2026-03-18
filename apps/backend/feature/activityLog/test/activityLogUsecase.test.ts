@@ -15,6 +15,7 @@ import {
   type ActivityLogId,
   createActivityLogId,
 } from "@packages/domain/activityLog/activityLogSchema";
+import type { GetActivityStatsResponse } from "@packages/types/response";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -559,7 +560,7 @@ describe("ActivityLogUsecase", () => {
         from: Date;
         to: Date;
       };
-      mockReturn: any;
+      mockReturn: GetActivityStatsResponse | undefined;
       expectError: boolean;
     };
 
@@ -571,11 +572,16 @@ describe("ActivityLogUsecase", () => {
           from: new Date("2025-01-01"),
           to: new Date("2025-01-31"),
         },
-        mockReturn: {
-          totalActivities: 10,
-          totalTime: 500,
-          activities: [],
-        },
+        mockReturn: [
+          {
+            id: "activity-1",
+            name: "Running",
+            total: 10,
+            quantityUnit: "km",
+            showCombinedStats: true,
+            kinds: [],
+          },
+        ],
         expectError: false,
       },
       {
@@ -603,6 +609,7 @@ describe("ActivityLogUsecase", () => {
           ).once();
         }
 
+        if (!mockReturn) throw new Error("mockReturn must be defined");
         when(qs.activityStatsQuery(userId, params.from, params.to)).thenResolve(
           mockReturn,
         );
@@ -793,7 +800,7 @@ describe("ActivityLogUsecase", () => {
 
           // 正常系: トランザクションを実行
           when(db.transaction(anything())).thenCall(async (callback) => {
-            return callback({ withTx: () => {} } as any);
+            return callback({ withTx: () => {} } as unknown as QueryExecutor);
           });
 
           const result = await usecase.createActivityLogBatch(
@@ -817,7 +824,7 @@ describe("ActivityLogUsecase", () => {
     it("アクティビティ種別が存在しない場合でも正常に処理される", async () => {
       const activityWithoutKinds: Activity = {
         ...mockActivity,
-        kinds: undefined as any,
+        kinds: undefined as unknown as ActivityKind[],
       };
 
       const txRepo = mock<ActivityLogRepository>();
@@ -835,7 +842,7 @@ describe("ActivityLogUsecase", () => {
       ]);
 
       when(db.transaction(anything())).thenCall(async (callback) => {
-        return callback({ withTx: () => {} } as any);
+        return callback({ withTx: () => {} } as unknown as QueryExecutor);
       });
 
       const result = await usecase.createActivityLogBatch(userId1, [

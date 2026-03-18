@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import type { R2Bucket } from "@cloudflare/workers-types";
+import type { R2Bucket, R2ObjectBody } from "@cloudflare/workers-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { r2ProxyRoute } from "../r2ProxyRoute";
@@ -60,7 +60,9 @@ describe("r2ProxyRoute", () => {
           contentType: "image/webp",
         },
       };
-      vi.mocked(mockR2Bucket.get).mockResolvedValue(mockObject as any);
+      vi.mocked(mockR2Bucket.get).mockResolvedValue(
+        mockObject as unknown as R2ObjectBody,
+      );
 
       const req = new Request("http://localhost/r2/uploads/icons/test.webp");
       const res = await app.fetch(req, {
@@ -82,7 +84,9 @@ describe("r2ProxyRoute", () => {
         arrayBuffer: vi.fn().mockResolvedValue(mockImageData),
         httpMetadata: {},
       };
-      vi.mocked(mockR2Bucket.get).mockResolvedValue(mockObject as any);
+      vi.mocked(mockR2Bucket.get).mockResolvedValue(
+        mockObject as unknown as R2ObjectBody,
+      );
 
       const req = new Request("http://localhost/r2/uploads/icons/test");
       const res = await app.fetch(req, {
@@ -101,7 +105,9 @@ describe("r2ProxyRoute", () => {
           contentType: "image/png",
         },
       };
-      vi.mocked(mockR2Bucket.get).mockResolvedValue(mockObject as any);
+      vi.mocked(mockR2Bucket.get).mockResolvedValue(
+        mockObject as unknown as R2ObjectBody,
+      );
 
       const key = "uploads/icons/user-123/activity-456/icon.png";
       const req = new Request(`http://localhost/r2/${key}`);

@@ -40,7 +40,7 @@ describe("userRoute", () => {
         JWT_SECRET: "test",
         JWT_AUDIENCE: "test-audience",
         __authenticatedUserId: TEST_USER_ID,
-      } as any);
+      } as unknown as Parameters<typeof testClient>[1]);
     };
 
     it("正常系：アカウント削除が成功する（204）", async () => {

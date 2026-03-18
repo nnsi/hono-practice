@@ -23,7 +23,10 @@ type RateLimitConfig = {
  * KV set を非ブロッキングで実行する。
  * Workers環境ではwaitUntilでバックグラウンド実行し、テスト環境ではawaitせず破棄。
  */
-function fireAndForget(c: any, promise: Promise<unknown>) {
+function fireAndForget(
+  c: { executionCtx?: { waitUntil?: (promise: Promise<unknown>) => void } },
+  promise: Promise<unknown>,
+) {
   try {
     const ctx = c.executionCtx;
     if (ctx?.waitUntil) {

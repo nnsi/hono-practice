@@ -8,16 +8,14 @@ type GoalInput = {
   endDate: string | null;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type DayjsLike = {
   startOf(unit: string): DayjsLike;
   endOf(unit: string): DayjsLike;
-  isBefore(other: any): boolean;
-  isAfter(other: any): boolean;
+  isBefore(other: unknown): boolean;
+  isAfter(other: unknown): boolean;
 };
 
 type DayjsFn = (date: string) => DayjsLike;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * 指定アクティビティに関連するゴールラインを生成する純粋関数。

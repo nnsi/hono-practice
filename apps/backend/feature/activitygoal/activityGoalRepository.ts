@@ -10,7 +10,7 @@ import {
 import type { UserId } from "@packages/domain/user/userSchema";
 import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
-export type ActivityGoalRepository<T = any> = {
+export type ActivityGoalRepository<T = QueryExecutor> = {
   getActivityGoalsByUserId(userId: UserId): Promise<ActivityGoal[]>;
   getActivityGoalByIdAndUserId(
     id: ActivityGoalId,

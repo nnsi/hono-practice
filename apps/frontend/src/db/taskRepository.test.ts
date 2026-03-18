@@ -48,6 +48,8 @@ vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
+import type { TaskRecord } from "@packages/domain/task/taskRecord";
+
 import { taskRepository } from "./taskRepository";
 
 describe("taskRepository", () => {
@@ -340,7 +342,7 @@ describe("taskRepository", () => {
       const tasks = [
         { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as TaskRecord[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
@@ -376,7 +378,7 @@ describe("taskRepository", () => {
       const tasks = [
         { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as TaskRecord[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
@@ -411,7 +413,7 @@ describe("taskRepository", () => {
       const tasks = [
         { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as TaskRecord[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
@@ -432,7 +434,7 @@ describe("taskRepository", () => {
       const tasks = [
         { id: "t1", title: "Task 1", updatedAt: "2026-03-01T00:00:00Z" },
         { id: "t2", title: "Task 2", updatedAt: "2026-03-01T00:00:00Z" },
-      ] as any[];
+      ] as unknown as TaskRecord[];
 
       await taskRepository.upsertTasksFromServer(tasks);
 
