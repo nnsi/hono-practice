@@ -43,7 +43,12 @@ export function computeChartScale(
   dataKeys: DataKey[],
   goalLines: GoalLine[],
   stacked: boolean,
-): { yMax: number; allIntegers: boolean; yTicks: number[]; effectiveYMax: number } {
+): {
+  yMax: number;
+  allIntegers: boolean;
+  yTicks: number[];
+  effectiveYMax: number;
+} {
   let max = 0;
   let allIntegers = true;
 
@@ -113,8 +118,5 @@ export function barHeightPct(value: number, effectiveYMax: number): number {
 }
 
 export function stackedTotal(d: ChartData, dataKeys: DataKey[]): number {
-  return dataKeys.reduce(
-    (sum, key) => sum + ((d[key.name] as number) || 0),
-    0,
-  );
+  return dataKeys.reduce((sum, key) => sum + ((d[key.name] as number) || 0), 0);
 }
