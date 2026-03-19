@@ -197,6 +197,11 @@ function syncGoals(repo: GoalSyncRepository, tracer: Tracer) {
       }
     }
 
-    return { syncedIds, serverWins, skippedIds };
+    const normalizedServerWins = serverWins.map((g) => ({
+      ...g,
+      dayTargets: parseDayTargets(g.dayTargets),
+    }));
+
+    return { syncedIds, serverWins: normalizedServerWins, skippedIds };
   };
 }

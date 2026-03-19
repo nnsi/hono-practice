@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { v7 } from "uuid";
 import { z } from "zod";
 
@@ -27,7 +28,7 @@ const BaseActivityLogSchema = z.object({
   quantity: z.number().nullable(),
   memo: z.string().nullish(),
   date: z.preprocess((arg) => {
-    if (arg instanceof Date) return arg.toISOString().split("T")[0];
+    if (arg instanceof Date) return dayjs(arg).format("YYYY-MM-DD");
     return arg;
   }, z.string()),
 });

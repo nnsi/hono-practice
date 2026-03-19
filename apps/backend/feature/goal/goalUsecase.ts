@@ -7,7 +7,6 @@ import {
   type ActivityGoal,
   createActivityGoalEntity,
   createActivityGoalId,
-  createActivityGoalIdFromString,
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -187,7 +186,7 @@ function getGoal(
   return async (userId: UserId, goalId: string): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        createActivityGoalIdFromString(goalId),
+        createActivityGoalId(goalId),
         userId,
       ),
     );
@@ -241,7 +240,7 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   ): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        createActivityGoalIdFromString(goalId),
+        createActivityGoalId(goalId),
         userId,
       ),
     );
@@ -280,7 +279,7 @@ function deleteGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   return async (userId: UserId, goalId: string): Promise<void> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        createActivityGoalIdFromString(goalId),
+        createActivityGoalId(goalId),
         userId,
       ),
     );
