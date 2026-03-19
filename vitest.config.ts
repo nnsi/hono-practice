@@ -35,9 +35,9 @@ export default defineConfig({
       "**/e2e/**",
     ],
     silent: true,
-    pool: "vmThreads",
+    pool: "threads",
     poolOptions: {
-      vmThreads: {
+      threads: {
         minThreads: 1,
         maxThreads: 4,
       },

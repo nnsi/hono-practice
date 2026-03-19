@@ -67,6 +67,25 @@ export function CreateGoalDialog({
       visible={visible}
       onClose={handleClose}
       title="新しい目標を作成"
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className="flex-1 py-3 border border-gray-300 rounded-lg items-center"
+            onPress={handleClose}
+          >
+            <Text className="text-gray-700 font-medium">キャンセル</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded-lg items-center ${
+              submitting ? "bg-gray-400" : "bg-gray-900"
+            }`}
+            onPress={handleSubmit}
+            disabled={submitting}
+          >
+            <Text className="text-white font-medium">作成</Text>
+          </TouchableOpacity>
+        </View>
+      }
     >
       <View className="gap-4">
         {/* Activity selection */}
@@ -188,25 +207,6 @@ export function CreateGoalDialog({
         {errorMsg ? (
           <Text className="text-sm text-red-500">{errorMsg}</Text>
         ) : null}
-
-        {/* Buttons */}
-        <View className="flex-row gap-2 pt-2 mb-4">
-          <TouchableOpacity
-            className="flex-1 py-3 border border-gray-300 rounded-lg items-center"
-            onPress={handleClose}
-          >
-            <Text className="text-gray-700 font-medium">キャンセル</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-lg items-center ${
-              submitting ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSubmit}
-            disabled={submitting}
-          >
-            <Text className="text-white font-medium">作成</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </ModalOverlay>
   );

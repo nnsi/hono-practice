@@ -52,6 +52,19 @@ export function CreateActivityDialog({
       visible={visible}
       onClose={handleClose}
       title="アクティビティ作成"
+      footer={
+        <TouchableOpacity
+          className={`py-3 rounded-xl items-center ${
+            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
+          }`}
+          onPress={handleCreate}
+          disabled={isSubmitting || !name.trim()}
+        >
+          <Text className="text-white font-bold text-base">
+            {isSubmitting ? "作成中..." : "作成"}
+          </Text>
+        </TouchableOpacity>
+      }
     >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
@@ -158,18 +171,6 @@ export function CreateActivityDialog({
         </View>
 
         {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
-
-        <TouchableOpacity
-          className={`mt-2 mb-4 py-3 rounded-xl items-center ${
-            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-          }`}
-          onPress={handleCreate}
-          disabled={isSubmitting || !name.trim()}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? "作成中..." : "作成"}
-          </Text>
-        </TouchableOpacity>
       </View>
     </ModalOverlay>
   );

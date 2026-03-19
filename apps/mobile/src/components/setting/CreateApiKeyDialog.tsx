@@ -50,19 +50,12 @@ export function CreateApiKeyDialog({
   const title = createdKey ? "APIキーが作成されました" : "新しいAPIキーの作成";
 
   return (
-    <ModalOverlay visible onClose={onClose} title={title}>
-      {createdKey ? (
-        <View>
-          <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-            <Text className="text-sm text-amber-700">
-              このAPIキーは一度しか表示されません。必ずコピーして安全に保管してください。
-            </Text>
-          </View>
-          <View className="bg-gray-50 rounded-lg p-3 mb-4">
-            <Text className="text-sm text-gray-800 font-mono" selectable>
-              {createdKey}
-            </Text>
-          </View>
+    <ModalOverlay
+      visible
+      onClose={onClose}
+      title={title}
+      footer={
+        createdKey ? (
           <TouchableOpacity
             className="w-full py-2.5 bg-stone-900 rounded-lg flex-row items-center justify-center gap-2"
             onPress={handleCopy}
@@ -80,6 +73,32 @@ export function CreateApiKeyDialog({
               </>
             )}
           </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting ? "bg-gray-300" : "bg-stone-900"}`}
+            onPress={handleSubmit}
+            disabled={isSubmitting || !name.trim()}
+            activeOpacity={0.7}
+          >
+            <Text className="text-white font-medium text-center">
+              {isSubmitting ? "作成中..." : "作成"}
+            </Text>
+          </TouchableOpacity>
+        )
+      }
+    >
+      {createdKey ? (
+        <View>
+          <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            <Text className="text-sm text-amber-700">
+              このAPIキーは一度しか表示されません。必ずコピーして安全に保管してください。
+            </Text>
+          </View>
+          <View className="bg-gray-50 rounded-lg p-3">
+            <Text className="text-sm text-gray-800 font-mono" selectable>
+              {createdKey}
+            </Text>
+          </View>
         </View>
       ) : (
         <View>
@@ -93,22 +112,11 @@ export function CreateApiKeyDialog({
             autoFocus
             maxLength={255}
           />
-          <Text className="text-xs text-gray-400 mt-1 mb-4">
+          <Text className="text-xs text-gray-400 mt-1">
             APIキーに識別しやすい名前を付けてください
           </Text>
 
-          {error && <Text className="text-sm text-red-600 mb-3">{error}</Text>}
-
-          <TouchableOpacity
-            className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting ? "bg-gray-300" : "bg-stone-900"}`}
-            onPress={handleSubmit}
-            disabled={isSubmitting || !name.trim()}
-            activeOpacity={0.7}
-          >
-            <Text className="text-white font-medium text-center">
-              {isSubmitting ? "作成中..." : "作成"}
-            </Text>
-          </TouchableOpacity>
+          {error && <Text className="text-sm text-red-600 mt-3">{error}</Text>}
         </View>
       )}
     </ModalOverlay>

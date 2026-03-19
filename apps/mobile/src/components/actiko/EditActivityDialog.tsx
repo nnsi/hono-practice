@@ -69,6 +69,40 @@ export function EditActivityDialog({
       visible={visible}
       onClose={onClose}
       title="アクティビティ編集"
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded-xl items-center ${
+              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
+            }`}
+            onPress={handleSave}
+            disabled={isSubmitting || !name.trim()}
+          >
+            <Text className="text-white font-bold text-base">
+              {isSubmitting ? "保存中..." : "保存"}
+            </Text>
+          </TouchableOpacity>
+
+          {!showDeleteConfirm ? (
+            <TouchableOpacity
+              className="px-4 py-3 rounded-xl items-center border border-red-300"
+              onPress={() => setShowDeleteConfirm(true)}
+            >
+              <Text className="text-red-500 font-medium text-sm">削除</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className={`px-4 py-3 rounded-xl items-center ${
+                isSubmitting ? "bg-red-300" : "bg-red-500"
+              }`}
+              onPress={handleDelete}
+              disabled={isSubmitting}
+            >
+              <Text className="text-white font-medium text-sm">本当に削除</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      }
     >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
@@ -172,42 +206,6 @@ export function EditActivityDialog({
         </View>
 
         {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
-
-        {/* Save + Delete buttons */}
-        <View className="flex-row gap-2 mt-2">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl items-center ${
-              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSave}
-            disabled={isSubmitting || !name.trim()}
-          >
-            <Text className="text-white font-bold text-base">
-              {isSubmitting ? "保存中..." : "保存"}
-            </Text>
-          </TouchableOpacity>
-
-          {!showDeleteConfirm ? (
-            <TouchableOpacity
-              className="px-4 py-3 rounded-xl items-center border border-red-300"
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Text className="text-red-500 font-medium text-sm">削除</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              className={`px-4 py-3 rounded-xl items-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-500"
-              }`}
-              onPress={handleDelete}
-              disabled={isSubmitting}
-            >
-              <Text className="text-white font-medium text-sm">本当に削除</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View className="h-4" />
       </View>
     </ModalOverlay>
   );
