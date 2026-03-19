@@ -43,13 +43,11 @@ const API_URL = getApiUrl();
 
 type AppSettings = {
   showGoalOnStartup: boolean;
-  hideGoalGraph: boolean;
   showInactiveDates: boolean;
   praiseMode: boolean;
 };
 const defaultSettings: AppSettings = {
   showGoalOnStartup: false,
-  hideGoalGraph: false,
   showInactiveDates: false,
   praiseMode: false,
 };
@@ -287,13 +285,6 @@ export function SettingsPage() {
           desc="アプリ起動時の初期画面を目標画面にします"
           value={settings.showGoalOnStartup}
           onChange={(v) => updateSetting("showGoalOnStartup", v)}
-        />
-        <Divider />
-        <SettingSwitch
-          label="目標グラフを非表示"
-          desc="負債時間と未実施日のみを表示します"
-          value={settings.hideGoalGraph}
-          onChange={(v) => updateSetting("hideGoalGraph", v)}
         />
         <Divider />
         <SettingSwitch

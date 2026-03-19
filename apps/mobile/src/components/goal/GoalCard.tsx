@@ -1,32 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
-import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import {
-  calculateGoalStats,
-  generateDailyRecords,
-} from "@packages/domain/goal/goalStats";
 import dayjs from "dayjs";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  BarChart3,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Loader2,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  TrendingUp,
-  Trophy,
-} from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
-import { getDatabase } from "../../db/database";
-import { useLiveQuery } from "../../db/useLiveQuery";
 import { FreezePeriodManager } from "./FreezePeriodManager";
+import { GoalCardHeader } from "./GoalCardHeader";
+import { GoalStatsDetail } from "./GoalStatsDetail";
+import { useGoalCard } from "./useGoalCard";
 
 type GoalForCard = {
   id: string;
@@ -37,41 +19,6 @@ type GoalForCard = {
   isActive: boolean;
   debtCap?: number | null;
 };
-
-type StatusBadge = { label: string; bgClass: string; textClass: string };
-
-function getStatusBadge(
-  goal: GoalForCard,
-  hasTodayLog: boolean,
-  balance: number,
-): StatusBadge {
-  if (!goal.isActive) {
-    return {
-      label: "終了",
-      bgClass: "bg-gray-200",
-      textClass: "text-gray-600",
-    };
-  }
-  if (balance < 0) {
-    return {
-      label: "負債あり",
-      bgClass: "bg-red-100",
-      textClass: "text-red-700",
-    };
-  }
-  if (hasTodayLog) {
-    return {
-      label: "順調",
-      bgClass: "bg-green-100",
-      textClass: "text-green-700",
-    };
-  }
-  return {
-    label: "達成ペース",
-    bgClass: "bg-green-50",
-    textClass: "text-green-600",
-  };
-}
 
 export function GoalCard({
   goal,
@@ -94,82 +41,19 @@ export function GoalCard({
 }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  const today = dayjs().format("YYYY-MM-DD");
-  const actualEndDate =
-    goal.endDate && goal.endDate < today ? goal.endDate : today;
-
-  const totalDays = useMemo(() => {
-    const start = dayjs(goal.startDate);
-    const end = goal.endDate ? dayjs(goal.endDate) : dayjs();
-    return Math.max(end.diff(start, "day") + 1, 1);
-  }, [goal.startDate, goal.endDate]);
-
-  // Today's log count
-  const todayLogCount = useLiveQuery(["activity_logs"], async () => {
-    const db = await getDatabase();
-    const row = await db.getFirstAsync<{ cnt: number }>(
-      `SELECT COUNT(*) as cnt FROM activity_logs
-         WHERE activity_id = ? AND date = ? AND deleted_at IS NULL`,
-      [goal.activityId, today],
-    );
-    return row?.cnt ?? 0;
-  }, [goal.activityId, today]);
-  const hasTodayLog = (todayLogCount ?? 0) > 0;
-
-  // Period logs for balance calculation
-  const periodLogs = useLiveQuery(["activity_logs"], async () => {
-    const db = await getDatabase();
-    return db.getAllAsync<{ date: string; quantity: number | null }>(
-      `SELECT date, quantity FROM activity_logs
-         WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
-      [goal.activityId, goal.startDate, actualEndDate],
-    );
-  }, [goal.activityId, goal.startDate, actualEndDate]);
-
-  // Freeze periods for this goal
-  const freezePeriods = useLiveQuery(["goal_freeze_periods"], async () => {
-    const db = await getDatabase();
-    return db.getAllAsync<FreezePeriod>(
-      `SELECT start_date as startDate, end_date as endDate
-         FROM goal_freeze_periods
-         WHERE goal_id = ? AND deleted_at IS NULL`,
-      [goal.id],
-    );
-  }, [goal.id]);
-
-  const isCurrentlyFrozen = useMemo(() => {
-    if (!freezePeriods) return false;
-    return freezePeriods.some(
-      (fp) =>
-        fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
-    );
-  }, [freezePeriods, today]);
-
-  const balance = useMemo(() => {
-    return calculateGoalBalance(
-      goal,
-      periodLogs ?? [],
-      today,
-      freezePeriods ?? [],
-    );
-  }, [goal, periodLogs, today, freezePeriods]);
-
-  const localBalance = balance.currentBalance;
-  const elapsedDays = balance.daysActive;
-
-  const completionPercent = useMemo(() => {
-    if (balance.totalTarget <= 0) return 0;
-    return Math.min((balance.totalActual / balance.totalTarget) * 100, 100);
-  }, [balance.totalActual, balance.totalTarget]);
-
-  const progressPercent = useMemo(() => {
-    if (totalDays === 0) return 0;
-    return Math.min((elapsedDays / totalDays) * 100, 100);
-  }, [elapsedDays, totalDays]);
-
-  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
-  const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
+  const {
+    totalDays,
+    elapsedDays,
+    localBalance,
+    balance,
+    isCurrentlyFrozen,
+    completionPercent,
+    progressPercent,
+    showInactiveDatesEnabled,
+    inactiveDates,
+    statusBadge,
+    balanceColor,
+  } = useGoalCard(goal);
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -182,14 +66,13 @@ export function GoalCard({
     }
   };
 
-  const gradientColor = useMemo(() => {
-    if (isPast) return null;
-    return localBalance > 0
+  const gradientColor = isPast
+    ? null
+    : localBalance > 0
       ? "rgba(34, 197, 94, 0.2)"
       : localBalance < 0
         ? "rgba(239, 68, 68, 0.2)"
         : "rgba(156, 163, 175, 0.2)";
-  }, [isPast, localBalance]);
 
   const shadowStyle = isPast
     ? undefined
@@ -205,123 +88,27 @@ export function GoalCard({
 
   const cardContent = (
     <>
-      {/* Card header */}
-      <TouchableOpacity
-        className="w-full px-4 py-3"
-        onPress={onToggleExpand}
-        activeOpacity={0.7}
-      >
-        <View className="flex-row gap-3 items-start">
-          {/* Activity emoji */}
-          <Text className="text-2xl pt-0.5">{activity?.emoji ?? "🎯"}</Text>
+      <GoalCardHeader
+        goal={goal}
+        activity={activity}
+        isExpanded={isExpanded}
+        isPast={isPast}
+        localBalance={localBalance}
+        debtCapped={balance.debtCapped}
+        balanceColor={balanceColor}
+        statusBadge={statusBadge}
+        isCurrentlyFrozen={isCurrentlyFrozen}
+        showDeleteConfirm={showDeleteConfirm}
+        deleting={deleting}
+        onToggleExpand={onToggleExpand}
+        onEditStart={onEditStart}
+        onDelete={onDelete}
+        onRecordOpen={onRecordOpen}
+        onDeleteConfirm={() => setShowDeleteConfirm(true)}
+        onDeleteCancel={() => setShowDeleteConfirm(false)}
+        onHandleDelete={handleDelete}
+      />
 
-          {/* Content */}
-          <View className="flex-1" style={{ minWidth: 0 }}>
-            {/* Row 1: Activity name + Balance + Chevron */}
-            <View className="flex-row items-start gap-2">
-              <Text
-                className="flex-1 font-semibold text-sm text-gray-900"
-                style={{ minWidth: 80 }}
-              >
-                {activity?.name ?? "不明なアクティビティ"}
-              </Text>
-              <View className="flex-row items-center gap-1 shrink-0">
-                <Text className={`text-[11px] font-medium ${balanceColor}`}>
-                  {localBalance < 0 ? "-" : "+"}
-                  {Math.abs(localBalance).toLocaleString()}
-                  <Text className="text-[10px]">
-                    {" "}
-                    {activity?.quantityUnit ?? ""}
-                  </Text>
-                  {balance.debtCapped && (
-                    <Text className="text-[9px] text-orange-500"> (上限)</Text>
-                  )}
-                </Text>
-                {isExpanded ? (
-                  <ChevronUp size={16} color="#9ca3af" />
-                ) : (
-                  <ChevronDown size={16} color="#9ca3af" />
-                )}
-              </View>
-            </View>
-
-            {/* Row 2: Badge + Meta + Action buttons */}
-            <View className="flex-row items-center gap-1.5 mt-1 flex-wrap">
-              {/* Status badge */}
-              <View
-                className={`rounded-full px-2 py-0.5 shrink-0 ${statusBadge.bgClass}`}
-              >
-                <Text
-                  className={`text-[10px] font-medium ${statusBadge.textClass}`}
-                >
-                  {statusBadge.label}
-                </Text>
-              </View>
-
-              {/* Freeze indicator */}
-              {isCurrentlyFrozen && (
-                <View className="rounded-full px-2 py-0.5 shrink-0 bg-blue-100">
-                  <Text className="text-[10px] font-medium text-blue-700">
-                    {"\u23F8"} 一時停止中
-                  </Text>
-                </View>
-              )}
-
-              <Text className="text-xs text-gray-500 shrink-0">
-                {goal.dailyTargetQuantity.toLocaleString()}
-                {activity?.quantityUnit ?? ""}/日
-              </Text>
-              <Text className="text-xs text-gray-300 shrink-0">|</Text>
-              <Text className="text-xs text-gray-500 shrink-0">
-                {dayjs(goal.startDate).format("M/D")}〜
-                {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
-              </Text>
-
-              {/* Spacer */}
-              <View className="flex-1" />
-
-              {/* Action buttons */}
-              {!isPast && onRecordOpen && (
-                <TouchableOpacity className="p-1" onPress={onRecordOpen}>
-                  <PlusCircle size={14} color="#3b82f6" />
-                </TouchableOpacity>
-              )}
-              {!isPast && onEditStart && (
-                <TouchableOpacity className="p-1" onPress={onEditStart}>
-                  <Pencil size={14} color="#9ca3af" />
-                </TouchableOpacity>
-              )}
-              {isPast && !showDeleteConfirm && onDelete && (
-                <TouchableOpacity
-                  className="p-1"
-                  onPress={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash2 size={14} color="#9ca3af" />
-                </TouchableOpacity>
-              )}
-              {isPast && showDeleteConfirm && (
-                <View className="flex-row items-center gap-1">
-                  <TouchableOpacity
-                    className="px-2 py-1 bg-red-500 rounded"
-                    onPress={handleDelete}
-                    disabled={deleting}
-                  >
-                    <Text className="text-xs text-white">削除</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="px-2 py-1 border border-gray-300 rounded"
-                    onPress={() => setShowDeleteConfirm(false)}
-                  >
-                    <Text className="text-xs text-gray-600">取消</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-
-      {/* Progress bar */}
       <View className="px-4 pb-2">
         <View className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
           <View
@@ -335,7 +122,23 @@ export function GoalCard({
         </View>
       </View>
 
-      {/* Expanded detail */}
+      {showInactiveDatesEnabled && inactiveDates.length > 0 && (
+        <View className="mt-1 px-3 py-1">
+          <Text className="text-xs text-gray-500">
+            <Text className="font-medium">やらなかった日付: </Text>
+            {inactiveDates.slice(0, 3).map((date, index) => (
+              <Text key={date}>
+                {index > 0 ? ", " : ""}
+                {dayjs(date).format("M/D")}
+              </Text>
+            ))}
+            {inactiveDates.length > 3 && (
+              <Text> 他{inactiveDates.length - 3}日</Text>
+            )}
+          </Text>
+        </View>
+      )}
+
       {isExpanded && (
         <View className="bg-white rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />
@@ -371,159 +174,6 @@ export function GoalCard({
       ) : (
         cardContent
       )}
-    </View>
-  );
-}
-
-// --- GoalStatsDetail (expanded panel) ---
-
-function GoalStatsDetail({
-  goal,
-  activity,
-}: {
-  goal: GoalForCard;
-  activity: ActivityRecord | null;
-}) {
-  const today = dayjs().format("YYYY-MM-DD");
-  const endDate = goal.endDate || today;
-  const actualEndDate = endDate < today ? endDate : today;
-
-  const periodLogs = useLiveQuery(["activity_logs"], async () => {
-    const db = await getDatabase();
-    return db.getAllAsync<{ date: string; quantity: number | null }>(
-      `SELECT date, quantity FROM activity_logs
-         WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
-      [goal.activityId, goal.startDate, actualEndDate],
-    );
-  }, [goal.activityId, goal.startDate, actualEndDate]);
-
-  const statsData = useMemo(() => {
-    if (!periodLogs) return null;
-    const dailyRecords = generateDailyRecords(goal, periodLogs, today);
-    const stats = calculateGoalStats(dailyRecords);
-    return { dailyRecords, stats };
-  }, [periodLogs, goal, today]);
-
-  const unit = activity?.quantityUnit ?? "";
-
-  if (!statsData) {
-    return (
-      <View className="px-4 pb-4 py-6 flex-row items-center justify-center">
-        <Loader2 size={16} color="#9ca3af" />
-        <Text className="ml-2 text-xs text-gray-400">統計を読み込み中...</Text>
-      </View>
-    );
-  }
-
-  const totalDays = statsData.dailyRecords.length;
-  const achieveRate =
-    totalDays > 0 ? (statsData.stats.achievedDays / totalDays) * 100 : 0;
-
-  return (
-    <View className="px-4 pb-4 border-t border-gray-100">
-      {/* Stats grid (2 columns) */}
-      <View className="flex-row flex-wrap gap-2 mt-3">
-        <StatCard
-          icon={<Calendar size={14} color="#6b7280" />}
-          label="活動日数"
-          value={`${statsData.stats.activeDays}日`}
-          sub={`/ ${totalDays}日`}
-        />
-        <StatCard
-          icon={<Trophy size={14} color="#6b7280" />}
-          label="達成日数"
-          value={`${statsData.stats.achievedDays}日`}
-          sub={`${achieveRate.toFixed(0)}%`}
-        />
-        <StatCard
-          icon={<Flame size={14} color="#6b7280" />}
-          label="最大連続日数"
-          value={`${statsData.stats.maxConsecutiveDays}日`}
-        />
-        <StatCard
-          icon={<TrendingUp size={14} color="#6b7280" />}
-          label="平均活動量"
-          value={`${statsData.stats.average}${unit}`}
-        />
-        <StatCard
-          icon={<BarChart3 size={14} color="#6b7280" />}
-          label="最大活動量"
-          value={`${statsData.stats.max}${unit}`}
-        />
-      </View>
-
-      {/* Daily records heatmap (last 14 days) */}
-      {statsData.dailyRecords.length > 0 && (
-        <View className="mt-3">
-          <Text className="text-xs font-medium text-gray-500 mb-1.5">
-            直近の記録
-          </Text>
-          <View className="flex-row gap-1">
-            {statsData.dailyRecords.slice(-14).map((record) => (
-              <View
-                key={record.date}
-                className={`flex-1 h-6 rounded-sm ${
-                  record.achieved
-                    ? "bg-green-400"
-                    : record.quantity > 0
-                      ? "bg-yellow-300"
-                      : "bg-gray-200"
-                }`}
-              />
-            ))}
-          </View>
-          <View className="flex-row justify-between mt-1">
-            <Text className="text-[10px] text-gray-400">
-              {dayjs(statsData.dailyRecords.slice(-14)[0]?.date).format("M/D")}
-            </Text>
-            <Text className="text-[10px] text-gray-400">
-              {dayjs(
-                statsData.dailyRecords[statsData.dailyRecords.length - 1]?.date,
-              ).format("M/D")}
-            </Text>
-          </View>
-          {/* Legend */}
-          <View className="flex-row gap-3 mt-1">
-            <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-sm bg-green-400" />
-              <Text className="text-[10px] text-gray-400">達成</Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-sm bg-yellow-300" />
-              <Text className="text-[10px] text-gray-400">活動あり</Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-sm bg-gray-200" />
-              <Text className="text-[10px] text-gray-400">未活動</Text>
-            </View>
-          </View>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <View className="bg-gray-50 rounded-lg p-2.5" style={{ width: "48%" }}>
-      <View className="flex-row items-center gap-1.5 mb-1">
-        {icon}
-        <Text className="text-[10px] text-gray-500">{label}</Text>
-      </View>
-      <View className="flex-row items-baseline gap-1">
-        <Text className="text-sm font-bold text-gray-900">{value}</Text>
-        {sub && <Text className="text-[10px] text-gray-400">{sub}</Text>}
-      </View>
     </View>
   );
 }

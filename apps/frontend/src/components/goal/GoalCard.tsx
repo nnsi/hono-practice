@@ -1,48 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import { getInactiveDates } from "@packages/domain/goal/goalStats";
-import dayjs from "dayjs";
-import { useLiveQuery } from "dexie-react-hooks";
-import {
-  ChevronDown,
-  ChevronUp,
-  Pause,
-  Pencil,
-  PlusCircle,
-  Trash2,
-} from "lucide-react";
-
-import { goalRepository } from "../../db/goalRepository";
-import { type DexieActivity, db } from "../../db/schema";
-import { syncEngine } from "../../sync/syncEngine";
-import { getActivityIcon } from "./activityHelpers";
+import type { DexieActivity } from "../../db/schema";
 import { EditGoalForm } from "./EditGoalForm";
 import { FreezePeriodManager } from "./FreezePeriodManager";
+import { GoalCardHeader } from "./GoalCardHeader";
 import { GoalStatsDetail } from "./GoalStatsDetail";
 import type { Goal, UpdateGoalPayload } from "./types";
+import { useGoalCard } from "./useGoalCard";
 
-// --- C. ステータスバッジ ---
-type StatusBadge = { label: string; className: string };
-
-function getStatusBadge(
-  goal: Goal,
-  hasTodayLog: boolean,
-  balance: number,
-): StatusBadge {
-  if (!goal.isActive) {
-    return { label: "終了", className: "bg-gray-200 text-gray-600" };
-  }
-  if (balance < 0) {
-    return { label: "負債あり", className: "bg-red-100 text-red-700" };
-  }
-  if (hasTodayLog) {
-    return { label: "順調", className: "bg-green-100 text-green-700" };
-  }
-  return { label: "達成ペース", className: "bg-green-50 text-green-600" };
-}
-
-// --- D. グラデーション背景 ---
 function progressGradient(completionPercent: number, balance: number): string {
   const color =
     balance > 0
@@ -80,147 +45,19 @@ export function GoalCard({
 }) {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // --- B. インライン編集 state ---
-  const [inlineEditing, setInlineEditing] = useState(false);
-  const [inlineValue, setInlineValue] = useState("");
-  const inlineInputRef = useRef<HTMLInputElement>(null);
-
-  const today = dayjs().format("YYYY-MM-DD");
-  const actualEndDate =
-    goal.endDate && goal.endDate < today ? goal.endDate : today;
-
-  const totalDays = useMemo(() => {
-    const start = dayjs(goal.startDate);
-    const end = goal.endDate ? dayjs(goal.endDate) : dayjs();
-    return Math.max(end.diff(start, "day") + 1, 1);
-  }, [goal.startDate, goal.endDate]);
-
-  // --- C. 今日のログがあるか確認 ---
-  const todayLogs = useLiveQuery(
-    () =>
-      db.activityLogs
-        .where("[date+activityId]")
-        .equals([today, goal.activityId])
-        .filter((log) => !log.deletedAt)
-        .count(),
-    [today, goal.activityId],
-  );
-  const hasTodayLog = (todayLogs ?? 0) > 0;
-
-  // --- フリーズ期間 ---
-  const freezePeriods = useLiveQuery(
-    () =>
-      db.goalFreezePeriods
-        .where("goalId")
-        .equals(goal.id)
-        .filter((fp) => !fp.deletedAt)
-        .toArray(),
-    [goal.id],
-  );
-
-  const isCurrentlyFrozen = useMemo(() => {
-    if (!freezePeriods) return false;
-    return freezePeriods.some(
-      (fp) =>
-        fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
-    );
-  }, [freezePeriods, today]);
-
-  // --- 完了率（背景グラデーション用、ローカルデータから算出） ---
-  const periodLogs = useLiveQuery(
-    () =>
-      db.activityLogs
-        .where("date")
-        .between(goal.startDate, actualEndDate, true, true)
-        .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
-        .toArray(),
-    [goal.activityId, goal.startDate, actualEndDate],
-  );
-
-  const balance = useMemo(() => {
-    return calculateGoalBalance(
-      goal,
-      periodLogs ?? [],
-      today,
-      freezePeriods ?? [],
-    );
-  }, [goal, periodLogs, today, freezePeriods]);
-
-  const localBalance = balance.currentBalance;
-  const elapsedDays = balance.daysActive;
-
-  const completionPercent = useMemo(() => {
-    if (balance.totalTarget <= 0) return 0;
-    return Math.min((balance.totalActual / balance.totalTarget) * 100, 100);
-  }, [balance.totalActual, balance.totalTarget]);
-
-  const progressPercent = useMemo(() => {
-    if (totalDays === 0) return 0;
-    const pct = (elapsedDays / totalDays) * 100;
-    return Math.min(pct, 100);
-  }, [elapsedDays, totalDays]);
-
-  // --- やらなかった日付（showInactiveDates設定時） ---
-  const showInactiveDatesEnabled = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("actiko-v2-settings");
-      if (!raw) return false;
-      const settings = JSON.parse(raw);
-      return settings.showInactiveDates === true;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const monthStart = useMemo(
-    () => dayjs().startOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-  const monthEnd = useMemo(
-    () => dayjs().endOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-
-  const effectiveStart = useMemo(
-    () => (goal.startDate > monthStart ? goal.startDate : monthStart),
-    [goal.startDate, monthStart],
-  );
-  const effectiveEnd = useMemo(() => {
-    const end =
-      goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
-    return end > today ? today : end;
-  }, [goal.endDate, monthEnd, today]);
-
-  const monthLogs = useLiveQuery(() => {
-    if (!showInactiveDatesEnabled) return [];
-    return db.activityLogs
-      .where("date")
-      .between(effectiveStart, effectiveEnd, true, true)
-      .filter((log) => log.activityId === goal.activityId && !log.deletedAt)
-      .toArray();
-  }, [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled]);
-
-  const inactiveDates = useMemo(() => {
-    if (!showInactiveDatesEnabled || !monthLogs) return [];
-    const monthGoal = {
-      ...goal,
-      startDate: effectiveStart,
-      endDate: effectiveEnd,
-    };
-    return getInactiveDates(monthGoal, monthLogs, today);
-  }, [
+  const {
+    totalDays,
+    elapsedDays,
+    localBalance,
+    balance,
+    isCurrentlyFrozen,
+    completionPercent,
+    progressPercent,
     showInactiveDatesEnabled,
-    monthLogs,
-    effectiveStart,
-    effectiveEnd,
-    goal,
-    today,
-  ]);
-
-  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
-
-  const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
+    inactiveDates,
+    statusBadge,
+    balanceColor,
+  } = useGoalCard(goal);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -231,38 +68,6 @@ export function GoalCard({
       setShowDeleteConfirm(false);
     }
   };
-
-  // --- B. インライン編集ハンドラ ---
-  const startInlineEdit = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (isPast) return;
-      setInlineValue(String(goal.dailyTargetQuantity));
-      setInlineEditing(true);
-      requestAnimationFrame(() => inlineInputRef.current?.select());
-    },
-    [goal.dailyTargetQuantity, isPast],
-  );
-
-  const commitInlineEdit = useCallback(async () => {
-    setInlineEditing(false);
-    const num = Number(inlineValue);
-    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity)
-      return;
-    await goalRepository.updateGoal(goal.id, { dailyTargetQuantity: num });
-    syncEngine.syncGoals();
-  }, [inlineValue, goal.id, goal.dailyTargetQuantity]);
-
-  const handleInlineKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commitInlineEdit();
-      } else if (e.key === "Escape") {
-        setInlineEditing(false);
-      }
-    },
-    [commitInlineEdit],
-  );
 
   if (isEditing) {
     return (
@@ -276,7 +81,6 @@ export function GoalCard({
     );
   }
 
-  // --- D. 背景スタイル ---
   const cardBg = isPast
     ? undefined
     : { background: progressGradient(completionPercent, localBalance) };
@@ -286,174 +90,25 @@ export function GoalCard({
       className={`rounded-2xl ${isPast ? "border border-gray-200 bg-gray-50 opacity-75" : "border border-gray-200/50 shadow-soft"} overflow-hidden transition-all duration-500`}
       style={cardBg}
     >
-      {/* カードヘッダー */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onToggleExpand}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") onToggleExpand();
-        }}
-        className="w-full px-4 py-3 hover:bg-gray-50/50 transition-colors cursor-pointer"
-      >
-        <div className="flex gap-3 items-start">
-          {/* アクティビティアイコン */}
-          <div className="flex-shrink-0 pt-0.5">
-            {getActivityIcon(activity)}
-          </div>
-
-          {/* コンテンツ */}
-          <div className="flex-1 min-w-0">
-            {/* 行1: アクティビティ名 + バランス + シェブロン */}
-            <div className="flex items-start gap-2">
-              <span className="flex-1 font-semibold text-sm min-w-[10em] break-words">
-                {activity?.name ?? "不明なアクティビティ"}
-              </span>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <span
-                  className={`text-[11px] font-medium whitespace-nowrap ${balanceColor}`}
-                >
-                  {localBalance < 0 ? "-" : "+"}
-                  {Math.abs(localBalance).toLocaleString()}
-                  <span className="text-[10px] ml-0.5">
-                    {activity?.quantityUnit ?? ""}
-                  </span>
-                  {balance.debtCapped && (
-                    <span className="text-[9px] ml-0.5 text-orange-500">
-                      (上限)
-                    </span>
-                  )}
-                </span>
-                {isExpanded ? (
-                  <ChevronUp size={16} className="text-gray-400" />
-                ) : (
-                  <ChevronDown size={16} className="text-gray-400" />
-                )}
-              </div>
-            </div>
-
-            {/* 行2: バッジ + メタ情報 + アクションボタン */}
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {/* ステータスバッジ */}
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.className}`}
-              >
-                {statusBadge.label}
-              </span>
-
-              {/* フリーズ中インジケーター */}
-              {isCurrentlyFrozen && (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 whitespace-nowrap flex-shrink-0">
-                  <Pause size={10} />
-                  一時停止中
-                </span>
-              )}
-
-              {/* B. インライン編集 */}
-              {inlineEditing ? (
-                <span
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center shrink-0"
-                >
-                  <input
-                    ref={inlineInputRef}
-                    type="number"
-                    inputMode="decimal"
-                    value={inlineValue}
-                    onChange={(e) => setInlineValue(e.target.value)}
-                    onBlur={commitInlineEdit}
-                    onKeyDown={handleInlineKeyDown}
-                    className="w-14 px-1 py-0 border border-blue-400 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    min="0"
-                    step="any"
-                  />
-                  <span className="ml-0.5 text-xs text-gray-500">
-                    {activity?.quantityUnit ?? ""}/日
-                  </span>
-                </span>
-              ) : (
-                <span
-                  onClick={!isPast ? startInlineEdit : undefined}
-                  className={`text-xs text-gray-500 shrink-0 ${!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}`}
-                  title={!isPast ? "クリックで編集" : undefined}
-                >
-                  {goal.dailyTargetQuantity.toLocaleString()}
-                  {activity?.quantityUnit ?? ""}/日
-                </span>
-              )}
-              <span className="text-gray-300 shrink-0 text-xs">|</span>
-              <span className="whitespace-nowrap shrink-0 text-xs text-gray-500">
-                {dayjs(goal.startDate).format("M/D")}〜
-                {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
-              </span>
-
-              {/* スペーサー */}
-              <div className="flex-1" />
-
-              {/* アクションボタン */}
-              {!isPast && onRecordOpen && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRecordOpen();
-                  }}
-                  className="p-1 hover:bg-blue-100 rounded-md transition-colors"
-                  title="活動を記録"
-                >
-                  <PlusCircle size={14} className="text-blue-500" />
-                </button>
-              )}
-              {!isPast && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditStart();
-                  }}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <Pencil size={14} className="text-gray-400" />
-                </button>
-              )}
-              {isPast && !showDeleteConfirm && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDeleteConfirm(true);
-                  }}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <Trash2 size={14} className="text-gray-400" />
-                </button>
-              )}
-              {isPast && showDeleteConfirm && (
-                <div
-                  className="flex items-center gap-1"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                  >
-                    削除
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
-                  >
-                    取消
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <GoalCardHeader
+        goal={goal}
+        activity={activity}
+        isExpanded={isExpanded}
+        isPast={isPast}
+        localBalance={localBalance}
+        debtCapped={balance.debtCapped}
+        balanceColor={balanceColor}
+        statusBadge={statusBadge}
+        isCurrentlyFrozen={isCurrentlyFrozen}
+        showDeleteConfirm={showDeleteConfirm}
+        deleting={deleting}
+        onToggleExpand={onToggleExpand}
+        onEditStart={onEditStart}
+        onRecordOpen={onRecordOpen}
+        onDeleteConfirm={() => setShowDeleteConfirm(true)}
+        onDeleteCancel={() => setShowDeleteConfirm(false)}
+        onHandleDelete={handleDelete}
+      />
 
       {/* プログレスバー */}
       <div className="px-4 pb-2">
@@ -488,7 +143,7 @@ export function GoalCard({
         </div>
       )}
 
-      {/* 展開時: 統計詳細 + フリーズ管理（グラデーション背景を適用しない） */}
+      {/* 展開時: 統計詳細 + フリーズ管理 */}
       {isExpanded && (
         <div className="bg-white rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />

@@ -24,7 +24,6 @@ import { GoogleSignInButton } from "../root/GoogleSignInButton";
 
 const AppSettingsSchema = z.object({
   showGoalOnStartup: z.boolean(),
-  hideGoalGraph: z.boolean(),
   showInactiveDates: z.boolean(),
   praiseMode: z.boolean().default(false),
 });
@@ -33,7 +32,6 @@ type AppSettings = z.infer<typeof AppSettingsSchema>;
 
 const defaultSettings: AppSettings = {
   showGoalOnStartup: false,
-  hideGoalGraph: false,
   showInactiveDates: false,
   praiseMode: false,
 };
@@ -181,14 +179,6 @@ export function SettingsPage() {
               description="アプリ起動時の初期画面を目標画面にします"
               checked={settings.showGoalOnStartup}
               onChange={(v) => updateSetting("showGoalOnStartup", v)}
-            />
-            <div className="border-t border-gray-100 mx-4" />
-            <SettingCheckbox
-              id="hide-goal-graph"
-              label="目標グラフを非表示"
-              description="負債時間と未実施日のみを表示します"
-              checked={settings.hideGoalGraph}
-              onChange={(v) => updateSetting("hideGoalGraph", v)}
             />
             <div className="border-t border-gray-100 mx-4" />
             <SettingCheckbox

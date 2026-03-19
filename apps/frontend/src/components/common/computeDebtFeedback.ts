@@ -32,6 +32,10 @@ export async function computeDebtFeedbackForActivity(
   const results: DebtFeedbackResult[] = [];
 
   for (const goal of goals) {
+    // Skip goals whose date range doesn't cover the recording date
+    if (date < goal.startDate) continue;
+    if (goal.endDate && date > goal.endDate) continue;
+
     const effectiveEnd =
       goal.endDate && today > goal.endDate ? goal.endDate : today;
     const logsBefore = await db.activityLogs
