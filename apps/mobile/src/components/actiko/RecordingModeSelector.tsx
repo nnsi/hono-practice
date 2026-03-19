@@ -6,7 +6,9 @@ import {
   parseRecordingModeConfig,
   serializeRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 
 type RecordingModeSelectorProps = {
   recordingMode: RecordingMode;
@@ -90,7 +92,7 @@ export function RecordingModeSelector({
           <Text className="text-sm text-gray-500 mb-1">
             ステップ値（カンマ区切り）
           </Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             value={stepsText}
             onChangeText={handleStepsTextChange}

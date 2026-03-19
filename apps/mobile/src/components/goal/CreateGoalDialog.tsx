@@ -1,8 +1,9 @@
 import { useState } from "react";
 
-import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { DayTargetsInput } from "./DayTargetsInput";
 import type { Activity, CreateGoalPayload } from "./types";
@@ -113,7 +114,7 @@ export function CreateGoalDialog({
               </Text>
             ) : null}
           </Text>
-          <TextInput
+          <IMESafeTextInput
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg"
             value={target}
             onChangeText={setTarget}
@@ -133,7 +134,7 @@ export function CreateGoalDialog({
           </View>
           <View className="flex-1">
             <Text className="text-sm text-gray-500 mb-1">終了日（任意）</Text>
-            <TextInput
+            <IMESafeTextInput
               className="border border-gray-300 rounded-lg px-3 py-2 text-base"
               value={endDate}
               onChangeText={setEndDate}
@@ -169,7 +170,7 @@ export function CreateGoalDialog({
           </View>
           {debtCapEnabled && (
             <View className="flex-row items-center gap-2 mt-1">
-              <TextInput
+              <IMESafeTextInput
                 className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 value={debtCapValue}
                 onChangeText={setDebtCapValue}

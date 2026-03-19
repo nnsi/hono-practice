@@ -1,16 +1,11 @@
 import dayjs from "dayjs";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import type { TaskItem } from "./types";
 import { useTaskEditDialog } from "./useTaskEditDialog";
@@ -82,7 +77,7 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 mb-1">
             タイトル
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={title}
             onChangeText={setTitle}
             placeholder="タスクのタイトル"
@@ -225,7 +220,7 @@ export function TaskEditDialog({
                 ? `（${selectedActivity.quantityUnit}）`
                 : ""}
             </Text>
-            <TextInput
+            <IMESafeTextInput
               value={quantity !== null ? String(quantity) : ""}
               onChangeText={(v) => {
                 const parsed = parseFloat(v);
@@ -263,7 +258,7 @@ export function TaskEditDialog({
           </View>
           <View className="flex-1">
             <Text className="text-sm text-gray-500 mb-1">期限（任意）</Text>
-            <TextInput
+            <IMESafeTextInput
               value={dueDate}
               onChangeText={setDueDate}
               placeholder="YYYY-MM-DD"
@@ -280,7 +275,7 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 mb-1">
             メモ（任意）
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={memo}
             onChangeText={setMemo}
             placeholder="タスクに関するメモ"

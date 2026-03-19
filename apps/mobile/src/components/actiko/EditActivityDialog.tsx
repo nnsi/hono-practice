@@ -1,8 +1,9 @@
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { ImageOff, ImagePlus } from "lucide-react-native";
-import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
@@ -100,7 +101,7 @@ export function EditActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={name}
             onChangeText={(t) => {
@@ -112,7 +113,7 @@ export function EditActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">単位（任意）</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
@@ -145,7 +146,7 @@ export function EditActivityDialog({
               key={kind.id ?? `new-${index}`}
               className="flex-row items-center mb-2 gap-2"
             >
-              <TextInput
+              <IMESafeTextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
                 value={kind.name}
                 onChangeText={(t) => updateKindName(index, t)}

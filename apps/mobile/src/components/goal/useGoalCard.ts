@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
 import { getInactiveDates } from "@packages/domain/goal/goalStats";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
+import { useFocusEffect } from "expo-router";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
@@ -125,20 +126,22 @@ export function useGoalCard(goal: GoalForCard) {
     return Math.min((elapsedDays / totalDays) * 100, 100);
   }, [elapsedDays, totalDays]);
 
-  // --- やらなかった日付 ---
+  // --- やらなかった日付（タブフォーカス時に再読み込み） ---
   const [showInactiveDatesEnabled, setShowInactiveDatesEnabled] =
     useState(false);
-  useEffect(() => {
-    AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
-      if (!raw) return;
-      try {
-        const s = JSON.parse(raw);
-        setShowInactiveDatesEnabled(s.showInactiveDates === true);
-      } catch {
-        // ignore
-      }
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
+        if (!raw) return;
+        try {
+          const s = JSON.parse(raw);
+          setShowInactiveDatesEnabled(s.showInactiveDates === true);
+        } catch {
+          // ignore
+        }
+      });
+    }, []),
+  );
 
   const monthStart = useMemo(
     () => dayjs().startOf("month").format("YYYY-MM-DD"),

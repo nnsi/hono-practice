@@ -3,8 +3,9 @@ import { useState } from "react";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy } from "lucide-react-native";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 
 export function CreateApiKeyDialog({
@@ -83,7 +84,7 @@ export function CreateApiKeyDialog({
       ) : (
         <View>
           <Text className="text-sm font-medium text-gray-600 mb-1">名前</Text>
-          <TextInput
+          <IMESafeTextInput
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base text-gray-900"
             value={name}
             onChangeText={setName}

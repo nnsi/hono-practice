@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react-native";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
 
@@ -97,7 +98,7 @@ export function EditLogDialog({
           <Text className="text-sm font-medium text-gray-600 mb-1">
             数量{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
             value={quantity}
             onChangeText={setQuantity}
@@ -111,7 +112,7 @@ export function EditLogDialog({
         {/* Memo */}
         <View>
           <Text className="text-sm font-medium text-gray-600 mb-1">メモ</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             value={memo}
             onChangeText={setMemo}
