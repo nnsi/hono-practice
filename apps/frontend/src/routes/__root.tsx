@@ -21,6 +21,7 @@ import { DebtFeedbackToast } from "../components/common/DebtFeedbackToast";
 import { LegalModal } from "../components/common/LegalModal";
 import { CreateUserForm, LoginForm } from "../components/root";
 import { useAuth } from "../hooks/useAuth";
+import { useNavigationSync } from "../hooks/useNavigationSync";
 import { useSyncEngine } from "../hooks/useSyncEngine";
 
 type AuthTab = "login" | "register";
@@ -30,6 +31,7 @@ function RootComponent() {
     isLoggedIn,
     isLoading,
     syncReady,
+    userId,
     login,
     googleLogin,
     register,
@@ -41,6 +43,7 @@ function RootComponent() {
   );
 
   useSyncEngine(syncReady);
+  useNavigationSync(syncReady, userId);
 
   if (isLoading) {
     return (

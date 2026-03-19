@@ -41,6 +41,8 @@ type InitialSyncDeps = {
 };
 
 export function createInitialSync(deps: InitialSyncDeps) {
+  let isPulling = false;
+
   async function clearLocalData(
     storage: StorageAdapter = deps.defaultStorage,
   ): Promise<void> {
@@ -52,6 +54,19 @@ export function createInitialSync(deps: InitialSyncDeps) {
   async function performInitialSync(
     userId: string,
     storage: StorageAdapter = deps.defaultStorage,
+  ): Promise<void> {
+    if (isPulling) return;
+    isPulling = true;
+    try {
+      await performInitialSyncInner(userId, storage);
+    } finally {
+      isPulling = false;
+    }
+  }
+
+  async function performInitialSyncInner(
+    userId: string,
+    storage: StorageAdapter,
   ): Promise<void> {
     await deps.updateAuthState(userId);
 

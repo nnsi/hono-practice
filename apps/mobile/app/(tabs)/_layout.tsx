@@ -12,6 +12,9 @@ import {
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useNavigationSync } from "../../src/hooks/useNavigationSync";
+import { useAuthContext } from "../_layout";
+
 const TAB_ITEMS: {
   name: string;
   title: string;
@@ -99,6 +102,9 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { syncReady, userId } = useAuthContext();
+  useNavigationSync(syncReady, userId);
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
