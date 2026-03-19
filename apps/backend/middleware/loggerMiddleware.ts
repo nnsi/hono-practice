@@ -136,6 +136,20 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
     const summary = tracer.getSummary();
 
+    // 400エラー時はレスポンスbodyからエラー詳細を抽出（zValidatorのバリデーションエラー等）
+    let errorMsg = "";
+    if (status === 400) {
+      try {
+        const cloned = c.res.clone();
+        const body = await cloned.json();
+        if (body?.error) {
+          errorMsg = JSON.stringify(body.error).slice(0, 500);
+        }
+      } catch {
+        // JSON解析失敗は無視
+      }
+    }
+
     // 内部リクエスト（batch等）の場合、トレーサーサマリーをレスポンスヘッダーに付与
     if (c.env.__authenticatedUserId) {
       const newRes = new Response(c.res.body, {
@@ -150,6 +164,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     logger[level]("Response sent", {
       status,
       duration,
+      ...(errorMsg ? { validationError: errorMsg } : {}),
       ...summary,
     });
 
@@ -165,6 +180,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
               requestId,
               method,
               path,
+              error: errorMsg,
               status,
               duration,
               summary,
