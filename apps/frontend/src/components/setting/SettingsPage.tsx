@@ -6,6 +6,7 @@ import {
   Database,
   Download,
   Info,
+  RefreshCw,
   Settings,
   Trash2,
   Upload,
@@ -122,6 +123,7 @@ function useGoogleAccount() {
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showFullResetConfirm, setShowFullResetConfirm] = useState(false);
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] =
     useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
@@ -132,6 +134,15 @@ export function SettingsPage() {
   const google = useGoogleAccount();
 
   const handleClearData = async () => {
+    await clearLocalData();
+    window.location.reload();
+  };
+
+  const handleFullReset = async () => {
+    const regs = await navigator.serviceWorker?.getRegistrations();
+    await Promise.all(regs?.map((r) => r.unregister()) ?? []);
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
     await clearLocalData();
     window.location.reload();
   };
@@ -339,6 +350,40 @@ export function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowClearConfirm(false)}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="border-t border-gray-100" />
+            {!showFullResetConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowFullResetConfirm(true)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <RefreshCw size={16} />
+                アプリを完全に初期化
+              </button>
+            ) : (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
+                <p className="text-sm text-orange-700 font-medium">
+                  ローカルデータに加え、キャッシュとService
+                  Workerもすべて削除します。同期やアプリの動作に問題がある場合に使用してください。
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleFullReset}
+                    className="px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    初期化する
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullResetConfirm(false)}
                     className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     キャンセル
