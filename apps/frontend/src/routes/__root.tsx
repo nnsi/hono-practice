@@ -42,8 +42,17 @@ function RootComponent() {
     null,
   );
 
+  const routerState = useRouterState();
+  const isLegalPage =
+    routerState.location.pathname === "/privacy" ||
+    routerState.location.pathname === "/terms";
+
   useSyncEngine(syncReady);
   useNavigationSync(syncReady, userId);
+
+  if (isLegalPage) {
+    return <Outlet />;
+  }
 
   if (isLoading) {
     return (
