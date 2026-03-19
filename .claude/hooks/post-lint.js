@@ -33,6 +33,43 @@ async function main() {
 
   const projectDir = process.env.CLAUDE_PROJECT_DIR || resolve(__dirname, "../..");
   const biome = join(projectDir, "node_modules", ".bin", "biome");
+  const warnings = [];
+
+  // 0. Project convention checks (file content inspection)
+  try {
+    const { readFileSync } = await import("node:fs");
+    const content = readFileSync(filePath, "utf-8");
+    const lines = content.split("\n");
+    const isTestFile = /\.(test|spec)\.(ts|tsx)$/.test(filePath);
+    const isFrontend = filePath.replace(/\\/g, "/").includes("/frontend/") ||
+      filePath.replace(/\\/g, "/").includes("/mobile/");
+
+    // 0a. interface → type (all files)
+    const interfaceMatch = content.match(/^export\s+interface\s+(\w+)/m);
+    if (interfaceMatch) {
+      warnings.push(`⚠️ interface禁止: \`export interface ${interfaceMatch[1]}\` → \`export type ${interfaceMatch[1]} = { ... }\` に変更してください。`);
+    }
+
+    // 0b. File length > 200 lines (test files excluded)
+    if (!isTestFile && lines.length > 200) {
+      warnings.push(`⚠️ ${lines.length}行: 1ファイル200行以内を目標にしてください。分割を検討してください。`);
+    }
+
+    // 0c. confirm() / alert() in frontend (tsx files)
+    if (isFrontend && /\.(tsx)$/.test(filePath)) {
+      const confirmMatch = content.match(/\b(confirm|alert)\s*\(/);
+      if (confirmMatch) {
+        warnings.push(`⚠️ ${confirmMatch[1]}()禁止: インライン2段階確認UIを使ってください（frontend CLAUDE.md参照）。`);
+      }
+    }
+
+    // 0d. vitest explicit import in test files (backend CLAUDE.md)
+    if (isTestFile && !content.includes('from "vitest"')) {
+      warnings.push('⚠️ vitest import不足: テストファイルでは `import { describe, expect, it } from "vitest"` を明示的に書いてください（backend CLAUDE.md参照）。');
+    }
+  } catch {
+    // file read failure is non-fatal
+  }
 
   // 1. Auto-format
   try {
@@ -70,13 +107,17 @@ async function main() {
     }
   }
 
-  if (diagnostics) {
-    const lines = diagnostics.split("\n").slice(0, 30);
-    const enhanced = enhanceDiagnostics(lines.join("\n"));
+  const allWarnings = warnings.length > 0 ? warnings.join("\n") : "";
+  const allDiagnostics = diagnostics
+    ? enhanceDiagnostics(diagnostics.split("\n").slice(0, 30).join("\n"))
+    : "";
+
+  const combined = [allWarnings, allDiagnostics].filter(Boolean).join("\n\n");
+  if (combined) {
     const output = {
       hookSpecificOutput: {
         hookEventName: "PostToolUse",
-        additionalContext: enhanced,
+        additionalContext: combined,
       },
     };
     process.stdout.write(JSON.stringify(output));

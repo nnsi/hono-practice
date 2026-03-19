@@ -37,14 +37,16 @@ biome.json の `overrides` + `noRestrictedImports` でクロスレイヤーimpor
 
 ---
 
-## 未対応
+## 対応済み（追加）
 
 ### 6. CLAUDE.md のスリム化
-**優先度: 中** | 🔶 83行（推奨: ≤50行）
+✅ 対応済み（2026-03-19）
 
-- 現在83行 → 50行以下を目標
-- 詳細ルールは `.claude/rules/` やサブディレクトリの CLAUDE.md に移動
-- 各行に「この行を削除するとエージェントの実行が壊れるか？」テスト
+83行 → 58行に削減。以下を `.claude/rules/` に移動:
+- `parallel-agents.md` — 並列エージェント運用（日記3/16-3/19から抽出したエージェント運用教訓も追加）
+- `response-style.md` — 回答方針
+
+`type`(interface不可) / 200行制限 / confirm()禁止は `post-lint.js` で機械的に検出するようにし、CLAUDE.mdから削除。
 
 ---
 
