@@ -76,7 +76,8 @@
       "suspicious": {
         "noExplicitAny": "error",
         "noConfusingVoidType": "off",
-        "useIterableCallbackReturn": "off"
+        "useIterableCallbackReturn": "off",
+        "noUnknownAtRules": "off"
       },
       "complexity": {
         "noForEach": "off",

@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   commands:
     lint:
-      glob: "*.{ts,tsx}"
+      glob: "**/*.{ts,tsx,css}"
       run: pnpm exec biome lint --no-errors-on-unmatched {staged_files}
     typecheck:
       run: pnpm run tsc

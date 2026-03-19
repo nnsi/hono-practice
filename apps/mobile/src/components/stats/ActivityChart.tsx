@@ -8,7 +8,6 @@ import {
   barHeightPct,
   computeChartScale,
   computeXLabelStep,
-  computeYAxisWidth,
   formatTickValue,
   shouldShowXLabel,
   stackedTotal,
@@ -28,9 +27,12 @@ function DashedLine({
   thickness?: number;
 }) {
   return (
-    <View style={{ flexDirection: "row", overflow: "hidden", height: thickness }}>
+    <View
+      style={{ flexDirection: "row", overflow: "hidden", height: thickness }}
+    >
       {Array.from({ length: 80 }, (_, i) => (
         <View
+          // biome-ignore lint/suspicious/noArrayIndexKey: static decorative dashes, never reordered
           key={i}
           style={{
             width: dashWidth,
@@ -290,10 +292,7 @@ export function ActivityChart({
             .map((d, i) => ({ label: d.date as string, index: i }))
             .filter((d) => shouldShowXLabel(d.index, data.length, tickStep))
             .map((d) => (
-              <Text
-                key={d.label}
-                style={{ fontSize: 9, color: "#6b7280" }}
-              >
+              <Text key={d.label} style={{ fontSize: 9, color: "#6b7280" }}>
                 {d.label}
               </Text>
             ))}

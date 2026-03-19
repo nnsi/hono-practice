@@ -15,8 +15,8 @@ import {
   type ActivityLogId,
   createActivityLogId,
 } from "@packages/domain/activityLog/activityLogSchema";
-import type { GetActivityStatsResponse } from "@packages/types/response";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
+import type { GetActivityStatsResponse } from "@packages/types/response";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 

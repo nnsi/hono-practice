@@ -1,8 +1,8 @@
 import { hc } from "hono/client";
 
-import type { AppType } from "@packages/types/api";
 import type { TokenStorage } from "@packages/platform";
 import { createAuthenticatedFetch } from "@packages/sync-engine";
+import type { AppType } from "@packages/types/api";
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3456"
