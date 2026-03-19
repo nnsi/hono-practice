@@ -137,7 +137,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     const summary = tracer.getSummary();
 
     // 内部リクエスト（batch等）の場合、トレーサーサマリーをレスポンスヘッダーに付与
-    if ((c.env as Record<string, unknown>).__authenticatedUserId) {
+    if (c.env.__authenticatedUserId) {
       const newRes = new Response(c.res.body, {
         status: c.res.status,
         statusText: c.res.statusText,

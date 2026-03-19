@@ -1,13 +1,13 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
-import type { ActivityId } from "@packages/domain/activity/activitySchema";
+import { createActivityId } from "@packages/domain/activity/activitySchema";
 import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import {
   type ActivityGoal,
-  type ActivityGoalId,
   createActivityGoalEntity,
   createActivityGoalId,
+  createActivityGoalIdFromString,
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -187,7 +187,7 @@ function getGoal(
   return async (userId: UserId, goalId: string): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        goalId as ActivityGoalId,
+        createActivityGoalIdFromString(goalId),
         userId,
       ),
     );
@@ -211,7 +211,7 @@ function createGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
       type: "new",
       id: createActivityGoalId(),
       userId,
-      activityId: req.activityId as ActivityId,
+      activityId: createActivityId(req.activityId),
       dailyTargetQuantity: req.dailyTargetQuantity,
       startDate: req.startDate,
       endDate: req.endDate || null,
@@ -241,7 +241,7 @@ function updateGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   ): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        goalId as ActivityGoalId,
+        createActivityGoalIdFromString(goalId),
         userId,
       ),
     );
@@ -280,7 +280,7 @@ function deleteGoal(activityGoalRepo: ActivityGoalRepository, tracer: Tracer) {
   return async (userId: UserId, goalId: string): Promise<void> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(
-        goalId as ActivityGoalId,
+        createActivityGoalIdFromString(goalId),
         userId,
       ),
     );

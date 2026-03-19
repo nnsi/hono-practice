@@ -32,16 +32,23 @@ function strOrNull(v: unknown): string | null {
 type IconType = "emoji" | "upload";
 const VALID_ICON_TYPES = new Set<string>(["emoji", "upload"]);
 
+function isIconType(v: string): v is IconType {
+  return VALID_ICON_TYPES.has(v);
+}
+
 function toIconType(v: unknown): IconType {
-  if (typeof v === "string" && VALID_ICON_TYPES.has(v)) return v as IconType;
+  if (typeof v === "string" && isIconType(v)) return v;
   return "emoji";
 }
 
 const VALID_RECORDING_MODES: ReadonlySet<string> = new Set(RECORDING_MODES);
 
+function isRecordingMode(v: string): v is RecordingMode {
+  return VALID_RECORDING_MODES.has(v);
+}
+
 function toRecordingMode(v: unknown): RecordingMode {
-  if (typeof v === "string" && VALID_RECORDING_MODES.has(v))
-    return v as RecordingMode;
+  if (typeof v === "string" && isRecordingMode(v)) return v;
   return "manual";
 }
 

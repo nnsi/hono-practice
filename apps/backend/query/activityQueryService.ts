@@ -148,7 +148,7 @@ function transform(
       return acc;
     },
     {
-      stats: [] as GetActivityStatsResponse,
+      stats: [] as Array<GetActivityStatsResponse[number]>,
       activityMap: new Map<string, number>(),
       activityKindMap: new Map<string, number>(),
     },

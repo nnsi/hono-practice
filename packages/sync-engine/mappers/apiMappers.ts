@@ -48,18 +48,26 @@ function toNumOrNull(v: unknown): number | null {
 const VALID_ICON_TYPES = new Set(["emoji", "upload", "generate"]);
 type IconType = "emoji" | "upload" | "generate";
 
+function isIconType(value: string): value is IconType {
+  return VALID_ICON_TYPES.has(value);
+}
+
 function toIconType(value: unknown): IconType {
-  if (typeof value === "string" && VALID_ICON_TYPES.has(value)) {
-    return value as IconType;
+  if (typeof value === "string" && isIconType(value)) {
+    return value;
   }
   return "emoji";
 }
 
 const VALID_RECORDING_MODES: ReadonlySet<string> = new Set(RECORDING_MODES);
 
+function isRecordingMode(value: string): value is RecordingMode {
+  return VALID_RECORDING_MODES.has(value);
+}
+
 function toRecordingMode(value: unknown): RecordingMode {
-  if (typeof value === "string" && VALID_RECORDING_MODES.has(value)) {
-    return value as RecordingMode;
+  if (typeof value === "string" && isRecordingMode(value)) {
+    return value;
   }
   return "manual";
 }

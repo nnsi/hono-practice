@@ -191,8 +191,8 @@ function updateActivityOrder(
     const typedNextId = params.next ? createActivityId(params.next) : undefined;
 
     const ids = [activityId, typedPrevId, typedNextId].filter(
-      Boolean,
-    ) as ActivityId[];
+      (x): x is ActivityId => Boolean(x),
+    );
 
     return tx.run([repo], async (txRepo) => {
       const activities = await tracer.span(
