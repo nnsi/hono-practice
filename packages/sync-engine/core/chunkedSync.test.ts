@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { chunkArray, mergeSyncResults } from "./chunkedSync";
+import type { SyncResult } from "./syncResult";
 
 describe("chunkArray", () => {
   it("returns empty array for empty input", () => {
@@ -42,7 +43,7 @@ describe("mergeSyncResults", () => {
       { syncedIds: ["a", "b"], serverWins: [{ id: "x" }], skippedIds: ["s1"] },
       { syncedIds: ["c"], serverWins: [], skippedIds: ["s2"] },
     ];
-    const merged = mergeSyncResults(results as any);
+    const merged = mergeSyncResults(results as unknown as SyncResult[]);
     expect(merged.syncedIds).toEqual(["a", "b", "c"]);
     expect(merged.serverWins).toEqual([{ id: "x" }]);
     expect(merged.skippedIds).toEqual(["s1", "s2"]);

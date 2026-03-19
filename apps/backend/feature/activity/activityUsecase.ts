@@ -3,11 +3,6 @@ import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { StorageService } from "@backend/infra/storage";
 import type { Tracer } from "@backend/lib/tracer";
 import { generateIconKey } from "@backend/utils/imageValidator";
-import type {
-  CreateActivityRequest,
-  UpdateActivityOrderRequest,
-  UpdateActivityRequest,
-} from "@packages/types/request";
 import {
   type Activity,
   type ActivityId,
@@ -16,6 +11,11 @@ import {
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
 import type { UserId } from "@packages/domain/user/userSchema";
+import type {
+  CreateActivityRequest,
+  UpdateActivityOrderRequest,
+  UpdateActivityRequest,
+} from "@packages/types/request";
 import { generateOrder } from "@packages/utils/lexicalOrder";
 
 import type { ActivityRepository } from ".";

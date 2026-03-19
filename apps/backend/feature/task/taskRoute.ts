@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 
 import { noopTracer } from "@backend/lib/tracer";
+import { zValidator } from "@hono/zod-validator";
+import { createTaskId } from "@packages/domain/task/taskSchema";
 import {
   createTaskRequestSchema,
   updateTaskRequestSchema,
 } from "@packages/types/request";
 import { getTasksRequestSchema } from "@packages/types/request/GetTasksRequest";
-import { zValidator } from "@hono/zod-validator";
-import { createTaskId } from "@packages/domain/task/taskSchema";
 
 import type { AppContext } from "../../context";
 import { newTaskHandler } from "./taskHandler";

@@ -1,4 +1,15 @@
 export {
+  barHeightPct,
+  computeChartScale,
+  computeXLabelStep,
+  computeYAxisWidth,
+  formatTickValue,
+  generateYTicks,
+  shouldShowXLabel,
+  stackedTotal,
+  tickBottomPct,
+} from "./chartUtils";
+export {
   COLOR_PALETTE,
   DEFAULT_BAR_COLOR,
   getUniqueColorForKind,

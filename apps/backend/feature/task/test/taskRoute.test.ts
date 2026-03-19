@@ -220,7 +220,9 @@ test("POST tasks/:id/archive / success", async () => {
   const archivedListRes = await client.archived.$get();
   const archivedList = await archivedListRes.json();
 
-  const found = archivedList.find((task: any) => task.id === taskId);
+  const found = archivedList.find(
+    (task: (typeof archivedList)[number]) => task.id === taskId,
+  );
   expect(found).toBeDefined();
   expect(found?.title).toEqual("タスクをアーカイブするテスト");
 });

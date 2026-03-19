@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj } = vi.hoisted(() => ({
-  mockApiClientObj: {} as any,
+  mockApiClientObj: {} as Record<string, unknown>,
 }));
 
 vi.mock("../db/activityRepository");
@@ -56,7 +56,10 @@ import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
 import { clearLocalData, performInitialSync } from "./initialSync";
 
-const mockDb = vi.mocked(db) as any;
+const mockDb = vi.mocked(db) as unknown as Record<
+  string,
+  Record<string, ReturnType<typeof vi.fn>>
+>;
 const mockActivityRepo = vi.mocked(activityRepository);
 const mockLogRepo = vi.mocked(activityLogRepository);
 const mockGoalRepo = vi.mocked(goalRepository);
@@ -66,12 +69,24 @@ describe("initialSync", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    vi.mocked(mapApiActivity).mockImplementation((a: any) => a);
-    vi.mocked(mapApiActivityKind).mockImplementation((k: any) => k);
-    vi.mocked(mapApiActivityLog).mockImplementation((l: any) => l);
-    vi.mocked(mapApiGoal).mockImplementation((g: any) => g);
-    vi.mocked(mapApiGoalFreezePeriod).mockImplementation((fp: any) => fp);
-    vi.mocked(mapApiTask).mockImplementation((t: any) => t);
+    vi.mocked(mapApiActivity).mockImplementation(
+      (a) => a as unknown as ReturnType<typeof mapApiActivity>,
+    );
+    vi.mocked(mapApiActivityKind).mockImplementation(
+      (k) => k as unknown as ReturnType<typeof mapApiActivityKind>,
+    );
+    vi.mocked(mapApiActivityLog).mockImplementation(
+      (l) => l as unknown as ReturnType<typeof mapApiActivityLog>,
+    );
+    vi.mocked(mapApiGoal).mockImplementation(
+      (g) => g as unknown as ReturnType<typeof mapApiGoal>,
+    );
+    vi.mocked(mapApiGoalFreezePeriod).mockImplementation(
+      (fp) => fp as unknown as ReturnType<typeof mapApiGoalFreezePeriod>,
+    );
+    vi.mocked(mapApiTask).mockImplementation(
+      (t) => t as unknown as ReturnType<typeof mapApiTask>,
+    );
   });
 
   describe("clearLocalData", () => {
@@ -323,7 +338,7 @@ describe("initialSync", () => {
     });
 
     it("full account switch: clear UserA → login as UserB", async () => {
-      const okRes = (data: any) => ({
+      const okRes = (data: unknown) => ({
         ok: true,
         json: () => Promise.resolve(data),
       });

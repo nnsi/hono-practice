@@ -43,7 +43,16 @@ export function useAuth(): AuthState {
         "SELECT user_id FROM auth_state WHERE id = 'current'",
       );
       if (authState && authState.user_id !== newUserId) await clearLocalData();
-      await performInitialSync(newUserId);
+      try {
+        await performInitialSync(newUserId);
+      } catch (err) {
+        reportError({
+          errorType: "unhandled_error",
+          message: `Initial sync failed: ${err instanceof Error ? err.message : String(err)}`,
+          stack: err instanceof Error ? err.stack : undefined,
+        });
+        throw err;
+      }
     };
 
     const serverRefreshAndSync = async (): Promise<boolean> => {
@@ -63,9 +72,11 @@ export function useAuth(): AuthState {
 
     // オンライン復帰時に serverRefreshAndSync をリトライ（最大2回）
     const registerOnlineRetry = (isLastAttempt: boolean) => {
-      const unsub = NetInfo.addEventListener((state) => {
+      let unsub: (() => void) | null = null;
+      unsub = NetInfo.addEventListener((state) => {
         if (!state.isConnected) return;
-        unsub();
+        // コールバックが同期的に発火する場合 unsub が未代入のため次tickで解除
+        queueMicrotask(() => unsub?.());
         serverRefreshAndSync()
           .then(() => {
             onlineRetryRef.current = null;
@@ -129,7 +140,15 @@ export function useAuth(): AuthState {
     if (authState && authState.user_id !== newUserId) await clearLocalData();
     setUserId(newUserId);
     setIsLoggedIn(true);
-    await performInitialSync(newUserId);
+    try {
+      await performInitialSync(newUserId);
+    } catch (err) {
+      reportError({
+        errorType: "unhandled_error",
+        message: `Login sync failed: ${err instanceof Error ? err.message : String(err)}`,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+    }
     setSyncReady(true);
   }, []);
 

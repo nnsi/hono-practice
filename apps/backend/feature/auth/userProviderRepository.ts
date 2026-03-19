@@ -7,7 +7,7 @@ import {
 } from "@packages/domain/auth/userProviderSchema";
 import { and, eq, isNull } from "drizzle-orm";
 
-export type UserProviderRepository<T = any> = {
+export type UserProviderRepository<T = QueryExecutor> = {
   findUserProviderByIdAndProvider(
     provider: Provider,
     providerId: string,

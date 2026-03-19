@@ -18,6 +18,7 @@
 - `/docs/knowledges/` — 設計ドキュメント
 - `apps/backend/CLAUDE.md` — バックエンド固有ルール
 - `apps/frontend/CLAUDE.md` — フロントエンド固有ルール
+- `apps/mobile/CLAUDE.md` — モバイル固有ルール
 
 ## 必須コマンド
 ```bash

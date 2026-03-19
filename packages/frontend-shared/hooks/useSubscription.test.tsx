@@ -26,7 +26,7 @@ describe("createUseSubscription", () => {
         $get: vi.fn(),
       },
     },
-  } as any;
+  } as unknown as Parameters<typeof createUseSubscription>[0]["apiClient"];
 
   beforeEach(() => {
     vi.clearAllMocks();

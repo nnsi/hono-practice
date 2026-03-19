@@ -1,6 +1,9 @@
-import type { CreateUserRequest } from "@packages/types/request";
-import { type GetUserResponse, GetUserResponseSchema } from "@packages/types/response";
 import type { UserId } from "@packages/domain/user/userSchema";
+import type { CreateUserRequest } from "@packages/types/request";
+import {
+  type GetUserResponse,
+  GetUserResponseSchema,
+} from "@packages/types/response";
 
 import { AppError } from "../../error";
 import type { AuthHandler } from "../auth/authHandler";

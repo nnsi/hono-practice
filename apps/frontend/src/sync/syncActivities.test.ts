@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClientObj, mockCustomFetchFn } = vi.hoisted(() => ({
-  mockApiClientObj: {} as any,
+  mockApiClientObj: {} as Record<string, unknown>,
   mockCustomFetchFn: vi.fn(),
 }));
 
@@ -22,6 +22,7 @@ import {
 } from "@packages/sync-engine/mappers/apiMappers";
 
 import { activityRepository } from "../db/activityRepository";
+import type { DexieActivity, DexieActivityKind } from "../db/schema";
 import { db } from "../db/schema";
 import {
   syncActivities,
@@ -30,13 +31,19 @@ import {
 } from "./syncActivities";
 
 const mockActivityRepo = vi.mocked(activityRepository);
-const mockDb = vi.mocked(db) as any;
+const mockDb = vi.mocked(db) as unknown as {
+  activities: { get: ReturnType<typeof vi.fn> };
+};
 
 describe("syncActivities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(mapApiActivity).mockImplementation((a: any) => a);
-    vi.mocked(mapApiActivityKind).mockImplementation((k: any) => k);
+    vi.mocked(mapApiActivity).mockImplementation(
+      (a) => a as ReturnType<typeof mapApiActivity>,
+    );
+    vi.mocked(mapApiActivityKind).mockImplementation(
+      (k) => k as ReturnType<typeof mapApiActivityKind>,
+    );
   });
 
   describe("syncActivities()", () => {
@@ -54,7 +61,7 @@ describe("syncActivities", () => {
         { id: "a1", name: "Run", _syncStatus: "pending" as const },
       ];
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue(
-        pending as any,
+        pending as unknown as DexieActivity[],
       );
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
 
@@ -98,10 +105,10 @@ describe("syncActivities", () => {
         },
       ];
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue(
-        pendingActivities as any,
+        pendingActivities as unknown as DexieActivity[],
       );
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue(
-        pendingKinds as any,
+        pendingKinds as unknown as DexieActivityKind[],
       );
 
       const serverWinActivity = { id: "a2", name: "Server" };
@@ -156,7 +163,7 @@ describe("syncActivities", () => {
     it("throws when API returns not ok (H5)", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
         { id: "a1", _syncStatus: "pending" },
-      ] as any);
+      ] as unknown as DexieActivity[]);
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
 
       const mockPost = vi.fn().mockResolvedValue({
@@ -176,7 +183,7 @@ describe("syncActivities", () => {
     it("skips DB writes when sync generation changes (H4)", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
         { id: "a1", name: "Run", _syncStatus: "pending" },
-      ] as any);
+      ] as unknown as DexieActivity[]);
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
 
       const mockPost = vi.fn().mockImplementation(async () => {
@@ -212,7 +219,7 @@ describe("syncActivities", () => {
         id: `a-${i}`,
         name: `Activity ${i}`,
         _syncStatus: "pending" as const,
-      })) as any;
+      })) as unknown as DexieActivity[];
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue(pending);
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
 

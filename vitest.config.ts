@@ -1,10 +1,10 @@
 import path from "node:path";
 
 import viteTsConfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from "vitest/config";
+import { type Plugin, defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [viteTsConfigPaths() as any],
+  plugins: [viteTsConfigPaths() as unknown as Plugin],
   esbuild: {
     target: "es2020",
     jsx: "automatic",
@@ -28,16 +28,18 @@ export default defineConfig({
       "**/dist/**",
       "**/cypress/**",
       "**/.{idea,git,cache,output,temp}/**",
+      "**/.claude/worktrees/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/db-data/**",
       "**/dist-frontend/**",
       "**/e2e/**",
     ],
-    pool: "forks",
+    silent: true,
+    pool: "vmThreads",
     poolOptions: {
-      forks: {
-        minForks: 1,
-        maxForks: 4,
+      vmThreads: {
+        minThreads: 1,
+        maxThreads: 4,
       },
     },
     maxConcurrency: 5,

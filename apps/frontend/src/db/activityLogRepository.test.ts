@@ -1,3 +1,4 @@
+import type { UpsertActivityLogFromServerInput } from "@packages/domain/activityLog/activityLogRepository";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockDb, uuidState } = vi.hoisted(() => {
@@ -246,7 +247,7 @@ describe("activityLogRepository", () => {
           date: "2024-06-02",
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as UpsertActivityLogFromServerInput[];
 
       await activityLogRepository.upsertActivityLogsFromServer(logs);
 
@@ -294,7 +295,7 @@ describe("activityLogRepository", () => {
           date: "2024-06-02",
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as UpsertActivityLogFromServerInput[];
 
       await activityLogRepository.upsertActivityLogsFromServer(logs);
 
@@ -340,7 +341,7 @@ describe("activityLogRepository", () => {
           date: "2024-06-02",
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as UpsertActivityLogFromServerInput[];
 
       await activityLogRepository.upsertActivityLogsFromServer(logs);
 
@@ -371,7 +372,7 @@ describe("activityLogRepository", () => {
           date: "2024-06-02",
           updatedAt: "2026-03-01T00:00:00Z",
         },
-      ] as any[];
+      ] as unknown as UpsertActivityLogFromServerInput[];
 
       await activityLogRepository.upsertActivityLogsFromServer(logs);
 

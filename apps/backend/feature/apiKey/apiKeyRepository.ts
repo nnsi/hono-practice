@@ -12,7 +12,7 @@ import {
 } from "@packages/domain/apiKey/apiKeySchema";
 import { and, eq, isNull } from "drizzle-orm";
 
-export type ApiKeyRepository<T = any> = {
+export type ApiKeyRepository<T = QueryExecutor> = {
   createApiKey: (
     data: CreateApiKeyData & { id: ApiKeyId; key: string },
   ) => Promise<ApiKey>;

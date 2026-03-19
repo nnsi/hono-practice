@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { multipartMiddleware } from "@backend/middleware/multipartMiddleware";
 import { describe, expect, it } from "vitest";
@@ -9,7 +10,9 @@ describe("multipartMiddleware", () => {
     let storedFile: File | undefined;
 
     app.post("/upload", multipartMiddleware, async (c) => {
-      storedFile = (c as any).get("uploadedFile") as File | undefined;
+      storedFile = (
+        c as unknown as { get: (key: string) => File | undefined }
+      ).get("uploadedFile");
       return c.json({ success: true });
     });
 
@@ -31,7 +34,9 @@ describe("multipartMiddleware", () => {
     const app = new Hono();
 
     app.post("/upload", multipartMiddleware, async (c) => {
-      const uploadedFile = (c as any).get("uploadedFile") as File | undefined;
+      const uploadedFile = (
+        c as unknown as { get: (key: string) => File | undefined }
+      ).get("uploadedFile");
       return c.json({ success: true, hasFile: !!uploadedFile });
     });
 
@@ -51,8 +56,8 @@ describe("multipartMiddleware", () => {
   it("ファイルがアップロードされていない場合はエラーを返す", async () => {
     const app = new Hono();
 
-    app.onError((err: any, c) => {
-      const status = err.status || 500;
+    app.onError((err: Error & { status?: number }, c) => {
+      const status = (err.status || 500) as ContentfulStatusCode;
       return c.json({ error: err.message }, status);
     });
 
@@ -76,8 +81,8 @@ describe("multipartMiddleware", () => {
   it("5MBを超えるファイルを拒否する", async () => {
     const app = new Hono();
 
-    app.onError((err: any, c) => {
-      const status = err.status || 500;
+    app.onError((err: Error & { status?: number }, c) => {
+      const status = (err.status || 500) as ContentfulStatusCode;
       return c.json({ error: err.message }, status);
     });
 
@@ -103,8 +108,8 @@ describe("multipartMiddleware", () => {
   it("無効なFormDataでエラーを返す", async () => {
     const app = new Hono();
 
-    app.onError((err: any, c) => {
-      const status = err.status || 500;
+    app.onError((err: Error & { status?: number }, c) => {
+      const status = (err.status || 500) as ContentfulStatusCode;
       return c.json({ error: err.message }, status);
     });
 

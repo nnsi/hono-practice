@@ -127,7 +127,7 @@ describe("createSyncEngine", () => {
       expect(fns.syncTasks).not.toHaveBeenCalled();
     });
 
-    it("partial failure in Promise.all does not break mutex", async () => {
+    it("partial failure does not break mutex", async () => {
       const fns = createMockFns();
       fns.syncGoals.mockRejectedValueOnce(new Error("goals failed"));
 

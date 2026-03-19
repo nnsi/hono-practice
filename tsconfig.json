@@ -33,9 +33,5 @@
       "@packages/utils/*": ["packages/utils/*"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "apps/tail-worker",
-    "apps/mobile"
-  ]
+  "exclude": ["node_modules", "apps/tail-worker", "apps/mobile"]
 }

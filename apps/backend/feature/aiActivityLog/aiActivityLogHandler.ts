@@ -1,8 +1,8 @@
 import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateAIActivityLogRequest } from "@packages/types/request";
 import { CreateAIActivityLogResponseSchema } from "@packages/types/response";
-import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { AIActivityLogUsecase } from "./aiActivityLogUsecase";
 

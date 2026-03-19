@@ -34,6 +34,7 @@ export function LoginForm() {
         redirectUri,
         scopes: ["openid", "profile", "email"],
         responseType: AuthSession.ResponseType.IdToken,
+        usePKCE: false,
       },
       googleDiscovery,
     );

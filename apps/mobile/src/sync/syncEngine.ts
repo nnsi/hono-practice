@@ -13,6 +13,7 @@ import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepo
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
+import { reportError } from "../utils/errorReporter";
 import { rnNetworkAdapter } from "./rnPlatformAdapters";
 import {
   syncActivities,
@@ -96,4 +97,12 @@ export const syncEngine = createSyncEngine(
     syncTasks,
   },
   rnNetworkAdapter,
+  (error, phase) => {
+    console.error(`[sync] ${phase} failed:`, error);
+    reportError({
+      errorType: "unhandled_error",
+      message: `Push sync failed (${phase}): ${error instanceof Error ? error.message : String(error)}`,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  },
 );

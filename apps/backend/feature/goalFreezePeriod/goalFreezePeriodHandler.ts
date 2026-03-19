@@ -1,4 +1,5 @@
 import { AppError } from "@backend/error";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type {
   CreateFreezePeriodRequest,
   UpdateFreezePeriodRequest,
@@ -7,7 +8,6 @@ import {
   FreezePeriodResponseSchema,
   GetFreezePeriodsResponseSchema,
 } from "@packages/types/response";
-import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { GoalFreezePeriodUsecase } from "./goalFreezePeriodUsecase";
 

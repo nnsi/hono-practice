@@ -39,7 +39,7 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
     if (credential === "no-sub-token") {
       return {
         iss: "https://accounts.google.com",
-        sub: undefined as any,
+        sub: undefined as unknown as string,
         aud: clientId,
         exp: Date.now() / 1000 + 600,
         iat: Date.now() / 1000,
@@ -231,7 +231,10 @@ describe("AuthRoute Integration Tests", () => {
     it("異常系：リクエストボディが不正 (missing password)", async () => {
       const client = createTestClient();
       const res = await client.login.$post({
-        json: { login_id: testLoginId } as any,
+        json: { login_id: testLoginId } as unknown as {
+          login_id: string;
+          password: string;
+        },
       });
       expect(res.status).toBe(400);
       const body = await res.json();
@@ -246,7 +249,10 @@ describe("AuthRoute Integration Tests", () => {
         "message" in body.error
       ) {
         // Zod 4 serializes errors as JSON string in message field
-        const errorMessage = (body.error as any).message;
+        const errorMessage = (body.error as Record<string, unknown>).message;
+        if (typeof errorMessage !== "string") {
+          expect.fail("Expected error message to be a string");
+        }
         const issues = JSON.parse(errorMessage);
         expect(issues).toEqual(
           expect.arrayContaining([
@@ -716,7 +722,7 @@ describe("AuthRoute Integration Tests", () => {
         { headers: { "x-client-id": mockClientId } },
       );
       expect(res.status).toBe(401);
-      const body: any = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.message).toMatch(/Invalid token/);
     });
 
@@ -727,7 +733,7 @@ describe("AuthRoute Integration Tests", () => {
         { headers: { "x-client-id": mockClientId } },
       );
       expect(res.status).toBe(401);
-      const body: any = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.message).toMatch(/Missing 'sub'/);
     });
 
@@ -738,7 +744,7 @@ describe("AuthRoute Integration Tests", () => {
         { headers: { "x-client-id": mockClientId } },
       );
       expect(res.status).toBe(401);
-      const body: any = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.message).toMatch(/Missing 'email'/);
     });
   });

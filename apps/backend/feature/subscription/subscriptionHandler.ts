@@ -1,6 +1,6 @@
 import { AppError } from "@backend/error";
-import { SubscriptionResponseSchema } from "@packages/types/response";
 import type { UserId } from "@packages/domain/user/userSchema";
+import { SubscriptionResponseSchema } from "@packages/types/response";
 
 import type { SubscriptionUsecase } from "./subscriptionUsecase";
 

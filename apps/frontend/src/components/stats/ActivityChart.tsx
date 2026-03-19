@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   ChartData,
   GoalLine,
 } from "@packages/frontend-shared/types/stats";
 import {
-  VictoryAxis,
-  VictoryBar,
-  VictoryChart,
-  VictoryLabel,
-  VictoryLine,
-  VictoryStack,
-  VictoryTooltip,
-} from "victory";
+  barHeightPct,
+  computeChartScale,
+  computeXLabelStep,
+  formatTickValue,
+  shouldShowXLabel,
+  stackedTotal,
+  tickBottomPct,
+} from "@packages/frontend-shared/utils/chartUtils";
 
 function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
   const [width, setWidth] = useState(0);
@@ -52,104 +52,49 @@ export function ActivityChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef);
 
-  const chartWidth = width - 24;
-  const paddingLeft = 45;
-  const hasGoalLines = goalLines.length > 0;
-  const paddingRight = hasGoalLines ? 20 : 15;
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    lines: { name: string; value: number; color: string }[];
+  } | null>(null);
 
-  // X-axis: show all ticks but only label some (preserveStartEnd like Recharts)
-  const allTickValues = useMemo(
-    () => data.map((d) => d.date as string),
-    [data],
+  const { yTicks, effectiveYMax } = useMemo(
+    () => computeChartScale(data, dataKeys, goalLines, !!stackId),
+    [data, dataKeys, goalLines, stackId],
   );
 
-  const tickStep = useMemo(() => {
-    if (data.length === 0 || width === 0) return 1;
-    const available = chartWidth - paddingLeft - paddingRight;
-    // Target ~40px per label for Japanese date labels like "28日"
-    const maxLabels = Math.max(2, Math.floor(available / 40));
-    return Math.max(1, Math.ceil(data.length / maxLabels));
-  }, [data.length, width, chartWidth, paddingLeft, paddingRight]);
+  const yAxisWidth = 7 * 7 + 8; // 7文字幅で固定（例: "300,000"）
 
-  const tickFormat = useMemo(() => {
-    return (tick: string, index: number) => {
-      if (index === 0 || index === data.length - 1) return tick;
-      // Hide label if too close to the last tick
-      if (index % tickStep === 0 && data.length - 1 - index >= tickStep) {
-        return tick;
-      }
-      return "";
-    };
-  }, [data.length, tickStep]);
+  const tickStep = useMemo(
+    () => computeXLabelStep(data.length, width, yAxisWidth),
+    [data.length, width, yAxisWidth],
+  );
 
-  // Y domain
-  const yMax = useMemo(() => {
-    let max = 0;
-    if (stackId) {
-      for (const d of data) {
-        let sum = 0;
-        for (const key of dataKeys) {
-          sum += (d[key.name] as number) || 0;
-        }
-        max = Math.max(max, sum);
-      }
-    } else {
-      for (const d of data) {
-        for (const key of dataKeys) {
-          max = Math.max(max, (d[key.name] as number) || 0);
-        }
-      }
-    }
-    for (const goal of goalLines) {
-      max = Math.max(max, goal.value);
-    }
-    return max === 0 ? 10 : Math.ceil(max * 1.15);
-  }, [data, dataKeys, stackId, goalLines]);
+  const chartAreaHeight = height - 32;
 
-  // Bar width
-  const barWidth = useMemo(() => {
-    const available = chartWidth - paddingLeft - paddingRight;
-    const barArea = available / data.length;
-    // For grouped (non-stacked) bars, divide by number of keys
-    const groupDivisor = stackId ? 1 : dataKeys.length;
-    const w = (barArea * 0.7) / groupDivisor;
-    return Math.max(3, Math.min(24, w));
-  }, [
-    chartWidth,
-    paddingLeft,
-    paddingRight,
-    data.length,
-    dataKeys.length,
-    stackId,
-  ]);
-
-  const bars = dataKeys.map((key) => (
-    <VictoryBar
-      key={key.name}
-      data={data}
-      x="date"
-      y={key.name}
-      style={{ data: { fill: key.color, width: barWidth } }}
-      cornerRadius={{ top: 2 }}
-      labels={({ datum }) => {
-        const val = datum[key.name] ?? datum._y ?? 0;
-        return val > 0 ? `${key.name}: ${val}` : "";
-      }}
-      labelComponent={
-        <VictoryTooltip
-          cornerRadius={8}
-          flyoutStyle={{
-            stroke: "#e5e7eb",
-            strokeWidth: 1,
-            fill: "white",
-          }}
-          style={{ fontSize: 11, fill: "#374151" }}
-          flyoutPadding={{ top: 6, bottom: 6, left: 10, right: 10 }}
-          renderInPortal={false}
-        />
+  const handleBarHover = useCallback(
+    (e: React.MouseEvent, d: ChartData) => {
+      const lines = dataKeys
+        .map((key) => ({
+          name: key.name,
+          value: (d[key.name] as number) || 0,
+          color: key.color,
+        }))
+        .filter((l) => l.value > 0);
+      if (lines.length === 0) {
+        setTooltip(null);
+        return;
       }
-    />
-  ));
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltip({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        lines,
+      });
+    },
+    [dataKeys],
+  );
 
   if (width === 0) {
     return (
@@ -162,7 +107,11 @@ export function ActivityChart({
   }
 
   return (
-    <div ref={containerRef} className="bg-white rounded-lg p-3 border">
+    <div
+      ref={containerRef}
+      className="bg-white rounded-lg p-3 border relative"
+      onMouseLeave={() => setTooltip(null)}
+    >
       {showLegend && dataKeys.length > 1 && (
         <div className="flex flex-wrap gap-3 px-2 pb-1">
           {dataKeys.map((key) => (
@@ -176,70 +125,179 @@ export function ActivityChart({
           ))}
         </div>
       )}
-      <VictoryChart
-        width={chartWidth}
-        height={height}
-        padding={{
-          top: 15,
-          right: paddingRight,
-          bottom: 35,
-          left: paddingLeft,
-        }}
-        domainPadding={{ x: barWidth }}
-        domain={{ y: [0, yMax] }}
-      >
-        {/* X Axis */}
-        <VictoryAxis
-          tickValues={allTickValues}
-          tickFormat={tickFormat}
+
+      <div style={{ height }}>
+        <div className="relative" style={{ height: chartAreaHeight }}>
+          {/* Y-axis labels + grid lines as unified rows */}
+          {yTicks.map((tick) => (
+            <div
+              key={`tick-${tick}`}
+              className="absolute flex items-center"
+              style={{
+                bottom: `${tickBottomPct(tick, effectiveYMax)}%`,
+                left: 0,
+                right: 0,
+                transform: "translateY(50%)",
+              }}
+            >
+              <span
+                className="text-[10px] text-gray-500 leading-none whitespace-nowrap shrink-0 text-right pr-2"
+                style={{ width: yAxisWidth }}
+              >
+                {formatTickValue(tick)}
+              </span>
+              {tick > 0 && (
+                <div className="flex-1 border-t border-dashed border-gray-200" />
+              )}
+            </div>
+          ))}
+
+          {/* Chart area (overlays on top of grid, offset by yAxisWidth) */}
+          <div
+            className="absolute top-0 bottom-0 right-0"
+            style={{ left: yAxisWidth }}
+          >
+            {/* Goal lines */}
+            {goalLines.map((goal) => {
+              const pct = Math.min(
+                tickBottomPct(goal.value, effectiveYMax),
+                100,
+              );
+              return (
+                <div
+                  key={goal.id}
+                  className="absolute left-0 right-0 z-[1]"
+                  style={{ bottom: `${pct}%` }}
+                >
+                  <div
+                    style={{
+                      borderTopColor: goal.color,
+                      borderTopStyle: "dashed",
+                      borderTopWidth: 1.5,
+                    }}
+                  />
+                  <span
+                    className="text-[10px] absolute right-0 whitespace-nowrap"
+                    style={{ color: goal.color, bottom: 4 }}
+                  >
+                    {goal.label}
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Bars */}
+            <div className="absolute inset-0 flex items-end">
+              {data.map((d) => {
+                const dateLabel = d.date as string;
+
+                if (stackId) {
+                  const total = stackedTotal(d, dataKeys);
+                  const totalPct = barHeightPct(total, effectiveYMax);
+
+                  return (
+                    <div
+                      key={dateLabel}
+                      className="flex-1 flex flex-col items-center justify-end h-full"
+                      onMouseMove={(e) => handleBarHover(e, d)}
+                      onMouseLeave={() => setTooltip(null)}
+                    >
+                      <div
+                        className="w-[60%] max-w-6 flex flex-col-reverse rounded-t-sm overflow-hidden"
+                        style={{ height: `${totalPct}%` }}
+                      >
+                        {dataKeys.map((key) => {
+                          const value = (d[key.name] as number) || 0;
+                          if (value === 0 || total === 0) return null;
+                          return (
+                            <div
+                              key={key.name}
+                              style={{
+                                backgroundColor: key.color,
+                                height: `${(value / total) * 100}%`,
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={dateLabel}
+                    className="flex-1 flex items-end justify-center gap-px h-full"
+                    onMouseMove={(e) => handleBarHover(e, d)}
+                    onMouseLeave={() => setTooltip(null)}
+                  >
+                    {dataKeys.map((key) => {
+                      const value = (d[key.name] as number) || 0;
+                      const barPct = barHeightPct(value, effectiveYMax);
+                      return (
+                        <div
+                          key={key.name}
+                          className="rounded-t-sm"
+                          style={{
+                            backgroundColor: key.color,
+                            height: `${barPct}%`,
+                            width: `${Math.floor(60 / dataKeys.length)}%`,
+                            maxWidth: 24,
+                            minWidth: 2,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* X-axis */}
+        <div
+          className="flex border-t border-gray-200"
+          style={{ height: 28, marginLeft: yAxisWidth }}
+        >
+          {data.map((d, i) => (
+            <div
+              key={d.date as string}
+              className="flex-1 flex items-center justify-center"
+            >
+              {shouldShowXLabel(i, data.length, tickStep) && (
+                <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                  {d.date as string}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute z-10 bg-white border rounded-lg shadow-sm px-2.5 py-1.5 pointer-events-none"
           style={{
-            axis: { stroke: "#e5e7eb" },
-            tickLabels: { fontSize: 10, fill: "#6b7280", padding: 5 },
-            grid: { stroke: "none" },
+            left: tooltip.x,
+            top: tooltip.y - 10,
+            transform: "translate(-50%, -100%)",
           }}
-        />
-
-        {/* Y Axis */}
-        <VictoryAxis
-          dependentAxis
-          style={{
-            axis: { stroke: "#e5e7eb" },
-            tickLabels: { fontSize: 11, fill: "#6b7280", padding: 5 },
-            grid: { stroke: "#f3f4f6", strokeDasharray: "4 4" },
-          }}
-        />
-
-        {/* Bars */}
-        {stackId ? <VictoryStack>{bars}</VictoryStack> : bars}
-
-        {/* Goal lines */}
-        {goalLines.map((goal) => (
-          <VictoryLine
-            key={`goal-${goal.id}`}
-            data={data.map((d, i) => ({
-              x: d.date as string,
-              y: goal.value,
-              _isLast: i === data.length - 1,
-            }))}
-            style={{
-              data: {
-                stroke: goal.color,
-                strokeDasharray: "5 5",
-                strokeWidth: 1.5,
-              },
-            }}
-            labels={({ datum }) => (datum._isLast ? goal.label : "")}
-            labelComponent={
-              <VictoryLabel
-                textAnchor="end"
-                dx={-5}
-                dy={-10}
-                style={{ fill: goal.color, fontSize: 11 }}
+        >
+          {tooltip.lines.map((l) => (
+            <div key={l.name} className="flex items-center gap-1.5 text-xs">
+              <span
+                className="w-2 h-2 rounded-sm inline-block"
+                style={{ backgroundColor: l.color }}
               />
-            }
-          />
-        ))}
-      </VictoryChart>
+              <span className="text-gray-700">
+                {l.name}: {l.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

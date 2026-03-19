@@ -8,7 +8,7 @@ import {
 } from "@packages/domain/user/userSchema";
 import { and, eq, isNull } from "drizzle-orm";
 
-export type UserRepository<T = any> = {
+export type UserRepository<T = QueryExecutor> = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
@@ -44,11 +44,12 @@ function createUser(db: QueryExecutor) {
       const persistedUser = createUserEntity({ ...result, type: "persisted" });
 
       return persistedUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // PostgreSQLの一意制約違反エラーをチェック
+      const pgError = error as Record<string, unknown>;
       if (
-        error.code === "23505" &&
-        error.constraint === "user_login_id_unique"
+        pgError.code === "23505" &&
+        pgError.constraint === "user_login_id_unique"
       ) {
         throw new ConflictError("このログインIDは既に使用されています");
       }

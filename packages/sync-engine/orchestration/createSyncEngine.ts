@@ -10,9 +10,12 @@ type SyncFunctions = {
   syncTasks: () => Promise<void>;
 };
 
+export type SyncErrorHandler = (error: unknown, phase: string) => void;
+
 export function createSyncEngine(
   fns: SyncFunctions,
   defaultNetwork: NetworkAdapter,
+  onSyncError?: SyncErrorHandler,
 ) {
   let isSyncing = false;
   let retryCount = 0;
@@ -38,16 +41,15 @@ export function createSyncEngine(
         await fns.syncActivities();
         // Upload icons after activity sync (activity must exist on server)
         await fns.syncActivityIcons();
-        await Promise.all([
-          fns.syncActivityLogs(),
-          fns.syncGoals(),
-          fns.syncTasks(),
-        ]);
+        await fns.syncActivityLogs();
+        await fns.syncGoals();
+        await fns.syncTasks();
         // Freeze periods depend on goals existing on server
         await fns.syncGoalFreezePeriods();
         retryCount = 0;
-      } catch {
+      } catch (err) {
         retryCount++;
+        onSyncError?.(err, `syncAll (retry ${retryCount})`);
       } finally {
         isSyncing = false;
       }

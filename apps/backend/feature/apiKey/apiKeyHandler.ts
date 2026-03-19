@@ -1,10 +1,10 @@
 import { AppError } from "@backend/error";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import {
   CreateApiKeyResponseSchema,
   GetApiKeysResponseSchema,
 } from "@packages/types/response";
-import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ApiKeyUsecase } from "./apiKeyUsecase";
 

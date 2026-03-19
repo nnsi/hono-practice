@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 
-import type { AppContext } from "@backend/context";
+import type { AppContext, HonoContext } from "@backend/context";
 import { noopTracer } from "@backend/lib/tracer";
 import { mockPremiumMiddleware } from "@backend/middleware/mockPremiumMiddleware";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
-import { CreateApiKeyRequestSchema } from "@packages/types/request";
 import { zValidator } from "@hono/zod-validator";
+import { CreateApiKeyRequestSchema } from "@packages/types/request";
 
 import { newApiKeyHandler } from "./apiKeyHandler";
 import { newApiKeyRepository } from "./apiKeyRepository";
@@ -23,9 +23,9 @@ export function createApiKeyRoute() {
   // プレミアムミドルウェアを適用（環境に応じて切り替え）
   app.use("*", async (c, next) => {
     if (c.env.NODE_ENV === "test") {
-      return mockPremiumMiddleware(c as any, next);
+      return mockPremiumMiddleware(c as unknown as HonoContext, next);
     }
-    return premiumMiddleware(c as any, next);
+    return premiumMiddleware(c as unknown as HonoContext, next);
   });
 
   app.use("*", async (c, next) => {
