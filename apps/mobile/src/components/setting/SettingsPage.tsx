@@ -25,7 +25,6 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
-import { setOAuthPending } from "../../utils/oauthPending";
 import { clearLocalData } from "../../sync/initialSync";
 import {
   apiGetMe,
@@ -35,6 +34,7 @@ import {
   customFetch,
   getApiUrl,
 } from "../../utils/apiClient";
+import { setOAuthPending } from "../../utils/oauthPending";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
@@ -69,7 +69,7 @@ function useGoogleAccount() {
     Google.useAuthRequest(
       {
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "", // Android型はブラウザフロー非対応のためweb clientIdを使用
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
       },
       Platform.OS === "android"
@@ -84,7 +84,6 @@ function useGoogleAccount() {
       setOAuthPending({
         codeVerifier: googleRequest.codeVerifier,
         redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
-        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
       });
     }
   }, [googleRequest]);

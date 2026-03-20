@@ -9,16 +9,15 @@ import {
   loginRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import {
-  googleLoginRequestSchema,
-  loginRequestSchema,
-} from "@packages/types/request";
+import { loginRequestSchema } from "@packages/types/request";
 
-import type { AppContext } from "../../context";
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
+import { appleVerify } from "./appleVerify";
 import { newAuthHandler } from "./authHandler";
+import { createAppleAuthRoutes } from "./authRouteApple";
+import { type AuthRouteContext, setRefreshCookie } from "./authRouteContext";
+import { createGoogleAuthRoutes } from "./authRouteGoogle";
 import type { OAuthVerifierMap } from "./authUsecase";
 import { newAuthUsecase } from "./authUsecase";
 import { googleVerify } from "./googleVerify";
@@ -27,18 +26,11 @@ import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
 export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
-  const app = new Hono<
-    AppContext & {
-      Variables: {
-        h: ReturnType<typeof newAuthHandler>;
-      };
-    }
-  >();
+  const app = new Hono<AuthRouteContext>();
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
     const { JWT_SECRET, JWT_AUDIENCE } = c.env;
-
     const repo = newUserRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
     const passwordVerifier = new MultiHashPasswordVerifier();
@@ -55,69 +47,40 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       tracer,
     );
     const userUc = newUserUsecase(repo, userProviderRepo, tracer);
-    const h = newAuthHandler(uc, userUc.getUserById);
-
-    c.set("h", h);
-
+    c.set("h", newAuthHandler(uc, userUc.getUserById));
     return next();
   });
 
-  // レートリミットミドルウェア（KVStoreがある場合のみ有効）
-  app.use("/login", async (c, next) => {
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) return next();
-    return createRateLimitMiddleware(
-      kv,
-      loginRateLimitConfig,
-      c.get("tracer"),
-    )(c, next);
-  });
-
-  app.use("/google", async (c, next) => {
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) return next();
-    return createRateLimitMiddleware(
-      kv,
-      loginRateLimitConfig,
-      c.get("tracer"),
-    )(c, next);
-  });
+  for (const path of ["/login", "/google", "/apple"]) {
+    app.use(path, async (c, next) => {
+      const kv = c.env.RATE_LIMIT_KV;
+      if (!kv) return next();
+      return createRateLimitMiddleware(
+        kv,
+        loginRateLimitConfig,
+        c.get("tracer"),
+      )(c, next);
+    });
+  }
 
   return app
     .post("/login", zValidator("json", loginRequestSchema), async (c) => {
-      const { NODE_ENV } = c.env;
       const body = c.req.valid("json");
-
       const { token, refreshToken } = await c.var.h.login(body);
-
-      const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-      // Only set refresh token cookie, access token is returned in response body
-      setCookie(c, "refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        ...(isDev ? {} : { sameSite: "None" }),
-      });
-
+      setRefreshCookie(c, refreshToken);
       return c.json({ token, refreshToken });
     })
     .post("/token", async (c) => {
-      const { NODE_ENV } = c.env;
-      // Try to get refresh token from cookie first (for web)
       let refreshTokenValue = getCookie(c, "refresh_token");
-
-      // If not in cookie, try to get from header (for mobile)
       if (!refreshTokenValue) {
         const authHeader = c.req.header("Authorization");
         if (authHeader?.startsWith("Bearer ")) {
           refreshTokenValue = authHeader.substring(7);
         }
       }
-
       if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
-
       try {
         const fireAndForgetFn = (p: Promise<unknown>) => {
           try {
@@ -131,50 +94,30 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           }
           p.catch(() => {});
         };
-
         const storedToken = await c.var.h.fetchRefreshToken(refreshTokenValue);
-
         const { token, refreshToken } = await c.var.h.rotateRefreshToken(
           storedToken,
           fireAndForgetFn,
         );
-
-        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-        // Only set refresh token cookie, access token is returned in response body
-        setCookie(c, "refresh_token", refreshToken, {
-          httpOnly: true,
-          secure: !isDev,
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          ...(isDev ? {} : { sameSite: "None" }),
-        });
-
+        setRefreshCookie(c, refreshToken);
         return c.json({ token, refreshToken });
       } catch (_error) {
-        // Let the error bubble up to be handled by the global error handler
         throw new UnauthorizedError("invalid refresh token");
       }
     })
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
-      // Try to get refresh token from cookie first (for web)
       let refreshTokenValue = getCookie(c, "refresh_token");
-
-      // If not in cookie, try to get from header (for mobile)
       if (!refreshTokenValue) {
         const authHeader = c.req.header("X-Refresh-Token");
-        if (authHeader) {
-          refreshTokenValue = authHeader;
-        }
+        if (authHeader) refreshTokenValue = authHeader;
       }
-
       if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
       const result = await c.var.h.logout(userId, refreshTokenValue);
-
       const isDev =
         c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test";
-      // Only clear refresh token cookie since access token is now in memory
       setCookie(c, "refresh_token", "", {
         httpOnly: true,
         secure: !isDev,
@@ -182,126 +125,13 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         ...(isDev ? {} : { sameSite: "None" }),
         path: "/",
       });
-
       return c.json(result);
     })
-    .post(
-      "/google",
-      zValidator("json", googleLoginRequestSchema),
-      async (c) => {
-        const {
-          NODE_ENV,
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        } = c.env;
-        const body = c.req.valid("json");
-        const googleClientIds = [
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        ].filter((id): id is string => !!id);
-
-        const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
-          body,
-          googleClientIds,
-        );
-
-        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-        setCookie(c, "refresh_token", refreshToken, {
-          httpOnly: true,
-          secure: !isDev,
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          ...(isDev ? {} : { sameSite: "None" }),
-        });
-
-        return c.json({ user, token });
-      },
-    )
-    .post(
-      "/google/link",
-      authMiddleware,
-      zValidator("json", googleLoginRequestSchema),
-      async (c) => {
-        const userId = c.get("userId");
-        const {
-          GOOGLE_OAUTH_CLIENT_ID: linkClientId,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID: linkAndroidId,
-          GOOGLE_OAUTH_CLIENT_ID_IOS: linkIosId,
-        } = c.env;
-        const body = c.req.valid("json");
-        const linkClientIds = [linkClientId, linkAndroidId, linkIosId].filter(
-          (id): id is string => !!id,
-        );
-        await c.var.h.linkProvider(userId, "google", body, linkClientIds);
-        return c.json({ message: "アカウントを紐付けました" });
-      },
-    )
-    .post(
-      "/google/exchange",
-      zValidator(
-        "json",
-        z.object({
-          code: z.string(),
-          code_verifier: z.string(),
-          redirect_uri: z.string(),
-        }),
-      ),
-      async (c) => {
-        const {
-          NODE_ENV,
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-          GOOGLE_OAUTH_CLIENT_SECRET,
-        } = c.env;
-        const { code, code_verifier, redirect_uri } = c.req.valid("json");
-
-        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            code,
-            client_id: GOOGLE_OAUTH_CLIENT_ID,
-            client_secret: GOOGLE_OAUTH_CLIENT_SECRET ?? "",
-            redirect_uri,
-            grant_type: "authorization_code",
-            code_verifier,
-          }).toString(),
-        });
-        const tokenData = (await tokenRes.json()) as { id_token?: string };
-        if (!tokenData.id_token) {
-          return c.json({ error: "Failed to exchange code" }, 400);
-        }
-
-        const googleClientIds = [
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        ].filter((id): id is string => !!id);
-
-        const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
-          { credential: tokenData.id_token },
-          googleClientIds,
-        );
-
-        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-        setCookie(c, "refresh_token", refreshToken, {
-          httpOnly: true,
-          secure: !isDev,
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          ...(isDev ? {} : { sameSite: "None" }),
-        });
-
-        return c.json({ user, token });
-      },
-    )
-    .get("/google/callback", (c) => {
-      const url = new URL(c.req.url);
-      return c.redirect(
-        `actiko://oauthredirect?${url.searchParams.toString()}`,
-      );
-    });
+    .route("/google", createGoogleAuthRoutes())
+    .route("/apple", createAppleAuthRoutes());
 }
 
-export const authRoute = createAuthRoute({ google: googleVerify });
+export const authRoute = createAuthRoute({
+  google: googleVerify,
+  apple: appleVerify,
+});

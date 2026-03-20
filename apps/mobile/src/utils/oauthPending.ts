@@ -1,7 +1,6 @@
 type OAuthPending = {
   codeVerifier: string;
   redirectUri: string;
-  clientId: string;
 };
 
 let pending: OAuthPending | null = null;

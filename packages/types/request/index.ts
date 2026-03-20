@@ -1,3 +1,4 @@
+export * from "./AppleLoginRequest";
 export * from "./CheckDuplicatesRequest";
 export * from "./CreateActivityLogBatchRequest";
 export * from "./CreateActivityLogRequest";

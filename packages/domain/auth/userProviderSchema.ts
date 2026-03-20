@@ -20,7 +20,7 @@ export function createUserProviderId(id?: string): UserProviderId {
 }
 
 // Define Provider literal type
-export const providerSchema = z.enum(["google"]); // Add other providers if needed
+export const providerSchema = z.enum(["google", "apple"]);
 export type Provider = z.infer<typeof providerSchema>;
 
 // Base schema for UserProvider

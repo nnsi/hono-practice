@@ -31,6 +31,8 @@ cd D:/workspace/hono-practice/apps/mobile && \
 EXPO_PUBLIC_API_URL=<値> \
 EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=<値> \
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=<値> \
 npx eas-cli update --channel preview --platform android --message "<メッセージ>" --clear-cache
 ```
 
@@ -43,6 +45,8 @@ cd D:/workspace/hono-practice/apps/mobile && \
 EXPO_PUBLIC_API_URL=<値> \
 EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=<値> \
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=<値> \
 npx eas-cli update --channel preview --platform ios --message "<メッセージ>"
 ```
 

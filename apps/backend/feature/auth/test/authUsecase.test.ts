@@ -64,7 +64,7 @@ describe("AuthUsecase", () => {
       instance(passwordVerifier),
       JWT_SECRET,
       JWT_AUDIENCE,
-      { google: mockVerifier },
+      { google: mockVerifier, apple: mockVerifier },
       noopTracer,
     );
   });

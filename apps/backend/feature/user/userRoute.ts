@@ -11,6 +11,7 @@ import { zValidator } from "@hono/zod-validator";
 import { createUserRequestSchema } from "@packages/types/request";
 
 import type { AppContext } from "../../context";
+import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
 import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
@@ -48,7 +49,7 @@ export function createUserRoute() {
       passwordVerifier,
       JWT_SECRET,
       JWT_AUDIENCE,
-      { google: googleVerify },
+      { google: googleVerify, apple: appleVerify },
       tracer,
     );
     const authH = newAuthHandler(authUc);

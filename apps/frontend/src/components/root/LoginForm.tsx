@@ -1,13 +1,19 @@
 import { useState } from "react";
 
+import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type LoginFormProps = {
   onLogin: (loginId: string, password: string) => Promise<void>;
   onGoogleLogin: (credential: string) => Promise<void>;
+  onAppleLogin: (credential: string) => Promise<void>;
 };
 
-export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
+export function LoginForm({
+  onLogin,
+  onGoogleLogin,
+  onAppleLogin,
+}: LoginFormProps) {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,13 +48,34 @@ export function LoginForm({ onLogin, onGoogleLogin }: LoginFormProps) {
     setError("Googleログインに失敗しました");
   };
 
+  const handleAppleSuccess = async (credential: string) => {
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await onAppleLogin(credential);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Appleログインに失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAppleError = () => {
+    setError("Appleログインに失敗しました");
+  };
+
   return (
     <div className="w-full max-w-sm">
-      {/* Google Sign-In */}
-      <div className="mb-6">
+      <div className="mb-3">
         <GoogleSignInButton
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
+        />
+      </div>
+      <div className="mb-6">
+        <AppleSignInButton
+          onSuccess={handleAppleSuccess}
+          onError={handleAppleError}
         />
       </div>
 
