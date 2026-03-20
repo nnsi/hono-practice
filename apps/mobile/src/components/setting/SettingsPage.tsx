@@ -479,6 +479,29 @@ export function SettingsPage() {
 
       {/* Account */}
       <Section icon={User} label="アカウント" shadow={shadow}>
+        {!showLogoutConfirm ? (
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-3"
+            onPress={() => setShowLogoutConfirm(true)}
+          >
+            <LogOut size={18} color="#ef4444" />
+            <Text className="ml-3 text-base text-red-500">ログアウト</Text>
+          </TouchableOpacity>
+        ) : (
+          <InlineConfirm
+            message="ログアウトしますか？"
+            onConfirm={() => {
+              logout();
+              setShowLogoutConfirm(false);
+            }}
+            onCancel={() => setShowLogoutConfirm(false)}
+            confirmLabel="ログアウト"
+          />
+        )}
+      </Section>
+
+      {/* Danger Zone */}
+      <Section icon={AlertTriangle} label="危険な操作" shadow={shadow}>
         {!showDeleteConfirm ? (
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
@@ -499,26 +522,6 @@ export function SettingsPage() {
             }}
             error={deleteError}
             disabled={isDeleting}
-          />
-        )}
-        <Divider />
-        {!showLogoutConfirm ? (
-          <TouchableOpacity
-            className="flex-row items-center px-4 py-3"
-            onPress={() => setShowLogoutConfirm(true)}
-          >
-            <LogOut size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">ログアウト</Text>
-          </TouchableOpacity>
-        ) : (
-          <InlineConfirm
-            message="ログアウトしますか？"
-            onConfirm={() => {
-              logout();
-              setShowLogoutConfirm(false);
-            }}
-            onCancel={() => setShowLogoutConfirm(false)}
-            confirmLabel="ログアウト"
           />
         )}
       </Section>
