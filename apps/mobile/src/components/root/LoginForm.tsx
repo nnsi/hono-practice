@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { setOAuthPending } from "../../utils/oauthPending";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
@@ -35,6 +36,16 @@ export function LoginForm() {
           }
         : undefined,
     );
+
+  useEffect(() => {
+    if (Platform.OS === "android" && googleRequest?.codeVerifier) {
+      setOAuthPending({
+        codeVerifier: googleRequest.codeVerifier,
+        redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+      });
+    }
+  }, [googleRequest]);
 
   useEffect(() => {
     if (googleResponse?.type === "success") {
