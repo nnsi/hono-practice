@@ -65,11 +65,18 @@ function useGoogleAccount() {
   } | null>(null);
 
   const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? "",
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
-    });
+    Google.useAuthRequest(
+      {
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
+      },
+      Platform.OS === "android"
+        ? {
+            native: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+          }
+        : undefined,
+    );
 
   useEffect(() => {
     fetchUserInfo();

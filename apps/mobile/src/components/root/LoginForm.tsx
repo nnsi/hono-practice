@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
@@ -23,11 +23,18 @@ export function LoginForm() {
   );
 
   const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? "",
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
-    });
+    Google.useAuthRequest(
+      {
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
+      },
+      Platform.OS === "android"
+        ? {
+            native: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+          }
+        : undefined,
+    );
 
   useEffect(() => {
     if (googleResponse?.type === "success") {

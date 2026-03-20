@@ -235,7 +235,13 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         await c.var.h.linkProvider(userId, "google", body, linkClientIds);
         return c.json({ message: "アカウントを紐付けました" });
       },
-    );
+    )
+    .get("/google/callback", (c) => {
+      const url = new URL(c.req.url);
+      return c.redirect(
+        `actiko://oauthredirect?${url.searchParams.toString()}`,
+      );
+    });
 }
 
 export const authRoute = createAuthRoute({ google: googleVerify });
