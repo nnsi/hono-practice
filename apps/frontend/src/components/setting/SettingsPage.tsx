@@ -20,6 +20,7 @@ import { apiClient, clearToken } from "../../utils/apiClient";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
+import { AppleSignInButton } from "../root/AppleSignInButton";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
 
 const AppSettingsSchema = z.object({
@@ -118,6 +119,62 @@ function useGoogleAccount() {
   };
 }
 
+function useAppleAccount() {
+  const [isAppleLinked, setIsAppleLinked] = useState(false);
+  const [appleEmail, setAppleEmail] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLinking, setIsLinking] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const fetchUserInfo = useCallback(async () => {
+    try {
+      const res = await apiClient.user.me.$get();
+      if (!res.ok) return;
+      const user = await res.json();
+      setIsAppleLinked(user.providers?.includes("apple") ?? false);
+      setAppleEmail(user.providerEmails?.apple ?? null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, [fetchUserInfo]);
+
+  const linkApple = async (credential: string) => {
+    setIsLinking(true);
+    setMessage(null);
+    try {
+      const res = await apiClient.auth.apple.link.$post({
+        json: { credential },
+      });
+      if (!res.ok) {
+        setMessage({ type: "error", text: "Apple連携に失敗しました" });
+        return;
+      }
+      setMessage({ type: "success", text: "Apple連携が完了しました" });
+      await fetchUserInfo();
+    } catch {
+      setMessage({ type: "error", text: "Apple連携に失敗しました" });
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  return {
+    isAppleLinked,
+    appleEmail,
+    isLoading,
+    isLinking,
+    message,
+    linkApple,
+  };
+}
+
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -130,6 +187,7 @@ export function SettingsPage() {
     null,
   );
   const google = useGoogleAccount();
+  const apple = useAppleAccount();
 
   const handleClearData = async () => {
     await clearLocalData();
@@ -251,6 +309,49 @@ export function SettingsPage() {
                 {google.message.text}
               </p>
             )}
+            <div className="border-t border-gray-100 mt-3 pt-3">
+              {apple.isLoading ? (
+                <div className="animate-pulse h-4 bg-gray-100 rounded w-32" />
+              ) : (
+                <div className="space-y-2">
+                  {apple.isAppleLinked && (
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-green-600 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-green-700">
+                          Apple連携済み
+                        </p>
+                        {apple.appleEmail && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {apple.appleEmail}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {!apple.isAppleLinked && (
+                    <p className="text-sm text-gray-600">
+                      Appleアカウントを連携すると、Apple
+                      IDでログインできるようになります。
+                    </p>
+                  )}
+                  <AppleSignInButton
+                    onSuccess={apple.linkApple}
+                    onError={() => {}}
+                  />
+                  {apple.isLinking && (
+                    <p className="text-xs text-gray-500">連携中...</p>
+                  )}
+                  {apple.message && (
+                    <p
+                      className={`text-xs ${apple.message.type === "success" ? "text-green-600" : "text-red-500"}`}
+                    >
+                      {apple.message.text}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="border-t border-gray-100 mt-3 pt-3">
               {!showDeleteAccountConfirm ? (
                 <button

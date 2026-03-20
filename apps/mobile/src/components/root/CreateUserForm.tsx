@@ -1,14 +1,20 @@
 import { useState } from "react";
 
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { GoogleMark } from "../common/GoogleMark";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export function CreateUserForm() {
-  const { register } = useAuthContext();
+  const { register, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
   const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
@@ -18,6 +24,11 @@ export function CreateUserForm() {
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
   );
+
+  const { googleRequest, handleGooglePress } = useGoogleSignIn({
+    onLogin: googleLogin,
+    onError: setError,
+  });
 
   const handleRegister = async () => {
     if (!loginId || !password) {
@@ -45,6 +56,62 @@ export function CreateUserForm() {
         <Text className="text-red-500 text-center mb-4">{error}</Text>
       ) : null}
 
+      <TouchableOpacity
+        className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 mb-3 ${googleRequest ? "" : "opacity-50"}`}
+        style={{ minHeight: 48, borderColor: "#747775" }}
+        onPress={handleGooglePress}
+        disabled={!googleRequest}
+        accessibilityRole="button"
+        accessibilityLabel="Sign up with Google"
+      >
+        <View className="absolute left-4">
+          <GoogleMark />
+        </View>
+        <Text className="text-base font-medium" style={{ color: "#1F1F1F" }}>
+          Sign up with Google
+        </Text>
+      </TouchableOpacity>
+
+      {Platform.OS === "ios" && (
+        <AppleAuthentication.AppleAuthenticationButton
+          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+          cornerRadius={8}
+          style={{ width: "100%", height: 48, marginBottom: 12 }}
+          onPress={async () => {
+            try {
+              const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                  AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                  AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+              });
+              if (credential.identityToken) {
+                await appleLogin(credential.identityToken);
+              }
+            } catch (e: unknown) {
+              const code =
+                e && typeof e === "object" && "code" in e
+                  ? (e as { code: string }).code
+                  : "";
+              if (code !== "ERR_REQUEST_CANCELED") {
+                setError(
+                  e instanceof Error
+                    ? e.message
+                    : "Appleアカウントでの登録に失敗しました",
+                );
+              }
+            }
+          }}
+        />
+      )}
+
+      <View className="flex-row items-center mb-4">
+        <View className="flex-1 h-px bg-gray-300" />
+        <Text className="mx-3 text-gray-400 text-sm">または</Text>
+        <View className="flex-1 h-px bg-gray-300" />
+      </View>
+
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="名前（任意）"
@@ -52,7 +119,6 @@ export function CreateUserForm() {
         onChangeText={setName}
         autoCorrect={false}
       />
-
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="ログインID"
@@ -61,10 +127,9 @@ export function CreateUserForm() {
         autoCapitalize="none"
         autoCorrect={false}
       />
-
       <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
-        placeholder="パスワード"
+        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
+        placeholder="パスワード（8文字以上）"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -98,6 +163,7 @@ export function CreateUserForm() {
       >
         <Text className="text-blue-500">ログインに戻る</Text>
       </TouchableOpacity>
+
       {legalModal && (
         <LegalModal
           visible={!!legalModal}
