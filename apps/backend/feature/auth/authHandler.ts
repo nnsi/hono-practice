@@ -40,7 +40,7 @@ export type AuthHandler = {
   }>;
   googleLoginWithUser(
     params: GoogleLoginRequest,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<{
     user: User;
     token: string;
@@ -50,7 +50,7 @@ export type AuthHandler = {
     userId: UserId,
     provider: string,
     params: GoogleLoginRequest,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<void>;
 };
 
@@ -96,7 +96,7 @@ function logout(uc: AuthUsecase) {
 }
 
 function googleLogin(uc: AuthUsecase) {
-  return async (params: GoogleLoginRequest, clientId: string) => {
+  return async (params: GoogleLoginRequest, clientId: string | string[]) => {
     const result = await uc.loginWithProvider(
       "google",
       params.credential,
@@ -136,7 +136,7 @@ function linkProvider(uc: AuthUsecase) {
     userId: UserId,
     provider: Provider,
     params: GoogleLoginRequest,
-    clientId: string,
+    clientId: string | string[],
   ) => {
     await uc.linkProvider(userId, provider, params.credential, clientId);
   };

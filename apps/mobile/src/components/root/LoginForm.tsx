@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import * as AuthSession from "expo-auth-session";
+import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -22,27 +22,16 @@ export function LoginForm() {
     null,
   );
 
-  const googleDiscovery = AuthSession.useAutoDiscovery(
-    "https://accounts.google.com",
-  );
-
-  const redirectUri = AuthSession.makeRedirectUri();
-
   const [googleRequest, googleResponse, googlePromptAsync] =
-    AuthSession.useAuthRequest(
-      {
-        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        redirectUri,
-        scopes: ["openid", "profile", "email"],
-        responseType: AuthSession.ResponseType.IdToken,
-        usePKCE: false,
-      },
-      googleDiscovery,
-    );
+    Google.useAuthRequest({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? "",
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
+    });
 
   useEffect(() => {
     if (googleResponse?.type === "success") {
-      const idToken = googleResponse.params.id_token;
+      const idToken = googleResponse.authentication?.idToken;
       if (idToken) {
         googleLogin(idToken).catch((e: unknown) =>
           setError(

@@ -32,7 +32,7 @@ const mockClientId = "test-google-client-id";
 
 // OAuthVerifierMap型でモックを定義
 const mockGoogleVerifiers: OAuthVerifierMap = {
-  google: async (credential: string, clientId: string) => {
+  google: async (credential: string, _clientId: string | string[]) => {
     if (credential === "invalid-token") {
       throw new AuthError("Invalid token");
     }
@@ -40,7 +40,7 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
       return {
         iss: "https://accounts.google.com",
         sub: undefined as unknown as string,
-        aud: clientId,
+        aud: mockClientId,
         exp: Date.now() / 1000 + 600,
         iat: Date.now() / 1000,
         email: mockGoogleEmail,
@@ -51,7 +51,7 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
       return {
         iss: "https://accounts.google.com",
         sub: mockGoogleSub,
-        aud: clientId,
+        aud: mockClientId,
         exp: Date.now() / 1000 + 600,
         iat: Date.now() / 1000,
         name: mockGoogleName,
@@ -60,7 +60,7 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
     return {
       iss: "https://accounts.google.com",
       sub: mockGoogleSub,
-      aud: clientId,
+      aud: mockClientId,
       exp: Date.now() / 1000 + 600,
       iat: Date.now() / 1000,
       email: mockGoogleEmail,

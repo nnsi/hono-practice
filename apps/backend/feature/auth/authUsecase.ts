@@ -61,13 +61,13 @@ export type AuthUsecase = {
   loginWithProvider(
     provider: Provider,
     credential: string,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<AuthOutput>;
   linkProvider(
     userId: UserId,
     provider: Provider,
     credential: string,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<void>;
 };
 
@@ -280,7 +280,7 @@ function loginWithProvider<T>(
   return async (
     provider: Provider,
     credential: string,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<AuthOutput> => {
     const verifier = oauthVerifiers[provider];
     if (!verifier) throw new AppError("未対応のプロバイダーです", 400);
@@ -368,7 +368,7 @@ function linkProvider(
     userId: UserId,
     provider: Provider,
     credential: string,
-    clientId: string,
+    clientId: string | string[],
   ): Promise<void> => {
     const verifier = oauthVerifiers[provider];
     if (!verifier) throw new AppError("未対応のプロバイダーです", 400);

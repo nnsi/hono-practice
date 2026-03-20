@@ -188,12 +188,22 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       "/google",
       zValidator("json", googleLoginRequestSchema),
       async (c) => {
-        const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID } = c.env;
+        const {
+          NODE_ENV,
+          GOOGLE_OAUTH_CLIENT_ID,
+          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
+          GOOGLE_OAUTH_CLIENT_ID_IOS,
+        } = c.env;
         const body = c.req.valid("json");
+        const googleClientIds = [
+          GOOGLE_OAUTH_CLIENT_ID,
+          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
+          GOOGLE_OAUTH_CLIENT_ID_IOS,
+        ].filter((id): id is string => !!id);
 
         const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
           body,
-          GOOGLE_OAUTH_CLIENT_ID,
+          googleClientIds,
         );
 
         const isDev = NODE_ENV === "development" || NODE_ENV === "test";
@@ -213,14 +223,16 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       zValidator("json", googleLoginRequestSchema),
       async (c) => {
         const userId = c.get("userId");
-        const { GOOGLE_OAUTH_CLIENT_ID } = c.env;
+        const {
+          GOOGLE_OAUTH_CLIENT_ID: linkClientId,
+          GOOGLE_OAUTH_CLIENT_ID_ANDROID: linkAndroidId,
+          GOOGLE_OAUTH_CLIENT_ID_IOS: linkIosId,
+        } = c.env;
         const body = c.req.valid("json");
-        await c.var.h.linkProvider(
-          userId,
-          "google",
-          body,
-          GOOGLE_OAUTH_CLIENT_ID,
+        const linkClientIds = [linkClientId, linkAndroidId, linkIosId].filter(
+          (id): id is string => !!id,
         );
+        await c.var.h.linkProvider(userId, "google", body, linkClientIds);
         return c.json({ message: "アカウントを紐付けました" });
       },
     );
