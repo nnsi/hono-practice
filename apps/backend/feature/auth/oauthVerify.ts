@@ -15,5 +15,5 @@ export type OIDCPayload = {
 // OAuth/OIDCトークン検証関数の型
 export type OAuthVerify = (
   credential: string,
-  clientId: string,
+  clientId: string | string[],
 ) => Promise<OIDCPayload>;

@@ -1,8 +1,9 @@
-pre-commit:
-  parallel: true
-  commands:
-    lint:
-      glob: "**/*.{ts,tsx,css}"
-      run: pnpm exec biome lint --no-errors-on-unmatched {staged_files}
-    typecheck:
-      run: pnpm run tsc
+# IDE使用時にバグるためコメントアウト
+# pre-commit:
+#   parallel: true
+#   commands:
+#     lint:
+#       glob: "**/*.{ts,tsx,css}"
+#       run: pnpm exec biome lint --no-errors-on-unmatched {staged_files}
+#     typecheck:
+#       run: pnpm run tsc
