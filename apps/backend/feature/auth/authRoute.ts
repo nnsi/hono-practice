@@ -26,6 +26,18 @@ import { MultiHashPasswordVerifier } from "./passwordVerifier";
 import { newRefreshTokenRepository } from "./refreshTokenRepository";
 import { newUserProviderRepository } from "./userProviderRepository";
 
+function collectGoogleClientIds(env: {
+  GOOGLE_OAUTH_CLIENT_ID: string;
+  GOOGLE_OAUTH_CLIENT_ID_ANDROID?: string;
+  GOOGLE_OAUTH_CLIENT_ID_IOS?: string;
+}): string[] {
+  return [
+    env.GOOGLE_OAUTH_CLIENT_ID,
+    env.GOOGLE_OAUTH_CLIENT_ID_ANDROID,
+    env.GOOGLE_OAUTH_CLIENT_ID_IOS,
+  ].filter((id): id is string => !!id);
+}
+
 export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   const app = new Hono<
     AppContext & {
@@ -189,18 +201,9 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       "/google",
       zValidator("json", googleLoginRequestSchema),
       async (c) => {
-        const {
-          NODE_ENV,
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        } = c.env;
+        const { NODE_ENV } = c.env;
         const body = c.req.valid("json");
-        const googleClientIds = [
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        ].filter((id): id is string => !!id);
+        const googleClientIds = collectGoogleClientIds(c.env);
 
         const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
           body,
@@ -224,16 +227,13 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       zValidator("json", googleLoginRequestSchema),
       async (c) => {
         const userId = c.get("userId");
-        const {
-          GOOGLE_OAUTH_CLIENT_ID: linkClientId,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID: linkAndroidId,
-          GOOGLE_OAUTH_CLIENT_ID_IOS: linkIosId,
-        } = c.env;
         const body = c.req.valid("json");
-        const linkClientIds = [linkClientId, linkAndroidId, linkIosId].filter(
-          (id): id is string => !!id,
+        await c.var.h.linkProvider(
+          userId,
+          "google",
+          body,
+          collectGoogleClientIds(c.env),
         );
-        await c.var.h.linkProvider(userId, "google", body, linkClientIds);
         return c.json({ message: "アカウントを紐付けました" });
       },
     )
@@ -248,13 +248,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         }),
       ),
       async (c) => {
-        const {
-          NODE_ENV,
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-          GOOGLE_OAUTH_CLIENT_SECRET,
-        } = c.env;
+        const { NODE_ENV, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET } =
+          c.env;
         const { code, code_verifier, redirect_uri } = c.req.valid("json");
 
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -274,11 +269,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
           return c.json({ error: "Failed to exchange code" }, 400);
         }
 
-        const googleClientIds = [
-          GOOGLE_OAUTH_CLIENT_ID,
-          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
-          GOOGLE_OAUTH_CLIENT_ID_IOS,
-        ].filter((id): id is string => !!id);
+        const googleClientIds = collectGoogleClientIds(c.env);
 
         const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
           { credential: tokenData.id_token },

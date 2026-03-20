@@ -118,7 +118,7 @@ function googleLoginWithUser(
   googleLoginFn: ReturnType<typeof googleLogin>,
   getUserById?: GetUserById,
 ) {
-  return async (params: GoogleLoginRequest, clientId: string) => {
+  return async (params: GoogleLoginRequest, clientId: string | string[]) => {
     const { token, refreshToken, userId } = await googleLoginFn(
       params,
       clientId,

@@ -15,7 +15,7 @@ import { refreshTokens, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { v7 } from "uuid";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newUserRepository } from "../../user";
 import { createAuthRoute, newAuthHandler } from "..";
@@ -140,6 +140,8 @@ describe("AuthRoute Integration Tests", () => {
       JWT_SECRET,
       JWT_AUDIENCE,
       NODE_ENV: "test",
+      GOOGLE_OAUTH_CLIENT_ID: mockClientId,
+      GOOGLE_OAUTH_CLIENT_SECRET: "test-client-secret",
     });
   };
 
@@ -746,6 +748,58 @@ describe("AuthRoute Integration Tests", () => {
       expect(res.status).toBe(401);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.message).toMatch(/Missing 'email'/);
+    });
+  });
+
+  describe("POST /google/exchange", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("正常系：コード交換でログイン成功", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ id_token: mockGoogleToken }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const client = createTestClient();
+      const res = await client.google.exchange.$post({
+        json: {
+          code: "mock-auth-code",
+          code_verifier: "mock-verifier",
+          redirect_uri: "https://example.com/callback",
+        },
+      });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { user: unknown; token: string };
+      expect(body.user).toEqual(expect.any(Object));
+      expect(body.token).toEqual(expect.any(String));
+      expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
+    });
+
+    it("異常系：Googleトークンエンドポイントがid_tokenを返さない", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "invalid_grant" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const client = createTestClient();
+      const res = await client.google.exchange.$post({
+        json: {
+          code: "expired-code",
+          code_verifier: "mock-verifier",
+          redirect_uri: "https://example.com/callback",
+        },
+      });
+
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBe("Failed to exchange code");
     });
   });
 });

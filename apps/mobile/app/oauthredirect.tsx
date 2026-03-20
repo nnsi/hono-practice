@@ -1,58 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Text, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
 import { useAuthContext } from "./_layout";
-import { getOAuthPending, clearOAuthPending } from "../src/utils/oauthPending";
-import {
-  apiGetMe,
-  getApiUrl,
-  setRefreshToken,
-  setToken,
-} from "../src/utils/apiClient";
+import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
+import { apiGetMe, getApiUrl, setToken } from "../src/utils/apiClient";
 
 const API_URL = getApiUrl();
 
 export default function OAuthRedirect() {
-  const params = useLocalSearchParams<{
-    code?: string;
-    error?: string;
-    error_description?: string;
-  }>();
+  const params = useLocalSearchParams<{ code?: string; error?: string }>();
   const { completeLogin } = useAuthContext();
-  const [debugInfo, setDebugInfo] = useState("Loading...");
-  const [processed, setProcessed] = useState(false);
+  const router = useRouter();
+  const processed = useRef(false);
 
   useEffect(() => {
-    if (processed) return;
-    setProcessed(true);
-
-    if (params.error) {
-      setDebugInfo(
-        `Google OAuth Error:\n${params.error}\n${params.error_description ?? ""}`,
-      );
-      return;
-    }
+    if (processed.current) return;
+    processed.current = true;
 
     const code = params.code;
-    if (!code) {
-      setDebugInfo(`No code param. All params: ${JSON.stringify(params)}`);
-      return;
-    }
-
     const pending = getOAuthPending();
     clearOAuthPending();
 
-    if (!pending) {
-      setDebugInfo("No pending OAuth state (codeVerifier lost)");
+    if (!code || params.error || !pending) {
+      router.replace("/(auth)/login");
       return;
     }
 
-    setDebugInfo("Exchanging code...");
-
     handleCodeExchange(code, pending).catch((e) => {
-      setDebugInfo(`Failed: ${e instanceof Error ? e.message : String(e)}`);
+      console.error("[OAuthRedirect]", e);
+      router.replace("/(auth)/login");
     });
   }, []);
 
@@ -70,27 +48,19 @@ export default function OAuthRedirect() {
       }),
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Server error ${res.status}: ${text}`);
-    }
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
 
     const data = await res.json();
     if (!data.token) throw new Error("No token in response");
 
     setToken(data.token);
-    if (data.refreshToken) await setRefreshToken(data.refreshToken);
-
     const user = await apiGetMe();
     await completeLogin(user.id);
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-white p-8">
+    <View className="flex-1 items-center justify-center bg-white">
       <ActivityIndicator size="large" />
-      <Text className="mt-4 text-sm text-gray-600 text-center">
-        {debugInfo}
-      </Text>
     </View>
   );
 }

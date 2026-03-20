@@ -27,7 +27,7 @@ export function LoginForm() {
     Google.useAuthRequest(
       {
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "", // Android型はブラウザフロー非対応のためweb clientIdを使用
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
       },
       Platform.OS === "android"
@@ -42,7 +42,6 @@ export function LoginForm() {
       setOAuthPending({
         codeVerifier: googleRequest.codeVerifier,
         redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
-        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
       });
     }
   }, [googleRequest]);
