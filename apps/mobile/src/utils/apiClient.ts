@@ -270,6 +270,19 @@ export async function apiAppleLogin(credential: string) {
   return data;
 }
 
+export async function apiAppleLink(credential: string) {
+  const res = await customFetch(`${API_URL}/auth/apple/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  if (!res.ok) {
+    if (res.status === 409)
+      throw new Error("このAppleアカウントは別のユーザーに連携済みです");
+    throw new Error("Apple連携に失敗しました");
+  }
+}
+
 export async function apiGoogleLink(credential: string) {
   const res = await customFetch(`${API_URL}/auth/google/link`, {
     method: "POST",

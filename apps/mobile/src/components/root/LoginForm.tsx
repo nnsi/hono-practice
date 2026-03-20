@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as Google from "expo-auth-session/providers/google";
-import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { useRouter } from "expo-router";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
-import { setOAuthPending } from "../../utils/oauthPending";
+import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { GoogleMark } from "../common/GoogleMark";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
@@ -24,41 +24,10 @@ export function LoginForm() {
     null,
   );
 
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest(
-      {
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "", // Android型はブラウザフロー非対応のためweb clientIdを使用
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
-      },
-      Platform.OS === "android"
-        ? {
-            native: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
-          }
-        : undefined,
-    );
-
-  useEffect(() => {
-    if (Platform.OS === "android" && googleRequest?.codeVerifier) {
-      setOAuthPending({
-        codeVerifier: googleRequest.codeVerifier,
-        redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
-      });
-    }
-  }, [googleRequest]);
-
-  useEffect(() => {
-    if (googleResponse?.type === "success") {
-      const idToken = googleResponse.authentication?.idToken;
-      if (idToken) {
-        googleLogin(idToken).catch((e: unknown) =>
-          setError(
-            e instanceof Error ? e.message : "Googleログインに失敗しました",
-          ),
-        );
-      }
-    }
-  }, [googleResponse]);
+  const { googleRequest, handleGooglePress } = useGoogleSignIn({
+    onLogin: googleLogin,
+    onError: setError,
+  });
 
   const handleLogin = async () => {
     if (!loginId || !password) {
@@ -126,12 +95,18 @@ export function LoginForm() {
         </View>
 
         <TouchableOpacity
-          className="w-full flex-row items-center justify-center py-3 rounded-lg border border-gray-300 bg-white"
-          onPress={() => googlePromptAsync()}
+          className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 ${googleRequest ? "" : "opacity-50"}`}
+          style={{ minHeight: 48, borderColor: "#747775" }}
+          onPress={handleGooglePress}
           disabled={!googleRequest}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in with Google"
         >
-          <Text className="text-base font-medium text-gray-700">
-            Googleでログイン
+          <View className="absolute left-4">
+            <GoogleMark />
+          </View>
+          <Text className="text-base font-medium" style={{ color: "#1F1F1F" }}>
+            Sign in with Google
           </Text>
         </TouchableOpacity>
 
@@ -174,7 +149,6 @@ export function LoginForm() {
         )}
       </View>
 
-      {/* Legal links */}
       <View className="mt-6 flex-row justify-center gap-3">
         <TouchableOpacity onPress={() => setLegalModal("privacy")}>
           <Text className="text-xs text-gray-400 underline">
@@ -185,6 +159,7 @@ export function LoginForm() {
           <Text className="text-xs text-gray-400 underline">利用規約</Text>
         </TouchableOpacity>
       </View>
+
       {legalModal && (
         <LegalModal
           visible={!!legalModal}
