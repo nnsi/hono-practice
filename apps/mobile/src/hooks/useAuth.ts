@@ -24,6 +24,7 @@ type AuthState = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  completeLogin: (userId: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -210,6 +211,7 @@ export function useAuth(): AuthState {
     userId,
     login,
     googleLogin,
+    completeLogin: loginWithUserCheck,
     register,
     logout,
   };

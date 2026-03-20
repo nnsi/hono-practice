@@ -32,6 +32,7 @@ type AuthContextType = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  completeLogin: (userId: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -43,6 +44,7 @@ export const AuthContext = createContext<AuthContextType>({
   userId: null,
   login: async () => {},
   googleLogin: async () => {},
+  completeLogin: async () => {},
   register: async () => {},
   logout: async () => {},
 });
@@ -112,7 +114,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (auth.isLoading) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
+    const inAuthGroup =
+      segments[0] === "(auth)" || segments[0] === "oauthredirect";
 
     if (!auth.isLoggedIn && !inAuthGroup) {
       router.replace("/(auth)/login");

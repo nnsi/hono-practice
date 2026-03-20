@@ -13,6 +13,7 @@ export const configSchema = z.object({
   GOOGLE_OAUTH_CLIENT_ID: z.string().default("dummy-string"),
   GOOGLE_OAUTH_CLIENT_ID_ANDROID: z.string().optional(),
   GOOGLE_OAUTH_CLIENT_ID_IOS: z.string().optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
   // Redis URL（ローカル開発用、オプション）

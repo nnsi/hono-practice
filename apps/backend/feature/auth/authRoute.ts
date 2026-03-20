@@ -9,6 +9,7 @@ import {
   loginRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
 import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import {
   googleLoginRequestSchema,
   loginRequestSchema,
@@ -234,6 +235,65 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         );
         await c.var.h.linkProvider(userId, "google", body, linkClientIds);
         return c.json({ message: "アカウントを紐付けました" });
+      },
+    )
+    .post(
+      "/google/exchange",
+      zValidator(
+        "json",
+        z.object({
+          code: z.string(),
+          code_verifier: z.string(),
+          redirect_uri: z.string(),
+        }),
+      ),
+      async (c) => {
+        const {
+          NODE_ENV,
+          GOOGLE_OAUTH_CLIENT_ID,
+          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
+          GOOGLE_OAUTH_CLIENT_ID_IOS,
+          GOOGLE_OAUTH_CLIENT_SECRET,
+        } = c.env;
+        const { code, code_verifier, redirect_uri } = c.req.valid("json");
+
+        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            code,
+            client_id: GOOGLE_OAUTH_CLIENT_ID,
+            client_secret: GOOGLE_OAUTH_CLIENT_SECRET ?? "",
+            redirect_uri,
+            grant_type: "authorization_code",
+            code_verifier,
+          }).toString(),
+        });
+        const tokenData = (await tokenRes.json()) as { id_token?: string };
+        if (!tokenData.id_token) {
+          return c.json({ error: "Failed to exchange code" }, 400);
+        }
+
+        const googleClientIds = [
+          GOOGLE_OAUTH_CLIENT_ID,
+          GOOGLE_OAUTH_CLIENT_ID_ANDROID,
+          GOOGLE_OAUTH_CLIENT_ID_IOS,
+        ].filter((id): id is string => !!id);
+
+        const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
+          { credential: tokenData.id_token },
+          googleClientIds,
+        );
+
+        const isDev = NODE_ENV === "development" || NODE_ENV === "test";
+        setCookie(c, "refresh_token", refreshToken, {
+          httpOnly: true,
+          secure: !isDev,
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          ...(isDev ? {} : { sameSite: "None" }),
+        });
+
+        return c.json({ user, token });
       },
     )
     .get("/google/callback", (c) => {

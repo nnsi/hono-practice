@@ -25,6 +25,7 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { setOAuthPending } from "../../utils/oauthPending";
 import { clearLocalData } from "../../sync/initialSync";
 import {
   apiGetMe,
@@ -77,6 +78,16 @@ function useGoogleAccount() {
           }
         : undefined,
     );
+
+  useEffect(() => {
+    if (Platform.OS === "android" && googleRequest?.codeVerifier) {
+      setOAuthPending({
+        codeVerifier: googleRequest.codeVerifier,
+        redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+        clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+      });
+    }
+  }, [googleRequest]);
 
   useEffect(() => {
     fetchUserInfo();

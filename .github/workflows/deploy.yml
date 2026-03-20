@@ -154,6 +154,7 @@ jobs:
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
           if [ -n "$GOOGLE_OAUTH_CLIENT_ID_ANDROID" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_ANDROID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID_ANDROID --env stg; fi
           if [ -n "$GOOGLE_OAUTH_CLIENT_ID_IOS" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_IOS" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID_IOS --env stg; fi
+          if [ -n "$GOOGLE_OAUTH_CLIENT_SECRET" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_SECRET" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET --env stg; fi
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env stg
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env stg; fi
         env:
@@ -166,6 +167,7 @@ jobs:
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
           GOOGLE_OAUTH_CLIENT_ID_ANDROID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_ANDROID }}
           GOOGLE_OAUTH_CLIENT_ID_IOS: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_IOS }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_SECRET_STG }}
           APP_URL_V2: ${{ vars.APP_URL_V2_STG }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -179,6 +181,7 @@ jobs:
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
           if [ -n "$GOOGLE_OAUTH_CLIENT_ID_ANDROID" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_ANDROID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID_ANDROID --env production; fi
           if [ -n "$GOOGLE_OAUTH_CLIENT_ID_IOS" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_IOS" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID_IOS --env production; fi
+          if [ -n "$GOOGLE_OAUTH_CLIENT_SECRET" ]; then printf '%s' "$GOOGLE_OAUTH_CLIENT_SECRET" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET --env production; fi
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env production
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env production; fi
         env:
@@ -191,6 +194,7 @@ jobs:
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
           GOOGLE_OAUTH_CLIENT_ID_ANDROID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_ANDROID }}
           GOOGLE_OAUTH_CLIENT_ID_IOS: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_IOS }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_SECRET_PROD }}
           APP_URL_V2: ${{ vars.APP_URL_V2_PROD }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
