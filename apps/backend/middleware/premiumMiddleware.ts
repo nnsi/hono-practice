@@ -1,10 +1,15 @@
-import type { Next } from "hono";
+import type { MiddlewareHandler } from "hono";
 
-import type { HonoContext } from "@backend/context";
+import type { AppContext } from "@backend/context";
 import { UnauthorizedError } from "@backend/error";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 
-export async function premiumMiddleware(c: HonoContext, next: Next) {
+import { mockPremiumMiddleware } from "./mockPremiumMiddleware";
+
+const prodPremiumMiddleware: MiddlewareHandler<AppContext> = async (
+  c,
+  next,
+) => {
   // 既にauthMiddlewareを通過していることを前提とする
   const userId = c.get("userId");
 
@@ -32,4 +37,15 @@ export async function premiumMiddleware(c: HonoContext, next: Next) {
   c.set("subscription", subscription);
 
   await next();
-}
+};
+
+/** 環境に応じてprod/mockを切り替えるミドルウェア */
+export const premiumMiddleware: MiddlewareHandler<AppContext> = async (
+  c,
+  next,
+) => {
+  if (c.env.NODE_ENV === "test") {
+    return mockPremiumMiddleware(c, next);
+  }
+  return prodPremiumMiddleware(c, next);
+};

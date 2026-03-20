@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react-native";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
 
@@ -50,6 +51,38 @@ export function EditLogDialog({
       visible
       onClose={onClose}
       title={`${activity?.emoji || "\u{1f4dd}"} ${activity?.name ?? "\u4e0d\u660e"}`}
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded-lg items-center ${
+              isSubmitting ? "bg-gray-400" : "bg-gray-900"
+            }`}
+            onPress={handleSave}
+            disabled={isSubmitting}
+          >
+            <Text className="text-white font-medium">保存</Text>
+          </TouchableOpacity>
+
+          {!showDeleteConfirm ? (
+            <TouchableOpacity
+              className="px-4 py-3 rounded-lg border border-red-300 items-center justify-center"
+              onPress={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 size={18} color="#ef4444" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className={`px-4 py-3 rounded-lg items-center justify-center ${
+                isSubmitting ? "bg-red-300" : "bg-red-500"
+              }`}
+              onPress={handleDelete}
+              disabled={isSubmitting}
+            >
+              <Text className="text-white font-medium">削除</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      }
     >
       <View className="gap-4">
         {/* Kind selector */}
@@ -97,7 +130,7 @@ export function EditLogDialog({
           <Text className="text-sm font-medium text-gray-600 mb-1">
             数量{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
             value={quantity}
             onChangeText={setQuantity}
@@ -111,7 +144,7 @@ export function EditLogDialog({
         {/* Memo */}
         <View>
           <Text className="text-sm font-medium text-gray-600 mb-1">メモ</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             value={memo}
             onChangeText={setMemo}
@@ -119,38 +152,6 @@ export function EditLogDialog({
             multiline
             numberOfLines={2}
           />
-        </View>
-
-        {/* Action buttons */}
-        <View className="flex-row gap-2 mb-4">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-lg items-center ${
-              isSubmitting ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSave}
-            disabled={isSubmitting}
-          >
-            <Text className="text-white font-medium">保存</Text>
-          </TouchableOpacity>
-
-          {!showDeleteConfirm ? (
-            <TouchableOpacity
-              className="px-4 py-3 rounded-lg border border-red-300 items-center justify-center"
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 size={18} color="#ef4444" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              className={`px-4 py-3 rounded-lg items-center justify-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-500"
-              }`}
-              onPress={handleDelete}
-              disabled={isSubmitting}
-            >
-              <Text className="text-white font-medium">削除</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </ModalOverlay>

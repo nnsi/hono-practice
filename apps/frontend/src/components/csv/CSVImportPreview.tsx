@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import dayjs from "dayjs";
 import {
   AlertCircle,
   CheckCircle,
@@ -94,7 +95,7 @@ export function CSVImportPreview({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `activity_logs_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `activity_logs_${dayjs().format("YYYY-MM-DD")}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };

@@ -1,6 +1,6 @@
 import "../src/polyfills/crypto";
 
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -107,6 +107,8 @@ export default function RootLayout() {
     }
   }, []);
 
+  const startupRedirectDone = useRef(false);
+
   useEffect(() => {
     if (auth.isLoading) return;
 
@@ -114,6 +116,7 @@ export default function RootLayout() {
 
     if (!auth.isLoggedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
+      startupRedirectDone.current = false;
     } else if (auth.isLoggedIn && inAuthGroup) {
       AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
         let showGoal = false;
@@ -126,6 +129,24 @@ export default function RootLayout() {
           }
         }
         router.replace(showGoal ? "/(tabs)/goals" : "/(tabs)");
+        startupRedirectDone.current = true;
+      });
+    } else if (
+      auth.isLoggedIn &&
+      !inAuthGroup &&
+      !startupRedirectDone.current
+    ) {
+      startupRedirectDone.current = true;
+      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
+        if (!raw) return;
+        try {
+          const settings = JSON.parse(raw);
+          if (settings.showGoalOnStartup === true) {
+            router.replace("/(tabs)/goals");
+          }
+        } catch {
+          // ignore parse error
+        }
       });
     }
   }, [auth.isLoggedIn, auth.isLoading, segments]);

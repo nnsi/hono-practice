@@ -2,9 +2,10 @@ import { useState } from "react";
 
 import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import { Trash2, X } from "lucide-react-native";
-import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { DayTargetsInput, buildDayTargets } from "./DayTargetsInput";
 import type { Activity, UpdateGoalPayload } from "./types";
 
@@ -132,7 +133,7 @@ export function EditGoalForm({
         <Text className="text-xs font-medium text-gray-600 mb-1">
           日次目標{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
         </Text>
-        <TextInput
+        <IMESafeTextInput
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
           value={target}
           onChangeText={setTarget}
@@ -152,7 +153,7 @@ export function EditGoalForm({
         </View>
         <View className="flex-1">
           <Text className="text-xs font-medium text-gray-600 mb-1">終了日</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
             value={endDate}
             onChangeText={setEndDate}
@@ -190,7 +191,7 @@ export function EditGoalForm({
         </View>
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
-            <TextInput
+            <IMESafeTextInput
               className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
               value={debtCapValue}
               onChangeText={setDebtCapValue}

@@ -1,16 +1,11 @@
 import dayjs from "dayjs";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
@@ -65,14 +60,39 @@ export function TaskCreateDialog({
   };
 
   return (
-    <ModalOverlay visible onClose={onClose} title="新しいタスクを作成">
+    <ModalOverlay
+      visible
+      onClose={onClose}
+      title="新しいタスクを作成"
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={onClose}
+            className="flex-1 py-2.5 border border-gray-300 rounded-lg items-center"
+          >
+            <Text className="text-sm text-gray-700">キャンセル</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleCreate}
+            disabled={isSubmitting || !title.trim()}
+            className={`flex-1 py-2.5 rounded-lg items-center ${
+              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
+            }`}
+          >
+            <Text className="text-sm text-white font-medium">
+              {isSubmitting ? "作成中..." : "作成"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      }
+    >
       <View className="gap-4 pb-4">
         {/* Title */}
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
             タイトル <Text className="text-red-500">*</Text>
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={title}
             onChangeText={setTitle}
             placeholder="タスクのタイトルを入力"
@@ -207,7 +227,7 @@ export function TaskCreateDialog({
                 ? `（${selectedActivity.quantityUnit}）`
                 : ""}
             </Text>
-            <TextInput
+            <IMESafeTextInput
               value={quantity !== null ? String(quantity) : ""}
               onChangeText={(v) => {
                 const parsed = parseFloat(v);
@@ -233,7 +253,7 @@ export function TaskCreateDialog({
           </View>
           <View className="flex-1">
             <Text className="text-sm text-gray-500 mb-1">期限（任意）</Text>
-            <TextInput
+            <IMESafeTextInput
               value={dueDate}
               onChangeText={setDueDate}
               placeholder="YYYY-MM-DD"
@@ -247,7 +267,7 @@ export function TaskCreateDialog({
           <Text className="text-sm font-medium text-gray-700 mb-1">
             メモ（任意）
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={memo}
             onChangeText={setMemo}
             placeholder="タスクに関するメモを入力"
@@ -256,27 +276,6 @@ export function TaskCreateDialog({
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
           />
-        </View>
-
-        {/* Buttons */}
-        <View className="flex-row gap-2 pt-2">
-          <TouchableOpacity
-            onPress={onClose}
-            className="flex-1 py-2.5 border border-gray-300 rounded-lg items-center"
-          >
-            <Text className="text-sm text-gray-700">キャンセル</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleCreate}
-            disabled={isSubmitting || !title.trim()}
-            className={`flex-1 py-2.5 rounded-lg items-center ${
-              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
-            }`}
-          >
-            <Text className="text-sm text-white font-medium">
-              {isSubmitting ? "作成中..." : "作成"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
     </ModalOverlay>

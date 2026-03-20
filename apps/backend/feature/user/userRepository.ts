@@ -46,10 +46,13 @@ function createUser(db: QueryExecutor) {
       return persistedUser;
     } catch (error: unknown) {
       // PostgreSQLの一意制約違反エラーをチェック
-      const pgError = error as Record<string, unknown>;
       if (
-        pgError.code === "23505" &&
-        pgError.constraint === "user_login_id_unique"
+        error != null &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "23505" &&
+        "constraint" in error &&
+        error.constraint === "user_login_id_unique"
       ) {
         throw new ConflictError("このログインIDは既に使用されています");
       }

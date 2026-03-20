@@ -1,8 +1,9 @@
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { ImageOff, ImagePlus } from "lucide-react-native";
-import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
@@ -68,6 +69,40 @@ export function EditActivityDialog({
       visible={visible}
       onClose={onClose}
       title="アクティビティ編集"
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded-xl items-center ${
+              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
+            }`}
+            onPress={handleSave}
+            disabled={isSubmitting || !name.trim()}
+          >
+            <Text className="text-white font-bold text-base">
+              {isSubmitting ? "保存中..." : "保存"}
+            </Text>
+          </TouchableOpacity>
+
+          {!showDeleteConfirm ? (
+            <TouchableOpacity
+              className="px-4 py-3 rounded-xl items-center border border-red-300"
+              onPress={() => setShowDeleteConfirm(true)}
+            >
+              <Text className="text-red-500 font-medium text-sm">削除</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className={`px-4 py-3 rounded-xl items-center ${
+                isSubmitting ? "bg-red-300" : "bg-red-500"
+              }`}
+              onPress={handleDelete}
+              disabled={isSubmitting}
+            >
+              <Text className="text-white font-medium text-sm">本当に削除</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      }
     >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
@@ -100,7 +135,7 @@ export function EditActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={name}
             onChangeText={(t) => {
@@ -112,7 +147,7 @@ export function EditActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">単位（任意）</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
@@ -145,7 +180,7 @@ export function EditActivityDialog({
               key={kind.id ?? `new-${index}`}
               className="flex-row items-center mb-2 gap-2"
             >
-              <TextInput
+              <IMESafeTextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
                 value={kind.name}
                 onChangeText={(t) => updateKindName(index, t)}
@@ -171,42 +206,6 @@ export function EditActivityDialog({
         </View>
 
         {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
-
-        {/* Save + Delete buttons */}
-        <View className="flex-row gap-2 mt-2">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl items-center ${
-              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSave}
-            disabled={isSubmitting || !name.trim()}
-          >
-            <Text className="text-white font-bold text-base">
-              {isSubmitting ? "保存中..." : "保存"}
-            </Text>
-          </TouchableOpacity>
-
-          {!showDeleteConfirm ? (
-            <TouchableOpacity
-              className="px-4 py-3 rounded-xl items-center border border-red-300"
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Text className="text-red-500 font-medium text-sm">削除</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              className={`px-4 py-3 rounded-xl items-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-500"
-              }`}
-              onPress={handleDelete}
-              disabled={isSubmitting}
-            >
-              <Text className="text-white font-medium text-sm">本当に削除</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View className="h-4" />
       </View>
     </ModalOverlay>
   );

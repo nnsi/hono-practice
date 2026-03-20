@@ -1,9 +1,10 @@
 import { useState } from "react";
 
 import { useRouter } from "expo-router";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
 export function CreateUserForm() {
@@ -44,7 +45,7 @@ export function CreateUserForm() {
         <Text className="text-red-500 text-center mb-4">{error}</Text>
       ) : null}
 
-      <TextInput
+      <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="名前（任意）"
         value={name}
@@ -52,7 +53,7 @@ export function CreateUserForm() {
         autoCorrect={false}
       />
 
-      <TextInput
+      <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="ログインID"
         value={loginId}
@@ -61,7 +62,7 @@ export function CreateUserForm() {
         autoCorrect={false}
       />
 
-      <TextInput
+      <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
         placeholder="パスワード"
         value={password}

@@ -1,7 +1,7 @@
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 import {
   createActivityGoalEntity,
-  createActivityGoalIdFromString,
+  createActivityGoalId,
 } from "@packages/domain/goal/goalSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, when } from "ts-mockito";
@@ -22,9 +22,7 @@ describe("ActivityGoalService", () => {
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const activityId1 = createActivityId("00000000-0000-4000-8000-000000000001");
-  const goalId1 = createActivityGoalIdFromString(
-    "00000000-0000-4000-8000-000000000002",
-  );
+  const goalId1 = createActivityGoalId("00000000-0000-4000-8000-000000000002");
 
   const mockGoalEntity = createActivityGoalEntity({
     type: "persisted",

@@ -59,6 +59,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
         apiClient.users.v2.activities.$get(),
         apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
         apiClient.users.v2.goals.$get({ query: sinceQuery }),
+        // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
         apiClient.users.v2["goal-freeze-periods"]
           .$get({ query: sinceQuery })
           .catch(() => null),

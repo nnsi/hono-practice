@@ -4,7 +4,6 @@ import { X } from "lucide-react-native";
 import {
   BackHandler,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +19,7 @@ type ModalOverlayProps = {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 };
 
 export function ModalOverlay({
@@ -27,6 +27,7 @@ export function ModalOverlay({
   onClose,
   title,
   children,
+  footer,
 }: ModalOverlayProps) {
   // Handle Android hardware back button (replaces Modal's onRequestClose)
   useEffect(() => {
@@ -42,10 +43,7 @@ export function ModalOverlay({
 
   return (
     <OverlayPortal>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <View className="flex-1">
           <Pressable
             style={[
@@ -86,6 +84,11 @@ export function ModalOverlay({
               >
                 {children}
               </ScrollView>
+              {footer && (
+                <View className="px-5 py-4 border-t border-gray-200">
+                  {footer}
+                </View>
+              )}
             </View>
           </View>
         </View>

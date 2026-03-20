@@ -37,6 +37,8 @@ export type AppContext = {
     // Analytics Engine（オプション、ローカル開発時はundefined）
     WAE_LOGS?: AnalyticsEngineDataset;
     WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;
+    // バッチリクエスト内部呼び出し時に親ミドルウェアがセットする認証済みユーザーID
+    __authenticatedUserId?: string;
   };
 };
 

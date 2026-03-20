@@ -1,7 +1,8 @@
 import { ImageOff, ImagePlus } from "lucide-react-native";
-import { Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useCreateActivityDialog } from "./useCreateActivityDialog";
@@ -51,6 +52,19 @@ export function CreateActivityDialog({
       visible={visible}
       onClose={handleClose}
       title="アクティビティ作成"
+      footer={
+        <TouchableOpacity
+          className={`py-3 rounded-xl items-center ${
+            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
+          }`}
+          onPress={handleCreate}
+          disabled={isSubmitting || !name.trim()}
+        >
+          <Text className="text-white font-bold text-base">
+            {isSubmitting ? "作成中..." : "作成"}
+          </Text>
+        </TouchableOpacity>
+      }
     >
       <View className="gap-4">
         <EmojiPicker value={emoji} onChange={setEmoji} />
@@ -87,7 +101,7 @@ export function CreateActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={name}
             onChangeText={(t) => {
@@ -101,7 +115,7 @@ export function CreateActivityDialog({
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">単位（任意）</Text>
-          <TextInput
+          <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-4 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
@@ -131,7 +145,7 @@ export function CreateActivityDialog({
           <Text className="text-sm text-gray-500 mb-2">種類</Text>
           {kinds.map((kind) => (
             <View key={kind.id} className="flex-row items-center mb-2 gap-2">
-              <TextInput
+              <IMESafeTextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
                 value={kind.name}
                 onChangeText={(t) => updateKindName(kind.id, t)}
@@ -157,18 +171,6 @@ export function CreateActivityDialog({
         </View>
 
         {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
-
-        <TouchableOpacity
-          className={`mt-2 mb-4 py-3 rounded-xl items-center ${
-            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-          }`}
-          onPress={handleCreate}
-          disabled={isSubmitting || !name.trim()}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? "作成中..." : "作成"}
-          </Text>
-        </TouchableOpacity>
       </View>
     </ModalOverlay>
   );

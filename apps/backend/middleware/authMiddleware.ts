@@ -12,8 +12,7 @@ export function verifyToken(jwt: string, secret: string) {
 
 export async function authMiddleware(c: HonoContext, next: Next) {
   // バッチリクエスト内部からの呼び出し時はJWT検証をスキップ
-  const internalUserId = (c.env as Record<string, unknown>)
-    .__authenticatedUserId as string | undefined;
+  const internalUserId = c.env.__authenticatedUserId;
   if (internalUserId) {
     c.set("userId", createUserId(internalUserId));
     await next();
@@ -42,12 +41,12 @@ export async function authMiddleware(c: HonoContext, next: Next) {
     if (
       !payload ||
       typeof payload !== "object" ||
-      (payload as Record<string, unknown>).aud !== JWT_AUDIENCE
+      payload.aud !== JWT_AUDIENCE
     ) {
       throw new UnauthorizedError("unauthorized");
     }
 
-    const userId = (payload as Record<string, unknown>).userId;
+    const userId = payload.userId;
     if (typeof userId !== "string" || userId.length === 0) {
       throw new UnauthorizedError("unauthorized");
     }

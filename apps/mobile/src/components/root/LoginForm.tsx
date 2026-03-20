@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -76,7 +77,7 @@ export function LoginForm() {
         <Text className="text-red-500 text-center mb-4">{error}</Text>
       ) : null}
 
-      <TextInput
+      <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="ログインID"
         value={loginId}
@@ -85,7 +86,7 @@ export function LoginForm() {
         autoCorrect={false}
       />
 
-      <TextInput
+      <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
         placeholder="パスワード"
         value={password}

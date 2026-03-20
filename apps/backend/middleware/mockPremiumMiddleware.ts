@@ -1,12 +1,15 @@
-import type { Next } from "hono";
+import type { MiddlewareHandler } from "hono";
 
-import type { HonoContext } from "@backend/context";
+import type { AppContext } from "@backend/context";
 import {
   createSubscriptionId,
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
 
-export async function mockPremiumMiddleware(c: HonoContext, next: Next) {
+export const mockPremiumMiddleware: MiddlewareHandler<AppContext> = async (
+  c,
+  next,
+) => {
   // テスト用のプレミアムサブスクリプションを常に持っていることにする
   const userId = c.get("userId");
 
@@ -38,4 +41,4 @@ export async function mockPremiumMiddleware(c: HonoContext, next: Next) {
   c.set("subscription", mockSubscription);
 
   await next();
-}
+};

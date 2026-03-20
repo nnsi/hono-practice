@@ -1,16 +1,11 @@
 import dayjs from "dayjs";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import type { TaskItem } from "./types";
 import { useTaskEditDialog } from "./useTaskEditDialog";
@@ -69,7 +64,39 @@ export function TaskEditDialog({
   };
 
   return (
-    <ModalOverlay visible onClose={onClose} title="タスクを編集">
+    <ModalOverlay
+      visible
+      onClose={onClose}
+      title="タスクを編集"
+      footer={
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => onDelete(task.id)}
+            className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
+          >
+            <Text className="text-sm text-red-600">削除</Text>
+          </TouchableOpacity>
+          <View className="flex-1" />
+          <TouchableOpacity
+            onPress={onClose}
+            className="px-4 py-2.5 border border-gray-300 rounded-lg items-center"
+          >
+            <Text className="text-sm text-gray-700">キャンセル</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={isSubmitting || !title.trim()}
+            className={`px-4 py-2.5 rounded-lg items-center ${
+              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
+            }`}
+          >
+            <Text className="text-sm text-white font-medium">
+              {isSubmitting ? "更新中..." : "更新"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      }
+    >
       <View className="gap-4 pb-4">
         {isArchived && (
           <Text className="text-xs text-gray-500">
@@ -82,7 +109,7 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 mb-1">
             タイトル
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={title}
             onChangeText={setTitle}
             placeholder="タスクのタイトル"
@@ -225,7 +252,7 @@ export function TaskEditDialog({
                 ? `（${selectedActivity.quantityUnit}）`
                 : ""}
             </Text>
-            <TextInput
+            <IMESafeTextInput
               value={quantity !== null ? String(quantity) : ""}
               onChangeText={(v) => {
                 const parsed = parseFloat(v);
@@ -263,7 +290,7 @@ export function TaskEditDialog({
           </View>
           <View className="flex-1">
             <Text className="text-sm text-gray-500 mb-1">期限（任意）</Text>
-            <TextInput
+            <IMESafeTextInput
               value={dueDate}
               onChangeText={setDueDate}
               placeholder="YYYY-MM-DD"
@@ -280,7 +307,7 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 mb-1">
             メモ（任意）
           </Text>
-          <TextInput
+          <IMESafeTextInput
             value={memo}
             onChangeText={setMemo}
             placeholder="タスクに関するメモ"
@@ -289,34 +316,6 @@ export function TaskEditDialog({
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
           />
-        </View>
-
-        {/* Buttons */}
-        <View className="flex-row gap-2 pt-2">
-          <TouchableOpacity
-            onPress={() => onDelete(task.id)}
-            className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
-          >
-            <Text className="text-sm text-red-600">削除</Text>
-          </TouchableOpacity>
-          <View className="flex-1" />
-          <TouchableOpacity
-            onPress={onClose}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg items-center"
-          >
-            <Text className="text-sm text-gray-700">キャンセル</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={isSubmitting || !title.trim()}
-            className={`px-4 py-2.5 rounded-lg items-center ${
-              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
-            }`}
-          >
-            <Text className="text-sm text-white font-medium">
-              {isSubmitting ? "更新中..." : "更新"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
     </ModalOverlay>
