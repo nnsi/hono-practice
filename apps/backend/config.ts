@@ -14,6 +14,12 @@ export const configSchema = z.object({
   GOOGLE_OAUTH_CLIENT_ID_ANDROID: z.string().optional(),
   GOOGLE_OAUTH_CLIENT_ID_IOS: z.string().optional(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+  // Apple Sign In
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(), // Services ID (Web)
+  APPLE_BUNDLE_ID: z.string().optional(), // iOS Bundle ID (audience検証用)
+  APPLE_PRIVATE_KEY: z.string().optional(), // Base64 encoded .p8 key
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
   // Redis URL（ローカル開発用、オプション）

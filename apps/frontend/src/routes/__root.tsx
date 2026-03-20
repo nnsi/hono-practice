@@ -34,6 +34,7 @@ function RootComponent() {
     userId,
     login,
     googleLogin,
+    appleLogin,
     register,
     logout,
   } = useAuth();
@@ -108,9 +109,17 @@ function RootComponent() {
           </div>
 
           {authTab === "login" ? (
-            <LoginForm onLogin={login} onGoogleLogin={googleLogin} />
+            <LoginForm
+              onLogin={login}
+              onGoogleLogin={googleLogin}
+              onAppleLogin={appleLogin}
+            />
           ) : (
-            <CreateUserForm onRegister={register} onGoogleLogin={googleLogin} />
+            <CreateUserForm
+              onRegister={register}
+              onGoogleLogin={googleLogin}
+              onAppleLogin={appleLogin}
+            />
           )}
 
           {/* Legal links */}

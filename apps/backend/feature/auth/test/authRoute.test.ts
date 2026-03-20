@@ -67,6 +67,9 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
       name: mockGoogleName,
     };
   },
+  apple: async () => {
+    throw new AuthError("Not configured in test");
+  },
 };
 
 function createMockKvStore(): KeyValueStore<RateLimitRecord> {

@@ -245,6 +245,31 @@ export async function apiGoogleLogin(credential: string) {
   return data;
 }
 
+// Apple auth
+export async function apiAppleLogin(credential: string) {
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_URL}/auth/apple`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+  } catch {
+    throw new Error("ネットワークに接続できません。接続を確認してください");
+  }
+  if (!res.ok) {
+    if (res.status >= 500)
+      throw new Error(
+        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+      );
+    throw new Error("Appleログインに失敗しました");
+  }
+  const data = await res.json();
+  setToken(data.token);
+  if (data.refreshToken) await setRefreshToken(data.refreshToken);
+  return data;
+}
+
 export async function apiGoogleLink(credential: string) {
   const res = await customFetch(`${API_URL}/auth/google/link`, {
     method: "POST",

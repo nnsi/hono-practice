@@ -6,6 +6,7 @@ import { getDatabase } from "../db/database";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
 import {
+  apiAppleLogin,
   apiGetMe,
   apiGoogleLogin,
   apiLogin,
@@ -24,6 +25,7 @@ type AuthState = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  appleLogin: (credential: string) => Promise<void>;
   completeLogin: (userId: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -171,6 +173,15 @@ export function useAuth(): AuthState {
     [loginWithUserCheck],
   );
 
+  const appleLogin = useCallback(
+    async (credential: string) => {
+      await apiAppleLogin(credential);
+      const user = await apiGetMe();
+      await loginWithUserCheck(user.id);
+    },
+    [loginWithUserCheck],
+  );
+
   const register = useCallback(
     async (name: string, loginId: string, password: string) => {
       await apiRegister(name, loginId, password);
@@ -211,6 +222,7 @@ export function useAuth(): AuthState {
     userId,
     login,
     googleLogin,
+    appleLogin,
     completeLogin: loginWithUserCheck,
     register,
     logout,

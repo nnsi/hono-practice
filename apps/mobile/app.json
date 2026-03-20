@@ -27,7 +27,8 @@
       "expo-sqlite",
       "expo-secure-store",
       "expo-web-browser",
-      "expo-updates"
+      "expo-updates",
+      "expo-apple-authentication"
     ],
     "extra": {
       "router": {},

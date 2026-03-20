@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { LegalModal } from "../common/LegalModal";
+import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type CreateUserFormProps = {
@@ -10,11 +11,13 @@ type CreateUserFormProps = {
     password: string,
   ) => Promise<void>;
   onGoogleLogin: (credential: string) => Promise<void>;
+  onAppleLogin: (credential: string) => Promise<void>;
 };
 
 export function CreateUserForm({
   onRegister,
   onGoogleLogin,
+  onAppleLogin,
 }: CreateUserFormProps) {
   const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
@@ -70,14 +73,39 @@ export function CreateUserForm({
     setError("Googleアカウントでの登録に失敗しました");
   };
 
+  const handleAppleSuccess = async (credential: string) => {
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await onAppleLogin(credential);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Appleアカウントでの登録に失敗しました",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAppleError = () => {
+    setError("Appleアカウントでの登録に失敗しました");
+  };
+
   return (
     <div className="w-full max-w-sm">
-      {/* Google Sign-In */}
-      <div className="mb-6">
+      <div className="mb-3">
         <GoogleSignInButton
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
           text="signup_with"
+        />
+      </div>
+      <div className="mb-6">
+        <AppleSignInButton
+          onSuccess={handleAppleSuccess}
+          onError={handleAppleError}
         />
       </div>
 

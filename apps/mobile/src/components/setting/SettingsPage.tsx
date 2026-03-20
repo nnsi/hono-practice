@@ -25,7 +25,6 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
-import { setOAuthPending } from "../../utils/oauthPending";
 import { clearLocalData } from "../../sync/initialSync";
 import {
   apiGetMe,
@@ -35,6 +34,7 @@ import {
   customFetch,
   getApiUrl,
 } from "../../utils/apiClient";
+import { setOAuthPending } from "../../utils/oauthPending";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";

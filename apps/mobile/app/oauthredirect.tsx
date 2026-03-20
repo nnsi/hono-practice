@@ -3,9 +3,9 @@ import { useEffect, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
-import { useAuthContext } from "./_layout";
-import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
 import { apiGetMe, getApiUrl, setToken } from "../src/utils/apiClient";
+import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
+import { useAuthContext } from "./_layout";
 
 const API_URL = getApiUrl();
 

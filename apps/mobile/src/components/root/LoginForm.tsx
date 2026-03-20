@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import * as AppleAuthentication from "expo-apple-authentication";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -13,7 +14,7 @@ import { LegalModal } from "../common/LegalModal";
 WebBrowser.maybeCompleteAuthSession();
 
 export function LoginForm() {
-  const { login, googleLogin } = useAuthContext();
+  const { login, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -133,6 +134,44 @@ export function LoginForm() {
             Googleでログイン
           </Text>
         </TouchableOpacity>
+
+        {Platform.OS === "ios" && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={
+              AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+            }
+            buttonStyle={
+              AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+            }
+            cornerRadius={8}
+            style={{ width: "100%", height: 48, marginTop: 12 }}
+            onPress={async () => {
+              try {
+                const credential = await AppleAuthentication.signInAsync({
+                  requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                  ],
+                });
+                if (credential.identityToken) {
+                  await appleLogin(credential.identityToken);
+                }
+              } catch (e: unknown) {
+                const code =
+                  e && typeof e === "object" && "code" in e
+                    ? (e as { code: string }).code
+                    : "";
+                if (code !== "ERR_REQUEST_CANCELED") {
+                  setError(
+                    e instanceof Error
+                      ? e.message
+                      : "Appleログインに失敗しました",
+                  );
+                }
+              }
+            }}
+          />
+        )}
       </View>
 
       {/* Legal links */}

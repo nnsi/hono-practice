@@ -13,6 +13,7 @@ type AuthState = {
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  appleLogin: (credential: string) => Promise<void>;
   register: (name: string, loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -160,6 +161,26 @@ export function useAuth(): AuthState {
     [loginWithUserCheck],
   );
 
+  const appleLogin = useCallback(
+    async (credential: string) => {
+      const res = await apiClient.auth.apple.$post({
+        json: { credential },
+      });
+      if (!res.ok) {
+        throw new Error("Apple login failed");
+      }
+      const data = await res.json();
+      setToken(data.token);
+      const userRes = await apiClient.user.me.$get();
+      if (!userRes.ok) {
+        throw new Error("Failed to fetch user after Apple login");
+      }
+      const user = await userRes.json();
+      await loginWithUserCheck(user.id);
+    },
+    [loginWithUserCheck],
+  );
+
   const register = useCallback(
     async (name: string, loginId: string, password: string) => {
       const res = await apiClient.user.$post({
@@ -208,6 +229,7 @@ export function useAuth(): AuthState {
     userId,
     login,
     googleLogin,
+    appleLogin,
     register,
     logout,
   };
