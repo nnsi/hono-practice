@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
 import dayjs from "dayjs";
-import { LinearGradient } from "expo-linear-gradient";
 import { Text, View } from "react-native";
 
 import { FreezePeriodManager } from "./FreezePeriodManager";
@@ -84,8 +83,6 @@ export function GoalCard({
         elevation: 2,
       };
 
-  const stop = completionPercent / 100;
-
   const cardContent = (
     <>
       <GoalCardHeader
@@ -161,19 +158,19 @@ export function GoalCard({
       }`}
       style={shadowStyle}
     >
-      {gradientColor ? (
-        <LinearGradient
-          colors={[gradientColor, "white"]}
-          locations={[stop, stop]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ flex: 1 }}
-        >
-          {cardContent}
-        </LinearGradient>
-      ) : (
-        cardContent
+      {gradientColor && (
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${completionPercent}%`,
+            backgroundColor: gradientColor,
+          }}
+        />
       )}
+      {cardContent}
     </View>
   );
 }

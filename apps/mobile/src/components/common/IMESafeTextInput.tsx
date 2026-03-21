@@ -14,9 +14,14 @@ import { TextInput, type TextInputProps } from "react-native";
  * so defaultValue is re-applied correctly each time.
  */
 export const IMESafeTextInput = forwardRef<TextInput, TextInputProps>(
-  function IMESafeTextInput({ value, defaultValue, ...props }, ref) {
+  function IMESafeTextInput({ value, defaultValue, style, ...props }, ref) {
     return (
-      <TextInput ref={ref} defaultValue={value ?? defaultValue} {...props} />
+      <TextInput
+        ref={ref}
+        defaultValue={value ?? defaultValue}
+        style={[{ includeFontPadding: false }, style]}
+        {...props}
+      />
     );
   },
 );

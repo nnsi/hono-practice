@@ -53,6 +53,7 @@ export function DayTargetsInput({
                   {DAY_LABELS[i]}
                 </Text>
                 <TextInput
+                  style={{ includeFontPadding: false }}
                   value={val}
                   onChangeText={(text) => onChange({ ...values, [k]: text })}
                   keyboardType="numeric"
