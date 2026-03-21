@@ -28,14 +28,12 @@ import {
 import { useAuthContext } from "../../../app/_layout";
 import { clearLocalData } from "../../sync/initialSync";
 import {
-  apiAppleLink,
-  apiGetMe,
-  apiGoogleLink,
   clearRefreshToken,
   clearToken,
   customFetch,
   getApiUrl,
 } from "../../utils/apiClient";
+import { apiAppleLink, apiGetMe, apiGoogleLink } from "../../utils/authApi";
 import { setOAuthPending } from "../../utils/oauthPending";
 import { GoogleMark } from "../common/GoogleMark";
 import { LegalModal } from "../common/LegalModal";

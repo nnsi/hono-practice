@@ -1,22 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-
-import NetInfo from "@react-native-community/netinfo";
+import { useCallback, useRef, useState } from "react";
 
 import { getDatabase } from "../db/database";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
-import { loadStorageCache } from "../sync/rnPlatformAdapters";
+import { clearToken } from "../utils/apiClient";
 import {
   apiAppleLogin,
   apiGetMe,
   apiGoogleLogin,
   apiLogin,
   apiLogout,
-  apiRefreshToken,
   apiRegister,
-  clearToken,
-  setToken,
-} from "../utils/apiClient";
+} from "../utils/authApi";
 import { reportError } from "../utils/errorReporter";
+import { useAuthInit } from "./useAuthInit";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -39,101 +35,14 @@ export function useAuth(): AuthState {
   const onlineRetryRef = useRef<(() => void) | null>(null);
   const authGenRef = useRef(0);
 
-  useEffect(() => {
-    const syncWithUserCheck = async (newUserId: string) => {
-      const db = await getDatabase();
-      const authState = await db.getFirstAsync<{ user_id: string }>(
-        "SELECT user_id FROM auth_state WHERE id = 'current'",
-      );
-      if (authState && authState.user_id !== newUserId) await clearLocalData();
-      try {
-        await performInitialSync(newUserId);
-      } catch (err) {
-        reportError({
-          errorType: "unhandled_error",
-          message: `Initial sync failed: ${err instanceof Error ? err.message : String(err)}`,
-          stack: err instanceof Error ? err.stack : undefined,
-        });
-        throw err;
-      }
-    };
-
-    const serverRefreshAndSync = async (): Promise<boolean> => {
-      const gen = authGenRef.current;
-      const data = await apiRefreshToken();
-      if (gen !== authGenRef.current) return false;
-      setToken(data.token);
-      const user = await apiGetMe();
-      if (gen !== authGenRef.current) return false;
-      setUserId(user.id);
-      setIsLoggedIn(true);
-      await syncWithUserCheck(user.id);
-      if (gen !== authGenRef.current) return false;
-      setSyncReady(true);
-      return true;
-    };
-
-    // オンライン復帰時に serverRefreshAndSync をリトライ（最大2回）
-    const registerOnlineRetry = (isLastAttempt: boolean) => {
-      let unsub: (() => void) | null = null;
-      unsub = NetInfo.addEventListener((state) => {
-        if (!state.isConnected) return;
-        // コールバックが同期的に発火する場合 unsub が未代入のため次tickで解除
-        queueMicrotask(() => unsub?.());
-        serverRefreshAndSync()
-          .then(() => {
-            onlineRetryRef.current = null;
-          })
-          .catch((err: unknown) => {
-            if (!isLastAttempt) {
-              registerOnlineRetry(true);
-              return;
-            }
-            onlineRetryRef.current = null;
-            reportError({
-              errorType: "network_error",
-              message: err instanceof Error ? err.message : "Auth retry failed",
-              stack: err instanceof Error ? err.stack : undefined,
-            });
-          });
-      });
-      onlineRetryRef.current = unsub;
-    };
-
-    const init = async () => {
-      await loadStorageCache();
-      const db = await getDatabase();
-      const authState = await db.getFirstAsync<{
-        user_id: string;
-        last_login_at: string;
-      }>("SELECT user_id, last_login_at FROM auth_state WHERE id = 'current'");
-
-      if (authState?.last_login_at) {
-        setUserId(authState.user_id);
-        setIsLoggedIn(true);
-        setIsLoading(false);
-        try {
-          await serverRefreshAndSync();
-        } catch {
-          registerOnlineRetry(false);
-        }
-        return;
-      }
-
-      try {
-        await serverRefreshAndSync();
-      } catch {
-        // unable to refresh - stay logged out
-      }
-      setIsLoading(false);
-    };
-
-    init();
-    return () => {
-      onlineRetryRef.current?.();
-      onlineRetryRef.current = null;
-    };
-  }, []);
+  useAuthInit({
+    setUserId,
+    setIsLoggedIn,
+    setIsLoading,
+    setSyncReady,
+    authGenRef,
+    onlineRetryRef,
+  });
 
   const loginWithUserCheck = useCallback(async (newUserId: string) => {
     const db = await getDatabase();

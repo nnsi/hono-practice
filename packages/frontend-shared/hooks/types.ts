@@ -46,6 +46,7 @@ export type ActivityLogBase = {
   memo: string;
   date: string;
   time: string | null;
+  _syncStatus?: "synced" | "pending" | "failed";
 };
 
 /**
@@ -109,6 +110,7 @@ export type DailyTask = {
   memo: string;
   startDate: string | null;
   dueDate: string | null;
+  _syncStatus?: "synced" | "pending" | "failed";
 };
 
 /**

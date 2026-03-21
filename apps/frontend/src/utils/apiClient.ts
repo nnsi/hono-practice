@@ -28,10 +28,13 @@ export function clearToken() {
   tokenStorage.clearToken();
 }
 
-export const customFetch = createAuthenticatedFetch({
+const authenticatedFetchResult = createAuthenticatedFetch({
   tokenStorage,
   apiUrl: API_URL,
 });
+
+export const customFetch = authenticatedFetchResult.fetch;
+export const setOnAuthExpired = authenticatedFetchResult.setOnAuthExpired;
 
 export const apiClient = hc<AppType>(API_URL, {
   fetch: customFetch,

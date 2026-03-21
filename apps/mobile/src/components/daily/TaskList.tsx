@@ -12,6 +12,7 @@ export type Task = {
   memo: string;
   startDate: string | null;
   dueDate: string | null;
+  _syncStatus?: "synced" | "pending" | "failed";
 };
 
 type ActivityInfo = {
@@ -61,10 +62,15 @@ export function TaskList({
         const activity = task.activityId
           ? activitiesMap?.get(task.activityId)
           : undefined;
+        const isPending = task._syncStatus === "pending";
         return (
           <View
             key={task.id}
-            className="flex-row items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white"
+            className={`flex-row items-center gap-3 p-3 rounded-xl ${
+              isPending
+                ? "border border-amber-200 bg-amber-50"
+                : "border border-gray-200 bg-white"
+            }`}
           >
             <TouchableOpacity
               onPress={() => onToggle(task)}
@@ -102,13 +108,21 @@ export function TaskList({
               </View>
             )}
             <View className="flex-1 min-w-0">
-              <Text
-                className={`text-base font-medium ${
-                  task.doneDate ? "line-through text-gray-400" : "text-gray-800"
-                }`}
-              >
-                {task.title}
-              </Text>
+              <View className="flex-row items-center gap-1.5">
+                <Text
+                  className={`text-base font-medium flex-shrink ${
+                    task.doneDate
+                      ? "line-through text-gray-400"
+                      : "text-gray-800"
+                  }`}
+                  numberOfLines={1}
+                >
+                  {task.title}
+                </Text>
+                {isPending && (
+                  <ActivityIndicator size="small" color="#f97316" />
+                )}
+              </View>
               {task.memo ? (
                 <Text
                   className="text-xs text-gray-400 mt-0.5"

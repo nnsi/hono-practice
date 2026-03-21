@@ -5,12 +5,18 @@ type AuthenticatedFetchOptions = {
   apiUrl: string;
 };
 
+type AuthenticatedFetchResult = {
+  fetch: typeof fetch;
+  setOnAuthExpired: (cb: (() => void) | null) => void;
+};
+
 export function createAuthenticatedFetch(
   options: AuthenticatedFetchOptions,
-): typeof fetch {
+): AuthenticatedFetchResult {
   const { tokenStorage } = options;
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
   let refreshPromise: Promise<string | null> | null = null;
+  const authExpiredRef: { current: (() => void) | null } = { current: null };
 
   async function refreshAccessToken(): Promise<string | null> {
     if (refreshPromise) return refreshPromise;
@@ -22,11 +28,19 @@ export function createAuthenticatedFetch(
           headers: { "Content-Type": "application/json" },
           credentials: "include",
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          // 500系はサーバー一時障害 → リトライに任せる
+          // それ以外(400/401/403等)はセッション回復不能 → 強制ログアウト
+          if (res.status < 500) {
+            authExpiredRef.current?.();
+          }
+          return null;
+        }
         const data = await res.json();
         tokenStorage.setToken(data.token);
         return data.token;
       } catch {
+        // ネットワークエラー/タイムアウト → リトライに任せる
         return null;
       } finally {
         refreshPromise = null;
@@ -79,5 +93,10 @@ export function createAuthenticatedFetch(
     return res;
   };
 
-  return authenticatedFetch;
+  return {
+    fetch: authenticatedFetch,
+    setOnAuthExpired: (cb: (() => void) | null) => {
+      authExpiredRef.current = cb;
+    },
+  };
 }

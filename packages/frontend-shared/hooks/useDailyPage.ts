@@ -88,6 +88,7 @@ export function createUseDailyPage<
           memo: t.memo,
           startDate: t.startDate,
           dueDate: t.dueDate,
+          _syncStatus: t._syncStatus,
         })),
       [rawTasks],
     );
