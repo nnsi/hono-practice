@@ -7,23 +7,76 @@ import { useCheckMode } from "./useCheckMode";
 export function CheckMode(props: RecordingModeProps) {
   const vm = useCheckMode(props);
 
+  const buttonColor =
+    !vm.hasKinds && vm.isCheckedToday
+      ? "bg-green-500"
+      : vm.canCheck
+        ? "bg-white border-2 border-blue-500"
+        : "bg-white border-2 border-gray-300";
+
+  const iconColor =
+    !vm.hasKinds && vm.isCheckedToday
+      ? "#ffffff"
+      : vm.canCheck
+        ? "#3b82f6"
+        : "#d1d5db";
+
+  const statusText =
+    !vm.hasKinds && vm.isCheckedToday
+      ? "記録済み ✓"
+      : vm.hasKinds && !vm.selectedKindId
+        ? "項目を選択してください"
+        : vm.canCheck
+          ? "タップして記録"
+          : vm.hasKinds
+            ? "記録済み ✓"
+            : "タップして記録";
+
   return (
     <View className="items-center gap-4 py-4">
+      {vm.hasKinds && (
+        <View className="flex-row flex-wrap gap-2 justify-center">
+          {vm.kindItems.map((kind) => (
+            <TouchableOpacity
+              key={kind.id}
+              onPress={() => vm.selectKind(kind.id)}
+              disabled={kind.isCheckedToday || vm.isSubmitting}
+              className={`flex-row items-center gap-1.5 px-3 py-2 rounded-full ${
+                kind.isCheckedToday
+                  ? "bg-gray-100"
+                  : vm.selectedKindId === kind.id
+                    ? "bg-blue-500"
+                    : "bg-white border border-gray-300"
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  kind.isCheckedToday
+                    ? "text-gray-400"
+                    : vm.selectedKindId === kind.id
+                      ? "text-white"
+                      : "text-gray-700"
+                }`}
+              >
+                {kind.name}
+              </Text>
+              {kind.isCheckedToday && <Check size={14} color="#22c55e" />}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       <TouchableOpacity
-        className={`w-24 h-24 rounded-full items-center justify-center ${
-          vm.isCheckedToday
-            ? "bg-green-500"
-            : "bg-white border-2 border-gray-300"
+        className={`w-24 h-24 rounded-full items-center justify-center ${buttonColor} ${
+          !vm.canCheck || vm.isSubmitting ? "opacity-50" : ""
         }`}
         onPress={vm.check}
-        disabled={vm.isSubmitting}
+        disabled={!vm.canCheck || vm.isSubmitting}
       >
-        <Check size={48} color={vm.isCheckedToday ? "#ffffff" : "#d1d5db"} />
+        <Check size={48} color={iconColor} />
       </TouchableOpacity>
 
-      <Text className="text-sm text-gray-500">
-        {vm.isCheckedToday ? "記録済み \u2713" : "タップして記録"}
-      </Text>
+      <Text className="text-sm text-gray-500">{statusText}</Text>
     </View>
   );
 }

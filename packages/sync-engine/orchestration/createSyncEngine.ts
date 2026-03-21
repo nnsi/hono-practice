@@ -1,5 +1,7 @@
 import type { NetworkAdapter } from "@packages/platform";
 
+import { type SyncMutex, createSyncMutex } from "./createSyncMutex";
+
 type SyncFunctions = {
   syncActivityIconDeletions: () => Promise<void>;
   syncActivities: () => Promise<void>;
@@ -16,8 +18,8 @@ export function createSyncEngine(
   fns: SyncFunctions,
   defaultNetwork: NetworkAdapter,
   onSyncError?: SyncErrorHandler,
+  mutex: SyncMutex = createSyncMutex(),
 ) {
-  let isSyncing = false;
   let retryCount = 0;
   const BASE_DELAY_MS = 1000;
 
@@ -29,30 +31,28 @@ export function createSyncEngine(
     syncGoals: fns.syncGoals,
     syncGoalFreezePeriods: fns.syncGoalFreezePeriods,
     syncTasks: fns.syncTasks,
+    mutex,
 
     async syncAll(): Promise<void> {
-      if (isSyncing) return;
-      isSyncing = true;
-
-      try {
-        // Icon deletions first (before activity sync overwrites server URLs)
-        await fns.syncActivityIconDeletions();
-        // Sync in dependency order: activities first, then others
-        await fns.syncActivities();
-        // Upload icons after activity sync (activity must exist on server)
-        await fns.syncActivityIcons();
-        await fns.syncActivityLogs();
-        await fns.syncGoals();
-        await fns.syncTasks();
-        // Freeze periods depend on goals existing on server
-        await fns.syncGoalFreezePeriods();
-        retryCount = 0;
-      } catch (err) {
-        retryCount++;
-        onSyncError?.(err, `syncAll (retry ${retryCount})`);
-      } finally {
-        isSyncing = false;
-      }
+      await mutex.run(async () => {
+        try {
+          // Icon deletions first (before activity sync overwrites server URLs)
+          await fns.syncActivityIconDeletions();
+          // Sync in dependency order: activities first, then others
+          await fns.syncActivities();
+          // Upload icons after activity sync (activity must exist on server)
+          await fns.syncActivityIcons();
+          await fns.syncActivityLogs();
+          await fns.syncGoals();
+          await fns.syncTasks();
+          // Freeze periods depend on goals existing on server
+          await fns.syncGoalFreezePeriods();
+          retryCount = 0;
+        } catch (err) {
+          retryCount++;
+          onSyncError?.(err, `syncAll (retry ${retryCount})`);
+        }
+      });
     },
 
     startAutoSync(
