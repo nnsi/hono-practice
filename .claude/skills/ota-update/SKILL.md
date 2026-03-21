@@ -16,7 +16,17 @@ user_invocable: true
 
 ユーザーが `/ota-update <message>` で指定したメッセージを使う。指定がなければ直近のgit diffから変更内容を要約して生成する。
 
-### 2. 環境変数を取得
+### 2. app.config.ts 用の環境変数をセット
+
+`eas` コマンドが `app.config.ts` を読み込むために必要。
+
+```bash
+cd D:/workspace/hono-practice/apps/mobile && set -a && source .env && set +a
+```
+
+これで `BUNDLE_ID`, `EAS_PROJECT_ID`, `EAS_OWNER` がセットされる。**この手順を飛ばすと `eas` コマンドが `EAS project not configured` エラーで失敗する。**
+
+### 3. EXPO_PUBLIC 環境変数を取得
 
 ```bash
 cd D:/workspace/hono-practice/apps/mobile && npx eas-cli env:list --environment preview
@@ -24,7 +34,7 @@ cd D:/workspace/hono-practice/apps/mobile && npx eas-cli env:list --environment 
 
 出力から `EXPO_PUBLIC_*` の変数と値を取得する。
 
-### 3. Android配信
+### 4. Android配信
 
 ```bash
 cd D:/workspace/hono-practice/apps/mobile && \
@@ -38,7 +48,7 @@ npx eas-cli update --channel preview --platform android --message "<メッセー
 
 **`--clear-cache` は毎回付ける**（環境変数なしバンドルのキャッシュ事故を防ぐため）。
 
-### 4. iOS配信
+### 5. iOS配信
 
 ```bash
 cd D:/workspace/hono-practice/apps/mobile && \
@@ -52,7 +62,7 @@ npx eas-cli update --channel preview --platform ios --message "<メッセージ>
 
 iOS側は `--clear-cache` 不要（Android配信でキャッシュは再構築済み）。
 
-### 5. 結果報告
+### 6. 結果報告
 
 Android/iOSそれぞれの Update ID と EAS Dashboard URL を報告する。
 

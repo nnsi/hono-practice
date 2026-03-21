@@ -856,20 +856,20 @@ export const mobileCryptoAdapter: CryptoAdapter = {
   
   saveKey: async (key) => {
     await Keychain.setInternetCredentials(
-      'com.actiko.app',
+      KEYCHAIN_SERVICE,
       'encryption-key',
       key,
       { accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED }
     );
   },
-  
+
   loadKey: async () => {
-    const credentials = await Keychain.getInternetCredentials('com.actiko.app');
+    const credentials = await Keychain.getInternetCredentials(KEYCHAIN_SERVICE);
     return credentials ? credentials.password : null;
   },
-  
+
   clearKey: async () => {
-    await Keychain.resetInternetCredentials('com.actiko.app');
+    await Keychain.resetInternetCredentials(KEYCHAIN_SERVICE);
   },
   
   encryptToken: async (token) => {

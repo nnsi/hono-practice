@@ -5,10 +5,22 @@
 - EAS Update は JS バンドルのみを差し替える（ネイティブ変更は含められない）
 - `EXPO_PUBLIC_*` 環境変数は Metro のバンドル時に JS に焼き込まれる
 - EAS クラウドビルドでは `eas env` に登録された変数が自動注入されるが、**ローカルからの `eas update` では自動注入されない**
+- `app.config.ts` が `BUNDLE_ID`, `EAS_PROJECT_ID`, `EAS_OWNER` を `process.env` から読むため、**ローカルで `eas` コマンドを実行する際はこれらも環境変数として渡す必要がある**（EAS クラウドビルドでは `eas env` に登録済みなので不要）
 
 ## ローカルから OTA Update を配信する手順
 
-### 1. 環境変数を取得
+### 1. app.config.ts 用の環境変数をセット
+
+`eas` コマンドが `app.config.ts` を読み込むために必要。`apps/mobile/.env` に記載されている。
+
+```bash
+cd apps/mobile
+set -a && source .env && set +a
+```
+
+`set -a` は以降の変数代入を自動で `export` するシェルオプション。`source .env` だけだとシェル変数にはなるが子プロセス（`eas-cli`）に渡らない。
+
+### 2. EXPO_PUBLIC 環境変数を取得
 
 ```bash
 cd apps/mobile
@@ -17,9 +29,9 @@ npx eas-cli env:list --environment preview
 
 preview 以外の環境に配信する場合は `--environment` を変更する。
 
-### 2. 環境変数を付けて配信
+### 3. 環境変数を付けて配信
 
-手順1で取得した変数を環境変数としてセットして実行する。
+手順2で取得した変数を環境変数としてセットして実行する（手順1の変数も必要）。
 
 ```bash
 # Android
@@ -43,7 +55,7 @@ npx eas-cli update --channel preview --platform ios --message "変更内容"
 
 > **なぜ2回に分けるのか:** `--platform` は `android` / `ios` / `all` のいずれかしか受け付けない（カンマ区切り `android,ios` は非対応）。`all` を指定すると web バンドルも生成され、`assets/favicon.png` が空ファイルの場合に Jimp の MIME 判定エラーで失敗する。
 
-### 3. 反映確認
+### 4. 反映確認
 
 `_layout.tsx` で `fetchUpdateAsync()` 成功後に `reloadAsync()` を呼んでいるため、**1回のコールドスタートで反映される**。起動中に update のダウンロード → 自動リロードが走る。
 
