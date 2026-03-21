@@ -123,7 +123,13 @@ export function GoogleSignInButton({
 
 function GoogleIcon() {
   return (
-    <svg width={18} height={18} viewBox="0 0 18 18">
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 18 18"
+      role="img"
+      aria-label="Google"
+    >
       <path
         fill="#4285F4"
         d="M17.64 9.2045c0-.6382-.0573-1.2518-.1636-1.8409H9v3.4818h4.8436c-.2087 1.125-.8427 2.0782-1.796 2.7164v2.2582h2.9087c1.7018-1.5668 2.6837-3.8741 2.6837-6.6155Z"
