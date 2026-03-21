@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -61,15 +61,8 @@ export function DailyPage() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity className="absolute right-14 p-2" onPress={goToNext}>
+        <TouchableOpacity className="absolute right-4 p-2" onPress={goToNext}>
           <ChevronRight size={20} color="#78716c" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="absolute right-4 p-2"
-          onPress={() => setCalendarOpen(true)}
-        >
-          <Calendar size={18} color="#78716c" />
         </TouchableOpacity>
       </View>
 
