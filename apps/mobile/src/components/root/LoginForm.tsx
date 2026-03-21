@@ -100,13 +100,14 @@ export function LoginForm() {
           onPress={handleGooglePress}
           disabled={!googleRequest}
           accessibilityRole="button"
-          accessibilityLabel="Sign in with Google"
+          accessibilityLabel="Googleでログイン"
         >
-          <View className="absolute left-4">
-            <GoogleMark />
-          </View>
-          <Text className="text-base font-medium" style={{ color: "#1F1F1F" }}>
-            Sign in with Google
+          <GoogleMark />
+          <Text
+            className="text-base font-medium ml-3"
+            style={{ color: "#1F1F1F" }}
+          >
+            Googleでログイン
           </Text>
         </TouchableOpacity>
 

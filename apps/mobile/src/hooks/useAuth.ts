@@ -27,7 +27,7 @@ type AuthState = {
   googleLogin: (credential: string) => Promise<void>;
   appleLogin: (credential: string) => Promise<void>;
   completeLogin: (userId: string) => Promise<void>;
-  register: (name: string, loginId: string, password: string) => Promise<void>;
+  register: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -183,8 +183,8 @@ export function useAuth(): AuthState {
   );
 
   const register = useCallback(
-    async (name: string, loginId: string, password: string) => {
-      await apiRegister(name, loginId, password);
+    async (loginId: string, password: string) => {
+      await apiRegister(loginId, password);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
     },

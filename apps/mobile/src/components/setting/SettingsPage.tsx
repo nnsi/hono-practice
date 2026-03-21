@@ -26,6 +26,7 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
+import { GoogleMark } from "../common/GoogleMark";
 import { clearLocalData } from "../../sync/initialSync";
 import {
   apiAppleLink,
@@ -308,13 +309,18 @@ export function SettingsPage() {
               </Text>
             )}
             <TouchableOpacity
-              className={`flex-row items-center justify-center py-2.5 rounded-lg border border-gray-300 bg-white ${
+              className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 ${
                 google.isLinking || !google.googleRequest ? "opacity-50" : ""
               }`}
+              style={{ minHeight: 48, borderColor: "#747775" }}
               onPress={() => google.googlePromptAsync()}
               disabled={google.isLinking || !google.googleRequest}
             >
-              <Text className="text-sm font-medium text-gray-700">
+              <GoogleMark />
+              <Text
+                className="text-base font-medium ml-3"
+                style={{ color: "#1F1F1F" }}
+              >
                 {google.isLinking
                   ? "連携中..."
                   : google.isGoogleLinked
@@ -372,7 +378,7 @@ export function SettingsPage() {
                   AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
                 }
                 cornerRadius={8}
-                style={{ width: "100%", height: 44 }}
+                style={{ width: "100%", height: 48 }}
                 onPress={async () => {
                   try {
                     const credential = await AppleAuthentication.signInAsync({

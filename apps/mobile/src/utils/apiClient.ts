@@ -159,17 +159,13 @@ export async function apiLogin(loginId: string, password: string) {
   return data;
 }
 
-export async function apiRegister(
-  name: string,
-  loginId: string,
-  password: string,
-) {
+export async function apiRegister(loginId: string, password: string) {
   let res: Response;
   try {
     res = await fetchWithTimeout(`${API_URL}/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name || undefined, loginId, password }),
+      body: JSON.stringify({ loginId, password }),
     });
   } catch {
     throw new Error("ネットワークに接続できません。接続を確認してください");

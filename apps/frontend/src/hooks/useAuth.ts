@@ -14,7 +14,7 @@ type AuthState = {
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
   appleLogin: (credential: string) => Promise<void>;
-  register: (name: string, loginId: string, password: string) => Promise<void>;
+  register: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -182,9 +182,9 @@ export function useAuth(): AuthState {
   );
 
   const register = useCallback(
-    async (name: string, loginId: string, password: string) => {
+    async (loginId: string, password: string) => {
       const res = await apiClient.user.$post({
-        json: { name: name || undefined, loginId, password },
+        json: { loginId, password },
       });
       if (!res.ok) {
         throw new Error("Registration failed");

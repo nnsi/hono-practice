@@ -5,11 +5,7 @@ import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type CreateUserFormProps = {
-  onRegister: (
-    name: string,
-    loginId: string,
-    password: string,
-  ) => Promise<void>;
+  onRegister: (loginId: string, password: string) => Promise<void>;
   onGoogleLogin: (credential: string) => Promise<void>;
   onAppleLogin: (credential: string) => Promise<void>;
 };
@@ -19,7 +15,6 @@ export function CreateUserForm({
   onGoogleLogin,
   onAppleLogin,
 }: CreateUserFormProps) {
-  const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +40,7 @@ export function CreateUserForm({
     setError("");
     setIsSubmitting(true);
     try {
-      await onRegister(name, loginId, password);
+      await onRegister(loginId, password);
     } catch (e) {
       setError(e instanceof Error ? e.message : "ユーザー登録に失敗しました");
     } finally {
@@ -106,6 +101,7 @@ export function CreateUserForm({
         <AppleSignInButton
           onSuccess={handleAppleSuccess}
           onError={handleAppleError}
+          text="signup"
         />
       </div>
 
@@ -119,23 +115,6 @@ export function CreateUserForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="register-name"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            ユーザー名
-            <span className="text-gray-400 text-xs ml-1">(任意)</span>
-          </label>
-          <input
-            id="register-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
-            placeholder="表示名"
-          />
-        </div>
         <div>
           <label
             htmlFor="register-loginId"
