@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
@@ -16,7 +16,6 @@ WebBrowser.maybeCompleteAuthSession();
 export function CreateUserForm() {
   const { register, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
-  const [name, setName] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,7 @@ export function CreateUserForm() {
     setLoading(true);
     setError("");
     try {
-      await register(name, loginId, password);
+      await register(loginId, password);
     } catch (e) {
       setError(e instanceof Error ? e.message : "登録に失敗しました");
     } finally {
@@ -62,13 +61,14 @@ export function CreateUserForm() {
         onPress={handleGooglePress}
         disabled={!googleRequest}
         accessibilityRole="button"
-        accessibilityLabel="Sign up with Google"
+        accessibilityLabel="Googleで登録"
       >
-        <View className="absolute left-4">
-          <GoogleMark />
-        </View>
-        <Text className="text-base font-medium" style={{ color: "#1F1F1F" }}>
-          Sign up with Google
+        <GoogleMark />
+        <Text
+          className="text-base font-medium ml-3"
+          style={{ color: "#1F1F1F" }}
+        >
+          Googleで登録
         </Text>
       </TouchableOpacity>
 
@@ -112,13 +112,6 @@ export function CreateUserForm() {
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
-      <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="名前（任意）"
-        value={name}
-        onChangeText={setName}
-        autoCorrect={false}
-      />
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder="ログインID"

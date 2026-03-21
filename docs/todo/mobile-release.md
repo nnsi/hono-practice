@@ -1,7 +1,7 @@
 # Actiko モバイルアプリ ストアリリース チェックリスト
 
 > 対象: `apps/mobile` (Expo SDK 54, Managed Workflow)
-> Bundle ID: `com.actiko.app` (iOS / Android 共通)
+> Bundle ID: `$BUNDLE_ID` (iOS / Android 共通、`.env` で設定)
 
 ---
 
@@ -59,7 +59,7 @@ OTA Update は channel に紐付くため、preview ビルドに production の 
 cd apps/mobile
 
 # preview（初期検証では本番 API に接続して実データで確認する）
-eas env:create --environment preview --name EXPO_PUBLIC_API_URL --value "https://api.actiko.app" --visibility plaintext
+eas env:create --environment preview --name EXPO_PUBLIC_API_URL --value "https://<API_DOMAIN>" --visibility plaintext
 eas env:create --environment preview --name EXPO_PUBLIC_GOOGLE_CLIENT_ID --value "<値>" --visibility plaintext
 eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<値>" --visibility plaintext
 ```
@@ -105,7 +105,7 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
   - https://developer.apple.com/programs/
 - [ ] Google Play Console に登録（一回 $25）
   - https://play.google.com/console/
-- [x] Apple: App ID (`com.actiko.app`) を Apple Developer Portal で登録
+- [x] Apple: App ID (`$BUNDLE_ID`) を Apple Developer Portal で登録
 - [ ] Google: Google Play Console でアプリを新規作成
 - [x] Apple Developer アカウントを EAS に接続: `eas credentials`
 

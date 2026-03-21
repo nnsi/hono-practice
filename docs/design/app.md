@@ -411,7 +411,7 @@ T
 | --- | --- | --- |
 | ローカル | 開発 | http://localhost:5173 (Frontend), http://localhost:3456 (Backend) |
 | ステージング | 統合テスト・検証 | https://actiko-stg.* |
-| 本番 | ユーザーアクセス | https://actiko.app |
+| 本番 | ユーザーアクセス | `$APP_URL` |
 
 ### 11.2 環境変数管理
 - **ローカル**: `.env` ファイル（git ignore）

@@ -34,7 +34,7 @@ type AuthContextType = {
   googleLogin: (credential: string) => Promise<void>;
   appleLogin: (credential: string) => Promise<void>;
   completeLogin: (userId: string) => Promise<void>;
-  register: (name: string, loginId: string, password: string) => Promise<void>;
+  register: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 

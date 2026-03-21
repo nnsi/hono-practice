@@ -37,6 +37,7 @@ import {
   getApiUrl,
 } from "../../utils/apiClient";
 import { setOAuthPending } from "../../utils/oauthPending";
+import { GoogleMark } from "../common/GoogleMark";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
@@ -308,13 +309,18 @@ export function SettingsPage() {
               </Text>
             )}
             <TouchableOpacity
-              className={`flex-row items-center justify-center py-2.5 rounded-lg border border-gray-300 bg-white ${
+              className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 ${
                 google.isLinking || !google.googleRequest ? "opacity-50" : ""
               }`}
+              style={{ minHeight: 48, borderColor: "#747775" }}
               onPress={() => google.googlePromptAsync()}
               disabled={google.isLinking || !google.googleRequest}
             >
-              <Text className="text-sm font-medium text-gray-700">
+              <GoogleMark />
+              <Text
+                className="text-base font-medium ml-3"
+                style={{ color: "#1F1F1F" }}
+              >
                 {google.isLinking
                   ? "連携中..."
                   : google.isGoogleLinked
@@ -372,7 +378,7 @@ export function SettingsPage() {
                   AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
                 }
                 cornerRadius={8}
-                style={{ width: "100%", height: 44 }}
+                style={{ width: "100%", height: 48 }}
                 onPress={async () => {
                   try {
                     const credential = await AppleAuthentication.signInAsync({
@@ -479,6 +485,29 @@ export function SettingsPage() {
 
       {/* Account */}
       <Section icon={User} label="アカウント" shadow={shadow}>
+        {!showLogoutConfirm ? (
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-3"
+            onPress={() => setShowLogoutConfirm(true)}
+          >
+            <LogOut size={18} color="#ef4444" />
+            <Text className="ml-3 text-base text-red-500">ログアウト</Text>
+          </TouchableOpacity>
+        ) : (
+          <InlineConfirm
+            message="ログアウトしますか？"
+            onConfirm={() => {
+              logout();
+              setShowLogoutConfirm(false);
+            }}
+            onCancel={() => setShowLogoutConfirm(false)}
+            confirmLabel="ログアウト"
+          />
+        )}
+      </Section>
+
+      {/* Danger Zone */}
+      <Section icon={AlertTriangle} label="危険な操作" shadow={shadow}>
         {!showDeleteConfirm ? (
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
@@ -499,26 +528,6 @@ export function SettingsPage() {
             }}
             error={deleteError}
             disabled={isDeleting}
-          />
-        )}
-        <Divider />
-        {!showLogoutConfirm ? (
-          <TouchableOpacity
-            className="flex-row items-center px-4 py-3"
-            onPress={() => setShowLogoutConfirm(true)}
-          >
-            <LogOut size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">ログアウト</Text>
-          </TouchableOpacity>
-        ) : (
-          <InlineConfirm
-            message="ログアウトしますか？"
-            onConfirm={() => {
-              logout();
-              setShowLogoutConfirm(false);
-            }}
-            onCancel={() => setShowLogoutConfirm(false)}
-            confirmLabel="ログアウト"
           />
         )}
       </Section>

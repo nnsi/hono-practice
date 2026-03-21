@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -10,15 +10,11 @@ declare global {
           redirectURI: string;
           usePopup: boolean;
         }) => void;
+        signIn: () => Promise<{
+          authorization?: { id_token?: string };
+        }>;
       };
     };
-  }
-
-  interface DocumentEventMap {
-    AppleIDSignInOnSuccess: CustomEvent<{
-      authorization?: { id_token?: string };
-    }>;
-    AppleIDSignInOnFailure: CustomEvent<unknown>;
   }
 }
 
@@ -29,6 +25,7 @@ const APPLE_SCRIPT_URL =
 type AppleSignInButtonProps = {
   onSuccess: (credential: string) => void;
   onError: () => void;
+  text?: "signin" | "signup";
 };
 
 let appleLoaded = false;
@@ -60,33 +57,17 @@ function loadAppleScript(): Promise<void> {
 export function AppleSignInButton({
   onSuccess,
   onError,
+  text = "signin",
 }: AppleSignInButtonProps) {
   const callbackRef = useRef({ onSuccess, onError });
   callbackRef.current = { onSuccess, onError };
   const initializedRef = useRef(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!APPLE_CLIENT_ID) return;
 
     let active = true;
-
-    const handleSuccess = (
-      event: DocumentEventMap["AppleIDSignInOnSuccess"],
-    ) => {
-      const idToken = event.detail?.authorization?.id_token;
-      if (idToken) {
-        callbackRef.current.onSuccess(idToken);
-        return;
-      }
-      callbackRef.current.onError();
-    };
-
-    const handleFailure = () => {
-      callbackRef.current.onError();
-    };
-
-    document.addEventListener("AppleIDSignInOnSuccess", handleSuccess);
-    document.addEventListener("AppleIDSignInOnFailure", handleFailure);
 
     loadAppleScript()
       .then(() => {
@@ -98,33 +79,58 @@ export function AppleSignInButton({
           usePopup: true,
         });
         initializedRef.current = true;
+        setReady(true);
       })
       .catch(() => {
-        if (active) {
-          callbackRef.current.onError();
-        }
+        if (active) callbackRef.current.onError();
       });
 
     return () => {
       active = false;
-      document.removeEventListener("AppleIDSignInOnSuccess", handleSuccess);
-      document.removeEventListener("AppleIDSignInOnFailure", handleFailure);
     };
   }, []);
 
-  if (!APPLE_CLIENT_ID) return null;
+  const handleClick = async () => {
+    if (!ready) return;
+    try {
+      const data = await window.AppleID.auth.signIn();
+      const idToken = data.authorization?.id_token;
+      if (idToken) {
+        callbackRef.current.onSuccess(idToken);
+      } else {
+        callbackRef.current.onError();
+      }
+    } catch {
+      callbackRef.current.onError();
+    }
+  };
+
+  const label = text === "signup" ? "Appleで登録" : "Appleでログイン";
 
   return (
-    <div className="w-full overflow-hidden rounded-md">
-      <div
-        id="appleid-signin"
-        data-color="black"
-        data-border="false"
-        data-type="sign in"
-        data-width="320"
-        data-height="40"
-        className="min-h-[40px] w-full"
-      />
-    </div>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={!ready}
+      className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-black text-sm font-medium text-white transition-opacity hover:bg-gray-900 disabled:opacity-50"
+    >
+      <AppleIcon />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      role="img"
+      aria-label="Apple"
+    >
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
   );
 }

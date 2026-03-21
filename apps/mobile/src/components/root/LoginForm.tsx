@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
@@ -100,13 +100,14 @@ export function LoginForm() {
           onPress={handleGooglePress}
           disabled={!googleRequest}
           accessibilityRole="button"
-          accessibilityLabel="Sign in with Google"
+          accessibilityLabel="Googleでログイン"
         >
-          <View className="absolute left-4">
-            <GoogleMark />
-          </View>
-          <Text className="text-base font-medium" style={{ color: "#1F1F1F" }}>
-            Sign in with Google
+          <GoogleMark />
+          <Text
+            className="text-base font-medium ml-3"
+            style={{ color: "#1F1F1F" }}
+          >
+            Googleでログイン
           </Text>
         </TouchableOpacity>
 

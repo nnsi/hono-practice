@@ -77,9 +77,6 @@ function RootComponent() {
             <h1 className="text-4xl font-bold tracking-tight brand-text mb-2">
               Actiko
             </h1>
-            <p className="text-sm text-gray-400 tracking-wide">
-              活動を、最速で記録する
-            </p>
           </div>
 
           {/* Auth tabs */}
