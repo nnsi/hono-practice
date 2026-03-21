@@ -74,26 +74,16 @@ function getRefreshTokenByToken(db: QueryExecutor) {
       .from(refreshTokens)
       .where(eq(refreshTokens.selector, selector))
       .limit(1);
-    if (!storedRawToken) {
-      console.log(`[DEBUG refreshToken] selector=${selector} reason=not_found`);
-      return null;
-    }
-    if (storedRawToken.revokedAt) {
-      console.log(
-        `[DEBUG refreshToken] selector=${selector} reason=revoked revokedAt=${storedRawToken.revokedAt}`,
-      );
-      return null;
-    }
-    if (storedRawToken.deletedAt) {
-      console.log(`[DEBUG refreshToken] selector=${selector} reason=deleted`);
+    if (
+      !storedRawToken ||
+      storedRawToken.revokedAt ||
+      storedRawToken.deletedAt
+    ) {
       return null;
     }
     const hashedToken = await hashWithSHA256(plainToken);
     const isValid = hashedToken === storedRawToken.token;
     if (!isValid) {
-      console.log(
-        `[DEBUG refreshToken] selector=${selector} reason=hash_mismatch`,
-      );
       return null;
     }
     const parsedToken = refreshTokenSchema.safeParse(storedRawToken);

@@ -71,23 +71,13 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       return c.json({ token, refreshToken });
     })
     .post("/token", async (c) => {
-      const cookieValue = getCookie(c, "refresh_token");
-      let refreshTokenValue = cookieValue;
-      let tokenSource = "cookie";
-      if (!refreshTokenValue) {
-        const authHeader = c.req.header("Authorization");
-        if (authHeader?.startsWith("Bearer ")) {
-          refreshTokenValue = authHeader.substring(7);
-          tokenSource = "header";
-        }
-      }
+      const authHeader = c.req.header("Authorization");
+      const refreshTokenValue = authHeader?.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : getCookie(c, "refresh_token");
       if (!refreshTokenValue) {
         return c.json({ message: "refresh token not found" }, 401);
       }
-      const selector = refreshTokenValue.split(".")[0] ?? "(invalid)";
-      console.log(
-        `[DEBUG auth/token] source=${tokenSource} selector=${selector} hasCookie=${!!cookieValue} hasAuthHeader=${!!c.req.header("Authorization")}`,
-      );
       try {
         const fireAndForgetFn = (p: Promise<unknown>) => {
           try {
