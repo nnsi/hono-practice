@@ -33,6 +33,7 @@ const config: ExpoConfig = {
     "expo-web-browser",
     "expo-updates",
     "expo-apple-authentication",
+    "expo-image-picker",
   ],
   extra: {
     router: {},

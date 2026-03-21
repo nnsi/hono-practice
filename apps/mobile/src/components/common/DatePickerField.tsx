@@ -1,6 +1,10 @@
+import { useState } from "react";
+
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Calendar } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
+
+import { CalendarPopover } from "./CalendarPopover";
 
 type DatePickerFieldProps = {
   value: string; // YYYY-MM-DD
@@ -13,27 +17,28 @@ export function DatePickerField({
   onChange,
   label,
 }: DatePickerFieldProps) {
-  const date = dayjs(value);
-
-  const prev = () => onChange(date.subtract(1, "day").format("YYYY-MM-DD"));
-  const next = () => onChange(date.add(1, "day").format("YYYY-MM-DD"));
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   return (
     <View>
       {label ? (
         <Text className="text-sm text-gray-500 mb-1">{label}</Text>
       ) : null}
-      <View className="flex-row items-center">
-        <TouchableOpacity onPress={prev} className="p-2">
-          <ChevronLeft size={20} color="#6b7280" />
-        </TouchableOpacity>
-        <Text className="text-base font-medium mx-2">
-          {date.format("YYYY/MM/DD (ddd)")}
+      <Pressable
+        className="flex-row items-center border border-gray-300 rounded-lg px-3 py-2"
+        onPress={() => setCalendarOpen(true)}
+      >
+        <Calendar size={16} color="#374151" />
+        <Text className="text-sm ml-2 text-gray-900">
+          {dayjs(value).format("YYYY/MM/DD (ddd)")}
         </Text>
-        <TouchableOpacity onPress={next} className="p-2">
-          <ChevronRight size={20} color="#6b7280" />
-        </TouchableOpacity>
-      </View>
+      </Pressable>
+      <CalendarPopover
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        selectedDate={value}
+        onDateSelect={onChange}
+      />
     </View>
   );
 }

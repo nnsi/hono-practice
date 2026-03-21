@@ -7,6 +7,7 @@ import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import type { TaskItem } from "./types";
 import { useTaskEditDialog } from "./useTaskEditDialog";
 
@@ -289,15 +290,11 @@ export function TaskEditDialog({
             )}
           </View>
           <View className="flex-1">
-            <Text className="text-sm text-gray-500 mb-1">期限（任意）</Text>
-            <IMESafeTextInput
+            <OptionalDatePickerField
               value={dueDate}
-              onChangeText={setDueDate}
-              placeholder="YYYY-MM-DD"
-              editable={!isArchived}
-              className={`border border-gray-300 rounded-lg px-3 py-2 text-sm ${
-                isArchived ? "bg-gray-100 text-gray-500" : ""
-              }`}
+              onChange={setDueDate}
+              label="期限（任意）"
+              disabled={isArchived}
             />
           </View>
         </View>

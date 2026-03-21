@@ -6,6 +6,7 @@ import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { DayTargetsInput, buildDayTargets } from "./DayTargetsInput";
 import type { Activity, UpdateGoalPayload } from "./types";
 
@@ -152,12 +153,10 @@ export function EditGoalForm({
           />
         </View>
         <View className="flex-1">
-          <Text className="text-xs font-medium text-gray-600 mb-1">終了日</Text>
-          <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+          <OptionalDatePickerField
             value={endDate}
-            onChangeText={setEndDate}
-            placeholder="未設定"
+            onChange={setEndDate}
+            label="終了日"
           />
         </View>
       </View>

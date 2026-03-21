@@ -2,9 +2,9 @@ import { useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
-import * as DocumentPicker from "expo-document-picker";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
 
 import { activityRepository } from "../../repositories/activityRepository";
 
@@ -55,9 +55,11 @@ export function useCreateActivityDialog(
 
   const handlePickImage = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["image/png", "image/jpeg", "image/webp"],
-        copyToCacheDirectory: true,
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
       });
       if (result.canceled || result.assets.length === 0) return;
 
