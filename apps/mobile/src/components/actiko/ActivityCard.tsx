@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { Pencil } from "lucide-react-native";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { activityRepository } from "../../repositories/activityRepository";
+import { ActivityIcon } from "../common/ActivityIcon";
 
 type IconBlob = {
   activityId: string;
@@ -44,8 +45,6 @@ export function ActivityCard({
   onPress,
   onEdit,
 }: ActivityCardProps) {
-  const [imageError, setImageError] = useState(false);
-
   useEffect(() => {
     if (activity.iconType !== "upload") return;
     if (iconBlob) return;
@@ -60,34 +59,16 @@ export function ActivityCard({
     iconBlob,
   ]);
 
-  const renderIcon = () => {
-    if (activity.iconType === "upload" && !imageError) {
-      if (iconBlob) {
-        return (
-          <Image
-            source={{
-              uri: `data:${iconBlob.mimeType};base64,${iconBlob.base64}`,
-            }}
-            style={{ width: 32, height: 32, borderRadius: 8 }}
-            resizeMode="cover"
-            onError={() => setImageError(true)}
-          />
-        );
-      }
-      const remoteUrl = activity.iconThumbnailUrl || activity.iconUrl;
-      if (remoteUrl) {
-        return (
-          <Image
-            source={{ uri: remoteUrl }}
-            style={{ width: 32, height: 32, borderRadius: 8 }}
-            resizeMode="cover"
-            onError={() => setImageError(true)}
-          />
-        );
-      }
-    }
-    return <Text className="text-3xl">{activity.emoji || "\ud83d\udcdd"}</Text>;
-  };
+  const renderIcon = () => (
+    <ActivityIcon
+      iconType={activity.iconType}
+      emoji={activity.emoji}
+      iconBlob={iconBlob}
+      iconUrl={activity.iconUrl}
+      iconThumbnailUrl={activity.iconThumbnailUrl}
+      fontSize="text-3xl"
+    />
+  );
 
   return (
     <View className="flex-1 m-1 relative">

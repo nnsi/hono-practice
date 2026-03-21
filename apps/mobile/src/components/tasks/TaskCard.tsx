@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import dayjs from "dayjs";
 import {
   Archive,
@@ -11,12 +9,10 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
-import { useLiveQuery } from "../../db/useLiveQuery";
-import { useActivities } from "../../hooks/useActivities";
-import { activityRepository } from "../../repositories/activityRepository";
 import type { TaskItem } from "./types";
+import { useTaskCard } from "./useTaskCard";
 
 export function TaskCard({
   task,
@@ -39,41 +35,8 @@ export function TaskCard({
   onArchive: () => void;
   onMoveToToday?: () => void;
 }) {
-  const { activities } = useActivities();
-  const activityMap = useMemo(() => {
-    const map = new Map<
-      string,
-      { name: string; emoji: string; quantityUnit: string }
-    >();
-    for (const a of activities) {
-      map.set(a.id, {
-        name: a.name,
-        emoji: a.emoji,
-        quantityUnit: a.quantityUnit,
-      });
-    }
-    return map;
-  }, [activities]);
-
-  const linkedActivity = task.activityId
-    ? activityMap.get(task.activityId)
-    : null;
-
-  const allKinds = useLiveQuery(
-    "activity_kinds",
-    () =>
-      task.activityId && task.activityKindId
-        ? activityRepository.getActivityKindsByActivityId(task.activityId)
-        : Promise.resolve([]),
-    [task.activityId, task.activityKindId],
-  );
-  const linkedKind = task.activityKindId
-    ? (allKinds ?? []).find((k) => k.id === task.activityKindId && !k.deletedAt)
-    : null;
-
-  const today = dayjs().format("YYYY-MM-DD");
-  const showMoveToToday =
-    !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
+  const { linkedActivity, linkedKind, iconBlobMap, showMoveToToday } =
+    useTaskCard(task, archived, onMoveToToday);
 
   return (
     <View
@@ -122,14 +85,32 @@ export function TaskCard({
           {task.title}
         </Text>
         {linkedActivity && (
-          <Text className="text-xs text-blue-600 mt-0.5">
-            {linkedActivity.emoji ? `${linkedActivity.emoji} ` : ""}
-            {linkedActivity.name}
-            {linkedKind ? ` · ${linkedKind.name}` : ""}
-            {task.quantity !== null
-              ? ` · ${task.quantity}${linkedActivity.quantityUnit ? ` ${linkedActivity.quantityUnit}` : ""}`
-              : ""}
-          </Text>
+          <View className="flex-row items-center gap-1 mt-0.5">
+            {linkedActivity.iconType === "upload" &&
+            (iconBlobMap.get(task.activityId!) ||
+              linkedActivity.iconThumbnailUrl ||
+              linkedActivity.iconUrl) ? (
+              <Image
+                source={{
+                  uri: iconBlobMap.get(task.activityId!)
+                    ? `data:${iconBlobMap.get(task.activityId!)!.mimeType};base64,${iconBlobMap.get(task.activityId!)!.base64}`
+                    : (linkedActivity.iconThumbnailUrl ||
+                        linkedActivity.iconUrl)!,
+                }}
+                style={{ width: 14, height: 14, borderRadius: 3 }}
+                resizeMode="cover"
+              />
+            ) : linkedActivity.emoji ? (
+              <Text className="text-xs">{linkedActivity.emoji}</Text>
+            ) : null}
+            <Text className="text-xs text-blue-600">
+              {linkedActivity.name}
+              {linkedKind ? ` · ${linkedKind.name}` : ""}
+              {task.quantity !== null
+                ? ` · ${task.quantity}${linkedActivity.quantityUnit ? ` ${linkedActivity.quantityUnit}` : ""}`
+                : ""}
+            </Text>
+          </View>
         )}
         {(task.startDate || task.dueDate) && (
           <View className="flex-row items-center gap-1 mt-0.5">

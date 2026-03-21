@@ -1,6 +1,8 @@
 import { Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { useEditLogDialog } from "./useEditLogDialog";
@@ -19,6 +21,9 @@ type Activity = {
   id: string;
   name: string;
   emoji: string;
+  iconType?: "emoji" | "upload" | "generate";
+  iconUrl?: string | null;
+  iconThumbnailUrl?: string | null;
   quantityUnit: string;
 };
 
@@ -31,6 +36,8 @@ export function EditLogDialog({
   activity: Activity | null;
   onClose: () => void;
 }) {
+  const iconBlobMap = useIconBlobMap();
+
   const {
     quantity,
     setQuantity,
@@ -50,7 +57,22 @@ export function EditLogDialog({
     <ModalOverlay
       visible
       onClose={onClose}
-      title={`${activity?.emoji || "\u{1f4dd}"} ${activity?.name ?? "\u4e0d\u660e"}`}
+      title={
+        <>
+          <ActivityIcon
+            iconType={activity?.iconType}
+            emoji={activity?.emoji || "\u{1f4dd}"}
+            iconBlob={activity ? iconBlobMap.get(activity.id) : undefined}
+            iconUrl={activity?.iconUrl}
+            iconThumbnailUrl={activity?.iconThumbnailUrl}
+            size={24}
+            fontSize="text-xl"
+          />
+          <Text className="text-lg font-bold text-gray-900">
+            {activity?.name ?? "\u4e0d\u660e"}
+          </Text>
+        </>
+      }
       footer={
         <View className="flex-row gap-2">
           <TouchableOpacity

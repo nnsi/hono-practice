@@ -3,7 +3,9 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -43,6 +45,7 @@ export function TaskEditDialog({
   } = useTaskEditDialog(task, onSuccess);
 
   const { activities } = useActivities();
+  const iconBlobMap = useIconBlobMap();
 
   const kinds = useLiveQuery(
     "activity_kinds",
@@ -160,12 +163,21 @@ export function TaskEditDialog({
                       handleSetActivityId(activityId === a.id ? null : a.id)
                     }
                     disabled={isArchived}
-                    className={`flex-row items-center px-3 py-1.5 rounded-full border ${
+                    className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full border ${
                       activityId === a.id
                         ? "bg-gray-900 border-gray-900"
                         : "bg-white border-gray-300"
                     } ${isArchived ? "opacity-50" : ""}`}
                   >
+                    <ActivityIcon
+                      iconType={a.iconType}
+                      emoji={a.emoji || "\u{1f4dd}"}
+                      iconBlob={iconBlobMap.get(a.id)}
+                      iconUrl={a.iconUrl}
+                      iconThumbnailUrl={a.iconThumbnailUrl}
+                      size={14}
+                      fontSize="text-xs"
+                    />
                     <Text
                       className={`text-sm ${
                         activityId === a.id
@@ -173,7 +185,6 @@ export function TaskEditDialog({
                           : "text-gray-700"
                       }`}
                     >
-                      {a.emoji ? `${a.emoji} ` : ""}
                       {a.name}
                     </Text>
                   </TouchableOpacity>

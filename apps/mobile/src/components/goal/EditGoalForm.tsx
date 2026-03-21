@@ -4,6 +4,8 @@ import type { DayTargets } from "@packages/domain/goal/dayTargets";
 import { Trash2, X } from "lucide-react-native";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
@@ -34,6 +36,7 @@ export function EditGoalForm({
   onSave: (payload: UpdateGoalPayload) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const iconBlobMap = useIconBlobMap();
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
   const [endDate, setEndDate] = useState(goal.endDate ?? "");
@@ -119,7 +122,15 @@ export function EditGoalForm({
       {/* Header */}
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center gap-2">
-          <Text className="text-xl">{activity?.emoji ?? "🎯"}</Text>
+          <ActivityIcon
+            iconType={activity?.iconType}
+            emoji={activity?.emoji ?? "🎯"}
+            iconBlob={activity ? iconBlobMap.get(goal.activityId) : undefined}
+            iconUrl={activity?.iconUrl}
+            iconThumbnailUrl={activity?.iconThumbnailUrl}
+            size={28}
+            fontSize="text-xl"
+          />
           <Text className="font-semibold text-sm text-gray-900">
             {activity?.name ?? "不明なアクティビティ"}
           </Text>

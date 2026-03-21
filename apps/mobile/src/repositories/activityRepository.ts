@@ -456,6 +456,7 @@ const adapter: ActivityDbAdapter = {
       "INSERT OR REPLACE INTO activity_icon_blobs (activity_id, base64, mime_type) VALUES (?, ?, ?)",
       [activityId, base64, mimeType],
     );
+    dbEvents.emit("activity_icon_blobs");
   },
 
   async getActivityIconBlob(activityId) {

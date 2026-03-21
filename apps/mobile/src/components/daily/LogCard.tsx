@@ -1,10 +1,15 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { ActivityIcon } from "../common/ActivityIcon";
+
 type Activity = {
   id: string;
   name: string;
   emoji: string;
   quantityUnit: string;
+  iconType?: "emoji" | "upload" | "generate";
+  iconUrl?: string | null;
+  iconThumbnailUrl?: string | null;
 };
 
 type Kind = {
@@ -13,10 +18,16 @@ type Kind = {
   color: string | null;
 };
 
+type IconBlob = {
+  base64: string;
+  mimeType: string;
+};
+
 export function LogCard({
   log,
   activity,
   kind,
+  iconBlob,
   onPress,
 }: {
   log: {
@@ -28,6 +39,7 @@ export function LogCard({
   };
   activity: Activity | null;
   kind: Kind | null;
+  iconBlob?: IconBlob;
   onPress: () => void;
 }) {
   return (
@@ -45,7 +57,13 @@ export function LogCard({
     >
       {/* Icon */}
       <View className="w-10 h-10 items-center justify-center shrink-0">
-        <Text className="text-2xl">{activity?.emoji || "\u{1f4dd}"}</Text>
+        <ActivityIcon
+          iconType={activity?.iconType}
+          emoji={activity?.emoji || "\u{1f4dd}"}
+          iconBlob={iconBlob}
+          iconUrl={activity?.iconUrl}
+          iconThumbnailUrl={activity?.iconThumbnailUrl}
+        />
       </View>
 
       {/* Content */}

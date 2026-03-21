@@ -9,6 +9,8 @@ import {
 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { ActivityIcon } from "../common/ActivityIcon";
+
 type GoalForCard = {
   dailyTargetQuantity: number;
   startDate: string;
@@ -17,9 +19,15 @@ type GoalForCard = {
 
 type StatusBadge = { label: string; bgClass: string; textClass: string };
 
+type IconBlob = {
+  base64: string;
+  mimeType: string;
+};
+
 export function GoalCardHeader({
   goal,
   activity,
+  iconBlob,
   isExpanded,
   isPast,
   localBalance,
@@ -39,6 +47,7 @@ export function GoalCardHeader({
 }: {
   goal: GoalForCard;
   activity: ActivityRecord | null;
+  iconBlob?: IconBlob;
   isExpanded: boolean;
   isPast: boolean;
   localBalance: number;
@@ -63,7 +72,13 @@ export function GoalCardHeader({
       activeOpacity={0.7}
     >
       <View className="flex-row gap-3 items-start">
-        <Text className="text-2xl pt-0.5">{activity?.emoji ?? "🎯"}</Text>
+        <ActivityIcon
+          iconType={activity?.iconType}
+          emoji={activity?.emoji ?? "\u{1F3AF}"}
+          iconBlob={iconBlob}
+          iconUrl={activity?.iconUrl}
+          iconThumbnailUrl={activity?.iconThumbnailUrl}
+        />
         <View className="flex-1" style={{ minWidth: 0 }}>
           <View className="flex-row items-start gap-2">
             <Text

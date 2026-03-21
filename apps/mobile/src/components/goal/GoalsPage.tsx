@@ -3,6 +3,7 @@ import { Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
@@ -30,6 +31,8 @@ export function GoalsPage() {
     handleGoalDeleted,
     handleToggleExpand,
   } = useGoalsPage();
+
+  const iconBlobMap = useIconBlobMap();
 
   const insets = useSafeAreaInsets();
 
@@ -107,6 +110,7 @@ export function GoalsPage() {
                   key={goal.id}
                   goal={goal}
                   activity={act ?? null}
+                  iconBlob={iconBlobMap.get(goal.activityId)}
                   isExpanded={expandedGoalId === goal.id}
                   onToggleExpand={() => handleToggleExpand(goal.id)}
                   onEditStart={() => setEditingGoalId(goal.id)}
@@ -142,6 +146,7 @@ export function GoalsPage() {
                 key={goal.id}
                 goal={goal}
                 activity={activityMap.get(goal.activityId) ?? null}
+                iconBlob={iconBlobMap.get(goal.activityId)}
                 isExpanded={expandedGoalId === goal.id}
                 isPast
                 onToggleExpand={() => handleToggleExpand(goal.id)}

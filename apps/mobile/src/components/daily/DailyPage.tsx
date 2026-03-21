@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
@@ -32,6 +33,8 @@ export function DailyPage() {
     setCalendarOpen,
     handleToggleTask,
   } = useDailyPage();
+
+  const iconBlobMap = useIconBlobMap();
 
   const insets = useSafeAreaInsets();
   const dateLabel = dayjs(date).format("M/D (ddd)");
@@ -106,6 +109,7 @@ export function DailyPage() {
                     log={log}
                     activity={activity ?? null}
                     kind={kind ?? null}
+                    iconBlob={iconBlobMap.get(log.activityId)}
                     onPress={() => setEditingLog(log)}
                   />
                 );
@@ -140,6 +144,7 @@ export function DailyPage() {
             isLoading={false}
             onToggle={handleToggleTask}
             activitiesMap={activitiesMap}
+            iconBlobMap={iconBlobMap}
           />
         </View>
       </ScrollView>

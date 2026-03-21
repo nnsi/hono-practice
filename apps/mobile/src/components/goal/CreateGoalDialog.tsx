@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -23,6 +25,7 @@ export function CreateGoalDialog({
   onClose,
   onCreate,
 }: CreateGoalDialogProps) {
+  const iconBlobMap = useIconBlobMap();
   const [debtCapEnabled, setDebtCapEnabled] = useState(false);
   const [debtCapValue, setDebtCapValue] = useState("");
 
@@ -110,7 +113,15 @@ export function CreateGoalDialog({
                       : "border-gray-200 bg-white"
                   }`}
                 >
-                  <Text className="text-xl">{a.emoji}</Text>
+                  <ActivityIcon
+                    iconType={a.iconType}
+                    emoji={a.emoji || "\u{1f4dd}"}
+                    iconBlob={iconBlobMap.get(a.id)}
+                    iconUrl={a.iconUrl}
+                    iconThumbnailUrl={a.iconThumbnailUrl}
+                    size={28}
+                    fontSize="text-xl"
+                  />
                   <Text
                     className="text-[10px] mt-1 text-center"
                     numberOfLines={1}

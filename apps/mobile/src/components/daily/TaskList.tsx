@@ -1,10 +1,6 @@
-import {
-  ActivityIndicator,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+
+import { ActivityIcon } from "../common/ActivityIcon";
 
 export type Task = {
   id: string;
@@ -25,16 +21,23 @@ type ActivityInfo = {
   iconThumbnailUrl?: string | null;
 };
 
+type IconBlob = {
+  base64: string;
+  mimeType: string;
+};
+
 export function TaskList({
   tasks,
   isLoading,
   onToggle,
   activitiesMap,
+  iconBlobMap,
 }: {
   tasks: Task[];
   isLoading: boolean;
   onToggle: (task: Task) => void;
   activitiesMap?: Map<string, ActivityInfo>;
+  iconBlobMap?: Map<string, IconBlob>;
 }) {
   if (isLoading) {
     return (
@@ -83,20 +86,19 @@ export function TaskList({
             </TouchableOpacity>
             {activity && (
               <View className="shrink-0">
-                {activity.iconType === "upload" &&
-                (activity.iconThumbnailUrl || activity.iconUrl) ? (
-                  <Image
-                    source={{
-                      uri: activity.iconThumbnailUrl || activity.iconUrl || "",
-                    }}
-                    style={{ width: 28, height: 28, borderRadius: 6 }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text className="text-xl">
-                    {activity.emoji || "\u{1F4DD}"}
-                  </Text>
-                )}
+                <ActivityIcon
+                  iconType={activity.iconType as "emoji" | "upload" | undefined}
+                  emoji={activity.emoji || "\u{1F4DD}"}
+                  iconBlob={
+                    task.activityId
+                      ? iconBlobMap?.get(task.activityId)
+                      : undefined
+                  }
+                  iconUrl={activity.iconUrl}
+                  iconThumbnailUrl={activity.iconThumbnailUrl}
+                  size={28}
+                  fontSize="text-xl"
+                />
               </View>
             )}
             <View className="flex-1 min-w-0">

@@ -12,6 +12,8 @@ import {
 } from "react-native";
 
 import { useActivities } from "../../hooks/useActivities";
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { LogFormBody } from "../common/LogFormBody";
 import { OverlayPortal } from "../common/overlayPortal";
 
@@ -19,6 +21,9 @@ type Activity = {
   id: string;
   name: string;
   emoji: string;
+  iconType?: "emoji" | "upload" | "generate";
+  iconUrl?: string | null;
+  iconThumbnailUrl?: string | null;
   quantityUnit: string;
   recordingMode: string;
   recordingModeConfig?: string | null;
@@ -36,6 +41,7 @@ export function CreateLogDialog({
   date,
 }: CreateLogDialogProps) {
   const { activities } = useActivities();
+  const iconBlobMap = useIconBlobMap();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
   );
@@ -92,8 +98,16 @@ export function CreateLogDialog({
                   >
                     <ChevronLeft size={20} color="#374151" />
                   </TouchableOpacity>
+                  <ActivityIcon
+                    iconType={selectedActivity.iconType}
+                    emoji={selectedActivity.emoji || "\u{1f4dd}"}
+                    iconBlob={iconBlobMap.get(selectedActivity.id)}
+                    iconUrl={selectedActivity.iconUrl}
+                    iconThumbnailUrl={selectedActivity.iconThumbnailUrl}
+                    size={24}
+                    fontSize="text-xl"
+                  />
                   <Text className="text-lg font-bold text-gray-900">
-                    {selectedActivity.emoji || "\u{1f4dd}"}{" "}
                     {selectedActivity.name}
                   </Text>
                 </View>
@@ -172,9 +186,14 @@ export function CreateLogDialog({
                       activeOpacity={0.7}
                     >
                       <View className="w-10 h-10 items-center justify-center shrink-0">
-                        <Text className="text-2xl">
-                          {activity.emoji || "\u{1f4dd}"}
-                        </Text>
+                        <ActivityIcon
+                          iconType={activity.iconType}
+                          emoji={activity.emoji || "\u{1f4dd}"}
+                          iconBlob={iconBlobMap.get(activity.id)}
+                          iconUrl={activity.iconUrl}
+                          iconThumbnailUrl={activity.iconThumbnailUrl}
+                          size={32}
+                        />
                       </View>
                       <View className="flex-1 min-w-0">
                         <Text className="text-base font-medium text-gray-800">

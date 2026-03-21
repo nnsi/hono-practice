@@ -19,9 +19,15 @@ type GoalForCard = {
   debtCap?: number | null;
 };
 
+type IconBlob = {
+  base64: string;
+  mimeType: string;
+};
+
 export function GoalCard({
   goal,
   activity,
+  iconBlob,
   isExpanded,
   isPast = false,
   onToggleExpand,
@@ -31,6 +37,7 @@ export function GoalCard({
 }: {
   goal: GoalForCard;
   activity: ActivityRecord | null;
+  iconBlob?: IconBlob;
   isExpanded: boolean;
   isPast?: boolean;
   onToggleExpand: () => void;
@@ -88,6 +95,7 @@ export function GoalCard({
       <GoalCardHeader
         goal={goal}
         activity={activity}
+        iconBlob={iconBlob}
         isExpanded={isExpanded}
         isPast={isPast}
         localBalance={localBalance}

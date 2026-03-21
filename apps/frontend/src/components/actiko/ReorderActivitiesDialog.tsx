@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { activityRepository } from "../../db/activityRepository";
 import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { renderActivityIcon } from "../goal/activityHelpers";
 
 type ReorderActivitiesDialogProps = {
   activities: DexieActivity[];
@@ -58,7 +59,7 @@ export function ReorderActivitiesDialog({
               className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100"
             >
               <span className="text-xl shrink-0">
-                {activity.emoji || "\ud83d\udcdd"}
+                {renderActivityIcon(activity, "w-6 h-6")}
               </span>
               <span className="text-sm font-medium text-gray-800 flex-1 truncate">
                 {activity.name}
