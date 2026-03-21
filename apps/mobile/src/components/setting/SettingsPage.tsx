@@ -26,7 +26,6 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
-import { GoogleMark } from "../common/GoogleMark";
 import { clearLocalData } from "../../sync/initialSync";
 import {
   apiAppleLink,
@@ -38,6 +37,7 @@ import {
   getApiUrl,
 } from "../../utils/apiClient";
 import { setOAuthPending } from "../../utils/oauthPending";
+import { GoogleMark } from "../common/GoogleMark";
 import { LegalModal } from "../common/LegalModal";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";

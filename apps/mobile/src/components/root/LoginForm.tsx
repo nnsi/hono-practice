@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
