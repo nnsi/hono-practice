@@ -15,6 +15,7 @@ import {
 
 import { type DexieActivityKind, db } from "../../db/schema";
 import { useActivities } from "../../hooks/useActivities";
+import { renderActivityIcon } from "../goal/activityHelpers";
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -99,8 +100,9 @@ export function TaskCard({
           {task.title}
         </div>
         {linkedActivity && (
-          <span className="text-xs text-gray-500">
-            {linkedActivity.emoji} {linkedActivity.name}
+          <span className="text-xs text-gray-500 inline-flex items-center gap-1">
+            {renderActivityIcon(linkedActivity, "w-3.5 h-3.5")}{" "}
+            {linkedActivity.name}
             {linkedKind && ` / ${linkedKind.name}`}
           </span>
         )}

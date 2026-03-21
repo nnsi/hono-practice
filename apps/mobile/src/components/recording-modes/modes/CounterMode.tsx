@@ -110,6 +110,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
         </Text>
         <TextInput
           ref={quantityRef}
+          style={{ includeFontPadding: false }}
           className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
           value={vm.quantity}
           onChangeText={vm.setQuantity}

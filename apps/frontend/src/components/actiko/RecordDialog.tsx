@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import type { DexieActivity } from "../../db/schema";
 import { LogFormBody } from "../common/LogFormBody";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { renderActivityIcon } from "../goal/activityHelpers";
 
 export function RecordDialog({
   activity,
@@ -18,7 +19,7 @@ export function RecordDialog({
       <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-modal">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <span className="text-2xl">{activity.emoji || "📝"}</span>
+            {renderActivityIcon(activity)}
             {activity.name}
           </h2>
           <button

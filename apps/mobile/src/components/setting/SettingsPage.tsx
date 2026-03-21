@@ -35,7 +35,9 @@ import {
   clearToken,
   customFetch,
   getApiUrl,
+  getRefreshToken,
 } from "../../utils/apiClient";
+import { reportError } from "../../utils/errorReporter";
 import { setOAuthPending } from "../../utils/oauthPending";
 import { GoogleMark } from "../common/GoogleMark";
 import { LegalModal } from "../common/LegalModal";
@@ -239,6 +241,17 @@ export function SettingsPage() {
   const handleDeleteAccount = async () => {
     setDeleteError("");
     setIsDeleting(true);
+
+    // DEBUG: SecureStore の refresh token を確認
+    const rt = await getRefreshToken();
+    const selector = rt?.split(".")[0] ?? "(null)";
+    const debugMsg = `[DEBUG] SecureStore refreshToken selector: ${selector}, full length: ${rt?.length ?? 0}`;
+    console.log(debugMsg);
+    reportError({
+      errorType: "unhandled_error",
+      message: debugMsg,
+    });
+
     try {
       const res = await customFetch(`${API_URL}/user/me`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
@@ -250,7 +263,7 @@ export function SettingsPage() {
       await logout();
     } catch {
       setDeleteError(
-        "アカウント削除に失敗しました。ネットワーク接続を確認してください。",
+        `アカウント削除に失敗しました。[debug] selector: ${selector}`,
       );
       setIsDeleting(false);
     }

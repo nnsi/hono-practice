@@ -19,6 +19,7 @@ export function useNavigationSync(
       syncAll: () => syncEngine.syncAll(),
       pullSync: () => performInitialSync(uid),
       isOnline: () => navigator.onLine,
+      mutex: syncEngine.mutex,
       onError: (error) => {
         console.warn(
           "[nav-sync] error:",

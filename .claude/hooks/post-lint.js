@@ -52,7 +52,7 @@ async function main() {
 
     // 0b. File length > 200 lines (test files excluded)
     if (!isTestFile && lines.length > 200) {
-      warnings.push(`⚠️ ${lines.length}行: 1ファイル200行以内を目標にしてください。分割を検討してください。`);
+      warnings.push(`⚠️ ${lines.length}行: 1ファイル200行以内を目標にしてください。分割を検討してください。変更前から超えていた場合でも、編集したタイミングで分割すること。`);
     }
 
     // 0c. confirm() / alert() in frontend (tsx files)

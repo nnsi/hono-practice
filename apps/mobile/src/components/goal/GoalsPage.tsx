@@ -1,8 +1,15 @@
 import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Plus } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
@@ -15,6 +22,7 @@ export function GoalsPage() {
     activeTab,
     setActiveTab,
     activities,
+    dataReady,
     activityMap,
     currentGoals,
     pastGoals,
@@ -31,7 +39,17 @@ export function GoalsPage() {
     handleToggleExpand,
   } = useGoalsPage();
 
+  const iconBlobMap = useIconBlobMap();
+
   const insets = useSafeAreaInsets();
+
+  if (!dataReady) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
@@ -107,6 +125,7 @@ export function GoalsPage() {
                   key={goal.id}
                   goal={goal}
                   activity={act ?? null}
+                  iconBlob={iconBlobMap.get(goal.activityId)}
                   isExpanded={expandedGoalId === goal.id}
                   onToggleExpand={() => handleToggleExpand(goal.id)}
                   onEditStart={() => setEditingGoalId(goal.id)}
@@ -142,6 +161,7 @@ export function GoalsPage() {
                 key={goal.id}
                 goal={goal}
                 activity={activityMap.get(goal.activityId) ?? null}
+                iconBlob={iconBlobMap.get(goal.activityId)}
                 isExpanded={expandedGoalId === goal.id}
                 isPast
                 onToggleExpand={() => handleToggleExpand(goal.id)}

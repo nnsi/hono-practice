@@ -21,6 +21,7 @@ export function useNavigationSync(
       syncAll: () => syncEngine.syncAll(),
       pullSync: () => performInitialSync(uid),
       isOnline: () => rnNetworkAdapter.isOnline(),
+      mutex: syncEngine.mutex,
       onError: (error) => {
         reportError({
           errorType: "unhandled_error",

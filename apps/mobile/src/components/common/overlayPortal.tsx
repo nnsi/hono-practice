@@ -1,25 +1,43 @@
-import { type ReactNode, useEffect, useLayoutEffect, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useState,
+} from "react";
 
 import { StyleSheet, View } from "react-native";
 
-// Module-level ref to OverlayHost's setState.
-// Only one overlay is shown at a time (single-slot portal).
-let _setContent: ((content: ReactNode | null) => void) | null = null;
+type OverlayLayer = { id: string; content: ReactNode };
+
+let _setLayers:
+  | ((fn: (prev: OverlayLayer[]) => OverlayLayer[]) => void)
+  | null = null;
 
 /**
  * Renders children into the OverlayHost at the root layout level.
- * Mount this conditionally — unmounting clears the overlay.
+ * Multiple OverlayPortals stack on top of each other (FIFO order).
  */
 export function OverlayPortal({ children }: { children: ReactNode }) {
-  // Sync content to host before paint (avoids 1-frame stale content)
+  const id = useId();
+
   useLayoutEffect(() => {
-    _setContent?.(children);
+    _setLayers?.((prev) => {
+      const idx = prev.findIndex((l) => l.id === id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { id, content: children };
+        return next;
+      }
+      return [...prev, { id, content: children }];
+    });
   });
 
-  // Clear overlay on unmount
   useEffect(() => {
-    return () => _setContent?.(null);
-  }, []);
+    return () => {
+      _setLayers?.((prev) => prev.filter((l) => l.id !== id));
+    };
+  }, [id]);
 
   return null;
 }
@@ -28,18 +46,26 @@ export function OverlayPortal({ children }: { children: ReactNode }) {
  * Place once in the root layout. Renders overlay content above everything.
  */
 export function OverlayHost() {
-  const [content, setContent] = useState<ReactNode | null>(null);
+  const [layers, setLayers] = useState<OverlayLayer[]>([]);
 
   useEffect(() => {
-    _setContent = setContent;
+    _setLayers = setLayers;
     return () => {
-      _setContent = null;
+      _setLayers = null;
     };
   }, []);
 
-  if (!content) return null;
+  if (layers.length === 0) return null;
 
-  return <View style={[StyleSheet.absoluteFill, styles.host]}>{content}</View>;
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.host]}>
+      {layers.map((layer) => (
+        <View key={layer.id} style={StyleSheet.absoluteFill}>
+          {layer.content}
+        </View>
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

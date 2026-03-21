@@ -3,6 +3,7 @@ import { Trash2, X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { renderActivityIcon } from "../goal/activityHelpers";
 import { useEditLogDialog } from "./useEditLogDialog";
 
 export function EditLogDialog({
@@ -34,7 +35,7 @@ export function EditLogDialog({
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <span className="text-2xl">{activity?.emoji || "📝"}</span>
+            {renderActivityIcon(activity)}
             {activity?.name ?? "不明"}
           </h2>
           <button

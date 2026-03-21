@@ -5,5 +5,5 @@ export function useActivities() {
   const activities = useLiveQuery("activities", () =>
     activityRepository.getAllActivities(),
   );
-  return { activities: activities ?? [] };
+  return { activities: activities ?? [], isReady: activities !== undefined };
 }

@@ -1,7 +1,10 @@
+import type { SyncMutex } from "./createSyncMutex";
+
 type NavigationSyncDeps = {
   syncAll: () => Promise<void>;
   pullSync: () => Promise<void>;
   isOnline: () => boolean;
+  mutex: SyncMutex;
   onError?: (error: unknown) => void;
 };
 
@@ -16,9 +19,19 @@ export function createNavigationSync(deps: NavigationSyncDeps) {
     if (!deps.isOnline()) return;
     lastSyncAt = now;
 
-    Promise.all([deps.syncAll(), deps.pullSync()]).catch((err) => {
-      console.error("[nav-sync]", err);
-      deps.onError?.(err);
-    });
+    (async () => {
+      try {
+        await deps.mutex.run(() => deps.pullSync());
+      } catch (err) {
+        console.error("[nav-sync:pull]", err);
+        deps.onError?.(err);
+      }
+      try {
+        await deps.syncAll();
+      } catch (err) {
+        console.error("[nav-sync:push]", err);
+        deps.onError?.(err);
+      }
+    })();
   };
 }

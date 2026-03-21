@@ -17,7 +17,7 @@ import { OverlayPortal } from "./overlayPortal";
 type ModalOverlayProps = {
   visible: boolean;
   onClose: () => void;
-  title: string;
+  title: string | React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 };
@@ -68,7 +68,15 @@ export function ModalOverlay({
               }}
             >
               <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
-                <Text className="text-lg font-bold text-gray-900">{title}</Text>
+                {typeof title === "string" ? (
+                  <Text className="text-lg font-bold text-gray-900">
+                    {title}
+                  </Text>
+                ) : (
+                  <View className="flex-row items-center gap-2 flex-1 min-w-0">
+                    {title}
+                  </View>
+                )}
                 <TouchableOpacity
                   onPress={onClose}
                   className="p-1.5 rounded-lg"

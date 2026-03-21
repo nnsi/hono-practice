@@ -4,7 +4,9 @@ import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
 import { ArrowDown, ArrowUp } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
+import { ActivityIcon } from "../common/ActivityIcon";
 import { ModalOverlay } from "../common/ModalOverlay";
 
 type ReorderActivitiesDialogProps = {
@@ -18,6 +20,7 @@ export function ReorderActivitiesDialog({
   onClose,
   activities,
 }: ReorderActivitiesDialogProps) {
+  const iconBlobMap = useIconBlobMap();
   const [items, setItems] = useState(activities);
   const [saving, setSaving] = useState(false);
 
@@ -53,7 +56,15 @@ export function ReorderActivitiesDialog({
             key={activity.id}
             className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100"
           >
-            <Text className="text-xl">{activity.emoji || "\ud83d\udcdd"}</Text>
+            <ActivityIcon
+              iconType={activity.iconType}
+              emoji={activity.emoji || "\ud83d\udcdd"}
+              iconBlob={iconBlobMap.get(activity.id)}
+              iconUrl={activity.iconUrl}
+              iconThumbnailUrl={activity.iconThumbnailUrl}
+              size={28}
+              fontSize="text-xl"
+            />
             <Text className="text-sm font-medium text-gray-800 flex-1">
               {activity.name}
             </Text>

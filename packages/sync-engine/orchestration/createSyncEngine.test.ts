@@ -2,6 +2,7 @@ import type { NetworkAdapter } from "@packages/platform";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSyncEngine } from "./createSyncEngine";
+import { createSyncMutex } from "./createSyncMutex";
 
 function createMockFns() {
   return {
@@ -233,6 +234,92 @@ describe("createSyncEngine", () => {
       expect(fns.syncActivityIconDeletions).not.toHaveBeenCalled();
 
       cleanup();
+    });
+  });
+
+  describe("shared mutex", () => {
+    it("exposes mutex on engine", () => {
+      const fns = createMockFns();
+      const engine = createSyncEngine(fns, createMockNetwork());
+      expect(engine.mutex).toBeDefined();
+      expect(typeof engine.mutex.isBusy).toBe("function");
+      expect(typeof engine.mutex.run).toBe("function");
+    });
+
+    it("uses the injected mutex", async () => {
+      const fns = createMockFns();
+      const mutex = createSyncMutex();
+      const engine = createSyncEngine(
+        fns,
+        createMockNetwork(),
+        undefined,
+        mutex,
+      );
+      expect(engine.mutex).toBe(mutex);
+    });
+
+    it("mutex.run is skipped while syncAll holds the lock", async () => {
+      const fns = createMockFns();
+      const mutex = createSyncMutex();
+      let resolveSyncAll: () => void;
+      const syncAllBlocks = new Promise<void>((r) => {
+        resolveSyncAll = r;
+      });
+      fns.syncActivityIconDeletions.mockImplementation(() => syncAllBlocks);
+
+      const engine = createSyncEngine(
+        fns,
+        createMockNetwork(),
+        undefined,
+        mutex,
+      );
+
+      // Start syncAll — it will block on the first step
+      const syncAllPromise = engine.syncAll();
+
+      // Attempt to run something else on the same mutex — should be skipped
+      const pullRan = vi.fn();
+      const result = await mutex.run(async () => {
+        pullRan();
+      });
+
+      expect(result).toBeUndefined();
+      expect(pullRan).not.toHaveBeenCalled();
+
+      // Clean up
+      resolveSyncAll!();
+      await syncAllPromise;
+    });
+
+    it("syncAll is skipped while mutex is held externally", async () => {
+      const fns = createMockFns();
+      const mutex = createSyncMutex();
+      let resolveExternal: () => void;
+      const externalBlocks = new Promise<void>((r) => {
+        resolveExternal = r;
+      });
+
+      const engine = createSyncEngine(
+        fns,
+        createMockNetwork(),
+        undefined,
+        mutex,
+      );
+
+      // Hold the mutex externally (simulating pullSync)
+      const externalPromise = mutex.run(() => externalBlocks);
+
+      // syncAll should be skipped
+      await engine.syncAll();
+      expect(fns.syncActivityIconDeletions).not.toHaveBeenCalled();
+
+      // Release external lock
+      resolveExternal!();
+      await externalPromise;
+
+      // Now syncAll should work
+      await engine.syncAll();
+      expect(fns.syncActivityIconDeletions).toHaveBeenCalledTimes(1);
     });
   });
 });

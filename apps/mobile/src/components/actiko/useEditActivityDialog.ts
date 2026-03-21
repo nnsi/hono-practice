@@ -2,12 +2,10 @@ import { useEffect, useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
-import * as DocumentPicker from "expo-document-picker";
-import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
-import * as ImageManipulator from "expo-image-manipulator";
 
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
+import { useActivityIconPicker } from "./useActivityIconPicker";
 
 type Activity = {
   id: string;
@@ -38,10 +36,6 @@ export function useEditActivityDialog(
   const [showCombinedStats, setShowCombinedStats] = useState(false);
   const [kindEntries, setKindEntries] = useState<KindEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [currentIconType, setCurrentIconType] = useState<
-    "emoji" | "upload" | "generate"
-  >("emoji");
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
     null,
@@ -49,14 +43,14 @@ export function useEditActivityDialog(
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState("");
 
-  // sync state when activity changes
+  const iconPicker = useActivityIconPicker(activity);
+
   useEffect(() => {
     if (activity) {
       setName(activity.name);
       setEmoji(activity.emoji);
       setQuantityUnit(activity.quantityUnit);
       setShowCombinedStats(activity.showCombinedStats);
-      setCurrentIconType(activity.iconType);
       setRecordingMode(activity.recordingMode ?? "manual");
       setRecordingModeConfig(activity.recordingModeConfig ?? null);
       setShowDeleteConfirm(false);
@@ -64,7 +58,6 @@ export function useEditActivityDialog(
     }
   }, [activity]);
 
-  // sync kinds when loaded
   useEffect(() => {
     if (existingKinds.length > 0) {
       setKindEntries(
@@ -76,56 +69,6 @@ export function useEditActivityDialog(
       );
     }
   }, [existingKinds]);
-
-  // handlers
-  const handlePickImage = async () => {
-    if (!activity) return;
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["image/png", "image/jpeg", "image/webp"],
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || result.assets.length === 0) return;
-
-      setIsUploadingImage(true);
-      const asset = result.assets[0];
-
-      const manipulated = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 512, height: 512 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.PNG },
-      );
-
-      const base64 = await readAsStringAsync(manipulated.uri, {
-        encoding: EncodingType.Base64,
-      });
-
-      await activityRepository.saveActivityIconBlob(
-        activity.id,
-        base64,
-        "image/png",
-      );
-      await activityRepository.updateActivity(activity.id, {
-        iconType: "upload",
-      });
-      setCurrentIconType("upload");
-    } catch {
-      setError("画像の選択に失敗しました");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const handleClearImage = async () => {
-    if (!activity) return;
-    try {
-      await activityRepository.clearActivityIcon(activity.id);
-      setCurrentIconType("emoji");
-    } catch {
-      setError("画像の削除に失敗しました");
-    }
-  };
 
   const handleSave = async () => {
     if (!activity) return;
@@ -192,8 +135,13 @@ export function useEditActivityDialog(
     );
   };
 
+  const updateKindColor = (index: number, color: string) => {
+    setKindEntries((prev) =>
+      prev.map((k, i) => (i === index ? { ...k, color } : k)),
+    );
+  };
+
   return {
-    // form state
     name,
     setName,
     emoji,
@@ -208,19 +156,16 @@ export function useEditActivityDialog(
     setRecordingModeConfig,
     kindEntries,
     isSubmitting,
-    isUploadingImage,
-    currentIconType,
     showDeleteConfirm,
     setShowDeleteConfirm,
     error,
     setError,
-    // handlers
-    handlePickImage,
-    handleClearImage,
+    ...iconPicker,
     handleSave,
     handleDelete,
     addKind,
     removeKind,
     updateKindName,
+    updateKindColor,
   };
 }
