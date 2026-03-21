@@ -71,8 +71,6 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       return c.json({ token, refreshToken });
     })
     .post("/token", async (c) => {
-      // TODO: テスト用 - 強制ログアウト確認後に削除
-      return c.json({ message: "token revoked" }, 403);
       const authHeader = c.req.header("Authorization");
       const refreshTokenValue = authHeader?.startsWith("Bearer ")
         ? authHeader.substring(7)

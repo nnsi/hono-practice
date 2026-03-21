@@ -91,7 +91,9 @@ export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
     },
 
     async getPendingSyncTasks() {
-      return adapter.getAll((t) => t._syncStatus === "pending");
+      return adapter.getAll(
+        (t) => t._syncStatus === "pending" || t._syncStatus === "failed",
+      );
     },
 
     async markTasksSynced(ids: string[]) {

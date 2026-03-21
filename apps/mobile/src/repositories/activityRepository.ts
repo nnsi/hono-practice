@@ -322,7 +322,7 @@ const adapter: ActivityDbAdapter = {
   async getPendingSyncActivities() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM activities WHERE sync_status = 'pending'",
+      "SELECT * FROM activities WHERE sync_status IN ('pending', 'failed')",
     );
     return rows.map(mapActivityRow);
   },
@@ -330,7 +330,7 @@ const adapter: ActivityDbAdapter = {
   async getPendingSyncActivityKinds() {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>(
-      "SELECT * FROM activity_kinds WHERE sync_status = 'pending'",
+      "SELECT * FROM activity_kinds WHERE sync_status IN ('pending', 'failed')",
     );
     return rows.map(mapActivityKindRow);
   },

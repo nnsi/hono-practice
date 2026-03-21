@@ -218,8 +218,8 @@ describe("goalFreezePeriodRepositoryLogic", () => {
 
       const result = await repo.getPendingSyncFreezePeriods();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("fp1");
+      expect(result).toHaveLength(2);
+      expect(result.map((p) => p.id).sort()).toEqual(["fp1", "fp3"]);
     });
   });
 
