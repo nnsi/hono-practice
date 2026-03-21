@@ -10,5 +10,5 @@ export function useActivities() {
       .toArray(),
   );
 
-  return { activities: activities ?? [] };
+  return { activities: activities ?? [], isReady: activities !== undefined };
 }

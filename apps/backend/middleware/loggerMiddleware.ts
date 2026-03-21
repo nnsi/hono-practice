@@ -79,6 +79,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     logger.info("Request received");
 
     const start = Date.now();
+    let waeWritten = false;
 
     try {
       await next();
@@ -123,6 +124,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
               }),
             ),
           );
+          waeWritten = true;
         }
       } catch {
         // WAE書き込み失敗はリクエスト処理に影響させない
@@ -136,14 +138,15 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
     const summary = tracer.getSummary();
 
-    // 400エラー時はレスポンスbodyからエラー詳細を抽出（zValidatorのバリデーションエラー等）
+    // エラーレスポンス時はレスポンスbodyからエラー詳細を抽出（zValidatorのバリデーションエラー、500エラー等）
     let errorMsg = "";
-    if (status === 400) {
+    if (status >= 400) {
       try {
         const cloned = c.res.clone();
         const body = await cloned.json();
-        if (body?.error) {
-          errorMsg = JSON.stringify(body.error).slice(0, 500);
+        const msg = body?.error ?? body?.message;
+        if (msg) {
+          errorMsg = JSON.stringify(msg).slice(0, 500);
         }
       } catch {
         // JSON解析失敗は無視
@@ -169,10 +172,11 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
     });
 
     // WAEにメトリクスを書き込み（404はボットトラフィックが大半なので除外）
+    // catchブロックで書き込み済みの場合は重複を防ぐためスキップ
     // app.request()経由のネストリクエストではWAE書き込みが失敗する可能性があるため、try-catchで保護
     try {
       const wae = c.env.WAE_LOGS;
-      if (wae && status !== 404) {
+      if (wae && status !== 404 && !waeWritten) {
         c.executionCtx.waitUntil(
           Promise.resolve(
             writeToWAE(wae, {

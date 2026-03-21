@@ -1,5 +1,10 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { activities, activityLogs } from "@infra/drizzle/schema";
+import {
+  activities,
+  activityKinds,
+  activityLogs,
+  tasks,
+} from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityLogRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
@@ -15,6 +20,8 @@ export type ActivityLogSyncRepository = {
     userId: UserId,
     activityIds: string[],
   ) => Promise<string[]>;
+  getExistingActivityKindIds: (kindIds: string[]) => Promise<string[]>;
+  getExistingTaskIds: (userId: UserId, taskIds: string[]) => Promise<string[]>;
   upsertActivityLogs: (
     userId: UserId,
     validLogs: UpsertActivityLogRequest[],
@@ -31,6 +38,8 @@ export function newActivityLogSyncRepository(
   return {
     getActivityLogsByUserId: getActivityLogsByUserId(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
+    getExistingActivityKindIds: getExistingActivityKindIds(db),
+    getExistingTaskIds: getExistingTaskIds(db),
     upsertActivityLogs: upsertActivityLogs(db),
     getActivityLogsByIds: getActivityLogsByIds(db),
   };
@@ -62,6 +71,32 @@ function getOwnedActivityIds(db: QueryExecutor) {
       );
 
     return rows.map((a) => a.id);
+  };
+}
+
+function getExistingActivityKindIds(db: QueryExecutor) {
+  return async (kindIds: string[]): Promise<string[]> => {
+    if (kindIds.length === 0) return [];
+
+    const rows = await db
+      .select({ id: activityKinds.id })
+      .from(activityKinds)
+      .where(inArray(activityKinds.id, kindIds));
+
+    return rows.map((r) => r.id);
+  };
+}
+
+function getExistingTaskIds(db: QueryExecutor) {
+  return async (userId: UserId, taskIds: string[]): Promise<string[]> => {
+    if (taskIds.length === 0) return [];
+
+    const rows = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)));
+
+    return rows.map((r) => r.id);
   };
 }
 

@@ -14,8 +14,8 @@ import type {
 
 type UseGoalsPageDeps<TActivity extends ActivityBase> = {
   react: Pick<ReactHooks, "useState" | "useMemo">;
-  useActivities: () => { activities: TActivity[] };
-  useGoals: () => { goals: Goal[] };
+  useActivities: () => { activities: TActivity[]; isReady: boolean };
+  useGoals: () => { goals: Goal[]; isReady: boolean };
   goalRepository: {
     createGoal: (payload: CreateGoalPayload) => Promise<unknown>;
     updateGoal: (id: string, payload: UpdateGoalPayload) => Promise<unknown>;
@@ -46,8 +46,8 @@ export function createUseGoalsPage<TActivity extends ActivityBase>(
     );
 
     // data
-    const { activities } = useActivities();
-    const { goals } = useGoals();
+    const { activities, isReady: activitiesReady } = useActivities();
+    const { goals, isReady: goalsReady } = useGoals();
 
     // computed
     const today = dayjs().format("YYYY-MM-DD");
@@ -103,11 +103,14 @@ export function createUseGoalsPage<TActivity extends ActivityBase>(
       setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
     };
 
+    const dataReady = activitiesReady && goalsReady;
+
     return {
       activeTab,
       setActiveTab,
       activities,
       goals,
+      dataReady,
       activityMap,
       currentGoals,
       pastGoals,

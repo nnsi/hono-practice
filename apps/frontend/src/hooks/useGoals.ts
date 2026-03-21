@@ -7,5 +7,5 @@ export function useGoals() {
     db.goals.filter((g) => !g.deletedAt).toArray(),
   );
 
-  return { goals: goals ?? [] };
+  return { goals: goals ?? [], isReady: goals !== undefined };
 }

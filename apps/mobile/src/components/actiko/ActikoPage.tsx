@@ -6,6 +6,7 @@ import {
   Plus,
 } from "lucide-react-native";
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   Text,
@@ -32,6 +33,7 @@ export function ActikoPage() {
     goToNext,
     isToday,
     activities,
+    activitiesReady,
     iconBlobMap,
     selectedActivity,
     setSelectedActivity,
@@ -123,7 +125,11 @@ export function ActikoPage() {
       />
 
       {/* Activity grid */}
-      {activities.length === 0 ? (
+      {!activitiesReady ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : activities.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-5xl mb-4">🎯</Text>
           <Text className="text-lg font-medium text-gray-600 text-center">

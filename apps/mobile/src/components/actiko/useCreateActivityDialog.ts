@@ -148,6 +148,10 @@ export function useCreateActivityDialog(
     );
   };
 
+  const updateKindColor = (id: number, color: string) => {
+    setKinds((prev) => prev.map((k) => (k.id === id ? { ...k, color } : k)));
+  };
+
   return {
     // form state
     name,
@@ -177,5 +181,6 @@ export function useCreateActivityDialog(
     addKind,
     removeKind,
     updateKindName,
+    updateKindColor,
   };
 }

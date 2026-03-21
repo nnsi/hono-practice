@@ -1,10 +1,11 @@
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-import { ImageOff, ImagePlus } from "lucide-react-native";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { ActivityIconPicker } from "./ActivityIconPicker";
+import { KindColorPicker } from "./KindColorPicker";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
@@ -45,6 +46,7 @@ export function EditActivityDialog({
     isSubmitting,
     isUploadingImage,
     currentIconType,
+    uploadedBlob,
     showDeleteConfirm,
     setShowDeleteConfirm,
     error,
@@ -60,6 +62,7 @@ export function EditActivityDialog({
     addKind,
     removeKind,
     updateKindName,
+    updateKindColor,
   } = useEditActivityDialog(activity, onUpdated, onClose);
 
   if (!activity) return null;
@@ -105,33 +108,17 @@ export function EditActivityDialog({
       }
     >
       <View className="gap-4">
-        <EmojiPicker value={emoji} onChange={setEmoji} />
+        {currentIconType !== "upload" && (
+          <EmojiPicker value={emoji} onChange={setEmoji} />
+        )}
 
-        {/* Image upload section */}
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg border border-gray-300 ${
-              isUploadingImage ? "opacity-50" : ""
-            }`}
-            onPress={handlePickImage}
-            disabled={isUploadingImage}
-          >
-            <ImagePlus size={16} color="#6b7280" />
-            <Text className="ml-1.5 text-sm text-gray-700">
-              {isUploadingImage ? "処理中..." : "画像を選択"}
-            </Text>
-          </TouchableOpacity>
-
-          {currentIconType === "upload" ? (
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-2.5 rounded-lg border border-red-300"
-              onPress={handleClearImage}
-            >
-              <ImageOff size={16} color="#ef4444" />
-              <Text className="ml-1.5 text-sm text-red-500">画像を削除</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <ActivityIconPicker
+          iconType={currentIconType}
+          blob={uploadedBlob}
+          isProcessing={isUploadingImage}
+          onPickImage={handlePickImage}
+          onClearImage={handleClearImage}
+        />
 
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
@@ -172,7 +159,6 @@ export function EditActivityDialog({
           />
         </View>
 
-        {/* Kind management */}
         <View>
           <Text className="text-sm text-gray-500 mb-2">種類</Text>
           {kindEntries.map((kind, index) => (
@@ -186,9 +172,9 @@ export function EditActivityDialog({
                 onChangeText={(t) => updateKindName(index, t)}
                 placeholder="種類名"
               />
-              <View
-                className="w-8 h-8 rounded"
-                style={{ backgroundColor: kind.color }}
+              <KindColorPicker
+                color={kind.color}
+                onColorChange={(c) => updateKindColor(index, c)}
               />
               <TouchableOpacity
                 onPress={() => removeKind(index)}

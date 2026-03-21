@@ -126,6 +126,48 @@ describe("POST /users/v2/activity-logs/sync", () => {
     expect(json.syncedIds).toHaveLength(0);
   });
 
+  test("FK チェック - 存在しないactivityKindIdはskip", async () => {
+    const app = createApp();
+    const log = makeLog({
+      activityKindId: "99999999-9999-4999-9999-999999999999",
+    });
+
+    const res = await postSync(app, { logs: [log] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.skippedIds).toContain(log.id);
+    expect(json.syncedIds).toHaveLength(0);
+  });
+
+  test("FK チェック - 存在しないtaskIdはskip", async () => {
+    const app = createApp();
+    const log = makeLog({
+      taskId: "99999999-9999-4999-9999-999999999999",
+    });
+
+    const res = await postSync(app, { logs: [log] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.skippedIds).toContain(log.id);
+    expect(json.syncedIds).toHaveLength(0);
+  });
+
+  test("FK チェック - 存在するactivityKindIdは正常同期", async () => {
+    const app = createApp();
+    const log = makeLog({
+      activityKindId: SEED_ACTIVITY_KIND_ID,
+    });
+
+    const res = await postSync(app, { logs: [log] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.syncedIds).toContain(log.id);
+    expect(json.skippedIds).toHaveLength(0);
+  });
+
   test("バリデーションエラー - 必須フィールド欠損", async () => {
     const app = createApp();
     const res = await postSync(app, {

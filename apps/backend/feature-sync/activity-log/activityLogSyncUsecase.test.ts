@@ -44,12 +44,17 @@ function makeUpsertRequest(overrides: Record<string, unknown> = {}) {
   };
 }
 
+const OWNED_KIND_ID = "00000000-0000-4000-8000-000000000020";
+const OWNED_TASK_ID = "00000000-0000-4000-8000-000000000030";
+
 function createMockRepo(
   overrides: Partial<ActivityLogSyncRepository> = {},
 ): ActivityLogSyncRepository {
   return {
     getActivityLogsByUserId: vi.fn().mockResolvedValue([]),
     getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
+    getExistingActivityKindIds: vi.fn().mockResolvedValue([OWNED_KIND_ID]),
+    getExistingTaskIds: vi.fn().mockResolvedValue([OWNED_TASK_ID]),
     upsertActivityLogs: vi.fn().mockResolvedValue([]),
     getActivityLogsByIds: vi.fn().mockResolvedValue([]),
     ...overrides,
@@ -140,6 +145,78 @@ describe("activityLogSyncUsecase", () => {
 
       expect(result.skippedIds).toContain(req.id);
       expect(repo.upsertActivityLogs).not.toHaveBeenCalled();
+    });
+
+    test("存在しないactivityKindId → skip", async () => {
+      const req = makeUpsertRequest({
+        activityKindId: "99999999-9999-4999-9999-999999999999",
+      });
+      const repo = createMockRepo({
+        getExistingActivityKindIds: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertActivityLogs).not.toHaveBeenCalled();
+    });
+
+    test("存在しないtaskId → skip", async () => {
+      const req = makeUpsertRequest({
+        taskId: "99999999-9999-4999-9999-999999999999",
+      });
+      const repo = createMockRepo({
+        getExistingTaskIds: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertActivityLogs).not.toHaveBeenCalled();
+    });
+
+    test("activityKindId=null → FK チェックをスキップして正常同期", async () => {
+      const req = makeUpsertRequest({ activityKindId: null });
+      const row = makeLogRow();
+      const repo = createMockRepo({
+        upsertActivityLogs: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
+    });
+
+    test("taskId=null → FK チェックをスキップして正常同期", async () => {
+      const req = makeUpsertRequest({ taskId: null });
+      const row = makeLogRow();
+      const repo = createMockRepo({
+        upsertActivityLogs: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
+    });
+
+    test("存在するactivityKindId → 正常同期", async () => {
+      const req = makeUpsertRequest({ activityKindId: OWNED_KIND_ID });
+      const row = makeLogRow({ activityKindId: OWNED_KIND_ID });
+      const repo = createMockRepo({
+        upsertActivityLogs: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
     });
 
     test("upsertで返らなかったID → serverWinsとして返す", async () => {

@@ -7,7 +7,7 @@ type UseActikoPageDeps<
   TIconBlob extends IconBlobBase,
 > = {
   react: Pick<ReactHooks, "useState" | "useMemo" | "useCallback">;
-  useActivities: () => { activities: TActivity[] };
+  useActivities: () => { activities: TActivity[]; isReady: boolean };
   useActivityLogsByDate: (date: string) => { logs: { activityId: string }[] };
   useIconBlobs: () => TIconBlob[] | undefined;
 };
@@ -34,7 +34,7 @@ export function createUseActikoPage<
     const [calendarOpen, setCalendarOpen] = useState(false);
     const [reorderOpen, setReorderOpen] = useState(false);
 
-    const { activities } = useActivities();
+    const { activities, isReady: activitiesReady } = useActivities();
     const { logs } = useActivityLogsByDate(date);
     const iconBlobs = useIconBlobs();
 
@@ -77,6 +77,7 @@ export function createUseActikoPage<
       goToNext,
       isToday,
       activities,
+      activitiesReady,
       iconBlobMap,
       selectedActivity,
       setSelectedActivity,

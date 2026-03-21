@@ -3,5 +3,5 @@ import { goalRepository } from "../repositories/goalRepository";
 
 export function useGoals() {
   const goals = useLiveQuery("goals", () => goalRepository.getAllGoals());
-  return { goals: goals ?? [] };
+  return { goals: goals ?? [], isReady: goals !== undefined };
 }

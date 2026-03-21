@@ -19,27 +19,15 @@ export function useOtaUpdate() {
       isEnabled: Updates.isEnabled,
     };
     console.log("[updates] state:", JSON.stringify(updatesState));
-    reportError({
-      errorType: "unhandled_error",
-      message: `[updates] state: ${JSON.stringify(updatesState)}`,
-    });
 
     if (__DEV__) return;
 
     Updates.checkForUpdateAsync()
       .then((result) => {
         console.log("[updates] checkForUpdate:", JSON.stringify(result));
-        reportError({
-          errorType: "unhandled_error",
-          message: `[updates] checkForUpdate: ${JSON.stringify(result)}`,
-        });
         if (result.isAvailable) {
           return Updates.fetchUpdateAsync().then(async (fetchResult) => {
             console.log("[updates] fetched:", JSON.stringify(fetchResult));
-            reportError({
-              errorType: "unhandled_error",
-              message: `[updates] fetched: ${JSON.stringify(fetchResult)}`,
-            });
             if (fetchResult.isNew) {
               setIsUpdating(true);
               await new Promise((r) => setTimeout(r, 1500));
