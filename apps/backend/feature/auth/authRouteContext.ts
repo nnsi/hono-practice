@@ -21,5 +21,6 @@ export function setRefreshCookie(
     secure: !isDev,
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     ...(isDev ? {} : { sameSite: "None" }),
+    path: "/",
   });
 }
