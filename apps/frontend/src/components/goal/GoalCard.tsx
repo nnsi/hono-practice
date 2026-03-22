@@ -28,6 +28,7 @@ export function GoalCard({
   onEditStart,
   onEditEnd,
   onUpdate,
+  onDeactivate,
   onDelete,
   onRecordOpen,
 }: {
@@ -40,6 +41,7 @@ export function GoalCard({
   onEditStart: () => void;
   onEditEnd: () => void;
   onUpdate: (payload: UpdateGoalPayload) => Promise<void>;
+  onDeactivate?: () => void;
   onDelete: () => Promise<void>;
   onRecordOpen?: () => void;
 }) {
@@ -105,6 +107,7 @@ export function GoalCard({
         onToggleExpand={onToggleExpand}
         onEditStart={onEditStart}
         onRecordOpen={onRecordOpen}
+        onDeactivate={onDeactivate}
         onDeleteConfirm={() => setShowDeleteConfirm(true)}
         onDeleteCancel={() => setShowDeleteConfirm(false)}
         onHandleDelete={handleDelete}

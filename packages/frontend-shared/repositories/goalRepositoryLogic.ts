@@ -76,7 +76,9 @@ export function newGoalRepository(adapter: GoalDbAdapter): GoalRepository {
     },
 
     async getPendingSyncGoals() {
-      return adapter.getAll((g) => g._syncStatus === "pending");
+      return adapter.getAll(
+        (g) => g._syncStatus === "pending" || g._syncStatus === "failed",
+      );
     },
 
     async markGoalsSynced(ids: string[]) {

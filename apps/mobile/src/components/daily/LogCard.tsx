@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
 
@@ -36,15 +36,22 @@ export function LogCard({
     activityKindId: string | null;
     quantity: number | null;
     memo: string;
+    _syncStatus?: "synced" | "pending" | "failed";
   };
   activity: Activity | null;
   kind: Kind | null;
   iconBlob?: IconBlob;
   onPress: () => void;
 }) {
+  const isPending = log._syncStatus === "pending";
+
   return (
     <TouchableOpacity
-      className="flex-row items-center gap-3 p-3.5 bg-white rounded-2xl border border-gray-200"
+      className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
+        isPending
+          ? "border border-amber-200 bg-amber-50"
+          : "bg-white border border-gray-200"
+      }`}
       style={{
         shadowColor: "#1c1917",
         shadowOffset: { width: 0, height: 1 },
@@ -85,6 +92,9 @@ export function LogCard({
               )}
               <Text className="text-xs text-gray-500">{kind.name}</Text>
             </View>
+          )}
+          {isPending && (
+            <ActivityIndicator size="small" color="#f97316" className="ml-1" />
           )}
         </View>
         <Text className="text-sm text-gray-500">

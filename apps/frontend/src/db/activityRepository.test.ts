@@ -377,31 +377,31 @@ describe("activityRepository", () => {
 
   // ========== Sync helpers ==========
   describe("getPendingSyncActivities", () => {
-    it("_syncStatus=pendingのActivitiesを返す", async () => {
+    it("_syncStatus=pending/failedのActivitiesを返す", async () => {
       const mockToArray = vi
         .fn()
         .mockResolvedValue([{ id: "a1", _syncStatus: "pending" }]);
-      const mockEquals = vi.fn().mockReturnValue({ toArray: mockToArray });
-      mockDb.activities.where.mockReturnValue({ equals: mockEquals });
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const result = await activityRepository.getPendingSyncActivities();
 
       expect(mockDb.activities.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockAnyOf).toHaveBeenCalledWith(["pending", "failed"]);
       expect(result).toEqual([{ id: "a1", _syncStatus: "pending" }]);
     });
   });
 
   describe("getPendingSyncActivityKinds", () => {
-    it("_syncStatus=pendingのActivityKindsを返す", async () => {
+    it("_syncStatus=pending/failedのActivityKindsを返す", async () => {
       const mockToArray = vi.fn().mockResolvedValue([{ id: "k1" }]);
-      const mockEquals = vi.fn().mockReturnValue({ toArray: mockToArray });
-      mockDb.activityKinds.where.mockReturnValue({ equals: mockEquals });
+      const mockAnyOf = vi.fn().mockReturnValue({ toArray: mockToArray });
+      mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
       const result = await activityRepository.getPendingSyncActivityKinds();
 
       expect(mockDb.activityKinds.where).toHaveBeenCalledWith("_syncStatus");
-      expect(mockEquals).toHaveBeenCalledWith("pending");
+      expect(mockAnyOf).toHaveBeenCalledWith(["pending", "failed"]);
       expect(result).toEqual([{ id: "k1" }]);
     });
   });

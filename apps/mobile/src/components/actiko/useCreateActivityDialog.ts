@@ -7,6 +7,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
 import { activityRepository } from "../../repositories/activityRepository";
+import { syncEngine } from "../../sync/syncEngine";
 
 type KindEntry = {
   id: number;
@@ -112,6 +113,7 @@ export function useCreateActivityDialog(
           pendingImage.mimeType,
         );
       }
+      syncEngine.syncAll();
       resetForm();
       onCreated();
       onClose();

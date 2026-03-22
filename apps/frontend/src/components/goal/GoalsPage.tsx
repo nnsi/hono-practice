@@ -126,6 +126,11 @@ export function GoalsPage() {
                 onEditStart={() => {}}
                 onEditEnd={() => {}}
                 onUpdate={() => Promise.resolve()}
+                onDeactivate={
+                  goal.isActive
+                    ? () => handleGoalUpdated(goal.id, { isActive: false })
+                    : undefined
+                }
                 onDelete={() => handleGoalDeleted(goal.id)}
               />
             ))}

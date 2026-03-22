@@ -323,8 +323,8 @@ describe("goalRepositoryLogic", () => {
 
       const result = await repo.getPendingSyncGoals();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("g1");
+      expect(result).toHaveLength(2);
+      expect(result.map((g) => g.id).sort()).toEqual(["g1", "g3"]);
     });
   });
 

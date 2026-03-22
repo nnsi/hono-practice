@@ -32,6 +32,7 @@ export function GoalCard({
   isPast = false,
   onToggleExpand,
   onEditStart,
+  onDeactivate,
   onDelete,
   onRecordOpen,
 }: {
@@ -42,6 +43,7 @@ export function GoalCard({
   isPast?: boolean;
   onToggleExpand: () => void;
   onEditStart?: () => void;
+  onDeactivate?: () => void;
   onDelete?: () => Promise<void>;
   onRecordOpen?: () => void;
 }) {
@@ -107,6 +109,7 @@ export function GoalCard({
         deleting={deleting}
         onToggleExpand={onToggleExpand}
         onEditStart={onEditStart}
+        onDeactivate={onDeactivate}
         onDelete={onDelete}
         onRecordOpen={onRecordOpen}
         onDeleteConfirm={() => setShowDeleteConfirm(true)}

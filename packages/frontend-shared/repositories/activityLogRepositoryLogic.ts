@@ -100,7 +100,9 @@ export function newActivityLogRepository(
     },
 
     async getPendingSyncActivityLogs() {
-      return adapter.getAll((l) => l._syncStatus === "pending");
+      return adapter.getAll(
+        (l) => l._syncStatus === "pending" || l._syncStatus === "failed",
+      );
     },
 
     async markActivityLogsSynced(ids: string[]) {

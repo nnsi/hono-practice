@@ -98,7 +98,9 @@ export function newGoalFreezePeriodRepository(
     },
 
     async getPendingSyncFreezePeriods() {
-      return adapter.getAll((p) => p._syncStatus === "pending");
+      return adapter.getAll(
+        (p) => p._syncStatus === "pending" || p._syncStatus === "failed",
+      );
     },
 
     async markFreezePeriodsSynced(ids: string[]) {

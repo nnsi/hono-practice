@@ -35,22 +35,64 @@ export function createSyncEngine(
 
     async syncAll(): Promise<void> {
       await mutex.run(async () => {
-        try {
-          // Icon deletions first (before activity sync overwrites server URLs)
-          await fns.syncActivityIconDeletions();
-          // Sync in dependency order: activities first, then others
-          await fns.syncActivities();
-          // Upload icons after activity sync (activity must exist on server)
-          await fns.syncActivityIcons();
-          await fns.syncActivityLogs();
-          await fns.syncGoals();
-          await fns.syncTasks();
-          // Freeze periods depend on goals existing on server
-          await fns.syncGoalFreezePeriods();
+        let succeeded = 0;
+        let total = 0;
+
+        const tryStep = async (
+          name: string,
+          fn: () => Promise<void>,
+        ): Promise<boolean> => {
+          total++;
+          try {
+            await fn();
+            succeeded++;
+            return true;
+          } catch (err) {
+            onSyncError?.(err, name);
+            return false;
+          }
+        };
+
+        // 1. Icon deletions (before activity sync overwrites server URLs)
+        await tryStep(
+          "syncActivityIconDeletions",
+          fns.syncActivityIconDeletions,
+        );
+
+        // 2. Activities
+        const activitiesOk = await tryStep(
+          "syncActivities",
+          fns.syncActivities,
+        );
+
+        // 3. Activity icons (depends on activities existing on server)
+        if (activitiesOk) {
+          await tryStep("syncActivityIcons", fns.syncActivityIcons);
+        } else {
+          total++;
+        }
+
+        // 4. Goals
+        const goalsOk = await tryStep("syncGoals", fns.syncGoals);
+
+        // 5. Tasks (before activity logs — logs can reference taskId)
+        await tryStep("syncTasks", fns.syncTasks);
+
+        // 6. Activity logs
+        await tryStep("syncActivityLogs", fns.syncActivityLogs);
+
+        // 7. Freeze periods (depends on goals existing on server)
+        if (goalsOk) {
+          await tryStep("syncGoalFreezePeriods", fns.syncGoalFreezePeriods);
+        } else {
+          total++;
+        }
+
+        // Backoff: only when ALL steps failed
+        if (succeeded > 0) {
           retryCount = 0;
-        } catch (err) {
+        } else {
           retryCount++;
-          onSyncError?.(err, `syncAll (retry ${retryCount})`);
         }
       });
     },

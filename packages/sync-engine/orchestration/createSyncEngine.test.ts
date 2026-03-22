@@ -56,6 +56,9 @@ describe("createSyncEngine", () => {
       fns.syncTasks.mockImplementation(async () => {
         callOrder.push("tasks");
       });
+      fns.syncGoalFreezePeriods.mockImplementation(async () => {
+        callOrder.push("goalFreezePeriods");
+      });
 
       const engine = createSyncEngine(fns, createMockNetwork());
       await engine.syncAll();
@@ -68,12 +71,15 @@ describe("createSyncEngine", () => {
       expect(iconDelIdx).toBeLessThan(activitiesIdx);
       expect(activitiesIdx).toBeLessThan(activityIconsIdx);
 
-      // activityLogs, goals, tasks are called after activityIcons
-      expect(callOrder.indexOf("activityLogs")).toBeGreaterThan(
-        activityIconsIdx,
+      // tasks must come before activityLogs (FK dependency)
+      expect(callOrder.indexOf("tasks")).toBeLessThan(
+        callOrder.indexOf("activityLogs"),
       );
-      expect(callOrder.indexOf("goals")).toBeGreaterThan(activityIconsIdx);
-      expect(callOrder.indexOf("tasks")).toBeGreaterThan(activityIconsIdx);
+
+      // goalFreezePeriods comes after goals
+      expect(callOrder.indexOf("goals")).toBeLessThan(
+        callOrder.indexOf("goalFreezePeriods"),
+      );
     });
 
     it("prevents concurrent execution (mutex)", async () => {
@@ -100,32 +106,53 @@ describe("createSyncEngine", () => {
       expect(fns.syncActivityIconDeletions).toHaveBeenCalledTimes(1);
     });
 
-    it("increments retryCount on error", async () => {
+    it("calls onSyncError for each failed step", async () => {
       const fns = createMockFns();
+      const onError = vi.fn();
       fns.syncActivityIconDeletions.mockRejectedValueOnce(
         new Error("network error"),
       );
+      fns.syncGoals.mockRejectedValueOnce(new Error("goals error"));
 
-      const engine = createSyncEngine(fns, createMockNetwork());
+      const engine = createSyncEngine(fns, createMockNetwork(), onError);
       await engine.syncAll();
 
-      fns.syncActivityIconDeletions.mockResolvedValue(undefined);
-      await engine.syncAll();
-
-      expect(fns.syncActivityIconDeletions).toHaveBeenCalledTimes(2);
+      expect(onError).toHaveBeenCalledTimes(2);
+      expect(onError).toHaveBeenCalledWith(
+        expect.any(Error),
+        "syncActivityIconDeletions",
+      );
+      expect(onError).toHaveBeenCalledWith(expect.any(Error), "syncGoals");
     });
 
-    it("does not call later sync functions if earlier ones throw", async () => {
+    it("skips dependent steps when prerequisite fails, but runs independent steps", async () => {
       const fns = createMockFns();
       fns.syncActivities.mockRejectedValueOnce(new Error("fail"));
 
       const engine = createSyncEngine(fns, createMockNetwork());
       await engine.syncAll();
 
+      // activityIcons depends on activities → skipped
       expect(fns.syncActivityIcons).not.toHaveBeenCalled();
-      expect(fns.syncActivityLogs).not.toHaveBeenCalled();
-      expect(fns.syncGoals).not.toHaveBeenCalled();
-      expect(fns.syncTasks).not.toHaveBeenCalled();
+
+      // independent steps still run
+      expect(fns.syncGoals).toHaveBeenCalled();
+      expect(fns.syncTasks).toHaveBeenCalled();
+      expect(fns.syncActivityLogs).toHaveBeenCalled();
+    });
+
+    it("skips goalFreezePeriods when goals fail", async () => {
+      const fns = createMockFns();
+      fns.syncGoals.mockRejectedValueOnce(new Error("fail"));
+
+      const engine = createSyncEngine(fns, createMockNetwork());
+      await engine.syncAll();
+
+      expect(fns.syncGoalFreezePeriods).not.toHaveBeenCalled();
+      // other steps still run
+      expect(fns.syncActivities).toHaveBeenCalled();
+      expect(fns.syncTasks).toHaveBeenCalled();
+      expect(fns.syncActivityLogs).toHaveBeenCalled();
     });
 
     it("partial failure does not break mutex", async () => {
@@ -141,18 +168,53 @@ describe("createSyncEngine", () => {
       expect(fns.syncActivityIconDeletions).toHaveBeenCalledTimes(2);
     });
 
-    it("resets retryCount on success", async () => {
+    it("resets retryCount on partial success", async () => {
       const fns = createMockFns();
-      fns.syncActivityIconDeletions.mockRejectedValueOnce(new Error("fail"));
+      // only iconDeletions fails — other steps succeed
+      fns.syncActivityIconDeletions.mockRejectedValue(new Error("fail"));
 
       const engine = createSyncEngine(fns, createMockNetwork());
-      await engine.syncAll();
+      const cleanup = engine.startAutoSync(30000);
 
-      fns.syncActivityIconDeletions.mockResolvedValue(undefined);
-      await engine.syncAll();
+      // First sync: partial success (iconDeletions fails, others succeed)
+      await vi.advanceTimersByTimeAsync(0);
 
+      // retryCount should be 0 (partial success) → next sync at 30s, not backoff
+      await vi.advanceTimersByTimeAsync(30000);
+      // activities called on both syncs
+      expect(fns.syncActivities).toHaveBeenCalledTimes(2);
+
+      cleanup();
+    });
+
+    it("increments retryCount only when ALL steps fail", async () => {
+      const fns = createMockFns();
+      const err = new Error("fail");
+      fns.syncActivityIconDeletions.mockRejectedValue(err);
+      fns.syncActivities.mockRejectedValue(err);
+      fns.syncActivityIcons.mockRejectedValue(err);
+      fns.syncActivityLogs.mockRejectedValue(err);
+      fns.syncGoals.mockRejectedValue(err);
+      fns.syncTasks.mockRejectedValue(err);
+      fns.syncGoalFreezePeriods.mockRejectedValue(err);
+
+      const engine = createSyncEngine(fns, createMockNetwork());
+      const cleanup = engine.startAutoSync(30000);
+
+      // Immediate sync: total failure → retryCount=1
+      await vi.advanceTimersByTimeAsync(0);
       expect(fns.syncActivities).toHaveBeenCalledTimes(1);
-      expect(fns.syncActivityLogs).toHaveBeenCalledTimes(1);
+
+      // First scheduleNext was called before immediate sync, so delay=30s
+      // After 30s: second sync → retryCount=2
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(fns.syncActivities).toHaveBeenCalledTimes(2);
+
+      // Now scheduleNext uses retryCount=2 → delay=4s
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(fns.syncActivities).toHaveBeenCalledTimes(3);
+
+      cleanup();
     });
   });
 

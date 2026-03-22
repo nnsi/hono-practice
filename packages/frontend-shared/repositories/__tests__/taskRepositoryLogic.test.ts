@@ -413,8 +413,8 @@ describe("taskRepositoryLogic", () => {
 
       const result = await repo.getPendingSyncTasks();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("t1");
+      expect(result).toHaveLength(2);
+      expect(result.map((t) => t.id).sort()).toEqual(["t1", "t3"]);
     });
   });
 

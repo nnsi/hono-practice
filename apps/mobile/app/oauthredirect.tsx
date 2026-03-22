@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
-import { apiGetMe, getApiUrl, setToken } from "../src/utils/apiClient";
+import { getApiUrl, setRefreshToken, setToken } from "../src/utils/apiClient";
+import { apiGetMe } from "../src/utils/authApi";
 import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
 import { useAuthContext } from "./_layout";
 
@@ -54,6 +55,7 @@ export default function OAuthRedirect() {
     if (!data.token) throw new Error("No token in response");
 
     setToken(data.token);
+    if (data.refreshToken) await setRefreshToken(data.refreshToken);
     const user = await apiGetMe();
     await completeLogin(user.id);
   }

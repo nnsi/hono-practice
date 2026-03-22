@@ -8,6 +8,7 @@ import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { goalFreezePeriodRepository } from "../../repositories/goalFreezePeriodRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import { DatePickerField } from "../common/DatePickerField";
 
 type FreezePeriodRow = FreezePeriod & { id: string };
@@ -57,6 +58,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
         goalId,
         startDate: today,
       });
+      syncEngine.syncGoalFreezePeriods();
     } finally {
       setBusy(false);
     }
@@ -71,6 +73,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
         startDate,
         endDate,
       });
+      syncEngine.syncGoalFreezePeriods();
       setShowForm(false);
       setStartDate(today);
       setEndDate(null);
@@ -96,6 +99,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
           { endDate: yesterday },
         );
       }
+      syncEngine.syncGoalFreezePeriods();
     } finally {
       setBusy(false);
     }
@@ -109,6 +113,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
         style: "destructive",
         onPress: async () => {
           await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(id);
+          syncEngine.syncGoalFreezePeriods();
         },
       },
     ]);

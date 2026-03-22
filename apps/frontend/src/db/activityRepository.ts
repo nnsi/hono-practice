@@ -95,10 +95,16 @@ const adapter: ActivityDbAdapter = {
 
   // Sync
   async getPendingSyncActivities() {
-    return db.activities.where("_syncStatus").equals("pending").toArray();
+    return db.activities
+      .where("_syncStatus")
+      .anyOf(["pending", "failed"])
+      .toArray();
   },
   async getPendingSyncActivityKinds() {
-    return db.activityKinds.where("_syncStatus").equals("pending").toArray();
+    return db.activityKinds
+      .where("_syncStatus")
+      .anyOf(["pending", "failed"])
+      .toArray();
   },
   async updateActivitiesSyncStatus(ids, status) {
     await db.activities.where("id").anyOf(ids).modify({ _syncStatus: status });

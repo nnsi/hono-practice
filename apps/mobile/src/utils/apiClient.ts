@@ -65,6 +65,11 @@ export async function clearRefreshToken(): Promise<void> {
 }
 
 let refreshPromise: Promise<string | null> | null = null;
+let authExpiredCallback: (() => void) | null = null;
+
+export function setOnAuthExpired(cb: (() => void) | null): void {
+  authExpiredCallback = cb;
+}
 
 async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
@@ -79,12 +84,21 @@ async function refreshAccessToken(): Promise<string | null> {
           Authorization: `Bearer ${rt}`,
         },
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        // 500系はサーバー一時障害 → リトライに任せる
+        // それ以外(400/401/403等)はセッション回復不能 → 強制ログアウト
+        if (res.status < 500) {
+          await clearRefreshToken();
+          authExpiredCallback?.();
+        }
+        return null;
+      }
       const data = await res.json();
       accessToken = data.token;
       if (data.refreshToken) await setRefreshToken(data.refreshToken);
       return data.token;
     } catch {
+      // ネットワークエラー/タイムアウト → リトライに任せる
       return null;
     } finally {
       refreshPromise = null;
@@ -132,162 +146,8 @@ export const apiClient = hc<AppType>(API_URL, {
   fetch: customFetch,
 });
 
-// Auth APIs (manual — these manage token state)
-export async function apiLogin(loginId: string, password: string) {
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login_id: loginId, password }),
-    });
-  } catch {
-    throw new Error("ネットワークに接続できません。接続を確認してください");
-  }
-  if (!res.ok) {
-    if (res.status === 401)
-      throw new Error("IDまたはパスワードが正しくありません");
-    if (res.status >= 500)
-      throw new Error(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
-      );
-    throw new Error("ログインに失敗しました");
-  }
-  const data = await res.json();
-  setToken(data.token);
-  if (data.refreshToken) await setRefreshToken(data.refreshToken);
-  return data;
-}
-
-export async function apiRegister(loginId: string, password: string) {
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(`${API_URL}/user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ loginId, password }),
-    });
-  } catch {
-    throw new Error("ネットワークに接続できません。接続を確認してください");
-  }
-  if (!res.ok) {
-    if (res.status >= 500)
-      throw new Error(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
-      );
-    throw new Error("登録に失敗しました");
-  }
-  const data = await res.json();
-  setToken(data.token);
-  if (data.refreshToken) await setRefreshToken(data.refreshToken);
-  return data;
-}
-
-export async function apiGetMe() {
-  const res = await customFetch(`${API_URL}/user/me`);
-  if (!res.ok) throw new Error("Failed to fetch user");
-  return res.json();
-}
-
 export async function apiRefreshToken() {
-  const rt = await getRefreshToken();
-  if (!rt) throw new Error("No refresh token");
-  const res = await fetchWithTimeout(`${API_URL}/auth/token`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${rt}`,
-    },
-  });
-  if (!res.ok) throw new Error("Token refresh failed");
-  const data = await res.json();
-  setToken(data.token);
-  if (data.refreshToken) await setRefreshToken(data.refreshToken);
-  return data;
-}
-
-export async function apiLogout() {
-  try {
-    await customFetch(`${API_URL}/auth/logout`, { method: "POST" });
-  } catch {
-    // Ignore logout errors - clear local state regardless
-  }
-  clearToken();
-  await clearRefreshToken();
-}
-
-// Google auth
-export async function apiGoogleLogin(credential: string) {
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(`${API_URL}/auth/google`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential }),
-    });
-  } catch {
-    throw new Error("ネットワークに接続できません。接続を確認してください");
-  }
-  if (!res.ok) {
-    if (res.status >= 500)
-      throw new Error(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
-      );
-    throw new Error("Googleログインに失敗しました");
-  }
-  const data = await res.json();
-  setToken(data.token);
-  if (data.refreshToken) await setRefreshToken(data.refreshToken);
-  return data;
-}
-
-// Apple auth
-export async function apiAppleLogin(credential: string) {
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(`${API_URL}/auth/apple`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential }),
-    });
-  } catch {
-    throw new Error("ネットワークに接続できません。接続を確認してください");
-  }
-  if (!res.ok) {
-    if (res.status >= 500)
-      throw new Error(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
-      );
-    throw new Error("Appleログインに失敗しました");
-  }
-  const data = await res.json();
-  setToken(data.token);
-  if (data.refreshToken) await setRefreshToken(data.refreshToken);
-  return data;
-}
-
-export async function apiAppleLink(credential: string) {
-  const res = await customFetch(`${API_URL}/auth/apple/link`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
-  });
-  if (!res.ok) {
-    if (res.status === 409)
-      throw new Error("このAppleアカウントは別のユーザーに連携済みです");
-    throw new Error("Apple連携に失敗しました");
-  }
-}
-
-export async function apiGoogleLink(credential: string) {
-  const res = await customFetch(`${API_URL}/auth/google/link`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
-  });
-  if (!res.ok) {
-    if (res.status === 409)
-      throw new Error("このGoogleアカウントは別のユーザーに連携済みです");
-    throw new Error("Google連携に失敗しました");
-  }
+  const token = await refreshAccessToken();
+  if (!token) throw new Error("Token refresh failed");
+  return { token };
 }

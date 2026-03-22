@@ -1,23 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 
 import dayjs from "dayjs";
-import {
-  ChevronDown,
-  ChevronUp,
-  Pause,
-  Pencil,
-  PlusCircle,
-  Trash2,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Pause } from "lucide-react";
 
 import { goalRepository } from "../../db/goalRepository";
 import type { DexieActivity } from "../../db/schema";
 import { syncEngine } from "../../sync/syncEngine";
+import { GoalCardActions } from "./GoalCardActions";
 import { getActivityIcon } from "./activityHelpers";
 import type { Goal } from "./types";
-
-type StatusBadge = { label: string; className: string };
-
 export function GoalCardHeader({
   goal,
   activity,
@@ -33,6 +24,7 @@ export function GoalCardHeader({
   onToggleExpand,
   onEditStart,
   onRecordOpen,
+  onDeactivate,
   onDeleteConfirm,
   onDeleteCancel,
   onHandleDelete,
@@ -44,13 +36,14 @@ export function GoalCardHeader({
   localBalance: number;
   debtCapped: boolean;
   balanceColor: string;
-  statusBadge: StatusBadge;
+  statusBadge: { label: string; className: string };
   isCurrentlyFrozen: boolean;
   showDeleteConfirm: boolean;
   deleting: boolean;
   onToggleExpand: () => void;
   onEditStart: () => void;
   onRecordOpen?: () => void;
+  onDeactivate?: () => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   onHandleDelete: () => void;
@@ -186,65 +179,18 @@ export function GoalCardHeader({
 
             <div className="flex-1" />
 
-            {!isPast && onRecordOpen && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRecordOpen();
-                }}
-                className="p-1 hover:bg-blue-100 rounded-md transition-colors"
-                title="活動を記録"
-              >
-                <PlusCircle size={14} className="text-blue-500" />
-              </button>
-            )}
-            {!isPast && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditStart();
-                }}
-                className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-              >
-                <Pencil size={14} className="text-gray-400" />
-              </button>
-            )}
-            {isPast && !showDeleteConfirm && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteConfirm();
-                }}
-                className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-              >
-                <Trash2 size={14} className="text-gray-400" />
-              </button>
-            )}
-            {isPast && showDeleteConfirm && (
-              <div
-                className="flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={onHandleDelete}
-                  disabled={deleting}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                >
-                  削除
-                </button>
-                <button
-                  type="button"
-                  onClick={onDeleteCancel}
-                  className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  取消
-                </button>
-              </div>
-            )}
+            <GoalCardActions
+              isPast={isPast}
+              goalIsActive={goal.isActive}
+              showDeleteConfirm={showDeleteConfirm}
+              deleting={deleting}
+              onRecordOpen={onRecordOpen}
+              onEditStart={onEditStart}
+              onDeactivate={onDeactivate}
+              onDeleteConfirm={onDeleteConfirm}
+              onDeleteCancel={onDeleteCancel}
+              onHandleDelete={onHandleDelete}
+            />
           </div>
         </div>
       </div>

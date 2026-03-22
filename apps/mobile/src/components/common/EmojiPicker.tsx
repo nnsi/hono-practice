@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
 
+import { Text, TouchableOpacity, View } from "react-native";
 import RNEmojiPicker, { type EmojiType } from "rn-emoji-keyboard";
 
 const jaTranslation = {

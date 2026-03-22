@@ -5,6 +5,7 @@ import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
+import { syncEngine } from "../../sync/syncEngine";
 import { useActivityIconPicker } from "./useActivityIconPicker";
 
 type Activity = {
@@ -92,6 +93,7 @@ export function useEditActivityDialog(
         changes,
         kindEntries.filter((k) => k.name.trim()),
       );
+      syncEngine.syncAll();
       onUpdated();
       onClose();
     } catch {
@@ -106,6 +108,7 @@ export function useEditActivityDialog(
     setIsSubmitting(true);
     try {
       await activityRepository.softDeleteActivity(activity.id);
+      syncEngine.syncActivities();
       onUpdated();
       onClose();
     } catch {
