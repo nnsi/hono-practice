@@ -30,7 +30,7 @@ export function DatePickerField({
       >
         <Calendar size={16} color="#374151" />
         <Text className="text-sm ml-2 text-gray-900">
-          {dayjs(value).format("YYYY/MM/DD (ddd)")}
+          {dayjs(value).format("YYYY/MM/DD")}
         </Text>
       </Pressable>
       <CalendarPopover

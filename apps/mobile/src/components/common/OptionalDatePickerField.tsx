@@ -42,7 +42,7 @@ export function OptionalDatePickerField({
               hasValue ? "text-gray-900" : "text-gray-400"
             }`}
           >
-            {hasValue ? dayjs(value).format("YYYY/MM/DD (ddd)") : placeholder}
+            {hasValue ? dayjs(value).format("YYYY/MM/DD") : placeholder}
           </Text>
           {hasValue && !disabled && (
             <Pressable onPress={() => onChange("")} hitSlop={8}>

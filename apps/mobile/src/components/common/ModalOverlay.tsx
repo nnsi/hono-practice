@@ -43,7 +43,11 @@ export function ModalOverlay({
 
   return (
     <OverlayPortal>
-      <KeyboardAvoidingView className="flex-1" behavior="padding">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior="padding"
+        style={{ backgroundColor: "rgba(28,25,23,0.35)" }}
+      >
         <View className="flex-1">
           <Pressable
             style={[

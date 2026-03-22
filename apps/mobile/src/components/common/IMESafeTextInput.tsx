@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 
-import { TextInput, type TextInputProps } from "react-native";
+import { Platform, TextInput, type TextInputProps } from "react-native";
 
 /**
  * Drop-in TextInput replacement that doesn't interrupt IME composition.
@@ -19,7 +19,14 @@ export const IMESafeTextInput = forwardRef<TextInput, TextInputProps>(
       <TextInput
         ref={ref}
         defaultValue={value ?? defaultValue}
-        style={[{ includeFontPadding: false }, style]}
+        style={[
+          { includeFontPadding: false },
+          Platform.select({
+            ios: { paddingTop: 0, paddingBottom: 7 },
+            android: { paddingTop: 1, paddingBottom: 0 },
+          }),
+          style,
+        ]}
         {...props}
       />
     );

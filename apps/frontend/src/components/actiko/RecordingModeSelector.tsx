@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import {
@@ -45,14 +45,23 @@ export function RecordingModeSelector({
   const [stepsText, setStepsText] = useState(() =>
     stepsFromConfig(recordingModeConfig).join(", "),
   );
+  const savedCounterConfigRef = useRef<string | null>(recordingModeConfig);
 
   const handleModeChange = (mode: RecordingMode) => {
+    if (recordingMode === "counter") {
+      savedCounterConfigRef.current = recordingModeConfig;
+    }
     onRecordingModeChange(mode);
-    const config = defaultRecordingModeConfig(mode);
-    const serialized = serializeRecordingModeConfig(config);
-    onRecordingModeConfigChange(serialized);
-    if (mode === "counter") {
-      setStepsText(stepsFromConfig(serialized).join(", "));
+    if (mode === "counter" && savedCounterConfigRef.current) {
+      onRecordingModeConfigChange(savedCounterConfigRef.current);
+      setStepsText(stepsFromConfig(savedCounterConfigRef.current).join(", "));
+    } else {
+      const config = defaultRecordingModeConfig(mode);
+      const serialized = serializeRecordingModeConfig(config);
+      onRecordingModeConfigChange(serialized);
+      if (mode === "counter") {
+        setStepsText(stepsFromConfig(serialized).join(", "));
+      }
     }
   };
 
