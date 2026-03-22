@@ -6,10 +6,9 @@ import {
   shouldShowDebtFeedback,
 } from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
+import { onDebtFeedback } from "@packages/frontend-shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, Text, View } from "react-native";
-
-import { onDebtFeedback } from "./debtFeedbackEvents";
 
 const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;

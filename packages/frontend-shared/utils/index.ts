@@ -14,6 +14,7 @@ export {
   DEFAULT_BAR_COLOR,
   getUniqueColorForKind,
 } from "./colorUtils";
+export { emitDebtFeedback, onDebtFeedback } from "./debtFeedbackEvents";
 export type {
   ErrorContext,
   ErrorReport,
@@ -23,3 +24,4 @@ export { reportError } from "./errorReporter";
 export { setupGlobalErrorHandler } from "./globalErrorHandler";
 export { generateGoalLines } from "./goalLineGeneration";
 export { formatQuantityWithUnit, roundQuantity } from "./statsFormatting";
+export { groupTasksByTimeline } from "./taskGrouping";

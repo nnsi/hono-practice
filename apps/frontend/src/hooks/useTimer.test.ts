@@ -116,7 +116,7 @@ describe("useTimer", () => {
   });
 
   describe("localStorage restore", () => {
-    it("restores running timer from localStorage", () => {
+    it("restores running timer from localStorage", async () => {
       const storedStartTime = Date.now() - 10000; // 10 seconds ago
       localStorage.setItem(
         "timer_act-1",
@@ -128,23 +128,25 @@ describe("useTimer", () => {
       );
 
       const { result } = renderHook(() => useTimer("act-1"));
+      await act(async () => {});
 
       expect(result.current.isRunning).toBe(true);
       expect(result.current.elapsedTime).toBe(10000);
       expect(result.current.getStartDate()?.getTime()).toBe(storedStartTime);
     });
 
-    it("removes invalid JSON from localStorage", () => {
+    it("removes invalid JSON from localStorage", async () => {
       localStorage.setItem("timer_act-1", "not-valid-json{{{");
 
       renderHook(() => useTimer("act-1"));
+      await act(async () => {});
 
       expect(localStorage.getItem("timer_act-1")).toBeNull();
     });
   });
 
   describe("getElapsedSeconds", () => {
-    it("calculates floor of elapsedTime / 1000", () => {
+    it("calculates floor of elapsedTime / 1000", async () => {
       const storedStartTime = Date.now() - 5500; // 5.5 seconds ago
       localStorage.setItem(
         "timer_act-1",
@@ -156,6 +158,7 @@ describe("useTimer", () => {
       );
 
       const { result } = renderHook(() => useTimer("act-1"));
+      await act(async () => {});
 
       expect(result.current.getElapsedSeconds()).toBe(5);
     });
