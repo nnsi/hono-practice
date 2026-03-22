@@ -33,6 +33,7 @@ export function ManualMode(props: RecordingModeProps) {
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"
+          autoFocus
           onFocus={() => {
             setTimeout(() => {
               const node = quantityRef.current as unknown as {

@@ -87,7 +87,8 @@
         "useSemanticElements": "off",
         "noLabelWithoutControl": "off",
         "useKeyWithClickEvents": "off",
-        "noStaticElementInteractions": "off"
+        "noStaticElementInteractions": "off",
+        "noAutofocus": "off"
       }
     }
   },

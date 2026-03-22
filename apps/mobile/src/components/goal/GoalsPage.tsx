@@ -165,6 +165,11 @@ export function GoalsPage() {
                 isExpanded={expandedGoalId === goal.id}
                 isPast
                 onToggleExpand={() => handleToggleExpand(goal.id)}
+                onDeactivate={
+                  goal.isActive
+                    ? () => handleGoalUpdated(goal.id, { isActive: false })
+                    : undefined
+                }
                 onDelete={() => handleGoalDeleted(goal.id)}
               />
             ))}

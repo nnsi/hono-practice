@@ -15,6 +15,7 @@ type GoalForCard = {
   dailyTargetQuantity: number;
   startDate: string;
   endDate: string | null;
+  isActive: boolean;
 };
 
 type StatusBadge = { label: string; bgClass: string; textClass: string };
@@ -41,6 +42,7 @@ export function GoalCardHeader({
   onEditStart,
   onDelete,
   onRecordOpen,
+  onDeactivate,
   onDeleteConfirm,
   onDeleteCancel,
   onHandleDelete,
@@ -61,6 +63,7 @@ export function GoalCardHeader({
   onEditStart?: () => void;
   onDelete?: () => Promise<void>;
   onRecordOpen?: () => void;
+  onDeactivate?: () => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   onHandleDelete: () => void;
@@ -141,6 +144,16 @@ export function GoalCardHeader({
             {!isPast && onEditStart && (
               <TouchableOpacity className="p-1" onPress={onEditStart}>
                 <Pencil size={14} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
+            {isPast && goal.isActive && onDeactivate && (
+              <TouchableOpacity
+                className="px-2 py-0.5 bg-orange-50 rounded-full"
+                onPress={onDeactivate}
+              >
+                <Text className="text-[10px] font-medium text-orange-600">
+                  終了する
+                </Text>
               </TouchableOpacity>
             )}
             {isPast && !showDeleteConfirm && onDelete && (
