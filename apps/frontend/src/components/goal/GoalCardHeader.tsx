@@ -6,8 +6,8 @@ import { ChevronDown, ChevronUp, Pause } from "lucide-react";
 import { goalRepository } from "../../db/goalRepository";
 import type { DexieActivity } from "../../db/schema";
 import { syncEngine } from "../../sync/syncEngine";
-import { GoalCardActions } from "./GoalCardActions";
 import { getActivityIcon } from "./activityHelpers";
+import { GoalCardActions } from "./GoalCardActions";
 import type { Goal } from "./types";
 export function GoalCardHeader({
   goal,

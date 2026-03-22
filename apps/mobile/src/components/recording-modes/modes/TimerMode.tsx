@@ -3,6 +3,14 @@ import { useRef } from "react";
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
+const tabShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 1,
+  elevation: 1,
+};
+
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
 import { SaveButton } from "../parts/SaveButton";
@@ -18,8 +26,9 @@ export function TimerMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("manual")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.effectiveTab === "manual" ? "bg-white shadow-sm" : ""
+            vm.effectiveTab === "manual" ? "bg-white" : ""
           }`}
+          style={vm.effectiveTab === "manual" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
@@ -32,8 +41,9 @@ export function TimerMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("timer")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.effectiveTab === "timer" ? "bg-white shadow-sm" : ""
+            vm.effectiveTab === "timer" ? "bg-white" : ""
           }`}
+          style={vm.effectiveTab === "timer" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${

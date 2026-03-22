@@ -1,7 +1,7 @@
+import type { TaskItem } from "@packages/domain/task/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { groupTasksByTimeline } from "./taskGrouping";
-import type { TaskItem } from "./types";
 
 // テスト用の「今日」を 2025-06-15 に固定
 const FIXED_TODAY = new Date("2025-06-15T00:00:00");
@@ -230,8 +230,6 @@ describe("groupTasksByTimeline", () => {
   });
 
   it("日付がないタスクはソートの最後に来る", () => {
-    // dueDate が nextWeek(6/22) より後 → startDate なし → showFuture → future
-    // 日付なしタスクも future に分類される
     const tasks = [
       createTask({ id: "no-date" }),
       createTask({ id: "has-due", dueDate: "2025-07-01" }),
@@ -240,7 +238,6 @@ describe("groupTasksByTimeline", () => {
       showCompleted: true,
       showFuture: true,
     });
-    // has-due は dueDate でソートされ先に来る、no-date は後ろ
     expect(result.future.map((t) => t.id)).toEqual(["has-due", "no-date"]);
   });
 
@@ -279,12 +276,9 @@ describe("groupTasksByTimeline", () => {
   });
 
   it("dueDate がちょうど7日後 → dueThisWeek に含まれない（isBefore なので）", () => {
-    // nextWeek = today + 7 = 2025-06-22
-    // isBefore(nextWeek) なので 6/22 は含まれない
     const task = createTask({ id: "week-boundary", dueDate: "2025-06-22" });
     const result = groupTasksByTimeline([task], defaultOptions);
     expect(result.dueThisWeek).toHaveLength(0);
-    // startDate がないので → showFuture=true → future
     expect(result.future).toHaveLength(1);
   });
 
@@ -294,7 +288,6 @@ describe("groupTasksByTimeline", () => {
     expect(result.dueThisWeek).toHaveLength(1);
   });
 
-  // startDate=今日 かつ dueDate=今日 → dueDateが優先されdueTodayになる
   it("startDate=今日 かつ dueDate=今日 → dueToday（dueDateの条件が先に評価される）", () => {
     const task = createTask({
       id: "both-today",

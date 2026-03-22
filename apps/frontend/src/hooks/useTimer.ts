@@ -1,123 +1,52 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type TimerPersistData = {
-  activityId: string;
-  startTime: number;
-  isRunning: boolean;
-};
+import {
+  TIMER_STORAGE_PREFIX,
+  type TimerPersistData,
+  type TimerStorageAdapter,
+  createUseTimer,
+  getTimerStorageKey,
+} from "@packages/frontend-shared";
 
-const STORAGE_PREFIX = "timer_";
-
-function getStorageKey(activityId: string) {
-  return `${STORAGE_PREFIX}${activityId}`;
-}
-
-export function useTimer(activityId: string) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-
-  // startTimeRefを同期
-  useEffect(() => {
-    startTimeRef.current = startTime;
-  }, [startTime]);
-
-  // ストレージから復元
-  useEffect(() => {
-    const stored = localStorage.getItem(getStorageKey(activityId));
-    if (!stored) return;
+const localStorageAdapter: TimerStorageAdapter = {
+  restore(key) {
+    const stored = localStorage.getItem(key);
+    if (!stored) return Promise.resolve(null);
     try {
-      const data: TimerPersistData = JSON.parse(stored);
-      if (data.isRunning && data.startTime) {
-        setStartTime(data.startTime);
-        setElapsedTime(Date.now() - data.startTime);
-        setIsRunning(true);
-      }
+      return Promise.resolve(JSON.parse(stored) as TimerPersistData);
     } catch {
-      localStorage.removeItem(getStorageKey(activityId));
+      localStorage.removeItem(key);
+      return Promise.resolve(null);
     }
-  }, [activityId]);
-
-  // インターバル管理
-  useEffect(() => {
-    if (isRunning && startTime != null) {
-      intervalRef.current = setInterval(() => {
-        if (startTimeRef.current != null) {
-          setElapsedTime(Date.now() - startTimeRef.current);
-        }
-      }, 100);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, startTime]);
-
-  const start = useCallback(() => {
-    // 他のタイマーが動作中かチェック
+  },
+  persist(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  },
+  remove(key) {
+    localStorage.removeItem(key);
+  },
+  isOtherTimerRunning(excludeKey) {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (
-        key?.startsWith(STORAGE_PREFIX) &&
-        key !== getStorageKey(activityId)
-      ) {
+      if (key?.startsWith(TIMER_STORAGE_PREFIX) && key !== excludeKey) {
         try {
           const data: TimerPersistData = JSON.parse(
             localStorage.getItem(key) || "",
           );
-          if (data.isRunning) return false;
+          if (data.isRunning) return true;
         } catch {
           // ignore
         }
       }
     }
+    return false;
+  },
+};
 
-    const now = Date.now();
-    const newStartTime = now - elapsedTime;
-    setStartTime(newStartTime);
-    setIsRunning(true);
-    const persist: TimerPersistData = {
-      activityId,
-      startTime: newStartTime,
-      isRunning: true,
-    };
-    localStorage.setItem(getStorageKey(activityId), JSON.stringify(persist));
-    return true;
-  }, [activityId, elapsedTime]);
+export const useTimer = createUseTimer({
+  react: { useState, useCallback, useEffect, useMemo },
+  useRef,
+  storage: localStorageAdapter,
+});
 
-  const stop = useCallback(() => {
-    setIsRunning(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    localStorage.removeItem(getStorageKey(activityId));
-  }, [activityId]);
-
-  const reset = useCallback(() => {
-    setIsRunning(false);
-    setStartTime(null);
-    setElapsedTime(0);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    localStorage.removeItem(getStorageKey(activityId));
-  }, [activityId]);
-
-  const getElapsedSeconds = useCallback(
-    () => Math.floor(elapsedTime / 1000),
-    [elapsedTime],
-  );
-
-  // タイマー開始時刻（Date）を取得
-  const getStartDate = useCallback(
-    () => (startTime != null ? new Date(startTime) : null),
-    [startTime],
-  );
-
-  return {
-    isRunning,
-    elapsedTime,
-    start,
-    stop,
-    reset,
-    getElapsedSeconds,
-    getStartDate,
-  };
-}
+export { getTimerStorageKey };

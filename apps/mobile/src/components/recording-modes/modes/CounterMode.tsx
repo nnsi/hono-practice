@@ -3,6 +3,14 @@ import { useRef } from "react";
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
+const tabShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 1,
+  elevation: 1,
+};
+
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
 import { SaveButton } from "../parts/SaveButton";
@@ -18,8 +26,9 @@ export function CounterMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("manual")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.activeTab === "manual" ? "bg-white shadow-sm" : ""
+            vm.activeTab === "manual" ? "bg-white" : ""
           }`}
+          style={vm.activeTab === "manual" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
@@ -32,8 +41,9 @@ export function CounterMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("counter")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.activeTab === "counter" ? "bg-white shadow-sm" : ""
+            vm.activeTab === "counter" ? "bg-white" : ""
           }`}
+          style={vm.activeTab === "counter" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${

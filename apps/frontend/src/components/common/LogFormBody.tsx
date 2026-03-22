@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { emitDebtFeedback } from "@packages/frontend-shared";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -11,7 +12,6 @@ import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
 import { computeDebtFeedbackForActivity } from "./computeDebtFeedback";
-import { emitDebtFeedback } from "./debtFeedbackEvents";
 
 export function LogFormBody({
   activity,
