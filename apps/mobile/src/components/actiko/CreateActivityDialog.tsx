@@ -84,7 +84,7 @@ export function CreateActivityDialog({
         <View>
           <Text className="text-sm text-gray-500 mb-1">名前</Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-4 h-11 text-base"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={name}
             onChangeText={(t) => {
               setName(t);
@@ -98,7 +98,7 @@ export function CreateActivityDialog({
         <View>
           <Text className="text-sm text-gray-500 mb-1">単位（任意）</Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-4 h-11 text-base"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
             placeholder="例: km, 回, 分"
@@ -125,7 +125,7 @@ export function CreateActivityDialog({
           {kinds.map((kind) => (
             <View key={kind.id} className="flex-row items-center mb-2 gap-2">
               <IMESafeTextInput
-                className="flex-1 border border-gray-300 rounded-lg px-3 h-9 text-sm"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-base"
                 value={kind.name}
                 onChangeText={(t) => updateKindName(kind.id, t)}
                 placeholder="種類名"

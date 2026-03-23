@@ -146,7 +146,7 @@ export function CreateGoalDialog({
             ) : null}
           </Text>
           <IMESafeTextInput
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base"
             value={target}
             onChangeText={setTarget}
             keyboardType="numeric"
@@ -200,7 +200,7 @@ export function CreateGoalDialog({
           {debtCapEnabled && (
             <View className="flex-row items-center gap-2 mt-1">
               <IMESafeTextInput
-                className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base"
                 value={debtCapValue}
                 onChangeText={setDebtCapValue}
                 keyboardType="numeric"

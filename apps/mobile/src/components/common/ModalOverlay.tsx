@@ -82,6 +82,7 @@ export function ModalOverlay({
               </View>
               <ScrollView
                 className="px-5 py-4"
+                style={{ flexShrink: 1 }}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
               >

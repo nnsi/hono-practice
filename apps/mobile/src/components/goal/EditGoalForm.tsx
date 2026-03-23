@@ -146,7 +146,7 @@ export function EditGoalForm({
           日次目標{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
           value={target}
           onChangeText={setTarget}
           keyboardType="numeric"
@@ -202,7 +202,7 @@ export function EditGoalForm({
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
             <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
               value={debtCapValue}
               onChangeText={setDebtCapValue}
               keyboardType="numeric"

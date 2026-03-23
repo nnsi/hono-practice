@@ -59,7 +59,10 @@ export function NumpadMode(props: RecordingModeProps) {
         />
       )}
 
-      <View className="flex-row items-center px-2 py-3">
+      <View
+        className="flex-row items-center px-2 py-3"
+        style={{ minHeight: 64 }}
+      >
         <TouchableOpacity onPress={handlePaste} className="p-2">
           <ClipboardPaste size={20} color="#9ca3af" />
         </TouchableOpacity>

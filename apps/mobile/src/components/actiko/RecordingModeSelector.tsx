@@ -6,6 +6,14 @@ import {
   parseRecordingModeConfig,
   serializeRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
+import {
+  Calculator,
+  CheckSquare,
+  Hash,
+  Pencil,
+  Timer,
+  ToggleLeft,
+} from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
@@ -18,12 +26,12 @@ type RecordingModeSelectorProps = {
 };
 
 const VISIBLE_MODES = [
-  { value: "manual", label: "手動入力" },
-  { value: "timer", label: "タイマー" },
-  { value: "counter", label: "カウンター" },
-  { value: "binary", label: "バイナリ" },
-  { value: "numpad", label: "テンキー" },
-  { value: "check", label: "チェック" },
+  { value: "manual", label: "手動入力", icon: Pencil },
+  { value: "timer", label: "タイマー", icon: Timer },
+  { value: "counter", label: "カウンタ", icon: Hash },
+  { value: "binary", label: "バイナリ", icon: ToggleLeft },
+  { value: "numpad", label: "テンキー", icon: Calculator },
+  { value: "check", label: "チェック", icon: CheckSquare },
 ] as const;
 
 function stepsFromConfig(config: string | null): number[] {
@@ -76,16 +84,20 @@ export function RecordingModeSelector({
     <View>
       <Text className="text-sm font-medium text-gray-600 mb-2">記録モード</Text>
       <View className="flex-row flex-wrap gap-2">
-        {VISIBLE_MODES.map(({ value, label }) => (
+        {VISIBLE_MODES.map(({ value, label, icon: Icon }) => (
           <TouchableOpacity
             key={value}
             onPress={() => handleModeChange(value)}
-            className={`items-center px-3 py-2 rounded-lg border ${
+            className={`flex-1 min-w-[80px] items-center gap-1 px-3 py-2 rounded-lg border ${
               recordingMode === value
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300"
             }`}
           >
+            <Icon
+              size={18}
+              color={recordingMode === value ? "#1d4ed8" : "#4b5563"}
+            />
             <Text
               className={`text-sm ${
                 recordingMode === value ? "text-blue-700" : "text-gray-600"
@@ -102,7 +114,7 @@ export function RecordingModeSelector({
             ステップ値（カンマ区切り）
           </Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 h-10 text-sm"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={stepsText}
             onChangeText={handleStepsTextChange}
             placeholder="1, 10, 100"

@@ -153,7 +153,7 @@ export function EditLogDialog({
             数量{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
