@@ -3,8 +3,8 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  TouchableOpacity,
   Text,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -12,9 +12,9 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarPopover } from "../common/CalendarPopover";
+import { ActikoDialogs } from "./ActikoDialogs";
 import { ActionCard } from "./ActionCard";
 import { ActivityCard } from "./ActivityCard";
-import { ActikoDialogs } from "./ActikoDialogs";
 import { DateNavHeader } from "./DateNavHeader";
 import { useActikoPage } from "./useActikoPage";
 

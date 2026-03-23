@@ -1,6 +1,5 @@
-import { Text, TouchableOpacity, View } from "react-native";
-
 import type { LucideIcon } from "lucide-react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 type ActionCardProps = {
   icon: LucideIcon;

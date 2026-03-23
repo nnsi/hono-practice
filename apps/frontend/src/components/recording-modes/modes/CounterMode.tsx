@@ -33,7 +33,7 @@ export function CounterMode(props: RecordingModeProps) {
               : "text-gray-500"
           }`}
         >
-          カウンター
+          カウンタ
         </button>
       </div>
 

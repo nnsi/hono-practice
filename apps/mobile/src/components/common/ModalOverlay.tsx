@@ -81,7 +81,8 @@ export function ModalOverlay({
                 </TouchableOpacity>
               </View>
               <ScrollView
-                className="px-5 py-4"
+                className="px-5 pt-4"
+                contentContainerStyle={{ paddingBottom: 16 }}
                 style={{ flexShrink: 1 }}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"

@@ -25,7 +25,7 @@ type RecordingModeSelectorProps = {
 const VISIBLE_MODES = [
   { value: "manual", label: "手動入力", icon: Pencil },
   { value: "timer", label: "タイマー", icon: Timer },
-  { value: "counter", label: "カウンター", icon: Hash },
+  { value: "counter", label: "カウンタ", icon: Hash },
   { value: "binary", label: "バイナリ", icon: ToggleLeft },
   { value: "numpad", label: "テンキー", icon: Calculator },
   { value: "check", label: "チェック", icon: CheckSquare },

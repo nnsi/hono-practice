@@ -1,9 +1,8 @@
-import type { useActikoPage } from "./useActikoPage";
-
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
 import { RecordDialog } from "./RecordDialog";
 import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
+import type { useActikoPage } from "./useActikoPage";
 
 type PageState = ReturnType<typeof useActikoPage>;
 type Activity = PageState["activities"][number];

@@ -87,13 +87,7 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 ### 実機テスト確認項目
 
-- [x] ログイン / ユーザー作成
-- [ ] Google認証によるログイン / ユーザー作成
-- [ ] アクティビティ記録（メイン機能）
-- [ ] データ同期（サーバーとの通信）
-- [ ] オフライン動作 → オンライン復帰時の同期
-- [ ] 各タブ画面の表示・遷移
-- [ ] 設定画面
+- [チェックリスト](./mobile-checklist.md)参照
 
 ---
 
