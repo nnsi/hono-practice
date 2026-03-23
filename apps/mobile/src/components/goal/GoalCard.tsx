@@ -165,7 +165,7 @@ export function GoalCard({
       className={`rounded-2xl mb-3 overflow-hidden ${
         isPast
           ? "border border-gray-200 bg-gray-50 opacity-75"
-          : "border border-gray-200"
+          : "border border-gray-200 bg-white"
       }`}
       style={shadowStyle}
     >

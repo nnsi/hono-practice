@@ -4,6 +4,7 @@ import {
   type DebtFeedbackResult,
   calculateDebtFeedback,
 } from "@packages/domain/goal/goalDebtFeedback";
+import { emitDebtFeedback } from "@packages/frontend-shared";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
 import dayjs from "dayjs";
@@ -19,7 +20,6 @@ import { goalFreezePeriodRepository } from "../../repositories/goalFreezePeriodR
 import { goalRepository } from "../../repositories/goalRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
-import { emitDebtFeedback } from "./debtFeedbackEvents";
 
 type Activity = {
   id: string;

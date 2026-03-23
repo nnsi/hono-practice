@@ -1,9 +1,8 @@
-import { useEffect } from "react";
-
 import { X } from "lucide-react-native";
 import {
-  BackHandler,
   KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,8 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { OverlayPortal } from "./overlayPortal";
 
 type ModalOverlayProps = {
   visible: boolean;
@@ -29,21 +26,19 @@ export function ModalOverlay({
   children,
   footer,
 }: ModalOverlayProps) {
-  // Handle Android hardware back button (replaces Modal's onRequestClose)
-  useEffect(() => {
-    if (!visible) return;
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      onClose();
-      return true;
-    });
-    return () => sub.remove();
-  }, [visible, onClose]);
-
-  if (!visible) return null;
-
   return (
-    <OverlayPortal>
-      <KeyboardAvoidingView className="flex-1" behavior="padding">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ backgroundColor: "rgba(28,25,23,0.35)" }}
+      >
         <View className="flex-1">
           <Pressable
             style={[
@@ -86,7 +81,9 @@ export function ModalOverlay({
                 </TouchableOpacity>
               </View>
               <ScrollView
-                className="px-5 py-4"
+                className="px-5 pt-4"
+                contentContainerStyle={{ paddingBottom: 16 }}
+                style={{ flexShrink: 1 }}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
               >
@@ -101,6 +98,6 @@ export function ModalOverlay({
           </View>
         </View>
       </KeyboardAvoidingView>
-    </OverlayPortal>
+    </Modal>
   );
 }

@@ -5,10 +5,7 @@ import type {
   ChartData,
   GoalLine,
 } from "@packages/frontend-shared/types/stats";
-import {
-  DEFAULT_BAR_COLOR,
-  getUniqueColorForKind,
-} from "@packages/frontend-shared/utils/colorUtils";
+import { getUniqueColorForKind } from "@packages/frontend-shared/utils/colorUtils";
 import {
   formatQuantityWithUnit,
   roundQuantity,
@@ -16,7 +13,7 @@ import {
 import dayjs from "dayjs";
 import { Text, View, useWindowDimensions } from "react-native";
 
-import { ActivityChart } from "./ActivityChart";
+import { ActivityChartSection } from "./ActivityChartSection";
 import { SummarySection } from "./SummarySection";
 import { SummaryTable } from "./SummaryTable";
 
@@ -78,7 +75,7 @@ export function ActivityStatCard({
   const effectiveWidth = Math.min(screenWidth, 768);
   const gap = 8;
   const cardPaddingX = 16;
-  const numColumns = 4;
+  const numColumns = 2;
   const kindCardWidth =
     (effectiveWidth - cardPaddingX * 2 - gap * (numColumns - 1)) / numColumns;
 
@@ -124,76 +121,23 @@ export function ActivityStatCard({
                 </Text>
               </View>
             ))}
+            {stat.kinds.length % 2 !== 0 && (
+              <View style={{ width: kindCardWidth }} />
+            )}
           </View>
         </View>
       )}
 
       {/* Chart */}
       <View className="p-4">
-        {stat.showCombinedStats ? (
-          <ActivityChart
-            data={chartData}
-            dataKeys={stat.kinds.map((k) => ({
-              name: k.name,
-              color: kindColors[k.name],
-            }))}
-            stackId="a"
-            showLegend={!isSingleUnnamedKind}
-            goalLines={goalLines}
-          />
-        ) : stat.kinds.length === 1 ? (
-          <ActivityChart
-            data={chartData}
-            dataKeys={[
-              {
-                name: stat.kinds[0].name,
-                color: kindColors[stat.kinds[0].name] || DEFAULT_BAR_COLOR,
-              },
-            ]}
-            showLegend={false}
-            goalLines={goalLines}
-          />
-        ) : (
-          <View className="gap-4">
-            {stat.kinds.map((kind) => {
-              const kindData = allDates.map((date) => {
-                const matchingLogs = kind.logs.filter(
-                  (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
-                );
-                return {
-                  date: `${dayjs(date).date()}日`,
-                  [kind.name]: roundQuantity(
-                    matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
-                  ),
-                };
-              });
-              return (
-                <View key={kind.id || kind.name}>
-                  <Text className="font-semibold text-sm mb-1 px-1 text-gray-900">
-                    {kind.name}
-                    <Text className="text-gray-400 font-normal">
-                      {" "}
-                      (合計:{" "}
-                      {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
-                    </Text>
-                  </Text>
-                  <ActivityChart
-                    data={kindData}
-                    dataKeys={[
-                      {
-                        name: kind.name,
-                        color: kindColors[kind.name] || DEFAULT_BAR_COLOR,
-                      },
-                    ]}
-                    height={200}
-                    showLegend={false}
-                    goalLines={goalLines}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        )}
+        <ActivityChartSection
+          stat={stat}
+          chartData={chartData}
+          allDates={allDates}
+          kindColors={kindColors}
+          isSingleUnnamedKind={isSingleUnnamedKind}
+          goalLines={goalLines}
+        />
       </View>
 
       {/* Summary */}

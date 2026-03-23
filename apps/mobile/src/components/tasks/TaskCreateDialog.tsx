@@ -1,15 +1,15 @@
 import dayjs from "dayjs";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
-import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
+import { TaskActivityPicker } from "./TaskActivityPicker";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
 export function TaskCreateDialog({
@@ -51,7 +51,6 @@ export function TaskCreateDialog({
         : Promise.resolve([]),
     [activityId],
   );
-  const activeKinds = (kinds ?? []).filter((k) => !k.deletedAt);
 
   const selectedActivity = activityId
     ? activities.find((a) => a.id === activityId)
@@ -91,7 +90,6 @@ export function TaskCreateDialog({
       }
     >
       <View className="gap-4 pb-4">
-        {/* Title */}
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
             タイトル <Text className="text-red-500">*</Text>
@@ -100,137 +98,21 @@ export function TaskCreateDialog({
             value={title}
             onChangeText={setTitle}
             placeholder="タスクのタイトルを入力"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             autoFocus
           />
         </View>
 
-        {/* Activity */}
-        {activities.length > 0 && (
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              アクティビティ（任意）
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row"
-            >
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => handleSetActivityId(null)}
-                  className={`px-3 py-1.5 rounded-full border ${
-                    activityId === null
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      activityId === null
-                        ? "text-white font-medium"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    なし
-                  </Text>
-                </TouchableOpacity>
-                {activities.map((a) => (
-                  <TouchableOpacity
-                    key={a.id}
-                    onPress={() =>
-                      handleSetActivityId(activityId === a.id ? null : a.id)
-                    }
-                    className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full border ${
-                      activityId === a.id
-                        ? "bg-gray-900 border-gray-900"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <ActivityIcon
-                      iconType={a.iconType}
-                      emoji={a.emoji || "\u{1f4dd}"}
-                      iconBlob={iconBlobMap.get(a.id)}
-                      iconUrl={a.iconUrl}
-                      iconThumbnailUrl={a.iconThumbnailUrl}
-                      size={14}
-                      fontSize="text-xs"
-                    />
-                    <Text
-                      className={`text-sm ${
-                        activityId === a.id
-                          ? "text-white font-medium"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {a.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
+        <TaskActivityPicker
+          activities={activities}
+          iconBlobMap={iconBlobMap}
+          activityId={activityId}
+          onActivityIdChange={handleSetActivityId}
+          kinds={kinds ?? []}
+          activityKindId={activityKindId}
+          onActivityKindIdChange={setActivityKindId}
+        />
 
-        {/* ActivityKind */}
-        {activityId && activeKinds.length > 0 && (
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              種類（任意）
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row"
-            >
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => setActivityKindId(null)}
-                  className={`px-3 py-1.5 rounded-full border ${
-                    activityKindId === null
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      activityKindId === null
-                        ? "text-white font-medium"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    なし
-                  </Text>
-                </TouchableOpacity>
-                {activeKinds.map((k) => (
-                  <TouchableOpacity
-                    key={k.id}
-                    onPress={() =>
-                      setActivityKindId(activityKindId === k.id ? null : k.id)
-                    }
-                    className={`px-3 py-1.5 rounded-full border ${
-                      activityKindId === k.id
-                        ? "bg-gray-900 border-gray-900"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm ${
-                        activityKindId === k.id
-                          ? "text-white font-medium"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {k.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Quantity */}
         {activityId && (
           <View>
             <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -249,12 +131,11 @@ export function TaskCreateDialog({
               }}
               placeholder="数量を入力"
               keyboardType="decimal-pad"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             />
           </View>
         )}
 
-        {/* Dates */}
         <View className="flex-row gap-3">
           <View className="flex-1">
             <DatePickerField
@@ -272,7 +153,6 @@ export function TaskCreateDialog({
           </View>
         </View>
 
-        {/* Memo */}
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
             メモ（任意）

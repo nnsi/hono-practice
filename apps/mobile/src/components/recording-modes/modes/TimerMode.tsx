@@ -1,7 +1,17 @@
 import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, type TextInput, TouchableOpacity, View } from "react-native";
+
+import { IMESafeTextInput } from "../../common/IMESafeTextInput";
+
+const tabShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 1,
+  elevation: 1,
+};
 
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -18,8 +28,9 @@ export function TimerMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("manual")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.effectiveTab === "manual" ? "bg-white shadow-sm" : ""
+            vm.effectiveTab === "manual" ? "bg-white" : ""
           }`}
+          style={vm.effectiveTab === "manual" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
@@ -32,8 +43,9 @@ export function TimerMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("timer")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.effectiveTab === "timer" ? "bg-white shadow-sm" : ""
+            vm.effectiveTab === "timer" ? "bg-white" : ""
           }`}
+          style={vm.effectiveTab === "timer" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
@@ -135,10 +147,9 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
         <Text className="text-sm font-medium text-gray-600 mb-1">
           数量{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
-        <TextInput
+        <IMESafeTextInput
           ref={quantityRef}
-          style={{ includeFontPadding: false }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-lg"
+          className="border border-gray-300 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"

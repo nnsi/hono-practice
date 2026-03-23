@@ -1,15 +1,15 @@
 import dayjs from "dayjs";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
-import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
+import { TaskActivityPicker } from "./TaskActivityPicker";
 import type { TaskItem } from "./types";
 import { useTaskEditDialog } from "./useTaskEditDialog";
 
@@ -55,7 +55,6 @@ export function TaskEditDialog({
         : Promise.resolve([]),
     [activityId],
   );
-  const activeKinds = (kinds ?? []).filter((k) => !k.deletedAt);
 
   const selectedActivity = activityId
     ? activities.find((a) => a.id === activityId)
@@ -108,7 +107,6 @@ export function TaskEditDialog({
           </Text>
         )}
 
-        {/* Title */}
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
             タイトル
@@ -118,144 +116,23 @@ export function TaskEditDialog({
             onChangeText={setTitle}
             placeholder="タスクのタイトル"
             editable={!isArchived}
-            className={`border border-gray-300 rounded-lg px-3 py-2 text-sm ${
+            className={`border border-gray-300 rounded-lg px-3 py-2 text-base ${
               isArchived ? "bg-gray-100 text-gray-500" : ""
             }`}
           />
         </View>
 
-        {/* Activity */}
-        {activities.length > 0 && (
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              アクティビティ（任意）
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row"
-            >
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => !isArchived && handleSetActivityId(null)}
-                  disabled={isArchived}
-                  className={`px-3 py-1.5 rounded-full border ${
-                    activityId === null
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
-                  } ${isArchived ? "opacity-50" : ""}`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      activityId === null
-                        ? "text-white font-medium"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    なし
-                  </Text>
-                </TouchableOpacity>
-                {activities.map((a) => (
-                  <TouchableOpacity
-                    key={a.id}
-                    onPress={() =>
-                      !isArchived &&
-                      handleSetActivityId(activityId === a.id ? null : a.id)
-                    }
-                    disabled={isArchived}
-                    className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full border ${
-                      activityId === a.id
-                        ? "bg-gray-900 border-gray-900"
-                        : "bg-white border-gray-300"
-                    } ${isArchived ? "opacity-50" : ""}`}
-                  >
-                    <ActivityIcon
-                      iconType={a.iconType}
-                      emoji={a.emoji || "\u{1f4dd}"}
-                      iconBlob={iconBlobMap.get(a.id)}
-                      iconUrl={a.iconUrl}
-                      iconThumbnailUrl={a.iconThumbnailUrl}
-                      size={14}
-                      fontSize="text-xs"
-                    />
-                    <Text
-                      className={`text-sm ${
-                        activityId === a.id
-                          ? "text-white font-medium"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {a.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
+        <TaskActivityPicker
+          activities={activities}
+          iconBlobMap={iconBlobMap}
+          activityId={activityId}
+          onActivityIdChange={handleSetActivityId}
+          kinds={kinds ?? []}
+          activityKindId={activityKindId}
+          onActivityKindIdChange={setActivityKindId}
+          disabled={isArchived}
+        />
 
-        {/* ActivityKind */}
-        {activityId && activeKinds.length > 0 && (
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              種類（任意）
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row"
-            >
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  onPress={() => !isArchived && setActivityKindId(null)}
-                  disabled={isArchived}
-                  className={`px-3 py-1.5 rounded-full border ${
-                    activityKindId === null
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
-                  } ${isArchived ? "opacity-50" : ""}`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      activityKindId === null
-                        ? "text-white font-medium"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    なし
-                  </Text>
-                </TouchableOpacity>
-                {activeKinds.map((k) => (
-                  <TouchableOpacity
-                    key={k.id}
-                    onPress={() =>
-                      !isArchived &&
-                      setActivityKindId(activityKindId === k.id ? null : k.id)
-                    }
-                    disabled={isArchived}
-                    className={`px-3 py-1.5 rounded-full border ${
-                      activityKindId === k.id
-                        ? "bg-gray-900 border-gray-900"
-                        : "bg-white border-gray-300"
-                    } ${isArchived ? "opacity-50" : ""}`}
-                  >
-                    <Text
-                      className={`text-sm ${
-                        activityKindId === k.id
-                          ? "text-white font-medium"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {k.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Quantity */}
         {activityId && (
           <View>
             <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -275,14 +152,13 @@ export function TaskEditDialog({
               placeholder="数量を入力"
               keyboardType="decimal-pad"
               editable={!isArchived}
-              className={`border border-gray-300 rounded-lg px-3 py-2 text-sm ${
+              className={`border border-gray-300 rounded-lg px-3 py-2 text-base ${
                 isArchived ? "bg-gray-100 text-gray-500" : ""
               }`}
             />
           </View>
         )}
 
-        {/* Dates */}
         <View className="flex-row gap-3">
           <View className="flex-1">
             {isArchived ? (
@@ -310,7 +186,6 @@ export function TaskEditDialog({
           </View>
         </View>
 
-        {/* Memo */}
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
             メモ（任意）

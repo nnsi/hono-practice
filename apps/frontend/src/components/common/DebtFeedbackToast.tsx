@@ -5,8 +5,7 @@ import {
   isMajorAchievement,
 } from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
-
-import { onDebtFeedback } from "./debtFeedbackEvents";
+import { onDebtFeedback } from "@packages/frontend-shared";
 
 type ToastState = {
   results: DebtFeedbackResult[];
