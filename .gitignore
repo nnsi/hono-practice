@@ -18,6 +18,9 @@ nul
 *.stackdump
 *.tsbuildinfo
 .expo
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/modules/**/android/build
 
 # Terraform
 terraform/*.tfvars

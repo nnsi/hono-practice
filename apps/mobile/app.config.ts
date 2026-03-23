@@ -34,6 +34,7 @@ const config: ExpoConfig = {
     "expo-updates",
     "expo-apple-authentication",
     "expo-image-picker",
+    "./modules/timer-widget/app.plugin.js",
   ],
   extra: {
     router: {},
