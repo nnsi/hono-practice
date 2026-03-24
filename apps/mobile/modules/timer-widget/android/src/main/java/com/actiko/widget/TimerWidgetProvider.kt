@@ -17,6 +17,7 @@ import java.util.TimeZone
 class TimerWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_START = "com.actiko.widget.ACTION_START"
+        const val ACTION_PAUSE = "com.actiko.widget.ACTION_PAUSE"
         const val ACTION_STOP = "com.actiko.widget.ACTION_STOP"
         const val ACTION_RESET = "com.actiko.widget.ACTION_RESET"
         const val EXTRA_WIDGET_ID = "com.actiko.widget.EXTRA_WIDGET_ID"
@@ -57,10 +58,14 @@ class TimerWidgetProvider : AppWidgetProvider() {
                 // When stopped, show static formatted time instead of ticking
                 views.setTextViewText(timerId, TimeConversion.formatElapsedTime(elapsedMs))
             }
-            views.setViewVisibility(id(context, "widget_btn_start"), if (isRunning) View.GONE else View.VISIBLE)
-            views.setViewVisibility(id(context, "widget_btn_stop"), if (isRunning) View.VISIBLE else View.GONE)
-            views.setViewVisibility(id(context, "widget_btn_reset"), if (!isRunning && elapsedMs > 0) View.VISIBLE else View.GONE)
+            val paused = !isRunning && elapsedMs > 0
+            // Running: pause + stop | Paused: start(resume) + stop | Idle: start
+            views.setViewVisibility(id(context, "widget_btn_start"), if (!isRunning) View.VISIBLE else View.GONE)
+            views.setViewVisibility(id(context, "widget_btn_pause"), if (isRunning) View.VISIBLE else View.GONE)
+            views.setViewVisibility(id(context, "widget_btn_stop"), if (isRunning || paused) View.VISIBLE else View.GONE)
+            views.setViewVisibility(id(context, "widget_btn_reset"), if (paused) View.VISIBLE else View.GONE)
             views.setOnClickPendingIntent(id(context, "widget_btn_start"), actionPi(context, widgetId, ACTION_START, 0))
+            views.setOnClickPendingIntent(id(context, "widget_btn_pause"), actionPi(context, widgetId, ACTION_PAUSE, 3))
             views.setOnClickPendingIntent(id(context, "widget_btn_stop"), actionPi(context, widgetId, ACTION_STOP, 1))
             views.setOnClickPendingIntent(id(context, "widget_btn_reset"), actionPi(context, widgetId, ACTION_RESET, 2))
             mgr.updateAppWidget(widgetId, views)
@@ -71,6 +76,7 @@ class TimerWidgetProvider : AppWidgetProvider() {
             views.setChronometer(id(context, "widget_timer_text"), SystemClock.elapsedRealtime(), null, false)
             views.setTextViewText(id(context, "widget_timer_text"), "00:00")
             views.setViewVisibility(id(context, "widget_btn_start"), View.GONE)
+            views.setViewVisibility(id(context, "widget_btn_pause"), View.GONE)
             views.setViewVisibility(id(context, "widget_btn_stop"), View.GONE)
             views.setViewVisibility(id(context, "widget_btn_reset"), View.GONE)
         }
@@ -132,6 +138,10 @@ class TimerWidgetProvider : AppWidgetProvider() {
                 TimerPreferences(context).startTimer(wId)
                 updateWidget(context, mgr, wId)
             }
+            ACTION_PAUSE -> {
+                TimerPreferences(context).stopTimer(wId)
+                updateWidget(context, mgr, wId)
+            }
             ACTION_STOP -> handleStop(context, wId, mgr)
             ACTION_RESET -> {
                 TimerPreferences(context).resetTimer(wId)
@@ -142,7 +152,9 @@ class TimerWidgetProvider : AppWidgetProvider() {
 
     private fun handleStop(context: Context, widgetId: Int, mgr: AppWidgetManager) {
         val prefs = TimerPreferences(context)
-        prefs.stopTimer(widgetId)
+        if (prefs.isRunning(widgetId)) {
+            prefs.stopTimer(widgetId)
+        }
         val activityId = prefs.getActivityId(widgetId) ?: return
         val kinds = WidgetDbHelper(context).getActivityKinds(activityId)
         if (kinds.isNotEmpty()) {

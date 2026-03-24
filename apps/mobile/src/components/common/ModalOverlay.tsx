@@ -36,7 +36,11 @@ export function ModalOverlay({
     >
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.select({
+          ios: "padding",
+          android: "height",
+          default: undefined,
+        })}
         style={{ backgroundColor: "rgba(28,25,23,0.35)" }}
       >
         <View className="flex-1">

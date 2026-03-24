@@ -9,21 +9,19 @@ struct TimerWidgetView: View {
     var body: some View {
         VStack(spacing: 8) {
             activityLabel
-            if entry.hasPendingKindSelect {
-                HStack {
-                    timerDisplay
-                    Button(intent: ResetTimerIntent()) {
-                        Image(systemName: "xmark")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                            .padding(5)
-                            .background(Color.red.opacity(0.8))
-                            .cornerRadius(6)
+            timerDisplay
+                .overlay(alignment: .trailing) {
+                    if entry.hasPendingKindSelect {
+                        Button(intent: ResetTimerIntent()) {
+                            Image(systemName: "xmark")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .padding(5)
+                                .background(Color.red.opacity(0.8))
+                                .cornerRadius(6)
+                        }
                     }
                 }
-            } else {
-                timerDisplay
-            }
             controlButtons
         }
         .containerBackground(Color(hex: "#1A1A2E"), for: .widget)
@@ -60,12 +58,22 @@ struct TimerWidgetView: View {
         if entry.hasPendingKindSelect, let activityId = entry.activityId {
             pendingKindButtons(activityId: activityId)
         } else if entry.isRunning {
-            Button(intent: StopTimerIntent()) {
-                buttonLabel("ストップ", systemImage: "stop.fill", bg: Color.red.opacity(0.8))
+            HStack(spacing: 8) {
+                Button(intent: PauseTimerIntent()) {
+                    buttonLabel("一時停止", systemImage: "pause.fill", bg: Color.orange.opacity(0.8))
+                }
+                Button(intent: StopTimerIntent()) {
+                    buttonLabel("記録する", systemImage: "checkmark", bg: Color.red.opacity(0.8))
+                }
             }
         } else if entry.elapsedMs > 0 {
-            Button(intent: ResetTimerIntent()) {
-                buttonLabel("リセット", systemImage: "arrow.counterclockwise", bg: Color.red.opacity(0.8))
+            HStack(spacing: 8) {
+                Button(intent: StartTimerIntent()) {
+                    buttonLabel("再開", systemImage: "play.fill", bg: Color(hex: "#4CAF50"))
+                }
+                Button(intent: StopTimerIntent()) {
+                    buttonLabel("記録する", systemImage: "checkmark", bg: Color.red.opacity(0.8))
+                }
             }
         } else {
             Button(intent: StartTimerIntent()) {

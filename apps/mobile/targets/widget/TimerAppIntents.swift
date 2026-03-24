@@ -17,10 +17,10 @@ struct StartTimerIntent: AppIntent {
     }
 }
 
-/// Stops the timer. Saves a log if no kinds exist, otherwise flags pending kind selection.
-struct StopTimerIntent: AppIntent {
-    static var title: LocalizedStringResource = "Stop Timer"
-    static var description: IntentDescription = "Stop the activity timer"
+/// Pauses the timer without saving. Accumulated time is preserved for resume.
+struct PauseTimerIntent: AppIntent {
+    static var title: LocalizedStringResource = "Pause Timer"
+    static var description: IntentDescription = "Pause the activity timer"
 
     func perform() async throws -> some IntentResult {
         let state = TimerState()
@@ -28,6 +28,24 @@ struct StopTimerIntent: AppIntent {
             return .result()
         }
         state.stopTimer(activityId: activityId)
+        WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+        return .result()
+    }
+}
+
+/// Stops the timer and saves a log. If kinds exist, flags pending kind selection.
+struct StopTimerIntent: AppIntent {
+    static var title: LocalizedStringResource = "Stop Timer"
+    static var description: IntentDescription = "Stop the activity timer and save"
+
+    func perform() async throws -> some IntentResult {
+        let state = TimerState()
+        guard let activityId = state.getConfiguredActivityId() else {
+            return .result()
+        }
+        if state.isRunning(activityId: activityId) {
+            state.stopTimer(activityId: activityId)
+        }
         let dbHelper = WidgetDbHelper()
         let kinds = dbHelper.getActivityKinds(activityId)
         if kinds.isEmpty {
