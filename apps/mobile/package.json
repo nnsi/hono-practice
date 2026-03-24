@@ -12,7 +12,9 @@
     "test-once": "vitest run --config ../../vitest.config.ts apps/mobile"
   },
   "dependencies": {
+    "@bacons/apple-targets": "^4.0.6",
     "@expo/metro-runtime": "~6.1.2",
+    "@expo/plist": "^0.5.2",
     "@packages/domain": "workspace:*",
     "@packages/platform": "workspace:*",
     "@packages/sync-engine": "workspace:*",

@@ -1,4 +1,20 @@
-const { withAndroidManifest } = require("expo/config-plugins");
+const {
+  withAndroidManifest,
+  withEntitlementsPlist,
+  createRunOncePlugin,
+} = require("expo/config-plugins");
+
+function withTimerWidgetIosEntitlements(config) {
+  return withEntitlementsPlist(config, (modConfig) => {
+    const bundleId = modConfig.ios?.bundleIdentifier;
+    if (bundleId) {
+      modConfig.modResults["com.apple.security.application-groups"] = [
+        `group.${bundleId}`,
+      ];
+    }
+    return modConfig;
+  });
+}
 
 function addTimerWidgetToManifest(config) {
   return withAndroidManifest(config, (modConfig) => {
@@ -71,4 +87,14 @@ function addTimerWidgetToManifest(config) {
   });
 }
 
-module.exports = addTimerWidgetToManifest;
+function withTimerWidget(config) {
+  config = addTimerWidgetToManifest(config);
+  config = withTimerWidgetIosEntitlements(config);
+  return config;
+}
+
+module.exports = createRunOncePlugin(
+  withTimerWidget,
+  "timer-widget",
+  "1.0.0",
+);

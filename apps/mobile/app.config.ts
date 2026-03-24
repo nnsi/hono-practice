@@ -17,6 +17,11 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
+    ...(bundleId && {
+      entitlements: {
+        "com.apple.security.application-groups": [`group.${bundleId}`],
+      },
+    }),
   },
   android: {
     package: bundleId,
@@ -35,6 +40,7 @@ const config: ExpoConfig = {
     "expo-apple-authentication",
     "expo-image-picker",
     "./modules/timer-widget/app.plugin.js",
+    "@bacons/apple-targets",
   ],
   extra: {
     router: {},
