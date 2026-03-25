@@ -8,7 +8,8 @@ dist-frontend
 dist-frontend-v2
 .husky
 stats.html
-public
+/public
+apps/backend/public
 *.pkl
 .serena
 tmp
