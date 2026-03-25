@@ -2,7 +2,7 @@ import AppIntents
 import WidgetKit
 
 /// Toggles the check state for a specific activity.
-/// If not done today, inserts a log with quantity=1.
+/// If not done today, inserts a log with quantity=1 and optional kindId.
 /// If already done, soft-deletes today's log(s).
 struct ToggleCheckIntent: AppIntent {
     static var title: LocalizedStringResource = "Toggle Check"
@@ -11,10 +11,14 @@ struct ToggleCheckIntent: AppIntent {
     @Parameter(title: "Activity ID")
     var activityId: String
 
+    @Parameter(title: "Kind ID")
+    var kindId: String?
+
     init() {}
 
-    init(activityId: String) {
+    init(activityId: String, kindId: String?) {
         self.activityId = activityId
+        self.kindId = kindId
     }
 
     func perform() async throws -> some IntentResult {
@@ -23,8 +27,8 @@ struct ToggleCheckIntent: AppIntent {
         if isDone {
             dbHelper.softDeleteTodayLog(activityId)
         } else {
-            SimpleLogHelper.saveLog(
-                activityId: activityId, kindId: nil, quantity: 1
+            await SimpleLogHelper.saveLog(
+                activityId: activityId, kindId: kindId, quantity: 1
             )
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "CheckWidget")

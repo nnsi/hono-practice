@@ -7,6 +7,7 @@ struct ActivityRow {
     let emoji: String
     let quantityUnit: String
     let recordingMode: String
+    let recordingModeConfig: String?
 }
 
 struct KindRow {
@@ -44,7 +45,7 @@ struct WidgetDbHelper {
         guard let db = openDatabase() else { return [] }
         defer { sqlite3_close(db) }
         let sql = """
-            SELECT id, name, emoji, quantity_unit, recording_mode FROM activities \
+            SELECT id, name, emoji, quantity_unit, recording_mode, recording_mode_config FROM activities \
             WHERE recording_mode = ? AND deleted_at IS NULL \
             AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current') \
             ORDER BY order_index
@@ -65,7 +66,7 @@ struct WidgetDbHelper {
         guard let db = openDatabase() else { return nil }
         defer { sqlite3_close(db) }
         let sql = """
-            SELECT id, name, emoji, quantity_unit, recording_mode FROM activities \
+            SELECT id, name, emoji, quantity_unit, recording_mode, recording_mode_config FROM activities \
             WHERE id = ? AND deleted_at IS NULL \
             AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current')
             """
@@ -142,6 +143,21 @@ struct WidgetDbHelper {
         return columnOptionalText(stmt, 0) ?? "free"
     }
 
+    // MARK: - Config Parsing
+
+    /// Parse counter steps from recording_mode_config JSON.
+    /// Format: {"mode":"counter","steps":[1,5,10]}
+    /// Falls back to [1] if parsing fails.
+    static func parseCounterSteps(_ configJson: String?) -> [Int] {
+        guard let json = configJson,
+              let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let steps = obj["steps"] as? [Any]
+        else { return [1] }
+        let intSteps = steps.compactMap { ($0 as? NSNumber)?.intValue }.filter { $0 > 0 }
+        return intSteps.isEmpty ? [1] : intSteps
+    }
+
     // MARK: - Helpers
 
     static func todayDateString() -> String {
@@ -156,7 +172,8 @@ struct WidgetDbHelper {
             name: columnText(stmt, 1),
             emoji: columnOptionalText(stmt, 2) ?? "",
             quantityUnit: columnOptionalText(stmt, 3) ?? "",
-            recordingMode: columnOptionalText(stmt, 4) ?? "timer"
+            recordingMode: columnOptionalText(stmt, 4) ?? "timer",
+            recordingModeConfig: columnOptionalText(stmt, 5)
         )
     }
 

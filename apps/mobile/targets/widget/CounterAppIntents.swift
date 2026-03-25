@@ -1,22 +1,30 @@
 import AppIntents
 import WidgetKit
 
-/// Increments the counter for a specific activity by 1.
+/// Increments the counter for a specific activity by the given step amount.
 struct IncrementCounterIntent: AppIntent {
     static var title: LocalizedStringResource = "Increment Counter"
-    static var description: IntentDescription = "Add 1 to the activity counter"
+    static var description: IntentDescription = "Add to the activity counter"
 
     @Parameter(title: "Activity ID")
     var activityId: String
 
+    @Parameter(title: "Kind ID")
+    var kindId: String?
+
+    @Parameter(title: "Step")
+    var step: Int
+
     init() {}
 
-    init(activityId: String) {
+    init(activityId: String, kindId: String?, step: Int) {
         self.activityId = activityId
+        self.kindId = kindId
+        self.step = step
     }
 
     func perform() async throws -> some IntentResult {
-        SimpleLogHelper.saveLog(activityId: activityId, kindId: nil, quantity: 1)
+        await SimpleLogHelper.saveLog(activityId: activityId, kindId: kindId, quantity: Double(step))
         WidgetCenter.shared.reloadTimelines(ofKind: "CounterWidget")
         return .result()
     }

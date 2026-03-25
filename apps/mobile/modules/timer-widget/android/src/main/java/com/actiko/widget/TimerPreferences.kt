@@ -19,6 +19,18 @@ class TimerPreferences(context: Context) {
             .apply()
     }
 
+    fun saveKindId(widgetId: Int, kindId: String?) {
+        val editor = prefs.edit()
+        if (kindId != null) {
+            editor.putString(key(widgetId, "kindId"), kindId)
+        } else {
+            editor.remove(key(widgetId, "kindId"))
+        }
+        editor.apply()
+    }
+
+    fun getKindId(widgetId: Int): String? = prefs.getString(key(widgetId, "kindId"), null)
+
     fun getActivityId(widgetId: Int): String? = prefs.getString(key(widgetId, "activityId"), null)
 
     fun getRecordingMode(widgetId: Int): String? = prefs.getString(key(widgetId, "recordingMode"), null)
@@ -69,7 +81,7 @@ class TimerPreferences(context: Context) {
 
     fun removeWidget(widgetId: Int) {
         val editor = prefs.edit()
-        listOf("activityId", "recordingMode", "isRunning", "startTimeMillis", "accumulatedMillis", "startDateIso")
+        listOf("activityId", "recordingMode", "kindId", "isRunning", "startTimeMillis", "accumulatedMillis", "startDateIso")
             .forEach { editor.remove(key(widgetId, it)) }
         val ids = getAllWidgetIds().toMutableSet()
         ids.remove(widgetId)

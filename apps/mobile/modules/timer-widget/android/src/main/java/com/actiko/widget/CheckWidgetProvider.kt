@@ -54,7 +54,19 @@ class CheckWidgetProvider : AppWidgetProvider() {
             }
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val done = WidgetLogHelper(ctx).hasActivityLogForToday(activityId, today)
-            views.setTextViewText(resId(ctx, "check_activity_name"), "${activity.emoji} ${activity.name}")
+
+            // Show activity name with optional kind name
+            val kindId = prefs.getKindId(widgetId)
+            val kindName = if (kindId != null) {
+                db.getActivityKinds(activityId).find { it.id == kindId }?.name
+            } else null
+            val label = if (kindName != null) {
+                "${activity.emoji} ${activity.name}\n$kindName"
+            } else {
+                "${activity.emoji} ${activity.name}"
+            }
+            views.setTextViewText(resId(ctx, "check_activity_name"), label)
+
             views.setTextViewText(resId(ctx, "check_btn_toggle"), if (done) "\u2611" else "\u2610")
             views.setInt(
                 resId(ctx, "check_btn_toggle"), "setTextColor",
@@ -93,6 +105,7 @@ class CheckWidgetProvider : AppWidgetProvider() {
 
         val prefs = TimerPreferences(ctx)
         val activityId = prefs.getActivityId(wId) ?: return
+        val kindId = prefs.getKindId(wId)
         val logHelper = WidgetLogHelper(ctx)
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val done = logHelper.hasActivityLogForToday(activityId, today)
@@ -100,7 +113,7 @@ class CheckWidgetProvider : AppWidgetProvider() {
             logHelper.softDeleteTodayLog(activityId, today)
         } else {
             logHelper.insertLog(
-                activityId = activityId, activityKindId = null,
+                activityId = activityId, activityKindId = kindId,
                 quantity = 1.0, memo = "", date = today,
             )
         }

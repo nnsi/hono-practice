@@ -35,15 +35,15 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectActivityIntent, in context: Context) async -> TimerEntry {
-        buildEntry(for: configuration)
+        await buildEntry(for: configuration)
     }
 
     func timeline(for configuration: SelectActivityIntent, in context: Context) async -> Timeline<TimerEntry> {
-        let entry = buildEntry(for: configuration)
+        let entry = await buildEntry(for: configuration)
         return Timeline(entries: [entry], policy: .never)
     }
 
-    private func buildEntry(for configuration: SelectActivityIntent) -> TimerEntry {
+    private func buildEntry(for configuration: SelectActivityIntent) async -> TimerEntry {
         if let entity = configuration.activity {
             TimerState().saveConfig(activityId: entity.id)
         }
@@ -56,7 +56,7 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
                 isProLocked: false
             )
         }
-        if !WidgetPlanHelper.isWidgetAllowed() {
+        if !(await WidgetPlanHelper.isWidgetAllowed()) {
             return TimerEntry(
                 date: Date(), activityName: "Timer", activityEmoji: "⏱",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,

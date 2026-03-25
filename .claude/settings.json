@@ -3,6 +3,18 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-manual-ddl.sh",
+            "statusMessage": "DDLチェック中..."
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [

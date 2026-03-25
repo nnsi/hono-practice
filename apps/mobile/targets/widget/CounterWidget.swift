@@ -2,7 +2,7 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-// MARK: - Entity & Query
+// MARK: - Activity Entity & Query
 
 struct CounterActivityEntity: AppEntity {
     let id: String
@@ -39,12 +39,65 @@ struct CounterEntityQuery: EntityQuery {
     }
 }
 
+// MARK: - Kind Entity & Query
+
+struct CounterKindEntity: AppEntity {
+    let id: String
+    let name: String
+    let activityId: String
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Kind"
+    static var defaultQuery = CounterKindEntityQuery()
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+}
+
+struct CounterKindEntityQuery: EntityQuery {
+    @IntentParameterDependency<SelectCounterActivityIntent>(\.$activity)
+    var activityParam
+
+    func entities(for identifiers: [CounterKindEntity.ID]) async throws
+        -> [CounterKindEntity]
+    {
+        let dbHelper = WidgetDbHelper()
+        let activities = dbHelper.getActivitiesByMode("counter")
+        var result: [CounterKindEntity] = []
+        for activity in activities {
+            let kinds = dbHelper.getActivityKinds(activity.id)
+            for kind in kinds where identifiers.contains(kind.id) {
+                result.append(CounterKindEntity(
+                    id: kind.id, name: kind.name, activityId: activity.id
+                ))
+            }
+        }
+        return result
+    }
+
+    func suggestedEntities() async throws -> [CounterKindEntity] {
+        guard let activityEntity = activityParam?.activity else { return [] }
+        return WidgetDbHelper().getActivityKinds(activityEntity.id).map {
+            CounterKindEntity(id: $0.id, name: $0.name, activityId: activityEntity.id)
+        }
+    }
+
+    func defaultResult() async -> CounterKindEntity? {
+        try? await suggestedEntities().first
+    }
+}
+
+// MARK: - Configuration Intent
+
 struct SelectCounterActivityIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Select Counter Activity"
     static var description: IntentDescription = "Choose a counter activity to track"
 
     @Parameter(title: "Activity")
     var activity: CounterActivityEntity?
+
+    @Parameter(title: "Kind")
+    var kind: CounterKindEntity?
 }
 
 // MARK: - Timeline Entry
@@ -54,7 +107,10 @@ struct CounterEntry: TimelineEntry {
     let activityName: String
     let activityEmoji: String
     let activityId: String?
+    let kindId: String?
+    let kindName: String?
     let todayCount: Int
+    let steps: [Int]
     let isProLocked: Bool
 }
 
@@ -67,47 +123,56 @@ struct CounterTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> CounterEntry {
         CounterEntry(
             date: Date(), activityName: "Activity", activityEmoji: "",
-            activityId: nil, todayCount: 0, isProLocked: false
+            activityId: nil, kindId: nil, kindName: nil,
+            todayCount: 0, steps: [1], isProLocked: false
         )
     }
 
     func snapshot(for configuration: Intent, in context: Context) async -> CounterEntry {
-        buildEntry(for: configuration)
+        await buildEntry(for: configuration)
     }
 
     func timeline(for configuration: Intent, in context: Context) async -> Timeline<CounterEntry> {
-        let entry = buildEntry(for: configuration)
+        let entry = await buildEntry(for: configuration)
         let nextMidnight = Calendar.current.startOfDay(
             for: Calendar.current.date(byAdding: .day, value: 1, to: Date())!
         )
         return Timeline(entries: [entry], policy: .after(nextMidnight))
     }
 
-    private func buildEntry(for configuration: Intent) -> CounterEntry {
+    private func buildEntry(for configuration: Intent) async -> CounterEntry {
+        let kindId = configuration.kind?.id
+        let kindName = configuration.kind?.name
+
         guard let entity = configuration.activity else {
             return CounterEntry(
                 date: Date(), activityName: "タップして設定", activityEmoji: "",
-                activityId: nil, todayCount: 0, isProLocked: false
+                activityId: nil, kindId: nil, kindName: nil,
+                todayCount: 0, steps: [1], isProLocked: false
             )
         }
-        if !WidgetPlanHelper.isWidgetAllowed() {
+        if !(await WidgetPlanHelper.isWidgetAllowed()) {
             return CounterEntry(
                 date: Date(), activityName: entity.name, activityEmoji: entity.emoji,
-                activityId: entity.id, todayCount: 0, isProLocked: true
+                activityId: entity.id, kindId: kindId, kindName: kindName,
+                todayCount: 0, steps: [1], isProLocked: true
             )
         }
         let dbHelper = WidgetDbHelper()
         guard let activity = dbHelper.getActivityById(entity.id) else {
             return CounterEntry(
                 date: Date(), activityName: "削除された活動", activityEmoji: "",
-                activityId: entity.id, todayCount: 0, isProLocked: false
+                activityId: entity.id, kindId: nil, kindName: nil,
+                todayCount: 0, steps: [1], isProLocked: false
             )
         }
         let count = dbHelper.getActivityLogCountForToday(entity.id)
+        let steps = WidgetDbHelper.parseCounterSteps(activity.recordingModeConfig)
         return CounterEntry(
             date: Date(), activityName: activity.name,
             activityEmoji: activity.emoji, activityId: entity.id,
-            todayCount: count, isProLocked: false
+            kindId: kindId, kindName: kindName,
+            todayCount: count, steps: steps, isProLocked: false
         )
     }
 }

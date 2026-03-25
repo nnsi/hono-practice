@@ -8,9 +8,14 @@ const config: ExpoConfig = {
   slug: "actiko",
   version: "1.0.0",
   orientation: "portrait",
+  icon: "./assets/icon.png",
   scheme: "actiko",
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
+  splash: {
+    image: "./assets/splash.png",
+    resizeMode: "contain",
+    backgroundColor: "#FFFFFF",
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: bundleId,
@@ -25,6 +30,10 @@ const config: ExpoConfig = {
   },
   android: {
     package: bundleId,
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#FFFFFF",
+    },
   },
   web: {
     bundler: "metro",

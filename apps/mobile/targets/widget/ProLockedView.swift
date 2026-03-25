@@ -11,7 +11,10 @@ struct ProLockedView: View {
             Text("Proにアップグレード")
                 .font(.caption)
                 .foregroundColor(.white)
-            Text("ウィジェットは1つまで")
+            Text("無料プランは1つまで")
+                .font(.caption2)
+                .foregroundColor(.gray)
+            Text("余分を削除してください")
                 .font(.caption2)
                 .foregroundColor(.gray)
         }

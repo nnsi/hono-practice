@@ -4,7 +4,6 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -63,11 +62,44 @@ class CounterConfigActivity : Activity() {
         }
         listView.setOnItemClickListener { _, _, pos, _ ->
             val selected = activities[pos]
-            val prefs = TimerPreferences(this)
-            prefs.saveWidgetConfig(appWidgetId, selected.id, "counter")
-            CounterWidgetProvider.updateWidget(this, AppWidgetManager.getInstance(this), appWidgetId)
-            setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
-            finish()
+            val db = WidgetDbHelper(this)
+            val kinds = db.getActivityKinds(selected.id)
+            if (kinds.isEmpty()) {
+                finishConfig(selected.id, null)
+            } else {
+                showKindList(selected, kinds)
+            }
         }
+    }
+
+    private fun showKindList(activity: ActivityRow, kinds: List<KindRow>) {
+        val layoutId = resources.getIdentifier("activity_config", "layout", packageName)
+        setContentView(layoutId)
+        val listView = findViewById<ListView>(resources.getIdentifier("activity_list", "id", packageName))
+        val itemLayoutId = resources.getIdentifier("item_activity", "layout", packageName)
+        val itemTextId = resources.getIdentifier("activity_item_text", "id", packageName)
+
+        val names = listOf("\u7A2E\u985E\u306A\u3057") + kinds.map { it.name }
+
+        listView.adapter = object : ArrayAdapter<String>(this, itemLayoutId, itemTextId, names) {
+            override fun getView(pos: Int, cv: View?, parent: ViewGroup): View {
+                return super.getView(pos, cv, parent).also {
+                    it.findViewById<TextView>(itemTextId)?.text = names[pos]
+                }
+            }
+        }
+        listView.setOnItemClickListener { _, _, pos, _ ->
+            val kindId = if (pos == 0) null else kinds[pos - 1].id
+            finishConfig(activity.id, kindId)
+        }
+    }
+
+    private fun finishConfig(activityId: String, kindId: String?) {
+        val prefs = TimerPreferences(this)
+        prefs.saveWidgetConfig(appWidgetId, activityId, "counter")
+        prefs.saveKindId(appWidgetId, kindId)
+        CounterWidgetProvider.updateWidget(this, AppWidgetManager.getInstance(this), appWidgetId)
+        setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
+        finish()
     }
 }

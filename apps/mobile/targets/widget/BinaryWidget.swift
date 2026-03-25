@@ -78,25 +78,25 @@ struct BinaryTimelineProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: Intent, in context: Context) async -> BinaryEntry {
-        buildEntry(for: configuration)
+        await buildEntry(for: configuration)
     }
 
     func timeline(for configuration: Intent, in context: Context) async -> Timeline<BinaryEntry> {
-        let entry = buildEntry(for: configuration)
+        let entry = await buildEntry(for: configuration)
         let nextMidnight = Calendar.current.startOfDay(
             for: Calendar.current.date(byAdding: .day, value: 1, to: Date())!
         )
         return Timeline(entries: [entry], policy: .after(nextMidnight))
     }
 
-    private func buildEntry(for configuration: Intent) -> BinaryEntry {
+    private func buildEntry(for configuration: Intent) async -> BinaryEntry {
         guard let entity = configuration.activity else {
             return BinaryEntry(
                 date: Date(), activityName: "タップして設定", activityEmoji: "",
                 activityId: nil, kinds: [], isProLocked: false
             )
         }
-        if !WidgetPlanHelper.isWidgetAllowed() {
+        if !(await WidgetPlanHelper.isWidgetAllowed()) {
             return BinaryEntry(
                 date: Date(), activityName: entity.name, activityEmoji: entity.emoji,
                 activityId: entity.id, kinds: [], isProLocked: true

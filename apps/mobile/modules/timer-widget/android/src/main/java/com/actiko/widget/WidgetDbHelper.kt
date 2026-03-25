@@ -12,6 +12,7 @@ data class ActivityRow(
     val emoji: String,
     val quantityUnit: String,
     val recordingMode: String,
+    val recordingModeConfig: String?,
 )
 
 data class KindRow(
@@ -21,6 +22,26 @@ data class KindRow(
 )
 
 class WidgetDbHelper(private val context: Context) {
+    companion object {
+        /** Parse counter steps from recording_mode_config JSON.
+         *  Format: {"mode":"counter","steps":[1,5,10]}
+         *  Falls back to [1] if parsing fails. */
+        fun parseCounterSteps(configJson: String?): List<Int> {
+            if (configJson == null) return listOf(1)
+            return try {
+                val obj = org.json.JSONObject(configJson)
+                val arr = obj.optJSONArray("steps") ?: return listOf(1)
+                val steps = (0 until arr.length()).mapNotNull {
+                    val v = arr.optInt(it, 0)
+                    if (v > 0) v else null
+                }
+                steps.ifEmpty { listOf(1) }
+            } catch (_: Exception) {
+                listOf(1)
+            }
+        }
+    }
+
     private val dbPath: String
         get() = File(context.filesDir, "SQLite/actiko.db").absolutePath
 
@@ -61,7 +82,7 @@ class WidgetDbHelper(private val context: Context) {
         val db = openDatabase() ?: return null
         return try {
             val cursor = db.rawQuery(
-                "SELECT id, name, emoji, quantity_unit, recording_mode FROM activities WHERE id = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current')",
+                "SELECT id, name, emoji, quantity_unit, recording_mode, recording_mode_config FROM activities WHERE id = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current')",
                 arrayOf(id),
             )
             cursor.use {
@@ -72,6 +93,7 @@ class WidgetDbHelper(private val context: Context) {
                         emoji = it.getString(2) ?: "",
                         quantityUnit = it.getString(3) ?: "",
                         recordingMode = it.getString(4) ?: "timer",
+                        recordingModeConfig = it.getString(5),
                     )
                 } else null
             }
@@ -109,7 +131,7 @@ class WidgetDbHelper(private val context: Context) {
         val db = openDatabase() ?: return emptyList()
         return try {
             val cursor = db.rawQuery(
-                "SELECT id, name, emoji, quantity_unit, recording_mode FROM activities WHERE recording_mode = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current') ORDER BY order_index",
+                "SELECT id, name, emoji, quantity_unit, recording_mode, recording_mode_config FROM activities WHERE recording_mode = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current') ORDER BY order_index",
                 arrayOf(mode),
             )
             val results = mutableListOf<ActivityRow>()
@@ -122,6 +144,7 @@ class WidgetDbHelper(private val context: Context) {
                             emoji = it.getString(2) ?: "",
                             quantityUnit = it.getString(3) ?: "",
                             recordingMode = it.getString(4) ?: mode,
+                            recordingModeConfig = it.getString(5),
                         ),
                     )
                 }

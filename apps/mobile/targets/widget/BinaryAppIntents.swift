@@ -20,7 +20,7 @@ struct RecordBinaryIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        SimpleLogHelper.saveLog(
+        await SimpleLogHelper.saveLog(
             activityId: activityId, kindId: kindId, quantity: 1
         )
         WidgetCenter.shared.reloadTimelines(ofKind: "BinaryWidget")

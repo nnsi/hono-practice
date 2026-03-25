@@ -5,9 +5,9 @@ import Foundation
 enum SimpleLogHelper {
     static func saveLog(
         activityId: String, kindId: String?, quantity: Double
-    ) {
+    ) async {
         // Plan check: block log creation if widget is not allowed
-        guard WidgetPlanHelper.isWidgetAllowed() else { return }
+        guard await WidgetPlanHelper.isWidgetAllowed() else { return }
         let dbHelper = WidgetDbHelper()
         let utcFormatter = ISO8601DateFormatter()
         utcFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

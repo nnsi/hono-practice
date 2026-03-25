@@ -13,11 +13,17 @@ struct CounterWidgetView: View {
     }
 
     private var counterContent: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             activityLabel
+            if let kindName = entry.kindName {
+                Text(kindName)
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
             countDisplay
-            if entry.activityId != nil {
-                incrementButton
+            if let activityId = entry.activityId {
+                stepButtons(activityId: activityId)
             }
         }
         .containerBackground(Color(hex: "#1A1A2E"), for: .widget)
@@ -25,27 +31,32 @@ struct CounterWidgetView: View {
 
     private var activityLabel: some View {
         Text("\(entry.activityEmoji) \(entry.activityName)")
-            .font(.headline)
+            .font(.subheadline)
             .foregroundColor(.white)
             .lineLimit(1)
     }
 
     private var countDisplay: some View {
         Text("\(entry.todayCount)")
-            .font(.system(size: 40, weight: .bold, design: .rounded))
+            .font(.system(size: 32, weight: .bold, design: .rounded))
             .foregroundColor(Color(hex: "#4CAF50"))
     }
 
-    private var incrementButton: some View {
-        Button(intent: IncrementCounterIntent(activityId: entry.activityId ?? "")) {
-            Label("+1", systemImage: "plus")
-                .font(.caption)
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
-                .background(Color(hex: "#4CAF50"))
-                .cornerRadius(8)
+    private func stepButtons(activityId: String) -> some View {
+        HStack(spacing: 4) {
+            ForEach(entry.steps, id: \.self) { step in
+                Button(intent: IncrementCounterIntent(
+                    activityId: activityId, kindId: entry.kindId, step: step
+                )) {
+                    Text("+\(step)")
+                        .font(.caption2)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, entry.steps.count == 1 ? 12 : 6)
+                        .padding(.vertical, 4)
+                        .background(Color(hex: "#4CAF50"))
+                        .cornerRadius(6)
+                }
+            }
         }
     }
-
 }

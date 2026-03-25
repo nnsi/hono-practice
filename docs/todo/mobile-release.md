@@ -107,11 +107,11 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 ## 4. アプリアセット作成
 
-- [ ] **アプリアイコン** (1024x1024 PNG, 透過なし) → `assets/icon.png`
-- [ ] **Adaptive Icon 前景** (1024x1024 PNG, 透過あり) → `assets/adaptive-icon.png`
-- [ ] **スプラッシュスクリーン** (1284x2778 推奨) → `assets/splash.png`
-- [ ] **Favicon** (48x48 PNG) → `assets/favicon.png`（既存ファイルが空なので差し替え）
-- [ ] `app.json` のアイコン・スプラッシュ設定を更新:
+- [x] **アプリアイコン** (1024x1024 PNG, 透過なし) → `assets/icon.png`
+- [x] **Adaptive Icon 前景** (1024x1024 PNG, 透過あり) → `assets/adaptive-icon.png`
+- [x] **スプラッシュスクリーン** (1284x2778 推奨) → `assets/splash.png`
+- [x] **Favicon** (48x48 PNG) → `assets/favicon.png`（既存ファイルが空なので差し替え）
+- [x] `app.json` のアイコン・スプラッシュ設定を更新:
 
 ```jsonc
 {
@@ -172,7 +172,7 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 - [ ] アプリ名: `Actiko`
 - [ ] 短い説明文（80文字以内）
 - [ ] 詳細な説明文（4000文字以内）
-- [ ] プライバシーポリシー URL を用意（**必須**）
+- [x] プライバシーポリシー URL を用意（**必須**）
 - [ ] カテゴリ: `Productivity` or `Health & Fitness`
 - [ ] 対象年齢の設定
 

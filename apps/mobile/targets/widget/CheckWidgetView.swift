@@ -13,8 +13,14 @@ struct CheckWidgetView: View {
     }
 
     private var checkContent: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             activityLabel
+            if let kindName = entry.kindName {
+                Text(kindName)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
             checkmarkDisplay
             if let activityId = entry.activityId {
                 toggleButton(activityId: activityId)
@@ -32,14 +38,14 @@ struct CheckWidgetView: View {
 
     private var checkmarkDisplay: some View {
         Image(systemName: entry.isDoneToday ? "checkmark.circle.fill" : "circle")
-            .font(.system(size: 44))
+            .font(.system(size: 40))
             .foregroundColor(
                 entry.isDoneToday ? Color(hex: "#4CAF50") : .gray
             )
     }
 
     private func toggleButton(activityId: String) -> some View {
-        Button(intent: ToggleCheckIntent(activityId: activityId)) {
+        Button(intent: ToggleCheckIntent(activityId: activityId, kindId: entry.kindId)) {
             Text(entry.isDoneToday ? "取り消す" : "完了")
                 .font(.caption)
                 .foregroundColor(.white)

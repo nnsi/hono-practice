@@ -4,6 +4,7 @@ import { Info, Settings } from "lucide-react";
 
 import { LegalModal } from "../common/LegalModal";
 import { AccountSection } from "./AccountSection";
+import { ApiKeyManager } from "./ApiKeyManager";
 import { DataManagementSection } from "./DataManagementSection";
 import { SettingCheckbox } from "./SettingCheckbox";
 import { SubscriptionSection } from "./SubscriptionSection";
@@ -58,6 +59,15 @@ export function SettingsPage() {
         </section>
 
         <SubscriptionSection />
+
+        {/* APIキー管理 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            API キー
+          </h2>
+          <ApiKeyManager />
+        </section>
+
         <AccountSection />
         <DataManagementSection />
 
