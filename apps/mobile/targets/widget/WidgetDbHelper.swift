@@ -126,6 +126,18 @@ struct WidgetDbHelper {
         sqlite3_step(stmt)
     }
 
+    func getPlan() -> String {
+        guard let db = openDatabase() else { return "free" }
+        defer { sqlite3_close(db) }
+        let sql = "SELECT plan FROM auth_state WHERE id = 'current'"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK,
+              let stmt else { return "free" }
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return "free" }
+        return columnOptionalText(stmt, 0) ?? "free"
+    }
+
     // MARK: - Helpers
 
     private func readActivityRow(_ stmt: OpaquePointer) -> ActivityRow {

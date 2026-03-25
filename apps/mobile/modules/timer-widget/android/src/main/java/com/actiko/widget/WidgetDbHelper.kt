@@ -130,6 +130,21 @@ class WidgetDbHelper(private val context: Context) {
         }
     }
 
+    fun getPlan(): String {
+        val db = openDatabase() ?: return "free"
+        return try {
+            val cursor = db.rawQuery(
+                "SELECT plan FROM auth_state WHERE id = 'current'",
+                null,
+            )
+            cursor.use {
+                if (it.moveToFirst()) it.getString(0) ?: "free" else "free"
+            }
+        } finally {
+            db.close()
+        }
+    }
+
     fun insertActivityLog(
         id: String,
         activityId: String,

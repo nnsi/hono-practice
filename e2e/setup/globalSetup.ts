@@ -34,6 +34,8 @@ export async function setup() {
     UPLOAD_DIR: "public/uploads",
     DB: db,
     RATE_LIMIT_KV: undefined,
+    STRIPE_WEBHOOK_SECRET: "whsec_e2e_test_secret",
+    REVENUECAT_WEBHOOK_AUTH_KEY: "rc_e2e_test_key",
   };
 
   server = serve({
@@ -56,7 +58,7 @@ export async function setup() {
       port: FRONTEND_PORT,
       host: "127.0.0.1",
       proxy: Object.fromEntries(
-        ["/auth", "/user", "/users", "/api", "/batch"].map((p) => [
+        ["/auth", "/user", "/users", "/api", "/batch", "/webhooks"].map((p) => [
           p,
           `http://localhost:${BACKEND_PORT}`,
         ]),

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { AppState } from "react-native";
 
 import { createUseSyncEngine } from "@packages/frontend-shared/hooks/useSyncEngine";
+import { AppState } from "react-native";
 
 import { syncEngine } from "../sync/syncEngine";
 

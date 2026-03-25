@@ -361,7 +361,7 @@ export const userSubscriptions = pgTable(
       .references(() => users.id)
       .unique(),
     plan: text("plan", {
-      enum: ["free", "premium", "enterprise"],
+      enum: ["free", "premium"],
     })
       .notNull()
       .default("free"),

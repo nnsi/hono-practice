@@ -27,6 +27,9 @@ export const configSchema = z.object({
   // AI連携（OpenRouter）
   OPENROUTER_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("openai/gpt-4o-mini"),
+  // Webhook認証
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

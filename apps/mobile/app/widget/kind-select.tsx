@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { ExtensionStorage } from "@bacons/apple-targets";
 import {
   convertSecondsToUnit,
@@ -5,7 +7,6 @@ import {
   getTimeUnitType,
 } from "@packages/domain/time/timeUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -63,7 +64,7 @@ export default function WidgetKindSelectPage() {
 
     // Generate time memo
     const memo =
-      startDateIso && !isNaN(Date.parse(startDateIso))
+      startDateIso && !Number.isNaN(Date.parse(startDateIso))
         ? generateTimeMemo(new Date(startDateIso), new Date())
         : "";
 

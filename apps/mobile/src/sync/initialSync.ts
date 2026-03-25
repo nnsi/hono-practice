@@ -25,9 +25,12 @@ const { clearLocalData, performInitialSync } = createInitialSync({
   },
   updateAuthState: async (userId) => {
     const db = await getDatabase();
+    const existing = await db.getFirstAsync<{ plan: string | null }>(
+      "SELECT plan FROM auth_state WHERE id = 'current'",
+    );
     await db.runAsync(
-      "INSERT OR REPLACE INTO auth_state (id, user_id, last_login_at) VALUES ('current', ?, ?)",
-      [userId, new Date().toISOString()],
+      "INSERT OR REPLACE INTO auth_state (id, user_id, last_login_at, plan) VALUES ('current', ?, ?, ?)",
+      [userId, new Date().toISOString(), existing?.plan ?? "free"],
     );
   },
   isLocalDataEmpty: async () => {

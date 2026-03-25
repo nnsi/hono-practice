@@ -13,6 +13,9 @@ export type SubscriptionRepository<T = QueryExecutor> = {
   create: (subscription: Subscription) => Promise<Subscription>;
   findById: (id: SubscriptionId) => Promise<Subscription | undefined>;
   findByUserId: (userId: UserId) => Promise<Subscription | undefined>;
+  findByPaymentProviderId: (
+    providerId: string,
+  ) => Promise<Subscription | undefined>;
   update: (subscription: Subscription) => Promise<Subscription>;
   withTx: (tx: T) => SubscriptionRepository<T>;
 };
@@ -24,6 +27,7 @@ export function newSubscriptionRepository(
     create: create(db),
     findById: findById(db),
     findByUserId: findByUserId(db),
+    findByPaymentProviderId: findByPaymentProviderId(db),
     update: update(db),
     withTx: (tx) => newSubscriptionRepository(tx),
   };
@@ -76,6 +80,20 @@ function findByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<Subscription | undefined> => {
     const result = await db.query.userSubscriptions.findFirst({
       where: eq(userSubscriptions.userId, userId),
+    });
+
+    if (!result) {
+      return undefined;
+    }
+
+    return mapToSubscription(result);
+  };
+}
+
+function findByPaymentProviderId(db: QueryExecutor) {
+  return async (providerId: string): Promise<Subscription | undefined> => {
+    const result = await db.query.userSubscriptions.findFirst({
+      where: eq(userSubscriptions.paymentProviderId, providerId),
     });
 
     if (!result) {
