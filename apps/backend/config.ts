@@ -28,8 +28,11 @@ export const configSchema = z.object({
   OPENROUTER_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("openai/gpt-4o-mini"),
   // Webhook認証
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  POLAR_WEBHOOK_SECRET: z.string().optional(),
   REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),
+  // Polar Checkout
+  POLAR_ACCESS_TOKEN: z.string().optional(),
+  POLAR_PRICE_ID: z.string().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

@@ -7,24 +7,28 @@ struct TimerWidgetView: View {
     let entry: TimerEntry
 
     var body: some View {
-        VStack(spacing: 8) {
-            activityLabel
-            timerDisplay
-                .overlay(alignment: .trailing) {
-                    if entry.hasPendingKindSelect {
-                        Button(intent: ResetTimerIntent()) {
-                            Image(systemName: "xmark")
-                                .font(.caption2)
-                                .foregroundColor(.white)
-                                .padding(5)
-                                .background(Color.red.opacity(0.8))
-                                .cornerRadius(6)
+        if entry.isProLocked {
+            ProLockedView()
+        } else {
+            VStack(spacing: 8) {
+                activityLabel
+                timerDisplay
+                    .overlay(alignment: .trailing) {
+                        if entry.hasPendingKindSelect {
+                            Button(intent: ResetTimerIntent()) {
+                                Image(systemName: "xmark")
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                    .padding(5)
+                                    .background(Color.red.opacity(0.8))
+                                    .cornerRadius(6)
+                            }
                         }
                     }
-                }
-            controlButtons
+                controlButtons
+            }
+            .containerBackground(Color(hex: "#1A1A2E"), for: .widget)
         }
-        .containerBackground(Color(hex: "#1A1A2E"), for: .widget)
     }
 
     private var activityLabel: some View {

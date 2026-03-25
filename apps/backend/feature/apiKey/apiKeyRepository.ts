@@ -3,6 +3,7 @@ import { apiKeys } from "@infra/drizzle/schema";
 import type {
   ApiKey,
   ApiKeyId,
+  ApiKeyScope,
   CreateApiKeyData,
   UpdateApiKeyData,
 } from "@packages/domain/apiKey/apiKeySchema";
@@ -52,6 +53,7 @@ function createApiKey(db: QueryExecutor) {
         userId: data.userId,
         key: hashedKey,
         name: data.name,
+        scope: data.scope ?? "all",
       })
       .returning();
 
@@ -60,6 +62,7 @@ function createApiKey(db: QueryExecutor) {
       userId: result.userId,
       key: data.key, // 生成時は平文のキーを返す
       name: result.name,
+      scope: (result.scope ?? "all") as ApiKeyScope,
       lastUsedAt: result.lastUsedAt,
       isActive: result.isActive,
       createdAt: result.createdAt,
@@ -81,6 +84,7 @@ function findApiKeyByUserId(db: QueryExecutor) {
       userId: result.userId,
       key: result.key,
       name: result.name,
+      scope: (result.scope ?? "all") as ApiKeyScope,
       lastUsedAt: result.lastUsedAt,
       isActive: result.isActive,
       createdAt: result.createdAt,
@@ -110,6 +114,7 @@ function findApiKeyByKey(db: QueryExecutor) {
       userId: result.userId,
       key: result.key, // ハッシュ化されたキーを返す（後でマスク処理される）
       name: result.name,
+      scope: (result.scope ?? "all") as ApiKeyScope,
       lastUsedAt: result.lastUsedAt,
       isActive: result.isActive,
       createdAt: result.createdAt,
@@ -142,6 +147,7 @@ function findApiKeyById(db: QueryExecutor) {
       userId: result.userId,
       key: result.key, // ハッシュ化されたキー
       name: result.name,
+      scope: (result.scope ?? "all") as ApiKeyScope,
       lastUsedAt: result.lastUsedAt,
       isActive: result.isActive,
       createdAt: result.createdAt,
@@ -168,6 +174,7 @@ function updateApiKey(db: QueryExecutor) {
       userId: result.userId,
       key: result.key,
       name: result.name,
+      scope: (result.scope ?? "all") as ApiKeyScope,
       lastUsedAt: result.lastUsedAt,
       isActive: result.isActive,
       createdAt: result.createdAt,

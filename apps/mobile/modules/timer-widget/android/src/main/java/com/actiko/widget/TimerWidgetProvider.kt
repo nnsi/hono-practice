@@ -32,6 +32,12 @@ class TimerWidgetProvider : AppWidgetProvider() {
         }
 
         fun updateWidget(context: Context, mgr: AppWidgetManager, widgetId: Int) {
+            if (!WidgetPlanHelper.isWidgetAllowed(context, widgetId)) {
+                val pkg = context.packageName
+                val views = RemoteViews(pkg, context.resources.getIdentifier("widget_upgrade", "layout", pkg))
+                mgr.updateAppWidget(widgetId, views)
+                return
+            }
             val prefs = TimerPreferences(context)
             val pkg = context.packageName
             val views = RemoteViews(pkg, context.resources.getIdentifier("widget_timer", "layout", pkg))
@@ -96,6 +102,7 @@ class TimerWidgetProvider : AppWidgetProvider() {
         }
 
         fun saveLogDirect(context: Context, widgetId: Int, activityId: String, kindId: String?) {
+            if (!WidgetPlanHelper.isWidgetAllowed(context, widgetId)) return
             val prefs = TimerPreferences(context)
             val elapsedSeconds = prefs.getElapsedMillis(widgetId) / 1000
             val dbHelper = WidgetDbHelper(context)
@@ -132,6 +139,7 @@ class TimerWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         val wId = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
         if (wId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+        if (!WidgetPlanHelper.isWidgetAllowed(context, wId)) return
         val mgr = AppWidgetManager.getInstance(context)
         when (intent.action) {
             ACTION_START -> {

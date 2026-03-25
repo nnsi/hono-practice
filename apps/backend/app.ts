@@ -17,7 +17,7 @@ import { goalRoute } from "./feature/goal/goalRoute";
 import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeriodRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
 import { subscriptionRoute } from "./feature/subscription/subscriptionRoute";
-import { revenueCatWebhookRoute, stripeWebhookRoute } from "./feature/webhook";
+import { polarWebhookRoute, revenueCatWebhookRoute } from "./feature/webhook";
 import {
   activityLogSyncRoute,
   activitySyncRoute,
@@ -91,7 +91,7 @@ const routes = app
     return c.json({ message: "Hello" }, 200);
   })
   .route("/auth", authRoute)
-  .route("/webhooks/stripe", stripeWebhookRoute)
+  .route("/webhooks/polar", polarWebhookRoute)
   .route("/webhooks/revenuecat", revenueCatWebhookRoute)
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)

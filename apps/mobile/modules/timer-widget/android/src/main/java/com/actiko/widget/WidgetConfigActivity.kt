@@ -29,6 +29,12 @@ class WidgetConfigActivity : Activity() {
             return
         }
 
+        if (!WidgetPlanHelper.isWidgetAllowed(this, appWidgetId)) {
+            Toast.makeText(this, "Pro\u306B\u30A2\u30C3\u30D7\u30B0\u30EC\u30FC\u30C9\u3057\u3066\u30A6\u30A3\u30B8\u30A7\u30C3\u30C8\u3092\u8FFD\u52A0", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
         val dbHelper = WidgetDbHelper(this)
         val activities = dbHelper.getTimerActivities()
 

@@ -25,7 +25,7 @@ struct WidgetDbHelper {
         return container.appendingPathComponent("SQLite/actiko.db").path
     }
 
-    private func openDatabase() -> OpaquePointer? {
+    func openDatabase() -> OpaquePointer? {
         let path = Self.dbPath
         guard FileManager.default.fileExists(atPath: path) else { return nil }
         var db: OpaquePointer?
@@ -37,6 +37,10 @@ struct WidgetDbHelper {
     }
 
     func getTimerActivities() -> [ActivityRow] {
+        getActivitiesByMode("timer")
+    }
+
+    func getActivitiesByMode(_ mode: String) -> [ActivityRow] {
         guard let db = openDatabase() else { return [] }
         defer { sqlite3_close(db) }
         let sql = """
@@ -49,7 +53,7 @@ struct WidgetDbHelper {
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK,
               let stmt else { return [] }
         defer { sqlite3_finalize(stmt) }
-        bindText(stmt, 1, "timer")
+        bindText(stmt, 1, mode)
         var results: [ActivityRow] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
             results.append(readActivityRow(stmt))
@@ -140,7 +144,13 @@ struct WidgetDbHelper {
 
     // MARK: - Helpers
 
-    private func readActivityRow(_ stmt: OpaquePointer) -> ActivityRow {
+    static func todayDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+
+    func readActivityRow(_ stmt: OpaquePointer) -> ActivityRow {
         ActivityRow(
             id: columnText(stmt, 0),
             name: columnText(stmt, 1),
@@ -150,14 +160,14 @@ struct WidgetDbHelper {
         )
     }
 
-    private func columnText(_ stmt: OpaquePointer, _ index: Int32) -> String {
+    func columnText(_ stmt: OpaquePointer, _ index: Int32) -> String {
         if let cStr = sqlite3_column_text(stmt, index) {
             return String(cString: cStr)
         }
         return ""
     }
 
-    private func columnOptionalText(_ stmt: OpaquePointer, _ index: Int32) -> String? {
+    func columnOptionalText(_ stmt: OpaquePointer, _ index: Int32) -> String? {
         if sqlite3_column_type(stmt, index) == SQLITE_NULL { return nil }
         if let cStr = sqlite3_column_text(stmt, index) {
             return String(cString: cStr)
@@ -165,11 +175,11 @@ struct WidgetDbHelper {
         return nil
     }
 
-    private func bindText(_ stmt: OpaquePointer, _ index: Int32, _ value: String) {
+    func bindText(_ stmt: OpaquePointer, _ index: Int32, _ value: String) {
         sqlite3_bind_text(stmt, index, (value as NSString).utf8String, -1, nil)
     }
 
-    private func bindOptionalText(_ stmt: OpaquePointer, _ index: Int32, _ value: String?) {
+    func bindOptionalText(_ stmt: OpaquePointer, _ index: Int32, _ value: String?) {
         if let value = value {
             sqlite3_bind_text(stmt, index, (value as NSString).utf8String, -1, nil)
         } else {

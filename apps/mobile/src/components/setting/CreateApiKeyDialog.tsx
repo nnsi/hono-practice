@@ -27,7 +27,7 @@ export function CreateApiKeyDialog({
     setError(null);
 
     try {
-      const result = await onCreate({ name: name.trim() });
+      const result = await onCreate({ name: name.trim(), scope: "all" });
       setCreatedKey(result.apiKey.key);
     } catch {
       setError("APIキーの作成に失敗しました");

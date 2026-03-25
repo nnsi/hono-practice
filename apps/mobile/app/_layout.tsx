@@ -19,6 +19,7 @@ import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
 import { useAuth } from "../src/hooks/useAuth";
 import { useOtaUpdate } from "../src/hooks/useOtaUpdate";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
+import { initRevenueCat } from "../src/lib/revenueCat";
 import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
@@ -67,6 +68,14 @@ export default function RootLayout() {
   useEffect(() => {
     setupGlobalErrorHandler();
   }, []);
+
+  useEffect(() => {
+    if (auth.isLoggedIn && auth.userId) {
+      initRevenueCat(auth.userId).catch(() => {
+        // RevenueCat init failure is non-fatal
+      });
+    }
+  }, [auth.isLoggedIn, auth.userId]);
 
   const startupRedirectDone = useRef(false);
 

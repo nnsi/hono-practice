@@ -19,6 +19,7 @@ import {
 import { AppleLinkSection } from "./AppleLinkSection";
 import { GoogleLinkSection } from "./GoogleLinkSection";
 import { Divider, Section, SettingSwitch } from "./SettingsParts";
+import { SubscriptionSection } from "./SubscriptionSection";
 import { useAppSettings } from "./useAppSettings";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -57,6 +58,8 @@ export function SettingsPage() {
           </View>
         </View>
       </View>
+
+      <SubscriptionSection shadow={shadow} />
 
       <GoogleLinkSection shadow={shadow} />
       {Platform.OS === "ios" && <AppleLinkSection shadow={shadow} />}

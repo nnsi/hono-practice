@@ -53,7 +53,7 @@
 - plan情報をSQLite/Dexieにどう持つか
 - ネイティブ（Swift/Kotlin）からplanをどう参照するか
 - サーバーの `/user/me` にplanを含める（設計ドキュメント既存）
-- RevenueCat/StripeのWebhookでuser_subscriptionレコードを更新
+- RevenueCat/PolarのWebhookでuser_subscriptionレコードを更新
 
 **以下は並列実行可能:**
 
@@ -61,13 +61,41 @@
    - カウンター / チェック / バイナリの3モード
    - 手動入力・テンキーはウィジェットUI制約と合わないため対象外
    - Free: 1個まで / Pro: 無制限
-2. 音声認識記録（Mobile UI）
+2. 音声認識記録（OS標準音声アシスタント連携）
    - バックエンドAI基盤は実装済み（`/users/ai/activity-logs/from-speech`）
-   - expo-avで録音 + AI API連携 + 結果確認UI
+   - アプリを起動せずにOS音声認識 → テキスト → HTTP POST → バックエンドAI解析 → リモートDB書き込み
+   - **iOS**: App Intents で `RecordBySpeechIntent` を追加。Siri / ショートカットアプリから呼べる（既存 `TimerAppIntents.swift` と同パターン）
+   - **Android**: App Actions (`actions.xml`) でGoogle Assistantから呼べるカスタムアクションを定義。fulfillmentはActivity/Serviceで受けてHTTP POST
+   - **認証方式**: voice-onlyスコープのAPI Keyを発行し、OSのセキュアストレージに保存（iOS: App Group Keychain / Android: EncryptedSharedPreferences）。ネイティブ拡張はそこから読み取ってHTTPヘッダに付与。既存API Key基盤を流用
+   - **前提作業**: 現状のAPI Keyにscopeの概念がない（`api_key`テーブルにscopeカラムなし）。scopeカラム追加（マイグレーション + domain/repository/usecase修正）を直列で先に実施する
 3. APIキー Pro ゲート
    - 既存premiumMiddlewareで制御（実装済みに近い）
-4. RevenueCat（Mobile） + Stripe（Web）
-   - サブスク商品作成、SDK統合、Webhook受信、サンドボックステスト
+4. RevenueCat（Mobile） + Polar（Web）
+
+   Webの決済にはPolarを採用（Merchant of Record）。Polarが法的な売主となり、税務処理（消費税/VAT/Sales Tax）を代行する。個人開発で国際販売の税務を自前対応する必要がなくなる。手数料は4% + 40¢（Stripeより約1%高いが、税務処理込みなので実質的には安い）。
+
+   **実装済み（バックエンド）:**
+   - Webhook受信・署名検証（RevenueCat Bearer / Stripe HMAC）
+   - Webhook → `user_subscription` テーブル upsert（INITIAL_PURCHASE / RENEWAL / CANCELLATION / EXPIRATION 等）
+   - `premiumMiddleware` によるPro判定
+   - `GET /subscription` エンドポイント
+   - entitlement判定ロジック（`canUseApiKey`, `canUseVoiceRecord`, `canUseWatch`, `maxWidgetCount`）
+   - フロント/モバイルの `usePlan` フック（キャッシュ読み取り）
+
+   **実装が必要（Claude Code作業）:**
+   - Stripe Webhook → Polar Webhookへの差し替え（Standard Webhooks準拠、署名検証方式が異なる）
+   - Polar Checkout連携（PolarホストのCheckout UIへのリダイレクト。Stripe Checkout Session作成より軽量）
+   - Web側の購入UI（アップグレードモーダル / 価格表示 / Polar Checkoutへの遷移）
+   - Mobile側のRevenueCat SDK統合（`react-native-purchases`）→ アプリ内課金フロー
+   - Mobile側の購入UI（アップグレード画面 / 復元ボタン）
+   - Webhookエンドポイントの本番URL設定後のE2Eテスト（現状はモック呼び出しのみ）
+
+   **ユーザー作業（アカウント・ダッシュボード操作）:**
+   - Polar: アカウント作成 → サブスク商品（Product）・価格作成 → Webhook URL設定 → APIキー取得 → サンドボックスで課金フローテスト
+   - RevenueCat: プロジェクト作成 → App Store Connect / Google Play Console と接続 → サブスク商品（Product）登録 → Webhook URL設定 → APIキー取得
+   - App Store Connect: サブスクリプショングループ・商品作成 → サンドボックステスターアカウント作成
+   - Google Play Console: 定期購入商品作成 → テスト用ライセンスアカウント登録
+   - 環境変数の登録: Polar APIキー・Webhook Secret、`REVENUECAT_WEBHOOK_AUTH_KEY`、RevenueCat APIキー
 
 **想定工期: 約5日（Claude Code全力並列稼働）**
 

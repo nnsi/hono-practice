@@ -12,6 +12,7 @@ struct TimerEntry: TimelineEntry {
     let hasPendingKindSelect: Bool
     let activityId: String?
     let kinds: [KindInfo]
+    let isProLocked: Bool
 
     struct KindInfo: Identifiable {
         let id: String
@@ -28,7 +29,8 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
         TimerEntry(
             date: Date(), activityName: "Activity", activityEmoji: "⏱",
             isRunning: false, elapsedMs: 0, timerStartDate: nil,
-            hasPendingKindSelect: false, activityId: nil, kinds: []
+            hasPendingKindSelect: false, activityId: nil, kinds: [],
+            isProLocked: false
         )
     }
 
@@ -50,7 +52,16 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
             return TimerEntry(
                 date: Date(), activityName: "タップして設定", activityEmoji: "",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,
-                hasPendingKindSelect: false, activityId: nil, kinds: []
+                hasPendingKindSelect: false, activityId: nil, kinds: [],
+                isProLocked: false
+            )
+        }
+        if !WidgetPlanHelper.isWidgetAllowed() {
+            return TimerEntry(
+                date: Date(), activityName: "Timer", activityEmoji: "⏱",
+                isRunning: false, elapsedMs: 0, timerStartDate: nil,
+                hasPendingKindSelect: false, activityId: activityId, kinds: [],
+                isProLocked: true
             )
         }
         let dbHelper = WidgetDbHelper()
@@ -58,7 +69,8 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
             return TimerEntry(
                 date: Date(), activityName: "削除された活動", activityEmoji: "",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,
-                hasPendingKindSelect: false, activityId: activityId, kinds: []
+                hasPendingKindSelect: false, activityId: activityId, kinds: [],
+                isProLocked: false
             )
         }
         let isRunning = state.isRunning(activityId: activityId)
@@ -76,7 +88,8 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
             date: Date(), activityName: activity.name,
             activityEmoji: activity.emoji, isRunning: isRunning,
             elapsedMs: elapsedMs, timerStartDate: timerStartDate,
-            hasPendingKindSelect: pending, activityId: activityId, kinds: kinds
+            hasPendingKindSelect: pending, activityId: activityId, kinds: kinds,
+            isProLocked: false
         )
     }
 }

@@ -5,5 +5,8 @@ import WidgetKit
 struct ActikoWidgetBundle: WidgetBundle {
     var body: some Widget {
         TimerWidget()
+        CounterWidget()
+        CheckWidget()
+        BinaryWidget()
     }
 }

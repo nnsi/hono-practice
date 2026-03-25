@@ -6,6 +6,7 @@ import { LegalModal } from "../common/LegalModal";
 import { AccountSection } from "./AccountSection";
 import { DataManagementSection } from "./DataManagementSection";
 import { SettingCheckbox } from "./SettingCheckbox";
+import { SubscriptionSection } from "./SubscriptionSection";
 import { useAppSettings } from "./useAppSettings";
 
 export function SettingsPage() {
@@ -56,6 +57,7 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <SubscriptionSection />
         <AccountSection />
         <DataManagementSection />
 

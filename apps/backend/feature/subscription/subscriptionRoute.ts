@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { AppContext } from "@backend/context";
 import { noopTracer } from "@backend/lib/tracer";
 
+import { checkoutRoute } from "./checkoutRoute";
 import { newSubscriptionHandler } from "./subscriptionHandler";
 import { newSubscriptionRepository } from "./subscriptionRepository";
 import { newSubscriptionUsecase } from "./subscriptionUsecase";
@@ -29,11 +30,13 @@ export function createSubscriptionRoute() {
     return next();
   });
 
-  return app.get("/", async (c) => {
-    const userId = c.get("userId");
-    const res = await c.var.h.getSubscription(userId);
-    return c.json(res);
-  });
+  return app
+    .get("/", async (c) => {
+      const userId = c.get("userId");
+      const res = await c.var.h.getSubscription(userId);
+      return c.json(res);
+    })
+    .route("/checkout", checkoutRoute);
 }
 
 export const subscriptionRoute = createSubscriptionRoute();

@@ -40,7 +40,7 @@ class WidgetDbHelper(private val context: Context) {
         }
     }
 
-    private fun openDatabase(): SQLiteDatabase? {
+    internal fun openDatabase(): SQLiteDatabase? {
         val file = File(dbPath)
         if (!file.exists()) {
             Log.e("WidgetDb", "DB not found at: $dbPath")
@@ -55,32 +55,7 @@ class WidgetDbHelper(private val context: Context) {
         }
     }
 
-    fun getTimerActivities(): List<ActivityRow> {
-        val db = openDatabase() ?: return emptyList()
-        return try {
-            val cursor = db.rawQuery(
-                "SELECT id, name, emoji, quantity_unit, recording_mode FROM activities WHERE recording_mode = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current') ORDER BY order_index",
-                arrayOf("timer"),
-            )
-            val results = mutableListOf<ActivityRow>()
-            cursor.use {
-                while (it.moveToNext()) {
-                    results.add(
-                        ActivityRow(
-                            id = it.getString(0),
-                            name = it.getString(1),
-                            emoji = it.getString(2) ?: "",
-                            quantityUnit = it.getString(3) ?: "",
-                            recordingMode = it.getString(4) ?: "timer",
-                        ),
-                    )
-                }
-            }
-            results
-        } finally {
-            db.close()
-        }
-    }
+    fun getTimerActivities(): List<ActivityRow> = getActivitiesByRecordingMode("timer")
 
     fun getActivityById(id: String): ActivityRow? {
         val db = openDatabase() ?: return null
@@ -120,6 +95,33 @@ class WidgetDbHelper(private val context: Context) {
                             id = it.getString(0),
                             name = it.getString(1),
                             color = it.getString(2),
+                        ),
+                    )
+                }
+            }
+            results
+        } finally {
+            db.close()
+        }
+    }
+
+    fun getActivitiesByRecordingMode(mode: String): List<ActivityRow> {
+        val db = openDatabase() ?: return emptyList()
+        return try {
+            val cursor = db.rawQuery(
+                "SELECT id, name, emoji, quantity_unit, recording_mode FROM activities WHERE recording_mode = ? AND deleted_at IS NULL AND user_id = (SELECT user_id FROM auth_state WHERE id = 'current') ORDER BY order_index",
+                arrayOf(mode),
+            )
+            val results = mutableListOf<ActivityRow>()
+            cursor.use {
+                while (it.moveToNext()) {
+                    results.add(
+                        ActivityRow(
+                            id = it.getString(0),
+                            name = it.getString(1),
+                            emoji = it.getString(2) ?: "",
+                            quantityUnit = it.getString(3) ?: "",
+                            recordingMode = it.getString(4) ?: mode,
                         ),
                     )
                 }

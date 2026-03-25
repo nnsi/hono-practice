@@ -1,2 +1,2 @@
+export { polarWebhookRoute } from "./polarWebhookRoute";
 export { revenueCatWebhookRoute } from "./revenueCatWebhookRoute";
-export { stripeWebhookRoute } from "./stripeWebhookRoute";
