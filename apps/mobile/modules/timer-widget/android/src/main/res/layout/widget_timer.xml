@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_activity_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Activity"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp" />
+
+    <Chronometer
+        android:id="@+id/widget_timer_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:fontFamily="monospace"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/widget_btn_start"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Start"
+            android:src="@drawable/ic_play"
+            android:tint="#4CAF50" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_pause"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Pause"
+            android:src="@drawable/ic_pause"
+            android:tint="#FF9800"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_stop"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Stop"
+            android:src="@drawable/ic_stop"
+            android:tint="#F44336"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_reset"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Reset"
+            android:src="@drawable/ic_reset"
+            android:tint="#9E9E9E"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>

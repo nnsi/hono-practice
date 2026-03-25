@@ -2,6 +2,7 @@ import { v7 } from "uuid";
 import { z } from "zod";
 
 import { DomainValidateError } from "../errors";
+import { canUseApiKey as canUseApiKeyEntitlement } from "./entitlement";
 
 export const subscriptionIdSchema = z.string().uuid().brand<"SubscriptionId">();
 
@@ -18,7 +19,7 @@ export function createSubscriptionId(id?: string): SubscriptionId {
   return parsedId.data;
 }
 
-export type SubscriptionPlan = "free" | "premium" | "enterprise";
+export type SubscriptionPlan = "free" | "premium";
 export type SubscriptionStatus =
   | "trial"
   | "active"
@@ -66,7 +67,7 @@ export function isSubscriptionActive(
 export function isSubscriptionPremium(
   sub: Pick<SubscriptionData, "plan">,
 ): boolean {
-  return sub.plan === "premium" || sub.plan === "enterprise";
+  return sub.plan === "premium";
 }
 
 export function isSubscriptionInTrial(
@@ -80,7 +81,8 @@ export const newSubscription = (params: SubscriptionData): Subscription => {
   const isActive = (): boolean => isSubscriptionActive(params);
   const isPremium = (): boolean => isSubscriptionPremium(params);
   const isInTrial = (): boolean => isSubscriptionInTrial(params);
-  const canUseApiKey = (): boolean => isActive() && isPremium();
+  const canUseApiKey = (): boolean =>
+    isActive() && canUseApiKeyEntitlement(params.plan);
 
   return {
     ...params,

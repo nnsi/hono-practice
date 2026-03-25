@@ -20,11 +20,16 @@ export function createApiKeyId(id?: string): ApiKeyId {
 
 // Cloudflare Workers環境では Web Crypto API を使用
 
+export type ApiKeyScope = "all" | "voice";
+
+export const API_KEY_SCOPES = ["all", "voice"] as const;
+
 export type ApiKey = {
   id: ApiKeyId;
   userId: string;
   key: string;
   name: string;
+  scope: ApiKeyScope;
   lastUsedAt: Date | null;
   isActive: boolean;
   createdAt: Date;
@@ -35,6 +40,7 @@ export type ApiKey = {
 export type CreateApiKeyData = {
   userId: string;
   name: string;
+  scope?: ApiKeyScope;
 };
 
 export type UpdateApiKeyData = {

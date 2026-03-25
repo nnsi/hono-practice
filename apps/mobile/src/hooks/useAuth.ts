@@ -64,13 +64,21 @@ export function useAuth(): AuthState {
     setSyncReady(true);
   }, []);
 
+  const persistPlan = useCallback(async (plan: string) => {
+    const db = await getDatabase();
+    await db.runAsync("UPDATE auth_state SET plan = ? WHERE id = 'current'", [
+      plan ?? "free",
+    ]);
+  }, []);
+
   const login = useCallback(
     async (loginId: string, password: string) => {
       await apiLogin(loginId, password);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
+      await persistPlan(user.plan);
     },
-    [loginWithUserCheck],
+    [loginWithUserCheck, persistPlan],
   );
 
   const googleLogin = useCallback(
@@ -78,8 +86,9 @@ export function useAuth(): AuthState {
       await apiGoogleLogin(credential);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
+      await persistPlan(user.plan);
     },
-    [loginWithUserCheck],
+    [loginWithUserCheck, persistPlan],
   );
 
   const appleLogin = useCallback(
@@ -87,8 +96,9 @@ export function useAuth(): AuthState {
       await apiAppleLogin(credential);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
+      await persistPlan(user.plan);
     },
-    [loginWithUserCheck],
+    [loginWithUserCheck, persistPlan],
   );
 
   const register = useCallback(
@@ -96,8 +106,9 @@ export function useAuth(): AuthState {
       await apiRegister(loginId, password);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
+      await persistPlan(user.plan);
     },
-    [loginWithUserCheck],
+    [loginWithUserCheck, persistPlan],
   );
 
   const logout = useCallback(async () => {

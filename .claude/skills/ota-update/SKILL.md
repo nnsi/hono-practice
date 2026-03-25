@@ -21,7 +21,7 @@ user_invocable: true
 `eas` コマンドが `app.config.ts` を読み込むために必要。
 
 ```bash
-cd D:/workspace/hono-practice/apps/mobile && set -a && source .env && set +a
+cd apps/mobile && set -a && source .env && set +a
 ```
 
 これで `BUNDLE_ID`, `EAS_PROJECT_ID`, `EAS_OWNER` がセットされる。**この手順を飛ばすと `eas` コマンドが `EAS project not configured` エラーで失敗する。**
@@ -29,7 +29,7 @@ cd D:/workspace/hono-practice/apps/mobile && set -a && source .env && set +a
 ### 3. EXPO_PUBLIC 環境変数を取得
 
 ```bash
-cd D:/workspace/hono-practice/apps/mobile && npx eas-cli env:list --environment preview
+cd apps/mobile && npx eas-cli env:list --environment preview
 ```
 
 出力から `EXPO_PUBLIC_*` の変数と値を取得する。
@@ -37,7 +37,7 @@ cd D:/workspace/hono-practice/apps/mobile && npx eas-cli env:list --environment 
 ### 4. Android配信
 
 ```bash
-cd D:/workspace/hono-practice/apps/mobile && \
+cd apps/mobile && \
 EXPO_PUBLIC_API_URL=<値> \
 EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
@@ -51,7 +51,7 @@ npx eas-cli update --channel preview --platform android --message "<メッセー
 ### 5. iOS配信
 
 ```bash
-cd D:/workspace/hono-practice/apps/mobile && \
+cd apps/mobile && \
 EXPO_PUBLIC_API_URL=<値> \
 EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
@@ -70,4 +70,4 @@ Android/iOSそれぞれの Update ID と EAS Dashboard URL を報告する。
 
 - `--platform all` は使わない（webバンドル生成でfavicon.pngのMIMEエラーが発生するため）
 - 環境変数を付け忘れると `EXPO_PUBLIC_API_URL is not set` でアプリが壊れる。**必ず手順2で取得してから配信する**
-- 作業ディレクトリは必ず `D:/workspace/hono-practice/apps/mobile` を絶対パスで指定する
+- 作業ディレクトリは必ずプロジェクトルートから `apps/mobile` に移動してから実行する

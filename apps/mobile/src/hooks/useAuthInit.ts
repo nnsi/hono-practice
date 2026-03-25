@@ -64,6 +64,11 @@ export function useAuthInit(deps: AuthInitDeps): void {
       setIsLoggedIn(true);
       await syncWithUserCheck(user.id);
       if (gen !== authGenRef.current) return false;
+      const planDb = await getDatabase();
+      await planDb.runAsync(
+        "UPDATE auth_state SET plan = ? WHERE id = 'current'",
+        [user.plan ?? "free"],
+      );
       setSyncReady(true);
       return true;
     };

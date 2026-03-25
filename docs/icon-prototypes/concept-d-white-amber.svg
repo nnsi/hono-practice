@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#FFFFFF"/>
+  <polygon points="256,70 130,420 180,420 256,195 332,420 382,420" fill="rgb(217,119,6)" opacity="0.12" transform="translate(-24, 0)"/>
+  <polygon points="256,70 130,420 180,420 256,195 332,420 382,420" fill="rgb(217,119,6)" opacity="0.25" transform="translate(-12, 0)"/>
+  <polygon points="256,70 130,420 180,420 256,195" fill="rgb(217,119,6)"/>
+  <polygon points="256,70 332,420 382,420 256,195" fill="rgb(217,119,6)"/>
+  <polyline points="42,320 100,320 210,320 228,275 248,350 264,258 280,335 296,295 370,320 470,320" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="42,320 100,320 210,320 228,275 248,350 264,258 280,335 296,295 370,320 470,320" fill="none" stroke="rgb(217,119,6)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="42,320 100,320 210,320 228,275 248,350 264,258 280,335 296,295 370,320 470,320" fill="none" stroke="rgb(217,119,6)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.2"/>
+  <circle cx="264" cy="258" r="5" fill="rgb(217,119,6)"/>
+  <circle cx="264" cy="258" r="10" fill="rgb(217,119,6)" opacity="0.3"/>
+</svg>

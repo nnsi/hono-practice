@@ -45,7 +45,10 @@ export function createApiKeyRoute() {
       const userId = c.get("userId");
       const params = c.req.valid("json");
 
-      const res = await c.var.h.createApiKey(userId, params);
+      const res = await c.var.h.createApiKey(userId, {
+        name: params.name,
+        scope: params.scope,
+      });
 
       return c.json(res);
     })

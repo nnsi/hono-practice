@@ -5,6 +5,7 @@ export const GetUserResponseSchema = z.object({
   name: z.string().nullable(),
   providers: z.array(z.string()),
   providerEmails: z.record(z.string(), z.string()).optional(),
+  plan: z.enum(["free", "premium"]).default("free"),
 });
 
 export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;

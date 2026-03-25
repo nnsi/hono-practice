@@ -25,10 +25,12 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     await db.activityIconDeleteQueue.clear();
   },
   updateAuthState: async (userId) => {
+    const existing = await db.authState.get("current");
     await db.authState.put({
       id: "current",
       userId,
       lastLoginAt: new Date().toISOString(),
+      plan: existing?.plan,
     });
   },
   isLocalDataEmpty: async () => {

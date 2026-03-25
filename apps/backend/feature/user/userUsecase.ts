@@ -2,6 +2,7 @@ import { sign } from "hono/jwt";
 
 import { AppError, ConflictError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
+import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
 import {
   type User,
   type UserId,
@@ -11,6 +12,7 @@ import {
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
+import type { SubscriptionUsecase } from "../subscription/subscriptionUsecase";
 import type { UserRepository } from "./userRepository";
 
 export type CreateUserInputParams = {
@@ -22,6 +24,7 @@ export type CreateUserInputParams = {
 export type UserWithProviders = User & {
   providers: string[];
   providerEmails?: Record<string, string>;
+  plan: SubscriptionPlan;
 };
 
 export type UserUsecase = {
@@ -36,13 +39,14 @@ export type UserUsecase = {
 export function newUserUsecase(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  subscriptionUc: SubscriptionUsecase,
   tracer: Tracer,
 ): UserUsecase {
   const passwordVerifier = new MultiHashPasswordVerifier();
 
   return {
     createUser: createUser(repo, passwordVerifier, tracer),
-    getUserById: getUserById(repo, userProviderRepo, tracer),
+    getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
     deleteUser: deleteUser(repo, tracer),
   };
 }
@@ -86,19 +90,20 @@ function createUser(
 function getUserById(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  subscriptionUc: SubscriptionUsecase,
   tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<UserWithProviders> => {
-    const [user, userProviders] = await Promise.all([
+    const [user, userProviders, subscription] = await Promise.all([
       tracer.span("db.getUserById", () => repo.getUserById(userId)),
       tracer.span("db.getUserProvidersByUserId", () =>
         userProviderRepo.getUserProvidersByUserId(userId),
       ),
+      subscriptionUc.getSubscriptionByUserIdOrDefault(userId),
     ]);
     if (!user) throw new AppError("user not found", 404);
     const providers = userProviders.map((p) => p.provider);
 
-    // providerEmailsオブジェクトを作成
     const providerEmails: Record<string, string> = {};
     for (const userProvider of userProviders) {
       if (userProvider.email) {
@@ -111,6 +116,7 @@ function getUserById(
       providers,
       providerEmails:
         Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
+      plan: subscription.plan,
     };
   };
 }

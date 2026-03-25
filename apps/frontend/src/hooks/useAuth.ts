@@ -57,6 +57,7 @@ export function useAuth(): AuthState {
       }
       const user = await userRes.json();
       await loginWithUserCheck(user.id);
+      await db.authState.update("current", { plan: user.plan });
     },
     [loginWithUserCheck],
   );
@@ -77,6 +78,7 @@ export function useAuth(): AuthState {
       }
       const user = await userRes.json();
       await loginWithUserCheck(user.id);
+      await db.authState.update("current", { plan: user.plan });
     },
     [loginWithUserCheck],
   );
@@ -97,6 +99,7 @@ export function useAuth(): AuthState {
       }
       const user = await userRes.json();
       await loginWithUserCheck(user.id);
+      await db.authState.update("current", { plan: user.plan });
     },
     [loginWithUserCheck],
   );
@@ -117,6 +120,7 @@ export function useAuth(): AuthState {
       }
       const user = await userRes.json();
       await loginWithUserCheck(user.id);
+      await db.authState.update("current", { plan: user.plan });
     },
     [loginWithUserCheck],
   );

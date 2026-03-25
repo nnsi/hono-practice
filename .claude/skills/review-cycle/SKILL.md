@@ -50,9 +50,12 @@ user_invocable: true
 ```
 
 #### レビュアーB: Codex
+
+**`-o` は使わず stdout で結果を受け取る**（ファイル出力だと前セッションの古い出力を誤読するリスクがある）:
 ```bash
-codex exec --full-auto --sandbox read-only -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md" "以下のディレクトリのコードレビューをしてください。<ディレクトリパス> を対象に、実装の正確性・エッジケース・パフォーマンス・セキュリティの観点でCritical/Warning/Infoに分類して指摘してください。最後にLGTM/NOT LGTMの判定を出してください。"
+codex exec --full-auto --sandbox read-only -C "D:\workspace\hono-practice" "以下のディレクトリのコードレビューをしてください。<ディレクトリパス> を対象に、実装の正確性・エッジケース・パフォーマンス・セキュリティの観点でCritical/Warning/Infoに分類して指摘してください。最後にLGTM/NOT LGTMの判定を出してください。"
 ```
+Bashツールの出力からそのまま結果を読み取る。バックグラウンド実行時は output_file から読む。
 
 ### Phase 3: フィードバック統合と修正
 
@@ -82,7 +85,7 @@ codex exec --full-auto --sandbox read-only -C "D:\workspace\hono-practice" -o "%
 
 - レビュー対象ディレクトリを間違えない（正しいパスは `apps/frontend`）
 - Codexの `-C` パスは `D:\workspace\hono-practice` を使う
-- Codexの出力は `%TEMP%\codex-output.md` からReadツールで読み取る
+- Codexは `-o` を使わず stdout で結果を受け取る。ファイル出力は前セッションの古い出力を誤読するリスクがある
 - 修正後の再レビューでは、前回の指摘が解消されたことを明示的に確認させる
 - **計画書レビューと実装レビューは別物**: 計画書のレビュー済み≠実装コードのレビュー済み。大規模リファクタリングでは実装後にも必ず回す
 - Warningでもプロジェクト規約違反（`as`キャスト等）は修正すべきと提案する。「スコープ外」で先送りしない

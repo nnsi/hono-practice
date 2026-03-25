@@ -8,7 +8,8 @@ dist-frontend
 dist-frontend-v2
 .husky
 stats.html
-public
+/public
+apps/backend/public
 *.pkl
 .serena
 tmp
@@ -18,6 +19,9 @@ nul
 *.stackdump
 *.tsbuildinfo
 .expo
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/modules/**/android/build
 
 # Terraform
 terraform/*.tfvars

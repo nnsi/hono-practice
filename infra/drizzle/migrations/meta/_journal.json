@@ -225,6 +225,13 @@
       "when": 1773494353863,
       "tag": "0031_elite_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1774656000000,
+      "tag": "0032_api_key_scope",
+      "breakpoints": true
     }
   ]
 }

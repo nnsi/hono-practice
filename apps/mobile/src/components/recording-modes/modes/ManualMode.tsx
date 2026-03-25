@@ -4,7 +4,6 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { Text, type TextInput, View } from "react-native";
 
 import { IMESafeTextInput } from "../../common/IMESafeTextInput";
-
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
 import { SaveButton } from "../parts/SaveButton";

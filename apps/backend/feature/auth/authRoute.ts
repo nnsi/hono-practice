@@ -11,6 +11,8 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { loginRequestSchema } from "@packages/types/request";
 
+import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
+import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
 import { appleVerify } from "./appleVerify";
@@ -46,7 +48,14 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       oauthVerifiers,
       tracer,
     );
-    const userUc = newUserUsecase(repo, userProviderRepo, tracer);
+    const subscriptionRepo = newSubscriptionRepository(db);
+    const subscriptionUc = newSubscriptionUsecase(subscriptionRepo, tracer);
+    const userUc = newUserUsecase(
+      repo,
+      userProviderRepo,
+      subscriptionUc,
+      tracer,
+    );
     c.set("h", newAuthHandler(uc, userUc.getUserById));
     return next();
   });

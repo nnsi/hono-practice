@@ -66,6 +66,8 @@ export function useAuthInit(deps: AuthInitDeps): void {
       setIsLoggedIn(true);
       await syncWithUserCheck(user.id);
       if (gen !== authGenRef.current) return false;
+      await db.authState.update("current", { plan: user.plan });
+
       setSyncReady(true);
       return true;
     };

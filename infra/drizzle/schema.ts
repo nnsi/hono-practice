@@ -334,6 +334,7 @@ export const apiKeys = pgTable(
       .references(() => users.id),
     key: text("key").notNull().unique(),
     name: text("name").notNull(),
+    scope: text("scope").notNull().default("all"),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -361,7 +362,7 @@ export const userSubscriptions = pgTable(
       .references(() => users.id)
       .unique(),
     plan: text("plan", {
-      enum: ["free", "premium", "enterprise"],
+      enum: ["free", "premium"],
     })
       .notNull()
       .default("free"),

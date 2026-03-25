@@ -34,8 +34,9 @@ export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
       throw new UnauthorizedError("Invalid API key");
     }
 
-    // コンテキストにユーザー情報を設定
+    // コンテキストにユーザー情報とスコープを設定
     c.set("userId", createUserId(apiKey.userId));
+    c.set("apiKeyScope", apiKey.scope);
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       throw e;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<actions>
+    <action intentName="custom.actions.intent.RECORD_BY_SPEECH">
+        <fulfillment urlTemplate="actiko://voice-record{?speechText}">
+            <parameter-mapping
+                intentParameter="speechText"
+                urlParameter="speechText" />
+        </fulfillment>
+        <parameter name="speechText" type="schema.org/Text">
+            <entity-set-reference entitySetId="speechTextEntity" />
+        </parameter>
+    </action>
+</actions>

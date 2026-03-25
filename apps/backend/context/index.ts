@@ -4,6 +4,7 @@ import type {
   AnalyticsEngineDataset,
   R2Bucket,
 } from "@cloudflare/workers-types";
+import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 import type { Subscription } from "@packages/domain/subscription/subscriptionSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -26,6 +27,7 @@ export type AppContext = {
     userId: UserId;
     user?: { id: string };
     subscription?: Subscription;
+    apiKeyScope?: ApiKeyScope;
     logger: Logger;
     tracer: Tracer;
   };

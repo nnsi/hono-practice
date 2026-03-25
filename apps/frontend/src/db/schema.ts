@@ -33,6 +33,7 @@ export type DexieAuthState = {
   id: "current";
   userId: string;
   lastLoginAt: string;
+  plan?: string;
 };
 
 export class ActikoDatabase extends Dexie {

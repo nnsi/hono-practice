@@ -20,13 +20,13 @@ describe("settings", () => {
     await page.waitForSelector('text="起動時に目標画面を表示"', {
       timeout: 15000,
     });
-    await page.waitForSelector('text="目標グラフを非表示"', { timeout: 15000 });
+    await page.waitForSelector('text="やらなかった日付をデフォルトで表示"', {
+      timeout: 15000,
+    });
+    await page.waitForSelector('text="褒めモード"', { timeout: 15000 });
 
     // アカウント設定セクション
     await page.waitForSelector('text="アカウント設定"', { timeout: 15000 });
-
-    // APIキー管理セクション
-    await page.waitForSelector('text="APIキー管理"', { timeout: 15000 });
 
     // データ管理セクション
     await page.waitForSelector('text="データ管理"', { timeout: 15000 });

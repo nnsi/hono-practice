@@ -19,7 +19,7 @@ vi.mock("../db/schema", () => ({
     tasks: { clear: vi.fn() },
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
-    authState: { put: vi.fn() },
+    authState: { put: vi.fn(), get: vi.fn().mockResolvedValue(undefined) },
     transaction: vi
       .fn()
       .mockImplementation(
