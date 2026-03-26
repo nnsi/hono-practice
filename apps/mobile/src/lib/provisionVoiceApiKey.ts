@@ -1,27 +1,24 @@
 import { Platform } from "react-native";
 
 import { customFetch, getApiUrl } from "../utils/apiClient";
-import {
-  getVoiceApiKey,
-  saveVoiceApiKey,
-  saveVoiceBackendUrl,
-} from "./voiceApiKey";
+import { hasVoiceApiKey, saveVoiceCredentials } from "./voiceApiKeyBridge";
 
 const API_URL = getApiUrl();
 
 /**
  * Proユーザーのショートカット用APIキーを自動プロビジョニングする。
- * Keychainにキーが未保存の場合のみ、バックエンドでvoiceスコープのキーを作成して保存する。
+ * 既にキーが保存済みの場合はスキップ。
+ * iOS: Keychain (App Group), Android: EncryptedSharedPreferences
  */
 export async function provisionVoiceApiKey(): Promise<void> {
-  if (Platform.OS !== "ios") return;
+  if (Platform.OS === "web") return;
 
-  const existing = await getVoiceApiKey();
+  const existing = await hasVoiceApiKey();
   if (existing) return;
 
   const res = await customFetch(`${API_URL}/users/api-keys`, {
     method: "POST",
-    body: JSON.stringify({ name: "Siri Shortcut", scope: "voice" }),
+    body: JSON.stringify({ name: "Voice Shortcut", scope: "voice" }),
   });
   if (!res.ok) return;
 
@@ -29,6 +26,5 @@ export async function provisionVoiceApiKey(): Promise<void> {
   const rawKey: string | undefined = data.apiKey?.key;
   if (!rawKey) return;
 
-  await saveVoiceApiKey(rawKey);
-  saveVoiceBackendUrl(API_URL);
+  await saveVoiceCredentials(rawKey, API_URL);
 }

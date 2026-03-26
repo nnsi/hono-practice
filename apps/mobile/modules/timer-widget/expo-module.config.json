@@ -1,6 +1,6 @@
 {
   "platforms": ["android"],
   "android": {
-    "modules": []
+    "modules": ["com.actiko.widget.VoiceApiKeyModule"]
   }
 }
