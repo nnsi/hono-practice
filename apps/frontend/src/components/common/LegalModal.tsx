@@ -1,4 +1,6 @@
 import {
+  commercialTransactionsTitle,
+  createCommercialTransactionsSections,
   createPrivacyPolicySections,
   privacyPolicyTitle,
   termsOfServiceSections,
@@ -10,17 +12,35 @@ import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 
+type LegalType = "privacy" | "terms" | "tokushoho";
+
 type LegalModalProps = {
-  type: "privacy" | "terms";
+  type: LegalType;
   onClose: () => void;
 };
 
+const titleMap = {
+  privacy: privacyPolicyTitle,
+  terms: termsOfServiceTitle,
+  tokushoho: commercialTransactionsTitle,
+} as const;
+
+function getSections(type: LegalType) {
+  switch (type) {
+    case "privacy":
+      return createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL });
+    case "terms":
+      return termsOfServiceSections;
+    case "tokushoho":
+      return createCommercialTransactionsSections({
+        contactEmail: CONTACT_EMAIL,
+      });
+  }
+}
+
 export function LegalModal({ type, onClose }: LegalModalProps) {
-  const title = type === "privacy" ? privacyPolicyTitle : termsOfServiceTitle;
-  const sections =
-    type === "privacy"
-      ? createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL })
-      : termsOfServiceSections;
+  const title = titleMap[type];
+  const sections = getSections(type);
 
   return (
     <ModalOverlay onClose={onClose}>

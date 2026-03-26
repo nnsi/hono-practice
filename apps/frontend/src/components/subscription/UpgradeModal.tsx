@@ -55,7 +55,7 @@ export function UpgradeModal({
 
           <div className="text-center">
             <p className="text-2xl font-bold">
-              ¥480
+              ¥550
               <span className="text-sm font-normal text-gray-500">/月</span>
             </p>
           </div>

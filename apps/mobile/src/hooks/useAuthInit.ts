@@ -2,8 +2,10 @@ import type { MutableRefObject } from "react";
 import { useEffect } from "react";
 
 import NetInfo from "@react-native-community/netinfo";
+import { AppState } from "react-native";
 
 import { getDatabase } from "../db/database";
+import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
 import {
@@ -65,10 +67,14 @@ export function useAuthInit(deps: AuthInitDeps): void {
       await syncWithUserCheck(user.id);
       if (gen !== authGenRef.current) return false;
       const planDb = await getDatabase();
+      const plan = user.plan ?? "free";
       await planDb.runAsync(
         "UPDATE auth_state SET plan = ? WHERE id = 'current'",
-        [user.plan ?? "free"],
+        [plan],
       );
+      if (plan === "premium") {
+        provisionVoiceApiKey().catch(() => {});
+      }
       setSyncReady(true);
       return true;
     };
@@ -129,6 +135,26 @@ export function useAuthInit(deps: AuthInitDeps): void {
 
     init();
 
+    // フォアグラウンド復帰時にplanを同期 + APIキー自動プロビジョニング
+    const appStateSub = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") return;
+      apiGetMe()
+        .then(async (user) => {
+          const plan = user.plan ?? "free";
+          const db = await getDatabase();
+          await db.runAsync(
+            "UPDATE auth_state SET plan = ? WHERE id = 'current'",
+            [plan],
+          );
+          if (plan === "premium") {
+            await provisionVoiceApiKey();
+          }
+        })
+        .catch(() => {
+          // オフラインなら無視
+        });
+    });
+
     // リフレッシュトークンが回復不能な失敗(400/401/403等)をした場合の強制ログアウト
     setOnAuthExpired(() => {
       authGenRef.current++;
@@ -144,6 +170,7 @@ export function useAuthInit(deps: AuthInitDeps): void {
     });
 
     return () => {
+      appStateSub.remove();
       onlineRetryRef.current?.();
       onlineRetryRef.current = null;
       setOnAuthExpired(null);

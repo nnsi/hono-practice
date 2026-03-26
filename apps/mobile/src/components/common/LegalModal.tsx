@@ -10,9 +10,11 @@ import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || "";
 
+type LegalType = "privacy" | "terms";
+
 type LegalModalProps = {
   visible: boolean;
-  type: "privacy" | "terms";
+  type: LegalType;
   onClose: () => void;
 };
 

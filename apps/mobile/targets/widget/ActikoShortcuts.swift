@@ -8,7 +8,9 @@ struct ActikoShortcuts: AppShortcutsProvider {
             phrases: [
                 "Record with \(.applicationName)",
                 "\(.applicationName) で記録",
-                "\(.applicationName) に記録して"
+                "\(.applicationName) に記録して",
+                "\(.applicationName) で活動を記録",
+                "\(.applicationName) に活動を記録して"
             ],
             shortTitle: "Voice Record",
             systemImageName: "mic"

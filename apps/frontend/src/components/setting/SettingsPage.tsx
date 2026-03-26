@@ -12,9 +12,9 @@ import { useAppSettings } from "./useAppSettings";
 
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
-  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
-    null,
-  );
+  const [legalModal, setLegalModal] = useState<
+    "privacy" | "terms" | "tokushoho" | null
+  >(null);
 
   return (
     <div className="bg-white">
@@ -93,6 +93,13 @@ export function SettingsPage() {
                 className="text-sm text-blue-600 hover:text-blue-700 underline"
               >
                 利用規約
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModal("tokushoho")}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                特定商取引法に基づく表記
               </button>
             </div>
           </div>

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TokushohoRouteImport } from './routes/tokushoho'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as StatsRouteImport } from './routes/stats'
@@ -19,6 +20,11 @@ import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TokushohoRoute = TokushohoRouteImport.update({
+  id: '/tokushoho',
+  path: '/tokushoho',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tokushoho': typeof TokushohoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tokushoho': typeof TokushohoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tokushoho': typeof TokushohoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/tasks'
     | '/terms'
+    | '/tokushoho'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/tasks'
     | '/terms'
+    | '/tokushoho'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/tasks'
     | '/terms'
+    | '/tokushoho'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,10 +157,18 @@ export interface RootRouteChildren {
   StatsRoute: typeof StatsRoute
   TasksRoute: typeof TasksRoute
   TermsRoute: typeof TermsRoute
+  TokushohoRoute: typeof TokushohoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tokushoho': {
+      id: '/tokushoho'
+      path: '/tokushoho'
+      fullPath: '/tokushoho'
+      preLoaderRoute: typeof TokushohoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatsRoute: StatsRoute,
   TasksRoute: TasksRoute,
   TermsRoute: TermsRoute,
+  TokushohoRoute: TokushohoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
