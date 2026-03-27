@@ -36,6 +36,7 @@ export function createUseManualMode(
     const submit = () => {
       const parsed = quantity !== "" ? Number(quantity) : null;
       if (parsed !== null && !Number.isFinite(parsed)) return;
+      if (parsed !== null && (parsed < 0 || parsed > 999999)) return;
       props.onSave({ quantity: parsed, memo, activityKindId: selectedKindId });
     };
 

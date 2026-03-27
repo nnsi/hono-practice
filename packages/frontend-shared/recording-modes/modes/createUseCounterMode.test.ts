@@ -119,6 +119,37 @@ describe("createUseCounterMode", () => {
     });
   });
 
+  it("submitManual rejects non-integer quantity", () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCounterMode(makeProps({ onSave })));
+    act(() => result.current.setQuantity("2.5"));
+    act(() => result.current.submitManual());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("submitManual rejects quantity exceeding 999999", () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCounterMode(makeProps({ onSave })));
+    act(() => result.current.setQuantity("1000000"));
+    act(() => result.current.submitManual());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("submitManual rejects negative quantity", () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCounterMode(makeProps({ onSave })));
+    act(() => result.current.setQuantity("-1"));
+    act(() => result.current.submitManual());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("recordStep rejects non-integer step", () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCounterMode(makeProps({ onSave })));
+    act(() => result.current.recordStep(1.5));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it("initializes with counter tab active", () => {
     const { result } = renderHook(() => useCounterMode(makeProps()));
     expect(result.current.activeTab).toBe("counter");

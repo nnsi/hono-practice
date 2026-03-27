@@ -169,21 +169,115 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 ### 共通
 
-- [ ] アプリ名: `Actiko`
+- [x] アプリ名: `Actiko`
 - [ ] 短い説明文（80文字以内）
 - [ ] 詳細な説明文（4000文字以内）
 - [x] プライバシーポリシー URL を用意（**必須**）
-- [ ] カテゴリ: `Productivity` or `Health & Fitness`
+- [ ] カテゴリ: プライマリ `Lifestyle` / セカンダリ `Health & Fitness`
 - [ ] 対象年齢の設定
+
+### 説明文たたき台
+
+#### App Store サブタイトル（30文字以内）
+
+> 最速で活動量を記録するアプリ
+
+#### App Store プロモーションテキスト（170文字以内・審査なしで随時変更可）
+
+> 習慣アプリが続かなかった人へ。筋トレ・読書・ゲーム戦績──どんな活動も1タップで記録。6種類の入力UIが、あなたの活動に最適な記録体験を提供します。
+
+#### 説明文（App Store / Google Play 共通）
+
+```
+■ Actikoとは？
+
+「記録がめんどくさい」──それが習慣アプリを辞めた理由なら、Actikoが答えです。
+
+活動ごとに最適な入力UIを選べるから、どんな記録も最小手数で完了。
+1年以上、開発者自身が毎日使い続けている実績があります。
+
+■ 6つの記録モード
+
+🔢 カウンター ── タップで+1。腕立て・スクワットに
+⏱ タイマー ── ストップウォッチで時間を計測。読書・作業に
+✅ チェック ── やった/やってないのワンタップ記録
+🆚 バイナリ ── 勝ち/負けなど二択を瞬時に記録
+🔟 テンキー ── 数値を直接入力。スコアや摂取量に
+📝 マニュアル ── 自由入力のフォールバック
+
+■ こんな人に
+
+・習慣アプリを3つ以上試して続かなかった
+・筋トレ回数、ゲーム戦績、読書量など種類がバラバラ
+・記録は1秒でも早く終わらせたい
+
+■ 主な機能
+
+・ホーム画面のグリッドから即記録
+・日別・月別の統計ビュー
+・借金システムのゴール管理（サボった分を後日返済できる柔軟な目標設定）
+・オフライン完全対応・複数端末で自動同期
+・CSVエクスポート/インポート
+・タスク管理
+
+すべての記録機能は無料で制限なく使えます。
+```
+
+#### Google Play 短い説明（80文字以内）
+
+> 6つの入力UIで、どんな活動も最速で記録。習慣アプリが続かなかった人のためのアプリ。
+
+#### 英語版（国際公開する場合）
+
+**Subtitle (App Store):** Record any activity, instantly
+**Short Description (Google Play):** 6 input modes for any activity. Built for people who quit every habit tracker.
+
+```
+■ What is Actiko?
+
+"Recording is too tedious" — if that's why you quit your habit app, Actiko is the answer.
+
+Choose the optimal input UI for each activity, and finish recording in minimal taps.
+Built and used daily by its developer for over a year.
+
+■ 6 Recording Modes
+
+🔢 Counter — Tap to increment. For push-ups, squats
+⏱ Timer — Built-in stopwatch. For reading, work sessions
+✅ Check — One-tap done/not done
+🆚 Binary — Win/Lose in one tap
+🔟 Numpad — Direct number entry. For scores, intake
+📝 Manual — Free-form fallback
+
+■ Built for you if...
+
+• You've tried 3+ habit apps and none stuck
+• You track diverse activities — workouts, gaming stats, reading, coding
+• You want recording to take less than a second
+
+■ Key Features
+
+• Grid dashboard for instant recording
+• Daily & monthly statistics
+• Flexible goal system with "debt" — miss a day, make it up later
+• Fully offline with automatic multi-device sync
+• CSV import/export
+• Task management
+
+All recording features are free with no limits.
+```
+
+#### キーワード候補（App Store Search Ads最適化）
+
+習慣,活動記録,ルーティン,筋トレ記録,タイマー,ストップウォッチ,目標管理
 
 ### iOS (App Store Connect)
 
 - [ ] スクリーンショット（各デバイスサイズ）
-  - [ ] 6.7" (iPhone 15 Pro Max): 1290x2796
-  - [ ] 6.5" (iPhone 14 Plus): 1284x2778
-  - [ ] 5.5" (iPhone 8 Plus): 1242x2208（任意）
+  - [ ] 6.7" (iPhone 15 Pro Max): 1290x2796 — **Xcodeシミュレータで撮影OK**（`Cmd + S`で保存）
+  - [ ] 6.1" (iPhone 15 Pro): 1179x2556 — 実機で撮影
   - [ ] iPad Pro 12.9": 2048x2732（`supportsTablet: true` なので必要）
-- [ ] App Store 用プロモーションテキスト（170文字）
+  - 6.7インチを提出すれば6.5インチ（旧Max）にも自動適用される
 - [ ] サポート URL
 - [ ] App Review 用のデモアカウント情報
 
@@ -191,10 +285,29 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 - [ ] フィーチャーグラフィック (1024x500)
 - [ ] スクリーンショット（最低2枚、最大8枚）
-  - 推奨: 1080x1920 以上
+  - 推奨: 1080x1920 以上。iOS実機スクショの流用で可
 - [ ] コンテンツレーティング質問票を回答
 - [ ] データセーフティフォーム（収集データの申告）
 - [ ] ターゲットオーディエンス設定
+
+### スクリーンショット撮影計画（8枚・優先順）
+
+| # | 画面 | キャプション案 | ポイント |
+|---|---|---|---|
+| 1 | ホーム画面（アクティビティグリッド） | ホーム画面から1タップで記録開始 | 活動5〜6個。絵文字アイコンで視覚訴求 |
+| 2 | カウンターモード記録中 | タップするだけ。筋トレ回数を最速記録 | 大きな+ボタンとカウント表示 |
+| 3 | タイマーモード記録中 | ストップウォッチで作業時間を計測 | 読書や勉強のイメージ |
+| 4 | 月間統計（Statsタブ） | 月間の活動量をひと目で把握 | バーチャートと借金ヒートマップ |
+| 5 | ゴール画面（借金ヒートマップ） | サボった日は後日返済。柔軟なゴール管理 | GitHub風ヒートマップ。競合差別化 |
+| 6 | バイナリモード | 勝ち/負けをワンタップで記録 | 他アプリにない用途 |
+| 7 | Daily（日別ログ） | 1日の活動をタイムラインで振り返り | ログが複数並んだ状態 |
+| 8 | チェックモード | やった？やってない？シンプルな習慣記録も | 従来の習慣アプリユーザーへの安心感 |
+
+**撮影時の注意:**
+- デモ用データを入れてから撮る（空画面は論外）
+- 活動名は共感しやすいもの: 「腕立て伏せ」「読書」「ランニング」「ゲーム戦績」「瞑想」「コーディング」
+- 絵文字をカラフルに: 💪📚🏃‍♂️🎮🧘‍♂️💻
+- 実機とシミュレータで同じデモデータを使う
 
 ---
 

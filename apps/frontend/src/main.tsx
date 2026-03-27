@@ -49,6 +49,11 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// bfcache復元時はReact内部状態が不整合になるためリロード
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) window.location.reload();
+});
+
 // ピンチズーム防止
 document.addEventListener("gesturestart", (e) => e.preventDefault());
 document.addEventListener(

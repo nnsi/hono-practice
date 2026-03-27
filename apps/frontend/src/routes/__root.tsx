@@ -8,6 +8,7 @@ import {
 
 import { ActikoLogo } from "../components/common/ActikoLogo";
 import { LegalModal } from "../components/common/LegalModal";
+import { NotFoundPage } from "../components/common/NotFoundPage";
 import {
   AuthenticatedLayout,
   CreateUserForm,
@@ -131,6 +132,11 @@ function RootComponent() {
         </div>
       </div>
     );
+  }
+
+  const hasChildMatch = routerState.matches.length > 1;
+  if (!hasChildMatch) {
+    return <NotFoundPage />;
   }
 
   return <AuthenticatedLayout onLogout={logout} />;

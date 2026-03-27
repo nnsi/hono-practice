@@ -18,9 +18,9 @@ export function setRefreshCookie(
   const isDev = c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test";
   setCookie(c, "refresh_token", refreshToken, {
     httpOnly: true,
-    secure: !isDev,
+    secure: true,
+    ...(isDev ? { sameSite: "None" } : { sameSite: "Lax" }),
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    ...(isDev ? {} : { sameSite: "None" }),
     path: "/",
   });
 }

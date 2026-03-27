@@ -8,7 +8,7 @@ type UseNumpadModeDeps = {
   react: Pick<ReactHooks, "useState">;
 };
 
-const MAX_DIGITS = 10;
+const MAX_DIGITS = 6;
 
 export type NumpadModeViewModel = {
   display: string;
@@ -70,7 +70,7 @@ export function createUseNumpadMode(
 
     const submit = () => {
       const value = Number(display) || 0;
-      if (value === 0) return;
+      if (value === 0 || value > 999999) return;
       props.onSave({
         quantity: value,
         memo,

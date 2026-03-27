@@ -121,10 +121,28 @@ describe("createUseNumpadMode", () => {
     expect(result.current.display).toBe("5");
   });
 
-  it("pasteFromClipboard truncates to MAX_DIGITS", () => {
+  it("pasteFromClipboard truncates to MAX_DIGITS (6)", () => {
     const { result } = renderHook(() => useNumpadMode(makeProps()));
     act(() => result.current.pasteFromClipboard("12345678901234"));
-    expect(result.current.display).toBe("1234567890");
+    expect(result.current.display).toBe("123456");
+  });
+
+  it("submit does not call onSave when value exceeds 999999", () => {
+    const onSave = vi.fn();
+    const { result } = renderHook(() => useNumpadMode(makeProps({ onSave })));
+    // MAX_DIGITS=6 prevents entering >6 digits, but verify submit guard
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.pressKey("9"));
+    act(() => result.current.submit());
+    expect(onSave).toHaveBeenCalledWith({
+      quantity: 999999,
+      activityKindId: null,
+      memo: "",
+    });
   });
 
   it("pasteFromClipboard ignores all-zero input", () => {
