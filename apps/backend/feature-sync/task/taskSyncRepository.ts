@@ -1,10 +1,15 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { tasks } from "@infra/drizzle/schema";
+import { activities, activityKinds, tasks } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type TaskRow = typeof tasks.$inferSelect;
+
+export type ActivityKindWithActivityId = {
+  id: string;
+  activityId: string;
+};
 
 export type TaskSyncRepository = {
   getTasksByUserId: (userId: UserId, since?: string) => Promise<TaskRow[]>;
@@ -13,6 +18,14 @@ export type TaskSyncRepository = {
     validTasks: UpsertTaskRequest[],
   ) => Promise<TaskRow[]>;
   getTasksByIds: (userId: UserId, ids: string[]) => Promise<TaskRow[]>;
+  getOwnedActivityIds: (
+    userId: UserId,
+    activityIds: string[],
+  ) => Promise<string[]>;
+  getOwnedActivityKindIdsWithActivityId: (
+    userId: UserId,
+    kindIds: string[],
+  ) => Promise<ActivityKindWithActivityId[]>;
 };
 
 export function newTaskSyncRepository(db: QueryExecutor): TaskSyncRepository {
@@ -20,6 +33,9 @@ export function newTaskSyncRepository(db: QueryExecutor): TaskSyncRepository {
     getTasksByUserId: getTasksByUserId(db),
     upsertTasks: upsertTasks(db),
     getTasksByIds: getTasksByIds(db),
+    getOwnedActivityIds: getOwnedActivityIds(db),
+    getOwnedActivityKindIdsWithActivityId:
+      getOwnedActivityKindIdsWithActivityId(db),
   };
 }
 
@@ -92,5 +108,37 @@ function getTasksByIds(db: QueryExecutor) {
       .select()
       .from(tasks)
       .where(and(inArray(tasks.id, ids), eq(tasks.userId, userId)));
+  };
+}
+
+function getOwnedActivityIds(db: QueryExecutor) {
+  return async (userId: UserId, activityIds: string[]): Promise<string[]> => {
+    if (activityIds.length === 0) return [];
+
+    const rows = await db
+      .select({ id: activities.id })
+      .from(activities)
+      .where(
+        and(inArray(activities.id, activityIds), eq(activities.userId, userId)),
+      );
+
+    return rows.map((a) => a.id);
+  };
+}
+
+function getOwnedActivityKindIdsWithActivityId(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    kindIds: string[],
+  ): Promise<ActivityKindWithActivityId[]> => {
+    if (kindIds.length === 0) return [];
+
+    return await db
+      .select({ id: activityKinds.id, activityId: activityKinds.activityId })
+      .from(activityKinds)
+      .innerJoin(activities, eq(activityKinds.activityId, activities.id))
+      .where(
+        and(inArray(activityKinds.id, kindIds), eq(activities.userId, userId)),
+      );
   };
 }

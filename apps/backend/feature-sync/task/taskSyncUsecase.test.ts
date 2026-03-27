@@ -6,6 +6,8 @@ import type { TaskSyncRepository } from "./taskSyncRepository";
 import { newTaskSyncUsecase } from "./taskSyncUsecase";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001" as UserId;
+const OWNED_ACTIVITY_ID = "00000000-0000-4000-8000-000000000010";
+const OWNED_KIND_ID = "00000000-0000-4000-8000-000000000020";
 const NOW = new Date();
 
 function makeTaskRow(overrides: Record<string, unknown> = {}) {
@@ -13,6 +15,9 @@ function makeTaskRow(overrides: Record<string, unknown> = {}) {
     id: "10000000-0000-4000-8000-000000000001",
     userId: USER_ID as string,
     title: "Test task",
+    activityId: null,
+    activityKindId: null,
+    quantity: null,
     startDate: null,
     dueDate: null,
     doneDate: null,
@@ -29,6 +34,9 @@ function makeUpsertRequest(overrides: Record<string, unknown> = {}) {
   return {
     id: "10000000-0000-4000-8000-000000000001",
     title: "Test task",
+    activityId: null,
+    activityKindId: null,
+    quantity: null,
     startDate: null,
     dueDate: null,
     doneDate: null,
@@ -48,6 +56,8 @@ function createMockRepo(
     getTasksByUserId: vi.fn().mockResolvedValue([]),
     upsertTasks: vi.fn().mockResolvedValue([]),
     getTasksByIds: vi.fn().mockResolvedValue([]),
+    getOwnedActivityIds: vi.fn().mockResolvedValue([]),
+    getOwnedActivityKindIdsWithActivityId: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
@@ -255,6 +265,123 @@ describe("taskSyncUsecase", () => {
       const result = await usecase.syncTasks(USER_ID, [req as never]);
 
       expect(result.syncedIds).toContain(req.id);
+    });
+
+    test("activityIdが他人のもの → skip", async () => {
+      const otherActivityId = "00000000-0000-4000-8000-000000000099";
+      const req = makeUpsertRequest({ activityId: otherActivityId });
+      const repo = createMockRepo({
+        getOwnedActivityIds: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertTasks).not.toHaveBeenCalled();
+    });
+
+    test("activityIdが自分のもの → 通過する", async () => {
+      const req = makeUpsertRequest({ activityId: OWNED_ACTIVITY_ID });
+      const row = makeTaskRow({ activityId: OWNED_ACTIVITY_ID });
+      const repo = createMockRepo({
+        getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
+        upsertTasks: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
+    });
+
+    test("activityKindIdが別activityに属する → skip", async () => {
+      const otherActivityId = "00000000-0000-4000-8000-000000000099";
+      const req = makeUpsertRequest({
+        activityId: OWNED_ACTIVITY_ID,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const repo = createMockRepo({
+        getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
+        // kindIdのactivityIdがtaskのactivityIdと異なる
+        getOwnedActivityKindIdsWithActivityId: vi
+          .fn()
+          .mockResolvedValue([
+            { id: OWNED_KIND_ID, activityId: otherActivityId },
+          ]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertTasks).not.toHaveBeenCalled();
+    });
+
+    test("activityKindIdあり + activityId null → 所有権のみチェックで通る", async () => {
+      const req = makeUpsertRequest({
+        activityId: null,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const row = makeTaskRow({ activityKindId: OWNED_KIND_ID });
+      const repo = createMockRepo({
+        getOwnedActivityKindIdsWithActivityId: vi
+          .fn()
+          .mockResolvedValue([
+            { id: OWNED_KIND_ID, activityId: OWNED_ACTIVITY_ID },
+          ]),
+        upsertTasks: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
+    });
+
+    test("activityKindIdが他人のもの + activityId null → skip", async () => {
+      const req = makeUpsertRequest({
+        activityId: null,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const repo = createMockRepo({
+        // kindIdが存在しない（他人のもの）
+        getOwnedActivityKindIdsWithActivityId: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertTasks).not.toHaveBeenCalled();
+    });
+
+    test("activityKindIdとactivityIdが整合している → 通過する", async () => {
+      const req = makeUpsertRequest({
+        activityId: OWNED_ACTIVITY_ID,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const row = makeTaskRow({
+        activityId: OWNED_ACTIVITY_ID,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const repo = createMockRepo({
+        getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
+        getOwnedActivityKindIdsWithActivityId: vi
+          .fn()
+          .mockResolvedValue([
+            { id: OWNED_KIND_ID, activityId: OWNED_ACTIVITY_ID },
+          ]),
+        upsertTasks: vi.fn().mockResolvedValue([row]),
+      });
+      const usecase = newTaskSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncTasks(USER_ID, [req as never]);
+
+      expect(result.syncedIds).toContain(req.id);
+      expect(result.skippedIds).toHaveLength(0);
     });
   });
 });

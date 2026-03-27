@@ -91,6 +91,45 @@ frontendでは2段階の認証チェックを行う:
 2. 異なる場合 → `clearLocalData()`でローカルDBを全クリア
 3. その後`performInitialSync(newUserId)`で新ユーザーのデータを取得
 
+## トークンローテーション
+
+### ローテーション方式
+
+リフレッシュトークンは**セレクタパターン**を採用:
+- トークン = `selector.plainToken`（selector: 検索用公開値、plainToken: 秘密値）
+- DBにはselectorとplainTokenのSHA256ハッシュを保存
+- 検索はselectorインデックス経由、検証はハッシュ比較（タイミングアタック耐性）
+
+`POST /auth/token` でのローテーションフロー:
+1. selectorでDB検索 → ハッシュ検証 → revoked/expired チェック
+2. 新しいトークンペア生成 + JWT発行
+3. 旧トークン失効（`revokedAt` 設定）と新トークン作成を `Promise.all` で並列実行
+4. DB書き込みは `waitUntil` で fire-and-forget（レスポンスをブロックしない）
+
+### 並行リフレッシュリクエストの対策
+
+**サーバー側にgrace period（replay window）は設けない。クライアント側のmutexで多重リクエストを防止する。**
+
+理由:
+- サーバー側grace periodは攻撃面を広げる（窃取されたトークンが猶予期間中にreplay可能）
+- 現状の設計では `fetchRefreshToken`（検証）→ `rotateRefreshToken`（生成+失効）が同一リクエスト内で完結し、攻撃者がこの隙間に割り込んでも旧トークンは即座に失効される
+- 多重リクエストの発生源（タブ復帰、ネットワークリトライ等）はクライアント責務として制御すべき
+
+クライアント側実装（Web / Mobile 共通パターン）:
+```typescript
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken() {
+  if (refreshPromise) return refreshPromise; // 2つ目以降は同じPromiseを共有
+  refreshPromise = (async () => { /* refresh処理 */ })();
+  return refreshPromise;
+}
+```
+
+- Web: `packages/sync-engine/http/authenticatedFetch.ts`
+- Mobile: `apps/mobile/src/utils/apiClient.ts`
+- テスト: "concurrent 401s share a single token refresh (mutex)" で検証済み
+
 ## セキュリティ対策
 
 1. **トークンの保存**

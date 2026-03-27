@@ -51,8 +51,39 @@ function syncTasks(repo: TaskSyncRepository, tracer: Tracer) {
     const skippedIds: string[] = [];
     const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
 
+    // activityId ownership check
+    const requestedActivityIds = [
+      ...new Set(taskList.map((t) => t.activityId).filter(Boolean)),
+    ] as string[];
+    const requestedKindIds = [
+      ...new Set(taskList.map((t) => t.activityKindId).filter(Boolean)),
+    ] as string[];
+
+    const [ownedActivityIds, ownedKindRows] = await Promise.all([
+      requestedActivityIds.length > 0
+        ? tracer.span("db.getOwnedActivityIds", () =>
+            repo.getOwnedActivityIds(userId, requestedActivityIds),
+          )
+        : Promise.resolve([] as string[]),
+      tracer.span("db.getOwnedActivityKindIdsWithActivityId", () =>
+        repo.getOwnedActivityKindIdsWithActivityId(userId, requestedKindIds),
+      ),
+    ]);
+
+    const ownedActivityIdSet = new Set(ownedActivityIds);
+    const kindIdToActivityId = new Map(
+      ownedKindRows.map((r) => [r.id, r.activityId]),
+    );
+
     const validTasks = taskList.filter((task) => {
-      if (new Date(task.updatedAt) > maxAllowed) {
+      if (
+        new Date(task.updatedAt) > maxAllowed ||
+        (task.activityId && !ownedActivityIdSet.has(task.activityId)) ||
+        (task.activityKindId &&
+          (!kindIdToActivityId.has(task.activityKindId) ||
+            (task.activityId &&
+              kindIdToActivityId.get(task.activityKindId) !== task.activityId)))
+      ) {
         skippedIds.push(task.id);
         return false;
       }

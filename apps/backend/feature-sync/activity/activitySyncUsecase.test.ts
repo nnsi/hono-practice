@@ -366,6 +366,45 @@ describe("activitySyncUsecase", () => {
       expect(result.activityKinds.syncedIds).toContain(kind1.id);
       expect(result.activityKinds.serverWins).toHaveLength(1);
       expect(result.activityKinds.serverWins[0].id).toBe(kind2.id);
+      expect(repo.getActivityKindsByIds).toHaveBeenCalledWith(
+        expect.arrayContaining([kind2.id]),
+        expect.arrayContaining([actId]),
+      );
+    });
+
+    test("serverWins: getActivityKindsByIds に ownedIds が渡され、他人のkindは返らない", async () => {
+      const actId = "10000000-0000-4000-8000-000000000001";
+      const kind1 = makeKindRequest({
+        id: "10000000-0000-4000-8000-100000000001",
+        activityId: actId,
+      });
+      const kind2 = makeKindRequest({
+        id: "10000000-0000-4000-8000-100000000002",
+        activityId: actId,
+      });
+
+      const kindRow1 = makeKindRow({ id: kind1.id });
+
+      const repo = createMockRepo({
+        getOwnedActivityIds: vi.fn().mockResolvedValue([actId]),
+        upsertActivityKinds: vi.fn().mockResolvedValue([kindRow1]),
+        // ownedActivityIds でフィルタ済みなので他人のkindは返らない
+        getActivityKindsByIds: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newActivitySyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivities(USER_ID, [], [
+        kind1,
+        kind2,
+      ] as never[]);
+
+      // 他人のkindはserverWinsに含まれない
+      expect(result.activityKinds.serverWins).toHaveLength(0);
+      // getActivityKindsByIds は ownedIds を第二引数で受け取る
+      expect(repo.getActivityKindsByIds).toHaveBeenCalledWith(
+        expect.any(Array),
+        [actId],
+      );
     });
 
     test("kindのupsertで返らず、getByIdsでも見つからない → skippedIds", async () => {

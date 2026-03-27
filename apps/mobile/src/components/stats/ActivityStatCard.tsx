@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type {
   ActivityStat,
@@ -11,7 +11,7 @@ import {
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
-import { Text, View, useWindowDimensions } from "react-native";
+import { Text, View } from "react-native";
 
 import { ActivityChartSection } from "./ActivityChartSection";
 import { SummarySection } from "./SummarySection";
@@ -71,13 +71,12 @@ export function ActivityStatCard({
     return { totalQuantity, activeDays, daysInMonth, avgPerDay };
   }, [stat.kinds, allDates]);
 
-  const { width: screenWidth } = useWindowDimensions();
-  const effectiveWidth = Math.min(screenWidth, 768);
+  const [containerWidth, setContainerWidth] = useState(0);
   const gap = 8;
-  const cardPaddingX = 16;
   const numColumns = 2;
-  const kindCardWidth =
-    (effectiveWidth - cardPaddingX * 2 - gap * (numColumns - 1)) / numColumns;
+  const kindCardWidth = Math.floor(
+    (containerWidth - gap * (numColumns - 1)) / numColumns,
+  );
 
   const isSingleUnnamedKind =
     stat.kinds.length === 1 && stat.kinds[0].name === "未指定";
@@ -100,7 +99,11 @@ export function ActivityStatCard({
       {/* Kind summary cards */}
       {!isSingleUnnamedKind && (
         <View className="px-4 pt-3">
-          <View className="flex-row flex-wrap" style={{ gap }}>
+          <View
+            className="flex-row flex-wrap"
+            style={{ gap }}
+            onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+          >
             {stat.kinds.map((kind) => (
               <View
                 key={kind.id || kind.name}
