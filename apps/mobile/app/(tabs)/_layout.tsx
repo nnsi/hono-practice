@@ -12,6 +12,7 @@ import {
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useThemeContext } from "../../src/contexts/ThemeContext";
 import { useNavigationSync } from "../../src/hooks/useNavigationSync";
 import { useAuthContext } from "../_layout";
 
@@ -30,12 +31,13 @@ const TAB_ITEMS: {
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useThemeContext();
   return (
     <View
       style={{
         borderTopWidth: 1,
-        borderTopColor: "rgba(231,229,228,0.5)",
-        backgroundColor: "rgba(255,255,255,0.82)",
+        borderTopColor: colors.tabBorder,
+        backgroundColor: colors.tabBg,
         ...(Platform.OS === "web"
           ? ({
               backdropFilter: "blur(20px) saturate(180%)",
@@ -71,12 +73,15 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 paddingVertical: 4,
               }}
             >
-              <Icon size={20} color={isActive ? "#d97706" : "#a8a29e"} />
+              <Icon
+                size={20}
+                color={isActive ? colors.tabActive : colors.tabInactive}
+              />
               <Text
                 style={{
                   fontSize: 10,
                   letterSpacing: 0.5,
-                  color: isActive ? "#d97706" : "#a8a29e",
+                  color: isActive ? colors.tabActive : colors.tabInactive,
                   fontWeight: isActive ? "600" : "500",
                 }}
               >
@@ -88,7 +93,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                   width: 16,
                   height: 2.5,
                   borderRadius: 9999,
-                  backgroundColor: isActive ? "#f59e0b" : "transparent",
+                  backgroundColor: isActive ? colors.tabPill : "transparent",
                   marginTop: 1,
                 }}
               />
@@ -103,6 +108,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { syncReady, userId } = useAuthContext();
+  const { colors } = useThemeContext();
   useNavigationSync(syncReady, userId);
 
   return (
@@ -115,7 +121,7 @@ export default function TabLayout() {
           maxWidth: 768,
           width: "100%",
           alignSelf: "center",
-          backgroundColor: "#ffffff",
+          backgroundColor: colors.sceneBg,
         },
       }}
     >

@@ -103,11 +103,11 @@ export function ActikoPage() {
       ) : activities.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-5xl mb-4">🎯</Text>
-          <Text className="text-lg font-medium text-gray-600 text-center">
+          <Text className="text-lg font-medium text-gray-600 dark:text-gray-400 text-center">
             {t("activitiesEmpty")}
           </Text>
           <TouchableOpacity onPress={() => setCreateActivityOpen(true)}>
-            <Text className="text-sm text-amber-600 text-center mt-2">
+            <Text className="text-sm text-amber-600 dark:text-amber-400 text-center mt-2">
               {t("tapToAdd")}
             </Text>
           </TouchableOpacity>

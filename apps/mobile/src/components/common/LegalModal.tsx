@@ -24,10 +24,10 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
       <View className="space-y-4">
         {sections.map((section) => (
           <View key={section.title} className="mb-4">
-            <Text className="font-semibold text-sm text-gray-900 mb-1">
+            <Text className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
               {section.title}
             </Text>
-            <Text className="text-sm text-gray-600 leading-relaxed">
+            <Text className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               {section.content}
             </Text>
           </View>

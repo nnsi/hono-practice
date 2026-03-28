@@ -5,9 +5,9 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { useBinaryMode } from "./useBinaryMode";
 
 const KIND_BG = [
-  { normal: "bg-blue-500", disabled: "bg-blue-300" },
-  { normal: "bg-gray-700", disabled: "bg-gray-500" },
-  { normal: "bg-emerald-500", disabled: "bg-emerald-300" },
+  { normal: "bg-blue-50 dark:bg-blue-900/200", disabled: "bg-blue-300" },
+  { normal: "bg-gray-700", disabled: "bg-gray-50 dark:bg-gray-8000" },
+  { normal: "bg-emerald-50 dark:bg-emerald-900/200", disabled: "bg-emerald-300" },
   { normal: "bg-orange-500", disabled: "bg-orange-300" },
 ];
 
@@ -18,9 +18,7 @@ export function BinaryMode(props: RecordingModeProps) {
   if (!vm.hasKinds) {
     return (
       <View className="py-8 items-center">
-        <Text className="text-gray-500 text-sm">
-          {t("binaryInstruction")}
-        </Text>
+        <Text className="text-gray-500 dark:text-gray-400 text-sm">{t("binaryInstruction")}</Text>
       </View>
     );
   }
@@ -48,8 +46,9 @@ export function BinaryMode(props: RecordingModeProps) {
       </View>
 
       {totalCount > 0 && (
-        <Text className="text-sm text-gray-500 text-center">
-          {t("today")} {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
+        <Text className="text-sm text-gray-500 dark:text-gray-400 text-center">
+          {t("today")}{" "}
+          {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
         </Text>
       )}
     </View>

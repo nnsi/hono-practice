@@ -113,7 +113,7 @@ export function DebtFeedbackToast() {
   const message = buildDebtFeedbackMessage(results, praiseMode, t);
   if (!message) return null;
 
-  const bgClass = praiseMode ? "bg-amber-500" : "bg-emerald-600";
+  const bgClass = praiseMode ? "bg-amber-50 dark:bg-amber-900/200" : "bg-emerald-600";
 
   return (
     <View className="absolute bottom-24 left-4 right-4" pointerEvents="none">
@@ -124,7 +124,7 @@ export function DebtFeedbackToast() {
         }}
         className={`rounded-xl ${bgClass} px-5 py-4 shadow-lg`}
       >
-        <Text className="text-center text-base font-bold text-white">
+        <Text className="text-center text-base font-bold text-white dark:text-white">
           {message}
         </Text>
       </Animated.View>

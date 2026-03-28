@@ -95,22 +95,22 @@ export function CreateApiKeyDialog({
     >
       {createdKey ? (
         <View>
-          <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-            <Text className="text-sm text-amber-700">{t("apiKeyWarning")}</Text>
+          <View className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg p-3 mb-4">
+            <Text className="text-sm text-amber-700 dark:text-amber-400">{t("apiKeyWarning")}</Text>
           </View>
-          <View className="bg-gray-50 rounded-lg p-3">
-            <Text className="text-sm text-gray-800 font-mono" selectable>
+          <View className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+            <Text className="text-sm text-gray-800 dark:text-gray-200 font-mono" selectable>
               {createdKey}
             </Text>
           </View>
         </View>
       ) : (
         <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             {t("apiKeyName")}
           </Text>
           <IMESafeTextInput
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base text-gray-900"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base text-gray-900 dark:text-gray-100"
             value={name}
             onChangeText={setName}
             placeholder={t("apiKeyNamePlaceholder")}
@@ -118,11 +118,11 @@ export function CreateApiKeyDialog({
             autoFocus
             maxLength={255}
           />
-          <Text className="text-xs text-gray-400 mt-1">
+          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {t("apiKeyNameHint")}
           </Text>
 
-          {error && <Text className="text-sm text-red-600 mt-3">{error}</Text>}
+          {error && <Text className="text-sm text-red-600 dark:text-red-400 mt-3">{error}</Text>}
         </View>
       )}
     </ModalOverlay>

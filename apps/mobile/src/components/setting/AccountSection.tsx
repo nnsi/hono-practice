@@ -51,7 +51,7 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           onPress={() => setShowImport(true)}
         >
           <Upload size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600">{t("importCSV")}</Text>
+          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">{t("importCSV")}</Text>
         </TouchableOpacity>
         <Divider />
         <TouchableOpacity
@@ -59,11 +59,11 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           onPress={() => setShowExport(true)}
         >
           <Download size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600">{t("exportCSV")}</Text>
+          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">{t("exportCSV")}</Text>
         </TouchableOpacity>
         <Divider />
         <View className="px-4 py-3">
-          <Text className="text-xs text-gray-500 leading-relaxed">
+          <Text className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
             {t("localStorageNote")}
           </Text>
         </View>
@@ -74,7 +74,7 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
             onPress={() => setShowClearConfirm(true)}
           >
             <Trash2 size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">
+            <Text className="ml-3 text-base text-red-500 dark:text-red-400">
               {t("deleteLocalData")}
             </Text>
           </TouchableOpacity>
@@ -142,7 +142,7 @@ export function AccountAndDangerSection({
             onPress={() => setShowLogoutConfirm(true)}
           >
             <LogOut size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">{t("logout")}</Text>
+            <Text className="ml-3 text-base text-red-500 dark:text-red-400">{t("logout")}</Text>
           </TouchableOpacity>
         ) : (
           <InlineConfirm
@@ -168,7 +168,7 @@ export function AccountAndDangerSection({
             onPress={() => setShowDeleteConfirm(true)}
           >
             <AlertTriangle size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">
+            <Text className="ml-3 text-base text-red-500 dark:text-red-400">
               {t("deleteAccount")}
             </Text>
           </TouchableOpacity>

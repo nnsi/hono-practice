@@ -48,17 +48,17 @@ export function CreateUserForm() {
   };
 
   return (
-    <View className="flex-1 justify-center px-8 bg-white">
+    <View className="flex-1 justify-center px-8 bg-white dark:bg-gray-800">
       <Text className="text-3xl font-bold text-center mb-8">
         {t("auth.createAccountTitle")}
       </Text>
 
       {error ? (
-        <Text className="text-red-500 text-center mb-4">{error}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-center mb-4">{error}</Text>
       ) : null}
 
       <TouchableOpacity
-        className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 mb-3 ${googleRequest ? "" : "opacity-50"}`}
+        className={`w-full flex-row items-center justify-center rounded-lg border bg-white dark:bg-gray-800 px-4 mb-3 ${googleRequest ? "" : "opacity-50"}`}
         style={{ minHeight: 48, borderColor: "#747775" }}
         onPress={handleGooglePress}
         disabled={!googleRequest}
@@ -108,12 +108,12 @@ export function CreateUserForm() {
 
       <View className="flex-row items-center mb-4">
         <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-3 text-gray-400 text-sm">{t("auth.or")}</Text>
+        <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">{t("auth.or")}</Text>
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
       <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder={t("auth.loginId")}
         value={loginId}
         onChangeText={setLoginId}
@@ -121,14 +121,14 @@ export function CreateUserForm() {
         autoCorrect={false}
       />
       <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
         placeholder={t("auth.passwordHint")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <Text className="text-xs text-gray-400 leading-5 mb-4">
+      <Text className="text-xs text-gray-400 dark:text-gray-500 leading-5 mb-4">
         {t("auth.legalConsentPrefix")}
         <Text className="underline" onPress={() => setLegalModal("terms")}>
           {t("auth.termsOfService")}
@@ -141,7 +141,7 @@ export function CreateUserForm() {
       </Text>
 
       <TouchableOpacity
-        className={`bg-blue-500 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
+        className={`bg-blue-50 dark:bg-blue-900/200 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
         onPress={handleRegister}
         disabled={loading}
       >
@@ -154,7 +154,7 @@ export function CreateUserForm() {
         className="mt-4 items-center"
         onPress={() => router.back()}
       >
-        <Text className="text-blue-500">{t("auth.backToLogin")}</Text>
+        <Text className="text-blue-500 dark:text-blue-400">{t("auth.backToLogin")}</Text>
       </TouchableOpacity>
 
       {legalModal && (

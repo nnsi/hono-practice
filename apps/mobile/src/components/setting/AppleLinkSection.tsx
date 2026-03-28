@@ -65,23 +65,23 @@ export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
     <Section icon={Link} label="Apple連携" shadow={shadow}>
       {apple.isLoading ? (
         <View className="px-4 py-3">
-          <Text className="text-sm text-gray-500">読み込み中...</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">読み込み中...</Text>
         </View>
       ) : (
         <View className="px-4 py-3 gap-2">
           {apple.isAppleLinked ? (
             <View className="flex-row items-center gap-2">
-              <Text className="text-sm text-green-700 font-medium">
+              <Text className="text-sm text-green-700 dark:text-green-400 font-medium">
                 {t("appleLinked")}
               </Text>
               {apple.appleEmail && (
-                <Text className="text-xs text-gray-500">
+                <Text className="text-xs text-gray-500 dark:text-gray-400">
                   {apple.appleEmail}
                 </Text>
               )}
             </View>
           ) : (
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-gray-500 dark:text-gray-400">
               {t("appleLinkDescription")}
             </Text>
           )}
@@ -117,7 +117,7 @@ export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
           <Divider />
           <View className="px-4 py-2">
             <Text
-              className={`text-xs ${apple.message.type === "success" ? "text-green-600" : "text-red-500"}`}
+              className={`text-xs ${apple.message.type === "success" ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}
             >
               {apple.message.text}
             </Text>

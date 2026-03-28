@@ -81,7 +81,7 @@ export function CreateLogDialog({
             pointerEvents="box-none"
           >
             <View
-              className="bg-white rounded-2xl w-full max-h-[85%]"
+              className="bg-white dark:bg-gray-800 rounded-2xl w-full max-h-[85%]"
               style={{
                 maxWidth: 448,
                 shadowColor: "#1c1917",
@@ -91,7 +91,7 @@ export function CreateLogDialog({
                 elevation: 24,
               }}
             >
-              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
+              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                 <View className="flex-row items-center gap-2">
                   <TouchableOpacity
                     onPress={() => setSelectedActivity(null)}
@@ -108,7 +108,7 @@ export function CreateLogDialog({
                     size={24}
                     fontSize="text-xl"
                   />
-                  <Text className="text-lg font-bold text-gray-900">
+                  <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {selectedActivity.name}
                   </Text>
                 </View>

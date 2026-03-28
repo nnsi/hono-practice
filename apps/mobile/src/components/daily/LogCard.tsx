@@ -51,8 +51,8 @@ export function LogCard({
     <TouchableOpacity
       className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
         isPending
-          ? "border border-amber-200 bg-amber-50"
-          : "bg-white border border-gray-200"
+          ? "border border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+          : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
       }`}
       style={{
         shadowColor: "#1c1917",
@@ -79,33 +79,33 @@ export function LogCard({
       <View className="flex-1 min-w-0">
         <View className="flex-row items-center gap-1.5">
           <Text
-            className="text-base font-semibold text-gray-800"
+            className="text-base font-semibold text-gray-800 dark:text-gray-200"
             numberOfLines={1}
           >
             {activity?.name ?? t("log.unknownActivity")}
           </Text>
           {kind && (
-            <View className="flex-row items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-lg shrink-0">
+            <View className="flex-row items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg shrink-0">
               {kind.color && (
                 <View
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: kind.color }}
                 />
               )}
-              <Text className="text-xs text-gray-500">{kind.name}</Text>
+              <Text className="text-xs text-gray-500 dark:text-gray-400">{kind.name}</Text>
             </View>
           )}
           {isPending && (
             <ActivityIndicator size="small" color="#f97316" className="ml-1" />
           )}
         </View>
-        <Text className="text-sm text-gray-500">
+        <Text className="text-sm text-gray-500 dark:text-gray-400">
           {log.quantity !== null
             ? `${log.quantity}${activity?.quantityUnit ?? ""}`
             : "-"}
         </Text>
         {log.memo ? (
-          <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
+          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-0.5" numberOfLines={1}>
             {log.memo}
           </Text>
         ) : null}

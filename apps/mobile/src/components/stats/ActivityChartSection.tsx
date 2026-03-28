@@ -79,9 +79,9 @@ export function ActivityChartSection({
         });
         return (
           <View key={kind.id || kind.name}>
-            <Text className="font-semibold text-sm mb-1 px-1 text-gray-900">
+            <Text className="font-semibold text-sm mb-1 px-1 text-gray-900 dark:text-gray-100">
               {kind.name}
-              <Text className="text-gray-400 font-normal">
+              <Text className="text-gray-400 dark:text-gray-500 font-normal">
                 {" "}
                 ({t("kindTotalLabel")}{" "}
                 {formatQuantityWithUnit(kind.total, stat.quantityUnit)})

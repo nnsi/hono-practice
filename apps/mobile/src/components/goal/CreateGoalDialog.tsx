@@ -69,10 +69,10 @@ export function CreateGoalDialog({
       footer={
         <View className="flex-row gap-2">
           <TouchableOpacity
-            className="flex-1 py-3 border border-gray-300 rounded-lg items-center"
+            className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
             onPress={handleClose}
           >
-            <Text className="text-gray-700 font-medium">
+            <Text className="text-gray-700 dark:text-gray-300 font-medium">
               {t("cancelButton")}
             </Text>
           </TouchableOpacity>

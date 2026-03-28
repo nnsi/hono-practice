@@ -50,12 +50,12 @@ export function EditGoalFields({
     <>
       {/* Daily target */}
       <View className="mb-3">
-        <Text className="text-xs font-medium text-gray-600 mb-1">
+        <Text className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t("dailyTargetLabel")}
           {activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-800"
           value={target}
           onChangeText={setTarget}
           keyboardType="numeric"
@@ -95,7 +95,7 @@ export function EditGoalFields({
       {/* Debt cap */}
       <View className="mb-3">
         <View className="flex-row items-center justify-between">
-          <Text className="text-xs font-medium text-gray-600">
+          <Text className="text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("debtCapLabel")}
           </Text>
           <Switch
@@ -111,13 +111,13 @@ export function EditGoalFields({
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
             <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
+              className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-800"
               value={debtCapValue}
               onChangeText={setDebtCapValue}
               keyboardType="numeric"
               selectTextOnFocus
             />
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-gray-500 dark:text-gray-400">
               {activity?.quantityUnit ?? ""}
             </Text>
           </View>
@@ -125,7 +125,7 @@ export function EditGoalFields({
       </View>
 
       {errorMsg ? (
-        <Text className="text-red-500 text-sm mb-2">{errorMsg}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-sm mb-2">{errorMsg}</Text>
       ) : null}
     </>
   );

@@ -22,9 +22,9 @@ export function StatsPage() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white dark:bg-gray-800">
       {/* Month navigation header */}
-      <View className="flex-row items-center justify-center gap-3 px-4 h-12 border-b border-gray-100 bg-white">
+      <View className="flex-row items-center justify-center gap-3 px-4 h-12 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800">
         <TouchableOpacity
           onPress={goToPrevMonth}
           className="p-2 rounded-xl"
@@ -32,7 +32,7 @@ export function StatsPage() {
         >
           <ChevronLeft size={20} color="#6b7280" />
         </TouchableOpacity>
-        <Text className="text-base font-medium text-gray-900 min-w-[100px] text-center">
+        <Text className="text-base font-medium text-gray-900 dark:text-gray-100 min-w-[100px] text-center">
           {dayjs(month).format(t("monthYearFormat"))}
         </Text>
         <TouchableOpacity
@@ -55,15 +55,15 @@ export function StatsPage() {
       >
         {isLoading ? (
           <View className="items-center py-16">
-            <Text className="text-gray-400">{t("loading")}</Text>
+            <Text className="text-gray-400 dark:text-gray-500">{t("loading")}</Text>
           </View>
         ) : !stats || stats.length === 0 ? (
           <View className="items-center py-16">
             <BarChart3 size={48} color="#d1d5db" />
-            <Text className="text-lg text-gray-400 mt-3 mb-1">
+            <Text className="text-lg text-gray-400 dark:text-gray-500 mt-3 mb-1">
               {t("noData")}
             </Text>
-            <Text className="text-sm text-gray-400">
+            <Text className="text-sm text-gray-400 dark:text-gray-500">
               {dayjs(month).format(t("monthYearFormat"))}
               {t("noActivityInMonth")}
             </Text>

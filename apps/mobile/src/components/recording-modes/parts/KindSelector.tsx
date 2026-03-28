@@ -15,7 +15,9 @@ export function KindSelector({
   const { t } = useTranslation("recording");
   return (
     <View>
-      <Text className="text-sm font-medium text-gray-600 mb-2">{t("kind")}</Text>
+      <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+        {t("kind")}
+      </Text>
       <View className="flex-row flex-wrap gap-2">
         {kinds.map((kind) => (
           <TouchableOpacity
@@ -26,7 +28,7 @@ export function KindSelector({
             className={`flex-row items-center px-3 py-1.5 rounded-full border ${
               selectedKindId === kind.id
                 ? "bg-gray-900 border-gray-900"
-                : "bg-white border-gray-300"
+                : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
             }`}
           >
             {kind.color && (
@@ -39,7 +41,7 @@ export function KindSelector({
               className={`text-sm ${
                 selectedKindId === kind.id
                   ? "text-white font-medium"
-                  : "text-gray-700"
+                  : "text-gray-700 dark:text-gray-300"
               }`}
             >
               {kind.name}

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import RNEmojiPicker, { type EmojiType } from "rn-emoji-keyboard";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
+
 const jaTranslation = {
   recently_used: "よく使う絵文字",
   smileys_emotion: "スマイリー",
@@ -23,6 +25,7 @@ type EmojiPickerProps = {
 };
 
 export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
+  const { colors } = useThemeContext();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (emojiObject: EmojiType) => {
@@ -31,9 +34,11 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
 
   return (
     <View>
-      <Text className="text-sm text-gray-500 mb-1">絵文字</Text>
+      <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+        絵文字
+      </Text>
       <TouchableOpacity
-        className="border border-gray-300 rounded-lg px-4 py-3 items-center"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 items-center bg-white dark:bg-gray-800"
         onPress={() => setIsOpen(true)}
       >
         <Text className="text-3xl">{value || "📝"}</Text>

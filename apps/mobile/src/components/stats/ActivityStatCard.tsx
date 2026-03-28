@@ -85,13 +85,13 @@ export function ActivityStatCard({
     stat.kinds.length === 1 && stat.kinds[0].name === t("defaultKind");
 
   return (
-    <View className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+    <View className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800">
       {/* Activity header */}
-      <View className="px-4 py-3 bg-white border-b border-gray-200">
-        <Text className="text-lg font-bold text-gray-900">
+      <View className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
           {stat.name}
           {stat.showCombinedStats && stat.total != null && (
-            <Text className="text-sm font-normal text-gray-500">
+            <Text className="text-sm font-normal text-gray-500 dark:text-gray-400">
               {"  "}
               {t("kindTotalLabel")}{" "}
               {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
@@ -111,11 +111,11 @@ export function ActivityStatCard({
             {stat.kinds.map((kind) => (
               <View
                 key={kind.id || kind.name}
-                className="bg-white rounded-lg p-3 border border-gray-200"
+                className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
                 style={{ width: kindCardWidth }}
               >
                 <Text
-                  className="text-xs text-gray-500 mb-0.5"
+                  className="text-xs text-gray-500 dark:text-gray-400 mb-0.5"
                   numberOfLines={1}
                 >
                   {kind.name}

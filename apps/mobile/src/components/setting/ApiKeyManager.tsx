@@ -27,7 +27,7 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
   if (subLoading) {
     return (
       <View
-        className="bg-white rounded-2xl border border-gray-200 p-6 items-center justify-center"
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 items-center justify-center"
         style={shadow}
       >
         <ActivityIndicator size="small" color="#9ca3af" />
@@ -38,16 +38,16 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
   if (!subscription?.canUseApiKey) {
     return (
       <View
-        className="bg-white rounded-2xl border border-gray-200 p-4"
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4"
         style={shadow}
       >
         <View className="flex-row items-center gap-2 mb-1">
           <Lock size={16} color="#6b7280" />
-          <Text className="text-sm font-medium text-gray-500">
+          <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             {t("premiumFeature")}
           </Text>
         </View>
-        <Text className="text-sm text-gray-500 leading-relaxed">
+        <Text className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
           {t("premiumFeatureDescription")}
         </Text>
       </View>
@@ -56,11 +56,11 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
 
   return (
     <View
-      className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
       style={shadow}
     >
       <View className="flex-row items-center justify-between px-4 py-3">
-        <Text className="text-sm text-gray-600 flex-1 mr-3">
+        <Text className="text-sm text-gray-600 dark:text-gray-400 flex-1 mr-3">
           {t("apiKeyManagement")}
         </Text>
         <TouchableOpacity

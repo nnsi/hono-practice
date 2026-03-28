@@ -3,6 +3,8 @@ import type { Dayjs } from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
+
 const WEEKDAY_KEYS = [
   "calendar.sun",
   "calendar.mon",
@@ -33,12 +35,14 @@ export function CalendarCard({
   onSelectDate,
 }: CalendarCardProps) {
   const { t } = useTranslation(["stats", "common"]);
+  const { colors } = useThemeContext();
+
   return (
     <View
-      className="bg-white rounded-2xl w-full p-4"
+      className="bg-white dark:bg-gray-800 rounded-2xl w-full p-4"
       style={{
         maxWidth: 320,
-        shadowColor: "#1c1917",
+        shadowColor: colors.shadowColor,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.12,
         shadowRadius: 24,
@@ -51,16 +55,16 @@ export function CalendarCard({
           className="p-2 rounded-full"
           onPress={() => setViewMonth(viewMonth.subtract(1, "month"))}
         >
-          <ChevronLeft size={18} color="#374151" />
+          <ChevronLeft size={18} color={colors.textSecondary} />
         </Pressable>
-        <Text className="text-sm font-semibold text-gray-900">
+        <Text className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {viewMonth.format(t("monthYearFormat"))}
         </Text>
         <Pressable
           className="p-2 rounded-full"
           onPress={() => setViewMonth(viewMonth.add(1, "month"))}
         >
-          <ChevronRight size={18} color="#374151" />
+          <ChevronRight size={18} color={colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -68,7 +72,7 @@ export function CalendarCard({
       <View className="flex-row mb-1">
         {WEEKDAY_KEYS.map((key) => (
           <View key={key} className="flex-1 items-center py-1">
-            <Text className="text-[10px] font-medium text-gray-400">
+            <Text className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
               {t(`common:${key}`)}
             </Text>
           </View>
@@ -89,19 +93,19 @@ export function CalendarCard({
             >
               <Pressable
                 className={`w-9 h-9 items-center justify-center rounded-full ${
-                  isSelected ? "bg-gray-900" : ""
-                } ${isToday && !isSelected ? "bg-amber-100" : ""}`}
+                  isSelected ? "bg-gray-900 dark:bg-gray-100" : ""
+                } ${isToday && !isSelected ? "bg-amber-100 dark:bg-amber-900/30" : ""}`}
                 onPress={() => onSelectDate(cell.date)}
               >
                 <Text
                   className={`text-xs ${
                     isSelected
-                      ? "text-white font-bold"
+                      ? "text-white dark:text-gray-900 dark:text-gray-100 font-bold"
                       : isToday
-                        ? "text-amber-700 font-bold"
+                        ? "text-amber-700 dark:text-amber-400 font-bold"
                         : cell.currentMonth
-                          ? "text-gray-700"
-                          : "text-gray-300"
+                          ? "text-gray-700 dark:text-gray-300"
+                          : "text-gray-300 dark:text-gray-600"
                   }`}
                 >
                   {cell.day}
@@ -118,7 +122,7 @@ export function CalendarCard({
           className="mt-3 py-2 items-center rounded-xl"
           onPress={() => onSelectDate(today)}
         >
-          <Text className="text-xs text-amber-600 font-medium">
+          <Text className="text-xs text-amber-600 dark:text-amber-400 font-medium">
             {t("common:calendar.goToToday")}
           </Text>
         </Pressable>

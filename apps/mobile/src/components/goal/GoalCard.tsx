@@ -118,21 +118,21 @@ export function GoalCard({
       />
 
       <View className="px-4 pb-2">
-        <View className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+        <View className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
           <View
-            className="h-full rounded-full bg-blue-500"
+            className="h-full rounded-full bg-blue-50 dark:bg-blue-900/200"
             style={{ width: `${progressPercent}%` }}
           />
         </View>
         <View className="flex-row justify-between mt-0.5">
-          <Text className="text-[10px] text-gray-400">{elapsedDays}日経過</Text>
-          <Text className="text-[10px] text-gray-400">全{totalDays}日</Text>
+          <Text className="text-[10px] text-gray-400 dark:text-gray-500">{elapsedDays}日経過</Text>
+          <Text className="text-[10px] text-gray-400 dark:text-gray-500">全{totalDays}日</Text>
         </View>
       </View>
 
       {showInactiveDatesEnabled && inactiveDates.length > 0 && (
         <View className="mt-1 px-3 py-1">
-          <Text className="text-xs text-gray-500">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
             <Text className="font-medium">やらなかった日付: </Text>
             {inactiveDates.slice(0, 3).map((date, index) => (
               <Text key={date}>
@@ -148,7 +148,7 @@ export function GoalCard({
       )}
 
       {isExpanded && (
-        <View className="bg-white rounded-b-2xl">
+        <View className="bg-white dark:bg-gray-800 rounded-b-2xl">
           <GoalStatsDetail goal={goal} activity={activity} />
           {!isPast && (
             <View className="px-4 pb-4">
@@ -164,8 +164,8 @@ export function GoalCard({
     <View
       className={`rounded-2xl mb-3 overflow-hidden ${
         isPast
-          ? "border border-gray-200 bg-gray-50 opacity-75"
-          : "border border-gray-200 bg-white"
+          ? "border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-75"
+          : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
       }`}
       style={shadowStyle}
     >

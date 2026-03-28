@@ -26,12 +26,13 @@ export function ManualMode(props: RecordingModeProps) {
       )}
 
       <View>
-        <Text className="text-sm font-medium text-gray-600 mb-1">
-          {t("quantity")}{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+        <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          {t("quantity")}
+          {vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
           ref={quantityRef}
-          className="border border-gray-300 rounded-lg px-3 text-base"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"

@@ -22,6 +22,7 @@ import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
 import { OverlayHost } from "../src/components/common/overlayPortal";
 import { UpdateToast } from "../src/components/common/UpdateToast";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useOtaUpdate } from "../src/hooks/useOtaUpdate";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
@@ -139,16 +140,18 @@ export default function RootLayout() {
 
   if (isUpdating) {
     return (
-      <View className="flex-1 items-center justify-center bg-white gap-4">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-base text-stone-500">{t("common.updating")}</Text>
+        <Text className="text-base text-stone-500 dark:text-stone-400">
+          {t("common.updating")}
+        </Text>
       </View>
     );
   }
 
   if (auth.isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
@@ -157,21 +160,23 @@ export default function RootLayout() {
   return (
     <ErrorBoundary onRecover={clearLocalData}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthContext.Provider value={auth}>
-            <StatusBar style="auto" />
-            <View className="flex-1 bg-stone-100">
-              <Slot />
-              <DebtFeedbackToast />
-              <UpdateToast
-                visible={hasPendingUpdate}
-                onReload={triggerReload}
-                onDismiss={dismissPendingUpdate}
-              />
-              <OverlayHost />
-            </View>
-          </AuthContext.Provider>
-        </QueryClientProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthContext.Provider value={auth}>
+              <StatusBar style="auto" />
+              <View className="flex-1 bg-stone-100 dark:bg-gray-900">
+                <Slot />
+                <DebtFeedbackToast />
+                <UpdateToast
+                  visible={hasPendingUpdate}
+                  onReload={triggerReload}
+                  onDismiss={dismissPendingUpdate}
+                />
+                <OverlayHost />
+              </View>
+            </AuthContext.Provider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

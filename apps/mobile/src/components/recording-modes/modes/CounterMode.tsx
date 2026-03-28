@@ -26,17 +26,17 @@ export function CounterMode(props: RecordingModeProps) {
   return (
     <View>
       {/* タブ切り替え */}
-      <View className="flex-row mb-4 bg-gray-100 rounded-lg p-1">
+      <View className="flex-row mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
         <TouchableOpacity
           onPress={() => vm.setActiveTab("manual")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.activeTab === "manual" ? "bg-white" : ""
+            vm.activeTab === "manual" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.activeTab === "manual" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
-              vm.activeTab === "manual" ? "text-gray-900" : "text-gray-500"
+              vm.activeTab === "manual" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("manualEntry")}
@@ -45,13 +45,13 @@ export function CounterMode(props: RecordingModeProps) {
         <TouchableOpacity
           onPress={() => vm.setActiveTab("counter")}
           className={`flex-1 py-2 rounded-md items-center ${
-            vm.activeTab === "counter" ? "bg-white" : ""
+            vm.activeTab === "counter" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.activeTab === "counter" ? tabShadow : undefined}
         >
           <Text
             className={`text-sm font-medium ${
-              vm.activeTab === "counter" ? "text-gray-900" : "text-gray-500"
+              vm.activeTab === "counter" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("counter")}
@@ -73,9 +73,9 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
   return (
     <View className="gap-4">
       {vm.todayTotal > 0 && (
-        <Text className="text-center text-sm text-gray-500">
+        <Text className="text-center text-sm text-gray-500 dark:text-gray-400">
           {t("todayTotal")}{" "}
-          <Text className="font-semibold text-gray-900">
+          <Text className="font-semibold text-gray-900 dark:text-gray-100">
             {vm.todayTotal} {vm.quantityUnit}
           </Text>
         </Text>
@@ -96,7 +96,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
             onPress={() => vm.recordStep(step)}
             disabled={vm.isSubmitting}
             className={`flex-1 py-3 rounded-lg items-center ${
-              vm.isSubmitting ? "bg-blue-300" : "bg-blue-500"
+              vm.isSubmitting ? "bg-blue-300" : "bg-blue-50 dark:bg-blue-900/200"
             }`}
           >
             <Text className="text-lg font-medium text-white">+{step}</Text>
@@ -121,12 +121,13 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
         />
       )}
       <View>
-        <Text className="text-sm font-medium text-gray-600 mb-1">
-          {t("quantity")}{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+        <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          {t("quantity")}
+          {vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
           ref={quantityRef}
-          className="border border-gray-300 rounded-lg px-3 text-base"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"

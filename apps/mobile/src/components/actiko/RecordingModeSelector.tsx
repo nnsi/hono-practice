@@ -84,7 +84,7 @@ export function RecordingModeSelector({
 
   return (
     <View>
-      <Text className="text-sm font-medium text-gray-600 mb-2">
+      <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
         {t("recordingMode")}
       </Text>
       <View className="flex-row flex-wrap gap-2">
@@ -94,8 +94,8 @@ export function RecordingModeSelector({
             onPress={() => handleModeChange(value)}
             className={`flex-1 min-w-[80px] items-center gap-1 px-3 py-2 rounded-lg border ${
               recordingMode === value
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300 dark:border-gray-600"
             }`}
           >
             <Icon
@@ -104,7 +104,7 @@ export function RecordingModeSelector({
             />
             <Text
               className={`text-sm ${
-                recordingMode === value ? "text-blue-700" : "text-gray-600"
+                recordingMode === value ? "text-blue-700" : "text-gray-600 dark:text-gray-400"
               }`}
             >
               {t(labelKey)}
@@ -114,9 +114,9 @@ export function RecordingModeSelector({
       </View>
       {recordingMode === "counter" && (
         <View className="mt-3">
-          <Text className="text-sm text-gray-500 mb-1">{t("stepValues")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t("stepValues")}</Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={stepsText}
             onChangeText={handleStepsTextChange}
             placeholder="1, 10, 100"

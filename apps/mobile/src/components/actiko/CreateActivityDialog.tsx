@@ -85,9 +85,9 @@ export function CreateActivityDialog({
         />
 
         <View>
-          <Text className="text-sm text-gray-500 mb-1">{t("name")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t("name")}</Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={name}
             onChangeText={(text) => {
               setName(text);
@@ -99,9 +99,9 @@ export function CreateActivityDialog({
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 mb-1">{t("unitLabel")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t("unitLabel")}</Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
@@ -116,7 +116,7 @@ export function CreateActivityDialog({
         />
 
         <View className="flex-row items-center justify-between py-2">
-          <Text className="text-sm text-gray-700">
+          <Text className="text-sm text-gray-700 dark:text-gray-300">
             {t("combinedStatsLabel")}
           </Text>
           <Switch
@@ -126,11 +126,11 @@ export function CreateActivityDialog({
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 mb-2">{t("kinds")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t("kinds")}</Text>
           {kinds.map((kind) => (
             <View key={kind.id} className="flex-row items-center mb-2 gap-2">
               <IMESafeTextInput
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-base"
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
                 value={kind.name}
                 onChangeText={(text) => updateKindName(kind.id, text)}
                 placeholder={t("kindPlaceholder")}
@@ -143,18 +143,18 @@ export function CreateActivityDialog({
                 onPress={() => removeKind(kind.id)}
                 className="px-2 py-1"
               >
-                <Text className="text-red-500 text-base">-</Text>
+                <Text className="text-red-500 dark:text-red-400 text-base">-</Text>
               </TouchableOpacity>
             </View>
           ))}
           <TouchableOpacity onPress={addKind}>
-            <Text className="text-sm text-blue-600 font-medium">
+            <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
               {t("addKind")}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
+        {error ? <Text className="text-red-500 dark:text-red-400 text-sm">{error}</Text> : null}
       </View>
     </ModalOverlay>
   );

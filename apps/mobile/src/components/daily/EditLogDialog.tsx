@@ -70,7 +70,7 @@ export function EditLogDialog({
             size={24}
             fontSize="text-xl"
           />
-          <Text className="text-lg font-bold text-gray-900">
+          <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {activity?.name ?? t("log.unknownActivity")}
           </Text>
         </>
@@ -99,7 +99,7 @@ export function EditLogDialog({
           ) : (
             <TouchableOpacity
               className={`px-4 py-3 rounded-lg items-center justify-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-500"
+                isSubmitting ? "bg-red-300" : "bg-red-50 dark:bg-red-900/200"
               }`}
               onPress={handleDelete}
               disabled={isSubmitting}
@@ -116,7 +116,7 @@ export function EditLogDialog({
         {/* Kind selector */}
         {kinds.length > 0 && (
           <View>
-            <Text className="text-sm font-medium text-gray-600 mb-2">
+            <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               {t("log.kindLabel")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -131,7 +131,7 @@ export function EditLogDialog({
                   className={`flex-row items-center px-3 py-1.5 rounded-full border ${
                     selectedKindId === kind.id
                       ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
+                      : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                   }`}
                 >
                   {kind.color && (
@@ -144,7 +144,7 @@ export function EditLogDialog({
                     className={`text-sm ${
                       selectedKindId === kind.id
                         ? "text-white font-medium"
-                        : "text-gray-700"
+                        : "text-gray-700 dark:text-gray-300"
                     }`}
                   >
                     {kind.name}
@@ -157,12 +157,12 @@ export function EditLogDialog({
 
         {/* Quantity */}
         <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             {t("log.quantityLabel")}
             {activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
@@ -174,11 +174,11 @@ export function EditLogDialog({
 
         {/* Memo */}
         <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             {t("log.memoLabel")}
           </Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             value={memo}
             onChangeText={setMemo}
             placeholder={t("log.memoPlaceholder")}

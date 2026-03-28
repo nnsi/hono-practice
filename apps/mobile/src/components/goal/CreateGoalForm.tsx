@@ -59,11 +59,11 @@ export function CreateGoalForm({
     <View className="gap-4">
       {/* Activity selection */}
       <View>
-        <Text className="text-sm font-medium text-gray-600 mb-1">
+        <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t("activityLabel")}
         </Text>
         {activities.length === 0 ? (
-          <Text className="text-sm text-gray-400">{t("noActivities")}</Text>
+          <Text className="text-sm text-gray-400 dark:text-gray-500">{t("noActivities")}</Text>
         ) : (
           <View className="flex-row flex-wrap gap-2">
             {activities.map((a) => (
@@ -72,8 +72,8 @@ export function CreateGoalForm({
                 onPress={() => setActivityId(a.id)}
                 className={`items-center p-2 rounded-lg border min-w-[80px] ${
                   activityId === a.id
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 bg-white"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                 }`}
               >
                 <ActivityIcon
@@ -99,17 +99,17 @@ export function CreateGoalForm({
 
       {/* Daily target */}
       <View>
-        <Text className="text-sm font-medium text-gray-600 mb-1">
+        <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t("dailyTargetLabel")}
           {selectedActivity?.quantityUnit ? (
-            <Text className="text-xs text-gray-400">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {" "}
               ({selectedActivity.quantityUnit})
             </Text>
           ) : null}
         </Text>
         <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
           value={target}
           onChangeText={setTarget}
           keyboardType="numeric"
@@ -147,7 +147,7 @@ export function CreateGoalForm({
       {/* Debt cap */}
       <View>
         <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-medium text-gray-600">
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-400">
             {t("debtCapLabel")}
           </Text>
           <Switch
@@ -163,13 +163,13 @@ export function CreateGoalForm({
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
             <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base"
+              className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
               value={debtCapValue}
               onChangeText={setDebtCapValue}
               keyboardType="numeric"
               selectTextOnFocus
             />
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-gray-500 dark:text-gray-400">
               {selectedActivity?.quantityUnit ?? ""}
             </Text>
           </View>
@@ -178,7 +178,7 @@ export function CreateGoalForm({
 
       {/* Error message */}
       {errorMsg ? (
-        <Text className="text-sm text-red-500">{errorMsg}</Text>
+        <Text className="text-sm text-red-500 dark:text-red-400">{errorMsg}</Text>
       ) : null}
     </View>
   );

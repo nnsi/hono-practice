@@ -79,14 +79,14 @@ export function TaskEditDialog({
             onPress={() => onDelete(task.id)}
             className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
           >
-            <Text className="text-sm text-red-600">{t("edit.delete")}</Text>
+            <Text className="text-sm text-red-600 dark:text-red-400">{t("edit.delete")}</Text>
           </TouchableOpacity>
           <View className="flex-1" />
           <TouchableOpacity
             onPress={onClose}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg items-center"
+            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
           >
-            <Text className="text-sm text-gray-700">{t("delete.cancel")}</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">{t("delete.cancel")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleSave}
@@ -104,13 +104,13 @@ export function TaskEditDialog({
     >
       <View className="gap-4 pb-4">
         {isArchived && (
-          <Text className="text-xs text-gray-500">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
             アーカイブ済みタスクはメモの編集と削除のみ可能です
           </Text>
         )}
 
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.title")}
           </Text>
           <IMESafeTextInput
@@ -118,8 +118,8 @@ export function TaskEditDialog({
             onChangeText={setTitle}
             placeholder={t("edit.placeholder.title")}
             editable={!isArchived}
-            className={`border border-gray-300 rounded-lg px-3 py-2 text-base ${
-              isArchived ? "bg-gray-100 text-gray-500" : ""
+            className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
+              isArchived ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400" : ""
             }`}
           />
         </View>
@@ -137,7 +137,7 @@ export function TaskEditDialog({
 
         {activityId && (
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               数量（任意）
               {selectedActivity?.quantityUnit
                 ? `（${selectedActivity.quantityUnit}）`
@@ -154,8 +154,8 @@ export function TaskEditDialog({
               placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
               editable={!isArchived}
-              className={`border border-gray-300 rounded-lg px-3 py-2 text-base ${
-                isArchived ? "bg-gray-100 text-gray-500" : ""
+              className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
+                isArchived ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400" : ""
               }`}
             />
           </View>
@@ -165,10 +165,10 @@ export function TaskEditDialog({
           <View className="flex-1">
             {isArchived ? (
               <View>
-                <Text className="text-sm text-gray-500 mb-1">
+                <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                   {t("create.label.startDate")}
                 </Text>
-                <Text className="text-sm text-gray-400 px-3 py-2">
+                <Text className="text-sm text-gray-400 dark:text-gray-500 px-3 py-2">
                   {startDate ? dayjs(startDate).format("YYYY/MM/DD") : "未設定"}
                 </Text>
               </View>
@@ -191,7 +191,7 @@ export function TaskEditDialog({
         </View>
 
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.memo")}
           </Text>
           <IMESafeTextInput
@@ -200,7 +200,7 @@ export function TaskEditDialog({
             placeholder={t("edit.placeholder.memo")}
             multiline
             numberOfLines={3}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
           />
         </View>

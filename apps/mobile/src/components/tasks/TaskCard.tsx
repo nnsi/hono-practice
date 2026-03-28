@@ -44,8 +44,8 @@ export function TaskCard({
     <View
       className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
         highlight
-          ? "border border-red-200 bg-red-50"
-          : "bg-white border border-gray-100"
+          ? "border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+          : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800"
       } ${completed ? "opacity-70" : ""}`}
       style={
         !highlight
@@ -79,8 +79,8 @@ export function TaskCard({
         <Text
           className={`text-sm font-medium ${
             completed || task.doneDate
-              ? "line-through text-gray-500"
-              : "text-gray-900"
+              ? "line-through text-gray-500 dark:text-gray-400"
+              : "text-gray-900 dark:text-gray-100"
           }`}
           numberOfLines={1}
         >
@@ -105,7 +105,7 @@ export function TaskCard({
             ) : linkedActivity.emoji ? (
               <Text className="text-xs">{linkedActivity.emoji}</Text>
             ) : null}
-            <Text className="text-xs text-blue-600">
+            <Text className="text-xs text-blue-600 dark:text-blue-400">
               {linkedActivity.name}
               {linkedKind ? ` · ${linkedKind.name}` : ""}
               {task.quantity !== null
@@ -117,13 +117,13 @@ export function TaskCard({
         {(task.startDate || task.dueDate) && (
           <View className="flex-row items-center gap-1 mt-0.5">
             <CalendarDays size={12} color="#9ca3af" />
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-gray-500 dark:text-gray-400">
               {task.startDate && dayjs(task.startDate).format("MM/DD")}
               {task.startDate && task.dueDate && " - "}
               {task.dueDate && dayjs(task.dueDate).format("MM/DD")}
             </Text>
             {task.doneDate && (
-              <Text className="text-xs text-green-600 ml-2">
+              <Text className="text-xs text-green-600 dark:text-green-400 ml-2">
                 完了: {dayjs(task.doneDate).format("MM/DD")}
               </Text>
             )}
@@ -132,7 +132,7 @@ export function TaskCard({
         {task.memo ? (
           <View className="flex-row items-center gap-1 mt-0.5">
             <FileText size={12} color="#9ca3af" />
-            <Text className="text-xs text-gray-400 flex-1" numberOfLines={1}>
+            <Text className="text-xs text-gray-400 dark:text-gray-500 flex-1" numberOfLines={1}>
               {task.memo}
             </Text>
           </View>

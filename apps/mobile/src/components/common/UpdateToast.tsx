@@ -76,13 +76,13 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
     <View className="absolute left-4 right-4 top-16" pointerEvents="box-none">
       <Animated.View
         style={{ opacity, transform: [{ translateY }] }}
-        className="rounded-xl bg-blue-600 px-5 py-4 shadow-lg"
+        className="rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-4 shadow-lg"
       >
         <Pressable onPress={handleReload}>
-          <Text className="text-center text-sm font-bold text-white">
+          <Text className="text-center text-sm font-bold text-white dark:text-white">
             アップデートがあります
           </Text>
-          <Text className="mt-1 text-center text-xs text-blue-100">
+          <Text className="mt-1 text-center text-xs text-blue-100 dark:text-blue-200">
             タップして再起動
           </Text>
         </Pressable>
@@ -90,7 +90,7 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
           onPress={handleDismiss}
           className="absolute right-2 top-2 px-2 py-1"
         >
-          <Text className="text-sm text-blue-200">✕</Text>
+          <Text className="text-sm text-blue-200 dark:text-blue-300">✕</Text>
         </Pressable>
       </Animated.View>
     </View>

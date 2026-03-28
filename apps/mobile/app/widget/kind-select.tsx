@@ -95,14 +95,14 @@ export default function WidgetKindSelectPage() {
 
   if (!activityId) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+      <SafeAreaView className="flex-1 bg-white dark:bg-gray-800 justify-center items-center">
         <Text>Activity ID が指定されていません</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white dark:bg-gray-800">
       <View className="p-6 gap-6">
         <Text className="text-xl font-bold">
           {activityName || "種類を選択"}

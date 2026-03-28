@@ -50,7 +50,7 @@ export function RecordDialog({
             size={24}
             fontSize="text-xl"
           />
-          <Text className="text-lg font-bold text-gray-900">
+          <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {activity.name}
           </Text>
         </>

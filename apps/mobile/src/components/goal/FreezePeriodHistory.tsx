@@ -38,12 +38,12 @@ export function FreezePeriodHistory({
         return (
           <View
             key={fp.id}
-            className={`flex-row items-center px-3 py-2 rounded-lg ${isActive ? "bg-blue-50" : "bg-gray-50"}`}
+            className={`flex-row items-center px-3 py-2 rounded-lg ${isActive ? "bg-blue-50 dark:bg-blue-900/20" : "bg-gray-50 dark:bg-gray-800"}`}
           >
             <View
-              className={`w-1.5 h-1.5 rounded-full mr-2 ${isActive ? "bg-blue-500" : "bg-gray-400"}`}
+              className={`w-1.5 h-1.5 rounded-full mr-2 ${isActive ? "bg-blue-50 dark:bg-blue-900/200" : "bg-gray-400"}`}
             />
-            <Text className="text-xs text-gray-700 flex-1">
+            <Text className="text-xs text-gray-700 dark:text-gray-300 flex-1">
               {dayjs(fp.startDate).format("YYYY/M/D")} {t("dateRange")}{" "}
               {fp.endDate
                 ? dayjs(fp.endDate).format("YYYY/M/D")
@@ -53,7 +53,7 @@ export function FreezePeriodHistory({
               (deletingId === fp.id ? (
                 <View className="flex-row items-center gap-1">
                   <TouchableOpacity
-                    className="px-2 py-1 bg-red-500 rounded"
+                    className="px-2 py-1 bg-red-50 dark:bg-red-900/200 rounded"
                     onPress={() => onDeleteConfirm(fp.id)}
                   >
                     <Text className="text-xs text-white">
@@ -61,10 +61,10 @@ export function FreezePeriodHistory({
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    className="px-2 py-1 border border-gray-300 rounded"
+                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                     onPress={onDeleteCancel}
                   >
-                    <Text className="text-xs text-gray-600">
+                    <Text className="text-xs text-gray-600 dark:text-gray-400">
                       {t("freezeCancelButton")}
                     </Text>
                   </TouchableOpacity>

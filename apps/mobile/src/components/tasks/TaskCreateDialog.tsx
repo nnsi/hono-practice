@@ -73,9 +73,9 @@ export function TaskCreateDialog({
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={onClose}
-            className="flex-1 py-2.5 border border-gray-300 rounded-lg items-center"
+            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
           >
-            <Text className="text-sm text-gray-700">{t("delete.cancel")}</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">{t("delete.cancel")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleCreate}
@@ -93,14 +93,14 @@ export function TaskCreateDialog({
     >
       <View className="gap-4 pb-4">
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            {t("create.label.title")} <Text className="text-red-500">*</Text>
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t("create.label.title")} <Text className="text-red-500 dark:text-red-400">*</Text>
           </Text>
           <IMESafeTextInput
             value={title}
             onChangeText={setTitle}
             placeholder={t("create.placeholder.title")}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             autoFocus
           />
         </View>
@@ -117,7 +117,7 @@ export function TaskCreateDialog({
 
         {activityId && (
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               数量（任意）
               {selectedActivity?.quantityUnit
                 ? `（${selectedActivity.quantityUnit}）`
@@ -133,7 +133,7 @@ export function TaskCreateDialog({
               }}
               placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             />
           </View>
         )}
@@ -156,7 +156,7 @@ export function TaskCreateDialog({
         </View>
 
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.memo")}
           </Text>
           <IMESafeTextInput
@@ -165,7 +165,7 @@ export function TaskCreateDialog({
             placeholder={t("create.placeholder.memo")}
             multiline
             numberOfLines={3}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
           />
         </View>

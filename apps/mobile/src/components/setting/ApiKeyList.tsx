@@ -42,7 +42,7 @@ export function ApiKeyList({
   if (apiKeys.length === 0) {
     return (
       <View className="px-4 py-2">
-        <Text className="text-sm text-gray-400">{t("noApiKeys")}</Text>
+        <Text className="text-sm text-gray-400 dark:text-gray-500">{t("noApiKeys")}</Text>
       </View>
     );
   }
@@ -50,9 +50,9 @@ export function ApiKeyList({
   return (
     <View>
       {apiKeys.map((apiKey) => (
-        <View key={apiKey.id} className="border-t border-gray-100 px-4 py-3">
+        <View key={apiKey.id} className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-gray-900">
+            <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {apiKey.name}
             </Text>
             {confirmDeleteId === apiKey.id ? (
@@ -70,11 +70,11 @@ export function ApiKeyList({
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="px-2 py-1 border border-gray-300 rounded"
+                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                   onPress={() => setConfirmDeleteId(null)}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-xs text-gray-700">
+                  <Text className="text-xs text-gray-700 dark:text-gray-300">
                     {t("apiKeyDeleteCancel")}
                   </Text>
                 </TouchableOpacity>
@@ -89,20 +89,20 @@ export function ApiKeyList({
               </TouchableOpacity>
             )}
           </View>
-          <View className="mt-1.5 bg-gray-50 px-2 py-1 rounded">
-            <Text className="text-xs text-gray-400 font-mono">
+          <View className="mt-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
+            <Text className="text-xs text-gray-400 dark:text-gray-500 font-mono">
               {apiKey.key.startsWith("api_")
                 ? apiKey.key
                 : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
             </Text>
           </View>
           <View className="flex-row gap-3 mt-1.5">
-            <Text className="text-xs text-gray-400">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {t("apiKeyCreated")}:{" "}
               {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}
             </Text>
             {apiKey.lastUsedAt && (
-              <Text className="text-xs text-gray-400">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 {t("apiKeyLastUsed")}:{" "}
                 {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}
               </Text>
