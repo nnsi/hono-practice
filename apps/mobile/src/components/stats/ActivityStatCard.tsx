@@ -121,7 +121,7 @@ export function ActivityStatCard({
                   {kind.name}
                 </Text>
                 <Text
-                  className="text-sm font-bold"
+                  className="text-xs font-bold"
                   style={{ color: kindColors[kind.name] }}
                 >
                   {formatQuantityWithUnit(kind.total, stat.quantityUnit)}
