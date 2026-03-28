@@ -22,7 +22,8 @@
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
-    "gen-be": "node scripts/gen-be.js"
+    "gen-be": "node scripts/gen-be.js",
+    "mobile": "pnpm --filter actiko-mobile"
   },
   "packageManager": "pnpm@10.27.0",
   "pnpm": {

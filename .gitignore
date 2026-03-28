@@ -22,6 +22,7 @@ nul
 apps/mobile/android
 apps/mobile/ios
 apps/mobile/modules/**/android/build
+.worktrees
 
 # Terraform
 terraform/*.tfvars
