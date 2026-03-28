@@ -232,6 +232,13 @@
       "when": 1774656000000,
       "tag": "0032_api_key_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1774716869389,
+      "tag": "0033_gigantic_sebastian_shaw",
+      "breakpoints": true
     }
   ]
 }

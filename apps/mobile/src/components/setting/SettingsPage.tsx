@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Info, Settings, User } from "lucide-react-native";
 import {
@@ -32,6 +33,7 @@ export function SettingsPage() {
   const { userId, logout } = useAuthContext();
   const { settings, updateSetting } = useAppSettings();
   const { colors } = useThemeContext();
+  const router = useRouter();
   const shadow = {
     shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
@@ -119,6 +121,11 @@ export function SettingsPage() {
           <TouchableOpacity onPress={() => setLegalModal("terms")}>
             <Text className="text-xs text-blue-500 dark:text-blue-400 underline">
               {t("termsOfService")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/contact")}>
+            <Text className="text-xs text-blue-500 dark:text-blue-400 underline">
+              {t("contact")}
             </Text>
           </TouchableOpacity>
         </View>

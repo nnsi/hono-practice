@@ -16,6 +16,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
   const { i18n } = useTranslation();
   const { title, sections } = getLegalContent(type, i18n.language, {
     contactEmail: CONTACT_EMAIL,
+    contactUrl: "/contact",
   });
 
   return (

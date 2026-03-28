@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next";
 import actikoEn from "./locales/en/actiko.json";
 import activityEn from "./locales/en/activity.json";
 import commonEn from "./locales/en/common.json";
+import contactEn from "./locales/en/contact.json";
 import csvEn from "./locales/en/csv.json";
 import feedbackEn from "./locales/en/feedback.json";
 import goalEn from "./locales/en/goal.json";
@@ -15,6 +16,7 @@ import validationEn from "./locales/en/validation.json";
 import actikoJa from "./locales/ja/actiko.json";
 import activityJa from "./locales/ja/activity.json";
 import commonJa from "./locales/ja/common.json";
+import contactJa from "./locales/ja/contact.json";
 import csvJa from "./locales/ja/csv.json";
 import feedbackJa from "./locales/ja/feedback.json";
 import goalJa from "./locales/ja/goal.json";
@@ -39,6 +41,7 @@ const allNS = [
   "csv",
   "actiko",
   "recording",
+  "contact",
 ] as const;
 
 export const resources = {
@@ -54,6 +57,7 @@ export const resources = {
     csv: csvJa,
     actiko: actikoJa,
     recording: recordingJa,
+    contact: contactJa,
   },
   en: {
     common: commonEn,
@@ -67,6 +71,7 @@ export const resources = {
     csv: csvEn,
     actiko: actikoEn,
     recording: recordingEn,
+    contact: contactEn,
   },
 } as const;
 

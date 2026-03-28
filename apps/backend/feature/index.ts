@@ -4,6 +4,7 @@ export * from "./activityLog";
 export * from "./aiActivityLog";
 export * from "./apiKey";
 export * from "./auth";
+export * from "./contact";
 export * from "./goal";
 export * from "./subscription";
 export * from "./task";

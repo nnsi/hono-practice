@@ -24,7 +24,10 @@ const titleMap = {
 function getSections(type: LegalPageProps["type"]) {
   switch (type) {
     case "privacy":
-      return createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL });
+      return createPrivacyPolicySections({
+        contactEmail: CONTACT_EMAIL,
+        contactUrl: "/contact",
+      });
     case "terms":
       return termsOfServiceSections;
     case "tokushoho":
