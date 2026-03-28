@@ -156,12 +156,16 @@ function PillButton({
       onPress={() => !disabled && onPress()}
       disabled={disabled}
       className={`px-3 py-1.5 rounded-full border ${
-        selected ? "bg-gray-900 border-gray-900" : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        selected
+          ? "bg-gray-900 border-gray-900"
+          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
       } ${disabled ? "opacity-50" : ""}`}
     >
       <Text
         className={`text-sm ${
-          selected ? "text-white font-medium" : "text-gray-700 dark:text-gray-300"
+          selected
+            ? "text-white font-medium"
+            : "text-gray-700 dark:text-gray-300"
         }`}
       >
         {label}

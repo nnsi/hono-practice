@@ -180,7 +180,9 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
               }}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
             >
-              <Text className="text-xs text-gray-600 dark:text-gray-400">{t("cancelButton")}</Text>
+              <Text className="text-xs text-gray-600 dark:text-gray-400">
+                {t("cancelButton")}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleFreezeWithDates}

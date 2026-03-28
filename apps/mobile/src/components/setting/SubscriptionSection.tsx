@@ -55,12 +55,16 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
         <View className="flex-row items-center">
           <View
             className={`px-2.5 py-1 rounded-full ${
-              isPremium ? "bg-amber-100 dark:bg-amber-900/30" : "bg-gray-100 dark:bg-gray-800"
+              isPremium
+                ? "bg-amber-100 dark:bg-amber-900/30"
+                : "bg-gray-100 dark:bg-gray-800"
             }`}
           >
             <Text
               className={`text-xs font-bold ${
-                isPremium ? "text-amber-700 dark:text-amber-400" : "text-gray-600 dark:text-gray-400"
+                isPremium
+                  ? "text-amber-700 dark:text-amber-400"
+                  : "text-gray-600 dark:text-gray-400"
               }`}
             >
               {isPremium ? t("planPro") : t("planFree")}
@@ -113,7 +117,9 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
       {error && (
         <View className="mx-4 mb-3">
-          <Text className="text-xs text-red-500 dark:text-red-400">{error}</Text>
+          <Text className="text-xs text-red-500 dark:text-red-400">
+            {error}
+          </Text>
         </View>
       )}
     </Section>

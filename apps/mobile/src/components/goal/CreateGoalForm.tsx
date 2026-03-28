@@ -63,7 +63,9 @@ export function CreateGoalForm({
           {t("activityLabel")}
         </Text>
         {activities.length === 0 ? (
-          <Text className="text-sm text-gray-400 dark:text-gray-500">{t("noActivities")}</Text>
+          <Text className="text-sm text-gray-400 dark:text-gray-500">
+            {t("noActivities")}
+          </Text>
         ) : (
           <View className="flex-row flex-wrap gap-2">
             {activities.map((a) => (
@@ -178,7 +180,9 @@ export function CreateGoalForm({
 
       {/* Error message */}
       {errorMsg ? (
-        <Text className="text-sm text-red-500 dark:text-red-400">{errorMsg}</Text>
+        <Text className="text-sm text-red-500 dark:text-red-400">
+          {errorMsg}
+        </Text>
       ) : null}
     </View>
   );

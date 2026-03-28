@@ -144,6 +144,22 @@ function enhanceDiagnostics(raw) {
       "FIX: import順序が規約と異なる。auto-fixで解決済みのはずだが残っている場合は手動で並べ替える。",
     "noRestrictedImports|noCrossLayerImport":
       "FIX: レイヤー違反。ADR 20241201_clean-architecture 参照。route→handler→usecase→repository の依存方向を守る。",
+    noParameterAssign:
+      "FIX: パラメータを直接変更せず、新しい変数に代入する。`const updated = { ...param, field: newValue }` パターンを使う。",
+    noPrototypeBuiltins:
+      "FIX: `obj.hasOwnProperty(key)` → `Object.hasOwn(obj, key)` に変更する。",
+    noShadowRestrictedNames:
+      "FIX: ビルトイン名（`name`, `status`, `event` 等）と同名の変数を避ける。`userName`, `responseStatus` のようにプレフィックスを付ける。",
+    noArrayIndexKey:
+      "FIX: map()のインデックスをReactのkeyに使わない。ドメインIDを使う。例: `key={activity.id}`",
+    useOptionalChain:
+      "FIX: `a && a.b && a.b.c` → `a?.b?.c` に変更する。",
+    noConsoleLog:
+      "FIX: `console.log` を削除する。バックエンドのデバッグには `logger` を使う。",
+    useIsNaN:
+      "FIX: `x === NaN` は常にfalse。`Number.isNaN(x)` を使う。",
+    noForEach:
+      "FIX: `.forEach()` → `for...of` ループに変更する。早期returnが使えて可読性が上がる。",
   };
 
   let result = raw;

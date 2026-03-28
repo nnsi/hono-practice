@@ -16,7 +16,9 @@ export function ActionCard({ icon: Icon, label, onPress }: ActionCardProps) {
         activeOpacity={0.7}
       >
         <Icon size={28} color="#a8a29e" />
-        <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">{label}</Text>
+        <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          {label}
+        </Text>
       </TouchableOpacity>
     </View>
   );

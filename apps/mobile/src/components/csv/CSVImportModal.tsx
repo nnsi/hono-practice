@@ -281,7 +281,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 
         {/* Activity picker */}
         <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">アクティビティ</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            アクティビティ
+          </Text>
           <View className="flex-row flex-wrap gap-2">
             {activities.map((a) => (
               <TouchableOpacity
@@ -318,7 +320,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               {fileName && (
                 <View className="flex-row items-center mt-1">
                   <FileText size={12} color="#6b7280" />
-                  <Text className="text-xs text-gray-400 dark:text-gray-500 ml-1">{fileName}</Text>
+                  <Text className="text-xs text-gray-400 dark:text-gray-500 ml-1">
+                    {fileName}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -338,7 +342,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 
         {error && (
           <View className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <Text className="text-sm text-red-700 dark:text-red-400">{error}</Text>
+            <Text className="text-sm text-red-700 dark:text-red-400">
+              {error}
+            </Text>
           </View>
         )}
         {successCount !== null && (
@@ -477,7 +483,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 setFileName(null);
               }}
             >
-              <Text className="text-sm text-gray-500 dark:text-gray-400">ファイルを選び直す</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400">
+                ファイルを選び直す
+              </Text>
             </TouchableOpacity>
           </View>
         )}

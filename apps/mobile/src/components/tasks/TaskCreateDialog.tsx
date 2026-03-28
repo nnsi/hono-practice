@@ -75,7 +75,9 @@ export function TaskCreateDialog({
             onPress={onClose}
             className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
           >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">{t("delete.cancel")}</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">
+              {t("delete.cancel")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleCreate}
@@ -94,7 +96,8 @@ export function TaskCreateDialog({
       <View className="gap-4 pb-4">
         <View>
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {t("create.label.title")} <Text className="text-red-500 dark:text-red-400">*</Text>
+            {t("create.label.title")}{" "}
+            <Text className="text-red-500 dark:text-red-400">*</Text>
           </Text>
           <IMESafeTextInput
             value={title}

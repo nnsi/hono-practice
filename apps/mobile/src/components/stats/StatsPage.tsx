@@ -55,7 +55,9 @@ export function StatsPage() {
       >
         {isLoading ? (
           <View className="items-center py-16">
-            <Text className="text-gray-400 dark:text-gray-500">{t("loading")}</Text>
+            <Text className="text-gray-400 dark:text-gray-500">
+              {t("loading")}
+            </Text>
           </View>
         ) : !stats || stats.length === 0 ? (
           <View className="items-center py-16">

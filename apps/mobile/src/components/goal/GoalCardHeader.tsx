@@ -176,7 +176,9 @@ export function GoalCardHeader({
                   className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                   onPress={onDeleteCancel}
                 >
-                  <Text className="text-xs text-gray-600 dark:text-gray-400">取消</Text>
+                  <Text className="text-xs text-gray-600 dark:text-gray-400">
+                    取消
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}

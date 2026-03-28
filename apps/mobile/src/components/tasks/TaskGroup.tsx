@@ -34,7 +34,9 @@ export function TaskGroup({
     <View>
       <View className="flex-row items-center mb-2">
         <Text className={`text-sm font-semibold ${titleColor}`}>{title} </Text>
-        <Text className="text-xs text-gray-400 dark:text-gray-500">({tasks.length})</Text>
+        <Text className="text-xs text-gray-400 dark:text-gray-500">
+          ({tasks.length})
+        </Text>
       </View>
       <View className="gap-2">
         {tasks.map((task) => (

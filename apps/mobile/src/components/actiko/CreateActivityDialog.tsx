@@ -85,7 +85,9 @@ export function CreateActivityDialog({
         />
 
         <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t("name")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            {t("name")}
+          </Text>
           <IMESafeTextInput
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={name}
@@ -99,7 +101,9 @@ export function CreateActivityDialog({
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t("unitLabel")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            {t("unitLabel")}
+          </Text>
           <IMESafeTextInput
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={quantityUnit}
@@ -126,7 +130,9 @@ export function CreateActivityDialog({
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t("kinds")}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            {t("kinds")}
+          </Text>
           {kinds.map((kind) => (
             <View key={kind.id} className="flex-row items-center mb-2 gap-2">
               <IMESafeTextInput
@@ -143,7 +149,9 @@ export function CreateActivityDialog({
                 onPress={() => removeKind(kind.id)}
                 className="px-2 py-1"
               >
-                <Text className="text-red-500 dark:text-red-400 text-base">-</Text>
+                <Text className="text-red-500 dark:text-red-400 text-base">
+                  -
+                </Text>
               </TouchableOpacity>
             </View>
           ))}
@@ -154,7 +162,11 @@ export function CreateActivityDialog({
           </TouchableOpacity>
         </View>
 
-        {error ? <Text className="text-red-500 dark:text-red-400 text-sm">{error}</Text> : null}
+        {error ? (
+          <Text className="text-red-500 dark:text-red-400 text-sm">
+            {error}
+          </Text>
+        ) : null}
       </View>
     </ModalOverlay>
   );

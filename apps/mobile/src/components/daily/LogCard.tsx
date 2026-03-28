@@ -92,7 +92,9 @@ export function LogCard({
                   style={{ backgroundColor: kind.color }}
                 />
               )}
-              <Text className="text-xs text-gray-500 dark:text-gray-400">{kind.name}</Text>
+              <Text className="text-xs text-gray-500 dark:text-gray-400">
+                {kind.name}
+              </Text>
             </View>
           )}
           {isPending && (
@@ -105,7 +107,10 @@ export function LogCard({
             : "-"}
         </Text>
         {log.memo ? (
-          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-0.5" numberOfLines={1}>
+          <Text
+            className="text-xs text-gray-400 dark:text-gray-500 mt-0.5"
+            numberOfLines={1}
+          >
             {log.memo}
           </Text>
         ) : null}

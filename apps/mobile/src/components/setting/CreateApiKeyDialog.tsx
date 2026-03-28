@@ -96,10 +96,15 @@ export function CreateApiKeyDialog({
       {createdKey ? (
         <View>
           <View className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg p-3 mb-4">
-            <Text className="text-sm text-amber-700 dark:text-amber-400">{t("apiKeyWarning")}</Text>
+            <Text className="text-sm text-amber-700 dark:text-amber-400">
+              {t("apiKeyWarning")}
+            </Text>
           </View>
           <View className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-            <Text className="text-sm text-gray-800 dark:text-gray-200 font-mono" selectable>
+            <Text
+              className="text-sm text-gray-800 dark:text-gray-200 font-mono"
+              selectable
+            >
               {createdKey}
             </Text>
           </View>
@@ -122,7 +127,11 @@ export function CreateApiKeyDialog({
             {t("apiKeyNameHint")}
           </Text>
 
-          {error && <Text className="text-sm text-red-600 dark:text-red-400 mt-3">{error}</Text>}
+          {error && (
+            <Text className="text-sm text-red-600 dark:text-red-400 mt-3">
+              {error}
+            </Text>
+          )}
         </View>
       )}
     </ModalOverlay>

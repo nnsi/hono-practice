@@ -54,7 +54,9 @@ export function TaskList({
   if (tasks.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-gray-400 dark:text-gray-500 text-sm">{t("daily.noTasks")}</Text>
+        <Text className="text-gray-400 dark:text-gray-500 text-sm">
+          {t("daily.noTasks")}
+        </Text>
       </View>
     );
   }

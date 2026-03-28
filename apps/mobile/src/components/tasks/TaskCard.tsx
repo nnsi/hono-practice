@@ -132,7 +132,10 @@ export function TaskCard({
         {task.memo ? (
           <View className="flex-row items-center gap-1 mt-0.5">
             <FileText size={12} color="#9ca3af" />
-            <Text className="text-xs text-gray-400 dark:text-gray-500 flex-1" numberOfLines={1}>
+            <Text
+              className="text-xs text-gray-400 dark:text-gray-500 flex-1"
+              numberOfLines={1}
+            >
               {task.memo}
             </Text>
           </View>

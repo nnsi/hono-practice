@@ -79,14 +79,18 @@ export function TaskEditDialog({
             onPress={() => onDelete(task.id)}
             className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
           >
-            <Text className="text-sm text-red-600 dark:text-red-400">{t("edit.delete")}</Text>
+            <Text className="text-sm text-red-600 dark:text-red-400">
+              {t("edit.delete")}
+            </Text>
           </TouchableOpacity>
           <View className="flex-1" />
           <TouchableOpacity
             onPress={onClose}
             className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
           >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">{t("delete.cancel")}</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">
+              {t("delete.cancel")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleSave}
@@ -119,7 +123,9 @@ export function TaskEditDialog({
             placeholder={t("edit.placeholder.title")}
             editable={!isArchived}
             className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
-              isArchived ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400" : ""
+              isArchived
+                ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                : ""
             }`}
           />
         </View>
@@ -155,7 +161,9 @@ export function TaskEditDialog({
               keyboardType="decimal-pad"
               editable={!isArchived}
               className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
-                isArchived ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400" : ""
+                isArchived
+                  ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  : ""
               }`}
             />
           </View>

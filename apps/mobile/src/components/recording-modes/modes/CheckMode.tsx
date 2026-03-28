@@ -78,7 +78,9 @@ export function CheckMode(props: RecordingModeProps) {
         <Check size={48} color={iconColor} />
       </TouchableOpacity>
 
-      <Text className="text-sm text-gray-500 dark:text-gray-400">{statusText}</Text>
+      <Text className="text-sm text-gray-500 dark:text-gray-400">
+        {statusText}
+      </Text>
     </View>
   );
 }

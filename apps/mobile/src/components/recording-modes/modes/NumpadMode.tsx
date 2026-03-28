@@ -70,7 +70,10 @@ export function NumpadMode(props: RecordingModeProps) {
           <Text className="text-4xl font-bold text-gray-900 dark:text-gray-100">
             {vm.formattedDisplay}
             {vm.quantityUnit ? (
-              <Text className="text-lg text-gray-500 dark:text-gray-400"> {vm.quantityUnit}</Text>
+              <Text className="text-lg text-gray-500 dark:text-gray-400">
+                {" "}
+                {vm.quantityUnit}
+              </Text>
             ) : null}
           </Text>
         </View>

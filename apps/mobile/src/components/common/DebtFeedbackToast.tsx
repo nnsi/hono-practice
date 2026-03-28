@@ -113,7 +113,9 @@ export function DebtFeedbackToast() {
   const message = buildDebtFeedbackMessage(results, praiseMode, t);
   if (!message) return null;
 
-  const bgClass = praiseMode ? "bg-amber-50 dark:bg-amber-900/200" : "bg-emerald-600";
+  const bgClass = praiseMode
+    ? "bg-amber-50 dark:bg-amber-900/200"
+    : "bg-emerald-600";
 
   return (
     <View className="absolute bottom-24 left-4 right-4" pointerEvents="none">

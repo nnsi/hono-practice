@@ -52,7 +52,9 @@ export function TasksPage() {
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "active" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
+              activeTab === "active"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
             {t("page.tab.active")}
@@ -66,7 +68,9 @@ export function TasksPage() {
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "archived" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
+              activeTab === "archived"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
             {t("page.tab.archived")}
@@ -86,7 +90,9 @@ export function TasksPage() {
           <View className="gap-6">
             {!hasAnyTasks && (
               <View className="items-center py-12">
-                <Text className="text-gray-500 dark:text-gray-400 mb-4">{t("page.empty")}</Text>
+                <Text className="text-gray-500 dark:text-gray-400 mb-4">
+                  {t("page.empty")}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setCreateDialogOpen(true)}
                   className="px-4 py-2 bg-blue-600 rounded-lg"
@@ -270,7 +276,9 @@ export function TasksPage() {
           <View>
             {archivedTasks.length === 0 && (
               <View className="items-center py-12">
-                <Text className="text-gray-500 dark:text-gray-400">{t("page.empty")}</Text>
+                <Text className="text-gray-500 dark:text-gray-400">
+                  {t("page.empty")}
+                </Text>
               </View>
             )}
             {archivedTasks.length > 0 && (

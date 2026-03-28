@@ -65,7 +65,9 @@ export function GoalsPage() {
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "active" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
+              activeTab === "active"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
             アクティブ
@@ -79,7 +81,9 @@ export function GoalsPage() {
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "ended" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
+              activeTab === "ended"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
             {t("tabEnded")}
@@ -143,7 +147,9 @@ export function GoalsPage() {
               activeOpacity={0.7}
             >
               <Plus size={20} color="#9ca3af" />
-              <Text className="text-sm text-gray-500 dark:text-gray-400">新規目標を追加</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400">
+                新規目標を追加
+              </Text>
             </TouchableOpacity>
           </View>
         )}

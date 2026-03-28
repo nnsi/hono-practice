@@ -36,7 +36,9 @@ export function CounterMode(props: RecordingModeProps) {
         >
           <Text
             className={`text-sm font-medium ${
-              vm.activeTab === "manual" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+              vm.activeTab === "manual"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("manualEntry")}
@@ -51,7 +53,9 @@ export function CounterMode(props: RecordingModeProps) {
         >
           <Text
             className={`text-sm font-medium ${
-              vm.activeTab === "counter" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+              vm.activeTab === "counter"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("counter")}
@@ -96,7 +100,9 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
             onPress={() => vm.recordStep(step)}
             disabled={vm.isSubmitting}
             className={`flex-1 py-3 rounded-lg items-center ${
-              vm.isSubmitting ? "bg-blue-300" : "bg-blue-50 dark:bg-blue-900/200"
+              vm.isSubmitting
+                ? "bg-blue-300"
+                : "bg-blue-50 dark:bg-blue-900/200"
             }`}
           >
             <Text className="text-lg font-medium text-white">+{step}</Text>

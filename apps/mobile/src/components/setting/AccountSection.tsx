@@ -51,7 +51,9 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           onPress={() => setShowImport(true)}
         >
           <Upload size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">{t("importCSV")}</Text>
+          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">
+            {t("importCSV")}
+          </Text>
         </TouchableOpacity>
         <Divider />
         <TouchableOpacity
@@ -59,7 +61,9 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           onPress={() => setShowExport(true)}
         >
           <Download size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">{t("exportCSV")}</Text>
+          <Text className="ml-3 text-base text-blue-600 dark:text-blue-400">
+            {t("exportCSV")}
+          </Text>
         </TouchableOpacity>
         <Divider />
         <View className="px-4 py-3">
@@ -142,7 +146,9 @@ export function AccountAndDangerSection({
             onPress={() => setShowLogoutConfirm(true)}
           >
             <LogOut size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500 dark:text-red-400">{t("logout")}</Text>
+            <Text className="ml-3 text-base text-red-500 dark:text-red-400">
+              {t("logout")}
+            </Text>
           </TouchableOpacity>
         ) : (
           <InlineConfirm

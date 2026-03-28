@@ -42,7 +42,9 @@ export function ApiKeyList({
   if (apiKeys.length === 0) {
     return (
       <View className="px-4 py-2">
-        <Text className="text-sm text-gray-400 dark:text-gray-500">{t("noApiKeys")}</Text>
+        <Text className="text-sm text-gray-400 dark:text-gray-500">
+          {t("noApiKeys")}
+        </Text>
       </View>
     );
   }
@@ -50,7 +52,10 @@ export function ApiKeyList({
   return (
     <View>
       {apiKeys.map((apiKey) => (
-        <View key={apiKey.id} className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">
+        <View
+          key={apiKey.id}
+          className="border-t border-gray-100 dark:border-gray-800 px-4 py-3"
+        >
           <View className="flex-row items-center justify-between">
             <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {apiKey.name}

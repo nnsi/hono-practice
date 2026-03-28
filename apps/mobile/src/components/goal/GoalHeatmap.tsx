@@ -4,7 +4,8 @@ import { ActivityIndicator, Text, View } from "react-native";
 import { useGoalHeatmap } from "./useGoalHeatmap";
 
 function slotBgColor(slot: HeatmapSlot): string {
-  if (!slot.cell || slot.cell.totalGoals === 0) return "bg-gray-100 dark:bg-gray-800";
+  if (!slot.cell || slot.cell.totalGoals === 0)
+    return "bg-gray-100 dark:bg-gray-800";
   const { achievedCount, activeCount, totalGoals } = slot.cell;
   if (achievedCount === totalGoals) return "bg-green-50 dark:bg-green-900/200";
   if (achievedCount > 0) {

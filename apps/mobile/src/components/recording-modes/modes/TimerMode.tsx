@@ -36,7 +36,9 @@ export function TimerMode(props: RecordingModeProps) {
         >
           <Text
             className={`text-sm font-medium ${
-              vm.effectiveTab === "manual" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+              vm.effectiveTab === "manual"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("manualEntry")}
@@ -51,7 +53,9 @@ export function TimerMode(props: RecordingModeProps) {
         >
           <Text
             className={`text-sm font-medium ${
-              vm.effectiveTab === "timer" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+              vm.effectiveTab === "timer"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {t("timer")}
@@ -80,7 +84,9 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           {vm.formattedTime}
         </Text>
         {vm.isRunning && (
-          <Text className="text-sm text-gray-400 dark:text-gray-500 mt-2">{t("measuring")}</Text>
+          <Text className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+            {t("measuring")}
+          </Text>
         )}
       </View>
 
@@ -107,7 +113,9 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             onPress={vm.reset}
             className="flex-row items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl"
           >
-            <Text className="text-gray-600 dark:text-gray-400 font-medium">{t("reset")}</Text>
+            <Text className="text-gray-600 dark:text-gray-400 font-medium">
+              {t("reset")}
+            </Text>
           </TouchableOpacity>
         )}
       </View>

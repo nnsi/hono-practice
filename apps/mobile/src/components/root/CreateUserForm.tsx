@@ -54,7 +54,9 @@ export function CreateUserForm() {
       </Text>
 
       {error ? (
-        <Text className="text-red-500 dark:text-red-400 text-center mb-4">{error}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-center mb-4">
+          {error}
+        </Text>
       ) : null}
 
       <TouchableOpacity
@@ -108,7 +110,9 @@ export function CreateUserForm() {
 
       <View className="flex-row items-center mb-4">
         <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">{t("auth.or")}</Text>
+        <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">
+          {t("auth.or")}
+        </Text>
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
@@ -154,7 +158,9 @@ export function CreateUserForm() {
         className="mt-4 items-center"
         onPress={() => router.back()}
       >
-        <Text className="text-blue-500 dark:text-blue-400">{t("auth.backToLogin")}</Text>
+        <Text className="text-blue-500 dark:text-blue-400">
+          {t("auth.backToLogin")}
+        </Text>
       </TouchableOpacity>
 
       {legalModal && (

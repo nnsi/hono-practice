@@ -104,7 +104,9 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
     <Section icon={Link} label="Google連携" shadow={shadow}>
       {google.isLoading ? (
         <View className="px-4 py-3">
-          <Text className="text-sm text-gray-500 dark:text-gray-400">読み込み中...</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            読み込み中...
+          </Text>
         </View>
       ) : (
         <View className="px-4 py-3 gap-2">

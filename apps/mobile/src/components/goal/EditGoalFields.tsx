@@ -125,7 +125,9 @@ export function EditGoalFields({
       </View>
 
       {errorMsg ? (
-        <Text className="text-red-500 dark:text-red-400 text-sm mb-2">{errorMsg}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-sm mb-2">
+          {errorMsg}
+        </Text>
       ) : null}
     </>
   );

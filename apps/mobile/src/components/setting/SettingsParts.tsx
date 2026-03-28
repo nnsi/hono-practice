@@ -39,7 +39,9 @@ export function Section({
 }
 
 export function Divider() {
-  return <View className="border-t border-gray-100 dark:border-gray-800 mx-4" />;
+  return (
+    <View className="border-t border-gray-100 dark:border-gray-800 mx-4" />
+  );
 }
 
 export function SettingSwitch({
@@ -56,8 +58,12 @@ export function SettingSwitch({
   return (
     <View className="flex-row items-center px-4 py-3">
       <View className="flex-1 mr-3">
-        <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</Text>
-        <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{desc}</Text>
+        <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {label}
+        </Text>
+        <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          {desc}
+        </Text>
       </View>
       <Switch value={value} onValueChange={onChange} />
     </View>
@@ -83,9 +89,13 @@ export function InlineConfirm({
   const label = confirmLabel ?? t("deleteAccountButton");
   return (
     <View className="mx-3 my-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-      <Text className="text-sm text-red-700 dark:text-red-400 font-medium mb-3">{message}</Text>
+      <Text className="text-sm text-red-700 dark:text-red-400 font-medium mb-3">
+        {message}
+      </Text>
       {error ? (
-        <Text className="text-xs text-red-600 dark:text-red-400 mb-2">{error}</Text>
+        <Text className="text-xs text-red-600 dark:text-red-400 mb-2">
+          {error}
+        </Text>
       ) : null}
       <View className="flex-row gap-2">
         <TouchableOpacity
@@ -102,7 +112,9 @@ export function InlineConfirm({
           onPress={onCancel}
           disabled={disabled}
         >
-          <Text className="text-sm text-gray-700 dark:text-gray-300">{t("cancel")}</Text>
+          <Text className="text-sm text-gray-700 dark:text-gray-300">
+            {t("cancel")}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

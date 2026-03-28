@@ -92,7 +92,9 @@ export function ActivityChart({
                 className="w-3 h-3 rounded-sm"
                 style={{ backgroundColor: key.color }}
               />
-              <Text className="text-xs text-gray-600 dark:text-gray-400">{key.name}</Text>
+              <Text className="text-xs text-gray-600 dark:text-gray-400">
+                {key.name}
+              </Text>
             </View>
           ))}
         </View>

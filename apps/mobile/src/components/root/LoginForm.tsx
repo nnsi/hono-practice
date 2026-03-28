@@ -52,7 +52,9 @@ export function LoginForm() {
       <Text className="text-3xl font-bold text-center mb-8">Actiko</Text>
 
       {error ? (
-        <Text className="text-red-500 dark:text-red-400 text-center mb-4">{error}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-center mb-4">
+          {error}
+        </Text>
       ) : null}
 
       <IMESafeTextInput
@@ -86,13 +88,17 @@ export function LoginForm() {
         className="mt-4 items-center"
         onPress={() => router.push("/(auth)/create-user")}
       >
-        <Text className="text-blue-500 dark:text-blue-400">{t("auth.createAccount")}</Text>
+        <Text className="text-blue-500 dark:text-blue-400">
+          {t("auth.createAccount")}
+        </Text>
       </TouchableOpacity>
 
       <View className="mt-6 items-center">
         <View className="flex-row items-center mb-4">
           <View className="flex-1 h-px bg-gray-300" />
-          <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">{t("auth.or")}</Text>
+          <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">
+            {t("auth.or")}
+          </Text>
           <View className="flex-1 h-px bg-gray-300" />
         </View>
 

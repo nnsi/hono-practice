@@ -65,7 +65,9 @@ export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
     <Section icon={Link} label="Apple連携" shadow={shadow}>
       {apple.isLoading ? (
         <View className="px-4 py-3">
-          <Text className="text-sm text-gray-500 dark:text-gray-400">読み込み中...</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            読み込み中...
+          </Text>
         </View>
       ) : (
         <View className="px-4 py-3 gap-2">

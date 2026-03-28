@@ -25,7 +25,9 @@ export function DeleteConfirmDialog({
             onPress={onCancel}
             className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl items-center"
           >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">{t("delete.cancel")}</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">
+              {t("delete.cancel")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onConfirm}
