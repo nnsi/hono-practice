@@ -20,6 +20,8 @@ export const configSchema = z.object({
   APPLE_CLIENT_ID: z.string().optional(), // Services ID (Web)
   APPLE_BUNDLE_ID: z.string().optional(), // iOS Bundle ID (audience検証用)
   APPLE_PRIVATE_KEY: z.string().optional(), // Base64 encoded .p8 key
+  // Admin
+  ADMIN_ALLOWED_EMAILS: z.string().optional(),
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
   // Redis URL（ローカル開発用、オプション）

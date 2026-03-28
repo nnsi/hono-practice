@@ -34,5 +34,11 @@
       "@packages/i18n/*": ["./packages/i18n/*"]
     }
   },
-  "exclude": ["node_modules", "apps/tail-worker", "apps/mobile", "scripts"]
+  "exclude": [
+    "node_modules",
+    "apps/tail-worker",
+    "apps/mobile",
+    "apps/admin-frontend",
+    "scripts"
+  ]
 }

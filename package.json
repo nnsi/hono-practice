@@ -3,6 +3,7 @@
     "dev": "pnpm --filter actiko-backend --filter actiko-frontend --parallel dev",
     "dev:api": "pnpm --filter actiko-backend dev",
     "dev:fe": "pnpm --filter actiko-frontend dev",
+    "dev:admin": "pnpm --filter actiko-admin-frontend dev",
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",

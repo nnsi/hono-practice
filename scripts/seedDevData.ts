@@ -12,6 +12,7 @@ import {
   userSubscriptions,
   users,
 } from "../infra/drizzle/schema";
+import { seedContacts } from "./seed/seedContacts";
 
 // E2E テスト用の決定論的ID
 export const E2E_USER_ID = "e2e00000-0000-4000-8000-000000000000";
@@ -109,6 +110,12 @@ export async function seedDevData(db: DrizzleInstance): Promise<void> {
   for (const user of userRecords) {
     await seedUserActivitiesAndTasks(db, user);
   }
+
+  // --- 問い合わせデータ ---
+  await seedContacts(
+    db,
+    userRecords.map((u) => u.id),
+  );
 
   // --- E2E テスト用の決定論的ユーザー ---
   await seedE2EUser(db, hashedPassword);
