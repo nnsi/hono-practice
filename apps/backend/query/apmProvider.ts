@@ -14,7 +14,7 @@ export type ApmProvider = {
 };
 
 /** 開発環境用モックプロバイダー（リアルなダミーデータを返す） */
-export function createMockApmProvider(): ApmProvider {
+export function newMockApmProvider(): ApmProvider {
   return {
     getSummary: async () => ({
       totalRequests: 1247,
@@ -26,7 +26,7 @@ export function createMockApmProvider(): ApmProvider {
 }
 
 /** データなしプロバイダー（WAEトークン未設定時） */
-export function getNullApmProvider(): ApmProvider {
+export function newNullApmProvider(): ApmProvider {
   return {
     getSummary: async () => ({
       totalRequests: 0,

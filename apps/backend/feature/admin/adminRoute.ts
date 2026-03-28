@@ -11,14 +11,14 @@ import { noopTracer } from "@backend/lib/tracer";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 import {
-  createMockApmProvider,
-  getNullApmProvider,
+  newMockApmProvider,
+  newNullApmProvider,
 } from "@backend/query/apmProvider";
 
 import { newAdminDashboardUsecase } from "./adminDashboardUsecase";
 import { type AdminHandler, newAdminHandler } from "./adminHandler";
 import { newAdminUserUsecase } from "./adminUserUsecase";
-import { createWaeApmProvider } from "./waeQuery";
+import { newWaeApmProvider } from "./waeQuery";
 
 const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
 
@@ -27,6 +27,16 @@ type AdminRouteContext = AppContext & {
     adminHandler: AdminHandler;
   };
 };
+
+function parsePaginationParam(
+  raw: string | undefined,
+  defaultValue: number,
+  max: number,
+): number {
+  const n = Number(raw ?? defaultValue);
+  if (!Number.isFinite(n) || n < 0) return defaultValue;
+  return Math.min(Math.floor(n), max);
+}
 
 function parseAllowedEmails(envValue: string | undefined): string[] {
   if (!envValue) return [];
@@ -123,11 +133,12 @@ function createAdminRoute() {
     const userUc = newAdminUserUsecase(userRepo, tracer);
     const contactUc = newContactUsecase(contactRepo, tracer);
     const isDev = c.env.NODE_ENV === "development";
-    const apmProvider = c.env.CF_API_TOKEN
-      ? createWaeApmProvider(c.env.CF_API_TOKEN)
-      : isDev
-        ? createMockApmProvider()
-        : getNullApmProvider();
+    const apmProvider =
+      c.env.CF_API_TOKEN && c.env.CF_ACCOUNT_ID
+        ? newWaeApmProvider(c.env.CF_API_TOKEN, c.env.CF_ACCOUNT_ID)
+        : isDev
+          ? newMockApmProvider()
+          : newNullApmProvider();
     const dashboardQs = newAdminDashboardQueryService(db, apmProvider);
     const dashboardUc = newAdminDashboardUsecase(dashboardQs, tracer);
     c.set("adminHandler", newAdminHandler(userUc, contactUc, dashboardUc));
@@ -141,15 +152,15 @@ function createAdminRoute() {
   });
 
   app.get("/users", async (c) => {
-    const limit = Number(c.req.query("limit") ?? "20");
-    const offset = Number(c.req.query("offset") ?? "0");
+    const limit = parsePaginationParam(c.req.query("limit"), 20, 100);
+    const offset = parsePaginationParam(c.req.query("offset"), 0, 10000);
     const result = await c.var.adminHandler.listUsers(limit, offset);
     return c.json(result);
   });
 
   app.get("/contacts", async (c) => {
-    const limit = Number(c.req.query("limit") ?? "20");
-    const offset = Number(c.req.query("offset") ?? "0");
+    const limit = parsePaginationParam(c.req.query("limit"), 20, 100);
+    const offset = parsePaginationParam(c.req.query("offset"), 0, 10000);
     const result = await c.var.adminHandler.listContacts(limit, offset);
     return c.json(result);
   });
