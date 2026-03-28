@@ -55,7 +55,7 @@ export function ActivityStatCard({
       }
       return {
         date: `${dayjs(date).date()}${t("dateLabel")}`,
-        ...kindsData,
+        values: kindsData,
       };
     });
   }, [allDates, stat.kinds, t]);
@@ -76,7 +76,7 @@ export function ActivityStatCard({
 
   const [containerWidth, setContainerWidth] = useState(0);
   const gap = 8;
-  const numColumns = 2;
+  const numColumns = 3;
   const kindCardWidth = Math.floor(
     (containerWidth - gap * (numColumns - 1)) / numColumns,
   );
@@ -128,9 +128,13 @@ export function ActivityStatCard({
                 </Text>
               </View>
             ))}
-            {stat.kinds.length % 2 !== 0 && (
-              <View style={{ width: kindCardWidth }} />
-            )}
+            {stat.kinds.length % numColumns !== 0 &&
+              [...Array(numColumns - (stat.kinds.length % numColumns))].map(
+                (_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static spacers
+                  <View key={`spacer-${i}`} style={{ width: kindCardWidth }} />
+                ),
+              )}
           </View>
         </View>
       )}

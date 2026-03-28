@@ -46,7 +46,7 @@ export function SummaryTable({
 
     for (const day of data) {
       const dayNumber = Number.parseInt(
-        (day.date as string).replace(t("dateLabel"), ""),
+        day.date.replace(t("dateLabel"), ""),
         10,
       );
       const dateObj = dayjs(month).date(dayNumber);
@@ -61,13 +61,13 @@ export function SummaryTable({
       }
 
       const dayTotal = kinds.reduce((sum, kind) => {
-        return sum + (Number(day[kind.name]) || 0);
+        return sum + (day.values[kind.name] || 0);
       }, 0);
       const roundedTotal = roundQuantity(dayTotal);
 
       const breakdown: Record<string, number> = {};
       for (const kind of kinds) {
-        breakdown[kind.name] = Number(day[kind.name]) || 0;
+        breakdown[kind.name] = day.values[kind.name] || 0;
       }
 
       weekMap[weekKey].days.push({

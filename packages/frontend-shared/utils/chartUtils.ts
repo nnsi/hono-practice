@@ -56,7 +56,7 @@ export function computeChartScale(
     for (const d of data) {
       let sum = 0;
       for (const key of dataKeys) {
-        const v = (d[key.name] as number) || 0;
+        const v = d.values[key.name] || 0;
         sum += v;
         if (allIntegers && v !== 0 && !Number.isInteger(v)) allIntegers = false;
       }
@@ -65,7 +65,7 @@ export function computeChartScale(
   } else {
     for (const d of data) {
       for (const key of dataKeys) {
-        const v = (d[key.name] as number) || 0;
+        const v = d.values[key.name] || 0;
         max = Math.max(max, v);
         if (allIntegers && v !== 0 && !Number.isInteger(v)) allIntegers = false;
       }
@@ -118,5 +118,5 @@ export function barHeightPct(value: number, effectiveYMax: number): number {
 }
 
 export function stackedTotal(d: ChartData, dataKeys: DataKey[]): number {
-  return dataKeys.reduce((sum, key) => sum + ((d[key.name] as number) || 0), 0);
+  return dataKeys.reduce((sum, key) => sum + (d.values[key.name] || 0), 0);
 }

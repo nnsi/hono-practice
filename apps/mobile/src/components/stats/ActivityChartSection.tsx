@@ -72,9 +72,11 @@ export function ActivityChartSection({
           );
           return {
             date: `${dayjs(date).date()}${t("dateLabel")}`,
-            [kind.name]: roundQuantity(
-              matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
-            ),
+            values: {
+              [kind.name]: roundQuantity(
+                matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
+              ),
+            },
           };
         });
         return (
