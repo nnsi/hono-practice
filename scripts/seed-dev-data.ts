@@ -1,4 +1,8 @@
-import "dotenv/config";
+try {
+  await import("dotenv/config");
+} catch {
+  // dotenv not available (e.g. worktree) — rely on env vars passed directly
+}
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";

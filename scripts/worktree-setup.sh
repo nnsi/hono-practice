@@ -4,7 +4,7 @@ set -euo pipefail
 # ============================================================
 # worktree-setup.sh — Git worktree + isolated DB setup
 # ============================================================
-# Usage: ./scripts/worktree-setup.sh <name> [port-offset] [--seed]
+# Usage: ./scripts/worktree-setup.sh <name> [port-offset] [--no-seed]
 #
 # Creates:
 #   .worktrees/<name>/        — git worktree (branch: wt/<name>)
@@ -18,7 +18,7 @@ set -euo pipefail
 # Examples:
 #   ./scripts/worktree-setup.sh feature-auth       # auto offset
 #   ./scripts/worktree-setup.sh feature-auth 2      # explicit offset=2
-#   ./scripts/worktree-setup.sh feature-auth 1 --seed
+#   ./scripts/worktree-setup.sh feature-auth 1 --no-seed  # skip seed
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -26,11 +26,12 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # --- args ---
 NAME="${1:?Usage: worktree-setup.sh <name> [port-offset] [--seed]}"
 OFFSET="${2:-}"
-SEED=false
+SEED=true
+for arg in "$@"; do [[ "$arg" == "--no-seed" ]] && SEED=false; done
 for arg in "$@"; do [[ "$arg" == "--seed" ]] && SEED=true; done
 
-# offset が --seed だった場合は空扱い
-[[ "${OFFSET:-}" == "--seed" ]] && OFFSET=""
+# offset がフラグだった場合は空扱い
+[[ "${OFFSET:-}" == "--seed" || "${OFFSET:-}" == "--no-seed" ]] && OFFSET=""
 
 # --- derived values ---
 DB_NAME="db_wt_$(echo "$NAME" | tr '.-' '__')"
@@ -128,10 +129,12 @@ echo "[4/5] Installing dependencies..."
 echo "[5/5] Running database migrations..."
 (cd "$WT_DIR" && DATABASE_URL="postgresql://postgres:postgres@localhost:5435/$DB_NAME" pnpm db-migrate)
 
-# --- Optional: seed ---
+# --- 6. Seed data (default: enabled, skip with --no-seed) ---
 if [ "$SEED" = true ]; then
-  echo "[+] Seeding development data..."
+  echo "[6/6] Seeding development data..."
   (cd "$WT_DIR" && DATABASE_URL="postgresql://postgres:postgres@localhost:5435/$DB_NAME" pnpm db-seed)
+else
+  echo "[6/6] Skipping seed (use default or --seed to seed)"
 fi
 
 echo ""
