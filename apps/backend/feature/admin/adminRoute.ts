@@ -11,6 +11,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 
+import { newAdminDashboardUsecase } from "./adminDashboardUsecase";
 import { type AdminHandler, newAdminHandler } from "./adminHandler";
 import { createMockApmProvider, getNullApmProvider } from "./apmProvider";
 import { createWaeApmProvider } from "./waeQuery";
@@ -127,7 +128,8 @@ function createAdminRoute() {
         ? createMockApmProvider()
         : getNullApmProvider();
     const dashboardQs = newAdminDashboardQueryService(db, apmProvider);
-    c.set("adminHandler", newAdminHandler(userUc, contactUc, dashboardQs));
+    const dashboardUc = newAdminDashboardUsecase(dashboardQs, tracer);
+    c.set("adminHandler", newAdminHandler(userUc, contactUc, dashboardUc));
     return next();
   });
 

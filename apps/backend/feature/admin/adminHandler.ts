@@ -1,5 +1,6 @@
 import type { ContactUsecase } from "@backend/feature/contact/contactUsecase";
-import type { AdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
+
+import type { AdminDashboardUsecase } from "./adminDashboardUsecase";
 
 type ListUsersUsecase = {
   listUsers: (
@@ -17,7 +18,7 @@ type ListUsersUsecase = {
 };
 
 export type AdminHandler = {
-  getDashboard: AdminDashboardQueryService["getDashboardData"];
+  getDashboard: AdminDashboardUsecase["getDashboardData"];
   listUsers: ListUsersUsecase["listUsers"];
   listContacts: ContactUsecase["listContacts"];
   getContactById: ContactUsecase["getContactById"];
@@ -26,10 +27,10 @@ export type AdminHandler = {
 export function newAdminHandler(
   userUc: ListUsersUsecase,
   contactUc: ContactUsecase,
-  dashboardQs: AdminDashboardQueryService,
+  dashboardUc: AdminDashboardUsecase,
 ): AdminHandler {
   return {
-    getDashboard: () => dashboardQs.getDashboardData(),
+    getDashboard: () => dashboardUc.getDashboardData(),
     listUsers: (limit, offset) => userUc.listUsers(limit, offset),
     listContacts: (limit, offset) => contactUc.listContacts(limit, offset),
     getContactById: (id) => contactUc.getContactById(id),
