@@ -6,6 +6,7 @@ import {
   parseRecordingModeConfig,
   serializeRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
+import { useTranslation } from "@packages/i18n";
 import {
   Calculator,
   CheckSquare,
@@ -21,15 +22,6 @@ type RecordingModeSelectorProps = {
   recordingModeConfig: string | null;
   onRecordingModeConfigChange: (config: string | null) => void;
 };
-
-const VISIBLE_MODES = [
-  { value: "manual", label: "手動入力", icon: Pencil },
-  { value: "timer", label: "タイマー", icon: Timer },
-  { value: "counter", label: "カウンタ", icon: Hash },
-  { value: "binary", label: "バイナリ", icon: ToggleLeft },
-  { value: "numpad", label: "テンキー", icon: Calculator },
-  { value: "check", label: "チェック", icon: CheckSquare },
-] as const;
 
 function stepsFromConfig(config: string | null): number[] {
   const parsed = parseRecordingModeConfig(config);
@@ -77,9 +69,22 @@ export function RecordingModeSelector({
     );
   };
 
+  const { t } = useTranslation("actiko");
+
+  const VISIBLE_MODES = [
+    { value: "manual", label: t("modeManual"), icon: Pencil },
+    { value: "timer", label: t("modeTimer"), icon: Timer },
+    { value: "counter", label: t("modeCounter"), icon: Hash },
+    { value: "binary", label: t("modeBinary"), icon: ToggleLeft },
+    { value: "numpad", label: t("modeNumpad"), icon: Calculator },
+    { value: "check", label: t("modeCheck"), icon: CheckSquare },
+  ] as const;
+
   return (
     <div>
-      <div className="text-sm font-medium text-gray-600 mb-2">記録モード</div>
+      <div className="text-sm font-medium text-gray-600 mb-2">
+        {t("recordingMode")}
+      </div>
       <div className="flex gap-2 flex-wrap">
         {VISIBLE_MODES.map(({ value, label, icon: Icon }) => (
           <button
@@ -100,7 +105,7 @@ export function RecordingModeSelector({
       {recordingMode === "counter" && (
         <div className="mt-3">
           <label className="block text-sm text-gray-500 mb-1">
-            ステップ値（カンマ区切り）
+            {t("stepValues")}
           </label>
           <input
             type="text"

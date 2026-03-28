@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ArrowUpDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
@@ -10,6 +11,7 @@ import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
+  const { t } = useTranslation("actiko");
   const {
     date,
     setDate,
@@ -94,7 +96,7 @@ export function ActikoPage() {
               className="text-gray-400 group-hover:text-gray-600 mb-1"
             />
             <span className="text-xs text-gray-400 group-hover:text-gray-600">
-              追加
+              {t("add")}
             </span>
           </button>
           {/* 並び替えカード */}
@@ -109,7 +111,7 @@ export function ActikoPage() {
                 className="text-gray-400 group-hover:text-gray-600 mb-1"
               />
               <span className="text-xs text-gray-400 group-hover:text-gray-600">
-                並び替え
+                {t("reorder")}
               </span>
             </button>
           )}

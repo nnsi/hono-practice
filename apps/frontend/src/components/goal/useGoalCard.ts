@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
 import { getInactiveDates } from "@packages/domain/goal/goalStats";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 
@@ -14,20 +15,26 @@ function getStatusBadge(
   goal: Goal,
   hasTodayLog: boolean,
   balance: number,
+  // biome-ignore lint: i18next TFunction has complex overloads
+  t: (...args: any[]) => string,
 ): StatusBadge {
   if (!goal.isActive) {
-    return { label: "終了", className: "bg-gray-200 text-gray-600" };
+    return { label: t("statusEnded"), className: "bg-gray-200 text-gray-600" };
   }
   if (balance < 0) {
-    return { label: "負債あり", className: "bg-red-100 text-red-700" };
+    return { label: t("statusInDebt"), className: "bg-red-100 text-red-700" };
   }
   if (hasTodayLog) {
-    return { label: "順調", className: "bg-green-100 text-green-700" };
+    return {
+      label: t("statusOnTrack"),
+      className: "bg-green-100 text-green-700",
+    };
   }
   return { label: "達成ペース", className: "bg-green-50 text-green-600" };
 }
 
 export function useGoalCard(goal: Goal) {
+  const { t } = useTranslation("goal");
   const today = dayjs().format("YYYY-MM-DD");
   const actualEndDate =
     goal.endDate && goal.endDate < today ? goal.endDate : today;
@@ -156,7 +163,7 @@ export function useGoalCard(goal: Goal) {
     today,
   ]);
 
-  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
+  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance, t);
   const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
 
   return {

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
+
 import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
@@ -14,6 +16,7 @@ export function LoginForm({
   onGoogleLogin,
   onAppleLogin,
 }: LoginFormProps) {
+  const { t } = useTranslation("common");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +29,7 @@ export function LoginForm({
     try {
       await onLogin(loginId, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ログインに失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.loginError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -38,14 +41,14 @@ export function LoginForm({
     try {
       await onGoogleLogin(credential);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Googleログインに失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.googleLoginError"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoogleError = () => {
-    setError("Googleログインに失敗しました");
+    setError(t("auth.googleLoginError"));
   };
 
   const handleAppleSuccess = async (credential: string) => {
@@ -54,14 +57,14 @@ export function LoginForm({
     try {
       await onAppleLogin(credential);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Appleログインに失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.appleLoginError"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleAppleError = () => {
-    setError("Appleログインに失敗しました");
+    setError(t("auth.appleLoginError"));
   };
 
   return (
@@ -84,7 +87,9 @@ export function LoginForm({
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-gray-100 px-3 text-gray-400 text-xs">または</span>
+          <span className="bg-gray-100 px-3 text-gray-400 text-xs">
+            {t("auth.or")}
+          </span>
         </div>
       </div>
 
@@ -94,7 +99,7 @@ export function LoginForm({
             htmlFor="loginId"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            ログインID
+            {t("auth.loginId")}
           </label>
           <input
             id="loginId"
@@ -110,7 +115,7 @@ export function LoginForm({
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            パスワード
+            {t("auth.password")}
           </label>
           <input
             id="password"
@@ -127,7 +132,7 @@ export function LoginForm({
           disabled={isSubmitting}
           className="w-full py-2.5 px-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
         >
-          {isSubmitting ? "ログイン中..." : "ログイン"}
+          {isSubmitting ? t("auth.loggingIn") : t("auth.login")}
         </button>
       </form>
     </div>

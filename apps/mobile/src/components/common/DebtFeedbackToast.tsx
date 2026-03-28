@@ -7,6 +7,7 @@ import {
 } from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
 import { onDebtFeedback } from "@packages/frontend-shared";
+import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, Text, View } from "react-native";
 
@@ -14,6 +15,7 @@ const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;
 
 export function DebtFeedbackToast() {
+  const { t } = useTranslation("feedback");
   const [results, setResults] = useState<DebtFeedbackResult[] | null>(null);
   const [praiseMode, setPraiseMode] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
@@ -108,10 +110,12 @@ export function DebtFeedbackToast() {
 
   if (!results) return null;
 
-  const message = buildDebtFeedbackMessage(results, praiseMode);
+  const message = buildDebtFeedbackMessage(results, praiseMode, t);
   if (!message) return null;
 
-  const bgClass = praiseMode ? "bg-amber-500" : "bg-emerald-600";
+  const bgClass = praiseMode
+    ? "bg-amber-50 dark:bg-amber-900/200"
+    : "bg-emerald-600";
 
   return (
     <View className="absolute bottom-24 left-4 right-4" pointerEvents="none">
@@ -122,7 +126,7 @@ export function DebtFeedbackToast() {
         }}
         className={`rounded-xl ${bgClass} px-5 py-4 shadow-lg`}
       >
-        <Text className="text-center text-base font-bold text-white">
+        <Text className="text-center text-base font-bold text-white dark:text-white">
           {message}
         </Text>
       </Animated.View>

@@ -35,7 +35,9 @@
     "overrides": {
       "drizzle-orm>expo-sqlite": "-",
       "hono": "4.12.3",
-      "miniflare>sharp": "-"
+      "miniflare>sharp": "-",
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
     }
   },
   "type": "module",
@@ -64,6 +66,8 @@
     "wrangler": "^4.26.1"
   },
   "dependencies": {
-    "@expo/plist": "^0.5.2"
+    "@expo/plist": "^0.5.2",
+    "i18next": "^25.10.10",
+    "react-i18next": "^16.6.6"
   }
 }

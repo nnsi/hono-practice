@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   CalendarDays,
   CheckSquare,
+  Globe,
   LayoutGrid,
   LogOut,
   Menu,
@@ -15,6 +17,7 @@ import {
 import { DebtFeedbackToast } from "../common/DebtFeedbackToast";
 
 export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
+  const { t, i18n } = useTranslation(["common", "settings"]);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
@@ -43,19 +46,31 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
           className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-          aria-label="メニュー"
+          aria-label="Menu"
         >
           <Menu size={20} className="text-gray-500" />
         </button>
         {menuOpen && (
           <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lifted border border-gray-200/60 py-1 z-50 animate-scale-in origin-top-right">
+            <button
+              type="button"
+              onClick={() => {
+                const next = i18n.language === "ja" ? "en" : "ja";
+                i18n.changeLanguage(next);
+                setMenuOpen(false);
+              }}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 w-full text-left transition-colors"
+            >
+              <Globe size={16} className="text-gray-400" />
+              {i18n.language === "ja" ? "English" : "日本語"}
+            </button>
             <Link
               to="/settings"
               onClick={() => setMenuOpen(false)}
               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <Settings size={16} className="text-gray-400" />
-              設定
+              {t("settings:heading")}
             </Link>
             <div className="border-t border-gray-100 my-1" />
             <button
@@ -67,7 +82,7 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full text-left transition-colors"
             >
               <LogOut size={16} />
-              ログアウト
+              {t("settings:logout")}
             </button>
           </div>
         )}

@@ -1,0 +1,20 @@
+{
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "monthYearFormat": "MMMM YYYY",
+  "loading": "Loading...",
+  "noData": "No data",
+  "noActivityInMonth": "No activity records",
+  "dateLabel": "",
+  "totalLabel": "Total",
+  "kindTotalLabel": "Total:",
+  "summaryTotal": "Total",
+  "summaryDailyAverage": "Daily avg",
+  "summaryRecordedDays": "Recorded days",
+  "summaryDaysFormat": "",
+  "tableExpandButton": "Daily/Weekly totals",
+  "tableDateHeader": "Date",
+  "tableDailyTotalHeader": "Daily total",
+  "tableWeeklyTotalHeader": "Weekly total",
+  "defaultKind": "Unspecified"
+}

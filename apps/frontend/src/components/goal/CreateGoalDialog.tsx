@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
@@ -17,6 +18,7 @@ export function CreateGoalDialog({
   onClose: () => void;
   onCreate: (payload: CreateGoalPayload) => Promise<void>;
 }) {
+  const { t } = useTranslation("goal");
   const {
     activityId,
     setActivityId,
@@ -45,7 +47,7 @@ export function CreateGoalDialog({
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">新しい目標を作成</h2>
+          <h2 className="text-lg font-bold">{t("createTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -59,12 +61,10 @@ export function CreateGoalDialog({
           {/* アクティビティ選択 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              アクティビティ
+              {t("activityLabel")}
             </label>
             {activities.length === 0 ? (
-              <p className="text-sm text-gray-400">
-                アクティビティがありません
-              </p>
+              <p className="text-sm text-gray-400">{t("noActivities")}</p>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {activities.map((a) => (
@@ -91,7 +91,7 @@ export function CreateGoalDialog({
           {/* 日次目標 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              日次目標
+              {t("dailyTargetLabel")}
               {selectedActivity?.quantityUnit && (
                 <span className="ml-1 text-xs text-gray-400">
                   ({selectedActivity.quantityUnit})
@@ -114,18 +114,18 @@ export function CreateGoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                開始日
+                {t("startDateLabel")}
               </label>
               <DatePickerField value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                終了日（任意）
+                {t("endDateLabel")}
               </label>
               <DatePickerField
                 value={endDate}
                 onChange={setEndDate}
-                placeholder="未設定"
+                placeholder={t("endDatePlaceholder")}
                 allowClear
               />
             </div>
@@ -154,7 +154,7 @@ export function CreateGoalDialog({
                 }}
                 className="rounded"
               />
-              負債上限を設定
+              {t("debtCapLabel")}
             </label>
             {debtCapEnabled && (
               <div className="flex items-center gap-1 mt-1">
@@ -183,14 +183,14 @@ export function CreateGoalDialog({
               onClick={onClose}
               className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
-              キャンセル
+              {t("cancelButton")}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
-              作成
+              {t("createButton")}
             </button>
           </div>
         </form>

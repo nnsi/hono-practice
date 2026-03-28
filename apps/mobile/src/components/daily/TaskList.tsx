@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -40,6 +41,8 @@ export function TaskList({
   activitiesMap?: Map<string, ActivityInfo>;
   iconBlobMap?: Map<string, IconBlob>;
 }) {
+  const { t } = useTranslation("activity");
+
   if (isLoading) {
     return (
       <View className="items-center py-8">
@@ -51,7 +54,9 @@ export function TaskList({
   if (tasks.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-gray-400 text-sm">タスクはありません</Text>
+        <Text className="text-gray-400 dark:text-gray-500 text-sm">
+          {t("daily.noTasks")}
+        </Text>
       </View>
     );
   }
@@ -68,8 +73,8 @@ export function TaskList({
             key={task.id}
             className={`flex-row items-center gap-3 p-3 rounded-xl ${
               isPending
-                ? "border border-amber-200 bg-amber-50"
-                : "border border-gray-200 bg-white"
+                ? "border border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+                : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             }`}
           >
             <TouchableOpacity
@@ -79,8 +84,8 @@ export function TaskList({
               <View
                 className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
                   task.doneDate
-                    ? "bg-green-500 border-green-500"
-                    : "border-gray-300"
+                    ? "bg-green-50 dark:bg-green-900/200 border-green-500"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
               >
                 {task.doneDate && (
@@ -112,8 +117,8 @@ export function TaskList({
                 <Text
                   className={`text-base font-medium flex-shrink ${
                     task.doneDate
-                      ? "line-through text-gray-400"
-                      : "text-gray-800"
+                      ? "line-through text-gray-400 dark:text-gray-500"
+                      : "text-gray-800 dark:text-gray-200"
                   }`}
                   numberOfLines={1}
                 >
@@ -125,7 +130,7 @@ export function TaskList({
               </View>
               {task.memo ? (
                 <Text
-                  className="text-xs text-gray-400 mt-0.5"
+                  className="text-xs text-gray-400 dark:text-gray-500 mt-0.5"
                   numberOfLines={1}
                 >
                   {task.memo}

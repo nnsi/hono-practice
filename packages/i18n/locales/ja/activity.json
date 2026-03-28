@@ -1,0 +1,20 @@
+{
+  "daily.selectActivity": "アクティビティを選択",
+  "daily.noActivities": "アクティビティがありません",
+  "daily.noRecords": "記録がありません",
+  "daily.activitySection": "アクティビティ",
+  "daily.tasksSection": "タスク",
+  "daily.addButton": "追加",
+  "daily.noTasks": "タスクはありません",
+  "daily.previousDay": "前の日",
+  "daily.nextDay": "次の日",
+  "log.unknownActivity": "不明",
+  "log.editTitle": "アクティビティログを編集",
+  "log.kindLabel": "種類",
+  "log.quantityLabel": "数量",
+  "log.memoLabel": "メモ",
+  "log.memoPlaceholder": "メモを入力...",
+  "log.saveButton": "保存",
+  "log.deleteButton": "削除",
+  "log.deleteConfirm": "削除を確認"
+}

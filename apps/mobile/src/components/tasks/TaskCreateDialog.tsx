@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -21,6 +22,7 @@ export function TaskCreateDialog({
   onSuccess: () => void;
   defaultDate?: string;
 }) {
+  const { t } = useTranslation("task");
   const {
     title,
     setTitle,
@@ -66,14 +68,16 @@ export function TaskCreateDialog({
     <ModalOverlay
       visible
       onClose={onClose}
-      title="新しいタスクを作成"
+      title={t("create.title")}
       footer={
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={onClose}
-            className="flex-1 py-2.5 border border-gray-300 rounded-lg items-center"
+            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
           >
-            <Text className="text-sm text-gray-700">キャンセル</Text>
+            <Text className="text-sm text-gray-700 dark:text-gray-300">
+              {t("delete.cancel")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleCreate}
@@ -83,7 +87,7 @@ export function TaskCreateDialog({
             }`}
           >
             <Text className="text-sm text-white font-medium">
-              {isSubmitting ? "作成中..." : "作成"}
+              {isSubmitting ? t("create.submitting") : t("create.submit")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -91,14 +95,15 @@ export function TaskCreateDialog({
     >
       <View className="gap-4 pb-4">
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            タイトル <Text className="text-red-500">*</Text>
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t("create.label.title")}{" "}
+            <Text className="text-red-500 dark:text-red-400">*</Text>
           </Text>
           <IMESafeTextInput
             value={title}
             onChangeText={setTitle}
-            placeholder="タスクのタイトルを入力"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            placeholder={t("create.placeholder.title")}
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             autoFocus
           />
         </View>
@@ -115,7 +120,7 @@ export function TaskCreateDialog({
 
         {activityId && (
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-1">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               数量（任意）
               {selectedActivity?.quantityUnit
                 ? `（${selectedActivity.quantityUnit}）`
@@ -129,9 +134,9 @@ export function TaskCreateDialog({
                   v === "" ? null : Number.isNaN(parsed) ? null : parsed,
                 );
               }}
-              placeholder="数量を入力"
+              placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             />
           </View>
         )}
@@ -141,29 +146,29 @@ export function TaskCreateDialog({
             <DatePickerField
               value={startDate || dayjs().format("YYYY-MM-DD")}
               onChange={setStartDate}
-              label="開始日"
+              label={t("create.label.startDate")}
             />
           </View>
           <View className="flex-1">
             <OptionalDatePickerField
               value={dueDate}
               onChange={setDueDate}
-              label="期限（任意）"
+              label={t("create.label.dueDate")}
             />
           </View>
         </View>
 
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            メモ（任意）
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t("create.label.memo")}
           </Text>
           <IMESafeTextInput
             value={memo}
             onChangeText={setMemo}
-            placeholder="タスクに関するメモを入力"
+            placeholder={t("create.placeholder.memo")}
             multiline
             numberOfLines={3}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
           />
         </View>

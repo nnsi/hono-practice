@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +10,7 @@ import { TaskGroup } from "./TaskGroup";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
+  const { t } = useTranslation("task");
   const {
     activeTab,
     setActiveTab,
@@ -39,35 +41,39 @@ export function TasksPage() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white dark:bg-gray-800">
       {/* Tabs */}
-      <View className="flex-row items-center px-1 h-12 border-b border-gray-100">
+      <View className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800">
         <TouchableOpacity
           onPress={() => setActiveTab("active")}
           className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "active" ? "bg-gray-100" : ""
+            activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
           }`}
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "active" ? "text-gray-900" : "text-gray-400"
+              activeTab === "active"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
-            アクティブ
+            {t("page.tab.active")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab("archived")}
           className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "archived" ? "bg-gray-100" : ""
+            activeTab === "archived" ? "bg-gray-100 dark:bg-gray-800" : ""
           }`}
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "archived" ? "text-gray-900" : "text-gray-400"
+              activeTab === "archived"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
-            アーカイブ済み
+            {t("page.tab.archived")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -84,12 +90,16 @@ export function TasksPage() {
           <View className="gap-6">
             {!hasAnyTasks && (
               <View className="items-center py-12">
-                <Text className="text-gray-500 mb-4">タスクがありません</Text>
+                <Text className="text-gray-500 dark:text-gray-400 mb-4">
+                  {t("page.empty")}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setCreateDialogOpen(true)}
                   className="px-4 py-2 bg-blue-600 rounded-lg"
                 >
-                  <Text className="text-white text-sm">最初のタスクを作成</Text>
+                  <Text className="text-white text-sm">
+                    {t("page.firstTask")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -97,9 +107,9 @@ export function TasksPage() {
             {/* Overdue */}
             {groupedTasks.overdue.length > 0 && (
               <TaskGroup
-                title="期限切れ"
+                title={t("page.group.overdue")}
                 tasks={groupedTasks.overdue}
-                titleColor="text-red-600"
+                titleColor="text-red-600 dark:text-red-400"
                 highlight
                 onToggleDone={handleToggleDone}
                 onEdit={setEditingTask}
@@ -112,7 +122,7 @@ export function TasksPage() {
             {/* Due today */}
             {groupedTasks.dueToday.length > 0 && (
               <TaskGroup
-                title="今日締切"
+                title={t("page.group.dueToday")}
                 tasks={groupedTasks.dueToday}
                 titleColor="text-orange-600"
                 onToggleDone={handleToggleDone}
@@ -126,9 +136,9 @@ export function TasksPage() {
             {/* Starting today */}
             {groupedTasks.startingToday.length > 0 && (
               <TaskGroup
-                title="今日開始"
+                title={t("page.group.startingToday")}
                 tasks={groupedTasks.startingToday}
-                titleColor="text-blue-600"
+                titleColor="text-blue-600 dark:text-blue-400"
                 onToggleDone={handleToggleDone}
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
@@ -140,9 +150,9 @@ export function TasksPage() {
             {/* In progress */}
             {groupedTasks.inProgress.length > 0 && (
               <TaskGroup
-                title="進行中"
+                title={t("page.group.inProgress")}
                 tasks={groupedTasks.inProgress}
-                titleColor="text-green-600"
+                titleColor="text-green-600 dark:text-green-400"
                 onToggleDone={handleToggleDone}
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
@@ -154,9 +164,9 @@ export function TasksPage() {
             {/* Due this week */}
             {groupedTasks.dueThisWeek.length > 0 && (
               <TaskGroup
-                title="今週締切"
+                title={t("page.group.dueThisWeek")}
                 tasks={groupedTasks.dueThisWeek}
-                titleColor="text-gray-700"
+                titleColor="text-gray-700 dark:text-gray-300"
                 onToggleDone={handleToggleDone}
                 onEdit={setEditingTask}
                 onDelete={setDeleteConfirmId}
@@ -177,7 +187,7 @@ export function TasksPage() {
                   ) : (
                     <ChevronRight size={16} color="#6b7280" />
                   )}
-                  <Text className="text-sm text-gray-500">
+                  <Text className="text-sm text-gray-500 dark:text-gray-400">
                     {showFuture
                       ? "未来のタスクを隠す"
                       : `未来のタスク (${futureCount})`}
@@ -187,7 +197,7 @@ export function TasksPage() {
                   <View className="mt-3 gap-6">
                     {groupedTasks.notStarted.length > 0 && (
                       <TaskGroup
-                        title="未開始"
+                        title={t("page.group.notStarted")}
                         tasks={groupedTasks.notStarted}
                         titleColor="text-purple-600"
                         onToggleDone={handleToggleDone}
@@ -198,7 +208,7 @@ export function TasksPage() {
                     )}
                     {groupedTasks.future.length > 0 && (
                       <TaskGroup
-                        title="来週以降"
+                        title={t("page.group.future")}
                         tasks={groupedTasks.future}
                         titleColor="text-indigo-600"
                         onToggleDone={handleToggleDone}
@@ -224,7 +234,7 @@ export function TasksPage() {
                   ) : (
                     <ChevronRight size={16} color="#6b7280" />
                   )}
-                  <Text className="text-sm text-gray-500">
+                  <Text className="text-sm text-gray-500 dark:text-gray-400">
                     {showCompleted
                       ? "完了済みを隠す"
                       : `完了済みを表示 (${completedCount})`}
@@ -233,9 +243,9 @@ export function TasksPage() {
                 {showCompleted && groupedTasks.completed.length > 0 && (
                   <View className="mt-3">
                     <TaskGroup
-                      title="完了済み"
+                      title={t("page.group.completed")}
                       tasks={groupedTasks.completed}
-                      titleColor="text-gray-500"
+                      titleColor="text-gray-500 dark:text-gray-400"
                       completed
                       onToggleDone={handleToggleDone}
                       onEdit={setEditingTask}
@@ -251,10 +261,12 @@ export function TasksPage() {
             {hasAnyTasks && (
               <TouchableOpacity
                 onPress={() => setCreateDialogOpen(true)}
-                className="py-5 border-2 border-dashed border-gray-300 rounded-xl bg-white flex-row items-center justify-center gap-2"
+                className="py-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 flex-row items-center justify-center gap-2"
               >
                 <Plus size={18} color="#9ca3af" />
-                <Text className="text-sm text-gray-500">新規タスクを追加</Text>
+                <Text className="text-sm text-gray-500 dark:text-gray-400">
+                  {t("page.addNew")}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -264,16 +276,16 @@ export function TasksPage() {
           <View>
             {archivedTasks.length === 0 && (
               <View className="items-center py-12">
-                <Text className="text-gray-500">
-                  アーカイブ済みのタスクはありません
+                <Text className="text-gray-500 dark:text-gray-400">
+                  {t("page.empty")}
                 </Text>
               </View>
             )}
             {archivedTasks.length > 0 && (
               <TaskGroup
-                title="アーカイブ済み"
+                title={t("page.group.archived")}
                 tasks={archivedTasks}
-                titleColor="text-gray-500"
+                titleColor="text-gray-500 dark:text-gray-400"
                 archived
                 onToggleDone={handleToggleDone}
                 onEdit={setEditingTask}

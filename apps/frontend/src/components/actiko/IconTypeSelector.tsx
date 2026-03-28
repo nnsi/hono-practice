@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 
-import { FlaskConical, Upload } from "lucide-react";
+import { useTranslation } from "@packages/i18n";
 
 import { EmojiPicker } from "../common/EmojiPicker";
+import { ImageUploadField } from "./ImageUploadField";
 
 export type IconSelectorValue = {
   type: "emoji" | "upload";
@@ -20,6 +21,7 @@ export function IconTypeSelector({
   onChange: (value: IconSelectorValue) => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation("actiko");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prevPreviewRef = useRef<string | undefined>(undefined);
 
@@ -57,7 +59,6 @@ export function IconTypeSelector({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // ランダムグラデーション背景
     const colors = [
       ["#667eea", "#764ba2"],
       ["#f093fb", "#f5576c"],
@@ -72,7 +73,6 @@ export function IconTypeSelector({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 256, 256);
 
-    // 絵文字またはイニシャルを描画
     ctx.fillStyle = "white";
     ctx.font = "bold 120px Arial";
     ctx.textAlign = "center";
@@ -128,7 +128,7 @@ export function IconTypeSelector({
             disabled={disabled}
             className="accent-blue-600"
           />
-          <span className="text-sm">絵文字</span>
+          <span className="text-sm">{t("emoji")}</span>
         </label>
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
@@ -140,7 +140,7 @@ export function IconTypeSelector({
             disabled={disabled}
             className="accent-blue-600"
           />
-          <span className="text-sm">画像</span>
+          <span className="text-sm">{t("image")}</span>
         </label>
       </div>
 
@@ -158,49 +158,14 @@ export function IconTypeSelector({
           </button>
         </EmojiPicker>
       ) : (
-        <div className="flex items-center gap-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            onChange={handleFileChange}
-            disabled={disabled}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
-            <Upload size={14} />
-            画像を選択
-          </button>
-          {import.meta.env.DEV && (
-            <button
-              type="button"
-              onClick={handleTestImage}
-              disabled={disabled}
-              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              title="テスト画像を生成"
-            >
-              <FlaskConical size={14} />
-              テスト
-            </button>
-          )}
-          {value.preview && (
-            <img
-              src={value.preview}
-              alt=""
-              className="w-12 h-12 rounded object-cover border border-gray-200"
-            />
-          )}
-          {value.file && (
-            <span className="text-xs text-gray-400 truncate max-w-[120px]">
-              {value.file.name}
-            </span>
-          )}
-        </div>
+        <ImageUploadField
+          disabled={disabled}
+          preview={value.preview}
+          file={value.file}
+          onFileChange={handleFileChange}
+          onTestImage={handleTestImage}
+          fileInputRef={fileInputRef}
+        />
       )}
     </div>
   );

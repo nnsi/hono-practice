@@ -41,6 +41,7 @@ user_invocable: true
 - コンポーネントの責務分離
 - DRY原則違反
 - プロジェクト規約違反（CLAUDE.mdの規約を参照）
+- 定義されているが呼び出し元が存在しない関数（dead code検出）
 
 結果を以下の形式で出力:
 ## Critical（必ず修正）

@@ -62,7 +62,9 @@ export function GoalStatsDetail({
     return (
       <View className="px-4 pb-4 py-6 flex-row items-center justify-center">
         <Loader2 size={16} color="#9ca3af" />
-        <Text className="ml-2 text-xs text-gray-400">統計を読み込み中...</Text>
+        <Text className="ml-2 text-xs text-gray-400 dark:text-gray-500">
+          統計を読み込み中...
+        </Text>
       </View>
     );
   }
@@ -72,7 +74,7 @@ export function GoalStatsDetail({
     totalDays > 0 ? (statsData.stats.achievedDays / totalDays) * 100 : 0;
 
   return (
-    <View className="px-4 pb-4 border-t border-gray-100">
+    <View className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800">
       {/* Stats grid (2 columns) */}
       <View className="flex-row flex-wrap gap-2 mt-3">
         <StatCard
@@ -107,7 +109,7 @@ export function GoalStatsDetail({
       {/* Daily records heatmap (last 14 days) */}
       {statsData.dailyRecords.length > 0 && (
         <View className="mt-3">
-          <Text className="text-xs font-medium text-gray-500 mb-1.5">
+          <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             直近の記録
           </Text>
           <View className="flex-row gap-1">
@@ -119,16 +121,16 @@ export function GoalStatsDetail({
                     ? "bg-green-400"
                     : record.quantity > 0
                       ? "bg-yellow-300"
-                      : "bg-gray-200"
+                      : "bg-gray-200 dark:bg-gray-700"
                 }`}
               />
             ))}
           </View>
           <View className="flex-row justify-between mt-1">
-            <Text className="text-[10px] text-gray-400">
+            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
               {dayjs(statsData.dailyRecords.slice(-14)[0]?.date).format("M/D")}
             </Text>
-            <Text className="text-[10px] text-gray-400">
+            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
               {dayjs(
                 statsData.dailyRecords[statsData.dailyRecords.length - 1]?.date,
               ).format("M/D")}
@@ -138,15 +140,21 @@ export function GoalStatsDetail({
           <View className="flex-row gap-3 mt-1">
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-green-400" />
-              <Text className="text-[10px] text-gray-400">達成</Text>
+              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+                達成
+              </Text>
             </View>
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-yellow-300" />
-              <Text className="text-[10px] text-gray-400">活動あり</Text>
+              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+                活動あり
+              </Text>
             </View>
             <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-sm bg-gray-200" />
-              <Text className="text-[10px] text-gray-400">未活動</Text>
+              <View className="w-2 h-2 rounded-sm bg-gray-200 dark:bg-gray-700" />
+              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+                未活動
+              </Text>
             </View>
           </View>
         </View>
@@ -167,14 +175,25 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <View className="bg-gray-50 rounded-lg p-2.5" style={{ width: "48%" }}>
+    <View
+      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5"
+      style={{ width: "48%" }}
+    >
       <View className="flex-row items-center gap-1.5 mb-1">
         {icon}
-        <Text className="text-[10px] text-gray-500">{label}</Text>
+        <Text className="text-[10px] text-gray-500 dark:text-gray-400">
+          {label}
+        </Text>
       </View>
       <View className="flex-row items-baseline gap-1">
-        <Text className="text-sm font-bold text-gray-900">{value}</Text>
-        {sub && <Text className="text-[10px] text-gray-400">{sub}</Text>}
+        <Text className="text-sm font-bold text-gray-900 dark:text-gray-100">
+          {value}
+        </Text>
+        {sub && (
+          <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+            {sub}
+          </Text>
+        )}
       </View>
     </View>
   );

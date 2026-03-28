@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
@@ -39,6 +40,7 @@ export function TaskCard({
   onArchive: () => void;
   onMoveToToday?: () => void;
 }) {
+  const { t } = useTranslation("task");
   const { activities } = useActivities();
   const activityMap = useMemo(
     () => new Map(activities.map((a) => [a.id, a])),
@@ -78,7 +80,7 @@ export function TaskCard({
             onToggleDone();
           }}
           className="flex-shrink-0 p-0.5 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label={task.doneDate ? "未完了に戻す" : "完了にする"}
+          aria-label={task.doneDate ? t("card.markDone") : t("card.markTodo")}
         >
           {task.doneDate ? (
             <CheckCircle2 size={22} className="text-green-500" />
@@ -122,7 +124,9 @@ export function TaskCard({
             </span>
             {task.doneDate && (
               <span className="text-xs text-green-600 ml-2">
-                完了: {dayjs(task.doneDate).format("MM/DD")}
+                {t("card.completed", {
+                  date: dayjs(task.doneDate).format("MM/DD"),
+                })}
               </span>
             )}
           </div>
@@ -146,7 +150,7 @@ export function TaskCard({
               onMoveToToday();
             }}
             className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-            title="今日に移動"
+            title={t("card.moveToToday")}
           >
             <CalendarCheck size={16} />
           </button>
@@ -160,7 +164,7 @@ export function TaskCard({
               onArchive();
             }}
             className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-            title="アーカイブ"
+            title={t("card.archive")}
           >
             <Archive size={16} />
           </button>
@@ -172,7 +176,7 @@ export function TaskCard({
             onEdit();
           }}
           className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          title="編集"
+          title={t("card.edit")}
         >
           <Pencil size={16} />
         </button>
@@ -183,7 +187,7 @@ export function TaskCard({
             onDelete();
           }}
           className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          title="削除"
+          title={t("card.delete")}
         >
           <Trash2 size={16} />
         </button>

@@ -1,58 +1,10 @@
 import type { MiddlewareHandler } from "hono";
 
-import type { AnalyticsEngineDataset } from "@cloudflare/workers-types";
-
 import type { AppContext } from "../context";
 import { createLogger } from "../lib/logger";
-import type { TracerSummary } from "../lib/tracer";
 import { createTracer } from "../lib/tracer";
-
-/** スタックトレースの最初のフレーム（"at ..."行）を取得 */
-const firstStackFrame = (stack?: string): string => {
-  if (!stack) return "";
-  const line = stack.split("\n").find((l) => l.trimStart().startsWith("at "));
-  return line?.trim() ?? "";
-};
-
-/** WAEに書き込むデータポイントを生成 */
-const writeToWAE = (
-  wae: AnalyticsEngineDataset,
-  entry: {
-    level: string;
-    requestId: string;
-    method: string;
-    path: string;
-    feature?: string;
-    error?: string;
-    stackFrame?: string;
-    status: number;
-    duration: number;
-    summary: TracerSummary;
-  },
-) => {
-  wae.writeDataPoint({
-    blobs: [
-      entry.level,
-      "Response sent",
-      entry.requestId,
-      entry.method,
-      entry.path,
-      entry.feature ?? "",
-      entry.error ?? "",
-      entry.stackFrame ?? "",
-    ],
-    doubles: [
-      entry.status,
-      entry.duration,
-      entry.summary.dbMs,
-      entry.summary.r2Ms,
-      entry.summary.kvMs,
-      entry.summary.extMs,
-      entry.summary.spanCount,
-    ],
-    indexes: [entry.level],
-  });
-};
+import { appendLocalLog } from "./localLogWriter";
+import { firstStackFrame, writeToWAE } from "./waeWriter";
 
 /**
  * 構造化ロガーミドルウェア
@@ -60,7 +12,7 @@ const writeToWAE = (
  * - リクエストごとにTracerを生成し、パフォーマンス計測を提供
  * - JSON形式で出力（Cloudflare Workers Logs対応）
  * - WAEへのメトリクス書き込み（waitUntilでレスポンス後に非同期実行）
- * - 全環境で有効（localだけでなくstg/productionでも動作）
+ * - WAE未使用時はローカルJSONLファイルにフォールバック
  */
 export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
   return async (c, next) => {
@@ -124,6 +76,19 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
               }),
             ),
           );
+          waeWritten = true;
+        } else {
+          appendLocalLog({
+            type: "request",
+            level: "error",
+            requestId,
+            method,
+            path,
+            error: errorMsg,
+            status: 500,
+            duration,
+            ...summary,
+          });
           waeWritten = true;
         }
       } catch {
@@ -191,6 +156,18 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
             }),
           ),
         );
+      } else if (!waeWritten && status !== 404) {
+        appendLocalLog({
+          type: "request",
+          level,
+          requestId,
+          method,
+          path,
+          status,
+          duration,
+          ...(errorMsg ? { error: errorMsg } : {}),
+          ...summary,
+        });
       }
     } catch {
       // WAE書き込み失敗はリクエスト処理に影響させない

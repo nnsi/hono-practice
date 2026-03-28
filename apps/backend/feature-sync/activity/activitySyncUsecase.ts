@@ -168,7 +168,7 @@ async function syncActivityKindEntities(
   }
 
   const upserted = await tracer.span("db.upsertActivityKinds", () =>
-    repo.upsertActivityKinds(validKinds),
+    repo.upsertActivityKinds(validKinds, ownedIds),
   );
 
   const syncedIdSet = new Set(upserted.map((r) => r.id));
@@ -181,7 +181,7 @@ async function syncActivityKindEntities(
   let serverWins: ActivityKindRow[] = [];
   if (missedIds.length > 0) {
     serverWins = await tracer.span("db.getActivityKindsByIds", () =>
-      repo.getActivityKindsByIds(missedIds),
+      repo.getActivityKindsByIds(missedIds, ownedIds),
     );
     const serverWinIdSet = new Set(serverWins.map((s) => s.id));
     for (const id of missedIds) {

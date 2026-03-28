@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { ChevronLeft, X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
@@ -15,6 +16,7 @@ export function CreateLogDialog({
   activities: DexieActivity[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation("activity");
   const [selectedActivity, setSelectedActivity] =
     useState<DexieActivity | null>(null);
 
@@ -62,7 +64,7 @@ export function CreateLogDialog({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-3">
-          <h2 className="text-lg font-bold">アクティビティを選択</h2>
+          <h2 className="text-lg font-bold">{t("daily.selectActivity")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -74,7 +76,7 @@ export function CreateLogDialog({
         <div className="overflow-y-auto px-6 pb-6 space-y-2">
           {activities.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
-              アクティビティがありません
+              {t("daily.noActivities")}
             </div>
           ) : (
             activities.map((activity) => (

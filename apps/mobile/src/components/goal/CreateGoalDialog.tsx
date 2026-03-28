@@ -1,14 +1,10 @@
 import { useState } from "react";
 
-import { Switch, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "@packages/i18n";
+import { Text, TouchableOpacity, View } from "react-native";
 
-import { useIconBlobMap } from "../../hooks/useIconBlobMap";
-import { ActivityIcon } from "../common/ActivityIcon";
-import { DatePickerField } from "../common/DatePickerField";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
-import { DayTargetsInput } from "./DayTargetsInput";
+import { CreateGoalForm } from "./CreateGoalForm";
 import type { Activity, CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
@@ -25,11 +21,10 @@ export function CreateGoalDialog({
   onClose,
   onCreate,
 }: CreateGoalDialogProps) {
-  const iconBlobMap = useIconBlobMap();
+  const { t } = useTranslation("goal");
   const [debtCapEnabled, setDebtCapEnabled] = useState(false);
   const [debtCapValue, setDebtCapValue] = useState("");
 
-  // Wrap onCreate to inject debtCap into the payload
   const onCreateWithDebtCap = async (payload: CreateGoalPayload) => {
     const debtCap = debtCapEnabled ? Number(debtCapValue) : null;
     await onCreate({ ...payload, debtCap });
@@ -70,14 +65,16 @@ export function CreateGoalDialog({
     <ModalOverlay
       visible={visible}
       onClose={handleClose}
-      title="新しい目標を作成"
+      title={t("createTitle")}
       footer={
         <View className="flex-row gap-2">
           <TouchableOpacity
-            className="flex-1 py-3 border border-gray-300 rounded-lg items-center"
+            className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
             onPress={handleClose}
           >
-            <Text className="text-gray-700 font-medium">キャンセル</Text>
+            <Text className="text-gray-700 dark:text-gray-300 font-medium">
+              {t("cancelButton")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             className={`flex-1 py-3 rounded-lg items-center ${
@@ -86,138 +83,32 @@ export function CreateGoalDialog({
             onPress={handleSubmit}
             disabled={submitting}
           >
-            <Text className="text-white font-medium">作成</Text>
+            <Text className="text-white font-medium">{t("createButton")}</Text>
           </TouchableOpacity>
         </View>
       }
     >
-      <View className="gap-4">
-        {/* Activity selection */}
-        <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">
-            アクティビティ
-          </Text>
-          {activities.length === 0 ? (
-            <Text className="text-sm text-gray-400">
-              アクティビティがありません
-            </Text>
-          ) : (
-            <View className="flex-row flex-wrap gap-2">
-              {activities.map((a) => (
-                <TouchableOpacity
-                  key={a.id}
-                  onPress={() => setActivityId(a.id)}
-                  className={`items-center p-2 rounded-lg border min-w-[80px] ${
-                    activityId === a.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white"
-                  }`}
-                >
-                  <ActivityIcon
-                    iconType={a.iconType}
-                    emoji={a.emoji || "\u{1f4dd}"}
-                    iconBlob={iconBlobMap.get(a.id)}
-                    iconUrl={a.iconUrl}
-                    iconThumbnailUrl={a.iconThumbnailUrl}
-                    size={28}
-                    fontSize="text-xl"
-                  />
-                  <Text
-                    className="text-[10px] mt-1 text-center"
-                    numberOfLines={1}
-                  >
-                    {a.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Daily target */}
-        <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">
-            日次目標
-            {selectedActivity?.quantityUnit ? (
-              <Text className="text-xs text-gray-400">
-                {" "}
-                ({selectedActivity.quantityUnit})
-              </Text>
-            ) : null}
-          </Text>
-          <IMESafeTextInput
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base"
-            value={target}
-            onChangeText={setTarget}
-            keyboardType="numeric"
-            selectTextOnFocus
-          />
-        </View>
-
-        {/* Dates */}
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <DatePickerField
-              value={startDate}
-              onChange={setStartDate}
-              label="開始日"
-            />
-          </View>
-          <View className="flex-1">
-            <OptionalDatePickerField
-              value={endDate}
-              onChange={setEndDate}
-              label="終了日（任意）"
-            />
-          </View>
-        </View>
-
-        {/* Day targets */}
-        <DayTargetsInput
-          enabled={dayTargetsEnabled}
-          onToggle={setDayTargetsEnabled}
-          values={dayTargetValues}
-          onChange={setDayTargetValues}
-          defaultTarget={target}
-        />
-
-        {/* Debt cap */}
-        <View>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-gray-600">
-              負債上限を設定
-            </Text>
-            <Switch
-              value={debtCapEnabled}
-              onValueChange={(v) => {
-                setDebtCapEnabled(v);
-                if (v && !debtCapValue) {
-                  setDebtCapValue(String(Number(target) * 7));
-                }
-              }}
-            />
-          </View>
-          {debtCapEnabled && (
-            <View className="flex-row items-center gap-2 mt-1">
-              <IMESafeTextInput
-                className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base"
-                value={debtCapValue}
-                onChangeText={setDebtCapValue}
-                keyboardType="numeric"
-                selectTextOnFocus
-              />
-              <Text className="text-xs text-gray-500">
-                {selectedActivity?.quantityUnit ?? ""}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Error message */}
-        {errorMsg ? (
-          <Text className="text-sm text-red-500">{errorMsg}</Text>
-        ) : null}
-      </View>
+      <CreateGoalForm
+        activities={activities}
+        activityId={activityId}
+        setActivityId={setActivityId}
+        target={target}
+        setTarget={setTarget}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        dayTargetsEnabled={dayTargetsEnabled}
+        setDayTargetsEnabled={setDayTargetsEnabled}
+        dayTargetValues={dayTargetValues}
+        setDayTargetValues={setDayTargetValues}
+        debtCapEnabled={debtCapEnabled}
+        setDebtCapEnabled={setDebtCapEnabled}
+        debtCapValue={debtCapValue}
+        setDebtCapValue={setDebtCapValue}
+        selectedActivity={selectedActivity}
+        errorMsg={errorMsg}
+      />
     </ModalOverlay>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy } from "lucide-react-native";
@@ -15,6 +16,7 @@ export function CreateApiKeyDialog({
   onClose: () => void;
   onCreate: (data: CreateApiKeyRequest) => Promise<CreateApiKeyResponse>;
 }) {
+  const { t } = useTranslation("settings");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export function CreateApiKeyDialog({
       const result = await onCreate({ name: name.trim(), scope: "all" });
       setCreatedKey(result.apiKey.key);
     } catch {
-      setError("APIキーの作成に失敗しました");
+      setError(t("apiKeyCreateError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +49,7 @@ export function CreateApiKeyDialog({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const title = createdKey ? "APIキーが作成されました" : "新しいAPIキーの作成";
+  const title = createdKey ? t("apiKeyCreatedTitle") : t("apiKeyCreateTitle");
 
   return (
     <ModalOverlay
@@ -64,12 +66,16 @@ export function CreateApiKeyDialog({
             {copied ? (
               <>
                 <Check size={16} color="#fff" />
-                <Text className="text-white font-medium">コピーしました</Text>
+                <Text className="text-white font-medium">
+                  {t("apiKeyCopied")}
+                </Text>
               </>
             ) : (
               <>
                 <Copy size={16} color="#fff" />
-                <Text className="text-white font-medium">APIキーをコピー</Text>
+                <Text className="text-white font-medium">
+                  {t("apiKeyCopy")}
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -81,7 +87,7 @@ export function CreateApiKeyDialog({
             activeOpacity={0.7}
           >
             <Text className="text-white font-medium text-center">
-              {isSubmitting ? "作成中..." : "作成"}
+              {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
             </Text>
           </TouchableOpacity>
         )
@@ -89,34 +95,43 @@ export function CreateApiKeyDialog({
     >
       {createdKey ? (
         <View>
-          <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-            <Text className="text-sm text-amber-700">
-              このAPIキーは一度しか表示されません。必ずコピーして安全に保管してください。
+          <View className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg p-3 mb-4">
+            <Text className="text-sm text-amber-700 dark:text-amber-400">
+              {t("apiKeyWarning")}
             </Text>
           </View>
-          <View className="bg-gray-50 rounded-lg p-3">
-            <Text className="text-sm text-gray-800 font-mono" selectable>
+          <View className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+            <Text
+              className="text-sm text-gray-800 dark:text-gray-200 font-mono"
+              selectable
+            >
               {createdKey}
             </Text>
           </View>
         </View>
       ) : (
         <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">名前</Text>
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+            {t("apiKeyName")}
+          </Text>
           <IMESafeTextInput
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base text-gray-900"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base text-gray-900 dark:text-gray-100"
             value={name}
             onChangeText={setName}
-            placeholder="例: 開発用APIキー"
+            placeholder={t("apiKeyNamePlaceholder")}
             placeholderTextColor="#9ca3af"
             autoFocus
             maxLength={255}
           />
-          <Text className="text-xs text-gray-400 mt-1">
-            APIキーに識別しやすい名前を付けてください
+          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            {t("apiKeyNameHint")}
           </Text>
 
-          {error && <Text className="text-sm text-red-600 mt-3">{error}</Text>}
+          {error && (
+            <Text className="text-sm text-red-600 dark:text-red-400 mt-3">
+              {error}
+            </Text>
+          )}
         </View>
       )}
     </ModalOverlay>

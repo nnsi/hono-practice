@@ -2,8 +2,14 @@ import "../src/polyfills/crypto";
 
 import { createContext, useContext, useEffect, useRef } from "react";
 
+import { initI18n, useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+import "dayjs/locale/en";
+
+import { getLocales } from "expo-localization";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, LogBox, Text, View } from "react-native";
@@ -16,6 +22,7 @@ import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
 import { OverlayHost } from "../src/components/common/overlayPortal";
 import { UpdateToast } from "../src/components/common/UpdateToast";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useOtaUpdate } from "../src/hooks/useOtaUpdate";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
@@ -23,6 +30,14 @@ import { initRevenueCat } from "../src/lib/revenueCat";
 import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
+
+const deviceLang = getLocales()[0]?.languageCode ?? "ja";
+const resolvedLang = deviceLang === "ja" ? "ja" : "en";
+dayjs.locale(resolvedLang);
+initI18n({
+  lng: resolvedLang,
+  onLanguageChanged: (lng) => dayjs.locale(lng === "ja" ? "ja" : "en"),
+});
 
 const queryClient = new QueryClient();
 
@@ -57,6 +72,7 @@ export function useAuthContext() {
 }
 
 export default function RootLayout() {
+  const { t } = useTranslation("common");
   const auth = useAuth();
   const router = useRouter();
   const segments = useSegments();
@@ -124,10 +140,10 @@ export default function RootLayout() {
 
   if (isUpdating) {
     return (
-      <View className="flex-1 items-center justify-center bg-white gap-4">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-base text-stone-500">
-          アップデートしています...
+        <Text className="text-base text-stone-500 dark:text-stone-400">
+          {t("common.updating")}
         </Text>
       </View>
     );
@@ -135,7 +151,7 @@ export default function RootLayout() {
 
   if (auth.isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
@@ -144,21 +160,23 @@ export default function RootLayout() {
   return (
     <ErrorBoundary onRecover={clearLocalData}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthContext.Provider value={auth}>
-            <StatusBar style="auto" />
-            <View className="flex-1 bg-stone-100">
-              <Slot />
-              <DebtFeedbackToast />
-              <UpdateToast
-                visible={hasPendingUpdate}
-                onReload={triggerReload}
-                onDismiss={dismissPendingUpdate}
-              />
-              <OverlayHost />
-            </View>
-          </AuthContext.Provider>
-        </QueryClientProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthContext.Provider value={auth}>
+              <StatusBar style="auto" />
+              <View className="flex-1 bg-stone-100 dark:bg-gray-900">
+                <Slot />
+                <DebtFeedbackToast />
+                <UpdateToast
+                  visible={hasPendingUpdate}
+                  onReload={triggerReload}
+                  onDismiss={dismissPendingUpdate}
+                />
+                <OverlayHost />
+              </View>
+            </AuthContext.Provider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity } from "react-native";
 
 type SaveButtonProps = {
@@ -6,11 +7,9 @@ type SaveButtonProps = {
   label?: string;
 };
 
-export function SaveButton({
-  onPress,
-  disabled,
-  label = "記録する",
-}: SaveButtonProps) {
+export function SaveButton({ onPress, disabled, label }: SaveButtonProps) {
+  const { t } = useTranslation("recording");
+  const displayLabel = label ?? t("save");
   return (
     <TouchableOpacity
       className={`py-3 rounded-lg items-center mb-4 ${
@@ -20,7 +19,7 @@ export function SaveButton({
       disabled={disabled}
     >
       <Text className="text-white font-medium">
-        {disabled ? "記録中..." : label}
+        {disabled ? t("saving") : displayLabel}
       </Text>
     </TouchableOpacity>
   );

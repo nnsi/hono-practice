@@ -112,7 +112,7 @@ test("GET tasks / with valid date query", async () => {
   expect(res.status).toEqual(200);
 });
 
-test("POST task / タイトルが200文字を超えると400", async () => {
+test("POST task / タイトルが20文字を超えると400", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
   const client = testClient(app, {
@@ -121,7 +121,7 @@ test("POST task / タイトルが200文字を超えると400", async () => {
 
   const res = await client.index.$post({
     json: {
-      title: "a".repeat(201),
+      title: "a".repeat(21),
       startDate: "2021-01-01",
     },
   });
@@ -129,7 +129,7 @@ test("POST task / タイトルが200文字を超えると400", async () => {
   expect(res.status).toEqual(400);
 });
 
-test("POST task / メモが2000文字を超えると400", async () => {
+test("POST task / メモが1000文字を超えると400", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
   const client = testClient(app, {
@@ -140,14 +140,14 @@ test("POST task / メモが2000文字を超えると400", async () => {
     json: {
       title: "test",
       startDate: "2021-01-01",
-      memo: "a".repeat(2001),
+      memo: "a".repeat(1001),
     },
   });
 
   expect(res.status).toEqual(400);
 });
 
-test("POST task / 上限ギリギリ(200文字タイトル)は成功", async () => {
+test("POST task / 上限ギリギリ(20文字タイトル)は成功", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
   const client = testClient(app, {
@@ -156,7 +156,7 @@ test("POST task / 上限ギリギリ(200文字タイトル)は成功", async () 
 
   const res = await client.index.$post({
     json: {
-      title: "a".repeat(200),
+      title: "a".repeat(20),
       startDate: "2021-01-01",
     },
   });

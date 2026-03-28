@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
+
 import { LegalModal } from "../common/LegalModal";
 import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
@@ -15,6 +17,7 @@ export function CreateUserForm({
   onGoogleLogin,
   onAppleLogin,
 }: CreateUserFormProps) {
+  const { t } = useTranslation("common");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,9 +27,9 @@ export function CreateUserForm({
   );
 
   const validate = (): string | null => {
-    if (!loginId.trim()) return "ログインIDを入力してください";
-    if (!password) return "パスワードを入力してください";
-    if (password.length < 8) return "パスワードは8文字以上で入力してください";
+    if (!loginId.trim()) return t("auth.loginIdRequired");
+    if (!password) return t("auth.passwordRequired");
+    if (password.length < 8) return t("auth.passwordMinLength");
     return null;
   };
 
@@ -42,7 +45,7 @@ export function CreateUserForm({
     try {
       await onRegister(loginId, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ユーザー登録に失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.registerError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -54,18 +57,14 @@ export function CreateUserForm({
     try {
       await onGoogleLogin(credential);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Googleアカウントでの登録に失敗しました",
-      );
+      setError(e instanceof Error ? e.message : t("auth.googleRegisterError"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoogleError = () => {
-    setError("Googleアカウントでの登録に失敗しました");
+    setError(t("auth.googleRegisterError"));
   };
 
   const handleAppleSuccess = async (credential: string) => {
@@ -74,18 +73,14 @@ export function CreateUserForm({
     try {
       await onAppleLogin(credential);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Appleアカウントでの登録に失敗しました",
-      );
+      setError(e instanceof Error ? e.message : t("auth.appleRegisterError"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleAppleError = () => {
-    setError("Appleアカウントでの登録に失敗しました");
+    setError(t("auth.appleRegisterError"));
   };
 
   return (
@@ -110,7 +105,9 @@ export function CreateUserForm({
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-gray-100 px-3 text-gray-400 text-xs">または</span>
+          <span className="bg-gray-100 px-3 text-gray-400 text-xs">
+            {t("auth.or")}
+          </span>
         </div>
       </div>
 
@@ -120,7 +117,7 @@ export function CreateUserForm({
             htmlFor="register-loginId"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            ログインID
+            {t("auth.loginId")}
           </label>
           <input
             id="register-loginId"
@@ -136,8 +133,10 @@ export function CreateUserForm({
             htmlFor="register-password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            パスワード
-            <span className="text-gray-400 text-xs ml-1">(8文字以上)</span>
+            {t("auth.password")}
+            <span className="text-gray-400 text-xs ml-1">
+              {t("auth.passwordHint").replace(t("auth.password"), "")}
+            </span>
           </label>
           <input
             id="register-password"
@@ -151,30 +150,30 @@ export function CreateUserForm({
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <p className="text-xs text-gray-400 leading-relaxed">
-          新規登録することで、
+          {t("auth.legalConsentPrefix")}
           <button
             type="button"
             onClick={() => setLegalModal("terms")}
             className="underline hover:text-gray-600 transition-colors"
           >
-            利用規約
+            {t("auth.termsOfService")}
           </button>
-          と
+          {t("auth.legalConsentAnd")}
           <button
             type="button"
             onClick={() => setLegalModal("privacy")}
             className="underline hover:text-gray-600 transition-colors"
           >
-            プライバシーポリシー
+            {t("auth.privacyPolicy")}
           </button>
-          に同意したものとみなします。
+          {t("auth.legalConsentSuffix")}
         </p>
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full py-2.5 px-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
         >
-          {isSubmitting ? "登録中..." : "新規登録"}
+          {isSubmitting ? t("auth.registering") : t("auth.signUp")}
         </button>
       </form>
       {legalModal && (

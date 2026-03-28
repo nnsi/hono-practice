@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Pencil } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
 import { activityRepository } from "../../repositories/activityRepository";
 import { ActivityIcon } from "../common/ActivityIcon";
 
@@ -45,6 +46,8 @@ export function ActivityCard({
   onPress,
   onEdit,
 }: ActivityCardProps) {
+  const { colors } = useThemeContext();
+
   useEffect(() => {
     if (activity.iconType !== "upload") return;
     if (iconBlob) return;
@@ -74,32 +77,37 @@ export function ActivityCard({
     <View className="flex-1 m-1 relative">
       <TouchableOpacity
         className={`p-4 rounded-2xl border items-center min-h-[120px] ${
-          isDone ? "border-emerald-200" : "border-gray-200"
+          isDone
+            ? "border-emerald-200 dark:border-emerald-800"
+            : "border-gray-200 dark:border-gray-700"
         }`}
-        style={[warmShadow, isDone ? doneBg : { backgroundColor: "#ffffff" }]}
+        style={[
+          warmShadow,
+          isDone ? doneBg : { backgroundColor: colors.surface },
+        ]}
         onPress={onPress}
         activeOpacity={0.95}
       >
         <View className="mb-2">{renderIcon()}</View>
         <Text
-          className="text-sm font-medium text-gray-800 text-center"
+          className="text-sm font-medium text-gray-800 dark:text-gray-200 text-center"
           numberOfLines={1}
         >
           {activity.name}
         </Text>
         {activity.quantityUnit ? (
-          <Text className="text-xs text-gray-400 mt-1">
+          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {activity.quantityUnit}
           </Text>
         ) : null}
       </TouchableOpacity>
       {/* Edit button */}
       <TouchableOpacity
-        className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white/80"
+        className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white dark:bg-gray-800/80 dark:bg-gray-700/80"
         onPress={onEdit}
         activeOpacity={0.7}
       >
-        <Pencil size={12} color="#9ca3af" />
+        <Pencil size={12} color={colors.textMuted} />
       </TouchableOpacity>
     </View>
   );

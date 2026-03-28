@@ -80,7 +80,7 @@ export function ActivityChart({
 
   return (
     <View
-      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
       style={{ padding: 8 }}
     >
       {/* Legend */}
@@ -92,7 +92,9 @@ export function ActivityChart({
                 className="w-3 h-3 rounded-sm"
                 style={{ backgroundColor: key.color }}
               />
-              <Text className="text-xs text-gray-600">{key.name}</Text>
+              <Text className="text-xs text-gray-600 dark:text-gray-400">
+                {key.name}
+              </Text>
             </View>
           ))}
         </View>

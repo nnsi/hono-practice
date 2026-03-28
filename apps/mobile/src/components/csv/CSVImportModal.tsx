@@ -281,7 +281,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 
         {/* Activity picker */}
         <View>
-          <Text className="text-sm text-gray-500 mb-1">アクティビティ</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            アクティビティ
+          </Text>
           <View className="flex-row flex-wrap gap-2">
             {activities.map((a) => (
               <TouchableOpacity
@@ -289,12 +291,12 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 onPress={() => setSelectedActivityId(a.id)}
                 className={`px-3 py-1.5 rounded-full border ${
                   selectedActivityId === a.id
-                    ? "bg-amber-500 border-amber-500"
-                    : "bg-white border-gray-300"
+                    ? "bg-amber-50 dark:bg-amber-900/200 border-amber-500"
+                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 }`}
               >
                 <Text
-                  className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700"}`}
+                  className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700 dark:text-gray-300"}`}
                 >
                   {a.emoji} {a.name}
                 </Text>
@@ -307,28 +309,30 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         {step === "file" && (
           <View className="gap-3">
             <TouchableOpacity
-              className="py-6 border-2 border-dashed border-gray-300 rounded-xl items-center"
+              className="py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl items-center"
               onPress={handlePickAndParse}
               disabled={isParsing}
             >
               <Upload size={28} color="#9ca3af" />
-              <Text className="text-sm text-gray-500 mt-2">
+              <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 {isParsing ? "解析中..." : "CSVファイルを選択して解析"}
               </Text>
               {fileName && (
                 <View className="flex-row items-center mt-1">
                   <FileText size={12} color="#6b7280" />
-                  <Text className="text-xs text-gray-400 ml-1">{fileName}</Text>
+                  <Text className="text-xs text-gray-400 dark:text-gray-500 ml-1">
+                    {fileName}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
             {Platform.OS === "web" && (
               <TouchableOpacity
-                className="flex-row items-center justify-center gap-2 py-2 border border-gray-300 rounded-lg"
+                className="flex-row items-center justify-center gap-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 onPress={downloadTemplateWeb}
               >
                 <Download size={14} color="#6b7280" />
-                <Text className="text-sm text-gray-600">
+                <Text className="text-sm text-gray-600 dark:text-gray-400">
                   CSVテンプレートをダウンロード
                 </Text>
               </TouchableOpacity>
@@ -337,20 +341,22 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         )}
 
         {error && (
-          <View className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <Text className="text-sm text-red-700">{error}</Text>
+          <View className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <Text className="text-sm text-red-700 dark:text-red-400">
+              {error}
+            </Text>
           </View>
         )}
         {successCount !== null && (
-          <View className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <Text className="text-sm text-green-700">
+          <View className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <Text className="text-sm text-green-700 dark:text-green-400">
               {successCount}件のログをインポートしました
             </Text>
           </View>
         )}
         {isImporting && progress.total > 0 && (
           <View className="gap-1">
-            <View className="w-full bg-gray-200 rounded-full h-2">
+            <View className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <View
                 className="bg-blue-600 h-2 rounded-full"
                 style={{
@@ -358,7 +364,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 }}
               />
             </View>
-            <Text className="text-xs text-center text-gray-600">
+            <Text className="text-xs text-center text-gray-600 dark:text-gray-400">
               {progress.succeeded} / {progress.total} 件処理中...
             </Text>
           </View>
@@ -369,19 +375,19 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
           <View className="gap-3">
             {/* Summary badges */}
             <View className="flex-row gap-2">
-              <View className="px-2 py-1 bg-gray-100 rounded">
-                <Text className="text-xs text-gray-600">
+              <View className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
+                <Text className="text-xs text-gray-600 dark:text-gray-400">
                   全{parsedRows.length}件
                 </Text>
               </View>
               <View className="px-2 py-1 bg-green-100 rounded">
-                <Text className="text-xs text-green-700">
+                <Text className="text-xs text-green-700 dark:text-green-400">
                   有効 {validCount}件
                 </Text>
               </View>
               {errorCount > 0 && (
                 <View className="px-2 py-1 bg-red-100 rounded">
-                  <Text className="text-xs text-red-700">
+                  <Text className="text-xs text-red-700 dark:text-red-400">
                     エラー {errorCount}件
                   </Text>
                 </View>
@@ -390,23 +396,23 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
 
             {/* Preview rows */}
             <ScrollView
-              className="bg-gray-50 rounded-lg p-2"
+              className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2"
               style={{ maxHeight: 240 }}
               nestedScrollEnabled
             >
               {/* Header */}
-              <View className="flex-row py-1 border-b border-gray-300">
-                <Text className="text-xs font-medium text-gray-500 w-6" />
-                <Text className="text-xs font-medium text-gray-500 w-24">
+              <View className="flex-row py-1 border-b border-gray-300 dark:border-gray-600">
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-6" />
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-24">
                   日付
                 </Text>
-                <Text className="text-xs font-medium text-gray-500 w-14">
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14">
                   時刻
                 </Text>
-                <Text className="text-xs font-medium text-gray-500 w-14">
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14">
                   数量
                 </Text>
-                <Text className="text-xs font-medium text-gray-500 flex-1">
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-1">
                   メモ
                 </Text>
               </View>
@@ -416,7 +422,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 return (
                   <View
                     key={`${i}-${row.date}-${row.quantity}`}
-                    className={`py-1 border-b border-gray-200 ${hasError ? "bg-red-50" : ""}`}
+                    className={`py-1 border-b border-gray-200 dark:border-gray-700 ${hasError ? "bg-red-50 dark:bg-red-900/20" : ""}`}
                   >
                     <View className="flex-row items-center">
                       <View className="w-6 items-center">
@@ -426,24 +432,24 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                           <CheckCircle size={12} color="#22c55e" />
                         )}
                       </View>
-                      <Text className="text-xs text-gray-600 w-24">
+                      <Text className="text-xs text-gray-600 dark:text-gray-400 w-24">
                         {row.date}
                       </Text>
-                      <Text className="text-xs text-gray-600 w-14">
+                      <Text className="text-xs text-gray-600 dark:text-gray-400 w-14">
                         {row.time}
                       </Text>
-                      <Text className="text-xs text-gray-600 w-14">
+                      <Text className="text-xs text-gray-600 dark:text-gray-400 w-14">
                         {row.quantity}
                       </Text>
                       <Text
-                        className="text-xs text-gray-600 flex-1"
+                        className="text-xs text-gray-600 dark:text-gray-400 flex-1"
                         numberOfLines={1}
                       >
                         {row.memo}
                       </Text>
                     </View>
                     {hasError && (
-                      <Text className="text-xs text-red-500 ml-6 mt-0.5">
+                      <Text className="text-xs text-red-500 dark:text-red-400 ml-6 mt-0.5">
                         {errors.join(", ")}
                       </Text>
                     )}
@@ -453,7 +459,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
             </ScrollView>
 
             {errorCount > 0 && (
-              <Text className="text-xs text-gray-500">
+              <Text className="text-xs text-gray-500 dark:text-gray-400">
                 エラーのある行はスキップされます
               </Text>
             )}
@@ -477,7 +483,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 setFileName(null);
               }}
             >
-              <Text className="text-sm text-gray-500">ファイルを選び直す</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400">
+                ファイルを選び直す
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -499,10 +507,10 @@ function StepIndicator({ current }: { current: Step }) {
         <View key={s.key} className="flex-row items-center">
           {i > 0 && <View className="w-6 h-px bg-gray-300 mx-1" />}
           <View
-            className={`px-3 py-1 rounded-full ${current === s.key ? "bg-blue-100" : "bg-gray-100"}`}
+            className={`px-3 py-1 rounded-full ${current === s.key ? "bg-blue-100" : "bg-gray-100 dark:bg-gray-800"}`}
           >
             <Text
-              className={`text-xs font-medium ${current === s.key ? "text-blue-700" : "text-gray-400"}`}
+              className={`text-xs font-medium ${current === s.key ? "text-blue-700" : "text-gray-400 dark:text-gray-500"}`}
             >
               {i + 1}. {s.label}
             </Text>

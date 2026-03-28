@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -13,6 +14,7 @@ import { TaskList } from "./TaskList";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
+  const { t } = useTranslation("activity");
   const {
     date,
     setDate,
@@ -42,7 +44,7 @@ export function DailyPage() {
   return (
     <View className="flex-1">
       {/* Date navigation header */}
-      <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
+      <View className="relative flex-row items-center justify-center h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>
           <ChevronLeft size={20} color="#78716c" />
         </TouchableOpacity>
@@ -58,7 +60,7 @@ export function DailyPage() {
               </Text>
             </View>
           ) : (
-            <Text className="text-base font-medium text-gray-800">
+            <Text className="text-base font-medium text-gray-800 dark:text-gray-200">
               {dateLabel}
             </Text>
           )}
@@ -84,15 +86,17 @@ export function DailyPage() {
         {/* Activity logs section */}
         <View className="px-4 pt-4">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              アクティビティ
+            <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {t("daily.activitySection")}
             </Text>
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setCreateDialogOpen(true)}
             >
               <Plus size={16} color="#2563eb" />
-              <Text className="text-sm text-blue-600 font-medium">追加</Text>
+              <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                {t("daily.addButton")}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -117,26 +121,30 @@ export function DailyPage() {
             </View>
           ) : (
             <View className="items-center py-8">
-              <Text className="text-sm text-gray-400">記録がありません</Text>
+              <Text className="text-sm text-gray-400 dark:text-gray-500">
+                {t("daily.noRecords")}
+              </Text>
             </View>
           )}
         </View>
 
         {/* Divider */}
-        <View className="mx-4 my-6 border-b border-gray-200" />
+        <View className="mx-4 my-6 border-b border-gray-200 dark:border-gray-700" />
 
         {/* Tasks section */}
         <View className="px-4">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              タスク
+            <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {t("daily.tasksSection")}
             </Text>
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setTaskCreateDialogOpen(true)}
             >
               <Plus size={16} color="#2563eb" />
-              <Text className="text-sm text-blue-600 font-medium">追加</Text>
+              <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                {t("daily.addButton")}
+              </Text>
             </TouchableOpacity>
           </View>
           <TaskList

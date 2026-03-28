@@ -1,9 +1,11 @@
 import { useState } from "react";
 
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { useTranslation } from "@packages/i18n";
 import { ArrowDown, ArrowUp } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -20,6 +22,8 @@ export function ReorderActivitiesDialog({
   onClose,
   activities,
 }: ReorderActivitiesDialogProps) {
+  const { t } = useTranslation("actiko");
+  const { colors } = useThemeContext();
   const iconBlobMap = useIconBlobMap();
   const [items, setItems] = useState(activities);
   const [saving, setSaving] = useState(false);
@@ -49,12 +53,12 @@ export function ReorderActivitiesDialog({
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title="並び替え">
+    <ModalOverlay visible={visible} onClose={onClose} title={t("reorder")}>
       <View className="gap-1 mb-4">
         {items.map((activity, index) => (
           <View
             key={activity.id}
-            className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100"
+            className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
           >
             <ActivityIcon
               iconType={activity.iconType}
@@ -65,7 +69,7 @@ export function ReorderActivitiesDialog({
               size={28}
               fontSize="text-xl"
             />
-            <Text className="text-sm font-medium text-gray-800 flex-1">
+            <Text className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1">
               {activity.name}
             </Text>
             <View className="flex-row gap-1">
@@ -76,7 +80,7 @@ export function ReorderActivitiesDialog({
                 activeOpacity={0.6}
                 style={{ opacity: index === 0 ? 0.3 : 1 }}
               >
-                <ArrowUp size={16} color="#4b5563" />
+                <ArrowUp size={16} color={colors.textTertiary} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => swap(index, 1)}
@@ -85,7 +89,7 @@ export function ReorderActivitiesDialog({
                 activeOpacity={0.6}
                 style={{ opacity: index === items.length - 1 ? 0.3 : 1 }}
               >
-                <ArrowDown size={16} color="#4b5563" />
+                <ArrowDown size={16} color={colors.textTertiary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -95,20 +99,22 @@ export function ReorderActivitiesDialog({
       <View className="flex-row gap-2">
         <TouchableOpacity
           onPress={onClose}
-          className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl items-center"
+          className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl items-center"
           activeOpacity={0.7}
         >
-          <Text className="text-sm font-medium text-gray-600">キャンセル</Text>
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            {t("cancel")}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}
-          className="flex-1 px-4 py-2.5 bg-gray-900 rounded-xl items-center"
+          className="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-gray-800 rounded-xl items-center"
           activeOpacity={0.7}
           style={{ opacity: saving ? 0.5 : 1 }}
         >
           <Text className="text-sm font-medium text-white">
-            {saving ? "保存中..." : "保存"}
+            {saving ? t("saving") : t("save")}
           </Text>
         </TouchableOpacity>
       </View>

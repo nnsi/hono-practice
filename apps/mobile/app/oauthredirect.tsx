@@ -61,7 +61,7 @@ export default function OAuthRedirect() {
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-white">
+    <View className="flex-1 items-center justify-center bg-white dark:bg-gray-800">
       <ActivityIndicator size="large" />
     </View>
   );

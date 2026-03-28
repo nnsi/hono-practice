@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Pause, Play, Trash2 } from "lucide-react";
@@ -14,6 +15,7 @@ type FreezePeriodManagerProps = {
 };
 
 export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
+  const { t } = useTranslation("goal");
   const today = dayjs().format("YYYY-MM-DD");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -85,7 +87,9 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
   return (
     <div className="px-4 py-3 border-t border-gray-100">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-gray-600">一時停止期間</span>
+        <span className="text-xs font-medium text-gray-600">
+          {t("freezePeriodLabel")}
+        </span>
         {activePeriod ? (
           <button
             type="button"
@@ -93,7 +97,7 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
           >
             <Play size={12} />
-            再開する
+            {t("resumeButton")}
           </button>
         ) : showForm ? null : (
           <div className="flex items-center gap-1.5">
@@ -103,14 +107,14 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
             >
               <Pause size={12} />
-              今日から
+              {t("freezeTodayButton")}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(true)}
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              日付指定
+              {t("freezeByDateButton")}
             </button>
           </div>
         )}
@@ -119,15 +123,19 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
       {showForm && !activePeriod && (
         <div className="mb-3 p-3 bg-blue-50 rounded-lg space-y-2">
           <div>
-            <label className="text-xs text-gray-600 block mb-1">開始日</label>
+            <label className="text-xs text-gray-600 block mb-1">
+              {t("startDateLabel")}
+            </label>
             <DatePickerField value={startDate} onChange={setStartDate} />
           </div>
           <div>
-            <label className="text-xs text-gray-600 block mb-1">終了日</label>
+            <label className="text-xs text-gray-600 block mb-1">
+              {t("endDateLabel")}
+            </label>
             <DatePickerField
               value={endDate}
               onChange={setEndDate}
-              placeholder="未定（手動で再開）"
+              placeholder={t("freezeEndDatePlaceholder")}
               allowClear
             />
           </div>
@@ -141,21 +149,21 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
               }}
               className="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {t("cancelButton")}
             </button>
             <button
               type="button"
               onClick={handleFreezeWithDates}
               className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
-              一時停止する
+              {t("freezeConfirmButton")}
             </button>
           </div>
         </div>
       )}
 
       {sorted.length === 0 && !showForm && (
-        <p className="text-xs text-gray-400">一時停止の履歴はありません</p>
+        <p className="text-xs text-gray-400">{t("freezeHistoryEmpty")}</p>
       )}
 
       {sorted.length > 0 && (
@@ -174,7 +182,9 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
                 >
                   {dayjs(fp.startDate).format("M/D")}
                   {" - "}
-                  {fp.endDate ? dayjs(fp.endDate).format("M/D") : "進行中"}
+                  {fp.endDate
+                    ? dayjs(fp.endDate).format("M/D")
+                    : t("freezeInProgress")}
                 </span>
                 {deletingId === fp.id ? (
                   <span className="flex items-center gap-1">
@@ -183,14 +193,14 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
                       onClick={() => handleDelete(fp.id)}
                       className="px-2 py-0.5 text-[11px] bg-red-500 text-white rounded hover:bg-red-600"
                     >
-                      削除
+                      {t("deleteButton")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeletingId(null)}
                       className="px-2 py-0.5 text-[11px] border border-gray-300 rounded hover:bg-gray-50"
                     >
-                      取消
+                      {t("freezeCancelButton")}
                     </button>
                   </span>
                 ) : (

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
+
 import type { DexieActivity } from "../../db/schema";
 import { EditGoalForm } from "./EditGoalForm";
 import { FreezePeriodManager } from "./FreezePeriodManager";
@@ -45,6 +47,7 @@ export function GoalCard({
   onDelete: () => Promise<void>;
   onRecordOpen?: () => void;
 }) {
+  const { t } = useTranslation("goal");
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const {
@@ -122,15 +125,22 @@ export function GoalCard({
           />
         </div>
         <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-          <span>{elapsedDays}日経過</span>
-          <span>全{totalDays}日</span>
+          <span>
+            {elapsedDays}
+            {t("elapsedDays")}
+          </span>
+          <span>
+            {t("totalDays")}
+            {totalDays}
+            {t("daysLabel")}
+          </span>
         </div>
       </div>
 
       {/* やらなかった日付 */}
       {showInactiveDatesEnabled && inactiveDates.length > 0 && (
         <div className="mt-1 px-3 py-1 text-xs text-gray-500">
-          <span className="font-medium">やらなかった日付: </span>
+          <span className="font-medium">{t("inactiveDatesPrefix")}</span>
           {inactiveDates.slice(0, 3).map((date, index) => (
             <span key={date}>
               {index > 0 && ", "}
@@ -141,7 +151,12 @@ export function GoalCard({
             </span>
           ))}
           {inactiveDates.length > 3 && (
-            <span> 他{inactiveDates.length - 3}日</span>
+            <span>
+              {" "}
+              {t("inactiveDatesMore")}
+              {inactiveDates.length - 3}
+              {t("daysLabel")}
+            </span>
           )}
         </div>
       )}

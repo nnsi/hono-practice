@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { CalendarGrid } from "./CalendarGrid";
 
 type CalendarPopoverProps = {
   selectedDate: string; // YYYY-MM-DD
@@ -14,8 +15,6 @@ type CalendarPopoverProps = {
   /** When provided, render via portal with fixed positioning relative to this element */
   triggerRef?: React.RefObject<HTMLElement | null>;
 };
-
-const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 export function CalendarPopover({
   selectedDate,
@@ -84,14 +83,11 @@ export function CalendarPopover({
   const startDay = startOfMonth.day(); // 0=日曜
   const daysInMonth = viewMonth.daysInMonth();
 
-  // 前月の日数（グリッド埋め用）
   const prevMonth = viewMonth.subtract(1, "month");
   const daysInPrevMonth = prevMonth.daysInMonth();
 
-  // グリッド生成
   const cells: { date: string; day: number; currentMonth: boolean }[] = [];
 
-  // 前月末の日
   for (let i = startDay - 1; i >= 0; i--) {
     const d = daysInPrevMonth - i;
     cells.push({
@@ -100,7 +96,6 @@ export function CalendarPopover({
       currentMonth: false,
     });
   }
-  // 当月
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push({
       date: viewMonth.date(d).format("YYYY-MM-DD"),
@@ -108,7 +103,6 @@ export function CalendarPopover({
       currentMonth: true,
     });
   }
-  // 次月（6行=42セルまで埋める）
   const remaining = 42 - cells.length;
   const nextMonth = viewMonth.add(1, "month");
   for (let d = 1; d <= remaining; d++) {
@@ -130,82 +124,15 @@ export function CalendarPopover({
       }
       style={triggerRef ? portalStyle : undefined}
     >
-      <div className="bg-white rounded-2xl shadow-lifted border border-gray-200/50 p-3 animate-scale-in origin-top">
-        {/* 月ナビ */}
-        <div className="flex items-center justify-between mb-2">
-          <button
-            type="button"
-            onClick={() => setViewMonth(viewMonth.subtract(1, "month"))}
-            className="p-1 hover:bg-gray-100 rounded-full"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="text-sm font-semibold">
-            {viewMonth.format("YYYY年M月")}
-          </span>
-          <button
-            type="button"
-            onClick={() => setViewMonth(viewMonth.add(1, "month"))}
-            className="p-1 hover:bg-gray-100 rounded-full"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        {/* 曜日ヘッダー */}
-        <div className="grid grid-cols-7 mb-1">
-          {WEEKDAYS.map((w) => (
-            <div
-              key={w}
-              className="text-center text-[10px] font-medium text-gray-400 py-1"
-            >
-              {w}
-            </div>
-          ))}
-        </div>
-
-        {/* 日付グリッド */}
-        <div className="grid grid-cols-7">
-          {cells.map((cell) => {
-            const isToday = cell.date === today;
-            const isSelected = cell.date === selectedDate;
-
-            return (
-              <button
-                key={cell.date}
-                type="button"
-                onClick={() => {
-                  onDateSelect(cell.date);
-                  onClose();
-                }}
-                className={`
-                w-9 h-9 flex items-center justify-center text-xs rounded-full mx-auto transition-colors
-                ${!cell.currentMonth ? "text-gray-300" : "text-gray-700"}
-                ${isSelected ? "bg-gray-900 text-white font-bold" : ""}
-                ${isToday && !isSelected ? "bg-amber-100 text-amber-700 font-bold" : ""}
-                ${!isSelected && cell.currentMonth ? "hover:bg-gray-100" : ""}
-              `}
-              >
-                {cell.day}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 今日ボタン */}
-        {selectedDate !== today && (
-          <button
-            type="button"
-            onClick={() => {
-              onDateSelect(today);
-              onClose();
-            }}
-            className="w-full mt-2 py-1.5 text-xs text-amber-600 font-medium hover:bg-amber-50 rounded-xl transition-colors"
-          >
-            今日に移動
-          </button>
-        )}
-      </div>
+      <CalendarGrid
+        viewMonth={viewMonth}
+        setViewMonth={setViewMonth}
+        cells={cells}
+        selectedDate={selectedDate}
+        today={today}
+        onDateSelect={onDateSelect}
+        onClose={onClose}
+      />
     </div>
   );
 

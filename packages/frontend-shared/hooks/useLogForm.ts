@@ -91,6 +91,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
     const handleManualSubmit = async () => {
       const parsed = quantity !== "" ? Number(quantity) : null;
       if (parsed !== null && !Number.isFinite(parsed)) return;
+      if (parsed !== null && (parsed < 0 || parsed > 999999)) return;
       setIsSubmitting(true);
       await saveLog({ quantity: parsed, memo, selectedKindId });
       setIsSubmitting(false);

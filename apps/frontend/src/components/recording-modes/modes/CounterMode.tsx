@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react";
 
 import { KindSelector } from "../parts/KindSelector";
@@ -7,6 +8,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useCounterMode } from "./useCounterMode";
 
 export function CounterMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useCounterMode(props);
 
   return (
@@ -22,7 +24,7 @@ export function CounterMode(props: RecordingModeProps) {
               : "text-gray-500"
           }`}
         >
-          手動入力
+          {t("manualEntry")}
         </button>
         <button
           type="button"
@@ -33,7 +35,7 @@ export function CounterMode(props: RecordingModeProps) {
               : "text-gray-500"
           }`}
         >
-          カウンタ
+          {t("counter")}
         </button>
       </div>
 
@@ -47,11 +49,12 @@ export function CounterMode(props: RecordingModeProps) {
 }
 
 function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <div className="space-y-4">
       {vm.todayTotal > 0 && (
         <div className="text-center text-sm text-gray-500">
-          今日の合計:{" "}
+          {t("todayTotal")}{" "}
           <span className="font-semibold text-black">
             {vm.todayTotal} {vm.quantityUnit}
           </span>
@@ -85,6 +88,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
 }
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <form
       onSubmit={(e) => {
@@ -102,7 +106,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
       )}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1">
-          数量 {vm.quantityUnit && `(${vm.quantityUnit})`}
+          {t("quantity")} {vm.quantityUnit && `(${vm.quantityUnit})`}
         </label>
         <input
           type="number"

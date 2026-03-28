@@ -3,12 +3,12 @@ import { z } from "zod";
 export const loginRequestSchema = z.object({
   login_id: z
     .string()
-    .min(1, "ログインIDは必須です")
-    .max(100, "ログインIDが長すぎます"),
+    .min(1, "validation:loginIdRequired")
+    .max(100, "validation:loginIdTooLong"),
   password: z
     .string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(100, "パスワードが長すぎます"),
+    .min(8, "validation:passwordMin8")
+    .max(100, "validation:passwordTooLong"),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;

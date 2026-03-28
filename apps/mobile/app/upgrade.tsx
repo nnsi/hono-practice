@@ -57,7 +57,10 @@ export default function UpgradeScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <View
+      className="flex-1 bg-white dark:bg-gray-800"
+      style={{ paddingTop: insets.top }}
+    >
       <UpgradeHeader onBack={() => router.back()} />
       <ScrollView
         className="flex-1"

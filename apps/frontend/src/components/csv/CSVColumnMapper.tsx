@@ -2,17 +2,10 @@ import { useMemo } from "react";
 
 import type { ColumnMapping } from "@packages/domain/csv/csvParser";
 import { autoDetectMapping } from "@packages/domain/csv/csvParser";
+import { useTranslation } from "@packages/i18n";
 import { ArrowRight, Info } from "lucide-react";
 
 import { useActivities } from "../../hooks/useActivities";
-
-const FIELD_OPTIONS = [
-  { value: "date", label: "日付", required: true },
-  { value: "activity", label: "アクティビティ", required: false },
-  { value: "kind", label: "種別", required: false },
-  { value: "quantity", label: "数量", required: true },
-  { value: "memo", label: "メモ", required: false },
-] as const;
 
 type Props = {
   csvHeaders: string[];
@@ -29,8 +22,17 @@ export function CSVColumnMapper({
   onMappingChange,
   onConfirm,
 }: Props) {
+  const { t } = useTranslation("csv");
   const { activities } = useActivities();
   const sampleRows = csvSampleData.slice(0, 3);
+
+  const FIELD_OPTIONS = [
+    { value: "date", label: t("fieldDate"), required: true },
+    { value: "activity", label: t("fieldActivity"), required: false },
+    { value: "kind", label: t("fieldKind"), required: false },
+    { value: "quantity", label: t("fieldQuantity"), required: true },
+    { value: "memo", label: t("fieldMemo"), required: false },
+  ] as const;
 
   const isValid = useMemo(() => {
     return !!(
@@ -60,19 +62,17 @@ export function CSVColumnMapper({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-base font-semibold">カラムマッピング</h3>
+        <h3 className="text-base font-semibold">{t("columnMapping")}</h3>
         <button
           type="button"
           onClick={() => onMappingChange(autoDetectMapping(csvHeaders))}
           className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
         >
-          自動検出
+          {t("autoDetect")}
         </button>
       </div>
 
-      <p className="text-sm text-gray-600">
-        CSVのカラムをアクティビティログのフィールドにマッピングしてください
-      </p>
+      <p className="text-sm text-gray-600">{t("mappingInstructions")}</p>
 
       {/* Fixed activity selector */}
       {!mapping.activity && (
@@ -80,11 +80,11 @@ export function CSVColumnMapper({
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">
-              固定アクティビティを使用
+              {t("fixedActivityTitle")}
             </span>
           </div>
           <p className="text-sm text-blue-700">
-            CSVにアクティビティ列がない場合、すべての行に同じアクティビティを適用できます
+            {t("fixedActivityDescription")}
           </p>
           <select
             value={mapping.fixedActivityId || "_none"}
@@ -97,7 +97,7 @@ export function CSVColumnMapper({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           >
-            <option value="_none">使用しない</option>
+            <option value="_none">{t("useFixed")}</option>
             {activities.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.emoji} {a.name}
@@ -111,7 +111,7 @@ export function CSVColumnMapper({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* CSV columns */}
         <div>
-          <p className="text-sm font-medium mb-2">CSVカラム</p>
+          <p className="text-sm font-medium mb-2">{t("csvColumns")}</p>
           <div className="space-y-2">
             {csvHeaders.map((header) => {
               const mappedField = getMappedField(header);
@@ -131,11 +131,11 @@ export function CSVColumnMapper({
                     }
                     className="w-32 px-2 py-1 border border-gray-300 rounded text-sm"
                   >
-                    <option value="_none">未選択</option>
+                    <option value="_none">{t("fieldUnselected")}</option>
                     {FIELD_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
-                        {opt.required ? " *" : ""}
+                        {opt.required ? ` ${t("fieldRequired")}` : ""}
                       </option>
                     ))}
                   </select>
@@ -147,7 +147,7 @@ export function CSVColumnMapper({
 
         {/* Mapping result */}
         <div>
-          <p className="text-sm font-medium mb-2">マッピング結果</p>
+          <p className="text-sm font-medium mb-2">{t("mappingResult")}</p>
           <div className="space-y-2">
             {FIELD_OPTIONS.map((field) => {
               const csvColumn = mapping[field.value as keyof ColumnMapping];
@@ -164,16 +164,23 @@ export function CSVColumnMapper({
                 >
                   <span className="text-sm">
                     {field.label}
-                    {isRequired && <span className="text-red-500"> *</span>}
+                    {isRequired && (
+                      <span className="text-red-500">
+                        {" "}
+                        {t("fieldRequired")}
+                      </span>
+                    )}
                     {field.value === "activity" && mapping.fixedActivityId && (
                       <span className="text-gray-500 text-xs ml-1">
-                        （固定使用中）
+                        {t("fieldUsingFixed")}
                       </span>
                     )}
                   </span>
                   <ArrowRight className="h-4 w-4 text-gray-400 mx-2" />
                   <span className="font-mono text-sm">
-                    {csvColumn || <span className="text-gray-400">未設定</span>}
+                    {csvColumn || (
+                      <span className="text-gray-400">{t("fieldNotSet")}</span>
+                    )}
                   </span>
                 </div>
               );
@@ -185,9 +192,7 @@ export function CSVColumnMapper({
       {/* Sample data preview */}
       {sampleRows.length > 0 && (
         <div>
-          <p className="text-sm font-medium mb-2">
-            サンプルデータ（最初の3行）
-          </p>
+          <p className="text-sm font-medium mb-2">{t("sampleData")}</p>
           <div className="border rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -244,7 +249,7 @@ export function CSVColumnMapper({
               : "bg-gray-300 cursor-not-allowed"
           }`}
         >
-          次へ
+          {t("next")}
         </button>
       </div>
     </div>

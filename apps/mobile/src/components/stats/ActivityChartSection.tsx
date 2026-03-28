@@ -8,6 +8,7 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Text, View } from "react-native";
 
@@ -30,6 +31,7 @@ export function ActivityChartSection({
   isSingleUnnamedKind,
   goalLines,
 }: ActivityChartSectionProps) {
+  const { t } = useTranslation("stats");
   if (stat.showCombinedStats) {
     return (
       <ActivityChart
@@ -69,7 +71,7 @@ export function ActivityChartSection({
             (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
           );
           return {
-            date: `${dayjs(date).date()}日`,
+            date: `${dayjs(date).date()}${t("dateLabel")}`,
             [kind.name]: roundQuantity(
               matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
             ),
@@ -77,11 +79,12 @@ export function ActivityChartSection({
         });
         return (
           <View key={kind.id || kind.name}>
-            <Text className="font-semibold text-sm mb-1 px-1 text-gray-900">
+            <Text className="font-semibold text-sm mb-1 px-1 text-gray-900 dark:text-gray-100">
               {kind.name}
-              <Text className="text-gray-400 font-normal">
+              <Text className="text-gray-400 dark:text-gray-500 font-normal">
                 {" "}
-                (合計: {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
+                ({t("kindTotalLabel")}{" "}
+                {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
               </Text>
             </Text>
             <ActivityChart

@@ -2,10 +2,10 @@ import { z } from "zod";
 
 export const UpdateActivityRequestSchema = z.object({
   activity: z.object({
-    name: z.string().max(100),
+    name: z.string().max(20, "validation:max20Chars"),
     description: z.string().max(500).optional(),
-    quantityUnit: z.string().max(50),
-    emoji: z.string().min(1, "絵文字は必須です").max(20),
+    quantityUnit: z.string().max(10, "validation:max10Chars"),
+    emoji: z.string().min(1, "validation:emojiRequired").max(20),
     iconType: z.enum(["emoji", "upload", "generate"]).optional(),
     recordingMode: z.string().optional(),
     recordingModeConfig: z.string().nullable().optional(),
@@ -14,7 +14,7 @@ export const UpdateActivityRequestSchema = z.object({
   kinds: z.array(
     z.object({
       id: z.string().max(100).optional(),
-      name: z.string().max(100),
+      name: z.string().max(10, "validation:max10Chars"),
       color: z.string().max(20).optional(),
     }),
   ),

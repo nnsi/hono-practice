@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Trash2, X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
@@ -45,23 +46,24 @@ export function EditGoalForm({
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const { t } = useTranslation("goal");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     const parsedTarget = Number(target);
     if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
-      setErrorMsg("日次目標は0より大きい数値を入力してください");
+      setErrorMsg(t("errorInvalidTarget"));
       return;
     }
     if (endDate && endDate < startDate) {
-      setErrorMsg("終了日は開始日より後の日付にしてください");
+      setErrorMsg(t("errorInvalidEndDate"));
       return;
     }
     const parsedDebtCap = debtCapEnabled ? Number(debtCapValue) : null;
     if (debtCapEnabled) {
       if (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0) {
-        setErrorMsg("負債上限は0より大きい数値を入力してください");
+        setErrorMsg(t("errorInvalidDebtCap"));
         return;
       }
     }
@@ -100,7 +102,7 @@ export function EditGoalForm({
           <div className="flex items-center gap-2">
             {getActivityIcon(activity)}
             <span className="font-semibold text-sm">
-              {activity?.name ?? "不明なアクティビティ"}
+              {activity?.name ?? t("unknownActivity")}
             </span>
           </div>
           <button
@@ -115,7 +117,8 @@ export function EditGoalForm({
         {/* 日次目標 */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            日次目標 {activity?.quantityUnit && `(${activity.quantityUnit})`}
+            {t("dailyTargetLabel")}{" "}
+            {activity?.quantityUnit && `(${activity.quantityUnit})`}
           </label>
           <input
             type="number"
@@ -132,18 +135,18 @@ export function EditGoalForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              開始日
+              {t("startDateLabel")}
             </label>
             <DatePickerField value={startDate} onChange={setStartDate} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              終了日
+              {t("endDateLabel")}
             </label>
             <DatePickerField
               value={endDate}
               onChange={setEndDate}
-              placeholder="未設定"
+              placeholder={t("endDatePlaceholder")}
               allowClear
             />
           </div>
@@ -172,7 +175,7 @@ export function EditGoalForm({
               }}
               className="rounded"
             />
-            負債上限を設定
+            {t("debtCapLabel")}
           </label>
           {debtCapEnabled && (
             <div className="flex items-center gap-1 mt-1">
@@ -201,7 +204,7 @@ export function EditGoalForm({
             disabled={saving}
             className="flex-1 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            保存
+            {t("saveButton")}
           </button>
           {!showDeactivateConfirm ? (
             <button
@@ -210,7 +213,7 @@ export function EditGoalForm({
               disabled={saving}
               className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
             >
-              終了
+              {t("deactivateButton")}
             </button>
           ) : (
             <button
@@ -219,7 +222,7 @@ export function EditGoalForm({
               disabled={saving}
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
             >
-              本当に終了
+              {t("deactivateConfirmButton")}
             </button>
           )}
           {!showDeleteConfirm ? (
@@ -238,7 +241,7 @@ export function EditGoalForm({
               disabled={saving}
               className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 disabled:opacity-50 transition-colors"
             >
-              削除
+              {t("deleteButton")}
             </button>
           )}
         </div>

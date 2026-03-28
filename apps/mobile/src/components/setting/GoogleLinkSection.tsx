@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as Google from "expo-auth-session/providers/google";
 import { Link } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
@@ -96,34 +97,37 @@ function useGoogleAccount() {
 }
 
 export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const google = useGoogleAccount();
 
   return (
     <Section icon={Link} label="Google連携" shadow={shadow}>
       {google.isLoading ? (
         <View className="px-4 py-3">
-          <Text className="text-sm text-gray-500">読み込み中...</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            読み込み中...
+          </Text>
         </View>
       ) : (
         <View className="px-4 py-3 gap-2">
           {google.isGoogleLinked ? (
             <View className="flex-row items-center gap-2">
-              <Text className="text-sm text-green-700 font-medium">
-                Google連携済み
+              <Text className="text-sm text-green-700 dark:text-green-400 font-medium">
+                {t("googleLinked")}
               </Text>
               {google.googleEmail && (
-                <Text className="text-xs text-gray-500">
+                <Text className="text-xs text-gray-500 dark:text-gray-400">
                   {google.googleEmail}
                 </Text>
               )}
             </View>
           ) : (
-            <Text className="text-xs text-gray-500">
-              Googleアカウントを連携すると、Googleログインでもこのアカウントにアクセスできます。
+            <Text className="text-xs text-gray-500 dark:text-gray-400">
+              {t("googleLinkDescription")}
             </Text>
           )}
           <TouchableOpacity
-            className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 ${
+            className={`w-full flex-row items-center justify-center rounded-lg border bg-white dark:bg-gray-800 px-4 ${
               google.isLinking || !google.googleRequest ? "opacity-50" : ""
             }`}
             style={{ minHeight: 48, borderColor: "#747775" }}
@@ -136,7 +140,7 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
               style={{ color: "#1F1F1F" }}
             >
               {google.isLinking
-                ? "連携中..."
+                ? t("linking")
                 : google.isGoogleLinked
                   ? "Googleアカウントを変更"
                   : "Googleアカウントを連携"}
@@ -149,7 +153,7 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
           <Divider />
           <View className="px-4 py-2">
             <Text
-              className={`text-xs ${google.message.type === "success" ? "text-green-600" : "text-red-500"}`}
+              className={`text-xs ${google.message.type === "success" ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}
             >
               {google.message.text}
             </Text>

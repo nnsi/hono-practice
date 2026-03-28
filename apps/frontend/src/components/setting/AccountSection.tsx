@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { AlertTriangle, Check, UserCircle } from "lucide-react";
 
 import { db } from "../../db/schema";
@@ -12,6 +13,7 @@ import { clearAppSettings } from "./useAppSettings";
 export function AccountSection() {
   const google = useGoogleAccount();
   const apple = useAppleAccount();
+  const { t } = useTranslation("settings");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDeleteAccount = async () => {
@@ -30,7 +32,7 @@ export function AccountSection() {
     <section>
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
         <UserCircle size={14} />
-        アカウント設定
+        {t("account")}
       </h2>
       <div className="rounded-xl border border-gray-200 p-4 space-y-3">
         {google.isLoading ? (
@@ -45,7 +47,7 @@ export function AccountSection() {
                 <Check size={16} className="text-green-600 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-green-700">
-                    Google連携済み
+                    {t("googleLinked")}
                   </p>
                   {google.googleEmail && (
                     <p className="text-xs text-gray-500 truncate">
@@ -58,7 +60,7 @@ export function AccountSection() {
             <div className="space-y-2">
               {!google.isGoogleLinked && (
                 <p className="text-sm text-gray-600">
-                  Googleアカウントを連携すると、Googleでログインできるようになります。
+                  {t("googleLinkDescription")}
                 </p>
               )}
               <GoogleSignInButton
@@ -66,7 +68,7 @@ export function AccountSection() {
                 onError={() => {}}
               />
               {google.isLinking && (
-                <p className="text-xs text-gray-500">連携中...</p>
+                <p className="text-xs text-gray-500">{t("linking")}</p>
               )}
             </div>
           </>
@@ -88,7 +90,7 @@ export function AccountSection() {
                   <Check size={16} className="text-green-600 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-green-700">
-                      Apple連携済み
+                      {t("appleLinked")}
                     </p>
                     {apple.appleEmail && (
                       <p className="text-xs text-gray-500 truncate">
@@ -100,8 +102,7 @@ export function AccountSection() {
               )}
               {!apple.isAppleLinked && (
                 <p className="text-sm text-gray-600">
-                  Appleアカウントを連携すると、Apple
-                  IDでログインできるようになります。
+                  {t("appleLinkDescription")}
                 </p>
               )}
               <AppleSignInButton
@@ -109,7 +110,7 @@ export function AccountSection() {
                 onError={() => {}}
               />
               {apple.isLinking && (
-                <p className="text-xs text-gray-500">連携中...</p>
+                <p className="text-xs text-gray-500">{t("linking")}</p>
               )}
               {apple.message && (
                 <p
@@ -129,12 +130,12 @@ export function AccountSection() {
               className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
             >
               <AlertTriangle size={16} />
-              アカウントを削除
+              {t("deleteAccount")}
             </button>
           ) : (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
               <p className="text-sm text-red-700 font-medium">
-                アカウントを削除すると、ローカルに保存されたデータが全て削除されます。この操作は取り消せません。
+                {t("deleteAccountConfirm")}
               </p>
               <div className="flex gap-2">
                 <button
@@ -142,14 +143,14 @@ export function AccountSection() {
                   onClick={handleDeleteAccount}
                   className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  削除する
+                  {t("deleteAccountButton")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  キャンセル
+                  {t("cancel")}
                 </button>
               </div>
             </div>

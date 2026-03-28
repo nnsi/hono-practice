@@ -124,16 +124,18 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
 
         {/* Error */}
         {error && (
-          <View className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <Text className="text-sm text-red-700">{error}</Text>
+          <View className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <Text className="text-sm text-red-700 dark:text-red-400">
+              {error}
+            </Text>
           </View>
         )}
 
         {/* Success */}
         {resultCount !== null && (
-          <View className="p-3 bg-green-50 border border-green-200 rounded-lg flex-row items-center">
+          <View className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex-row items-center">
             <CheckCircle size={16} color="#16a34a" />
-            <Text className="text-sm text-green-700 ml-2">
+            <Text className="text-sm text-green-700 dark:text-green-400 ml-2">
               {resultCount}件の活動記録をエクスポートしました
             </Text>
           </View>
@@ -152,7 +154,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           </Text>
         </TouchableOpacity>
 
-        <Text className="text-xs text-gray-400 text-center">
+        <Text className="text-xs text-gray-400 dark:text-gray-500 text-center">
           形式: date, activity, kind, quantity, memo（CSVインポート互換）
         </Text>
       </View>

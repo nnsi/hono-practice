@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Plus } from "lucide-react-native";
 import {
@@ -39,31 +40,34 @@ export function GoalsPage() {
     handleToggleExpand,
   } = useGoalsPage();
 
+  const { t } = useTranslation("goal");
   const iconBlobMap = useIconBlobMap();
 
   const insets = useSafeAreaInsets();
 
   if (!dataReady) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-800">
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white dark:bg-gray-800">
       {/* Tabs */}
-      <View className="flex-row items-center px-1 h-12 border-b border-gray-100">
+      <View className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800">
         <TouchableOpacity
           onPress={() => setActiveTab("active")}
           className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "active" ? "bg-gray-100" : ""
+            activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
           }`}
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "active" ? "text-gray-900" : "text-gray-400"
+              activeTab === "active"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
             アクティブ
@@ -72,15 +76,17 @@ export function GoalsPage() {
         <TouchableOpacity
           onPress={() => setActiveTab("ended")}
           className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "ended" ? "bg-gray-100" : ""
+            activeTab === "ended" ? "bg-gray-100 dark:bg-gray-800" : ""
           }`}
         >
           <Text
             className={`text-sm font-medium ${
-              activeTab === "ended" ? "text-gray-900" : "text-gray-400"
+              activeTab === "ended"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500"
             }`}
           >
-            終了済み
+            {t("tabEnded")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -99,7 +105,7 @@ export function GoalsPage() {
             {/* Empty state */}
             {currentGoals.length === 0 && (
               <View className="items-center py-8">
-                <Text className="text-sm text-gray-400">
+                <Text className="text-sm text-gray-400 dark:text-gray-500">
                   アクティブな目標がありません
                 </Text>
               </View>
@@ -136,12 +142,14 @@ export function GoalsPage() {
 
             {/* Add new goal button */}
             <TouchableOpacity
-              className="w-full h-20 rounded-xl border-2 border-dashed border-gray-300 bg-white items-center justify-center flex-row gap-2 mt-2"
+              className="w-full h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 items-center justify-center flex-row gap-2 mt-2"
               onPress={() => setCreateDialogOpen(true)}
               activeOpacity={0.7}
             >
               <Plus size={20} color="#9ca3af" />
-              <Text className="text-sm text-gray-500">新規目標を追加</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400">
+                新規目標を追加
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -150,8 +158,8 @@ export function GoalsPage() {
           <View>
             {pastGoals.length === 0 && (
               <View className="items-center py-8">
-                <Text className="text-sm text-gray-400">
-                  終了済みの目標はありません
+                <Text className="text-sm text-gray-400 dark:text-gray-500">
+                  {t("noEndedGoals")}
                 </Text>
               </View>
             )}

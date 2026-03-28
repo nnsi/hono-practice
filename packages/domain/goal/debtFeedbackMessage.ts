@@ -1,5 +1,8 @@
 import type { DebtFeedbackResult } from "./goalDebtFeedback";
 
+// biome-ignore lint: i18next TFunction has complex overloads; use loose signature for compatibility
+type TFunc = (...args: any[]) => string;
+
 function fmt(n: number): number {
   return Math.round(n * 10) / 10;
 }
@@ -7,45 +10,53 @@ function fmt(n: number): number {
 function buildMessage(
   result: DebtFeedbackResult,
   praise: boolean,
+  t: TFunc,
 ): string | null {
   const lines: string[] = [];
 
   if (result.targetAchievedToday && result.debtCleared) {
     lines.push(
-      praise ? "すごい！目標達成 & 負債完済！🎉" : "目標達成 & 負債完済！",
+      t(
+        praise
+          ? "feedback:targetAchievedDebtClearedPraise"
+          : "feedback:targetAchievedDebtCleared",
+      ),
     );
   } else if (result.targetAchievedToday) {
-    lines.push(praise ? "やったね！今日の目標達成！✨" : "今日の目標達成！");
+    lines.push(
+      t(praise ? "feedback:targetAchievedPraise" : "feedback:targetAchieved"),
+    );
   } else if (result.debtCleared) {
     lines.push(
-      praise
-        ? `お見事！負債完済！💪 (${fmt(result.balanceBefore)} → 0)`
-        : `負債完済！ (${fmt(result.balanceBefore)} → 0)`,
+      t(praise ? "feedback:debtClearedPraise" : "feedback:debtCleared", {
+        before: fmt(result.balanceBefore),
+      }),
     );
   } else if (result.debtReduced) {
     lines.push(
-      praise
-        ? `いい調子！負債軽減 📈 (${fmt(result.balanceBefore)} → ${fmt(result.balanceAfter)})`
-        : `負債軽減: ${fmt(result.balanceBefore)} → ${fmt(result.balanceAfter)}`,
+      t(praise ? "feedback:debtReducedPraise" : "feedback:debtReduced", {
+        before: fmt(result.balanceBefore),
+        after: fmt(result.balanceAfter),
+      }),
     );
   } else if (result.savedAmount > 0 && !result.targetAchievedToday) {
     lines.push(
-      praise
-        ? `えらい！${fmt(result.savedAmount)}回分の負債を回避 👏`
-        : `部分達成: ${fmt(result.savedAmount)}回分の負債を回避`,
+      t(praise ? "feedback:debtAvoidedPraise" : "feedback:debtAvoided", {
+        amount: fmt(result.savedAmount),
+      }),
     );
   }
 
   if (result.debtCapSaved > 0) {
     lines.push(
-      praise
-        ? `(上限により${fmt(result.debtCapSaved)}回分免除 🛡️)`
-        : `(上限により${fmt(result.debtCapSaved)}回分免除)`,
+      t(praise ? "feedback:debtCapSavedPraise" : "feedback:debtCapSaved", {
+        amount: fmt(result.debtCapSaved),
+      }),
     );
   }
 
   if (praise && result.balanceAfter > 0) {
-    lines.push(`貯金 +${result.balanceAfter}！余裕がある証拠 🏦`);
+    lines.push(t("feedback:savingsBonus", { amount: result.balanceAfter }));
   }
 
   return lines.length > 0 ? lines.join("\n") : null;
@@ -54,11 +65,12 @@ function buildMessage(
 export function buildDebtFeedbackMessage(
   results: DebtFeedbackResult[],
   praiseMode: boolean,
+  t: TFunc,
 ): string | null {
   const lines: string[] = [];
 
   for (const result of results) {
-    const msg = buildMessage(result, praiseMode);
+    const msg = buildMessage(result, praiseMode, t);
     if (!msg) continue;
     const prefix = result.goalLabel ? `${result.goalLabel}: ` : "";
     lines.push(`${prefix}${msg}`);

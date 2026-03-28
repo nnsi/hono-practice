@@ -1,0 +1,20 @@
+{
+  "daily.selectActivity": "Select Activity",
+  "daily.noActivities": "No activities",
+  "daily.noRecords": "No records",
+  "daily.activitySection": "Activities",
+  "daily.tasksSection": "Tasks",
+  "daily.addButton": "Add",
+  "daily.noTasks": "No tasks",
+  "daily.previousDay": "Previous day",
+  "daily.nextDay": "Next day",
+  "log.unknownActivity": "Unknown",
+  "log.editTitle": "Edit Activity Log",
+  "log.kindLabel": "Kind",
+  "log.quantityLabel": "Quantity",
+  "log.memoLabel": "Memo",
+  "log.memoPlaceholder": "Enter memo...",
+  "log.saveButton": "Save",
+  "log.deleteButton": "Delete",
+  "log.deleteConfirm": "Confirm delete"
+}

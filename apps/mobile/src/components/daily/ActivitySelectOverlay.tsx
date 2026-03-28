@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react-native";
 import {
   Pressable,
@@ -38,6 +39,7 @@ export function ActivitySelectOverlay({
   onSelect,
   onClose,
 }: ActivitySelectOverlayProps) {
+  const { t } = useTranslation("activity");
   return (
     <OverlayPortal>
       <View className="flex-1">
@@ -53,7 +55,7 @@ export function ActivitySelectOverlay({
           pointerEvents="box-none"
         >
           <View
-            className="bg-white rounded-2xl w-full max-h-[85%]"
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-h-[85%]"
             style={{
               maxWidth: 448,
               shadowColor: "#1c1917",
@@ -63,9 +65,9 @@ export function ActivitySelectOverlay({
               elevation: 24,
             }}
           >
-            <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
-              <Text className="text-lg font-bold text-gray-900">
-                アクティビティを選択
+            <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+              <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                {t("daily.selectActivity")}
               </Text>
               <TouchableOpacity onPress={onClose} className="p-1.5 rounded-lg">
                 <X size={20} color="#78716c" />
@@ -74,8 +76,8 @@ export function ActivitySelectOverlay({
             <ScrollView className="px-5 py-4" style={{ flexShrink: 1 }}>
               {activities.length === 0 ? (
                 <View className="items-center py-8">
-                  <Text className="text-gray-400 text-sm">
-                    アクティビティがありません
+                  <Text className="text-gray-400 dark:text-gray-500 text-sm">
+                    {t("daily.noActivities")}
                   </Text>
                 </View>
               ) : (
@@ -84,7 +86,7 @@ export function ActivitySelectOverlay({
                     <TouchableOpacity
                       key={activity.id}
                       onPress={() => onSelect(activity)}
-                      className="flex-row items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white"
+                      className="flex-row items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                       activeOpacity={0.7}
                     >
                       <View className="w-10 h-10 items-center justify-center shrink-0">
@@ -98,11 +100,11 @@ export function ActivitySelectOverlay({
                         />
                       </View>
                       <View className="flex-1 min-w-0">
-                        <Text className="text-base font-medium text-gray-800">
+                        <Text className="text-base font-medium text-gray-800 dark:text-gray-200">
                           {activity.name}
                         </Text>
                         {activity.quantityUnit ? (
-                          <Text className="text-xs text-gray-400">
+                          <Text className="text-xs text-gray-400 dark:text-gray-500">
                             {activity.quantityUnit}
                           </Text>
                         ) : null}

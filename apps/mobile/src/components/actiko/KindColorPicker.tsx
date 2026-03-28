@@ -18,12 +18,12 @@ export function KindColorPicker({
     <View>
       <TouchableOpacity
         onPress={() => setOpen((v) => !v)}
-        className="w-8 h-8 rounded border border-gray-300"
+        className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600"
         style={{ backgroundColor: color }}
       />
       {open && (
         <View
-          className="absolute bottom-10 right-0 z-10 flex-row flex-wrap bg-white rounded-lg p-2 border border-gray-200 shadow-sm"
+          className="absolute bottom-10 right-0 z-10 flex-row flex-wrap bg-white dark:bg-gray-800 rounded-lg p-2 border border-gray-200 dark:border-gray-700 shadow-sm"
           style={{ width: 180 }}
         >
           {COLOR_PALETTE.map((c) => (

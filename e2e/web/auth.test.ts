@@ -29,7 +29,7 @@ describe("auth", () => {
     const page = getPage();
     await login(page, "e2e@example.com", "password123");
 
-    await page.click('button[aria-label="メニュー"]');
+    await page.click('button[aria-label="Menu"]');
     await page.click('button:has-text("ログアウト")');
 
     await page.waitForSelector("#loginId", { timeout: 15000 });

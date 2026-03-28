@@ -1,4 +1,5 @@
 import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
+import { useTranslation } from "@packages/i18n";
 import { Loader2 } from "lucide-react";
 
 import type {
@@ -20,6 +21,7 @@ export function LogCard({
   kind: DexieActivityKind | null;
   onClick: () => void;
 }) {
+  const { t } = useTranslation("activity");
   const isPending = log._syncStatus === "pending";
 
   return (
@@ -53,7 +55,7 @@ export function LogCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="font-semibold text-base truncate">
-            {activity?.name ?? "不明"}
+            {activity?.name ?? t("log.unknownActivity")}
           </span>
           {kind && (
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0">

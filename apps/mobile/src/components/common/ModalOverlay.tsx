@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
+
 type ModalOverlayProps = {
   visible: boolean;
   onClose: () => void;
@@ -26,6 +28,8 @@ export function ModalOverlay({
   children,
   footer,
 }: ModalOverlayProps) {
+  const { colors } = useThemeContext();
+
   return (
     <Modal
       visible={visible}
@@ -41,13 +45,13 @@ export function ModalOverlay({
           android: "height",
           default: undefined,
         })}
-        style={{ backgroundColor: "rgba(28,25,23,0.35)" }}
+        style={{ backgroundColor: colors.modalOverlay }}
       >
         <View className="flex-1">
           <Pressable
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(28,25,23,0.35)" },
+              { backgroundColor: colors.modalOverlay },
             ]}
             onPress={onClose}
           />
@@ -56,19 +60,19 @@ export function ModalOverlay({
             pointerEvents="box-none"
           >
             <View
-              className="bg-white rounded-2xl w-full max-h-[85%]"
+              className="bg-white dark:bg-gray-800 rounded-2xl w-full max-h-[85%]"
               style={{
                 maxWidth: 448,
-                shadowColor: "#1c1917",
+                shadowColor: colors.shadowColor,
                 shadowOffset: { width: 0, height: 16 },
                 shadowOpacity: 0.16,
                 shadowRadius: 48,
                 elevation: 24,
               }}
             >
-              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
+              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                 {typeof title === "string" ? (
-                  <Text className="text-lg font-bold text-gray-900">
+                  <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {title}
                   </Text>
                 ) : (
@@ -81,7 +85,7 @@ export function ModalOverlay({
                   className="p-1.5 rounded-lg"
                   activeOpacity={0.7}
                 >
-                  <X size={20} color="#78716c" />
+                  <X size={20} color={colors.textTertiary} />
                 </TouchableOpacity>
               </View>
               <ScrollView
@@ -94,7 +98,7 @@ export function ModalOverlay({
                 {children}
               </ScrollView>
               {footer && (
-                <View className="px-5 py-4 border-t border-gray-200">
+                <View className="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
                   {footer}
                 </View>
               )}

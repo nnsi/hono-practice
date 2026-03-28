@@ -1,6 +1,7 @@
+import { useTranslation } from "@packages/i18n";
+
 export { buildDayTargets } from "@packages/domain/goal/dayTargets";
 
-const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 const DAY_KEYS = ["1", "2", "3", "4", "5", "6", "7"] as const;
 
 export function DayTargetsInput({
@@ -16,6 +17,17 @@ export function DayTargetsInput({
   onChange: (values: Record<string, string>) => void;
   defaultTarget: string;
 }) {
+  const { t } = useTranslation("goal");
+  const DAY_LABELS = [
+    t("dayMon"),
+    t("dayTue"),
+    t("dayWed"),
+    t("dayThu"),
+    t("dayFri"),
+    t("daySat"),
+    t("daySun"),
+  ];
+
   return (
     <div>
       <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
@@ -32,7 +44,7 @@ export function DayTargetsInput({
           }}
           className="rounded"
         />
-        曜日別に設定
+        {t("dayTargetsLabel")}
       </label>
       {enabled && (
         <div className="grid grid-cols-7 gap-1 mt-2">
@@ -66,7 +78,9 @@ export function DayTargetsInput({
                   step="any"
                 />
                 {isRest && (
-                  <span className="text-[9px] text-gray-400">休み</span>
+                  <span className="text-[9px] text-gray-400">
+                    {t("dayTargetRest")}
+                  </span>
                 )}
               </div>
             );

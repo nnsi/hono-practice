@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -14,6 +15,7 @@ import { LegalModal } from "../common/LegalModal";
 WebBrowser.maybeCompleteAuthSession();
 
 export function CreateUserForm() {
+  const { t } = useTranslation("common");
   const { register, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
@@ -31,7 +33,7 @@ export function CreateUserForm() {
 
   const handleRegister = async () => {
     if (!loginId || !password) {
-      setError("IDとパスワードを入力してください");
+      setError(t("auth.idAndPasswordRequired"));
       return;
     }
     setLoading(true);
@@ -39,36 +41,38 @@ export function CreateUserForm() {
     try {
       await register(loginId, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "登録に失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.registerError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View className="flex-1 justify-center px-8 bg-white">
+    <View className="flex-1 justify-center px-8 bg-white dark:bg-gray-800">
       <Text className="text-3xl font-bold text-center mb-8">
-        アカウント作成
+        {t("auth.createAccountTitle")}
       </Text>
 
       {error ? (
-        <Text className="text-red-500 text-center mb-4">{error}</Text>
+        <Text className="text-red-500 dark:text-red-400 text-center mb-4">
+          {error}
+        </Text>
       ) : null}
 
       <TouchableOpacity
-        className={`w-full flex-row items-center justify-center rounded-lg border bg-white px-4 mb-3 ${googleRequest ? "" : "opacity-50"}`}
+        className={`w-full flex-row items-center justify-center rounded-lg border bg-white dark:bg-gray-800 px-4 mb-3 ${googleRequest ? "" : "opacity-50"}`}
         style={{ minHeight: 48, borderColor: "#747775" }}
         onPress={handleGooglePress}
         disabled={!googleRequest}
         accessibilityRole="button"
-        accessibilityLabel="Googleで登録"
+        accessibilityLabel={t("auth.googleRegister")}
       >
         <GoogleMark />
         <Text
           className="text-base font-medium ml-3"
           style={{ color: "#1F1F1F" }}
         >
-          Googleで登録
+          {t("auth.googleRegister")}
         </Text>
       </TouchableOpacity>
 
@@ -96,9 +100,7 @@ export function CreateUserForm() {
                   : "";
               if (code !== "ERR_REQUEST_CANCELED") {
                 setError(
-                  e instanceof Error
-                    ? e.message
-                    : "Appleアカウントでの登録に失敗しました",
+                  e instanceof Error ? e.message : t("auth.appleRegisterError"),
                 );
               }
             }
@@ -108,45 +110,47 @@ export function CreateUserForm() {
 
       <View className="flex-row items-center mb-4">
         <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-3 text-gray-400 text-sm">または</Text>
+        <Text className="mx-3 text-gray-400 dark:text-gray-500 text-sm">
+          {t("auth.or")}
+        </Text>
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
       <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="ログインID"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
+        placeholder={t("auth.loginId")}
         value={loginId}
         onChangeText={setLoginId}
         autoCapitalize="none"
         autoCorrect={false}
       />
       <IMESafeTextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="パスワード（8文字以上）"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
+        placeholder={t("auth.passwordHint")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <Text className="text-xs text-gray-400 leading-5 mb-4">
-        新規登録することで、
+      <Text className="text-xs text-gray-400 dark:text-gray-500 leading-5 mb-4">
+        {t("auth.legalConsentPrefix")}
         <Text className="underline" onPress={() => setLegalModal("terms")}>
-          利用規約
+          {t("auth.termsOfService")}
         </Text>
-        と
+        {t("auth.legalConsentAnd")}
         <Text className="underline" onPress={() => setLegalModal("privacy")}>
-          プライバシーポリシー
+          {t("auth.privacyPolicy")}
         </Text>
-        に同意したものとみなします。
+        {t("auth.legalConsentSuffix")}
       </Text>
 
       <TouchableOpacity
-        className={`bg-blue-500 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
+        className={`bg-blue-50 dark:bg-blue-900/200 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
         onPress={handleRegister}
         disabled={loading}
       >
         <Text className="text-white text-base font-semibold">
-          {loading ? "登録中..." : "登録"}
+          {loading ? t("auth.registering") : t("auth.register")}
         </Text>
       </TouchableOpacity>
 
@@ -154,7 +158,9 @@ export function CreateUserForm() {
         className="mt-4 items-center"
         onPress={() => router.back()}
       >
-        <Text className="text-blue-500">ログインに戻る</Text>
+        <Text className="text-blue-500 dark:text-blue-400">
+          {t("auth.backToLogin")}
+        </Text>
       </TouchableOpacity>
 
       {legalModal && (

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import {
   AlertCircle,
@@ -32,6 +33,7 @@ export function CSVImportPreview({
   onImport,
   isImporting = false,
 }: Props) {
+  const { t } = useTranslation("csv");
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
     new Set(),
   );
@@ -127,19 +129,19 @@ export function CSVImportPreview({
       {/* Stats */}
       <div className="flex gap-3 items-center flex-wrap">
         <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-          合計: {stats.total}件
+          {t("statsTotal")}: {stats.total}
         </span>
         <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-          正常: {stats.valid}件
+          {t("statsValid")}: {stats.valid}
         </span>
         {stats.warnings > 0 && (
           <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
-            新規アクティビティ: {stats.warnings}件
+            {t("statsNewActivities")}: {stats.warnings}
           </span>
         )}
         {stats.errors > 0 && (
           <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-            エラー: {stats.errors}件
+            {t("statsErrors")}: {stats.errors}
           </span>
         )}
         {stats.errors > 0 && (
@@ -148,7 +150,7 @@ export function CSVImportPreview({
             onClick={() => setShowErrorsOnly(!showErrorsOnly)}
             className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            {showErrorsOnly ? "全て表示" : "エラーのみ表示"}
+            {showErrorsOnly ? t("filterShowAll") : t("filterErrorsOnly")}
           </button>
         )}
       </div>
@@ -163,7 +165,7 @@ export function CSVImportPreview({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            選択した行を削除 ({selectedIndices.size})
+            {t("deleteSelected")} ({selectedIndices.size})
           </button>
           <button
             type="button"
@@ -172,14 +174,14 @@ export function CSVImportPreview({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
           >
             <Download className="h-3.5 w-3.5" />
-            修正済みCSV
+            {t("exportCorrected")}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           {stats.errors > 0 && (
             <span className="text-xs text-orange-600">
-              エラーがある行はスキップされます
+              {t("errorSkipMessage")}
             </span>
           )}
           <button
@@ -192,7 +194,9 @@ export function CSVImportPreview({
                 : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {isImporting ? "インポート中..." : `インポート (${stats.valid}件)`}
+            {isImporting
+              ? `${t("exporting")}`
+              : `${t("importButton")} (${stats.valid})`}
           </button>
         </div>
       </div>
@@ -213,13 +217,13 @@ export function CSVImportPreview({
                   className="h-4 w-4 accent-blue-600"
                 />
               </th>
-              <th className="w-10 px-2 py-2">状態</th>
-              <th className="px-3 py-2 text-left">日付</th>
-              <th className="px-3 py-2 text-left">アクティビティ</th>
-              <th className="px-3 py-2 text-left">種別</th>
-              <th className="px-3 py-2 text-left">数量</th>
-              <th className="px-3 py-2 text-left">メモ</th>
-              <th className="px-3 py-2 text-left">エラー</th>
+              <th className="w-10 px-2 py-2">{t("tableStatus")}</th>
+              <th className="px-3 py-2 text-left">{t("tableDate")}</th>
+              <th className="px-3 py-2 text-left">{t("tableActivity")}</th>
+              <th className="px-3 py-2 text-left">{t("tableKind")}</th>
+              <th className="px-3 py-2 text-left">{t("tableQuantity")}</th>
+              <th className="px-3 py-2 text-left">{t("tableMemo")}</th>
+              <th className="px-3 py-2 text-left">{t("tableError")}</th>
             </tr>
           </thead>
           <tbody>
@@ -273,6 +277,7 @@ function PreviewRow({
   activities: { id: string; name: string; emoji: string }[];
   statusIcon: React.ReactNode;
 }) {
+  const { t } = useTranslation("csv");
   const selectedActivity = activities.find((a) => a.name === log.activityName);
   const { kinds } = useActivityKinds(selectedActivity?.id ?? null);
 
@@ -312,7 +317,7 @@ function PreviewRow({
             disabled={isImporting}
             className="w-32 px-2 py-1 border border-gray-300 rounded text-xs"
           >
-            <option value="_new">新規作成...</option>
+            <option value="_new">{t("newActivityLabel")}</option>
             {activities.map((a) => (
               <option key={a.id} value={a.name}>
                 {a.emoji} {a.name}
@@ -325,14 +330,14 @@ function PreviewRow({
                 type="text"
                 value={log.activityName}
                 onChange={(e) => onEdit(index, "activityName", e.target.value)}
-                placeholder="新規名"
+                placeholder={t("newActivityPlaceholder")}
                 className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
                 disabled={isImporting}
               />
             )}
           {log.isNewActivity && log.activityName && (
             <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded">
-              新規
+              {t("newActivityBadge")}
             </span>
           )}
         </div>
@@ -351,7 +356,7 @@ function PreviewRow({
             disabled={isImporting}
             className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
           >
-            <option value="_none">種別なし</option>
+            <option value="_none">{t("noKind")}</option>
             {kinds.map((k) => (
               <option key={k.id} value={k.name}>
                 {k.name}
@@ -365,7 +370,7 @@ function PreviewRow({
             onChange={(e) => onEdit(index, "kindName", e.target.value)}
             className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
             disabled={isImporting || !selectedActivity}
-            placeholder={!selectedActivity ? "-" : "種別なし"}
+            placeholder={!selectedActivity ? "-" : t("noKind")}
           />
         )}
       </td>

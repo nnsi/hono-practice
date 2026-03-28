@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
 import { Crown, RotateCcw } from "lucide-react-native";
 import {
@@ -24,6 +25,7 @@ type SubscriptionInfo = {
 };
 
 export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const router = useRouter();
   const plan = usePlan();
   const { isRestoring, restorePurchases, error } = useRevenueCat();
@@ -48,25 +50,29 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
     : null;
 
   return (
-    <Section icon={Crown} label="プラン" shadow={shadow}>
+    <Section icon={Crown} label={t("plan")} shadow={shadow}>
       <View className="px-4 py-3">
         <View className="flex-row items-center">
           <View
             className={`px-2.5 py-1 rounded-full ${
-              isPremium ? "bg-amber-100" : "bg-gray-100"
+              isPremium
+                ? "bg-amber-100 dark:bg-amber-900/30"
+                : "bg-gray-100 dark:bg-gray-800"
             }`}
           >
             <Text
               className={`text-xs font-bold ${
-                isPremium ? "text-amber-700" : "text-gray-600"
+                isPremium
+                  ? "text-amber-700 dark:text-amber-400"
+                  : "text-gray-600 dark:text-gray-400"
               }`}
             >
-              {isPremium ? "Pro" : "Free"}
+              {isPremium ? t("planPro") : t("planFree")}
             </Text>
           </View>
           {isPremium && periodEnd && (
-            <Text className="ml-3 text-xs text-gray-500">
-              次回更新: {periodEnd}
+            <Text className="ml-3 text-xs text-gray-500 dark:text-gray-400">
+              {t("nextUpdateDate")}: {periodEnd}
             </Text>
           )}
         </View>
@@ -74,14 +80,14 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
       {!isPremium && (
         <>
-          <View className="border-t border-gray-100 mx-4" />
+          <View className="border-t border-gray-100 dark:border-gray-800 mx-4" />
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
             onPress={() => router.push("/upgrade")}
           >
             <Crown size={18} color="#f59e0b" />
-            <Text className="ml-3 text-base text-amber-600 font-medium">
-              Pro プランにアップグレード
+            <Text className="ml-3 text-base text-amber-600 dark:text-amber-400 font-medium">
+              {t("upgradeProPlan")}
             </Text>
           </TouchableOpacity>
         </>
@@ -89,7 +95,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
       {Platform.OS !== "web" && (
         <>
-          <View className="border-t border-gray-100 mx-4" />
+          <View className="border-t border-gray-100 dark:border-gray-800 mx-4" />
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
             onPress={() => restorePurchases()}
@@ -100,7 +106,9 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
             ) : (
               <>
                 <RotateCcw size={18} color="#6b7280" />
-                <Text className="ml-3 text-base text-gray-600">購入を復元</Text>
+                <Text className="ml-3 text-base text-gray-600 dark:text-gray-400">
+                  {t("restorePurchases")}
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -109,7 +117,9 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
       {error && (
         <View className="mx-4 mb-3">
-          <Text className="text-xs text-red-500">{error}</Text>
+          <Text className="text-xs text-red-500 dark:text-red-400">
+            {error}
+          </Text>
         </View>
       )}
     </Section>

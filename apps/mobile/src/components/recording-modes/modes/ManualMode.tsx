@@ -1,6 +1,7 @@
 import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, View } from "react-native";
 
 import { IMESafeTextInput } from "../../common/IMESafeTextInput";
@@ -10,6 +11,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useManualMode } from "./useManualMode";
 
 export function ManualMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useManualMode(props);
   const quantityRef = useRef<TextInput>(null);
 
@@ -24,12 +26,13 @@ export function ManualMode(props: RecordingModeProps) {
       )}
 
       <View>
-        <Text className="text-sm font-medium text-gray-600 mb-1">
-          数量{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+        <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          {t("quantity")}
+          {vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
           ref={quantityRef}
-          className="border border-gray-300 rounded-lg px-3 text-base"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"

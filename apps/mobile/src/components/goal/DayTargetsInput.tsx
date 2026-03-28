@@ -1,8 +1,8 @@
 export { buildDayTargets } from "@packages/domain/goal/dayTargets";
 
+import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TextInput, View } from "react-native";
 
-const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 const DAY_KEYS = ["1", "2", "3", "4", "5", "6", "7"] as const;
 
 export function DayTargetsInput({
@@ -18,10 +18,23 @@ export function DayTargetsInput({
   onChange: (values: Record<string, string>) => void;
   defaultTarget: string;
 }) {
+  const { t } = useTranslation("goal");
+  const DAY_LABELS = [
+    t("dayMon"),
+    t("dayTue"),
+    t("dayWed"),
+    t("dayThu"),
+    t("dayFri"),
+    t("daySat"),
+    t("daySun"),
+  ] as const;
+
   return (
     <View>
       <View className="flex-row items-center justify-between">
-        <Text className="text-xs font-medium text-gray-600">曜日別に設定</Text>
+        <Text className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          {t("dayTargetsLabel")}
+        </Text>
         <Switch
           value={enabled}
           onValueChange={(v) => {
@@ -44,10 +57,10 @@ export function DayTargetsInput({
                 <Text
                   className={`text-[10px] font-medium ${
                     i === 6
-                      ? "text-red-500"
+                      ? "text-red-500 dark:text-red-400"
                       : i === 5
-                        ? "text-blue-500"
-                        : "text-gray-500"
+                        ? "text-blue-500 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   {DAY_LABELS[i]}
@@ -59,13 +72,15 @@ export function DayTargetsInput({
                   keyboardType="numeric"
                   className={`w-full px-1 py-1 border rounded text-xs text-center ${
                     isRest
-                      ? "border-gray-200 bg-gray-50 text-gray-400"
-                      : "border-gray-300 bg-white"
+                      ? "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                      : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
                   }`}
                   selectTextOnFocus
                 />
                 {isRest && (
-                  <Text className="text-[9px] text-gray-400">休み</Text>
+                  <Text className="text-[9px] text-gray-400 dark:text-gray-500">
+                    {t("dayTargetRest")}
+                  </Text>
                 )}
               </View>
             );

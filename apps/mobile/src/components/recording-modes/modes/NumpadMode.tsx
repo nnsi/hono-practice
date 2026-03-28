@@ -21,13 +21,13 @@ function keyLabel(key: string): string {
 
 function keyStyle(key: string): string {
   if (key === "C") return "bg-red-100";
-  if (key === "backspace") return "bg-gray-200";
-  return "bg-gray-100";
+  if (key === "backspace") return "bg-gray-200 dark:bg-gray-700";
+  return "bg-gray-100 dark:bg-gray-800";
 }
 
 function keyTextStyle(key: string): string {
-  if (key === "C") return "text-red-600 text-xl font-medium";
-  return "text-xl font-medium text-gray-800";
+  if (key === "C") return "text-red-600 dark:text-red-400 text-xl font-medium";
+  return "text-xl font-medium text-gray-800 dark:text-gray-200";
 }
 
 async function readClipboard(): Promise<string | null> {
@@ -67,10 +67,13 @@ export function NumpadMode(props: RecordingModeProps) {
           <ClipboardPaste size={20} color="#9ca3af" />
         </TouchableOpacity>
         <View className="flex-1 items-end">
-          <Text className="text-4xl font-bold text-gray-900">
+          <Text className="text-4xl font-bold text-gray-900 dark:text-gray-100">
             {vm.formattedDisplay}
             {vm.quantityUnit ? (
-              <Text className="text-lg text-gray-500"> {vm.quantityUnit}</Text>
+              <Text className="text-lg text-gray-500 dark:text-gray-400">
+                {" "}
+                {vm.quantityUnit}
+              </Text>
             ) : null}
           </Text>
         </View>

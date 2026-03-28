@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 
 import { activityRepository } from "../../db/activityRepository";
@@ -16,6 +17,7 @@ export function ReorderActivitiesDialog({
   activities,
   onClose,
 }: ReorderActivitiesDialogProps) {
+  const { t } = useTranslation("actiko");
   const [items, setItems] = useState(activities);
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +43,9 @@ export function ReorderActivitiesDialog({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[80vh] flex flex-col animate-scale-in">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">並び替え</h2>
+          <h2 className="text-base font-semibold text-gray-900">
+            {t("reorder")}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -93,7 +97,7 @@ export function ReorderActivitiesDialog({
             onClick={onClose}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
           >
-            キャンセル
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -101,7 +105,7 @@ export function ReorderActivitiesDialog({
             disabled={saving}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            {saving ? "保存中..." : "保存"}
+            {saving ? t("saving") : t("save")}
           </button>
         </div>
       </div>

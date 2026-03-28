@@ -20,7 +20,7 @@ export function DateNavHeader({
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
   return (
-    <View className="relative flex-row items-center justify-center h-12 bg-white border-b border-gray-200">
+    <View className="relative flex-row items-center justify-center h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <TouchableOpacity className="absolute left-4 p-2" onPress={onPrev}>
         <ChevronLeft size={20} color="#78716c" />
       </TouchableOpacity>
@@ -37,7 +37,7 @@ export function DateNavHeader({
           </View>
         ) : (
           <View className="px-4 py-1">
-            <Text className="text-base font-medium text-gray-800">
+            <Text className="text-base font-medium text-gray-800 dark:text-gray-200">
               {dateLabel}
             </Text>
           </View>

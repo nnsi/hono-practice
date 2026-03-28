@@ -16,6 +16,8 @@
       "@packages/types/*": ["../../packages/types/*"],
       "@packages/utils": ["../../packages/utils/index.ts"],
       "@packages/utils/*": ["../../packages/utils/*"],
+      "@packages/i18n": ["../../packages/i18n/index.ts"],
+      "@packages/i18n/*": ["../../packages/i18n/*"],
       "@/*": ["./src/*"],
       "@backend/*": ["../../apps/backend/*"],
       "@infra/*": ["../../infra/*"]

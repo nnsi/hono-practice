@@ -5,8 +5,14 @@ import {
   reportError,
   setupGlobalErrorHandler,
 } from "@packages/frontend-shared";
+import { initI18n } from "@packages/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+import "dayjs/locale/en";
+
+import LanguageDetector from "i18next-browser-languagedetector";
 
 import { ErrorBoundary } from "./components/root";
 import { db } from "./db/schema";
@@ -43,11 +49,26 @@ const reportErrorOptions = {
 
 setupGlobalErrorHandler((report) => reportError(report, reportErrorOptions));
 
+initI18n({
+  plugins: [LanguageDetector],
+  detection: {
+    order: ["localStorage", "navigator"],
+    lookupLocalStorage: "actiko-v2-language",
+    caches: ["localStorage"],
+  },
+  onLanguageChanged: (lng) => dayjs.locale(lng === "ja" ? "ja" : "en"),
+});
+
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
+
+// bfcache復元時はReact内部状態が不整合になるためリロード
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) window.location.reload();
+});
 
 // ピンチズーム防止
 document.addEventListener("gesturestart", (e) => e.preventDefault());

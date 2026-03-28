@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
@@ -10,6 +11,7 @@ import { TaskList } from "./TaskList";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
+  const { t } = useTranslation("activity");
   const {
     date,
     setDate,
@@ -40,7 +42,7 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToPrev}
-            aria-label="前の日"
+            aria-label={t("daily.previousDay")}
             className="absolute left-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
@@ -57,7 +59,7 @@ export function DailyPage() {
           <button
             type="button"
             onClick={goToNext}
-            aria-label="次の日"
+            aria-label={t("daily.nextDay")}
             className="absolute right-14 p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
@@ -76,7 +78,7 @@ export function DailyPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              アクティビティ
+              {t("daily.activitySection")}
             </h2>
             <button
               type="button"
@@ -84,7 +86,7 @@ export function DailyPage() {
               className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               <Plus size={16} />
-              追加
+              {t("daily.addButton")}
             </button>
           </div>
 
@@ -108,7 +110,7 @@ export function DailyPage() {
             </div>
           ) : (
             <div className="text-center text-gray-400 py-8">
-              記録がありません
+              {t("daily.noRecords")}
             </div>
           )}
         </section>
@@ -119,7 +121,7 @@ export function DailyPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              タスク
+              {t("daily.tasksSection")}
             </h2>
             <button
               type="button"
@@ -127,7 +129,7 @@ export function DailyPage() {
               className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               <Plus size={16} />
-              追加
+              {t("daily.addButton")}
             </button>
           </div>
           <TaskList

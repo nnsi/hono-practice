@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -15,6 +16,7 @@ import { ApiKeyList } from "./ApiKeyList";
 import { CreateApiKeyDialog } from "./CreateApiKeyDialog";
 
 export function ApiKeyManager() {
+  const { t } = useTranslation("settings");
   const { data: subscription, isLoading: subLoading } = useSubscription();
   const canUseApiKey = subscription?.canUseApiKey ?? false;
   const { data: apiKeysData, isLoading: keysLoading } = useApiKeys({
@@ -38,15 +40,13 @@ export function ApiKeyManager() {
       <EntitlementGate feature="apiKey" onUpgrade={upgrade.openUpgradeModal}>
         <div className="rounded-xl border border-gray-200 p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              外部アプリケーションからアクセスするためのAPIキーを管理します
-            </p>
+            <p className="text-sm text-gray-600">{t("apiKeyManagement")}</p>
             <button
               type="button"
               onClick={() => setShowCreateDialog(true)}
               className="shrink-0 px-3 py-1.5 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
-              + 新規作成
+              {t("createNewKey")}
             </button>
           </div>
 

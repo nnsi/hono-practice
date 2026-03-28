@@ -8,6 +8,7 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -26,6 +27,7 @@ export function SummaryTable({
   kindColors: Record<string, string>;
   month: string;
 }) {
+  const { t } = useTranslation("stats");
   const [isExpanded, setIsExpanded] = useState(false);
   const weeks = useMemo(
     () => buildWeeks(data, kinds, month),
@@ -34,14 +36,14 @@ export function SummaryTable({
   const hasMultipleKinds = kinds.length > 1;
 
   return (
-    <View className="border-t border-gray-200">
+    <View className="border-t border-gray-200 dark:border-gray-700">
       <TouchableOpacity
         onPress={() => setIsExpanded(!isExpanded)}
-        className="flex-row items-center justify-between px-4 py-3 bg-white"
+        className="flex-row items-center justify-between px-4 py-3 bg-white dark:bg-gray-800"
         activeOpacity={0.7}
       >
-        <Text className="font-semibold text-sm text-gray-900">
-          日別・週別 合計値
+        <Text className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+          {t("tableExpandButton")}
         </Text>
         {isExpanded ? (
           <ChevronUp size={18} color="#9ca3af" />
@@ -54,13 +56,15 @@ export function SummaryTable({
         <ScrollView horizontal showsHorizontalScrollIndicator>
           <View style={{ minWidth: "100%" }}>
             {/* Header */}
-            <View className="flex-row bg-gray-50 border-b border-gray-200">
+            <View className="flex-row bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <View className="px-3 py-2" style={{ width: 88 }}>
-                <Text className="text-xs font-medium text-gray-500">日付</Text>
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t("tableDateHeader")}
+                </Text>
               </View>
               <View className="px-3 py-2 items-end" style={{ width: 64 }}>
-                <Text className="text-xs font-medium text-gray-500">
-                  日合計
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t("tableDailyTotalHeader")}
                 </Text>
               </View>
               {hasMultipleKinds &&
@@ -80,8 +84,8 @@ export function SummaryTable({
                   </View>
                 ))}
               <View className="px-3 py-2 items-end" style={{ width: 64 }}>
-                <Text className="text-xs font-medium text-gray-500">
-                  週合計
+                <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t("tableWeeklyTotalHeader")}
                 </Text>
               </View>
             </View>
@@ -91,15 +95,15 @@ export function SummaryTable({
               week.days.map((day, dayIndex) => (
                 <View
                   key={`${weekIndex}-${day.date}`}
-                  className="flex-row border-b border-gray-100 bg-white"
+                  className="flex-row border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800"
                 >
                   <View className="px-3 py-1.5" style={{ width: 88 }}>
-                    <Text className="text-sm text-gray-900">
+                    <Text className="text-sm text-gray-900 dark:text-gray-100">
                       {day.date} ({day.dayOfWeek})
                     </Text>
                   </View>
                   <View className="px-3 py-1.5 items-end" style={{ width: 64 }}>
-                    <Text className="text-sm font-medium text-gray-900">
+                    <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {day.total > 0
                         ? formatQuantityWithUnit(day.total, quantityUnit)
                         : "-"}
@@ -127,10 +131,10 @@ export function SummaryTable({
                     ))}
                   {dayIndex === 0 ? (
                     <View
-                      className="px-3 py-1.5 items-end bg-gray-50"
+                      className="px-3 py-1.5 items-end bg-gray-50 dark:bg-gray-800"
                       style={{ width: 64 }}
                     >
-                      <Text className="text-sm font-bold text-gray-900">
+                      <Text className="text-sm font-bold text-gray-900 dark:text-gray-100">
                         {formatQuantityWithUnit(
                           roundQuantity(week.weekTotal),
                           quantityUnit,
@@ -139,7 +143,7 @@ export function SummaryTable({
                     </View>
                   ) : (
                     <View
-                      className="px-3 py-1.5 bg-gray-50"
+                      className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800"
                       style={{ width: 64 }}
                     />
                   )}

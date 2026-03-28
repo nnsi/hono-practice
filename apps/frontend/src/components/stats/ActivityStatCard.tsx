@@ -13,6 +13,7 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 
 import { ActivityChart } from "./ActivityChart";
@@ -30,6 +31,8 @@ export function ActivityStatCard({
   month: string;
   goalLines: GoalLine[];
 }) {
+  const { t } = useTranslation("stats");
+
   // Build color map for kinds
   const kindColors = useMemo(() => {
     const usedColors = new Set<string>();
@@ -55,11 +58,11 @@ export function ActivityStatCard({
         );
       }
       return {
-        date: `${dayjs(date).date()}日`,
+        date: `${dayjs(date).date()}${t("dateLabel")}`,
         ...kindsData,
       };
     });
-  }, [allDates, stat.kinds]);
+  }, [allDates, stat.kinds, t]);
 
   // Calculate summary stats
   const summary = useMemo(() => {
@@ -77,7 +80,7 @@ export function ActivityStatCard({
   }, [stat.kinds, allDates]);
 
   const isSingleUnnamedKind =
-    stat.kinds.length === 1 && stat.kinds[0].name === "未指定";
+    stat.kinds.length === 1 && stat.kinds[0].name === t("defaultKind");
 
   return (
     <div className="border rounded-xl overflow-hidden bg-gray-50">
@@ -87,7 +90,8 @@ export function ActivityStatCard({
           {stat.name}
           {stat.showCombinedStats && stat.total != null && (
             <span className="text-sm font-normal text-gray-500 ml-2">
-              合計: {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
+              {t("kindTotalLabel")}{" "}
+              {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
             </span>
           )}
         </h2>
@@ -150,7 +154,7 @@ export function ActivityStatCard({
                   (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
                 );
                 return {
-                  date: `${dayjs(date).date()}日`,
+                  date: `${dayjs(date).date()}${t("dateLabel")}`,
                   [kind.name]: roundQuantity(
                     matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
                   ),
@@ -161,7 +165,7 @@ export function ActivityStatCard({
                   <h4 className="font-semibold text-sm mb-1 px-1">
                     {kind.name}
                     <span className="text-gray-400 font-normal ml-1">
-                      (合計:{" "}
+                      ({t("kindTotalLabel")}{" "}
                       {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
                     </span>
                   </h4>

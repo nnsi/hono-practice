@@ -6,6 +6,7 @@ import {
 } from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
 import { onDebtFeedback } from "@packages/frontend-shared";
+import { useTranslation } from "@packages/i18n";
 
 type ToastState = {
   results: DebtFeedbackResult[];
@@ -25,6 +26,7 @@ function isPraiseModeEnabled(): boolean {
 }
 
 export function DebtFeedbackToast() {
+  const { t } = useTranslation("feedback");
   const [toast, setToast] = useState<ToastState | null>(null);
   const [visible, setVisible] = useState(false);
   const keyRef = useRef(0);
@@ -33,7 +35,7 @@ export function DebtFeedbackToast() {
   useEffect(() => {
     return onDebtFeedback((results) => {
       const praise = isPraiseModeEnabled();
-      const message = buildDebtFeedbackMessage(results, praise);
+      const message = buildDebtFeedbackMessage(results, praise, t);
       if (!message) return;
 
       keyRef.current += 1;
@@ -56,7 +58,7 @@ export function DebtFeedbackToast() {
 
   if (!toast) return null;
 
-  const message = buildDebtFeedbackMessage(toast.results, toast.praiseMode);
+  const message = buildDebtFeedbackMessage(toast.results, toast.praiseMode, t);
   if (!message) return null;
 
   const praise = toast.praiseMode;

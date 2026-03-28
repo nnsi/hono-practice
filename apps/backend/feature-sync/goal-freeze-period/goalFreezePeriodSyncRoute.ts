@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 import { SyncGoalFreezePeriodsRequestSchema } from "@packages/types";
+import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
@@ -34,7 +35,21 @@ export function createGoalFreezePeriodSyncRoute() {
   return app
     .get("/goal-freeze-periods", async (c) => {
       const userId = c.get("userId");
-      const since = c.req.query("since");
+      const sinceRaw = c.req.query("since");
+      const parsed = z
+        .string()
+        .datetime()
+        .optional()
+        .safeParse(sinceRaw || undefined);
+      if (!parsed.success) {
+        return c.json(
+          {
+            message: "Invalid 'since' parameter. Expected ISO 8601 datetime.",
+          },
+          400,
+        );
+      }
+      const since = parsed.data;
       const res = await c.var.h.getFreezePeriods(userId, since);
       return c.json(res);
     })

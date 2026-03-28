@@ -1,9 +1,11 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Check } from "lucide-react";
 
 import { useCheckMode } from "./useCheckMode";
 
 export function CheckMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useCheckMode(props);
 
   return (
@@ -50,14 +52,14 @@ export function CheckMode(props: RecordingModeProps) {
 
       <p className="text-sm text-gray-500">
         {!vm.hasKinds && vm.isCheckedToday
-          ? "記録済み ✓"
+          ? t("recorded")
           : vm.hasKinds && !vm.selectedKindId
-            ? "項目を選択してください"
+            ? t("selectItem")
             : vm.canCheck
-              ? "タップして記録"
+              ? t("tapToRecord")
               : vm.hasKinds
-                ? "記録済み ✓"
-                : "タップして記録"}
+                ? t("recorded")
+                : t("tapToRecord")}
       </p>
     </div>
   );

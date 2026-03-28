@@ -6,6 +6,7 @@ import {
   parseRecordingModeConfig,
   serializeRecordingModeConfig,
 } from "@packages/domain/activity/recordingModeConfig";
+import { useTranslation } from "@packages/i18n";
 import {
   Calculator,
   CheckSquare,
@@ -26,12 +27,12 @@ type RecordingModeSelectorProps = {
 };
 
 const VISIBLE_MODES = [
-  { value: "manual", label: "手動入力", icon: Pencil },
-  { value: "timer", label: "タイマー", icon: Timer },
-  { value: "counter", label: "カウンタ", icon: Hash },
-  { value: "binary", label: "バイナリ", icon: ToggleLeft },
-  { value: "numpad", label: "テンキー", icon: Calculator },
-  { value: "check", label: "チェック", icon: CheckSquare },
+  { value: "manual", labelKey: "modeManual" as const, icon: Pencil },
+  { value: "timer", labelKey: "modeTimer" as const, icon: Timer },
+  { value: "counter", labelKey: "modeCounter" as const, icon: Hash },
+  { value: "binary", labelKey: "modeBinary" as const, icon: ToggleLeft },
+  { value: "numpad", labelKey: "modeNumpad" as const, icon: Calculator },
+  { value: "check", labelKey: "modeCheck" as const, icon: CheckSquare },
 ] as const;
 
 function stepsFromConfig(config: string | null): number[] {
@@ -45,6 +46,7 @@ export function RecordingModeSelector({
   recordingModeConfig,
   onRecordingModeConfigChange,
 }: RecordingModeSelectorProps) {
+  const { t } = useTranslation("actiko");
   const [stepsText, setStepsText] = useState(() =>
     stepsFromConfig(recordingModeConfig).join(", "),
   );
@@ -82,16 +84,18 @@ export function RecordingModeSelector({
 
   return (
     <View>
-      <Text className="text-sm font-medium text-gray-600 mb-2">記録モード</Text>
+      <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+        {t("recordingMode")}
+      </Text>
       <View className="flex-row flex-wrap gap-2">
-        {VISIBLE_MODES.map(({ value, label, icon: Icon }) => (
+        {VISIBLE_MODES.map(({ value, labelKey, icon: Icon }) => (
           <TouchableOpacity
             key={value}
             onPress={() => handleModeChange(value)}
             className={`flex-1 min-w-[80px] items-center gap-1 px-3 py-2 rounded-lg border ${
               recordingMode === value
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300 dark:border-gray-600"
             }`}
           >
             <Icon
@@ -100,21 +104,23 @@ export function RecordingModeSelector({
             />
             <Text
               className={`text-sm ${
-                recordingMode === value ? "text-blue-700" : "text-gray-600"
+                recordingMode === value
+                  ? "text-blue-700"
+                  : "text-gray-600 dark:text-gray-400"
               }`}
             >
-              {label}
+              {t(labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
       {recordingMode === "counter" && (
         <View className="mt-3">
-          <Text className="text-sm text-gray-500 mb-1">
-            ステップ値（カンマ区切り）
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            {t("stepValues")}
           </Text>
           <IMESafeTextInput
-            className="border border-gray-300 rounded-lg px-3 py-2 text-base"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             value={stepsText}
             onChangeText={handleStepsTextChange}
             placeholder="1, 10, 100"

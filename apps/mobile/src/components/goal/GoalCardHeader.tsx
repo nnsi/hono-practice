@@ -1,4 +1,5 @@
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import {
   ChevronDown,
@@ -68,6 +69,7 @@ export function GoalCardHeader({
   onDeleteCancel: () => void;
   onHandleDelete: () => void;
 }) {
+  const { t } = useTranslation("goal");
   return (
     <TouchableOpacity
       className="w-full px-4 py-3"
@@ -85,7 +87,7 @@ export function GoalCardHeader({
         <View className="flex-1" style={{ minWidth: 0 }}>
           <View className="flex-row items-start gap-2">
             <Text
-              className="flex-1 font-semibold text-sm text-gray-900"
+              className="flex-1 font-semibold text-sm text-gray-900 dark:text-gray-100"
               style={{ minWidth: 80 }}
             >
               {activity?.name ?? "不明なアクティビティ"}
@@ -126,12 +128,12 @@ export function GoalCardHeader({
                 </Text>
               </View>
             )}
-            <Text className="text-xs text-gray-500 shrink-0">
+            <Text className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
               {goal.dailyTargetQuantity.toLocaleString()}
               {activity?.quantityUnit ?? ""}/日
             </Text>
             <Text className="text-xs text-gray-300 shrink-0">|</Text>
-            <Text className="text-xs text-gray-500 shrink-0">
+            <Text className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
               {dayjs(goal.startDate).format("M/D")}〜
               {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
             </Text>
@@ -152,7 +154,7 @@ export function GoalCardHeader({
                 onPress={onDeactivate}
               >
                 <Text className="text-[10px] font-medium text-orange-600">
-                  終了する
+                  {t("cardDeactivate")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -164,17 +166,19 @@ export function GoalCardHeader({
             {isPast && showDeleteConfirm && (
               <View className="flex-row items-center gap-1">
                 <TouchableOpacity
-                  className="px-2 py-1 bg-red-500 rounded"
+                  className="px-2 py-1 bg-red-50 dark:bg-red-900/200 rounded"
                   onPress={onHandleDelete}
                   disabled={deleting}
                 >
                   <Text className="text-xs text-white">削除</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="px-2 py-1 border border-gray-300 rounded"
+                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                   onPress={onDeleteCancel}
                 >
-                  <Text className="text-xs text-gray-600">取消</Text>
+                  <Text className="text-xs text-gray-600 dark:text-gray-400">
+                    取消
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}

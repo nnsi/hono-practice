@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type {
   ActivityStat,
@@ -10,8 +10,9 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { Text, View, useWindowDimensions } from "react-native";
+import { Text, View } from "react-native";
 
 import { ActivityChartSection } from "./ActivityChartSection";
 import { SummarySection } from "./SummarySection";
@@ -28,6 +29,8 @@ export function ActivityStatCard({
   month: string;
   goalLines: GoalLine[];
 }) {
+  const { t } = useTranslation("stats");
+
   const kindColors = useMemo(() => {
     const usedColors = new Set<string>();
     const colorMap: Record<string, string> = {};
@@ -51,11 +54,11 @@ export function ActivityStatCard({
         );
       }
       return {
-        date: `${dayjs(date).date()}日`,
+        date: `${dayjs(date).date()}${t("dateLabel")}`,
         ...kindsData,
       };
     });
-  }, [allDates, stat.kinds]);
+  }, [allDates, stat.kinds, t]);
 
   const summary = useMemo(() => {
     const totalQuantity = stat.kinds.reduce((sum, k) => sum + k.total, 0);
@@ -71,26 +74,26 @@ export function ActivityStatCard({
     return { totalQuantity, activeDays, daysInMonth, avgPerDay };
   }, [stat.kinds, allDates]);
 
-  const { width: screenWidth } = useWindowDimensions();
-  const effectiveWidth = Math.min(screenWidth, 768);
+  const [containerWidth, setContainerWidth] = useState(0);
   const gap = 8;
-  const cardPaddingX = 16;
   const numColumns = 2;
-  const kindCardWidth =
-    (effectiveWidth - cardPaddingX * 2 - gap * (numColumns - 1)) / numColumns;
+  const kindCardWidth = Math.floor(
+    (containerWidth - gap * (numColumns - 1)) / numColumns,
+  );
 
   const isSingleUnnamedKind =
-    stat.kinds.length === 1 && stat.kinds[0].name === "未指定";
+    stat.kinds.length === 1 && stat.kinds[0].name === t("defaultKind");
 
   return (
-    <View className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+    <View className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800">
       {/* Activity header */}
-      <View className="px-4 py-3 bg-white border-b border-gray-200">
-        <Text className="text-lg font-bold text-gray-900">
+      <View className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
           {stat.name}
           {stat.showCombinedStats && stat.total != null && (
-            <Text className="text-sm font-normal text-gray-500">
-              {"  "}合計:{" "}
+            <Text className="text-sm font-normal text-gray-500 dark:text-gray-400">
+              {"  "}
+              {t("kindTotalLabel")}{" "}
               {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
             </Text>
           )}
@@ -100,15 +103,19 @@ export function ActivityStatCard({
       {/* Kind summary cards */}
       {!isSingleUnnamedKind && (
         <View className="px-4 pt-3">
-          <View className="flex-row flex-wrap" style={{ gap }}>
+          <View
+            className="flex-row flex-wrap"
+            style={{ gap }}
+            onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+          >
             {stat.kinds.map((kind) => (
               <View
                 key={kind.id || kind.name}
-                className="bg-white rounded-lg p-3 border border-gray-200"
+                className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
                 style={{ width: kindCardWidth }}
               >
                 <Text
-                  className="text-xs text-gray-500 mb-0.5"
+                  className="text-xs text-gray-500 dark:text-gray-400 mb-0.5"
                   numberOfLines={1}
                 >
                   {kind.name}

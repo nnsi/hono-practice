@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Download, FileText, Upload, X } from "lucide-react";
 
 import { useCSVImport } from "../../hooks/useCSVImport";
@@ -11,6 +12,7 @@ type Props = {
 
 export function CSVImportModal({ onClose }: Props) {
   const csv = useCSVImport(onClose);
+  const { t } = useTranslation("csv");
 
   return (
     <ModalOverlay onClose={csv.isImporting ? () => {} : onClose}>
@@ -18,16 +20,16 @@ export function CSVImportModal({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
           <div>
-            <h2 className="text-base font-semibold">CSVインポート</h2>
+            <h2 className="text-base font-semibold">{t("importModal")}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              活動記録をCSVファイルから一括でインポートします
+              {t("importDescription")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={csv.isImporting}
-            aria-label="閉じる"
+            aria-label="Close"
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-40"
           >
             <X size={18} />
@@ -43,7 +45,7 @@ export function CSVImportModal({ onClose }: Props) {
                 <Upload className="mx-auto h-10 w-10 text-gray-400 mb-3" />
                 <label htmlFor="csv-file-v2" className="cursor-pointer">
                   <span className="text-blue-600 hover:underline text-sm">
-                    CSVファイルを選択
+                    {t("selectFile")}
                   </span>
                   <input
                     id="csv-file-v2"
@@ -57,7 +59,9 @@ export function CSVImportModal({ onClose }: Props) {
                     disabled={csv.isParsing || csv.isImporting}
                   />
                 </label>
-                <p className="text-xs text-gray-400 mt-2">.csvファイルに対応</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  {t("supportedFormat")}
+                </p>
               </div>
 
               {csv.file && (
@@ -72,7 +76,7 @@ export function CSVImportModal({ onClose }: Props) {
                     disabled={csv.isParsing}
                     className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
                   >
-                    {csv.isParsing ? "解析中..." : "ファイルを解析"}
+                    {csv.isParsing ? t("parsing") : t("parseFile")}
                   </button>
                 </div>
               )}
@@ -83,7 +87,7 @@ export function CSVImportModal({ onClose }: Props) {
                 className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <Download className="h-4 w-4" />
-                CSVテンプレートをダウンロード
+                {t("downloadTemplate")}
               </button>
             </div>
           )}
@@ -100,9 +104,7 @@ export function CSVImportModal({ onClose }: Props) {
           {/* Success */}
           {csv.importSuccess && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-700">
-                インポートが完了しました！
-              </p>
+              <p className="text-sm text-green-700">{t("importSuccess")}</p>
             </div>
           )}
 
@@ -118,7 +120,8 @@ export function CSVImportModal({ onClose }: Props) {
                 />
               </div>
               <p className="text-xs text-center text-gray-600">
-                {csv.progress.processed} / {csv.progress.total} 件処理中...
+                {csv.progress.processed} / {csv.progress.total}{" "}
+                {t("processing")}
               </p>
             </div>
           )}

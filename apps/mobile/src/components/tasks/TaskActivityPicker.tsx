@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -40,14 +41,15 @@ export function TaskActivityPicker({
   onActivityKindIdChange,
   disabled = false,
 }: TaskActivityPickerProps) {
+  const { t } = useTranslation("task");
   const activeKinds = kinds.filter((k) => !k.deletedAt);
 
   return (
     <>
       {activities.length > 0 && (
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            アクティビティ（任意）
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t("create.label.activity")}
           </Text>
           <ScrollView
             horizontal
@@ -56,7 +58,7 @@ export function TaskActivityPicker({
           >
             <View className="flex-row gap-2">
               <PillButton
-                label="なし"
+                label={t("create.none")}
                 selected={activityId === null}
                 disabled={disabled}
                 onPress={() => onActivityIdChange(null)}
@@ -72,7 +74,7 @@ export function TaskActivityPicker({
                   className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full border ${
                     activityId === a.id
                       ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
+                      : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                   } ${disabled ? "opacity-50" : ""}`}
                 >
                   <ActivityIcon
@@ -88,7 +90,7 @@ export function TaskActivityPicker({
                     className={`text-sm ${
                       activityId === a.id
                         ? "text-white font-medium"
-                        : "text-gray-700"
+                        : "text-gray-700 dark:text-gray-300"
                     }`}
                   >
                     {a.name}
@@ -102,8 +104,8 @@ export function TaskActivityPicker({
 
       {activityId && activeKinds.length > 0 && (
         <View>
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            種類（任意）
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t("create.label.kind")}
           </Text>
           <ScrollView
             horizontal
@@ -112,7 +114,7 @@ export function TaskActivityPicker({
           >
             <View className="flex-row gap-2">
               <PillButton
-                label="なし"
+                label={t("create.none")}
                 selected={activityKindId === null}
                 disabled={disabled}
                 onPress={() => onActivityKindIdChange(null)}
@@ -154,12 +156,16 @@ function PillButton({
       onPress={() => !disabled && onPress()}
       disabled={disabled}
       className={`px-3 py-1.5 rounded-full border ${
-        selected ? "bg-gray-900 border-gray-900" : "bg-white border-gray-300"
+        selected
+          ? "bg-gray-900 border-gray-900"
+          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
       } ${disabled ? "opacity-50" : ""}`}
     >
       <Text
         className={`text-sm ${
-          selected ? "text-white font-medium" : "text-gray-700"
+          selected
+            ? "text-white font-medium"
+            : "text-gray-700 dark:text-gray-300"
         }`}
       >
         {label}

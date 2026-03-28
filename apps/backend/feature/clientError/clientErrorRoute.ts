@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
 import type { AppContext } from "../../context";
+import { appendLocalLog } from "../../middleware/localLogWriter";
 
 const clientErrorSchema = z.object({
   errorType: z.enum([
@@ -53,6 +54,7 @@ export const clientErrorRoute = new Hono<AppContext>().post(
     } else {
       const logger = c.get("logger");
       logger?.info("Client error reported", body);
+      appendLocalLog({ type: "client_error", ...body });
     }
 
     return c.body(null, 204);

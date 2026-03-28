@@ -1,19 +1,25 @@
 import { z } from "zod";
 
 export const CreateActivityRequestSchema = z.object({
-  name: z.string().min(1, "タイトルは必須です").max(100),
+  name: z
+    .string()
+    .min(1, "validation:titleRequired")
+    .max(20, "validation:max20Chars"),
   description: z.string().max(500).optional(),
   label: z.string().max(50).optional(),
-  emoji: z.string().min(1, "絵文字は必須です").max(20),
+  emoji: z.string().min(1, "validation:emojiRequired").max(20),
   iconType: z.enum(["emoji", "upload", "generate"]).optional().default("emoji"),
-  quantityUnit: z.string().min(1, "単位名は必須です").max(50),
+  quantityUnit: z
+    .string()
+    .min(1, "validation:unitRequired")
+    .max(10, "validation:max10Chars"),
   recordingMode: z.string().optional().default("manual"),
   recordingModeConfig: z.string().nullable().optional(),
   showCombinedStats: z.boolean().optional(),
   kinds: z
     .array(
       z.object({
-        name: z.string().max(100),
+        name: z.string().max(10, "validation:max10Chars"),
         color: z.string().max(20).optional(),
       }),
     )

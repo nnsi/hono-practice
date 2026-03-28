@@ -1,4 +1,6 @@
 import {
+  commercialTransactionsTitle,
+  createCommercialTransactionsSections,
   createPrivacyPolicySections,
   privacyPolicyTitle,
   termsOfServiceSections,
@@ -10,16 +12,32 @@ import { ArrowLeft } from "lucide-react";
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 
 type LegalPageProps = {
-  type: "privacy" | "terms";
+  type: "privacy" | "terms" | "tokushoho";
 };
+
+const titleMap = {
+  privacy: privacyPolicyTitle,
+  terms: termsOfServiceTitle,
+  tokushoho: commercialTransactionsTitle,
+} as const;
+
+function getSections(type: LegalPageProps["type"]) {
+  switch (type) {
+    case "privacy":
+      return createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL });
+    case "terms":
+      return termsOfServiceSections;
+    case "tokushoho":
+      return createCommercialTransactionsSections({
+        contactEmail: CONTACT_EMAIL,
+      });
+  }
+}
 
 export function LegalPage({ type }: LegalPageProps) {
   const navigate = useNavigate();
-  const title = type === "privacy" ? privacyPolicyTitle : termsOfServiceTitle;
-  const sections =
-    type === "privacy"
-      ? createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL })
-      : termsOfServiceSections;
+  const title = titleMap[type];
+  const sections = getSections(type);
 
   return (
     <div className="min-h-screen bg-gray-50">

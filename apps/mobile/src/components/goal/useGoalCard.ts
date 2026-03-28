@@ -1,14 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
-import { getInactiveDates } from "@packages/domain/goal/goalStats";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { useFocusEffect } from "expo-router";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
+import { useInactiveDates } from "./useInactiveDates";
 
 type GoalForCard = {
   id: string;
@@ -26,24 +25,26 @@ function getStatusBadge(
   goal: GoalForCard,
   hasTodayLog: boolean,
   balance: number,
+  // biome-ignore lint: i18next TFunction has complex overloads
+  t: (...args: any[]) => string,
 ): StatusBadge {
   if (!goal.isActive) {
     return {
-      label: "終了",
+      label: t("statusEnded"),
       bgClass: "bg-gray-200",
       textClass: "text-gray-600",
     };
   }
   if (balance < 0) {
     return {
-      label: "負債あり",
+      label: t("statusInDebt"),
       bgClass: "bg-red-100",
       textClass: "text-red-700",
     };
   }
   if (hasTodayLog) {
     return {
-      label: "順調",
+      label: t("statusOnTrack"),
       bgClass: "bg-green-100",
       textClass: "text-green-700",
     };
@@ -56,6 +57,7 @@ function getStatusBadge(
 }
 
 export function useGoalCard(goal: GoalForCard) {
+  const { t } = useTranslation("goal");
   const today = dayjs().format("YYYY-MM-DD");
   const actualEndDate =
     goal.endDate && goal.endDate < today ? goal.endDate : today;
@@ -126,69 +128,12 @@ export function useGoalCard(goal: GoalForCard) {
     return Math.min((elapsedDays / totalDays) * 100, 100);
   }, [elapsedDays, totalDays]);
 
-  // --- やらなかった日付（タブフォーカス時に再読み込み） ---
-  const [showInactiveDatesEnabled, setShowInactiveDatesEnabled] =
-    useState(false);
-  useFocusEffect(
-    useCallback(() => {
-      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
-        if (!raw) return;
-        try {
-          const s = JSON.parse(raw);
-          setShowInactiveDatesEnabled(s.showInactiveDates === true);
-        } catch {
-          // ignore
-        }
-      });
-    }, []),
-  );
-
-  const monthStart = useMemo(
-    () => dayjs().startOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-  const monthEnd = useMemo(
-    () => dayjs().endOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-  const effectiveStart = useMemo(
-    () => (goal.startDate > monthStart ? goal.startDate : monthStart),
-    [goal.startDate, monthStart],
-  );
-  const effectiveEnd = useMemo(() => {
-    const end =
-      goal.endDate && goal.endDate < monthEnd ? goal.endDate : monthEnd;
-    return end > today ? today : end;
-  }, [goal.endDate, monthEnd, today]);
-
-  const monthLogs = useLiveQuery(["activity_logs"], async () => {
-    if (!showInactiveDatesEnabled) return [];
-    const sqlDb = await getDatabase();
-    return sqlDb.getAllAsync<{ date: string; quantity: number | null }>(
-      `SELECT date, quantity FROM activity_logs
-         WHERE activity_id = ? AND date >= ? AND date <= ? AND deleted_at IS NULL`,
-      [goal.activityId, effectiveStart, effectiveEnd],
-    );
-  }, [goal.activityId, effectiveStart, effectiveEnd, showInactiveDatesEnabled]);
-
-  const inactiveDates = useMemo(() => {
-    if (!showInactiveDatesEnabled || !monthLogs) return [];
-    const monthGoal = {
-      ...goal,
-      startDate: effectiveStart,
-      endDate: effectiveEnd,
-    };
-    return getInactiveDates(monthGoal, monthLogs, today);
-  }, [
-    showInactiveDatesEnabled,
-    monthLogs,
-    effectiveStart,
-    effectiveEnd,
+  const { showInactiveDatesEnabled, inactiveDates } = useInactiveDates(
     goal,
     today,
-  ]);
+  );
 
-  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance);
+  const statusBadge = getStatusBadge(goal, hasTodayLog, localBalance, t);
   const balanceColor = localBalance < 0 ? "text-red-600" : "text-blue-600";
 
   return {

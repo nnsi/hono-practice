@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { BackHandler, Modal, Pressable, StyleSheet, View } from "react-native";
 
+import { useThemeContext } from "../../contexts/ThemeContext";
 import { CalendarCard } from "./CalendarCard";
 
 type CalendarPopoverProps = {
@@ -18,6 +19,7 @@ export function CalendarPopover({
   selectedDate,
   onDateSelect,
 }: CalendarPopoverProps) {
+  const { colors } = useThemeContext();
   const [viewMonth, setViewMonth] = useState(() =>
     dayjs(selectedDate).startOf("month"),
   );
@@ -97,7 +99,7 @@ export function CalendarPopover({
         <Pressable
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: "rgba(28,25,23,0.35)" },
+            { backgroundColor: colors.modalOverlay },
           ]}
           onPress={onClose}
         />

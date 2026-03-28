@@ -70,6 +70,7 @@ export function createUseCounterMode(
 
     const recordStep = (step: number) => {
       if (isSubmitting || props.isSubmitting) return;
+      if (!Number.isInteger(step) || step < 0 || step > 999999) return;
       setIsSubmitting(true);
       props
         .onSave({ quantity: step, activityKindId: selectedKindId, memo: "" })
@@ -78,10 +79,13 @@ export function createUseCounterMode(
 
     const submitManual = () => {
       if (isSubmitting || props.isSubmitting) return;
+      const parsed = Number(quantity) || 0;
+      if (parsed < 0 || parsed > 999999) return;
+      if (!Number.isInteger(parsed)) return;
       setIsSubmitting(true);
       props
         .onSave({
-          quantity: Number(quantity) || 0,
+          quantity: parsed,
           activityKindId: selectedKindId,
           memo,
         })
