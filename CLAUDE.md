@@ -33,8 +33,8 @@ pnpm run ci-check    # 全CIチェック
 ## 開発規約
 
 ### TypeScript
-- ファクトリ関数 `newXXX` で依存注入
 - Repository命名: メソッド名にドメイン名を含める（`createGoal` ✓ / `create` ✗）
+- 詳細は `apps/backend/CLAUDE.md` のアーキテクチャセクション参照
 
 ### テスト
 - `test-once` → `tsc` → `fix` の順で確認
