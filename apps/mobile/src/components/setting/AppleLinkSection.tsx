@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Link } from "lucide-react-native";
 import { Text, View } from "react-native";
@@ -57,6 +58,7 @@ function useAppleAccount() {
 }
 
 export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const apple = useAppleAccount();
 
   return (
@@ -70,7 +72,7 @@ export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
           {apple.isAppleLinked ? (
             <View className="flex-row items-center gap-2">
               <Text className="text-sm text-green-700 font-medium">
-                Apple連携済み
+                {t("appleLinked")}
               </Text>
               {apple.appleEmail && (
                 <Text className="text-xs text-gray-500">
@@ -80,8 +82,7 @@ export function AppleLinkSection({ shadow }: { shadow: ShadowStyle }) {
             </View>
           ) : (
             <Text className="text-xs text-gray-500">
-              Appleアカウントを連携すると、Apple
-              IDでもこのアカウントにアクセスできます。
+              {t("appleLinkDescription")}
             </Text>
           )}
           <AppleAuthentication.AppleAuthenticationButton

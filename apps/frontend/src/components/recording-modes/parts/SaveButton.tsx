@@ -1,3 +1,5 @@
+import { useTranslation } from "@packages/i18n";
+
 type SaveButtonProps = {
   onClick?: () => void;
   disabled: boolean;
@@ -8,9 +10,10 @@ type SaveButtonProps = {
 export function SaveButton({
   onClick,
   disabled,
-  label = "記録する",
+  label,
   type = "button",
 }: SaveButtonProps) {
+  const { t } = useTranslation("recording");
   return (
     <button
       type={type}
@@ -18,7 +21,7 @@ export function SaveButton({
       disabled={disabled}
       className="w-full py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
     >
-      {disabled ? "記録中..." : label}
+      {disabled ? t("saving") : (label ?? t("save"))}
     </button>
   );
 }

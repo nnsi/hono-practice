@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -40,6 +41,7 @@ export function TaskActivityPicker({
   onActivityKindIdChange,
   disabled = false,
 }: TaskActivityPickerProps) {
+  const { t } = useTranslation("task");
   const activeKinds = kinds.filter((k) => !k.deletedAt);
 
   return (
@@ -47,7 +49,7 @@ export function TaskActivityPicker({
       {activities.length > 0 && (
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
-            アクティビティ（任意）
+            {t("create.label.activity")}
           </Text>
           <ScrollView
             horizontal
@@ -56,7 +58,7 @@ export function TaskActivityPicker({
           >
             <View className="flex-row gap-2">
               <PillButton
-                label="なし"
+                label={t("create.none")}
                 selected={activityId === null}
                 disabled={disabled}
                 onPress={() => onActivityIdChange(null)}
@@ -103,7 +105,7 @@ export function TaskActivityPicker({
       {activityId && activeKinds.length > 0 && (
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-1">
-            種類（任意）
+            {t("create.label.kind")}
           </Text>
           <ScrollView
             horizontal
@@ -112,7 +114,7 @@ export function TaskActivityPicker({
           >
             <View className="flex-row gap-2">
               <PillButton
-                label="なし"
+                label={t("create.none")}
                 selected={activityKindId === null}
                 disabled={disabled}
                 onPress={() => onActivityKindIdChange(null)}

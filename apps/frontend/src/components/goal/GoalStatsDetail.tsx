@@ -5,6 +5,7 @@ import {
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
 import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
@@ -52,6 +53,7 @@ export function GoalStatsDetail({
   goal: Goal;
   activity: DexieActivity | undefined;
 }) {
+  const { t } = useTranslation("goal");
   const today = dayjs().format("YYYY-MM-DD");
   const endDate = goal.endDate || today;
   const actualEndDate = endDate < today ? endDate : today;
@@ -82,7 +84,7 @@ export function GoalStatsDetail({
     return (
       <div className="px-4 pb-4 flex items-center justify-center py-6">
         <Loader2 size={16} className="animate-spin text-gray-400" />
-        <span className="ml-2 text-xs text-gray-400">統計を読み込み中...</span>
+        <span className="ml-2 text-xs text-gray-400">{t("loadingStats")}</span>
       </div>
     );
   }
@@ -99,29 +101,29 @@ export function GoalStatsDetail({
       <div className="grid grid-cols-2 gap-2 mt-3">
         <StatCard
           icon={<Calendar size={14} />}
-          label="活動日数"
-          value={`${activeDays}日`}
-          sub={`/ ${totalDays}日`}
+          label={t("activeDaysLabel")}
+          value={`${activeDays}${t("daysLabel")}`}
+          sub={`/ ${totalDays}${t("daysLabel")}`}
         />
         <StatCard
           icon={<Trophy size={14} />}
-          label="達成日数"
-          value={`${stats.stats.achievedDays}日`}
+          label={t("achievedDaysLabel")}
+          value={`${stats.stats.achievedDays}${t("daysLabel")}`}
           sub={`${achieveRate.toFixed(0)}%`}
         />
         <StatCard
           icon={<Flame size={14} />}
-          label="最大連続日数"
-          value={`${stats.stats.maxConsecutiveDays}日`}
+          label={t("maxConsecutiveDaysLabel")}
+          value={`${stats.stats.maxConsecutiveDays}${t("daysLabel")}`}
         />
         <StatCard
           icon={<TrendingUp size={14} />}
-          label="平均活動量"
+          label={t("averageActivityLabel")}
           value={`${stats.stats.average}${unit}`}
         />
         <StatCard
           icon={<BarChart3 size={14} />}
-          label="最大活動量"
+          label={t("maxActivityLabel")}
           value={`${stats.stats.max}${unit}`}
         />
       </div>
@@ -129,7 +131,9 @@ export function GoalStatsDetail({
       {/* 直近の日次記録(最新14日分) */}
       {stats.dailyRecords.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-medium text-gray-500 mb-1.5">直近の記録</p>
+          <p className="text-xs font-medium text-gray-500 mb-1.5">
+            {t("recentRecordsLabel")}
+          </p>
           <div className="flex gap-1">
             {stats.dailyRecords.slice(-14).map((record) => (
               <div
@@ -158,15 +162,15 @@ export function GoalStatsDetail({
           <div className="flex gap-3 mt-1 text-[10px] text-gray-400">
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-sm bg-green-400" />
-              達成
+              {t("achievedStatus")}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-sm bg-yellow-300" />
-              活動あり
+              {t("activeStatus")}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-sm bg-gray-200" />
-              未活動
+              {t("inactiveStatus")}
             </span>
           </div>
         </div>

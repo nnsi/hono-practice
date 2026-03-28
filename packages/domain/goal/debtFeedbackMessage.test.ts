@@ -7,6 +7,16 @@ import {
 } from "./debtFeedbackMessage";
 import type { DebtFeedbackResult } from "./goalDebtFeedback";
 
+const mockT = (key: string, params?: Record<string, unknown>): string => {
+  let result = key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      result = result.replace(`{{${k}}}`, String(v));
+    }
+  }
+  return result;
+};
+
 const base: DebtFeedbackResult = {
   goalLabel: null,
   balanceBefore: 0,
@@ -23,29 +33,26 @@ const base: DebtFeedbackResult = {
 describe("buildDebtFeedbackMessage", () => {
   test("目標達成 & 負債完済: 通常モード", () => {
     const r = { ...base, targetAchievedToday: true, debtCleared: true };
-    const msg = buildDebtFeedbackMessage([r], false);
-    expect(msg).toBe("目標達成 & 負債完済！");
+    const msg = buildDebtFeedbackMessage([r], false, mockT);
+    expect(msg).toBe("feedback:targetAchievedDebtCleared");
   });
 
   test("目標達成 & 負債完済: 褒めモード", () => {
     const r = { ...base, targetAchievedToday: true, debtCleared: true };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("すごい！");
-    expect(msg).toContain("🎉");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("targetAchievedDebtClearedPraise");
   });
 
   test("今日の目標達成: 褒めモード", () => {
     const r = { ...base, targetAchievedToday: true };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("やったね！");
-    expect(msg).toContain("✨");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("targetAchievedPraise");
   });
 
   test("負債完済: 褒めモード", () => {
     const r = { ...base, debtCleared: true, balanceBefore: -5 };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("お見事！");
-    expect(msg).toContain("💪");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("debtClearedPraise");
   });
 
   test("負債軽減: 褒めモード", () => {
@@ -55,16 +62,14 @@ describe("buildDebtFeedbackMessage", () => {
       balanceBefore: -10,
       balanceAfter: -5,
     };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("いい調子！");
-    expect(msg).toContain("📈");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("debtReducedPraise");
   });
 
   test("部分達成: 褒めモード", () => {
     const r = { ...base, savedAmount: 3 };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("えらい！");
-    expect(msg).toContain("👏");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("debtAvoidedPraise");
   });
 
   test("debtCapSaved: 褒めモード", () => {
@@ -75,32 +80,32 @@ describe("buildDebtFeedbackMessage", () => {
       balanceBefore: -10,
       balanceAfter: -8,
     };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("🛡️");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("debtCapSavedPraise");
   });
 
   test("貯金メッセージ: 褒めモード ON & balanceAfter > 0", () => {
     const r = { ...base, targetAchievedToday: true, balanceAfter: 5 };
-    const msg = buildDebtFeedbackMessage([r], true);
-    expect(msg).toContain("貯金 +5");
-    expect(msg).toContain("🏦");
+    const msg = buildDebtFeedbackMessage([r], true, mockT);
+    expect(msg).toContain("savingsBonus");
   });
 
   test("貯金メッセージ: 通常モードでは表示しない", () => {
     const r = { ...base, targetAchievedToday: true, balanceAfter: 5 };
-    const msg = buildDebtFeedbackMessage([r], false);
-    expect(msg).not.toContain("貯金");
+    const msg = buildDebtFeedbackMessage([r], false, mockT);
+    expect(msg).not.toContain("savingsBonus");
   });
 
   test("何も表示しない結果: nullを返す", () => {
-    const msg = buildDebtFeedbackMessage([base], false);
+    const msg = buildDebtFeedbackMessage([base], false, mockT);
     expect(msg).toBeNull();
   });
 
   test("goalLabel付き", () => {
     const r = { ...base, goalLabel: "筋トレ", targetAchievedToday: true };
-    const msg = buildDebtFeedbackMessage([r], false);
-    expect(msg).toBe("筋トレ: 今日の目標達成！");
+    const msg = buildDebtFeedbackMessage([r], false, mockT);
+    expect(msg).toContain("筋トレ:");
+    expect(msg).toContain("targetAchieved");
   });
 
   test("複数ゴール", () => {
@@ -111,9 +116,9 @@ describe("buildDebtFeedbackMessage", () => {
       debtCleared: true,
       balanceBefore: -3,
     };
-    const msg = buildDebtFeedbackMessage([r1, r2], false);
-    expect(msg).toContain("A: 今日の目標達成！");
-    expect(msg).toContain("B: 負債完済！");
+    const msg = buildDebtFeedbackMessage([r1, r2], false, mockT);
+    expect(msg).toContain("A:");
+    expect(msg).toContain("B:");
   });
 });
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Lock } from "lucide-react-native";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
@@ -13,6 +14,7 @@ import { ApiKeyList } from "./ApiKeyList";
 import { CreateApiKeyDialog } from "./CreateApiKeyDialog";
 
 export function ApiKeyManager({ shadow }: { shadow: object }) {
+  const { t } = useTranslation("settings");
   const { data: subscription, isLoading: subLoading } = useSubscription();
   const canUseApiKey = subscription?.canUseApiKey ?? false;
   const { data: apiKeysData, isLoading: keysLoading } = useApiKeys({
@@ -42,11 +44,11 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
         <View className="flex-row items-center gap-2 mb-1">
           <Lock size={16} color="#6b7280" />
           <Text className="text-sm font-medium text-gray-500">
-            プレミアムプラン限定機能
+            {t("premiumFeature")}
           </Text>
         </View>
         <Text className="text-sm text-gray-500 leading-relaxed">
-          APIキー機能はプレミアムプラン以上のユーザーのみご利用いただけます。プランをアップグレードすることで、外部アプリケーションからのアクセスが可能になります。
+          {t("premiumFeatureDescription")}
         </Text>
       </View>
     );
@@ -59,14 +61,16 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
     >
       <View className="flex-row items-center justify-between px-4 py-3">
         <Text className="text-sm text-gray-600 flex-1 mr-3">
-          外部アプリケーションからアクセスするためのAPIキーを管理します
+          {t("apiKeyManagement")}
         </Text>
         <TouchableOpacity
           className="px-3 py-1.5 bg-stone-900 rounded-lg"
           onPress={() => setShowCreateDialog(true)}
           activeOpacity={0.7}
         >
-          <Text className="text-sm text-white font-medium">+ 新規作成</Text>
+          <Text className="text-sm text-white font-medium">
+            {t("createNewKey")}
+          </Text>
         </TouchableOpacity>
       </View>
 

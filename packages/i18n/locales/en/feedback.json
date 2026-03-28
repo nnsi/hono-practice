@@ -1,0 +1,15 @@
+{
+  "targetAchievedDebtClearedPraise": "Amazing! Goal achieved & debt cleared! 🎉",
+  "targetAchievedDebtCleared": "Goal achieved & debt cleared!",
+  "targetAchievedPraise": "Great job! Today's goal achieved! ✨",
+  "targetAchieved": "Today's goal achieved!",
+  "debtClearedPraise": "Well done! Debt cleared! 💪 ({{before}} → 0)",
+  "debtCleared": "Debt cleared! ({{before}} → 0)",
+  "debtReducedPraise": "Nice! Debt reduced 📈 ({{before}} → {{after}})",
+  "debtReduced": "Debt reduced: {{before}} → {{after}}",
+  "debtAvoidedPraise": "Great! Avoided {{amount}} unit(s) of debt 👏",
+  "debtAvoided": "Partial: avoided {{amount}} unit(s) of debt",
+  "debtCapSavedPraise": "(Cap saved {{amount}} unit(s) 🛡️)",
+  "debtCapSaved": "(Cap saved {{amount}} unit(s))",
+  "savingsBonus": "Savings +{{amount}}! You're ahead 🏦"
+}

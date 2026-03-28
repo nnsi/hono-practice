@@ -1,16 +1,11 @@
-import {
-  createPrivacyPolicySections,
-  privacyPolicyTitle,
-  termsOfServiceSections,
-  termsOfServiceTitle,
-} from "@packages/frontend-shared";
+import type { LegalType } from "@packages/frontend-shared/legal";
+import { getLegalContent } from "@packages/frontend-shared/legal";
+import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || "";
-
-type LegalType = "privacy" | "terms";
 
 type LegalModalProps = {
   visible: boolean;
@@ -19,11 +14,10 @@ type LegalModalProps = {
 };
 
 export function LegalModal({ visible, type, onClose }: LegalModalProps) {
-  const title = type === "privacy" ? privacyPolicyTitle : termsOfServiceTitle;
-  const sections =
-    type === "privacy"
-      ? createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL })
-      : termsOfServiceSections;
+  const { i18n } = useTranslation();
+  const { title, sections } = getLegalContent(type, i18n.language, {
+    contactEmail: CONTACT_EMAIL,
+  });
 
   return (
     <ModalOverlay visible={visible} onClose={onClose} title={title}>

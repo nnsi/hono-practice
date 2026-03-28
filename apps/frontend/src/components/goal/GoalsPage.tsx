@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Plus } from "lucide-react";
 
@@ -8,6 +9,7 @@ import { GoalHeatmap } from "./GoalHeatmap";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
+  const { t } = useTranslation("goal");
   const {
     activeTab,
     setActiveTab,
@@ -42,7 +44,7 @@ export function GoalsPage() {
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            アクティブ
+            {t("tabActive")}
           </button>
           <button
             type="button"
@@ -53,7 +55,7 @@ export function GoalsPage() {
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            終了済み
+            {t("tabEnded")}
           </button>
         </div>
       </div>
@@ -66,7 +68,7 @@ export function GoalsPage() {
 
             {currentGoals.length === 0 && (
               <div className="text-center text-gray-400 py-8">
-                <p className="text-sm">アクティブな目標がありません</p>
+                <p className="text-sm">{t("noActiveGoals")}</p>
               </div>
             )}
 
@@ -100,7 +102,7 @@ export function GoalsPage() {
                 className="text-gray-400 group-hover:text-gray-600"
               />
               <span className="text-sm text-gray-500 group-hover:text-gray-700">
-                新規目標を追加
+                {t("addNewGoal")}
               </span>
             </button>
           </div>
@@ -110,7 +112,7 @@ export function GoalsPage() {
           <div className="space-y-4">
             {pastGoals.length === 0 && (
               <div className="text-center text-gray-400 py-8">
-                <p className="text-sm">終了済みの目標はありません</p>
+                <p className="text-sm">{t("noEndedGoals")}</p>
               </div>
             )}
 

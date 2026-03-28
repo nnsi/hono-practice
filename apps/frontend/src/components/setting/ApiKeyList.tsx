@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import type { ApiKeyResponse } from "@packages/types/response";
 import dayjs from "dayjs";
 import { Loader2, Trash2 } from "lucide-react";
@@ -13,6 +14,7 @@ export function ApiKeyList({
   isLoading: boolean;
   onDelete: (id: string) => Promise<unknown>;
 }) {
+  const { t } = useTranslation("settings");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ export function ApiKeyList({
   }
 
   if (apiKeys.length === 0) {
-    return <p className="text-sm text-gray-400 py-2">APIキーがありません</p>;
+    return <p className="text-sm text-gray-400 py-2">{t("noApiKeys")}</p>;
   }
 
   return (
@@ -59,14 +61,14 @@ export function ApiKeyList({
                   disabled={deletingId === apiKey.id}
                   className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
                 >
-                  {deletingId === apiKey.id ? "..." : "削除"}
+                  {deletingId === apiKey.id ? "..." : t("apiKeyDeleteConfirm")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmDeleteId(null)}
                   className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                 >
-                  取消
+                  {t("apiKeyDeleteCancel")}
                 </button>
               </div>
             ) : (
@@ -85,10 +87,14 @@ export function ApiKeyList({
               : `${"*".repeat(8)}...${apiKey.key.slice(-4)}`}
           </div>
           <div className="flex gap-3 text-xs text-gray-400">
-            <span>作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}</span>
+            <span>
+              {t("apiKeyCreated")}:{" "}
+              {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}
+            </span>
             {apiKey.lastUsedAt && (
               <span>
-                最終使用: {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}
+                {t("apiKeyLastUsed")}:{" "}
+                {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}
               </span>
             )}
           </div>

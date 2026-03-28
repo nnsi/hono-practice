@@ -1,0 +1,23 @@
+{
+  "save": "記録する",
+  "saving": "記録中...",
+  "memo": "メモ",
+  "memoPlaceholder": "メモを入力...",
+  "kind": "種類",
+  "quantity": "数量",
+  "manualEntry": "手動入力",
+  "timer": "タイマー",
+  "counter": "カウンタ",
+  "measuring": "計測中...",
+  "stop": "停止",
+  "resume": "再開",
+  "start": "開始",
+  "reset": "リセット",
+  "elapsedTime": "記録時間:",
+  "todayTotal": "今日の合計:",
+  "binaryInstruction": "バイナリモードを使うには、アクティビティに「種類」を追加してください。",
+  "today": "今日:",
+  "recorded": "記録済み ✓",
+  "selectItem": "項目を選択してください",
+  "tapToRecord": "タップして記録"
+}

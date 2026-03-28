@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { useLiveQuery } from "dexie-react-hooks";
 import { X } from "lucide-react";
 
@@ -16,6 +17,7 @@ export function TaskCreateDialog({
   onSuccess: () => void;
   defaultDate?: string;
 }) {
+  const { t } = useTranslation("task");
   const {
     title,
     setTitle,
@@ -57,7 +59,7 @@ export function TaskCreateDialog({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">新しいタスクを作成</h2>
+          <h2 className="text-lg font-bold">{t("create.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -71,13 +73,13 @@ export function TaskCreateDialog({
           {/* タイトル */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              タイトル <span className="text-red-500">*</span>
+              {t("create.label.title")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="タスクのタイトルを入力"
+              placeholder={t("create.placeholder.title")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -85,7 +87,7 @@ export function TaskCreateDialog({
           {/* アクティビティ */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              アクティビティ（任意）
+              {t("create.label.activity")}
             </label>
             <select
               value={activityId ?? ""}
@@ -96,7 +98,7 @@ export function TaskCreateDialog({
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">なし</option>
+              <option value="">{t("create.none")}</option>
               {activities.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.emoji} {a.name}
@@ -109,7 +111,7 @@ export function TaskCreateDialog({
           {activityId && activityKinds && activityKinds.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                種類（任意）
+                {t("create.label.kind")}
               </label>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -121,7 +123,7 @@ export function TaskCreateDialog({
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  なし
+                  {t("create.none")}
                 </button>
                 {activityKinds.map((kind) => (
                   <button
@@ -152,7 +154,7 @@ export function TaskCreateDialog({
           {activityId && selectedActivity && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                数量
+                {t("create.label.quantity")}
                 {selectedActivity.quantityUnit && (
                   <span className="ml-1 text-gray-500">
                     ({selectedActivity.quantityUnit})
@@ -168,7 +170,7 @@ export function TaskCreateDialog({
                     e.target.value !== "" ? Number(e.target.value) : null,
                   )
                 }
-                placeholder="数量を入力（任意）"
+                placeholder={t("create.placeholder.quantity")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -178,18 +180,18 @@ export function TaskCreateDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                開始日
+                {t("create.label.startDate")}
               </label>
               <DatePickerField value={startDate} onChange={setStartDate} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                期限（任意）
+                {t("create.label.dueDate")}
               </label>
               <DatePickerField
                 value={dueDate}
                 onChange={setDueDate}
-                placeholder="未設定"
+                placeholder={t("create.placeholder.dueDate")}
                 allowClear
               />
             </div>
@@ -198,12 +200,12 @@ export function TaskCreateDialog({
           {/* メモ */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              メモ（任意）
+              {t("create.label.memo")}
             </label>
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder="タスクに関するメモを入力"
+              placeholder={t("create.placeholder.memo")}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -216,14 +218,14 @@ export function TaskCreateDialog({
               onClick={onClose}
               className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              キャンセル
+              {t("delete.cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
               className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? "作成中..." : "作成"}
+              {isSubmitting ? t("create.submitting") : t("create.submit")}
             </button>
           </div>
         </form>

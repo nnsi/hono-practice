@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import {
   Outlet,
   createRootRoute,
@@ -32,6 +33,7 @@ function RootComponent() {
     register,
     logout,
   } = useAuth();
+  const { t } = useTranslation("common");
   const [authTab, setAuthTab] = useState<AuthTab>("login");
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
@@ -80,7 +82,7 @@ function RootComponent() {
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              ログイン
+              {t("auth.login")}
             </button>
             <button
               type="button"
@@ -91,7 +93,7 @@ function RootComponent() {
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              新規登録
+              {t("auth.signUp")}
             </button>
           </div>
 
@@ -116,14 +118,14 @@ function RootComponent() {
               onClick={() => setLegalModal("privacy")}
               className="hover:text-gray-600 underline"
             >
-              プライバシーポリシー
+              {t("auth.privacyPolicy")}
             </button>
             <button
               type="button"
               onClick={() => setLegalModal("terms")}
               className="hover:text-gray-600 underline"
             >
-              利用規約
+              {t("auth.termsOfService")}
             </button>
           </div>
           {legalModal && (

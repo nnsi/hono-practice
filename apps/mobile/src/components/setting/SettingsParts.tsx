@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 export type ShadowStyle = {
@@ -67,7 +68,7 @@ export function InlineConfirm({
   message,
   onConfirm,
   onCancel,
-  confirmLabel = "削除する",
+  confirmLabel,
   error,
   disabled = false,
 }: {
@@ -78,6 +79,8 @@ export function InlineConfirm({
   error?: string;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation("settings");
+  const label = confirmLabel ?? t("deleteAccountButton");
   return (
     <View className="mx-3 my-2 bg-red-50 border border-red-200 rounded-lg p-4">
       <Text className="text-sm text-red-700 font-medium mb-3">{message}</Text>
@@ -91,7 +94,7 @@ export function InlineConfirm({
           disabled={disabled}
         >
           <Text className="text-sm text-white font-medium">
-            {disabled ? "処理中..." : confirmLabel}
+            {disabled ? "処理中..." : label}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -99,7 +102,7 @@ export function InlineConfirm({
           onPress={onCancel}
           disabled={disabled}
         >
-          <Text className="text-sm text-gray-700">キャンセル</Text>
+          <Text className="text-sm text-gray-700">{t("cancel")}</Text>
         </TouchableOpacity>
       </View>
     </View>

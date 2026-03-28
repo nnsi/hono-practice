@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   AlertTriangle,
@@ -32,6 +33,7 @@ import { SETTINGS_KEY } from "./useAppSettings";
 const API_URL = getApiUrl();
 
 export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -43,15 +45,13 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
 
   return (
     <>
-      <Section icon={Database} label="データ管理" shadow={shadow}>
+      <Section icon={Database} label={t("dataManagement")} shadow={shadow}>
         <TouchableOpacity
           className="flex-row items-center px-4 py-3"
           onPress={() => setShowImport(true)}
         >
           <Upload size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600">
-            CSVから活動記録をインポート
-          </Text>
+          <Text className="ml-3 text-base text-blue-600">{t("importCSV")}</Text>
         </TouchableOpacity>
         <Divider />
         <TouchableOpacity
@@ -59,14 +59,12 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           onPress={() => setShowExport(true)}
         >
           <Download size={18} color="#3b82f6" />
-          <Text className="ml-3 text-base text-blue-600">
-            活動記録をCSVにエクスポート
-          </Text>
+          <Text className="ml-3 text-base text-blue-600">{t("exportCSV")}</Text>
         </TouchableOpacity>
         <Divider />
         <View className="px-4 py-3">
           <Text className="text-xs text-gray-500 leading-relaxed">
-            アクティビティや記録データはローカルストレージに保存されています。サーバーとの同期によりデータは復元可能です。
+            {t("localStorageNote")}
           </Text>
         </View>
         <Divider />
@@ -77,12 +75,13 @@ export function DataManagementSection({ shadow }: { shadow: ShadowStyle }) {
           >
             <Trash2 size={18} color="#ef4444" />
             <Text className="ml-3 text-base text-red-500">
-              ローカルデータを削除
+              {t("deleteLocalData")}
             </Text>
           </TouchableOpacity>
         ) : (
           <InlineConfirm
-            message="ローカルに保存されたデータをすべて削除します。次回アクセス時にサーバーから再同期されます。"
+            message={t("deleteLocalDataConfirm")}
+            confirmLabel={t("deleteLocalDataButton")}
             onConfirm={handleClearData}
             onCancel={() => setShowClearConfirm(false)}
           />
@@ -108,6 +107,7 @@ export function AccountAndDangerSection({
   shadow: ShadowStyle;
   logout: () => void;
 }) {
+  const { t } = useTranslation("settings");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -135,14 +135,14 @@ export function AccountAndDangerSection({
 
   return (
     <>
-      <Section icon={User} label="アカウント" shadow={shadow}>
+      <Section icon={User} label={t("account")} shadow={shadow}>
         {!showLogoutConfirm ? (
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
             onPress={() => setShowLogoutConfirm(true)}
           >
             <LogOut size={18} color="#ef4444" />
-            <Text className="ml-3 text-base text-red-500">ログアウト</Text>
+            <Text className="ml-3 text-base text-red-500">{t("logout")}</Text>
           </TouchableOpacity>
         ) : (
           <InlineConfirm
@@ -152,12 +152,16 @@ export function AccountAndDangerSection({
               setShowLogoutConfirm(false);
             }}
             onCancel={() => setShowLogoutConfirm(false)}
-            confirmLabel="ログアウト"
+            confirmLabel={t("logout")}
           />
         )}
       </Section>
 
-      <Section icon={AlertTriangle} label="危険な操作" shadow={shadow}>
+      <Section
+        icon={AlertTriangle}
+        label={t("dangerousOperations")}
+        shadow={shadow}
+      >
         {!showDeleteConfirm ? (
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
@@ -165,12 +169,13 @@ export function AccountAndDangerSection({
           >
             <AlertTriangle size={18} color="#ef4444" />
             <Text className="ml-3 text-base text-red-500">
-              アカウントを削除
+              {t("deleteAccount")}
             </Text>
           </TouchableOpacity>
         ) : (
           <InlineConfirm
-            message="アカウントを削除すると全データが失われます。この操作は取り消せません。"
+            message={t("deleteAccountConfirm")}
+            confirmLabel={t("deleteAccountButton")}
             onConfirm={handleDeleteAccount}
             onCancel={() => {
               setShowDeleteConfirm(false);

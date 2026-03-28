@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react-native";
 import {
   Pressable,
@@ -38,6 +39,7 @@ export function ActivitySelectOverlay({
   onSelect,
   onClose,
 }: ActivitySelectOverlayProps) {
+  const { t } = useTranslation("activity");
   return (
     <OverlayPortal>
       <View className="flex-1">
@@ -65,7 +67,7 @@ export function ActivitySelectOverlay({
           >
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
               <Text className="text-lg font-bold text-gray-900">
-                アクティビティを選択
+                {t("daily.selectActivity")}
               </Text>
               <TouchableOpacity onPress={onClose} className="p-1.5 rounded-lg">
                 <X size={20} color="#78716c" />
@@ -75,7 +77,7 @@ export function ActivitySelectOverlay({
               {activities.length === 0 ? (
                 <View className="items-center py-8">
                   <Text className="text-gray-400 text-sm">
-                    アクティビティがありません
+                    {t("daily.noActivities")}
                   </Text>
                 </View>
               ) : (

@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Crown, Loader2 } from "lucide-react";
 
 import { useSubscription } from "../../hooks/useSubscription";
@@ -7,13 +8,14 @@ import { useUpgrade } from "../subscription/useUpgrade";
 export function SubscriptionSection() {
   const { data: subscription, isLoading } = useSubscription();
   const upgrade = useUpgrade();
+  const { t } = useTranslation("settings");
 
   if (isLoading) {
     return (
       <section>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
           <Crown size={14} />
-          プラン
+          {t("plan")}
         </h2>
         <div className="rounded-xl border border-gray-200 p-6 flex items-center justify-center">
           <Loader2 size={20} className="animate-spin text-gray-400" />
@@ -31,7 +33,7 @@ export function SubscriptionSection() {
     <section>
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
         <Crown size={14} />
-        プラン
+        {t("plan")}
       </h2>
       <div className="rounded-xl border border-gray-200 p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -43,25 +45,26 @@ export function SubscriptionSection() {
                   : "bg-gray-100 text-gray-600"
               }`}
             >
-              {isPremium ? "Pro" : "Free"}
+              {isPremium ? t("planPro") : t("planFree")}
             </span>
             {subscription?.status === "trial" && (
               <span className="text-xs text-blue-600 font-medium">
-                トライアル中
+                {t("trialStatus")}
               </span>
             )}
           </div>
         </div>
 
         {isPremium && periodEnd && (
-          <p className="text-sm text-gray-500">次回更新日: {periodEnd}</p>
+          <p className="text-sm text-gray-500">
+            {t("nextUpdateDate")}: {periodEnd}
+          </p>
         )}
 
         {!isPremium && (
           <div className="space-y-2">
             <p className="text-sm text-gray-500 leading-relaxed">
-              Pro
-              にアップグレードすると、APIキー管理や音声記録など全機能が使えるようになります。
+              {t("upgradeText")}
             </p>
             <button
               type="button"
@@ -69,7 +72,7 @@ export function SubscriptionSection() {
               className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
               <Crown size={14} />
-              Pro にアップグレード
+              {t("upgradeButton")}
             </button>
           </div>
         )}

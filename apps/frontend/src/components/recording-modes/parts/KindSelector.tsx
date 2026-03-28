@@ -1,3 +1,5 @@
+import { useTranslation } from "@packages/i18n";
+
 type KindSelectorProps = {
   kinds: { id: string; name: string; color: string | null }[];
   selectedKindId: string | null;
@@ -9,9 +11,12 @@ export function KindSelector({
   selectedKindId,
   onSelect,
 }: KindSelectorProps) {
+  const { t } = useTranslation("recording");
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-600">種類</label>
+      <label className="block text-sm font-medium text-gray-600">
+        {t("kind")}
+      </label>
       <div className="flex flex-wrap gap-2">
         {kinds.map((kind) => (
           <button

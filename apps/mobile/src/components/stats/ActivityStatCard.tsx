@@ -10,6 +10,7 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Text, View } from "react-native";
 
@@ -28,6 +29,8 @@ export function ActivityStatCard({
   month: string;
   goalLines: GoalLine[];
 }) {
+  const { t } = useTranslation("stats");
+
   const kindColors = useMemo(() => {
     const usedColors = new Set<string>();
     const colorMap: Record<string, string> = {};
@@ -51,11 +54,11 @@ export function ActivityStatCard({
         );
       }
       return {
-        date: `${dayjs(date).date()}日`,
+        date: `${dayjs(date).date()}${t("dateLabel")}`,
         ...kindsData,
       };
     });
-  }, [allDates, stat.kinds]);
+  }, [allDates, stat.kinds, t]);
 
   const summary = useMemo(() => {
     const totalQuantity = stat.kinds.reduce((sum, k) => sum + k.total, 0);
@@ -79,7 +82,7 @@ export function ActivityStatCard({
   );
 
   const isSingleUnnamedKind =
-    stat.kinds.length === 1 && stat.kinds[0].name === "未指定";
+    stat.kinds.length === 1 && stat.kinds[0].name === t("defaultKind");
 
   return (
     <View className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
@@ -89,7 +92,8 @@ export function ActivityStatCard({
           {stat.name}
           {stat.showCombinedStats && stat.total != null && (
             <Text className="text-sm font-normal text-gray-500">
-              {"  "}合計:{" "}
+              {"  "}
+              {t("kindTotalLabel")}{" "}
               {formatQuantityWithUnit(stat.total, stat.quantityUnit)}
             </Text>
           )}

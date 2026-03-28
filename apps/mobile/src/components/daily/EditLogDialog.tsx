@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -36,6 +37,7 @@ export function EditLogDialog({
   activity: Activity | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("activity");
   const iconBlobMap = useIconBlobMap();
 
   const {
@@ -69,7 +71,7 @@ export function EditLogDialog({
             fontSize="text-xl"
           />
           <Text className="text-lg font-bold text-gray-900">
-            {activity?.name ?? "\u4e0d\u660e"}
+            {activity?.name ?? t("log.unknownActivity")}
           </Text>
         </>
       }
@@ -82,7 +84,9 @@ export function EditLogDialog({
             onPress={handleSave}
             disabled={isSubmitting}
           >
-            <Text className="text-white font-medium">保存</Text>
+            <Text className="text-white font-medium">
+              {t("log.saveButton")}
+            </Text>
           </TouchableOpacity>
 
           {!showDeleteConfirm ? (
@@ -100,7 +104,9 @@ export function EditLogDialog({
               onPress={handleDelete}
               disabled={isSubmitting}
             >
-              <Text className="text-white font-medium">削除</Text>
+              <Text className="text-white font-medium">
+                {t("log.deleteButton")}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -110,7 +116,9 @@ export function EditLogDialog({
         {/* Kind selector */}
         {kinds.length > 0 && (
           <View>
-            <Text className="text-sm font-medium text-gray-600 mb-2">種類</Text>
+            <Text className="text-sm font-medium text-gray-600 mb-2">
+              {t("log.kindLabel")}
+            </Text>
             <View className="flex-row flex-wrap gap-2">
               {kinds.map((kind) => (
                 <TouchableOpacity
@@ -150,7 +158,8 @@ export function EditLogDialog({
         {/* Quantity */}
         <View>
           <Text className="text-sm font-medium text-gray-600 mb-1">
-            数量{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
+            {t("log.quantityLabel")}
+            {activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
           <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-base"
@@ -165,12 +174,14 @@ export function EditLogDialog({
 
         {/* Memo */}
         <View>
-          <Text className="text-sm font-medium text-gray-600 mb-1">メモ</Text>
+          <Text className="text-sm font-medium text-gray-600 mb-1">
+            {t("log.memoLabel")}
+          </Text>
           <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             value={memo}
             onChangeText={setMemo}
-            placeholder="メモを入力..."
+            placeholder={t("log.memoPlaceholder")}
             multiline
             numberOfLines={2}
           />

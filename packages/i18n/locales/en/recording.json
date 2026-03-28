@@ -1,0 +1,23 @@
+{
+  "save": "Record",
+  "saving": "Recording...",
+  "memo": "Memo",
+  "memoPlaceholder": "Enter memo...",
+  "kind": "Kind",
+  "quantity": "Quantity",
+  "manualEntry": "Manual",
+  "timer": "Timer",
+  "counter": "Counter",
+  "measuring": "Measuring...",
+  "stop": "Stop",
+  "resume": "Resume",
+  "start": "Start",
+  "reset": "Reset",
+  "elapsedTime": "Elapsed:",
+  "todayTotal": "Today's total:",
+  "binaryInstruction": "To use Binary mode, add kinds to the activity.",
+  "today": "Today:",
+  "recorded": "Recorded ✓",
+  "selectItem": "Please select an item",
+  "tapToRecord": "Tap to record"
+}

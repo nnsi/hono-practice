@@ -1,4 +1,5 @@
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import {
   ChevronDown,
@@ -68,6 +69,7 @@ export function GoalCardHeader({
   onDeleteCancel: () => void;
   onHandleDelete: () => void;
 }) {
+  const { t } = useTranslation("goal");
   return (
     <TouchableOpacity
       className="w-full px-4 py-3"
@@ -152,7 +154,7 @@ export function GoalCardHeader({
                 onPress={onDeactivate}
               >
                 <Text className="text-[10px] font-medium text-orange-600">
-                  終了する
+                  {t("cardDeactivate")}
                 </Text>
               </TouchableOpacity>
             )}

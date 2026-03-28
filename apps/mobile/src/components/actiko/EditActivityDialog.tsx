@@ -1,4 +1,5 @@
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
+import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
@@ -65,13 +66,15 @@ export function EditActivityDialog({
     updateKindColor,
   } = useEditActivityDialog(activity, onUpdated, onClose);
 
+  const { t } = useTranslation("actiko");
+
   if (!activity) return null;
 
   return (
     <ModalOverlay
       visible={visible}
       onClose={onClose}
-      title="アクティビティ編集"
+      title={t("editTitle")}
       footer={
         <View className="flex-row gap-2">
           <TouchableOpacity
@@ -82,7 +85,7 @@ export function EditActivityDialog({
             disabled={isSubmitting || !name.trim()}
           >
             <Text className="text-white font-bold text-base">
-              {isSubmitting ? "保存中..." : "保存"}
+              {isSubmitting ? t("saving") : t("save")}
             </Text>
           </TouchableOpacity>
 
@@ -91,7 +94,9 @@ export function EditActivityDialog({
               className="px-4 py-3 rounded-xl items-center border border-red-300"
               onPress={() => setShowDeleteConfirm(true)}
             >
-              <Text className="text-red-500 font-medium text-sm">削除</Text>
+              <Text className="text-red-500 font-medium text-sm">
+                {t("delete")}
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -101,7 +106,9 @@ export function EditActivityDialog({
               onPress={handleDelete}
               disabled={isSubmitting}
             >
-              <Text className="text-white font-medium text-sm">本当に削除</Text>
+              <Text className="text-white font-medium text-sm">
+                {t("confirmDelete")}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -121,24 +128,24 @@ export function EditActivityDialog({
         />
 
         <View>
-          <Text className="text-sm text-gray-500 mb-1">名前</Text>
+          <Text className="text-sm text-gray-500 mb-1">{t("name")}</Text>
           <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={name}
-            onChangeText={(t) => {
-              setName(t);
+            onChangeText={(text) => {
+              setName(text);
               if (error) setError("");
             }}
           />
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 mb-1">単位（任意）</Text>
+          <Text className="text-sm text-gray-500 mb-1">{t("unitLabel")}</Text>
           <IMESafeTextInput
             className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             value={quantityUnit}
             onChangeText={setQuantityUnit}
-            placeholder="例: km, 回, 分"
+            placeholder={t("unitExamplePlaceholder")}
           />
         </View>
 
@@ -150,7 +157,9 @@ export function EditActivityDialog({
         />
 
         <View className="flex-row items-center justify-between py-2">
-          <Text className="text-sm text-gray-700">統計を合算表示</Text>
+          <Text className="text-sm text-gray-700">
+            {t("combinedStatsLabel")}
+          </Text>
           <Switch
             value={showCombinedStats}
             onValueChange={setShowCombinedStats}
@@ -158,7 +167,7 @@ export function EditActivityDialog({
         </View>
 
         <View>
-          <Text className="text-sm text-gray-500 mb-2">種類</Text>
+          <Text className="text-sm text-gray-500 mb-2">{t("kinds")}</Text>
           {kindEntries.map((kind, index) => (
             <View
               key={kind.id ?? `new-${index}`}
@@ -167,8 +176,8 @@ export function EditActivityDialog({
               <IMESafeTextInput
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-base"
                 value={kind.name}
-                onChangeText={(t) => updateKindName(index, t)}
-                placeholder="種類名"
+                onChangeText={(text) => updateKindName(index, text)}
+                placeholder={t("kindPlaceholder")}
               />
               <KindColorPicker
                 color={kind.color}
@@ -184,7 +193,7 @@ export function EditActivityDialog({
           ))}
           <TouchableOpacity onPress={addKind}>
             <Text className="text-sm text-blue-600 font-medium">
-              + 種類を追加
+              {t("addKind")}
             </Text>
           </TouchableOpacity>
         </View>

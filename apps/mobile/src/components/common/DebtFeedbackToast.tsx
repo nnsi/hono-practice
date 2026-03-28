@@ -7,6 +7,7 @@ import {
 } from "@packages/domain/goal/debtFeedbackMessage";
 import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
 import { onDebtFeedback } from "@packages/frontend-shared";
+import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, Text, View } from "react-native";
 
@@ -14,6 +15,7 @@ const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;
 
 export function DebtFeedbackToast() {
+  const { t } = useTranslation("feedback");
   const [results, setResults] = useState<DebtFeedbackResult[] | null>(null);
   const [praiseMode, setPraiseMode] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
@@ -108,7 +110,7 @@ export function DebtFeedbackToast() {
 
   if (!results) return null;
 
-  const message = buildDebtFeedbackMessage(results, praiseMode);
+  const message = buildDebtFeedbackMessage(results, praiseMode, t);
   if (!message) return null;
 
   const bgClass = praiseMode ? "bg-amber-500" : "bg-emerald-600";

@@ -1,15 +1,15 @@
 import { useState } from "react";
 
 import type { DayTargets } from "@packages/domain/goal/dayTargets";
-import { Trash2, X } from "lucide-react-native";
-import { Switch, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "@packages/i18n";
+import { X } from "lucide-react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { ActivityIcon } from "../common/ActivityIcon";
-import { DatePickerField } from "../common/DatePickerField";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
-import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
-import { DayTargetsInput, buildDayTargets } from "./DayTargetsInput";
+import { buildDayTargets } from "./DayTargetsInput";
+import { EditGoalButtons } from "./EditGoalButtons";
+import { EditGoalFields } from "./EditGoalFields";
 import type { Activity, UpdateGoalPayload } from "./types";
 
 type GoalForEdit = {
@@ -36,6 +36,7 @@ export function EditGoalForm({
   onSave: (payload: UpdateGoalPayload) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const { t } = useTranslation("goal");
   const iconBlobMap = useIconBlobMap();
   const [target, setTarget] = useState(String(goal.dailyTargetQuantity));
   const [startDate, setStartDate] = useState(goal.startDate);
@@ -48,9 +49,7 @@ export function EditGoalForm({
   >(() => {
     if (!goal.dayTargets) return {};
     const vals: Record<string, string> = {};
-    for (const [k, v] of Object.entries(goal.dayTargets)) {
-      vals[k] = String(v);
-    }
+    for (const [k, v] of Object.entries(goal.dayTargets)) vals[k] = String(v);
     return vals;
   });
   const [debtCapEnabled, setDebtCapEnabled] = useState(goal.debtCap != null);
@@ -66,28 +65,26 @@ export function EditGoalForm({
     setErrorMsg("");
     const parsedTarget = Number(target);
     if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
-      setErrorMsg("日次目標は0より大きい数値を入力してください");
+      setErrorMsg(t("errorInvalidTarget"));
       return;
     }
     if (endDate && endDate < startDate) {
-      setErrorMsg("終了日は開始日より後の日付にしてください");
+      setErrorMsg(t("errorInvalidEndDate"));
       return;
     }
     const parsedDebtCap = debtCapEnabled ? Number(debtCapValue) : null;
-    if (debtCapEnabled) {
-      if (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0) {
-        setErrorMsg("負債上限は0より大きい数値を入力してください");
-        return;
-      }
+    if (
+      debtCapEnabled &&
+      (!Number.isFinite(parsedDebtCap) || (parsedDebtCap as number) <= 0)
+    ) {
+      setErrorMsg(t("errorInvalidDebtCap"));
+      return;
     }
     setSaving(true);
     try {
-      const dayTargets = dayTargetsEnabled
-        ? buildDayTargets(dayTargetValues)
-        : null;
       await onSave({
         dailyTargetQuantity: parsedTarget,
-        dayTargets,
+        dayTargets: dayTargetsEnabled ? buildDayTargets(dayTargetValues) : null,
         startDate,
         endDate: endDate || null,
         debtCap: parsedDebtCap,
@@ -119,7 +116,6 @@ export function EditGoalForm({
 
   return (
     <View className="rounded-xl border-2 border-blue-300 bg-blue-50/30 mb-3 p-4">
-      {/* Header */}
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center gap-2">
           <ActivityIcon
@@ -132,7 +128,7 @@ export function EditGoalForm({
             fontSize="text-xl"
           />
           <Text className="font-semibold text-sm text-gray-900">
-            {activity?.name ?? "不明なアクティビティ"}
+            {activity?.name ?? t("unknownActivity")}
           </Text>
         </View>
         <TouchableOpacity className="p-1" onPress={onCancel}>
@@ -140,136 +136,35 @@ export function EditGoalForm({
         </TouchableOpacity>
       </View>
 
-      {/* Daily target */}
-      <View className="mb-3">
-        <Text className="text-xs font-medium text-gray-600 mb-1">
-          日次目標{activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
-        </Text>
-        <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
-          value={target}
-          onChangeText={setTarget}
-          keyboardType="numeric"
-          selectTextOnFocus
-        />
-      </View>
+      <EditGoalFields
+        activity={activity}
+        target={target}
+        setTarget={setTarget}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        dayTargetsEnabled={dayTargetsEnabled}
+        setDayTargetsEnabled={setDayTargetsEnabled}
+        dayTargetValues={dayTargetValues}
+        setDayTargetValues={setDayTargetValues}
+        debtCapEnabled={debtCapEnabled}
+        setDebtCapEnabled={setDebtCapEnabled}
+        debtCapValue={debtCapValue}
+        setDebtCapValue={setDebtCapValue}
+        errorMsg={errorMsg}
+      />
 
-      {/* Dates */}
-      <View className="flex-row gap-3 mb-3">
-        <View className="flex-1">
-          <DatePickerField
-            value={startDate}
-            onChange={setStartDate}
-            label="開始日"
-          />
-        </View>
-        <View className="flex-1">
-          <OptionalDatePickerField
-            value={endDate}
-            onChange={setEndDate}
-            label="終了日"
-          />
-        </View>
-      </View>
-
-      {/* Day targets */}
-      <View className="mb-3">
-        <DayTargetsInput
-          enabled={dayTargetsEnabled}
-          onToggle={setDayTargetsEnabled}
-          values={dayTargetValues}
-          onChange={setDayTargetValues}
-          defaultTarget={target}
-        />
-      </View>
-
-      {/* Debt cap */}
-      <View className="mb-3">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-xs font-medium text-gray-600">
-            負債上限を設定
-          </Text>
-          <Switch
-            value={debtCapEnabled}
-            onValueChange={(v) => {
-              setDebtCapEnabled(v);
-              if (v && !debtCapValue) {
-                setDebtCapValue(String(Number(target) * 7));
-              }
-            }}
-          />
-        </View>
-        {debtCapEnabled && (
-          <View className="flex-row items-center gap-2 mt-1">
-            <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-base bg-white"
-              value={debtCapValue}
-              onChangeText={setDebtCapValue}
-              keyboardType="numeric"
-              selectTextOnFocus
-            />
-            <Text className="text-xs text-gray-500">
-              {activity?.quantityUnit ?? ""}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {errorMsg ? (
-        <Text className="text-red-500 text-sm mb-2">{errorMsg}</Text>
-      ) : null}
-
-      {/* Buttons */}
-      <View className="flex-row gap-2 pt-1">
-        {/* Save */}
-        <TouchableOpacity
-          className={`flex-1 py-2 rounded-lg items-center ${
-            saving ? "bg-gray-400" : "bg-gray-900"
-          }`}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          <Text className="text-white text-sm font-medium">保存</Text>
-        </TouchableOpacity>
-
-        {/* Deactivate (2-step) */}
-        {!showDeactivateConfirm ? (
-          <TouchableOpacity
-            className="px-4 py-2 bg-orange-500 rounded-lg items-center"
-            onPress={() => setShowDeactivateConfirm(true)}
-            disabled={saving}
-          >
-            <Text className="text-white text-sm font-medium">終了</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            className="px-4 py-2 bg-red-600 rounded-lg items-center"
-            onPress={handleDeactivate}
-            disabled={saving}
-          >
-            <Text className="text-white text-sm font-medium">本当に終了</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Delete (2-step) */}
-        {!showDeleteConfirm ? (
-          <TouchableOpacity
-            className="px-3 py-2 border border-red-300 rounded-lg items-center justify-center"
-            onPress={() => setShowDeleteConfirm(true)}
-            disabled={saving}
-          >
-            <Trash2 size={14} color="#ef4444" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            className="px-3 py-2 bg-red-500 rounded-lg items-center justify-center"
-            onPress={handleDelete}
-            disabled={saving}
-          >
-            <Text className="text-white text-sm">削除</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <EditGoalButtons
+        saving={saving}
+        showDeactivateConfirm={showDeactivateConfirm}
+        showDeleteConfirm={showDeleteConfirm}
+        onSave={handleSave}
+        onDeactivateRequest={() => setShowDeactivateConfirm(true)}
+        onDeactivateConfirm={handleDeactivate}
+        onDeleteRequest={() => setShowDeleteConfirm(true)}
+        onDeleteConfirm={handleDelete}
+      />
     </View>
   );
 }

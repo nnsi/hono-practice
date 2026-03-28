@@ -1,8 +1,8 @@
 export { buildDayTargets } from "@packages/domain/goal/dayTargets";
 
+import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TextInput, View } from "react-native";
 
-const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 const DAY_KEYS = ["1", "2", "3", "4", "5", "6", "7"] as const;
 
 export function DayTargetsInput({
@@ -18,10 +18,23 @@ export function DayTargetsInput({
   onChange: (values: Record<string, string>) => void;
   defaultTarget: string;
 }) {
+  const { t } = useTranslation("goal");
+  const DAY_LABELS = [
+    t("dayMon"),
+    t("dayTue"),
+    t("dayWed"),
+    t("dayThu"),
+    t("dayFri"),
+    t("daySat"),
+    t("daySun"),
+  ] as const;
+
   return (
     <View>
       <View className="flex-row items-center justify-between">
-        <Text className="text-xs font-medium text-gray-600">曜日別に設定</Text>
+        <Text className="text-xs font-medium text-gray-600">
+          {t("dayTargetsLabel")}
+        </Text>
         <Switch
           value={enabled}
           onValueChange={(v) => {
@@ -65,7 +78,9 @@ export function DayTargetsInput({
                   selectTextOnFocus
                 />
                 {isRest && (
-                  <Text className="text-[9px] text-gray-400">休み</Text>
+                  <Text className="text-[9px] text-gray-400">
+                    {t("dayTargetRest")}
+                  </Text>
                 )}
               </View>
             );

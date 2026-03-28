@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("hono/client", () => ({ hc: vi.fn(() => ({})) }));
 vi.mock("@backend/app", () => ({}));
 
+// Mock i18next to return the key as-is (no actual translation)
+vi.mock("@packages/i18n", () => ({
+  i18next: { t: (key: string) => key },
+}));
+
 // We need to mock global fetch before importing the module
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -208,7 +213,7 @@ describe("apiClient", () => {
       mockFetch.mockResolvedValueOnce(new Response("bad", { status: 401 }));
 
       await expect(apiLogin("user1", "wrong")).rejects.toThrow(
-        "IDまたはパスワードが正しくありません",
+        "common:api.invalidCredentials",
       );
     });
 
@@ -218,7 +223,7 @@ describe("apiClient", () => {
       );
 
       await expect(apiLogin("user1", "pass")).rejects.toThrow(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
+        "common:api.serverError",
       );
     });
 
@@ -228,7 +233,7 @@ describe("apiClient", () => {
       );
 
       await expect(apiLogin("user1", "pass")).rejects.toThrow(
-        "ログインに失敗しました",
+        "common:api.loginError",
       );
     });
 
@@ -236,7 +241,7 @@ describe("apiClient", () => {
       mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
 
       await expect(apiLogin("user1", "pass")).rejects.toThrow(
-        "ネットワークに接続できません。接続を確認してください",
+        "common:api.networkError",
       );
     });
   });

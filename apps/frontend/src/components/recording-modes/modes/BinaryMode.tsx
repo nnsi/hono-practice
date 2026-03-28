@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 
 import { useBinaryMode } from "./useBinaryMode";
 
@@ -10,12 +11,13 @@ const KIND_COLORS = [
 ];
 
 export function BinaryMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useBinaryMode(props);
 
   if (!vm.hasKinds) {
     return (
       <div className="py-8 text-center text-gray-500 text-sm">
-        バイナリモードを使うには、アクティビティに「種類」を追加してください。
+        {t("binaryInstruction")}
       </div>
     );
   }
@@ -40,7 +42,8 @@ export function BinaryMode(props: RecordingModeProps) {
 
       {totalCount > 0 && (
         <div className="text-center text-sm text-gray-500">
-          今日: {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
+          {t("today")}{" "}
+          {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
         </div>
       )}
     </div>

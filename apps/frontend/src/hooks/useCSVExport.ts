@@ -1,12 +1,14 @@
 import { useCallback, useState } from "react";
 
 import { buildCSVContent } from "@packages/domain/csv/csvExport";
+import { useTranslation } from "@packages/i18n";
 
 import { db } from "../db/schema";
 
 type ExportResult = { count: number };
 
 export function useCSVExport() {
+  const { t } = useTranslation("csv");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isExporting, setIsExporting] = useState(false);
@@ -15,11 +17,11 @@ export function useCSVExport() {
 
   const handleExport = useCallback(async () => {
     if (!startDate || !endDate) {
-      setError("開始日と終了日を指定してください");
+      setError(t("startDatePlaceholder"));
       return;
     }
     if (startDate > endDate) {
-      setError("開始日は終了日より前にしてください");
+      setError(t("startDate"));
       return;
     }
 

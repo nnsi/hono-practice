@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Plus } from "lucide-react-native";
 import {
@@ -39,6 +40,7 @@ export function GoalsPage() {
     handleToggleExpand,
   } = useGoalsPage();
 
+  const { t } = useTranslation("goal");
   const iconBlobMap = useIconBlobMap();
 
   const insets = useSafeAreaInsets();
@@ -80,7 +82,7 @@ export function GoalsPage() {
               activeTab === "ended" ? "text-gray-900" : "text-gray-400"
             }`}
           >
-            終了済み
+            {t("tabEnded")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -151,7 +153,7 @@ export function GoalsPage() {
             {pastGoals.length === 0 && (
               <View className="items-center py-8">
                 <Text className="text-sm text-gray-400">
-                  終了済みの目標はありません
+                  {t("noEndedGoals")}
                 </Text>
               </View>
             )}

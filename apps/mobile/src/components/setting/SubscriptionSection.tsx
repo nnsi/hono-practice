@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
 import { Crown, RotateCcw } from "lucide-react-native";
 import {
@@ -24,6 +25,7 @@ type SubscriptionInfo = {
 };
 
 export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const router = useRouter();
   const plan = usePlan();
   const { isRestoring, restorePurchases, error } = useRevenueCat();
@@ -48,7 +50,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
     : null;
 
   return (
-    <Section icon={Crown} label="プラン" shadow={shadow}>
+    <Section icon={Crown} label={t("plan")} shadow={shadow}>
       <View className="px-4 py-3">
         <View className="flex-row items-center">
           <View
@@ -61,12 +63,12 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
                 isPremium ? "text-amber-700" : "text-gray-600"
               }`}
             >
-              {isPremium ? "Pro" : "Free"}
+              {isPremium ? t("planPro") : t("planFree")}
             </Text>
           </View>
           {isPremium && periodEnd && (
             <Text className="ml-3 text-xs text-gray-500">
-              次回更新: {periodEnd}
+              {t("nextUpdateDate")}: {periodEnd}
             </Text>
           )}
         </View>
@@ -81,7 +83,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
           >
             <Crown size={18} color="#f59e0b" />
             <Text className="ml-3 text-base text-amber-600 font-medium">
-              Pro プランにアップグレード
+              {t("upgradeProPlan")}
             </Text>
           </TouchableOpacity>
         </>
@@ -100,7 +102,9 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
             ) : (
               <>
                 <RotateCcw size={18} color="#6b7280" />
-                <Text className="ml-3 text-base text-gray-600">購入を復元</Text>
+                <Text className="ml-3 text-base text-gray-600">
+                  {t("restorePurchases")}
+                </Text>
               </>
             )}
           </TouchableOpacity>

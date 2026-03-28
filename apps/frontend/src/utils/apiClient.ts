@@ -1,5 +1,6 @@
 import { hc } from "hono/client";
 
+import { i18next } from "@packages/i18n";
 import type { TokenStorage } from "@packages/platform";
 import { createAuthenticatedFetch } from "@packages/sync-engine";
 import type { AppType } from "@packages/types/api";
@@ -50,16 +51,13 @@ export async function apiLogin(loginId: string, password: string) {
       body: JSON.stringify({ login_id: loginId, password }),
     });
   } catch {
-    throw new Error("ネットワークに接続できません。接続を確認してください");
+    throw new Error(i18next.t("common:api.networkError"));
   }
   if (!res.ok) {
     if (res.status === 401)
-      throw new Error("IDまたはパスワードが正しくありません");
-    if (res.status >= 500)
-      throw new Error(
-        "サーバーエラーが発生しました。しばらく経ってからお試しください",
-      );
-    throw new Error("ログインに失敗しました");
+      throw new Error(i18next.t("common:api.invalidCredentials"));
+    if (res.status >= 500) throw new Error(i18next.t("common:api.serverError"));
+    throw new Error(i18next.t("common:api.loginError"));
   }
   const data = await res.json();
   setToken(data.token);

@@ -3,6 +3,8 @@ export {
   commercialTransactionsTitle,
   createCommercialTransactionsSections,
 } from "./commercialTransactions";
+export type { LegalType } from "./getLegalContent";
+export { getLegalContent } from "./getLegalContent";
 export type { LegalSection, PrivacyPolicyConfig } from "./privacyPolicy";
 export {
   createPrivacyPolicySections,

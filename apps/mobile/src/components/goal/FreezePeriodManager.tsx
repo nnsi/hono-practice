@@ -1,21 +1,25 @@
 import { useMemo, useState } from "react";
 
 import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { Pause, Play, Trash2 } from "lucide-react-native";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Pause, Play } from "lucide-react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { goalFreezePeriodRepository } from "../../repositories/goalFreezePeriodRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { DatePickerField } from "../common/DatePickerField";
+import { FreezePeriodHistory } from "./FreezePeriodHistory";
 
 type FreezePeriodRow = FreezePeriod & { id: string };
 
 export function FreezePeriodManager({ goalId }: { goalId: string }) {
+  const { t } = useTranslation("goal");
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState<string | null>(null);
@@ -43,12 +47,14 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
     }));
   }, [periods]);
 
-  const activePeriod = useMemo(() => {
-    return rows.find(
-      (fp) =>
-        fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
-    );
-  }, [rows, today]);
+  const activePeriod = useMemo(
+    () =>
+      rows.find(
+        (fp) =>
+          fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
+      ),
+    [rows, today],
+  );
 
   const handleFreezeToday = async () => {
     if (busy) return;
@@ -87,12 +93,10 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
     setBusy(true);
     try {
       if (activePeriod.startDate === today) {
-        // 今日開始→今日再開はフリーズ不要なので削除
         await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(
           activePeriod.id,
         );
       } else {
-        // endDateは昨日（inclusive）にセット
         const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
         await goalFreezePeriodRepository.updateGoalFreezePeriod(
           activePeriod.id,
@@ -105,25 +109,18 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
     }
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert("削除確認", "この一時停止期間を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(id);
-          syncEngine.syncGoalFreezePeriods();
-        },
-      },
-    ]);
+  const handleDeleteConfirm = async (id: string) => {
+    await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(id);
+    setDeletingId(null);
+    syncEngine.syncGoalFreezePeriods();
   };
 
   return (
     <View className="mt-3 border-t border-gray-100 pt-3">
-      <Text className="text-xs font-medium text-gray-500 mb-2">一時停止</Text>
+      <Text className="text-xs font-medium text-gray-500 mb-2">
+        {t("freezePeriodLabel")}
+      </Text>
 
-      {/* Action buttons */}
       {activePeriod ? (
         <TouchableOpacity
           className="flex-row items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-3"
@@ -132,21 +129,25 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
           activeOpacity={0.7}
         >
           <Play size={16} color="#16a34a" />
-          <Text className="text-sm font-medium text-green-700">再開する</Text>
+          <Text className="text-sm font-medium text-green-700">
+            {t("resumeButton")}
+          </Text>
           <Text className="text-xs text-green-600 ml-auto">
-            {dayjs(activePeriod.startDate).format("M/D")}〜
+            {dayjs(activePeriod.startDate).format("M/D")}
+            {t("dateRange")}
           </Text>
         </TouchableOpacity>
       ) : showForm ? (
-        /* Date picker form */
         <View className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-3">
           <DatePickerField
             value={startDate}
             onChange={setStartDate}
-            label="開始日"
+            label={t("freezeStartDateLabel")}
           />
           <View className="mt-2">
-            <Text className="text-sm text-gray-500 mb-1">終了日</Text>
+            <Text className="text-sm text-gray-500 mb-1">
+              {t("freezeEndDateLabel")}
+            </Text>
             {endDate ? (
               <View className="flex-row items-center">
                 <DatePickerField value={endDate} onChange={setEndDate} />
@@ -154,7 +155,9 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
                   onPress={() => setEndDate(null)}
                   className="ml-2 px-2 py-1"
                 >
-                  <Text className="text-xs text-gray-500">クリア</Text>
+                  <Text className="text-xs text-gray-500">
+                    {t("freezeCancelButton")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -163,7 +166,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
                 className="py-1"
               >
                 <Text className="text-sm text-blue-600">
-                  終了日を設定（空なら手動で再開）
+                  {t("freezeEndDatePlaceholder")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -177,7 +180,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
               }}
               className="px-4 py-2 border border-gray-300 rounded-lg"
             >
-              <Text className="text-xs text-gray-600">キャンセル</Text>
+              <Text className="text-xs text-gray-600">{t("cancelButton")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleFreezeWithDates}
@@ -185,7 +188,7 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
               className="px-4 py-2 bg-blue-600 rounded-lg"
             >
               <Text className="text-xs font-medium text-white">
-                一時停止する
+                {t("freezeConfirmButton")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -199,55 +202,30 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
             activeOpacity={0.7}
           >
             <Pause size={16} color="#2563eb" />
-            <Text className="text-sm font-medium text-blue-700">今日から</Text>
+            <Text className="text-sm font-medium text-blue-700">
+              {t("freezeTodayButton")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             className="flex-1 flex-row items-center justify-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
             onPress={() => setShowForm(true)}
             activeOpacity={0.7}
           >
-            <Text className="text-sm font-medium text-gray-600">日付指定</Text>
+            <Text className="text-sm font-medium text-gray-600">
+              {t("freezeByDateButton")}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* History list */}
-      {rows.length > 0 && (
-        <View className="gap-1">
-          {rows.map((fp) => {
-            const isActive =
-              fp.startDate <= today &&
-              (fp.endDate == null || fp.endDate >= today);
-            return (
-              <View
-                key={fp.id}
-                className={`flex-row items-center px-3 py-2 rounded-lg ${
-                  isActive ? "bg-blue-50" : "bg-gray-50"
-                }`}
-              >
-                <View
-                  className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                    isActive ? "bg-blue-500" : "bg-gray-400"
-                  }`}
-                />
-                <Text className="text-xs text-gray-700 flex-1">
-                  {dayjs(fp.startDate).format("YYYY/M/D")}
-                  {" 〜 "}
-                  {fp.endDate ? dayjs(fp.endDate).format("YYYY/M/D") : "継続中"}
-                </Text>
-                {!isActive && (
-                  <TouchableOpacity
-                    className="p-1"
-                    onPress={() => handleDelete(fp.id)}
-                  >
-                    <Trash2 size={12} color="#9ca3af" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      )}
+      <FreezePeriodHistory
+        rows={rows}
+        today={today}
+        deletingId={deletingId}
+        onDeleteRequest={setDeletingId}
+        onDeleteConfirm={handleDeleteConfirm}
+        onDeleteCancel={() => setDeletingId(null)}
+      />
     </View>
   );
 }

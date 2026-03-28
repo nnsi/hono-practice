@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy, X } from "lucide-react";
@@ -13,6 +14,7 @@ export function CreateApiKeyDialog({
   onClose: () => void;
   onCreate: (data: CreateApiKeyRequest) => Promise<CreateApiKeyResponse>;
 }) {
+  const { t } = useTranslation("settings");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export function CreateApiKeyDialog({
       const result = await onCreate({ name: name.trim(), scope: "all" });
       setCreatedKey(result.apiKey.key);
     } catch {
-      setError("APIキーの作成に失敗しました");
+      setError(t("apiKeyCreateError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +49,7 @@ export function CreateApiKeyDialog({
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">
-            {createdKey ? "APIキーが作成されました" : "新しいAPIキーの作成"}
+            {createdKey ? t("apiKeyCreatedTitle") : t("apiKeyCreateTitle")}
           </h2>
           <button
             type="button"
@@ -62,7 +64,7 @@ export function CreateApiKeyDialog({
         {createdKey ? (
           <div className="space-y-4">
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              このAPIキーは一度しか表示されません。必ずコピーして安全に保管してください。
+              {t("apiKeyWarning")}
             </p>
             <div className="bg-gray-50 rounded-lg p-3">
               <code className="text-sm break-all text-gray-800">
@@ -77,12 +79,12 @@ export function CreateApiKeyDialog({
               {copied ? (
                 <>
                   <Check size={16} />
-                  コピーしました
+                  {t("apiKeyCopied")}
                 </>
               ) : (
                 <>
                   <Copy size={16} />
-                  APIキーをコピー
+                  {t("apiKeyCopy")}
                 </>
               )}
             </button>
@@ -91,18 +93,18 @@ export function CreateApiKeyDialog({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                名前
+                {t("apiKeyName")}
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="例: 開発用APIキー"
+                placeholder={t("apiKeyNamePlaceholder")}
                 maxLength={255}
               />
               <p className="text-xs text-gray-400 mt-1">
-                APIキーに識別しやすい名前を付けてください
+                {t("apiKeyNameHint")}
               </p>
             </div>
 
@@ -113,7 +115,7 @@ export function CreateApiKeyDialog({
               disabled={isSubmitting || !name.trim()}
               className="w-full py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? "作成中..." : "作成"}
+              {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
             </button>
           </form>
         )}

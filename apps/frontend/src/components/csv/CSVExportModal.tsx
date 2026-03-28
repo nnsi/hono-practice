@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { CheckCircle, Download, X } from "lucide-react";
 
 import { useCSVExport } from "../../hooks/useCSVExport";
@@ -10,6 +11,7 @@ type Props = {
 
 export function CSVExportModal({ onClose }: Props) {
   const csv = useCSVExport();
+  const { t } = useTranslation("csv");
 
   return (
     <ModalOverlay onClose={csv.isExporting ? () => {} : onClose}>
@@ -17,9 +19,9 @@ export function CSVExportModal({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
           <div>
-            <h2 className="text-base font-semibold">CSVエクスポート</h2>
+            <h2 className="text-base font-semibold">{t("exportModal")}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              活動記録をCSVファイルにエクスポートします
+              {t("exportDescription")}
             </p>
           </div>
           <button
@@ -38,22 +40,22 @@ export function CSVExportModal({ onClose }: Props) {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                開始日
+                {t("startDate")}
               </label>
               <DatePickerField
                 value={csv.startDate}
                 onChange={csv.setStartDate}
-                placeholder="開始日を選択"
+                placeholder={t("startDatePlaceholder")}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                終了日
+                {t("endDate")}
               </label>
               <DatePickerField
                 value={csv.endDate}
                 onChange={csv.setEndDate}
-                placeholder="終了日を選択"
+                placeholder={t("endDatePlaceholder")}
               />
             </div>
           </div>
@@ -68,7 +70,8 @@ export function CSVExportModal({ onClose }: Props) {
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
               <CheckCircle size={16} className="text-green-600 shrink-0" />
               <p className="text-sm text-green-700">
-                {csv.result.count}件の活動記録をエクスポートしました
+                {csv.result.count}
+                {t("exportCount")}
               </p>
             </div>
           )}
@@ -84,11 +87,11 @@ export function CSVExportModal({ onClose }: Props) {
             }`}
           >
             <Download size={16} />
-            {csv.isExporting ? "エクスポート中..." : "CSVをダウンロード"}
+            {csv.isExporting ? t("exporting") : t("exportButton")}
           </button>
 
           <p className="text-xs text-gray-400 text-center">
-            形式: date, activity, kind, quantity, memo（CSVインポート互換）
+            {t("exportFormat")}
           </p>
         </div>
       </div>

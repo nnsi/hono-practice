@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { useBinaryMode } from "./useBinaryMode";
@@ -11,13 +12,14 @@ const KIND_BG = [
 ];
 
 export function BinaryMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useBinaryMode(props);
 
   if (!vm.hasKinds) {
     return (
       <View className="py-8 items-center">
         <Text className="text-gray-500 text-sm">
-          バイナリモードを使うには、アクティビティに「種類」を追加してください。
+          {t("binaryInstruction")}
         </Text>
       </View>
     );
@@ -47,7 +49,7 @@ export function BinaryMode(props: RecordingModeProps) {
 
       {totalCount > 0 && (
         <Text className="text-sm text-gray-500 text-center">
-          今日: {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
+          {t("today")} {vm.kindTallies.map((k) => `${k.count}${k.name}`).join(" ")}
         </Text>
       )}
     </View>

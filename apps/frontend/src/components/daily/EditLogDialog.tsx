@@ -1,4 +1,5 @@
 import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
+import { useTranslation } from "@packages/i18n";
 import { Trash2, X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
@@ -15,6 +16,7 @@ export function EditLogDialog({
   activity: DexieActivity | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("activity");
   const {
     quantity,
     setQuantity,
@@ -36,7 +38,7 @@ export function EditLogDialog({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
             {renderActivityIcon(activity)}
-            {activity?.name ?? "不明"}
+            {activity?.name ?? t("log.unknownActivity")}
           </h2>
           <button
             type="button"
@@ -52,7 +54,7 @@ export function EditLogDialog({
           {kinds.length > 0 && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-600">
-                種類
+                {t("log.kindLabel")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {kinds.map((kind) => (
@@ -86,7 +88,8 @@ export function EditLogDialog({
           {/* 数量入力 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              数量 {activity?.quantityUnit && `(${activity.quantityUnit})`}
+              {t("log.quantityLabel")}{" "}
+              {activity?.quantityUnit && `(${activity.quantityUnit})`}
             </label>
             <input
               type="number"
@@ -103,14 +106,14 @@ export function EditLogDialog({
           {/* メモ */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              メモ
+              {t("log.memoLabel")}
             </label>
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="メモを入力..."
+              placeholder={t("log.memoPlaceholder")}
             />
           </div>
 
@@ -121,13 +124,13 @@ export function EditLogDialog({
               disabled={isSubmitting}
               className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
-              保存
+              {t("log.saveButton")}
             </button>
             {!showDeleteConfirm ? (
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                aria-label="削除"
+                aria-label={t("log.deleteButton")}
                 className="px-4 py-3 border border-red-300 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={18} />
@@ -137,10 +140,10 @@ export function EditLogDialog({
                 type="button"
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                aria-label="削除を確認"
+                aria-label={t("log.deleteConfirm")}
                 className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
-                削除
+                {t("log.deleteButton")}
               </button>
             )}
           </div>

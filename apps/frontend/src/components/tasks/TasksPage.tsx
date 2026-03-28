@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -7,6 +8,7 @@ import { TaskGroup } from "./TaskGroup";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
+  const { t } = useTranslation("task");
   const {
     activeTab,
     setActiveTab,
@@ -48,7 +50,7 @@ export function TasksPage() {
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            アクティブ
+            {t("page.tab.active")}
           </button>
           <button
             type="button"
@@ -59,7 +61,7 @@ export function TasksPage() {
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            アーカイブ済み
+            {t("page.tab.archived")}
           </button>
         </div>
       </div>
@@ -70,13 +72,13 @@ export function TasksPage() {
           <div className="space-y-6">
             {!hasAnyTasks && (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">タスクがありません</p>
+                <p className="text-gray-500 mb-4">{t("page.empty")}</p>
                 <button
                   type="button"
                   onClick={() => setCreateDialogOpen(true)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
                 >
-                  最初のタスクを作成
+                  {t("page.firstTask")}
                 </button>
               </div>
             )}
@@ -84,7 +86,7 @@ export function TasksPage() {
             {/* 期限切れ */}
             {groupedTasks.overdue.length > 0 && (
               <TaskGroup
-                title="期限切れ"
+                title={t("page.group.overdue")}
                 tasks={groupedTasks.overdue}
                 titleColor="text-red-600"
                 highlight
@@ -99,7 +101,7 @@ export function TasksPage() {
             {/* 今日締切 */}
             {groupedTasks.dueToday.length > 0 && (
               <TaskGroup
-                title="今日締切"
+                title={t("page.group.dueToday")}
                 tasks={groupedTasks.dueToday}
                 titleColor="text-orange-600"
                 onToggleDone={handleToggleDone}
@@ -113,7 +115,7 @@ export function TasksPage() {
             {/* 今日開始 */}
             {groupedTasks.startingToday.length > 0 && (
               <TaskGroup
-                title="今日開始"
+                title={t("page.group.startingToday")}
                 tasks={groupedTasks.startingToday}
                 titleColor="text-blue-600"
                 onToggleDone={handleToggleDone}
@@ -127,7 +129,7 @@ export function TasksPage() {
             {/* 進行中 */}
             {groupedTasks.inProgress.length > 0 && (
               <TaskGroup
-                title="進行中"
+                title={t("page.group.inProgress")}
                 tasks={groupedTasks.inProgress}
                 titleColor="text-green-600"
                 onToggleDone={handleToggleDone}
@@ -141,7 +143,7 @@ export function TasksPage() {
             {/* 今週締切 */}
             {groupedTasks.dueThisWeek.length > 0 && (
               <TaskGroup
-                title="今週締切"
+                title={t("page.group.dueThisWeek")}
                 tasks={groupedTasks.dueThisWeek}
                 titleColor="text-gray-700"
                 onToggleDone={handleToggleDone}
@@ -166,14 +168,14 @@ export function TasksPage() {
                     <ChevronRight size={16} />
                   )}
                   {showFuture
-                    ? "未来のタスクを隠す"
-                    : `未来のタスク (${futureCount})`}
+                    ? t("page.toggle.futureHide")
+                    : t("page.toggle.futureShow", { count: futureCount })}
                 </button>
                 {showFuture && (
                   <div className="mt-3 space-y-6">
                     {groupedTasks.notStarted.length > 0 && (
                       <TaskGroup
-                        title="未開始"
+                        title={t("page.group.notStarted")}
                         tasks={groupedTasks.notStarted}
                         titleColor="text-purple-600"
                         onToggleDone={handleToggleDone}
@@ -184,7 +186,7 @@ export function TasksPage() {
                     )}
                     {groupedTasks.future.length > 0 && (
                       <TaskGroup
-                        title="来週以降"
+                        title={t("page.group.future")}
                         tasks={groupedTasks.future}
                         titleColor="text-indigo-600"
                         onToggleDone={handleToggleDone}
@@ -212,13 +214,13 @@ export function TasksPage() {
                     <ChevronRight size={16} />
                   )}
                   {showCompleted
-                    ? "完了済みを隠す"
-                    : `完了済みを表示 (${completedCount})`}
+                    ? t("page.toggle.completedHide")
+                    : t("page.toggle.completedShow", { count: completedCount })}
                 </button>
                 {showCompleted && groupedTasks.completed.length > 0 && (
                   <div className="mt-3">
                     <TaskGroup
-                      title="完了済み"
+                      title={t("page.group.completed")}
                       tasks={groupedTasks.completed}
                       titleColor="text-gray-500"
                       completed
@@ -244,7 +246,7 @@ export function TasksPage() {
                   className="text-gray-400 group-hover:text-gray-600"
                 />
                 <span className="text-sm text-gray-500 group-hover:text-gray-700">
-                  新規タスクを追加
+                  {t("page.addNew")}
                 </span>
               </button>
             )}
@@ -255,14 +257,12 @@ export function TasksPage() {
           <div>
             {archivedTasks.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">
-                  アーカイブ済みのタスクはありません
-                </p>
+                <p className="text-gray-500">{t("page.empty.archived")}</p>
               </div>
             )}
             {archivedTasks.length > 0 && (
               <TaskGroup
-                title="アーカイブ済み"
+                title={t("page.tab.archived")}
                 tasks={archivedTasks}
                 titleColor="text-gray-500"
                 archived

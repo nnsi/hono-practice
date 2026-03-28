@@ -1,5 +1,6 @@
 import type { HeatmapCell } from "@packages/domain/goal/goalHeatmap";
 import type { HeatmapSlot } from "@packages/frontend-shared/hooks/useGoalHeatmap";
+import { useTranslation } from "@packages/i18n";
 import { Loader2 } from "lucide-react";
 
 import { useGoalHeatmap } from "./useGoalHeatmap";
@@ -17,13 +18,19 @@ function slotColor(slot: HeatmapSlot): string {
   return "bg-gray-200";
 }
 
-function slotTooltip(cell: HeatmapCell | null, date: string): string {
+function slotTooltip(
+  cell: HeatmapCell | null,
+  date: string,
+  achieved: string,
+): string {
   if (!cell || cell.totalGoals === 0) return date;
-  return `${date}: ${cell.achievedCount}/${cell.totalGoals}ゴール達成`;
+  return `${date}: ${cell.achievedCount}/${cell.totalGoals}${achieved}`;
 }
 
 export function GoalHeatmap() {
+  const { t } = useTranslation("goal");
   const { grid, isLoading } = useGoalHeatmap();
+  const achievedLabel = t("heatmapAchieved");
 
   if (isLoading) {
     return (
@@ -60,7 +67,7 @@ export function GoalHeatmap() {
               {col.slots.map((slot) => (
                 <div
                   key={slot.key}
-                  title={slotTooltip(slot.cell, slot.key)}
+                  title={slotTooltip(slot.cell, slot.key, achievedLabel)}
                   className={`w-[13px] h-[13px] sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] rounded-[2px] ${slotColor(slot)} ${
                     slot.isToday ? "ring-1 ring-gray-900" : ""
                   }`}
@@ -81,7 +88,7 @@ export function GoalHeatmap() {
             <span className="inline-block w-[9px] h-[9px] sm:w-3 sm:h-3 rounded-[2px] bg-green-300" />
             <span className="inline-block w-[9px] h-[9px] sm:w-3 sm:h-3 rounded-[2px] bg-green-500" />
             <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 ml-0.5">
-              達成
+              {t("heatmapAchieved")}
             </span>
           </div>
         </div>

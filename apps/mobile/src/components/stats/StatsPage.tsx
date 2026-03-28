@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -7,6 +8,7 @@ import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 
 export function StatsPage() {
+  const { t } = useTranslation("stats");
   const {
     month,
     goToPrevMonth,
@@ -31,7 +33,7 @@ export function StatsPage() {
           <ChevronLeft size={20} color="#6b7280" />
         </TouchableOpacity>
         <Text className="text-base font-medium text-gray-900 min-w-[100px] text-center">
-          {dayjs(month).format("YYYY年M月")}
+          {dayjs(month).format(t("monthYearFormat"))}
         </Text>
         <TouchableOpacity
           onPress={goToNextMonth}
@@ -53,17 +55,17 @@ export function StatsPage() {
       >
         {isLoading ? (
           <View className="items-center py-16">
-            <Text className="text-gray-400">読み込み中...</Text>
+            <Text className="text-gray-400">{t("loading")}</Text>
           </View>
         ) : !stats || stats.length === 0 ? (
           <View className="items-center py-16">
             <BarChart3 size={48} color="#d1d5db" />
             <Text className="text-lg text-gray-400 mt-3 mb-1">
-              データがありません
+              {t("noData")}
             </Text>
             <Text className="text-sm text-gray-400">
-              {dayjs(month).format("YYYY年M月")}
-              のアクティビティ記録はありません
+              {dayjs(month).format(t("monthYearFormat"))}
+              {t("noActivityInMonth")}
             </Text>
           </View>
         ) : (

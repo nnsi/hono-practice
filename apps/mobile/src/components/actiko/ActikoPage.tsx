@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ArrowUpDown, Plus } from "lucide-react-native";
 import {
   ActivityIndicator,
@@ -19,6 +20,7 @@ import { DateNavHeader } from "./DateNavHeader";
 import { useActikoPage } from "./useActikoPage";
 
 export function ActikoPage() {
+  const { t } = useTranslation("actiko");
   const {
     date,
     setDate,
@@ -102,11 +104,11 @@ export function ActikoPage() {
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-5xl mb-4">🎯</Text>
           <Text className="text-lg font-medium text-gray-600 text-center">
-            アクティビティがありません
+            {t("activitiesEmpty")}
           </Text>
           <TouchableOpacity onPress={() => setCreateActivityOpen(true)}>
             <Text className="text-sm text-amber-600 text-center mt-2">
-              タップして追加しましょう
+              {t("tapToAdd")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -129,7 +131,7 @@ export function ActikoPage() {
               card = (
                 <ActionCard
                   icon={Plus}
-                  label="追加"
+                  label={t("add")}
                   onPress={() => setCreateActivityOpen(true)}
                 />
               );
@@ -137,7 +139,7 @@ export function ActikoPage() {
               card = (
                 <ActionCard
                   icon={ArrowUpDown}
-                  label="並び替え"
+                  label={t("reorder")}
                   onPress={() => setReorderOpen(true)}
                 />
               );

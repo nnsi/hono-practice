@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import {
   Archive,
@@ -35,6 +36,7 @@ export function TaskCard({
   onArchive: () => void;
   onMoveToToday?: () => void;
 }) {
+  const { t } = useTranslation("task");
   const { linkedActivity, linkedKind, iconBlobMap, showMoveToToday } =
     useTaskCard(task, archived, onMoveToToday);
 

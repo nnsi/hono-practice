@@ -1,0 +1,15 @@
+{
+  "targetAchievedDebtClearedPraise": "すごい！目標達成 & 負債完済！🎉",
+  "targetAchievedDebtCleared": "目標達成 & 負債完済！",
+  "targetAchievedPraise": "やったね！今日の目標達成！✨",
+  "targetAchieved": "今日の目標達成！",
+  "debtClearedPraise": "お見事！負債完済！💪 ({{before}} → 0)",
+  "debtCleared": "負債完済！ ({{before}} → 0)",
+  "debtReducedPraise": "いい調子！負債軽減 📈 ({{before}} → {{after}})",
+  "debtReduced": "負債軽減: {{before}} → {{after}}",
+  "debtAvoidedPraise": "えらい！{{amount}}回分の負債を回避 👏",
+  "debtAvoided": "部分達成: {{amount}}回分の負債を回避",
+  "debtCapSavedPraise": "(上限により{{amount}}回分免除 🛡️)",
+  "debtCapSaved": "(上限により{{amount}}回分免除)",
+  "savingsBonus": "貯金 +{{amount}}！余裕がある証拠 🏦"
+}

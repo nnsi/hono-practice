@@ -1,8 +1,17 @@
+import { useTranslation } from "@packages/i18n";
 import type { Dayjs } from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+const WEEKDAY_KEYS = [
+  "calendar.sun",
+  "calendar.mon",
+  "calendar.tue",
+  "calendar.wed",
+  "calendar.thu",
+  "calendar.fri",
+  "calendar.sat",
+] as const;
 
 type CalendarCell = { date: string; day: number; currentMonth: boolean };
 
@@ -23,6 +32,7 @@ export function CalendarCard({
   cells,
   onSelectDate,
 }: CalendarCardProps) {
+  const { t } = useTranslation(["stats", "common"]);
   return (
     <View
       className="bg-white rounded-2xl w-full p-4"
@@ -44,7 +54,7 @@ export function CalendarCard({
           <ChevronLeft size={18} color="#374151" />
         </Pressable>
         <Text className="text-sm font-semibold text-gray-900">
-          {viewMonth.format("YYYY年M月")}
+          {viewMonth.format(t("monthYearFormat"))}
         </Text>
         <Pressable
           className="p-2 rounded-full"
@@ -56,9 +66,11 @@ export function CalendarCard({
 
       {/* Weekday headers */}
       <View className="flex-row mb-1">
-        {WEEKDAYS.map((w) => (
-          <View key={w} className="flex-1 items-center py-1">
-            <Text className="text-[10px] font-medium text-gray-400">{w}</Text>
+        {WEEKDAY_KEYS.map((key) => (
+          <View key={key} className="flex-1 items-center py-1">
+            <Text className="text-[10px] font-medium text-gray-400">
+              {t(`common:${key}`)}
+            </Text>
           </View>
         ))}
       </View>
@@ -106,7 +118,9 @@ export function CalendarCard({
           className="mt-3 py-2 items-center rounded-xl"
           onPress={() => onSelectDate(today)}
         >
-          <Text className="text-xs text-amber-600 font-medium">今日に移動</Text>
+          <Text className="text-xs text-amber-600 font-medium">
+            {t("common:calendar.goToToday")}
+          </Text>
         </Pressable>
       )}
     </View>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -14,6 +15,7 @@ import { LegalModal } from "../common/LegalModal";
 WebBrowser.maybeCompleteAuthSession();
 
 export function CreateUserForm() {
+  const { t } = useTranslation("common");
   const { register, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
@@ -31,7 +33,7 @@ export function CreateUserForm() {
 
   const handleRegister = async () => {
     if (!loginId || !password) {
-      setError("IDとパスワードを入力してください");
+      setError(t("auth.idAndPasswordRequired"));
       return;
     }
     setLoading(true);
@@ -39,7 +41,7 @@ export function CreateUserForm() {
     try {
       await register(loginId, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "登録に失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.registerError"));
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export function CreateUserForm() {
   return (
     <View className="flex-1 justify-center px-8 bg-white">
       <Text className="text-3xl font-bold text-center mb-8">
-        アカウント作成
+        {t("auth.createAccountTitle")}
       </Text>
 
       {error ? (
@@ -61,14 +63,14 @@ export function CreateUserForm() {
         onPress={handleGooglePress}
         disabled={!googleRequest}
         accessibilityRole="button"
-        accessibilityLabel="Googleで登録"
+        accessibilityLabel={t("auth.googleRegister")}
       >
         <GoogleMark />
         <Text
           className="text-base font-medium ml-3"
           style={{ color: "#1F1F1F" }}
         >
-          Googleで登録
+          {t("auth.googleRegister")}
         </Text>
       </TouchableOpacity>
 
@@ -96,9 +98,7 @@ export function CreateUserForm() {
                   : "";
               if (code !== "ERR_REQUEST_CANCELED") {
                 setError(
-                  e instanceof Error
-                    ? e.message
-                    : "Appleアカウントでの登録に失敗しました",
+                  e instanceof Error ? e.message : t("auth.appleRegisterError"),
                 );
               }
             }
@@ -108,13 +108,13 @@ export function CreateUserForm() {
 
       <View className="flex-row items-center mb-4">
         <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-3 text-gray-400 text-sm">または</Text>
+        <Text className="mx-3 text-gray-400 text-sm">{t("auth.or")}</Text>
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="ログインID"
+        placeholder={t("auth.loginId")}
         value={loginId}
         onChangeText={setLoginId}
         autoCapitalize="none"
@@ -122,22 +122,22 @@ export function CreateUserForm() {
       />
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="パスワード（8文字以上）"
+        placeholder={t("auth.passwordHint")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
       <Text className="text-xs text-gray-400 leading-5 mb-4">
-        新規登録することで、
+        {t("auth.legalConsentPrefix")}
         <Text className="underline" onPress={() => setLegalModal("terms")}>
-          利用規約
+          {t("auth.termsOfService")}
         </Text>
-        と
+        {t("auth.legalConsentAnd")}
         <Text className="underline" onPress={() => setLegalModal("privacy")}>
-          プライバシーポリシー
+          {t("auth.privacyPolicy")}
         </Text>
-        に同意したものとみなします。
+        {t("auth.legalConsentSuffix")}
       </Text>
 
       <TouchableOpacity
@@ -146,7 +146,7 @@ export function CreateUserForm() {
         disabled={loading}
       >
         <Text className="text-white text-base font-semibold">
-          {loading ? "登録中..." : "登録"}
+          {loading ? t("auth.registering") : t("auth.register")}
         </Text>
       </TouchableOpacity>
 
@@ -154,7 +154,7 @@ export function CreateUserForm() {
         className="mt-4 items-center"
         onPress={() => router.back()}
       >
-        <Text className="text-blue-500">ログインに戻る</Text>
+        <Text className="text-blue-500">{t("auth.backToLogin")}</Text>
       </TouchableOpacity>
 
       {legalModal && (

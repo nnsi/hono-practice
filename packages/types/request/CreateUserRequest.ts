@@ -4,12 +4,12 @@ export const createUserRequestSchema = z.object({
   name: z.string().optional(),
   loginId: z
     .string()
-    .min(1, "ログインIDは必須です")
-    .max(100, "ログインIDは100文字以内で入力してください"),
+    .min(1, "validation:loginIdRequired")
+    .max(100, "validation:loginIdMax100"),
   password: z
     .string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(100, "パスワードは100文字以内で入力してください"),
+    .min(8, "validation:passwordMin8")
+    .max(100, "validation:passwordMax100"),
 });
 
 export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;

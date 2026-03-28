@@ -1,0 +1,17 @@
+{
+  "loginIdRequired": "Login ID is required",
+  "loginIdMax100": "Login ID must be 100 characters or less",
+  "loginIdTooLong": "Login ID is too long",
+  "passwordMin8": "Password must be at least 8 characters",
+  "passwordMax100": "Password must be 100 characters or less",
+  "passwordTooLong": "Password is too long",
+  "titleRequired": "Title is required",
+  "max20Chars": "Must be 20 characters or less",
+  "emojiRequired": "Emoji is required",
+  "unitRequired": "Unit name is required",
+  "max10Chars": "Must be 10 characters or less",
+  "quantityMin0": "Enter a value of 0 or more",
+  "quantityMax999999": "Enter a value of 999,999 or less",
+  "memoMax1000": "Must be 1,000 characters or less",
+  "startDateRequired": "Start date is required"
+}

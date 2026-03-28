@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import type { ApiKeyResponse } from "@packages/types/response";
 import dayjs from "dayjs";
 import { Trash2 } from "lucide-react-native";
@@ -14,6 +15,7 @@ export function ApiKeyList({
   isLoading: boolean;
   onDelete: (id: string) => Promise<unknown>;
 }) {
+  const { t } = useTranslation("settings");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -40,7 +42,7 @@ export function ApiKeyList({
   if (apiKeys.length === 0) {
     return (
       <View className="px-4 py-2">
-        <Text className="text-sm text-gray-400">APIキーがありません</Text>
+        <Text className="text-sm text-gray-400">{t("noApiKeys")}</Text>
       </View>
     );
   }
@@ -62,7 +64,9 @@ export function ApiKeyList({
                   activeOpacity={0.7}
                 >
                   <Text className="text-xs text-white">
-                    {deletingId === apiKey.id ? "..." : "削除"}
+                    {deletingId === apiKey.id
+                      ? "..."
+                      : t("apiKeyDeleteConfirm")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -70,7 +74,9 @@ export function ApiKeyList({
                   onPress={() => setConfirmDeleteId(null)}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-xs text-gray-700">取消</Text>
+                  <Text className="text-xs text-gray-700">
+                    {t("apiKeyDeleteCancel")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -92,11 +98,13 @@ export function ApiKeyList({
           </View>
           <View className="flex-row gap-3 mt-1.5">
             <Text className="text-xs text-gray-400">
-              作成: {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}
+              {t("apiKeyCreated")}:{" "}
+              {dayjs(apiKey.createdAt).format("YYYY/MM/DD")}
             </Text>
             {apiKey.lastUsedAt && (
               <Text className="text-xs text-gray-400">
-                最終使用: {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}
+                {t("apiKeyLastUsed")}:{" "}
+                {dayjs(apiKey.lastUsedAt).format("YYYY/MM/DD")}
               </Text>
             )}
           </View>

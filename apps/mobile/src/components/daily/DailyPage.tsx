@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -13,6 +14,7 @@ import { TaskList } from "./TaskList";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
+  const { t } = useTranslation("activity");
   const {
     date,
     setDate,
@@ -85,14 +87,16 @@ export function DailyPage() {
         <View className="px-4 pt-4">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              アクティビティ
+              {t("daily.activitySection")}
             </Text>
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setCreateDialogOpen(true)}
             >
               <Plus size={16} color="#2563eb" />
-              <Text className="text-sm text-blue-600 font-medium">追加</Text>
+              <Text className="text-sm text-blue-600 font-medium">
+                {t("daily.addButton")}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -117,7 +121,9 @@ export function DailyPage() {
             </View>
           ) : (
             <View className="items-center py-8">
-              <Text className="text-sm text-gray-400">記録がありません</Text>
+              <Text className="text-sm text-gray-400">
+                {t("daily.noRecords")}
+              </Text>
             </View>
           )}
         </View>
@@ -129,14 +135,16 @@ export function DailyPage() {
         <View className="px-4">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              タスク
+              {t("daily.tasksSection")}
             </Text>
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setTaskCreateDialogOpen(true)}
             >
               <Plus size={16} color="#2563eb" />
-              <Text className="text-sm text-blue-600 font-medium">追加</Text>
+              <Text className="text-sm text-blue-600 font-medium">
+                {t("daily.addButton")}
+              </Text>
             </TouchableOpacity>
           </View>
           <TaskList

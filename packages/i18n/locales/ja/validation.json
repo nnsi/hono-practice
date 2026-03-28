@@ -1,0 +1,17 @@
+{
+  "loginIdRequired": "ログインIDは必須です",
+  "loginIdMax100": "ログインIDは100文字以内で入力してください",
+  "loginIdTooLong": "ログインIDが長すぎます",
+  "passwordMin8": "パスワードは8文字以上で入力してください",
+  "passwordMax100": "パスワードは100文字以内で入力してください",
+  "passwordTooLong": "パスワードが長すぎます",
+  "titleRequired": "タイトルは必須です",
+  "max20Chars": "20文字以内で入力してください",
+  "emojiRequired": "絵文字は必須です",
+  "unitRequired": "単位名は必須です",
+  "max10Chars": "10文字以内で入力してください",
+  "quantityMin0": "0以上の値を入力してください",
+  "quantityMax999999": "999999以下の値を入力してください",
+  "memoMax1000": "1000文字以内で入力してください",
+  "startDateRequired": "開始日は必須です"
+}

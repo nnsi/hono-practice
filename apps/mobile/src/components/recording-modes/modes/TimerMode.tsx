@@ -1,6 +1,7 @@
 import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, TouchableOpacity, View } from "react-native";
 
 import { IMESafeTextInput } from "../../common/IMESafeTextInput";
@@ -19,6 +20,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useTimerMode } from "./useTimerMode";
 
 export function TimerMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useTimerMode(props);
 
   return (
@@ -37,7 +39,7 @@ export function TimerMode(props: RecordingModeProps) {
               vm.effectiveTab === "manual" ? "text-gray-900" : "text-gray-500"
             }`}
           >
-            手動入力
+            {t("manualEntry")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -52,7 +54,7 @@ export function TimerMode(props: RecordingModeProps) {
               vm.effectiveTab === "timer" ? "text-gray-900" : "text-gray-500"
             }`}
           >
-            タイマー
+            {t("timer")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -67,6 +69,7 @@ export function TimerMode(props: RecordingModeProps) {
 }
 
 function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <View className="gap-5">
       <View className="items-center py-4">
@@ -77,7 +80,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           {vm.formattedTime}
         </Text>
         {vm.isRunning && (
-          <Text className="text-sm text-gray-400 mt-2">計測中...</Text>
+          <Text className="text-sm text-gray-400 mt-2">{t("measuring")}</Text>
         )}
       </View>
 
@@ -87,7 +90,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             onPress={vm.stop}
             className="flex-row items-center gap-2 px-6 py-3 bg-red-500 rounded-xl"
           >
-            <Text className="text-white font-medium">停止</Text>
+            <Text className="text-white font-medium">{t("stop")}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -95,7 +98,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex-row items-center gap-2 px-6 py-3 bg-gray-900 rounded-xl"
           >
             <Text className="text-white font-medium">
-              {vm.elapsedTime > 0 ? "再開" : "開始"}
+              {vm.elapsedTime > 0 ? t("resume") : t("start")}
             </Text>
           </TouchableOpacity>
         )}
@@ -104,7 +107,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             onPress={vm.reset}
             className="flex-row items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl"
           >
-            <Text className="text-gray-600 font-medium">リセット</Text>
+            <Text className="text-gray-600 font-medium">{t("reset")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -112,7 +115,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
       {vm.isStopped && (
         <View className="gap-4 pt-2 border-t border-gray-100">
           <Text className="text-center text-sm text-gray-500">
-            記録時間:{" "}
+            {t("elapsedTime")}{" "}
             <Text className="font-semibold text-gray-900">
               {vm.convertedQuantity} {vm.quantityUnit}
             </Text>
@@ -132,6 +135,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
 }
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
+  const { t } = useTranslation("recording");
   const quantityRef = useRef<TextInput>(null);
 
   return (
@@ -145,7 +149,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
       )}
       <View>
         <Text className="text-sm font-medium text-gray-600 mb-1">
-          数量{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+          {t("quantity")}{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
           ref={quantityRef}

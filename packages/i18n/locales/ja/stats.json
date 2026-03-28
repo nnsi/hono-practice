@@ -1,0 +1,20 @@
+{
+  "previousMonth": "前の月",
+  "nextMonth": "次の月",
+  "monthYearFormat": "YYYY年M月",
+  "loading": "読み込み中...",
+  "noData": "データがありません",
+  "noActivityInMonth": "のアクティビティ記録はありません",
+  "dateLabel": "日",
+  "totalLabel": "合計",
+  "kindTotalLabel": "合計:",
+  "summaryTotal": "合計",
+  "summaryDailyAverage": "日平均",
+  "summaryRecordedDays": "記録日数",
+  "summaryDaysFormat": "日",
+  "tableExpandButton": "日別・週別 合計値",
+  "tableDateHeader": "日付",
+  "tableDailyTotalHeader": "日合計",
+  "tableWeeklyTotalHeader": "週合計",
+  "defaultKind": "未指定"
+}

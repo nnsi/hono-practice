@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp, Pause } from "lucide-react";
 
@@ -48,6 +49,7 @@ export function GoalCardHeader({
   onDeleteCancel: () => void;
   onHandleDelete: () => void;
 }) {
+  const { t } = useTranslation("goal");
   // --- インライン編集 ---
   const [inlineEditing, setInlineEditing] = useState(false);
   const [inlineValue, setInlineValue] = useState("");
@@ -100,7 +102,7 @@ export function GoalCardHeader({
           {/* 行1: アクティビティ名 + バランス + シェブロン */}
           <div className="flex items-start gap-2">
             <span className="flex-1 font-semibold text-sm min-w-[10em] break-words">
-              {activity?.name ?? "不明なアクティビティ"}
+              {activity?.name ?? t("unknownActivity")}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
               <span
@@ -113,7 +115,7 @@ export function GoalCardHeader({
                 </span>
                 {debtCapped && (
                   <span className="text-[9px] ml-0.5 text-orange-500">
-                    (上限)
+                    {t("debtCapped")}
                   </span>
                 )}
               </span>
@@ -135,7 +137,7 @@ export function GoalCardHeader({
             {isCurrentlyFrozen && (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 whitespace-nowrap flex-shrink-0">
                 <Pause size={10} />
-                一時停止中
+                {t("frozenBadge")}
               </span>
             )}
 
@@ -158,22 +160,25 @@ export function GoalCardHeader({
                   step="any"
                 />
                 <span className="ml-0.5 text-xs text-gray-500">
-                  {activity?.quantityUnit ?? ""}/日
+                  {activity?.quantityUnit ?? ""}
+                  {t("perDay")}
                 </span>
               </span>
             ) : (
               <span
                 onClick={!isPast ? startInlineEdit : undefined}
                 className={`text-xs text-gray-500 shrink-0 ${!isPast ? "cursor-pointer hover:text-blue-600 hover:underline" : ""}`}
-                title={!isPast ? "クリックで編集" : undefined}
+                title={!isPast ? t("clickToEdit") : undefined}
               >
                 {goal.dailyTargetQuantity.toLocaleString()}
-                {activity?.quantityUnit ?? ""}/日
+                {activity?.quantityUnit ?? ""}
+                {t("perDay")}
               </span>
             )}
             <span className="text-gray-300 shrink-0 text-xs">|</span>
             <span className="whitespace-nowrap shrink-0 text-xs text-gray-500">
-              {dayjs(goal.startDate).format("M/D")}〜
+              {dayjs(goal.startDate).format("M/D")}
+              {t("dateRange")}
               {goal.endDate ? dayjs(goal.endDate).format("M/D") : ""}
             </span>
 

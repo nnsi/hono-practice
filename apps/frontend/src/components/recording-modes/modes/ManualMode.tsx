@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -6,6 +7,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useManualMode } from "./useManualMode";
 
 export function ManualMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useManualMode(props);
 
   return (
@@ -26,7 +28,7 @@ export function ManualMode(props: RecordingModeProps) {
 
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1">
-          数量 {vm.quantityUnit && `(${vm.quantityUnit})`}
+          {t("quantity")} {vm.quantityUnit && `(${vm.quantityUnit})`}
         </label>
         <input
           type="number"

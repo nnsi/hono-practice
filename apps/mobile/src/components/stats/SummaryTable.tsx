@@ -8,6 +8,7 @@ import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
+import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -26,6 +27,7 @@ export function SummaryTable({
   kindColors: Record<string, string>;
   month: string;
 }) {
+  const { t } = useTranslation("stats");
   const [isExpanded, setIsExpanded] = useState(false);
   const weeks = useMemo(
     () => buildWeeks(data, kinds, month),
@@ -41,7 +43,7 @@ export function SummaryTable({
         activeOpacity={0.7}
       >
         <Text className="font-semibold text-sm text-gray-900">
-          日別・週別 合計値
+          {t("tableExpandButton")}
         </Text>
         {isExpanded ? (
           <ChevronUp size={18} color="#9ca3af" />
@@ -56,11 +58,13 @@ export function SummaryTable({
             {/* Header */}
             <View className="flex-row bg-gray-50 border-b border-gray-200">
               <View className="px-3 py-2" style={{ width: 88 }}>
-                <Text className="text-xs font-medium text-gray-500">日付</Text>
+                <Text className="text-xs font-medium text-gray-500">
+                  {t("tableDateHeader")}
+                </Text>
               </View>
               <View className="px-3 py-2 items-end" style={{ width: 64 }}>
                 <Text className="text-xs font-medium text-gray-500">
-                  日合計
+                  {t("tableDailyTotalHeader")}
                 </Text>
               </View>
               {hasMultipleKinds &&
@@ -81,7 +85,7 @@ export function SummaryTable({
                 ))}
               <View className="px-3 py-2 items-end" style={{ width: 64 }}>
                 <Text className="text-xs font-medium text-gray-500">
-                  週合計
+                  {t("tableWeeklyTotalHeader")}
                 </Text>
               </View>
             </View>

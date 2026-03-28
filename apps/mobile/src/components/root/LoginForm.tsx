@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -14,6 +15,7 @@ import { LegalModal } from "../common/LegalModal";
 WebBrowser.maybeCompleteAuthSession();
 
 export function LoginForm() {
+  const { t } = useTranslation("common");
   const { login, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
@@ -31,7 +33,7 @@ export function LoginForm() {
 
   const handleLogin = async () => {
     if (!loginId || !password) {
-      setError("IDとパスワードを入力してください");
+      setError(t("auth.idAndPasswordRequired"));
       return;
     }
     setLoading(true);
@@ -39,7 +41,7 @@ export function LoginForm() {
     try {
       await login(loginId, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ログインに失敗しました");
+      setError(e instanceof Error ? e.message : t("auth.loginError"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export function LoginForm() {
 
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="ログインID"
+        placeholder={t("auth.loginId")}
         value={loginId}
         onChangeText={setLoginId}
         autoCapitalize="none"
@@ -64,7 +66,7 @@ export function LoginForm() {
 
       <IMESafeTextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
-        placeholder="パスワード"
+        placeholder={t("auth.password")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -76,7 +78,7 @@ export function LoginForm() {
         disabled={loading}
       >
         <Text className="text-white text-base font-semibold">
-          {loading ? "ログイン中..." : "ログイン"}
+          {loading ? t("auth.loggingIn") : t("auth.login")}
         </Text>
       </TouchableOpacity>
 
@@ -84,13 +86,13 @@ export function LoginForm() {
         className="mt-4 items-center"
         onPress={() => router.push("/(auth)/create-user")}
       >
-        <Text className="text-blue-500">アカウントを作成</Text>
+        <Text className="text-blue-500">{t("auth.createAccount")}</Text>
       </TouchableOpacity>
 
       <View className="mt-6 items-center">
         <View className="flex-row items-center mb-4">
           <View className="flex-1 h-px bg-gray-300" />
-          <Text className="mx-3 text-gray-400 text-sm">または</Text>
+          <Text className="mx-3 text-gray-400 text-sm">{t("auth.or")}</Text>
           <View className="flex-1 h-px bg-gray-300" />
         </View>
 
@@ -100,14 +102,14 @@ export function LoginForm() {
           onPress={handleGooglePress}
           disabled={!googleRequest}
           accessibilityRole="button"
-          accessibilityLabel="Googleでログイン"
+          accessibilityLabel={t("auth.googleLogin")}
         >
           <GoogleMark />
           <Text
             className="text-base font-medium ml-3"
             style={{ color: "#1F1F1F" }}
           >
-            Googleでログイン
+            {t("auth.googleLogin")}
           </Text>
         </TouchableOpacity>
 
@@ -139,9 +141,7 @@ export function LoginForm() {
                     : "";
                 if (code !== "ERR_REQUEST_CANCELED") {
                   setError(
-                    e instanceof Error
-                      ? e.message
-                      : "Appleログインに失敗しました",
+                    e instanceof Error ? e.message : t("auth.appleLoginError"),
                   );
                 }
               }
@@ -153,11 +153,13 @@ export function LoginForm() {
       <View className="mt-6 flex-row justify-center gap-3">
         <TouchableOpacity onPress={() => setLegalModal("privacy")}>
           <Text className="text-xs text-gray-400 underline">
-            プライバシーポリシー
+            {t("auth.privacyPolicy")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setLegalModal("terms")}>
-          <Text className="text-xs text-gray-400 underline">利用規約</Text>
+          <Text className="text-xs text-gray-400 underline">
+            {t("auth.termsOfService")}
+          </Text>
         </TouchableOpacity>
       </View>
 

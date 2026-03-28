@@ -1,4 +1,5 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Play, RotateCcw, Square } from "lucide-react";
 
 import { KindSelector } from "../parts/KindSelector";
@@ -7,6 +8,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useTimerMode } from "./useTimerMode";
 
 export function TimerMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useTimerMode(props);
 
   return (
@@ -22,7 +24,7 @@ export function TimerMode(props: RecordingModeProps) {
               : "text-gray-500"
           }`}
         >
-          手動入力
+          {t("manualEntry")}
         </button>
         <button
           type="button"
@@ -33,7 +35,7 @@ export function TimerMode(props: RecordingModeProps) {
               : "text-gray-500"
           }`}
         >
-          タイマー
+          {t("timer")}
         </button>
       </div>
 
@@ -47,6 +49,7 @@ export function TimerMode(props: RecordingModeProps) {
 }
 
 function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <div className="space-y-5">
       <div className="flex flex-col items-center py-4">
@@ -54,7 +57,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           {vm.formattedTime}
         </div>
         {vm.isRunning && (
-          <div className="text-sm text-gray-400 mt-2">計測中...</div>
+          <div className="text-sm text-gray-400 mt-2">{t("measuring")}</div>
         )}
       </div>
 
@@ -66,7 +69,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
           >
             <Square size={18} />
-            停止
+            {t("stop")}
           </button>
         ) : (
           <button
@@ -75,7 +78,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
           >
             <Play size={18} />
-            {vm.elapsedTime > 0 ? "再開" : "開始"}
+            {vm.elapsedTime > 0 ? t("resume") : t("start")}
           </button>
         )}
         {vm.isStopped && (
@@ -92,7 +95,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
       {vm.isStopped && (
         <div className="space-y-4 pt-2 border-t border-gray-100">
           <div className="text-center text-sm text-gray-500">
-            記録時間:{" "}
+            {t("elapsedTime")}{" "}
             <span className="font-semibold text-black">
               {vm.convertedQuantity} {vm.quantityUnit}
             </span>
@@ -112,6 +115,7 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
 }
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <form
       onSubmit={(e) => {
@@ -129,7 +133,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
       )}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1">
-          数量 {vm.quantityUnit && `(${vm.quantityUnit})`}
+          {t("quantity")} {vm.quantityUnit && `(${vm.quantityUnit})`}
         </label>
         <input
           type="number"

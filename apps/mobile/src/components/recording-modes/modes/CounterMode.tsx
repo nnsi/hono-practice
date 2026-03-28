@@ -1,6 +1,7 @@
 import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, TouchableOpacity, View } from "react-native";
 
 import { IMESafeTextInput } from "../../common/IMESafeTextInput";
@@ -19,6 +20,7 @@ import { SaveButton } from "../parts/SaveButton";
 import { useCounterMode } from "./useCounterMode";
 
 export function CounterMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useCounterMode(props);
 
   return (
@@ -37,7 +39,7 @@ export function CounterMode(props: RecordingModeProps) {
               vm.activeTab === "manual" ? "text-gray-900" : "text-gray-500"
             }`}
           >
-            手動入力
+            {t("manualEntry")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -52,7 +54,7 @@ export function CounterMode(props: RecordingModeProps) {
               vm.activeTab === "counter" ? "text-gray-900" : "text-gray-500"
             }`}
           >
-            カウンター
+            {t("counter")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -67,11 +69,12 @@ export function CounterMode(props: RecordingModeProps) {
 }
 
 function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  const { t } = useTranslation("recording");
   return (
     <View className="gap-4">
       {vm.todayTotal > 0 && (
         <Text className="text-center text-sm text-gray-500">
-          今日の合計:{" "}
+          {t("todayTotal")}{" "}
           <Text className="font-semibold text-gray-900">
             {vm.todayTotal} {vm.quantityUnit}
           </Text>
@@ -105,6 +108,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
 }
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
+  const { t } = useTranslation("recording");
   const quantityRef = useRef<TextInput>(null);
 
   return (
@@ -118,7 +122,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
       )}
       <View>
         <Text className="text-sm font-medium text-gray-600 mb-1">
-          数量{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
+          {t("quantity")}{vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
         <IMESafeTextInput
           ref={quantityRef}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as WebBrowser from "expo-web-browser";
 import { Info, Settings, User } from "lucide-react-native";
 import {
@@ -33,6 +34,7 @@ const shadow = {
 };
 
 export function SettingsPage() {
+  const { t } = useTranslation("settings");
   const { userId, logout } = useAuthContext();
   const { settings, updateSetting } = useAppSettings();
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
@@ -51,9 +53,9 @@ export function SettingsPage() {
             <User size={20} color="#f59e0b" />
           </View>
           <View className="ml-3 flex-1">
-            <Text className="text-sm text-gray-500">ユーザーID</Text>
+            <Text className="text-sm text-gray-500">{t("userId")}</Text>
             <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
-              {userId || "未ログイン"}
+              {userId || t("notLoggedIn")}
             </Text>
           </View>
         </View>
@@ -65,24 +67,24 @@ export function SettingsPage() {
       {Platform.OS === "ios" && <AppleLinkSection shadow={shadow} />}
 
       {/* App settings */}
-      <Section icon={Settings} label="アプリ設定" shadow={shadow}>
+      <Section icon={Settings} label={t("appSettings")} shadow={shadow}>
         <SettingSwitch
-          label="起動時に目標画面を表示"
-          desc="アプリ起動時の初期画面を目標画面にします"
+          label={t("showGoalOnStartup")}
+          desc={t("showGoalOnStartupDesc")}
           value={settings.showGoalOnStartup}
           onChange={(v) => updateSetting("showGoalOnStartup", v)}
         />
         <Divider />
         <SettingSwitch
-          label="やらなかった日付をデフォルトで表示"
-          desc="目標詳細で活動がなかった日付を表示します"
+          label={t("showInactiveDates")}
+          desc={t("showInactiveDatesDesc")}
           value={settings.showInactiveDates}
           onChange={(v) => updateSetting("showInactiveDates", v)}
         />
         <Divider />
         <SettingSwitch
-          label="褒めモード"
-          desc="記録時のフィードバックに褒めメッセージと演出を追加します"
+          label={t("praiseMode")}
+          desc={t("praiseModeDesc")}
           value={settings.praiseMode}
           onChange={(v) => updateSetting("praiseMode", v)}
         />
@@ -100,11 +102,13 @@ export function SettingsPage() {
         <View className="flex-row gap-3">
           <TouchableOpacity onPress={() => setLegalModal("privacy")}>
             <Text className="text-xs text-blue-500 underline">
-              プライバシーポリシー
+              {t("privacyPolicy")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setLegalModal("terms")}>
-            <Text className="text-xs text-blue-500 underline">利用規約</Text>
+            <Text className="text-xs text-blue-500 underline">
+              {t("termsOfService")}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -43,6 +44,7 @@ export function LogCard({
   iconBlob?: IconBlob;
   onPress: () => void;
 }) {
+  const { t } = useTranslation("activity");
   const isPending = log._syncStatus === "pending";
 
   return (
@@ -80,7 +82,7 @@ export function LogCard({
             className="text-base font-semibold text-gray-800"
             numberOfLines={1}
           >
-            {activity?.name ?? "\u4e0d\u660e"}
+            {activity?.name ?? t("log.unknownActivity")}
           </Text>
           {kind && (
             <View className="flex-row items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-lg shrink-0">

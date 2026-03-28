@@ -1,46 +1,22 @@
-import {
-  commercialTransactionsTitle,
-  createCommercialTransactionsSections,
-  createPrivacyPolicySections,
-  privacyPolicyTitle,
-  termsOfServiceSections,
-  termsOfServiceTitle,
-} from "@packages/frontend-shared/legal";
+import type { LegalType } from "@packages/frontend-shared/legal";
+import { getLegalContent } from "@packages/frontend-shared/legal";
+import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 
-type LegalType = "privacy" | "terms" | "tokushoho";
-
 type LegalModalProps = {
   type: LegalType;
   onClose: () => void;
 };
 
-const titleMap = {
-  privacy: privacyPolicyTitle,
-  terms: termsOfServiceTitle,
-  tokushoho: commercialTransactionsTitle,
-} as const;
-
-function getSections(type: LegalType) {
-  switch (type) {
-    case "privacy":
-      return createPrivacyPolicySections({ contactEmail: CONTACT_EMAIL });
-    case "terms":
-      return termsOfServiceSections;
-    case "tokushoho":
-      return createCommercialTransactionsSections({
-        contactEmail: CONTACT_EMAIL,
-      });
-  }
-}
-
 export function LegalModal({ type, onClose }: LegalModalProps) {
-  const title = titleMap[type];
-  const sections = getSections(type);
+  const { i18n } = useTranslation();
+  const { title, sections } = getLegalContent(type, i18n.language, {
+    contactEmail: CONTACT_EMAIL,
+  });
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -50,7 +26,6 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="閉じる"
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X size={20} className="text-gray-500" />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import * as Google from "expo-auth-session/providers/google";
 import { Link } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
@@ -96,6 +97,7 @@ function useGoogleAccount() {
 }
 
 export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
+  const { t } = useTranslation("settings");
   const google = useGoogleAccount();
 
   return (
@@ -109,7 +111,7 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
           {google.isGoogleLinked ? (
             <View className="flex-row items-center gap-2">
               <Text className="text-sm text-green-700 font-medium">
-                Google連携済み
+                {t("googleLinked")}
               </Text>
               {google.googleEmail && (
                 <Text className="text-xs text-gray-500">
@@ -119,7 +121,7 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
             </View>
           ) : (
             <Text className="text-xs text-gray-500">
-              Googleアカウントを連携すると、Googleログインでもこのアカウントにアクセスできます。
+              {t("googleLinkDescription")}
             </Text>
           )}
           <TouchableOpacity
@@ -136,7 +138,7 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
               style={{ color: "#1F1F1F" }}
             >
               {google.isLinking
-                ? "連携中..."
+                ? t("linking")
                 : google.isGoogleLinked
                   ? "Googleアカウントを変更"
                   : "Googleアカウントを連携"}

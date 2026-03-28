@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -5,6 +6,7 @@ import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 
 export function StatsPage() {
+  const { t } = useTranslation("stats");
   const {
     month,
     goToPrevMonth,
@@ -23,18 +25,18 @@ export function StatsPage() {
           <button
             type="button"
             onClick={goToPrevMonth}
-            aria-label="前の月"
+            aria-label={t("previousMonth")}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
           </button>
           <span className="text-base font-medium min-w-[100px] text-center">
-            {dayjs(month).format("YYYY年M月")}
+            {dayjs(month).format(t("monthYearFormat"))}
           </span>
           <button
             type="button"
             onClick={goToNextMonth}
-            aria-label="次の月"
+            aria-label={t("nextMonth")}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
@@ -46,15 +48,15 @@ export function StatsPage() {
       <div className="p-4 space-y-6">
         {isLoading ? (
           <div className="text-center text-gray-400 py-16">
-            <div className="animate-pulse">読み込み中...</div>
+            <div className="animate-pulse">{t("loading")}</div>
           </div>
         ) : !stats || stats.length === 0 ? (
           <div className="text-center text-gray-400 py-16">
             <BarChart3 size={48} className="mx-auto mb-3 opacity-30" />
-            <p className="text-lg mb-1">データがありません</p>
+            <p className="text-lg mb-1">{t("noData")}</p>
             <p className="text-sm">
-              {dayjs(month).format("YYYY年M月")}
-              のアクティビティ記録はありません
+              {dayjs(month).format(t("monthYearFormat"))}
+              {t("noActivityInMonth")}
             </p>
           </div>
         ) : (

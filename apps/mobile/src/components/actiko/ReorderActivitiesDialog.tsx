@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { ActivityRecord } from "@packages/domain/activity/activityRecord";
+import { useTranslation } from "@packages/i18n";
 import { ArrowDown, ArrowUp } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -20,6 +21,7 @@ export function ReorderActivitiesDialog({
   onClose,
   activities,
 }: ReorderActivitiesDialogProps) {
+  const { t } = useTranslation("actiko");
   const iconBlobMap = useIconBlobMap();
   const [items, setItems] = useState(activities);
   const [saving, setSaving] = useState(false);
@@ -49,7 +51,7 @@ export function ReorderActivitiesDialog({
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title="並び替え">
+    <ModalOverlay visible={visible} onClose={onClose} title={t("reorder")}>
       <View className="gap-1 mb-4">
         {items.map((activity, index) => (
           <View
@@ -98,7 +100,9 @@ export function ReorderActivitiesDialog({
           className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl items-center"
           activeOpacity={0.7}
         >
-          <Text className="text-sm font-medium text-gray-600">キャンセル</Text>
+          <Text className="text-sm font-medium text-gray-600">
+            {t("cancel")}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleSave}
@@ -108,7 +112,7 @@ export function ReorderActivitiesDialog({
           style={{ opacity: saving ? 0.5 : 1 }}
         >
           <Text className="text-sm font-medium text-white">
-            {saving ? "保存中..." : "保存"}
+            {saving ? t("saving") : t("save")}
           </Text>
         </TouchableOpacity>
       </View>

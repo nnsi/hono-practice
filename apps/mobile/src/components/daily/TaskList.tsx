@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 import { ActivityIcon } from "../common/ActivityIcon";
@@ -40,6 +41,8 @@ export function TaskList({
   activitiesMap?: Map<string, ActivityInfo>;
   iconBlobMap?: Map<string, IconBlob>;
 }) {
+  const { t } = useTranslation("activity");
+
   if (isLoading) {
     return (
       <View className="items-center py-8">
@@ -51,7 +54,7 @@ export function TaskList({
   if (tasks.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-gray-400 text-sm">タスクはありません</Text>
+        <Text className="text-gray-400 text-sm">{t("daily.noTasks")}</Text>
       </View>
     );
   }

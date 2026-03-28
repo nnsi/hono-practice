@@ -1,4 +1,5 @@
 import type { DailyTask } from "@packages/frontend-shared/hooks/types";
+import { useTranslation } from "@packages/i18n";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
@@ -15,6 +16,7 @@ export function TaskList({
   onToggle: (task: DailyTask) => void | Promise<void>;
   activitiesMap?: Map<string, DexieActivity>;
 }) {
+  const { t } = useTranslation("activity");
   if (isLoading) {
     return (
       <div className="text-center text-gray-400 py-8">
@@ -25,7 +27,7 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-8">タスクはありません</div>
+      <div className="text-center text-gray-400 py-8">{t("daily.noTasks")}</div>
     );
   }
 

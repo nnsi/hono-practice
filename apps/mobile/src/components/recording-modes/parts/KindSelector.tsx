@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
 type KindSelectorProps = {
@@ -11,9 +12,10 @@ export function KindSelector({
   selectedKindId,
   onSelect,
 }: KindSelectorProps) {
+  const { t } = useTranslation("recording");
   return (
     <View>
-      <Text className="text-sm font-medium text-gray-600 mb-2">種類</Text>
+      <Text className="text-sm font-medium text-gray-600 mb-2">{t("kind")}</Text>
       <View className="flex-row flex-wrap gap-2">
         {kinds.map((kind) => (
           <TouchableOpacity

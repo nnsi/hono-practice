@@ -14,6 +14,7 @@ import {
   validateDate,
   validateQuantity,
 } from "@packages/domain/csv/csvParser";
+import { i18next, useTranslation } from "@packages/i18n";
 
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
@@ -64,7 +65,10 @@ function validateRowWithMapping(
   if (dateError) errors.push({ field: "date", message: dateError });
 
   if (!isFixedActivity && !activityName) {
-    errors.push({ field: "activity", message: "活動名は必須です" });
+    errors.push({
+      field: "activity",
+      message: i18next.t("csv:validation.activityRequired"),
+    });
   }
 
   const { value: quantity, error: quantityError } =
@@ -84,7 +88,10 @@ function validateRowWithMapping(
         if (!hasKind) {
           errors.push({
             field: "kind",
-            message: `活動「${activityName}」に種別「${kindName}」は存在しません`,
+            message: i18next.t("csv:validation.kindNotFound", {
+              activity: activityName,
+              kind: kindName,
+            }),
           });
         }
       }
@@ -128,6 +135,7 @@ export type ImportResult = {
 type Step = "file" | "mapping" | "preview";
 
 export function useCSVImport(onComplete: () => void) {
+  const { t } = useTranslation("csv");
   const [step, setStep] = useState<Step>("file");
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
@@ -181,7 +189,7 @@ export function useCSVImport(onComplete: () => void) {
     try {
       const result = await parseCSVFile(file);
       if (result.data.length === 0) {
-        setError("CSVにデータ行がありません");
+        setError(t("noData"));
         return;
       }
       setParsedData(result.data);
@@ -189,7 +197,7 @@ export function useCSVImport(onComplete: () => void) {
       setColumnMapping(autoDetectMapping(result.headers));
       setStep("mapping");
     } catch {
-      setError("ファイルの解析に失敗しました");
+      setError(t("parseError"));
     } finally {
       setIsParsing(false);
     }
@@ -198,14 +206,11 @@ export function useCSVImport(onComplete: () => void) {
   const handleMappingConfirm = useCallback(async () => {
     // Validate required mapping
     const mappingErrors: string[] = [];
-    if (!columnMapping.date)
-      mappingErrors.push("日付カラムのマッピングが必要です");
+    if (!columnMapping.date) mappingErrors.push(t("validation.dateRequired"));
     if (!columnMapping.activity && !columnMapping.fixedActivityId)
-      mappingErrors.push(
-        "アクティビティカラムまたは固定アクティビティの選択が必要です",
-      );
+      mappingErrors.push(t("validation.activityOrFixed"));
     if (!columnMapping.quantity)
-      mappingErrors.push("数量カラムのマッピングが必要です");
+      mappingErrors.push(t("validation.quantityRequired"));
 
     if (mappingErrors.length > 0) {
       setError(mappingErrors.join("\n"));
@@ -224,13 +229,11 @@ export function useCSVImport(onComplete: () => void) {
 
     const totalErrors = validated.filter((l) => l.errors.length > 0).length;
     if (totalErrors > 0) {
-      setError(
-        `${totalErrors}件のエラーが見つかりました。修正してからインポートしてください。`,
-      );
+      setError(`${totalErrors}${t("validation.errorsFound")}`);
     } else {
       setError(null);
     }
-  }, [parsedData, columnMapping]);
+  }, [parsedData, columnMapping, t]);
 
   const handleEdit = useCallback(
     async (index: number, field: keyof ValidatedActivityLog, value: string) => {
@@ -283,9 +286,7 @@ export function useCSVImport(onComplete: () => void) {
 
         const totalErrors = updated.filter((l) => l.errors.length > 0).length;
         if (totalErrors > 0) {
-          setError(
-            `${totalErrors}件のエラーがあります。修正してからインポートしてください。`,
-          );
+          setError(`${totalErrors}${t("validation.errorsFound")}`);
         } else {
           setError(null);
         }
@@ -304,7 +305,7 @@ export function useCSVImport(onComplete: () => void) {
     async (logs: ValidatedActivityLog[]) => {
       const toImport = logs.filter((l) => l.errors.length === 0);
       if (toImport.length === 0) {
-        setError("インポートできるデータがありません");
+        setError(t("noImportData"));
         return;
       }
 
@@ -428,9 +429,8 @@ export function useCSVImport(onComplete: () => void) {
         syncEngine.syncAll();
 
         const messages: string[] = [];
-        if (skipped > 0)
-          messages.push(`${skipped}件は既存データと重複のためスキップ`);
-        if (failed > 0) messages.push(`${failed}件のインポートに失敗`);
+        if (skipped > 0) messages.push(`${skipped}${t("skipDuplicate")}`);
+        if (failed > 0) messages.push(`${failed}${t("importFailed")}`);
 
         if (messages.length === 0) {
           setImportSuccess(true);
@@ -449,12 +449,12 @@ export function useCSVImport(onComplete: () => void) {
           setError(messages.join("、"));
         }
       } catch {
-        setError("インポート中にエラーが発生しました");
+        setError(t("importError"));
       } finally {
         setIsImporting(false);
       }
     },
-    [onComplete, reset],
+    [onComplete, reset, t],
   );
 
   const downloadTemplate = useCallback(() => {
