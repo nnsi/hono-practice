@@ -13,7 +13,7 @@ import { useManualMode } from "./useManualMode";
 export function ManualMode(props: RecordingModeProps) {
   const { t } = useTranslation("recording");
   const vm = useManualMode(props);
-  const quantityRef = useRef<TextInput>(null);
+  const quantityRef = useRef<TextInput & { select?: () => void }>(null);
 
   return (
     <View className="gap-4">
@@ -39,14 +39,11 @@ export function ManualMode(props: RecordingModeProps) {
           autoFocus
           onFocus={() => {
             setTimeout(() => {
-              const node = quantityRef.current as unknown as {
-                select?: () => void;
-                setSelection?: (start: number, end: number) => void;
-              } | null;
+              const node = quantityRef.current;
               if (node?.select) {
                 node.select();
-              } else if (node?.setSelection) {
-                node.setSelection(0, vm.quantity.length);
+              } else {
+                node?.setSelection(0, vm.quantity.length);
               }
             }, 0);
           }}

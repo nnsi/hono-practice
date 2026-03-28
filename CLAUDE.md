@@ -17,10 +17,10 @@
 - pnpmモノレポ: バージョン重複→型不一致に注意。`pnpm.overrides`で統一。tsconfig pathsとmodule resolution（`"workspace:*"`宣言）は別物
 
 ## 📚 詳細ドキュメント
-- `/docs/knowledges/` — 設計ドキュメント
 - `apps/backend/CLAUDE.md` — バックエンド固有ルール
 - `apps/frontend/CLAUDE.md` — フロントエンド固有ルール
 - `apps/mobile/CLAUDE.md` — モバイル固有ルール
+- `docs/adr/` — 設計判断の記録
 
 ## 必須コマンド
 ```bash

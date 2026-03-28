@@ -11,23 +11,12 @@ export function useOtaUpdate() {
 
   // Cold start: check → fetch → splash → reload
   useEffect(() => {
-    const updatesState = {
-      channel: Updates.channel,
-      runtimeVersion: Updates.runtimeVersion,
-      isEmbeddedLaunch: Updates.isEmbeddedLaunch,
-      updateId: Updates.updateId,
-      isEnabled: Updates.isEnabled,
-    };
-    console.log("[updates] state:", JSON.stringify(updatesState));
-
     if (__DEV__) return;
 
     Updates.checkForUpdateAsync()
       .then((result) => {
-        console.log("[updates] checkForUpdate:", JSON.stringify(result));
         if (result.isAvailable) {
           return Updates.fetchUpdateAsync().then(async (fetchResult) => {
-            console.log("[updates] fetched:", JSON.stringify(fetchResult));
             if (fetchResult.isNew) {
               setIsUpdating(true);
               await new Promise((r) => setTimeout(r, 1500));
