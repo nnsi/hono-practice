@@ -50,24 +50,21 @@ export function useContactForm(): ContactFormState & ContactFormHandlers {
       });
 
       if (!res.ok) {
-        const rawRes = res as unknown as Response;
-        const message =
-          rawRes.status === 429
+        const status: number = res.status;
+        setError(
+          status === 429
             ? t("contact.rateLimitError")
-            : "An error occurred. Please try again.";
-        throw new Error(message);
+            : t("contact.genericError"),
+        );
+        return;
       }
 
       setIsSuccess(true);
       setTimeout(() => {
         navigate({ to: "/" });
       }, 2000);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred. Please try again.",
-      );
+    } catch {
+      setError(t("contact.genericError"));
     } finally {
       setIsSubmitting(false);
     }
