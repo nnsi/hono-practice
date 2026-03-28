@@ -82,7 +82,7 @@ fi
 # --- 3. Setup env files ---
 echo "[3/5] Setting up environment files..."
 
-# Backend .env.local
+# Backend .env.local + .env (dotenv reads .env by default)
 MAIN_BE_ENV="$REPO_ROOT/apps/backend/.env.local"
 WT_BE_ENV="$WT_DIR/apps/backend/.env.local"
 if [ -f "$MAIN_BE_ENV" ]; then
@@ -91,7 +91,8 @@ if [ -f "$MAIN_BE_ENV" ]; then
   sed -i "s|^API_PORT=.*|API_PORT=$API_PORT|" "$WT_BE_ENV"
   sed -i "s|^APP_URL=.*|APP_URL=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
   sed -i "s|^APP_URL_V2=.*|APP_URL_V2=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
-  echo "  apps/backend/.env.local → OK"
+  cp "$WT_BE_ENV" "$WT_DIR/apps/backend/.env"
+  echo "  apps/backend/.env.local + .env → OK"
 else
   echo "  WARNING: $MAIN_BE_ENV not found. Create it manually in the worktree."
 fi
@@ -102,6 +103,12 @@ WT_FE_ENV="$WT_DIR/apps/frontend/.env"
 if [ -f "$MAIN_FE_ENV" ]; then
   cp "$MAIN_FE_ENV" "$WT_FE_ENV"
   sed -i "s|^VITE_API_URL=.*|VITE_API_URL=http://localhost:$API_PORT|" "$WT_FE_ENV"
+  # VITE_PORT for vite.config.ts (reads from env)
+  if ! grep -q "^VITE_PORT=" "$WT_FE_ENV" 2>/dev/null; then
+    echo "VITE_PORT=$VITE_PORT" >> "$WT_FE_ENV"
+  else
+    sed -i "s|^VITE_PORT=.*|VITE_PORT=$VITE_PORT|" "$WT_FE_ENV"
+  fi
   echo "  apps/frontend/.env → OK"
 else
   echo "  WARNING: $MAIN_FE_ENV not found."

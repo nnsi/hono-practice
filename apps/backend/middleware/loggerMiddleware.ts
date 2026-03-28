@@ -6,6 +6,13 @@ import { createTracer } from "../lib/tracer";
 import { appendLocalLog } from "./localLogWriter";
 import { firstStackFrame, writeToWAE } from "./waeWriter";
 
+/** ボットスキャナーがよく叩くパスか判定（.env, .git, wp-admin 等） */
+const BOT_SCAN_RE =
+  /\.\w{1,10}$|\/\.git|\/wp-|\/cgi-bin|\/admin|\/phpmy|\/actuator/i;
+function isBotScanPath(path: string): boolean {
+  return BOT_SCAN_RE.test(path);
+}
+
 /**
  * 構造化ロガーミドルウェア
  * - リクエストごとにrequestIdを生成し、全ログに付与
@@ -136,12 +143,13 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
       ...summary,
     });
 
-    // WAEにメトリクスを書き込み（404はボットトラフィックが大半なので除外）
+    // WAEにメトリクスを書き込み（404・ボットスキャンはノイズなので除外）
     // catchブロックで書き込み済みの場合は重複を防ぐためスキップ
     // app.request()経由のネストリクエストではWAE書き込みが失敗する可能性があるため、try-catchで保護
+    const skipWae = status === 404 || (status === 401 && isBotScanPath(path));
     try {
       const wae = c.env.WAE_LOGS;
-      if (wae && status !== 404 && !waeWritten) {
+      if (wae && !skipWae && !waeWritten) {
         c.executionCtx.waitUntil(
           Promise.resolve(
             writeToWAE(wae, {
@@ -156,7 +164,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
             }),
           ),
         );
-      } else if (!waeWritten && status !== 404) {
+      } else if (!waeWritten && !skipWae) {
         appendLocalLog({
           type: "request",
           level,

@@ -60,6 +60,8 @@ export type ActivityRepository = {
   markActivityKindsSynced(ids: string[]): Promise<void>;
   markActivitiesFailed(ids: string[]): Promise<void>;
   markActivityKindsFailed(ids: string[]): Promise<void>;
+  markActivitiesRejected(ids: string[]): Promise<void>;
+  markActivityKindsRejected(ids: string[]): Promise<void>;
   // Icon management
   saveActivityIconBlob(
     activityId: string,

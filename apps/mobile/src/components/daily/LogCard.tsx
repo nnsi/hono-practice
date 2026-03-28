@@ -37,7 +37,7 @@ export function LogCard({
     activityKindId: string | null;
     quantity: number | null;
     memo: string;
-    _syncStatus?: "synced" | "pending" | "failed";
+    _syncStatus?: "synced" | "pending" | "failed" | "rejected";
   };
   activity: Activity | null;
   kind: Kind | null;

@@ -17,6 +17,8 @@ vi.mock("../repositories/activityRepository", () => ({
     markActivitiesFailed: vi.fn().mockResolvedValue(undefined),
     markActivityKindsSynced: vi.fn().mockResolvedValue(undefined),
     markActivityKindsFailed: vi.fn().mockResolvedValue(undefined),
+    markActivitiesRejected: vi.fn().mockResolvedValue(undefined),
+    markActivityKindsRejected: vi.fn().mockResolvedValue(undefined),
     upsertActivities: vi.fn().mockResolvedValue(undefined),
     upsertActivityKinds: vi.fn().mockResolvedValue(undefined),
     getPendingIconDeletes: vi.fn().mockResolvedValue([]),
@@ -158,7 +160,7 @@ describe("syncActivities", () => {
     expect(activityRepository.markActivityKindsFailed).toHaveBeenCalledWith([]);
   });
 
-  it("stops on first API error", async () => {
+  it("throws on 5xx API error", async () => {
     (activityRepository.getPendingSyncActivities as Mock).mockResolvedValue([
       {
         id: "a1",
@@ -183,7 +185,7 @@ describe("syncActivities", () => {
       [],
     );
 
-    mockPost.mockResolvedValue({ ok: false });
+    mockPost.mockResolvedValue({ ok: false, status: 500 });
 
     await expect(syncActivities()).rejects.toThrow("syncActivities failed");
 
@@ -191,6 +193,56 @@ describe("syncActivities", () => {
     expect(activityRepository.markActivitiesFailed).not.toHaveBeenCalled();
     expect(activityRepository.markActivityKindsSynced).not.toHaveBeenCalled();
     expect(activityRepository.markActivityKindsFailed).not.toHaveBeenCalled();
+  });
+
+  it("marks items as rejected on 4xx and does not throw", async () => {
+    (activityRepository.getPendingSyncActivities as Mock).mockResolvedValue([
+      {
+        id: "a1",
+        _syncStatus: "pending",
+        userId: "u1",
+        name: "Run",
+        label: "",
+        emoji: "",
+        iconType: "emoji",
+        iconUrl: null,
+        iconThumbnailUrl: null,
+        description: "",
+        quantityUnit: "km",
+        orderIndex: "000001",
+        showCombinedStats: true,
+        createdAt: "2026-01-01T00:00:00Z",
+        updatedAt: "2026-01-01T00:00:00Z",
+        deletedAt: null,
+      },
+    ]);
+    (activityRepository.getPendingSyncActivityKinds as Mock).mockResolvedValue([
+      {
+        id: "k1",
+        activityId: "a1",
+        name: "",
+        color: null,
+        orderIndex: "000001",
+        createdAt: "2026-01-01T00:00:00Z",
+        updatedAt: "2026-01-01T00:00:00Z",
+        deletedAt: null,
+        _syncStatus: "pending",
+      },
+    ]);
+
+    mockPost.mockResolvedValue({ ok: false, status: 400 });
+
+    await syncActivities(); // should not throw
+
+    expect(activityRepository.markActivitiesRejected).toHaveBeenCalledWith([
+      "a1",
+    ]);
+    expect(activityRepository.markActivityKindsRejected).toHaveBeenCalledWith([
+      "k1",
+    ]);
+    // syncedIds/skippedIds are empty → called with [] (no-op)
+    expect(activityRepository.markActivitiesSynced).toHaveBeenCalledWith([]);
+    expect(activityRepository.markActivitiesFailed).toHaveBeenCalledWith([]);
   });
 
   it("strips _syncStatus before sending to API", async () => {
