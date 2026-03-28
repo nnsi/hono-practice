@@ -13,7 +13,7 @@ export type Task = {
   memo: string;
   startDate: string | null;
   dueDate: string | null;
-  _syncStatus?: "synced" | "pending" | "failed";
+  _syncStatus?: "synced" | "pending" | "failed" | "rejected";
 };
 
 type ActivityInfo = {

@@ -73,6 +73,7 @@ class WidgetDbHelper(private val context: Context) {
             SQLiteDatabase.OPEN_READWRITE,
         ).also {
             it.enableWriteAheadLogging()
+            it.execSQL("PRAGMA busy_timeout = 5000")
         }
     }
 

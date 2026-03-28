@@ -29,6 +29,7 @@ export default defineConfig({
       "**/cypress/**",
       "**/.{idea,git,cache,output,temp}/**",
       "**/.claude/worktrees/**",
+      "**/.worktrees/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/db-data/**",
       "**/dist-frontend/**",

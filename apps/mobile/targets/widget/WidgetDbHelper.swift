@@ -34,6 +34,7 @@ struct WidgetDbHelper {
             return nil
         }
         sqlite3_exec(db, "PRAGMA journal_mode = WAL;", nil, nil, nil)
+        sqlite3_exec(db, "PRAGMA busy_timeout = 5000;", nil, nil, nil)
         return db
     }
 
