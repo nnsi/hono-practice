@@ -28,7 +28,7 @@ export function CSVExportModal({ onClose }: Props) {
             type="button"
             onClick={onClose}
             disabled={csv.isExporting}
-            aria-label="閉じる"
+            aria-label="Close"
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-40"
           >
             <X size={18} />

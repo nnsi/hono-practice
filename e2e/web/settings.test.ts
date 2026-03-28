@@ -68,7 +68,7 @@ describe("settings", () => {
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
     // モーダルを閉じる
-    await page.locator('.modal-backdrop button[aria-label="閉じる"]').click();
+    await page.locator('.modal-backdrop button[aria-label="Close"]').click();
     await page.waitForSelector(".modal-backdrop", {
       state: "detached",
       timeout: 15000,
@@ -84,7 +84,7 @@ describe("settings", () => {
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
     // モーダルを閉じる
-    await page.locator('.modal-backdrop button[aria-label="閉じる"]').click();
+    await page.locator('.modal-backdrop button[aria-label="Close"]').click();
     await page.waitForSelector(".modal-backdrop", {
       state: "detached",
       timeout: 15000,
@@ -108,7 +108,7 @@ describe("settings", () => {
     });
 
     // モーダルを閉じる
-    await page.locator('.modal-backdrop button[aria-label="閉じる"]').click();
+    await page.locator('.modal-backdrop button[aria-label="Close"]').click();
     await page.waitForSelector(".modal-backdrop", {
       state: "detached",
       timeout: 15000,
@@ -124,7 +124,7 @@ describe("settings", () => {
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
     // モーダルを閉じる
-    await page.locator('.modal-backdrop button[aria-label="閉じる"]').click();
+    await page.locator('.modal-backdrop button[aria-label="Close"]').click();
     await page.waitForSelector(".modal-backdrop", {
       state: "detached",
       timeout: 15000,

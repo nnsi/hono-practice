@@ -7,7 +7,7 @@
   "createTitle": "New Activity",
   "icon": "Icon",
   "name": "Name",
-  "namePlaceholder": "E.g., Running",
+  "namePlaceholder": "Activity name",
   "unit": "Unit",
   "unitPlaceholder": "times, min, km, etc.",
   "unitLabel": "Unit (optional)",

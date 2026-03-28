@@ -7,7 +7,7 @@
   "createTitle": "新規アクティビティ",
   "icon": "アイコン",
   "name": "名前",
-  "namePlaceholder": "例: ランニング",
+  "namePlaceholder": "アクティビティ名",
   "unit": "単位",
   "unitPlaceholder": "回, 分, km など",
   "unitLabel": "単位（任意）",

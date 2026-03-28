@@ -52,7 +52,7 @@ describe("apiKey", () => {
     createdApiKey = keyText!;
 
     // ダイアログを閉じる
-    await page.click('button[aria-label="閉じる"]');
+    await page.click('button[aria-label="Close"]');
     await page.waitForSelector('text="APIキーが作成されました"', {
       state: "detached",
       timeout: 15000,
