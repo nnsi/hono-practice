@@ -5,7 +5,9 @@ import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { googleVerify } from "@backend/feature/auth/googleVerify";
 import { newContactRepository } from "@backend/feature/contact/contactRepository";
+import { newContactUsecase } from "@backend/feature/contact/contactUsecase";
 import { newUserRepository } from "@backend/feature/user/userRepository";
+import { noopTracer } from "@backend/lib/tracer";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 
@@ -110,8 +112,14 @@ function createAdminRoute() {
       return next();
     }
     const db = c.env.DB;
+    const tracer = c.get("tracer") ?? noopTracer;
     const userRepo = newUserRepository(db);
     const contactRepo = newContactRepository(db);
+    const userUc = {
+      listUsers: (limit: number, offset: number) =>
+        tracer.span("db.listUsers", () => userRepo.listUsers(limit, offset)),
+    };
+    const contactUc = newContactUsecase(contactRepo, tracer);
     const isDev = c.env.NODE_ENV === "development";
     const apmProvider = c.env.CF_API_TOKEN
       ? createWaeApmProvider(c.env.CF_API_TOKEN)
@@ -119,7 +127,7 @@ function createAdminRoute() {
         ? createMockApmProvider()
         : getNullApmProvider();
     const dashboardQs = newAdminDashboardQueryService(db, apmProvider);
-    c.set("adminHandler", newAdminHandler(userRepo, contactRepo, dashboardQs));
+    c.set("adminHandler", newAdminHandler(userUc, contactUc, dashboardQs));
     return next();
   });
 
