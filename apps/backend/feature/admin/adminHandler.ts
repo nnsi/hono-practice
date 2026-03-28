@@ -1,31 +1,17 @@
 import type { ContactUsecase } from "@backend/feature/contact/contactUsecase";
 
 import type { AdminDashboardUsecase } from "./adminDashboardUsecase";
-
-type ListUsersUsecase = {
-  listUsers: (
-    limit: number,
-    offset: number,
-  ) => Promise<{
-    items: {
-      id: string;
-      loginId: string;
-      name: string | null;
-      createdAt: Date;
-    }[];
-    total: number;
-  }>;
-};
+import type { AdminUserUsecase } from "./adminUserUsecase";
 
 export type AdminHandler = {
   getDashboard: AdminDashboardUsecase["getDashboardData"];
-  listUsers: ListUsersUsecase["listUsers"];
+  listUsers: AdminUserUsecase["listUsers"];
   listContacts: ContactUsecase["listContacts"];
   getContactById: ContactUsecase["getContactById"];
 };
 
 export function newAdminHandler(
-  userUc: ListUsersUsecase,
+  userUc: AdminUserUsecase,
   contactUc: ContactUsecase,
   dashboardUc: AdminDashboardUsecase,
 ): AdminHandler {

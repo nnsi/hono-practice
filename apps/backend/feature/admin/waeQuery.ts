@@ -1,4 +1,4 @@
-import type { ApmProvider, ApmSummary } from "./apmProvider";
+import type { ApmProvider, ApmSummary } from "@backend/query/apmProvider";
 
 const WAE_SQL_ENDPOINT =
   "https://api.cloudflare.com/client/v4/accounts/4cd610dc1501d4e5846588d422150e15/analytics_engine/sql";

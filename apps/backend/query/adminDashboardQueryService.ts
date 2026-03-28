@@ -1,10 +1,8 @@
-import type {
-  ApmProvider,
-  ApmSummary,
-} from "@backend/feature/admin/apmProvider";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activityLogs, contacts, users } from "@infra/drizzle/schema";
 import { count, gte, isNull } from "drizzle-orm";
+
+import type { ApmProvider, ApmSummary } from "./apmProvider";
 
 export type AdminDashboardData = {
   totalUsers: number;

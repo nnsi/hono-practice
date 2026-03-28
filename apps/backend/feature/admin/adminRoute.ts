@@ -10,10 +10,14 @@ import { newUserRepository } from "@backend/feature/user/userRepository";
 import { noopTracer } from "@backend/lib/tracer";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
+import {
+  createMockApmProvider,
+  getNullApmProvider,
+} from "@backend/query/apmProvider";
 
 import { newAdminDashboardUsecase } from "./adminDashboardUsecase";
 import { type AdminHandler, newAdminHandler } from "./adminHandler";
-import { createMockApmProvider, getNullApmProvider } from "./apmProvider";
+import { newAdminUserUsecase } from "./adminUserUsecase";
 import { createWaeApmProvider } from "./waeQuery";
 
 const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
@@ -116,10 +120,7 @@ function createAdminRoute() {
     const tracer = c.get("tracer") ?? noopTracer;
     const userRepo = newUserRepository(db);
     const contactRepo = newContactRepository(db);
-    const userUc = {
-      listUsers: (limit: number, offset: number) =>
-        tracer.span("db.listUsers", () => userRepo.listUsers(limit, offset)),
-    };
+    const userUc = newAdminUserUsecase(userRepo, tracer);
     const contactUc = newContactUsecase(contactRepo, tracer);
     const isDev = c.env.NODE_ENV === "development";
     const apmProvider = c.env.CF_API_TOKEN
