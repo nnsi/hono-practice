@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host --port 2462",
-    "build": "vite build"
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
