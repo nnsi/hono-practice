@@ -6,13 +6,25 @@ import {
   type UserId,
   createUserEntity,
 } from "@packages/domain/user/userSchema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 
 export type UserRepository<T = QueryExecutor> = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
   deleteUser: (userId: UserId) => Promise<void>;
+  listUsers: (
+    limit: number,
+    offset: number,
+  ) => Promise<{
+    items: {
+      id: string;
+      loginId: string;
+      name: string | null;
+      createdAt: Date;
+    }[];
+    total: number;
+  }>;
   withTx: (tx: T) => UserRepository<T>;
 };
 
@@ -24,6 +36,7 @@ export function newUserRepository(
     getUserById: getUserById(db),
     getUserByLoginId: getUserByLoginId(db),
     deleteUser: deleteUser(db),
+    listUsers: listUsers(db),
     withTx: (tx) => newUserRepository(tx),
   };
 }
@@ -99,5 +112,27 @@ function deleteUser(db: QueryExecutor) {
       .update(users)
       .set({ deletedAt: new Date() })
       .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+  };
+}
+
+function listUsers(db: QueryExecutor) {
+  return async (limit: number, offset: number) => {
+    const [items, [{ total }]] = await Promise.all([
+      db
+        .select({
+          id: users.id,
+          loginId: users.loginId,
+          name: users.name,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(isNull(users.deletedAt))
+        .orderBy(desc(users.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ total: count() }).from(users).where(isNull(users.deletedAt)),
+    ]);
+
+    return { items, total };
   };
 }

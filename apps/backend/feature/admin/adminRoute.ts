@@ -4,15 +4,20 @@ import { sign } from "hono/jwt";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { googleVerify } from "@backend/feature/auth/googleVerify";
+import { newContactRepository } from "@backend/feature/contact/contactRepository";
+import { newUserRepository } from "@backend/feature/user/userRepository";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
+import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 
-import { type AdminRepository, newAdminRepository } from "./adminRepository";
+import { type AdminHandler, newAdminHandler } from "./adminHandler";
+import { createMockApmProvider, getNullApmProvider } from "./apmProvider";
+import { createWaeApmProvider } from "./waeQuery";
 
-const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60; // 8 hours
+const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
 
 type AdminRouteContext = AppContext & {
   Variables: AppContext["Variables"] & {
-    adminRepo: AdminRepository;
+    adminHandler: AdminHandler;
   };
 };
 
@@ -27,7 +32,7 @@ function parseAllowedEmails(envValue: string | undefined): string[] {
 function createAdminRoute() {
   const app = new Hono<AdminRouteContext>();
 
-  // --- Auth (no adminAuthMiddleware) ---
+  // --- Auth endpoints (no adminAuthMiddleware) ---
   app.post("/auth/google", async (c) => {
     const { credential } = await c.req.json<{ credential: string }>();
     if (!credential) {
@@ -65,14 +70,9 @@ function createAdminRoute() {
       "HS256",
     );
 
-    return c.json({
-      token,
-      email: payload.email,
-      name: payload.name ?? "",
-    });
+    return c.json({ token, email: payload.email, name: payload.name ?? "" });
   });
 
-  // --- Dev bypass (development only) ---
   app.post("/auth/dev-login", async (c) => {
     if (c.env.NODE_ENV !== "development") {
       throw new AppError("Not available", 404);
@@ -98,44 +98,54 @@ function createAdminRoute() {
     return c.json({ token, email, name });
   });
 
-  // --- Protected admin routes ---
+  // --- Protected routes: auth + DI ---
   app.use("/dashboard", adminAuthMiddleware);
   app.use("/users", adminAuthMiddleware);
   app.use("/contacts/*", adminAuthMiddleware);
   app.use("/contacts", adminAuthMiddleware);
 
   app.use("/*", async (c, next) => {
+    // Skip DI for auth routes
+    if (c.req.path.startsWith("/admin/auth")) {
+      return next();
+    }
     const db = c.env.DB;
-    c.set("adminRepo", newAdminRepository(db));
+    const userRepo = newUserRepository(db);
+    const contactRepo = newContactRepository(db);
+    const isDev = c.env.NODE_ENV === "development";
+    const apmProvider = c.env.CF_API_TOKEN
+      ? createWaeApmProvider(c.env.CF_API_TOKEN)
+      : isDev
+        ? createMockApmProvider()
+        : getNullApmProvider();
+    const dashboardQs = newAdminDashboardQueryService(db, apmProvider);
+    c.set("adminHandler", newAdminHandler(userRepo, contactRepo, dashboardQs));
     return next();
   });
 
+  // --- Endpoints ---
   app.get("/dashboard", async (c) => {
-    const repo = c.var.adminRepo;
-    const data = await repo.getDashboardData();
+    const data = await c.var.adminHandler.getDashboard();
     return c.json(data);
   });
 
   app.get("/users", async (c) => {
     const limit = Number(c.req.query("limit") ?? "20");
     const offset = Number(c.req.query("offset") ?? "0");
-    const repo = c.var.adminRepo;
-    const result = await repo.listUsers(limit, offset);
+    const result = await c.var.adminHandler.listUsers(limit, offset);
     return c.json(result);
   });
 
   app.get("/contacts", async (c) => {
     const limit = Number(c.req.query("limit") ?? "20");
     const offset = Number(c.req.query("offset") ?? "0");
-    const repo = c.var.adminRepo;
-    const result = await repo.listContacts(limit, offset);
+    const result = await c.var.adminHandler.listContacts(limit, offset);
     return c.json(result);
   });
 
   app.get("/contacts/:id", async (c) => {
     const { id } = c.req.param();
-    const repo = c.var.adminRepo;
-    const contact = await repo.getContactById(id);
+    const contact = await c.var.adminHandler.getContactById(id);
     if (!contact) {
       throw new AppError("Contact not found", 404);
     }

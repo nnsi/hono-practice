@@ -3,10 +3,18 @@ import { Activity, AlertTriangle, Mail, Users } from "lucide-react";
 
 import { adminGet } from "../../utils/apiClient";
 
+type WaeApmData = {
+  totalRequests: number;
+  errorCount: number;
+  errorRate: number;
+  avgResponseTimeMs: number;
+};
+
 type DashboardData = {
   totalUsers: number;
   totalContacts: number;
   recentActionCount: number;
+  apm: WaeApmData;
 };
 
 export function DashboardPage() {
@@ -15,11 +23,12 @@ export function DashboardPage() {
     queryFn: () => adminGet<DashboardData>("/admin/dashboard"),
   });
 
+  const apm = data?.apm;
+
   return (
     <div>
       <h2 className="mb-6 text-2xl font-bold text-gray-900">ダッシュボード</h2>
 
-      {/* Stats grid */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="総ユーザー数"
@@ -40,35 +49,52 @@ export function DashboardPage() {
           isLoading={isLoading}
         />
         <StatCard
-          label="WAE-APM アラート"
-          value={0}
+          label="24h エラー件数"
+          value={apm?.errorCount}
           icon={<AlertTriangle size={20} />}
-          isLoading={false}
-          subtitle="正常稼働中"
+          isLoading={isLoading}
+          subtitle={
+            apm && apm.totalRequests > 0
+              ? `エラーレート: ${apm.errorRate}%`
+              : undefined
+          }
         />
       </div>
 
-      {/* WAE-APM Section */}
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <h3 className="mb-4 text-lg font-semibold text-gray-900">
-          WAE-APM ステータス
+          WAE-APM（直近24時間）
         </h3>
         <div className="space-y-3">
-          <AlertRow level="info" message="全サービス正常稼働中" time="現在" />
-          <AlertRow
-            level="info"
-            message="直近24時間のエラーレート: 0.00%"
-            time="自動集計"
+          <ApmRow
+            label="総リクエスト数"
+            value={
+              apm?.totalRequests ? apm.totalRequests.toLocaleString() : "--"
+            }
           />
-          <AlertRow
-            level="info"
-            message="平均レスポンスタイム: -- ms"
-            time="WAE連携後に表示"
+          <ApmRow
+            label="エラー件数"
+            value={apm?.errorCount?.toString() ?? "--"}
+            alert={!!apm && apm.errorCount > 0}
+          />
+          <ApmRow
+            label="エラーレート"
+            value={apm?.totalRequests ? `${apm.errorRate}%` : "--"}
+            alert={!!apm && apm.errorRate > 1}
+          />
+          <ApmRow
+            label="平均レスポンスタイム"
+            value={
+              apm?.avgResponseTimeMs ? `${apm.avgResponseTimeMs} ms` : "--"
+            }
+            alert={!!apm && apm.avgResponseTimeMs > 500}
           />
         </div>
-        <p className="mt-4 text-xs text-gray-400">
-          WAE Analytics Engine連携後、リアルタイムのメトリクスが表示されます
-        </p>
+        {!apm?.totalRequests && (
+          <p className="mt-4 text-xs text-gray-400">
+            CF_API_TOKEN未設定、またはデータなし
+          </p>
+        )}
       </div>
     </div>
   );
@@ -105,26 +131,22 @@ function StatCard({
   );
 }
 
-function AlertRow({
-  level,
-  message,
-  time,
+function ApmRow({
+  label,
+  value,
+  alert,
 }: {
-  level: "info" | "warn" | "error";
-  message: string;
-  time: string;
+  label: string;
+  value: string;
+  alert?: boolean;
 }) {
-  const colors = {
-    info: "bg-blue-50 text-blue-700",
-    warn: "bg-yellow-50 text-yellow-700",
-    error: "bg-red-50 text-red-700",
-  };
+  const bg = alert ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700";
   return (
     <div
-      className={`flex items-center justify-between rounded-lg px-4 py-3 ${colors[level]}`}
+      className={`flex items-center justify-between rounded-lg px-4 py-3 ${bg}`}
     >
-      <span className="text-sm">{message}</span>
-      <span className="text-xs opacity-70">{time}</span>
+      <span className="text-sm">{label}</span>
+      <span className="text-sm font-medium">{value}</span>
     </div>
   );
 }
