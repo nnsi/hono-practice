@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as TokushohoRouteImport } from './routes/tokushoho'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -20,6 +21,11 @@ import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TokushohoRoute = TokushohoRouteImport.update({
   id: '/tokushoho',
   path: '/tokushoho',
@@ -74,6 +80,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
   '/privacy': typeof PrivacyRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
   '/privacy': typeof PrivacyRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
   '/privacy': typeof PrivacyRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/actiko'
+    | '/contact'
     | '/daily'
     | '/goals'
     | '/privacy'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/actiko'
+    | '/contact'
     | '/daily'
     | '/goals'
     | '/privacy'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/actiko'
+    | '/contact'
     | '/daily'
     | '/goals'
     | '/privacy'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActikoRoute: typeof ActikoRoute
+  ContactRoute: typeof ContactRoute
   DailyRoute: typeof DailyRoute
   GoalsRoute: typeof GoalsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -162,6 +175,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tokushoho': {
       id: '/tokushoho'
       path: '/tokushoho'
@@ -238,6 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActikoRoute: ActikoRoute,
+  ContactRoute: ContactRoute,
   DailyRoute: DailyRoute,
   GoalsRoute: GoalsRoute,
   PrivacyRoute: PrivacyRoute,

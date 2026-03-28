@@ -7,6 +7,7 @@ import {
   aiActivityLogRoute,
   apiKeyRoute,
   authRoute,
+  contactRoute,
   newActivityLogRoute,
   newActivityRoute,
   taskRoute,
@@ -109,6 +110,7 @@ const routes = app
   .route("/users/v2", taskSyncRoute)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
+  .route("/contact", contactRoute)
   .route("/client-errors", clientErrorRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();

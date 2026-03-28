@@ -3,6 +3,16 @@ import type { MiddlewareHandler } from "hono";
 import type { KeyValueStore } from "@backend/infra/kv/kv";
 import type { Tracer } from "@backend/lib/tracer";
 
+import type { RateLimitConfig } from "./rateLimitConfigs";
+
+export type { RateLimitConfig } from "./rateLimitConfigs";
+export {
+  contactRateLimitConfig,
+  loginRateLimitConfig,
+  registerRateLimitConfig,
+  tokenRateLimitConfig,
+} from "./rateLimitConfigs";
+
 export type RateLimitRecord = {
   count: number;
   windowStart: number;
@@ -11,12 +21,6 @@ export type RateLimitRecord = {
 export type RateLimitResult = {
   allowed: boolean;
   headers: Record<string, string>;
-};
-
-type RateLimitConfig = {
-  windowMs: number;
-  limit: number;
-  keyGenerator: (c: { ip: string; path: string }) => string;
 };
 
 /**
@@ -191,33 +195,3 @@ export async function checkRateLimit(
     },
   };
 }
-
-/**
- * ログイン用レートリミット設定
- * 15分間に5回まで
- */
-export const loginRateLimitConfig: RateLimitConfig = {
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  keyGenerator: ({ ip }) => `login:${ip}`,
-};
-
-/**
- * トークンリフレッシュ用レートリミット設定
- * 1分間に10回まで
- */
-export const tokenRateLimitConfig: RateLimitConfig = {
-  windowMs: 60 * 1000,
-  limit: 10,
-  keyGenerator: ({ ip }) => `token:${ip}`,
-};
-
-/**
- * ユーザー登録用レートリミット設定
- * 1時間に5回まで
- */
-export const registerRateLimitConfig: RateLimitConfig = {
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  keyGenerator: ({ ip }) => `register:${ip}`,
-};
