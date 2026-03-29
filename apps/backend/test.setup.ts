@@ -34,6 +34,7 @@ afterEach(async () => {
     task,
     api_key,
     user_subscription,
+    contact,
     refresh_token,
     user_provider,
     "user"

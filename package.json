@@ -1,13 +1,14 @@
 {
   "scripts": {
-    "dev": "pnpm --filter actiko-backend --filter actiko-frontend --parallel dev",
+    "dev": "pnpm --filter actiko-backend --filter actiko-frontend --filter actiko-admin-frontend --parallel dev",
     "dev:api": "pnpm --filter actiko-backend dev",
     "dev:fe": "pnpm --filter actiko-frontend dev",
+    "dev:admin": "pnpm --filter actiko-admin-frontend dev",
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
     "ci-check": "vitest run --reporter=dot && biome lint && pnpm run tsc",
-    "tsc": "tsc --noEmit && pnpm --filter actiko-mobile typecheck",
+    "tsc": "tsc --noEmit && pnpm --filter actiko-admin-frontend typecheck && pnpm --filter actiko-mobile typecheck",
     "lint": "biome lint",
     "fix": "biome check . --write --unsafe",
     "deploy:stg": "wrangler deploy --env stg",
@@ -22,7 +23,8 @@
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
-    "gen-be": "node scripts/gen-be.js"
+    "gen-be": "node scripts/gen-be.js",
+    "mobile": "pnpm --filter actiko-mobile"
   },
   "packageManager": "pnpm@10.27.0",
   "pnpm": {

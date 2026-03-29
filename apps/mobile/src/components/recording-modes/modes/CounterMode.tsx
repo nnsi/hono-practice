@@ -115,7 +115,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
   const { t } = useTranslation("recording");
-  const quantityRef = useRef<TextInput>(null);
+  const quantityRef = useRef<TextInput & { select?: () => void }>(null);
 
   return (
     <View className="gap-4">
@@ -139,14 +139,11 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
           keyboardType="decimal-pad"
           onFocus={() => {
             setTimeout(() => {
-              const node = quantityRef.current as unknown as {
-                select?: () => void;
-                setSelection?: (start: number, end: number) => void;
-              } | null;
+              const node = quantityRef.current;
               if (node?.select) {
                 node.select();
-              } else if (node?.setSelection) {
-                node.setSelection(0, vm.quantity.length);
+              } else {
+                node?.setSelection(0, vm.quantity.length);
               }
             }, 0);
           }}

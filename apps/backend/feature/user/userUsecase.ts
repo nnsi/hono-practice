@@ -27,6 +27,16 @@ export type UserWithProviders = User & {
   plan: SubscriptionPlan;
 };
 
+type UserListResult = {
+  items: {
+    id: string;
+    loginId: string;
+    name: string | null;
+    createdAt: Date;
+  }[];
+  total: number;
+};
+
 export type UserUsecase = {
   createUser: (
     params: CreateUserInputParams,
@@ -34,6 +44,7 @@ export type UserUsecase = {
   ) => Promise<string>;
   getUserById: (userId: UserId) => Promise<UserWithProviders>;
   deleteUser: (userId: UserId) => Promise<void>;
+  listUsers: (limit: number, offset: number) => Promise<UserListResult>;
 };
 
 export function newUserUsecase(
@@ -48,6 +59,7 @@ export function newUserUsecase(
     createUser: createUser(repo, passwordVerifier, tracer),
     getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
     deleteUser: deleteUser(repo, tracer),
+    listUsers: listUsers(repo, tracer),
   };
 }
 
@@ -79,7 +91,7 @@ function createUser(
     );
 
     const token = await sign(
-      { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 60 * 60 },
+      { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60 },
       secret,
     );
 
@@ -124,5 +136,11 @@ function getUserById(
 function deleteUser(repo: UserRepository, tracer: Tracer) {
   return async (userId: UserId): Promise<void> => {
     await tracer.span("db.deleteUser", () => repo.deleteUser(userId));
+  };
+}
+
+function listUsers(repo: UserRepository, tracer: Tracer) {
+  return async (limit: number, offset: number): Promise<UserListResult> => {
+    return tracer.span("db.listUsers", () => repo.listUsers(limit, offset));
   };
 }

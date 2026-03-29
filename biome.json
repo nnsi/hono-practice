@@ -12,7 +12,8 @@
       "!**/*.gen.ts",
       "!**/*.js",
       "!**/db-data",
-      "!**/stats.html"
+      "!**/stats.html",
+      "!.worktrees"
     ]
   },
   "formatter": {

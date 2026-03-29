@@ -7,11 +7,13 @@ import {
   aiActivityLogRoute,
   apiKeyRoute,
   authRoute,
+  contactRoute,
   newActivityLogRoute,
   newActivityRoute,
   taskRoute,
   userRoute,
 } from "./feature";
+import { adminRoute } from "./feature/admin";
 import { clientErrorRoute } from "./feature/clientError/clientErrorRoute";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeriodRoute";
@@ -59,6 +61,8 @@ app.use("*", async (c, next) => {
       "http://localhost:19006", // Expo Web
       "http://localhost:2460", // frontend
       "http://localhost:2461", // frontend fallback port
+      "http://localhost:2462", // admin-frontend
+      "http://localhost:2463", // admin-frontend fallback
       "http://localhost:8081", // mobile (Expo Web)
     );
 
@@ -109,6 +113,8 @@ const routes = app
   .route("/users/v2", taskSyncRoute)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
+  .route("/contact", contactRoute)
+  .route("/admin", adminRoute)
   .route("/client-errors", clientErrorRoute)
   .post("/batch", authMiddleware, async (c) => {
     const requests = await c.req.json<{ path: string }[]>();

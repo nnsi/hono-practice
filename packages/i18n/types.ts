@@ -1,6 +1,7 @@
 import type actiko from "./locales/ja/actiko.json";
 import type activity from "./locales/ja/activity.json";
 import type common from "./locales/ja/common.json";
+import type contact from "./locales/ja/contact.json";
 import type csv from "./locales/ja/csv.json";
 import type feedback from "./locales/ja/feedback.json";
 import type goal from "./locales/ja/goal.json";
@@ -22,6 +23,7 @@ export type Resources = {
   csv: typeof csv;
   actiko: typeof actiko;
   recording: typeof recording;
+  contact: typeof contact;
 };
 
 declare module "i18next" {

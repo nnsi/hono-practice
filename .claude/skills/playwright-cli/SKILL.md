@@ -19,17 +19,15 @@ playwright-cliを使ったブラウザ操作スキル。Bashツールから`play
 
 ## 基本ワークフロー
 
-### Step 1: ブラウザを開く
+### Step 1: ポート確認 → ブラウザを開く
+
+ポートはworktreeごとに異なる。推測せず、以下から読み取る:
+- **frontend**: `apps/frontend/vite.config.ts` の `server.port`
+- **backend API**: `apps/backend/.env.local` の `API_PORT`
 
 ```bash
-playwright-cli open http://localhost:2460
+playwright-cli open http://localhost:<確認したポート>
 ```
-
-ポート番号はCLAUDE.mdに従う:
-| アプリ | ポート |
-|--------|--------|
-| frontend | 2460 |
-| backend API | 3456 |
 
 ### Step 2: スナップショットで要素参照を取得
 
@@ -79,7 +77,7 @@ playwright-cli close
 ### ページ遷移 → 表示確認
 
 ```bash
-playwright-cli open http://localhost:2460
+playwright-cli open http://localhost:<frontendポート>
 playwright-cli snapshot                        # 初期表示確認
 playwright-cli click e3                        # ナビゲーション要素クリック
 playwright-cli snapshot                        # 遷移後の状態確認
@@ -118,7 +116,7 @@ playwright-cli state-save auth.json
 
 # 別セッションで復元（ログインスキップ）
 playwright-cli state-load auth.json
-playwright-cli open http://localhost:2460
+playwright-cli open http://localhost:<frontendポート>
 ```
 
 ### localStorage / Cookie操作
@@ -147,7 +145,7 @@ playwright-cli video-stop
 ### 複数タブ操作
 
 ```bash
-playwright-cli tab-new http://localhost:3456/api/health
+playwright-cli tab-new http://localhost:<APIポート>/api/health
 playwright-cli tab-list
 playwright-cli tab-select 0    # 元のタブに戻る
 playwright-cli tab-close 1     # 2番目のタブを閉じる
@@ -194,7 +192,7 @@ playwright-cli run-code "async page => {
 ## 注意事項
 
 - **snapshot必須**: 要素操作前に必ず`snapshot`で最新の要素参照を取得する。画面遷移後は参照が変わる
-- **ポート確認**: localhost のポートはCLAUDE.mdに従う。推測しない
+- **ポート確認**: Step 1の手順で実際の設定値を確認する。推測しない
 - **セッション管理**: `playwright-cli list`で既存セッション確認。ゾンビが残ったら`playwright-cli kill-all`
 - **dialog対応**: `dialog-accept` / `dialog-dismiss`でダイアログ処理可能（Chrome MCPと違いブロックしない）
 - **Chrome MCPとの使い分け**: 簡単な表示確認はChrome MCP、複雑な操作・モック・記録はplaywright-cli

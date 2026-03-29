@@ -244,6 +244,16 @@ export function newActivityRepository(
       await adapter.updateKindsSyncStatus(ids, "failed");
     },
 
+    async markActivitiesRejected(ids: string[]) {
+      if (ids.length === 0) return;
+      await adapter.updateActivitiesSyncStatus(ids, "rejected");
+    },
+
+    async markActivityKindsRejected(ids: string[]) {
+      if (ids.length === 0) return;
+      await adapter.updateKindsSyncStatus(ids, "rejected");
+    },
+
     // === Icon management (platform-specific passthrough) ===
     saveActivityIconBlob: (activityId, base64, mimeType) =>
       adapter.saveActivityIconBlob(activityId, base64, mimeType),

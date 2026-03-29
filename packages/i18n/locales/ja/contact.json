@@ -1,0 +1,18 @@
+{
+  "contact.title": "お問い合わせ",
+  "contact.email": "メールアドレス",
+  "contact.emailPlaceholder": "返信先メールアドレス",
+  "contact.category": "カテゴリ",
+  "contact.categoryDefault": "選択してください",
+  "contact.categoryOptions.bug_report": "不具合報告",
+  "contact.categoryOptions.account_deletion": "アカウント削除",
+  "contact.categoryOptions.other": "その他",
+  "contact.body": "お問い合わせ内容",
+  "contact.bodyPlaceholder": "お問い合わせ内容を入力してください",
+  "contact.submit": "送信",
+  "contact.submitting": "送信中...",
+  "contact.success": "お問い合わせを受け付けました",
+  "contact.charCount": "{{count}}/1000",
+  "contact.rateLimitError": "送信回数の上限に達しました。時間をおいて再度お試しください",
+  "contact.genericError": "送信に失敗しました。時間をおいて再度お試しください"
+}

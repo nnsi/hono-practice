@@ -18,6 +18,7 @@ type LegalContent = {
 
 type Options = {
   contactEmail: string;
+  contactUrl: string;
 };
 
 /**

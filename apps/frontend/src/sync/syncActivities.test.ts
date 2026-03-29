@@ -160,7 +160,7 @@ describe("syncActivities", () => {
       ]);
     });
 
-    it("throws when API returns not ok (H5)", async () => {
+    it("throws when API returns 5xx", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
         { id: "a1", _syncStatus: "pending" },
       ] as unknown as DexieActivity[]);
@@ -178,6 +178,40 @@ describe("syncActivities", () => {
 
       expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
       expect(mockActivityRepo.markActivitiesFailed).not.toHaveBeenCalled();
+    });
+
+    it("marks items as rejected on 4xx and does not throw", async () => {
+      mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
+        { id: "a1", name: "Run", _syncStatus: "pending" },
+      ] as unknown as DexieActivity[]);
+      mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([
+        {
+          id: "k1",
+          activityId: "a1",
+          name: "",
+          _syncStatus: "pending",
+        },
+      ] as unknown as DexieActivityKind[]);
+
+      const mockPost = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+      });
+      mockApiClientObj.users = {
+        v2: { activities: { sync: { $post: mockPost } } },
+      };
+
+      await syncActivities(); // should not throw
+
+      expect(mockActivityRepo.markActivitiesRejected).toHaveBeenCalledWith([
+        "a1",
+      ]);
+      expect(mockActivityRepo.markActivityKindsRejected).toHaveBeenCalledWith([
+        "k1",
+      ]);
+      // syncedIds/skippedIds are empty → called with [] (no-op)
+      expect(mockActivityRepo.markActivitiesSynced).toHaveBeenCalledWith([]);
+      expect(mockActivityRepo.markActivitiesFailed).toHaveBeenCalledWith([]);
     });
 
     it("skips DB writes when sync generation changes (H4)", async () => {

@@ -1,6 +1,6 @@
 const TIMESTAMP_TOLERANCE_SEC = 300;
 
-function base64Decode(str: string): Uint8Array {
+function base64Decode(str: string): Uint8Array<ArrayBuffer> {
   const binary = atob(str);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
@@ -41,12 +41,12 @@ async function timingSafeEqual(a: string, b: string): Promise<boolean> {
 
 async function computeHmacBase64(
   payload: string,
-  secretBytes: Uint8Array,
+  secretBytes: Uint8Array<ArrayBuffer>,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
-    secretBytes as unknown as ArrayBuffer,
+    secretBytes,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -56,7 +56,7 @@ async function computeHmacBase64(
 }
 
 /** Strip `whsec_` prefix and base64-decode the Polar webhook secret. */
-export function decodeWebhookSecret(secret: string): Uint8Array {
+export function decodeWebhookSecret(secret: string): Uint8Array<ArrayBuffer> {
   const raw = secret.startsWith("whsec_") ? secret.slice(6) : secret;
   return base64Decode(raw);
 }

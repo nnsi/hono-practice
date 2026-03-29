@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## 🚫 最重要制限事項
-- **開発サーバーは起動しない**（ユーザー側で起動済み。ポート: frontend=2460, backend=3456）
+- **開発サーバーは起動しない**（ユーザー側で起動済み。ポートは `apps/backend/.env.local` の `API_PORT` と `apps/frontend/vite.config.ts` を参照）。**ただし worktree 環境ではポートが分離されているため、自分で起動してよい**
 - **ブラウザ動作確認はClaude in Chrome MCPを使用する**
 - **デプロイは勝手にやらない**（`wrangler deploy`, `eas-cli update` 等の本番反映コマンドは必ずユーザーの明示的な承認を得てから実行する）
 - **EAS Buildは慎重に扱う**（ビルドはリモートサーバーで実行され、時間とコストがかかる。CLIの出力が途中で止まって見えても、`eas-cli build:list` でEAS側の状態を確認してから判断する。二重投入しない）
@@ -17,10 +17,10 @@
 - pnpmモノレポ: バージョン重複→型不一致に注意。`pnpm.overrides`で統一。tsconfig pathsとmodule resolution（`"workspace:*"`宣言）は別物
 
 ## 📚 詳細ドキュメント
-- `/docs/knowledges/` — 設計ドキュメント
 - `apps/backend/CLAUDE.md` — バックエンド固有ルール
 - `apps/frontend/CLAUDE.md` — フロントエンド固有ルール
 - `apps/mobile/CLAUDE.md` — モバイル固有ルール
+- `docs/adr/` — 設計判断の記録
 
 ## 必須コマンド
 ```bash
@@ -33,8 +33,8 @@ pnpm run ci-check    # 全CIチェック
 ## 開発規約
 
 ### TypeScript
-- ファクトリ関数 `newXXX` で依存注入
 - Repository命名: メソッド名にドメイン名を含める（`createGoal` ✓ / `create` ✗）
+- 詳細は `apps/backend/CLAUDE.md` のアーキテクチャセクション参照
 
 ### テスト
 - `test-once` → `tsc` → `fix` の順で確認
@@ -42,6 +42,10 @@ pnpm run ci-check    # 全CIチェック
 - 計画段階でテストファイルも変更対象に含める
 - **実装を変えたらまずテストファイルを開く**（テストが旧挙動を期待していないか確認する）
 - **テスト失敗は100%自分の変更が原因**（CIは常に通る前提で運用されている。「既存の問題かも」と思わず、自分の変更を疑う）
+
+### 新規アプリ/パッケージ追加時のチェックリスト
+- `pnpm run tsc` のチェック対象に含まれているか（tsconfig excludeに入れた場合はpnpm filter経由で個別チェックを追加）
+- 各アプリ固有のCLAUDE.md（`apps/backend/CLAUDE.md`等）の規約に従っているか
 
 ### 完了の定義
 - テスト・型チェック通過は最低ライン。以下を満たして初めて「完了」:

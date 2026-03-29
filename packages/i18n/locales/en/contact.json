@@ -1,0 +1,18 @@
+{
+  "contact.title": "Contact Us",
+  "contact.email": "Email",
+  "contact.emailPlaceholder": "Your email address",
+  "contact.category": "Category",
+  "contact.categoryDefault": "Select a category",
+  "contact.categoryOptions.bug_report": "Bug Report",
+  "contact.categoryOptions.account_deletion": "Account Deletion",
+  "contact.categoryOptions.other": "Other",
+  "contact.body": "Message",
+  "contact.bodyPlaceholder": "Please describe your inquiry",
+  "contact.submit": "Submit",
+  "contact.submitting": "Submitting...",
+  "contact.success": "Your inquiry has been submitted",
+  "contact.charCount": "{{count}}/1000",
+  "contact.rateLimitError": "Too many submissions. Please try again later",
+  "contact.genericError": "Submission failed. Please try again later"
+}

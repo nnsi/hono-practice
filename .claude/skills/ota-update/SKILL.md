@@ -43,7 +43,7 @@ EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=<値> \
-npx eas-cli update --channel preview --platform android --message "<メッセージ>" --clear-cache
+npx eas-cli update --channel preview --environment preview --platform android --message "<メッセージ>" --clear-cache
 ```
 
 **`--clear-cache` は毎回付ける**（環境変数なしバンドルのキャッシュ事故を防ぐため）。
@@ -57,7 +57,7 @@ EXPO_PUBLIC_CONTACT_EMAIL=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=<値> \
 EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=<値> \
-npx eas-cli update --channel preview --platform ios --message "<メッセージ>"
+npx eas-cli update --channel preview --environment preview --platform ios --message "<メッセージ>"
 ```
 
 iOS側は `--clear-cache` 不要（Android配信でキャッシュは再構築済み）。

@@ -1,38 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type {
   ChartData,
   GoalLine,
 } from "@packages/frontend-shared/types/stats";
 import {
-  barHeightPct,
   computeChartScale,
   computeXLabelStep,
   formatTickValue,
   shouldShowXLabel,
-  stackedTotal,
   tickBottomPct,
 } from "@packages/frontend-shared/utils/chartUtils";
 
-function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setWidth(entry.contentRect.width);
-      }
-    });
-    observer.observe(el);
-    setWidth(el.clientWidth);
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return width;
-}
+import { ChartBars } from "./ChartBars";
+import { ChartGoalLines } from "./ChartGoalLines";
+import { ChartTooltip, type TooltipData } from "./ChartTooltip";
+import { useContainerWidth } from "./useContainerWidth";
 
 export function ActivityChart({
   data,
@@ -52,11 +35,7 @@ export function ActivityChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef);
 
-  const [tooltip, setTooltip] = useState<{
-    x: number;
-    y: number;
-    lines: { name: string; value: number; color: string }[];
-  } | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
   const { yTicks, effectiveYMax } = useMemo(
     () => computeChartScale(data, dataKeys, goalLines, !!stackId),
@@ -77,7 +56,7 @@ export function ActivityChart({
       const lines = dataKeys
         .map((key) => ({
           name: key.name,
-          value: (d[key.name] as number) || 0,
+          value: d.values[key.name] || 0,
           color: key.color,
         }))
         .filter((l) => l.value > 0);
@@ -128,7 +107,7 @@ export function ActivityChart({
 
       <div style={{ height }}>
         <div className="relative" style={{ height: chartAreaHeight }}>
-          {/* Y-axis labels + grid lines as unified rows */}
+          {/* Y-axis labels + grid lines */}
           {yTicks.map((tick) => (
             <div
               key={`tick-${tick}`}
@@ -152,106 +131,24 @@ export function ActivityChart({
             </div>
           ))}
 
-          {/* Chart area (overlays on top of grid, offset by yAxisWidth) */}
+          {/* Chart area */}
           <div
             className="absolute top-0 bottom-0 right-0"
             style={{ left: yAxisWidth }}
           >
-            {/* Goal lines */}
-            {goalLines.map((goal) => {
-              const pct = Math.min(
-                tickBottomPct(goal.value, effectiveYMax),
-                100,
-              );
-              return (
-                <div
-                  key={goal.id}
-                  className="absolute left-0 right-0 z-[1]"
-                  style={{ bottom: `${pct}%` }}
-                >
-                  <div
-                    style={{
-                      borderTopColor: goal.color,
-                      borderTopStyle: "dashed",
-                      borderTopWidth: 1.5,
-                    }}
-                  />
-                  <span
-                    className="text-[10px] absolute right-0 whitespace-nowrap"
-                    style={{ color: goal.color, bottom: 4 }}
-                  >
-                    {goal.label}
-                  </span>
-                </div>
-              );
-            })}
+            <ChartGoalLines
+              goalLines={goalLines}
+              effectiveYMax={effectiveYMax}
+            />
 
-            {/* Bars */}
-            <div className="absolute inset-0 flex items-end">
-              {data.map((d) => {
-                const dateLabel = d.date as string;
-
-                if (stackId) {
-                  const total = stackedTotal(d, dataKeys);
-                  const totalPct = barHeightPct(total, effectiveYMax);
-
-                  return (
-                    <div
-                      key={dateLabel}
-                      className="flex-1 flex flex-col items-center justify-end h-full"
-                      onMouseMove={(e) => handleBarHover(e, d)}
-                      onMouseLeave={() => setTooltip(null)}
-                    >
-                      <div
-                        className="w-[60%] max-w-6 flex flex-col-reverse rounded-t-sm overflow-hidden"
-                        style={{ height: `${totalPct}%` }}
-                      >
-                        {dataKeys.map((key) => {
-                          const value = (d[key.name] as number) || 0;
-                          if (value === 0 || total === 0) return null;
-                          return (
-                            <div
-                              key={key.name}
-                              style={{
-                                backgroundColor: key.color,
-                                height: `${(value / total) * 100}%`,
-                              }}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div
-                    key={dateLabel}
-                    className="flex-1 flex items-end justify-center gap-px h-full"
-                    onMouseMove={(e) => handleBarHover(e, d)}
-                    onMouseLeave={() => setTooltip(null)}
-                  >
-                    {dataKeys.map((key) => {
-                      const value = (d[key.name] as number) || 0;
-                      const barPct = barHeightPct(value, effectiveYMax);
-                      return (
-                        <div
-                          key={key.name}
-                          className="rounded-t-sm"
-                          style={{
-                            backgroundColor: key.color,
-                            height: `${barPct}%`,
-                            width: `${Math.floor(60 / dataKeys.length)}%`,
-                            maxWidth: 24,
-                            minWidth: 2,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
+            <ChartBars
+              data={data}
+              dataKeys={dataKeys}
+              effectiveYMax={effectiveYMax}
+              stackId={stackId}
+              onBarHover={handleBarHover}
+              onBarLeave={() => setTooltip(null)}
+            />
           </div>
         </div>
 
@@ -262,12 +159,12 @@ export function ActivityChart({
         >
           {data.map((d, i) => (
             <div
-              key={d.date as string}
+              key={d.date}
               className="flex-1 flex items-center justify-center"
             >
               {shouldShowXLabel(i, data.length, tickStep) && (
                 <span className="text-[10px] text-gray-500 whitespace-nowrap">
-                  {d.date as string}
+                  {d.date}
                 </span>
               )}
             </div>
@@ -275,29 +172,7 @@ export function ActivityChart({
         </div>
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="absolute z-10 bg-white border rounded-lg shadow-sm px-2.5 py-1.5 pointer-events-none"
-          style={{
-            left: tooltip.x,
-            top: tooltip.y - 10,
-            transform: "translate(-50%, -100%)",
-          }}
-        >
-          {tooltip.lines.map((l) => (
-            <div key={l.name} className="flex items-center gap-1.5 text-xs">
-              <span
-                className="w-2 h-2 rounded-sm inline-block"
-                style={{ backgroundColor: l.color }}
-              />
-              <span className="text-gray-700">
-                {l.name}: {l.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {tooltip && <ChartTooltip tooltip={tooltip} />}
     </div>
   );
 }

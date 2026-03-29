@@ -41,7 +41,7 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
   },
   server: {
-    port: 2460,
+    port: Number(process.env.VITE_PORT) || 2460,
     host: true,
   },
   build: {

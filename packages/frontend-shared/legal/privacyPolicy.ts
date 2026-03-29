@@ -5,6 +5,7 @@ export type LegalSection = {
 
 export type PrivacyPolicyConfig = {
   contactEmail: string;
+  contactUrl: string;
 };
 
 export const privacyPolicyTitle = "プライバシーポリシー";
@@ -77,10 +78,10 @@ export const createPrivacyPolicySections = (
   {
     title: "8. 開示・訂正・削除の請求",
     content:
-      "ユーザーは、本アプリが保有する自己の個人情報について、開示・訂正・削除・利用停止・第三者提供の停止を請求できます。活動記録データの編集・削除はアプリ内の操作で行えます。その他の請求については、下記お問い合わせ先までご連絡ください。",
+      "ユーザーは、本アプリが保有する自己の個人情報について、開示・訂正・削除・利用停止・第三者提供の停止を請求できます。活動記録データの編集・削除はアプリ内の操作で行えます。その他の請求については、問い合わせフォームからご連絡ください。",
   },
   {
     title: "9. お問い合わせ",
-    content: `本ポリシーに関するお問い合わせは、以下のメールアドレスまでご連絡ください。\n\nお問い合わせ先: ${config.contactEmail}`,
+    content: `本ポリシーに関するお問い合わせは、問い合わせフォームからご連絡ください。\n\nお問い合わせフォーム: ${config.contactUrl}`,
   },
 ];

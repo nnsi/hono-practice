@@ -29,5 +29,5 @@ export type GoalLine = {
 
 export type ChartData = {
   date: string;
-  [key: string]: string | number;
+  values: Record<string, number>;
 };

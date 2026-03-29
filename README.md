@@ -56,6 +56,22 @@ pnpm run db-seed
 
 すべてのデータは現在時刻を起点として生成されるため、いつ実行してもリアルなテストデータが作成されます。
 
+## Claude Code スキル（手動実行）
+
+以下のスキルはClaude Codeセッション中に手動で呼び出す:
+
+| コマンド | 用途 | 頻度 |
+|----------|------|------|
+| `/quality-scan` | コードベースの品質スキャン。autoFixable/judgment-required分類 | 週次推奨 |
+| `/local-logs` | ローカル開発環境のAPIログ・クライアントエラー検索 | 必要時 |
+| `/review-cycle` | サブエージェント + Codexの並列コードレビュー | PR前 |
+| `/browser-check` | Chrome MCPでのUI動作確認 | UI変更時 |
+| `/eas-build` | モバイルネイティブビルド（EAS） | ネイティブ変更時 |
+| `/ota-update` | モバイルJS更新（EAS Update） | JSのみの変更時 |
+| `/write-diary` | セッション日記の作成 | セッション終了時 |
+
+自動実行されるもの（hooks）は `.claude/settings.json` で管理。
+
 ## Makefileコマンド一覧
 
 ```sh

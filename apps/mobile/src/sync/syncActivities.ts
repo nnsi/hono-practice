@@ -22,7 +22,23 @@ export const syncActivities = createSyncActivities({
         activityKinds,
       },
     });
-    if (!res.ok) throw new Error(`syncActivities failed: ${res.status}`);
+    if (!res.ok) {
+      if (res.status >= 400 && res.status < 500) {
+        // バリデーションエラー等 → リトライしても治らないので "rejected" にして除外
+        console.warn(`syncActivities rejected (${res.status})`);
+        const aIds = activities.map((a) => (a as { id: string }).id);
+        const kIds = activityKinds.map((k) => (k as { id: string }).id);
+        if (aIds.length > 0)
+          await activityRepository.markActivitiesRejected(aIds);
+        if (kIds.length > 0)
+          await activityRepository.markActivityKindsRejected(kIds);
+        return {
+          activities: { syncedIds: [], skippedIds: [], serverWins: [] },
+          activityKinds: { syncedIds: [], skippedIds: [], serverWins: [] },
+        };
+      }
+      throw new Error(`syncActivities failed: ${res.status}`);
+    }
     return (await res.json()) as {
       activities: SyncResult;
       activityKinds: SyncResult;
