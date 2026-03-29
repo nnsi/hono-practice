@@ -18,6 +18,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -66,6 +67,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiReferenceRoute = ApiReferenceRouteImport.update({
+  id: '/api-reference',
+  path: '/api-reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ActikoRoute = ActikoRouteImport.update({
   id: '/actiko',
   path: '/actiko',
@@ -80,6 +86,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/actiko': typeof ActikoRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/actiko'
+    | '/api-reference'
     | '/contact'
     | '/daily'
     | '/goals'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/actiko'
+    | '/api-reference'
     | '/contact'
     | '/daily'
     | '/goals'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/actiko'
+    | '/api-reference'
     | '/contact'
     | '/daily'
     | '/goals'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActikoRoute: typeof ActikoRoute
+  ApiReferenceRoute: typeof ApiReferenceRoute
   ContactRoute: typeof ContactRoute
   DailyRoute: typeof DailyRoute
   GoalsRoute: typeof GoalsRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api-reference': {
+      id: '/api-reference'
+      path: '/api-reference'
+      fullPath: '/api-reference'
+      preLoaderRoute: typeof ApiReferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/actiko': {
       id: '/actiko'
       path: '/actiko'
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActikoRoute: ActikoRoute,
+  ApiReferenceRoute: ApiReferenceRoute,
   ContactRoute: ContactRoute,
   DailyRoute: DailyRoute,
   GoalsRoute: GoalsRoute,

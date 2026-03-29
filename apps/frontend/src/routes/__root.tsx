@@ -43,7 +43,8 @@ function RootComponent() {
   const isLegalPage =
     routerState.location.pathname === "/privacy" ||
     routerState.location.pathname === "/terms" ||
-    routerState.location.pathname === "/contact";
+    routerState.location.pathname === "/contact" ||
+    routerState.location.pathname === "/api-reference";
 
   useSyncEngine(syncReady);
   useNavigationSync(syncReady, userId);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 
 import {
   useApiKeys,
@@ -39,8 +39,19 @@ export function ApiKeyManager() {
     <>
       <EntitlementGate feature="apiKey" onUpgrade={upgrade.openUpgradeModal}>
         <div className="rounded-xl border border-gray-200 p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">{t("apiKeyManagement")}</p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-600">{t("apiKeyManagement")}</p>
+              <a
+                href="/api-reference"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                API Reference
+                <ExternalLink size={12} />
+              </a>
+            </div>
             <button
               type="button"
               onClick={() => setShowCreateDialog(true)}
