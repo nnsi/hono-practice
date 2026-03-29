@@ -32,6 +32,7 @@ import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { loggerMiddleware } from "./middleware/loggerMiddleware";
+import { isLocalOrigin } from "./utils/isLocalOrigin";
 
 export const app = newHonoWithErrorHandling();
 
@@ -53,26 +54,8 @@ app.use("*", async (c, next) => {
   if (c.env.APP_URL_V2) allowedOrigins.push(c.env.APP_URL_V2);
 
   if (c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test") {
-    // ローカル開発環境のポート
-    allowedOrigins.push(
-      "http://localhost:5176",
-      "http://localhost:5177", // E2Eテスト用追加ポート
-      "http://localhost:8081",
-      "http://localhost:8082",
-      "http://localhost:19006", // Expo Web
-      "http://localhost:2460", // frontend
-      "http://localhost:2461", // frontend fallback port
-      "http://localhost:2462", // admin-frontend
-      "http://localhost:2463", // admin-frontend fallback
-      "http://localhost:8081", // mobile (Expo Web)
-    );
-
-    // 実機からのアクセス用（同一ネットワーク内のIPアドレス）
-    // 192.168.x.x や 10.x.x.x からのアクセスを許可
-    const isLocalNetwork = headerOrigin.match(
-      /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/,
-    );
-    if (isLocalNetwork) {
+    // localhost / プライベートIPはポート番号によらず許可
+    if (isLocalOrigin(headerOrigin)) {
       allowedOrigins.push(headerOrigin);
     }
   }
