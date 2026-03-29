@@ -76,7 +76,7 @@ export function ApmSection({ apm }: Props) {
       </div>
       {!apm?.totalRequests && (
         <p className="mt-4 text-xs text-gray-400">
-          CF_API_TOKEN未設定、またはデータなし
+          CF_WORKERS_TOKEN未設定、またはデータなし
         </p>
       )}
 

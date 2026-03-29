@@ -22,7 +22,7 @@ export const configSchema = z.object({
   APPLE_PRIVATE_KEY: z.string().optional(), // Base64 encoded .p8 key
   // Admin
   ADMIN_ALLOWED_EMAILS: z.string().optional(),
-  CF_API_TOKEN: z.string().optional(),
+  CF_WORKERS_TOKEN: z.string().optional(),
   CF_ACCOUNT_ID: z.string().optional(),
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
