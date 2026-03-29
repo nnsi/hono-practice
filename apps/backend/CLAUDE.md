@@ -15,8 +15,13 @@
 
 ## アーキテクチャ
 
-- route → handler → usecase → repository の層構造
-- ファクトリ関数パターン: `newXXX` で依存注入
+- route → handler → usecase → repository/queryService の層構造。**handlerからrepositoryを直接呼ばない**
+- ファクトリ関数パターン: `newXXX` で依存注入（`createXXX`/`getXXX` ではなく `newXXX`）
+- `as` キャスト禁止（型ガード・ジェネリクス・型宣言の修正で解決する）
+- 型定義は `type` を使う（`interface` ではない）
 - エラーハンドリング: try-catchは使わず `throw` で例外をスロー
 - レートリミッターはインフラ層（ミドルウェア）に留める。usecaseに入れない
 - 新規にエンドポイントを生やす際には、`/scripts/generate-feature.js` を利用すること
+
+- 外部API呼び出しはエラー時にフォールバックがあるか（Promise.allで巻き込み500にしない）
+- ユーザー入力（query params等）にバリデーションがあるか
