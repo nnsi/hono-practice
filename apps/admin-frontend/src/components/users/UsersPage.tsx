@@ -4,19 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { adminGet } from "../../utils/apiClient";
-
-type UserListItem = {
-  id: string;
-  loginId: string;
-  name: string | null;
-  createdAt: string;
-};
-
-type UsersResponse = {
-  items: UserListItem[];
-  total: number;
-};
+import { adminClient } from "../../utils/apiClient";
 
 const PAGE_SIZE = 20;
 
@@ -25,10 +13,16 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users", page],
-    queryFn: () =>
-      adminGet<UsersResponse>(
-        `/admin/users?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
-      ),
+    queryFn: async () => {
+      const res = await adminClient.admin.users.$get({
+        query: {
+          limit: String(PAGE_SIZE),
+          offset: String(page * PAGE_SIZE),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
   });
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;

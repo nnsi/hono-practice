@@ -1,3 +1,7 @@
+import { hc } from "hono/client";
+
+import type { AppType } from "@packages/types/api";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3456";
 
 let token: string | null = null;
@@ -15,20 +19,13 @@ export function setOnUnauthorized(fn: () => void) {
   onUnauthorized = fn;
 }
 
-export async function adminFetch(
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
-  const headers = new Headers(options.headers);
+const customFetch: typeof fetch = async (input, init) => {
+  const headers = new Headers(init?.headers);
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  headers.set("Content-Type", "application/json");
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const res = await fetch(input, { ...init, headers });
 
   if (res.status === 401) {
     setAdminToken(null);
@@ -38,28 +35,6 @@ export async function adminFetch(
   }
 
   return res;
-}
+};
 
-async function parseJsonResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
-  // Response.json() returns Promise<unknown> at runtime.
-  // Callers are responsible for passing the correct generic T
-  // matching the server's response shape.
-  const data: T = await res.json();
-  return data;
-}
-
-export async function adminGet<T>(path: string): Promise<T> {
-  const res = await adminFetch(path);
-  return parseJsonResponse<T>(res);
-}
-
-export async function adminPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await adminFetch(path, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return parseJsonResponse<T>(res);
-}
+export const adminClient = hc<AppType>(API_URL, { fetch: customFetch });
