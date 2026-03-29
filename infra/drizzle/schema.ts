@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   customType,
@@ -334,7 +334,7 @@ export const apiKeys = pgTable(
       .references(() => users.id),
     key: text("key").notNull().unique(),
     name: text("name").notNull(),
-    scope: text("scope").notNull().default("all"),
+    scopes: text("scopes").array().notNull().default(sql`ARRAY['all']::text[]`),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })

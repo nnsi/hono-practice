@@ -1,11 +1,13 @@
 import { useState } from "react";
 
+import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 import { useTranslation } from "@packages/i18n";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy, X } from "lucide-react";
 
 import { ModalOverlay } from "../common/ModalOverlay";
+import { ScopeSelector } from "./ScopeSelector";
 
 export function CreateApiKeyDialog({
   onClose,
@@ -16,6 +18,7 @@ export function CreateApiKeyDialog({
 }) {
   const { t } = useTranslation("settings");
   const [name, setName] = useState("");
+  const [selectedScopes, setSelectedScopes] = useState<ApiKeyScope[]>(["all"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -23,12 +26,15 @@ export function CreateApiKeyDialog({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || selectedScopes.length === 0) return;
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const result = await onCreate({ name: name.trim(), scope: "all" });
+      const result = await onCreate({
+        name: name.trim(),
+        scopes: selectedScopes,
+      });
       setCreatedKey(result.apiKey.key);
     } catch {
       setError(t("apiKeyCreateError"));
@@ -108,11 +114,18 @@ export function CreateApiKeyDialog({
               </p>
             </div>
 
+            <ScopeSelector
+              selectedScopes={selectedScopes}
+              onChange={setSelectedScopes}
+            />
+
             {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"
-              disabled={isSubmitting || !name.trim()}
+              disabled={
+                isSubmitting || !name.trim() || selectedScopes.length === 0
+              }
               className="w-full py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
               {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}

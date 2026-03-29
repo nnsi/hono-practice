@@ -18,7 +18,7 @@ export async function provisionVoiceApiKey(): Promise<void> {
 
   const res = await customFetch(`${API_URL}/users/api-keys`, {
     method: "POST",
-    body: JSON.stringify({ name: "Voice Shortcut", scope: "voice" }),
+    body: JSON.stringify({ name: "Voice Shortcut", scopes: ["voice"] }),
   });
   if (!res.ok) return;
 

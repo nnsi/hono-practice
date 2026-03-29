@@ -36,7 +36,7 @@ export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
 
     // コンテキストにユーザー情報とスコープを設定
     c.set("userId", createUserId(apiKey.userId));
-    c.set("apiKeyScope", apiKey.scope);
+    c.set("apiKeyScopes", apiKey.scopes);
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       throw e;

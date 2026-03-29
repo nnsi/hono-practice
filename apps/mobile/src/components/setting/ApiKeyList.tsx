@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 import { Trash2 } from "lucide-react-native";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
+import { MobileScopeBadges } from "./MobileScopeBadges";
+
 export function ApiKeyList({
   apiKeys,
   isLoading,
@@ -94,6 +96,7 @@ export function ApiKeyList({
               </TouchableOpacity>
             )}
           </View>
+          <MobileScopeBadges scopes={apiKey.scopes} />
           <View className="mt-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
             <Text className="text-xs text-gray-400 dark:text-gray-500 font-mono">
               {apiKey.key.startsWith("api_")

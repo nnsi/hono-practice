@@ -5,8 +5,8 @@ import { requireScope } from "@backend/middleware/scopeGuard";
 
 const app = new Hono();
 
-// 音声記録は "all" と "voice" スコープの両方でアクセス可能
-app.use("*", requireScope("all", "voice"));
+// 音声記録は "voice" スコープ（"all" は scopeGuard 内で自動許可）
+app.use("*", requireScope("voice"));
 
 const aiActivityLogRoute = createAIActivityLogRoute();
 app.route("/", aiActivityLogRoute);

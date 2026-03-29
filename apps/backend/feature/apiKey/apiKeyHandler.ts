@@ -25,7 +25,7 @@ function getApiKeys(uc: ApiKeyUsecase) {
       id: apiKey.id,
       name: apiKey.name,
       key: apiKey.key, // 既にマスクされている
-      scope: apiKey.scope,
+      scopes: apiKey.scopes,
       lastUsedAt: apiKey.lastUsedAt ? apiKey.lastUsedAt.toISOString() : null,
       isActive: apiKey.isActive,
       createdAt: apiKey.createdAt.toISOString(),
@@ -48,14 +48,14 @@ function createApiKey(uc: ApiKeyUsecase) {
     const result = await uc.createApiKey({
       userId: userId,
       name: params.name,
-      scope: params.scope,
+      scopes: params.scopes,
     });
 
     const apiKeyResponse = {
       id: result.id,
       name: result.name,
       key: result.key, // 作成時は完全なキーを返す
-      scope: result.scope,
+      scopes: result.scopes,
       lastUsedAt: result.lastUsedAt ? result.lastUsedAt.toISOString() : null,
       isActive: result.isActive,
       createdAt: result.createdAt.toISOString(),

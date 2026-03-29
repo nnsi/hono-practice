@@ -29,7 +29,7 @@ describe("ApiKeyUsecase", () => {
     userId: userId,
     key: "test_key_1234567890abcdef",
     name: "Test API Key",
-    scope: "all",
+    scopes: ["all"],
     lastUsedAt: null,
     isActive: true,
     createdAt: new Date("2024-01-01"),
