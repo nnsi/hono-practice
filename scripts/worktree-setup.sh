@@ -83,19 +83,19 @@ fi
 # --- 3. Setup env files ---
 echo "[3/5] Setting up environment files..."
 
-# Backend .env.local + .env (dotenv reads .env by default)
-MAIN_BE_ENV="$REPO_ROOT/apps/backend/.env.local"
-WT_BE_ENV="$WT_DIR/apps/backend/.env.local"
-if [ -f "$MAIN_BE_ENV" ]; then
-  cp "$MAIN_BE_ENV" "$WT_BE_ENV"
+# Backend .env (dotenv reads .env by default)
+# .env.local is the git-tracked template; copy it to .env for actual use
+MAIN_BE_TEMPLATE="$REPO_ROOT/apps/backend/.env.local"
+WT_BE_ENV="$WT_DIR/apps/backend/.env"
+if [ -f "$MAIN_BE_TEMPLATE" ]; then
+  cp "$MAIN_BE_TEMPLATE" "$WT_BE_ENV"
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5435/$DB_NAME|" "$WT_BE_ENV"
   sed -i "s|^API_PORT=.*|API_PORT=$API_PORT|" "$WT_BE_ENV"
   sed -i "s|^APP_URL=.*|APP_URL=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
   sed -i "s|^APP_URL_V2=.*|APP_URL_V2=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
-  cp "$WT_BE_ENV" "$WT_DIR/apps/backend/.env"
-  echo "  apps/backend/.env.local + .env → OK"
+  echo "  apps/backend/.env → OK"
 else
-  echo "  WARNING: $MAIN_BE_ENV not found. Create it manually in the worktree."
+  echo "  WARNING: $MAIN_BE_TEMPLATE not found. Create it manually in the worktree."
 fi
 
 # Frontend .env
