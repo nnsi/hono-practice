@@ -30,7 +30,7 @@ export function resolveAdminHandler(c: {
   const userUc = newAdminUserUsecase(userRepo, tracer);
   const contactUc = newContactUsecase(contactRepo, tracer);
   const isDev = c.env.NODE_ENV === "development";
-  const cfApiToken = c.env.CF_API_TOKEN;
+  const cfApiToken = c.env.CF_WORKERS_TOKEN;
   const cfAccountId = c.env.CF_ACCOUNT_ID;
   const apmProvider =
     cfApiToken && cfAccountId
