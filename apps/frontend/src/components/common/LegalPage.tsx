@@ -6,10 +6,30 @@ import {
   termsOfServiceSections,
   termsOfServiceTitle,
 } from "@packages/frontend-shared/legal";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const CONTACT_PATH = "/contact";
+
+function renderContent(content: string) {
+  const idx = content.indexOf(CONTACT_PATH);
+  if (idx === -1) return content;
+  const before = content.slice(0, idx);
+  const after = content.slice(idx + CONTACT_PATH.length);
+  return (
+    <>
+      {before}
+      <Link
+        to="/contact"
+        className="text-blue-600 hover:text-blue-700 underline"
+      >
+        {CONTACT_PATH}
+      </Link>
+      {after}
+    </>
+  );
+}
 
 type LegalPageProps = {
   type: "privacy" | "terms" | "tokushoho";
@@ -26,7 +46,7 @@ function getSections(type: LegalPageProps["type"]) {
     case "privacy":
       return createPrivacyPolicySections({
         contactEmail: CONTACT_EMAIL,
-        contactUrl: "/contact",
+        contactUrl: CONTACT_PATH,
       });
     case "terms":
       return termsOfServiceSections;
@@ -59,7 +79,7 @@ export function LegalPage({ type }: LegalPageProps) {
             <div key={section.title}>
               <h2 className="font-semibold text-base mb-1">{section.title}</h2>
               <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-                {section.content}
+                {renderContent(section.content)}
               </p>
             </div>
           ))}
