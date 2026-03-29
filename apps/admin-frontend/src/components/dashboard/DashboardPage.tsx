@@ -1,29 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, AlertTriangle, Mail, Users } from "lucide-react";
 
-import { adminGet } from "../../utils/apiClient";
-
-type WaeApmData = {
-  totalRequests: number;
-  errorCount: number;
-  errorRate: number;
-  avgResponseTimeMs: number;
-};
-
-type DashboardData = {
-  totalUsers: number;
-  totalContacts: number;
-  recentActionCount: number;
-  apm: WaeApmData;
-};
+import { adminClient } from "../../utils/apiClient";
+import { ApmSection } from "./ApmSection";
+import { ClientErrorSection } from "./ClientErrorSection";
 
 export function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
-    queryFn: () => adminGet<DashboardData>("/admin/dashboard"),
+    queryFn: async () => {
+      const res = await adminClient.admin.dashboard.$get();
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
   });
-
-  const apm = data?.apm;
 
   return (
     <div>
@@ -50,52 +40,20 @@ export function DashboardPage() {
         />
         <StatCard
           label="24h エラー件数"
-          value={apm?.errorCount}
+          value={data?.apm?.errorCount}
           icon={<AlertTriangle size={20} />}
           isLoading={isLoading}
           subtitle={
-            apm && apm.totalRequests > 0
-              ? `エラーレート: ${apm.errorRate}%`
+            data?.apm && data.apm.totalRequests > 0
+              ? `エラーレート: ${data.apm.errorRate}%`
               : undefined
           }
         />
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">
-          WAE-APM（直近24時間）
-        </h3>
-        <div className="space-y-3">
-          <ApmRow
-            label="総リクエスト数"
-            value={
-              apm?.totalRequests ? apm.totalRequests.toLocaleString() : "--"
-            }
-          />
-          <ApmRow
-            label="エラー件数"
-            value={apm?.errorCount?.toString() ?? "--"}
-            alert={!!apm && apm.errorCount > 0}
-          />
-          <ApmRow
-            label="エラーレート"
-            value={apm?.totalRequests ? `${apm.errorRate}%` : "--"}
-            alert={!!apm && apm.errorRate > 1}
-          />
-          <ApmRow
-            label="平均レスポンスタイム"
-            value={
-              apm?.avgResponseTimeMs ? `${apm.avgResponseTimeMs} ms` : "--"
-            }
-            alert={!!apm && apm.avgResponseTimeMs > 500}
-          />
-        </div>
-        {!apm?.totalRequests && (
-          <p className="mt-4 text-xs text-gray-400">
-            CF_API_TOKEN未設定、またはデータなし
-          </p>
-        )}
-      </div>
+      <ApmSection apm={data?.apm} />
+
+      <ClientErrorSection summary={data?.clientErrors} isLoading={isLoading} />
     </div>
   );
 }
@@ -127,26 +85,6 @@ function StatCard({
         )}
       </div>
       {subtitle && <p className="mt-1 text-xs text-gray-400">{subtitle}</p>}
-    </div>
-  );
-}
-
-function ApmRow({
-  label,
-  value,
-  alert,
-}: {
-  label: string;
-  value: string;
-  alert?: boolean;
-}) {
-  const bg = alert ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700";
-  return (
-    <div
-      className={`flex items-center justify-between rounded-lg px-4 py-3 ${bg}`}
-    >
-      <span className="text-sm">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
     </div>
   );
 }

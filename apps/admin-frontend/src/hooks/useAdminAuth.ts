@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  adminPost,
+  adminClient,
   getAdminToken,
   setAdminToken,
   setOnUnauthorized,
@@ -68,11 +68,11 @@ export function useAdminAuth(): AdminAuthState {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await adminPost<{
-        token: string;
-        email: string;
-        name: string;
-      }>("/admin/auth/google", { credential });
+      const response = await adminClient.admin.auth.google.$post({
+        json: { credential },
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const res = await response.json();
 
       setAdminToken(res.token);
       localStorage.setItem("admin_token", res.token);
@@ -93,11 +93,11 @@ export function useAdminAuth(): AdminAuthState {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await adminPost<{
-        token: string;
-        email: string;
-        name: string;
-      }>("/admin/auth/dev-login", {});
+      const response = await adminClient.admin.auth["dev-login"].$post({
+        json: {},
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const res = await response.json();
 
       setAdminToken(res.token);
       localStorage.setItem("admin_token", res.token);

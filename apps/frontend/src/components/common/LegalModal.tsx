@@ -1,11 +1,32 @@
 import type { LegalType } from "@packages/frontend-shared/legal";
 import { getLegalContent } from "@packages/frontend-shared/legal";
 import { useTranslation } from "@packages/i18n";
+import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const CONTACT_PATH = "/contact";
+
+function renderContent(content: string) {
+  const idx = content.indexOf(CONTACT_PATH);
+  if (idx === -1) return content;
+  const before = content.slice(0, idx);
+  const after = content.slice(idx + CONTACT_PATH.length);
+  return (
+    <>
+      {before}
+      <Link
+        to="/contact"
+        className="text-blue-600 hover:text-blue-700 underline"
+      >
+        {CONTACT_PATH}
+      </Link>
+      {after}
+    </>
+  );
+}
 
 type LegalModalProps = {
   type: LegalType;
@@ -16,7 +37,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
   const { i18n } = useTranslation();
   const { title, sections } = getLegalContent(type, i18n.language, {
     contactEmail: CONTACT_EMAIL,
-    contactUrl: "/contact",
+    contactUrl: CONTACT_PATH,
   });
 
   return (
@@ -38,7 +59,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
             <div key={section.title}>
               <h3 className="font-semibold text-sm">{section.title}</h3>
               <p className="text-sm text-gray-600 whitespace-pre-line">
-                {section.content}
+                {renderContent(section.content)}
               </p>
             </div>
           ))}

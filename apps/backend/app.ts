@@ -14,6 +14,7 @@ import {
   userRoute,
 } from "./feature";
 import { adminRoute } from "./feature/admin";
+import { adminAuthRoute } from "./feature/admin/adminAuthRoute";
 import { clientErrorRoute } from "./feature/clientError/clientErrorRoute";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeriodRoute";
@@ -114,6 +115,7 @@ const routes = app
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
   .route("/contact", contactRoute)
+  .route("/admin/auth", adminAuthRoute)
   .route("/admin", adminRoute)
   .route("/client-errors", clientErrorRoute)
   .post("/batch", authMiddleware, async (c) => {

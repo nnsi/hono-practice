@@ -5,21 +5,7 @@ import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
-import { adminGet } from "../../utils/apiClient";
-
-type ContactListItem = {
-  id: string;
-  email: string;
-  category: string | null;
-  body: string;
-  userId: string | null;
-  createdAt: string;
-};
-
-type ContactsResponse = {
-  items: ContactListItem[];
-  total: number;
-};
+import { adminClient } from "../../utils/apiClient";
 
 const PAGE_SIZE = 20;
 
@@ -28,10 +14,16 @@ export function ContactsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "contacts", page],
-    queryFn: () =>
-      adminGet<ContactsResponse>(
-        `/admin/contacts?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
-      ),
+    queryFn: async () => {
+      const res = await adminClient.admin.contacts.$get({
+        query: {
+          limit: String(PAGE_SIZE),
+          offset: String(page * PAGE_SIZE),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
   });
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import { Link } from "@tanstack/react-router";
 import { Info, Settings } from "lucide-react";
 
 import { LegalModal } from "../common/LegalModal";
@@ -100,6 +101,12 @@ export function SettingsPage() {
               >
                 {t("commercialTransactions")}
               </button>
+              <Link
+                to="/contact"
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                {t("contact")}
+              </Link>
             </div>
           </div>
         </section>

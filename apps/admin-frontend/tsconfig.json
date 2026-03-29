@@ -19,7 +19,12 @@
     "paths": {
       "@packages/types": ["../../packages/types/index.ts"],
       "@packages/types/*": ["../../packages/types/*"],
-      "@backend/*": ["../../apps/backend/*"]
+      "@packages/domain": ["../../packages/domain/index.ts"],
+      "@packages/domain/*": ["../../packages/domain/*"],
+      "@packages/utils": ["../../packages/utils/index.ts"],
+      "@packages/utils/*": ["../../packages/utils/*"],
+      "@backend/*": ["../../apps/backend/*"],
+      "@infra/*": ["../../infra/*"]
     }
   },
   "include": ["src"],

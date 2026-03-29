@@ -3,24 +3,20 @@ import { Link, useParams } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import { ArrowLeft } from "lucide-react";
 
-import { adminGet } from "../../utils/apiClient";
-
-type ContactDetail = {
-  id: string;
-  email: string;
-  category: string | null;
-  body: string;
-  ipAddress: string;
-  userId: string | null;
-  createdAt: string;
-};
+import { adminClient } from "../../utils/apiClient";
 
 export function ContactDetailPage() {
   const { id } = useParams({ from: "/contacts_/$id" });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "contacts", id],
-    queryFn: () => adminGet<ContactDetail>(`/admin/contacts/${id}`),
+    queryFn: async () => {
+      const res = await adminClient.admin.contacts[":id"].$get({
+        param: { id },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
   });
 
   if (isLoading) {

@@ -1,0 +1,12 @@
+name = "actiko-admin-frontend"
+compatibility_date = "2025-01-12"
+
+[assets]
+directory = "../../dist-admin-frontend"
+not_found_handling = "single-page-application"
+
+[env.stg]
+name = "actiko-admin-frontend-stg"
+
+[env.production]
+name = "actiko-admin-frontend-prod"
