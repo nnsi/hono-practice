@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "pnpm --filter actiko-backend --filter actiko-frontend --parallel dev",
+    "dev": "pnpm --filter actiko-backend --filter actiko-frontend --filter actiko-admin-frontend --parallel dev",
     "dev:api": "pnpm --filter actiko-backend dev",
     "dev:fe": "pnpm --filter actiko-frontend dev",
     "dev:admin": "pnpm --filter actiko-admin-frontend dev",
