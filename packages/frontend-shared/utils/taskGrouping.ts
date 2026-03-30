@@ -4,12 +4,12 @@ import type {
   GroupingOptions,
   TaskItem,
 } from "@packages/domain/task/types";
-import dayjs from "dayjs";
+
+import { getToday } from "./dateUtils";
 
 export function groupTasksByTimeline(
   tasks: TaskItem[],
   options: GroupingOptions,
 ): GroupedTasks {
-  const today = dayjs().format("YYYY-MM-DD");
-  return groupTasksByTimelineCore(tasks, options, today);
+  return groupTasksByTimelineCore(tasks, options, getToday());
 }

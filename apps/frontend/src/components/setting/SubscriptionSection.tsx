@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import dayjs from "dayjs";
 import { Crown, Loader2 } from "lucide-react";
 
 import { useSubscription } from "../../hooks/useSubscription";
@@ -26,7 +27,7 @@ export function SubscriptionSection() {
 
   const isPremium = subscription?.plan === "premium";
   const periodEnd = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString("ja-JP")
+    ? dayjs(subscription.currentPeriodEnd).format("YYYY/MM/DD")
     : null;
 
   return (

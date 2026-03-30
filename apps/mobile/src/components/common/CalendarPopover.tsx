@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import { BackHandler, Modal, Pressable, StyleSheet, View } from "react-native";
 
@@ -41,7 +42,7 @@ export function CalendarPopover({
 
   if (!isOpen) return null;
 
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const startDay = viewMonth.startOf("month").day(); // 0=Sunday
   const daysInMonth = viewMonth.daysInMonth();
 

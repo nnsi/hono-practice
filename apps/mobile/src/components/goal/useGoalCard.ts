@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 
@@ -58,7 +59,7 @@ function getStatusBadge(
 
 export function useGoalCard(goal: GoalForCard) {
   const { t } = useTranslation("goal");
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const actualEndDate =
     goal.endDate && goal.endDate < today ? goal.endDate : today;
 

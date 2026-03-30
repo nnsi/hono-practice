@@ -1,6 +1,6 @@
 import { buildDayTargets } from "@packages/domain/goal/dayTargets";
-import dayjs from "dayjs";
 
+import { getToday } from "../utils/dateUtils";
 import type { ActivityBase, CreateGoalPayload, ReactHooks } from "./types";
 
 type UseCreateGoalDialogDeps = {
@@ -20,7 +20,7 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
   ) {
     const [activityId, setActivityId] = useState("");
     const [target, setTarget] = useState("1");
-    const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
+    const [startDate, setStartDate] = useState(getToday());
     const [endDate, setEndDate] = useState("");
     const [dayTargetsEnabled, setDayTargetsEnabled] = useState(false);
     const [dayTargetValues, setDayTargetValues] = useState<
@@ -39,7 +39,7 @@ export function createUseCreateGoalDialog<TActivity extends ActivityBase>(
     const resetForm = () => {
       setActivityId("");
       setTarget("1");
-      setStartDate(dayjs().format("YYYY-MM-DD"));
+      setStartDate(getToday());
       setEndDate("");
       setDayTargetsEnabled(false);
       setDayTargetValues({});

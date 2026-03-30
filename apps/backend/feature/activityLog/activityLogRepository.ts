@@ -1,5 +1,4 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import dayjs from "@backend/lib/dayjs";
 import { activityLogs } from "@infra/drizzle/schema";
 import {
   type ActivityId,
@@ -11,7 +10,15 @@ import {
   createActivityLogEntity,
 } from "@packages/domain/activityLog/activityLogSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { and, between, eq, gt, isNull } from "drizzle-orm";
+import { and, between, eq, isNull } from "drizzle-orm";
+
+import {
+  createActivityLog,
+  createActivityLogBatch,
+  deleteActivityLog,
+  getActivityLogChangesAfter,
+  updateActivityLog,
+} from "./activityLogMutationRepository";
 
 export type ActivityLogSummary = {
   activityId: ActivityId;
@@ -22,13 +29,13 @@ export type ActivityLogSummary = {
 export type ActivityLogRepository<T = QueryExecutor> = {
   getActivityLogsByUserIdAndDate: (
     userId: UserId,
-    from: Date,
-    to: Date,
+    from: string,
+    to: string,
   ) => Promise<ActivityLog[]>;
   getActivityLogSummariesByUserIdAndDate: (
     userId: UserId,
-    from: Date,
-    to: Date,
+    from: string,
+    to: string,
   ) => Promise<ActivityLogSummary[]>;
   getActivityLogByIdAndUserId: (
     userId: UserId,
@@ -66,10 +73,7 @@ export function newActivityLogRepository(
 }
 
 function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
-  return async (userId: UserId, from: Date, to: Date) => {
-    const fromStr = dayjs(from).format("YYYY-MM-DD");
-    const toStr = dayjs(to).format("YYYY-MM-DD");
-
+  return async (userId: UserId, from: string, to: string) => {
     const rows = await db.query.activityLogs.findMany({
       with: {
         activity: true,
@@ -78,7 +82,7 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
       where: and(
         eq(activityLogs.userId, userId),
         isNull(activityLogs.deletedAt),
-        between(activityLogs.date, fromStr, toStr),
+        between(activityLogs.date, from, to),
       ),
     });
 
@@ -102,12 +106,9 @@ function getActivityLogsByUserIdAndDate(db: QueryExecutor) {
 function getActivityLogSummariesByUserIdAndDate(db: QueryExecutor) {
   return async (
     userId: UserId,
-    from: Date,
-    to: Date,
+    from: string,
+    to: string,
   ): Promise<ActivityLogSummary[]> => {
-    const fromStr = dayjs(from).format("YYYY-MM-DD");
-    const toStr = dayjs(to).format("YYYY-MM-DD");
-
     const rows = await db
       .select({
         activityId: activityLogs.activityId,
@@ -119,7 +120,7 @@ function getActivityLogSummariesByUserIdAndDate(db: QueryExecutor) {
         and(
           eq(activityLogs.userId, userId),
           isNull(activityLogs.deletedAt),
-          between(activityLogs.date, fromStr, toStr),
+          between(activityLogs.date, from, to),
         ),
       );
 
@@ -157,126 +158,5 @@ function getActivityLogByIdAndUserId(db: QueryExecutor) {
       activityKind: activity.kinds[0],
       type: "persisted",
     });
-  };
-}
-
-function createActivityLog(db: QueryExecutor) {
-  return async (activityLog: ActivityLog) => {
-    const [row] = await db
-      .insert(activityLogs)
-      .values({
-        id: activityLog.id,
-        userId: activityLog.userId,
-        activityId: activityLog.activity.id,
-        activityKindId: activityLog.activityKind?.id,
-        quantity: activityLog.quantity,
-        memo: activityLog.memo,
-        date: activityLog.date,
-      })
-      .returning();
-
-    return createActivityLogEntity({
-      ...activityLog,
-      ...row,
-      type: "persisted",
-    });
-  };
-}
-
-function updateActivityLog(db: QueryExecutor) {
-  return async (activityLog: ActivityLog) => {
-    const [row] = await db
-      .update(activityLogs)
-      .set({
-        quantity: activityLog.quantity,
-        memo: activityLog.memo,
-        date: activityLog.date,
-        activityKindId: activityLog.activityKind?.id ?? null,
-      })
-      .where(eq(activityLogs.id, activityLog.id))
-      .returning();
-
-    return createActivityLogEntity({
-      ...activityLog,
-      ...row,
-      type: "persisted",
-    });
-  };
-}
-
-function deleteActivityLog(db: QueryExecutor) {
-  return async (activityLog: ActivityLog) => {
-    await db
-      .update(activityLogs)
-      .set({
-        deletedAt: new Date(),
-      })
-      .where(eq(activityLogs.id, activityLog.id));
-  };
-}
-
-function getActivityLogChangesAfter(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    timestamp: Date,
-    limit = 100,
-  ): Promise<{ activityLogs: ActivityLog[]; hasMore: boolean }> => {
-    const rows = await db.query.activityLogs.findMany({
-      with: {
-        activity: true,
-        activityKind: true,
-      },
-      where: and(
-        eq(activityLogs.userId, userId),
-        gt(activityLogs.updatedAt, timestamp),
-      ),
-      orderBy: (logs, { asc }) => [asc(logs.updatedAt)],
-      limit: limit + 1, // +1 to check if there are more
-    });
-
-    const hasMore = rows.length > limit;
-    const activityLogsData = rows.slice(0, limit);
-
-    return {
-      activityLogs: activityLogsData.map((r) => {
-        const activity = createActivityEntity({
-          ...r.activity,
-          kinds: r.activityKind ? [r.activityKind] : [],
-          type: "persisted",
-        });
-
-        return createActivityLogEntity({
-          ...r,
-          activity,
-          activityKind: activity.kinds[0],
-          type: "persisted",
-        });
-      }),
-      hasMore,
-    };
-  };
-}
-
-function createActivityLogBatch(db: QueryExecutor) {
-  return async (logs: ActivityLog[]): Promise<ActivityLog[]> => {
-    const values = logs.map((activityLog) => ({
-      id: activityLog.id,
-      userId: activityLog.userId,
-      activityId: activityLog.activity.id,
-      activityKindId: activityLog.activityKind?.id,
-      quantity: activityLog.quantity,
-      memo: activityLog.memo,
-      date: activityLog.date,
-    }));
-
-    const rows = await db.insert(activityLogs).values(values).returning();
-
-    return logs.map((log, index) =>
-      createActivityLogEntity({
-        ...log,
-        ...rows[index],
-        type: "persisted",
-      }),
-    );
   };
 }

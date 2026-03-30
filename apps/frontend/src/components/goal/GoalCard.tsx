@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import dayjs from "dayjs";
 
 import type { DexieActivity } from "../../db/schema";
 import { EditGoalForm } from "./EditGoalForm";
@@ -144,10 +145,7 @@ export function GoalCard({
           {inactiveDates.slice(0, 3).map((date, index) => (
             <span key={date}>
               {index > 0 && ", "}
-              {new Date(date).toLocaleDateString("ja-JP", {
-                month: "numeric",
-                day: "numeric",
-              })}
+              {dayjs(date).format("M/D")}
             </span>
           ))}
           {inactiveDates.length > 3 && (

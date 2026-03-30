@@ -6,6 +6,7 @@ import {
   generateTimeMemo,
   getTimeUnitType,
 } from "@packages/domain/time/timeUtils";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,7 +70,7 @@ export default function WidgetKindSelectPage() {
         : "";
 
     // Save activity log
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getToday();
     await activityLogRepository.createActivityLog({
       activityId,
       activityKindId: selectedKindId,

@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { getInactiveDates } from "@packages/domain/goal/goalStats";
+import {
+  getEndOfMonth,
+  getStartOfMonth,
+} from "@packages/frontend-shared/utils/dateUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import dayjs from "dayjs";
 import { useFocusEffect } from "expo-router";
 
 import { getDatabase } from "../../db/database";
@@ -34,14 +37,8 @@ export function useInactiveDates(goal: GoalForInactiveDates, today: string) {
     }, []),
   );
 
-  const monthStart = useMemo(
-    () => dayjs().startOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-  const monthEnd = useMemo(
-    () => dayjs().endOf("month").format("YYYY-MM-DD"),
-    [],
-  );
+  const monthStart = useMemo(() => getStartOfMonth(), []);
+  const monthEnd = useMemo(() => getEndOfMonth(), []);
   const effectiveStart = useMemo(
     () => (goal.startDate > monthStart ? goal.startDate : monthStart),
     [goal.startDate, monthStart],

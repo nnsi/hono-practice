@@ -10,9 +10,11 @@ import {
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
 
+import dayjs from "../../lib/dayjs";
 import type { Tracer } from "../../lib/tracer";
 import type { GoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
 import type { GoalSyncRepository } from "./goalSyncRepository";
+import { syncGoals } from "./goalSyncWriteUsecase";
 
 type GoalRow = typeof activityGoals.$inferSelect;
 
@@ -32,6 +34,7 @@ export type GoalSyncUsecase = {
   getGoals: (
     userId: UserId,
     since?: string,
+    clientDate?: string,
   ) => Promise<{ goals: GoalWithStats[] }>;
   syncGoals: (
     userId: UserId,
@@ -66,6 +69,7 @@ function getGoals(
   return async (
     userId: UserId,
     since?: string,
+    clientDate?: string,
   ): Promise<{ goals: GoalWithStats[] }> => {
     const goals = await tracer.span("db.getGoalsByUserId", () =>
       repo.getGoalsByUserId(userId, since),
@@ -87,7 +91,7 @@ function getGoals(
       freezeByGoalId.set(fp.goalId, existing);
     }
 
-    const today = new Date().toISOString().split("T")[0]!;
+    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
 
     const goalsWithStats = await Promise.all(
       goals.map(async (goal) => {
@@ -141,67 +145,5 @@ function getGoals(
     );
 
     return { goals: goalsWithStats };
-  };
-}
-
-function syncGoals(repo: GoalSyncRepository, tracer: Tracer) {
-  return async (
-    userId: UserId,
-    goals: UpsertGoalRequest[],
-  ): Promise<SyncGoalsResult> => {
-    const activityIds = [...new Set(goals.map((g) => g.activityId))];
-    const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
-      repo.getOwnedActivityIds(userId, activityIds),
-    );
-    const ownedActivityIdSet = new Set(ownedIds);
-
-    const skippedIds: string[] = [];
-    const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
-
-    const validGoals = goals.filter((goal) => {
-      if (
-        !ownedActivityIdSet.has(goal.activityId) ||
-        new Date(goal.updatedAt) > maxAllowed
-      ) {
-        skippedIds.push(goal.id);
-        return false;
-      }
-      return true;
-    });
-
-    if (validGoals.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
-    }
-
-    const upserted = await tracer.span("db.upsertGoals", () =>
-      repo.upsertGoals(userId, validGoals),
-    );
-
-    const syncedIdSet = new Set(upserted.map((r) => r.id));
-    const syncedIds = [...syncedIdSet];
-
-    const missedIds = validGoals
-      .map((g) => g.id)
-      .filter((id) => !syncedIdSet.has(id));
-
-    let serverWins: GoalRow[] = [];
-    if (missedIds.length > 0) {
-      serverWins = await tracer.span("db.getGoalsByIds", () =>
-        repo.getGoalsByIds(userId, missedIds),
-      );
-      const serverWinIdSet = new Set(serverWins.map((s) => s.id));
-      for (const id of missedIds) {
-        if (!serverWinIdSet.has(id)) {
-          skippedIds.push(id);
-        }
-      }
-    }
-
-    const normalizedServerWins = serverWins.map((g) => ({
-      ...g,
-      dayTargets: parseDayTargets(g.dayTargets),
-    }));
-
-    return { syncedIds, serverWins: normalizedServerWins, skippedIds };
   };
 }

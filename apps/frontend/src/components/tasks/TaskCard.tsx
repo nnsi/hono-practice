@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -59,7 +60,7 @@ export function TaskCard({
   );
   const linkedKind = rawKind && !rawKind.deletedAt ? rawKind : undefined;
 
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const showMoveToToday =
     !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
   return (

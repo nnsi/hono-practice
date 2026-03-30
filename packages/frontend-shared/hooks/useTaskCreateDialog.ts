@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-
+import { getToday } from "../utils/dateUtils";
 import type { ReactHooks } from "./types";
 
 type UseTaskCreateDialogDeps = {
@@ -33,9 +32,7 @@ export function createUseTaskCreateDialog(deps: UseTaskCreateDialogDeps) {
     const [activityId, setActivityId] = useState<string | null>(null);
     const [activityKindId, setActivityKindId] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<number | null>(null);
-    const [startDate, setStartDate] = useState(
-      defaultDate ?? dayjs().format("YYYY-MM-DD"),
-    );
+    const [startDate, setStartDate] = useState(defaultDate ?? getToday());
     const [dueDate, setDueDate] = useState("");
     const [memo, setMemo] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);

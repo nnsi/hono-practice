@@ -1,6 +1,7 @@
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
@@ -11,6 +12,7 @@ import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { TaskActivityPicker } from "./TaskActivityPicker";
+import { TaskEditDialogFooter } from "./TaskEditDialogFooter";
 import type { TaskItem } from "./types";
 import { useTaskEditDialog } from "./useTaskEditDialog";
 
@@ -74,36 +76,14 @@ export function TaskEditDialog({
       onClose={onClose}
       title={t("edit.title")}
       footer={
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            onPress={() => onDelete(task.id)}
-            className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
-          >
-            <Text className="text-sm text-red-600 dark:text-red-400">
-              {t("edit.delete")}
-            </Text>
-          </TouchableOpacity>
-          <View className="flex-1" />
-          <TouchableOpacity
-            onPress={onClose}
-            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
-          >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">
-              {t("delete.cancel")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={isSubmitting || !title.trim()}
-            className={`px-4 py-2.5 rounded-lg items-center ${
-              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
-            }`}
-          >
-            <Text className="text-sm text-white font-medium">
-              {isSubmitting ? t("edit.submitting") : t("edit.submit")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TaskEditDialogFooter
+          taskId={task.id}
+          title={title}
+          isSubmitting={isSubmitting}
+          onDelete={onDelete}
+          onClose={onClose}
+          onSave={handleSave}
+        />
       }
     >
       <View className="gap-4 pb-4">
@@ -182,7 +162,7 @@ export function TaskEditDialog({
               </View>
             ) : (
               <DatePickerField
-                value={startDate || dayjs().format("YYYY-MM-DD")}
+                value={startDate || getToday()}
                 onChange={setStartDate}
                 label={t("create.label.startDate")}
               />

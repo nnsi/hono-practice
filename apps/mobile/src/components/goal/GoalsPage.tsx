@@ -1,5 +1,5 @@
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Plus } from "lucide-react-native";
 import {
   ActivityIndicator,
@@ -16,6 +16,7 @@ import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalCard } from "./GoalCard";
 import { GoalHeatmap } from "./GoalHeatmap";
+import { GoalsTabBar } from "./GoalsTabBar";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
@@ -55,41 +56,7 @@ export function GoalsPage() {
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-800">
-      {/* Tabs */}
-      <View className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800">
-        <TouchableOpacity
-          onPress={() => setActiveTab("active")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "active"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            アクティブ
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setActiveTab("ended")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "ended" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "ended"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            {t("tabEnded")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <GoalsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <ScrollView
         className="flex-1"
@@ -198,7 +165,7 @@ export function GoalsPage() {
         visible={recordActivity !== null}
         onClose={() => setRecordActivity(null)}
         activity={recordActivity}
-        date={dayjs().format("YYYY-MM-DD")}
+        date={getToday()}
       />
     </View>
   );

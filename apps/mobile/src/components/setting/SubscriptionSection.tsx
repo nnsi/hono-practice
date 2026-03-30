@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { Crown, RotateCcw } from "lucide-react-native";
 import {
@@ -46,7 +47,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
   const isPremium = plan === "premium";
   const periodEnd = info?.currentPeriodEnd
-    ? new Date(info.currentPeriodEnd).toLocaleDateString("ja-JP")
+    ? dayjs(info.currentPeriodEnd).format("YYYY/MM/DD")
     : null;
 
   return (

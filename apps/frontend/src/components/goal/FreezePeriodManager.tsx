@@ -1,14 +1,9 @@
-import { useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { useLiveQuery } from "dexie-react-hooks";
 import { Pause, Play, Trash2 } from "lucide-react";
 
-import { goalFreezePeriodRepository } from "../../db/goalFreezePeriodRepository";
-import { db } from "../../db/schema";
-import { syncEngine } from "../../sync/syncEngine";
 import { DatePickerField } from "../common/DatePickerField";
+import { useFreezePeriodManager } from "./useFreezePeriodManager";
 
 type FreezePeriodManagerProps = {
   goalId: string;
@@ -16,73 +11,26 @@ type FreezePeriodManagerProps = {
 
 export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
   const { t } = useTranslation("goal");
-  const today = dayjs().format("YYYY-MM-DD");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState("");
+  const {
+    today,
+    sorted,
+    activePeriod,
+    deletingId,
+    setDeletingId,
+    showForm,
+    setShowForm,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    handleFreezeToday,
+    handleFreezeWithDates,
+    handleResume,
+    handleDelete,
+    handleCancelForm,
+  } = useFreezePeriodManager(goalId);
 
-  const freezePeriods = useLiveQuery(
-    () =>
-      db.goalFreezePeriods
-        .where("goalId")
-        .equals(goalId)
-        .filter((fp) => !fp.deletedAt)
-        .toArray(),
-    [goalId],
-  );
-
-  if (!freezePeriods) return null;
-
-  const sorted = [...freezePeriods].sort((a, b) =>
-    b.startDate.localeCompare(a.startDate),
-  );
-
-  const activePeriod = sorted.find(
-    (fp) =>
-      fp.startDate <= today && (fp.endDate == null || fp.endDate >= today),
-  );
-
-  const handleFreezeToday = async () => {
-    await goalFreezePeriodRepository.createGoalFreezePeriod({
-      goalId,
-      startDate: today,
-    });
-    syncEngine.syncGoalFreezePeriods();
-  };
-
-  const handleFreezeWithDates = async () => {
-    await goalFreezePeriodRepository.createGoalFreezePeriod({
-      goalId,
-      startDate,
-      endDate: endDate || null,
-    });
-    setShowForm(false);
-    setStartDate(today);
-    setEndDate("");
-    syncEngine.syncGoalFreezePeriods();
-  };
-
-  const handleResume = async (id: string) => {
-    const period = sorted.find((fp) => fp.id === id);
-    if (period?.startDate === today) {
-      // 今日開始→今日再開はフリーズ不要なので削除
-      await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(id);
-    } else {
-      // endDateは昨日（inclusive）にセット
-      const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
-      await goalFreezePeriodRepository.updateGoalFreezePeriod(id, {
-        endDate: yesterday,
-      });
-    }
-    syncEngine.syncGoalFreezePeriods();
-  };
-
-  const handleDelete = async (id: string) => {
-    await goalFreezePeriodRepository.softDeleteGoalFreezePeriod(id);
-    setDeletingId(null);
-    syncEngine.syncGoalFreezePeriods();
-  };
+  if (!sorted) return null;
 
   return (
     <div className="px-4 py-3 border-t border-gray-100">
@@ -142,11 +90,7 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
           <div className="flex justify-end gap-1.5 pt-1">
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false);
-                setStartDate(today);
-                setEndDate("");
-              }}
+              onClick={handleCancelForm}
               className="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50"
             >
               {t("cancelButton")}

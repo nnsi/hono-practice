@@ -94,7 +94,7 @@ describe("ActivityLogUsecase", () => {
     type GetActivityLogsTestCase = {
       name: string;
       userId: UserId;
-      params: { from: Date; to: Date };
+      params: { from: string; to: string };
       mockReturn: ActivityLog[] | undefined;
       expectError: boolean;
     };
@@ -104,8 +104,8 @@ describe("ActivityLogUsecase", () => {
         name: "success",
         userId: userId1,
         params: {
-          from: new Date("2025-01-01"),
-          to: new Date("2025-01-31"),
+          from: "2025-01-01",
+          to: "2025-01-31",
         },
         mockReturn: [mockActivityLog],
         expectError: false,
@@ -114,8 +114,8 @@ describe("ActivityLogUsecase", () => {
         name: "failed / getActivityLogsByUserIdAndDate error",
         userId: userId1,
         params: {
-          from: new Date("2025-01-01"),
-          to: new Date("2025-01-31"),
+          from: "2025-01-01",
+          to: "2025-01-31",
         },
         mockReturn: undefined,
         expectError: true,
@@ -557,8 +557,8 @@ describe("ActivityLogUsecase", () => {
       name: string;
       userId: UserId;
       params: {
-        from: Date;
-        to: Date;
+        from: string;
+        to: string;
       };
       mockReturn: GetActivityStatsResponse | undefined;
       expectError: boolean;
@@ -569,8 +569,8 @@ describe("ActivityLogUsecase", () => {
         name: "success",
         userId: userId1,
         params: {
-          from: new Date("2025-01-01"),
-          to: new Date("2025-01-31"),
+          from: "2025-01-01",
+          to: "2025-01-31",
         },
         mockReturn: [
           {
@@ -588,8 +588,8 @@ describe("ActivityLogUsecase", () => {
         name: "failed / activityStatsQuery error",
         userId: userId1,
         params: {
-          from: new Date("2025-01-01"),
-          to: new Date("2025-01-31"),
+          from: "2025-01-01",
+          to: "2025-01-31",
         },
         mockReturn: undefined,
         expectError: true,

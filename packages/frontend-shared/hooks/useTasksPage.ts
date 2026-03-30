@@ -1,7 +1,7 @@
 import { groupTasksByTimeline as groupTasksByTimelineCore } from "@packages/domain/task/taskGrouping";
 import type { TaskItem } from "@packages/domain/task/types";
-import dayjs from "dayjs";
 
+import { getToday } from "../utils/dateUtils";
 import type { ReactHooks } from "./types";
 
 type UseTasksPageDeps = {
@@ -56,7 +56,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
 
     // computed
     const tasks: TaskItem[] = activeTasks;
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = getToday();
 
     const allGrouped = useMemo(
       () =>
@@ -90,7 +90,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
 
     // handlers
     const handleToggleDone = async (task: TaskItem) => {
-      const newDoneDate = task.doneDate ? null : dayjs().format("YYYY-MM-DD");
+      const newDoneDate = task.doneDate ? null : getToday();
       await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
       // タスク完了時にactivityId+quantityがあればActivityLogを自動作成
       if (
@@ -130,8 +130,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
     };
 
     const handleMoveToToday = async (task: TaskItem) => {
-      const todayStr = dayjs().format("YYYY-MM-DD");
-      await taskRepository.updateTask(task.id, { startDate: todayStr });
+      await taskRepository.updateTask(task.id, { startDate: getToday() });
       syncEngine.syncTasks();
     };
 

@@ -263,7 +263,10 @@ describe("initialSync", () => {
         query: { since: "2025-06-01T00:00:00Z" },
       });
       expect(goalsGet).toHaveBeenCalledWith({
-        query: { since: "2025-06-01T00:00:00Z" },
+        query: {
+          since: "2025-06-01T00:00:00Z",
+          clientDate: expect.any(String),
+        },
       });
       expect(tasksGet).toHaveBeenCalledWith({
         query: { since: "2025-06-01T00:00:00Z" },
@@ -284,7 +287,9 @@ describe("initialSync", () => {
 
       // since parameter should NOT be used (full sync)
       expect(logsGet).toHaveBeenCalledWith({ query: {} });
-      expect(goalsGet).toHaveBeenCalledWith({ query: {} });
+      expect(goalsGet).toHaveBeenCalledWith({
+        query: { clientDate: expect.any(String) },
+      });
       expect(tasksGet).toHaveBeenCalledWith({ query: {} });
 
       // lastSyncedAt should have been cleared
@@ -298,7 +303,9 @@ describe("initialSync", () => {
       await performInitialSync("user-123");
 
       expect(logsGet).toHaveBeenCalledWith({ query: {} });
-      expect(goalsGet).toHaveBeenCalledWith({ query: {} });
+      expect(goalsGet).toHaveBeenCalledWith({
+        query: { clientDate: expect.any(String) },
+      });
       expect(tasksGet).toHaveBeenCalledWith({ query: {} });
     });
 

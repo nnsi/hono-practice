@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 
 import { CalendarGrid } from "./CalendarGrid";
@@ -78,7 +79,7 @@ export function CalendarPopover({
 
   if (!isOpen) return null;
 
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const startOfMonth = viewMonth.startOf("month");
   const startDay = startOfMonth.day(); // 0=日曜
   const daysInMonth = viewMonth.daysInMonth();

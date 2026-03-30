@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import { Calendar, X } from "lucide-react";
 
@@ -83,7 +84,7 @@ export function DatePickerField({
         )}
       </button>
       <CalendarPopover
-        selectedDate={value || dayjs().format("YYYY-MM-DD")}
+        selectedDate={value || getToday()}
         onDateSelect={(date) => {
           onChange(date);
           handleClose();

@@ -4,6 +4,7 @@ import {
 } from "@packages/domain/goal/goalHeatmap";
 import dayjs from "dayjs";
 
+import { addDays, getToday } from "../utils/dateUtils";
 import type { ActivityLogBase, Goal, ReactHooks } from "./types";
 
 type UseGoalHeatmapDeps = {
@@ -107,8 +108,8 @@ export function createUseGoalHeatmap(deps: UseGoalHeatmapDeps) {
   } = deps;
 
   return function useGoalHeatmap(): GoalHeatmapViewModel {
-    const today = dayjs().format("YYYY-MM-DD");
-    const start = dayjs().subtract(119, "day").format("YYYY-MM-DD");
+    const today = getToday();
+    const start = addDays(getToday(), -119);
 
     const { goals } = useGoals();
 

@@ -1,5 +1,5 @@
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
@@ -144,7 +144,7 @@ export function TaskCreateDialog({
         <View className="flex-row gap-3">
           <View className="flex-1">
             <DatePickerField
-              value={startDate || dayjs().format("YYYY-MM-DD")}
+              value={startDate || getToday()}
               onChange={setStartDate}
               label={t("create.label.startDate")}
             />

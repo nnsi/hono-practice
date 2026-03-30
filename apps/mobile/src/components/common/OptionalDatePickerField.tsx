@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import { Calendar, X } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
@@ -65,7 +66,7 @@ export function OptionalDatePickerField({
       <CalendarPopover
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}
-        selectedDate={value || dayjs().format("YYYY-MM-DD")}
+        selectedDate={value || getToday()}
         onDateSelect={onChange}
       />
     </View>
