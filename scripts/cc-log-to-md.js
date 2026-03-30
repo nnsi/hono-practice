@@ -109,12 +109,16 @@ function getAllSessions(since) {
           if (!line.trim()) return false;
           try {
             const obj = JSON.parse(line);
-            return (
-              obj.type === "user" &&
-              obj.message?.role === "user" &&
-              typeof obj.message?.content === "string" &&
-              !/^<[a-zA-Z][\w-]*[> /]/.test(obj.message.content.trim())
-            );
+            if (
+              obj.type !== "user" ||
+              obj.message?.role !== "user" ||
+              typeof obj.message?.content !== "string"
+            )
+              return false;
+            const c = obj.message.content.trim();
+            // コマンドもユーザー発言として扱う
+            if (/<command-name>/.test(c)) return true;
+            return !/^<[a-zA-Z][\w-]*[> /]/.test(c);
           } catch {
             return false;
           }
@@ -122,8 +126,18 @@ function getAllSessions(since) {
         let preview = "(empty)";
         if (firstUserLine) {
           const obj = JSON.parse(firstUserLine);
-          preview = obj.message.content.substring(0, 60);
-          if (obj.message.content.length > 60) preview += "...";
+          const c = obj.message.content.trim();
+          const cmdMatch = c.match(/<command-name>(.*?)<\/command-name>/);
+          if (cmdMatch) {
+            const argsMatch = c.match(/<command-args>(.*?)<\/command-args>/s);
+            const cmdArgs = argsMatch ? argsMatch[1].trim() : "";
+            preview = cmdArgs
+              ? `${cmdMatch[1]} ${cmdArgs}`.substring(0, 60)
+              : cmdMatch[1];
+          } else {
+            preview = c.substring(0, 60);
+            if (c.length > 60) preview += "...";
+          }
         }
         sessions.push({
           project: dir,
@@ -215,6 +229,20 @@ function convertJsonlToMarkdown(filePath) {
       typeof obj.message?.content === "string"
     ) {
       const text = obj.message.content.trim();
+
+      // コマンド（/commit 等）を検出して記録
+      const cmdMatch = text.match(/<command-name>(.*?)<\/command-name>/);
+      if (cmdMatch) {
+        const cmdName = cmdMatch[1];
+        const argsMatch = text.match(/<command-args>(.*?)<\/command-args>/s);
+        const cmdArgs = argsMatch ? argsMatch[1].trim() : "";
+        const display = cmdArgs ? `${cmdName} ${cmdArgs}` : cmdName;
+        md.push(`## User\n`);
+        md.push(`\`${display}\``);
+        md.push("");
+        continue;
+      }
+
       // XMLタグで始まるシステム発言はスキップ
       if (/^<[a-zA-Z][\w-]*[> /]/.test(text)) continue;
 
