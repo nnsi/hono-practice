@@ -8,6 +8,7 @@ import type {
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
@@ -27,7 +28,7 @@ export type GoalDbAdapter = {
 export function newGoalRepository(adapter: GoalDbAdapter): GoalRepository {
   return {
     async createGoal(input: CreateGoalInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const goal: Syncable<GoalRecord> = {
         id: uuidv7(),
@@ -58,7 +59,7 @@ export function newGoalRepository(adapter: GoalDbAdapter): GoalRepository {
     },
 
     async updateGoal(id: string, changes: UpdateGoalInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         ...changes,
         updatedAt: now,
@@ -67,7 +68,7 @@ export function newGoalRepository(adapter: GoalDbAdapter): GoalRepository {
     },
 
     async softDeleteGoal(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         deletedAt: now,
         updatedAt: now,

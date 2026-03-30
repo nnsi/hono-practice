@@ -1,5 +1,6 @@
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const uuidState = vi.hoisted(() => ({ counter: 0 }));
@@ -92,6 +93,7 @@ describe("taskRepositoryLogic", () => {
     setUserId = env.setUserId;
     repo = newTaskRepository(adapter);
     uuidState.counter = 0;
+    resetServerTimeForTests();
   });
 
   // ========== Create ==========

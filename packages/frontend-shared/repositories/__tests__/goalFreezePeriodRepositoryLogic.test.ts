@@ -1,5 +1,6 @@
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GoalFreezePeriodDbAdapter } from "../goalFreezePeriodRepositoryLogic";
@@ -69,6 +70,7 @@ describe("goalFreezePeriodRepositoryLogic", () => {
 
   beforeEach(() => {
     uuidCounter = 0;
+    resetServerTimeForTests();
     adapter = createInMemoryAdapter();
     repo = newGoalFreezePeriodRepository(adapter.adapter);
   });

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { emitDebtFeedback } from "@packages/frontend-shared";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import { activityLogRepository } from "../../db/activityLogRepository";
@@ -62,7 +63,7 @@ export function LogFormBody({
       if (existingLog) {
         await db.activityLogs.update(existingLog.id, {
           quantity: (existingLog.quantity ?? 0) + (params.quantity ?? 1),
-          updatedAt: new Date().toISOString(),
+          updatedAt: getServerNowISOString(),
           _syncStatus: "pending" as const,
         });
       } else {

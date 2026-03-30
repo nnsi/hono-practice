@@ -9,6 +9,7 @@ import type {
   TaskRepository,
   UpdateTaskInput,
 } from "@packages/domain/task/taskRepository";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
@@ -28,7 +29,7 @@ export type TaskDbAdapter = {
 export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
   return {
     async createTask(input: CreateTaskInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const task: Syncable<TaskRecord> = {
         id: uuidv7(),
@@ -64,7 +65,7 @@ export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
     },
 
     async updateTask(id: string, changes: UpdateTaskInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         ...changes,
         updatedAt: now,
@@ -73,7 +74,7 @@ export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
     },
 
     async archiveTask(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         archivedAt: now,
         updatedAt: now,
@@ -82,7 +83,7 @@ export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
     },
 
     async softDeleteTask(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         deletedAt: now,
         updatedAt: now,

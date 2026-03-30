@@ -3,6 +3,7 @@ import {
   type ActivityDbAdapter,
   newActivityRepository,
 } from "@packages/frontend-shared/repositories";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { generateOrder } from "@packages/utils/lexicalOrder";
 
 import { db } from "./schema";
@@ -78,7 +79,7 @@ const adapter: ActivityDbAdapter = {
 
   // Reorder
   async reorderActivities(orderedIds) {
-    const now = new Date().toISOString();
+    const now = getServerNowISOString();
     await db.transaction("rw", db.activities, async () => {
       let prev: string | null = null;
       for (const id of orderedIds) {
@@ -160,7 +161,7 @@ const adapter: ActivityDbAdapter = {
     );
   },
   async clearActivityIcon(activityId) {
-    const now = new Date().toISOString();
+    const now = getServerNowISOString();
     await db.transaction(
       "rw",
       [db.activities, db.activityIconBlobs, db.activityIconDeleteQueue],

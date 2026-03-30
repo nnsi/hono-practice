@@ -1,5 +1,6 @@
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityLogDbAdapter } from "../activityLogRepositoryLogic";
@@ -66,6 +67,7 @@ describe("activityLogRepositoryLogic", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     uuidState.counter = 0;
+    resetServerTimeForTests();
     const mem = createInMemoryAdapter();
     store = mem.store;
     repo = newActivityLogRepository(mem.adapter);
