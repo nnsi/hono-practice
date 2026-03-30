@@ -1,6 +1,6 @@
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { CalendarPopover } from "../common/CalendarPopover";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
@@ -38,39 +38,40 @@ export function DailyPage() {
     <div className="bg-white">
       {/* 日付ヘッダー */}
       <header className="sticky top-0 sticky-header z-10">
-        <div className="relative flex items-center justify-center h-12">
+        <div className="flex items-center justify-center gap-3 px-4 h-12">
           <button
             type="button"
             onClick={goToPrev}
             aria-label={t("daily.previousDay")}
-            className="absolute left-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
           </button>
           <button
             type="button"
             onClick={() => setCalendarOpen(!calendarOpen)}
-            className={`text-base font-medium px-4 py-1 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 text-base font-medium px-4 py-1 rounded-xl transition-all ${
               isToday ? "date-pill-today" : "hover:bg-gray-100"
             }`}
           >
+            <Calendar size={14} />
             {dayjs(date).format("M/D (ddd)")}
           </button>
           <button
             type="button"
             onClick={goToNext}
             aria-label={t("daily.nextDay")}
-            className="absolute right-14 p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
           </button>
-          <CalendarPopover
-            selectedDate={date}
-            onDateSelect={setDate}
-            isOpen={calendarOpen}
-            onClose={() => setCalendarOpen(false)}
-          />
         </div>
+        <CalendarPopover
+          selectedDate={date}
+          onDateSelect={setDate}
+          isOpen={calendarOpen}
+          onClose={() => setCalendarOpen(false)}
+        />
       </header>
 
       <main className="p-4 space-y-6">

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 type DateNavHeaderProps = {
@@ -20,9 +20,9 @@ export function DateNavHeader({
   const dateLabel = dayjs(date).format("M/D (ddd)");
 
   return (
-    <View className="relative flex-row items-center justify-center h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <View className="flex-row items-center justify-center gap-3 px-4 h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <TouchableOpacity
-        className="absolute left-4 p-2"
+        className="p-2"
         onPress={onPrev}
         accessibilityRole="button"
         accessibilityLabel="Previous day"
@@ -38,13 +38,15 @@ export function DateNavHeader({
         accessibilityLabel={`Select date: ${dateLabel}`}
       >
         {isToday ? (
-          <View className="bg-gray-900 rounded-xl px-4 py-1">
+          <View className="flex-row items-center gap-1.5 bg-gray-900 rounded-xl px-4 py-1">
+            <Calendar size={14} color="#ffffff" />
             <Text className="text-white text-base font-medium">
               {dateLabel}
             </Text>
           </View>
         ) : (
-          <View className="px-4 py-1">
+          <View className="flex-row items-center gap-1.5 px-4 py-1">
+            <Calendar size={14} color="#1f2937" />
             <Text className="text-base font-medium text-gray-800 dark:text-gray-200">
               {dateLabel}
             </Text>
@@ -53,7 +55,7 @@ export function DateNavHeader({
       </TouchableOpacity>
 
       <TouchableOpacity
-        className="absolute right-14 p-2"
+        className="p-2"
         onPress={onNext}
         accessibilityRole="button"
         accessibilityLabel="Next day"
