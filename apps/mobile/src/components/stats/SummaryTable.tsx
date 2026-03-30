@@ -4,6 +4,7 @@ import type {
   ChartData,
   StatsKind,
 } from "@packages/frontend-shared/types/stats";
+import { buildWeeks } from "@packages/frontend-shared/utils/buildWeeks";
 import {
   formatQuantityWithUnit,
   roundQuantity,
@@ -11,8 +12,6 @@ import {
 import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-
-import { buildWeeks } from "./buildWeeks";
 
 export function SummaryTable({
   quantityUnit,

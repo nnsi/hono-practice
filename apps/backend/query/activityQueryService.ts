@@ -3,13 +3,11 @@ import { activities, activityKinds, activityLogs } from "@infra/drizzle/schema";
 import type { GetActivityStatsResponse } from "@packages/types/response";
 import { and, asc, between, eq, isNull } from "drizzle-orm";
 
-import dayjs from "../lib/dayjs";
-
 export type ActivityQueryService = {
   activityStatsQuery: (
     userId: string,
-    startDate: Date,
-    endDate: Date,
+    startDate: string,
+    endDate: string,
   ) => Promise<GetActivityStatsResponse>;
   withTx: (tx: QueryExecutor) => ActivityQueryService;
 };
@@ -24,10 +22,7 @@ export function newActivityQueryService(
 }
 
 function activityStatsQuery(db: QueryExecutor) {
-  return async (userId: string, startDate: Date, endDate: Date) => {
-    const startDateStr = dayjs(startDate).format("YYYY-MM-DD");
-    const endDateStr = dayjs(endDate).format("YYYY-MM-DD");
-
+  return async (userId: string, startDate: string, endDate: string) => {
     const rows = await db
       .select({
         id: activities.id,
@@ -50,7 +45,7 @@ function activityStatsQuery(db: QueryExecutor) {
       .where(
         and(
           eq(activityLogs.userId, userId),
-          between(activityLogs.date, startDateStr, endDateStr),
+          between(activityLogs.date, startDate, endDate),
           isNull(activityLogs.deletedAt),
         ),
       )
@@ -97,7 +92,7 @@ function transform(
               total: Math.round((row.quantity || 0) * 100) / 100,
               logs: [
                 {
-                  date: dayjs(row.date).format("YYYY-MM-DD"),
+                  date: row.date,
                   quantity: row.quantity || 0,
                 },
               ],

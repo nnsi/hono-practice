@@ -1,3 +1,4 @@
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { createInitialSync } from "@packages/sync-engine";
 
 import { activityLogRepository } from "../db/activityLogRepository";
@@ -56,7 +57,9 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       await Promise.all([
         apiClient.users.v2.activities.$get(),
         apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-        apiClient.users.v2.goals.$get({ query: sinceQuery }),
+        apiClient.users.v2.goals.$get({
+          query: { ...sinceQuery, clientDate: getToday() },
+        }),
         // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
         customFetch(freezePeriodsUrl).catch(() => null),
         apiClient.users.v2.tasks.$get({ query: sinceQuery }),

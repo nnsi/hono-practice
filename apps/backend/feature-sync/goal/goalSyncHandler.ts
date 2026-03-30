@@ -16,8 +16,8 @@ export function newGoalSyncHandler(uc: GoalSyncUsecase) {
 }
 
 function getGoals(uc: GoalSyncUsecase) {
-  return async (userId: UserId, since?: string) => {
-    const result = await uc.getGoals(userId, since);
+  return async (userId: UserId, since?: string, clientDate?: string) => {
+    const result = await uc.getGoals(userId, since, clientDate);
     const parsed = GetGoalsV2ResponseSchema.safeParse(result);
     if (!parsed.success) {
       throw new AppError("failed to parse goals response", 500);

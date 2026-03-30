@@ -2,8 +2,8 @@ import {
   isGoalActive,
   isGoalEnded,
 } from "@packages/domain/goal/goalPredicates";
-import dayjs from "dayjs";
 
+import { getToday } from "../utils/dateUtils";
 import type {
   ActivityBase,
   CreateGoalPayload,
@@ -50,7 +50,7 @@ export function createUseGoalsPage<TActivity extends ActivityBase>(
     const { goals, isReady: goalsReady } = useGoals();
 
     // computed
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = getToday();
 
     const activityMap = useMemo(() => {
       const map = new Map<string, TActivity>();

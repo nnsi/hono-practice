@@ -1,5 +1,6 @@
 import { AppError } from "@backend/error";
 import dayjs from "@backend/lib/dayjs";
+import { getEndOfMonth } from "@backend/utils/dateUtils";
 import {
   createActivityId,
   createActivityKindId,
@@ -35,9 +36,9 @@ function getActivityLogs(uc: ActivityLogUsecase) {
   return async (userId: UserId, query: { date?: string }) => {
     const date = query.date || dayjs().format("YYYY-MM-DD");
 
-    const dayOrDate = date.split("-").length === 2 ? "month" : "day";
-    const from = dayjs(date).startOf(dayOrDate).toDate();
-    const to = dayjs(date).endOf(dayOrDate).toDate();
+    const isMonth = date.split("-").length === 2;
+    const from = isMonth ? `${date}-01` : date;
+    const to = isMonth ? getEndOfMonth(date) : date;
 
     const params: GetActivityLogsParams = { from, to };
 
@@ -124,9 +125,9 @@ function getStats(uc: ActivityLogUsecase) {
       throw new AppError("invalid query");
     }
 
-    const dayOrDate = date.split("-").length === 2 ? "month" : "day";
-    const from = dayjs(date).startOf(dayOrDate).toDate();
-    const to = dayjs(date).endOf(dayOrDate).toDate();
+    const isMonth = date.split("-").length === 2;
+    const from = isMonth ? `${date}-01` : date;
+    const to = isMonth ? getEndOfMonth(date) : date;
 
     const stats = await uc.getStats(userId, { from, to });
 

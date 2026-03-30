@@ -4,6 +4,7 @@ import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
@@ -54,7 +55,7 @@ export function GoalStatsDetail({
   activity: DexieActivity | undefined;
 }) {
   const { t } = useTranslation("goal");
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const endDate = goal.endDate || today;
   const actualEndDate = endDate < today ? endDate : today;
 

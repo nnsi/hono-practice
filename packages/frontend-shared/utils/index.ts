@@ -1,3 +1,5 @@
+export type { WeekDay, WeekEntry } from "./buildWeeks";
+export { buildWeeks } from "./buildWeeks";
 export {
   barHeightPct,
   computeChartScale,
@@ -14,6 +16,15 @@ export {
   DEFAULT_BAR_COLOR,
   getUniqueColorForKind,
 } from "./colorUtils";
+export {
+  addDays,
+  addMonths,
+  daysInMonth,
+  getEndOfMonth,
+  getStartOfMonth,
+  getToday,
+  isToday,
+} from "./dateUtils";
 export { emitDebtFeedback, onDebtFeedback } from "./debtFeedbackEvents";
 export type {
   ErrorContext,

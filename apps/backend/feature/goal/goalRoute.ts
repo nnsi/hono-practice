@@ -57,29 +57,32 @@ export function createGoalRoute() {
         const userId = c.get("userId");
         const activityId = c.req.query("activityId");
         const isActive = c.req.query("isActive");
+        const clientDate = c.req.query("clientDate");
 
         const filters = {
           ...(activityId && { activityId }),
           ...(isActive && { isActive: isActive === "true" }),
         };
 
-        const res = await c.var.h.getGoals(userId, filters);
+        const res = await c.var.h.getGoals(userId, filters, clientDate);
         return c.json(res);
       })
       // 個別目標取得
       .get("/:id", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
+        const clientDate = c.req.query("clientDate");
 
-        const res = await c.var.h.getGoal(userId, id);
+        const res = await c.var.h.getGoal(userId, id, clientDate);
         return c.json(res);
       })
       // 目標統計情報取得
       .get("/:id/stats", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
+        const clientDate = c.req.query("clientDate");
 
-        const res = await c.var.h.getGoalStats(userId, id);
+        const res = await c.var.h.getGoalStats(userId, id, clientDate);
         return c.json(res);
       })
       // 目標作成

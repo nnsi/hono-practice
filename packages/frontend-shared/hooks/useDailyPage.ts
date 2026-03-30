@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-
+import { addDays, getToday } from "../utils/dateUtils";
 import type {
   ActivityBase,
   ActivityLogBase,
@@ -53,7 +52,7 @@ export function createUseDailyPage<
   } = deps;
 
   return function useDailyPage() {
-    const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+    const [date, setDate] = useState(getToday());
     const [editingLog, setEditingLog] = useState<ActivityLogBase | null>(null);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [taskCreateDialogOpen, setTaskCreateDialogOpen] = useState(false);
@@ -93,18 +92,12 @@ export function createUseDailyPage<
       [rawTasks],
     );
 
-    const goToPrev = useCallback(
-      () => setDate((d) => dayjs(d).subtract(1, "day").format("YYYY-MM-DD")),
-      [],
-    );
-    const goToNext = useCallback(
-      () => setDate((d) => dayjs(d).add(1, "day").format("YYYY-MM-DD")),
-      [],
-    );
-    const isToday = date === dayjs().format("YYYY-MM-DD");
+    const goToPrev = useCallback(() => setDate((d) => addDays(d, -1)), []);
+    const goToNext = useCallback(() => setDate((d) => addDays(d, 1)), []);
+    const isToday = date === getToday();
 
     const handleToggleTask = useCallback(async (task: DailyTask) => {
-      const newDoneDate = task.doneDate ? null : dayjs().format("YYYY-MM-DD");
+      const newDoneDate = task.doneDate ? null : getToday();
       await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
       if (
         !task.doneDate &&

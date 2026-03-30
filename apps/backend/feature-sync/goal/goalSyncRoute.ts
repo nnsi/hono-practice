@@ -37,7 +37,8 @@ export function createGoalSyncRoute() {
     .get("/goals", async (c) => {
       const userId = c.get("userId");
       const since = c.req.query("since");
-      const res = await c.var.h.getGoals(userId, since);
+      const clientDate = c.req.query("clientDate");
+      const res = await c.var.h.getGoals(userId, since, clientDate);
       return c.json(res);
     })
     .post(

@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-
+import { addDays, getToday } from "../utils/dateUtils";
 import type { ActivityBase, IconBlobBase, ReactHooks } from "./types";
 
 type UseActikoPageDeps<
@@ -24,7 +23,7 @@ export function createUseActikoPage<
   } = deps;
 
   return function useActikoPage() {
-    const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+    const [date, setDate] = useState(getToday());
     const [selectedActivity, setSelectedActivity] = useState<TActivity | null>(
       null,
     );
@@ -46,14 +45,14 @@ export function createUseActikoPage<
       return map;
     }, [iconBlobs]);
 
-    const isToday = date === dayjs().format("YYYY-MM-DD");
+    const isToday = date === getToday();
 
     const goToPrev = useCallback(() => {
-      setDate((d) => dayjs(d).subtract(1, "day").format("YYYY-MM-DD"));
+      setDate((d) => addDays(d, -1));
     }, []);
 
     const goToNext = useCallback(() => {
-      setDate((d) => dayjs(d).add(1, "day").format("YYYY-MM-DD"));
+      setDate((d) => addDays(d, 1));
     }, []);
 
     const hasLogsForActivity = useCallback(

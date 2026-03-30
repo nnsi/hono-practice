@@ -213,6 +213,79 @@ describe("goalSyncUsecase", () => {
         vi.useRealTimers();
       }
     });
+    test("clientDateを渡すとサーバー時刻ではなくclientDateで計算される", async () => {
+      // サーバー時刻を2026-03-10に固定（clientDateと異なる値にする）
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-03-10T12:00:00.000Z"));
+      try {
+        const row = makeGoalRow({
+          startDate: "2026-03-01",
+          endDate: null,
+          dailyTargetQuantity: "10",
+        });
+        const repo = createMockRepo({
+          getGoalsByUserId: vi.fn().mockResolvedValue([row]),
+          getGoalActualQuantity: vi.fn().mockResolvedValue(50),
+        });
+        const usecase = newGoalSyncUsecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
+
+        // clientDate="2026-03-05" を渡す（サーバー時刻の3/10ではなく3/5で計算されるべき）
+        const result = await usecase.getGoals(USER_ID, undefined, "2026-03-05");
+
+        // 5日間(3/1-3/5) × 10 = 50, actual=50 → balance=0
+        expect(result.goals[0].totalTarget).toBe(50);
+        expect(result.goals[0].totalActual).toBe(50);
+        expect(result.goals[0].currentBalance).toBe(0);
+        // effectiveEnd は clientDate の "2026-03-05" であること
+        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+          USER_ID,
+          OWNED_ACTIVITY_ID,
+          "2026-03-01",
+          "2026-03-05",
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    test("clientDateなしの場合はサーバー時刻にフォールバック", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-03-10T12:00:00.000Z"));
+      try {
+        const row = makeGoalRow({
+          startDate: "2026-03-01",
+          endDate: null,
+          dailyTargetQuantity: "10",
+        });
+        const repo = createMockRepo({
+          getGoalsByUserId: vi.fn().mockResolvedValue([row]),
+          getGoalActualQuantity: vi.fn().mockResolvedValue(100),
+        });
+        const usecase = newGoalSyncUsecase(
+          repo,
+          createMockFreezeRepo(),
+          noopTracer,
+        );
+
+        // clientDateなし → サーバーのUTC日付 "2026-03-10" で計算
+        const result = await usecase.getGoals(USER_ID);
+
+        // 10日間(3/1-3/10) × 10 = 100
+        expect(result.goals[0].totalTarget).toBe(100);
+        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+          USER_ID,
+          OWNED_ACTIVITY_ID,
+          "2026-03-01",
+          "2026-03-10",
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("syncGoals", () => {

@@ -1,16 +1,20 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import dayjs from "@backend/lib/dayjs";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
 import type { GoalStatsResponse } from "@packages/types/response";
-import dayjs from "dayjs";
 import { and, between, eq, isNull, sql } from "drizzle-orm";
 
 export type GoalQueryService = {
-  getGoalStats: (userId: string, goalId: string) => Promise<GoalStatsResponse>;
+  getGoalStats: (
+    userId: string,
+    goalId: string,
+    clientDate?: string,
+  ) => Promise<GoalStatsResponse>;
   withTx: (tx: QueryExecutor) => GoalQueryService;
 };
 
@@ -22,7 +26,11 @@ export function newGoalQueryService(db: QueryExecutor): GoalQueryService {
 }
 
 function getGoalStats(db: QueryExecutor) {
-  return async (userId: string, goalId: string): Promise<GoalStatsResponse> => {
+  return async (
+    userId: string,
+    goalId: string,
+    clientDate?: string,
+  ): Promise<GoalStatsResponse> => {
     // まず目標の詳細を取得
     const goal = await db
       .select()
@@ -41,7 +49,7 @@ function getGoalStats(db: QueryExecutor) {
     }
 
     const activityGoal = goal[0];
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
     const startDate = activityGoal.startDate;
     const endDate = activityGoal.endDate || today;
     const actualEndDate = endDate < today ? endDate : today;

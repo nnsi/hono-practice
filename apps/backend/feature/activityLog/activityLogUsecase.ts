@@ -1,12 +1,9 @@
-import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { Tracer } from "@backend/lib/tracer";
 import type { ActivityQueryService } from "@backend/query";
-import {
-  type ActivityId,
-  type ActivityKindId,
-  createActivityId,
-  createActivityKindId,
+import type {
+  ActivityId,
+  ActivityKindId,
 } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityLog,
@@ -21,16 +18,22 @@ import type {
 } from "@packages/types/response";
 
 import type { ActivityRepository } from "../activity";
+import { createActivityLogBatch } from "./activityLogBatchUsecase";
+import {
+  deleteActivityLog,
+  getActivityLog,
+  updateActivityLog,
+} from "./activityLogMutationUsecase";
 import type { ActivityLogRepository } from "./activityLogRepository";
 
 export type GetActivityLogsParams = {
-  from: Date;
-  to: Date;
+  from: string;
+  to: string;
 };
 
 export type GetStatsParams = {
-  from: Date;
-  to: Date;
+  from: string;
+  to: string;
 };
 
 type CreateActivityLogParams = {
@@ -39,12 +42,6 @@ type CreateActivityLogParams = {
   quantity: number;
   memo?: string;
   activityId?: string;
-  activityKindId?: string;
-};
-
-type UpdateActivityLogParams = {
-  quantity?: number;
-  memo?: string;
   activityKindId?: string;
 };
 
@@ -70,7 +67,7 @@ export type ActivityLogUsecase = {
   updateActivityLog: (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: UpdateActivityLogParams,
+    params: { quantity?: number; memo?: string; activityKindId?: string },
   ) => Promise<ActivityLog>;
   deleteActivityLog: (
     userId: UserId,
@@ -103,23 +100,9 @@ export function newActivityLogUsecase(
 function getActivityLogs(repo: ActivityLogRepository, tracer: Tracer) {
   return async (userId: UserId, params: GetActivityLogsParams) => {
     const { from, to } = params;
-
     return tracer.span("db.getActivityLogsByUserIdAndDate", () =>
       repo.getActivityLogsByUserIdAndDate(userId, from, to),
     );
-  };
-}
-
-function getActivityLog(repo: ActivityLogRepository, tracer: Tracer) {
-  return async (userId: UserId, activityLogId: ActivityLogId) => {
-    const aLog = await tracer.span("db.getActivityLogByIdAndUserId", () =>
-      repo.getActivityLogByIdAndUserId(userId, activityLogId),
-    );
-    if (!aLog) {
-      throw new ResourceNotFoundError("activity log not found");
-    }
-
-    return aLog;
   };
 }
 
@@ -150,7 +133,7 @@ function createActivityLog(
       date: new Date(params.date),
       quantity: params.quantity,
       memo: params.memo,
-      activity: activity,
+      activity,
       activityKind: activityKind!,
       type: "new",
     });
@@ -161,172 +144,11 @@ function createActivityLog(
   };
 }
 
-function updateActivityLog(
-  repo: ActivityLogRepository,
-  acRepo: ActivityRepository,
-  tracer: Tracer,
-) {
-  return async (
-    userId: UserId,
-    activityLogId: ActivityLogId,
-    params: UpdateActivityLogParams,
-  ) => {
-    const activityLog = await tracer.span(
-      "db.getActivityLogByIdAndUserId",
-      () => repo.getActivityLogByIdAndUserId(userId, activityLogId),
-    );
-    if (!activityLog) {
-      throw new ResourceNotFoundError("activity log not found");
-    }
-
-    const activityKindParent = params.activityKindId
-      ? await tracer.span("db.getActivityByUserIdAndActivityKindId", () =>
-          acRepo.getActivityByUserIdAndActivityKindId(
-            userId,
-            createActivityKindId(params.activityKindId!),
-          ),
-        )
-      : { kinds: [activityLog.activityKind] };
-    if (!activityKindParent) {
-      throw new ResourceNotFoundError("activity kind not found");
-    }
-
-    const activityKind =
-      activityKindParent.kinds.find((ak) => ak?.id === params.activityKindId) ||
-      null;
-
-    const newActivityLog = createActivityLogEntity({
-      ...activityLog,
-      ...params,
-      activityKind,
-    });
-
-    return tracer.span("db.updateActivityLog", () =>
-      repo.updateActivityLog(newActivityLog),
-    );
-  };
-}
-
-function deleteActivityLog(repo: ActivityLogRepository, tracer: Tracer) {
-  return async (userId: UserId, activityLogId: ActivityLogId) => {
-    const activityLog = await tracer.span(
-      "db.getActivityLogByIdAndUserId",
-      () => repo.getActivityLogByIdAndUserId(userId, activityLogId),
-    );
-    if (!activityLog) {
-      throw new ResourceNotFoundError("activity log not found");
-    }
-
-    return tracer.span("db.deleteActivityLog", () =>
-      repo.deleteActivityLog(activityLog),
-    );
-  };
-}
-
 function getStats(qs: ActivityQueryService, tracer: Tracer) {
   return async (userId: UserId, params: GetStatsParams) => {
     const { from, to } = params;
-
     return tracer.span("db.activityStatsQuery", () =>
       qs.activityStatsQuery(userId, from, to),
     );
-  };
-}
-
-function createActivityLogBatch(
-  repo: ActivityLogRepository,
-  acRepo: ActivityRepository,
-  db: QueryExecutor,
-  tracer: Tracer,
-) {
-  return async (
-    userId: UserId,
-    activityLogs: CreateActivityLogParams[],
-  ): Promise<CreateActivityLogBatchResponse> => {
-    try {
-      // トランザクション内で全件処理
-      const createdLogs = await db.transaction(async (tx) => {
-        const txRepo = repo.withTx(tx);
-        const txAcRepo = acRepo.withTx(tx);
-
-        // ユニークなactivityIdを集めて1回のクエリで一括取得
-        const uniqueActivityIds = [
-          ...new Set(activityLogs.map((p) => createActivityId(p.activityId))),
-        ];
-        const activities = await tracer.span(
-          "db.getActivitiesByIdsAndUserId",
-          () => txAcRepo.getActivitiesByIdsAndUserId(userId, uniqueActivityIds),
-        );
-        const activityMap = new Map(activities.map((a) => [a.id, a]));
-
-        const logsToCreate: ActivityLog[] = [];
-
-        // 全てのアクティビティログを準備（DBアクセスなし）
-        for (const params of activityLogs) {
-          const activityId = createActivityId(params.activityId);
-          const activityKindId = createActivityKindId(params.activityKindId);
-
-          const activity = activityMap.get(activityId);
-          if (!activity) {
-            throw new Error(`Activity not found: ${params.activityId}`);
-          }
-
-          if (!activity.kinds) activity.kinds = [];
-
-          const activityKind =
-            activity.kinds.find((kind) => kind.id === activityKindId) || null;
-
-          const activityLog = createActivityLogEntity({
-            id: createActivityLogId(),
-            userId,
-            date: new Date(params.date),
-            quantity: params.quantity,
-            memo: params.memo,
-            activity: activity,
-            activityKind: activityKind!,
-            type: "new",
-          });
-
-          logsToCreate.push(activityLog);
-        }
-
-        // バッチ作成
-        return await tracer.span("db.createActivityLogBatch", () =>
-          txRepo.createActivityLogBatch(logsToCreate),
-        );
-      });
-
-      // 成功レスポンスを作成
-      const results = createdLogs.map((log, index) => ({
-        index,
-        success: true,
-        activityLogId: log.id,
-      }));
-
-      return {
-        results,
-        summary: {
-          total: activityLogs.length,
-          succeeded: activityLogs.length,
-          failed: 0,
-        },
-      };
-    } catch (error) {
-      // トランザクションが失敗した場合、全件失敗として扱う
-      const results = activityLogs.map((_, index) => ({
-        index,
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }));
-
-      return {
-        results,
-        summary: {
-          total: activityLogs.length,
-          succeeded: 0,
-          failed: activityLogs.length,
-        },
-      };
-    }
   };
 }

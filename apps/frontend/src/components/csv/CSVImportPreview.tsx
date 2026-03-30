@@ -1,7 +1,4 @@
-import { useMemo, useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs";
 import {
   AlertCircle,
   CheckCircle,
@@ -11,8 +8,9 @@ import {
 } from "lucide-react";
 
 import { useActivities } from "../../hooks/useActivities";
-import { useActivityKinds } from "../../hooks/useActivityKinds";
 import type { ValidatedActivityLog } from "../../hooks/useCSVImport";
+import { PreviewRow } from "./PreviewRow";
+import { useCSVImportPreview } from "./useCSVImportPreview";
 
 type Props = {
   validatedLogs: ValidatedActivityLog[];
@@ -26,6 +24,17 @@ type Props = {
   isImporting?: boolean;
 };
 
+function StatusIcon({ status }: { status: string }) {
+  switch (status) {
+    case "error":
+      return <XCircle className="h-4 w-4 text-red-500" />;
+    case "warning":
+      return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+    default:
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+  }
+}
+
 export function CSVImportPreview({
   validatedLogs,
   onEdit,
@@ -34,95 +43,19 @@ export function CSVImportPreview({
   isImporting = false,
 }: Props) {
   const { t } = useTranslation("csv");
-  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
-    new Set(),
-  );
-  const [showErrorsOnly, setShowErrorsOnly] = useState(false);
   const { activities } = useActivities();
-
-  const stats = useMemo(() => {
-    const total = validatedLogs.length;
-    const errors = validatedLogs.filter((l) => l.errors.length > 0).length;
-    const warnings = validatedLogs.filter(
-      (l) => l.isNewActivity && l.errors.length === 0,
-    ).length;
-    const valid = total - errors;
-    return { total, errors, warnings, valid };
-  }, [validatedLogs]);
-
-  const toggleSelection = (index: number) => {
-    const s = new Set(selectedIndices);
-    if (s.has(index)) s.delete(index);
-    else s.add(index);
-    setSelectedIndices(s);
-  };
-
-  const toggleAll = () => {
-    if (selectedIndices.size === validatedLogs.length) {
-      setSelectedIndices(new Set());
-    } else {
-      setSelectedIndices(new Set(validatedLogs.map((_, i) => i)));
-    }
-  };
-
-  const handleRemoveSelected = () => {
-    onRemove(Array.from(selectedIndices));
-    setSelectedIndices(new Set());
-  };
-
-  const handleExportCsv = () => {
-    const headers = ["date", "activity", "kind", "quantity", "memo"];
-    const csvContent = [
-      headers.join(","),
-      ...validatedLogs.map((log) => {
-        const row = [
-          log.date,
-          log.activityName,
-          log.kindName || "",
-          log.quantity.toString(),
-          log.memo || "",
-        ];
-        return row
-          .map((f) => {
-            if (f.includes(",") || f.includes('"') || f.includes("\n")) {
-              return `"${f.replace(/"/g, '""')}"`;
-            }
-            return f;
-          })
-          .join(",");
-      }),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `activity_logs_${dayjs().format("YYYY-MM-DD")}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const getRowStatus = (log: ValidatedActivityLog) => {
-    if (log.errors.length > 0) return "error";
-    if (log.isNewActivity) return "warning";
-    return "success";
-  };
-
-  const StatusIcon = ({ status }: { status: string }) => {
-    switch (status) {
-      case "error":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      case "warning":
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-    }
-  };
-
-  const filteredLogs = useMemo(() => {
-    if (!showErrorsOnly) return validatedLogs;
-    return validatedLogs.filter((l) => l.errors.length > 0);
-  }, [validatedLogs, showErrorsOnly]);
+  const {
+    selectedIndices,
+    showErrorsOnly,
+    setShowErrorsOnly,
+    stats,
+    toggleSelection,
+    toggleAll,
+    handleRemoveSelected,
+    handleExportCsv,
+    getRowStatus,
+    filteredLogs,
+  } = useCSVImportPreview(validatedLogs);
 
   return (
     <div className="space-y-4">
@@ -160,7 +93,7 @@ export function CSVImportPreview({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={handleRemoveSelected}
+            onClick={() => handleRemoveSelected(onRemove)}
             disabled={selectedIndices.size === 0}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
           >
@@ -249,158 +182,5 @@ export function CSVImportPreview({
         </table>
       </div>
     </div>
-  );
-}
-
-function PreviewRow({
-  log,
-  index,
-  status,
-  isSelected,
-  onToggleSelect,
-  onEdit,
-  isImporting,
-  activities,
-  statusIcon,
-}: {
-  log: ValidatedActivityLog;
-  index: number;
-  status: string;
-  isSelected: boolean;
-  onToggleSelect: () => void;
-  onEdit: (
-    index: number,
-    field: keyof ValidatedActivityLog,
-    value: string,
-  ) => void;
-  isImporting: boolean;
-  activities: { id: string; name: string; emoji: string }[];
-  statusIcon: React.ReactNode;
-}) {
-  const { t } = useTranslation("csv");
-  const selectedActivity = activities.find((a) => a.name === log.activityName);
-  const { kinds } = useActivityKinds(selectedActivity?.id ?? null);
-
-  return (
-    <tr
-      className={`border-b last:border-0 ${status === "error" ? "bg-red-50" : ""}`}
-    >
-      <td className="px-3 py-2">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={onToggleSelect}
-          className="h-4 w-4 accent-blue-600"
-        />
-      </td>
-      <td className="px-2 py-2">{statusIcon}</td>
-      <td className="px-3 py-2">
-        <input
-          type="text"
-          value={log.date}
-          onChange={(e) => onEdit(index, "date", e.target.value)}
-          className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
-          disabled={isImporting}
-        />
-      </td>
-      <td className="px-3 py-2">
-        <div className="flex items-center gap-1.5">
-          <select
-            value={log.activityName || "_new"}
-            onChange={(e) =>
-              onEdit(
-                index,
-                "activityName",
-                e.target.value === "_new" ? "" : e.target.value,
-              )
-            }
-            disabled={isImporting}
-            className="w-32 px-2 py-1 border border-gray-300 rounded text-xs"
-          >
-            <option value="_new">{t("newActivityLabel")}</option>
-            {activities.map((a) => (
-              <option key={a.id} value={a.name}>
-                {a.emoji} {a.name}
-              </option>
-            ))}
-          </select>
-          {log.activityName &&
-            !activities.find((a) => a.name === log.activityName) && (
-              <input
-                type="text"
-                value={log.activityName}
-                onChange={(e) => onEdit(index, "activityName", e.target.value)}
-                placeholder={t("newActivityPlaceholder")}
-                className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
-                disabled={isImporting}
-              />
-            )}
-          {log.isNewActivity && log.activityName && (
-            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded">
-              {t("newActivityBadge")}
-            </span>
-          )}
-        </div>
-      </td>
-      <td className="px-3 py-2">
-        {selectedActivity && kinds.length > 0 ? (
-          <select
-            value={log.kindName || "_none"}
-            onChange={(e) =>
-              onEdit(
-                index,
-                "kindName",
-                e.target.value === "_none" ? "" : e.target.value,
-              )
-            }
-            disabled={isImporting}
-            className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
-          >
-            <option value="_none">{t("noKind")}</option>
-            {kinds.map((k) => (
-              <option key={k.id} value={k.name}>
-                {k.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            type="text"
-            value={log.kindName || ""}
-            onChange={(e) => onEdit(index, "kindName", e.target.value)}
-            className="w-28 px-2 py-1 border border-gray-300 rounded text-xs"
-            disabled={isImporting || !selectedActivity}
-            placeholder={!selectedActivity ? "-" : t("noKind")}
-          />
-        )}
-      </td>
-      <td className="px-3 py-2">
-        <input
-          type="number"
-          value={log.quantity}
-          onChange={(e) => onEdit(index, "quantity", e.target.value)}
-          className="w-20 px-2 py-1 border border-gray-300 rounded text-xs"
-          disabled={isImporting}
-        />
-      </td>
-      <td className="px-3 py-2">
-        <input
-          type="text"
-          value={log.memo || ""}
-          onChange={(e) => onEdit(index, "memo", e.target.value)}
-          className="w-32 px-2 py-1 border border-gray-300 rounded text-xs"
-          disabled={isImporting}
-        />
-      </td>
-      <td className="px-3 py-2">
-        {log.errors.length > 0 && (
-          <div className="text-xs text-red-600">
-            {log.errors.map((err, i) => (
-              <div key={`err-${i}-${err.message}`}>{err.message}</div>
-            ))}
-          </div>
-        )}
-      </td>
-    </tr>
   );
 }
