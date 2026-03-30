@@ -6,12 +6,12 @@ import {
   CalendarDays,
   CheckSquare,
   LayoutGrid,
-  Settings,
   Target,
 } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { HamburgerMenu } from "../../src/components/common/HamburgerMenu";
 import { useThemeContext } from "../../src/contexts/ThemeContext";
 import { useNavigationSync } from "../../src/hooks/useNavigationSync";
 import { useAuthContext } from "../_layout";
@@ -26,7 +26,6 @@ const TAB_ITEMS: {
   { name: "stats", title: "Stats", icon: BarChart3 },
   { name: "goals", title: "Goal", icon: Target },
   { name: "tasks", title: "Tasks", icon: CheckSquare },
-  { name: "settings", title: "Settings", icon: Settings },
 ];
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -47,6 +46,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       }}
     >
       <View
+        accessibilityRole="tablist"
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
@@ -66,20 +66,24 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               key={tab.name}
               onPress={() => navigation.navigate(state.routes[index].name)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.title}
+              accessibilityState={{ selected: isActive }}
               style={{
                 alignItems: "center",
                 gap: 2,
                 paddingHorizontal: 12,
                 paddingVertical: 4,
+                minHeight: 48,
               }}
             >
               <Icon
-                size={20}
+                size={24}
                 color={isActive ? colors.tabActive : colors.tabInactive}
               />
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   letterSpacing: 0.5,
                   color: isActive ? colors.tabActive : colors.tabInactive,
                   fontWeight: isActive ? "600" : "500",
@@ -112,25 +116,29 @@ export default function TabLayout() {
   useNavigationSync(syncReady, userId);
 
   return (
-    <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: {
-          paddingTop: insets.top,
-          maxWidth: 768,
-          width: "100%",
-          alignSelf: "center",
-          backgroundColor: colors.sceneBg,
-        },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Actiko" }} />
-      <Tabs.Screen name="daily" options={{ title: "Daily" }} />
-      <Tabs.Screen name="stats" options={{ title: "Stats" }} />
-      <Tabs.Screen name="goals" options={{ title: "Goal" }} />
-      <Tabs.Screen name="tasks" options={{ title: "Tasks" }} />
-      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: {
+            paddingTop: insets.top,
+            maxWidth: 768,
+            width: "100%",
+            alignSelf: "center",
+            backgroundColor: colors.sceneBg,
+          },
+        }}
+      >
+        <Tabs.Screen name="index" options={{ title: "Actiko" }} />
+        <Tabs.Screen name="daily" options={{ title: "Daily" }} />
+        <Tabs.Screen name="stats" options={{ title: "Stats" }} />
+        <Tabs.Screen name="goals" options={{ title: "Goal" }} />
+        <Tabs.Screen name="tasks" options={{ title: "Tasks" }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
+        <Tabs.Screen name="contact" options={{ href: null }} />
+      </Tabs>
+      <HamburgerMenu />
+    </View>
   );
 }

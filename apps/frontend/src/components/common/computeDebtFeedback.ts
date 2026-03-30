@@ -2,7 +2,7 @@ import {
   type DebtFeedbackResult,
   calculateDebtFeedback,
 } from "@packages/domain/goal/goalDebtFeedback";
-import dayjs from "dayjs";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 
 import { db } from "../../db/schema";
 
@@ -17,7 +17,7 @@ export async function computeDebtFeedbackForActivity(
 ): Promise<DebtFeedbackResult[]> {
   if (quantityRecorded <= 0) return [];
 
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
 
   const goals = await db.goals
     .where("activityId")

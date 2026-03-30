@@ -5,6 +5,8 @@ import type { ApiKeyResponse } from "@packages/types/response";
 import dayjs from "dayjs";
 import { Loader2, Trash2 } from "lucide-react";
 
+import { ScopeBadges } from "./ScopeBadges";
+
 export function ApiKeyList({
   apiKeys,
   isLoading,
@@ -81,6 +83,7 @@ export function ApiKeyList({
               </button>
             )}
           </div>
+          <ScopeBadges scopes={apiKey.scopes} />
           <div className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded select-none">
             {apiKey.key.startsWith("api_")
               ? apiKey.key

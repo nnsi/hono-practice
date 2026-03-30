@@ -166,6 +166,9 @@ class WidgetDbHelper(private val context: Context) {
             cursor.use {
                 if (it.moveToFirst()) it.getString(0) ?: "free" else "free"
             }
+        } catch (e: Exception) {
+            Log.w("WidgetDb", "getPlan failed (column may not exist yet): ${e.message}")
+            "free"
         } finally {
             db.close()
         }

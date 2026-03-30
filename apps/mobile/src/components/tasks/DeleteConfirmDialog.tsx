@@ -24,6 +24,8 @@ export function DeleteConfirmDialog({
           <TouchableOpacity
             onPress={onCancel}
             className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl items-center"
+            accessibilityRole="button"
+            accessibilityLabel={t("delete.cancel")}
           >
             <Text className="text-sm text-gray-700 dark:text-gray-300">
               {t("delete.cancel")}
@@ -32,6 +34,8 @@ export function DeleteConfirmDialog({
           <TouchableOpacity
             onPress={onConfirm}
             className="flex-1 py-2.5 bg-red-50 dark:bg-red-900/200 rounded-xl items-center"
+            accessibilityRole="button"
+            accessibilityLabel={t("delete.confirm")}
           >
             <Text className="text-sm text-white font-medium">
               {t("delete.confirm")}

@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 import { Trash2 } from "lucide-react-native";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
+import { MobileScopeBadges } from "./MobileScopeBadges";
+
 export function ApiKeyList({
   apiKeys,
   isLoading,
@@ -67,6 +69,8 @@ export function ApiKeyList({
                   onPress={() => handleDelete(apiKey.id)}
                   disabled={deletingId === apiKey.id}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("apiKeyDeleteConfirm")}
                 >
                   <Text className="text-xs text-white">
                     {deletingId === apiKey.id
@@ -78,6 +82,8 @@ export function ApiKeyList({
                   className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                   onPress={() => setConfirmDeleteId(null)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("apiKeyDeleteCancel")}
                 >
                   <Text className="text-xs text-gray-700 dark:text-gray-300">
                     {t("apiKeyDeleteCancel")}
@@ -89,11 +95,14 @@ export function ApiKeyList({
                 className="p-1"
                 onPress={() => setConfirmDeleteId(apiKey.id)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${apiKey.name} ${t("apiKeyDeleteConfirm")}`}
               >
                 <Trash2 size={14} color="#9ca3af" />
               </TouchableOpacity>
             )}
           </View>
+          <MobileScopeBadges scopes={apiKey.scopes} />
           <View className="mt-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
             <Text className="text-xs text-gray-400 dark:text-gray-500 font-mono">
               {apiKey.key.startsWith("api_")

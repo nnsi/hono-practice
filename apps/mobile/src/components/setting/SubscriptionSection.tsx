@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { Crown, RotateCcw } from "lucide-react-native";
 import {
@@ -46,7 +47,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
 
   const isPremium = plan === "premium";
   const periodEnd = info?.currentPeriodEnd
-    ? new Date(info.currentPeriodEnd).toLocaleDateString("ja-JP")
+    ? dayjs(info.currentPeriodEnd).format("YYYY/MM/DD")
     : null;
 
   return (
@@ -84,6 +85,8 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
             onPress={() => router.push("/upgrade")}
+            accessibilityRole="button"
+            accessibilityLabel={t("upgradeProPlan")}
           >
             <Crown size={18} color="#f59e0b" />
             <Text className="ml-3 text-base text-amber-600 dark:text-amber-400 font-medium">
@@ -100,6 +103,8 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
             className="flex-row items-center px-4 py-3"
             onPress={() => restorePurchases()}
             disabled={isRestoring}
+            accessibilityRole="button"
+            accessibilityLabel={t("restorePurchases")}
           >
             {isRestoring ? (
               <ActivityIndicator size="small" color="#6b7280" />

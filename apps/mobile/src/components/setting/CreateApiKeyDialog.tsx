@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 import { useTranslation } from "@packages/i18n";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
@@ -8,6 +9,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { MobileScopeSelector } from "./MobileScopeSelector";
 
 export function CreateApiKeyDialog({
   onClose,
@@ -18,18 +20,22 @@ export function CreateApiKeyDialog({
 }) {
   const { t } = useTranslation("settings");
   const [name, setName] = useState("");
+  const [selectedScopes, setSelectedScopes] = useState<ApiKeyScope[]>(["all"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || selectedScopes.length === 0) return;
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const result = await onCreate({ name: name.trim(), scope: "all" });
+      const result = await onCreate({
+        name: name.trim(),
+        scopes: selectedScopes,
+      });
       setCreatedKey(result.apiKey.key);
     } catch {
       setError(t("apiKeyCreateError"));
@@ -62,6 +68,8 @@ export function CreateApiKeyDialog({
             className="w-full py-2.5 bg-stone-900 rounded-lg flex-row items-center justify-center gap-2"
             onPress={handleCopy}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={copied ? t("apiKeyCopied") : t("apiKeyCopy")}
           >
             {copied ? (
               <>
@@ -81,10 +89,16 @@ export function CreateApiKeyDialog({
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting ? "bg-gray-300" : "bg-stone-900"}`}
+            className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting || selectedScopes.length === 0 ? "bg-gray-300" : "bg-stone-900"}`}
             onPress={handleSubmit}
-            disabled={isSubmitting || !name.trim()}
+            disabled={
+              isSubmitting || !name.trim() || selectedScopes.length === 0
+            }
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")
+            }
           >
             <Text className="text-white font-medium text-center">
               {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
@@ -122,10 +136,18 @@ export function CreateApiKeyDialog({
             placeholderTextColor="#9ca3af"
             autoFocus
             maxLength={255}
+            accessibilityLabel={t("apiKeyName")}
           />
           <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {t("apiKeyNameHint")}
           </Text>
+
+          <View className="mt-4">
+            <MobileScopeSelector
+              selectedScopes={selectedScopes}
+              onChange={setSelectedScopes}
+            />
+          </View>
 
           {error && (
             <Text className="text-sm text-red-600 dark:text-red-400 mt-3">

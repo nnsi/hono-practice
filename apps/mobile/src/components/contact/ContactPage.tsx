@@ -76,6 +76,7 @@ export function ContactPage() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            accessibilityLabel={t("contact.email")}
           />
         </View>
 
@@ -96,6 +97,9 @@ export function ContactPage() {
                       ? "px-3 py-2 rounded-lg bg-blue-500"
                       : "px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                   }
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={t(item.key)}
                 >
                   <Text
                     className={
@@ -125,6 +129,7 @@ export function ContactPage() {
             onChangeText={(v) => setBody(v.slice(0, 1000))}
             multiline
             textAlignVertical="top"
+            accessibilityLabel={t("contact.body")}
           />
           <Text className="text-xs text-gray-400 dark:text-gray-500 text-right">
             {t("contact.charCount", { count: charCount })}
@@ -147,6 +152,10 @@ export function ContactPage() {
           }
           onPress={handleSubmit}
           disabled={isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isSubmitting ? t("contact.submitting") : t("contact.submit")
+          }
         >
           <Text className="text-base font-semibold text-white">
             {isSubmitting ? t("contact.submitting") : t("contact.submit")}

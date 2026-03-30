@@ -35,7 +35,7 @@ function createApiKey(repo: ApiKeyRepository, tracer: Tracer) {
     const id = createApiKeyId();
     const key = generateApiKey();
     const apiKey = await tracer.span("db.createApiKey", () =>
-      repo.createApiKey({ id, ...data, key, scope: data.scope ?? "all" }),
+      repo.createApiKey({ id, ...data, key, scopes: data.scopes ?? ["all"] }),
     );
     return apiKey;
   };

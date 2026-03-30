@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 
 import { Animated, Pressable, Text, View } from "react-native";
 
+import { useReduceMotion } from "../../hooks/useReduceMotion";
+
 type Props = {
   visible: boolean;
   onReload: () => void;
@@ -14,28 +16,39 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-30)).current;
   const shown = useRef(false);
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
     if (visible && !shown.current) {
       shown.current = true;
       opacity.setValue(0);
       translateY.setValue(-30);
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      if (reduceMotion) {
+        opacity.setValue(1);
+        translateY.setValue(0);
+      } else {
+        Animated.parallel([
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: FADE_DURATION,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: FADE_DURATION,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
     }
-  }, [visible]);
+  }, [visible, reduceMotion]);
 
   const handleReload = async () => {
+    if (reduceMotion) {
+      opacity.setValue(0);
+      onReload();
+      return;
+    }
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 0,
@@ -53,6 +66,12 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
   };
 
   const handleDismiss = () => {
+    if (reduceMotion) {
+      opacity.setValue(0);
+      shown.current = false;
+      onDismiss();
+      return;
+    }
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 0,
@@ -78,7 +97,11 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
         style={{ opacity, transform: [{ translateY }] }}
         className="rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-4 shadow-lg"
       >
-        <Pressable onPress={handleReload}>
+        <Pressable
+          onPress={handleReload}
+          accessibilityRole="button"
+          accessibilityLabel="アップデートがあります。タップして再起動"
+        >
           <Text className="text-center text-sm font-bold text-white dark:text-white">
             アップデートがあります
           </Text>
@@ -89,6 +112,9 @@ export function UpdateToast({ visible, onReload, onDismiss }: Props) {
         <Pressable
           onPress={handleDismiss}
           className="absolute right-2 top-2 px-2 py-1"
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Text className="text-sm text-blue-200 dark:text-blue-300">✕</Text>
         </Pressable>

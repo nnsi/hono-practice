@@ -136,14 +136,14 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 ## 5. 本番環境設定
 
-- [ ] EAS の production 環境変数を登録:
+- [x] EAS の production 環境変数を登録:
   ```bash
   cd apps/mobile
   eas env:create --environment production --name EXPO_PUBLIC_API_URL --value "<値>" --visibility plaintext
   eas env:create --environment production --name EXPO_PUBLIC_GOOGLE_CLIENT_ID --value "<値>" --visibility plaintext
   eas env:create --environment production --name EXPO_PUBLIC_CONTACT_EMAIL --value "<値>" --visibility plaintext
   ```
-- [ ] バックエンド CORS に本番ドメインを追加
+- [x] バックエンド CORS に本番ドメインを追加
 
 ---
 

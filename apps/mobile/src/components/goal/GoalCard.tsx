@@ -125,10 +125,10 @@ export function GoalCard({
           />
         </View>
         <View className="flex-row justify-between mt-0.5">
-          <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+          <Text className="text-xs text-gray-400 dark:text-gray-500">
             {elapsedDays}日経過
           </Text>
-          <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+          <Text className="text-xs text-gray-400 dark:text-gray-500">
             全{totalDays}日
           </Text>
         </View>

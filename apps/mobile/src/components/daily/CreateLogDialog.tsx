@@ -96,6 +96,8 @@ export function CreateLogDialog({
                   <TouchableOpacity
                     onPress={() => setSelectedActivity(null)}
                     className="p-1"
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to activity selection"
                   >
                     <ChevronLeft size={20} color="#374151" />
                   </TouchableOpacity>
@@ -115,6 +117,8 @@ export function CreateLogDialog({
                 <TouchableOpacity
                   onPress={handleClose}
                   className="p-1.5 rounded-lg"
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
                 >
                   <X size={20} color="#78716c" />
                 </TouchableOpacity>

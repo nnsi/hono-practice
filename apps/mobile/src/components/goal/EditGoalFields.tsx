@@ -60,6 +60,7 @@ export function EditGoalFields({
           onChangeText={setTarget}
           keyboardType="numeric"
           selectTextOnFocus
+          accessibilityLabel={t("dailyTargetLabel")}
         />
       </View>
 
@@ -116,6 +117,7 @@ export function EditGoalFields({
               onChangeText={setDebtCapValue}
               keyboardType="numeric"
               selectTextOnFocus
+              accessibilityLabel={t("debtCapLabel")}
             />
             <Text className="text-xs text-gray-500 dark:text-gray-400">
               {activity?.quantityUnit ?? ""}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import { Calendar, X } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
@@ -41,6 +42,15 @@ export function OptionalDatePickerField({
               : "border-gray-300 dark:border-gray-600"
           }`}
           onPress={() => !disabled && setCalendarOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            label
+              ? `${label}: ${hasValue ? dayjs(value).format("YYYY/MM/DD") : placeholder}`
+              : hasValue
+                ? dayjs(value).format("YYYY/MM/DD")
+                : placeholder
+          }
+          style={{ minHeight: 48 }}
         >
           <Calendar
             size={16}
@@ -56,7 +66,12 @@ export function OptionalDatePickerField({
             {hasValue ? dayjs(value).format("YYYY/MM/DD") : placeholder}
           </Text>
           {hasValue && !disabled && (
-            <Pressable onPress={() => onChange("")} hitSlop={8}>
+            <Pressable
+              onPress={() => onChange("")}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear date"
+            >
               <X size={14} color={colors.textMuted} />
             </Pressable>
           )}
@@ -65,7 +80,7 @@ export function OptionalDatePickerField({
       <CalendarPopover
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}
-        selectedDate={value || dayjs().format("YYYY-MM-DD")}
+        selectedDate={value || getToday()}
         onDateSelect={onChange}
       />
     </View>

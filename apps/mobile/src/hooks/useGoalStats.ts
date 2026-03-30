@@ -7,7 +7,7 @@ import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
-import dayjs from "dayjs";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 
 import { useLiveQuery } from "../db/useLiveQuery";
 import { activityLogRepository } from "../repositories/activityLogRepository";
@@ -31,7 +31,7 @@ export function useGoalStats(
   startDate: string,
   endDate: string | null,
 ): GoalStatsResult {
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const effectiveEnd = endDate && endDate < today ? endDate : today;
 
   const logs = useLiveQuery(

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { buildCSVContent } from "@packages/domain/csv/csvExport";
+import { addDays, getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import {
   EncodingType,
@@ -25,10 +26,8 @@ type CSVExportModalProps = {
 export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
   const { activities } = useActivities();
   const { kinds: allKinds } = useActivityKinds();
-  const [startDate, setStartDate] = useState(
-    dayjs().subtract(30, "day").format("YYYY-MM-DD"),
-  );
-  const [endDate, setEndDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(() => addDays(getToday(), -30));
+  const [endDate, setEndDate] = useState(() => getToday());
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultCount, setResultCount] = useState<number | null>(null);
@@ -147,6 +146,10 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           }`}
           onPress={handleExport}
           disabled={isExporting}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isExporting ? "エクスポート中..." : "CSVをエクスポート"
+          }
         >
           <Download size={16} color="#ffffff" />
           <Text className="text-white font-bold text-base ml-2">

@@ -26,6 +26,7 @@ import { ThemeProvider } from "../src/contexts/ThemeContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useOtaUpdate } from "../src/hooks/useOtaUpdate";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
+import { clearThemePreference } from "../src/hooks/useTheme";
 import { initRevenueCat } from "../src/lib/revenueCat";
 import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
@@ -158,7 +159,12 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary onRecover={clearLocalData}>
+    <ErrorBoundary
+      onRecover={async () => {
+        await clearThemePreference();
+        await clearLocalData();
+      }}
+    >
       <SafeAreaProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>

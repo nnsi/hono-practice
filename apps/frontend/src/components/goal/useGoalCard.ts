@@ -2,6 +2,11 @@ import { useMemo } from "react";
 
 import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
 import { getInactiveDates } from "@packages/domain/goal/goalStats";
+import {
+  getEndOfMonth,
+  getStartOfMonth,
+  getToday,
+} from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -35,7 +40,7 @@ function getStatusBadge(
 
 export function useGoalCard(goal: Goal) {
   const { t } = useTranslation("goal");
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const actualEndDate =
     goal.endDate && goal.endDate < today ? goal.endDate : today;
 
@@ -119,14 +124,8 @@ export function useGoalCard(goal: Goal) {
     }
   }, []);
 
-  const monthStart = useMemo(
-    () => dayjs().startOf("month").format("YYYY-MM-DD"),
-    [],
-  );
-  const monthEnd = useMemo(
-    () => dayjs().endOf("month").format("YYYY-MM-DD"),
-    [],
-  );
+  const monthStart = useMemo(() => getStartOfMonth(), []);
+  const monthEnd = useMemo(() => getEndOfMonth(), []);
   const effectiveStart = useMemo(
     () => (goal.startDate > monthStart ? goal.startDate : monthStart),
     [goal.startDate, monthStart],

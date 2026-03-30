@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import dayjs from "dayjs";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
@@ -42,7 +42,7 @@ export function useTaskCard(
   const iconBlobMap = useIconBlobMap();
 
   const linkedActivity = task.activityId
-    ? activityMap.get(task.activityId)
+    ? (activityMap.get(task.activityId) ?? null)
     : null;
 
   const allKinds = useLiveQuery(
@@ -54,10 +54,12 @@ export function useTaskCard(
     [task.activityId, task.activityKindId],
   );
   const linkedKind = task.activityKindId
-    ? (allKinds ?? []).find((k) => k.id === task.activityKindId && !k.deletedAt)
+    ? ((allKinds ?? []).find(
+        (k) => k.id === task.activityKindId && !k.deletedAt,
+      ) ?? null)
     : null;
 
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const showMoveToToday =
     !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
 

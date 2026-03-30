@@ -45,6 +45,7 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
         <Text
           onPress={handleContactPress}
           className="text-blue-500 dark:text-blue-400 underline"
+          accessibilityRole="link"
         >
           {CONTACT_PATH}
         </Text>

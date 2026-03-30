@@ -29,8 +29,8 @@ export function newGoalHandler(
 }
 
 function getGoals(uc: GoalUsecase) {
-  return async (userId: UserId, filters?: GoalFilters) => {
-    const goals = await uc.getGoals(userId, filters);
+  return async (userId: UserId, filters?: GoalFilters, clientDate?: string) => {
+    const goals = await uc.getGoals(userId, filters, clientDate);
 
     const response = { goals };
 
@@ -44,8 +44,8 @@ function getGoals(uc: GoalUsecase) {
 }
 
 function getGoal(uc: GoalUsecase) {
-  return async (userId: UserId, goalId: string) => {
-    const goal = await uc.getGoal(userId, goalId);
+  return async (userId: UserId, goalId: string, clientDate?: string) => {
+    const goal = await uc.getGoal(userId, goalId, clientDate);
 
     const parsedGoal = GoalResponseSchema.safeParse(goal);
     if (!parsedGoal.success) {
@@ -90,9 +90,9 @@ function deleteGoal(uc: GoalUsecase) {
 }
 
 function getGoalStats(goalQueryService: GoalQueryService, tracer: Tracer) {
-  return async (userId: UserId, goalId: string) => {
+  return async (userId: UserId, goalId: string, clientDate?: string) => {
     return await tracer.span("db.getGoalStats", () =>
-      goalQueryService.getGoalStats(userId, goalId),
+      goalQueryService.getGoalStats(userId, goalId, clientDate),
     );
   };
 }

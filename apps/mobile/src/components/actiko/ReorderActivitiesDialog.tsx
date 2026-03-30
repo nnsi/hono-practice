@@ -79,6 +79,10 @@ export function ReorderActivitiesDialog({
                 className="p-1.5 rounded-lg"
                 activeOpacity={0.6}
                 style={{ opacity: index === 0 ? 0.3 : 1 }}
+                accessibilityRole="button"
+                accessibilityLabel="Move up"
+                accessibilityState={{ disabled: index === 0 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <ArrowUp size={16} color={colors.textTertiary} />
               </TouchableOpacity>
@@ -88,6 +92,10 @@ export function ReorderActivitiesDialog({
                 className="p-1.5 rounded-lg"
                 activeOpacity={0.6}
                 style={{ opacity: index === items.length - 1 ? 0.3 : 1 }}
+                accessibilityRole="button"
+                accessibilityLabel="Move down"
+                accessibilityState={{ disabled: index === items.length - 1 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <ArrowDown size={16} color={colors.textTertiary} />
               </TouchableOpacity>

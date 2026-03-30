@@ -22,7 +22,10 @@ export function Section({
 }) {
   return (
     <View className="mx-4 mt-4">
-      <View className="flex-row items-center mb-2 ml-1">
+      <View
+        className="flex-row items-center mb-2 ml-1"
+        accessibilityRole="header"
+      >
         <Icon size={14} color="#9ca3af" />
         <Text className="ml-1.5 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
           {label}
@@ -65,7 +68,13 @@ export function SettingSwitch({
           {desc}
         </Text>
       </View>
-      <Switch value={value} onValueChange={onChange} />
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+        accessibilityLabel={label}
+      />
     </View>
   );
 }

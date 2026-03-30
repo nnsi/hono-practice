@@ -191,7 +191,9 @@ describe("performInitialSync", () => {
     await performInitialSync("user-1", mockStorage);
 
     expect(logsApi).toHaveBeenCalledWith({ query: {} });
-    expect(goalsApi).toHaveBeenCalledWith({ query: {} });
+    expect(goalsApi).toHaveBeenCalledWith({
+      query: { clientDate: expect.any(String) },
+    });
     expect(tasksApi).toHaveBeenCalledWith({ query: {} });
   });
 
@@ -205,7 +207,10 @@ describe("performInitialSync", () => {
       query: { since: "2025-01-01T00:00:00.000Z" },
     });
     expect(goalsApi).toHaveBeenCalledWith({
-      query: { since: "2025-01-01T00:00:00.000Z" },
+      query: {
+        since: "2025-01-01T00:00:00.000Z",
+        clientDate: expect.any(String),
+      },
     });
     expect(tasksApi).toHaveBeenCalledWith({
       query: { since: "2025-01-01T00:00:00.000Z" },
@@ -222,7 +227,9 @@ describe("performInitialSync", () => {
       "actiko-v2-lastSyncedAt",
     );
     expect(logsApi).toHaveBeenCalledWith({ query: {} });
-    expect(goalsApi).toHaveBeenCalledWith({ query: {} });
+    expect(goalsApi).toHaveBeenCalledWith({
+      query: { clientDate: expect.any(String) },
+    });
     expect(tasksApi).toHaveBeenCalledWith({ query: {} });
   });
 

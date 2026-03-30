@@ -4,12 +4,12 @@ import type {
   ChartData,
   StatsKind,
 } from "@packages/frontend-shared/types/stats";
+import { buildWeeks } from "@packages/frontend-shared/utils/buildWeeks";
 import {
   formatQuantityWithUnit,
   roundQuantity,
 } from "@packages/frontend-shared/utils/statsFormatting";
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function SummaryTable({
@@ -29,61 +29,10 @@ export function SummaryTable({
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Group data by week
-  const weeks = useMemo(() => {
-    type DayEntry = {
-      date: string;
-      dayOfWeek: string;
-      total: number;
-      breakdown: Record<string, number>;
-    };
-    type WeekEntry = {
-      weekStart: dayjs.Dayjs;
-      days: DayEntry[];
-      weekTotal: number;
-    };
-
-    const weekMap: Record<string, WeekEntry> = {};
-
-    for (const day of data) {
-      const dayNumber = Number.parseInt(
-        day.date.replace(t("dateLabel"), ""),
-        10,
-      );
-      const dateObj = dayjs(month).date(dayNumber);
-      const weekKey = dateObj.startOf("week").format("YYYY-MM-DD");
-
-      if (!weekMap[weekKey]) {
-        weekMap[weekKey] = {
-          weekStart: dateObj.startOf("week"),
-          days: [],
-          weekTotal: 0,
-        };
-      }
-
-      const dayTotal = kinds.reduce((sum, kind) => {
-        return sum + (day.values[kind.name] || 0);
-      }, 0);
-      const roundedTotal = roundQuantity(dayTotal);
-
-      const breakdown: Record<string, number> = {};
-      for (const kind of kinds) {
-        breakdown[kind.name] = day.values[kind.name] || 0;
-      }
-
-      weekMap[weekKey].days.push({
-        date: dateObj.format("MM/DD"),
-        dayOfWeek: dateObj.format("ddd"),
-        total: roundedTotal,
-        breakdown,
-      });
-
-      weekMap[weekKey].weekTotal += roundedTotal;
-    }
-
-    return Object.values(weekMap).sort(
-      (a, b) => a.weekStart.valueOf() - b.weekStart.valueOf(),
-    );
-  }, [data, kinds, month]);
+  const weeks = useMemo(
+    () => buildWeeks(data, kinds, month, t("dateLabel")),
+    [data, kinds, month, t],
+  );
 
   return (
     <div className="border-t">

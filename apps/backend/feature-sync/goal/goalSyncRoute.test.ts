@@ -295,4 +295,21 @@ describe("GET /users/v2/goals", () => {
     const json = await res.json();
     expect(json.goals.length).toBeGreaterThanOrEqual(1);
   });
+
+  test("clientDate パラメータを渡しても正常に取得できる", async () => {
+    const app = createApp();
+
+    await postSync(app, {
+      goals: [makeGoal({ id: "10000000-0000-4000-8000-000000000055" })],
+    });
+
+    const res = await getGoals(app, "clientDate=2026-03-29");
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.goals.length).toBeGreaterThanOrEqual(1);
+    expect(json.goals[0]).toHaveProperty("currentBalance");
+    expect(json.goals[0]).toHaveProperty("totalTarget");
+    expect(json.goals[0]).toHaveProperty("totalActual");
+  });
 });

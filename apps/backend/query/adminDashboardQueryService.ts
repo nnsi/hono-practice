@@ -1,4 +1,5 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import dayjs from "@backend/lib/dayjs";
 import { activityLogs, contacts, users } from "@infra/drizzle/schema";
 import { count, gte, isNull } from "drizzle-orm";
 
@@ -36,9 +37,7 @@ function getDashboardData(
   clientErrorProvider: ClientErrorProvider,
 ) {
   return async (): Promise<AdminDashboardData> => {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const sevenDaysAgo = dayjs().subtract(7, "day").format("YYYY-MM-DD");
 
     const [dbStats, apm, clientErrors] = await Promise.all([
       Promise.all([

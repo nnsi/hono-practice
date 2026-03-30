@@ -27,7 +27,7 @@ export type AppContext = {
     userId: UserId;
     user?: { id: string };
     subscription?: Subscription;
-    apiKeyScope?: ApiKeyScope;
+    apiKeyScopes?: ApiKeyScope[];
     logger: Logger;
     tracer: Tracer;
   };

@@ -69,7 +69,13 @@ export function ActivitySelectOverlay({
               <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {t("daily.selectActivity")}
               </Text>
-              <TouchableOpacity onPress={onClose} className="p-1.5 rounded-lg">
+              <TouchableOpacity
+                onPress={onClose}
+                className="p-1.5 rounded-lg"
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <X size={20} color="#78716c" />
               </TouchableOpacity>
             </View>
@@ -88,6 +94,8 @@ export function ActivitySelectOverlay({
                       onPress={() => onSelect(activity)}
                       className="flex-row items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={activity.name}
                     >
                       <View className="w-10 h-10 items-center justify-center shrink-0">
                         <ActivityIcon

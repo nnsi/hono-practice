@@ -30,6 +30,9 @@ export function KindSelector({
                 ? "bg-gray-900 border-gray-900"
                 : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
             }`}
+            accessibilityRole="button"
+            accessibilityLabel={kind.name}
+            accessibilityState={{ selected: selectedKindId === kind.id }}
           >
             {kind.color && (
               <View

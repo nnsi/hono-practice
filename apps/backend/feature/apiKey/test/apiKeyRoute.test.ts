@@ -81,6 +81,28 @@ test("DELETE /api-keys/:id - should delete an API key", async () => {
   expect(resJson.success).toBe(true);
 });
 
+test("POST /api-keys - should create API key with specific scopes", async () => {
+  const route = createApiKeyRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const client = testClient(app, {
+    DB: testDB,
+    NODE_ENV: "test",
+  });
+
+  const res = await client.index.$post({
+    json: {
+      name: "Read Only Key",
+      scopes: ["activity-logs:read", "tasks:read"],
+    },
+  });
+
+  expect(res.status).toEqual(200);
+  const resJson = await res.json();
+  expect(resJson.apiKey.scopes).toEqual(["activity-logs:read", "tasks:read"]);
+});
+
 test("POST /api-keys - should validate name field", async () => {
   const route = createApiKeyRoute();
   const app = newHonoWithErrorHandling()

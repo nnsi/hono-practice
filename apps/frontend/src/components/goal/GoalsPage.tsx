@@ -1,5 +1,5 @@
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs";
 import { Plus } from "lucide-react";
 
 import { RecordDialog } from "../actiko/RecordDialog";
@@ -153,7 +153,7 @@ export function GoalsPage() {
       {recordActivity && (
         <RecordDialog
           activity={recordActivity}
-          date={dayjs().format("YYYY-MM-DD")}
+          date={getToday()}
           onClose={() => setRecordActivity(null)}
         />
       )}

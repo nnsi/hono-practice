@@ -55,6 +55,8 @@ export function FreezePeriodHistory({
                   <TouchableOpacity
                     className="px-2 py-1 bg-red-50 dark:bg-red-900/200 rounded"
                     onPress={() => onDeleteConfirm(fp.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("freezeDeleteButton")}
                   >
                     <Text className="text-xs text-white">
                       {t("freezeDeleteButton")}
@@ -63,6 +65,8 @@ export function FreezePeriodHistory({
                   <TouchableOpacity
                     className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
                     onPress={onDeleteCancel}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("freezeCancelButton")}
                   >
                     <Text className="text-xs text-gray-600 dark:text-gray-400">
                       {t("freezeCancelButton")}
@@ -73,6 +77,9 @@ export function FreezePeriodHistory({
                 <TouchableOpacity
                   className="p-1"
                   onPress={() => onDeleteRequest(fp.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("freezeDeleteButton")}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Trash2 size={12} color="#9ca3af" />
                 </TouchableOpacity>

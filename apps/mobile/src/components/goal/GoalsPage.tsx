@@ -1,8 +1,11 @@
+import { useCallback, useState } from "react";
+
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Plus } from "lucide-react-native";
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -11,11 +14,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { syncEngine } from "../../sync/syncEngine";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalCard } from "./GoalCard";
 import { GoalHeatmap } from "./GoalHeatmap";
+import { GoalsTabBar } from "./GoalsTabBar";
 import { useGoalsPage } from "./useGoalsPage";
 
 export function GoalsPage() {
@@ -45,6 +50,16 @@ export function GoalsPage() {
 
   const insets = useSafeAreaInsets();
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await syncEngine.syncAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
   if (!dataReady) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-gray-800">
@@ -55,41 +70,7 @@ export function GoalsPage() {
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-800">
-      {/* Tabs */}
-      <View className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800">
-        <TouchableOpacity
-          onPress={() => setActiveTab("active")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "active"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            アクティブ
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setActiveTab("ended")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "ended" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "ended"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            {t("tabEnded")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <GoalsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <ScrollView
         className="flex-1"
@@ -97,6 +78,9 @@ export function GoalsPage() {
           padding: 16,
           paddingBottom: 80 + insets.bottom,
         }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {activeTab === "active" && (
           <View>
@@ -145,6 +129,8 @@ export function GoalsPage() {
               className="w-full h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 items-center justify-center flex-row gap-2 mt-2"
               onPress={() => setCreateDialogOpen(true)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="新規目標を追加"
             >
               <Plus size={20} color="#9ca3af" />
               <Text className="text-sm text-gray-500 dark:text-gray-400">
@@ -198,7 +184,7 @@ export function GoalsPage() {
         visible={recordActivity !== null}
         onClose={() => setRecordActivity(null)}
         activity={recordActivity}
-        date={dayjs().format("YYYY-MM-DD")}
+        date={getToday()}
       />
     </View>
   );

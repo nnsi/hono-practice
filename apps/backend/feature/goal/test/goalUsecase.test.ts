@@ -91,7 +91,12 @@ describe("GoalUsecase", () => {
         ),
       ).thenResolve(balance);
       when(
-        activityGoalService.getInactiveDates(userId, goal, anything()),
+        activityGoalService.getInactiveDates(
+          userId,
+          goal,
+          anything(),
+          anything(),
+        ),
       ).thenResolve([]);
 
       const result = await usecase.getGoals(userId);
@@ -160,7 +165,12 @@ describe("GoalUsecase", () => {
         ),
       ).thenResolve(balance);
       when(
-        activityGoalService.getInactiveDates(userId, anything(), anything()),
+        activityGoalService.getInactiveDates(
+          userId,
+          anything(),
+          anything(),
+          anything(),
+        ),
       ).thenResolve([]);
 
       const result = await usecase.getGoals(userId);
@@ -236,7 +246,12 @@ describe("GoalUsecase", () => {
         ),
       ).thenResolve(balance);
       when(
-        activityGoalService.getInactiveDates(userId, anything(), anything()),
+        activityGoalService.getInactiveDates(
+          userId,
+          anything(),
+          anything(),
+          anything(),
+        ),
       ).thenResolve([]);
 
       const filters: GoalFilters = { activityId: activityId1 };

@@ -5,6 +5,7 @@ import {
   calculateGoalStats,
   generateDailyRecords,
 } from "@packages/domain/goal/goalStats";
+import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import dayjs from "dayjs";
 import {
   BarChart3,
@@ -18,6 +19,7 @@ import { Text, View } from "react-native";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
+import { StatCard } from "./StatCard";
 
 type GoalForCard = {
   id: string;
@@ -36,7 +38,7 @@ export function GoalStatsDetail({
   goal: GoalForCard;
   activity: ActivityRecord | null;
 }) {
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = getToday();
   const endDate = goal.endDate || today;
   const actualEndDate = endDate < today ? endDate : today;
 
@@ -127,10 +129,10 @@ export function GoalStatsDetail({
             ))}
           </View>
           <View className="flex-row justify-between mt-1">
-            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {dayjs(statsData.dailyRecords.slice(-14)[0]?.date).format("M/D")}
             </Text>
-            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {dayjs(
                 statsData.dailyRecords[statsData.dailyRecords.length - 1]?.date,
               ).format("M/D")}
@@ -140,61 +142,25 @@ export function GoalStatsDetail({
           <View className="flex-row gap-3 mt-1">
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-green-400" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 達成
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-yellow-300" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 活動あり
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-gray-200 dark:bg-gray-700" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 未活動
               </Text>
             </View>
           </View>
         </View>
       )}
-    </View>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <View
-      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5"
-      style={{ width: "48%" }}
-    >
-      <View className="flex-row items-center gap-1.5 mb-1">
-        {icon}
-        <Text className="text-[10px] text-gray-500 dark:text-gray-400">
-          {label}
-        </Text>
-      </View>
-      <View className="flex-row items-baseline gap-1">
-        <Text className="text-sm font-bold text-gray-900 dark:text-gray-100">
-          {value}
-        </Text>
-        {sub && (
-          <Text className="text-[10px] text-gray-400 dark:text-gray-500">
-            {sub}
-          </Text>
-        )}
-      </View>
     </View>
   );
 }

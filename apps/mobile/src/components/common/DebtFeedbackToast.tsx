@@ -11,6 +11,8 @@ import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, Text, View } from "react-native";
 
+import { useReduceMotion } from "../../hooks/useReduceMotion";
+
 const DISPLAY_DURATION = 4000;
 const FADE_DURATION = 300;
 
@@ -18,6 +20,7 @@ export function DebtFeedbackToast() {
   const { t } = useTranslation("feedback");
   const [results, setResults] = useState<DebtFeedbackResult[] | null>(null);
   const [praiseMode, setPraiseMode] = useState(false);
+  const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -54,59 +57,69 @@ export function DebtFeedbackToast() {
     translateY.setValue(30);
     scale.setValue(1);
 
-    const fadeIn = Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: FADE_DURATION,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: FADE_DURATION,
-        useNativeDriver: true,
-      }),
-    ]);
-
-    if (praiseMode) {
-      const pulseScale = Animated.sequence([
-        Animated.timing(scale, {
-          toValue: isMajorAchievement(results) ? 1.08 : 1.05,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scale, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]);
-
-      Animated.sequence([fadeIn, pulseScale]).start();
+    if (reduceMotion) {
+      opacity.setValue(1);
+      translateY.setValue(0);
     } else {
-      fadeIn.start();
-    }
-
-    timerRef.current = setTimeout(() => {
-      Animated.parallel([
+      const fadeIn = Animated.parallel([
         Animated.timing(opacity, {
-          toValue: 0,
+          toValue: 1,
           duration: FADE_DURATION,
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
-          toValue: 30,
+          toValue: 0,
           duration: FADE_DURATION,
           useNativeDriver: true,
         }),
-      ]).start(() => {
+      ]);
+
+      if (praiseMode) {
+        const pulseScale = Animated.sequence([
+          Animated.timing(scale, {
+            toValue: isMajorAchievement(results) ? 1.08 : 1.05,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]);
+
+        Animated.sequence([fadeIn, pulseScale]).start();
+      } else {
+        fadeIn.start();
+      }
+    }
+
+    timerRef.current = setTimeout(() => {
+      if (reduceMotion) {
+        opacity.setValue(0);
         setResults(null);
-      });
+      } else {
+        Animated.parallel([
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: FADE_DURATION,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: 30,
+            duration: FADE_DURATION,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          setResults(null);
+        });
+      }
     }, DISPLAY_DURATION);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [results]);
+  }, [results, reduceMotion]);
 
   if (!results) return null;
 

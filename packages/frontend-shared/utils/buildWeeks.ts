@@ -2,8 +2,9 @@ import type {
   ChartData,
   StatsKind,
 } from "@packages/frontend-shared/types/stats";
-import { roundQuantity } from "@packages/frontend-shared/utils/statsFormatting";
 import dayjs from "dayjs";
+
+import { roundQuantity } from "./statsFormatting";
 
 export type WeekDay = {
   date: string;
@@ -18,15 +19,20 @@ export type WeekEntry = {
   weekTotal: number;
 };
 
+/**
+ * Group daily ChartData entries into week buckets.
+ * @param dateLabel - the suffix stripped from `day.date` to extract day number (e.g. "日" or "日")
+ */
 export function buildWeeks(
   data: ChartData[],
   kinds: StatsKind[],
   month: string,
+  dateLabel = "日",
 ): WeekEntry[] {
   const weekMap: Record<string, WeekEntry> = {};
 
   for (const day of data) {
-    const dayNumber = Number.parseInt(day.date.replace("日", ""), 10);
+    const dayNumber = Number.parseInt(day.date.replace(dateLabel, ""), 10);
     const dateObj = dayjs(month).date(dayNumber);
     const weekKey = dateObj.startOf("week").format("YYYY-MM-DD");
 
