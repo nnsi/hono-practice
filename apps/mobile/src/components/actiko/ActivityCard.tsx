@@ -87,6 +87,8 @@ export function ActivityCard({
         ]}
         onPress={onPress}
         activeOpacity={0.95}
+        accessibilityRole="button"
+        accessibilityLabel={activity.name}
       >
         <View className="mb-2">{renderIcon()}</View>
         <Text
@@ -106,6 +108,9 @@ export function ActivityCard({
         className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white dark:bg-gray-800/80 dark:bg-gray-700/80"
         onPress={onEdit}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="Edit"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Pencil size={12} color={colors.textMuted} />
       </TouchableOpacity>

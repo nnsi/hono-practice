@@ -74,6 +74,8 @@ export function TaskCreateDialog({
           <TouchableOpacity
             onPress={onClose}
             className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
+            accessibilityRole="button"
+            accessibilityLabel={t("delete.cancel")}
           >
             <Text className="text-sm text-gray-700 dark:text-gray-300">
               {t("delete.cancel")}
@@ -85,6 +87,10 @@ export function TaskCreateDialog({
             className={`flex-1 py-2.5 rounded-lg items-center ${
               isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
             }`}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSubmitting ? t("create.submitting") : t("create.submit")
+            }
           >
             <Text className="text-sm text-white font-medium">
               {isSubmitting ? t("create.submitting") : t("create.submit")}
@@ -105,6 +111,7 @@ export function TaskCreateDialog({
             placeholder={t("create.placeholder.title")}
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             autoFocus
+            accessibilityLabel={t("create.label.title")}
           />
         </View>
 
@@ -170,6 +177,7 @@ export function TaskCreateDialog({
             numberOfLines={3}
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
+            accessibilityLabel={t("create.label.memo")}
           />
         </View>
       </View>

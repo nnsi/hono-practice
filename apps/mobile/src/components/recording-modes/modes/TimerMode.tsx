@@ -33,6 +33,9 @@ export function TimerMode(props: RecordingModeProps) {
             vm.effectiveTab === "manual" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.effectiveTab === "manual" ? tabShadow : undefined}
+          accessibilityRole="tab"
+          accessibilityLabel={t("manualEntry")}
+          accessibilityState={{ selected: vm.effectiveTab === "manual" }}
         >
           <Text
             className={`text-sm font-medium ${
@@ -50,6 +53,9 @@ export function TimerMode(props: RecordingModeProps) {
             vm.effectiveTab === "timer" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.effectiveTab === "timer" ? tabShadow : undefined}
+          accessibilityRole="tab"
+          accessibilityLabel={t("timer")}
+          accessibilityState={{ selected: vm.effectiveTab === "timer" }}
         >
           <Text
             className={`text-sm font-medium ${
@@ -95,6 +101,8 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           <TouchableOpacity
             onPress={vm.stop}
             className="flex-row items-center gap-2 px-6 py-3 bg-red-50 dark:bg-red-900/200 rounded-xl"
+            accessibilityRole="button"
+            accessibilityLabel={t("stop")}
           >
             <Text className="text-white font-medium">{t("stop")}</Text>
           </TouchableOpacity>
@@ -102,6 +110,8 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           <TouchableOpacity
             onPress={vm.start}
             className="flex-row items-center gap-2 px-6 py-3 bg-gray-900 rounded-xl"
+            accessibilityRole="button"
+            accessibilityLabel={vm.elapsedTime > 0 ? t("resume") : t("start")}
           >
             <Text className="text-white font-medium">
               {vm.elapsedTime > 0 ? t("resume") : t("start")}
@@ -112,6 +122,8 @@ function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
           <TouchableOpacity
             onPress={vm.reset}
             className="flex-row items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl"
+            accessibilityRole="button"
+            accessibilityLabel={t("reset")}
           >
             <Text className="text-gray-600 dark:text-gray-400 font-medium">
               {t("reset")}
@@ -176,6 +188,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
               }
             }, 0);
           }}
+          accessibilityLabel={t("quantity")}
         />
       </View>
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />

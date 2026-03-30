@@ -1,21 +1,23 @@
+import { useCallback, useState } from "react";
+
 import { useTranslation } from "@packages/i18n";
 import { ArrowUpDown, Plus } from "lucide-react-native";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
+  RefreshControl,
   Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useReduceMotion } from "../../hooks/useReduceMotion";
+import { syncEngine } from "../../sync/syncEngine";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { ActikoDialogs } from "./ActikoDialogs";
-import { ActionCard } from "./ActionCard";
-import { ActivityCard } from "./ActivityCard";
+import { ActikoGridItem } from "./ActikoGridItem";
 import { DateNavHeader } from "./DateNavHeader";
 import { useActikoPage } from "./useActikoPage";
 
@@ -51,6 +53,34 @@ export function ActikoPage() {
   const { width: screenWidth } = useWindowDimensions();
   const effectiveWidth = Math.min(screenWidth, 768);
   const numColumns = Math.min(4, Math.max(2, Math.floor(effectiveWidth / 180)));
+
+  const reduceMotion = useReduceMotion();
+
+  // Pull-to-refresh support
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await syncEngine.syncAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  const gridActions = [
+    {
+      id: "__add__",
+      icon: Plus,
+      label: t("add"),
+      onPress: () => setCreateActivityOpen(true),
+    },
+    {
+      id: "__reorder__",
+      icon: ArrowUpDown,
+      label: t("reorder"),
+      onPress: () => setReorderOpen(true),
+    },
+  ];
 
   const handleRecordClose = () => {
     setDialogOpen(false);
@@ -122,53 +152,21 @@ export function ActikoPage() {
             padding: 8,
             paddingBottom: 80 + insets.bottom,
           }}
-          renderItem={({ item, index }) => {
-            if (item.id.startsWith("__spacer_")) {
-              return <View className="flex-1 m-1" />;
-            }
-            let card: React.ReactNode;
-            if (item.id === "__add__") {
-              card = (
-                <ActionCard
-                  icon={Plus}
-                  label={t("add")}
-                  onPress={() => setCreateActivityOpen(true)}
-                />
-              );
-            } else if (item.id === "__reorder__") {
-              card = (
-                <ActionCard
-                  icon={ArrowUpDown}
-                  label={t("reorder")}
-                  onPress={() => setReorderOpen(true)}
-                />
-              );
-            } else {
-              const activity = item as (typeof activities)[number];
-              card = (
-                <ActivityCard
-                  activity={activity}
-                  isDone={hasLogsForActivity(activity.id)}
-                  iconBlob={iconBlobMap.get(activity.id)}
-                  onPress={() => handleActivityClick(activity)}
-                  onEdit={() => setEditActivity(activity)}
-                />
-              );
-            }
-            if (Platform.OS === "web") {
-              return card;
-            }
-            return (
-              <Animated.View
-                entering={FadeInDown.delay(index * 35)
-                  .duration(350)
-                  .springify()}
-                style={{ flex: 1 }}
-              >
-                {card}
-              </Animated.View>
-            );
-          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          renderItem={({ item, index }) => (
+            <ActikoGridItem
+              item={item}
+              index={index}
+              reduceMotion={reduceMotion}
+              iconBlobMap={iconBlobMap}
+              hasLogsForActivity={hasLogsForActivity}
+              onActivityPress={handleActivityClick}
+              onActivityEdit={setEditActivity}
+              actions={gridActions}
+            />
+          )}
         />
       )}
 

@@ -123,6 +123,7 @@ export function CreateUserForm() {
         onChangeText={setLoginId}
         autoCapitalize="none"
         autoCorrect={false}
+        accessibilityLabel={t("auth.loginId")}
       />
       <IMESafeTextInput
         className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
@@ -130,26 +131,39 @@ export function CreateUserForm() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        accessibilityLabel={t("auth.password")}
       />
 
       <Text className="text-xs text-gray-400 dark:text-gray-500 leading-5 mb-4">
         {t("auth.legalConsentPrefix")}
-        <Text className="underline" onPress={() => setLegalModal("terms")}>
+        <Text
+          className="underline"
+          onPress={() => setLegalModal("terms")}
+          accessibilityRole="link"
+        >
           {t("auth.termsOfService")}
         </Text>
         {t("auth.legalConsentAnd")}
-        <Text className="underline" onPress={() => setLegalModal("privacy")}>
+        <Text
+          className="underline"
+          onPress={() => setLegalModal("privacy")}
+          accessibilityRole="link"
+        >
           {t("auth.privacyPolicy")}
         </Text>
         {t("auth.legalConsentSuffix")}
       </Text>
 
       <TouchableOpacity
-        className={`bg-blue-50 dark:bg-blue-900/200 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
+        className={`bg-gray-900 dark:bg-gray-100 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
         onPress={handleRegister}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={
+          loading ? t("auth.registering") : t("auth.register")
+        }
       >
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-white dark:text-gray-900 text-base font-semibold">
           {loading ? t("auth.registering") : t("auth.register")}
         </Text>
       </TouchableOpacity>
@@ -157,6 +171,8 @@ export function CreateUserForm() {
       <TouchableOpacity
         className="mt-4 items-center"
         onPress={() => router.back()}
+        accessibilityRole="link"
+        accessibilityLabel={t("auth.backToLogin")}
       >
         <Text className="text-blue-500 dark:text-blue-400">
           {t("auth.backToLogin")}

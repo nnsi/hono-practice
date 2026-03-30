@@ -22,6 +22,8 @@ export function TaskEditDialogFooter({
       <TouchableOpacity
         onPress={() => onDelete(taskId)}
         className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
+        accessibilityRole="button"
+        accessibilityLabel={t("edit.delete")}
       >
         <Text className="text-sm text-red-600 dark:text-red-400">
           {t("edit.delete")}
@@ -31,6 +33,8 @@ export function TaskEditDialogFooter({
       <TouchableOpacity
         onPress={onClose}
         className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
+        accessibilityRole="button"
+        accessibilityLabel={t("delete.cancel")}
       >
         <Text className="text-sm text-gray-700 dark:text-gray-300">
           {t("delete.cancel")}
@@ -42,6 +46,10 @@ export function TaskEditDialogFooter({
         className={`px-4 py-2.5 rounded-lg items-center ${
           isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
         }`}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isSubmitting ? t("edit.submitting") : t("edit.submit")
+        }
       >
         <Text className="text-sm text-white font-medium">
           {isSubmitting ? t("edit.submitting") : t("edit.submit")}

@@ -146,6 +146,10 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           }`}
           onPress={handleExport}
           disabled={isExporting}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isExporting ? "エクスポート中..." : "CSVをエクスポート"
+          }
         >
           <Download size={16} color="#ffffff" />
           <Text className="text-white font-bold text-base ml-2">

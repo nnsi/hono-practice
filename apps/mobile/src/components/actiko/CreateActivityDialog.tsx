@@ -97,6 +97,7 @@ export function CreateActivityDialog({
             }}
             placeholder={t("namePlaceholder")}
             autoFocus
+            accessibilityLabel={t("name")}
           />
         </View>
 
@@ -109,6 +110,7 @@ export function CreateActivityDialog({
             value={quantityUnit}
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
+            accessibilityLabel={t("unitLabel")}
           />
         </View>
 
@@ -126,6 +128,9 @@ export function CreateActivityDialog({
           <Switch
             value={showCombinedStats}
             onValueChange={setShowCombinedStats}
+            accessibilityRole="switch"
+            accessibilityLabel={t("combinedStatsLabel")}
+            accessibilityState={{ checked: showCombinedStats }}
           />
         </View>
 
@@ -140,6 +145,7 @@ export function CreateActivityDialog({
                 value={kind.name}
                 onChangeText={(text) => updateKindName(kind.id, text)}
                 placeholder={t("kindPlaceholder")}
+                accessibilityLabel={t("kindPlaceholder")}
               />
               <KindColorPicker
                 color={kind.color}
@@ -148,6 +154,9 @@ export function CreateActivityDialog({
               <TouchableOpacity
                 onPress={() => removeKind(kind.id)}
                 className="px-2 py-1"
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${kind.name}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text className="text-red-500 dark:text-red-400 text-base">
                   -
@@ -155,7 +164,11 @@ export function CreateActivityDialog({
               </TouchableOpacity>
             </View>
           ))}
-          <TouchableOpacity onPress={addKind}>
+          <TouchableOpacity
+            onPress={addKind}
+            accessibilityRole="button"
+            accessibilityLabel={t("addKind")}
+          >
             <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
               {t("addKind")}
             </Text>

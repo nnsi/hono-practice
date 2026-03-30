@@ -97,6 +97,9 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                     ? "bg-amber-50 dark:bg-amber-900/200 border-amber-500"
                     : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 }`}
+                accessibilityRole="button"
+                accessibilityLabel={a.name}
+                accessibilityState={{ selected: selectedActivityId === a.id }}
               >
                 <Text
                   className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700 dark:text-gray-300"}`}
@@ -115,6 +118,10 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               className="py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl items-center"
               onPress={handlePickAndParse}
               disabled={isParsing}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isParsing ? "解析中..." : "CSVファイルを選択して解析"
+              }
             >
               <Upload size={28} color="#9ca3af" />
               <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -133,6 +140,8 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               <TouchableOpacity
                 className="flex-row items-center justify-center gap-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 onPress={downloadTemplateWeb}
+                accessibilityRole="button"
+                accessibilityLabel="CSVテンプレートをダウンロード"
               >
                 <Download size={14} color="#6b7280" />
                 <Text className="text-sm text-gray-600 dark:text-gray-400">

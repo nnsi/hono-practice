@@ -12,12 +12,18 @@ export function GoalsTabBar({
 }) {
   const { t } = useTranslation("goal");
   return (
-    <View className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800">
+    <View
+      className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800"
+      style={{ paddingRight: 48 }}
+    >
       <TouchableOpacity
         onPress={() => onTabChange("active")}
         className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
           activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
         }`}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "active" }}
+        accessibilityLabel="アクティブ"
       >
         <Text
           className={`text-sm font-medium ${
@@ -34,6 +40,9 @@ export function GoalsTabBar({
         className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
           activeTab === "ended" ? "bg-gray-100 dark:bg-gray-800" : ""
         }`}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "ended" }}
+        accessibilityLabel={t("tabEnded")}
       >
         <Text
           className={`text-sm font-medium ${

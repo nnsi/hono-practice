@@ -21,13 +21,21 @@ export function DateNavHeader({
 
   return (
     <View className="relative flex-row items-center justify-center h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <TouchableOpacity className="absolute left-4 p-2" onPress={onPrev}>
+      <TouchableOpacity
+        className="absolute left-4 p-2"
+        onPress={onPrev}
+        accessibilityRole="button"
+        accessibilityLabel="Previous day"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
         <ChevronLeft size={20} color="#78716c" />
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={onToggleCalendar}
         className="flex-row items-center"
+        accessibilityRole="button"
+        accessibilityLabel={`Select date: ${dateLabel}`}
       >
         {isToday ? (
           <View className="bg-gray-900 rounded-xl px-4 py-1">
@@ -44,7 +52,13 @@ export function DateNavHeader({
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity className="absolute right-4 p-2" onPress={onNext}>
+      <TouchableOpacity
+        className="absolute right-14 p-2"
+        onPress={onNext}
+        accessibilityRole="button"
+        accessibilityLabel="Next day"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
         <ChevronRight size={20} color="#78716c" />
       </TouchableOpacity>
     </View>

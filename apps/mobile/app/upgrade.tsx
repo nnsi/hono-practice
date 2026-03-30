@@ -4,8 +4,8 @@ import { useRouter } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { UpgradeActionButtons } from "../src/components/upgrade/UpgradeActionButtons";
 import {
-  ActionButtons,
   FeatureTable,
   HeroSection,
   StatusBar,
@@ -74,7 +74,7 @@ export default function UpgradeScreen() {
         )}
         {error && <StatusBar message={error} variant="error" />}
 
-        <ActionButtons
+        <UpgradeActionButtons
           plan={plan}
           isPurchasing={isPurchasing}
           isRestoring={isRestoring}

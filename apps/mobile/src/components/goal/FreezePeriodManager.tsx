@@ -128,6 +128,9 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
           onPress={handleResume}
           disabled={busy}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t("resumeButton")}
+          accessibilityState={{ disabled: busy }}
         >
           <Play size={16} color="#16a34a" />
           <Text className="text-sm font-medium text-green-700 dark:text-green-400">
@@ -159,6 +162,9 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
             onPress={handleFreezeToday}
             disabled={busy}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("freezeTodayButton")}
+            accessibilityState={{ disabled: busy }}
           >
             <Pause size={16} color="#2563eb" />
             <Text className="text-sm font-medium text-blue-700">
@@ -169,6 +175,8 @@ export function FreezePeriodManager({ goalId }: { goalId: string }) {
             className="flex-1 flex-row items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3"
             onPress={() => setShowForm(true)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("freezeByDateButton")}
           >
             <Text className="text-sm font-medium text-gray-600 dark:text-gray-400">
               {t("freezeByDateButton")}

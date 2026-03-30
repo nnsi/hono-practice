@@ -22,6 +22,7 @@ export function MemoInput({ value, onChangeText }: MemoInputProps) {
         placeholder={t("memoPlaceholder")}
         multiline
         numberOfLines={2}
+        accessibilityLabel={t("memo")}
       />
     </View>
   );

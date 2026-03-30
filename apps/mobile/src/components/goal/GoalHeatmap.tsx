@@ -41,7 +41,7 @@ export function GoalHeatmap() {
                 className="h-[13px] md:h-4 justify-center items-end"
               >
                 {i % 2 === 0 ? (
-                  <Text className="text-[9px] md:text-[11px] text-gray-400 dark:text-gray-500 leading-none">
+                  <Text className="text-xs text-gray-400 dark:text-gray-500 leading-none">
                     {label}
                   </Text>
                 ) : null}
@@ -66,7 +66,7 @@ export function GoalHeatmap() {
 
         {/* 日付範囲ラベル + 凡例 */}
         <View className="flex-row items-center justify-between mt-1.5 md:mt-2">
-          <Text className="text-[9px] md:text-[11px] text-gray-400 dark:text-gray-500">
+          <Text className="text-xs text-gray-400 dark:text-gray-500">
             {grid.startLabel} — {grid.endLabel}
           </Text>
           <View className="flex-row items-center gap-0.5 md:gap-1">
@@ -74,7 +74,7 @@ export function GoalHeatmap() {
             <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-yellow-300" />
             <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-green-300" />
             <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-green-50 dark:bg-green-900/200" />
-            <Text className="text-[9px] md:text-[11px] text-gray-400 dark:text-gray-500 ml-0.5">
+            <Text className="text-xs text-gray-400 dark:text-gray-500 ml-0.5">
               達成
             </Text>
           </View>

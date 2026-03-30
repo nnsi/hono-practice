@@ -71,6 +71,8 @@ export function CreateGoalDialog({
           <TouchableOpacity
             className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
             onPress={handleClose}
+            accessibilityRole="button"
+            accessibilityLabel={t("cancelButton")}
           >
             <Text className="text-gray-700 dark:text-gray-300 font-medium">
               {t("cancelButton")}
@@ -82,6 +84,9 @@ export function CreateGoalDialog({
             }`}
             onPress={handleSubmit}
             disabled={submitting}
+            accessibilityRole="button"
+            accessibilityLabel={t("createButton")}
+            accessibilityState={{ disabled: submitting }}
           >
             <Text className="text-white font-medium">{t("createButton")}</Text>
           </TouchableOpacity>

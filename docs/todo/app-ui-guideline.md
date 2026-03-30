@@ -597,23 +597,45 @@ UI:
 
 ### P0 — App Store/Play Store審査リスク
 
-1. **アクセシビリティ全般** (セクション12) — `accessibilityLabel`、`accessibilityRole`の全面追加
-2. **Dynamic Type対応** (セクション2) — テキストスケーリングとレイアウトリフロー
-3. **Reduce Motion対応** (セクション14) — `AccessibilityInfo.isReduceMotionEnabled`チェック
+1. ~~**アクセシビリティ全般** (セクション12) — `accessibilityLabel`、`accessibilityRole`の全面追加~~ ✅ 対応済み (2026-03-30)
+   - 全インタラクティブ要素に accessibilityLabel / accessibilityRole / accessibilityState を追加
+   - Modal に accessibilityViewIsModal 追加
+   - タブバーに accessibilityRole="tablist" / "tab" 追加
+2. ~~**Dynamic Type対応** (セクション2) — テキストスケーリングとレイアウトリフロー~~ ✅ 部分対応 (2026-03-30)
+   - text-[9px]〜text-[11px] の極小フォントを全て text-xs (12px) に修正
+   - タブラベル 10px → 12px に修正
+   - ※ レイアウトリフロー（numberOfLines={1}のフォント拡大時対応）は未着手
+3. ~~**Reduce Motion対応** (セクション14) — `AccessibilityInfo.isReduceMotionEnabled`チェック~~ ✅ 対応済み (2026-03-30)
+   - useReduceMotion カスタムフック作成（addEventListener でリアルタイム追従）
+   - UpdateToast / DebtFeedbackToast / ActikoPage のアニメーションをスキップ
 
 ### P1 — UX品質・ガイドライン準拠
 
-4. **タブバー6→5** (セクション3) — Settings分離
-5. **モーダルスワイプ閉じ** (セクション8) — `@gorhom/bottom-sheet`導入
-6. **タッチターゲット統一** (セクション1) — 全ボタン48dp以上
-7. **コントラスト修正** (セクション5) — tertiary/mutedカラー調整
-8. **ハプティクス導入** (セクション11) — `expo-haptics`
+4. ~~**タブバー6→5** (セクション3) — Settings分離~~ ✅ 対応済み (2026-03-30)
+   - Settings タブを削除し、右上ハンバーガーメニュー（言語切替 / 設定 / ログアウト）に移動
+   - 全ページでハンバーガーメニューとヘッダーの重なりを回避（paddingRight: 48）
+5. **モーダルスワイプ閉じ** (セクション8) — `@gorhom/bottom-sheet`導入 → 未着手（新規ライブラリ必要）
+6. ~~**タッチターゲット統一** (セクション1) — 全ボタン48dp以上~~ ✅ 対応済み (2026-03-30)
+   - hitSlop を最低 {top:10, bottom:10, left:10, right:10} に統一
+   - ボタンの minHeight: 48 を確保
+   - タブアイコン 20dp → 24dp に拡大
+7. ~~**コントラスト修正** (セクション5) — tertiary/mutedカラー調整~~ ✅ 対応済み (2026-03-30)
+   - Light textTertiary: #78716c → #6b7280 (コントラスト比 ~5.0:1)
+   - Light tabInactive: #a8a29e → #78716c
+   - Dark textMuted: #78716c → #9ca3af (コントラスト比 ~4.5:1)
+   - Dark tabInactive: #78716c → #a8a29e
+   - GoalCardActions / UpgradeActionButtons の bg-red-50/bg-amber-50 + text-white コントラスト違反も修正
+8. **ハプティクス導入** (セクション11) — `expo-haptics` → 未着手（新規ライブラリ必要）
 
 ### P2 — ポリッシュ
 
-9. **アイコンfilled/outlined** (セクション7)
-10. **Pull-to-refresh** (セクション10)
-11. **スケルトンスクリーン** (セクション10)
-12. **リストスワイプアクション** (セクション9, iOS)
-13. **Android FAB/elevation** (セクション13)
-14. **タブラベル最小サイズ** (セクション2) — 10px→12px
+9. **アイコンfilled/outlined** (セクション7) → 未着手（色+ピルインジケーターで妥協）
+10. ~~**Pull-to-refresh** (セクション10)~~ ✅ 対応済み (2026-03-30)
+    - Actiko / Daily / Goals / Tasks / Stats の5ページに RefreshControl 追加
+    - syncEngine.syncAll() をトリガー、try/finally でスピナー確実停止
+11. **スケルトンスクリーン** (セクション10) → 対応不要と判断（オフラインファーストで初期表示が高速）
+12. ~~**リストスワイプアクション** (セクション9, iOS)~~ ✅ 対応済み (2026-03-30)
+    - LogCard: 右スワイプで削除（Swipeable + react-native-gesture-handler）
+    - TaskCard: 左スワイプで完了トグル、右スワイプで削除（archived タスクはスワイプ無効）
+13. **Android FAB/elevation** (セクション13) → 未着手（Android固有UIの調査が必要）
+14. ~~**タブラベル最小サイズ** (セクション2) — 10px→12px~~ ✅ 対応済み (2026-03-30)

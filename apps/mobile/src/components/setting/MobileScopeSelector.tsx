@@ -81,6 +81,9 @@ function ScopeCheckbox({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
     >
       <View
         className={`w-5 h-5 rounded border items-center justify-center ${

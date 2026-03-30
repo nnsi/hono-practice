@@ -131,7 +131,13 @@ export function EditGoalForm({
             {activity?.name ?? t("unknownActivity")}
           </Text>
         </View>
-        <TouchableOpacity className="p-1" onPress={onCancel}>
+        <TouchableOpacity
+          className="p-1"
+          onPress={onCancel}
+          accessibilityRole="button"
+          accessibilityLabel={t("cancelButton")}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <X size={16} color="#6b7280" />
         </TouchableOpacity>
       </View>

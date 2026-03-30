@@ -26,6 +26,9 @@ export function ActivityIconPicker({
         }`}
         onPress={onPickImage}
         disabled={isProcessing}
+        accessibilityRole="button"
+        accessibilityLabel={blob ? t("changeImage") : t("selectImage")}
+        accessibilityState={{ disabled: isProcessing }}
       >
         {blob ? (
           <>
@@ -54,6 +57,8 @@ export function ActivityIconPicker({
         <TouchableOpacity
           className="flex-1 flex-row items-center justify-center py-2.5 rounded-lg border border-red-300"
           onPress={onClearImage}
+          accessibilityRole="button"
+          accessibilityLabel={t("removeImage")}
         >
           <ImageOff size={16} color="#ef4444" />
           <Text className="ml-1.5 text-sm text-red-500 dark:text-red-400">

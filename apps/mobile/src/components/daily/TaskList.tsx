@@ -80,6 +80,9 @@ export function TaskList({
             <TouchableOpacity
               onPress={() => onToggle(task)}
               className="shrink-0 p-0.5"
+              accessibilityRole="checkbox"
+              accessibilityLabel={task.title}
+              accessibilityState={{ checked: !!task.doneDate }}
             >
               <View
                 className={`w-6 h-6 rounded-full border-2 items-center justify-center ${

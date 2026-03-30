@@ -7,7 +7,7 @@ import { useActivities } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { activityRepository } from "../../repositories/activityRepository";
 
-type Activity =
+export type Activity =
   import("@packages/domain/activity/activityRecord").ActivityRecord & {
     _syncStatus: string;
   };

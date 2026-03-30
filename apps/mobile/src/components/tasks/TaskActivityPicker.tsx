@@ -76,6 +76,9 @@ export function TaskActivityPicker({
                       ? "bg-gray-900 border-gray-900"
                       : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                   } ${disabled ? "opacity-50" : ""}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={a.name}
+                  accessibilityState={{ selected: activityId === a.id }}
                 >
                   <ActivityIcon
                     iconType={a.iconType}
@@ -160,6 +163,9 @@ function PillButton({
           ? "bg-gray-900 border-gray-900"
           : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
       } ${disabled ? "opacity-50" : ""}`}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
     >
       <Text
         className={`text-sm ${

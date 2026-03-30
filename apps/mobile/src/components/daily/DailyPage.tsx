@@ -1,10 +1,20 @@
+import { useCallback, useState } from "react";
+
 import { useTranslation } from "@packages/i18n";
-import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Plus } from "lucide-react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { syncEngine } from "../../sync/syncEngine";
+import { DateNavHeader } from "../actiko/DateNavHeader";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
@@ -37,41 +47,28 @@ export function DailyPage() {
   } = useDailyPage();
 
   const iconBlobMap = useIconBlobMap();
-
   const insets = useSafeAreaInsets();
-  const dateLabel = dayjs(date).format("M/D (ddd)");
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await syncEngine.syncAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   return (
     <View className="flex-1">
-      {/* Date navigation header */}
-      <View className="relative flex-row items-center justify-center h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <TouchableOpacity className="absolute left-4 p-2" onPress={goToPrev}>
-          <ChevronLeft size={20} color="#78716c" />
-        </TouchableOpacity>
+      <DateNavHeader
+        date={date}
+        isToday={isToday}
+        onPrev={goToPrev}
+        onNext={goToNext}
+        onToggleCalendar={() => setCalendarOpen(!calendarOpen)}
+      />
 
-        <TouchableOpacity
-          onPress={() => setCalendarOpen(!calendarOpen)}
-          activeOpacity={0.7}
-        >
-          {isToday ? (
-            <View className="bg-gray-900 rounded-xl px-4 py-1">
-              <Text className="text-white text-base font-medium">
-                {dateLabel}
-              </Text>
-            </View>
-          ) : (
-            <Text className="text-base font-medium text-gray-800 dark:text-gray-200">
-              {dateLabel}
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity className="absolute right-4 p-2" onPress={goToNext}>
-          <ChevronRight size={20} color="#78716c" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Calendar popover */}
       <CalendarPopover
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}
@@ -82,6 +79,9 @@ export function DailyPage() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 + insets.bottom }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Activity logs section */}
         <View className="px-4 pt-4">
@@ -92,6 +92,8 @@ export function DailyPage() {
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setCreateDialogOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t("daily.addButton")}
             >
               <Plus size={16} color="#2563eb" />
               <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
@@ -115,6 +117,10 @@ export function DailyPage() {
                     kind={kind ?? null}
                     iconBlob={iconBlobMap.get(log.activityId)}
                     onPress={() => setEditingLog(log)}
+                    onDelete={async () => {
+                      await activityLogRepository.softDeleteActivityLog(log.id);
+                      syncEngine.syncActivityLogs();
+                    }}
                   />
                 );
               })}
@@ -140,6 +146,8 @@ export function DailyPage() {
             <TouchableOpacity
               className="flex-row items-center gap-1"
               onPress={() => setTaskCreateDialogOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t("daily.addButton")}
             >
               <Plus size={16} color="#2563eb" />
               <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
@@ -157,7 +165,6 @@ export function DailyPage() {
         </View>
       </ScrollView>
 
-      {/* Edit log dialog */}
       {editingLog && (
         <EditLogDialog
           log={editingLog}
@@ -166,14 +173,12 @@ export function DailyPage() {
         />
       )}
 
-      {/* Create log dialog */}
       <CreateLogDialog
         visible={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         date={date}
       />
 
-      {/* Task create dialog */}
       {taskCreateDialogOpen && (
         <TaskCreateDialog
           defaultDate={date}

@@ -59,11 +59,9 @@ export function TaskEditDialog({
         : Promise.resolve([]),
     [activityId],
   );
-
   const selectedActivity = activityId
     ? activities.find((a) => a.id === activityId)
     : null;
-
   const handleSetActivityId = (id: string | null) => {
     setActivityId(id);
     setActivityKindId(null);
@@ -107,6 +105,7 @@ export function TaskEditDialog({
                 ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                 : ""
             }`}
+            accessibilityLabel={t("create.label.title")}
           />
         </View>
 
@@ -190,6 +189,7 @@ export function TaskEditDialog({
             numberOfLines={3}
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
+            accessibilityLabel={t("create.label.memo")}
           />
         </View>
       </View>

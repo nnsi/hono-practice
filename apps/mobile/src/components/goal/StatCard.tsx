@@ -18,7 +18,7 @@ export function StatCard({
     >
       <View className="flex-row items-center gap-1.5 mb-1">
         {icon}
-        <Text className="text-[10px] text-gray-500 dark:text-gray-400">
+        <Text className="text-xs text-gray-500 dark:text-gray-400">
           {label}
         </Text>
       </View>
@@ -27,7 +27,7 @@ export function StatCard({
           {value}
         </Text>
         {sub && (
-          <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+          <Text className="text-xs text-gray-400 dark:text-gray-500">
             {sub}
           </Text>
         )}

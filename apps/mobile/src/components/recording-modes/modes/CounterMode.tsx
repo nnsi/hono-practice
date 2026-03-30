@@ -33,6 +33,9 @@ export function CounterMode(props: RecordingModeProps) {
             vm.activeTab === "manual" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.activeTab === "manual" ? tabShadow : undefined}
+          accessibilityRole="tab"
+          accessibilityLabel={t("manualEntry")}
+          accessibilityState={{ selected: vm.activeTab === "manual" }}
         >
           <Text
             className={`text-sm font-medium ${
@@ -50,6 +53,9 @@ export function CounterMode(props: RecordingModeProps) {
             vm.activeTab === "counter" ? "bg-white dark:bg-gray-800" : ""
           }`}
           style={vm.activeTab === "counter" ? tabShadow : undefined}
+          accessibilityRole="tab"
+          accessibilityLabel={t("counter")}
+          accessibilityState={{ selected: vm.activeTab === "counter" }}
         >
           <Text
             className={`text-sm font-medium ${
@@ -104,6 +110,9 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
                 ? "bg-blue-300"
                 : "bg-blue-50 dark:bg-blue-900/200"
             }`}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${step}`}
+            accessibilityState={{ disabled: vm.isSubmitting }}
           >
             <Text className="text-lg font-medium text-white">+{step}</Text>
           </TouchableOpacity>
@@ -147,6 +156,7 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
               }
             }, 0);
           }}
+          accessibilityLabel={t("quantity")}
         />
       </View>
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />

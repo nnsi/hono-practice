@@ -50,6 +50,12 @@ export function CheckMode(props: RecordingModeProps) {
                     ? "bg-blue-50 dark:bg-blue-900/200"
                     : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
               }`}
+              accessibilityRole="button"
+              accessibilityLabel={kind.name}
+              accessibilityState={{
+                selected: vm.selectedKindId === kind.id,
+                disabled: kind.isCheckedToday || vm.isSubmitting,
+              }}
             >
               <Text
                 className={`text-sm font-medium ${
@@ -74,6 +80,12 @@ export function CheckMode(props: RecordingModeProps) {
         }`}
         onPress={vm.check}
         disabled={!vm.canCheck || vm.isSubmitting}
+        accessibilityRole="checkbox"
+        accessibilityLabel={t("recorded")}
+        accessibilityState={{
+          checked: vm.isCheckedToday,
+          disabled: !vm.canCheck || vm.isSubmitting,
+        }}
       >
         <Check size={48} color={iconColor} />
       </TouchableOpacity>
