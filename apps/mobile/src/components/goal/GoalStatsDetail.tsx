@@ -129,10 +129,10 @@ export function GoalStatsDetail({
             ))}
           </View>
           <View className="flex-row justify-between mt-1">
-            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {dayjs(statsData.dailyRecords.slice(-14)[0]?.date).format("M/D")}
             </Text>
-            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+            <Text className="text-xs text-gray-400 dark:text-gray-500">
               {dayjs(
                 statsData.dailyRecords[statsData.dailyRecords.length - 1]?.date,
               ).format("M/D")}
@@ -142,19 +142,19 @@ export function GoalStatsDetail({
           <View className="flex-row gap-3 mt-1">
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-green-400" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 達成
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-yellow-300" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 活動あり
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
               <View className="w-2 h-2 rounded-sm bg-gray-200 dark:bg-gray-700" />
-              <Text className="text-[10px] text-gray-400 dark:text-gray-500">
+              <Text className="text-xs text-gray-400 dark:text-gray-500">
                 未活動
               </Text>
             </View>

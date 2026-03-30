@@ -63,7 +63,13 @@ export function NumpadMode(props: RecordingModeProps) {
         className="flex-row items-center px-2 py-3"
         style={{ minHeight: 64 }}
       >
-        <TouchableOpacity onPress={handlePaste} className="p-2">
+        <TouchableOpacity
+          onPress={handlePaste}
+          className="p-2"
+          accessibilityRole="button"
+          accessibilityLabel="Paste from clipboard"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <ClipboardPaste size={20} color="#9ca3af" />
         </TouchableOpacity>
         <View className="flex-1 items-end">
@@ -87,6 +93,8 @@ export function NumpadMode(props: RecordingModeProps) {
                 key={key}
                 className={`flex-1 py-4 rounded-lg items-center ${keyStyle(key)}`}
                 onPress={() => vm.pressKey(key)}
+                accessibilityRole="button"
+                accessibilityLabel={keyLabel(key)}
               >
                 <Text className={keyTextStyle(key)}>{keyLabel(key)}</Text>
               </TouchableOpacity>

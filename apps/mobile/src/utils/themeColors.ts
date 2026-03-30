@@ -40,8 +40,8 @@ const light: ThemeColors = {
   // Text
   text: "#1c1917", // gray-900
   textSecondary: "#57534e", // gray-600
-  textTertiary: "#78716c", // gray-500
-  textMuted: "#a8a29e", // gray-400
+  textTertiary: "#6b7280", // gray-500 (contrast-fixed: ~5.0:1 on white)
+  textMuted: "#a8a29e", // gray-400 (decorative only)
 
   // Borders
   border: "#e7e5e4", // gray-200
@@ -57,7 +57,7 @@ const light: ThemeColors = {
   tabBg: "rgba(255,255,255,0.82)",
   tabBorder: "rgba(231,229,228,0.5)",
   tabActive: "#d97706",
-  tabInactive: "#a8a29e",
+  tabInactive: "#78716c", // stone-500 (contrast-fixed)
   tabPill: "#f59e0b",
 
   // Shadows
@@ -84,7 +84,7 @@ const dark: ThemeColors = {
   text: "#fafaf9", // gray-50
   textSecondary: "#d6d3d1", // gray-300
   textTertiary: "#a8a29e", // gray-400
-  textMuted: "#78716c", // gray-500
+  textMuted: "#9ca3af", // gray-400 (contrast-fixed: ~4.5:1 on #292524)
 
   // Borders
   border: "#44403c", // gray-700
@@ -100,7 +100,7 @@ const dark: ThemeColors = {
   tabBg: "rgba(28,25,23,0.82)",
   tabBorder: "rgba(68,64,60,0.5)",
   tabActive: "#fbbf24",
-  tabInactive: "#78716c",
+  tabInactive: "#a8a29e", // stone-400 (contrast-fixed: ~4.5:1 on dark bg)
   tabPill: "#f59e0b",
 
   // Shadows

@@ -15,10 +15,8 @@ import {
 import { useAuthContext } from "../../../app/_layout";
 import { useThemeContext } from "../../contexts/ThemeContext";
 import { LegalModal } from "../common/LegalModal";
-import {
-  AccountAndDangerSection,
-  DataManagementSection,
-} from "./AccountSection";
+import { AccountAndDangerSection } from "./AccountAndDangerSection";
+import { DataManagementSection } from "./AccountSection";
 import { AppleLinkSection } from "./AppleLinkSection";
 import { GoogleLinkSection } from "./GoogleLinkSection";
 import { Divider, Section, SettingSwitch } from "./SettingsParts";
@@ -113,17 +111,29 @@ export function SettingsPage() {
           </Text>
         </View>
         <View className="flex-row gap-3">
-          <TouchableOpacity onPress={() => setLegalModal("privacy")}>
+          <TouchableOpacity
+            onPress={() => setLegalModal("privacy")}
+            accessibilityRole="link"
+            accessibilityLabel={t("privacyPolicy")}
+          >
             <Text className="text-xs text-blue-500 dark:text-blue-400 underline">
               {t("privacyPolicy")}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setLegalModal("terms")}>
+          <TouchableOpacity
+            onPress={() => setLegalModal("terms")}
+            accessibilityRole="link"
+            accessibilityLabel={t("termsOfService")}
+          >
             <Text className="text-xs text-blue-500 dark:text-blue-400 underline">
               {t("termsOfService")}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/contact")}>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/contact")}
+            accessibilityRole="link"
+            accessibilityLabel={t("contact")}
+          >
             <Text className="text-xs text-blue-500 dark:text-blue-400 underline">
               {t("contact")}
             </Text>

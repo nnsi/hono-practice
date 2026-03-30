@@ -38,6 +38,8 @@ export function FreezePeriodForm({
             <TouchableOpacity
               onPress={() => onEndDateChange(null)}
               className="ml-2 px-2 py-1"
+              accessibilityRole="button"
+              accessibilityLabel={t("freezeCancelButton")}
             >
               <Text className="text-xs text-gray-500 dark:text-gray-400">
                 {t("freezeCancelButton")}
@@ -48,6 +50,8 @@ export function FreezePeriodForm({
           <TouchableOpacity
             onPress={() => onEndDateChange(startDate)}
             className="py-1"
+            accessibilityRole="button"
+            accessibilityLabel={t("freezeEndDatePlaceholder")}
           >
             <Text className="text-sm text-blue-600 dark:text-blue-400">
               {t("freezeEndDatePlaceholder")}
@@ -59,6 +63,8 @@ export function FreezePeriodForm({
         <TouchableOpacity
           onPress={onCancel}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          accessibilityRole="button"
+          accessibilityLabel={t("cancelButton")}
         >
           <Text className="text-xs text-gray-600 dark:text-gray-400">
             {t("cancelButton")}
@@ -68,6 +74,9 @@ export function FreezePeriodForm({
           onPress={onConfirm}
           disabled={busy}
           className="px-4 py-2 bg-blue-600 rounded-lg"
+          accessibilityRole="button"
+          accessibilityLabel={t("freezeConfirmButton")}
+          accessibilityState={{ disabled: busy }}
         >
           <Text className="text-xs font-medium text-white">
             {t("freezeConfirmButton")}

@@ -1,55 +1,36 @@
-import { useState } from "react";
-
-import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
-import { useAuthContext } from "../../../app/_layout";
-import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { ActikoLogo } from "../common/ActikoLogo";
 import { GoogleMark } from "../common/GoogleMark";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
-
-WebBrowser.maybeCompleteAuthSession();
+import { useLoginForm } from "./useLoginForm";
 
 export function LoginForm() {
-  const { t } = useTranslation("common");
-  const { login, googleLogin, appleLogin } = useAuthContext();
-  const router = useRouter();
-  const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
-    null,
-  );
-
-  const { googleRequest, handleGooglePress } = useGoogleSignIn({
-    onLogin: googleLogin,
-    onError: setError,
-  });
-
-  const handleLogin = async () => {
-    if (!loginId || !password) {
-      setError(t("auth.idAndPasswordRequired"));
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      await login(loginId, password);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("auth.loginError"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    t,
+    loginId,
+    setLoginId,
+    password,
+    setPassword,
+    loading,
+    error,
+    legalModal,
+    setLegalModal,
+    googleRequest,
+    handleGooglePress,
+    handleLogin,
+    appleLogin,
+    handleAppleError,
+    router,
+  } = useLoginForm();
 
   return (
     <View className="flex-1 justify-center px-8 bg-white dark:bg-gray-800">
-      <Text className="text-3xl font-bold text-center mb-8">Actiko</Text>
+      <View className="items-center mb-8">
+        <ActikoLogo width={200} height={83} />
+      </View>
 
       {error ? (
         <Text className="text-red-500 dark:text-red-400 text-center mb-4">
@@ -64,6 +45,7 @@ export function LoginForm() {
         onChangeText={setLoginId}
         autoCapitalize="none"
         autoCorrect={false}
+        accessibilityLabel={t("auth.loginId")}
       />
 
       <IMESafeTextInput
@@ -72,14 +54,17 @@ export function LoginForm() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        accessibilityLabel={t("auth.password")}
       />
 
       <TouchableOpacity
-        className={`bg-blue-50 dark:bg-blue-900/200 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
+        className={`bg-gray-900 dark:bg-gray-100 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
         onPress={handleLogin}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={loading ? t("auth.loggingIn") : t("auth.login")}
       >
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-white dark:text-gray-900 text-base font-semibold">
           {loading ? t("auth.loggingIn") : t("auth.login")}
         </Text>
       </TouchableOpacity>
@@ -87,6 +72,8 @@ export function LoginForm() {
       <TouchableOpacity
         className="mt-4 items-center"
         onPress={() => router.push("/(auth)/create-user")}
+        accessibilityRole="link"
+        accessibilityLabel={t("auth.createAccount")}
       >
         <Text className="text-blue-500 dark:text-blue-400">
           {t("auth.createAccount")}
@@ -141,15 +128,7 @@ export function LoginForm() {
                   await appleLogin(credential.identityToken);
                 }
               } catch (e: unknown) {
-                const code =
-                  e && typeof e === "object" && "code" in e
-                    ? (e as { code: string }).code
-                    : "";
-                if (code !== "ERR_REQUEST_CANCELED") {
-                  setError(
-                    e instanceof Error ? e.message : t("auth.appleLoginError"),
-                  );
-                }
+                handleAppleError(e);
               }
             }}
           />
@@ -157,12 +136,20 @@ export function LoginForm() {
       </View>
 
       <View className="mt-6 flex-row justify-center gap-3">
-        <TouchableOpacity onPress={() => setLegalModal("privacy")}>
+        <TouchableOpacity
+          onPress={() => setLegalModal("privacy")}
+          accessibilityRole="link"
+          accessibilityLabel={t("auth.privacyPolicy")}
+        >
           <Text className="text-xs text-gray-400 dark:text-gray-500 underline">
             {t("auth.privacyPolicy")}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setLegalModal("terms")}>
+        <TouchableOpacity
+          onPress={() => setLegalModal("terms")}
+          accessibilityRole="link"
+          accessibilityLabel={t("auth.termsOfService")}
+        >
           <Text className="text-xs text-gray-400 dark:text-gray-500 underline">
             {t("auth.termsOfService")}
           </Text>

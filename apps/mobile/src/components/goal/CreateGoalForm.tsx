@@ -77,6 +77,9 @@ export function CreateGoalForm({
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                     : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                 }`}
+                accessibilityRole="button"
+                accessibilityLabel={a.name}
+                accessibilityState={{ selected: activityId === a.id }}
               >
                 <ActivityIcon
                   iconType={a.iconType}
@@ -87,10 +90,7 @@ export function CreateGoalForm({
                   size={28}
                   fontSize="text-xl"
                 />
-                <Text
-                  className="text-[10px] mt-1 text-center"
-                  numberOfLines={1}
-                >
+                <Text className="text-xs mt-1 text-center" numberOfLines={1}>
                   {a.name}
                 </Text>
               </TouchableOpacity>
@@ -116,6 +116,7 @@ export function CreateGoalForm({
           onChangeText={setTarget}
           keyboardType="numeric"
           selectTextOnFocus
+          accessibilityLabel={t("dailyTargetLabel")}
         />
       </View>
 
@@ -170,6 +171,7 @@ export function CreateGoalForm({
               onChangeText={setDebtCapValue}
               keyboardType="numeric"
               selectTextOnFocus
+              accessibilityLabel={t("debtCapLabel")}
             />
             <Text className="text-xs text-gray-500 dark:text-gray-400">
               {selectedActivity?.quantityUnit ?? ""}

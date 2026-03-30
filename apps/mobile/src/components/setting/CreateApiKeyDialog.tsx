@@ -68,6 +68,8 @@ export function CreateApiKeyDialog({
             className="w-full py-2.5 bg-stone-900 rounded-lg flex-row items-center justify-center gap-2"
             onPress={handleCopy}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={copied ? t("apiKeyCopied") : t("apiKeyCopy")}
           >
             {copied ? (
               <>
@@ -93,6 +95,10 @@ export function CreateApiKeyDialog({
               isSubmitting || !name.trim() || selectedScopes.length === 0
             }
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")
+            }
           >
             <Text className="text-white font-medium text-center">
               {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
@@ -130,6 +136,7 @@ export function CreateApiKeyDialog({
             placeholderTextColor="#9ca3af"
             autoFocus
             maxLength={255}
+            accessibilityLabel={t("apiKeyName")}
           />
           <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {t("apiKeyNameHint")}

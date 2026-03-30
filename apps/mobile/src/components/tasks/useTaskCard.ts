@@ -42,7 +42,7 @@ export function useTaskCard(
   const iconBlobMap = useIconBlobMap();
 
   const linkedActivity = task.activityId
-    ? activityMap.get(task.activityId)
+    ? (activityMap.get(task.activityId) ?? null)
     : null;
 
   const allKinds = useLiveQuery(
@@ -54,7 +54,9 @@ export function useTaskCard(
     [task.activityId, task.activityKindId],
   );
   const linkedKind = task.activityKindId
-    ? (allKinds ?? []).find((k) => k.id === task.activityKindId && !k.deletedAt)
+    ? ((allKinds ?? []).find(
+        (k) => k.id === task.activityKindId && !k.deletedAt,
+      ) ?? null)
     : null;
 
   const today = getToday();

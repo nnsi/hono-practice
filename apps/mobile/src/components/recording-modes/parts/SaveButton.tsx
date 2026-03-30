@@ -17,6 +17,9 @@ export function SaveButton({ onPress, disabled, label }: SaveButtonProps) {
       }`}
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={displayLabel}
+      accessibilityState={{ disabled }}
     >
       <Text className="text-white font-medium">
         {disabled ? t("saving") : displayLabel}

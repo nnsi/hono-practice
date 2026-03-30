@@ -133,6 +133,12 @@ export function GoogleLinkSection({ shadow }: { shadow: ShadowStyle }) {
             style={{ minHeight: 48, borderColor: "#747775" }}
             onPress={() => google.googlePromptAsync()}
             disabled={google.isLinking || !google.googleRequest}
+            accessibilityRole="button"
+            accessibilityLabel={
+              google.isGoogleLinked
+                ? "Googleアカウントを変更"
+                : "Googleアカウントを連携"
+            }
           >
             <GoogleMark />
             <Text

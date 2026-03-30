@@ -40,6 +40,9 @@ export function SummaryTable({
         onPress={() => setIsExpanded(!isExpanded)}
         className="flex-row items-center justify-between px-4 py-3 bg-white dark:bg-gray-800"
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isExpanded }}
+        accessibilityLabel={t("tableExpandButton")}
       >
         <Text className="font-semibold text-sm text-gray-900 dark:text-gray-100">
           {t("tableExpandButton")}

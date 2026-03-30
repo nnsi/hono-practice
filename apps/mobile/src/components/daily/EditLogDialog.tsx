@@ -6,6 +6,7 @@ import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { EditLogKindSelector } from "./EditLogKindSelector";
 import { useEditLogDialog } from "./useEditLogDialog";
 
 type Log = {
@@ -83,6 +84,8 @@ export function EditLogDialog({
             }`}
             onPress={handleSave}
             disabled={isSubmitting}
+            accessibilityRole="button"
+            accessibilityLabel={t("log.saveButton")}
           >
             <Text className="text-white font-medium">
               {t("log.saveButton")}
@@ -93,6 +96,8 @@ export function EditLogDialog({
             <TouchableOpacity
               className="px-4 py-3 rounded-lg border border-red-300 items-center justify-center"
               onPress={() => setShowDeleteConfirm(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t("log.deleteButton")}
             >
               <Trash2 size={18} color="#ef4444" />
             </TouchableOpacity>
@@ -103,6 +108,8 @@ export function EditLogDialog({
               }`}
               onPress={handleDelete}
               disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel={t("log.deleteButton")}
             >
               <Text className="text-white font-medium">
                 {t("log.deleteButton")}
@@ -113,47 +120,11 @@ export function EditLogDialog({
       }
     >
       <View className="gap-4">
-        {/* Kind selector */}
-        {kinds.length > 0 && (
-          <View>
-            <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-              {t("log.kindLabel")}
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {kinds.map((kind) => (
-                <TouchableOpacity
-                  key={kind.id}
-                  onPress={() =>
-                    setSelectedKindId(
-                      selectedKindId === kind.id ? null : kind.id,
-                    )
-                  }
-                  className={`flex-row items-center px-3 py-1.5 rounded-full border ${
-                    selectedKindId === kind.id
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                  }`}
-                >
-                  {kind.color && (
-                    <View
-                      className="w-2.5 h-2.5 rounded-full mr-1.5"
-                      style={{ backgroundColor: kind.color }}
-                    />
-                  )}
-                  <Text
-                    className={`text-sm ${
-                      selectedKindId === kind.id
-                        ? "text-white font-medium"
-                        : "text-gray-700 dark:text-gray-300"
-                    }`}
-                  >
-                    {kind.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+        <EditLogKindSelector
+          kinds={kinds}
+          selectedKindId={selectedKindId}
+          onSelect={setSelectedKindId}
+        />
 
         {/* Quantity */}
         <View>
@@ -166,6 +137,7 @@ export function EditLogDialog({
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
+            accessibilityLabel={t("log.quantityLabel")}
             onFocus={() => {
               // Select all on focus is not directly supported in RN TextInput
             }}
@@ -184,6 +156,7 @@ export function EditLogDialog({
             placeholder={t("log.memoPlaceholder")}
             multiline
             numberOfLines={2}
+            accessibilityLabel={t("log.memoLabel")}
           />
         </View>
       </View>

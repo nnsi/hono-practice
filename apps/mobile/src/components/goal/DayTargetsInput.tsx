@@ -45,6 +45,7 @@ export function DayTargetsInput({
               onChange(init);
             }
           }}
+          accessibilityLabel={t("dayTargetsLabel")}
         />
       </View>
       {enabled && (
@@ -55,7 +56,7 @@ export function DayTargetsInput({
             return (
               <View key={k} className="flex-1 items-center gap-0.5">
                 <Text
-                  className={`text-[10px] font-medium ${
+                  className={`text-xs font-medium ${
                     i === 6
                       ? "text-red-500 dark:text-red-400"
                       : i === 5
@@ -76,9 +77,10 @@ export function DayTargetsInput({
                       : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
                   }`}
                   selectTextOnFocus
+                  accessibilityLabel={`${DAY_LABELS[i]} ${t("dayTargetsLabel")}`}
                 />
                 {isRest && (
-                  <Text className="text-[9px] text-gray-400 dark:text-gray-500">
+                  <Text className="text-xs text-gray-400 dark:text-gray-500">
                     {t("dayTargetRest")}
                   </Text>
                 )}

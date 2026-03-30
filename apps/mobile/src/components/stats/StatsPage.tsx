@@ -1,9 +1,18 @@
+import { useState } from "react";
+
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { syncEngine } from "../../sync/syncEngine";
 import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 
@@ -20,15 +29,31 @@ export function StatsPage() {
   } = useStatsPage();
 
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await syncEngine.syncAll();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-800">
       {/* Month navigation header */}
-      <View className="flex-row items-center justify-center gap-3 px-4 h-12 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800">
+      <View
+        className="flex-row items-center justify-center gap-3 px-4 h-12 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800"
+        style={{ paddingRight: 48 }}
+      >
         <TouchableOpacity
           onPress={goToPrevMonth}
           className="p-2 rounded-xl"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel={t("previousMonth")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <ChevronLeft size={20} color="#6b7280" />
         </TouchableOpacity>
@@ -39,6 +64,9 @@ export function StatsPage() {
           onPress={goToNextMonth}
           className="p-2 rounded-xl"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel={t("nextMonth")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <ChevronRight size={20} color="#6b7280" />
         </TouchableOpacity>
@@ -52,6 +80,9 @@ export function StatsPage() {
           paddingBottom: 80 + insets.bottom,
           gap: 24,
         }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {isLoading ? (
           <View className="items-center py-16">

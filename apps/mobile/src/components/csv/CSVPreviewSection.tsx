@@ -119,12 +119,21 @@ export function CSVPreviewSection({
         className={`py-3 rounded-xl items-center ${isImporting || !selectedActivityId || validCount === 0 ? "bg-gray-400" : "bg-gray-900"}`}
         onPress={onImport}
         disabled={isImporting || !selectedActivityId || validCount === 0}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isImporting ? "インポート中..." : `インポート (${validCount}件)`
+        }
       >
         <Text className="text-white font-bold text-base">
           {isImporting ? "インポート中..." : `インポート (${validCount}件)`}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity className="py-2 items-center" onPress={onBack}>
+      <TouchableOpacity
+        className="py-2 items-center"
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="ファイルを選び直す"
+      >
         <Text className="text-sm text-gray-500 dark:text-gray-400">
           ファイルを選び直す
         </Text>

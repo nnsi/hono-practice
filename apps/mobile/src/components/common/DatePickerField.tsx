@@ -31,6 +31,13 @@ export function DatePickerField({
       <Pressable
         className="flex-row items-center border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2"
         onPress={() => setCalendarOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          label
+            ? `${label}: ${dayjs(value).format("YYYY/MM/DD")}`
+            : dayjs(value).format("YYYY/MM/DD")
+        }
+        style={{ minHeight: 48 }}
       >
         <Calendar size={16} color={colors.textSecondary} />
         <Text className="text-sm ml-2 text-gray-900 dark:text-gray-100">

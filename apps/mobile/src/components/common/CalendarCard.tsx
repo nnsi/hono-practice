@@ -54,6 +54,8 @@ export function CalendarCard({
         <Pressable
           className="p-2 rounded-full"
           onPress={() => setViewMonth(viewMonth.subtract(1, "month"))}
+          accessibilityLabel="Previous month"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <ChevronLeft size={18} color={colors.textSecondary} />
         </Pressable>
@@ -63,6 +65,8 @@ export function CalendarCard({
         <Pressable
           className="p-2 rounded-full"
           onPress={() => setViewMonth(viewMonth.add(1, "month"))}
+          accessibilityLabel="Next month"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <ChevronRight size={18} color={colors.textSecondary} />
         </Pressable>
@@ -72,7 +76,7 @@ export function CalendarCard({
       <View className="flex-row mb-1">
         {WEEKDAY_KEYS.map((key) => (
           <View key={key} className="flex-1 items-center py-1">
-            <Text className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
+            <Text className="text-xs font-medium text-gray-400 dark:text-gray-500">
               {t(`common:${key}`)}
             </Text>
           </View>
@@ -96,6 +100,9 @@ export function CalendarCard({
                   isSelected ? "bg-gray-900 dark:bg-gray-100" : ""
                 } ${isToday && !isSelected ? "bg-amber-100 dark:bg-amber-900/30" : ""}`}
                 onPress={() => onSelectDate(cell.date)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={cell.date}
               >
                 <Text
                   className={`text-xs ${

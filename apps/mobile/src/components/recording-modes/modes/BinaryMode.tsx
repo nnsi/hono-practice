@@ -43,6 +43,9 @@ export function BinaryMode(props: RecordingModeProps) {
               }`}
               onPress={() => vm.selectKind(kind.id)}
               disabled={vm.isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel={kind.name}
+              accessibilityState={{ disabled: vm.isSubmitting }}
             >
               <Text className="text-xl font-bold text-white">{kind.name}</Text>
             </TouchableOpacity>

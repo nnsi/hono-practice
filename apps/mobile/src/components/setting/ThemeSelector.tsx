@@ -37,6 +37,9 @@ export function ThemeSelector() {
                   ? "bg-amber-50 dark:bg-amber-900/30"
                   : "bg-gray-50 dark:bg-gray-800"
               }`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={t(labelKey)}
             >
               <Icon
                 size={16}

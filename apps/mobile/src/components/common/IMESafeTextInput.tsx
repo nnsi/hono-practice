@@ -28,7 +28,15 @@ import {
  */
 export const IMESafeTextInput = forwardRef<TextInput, TextInputProps>(
   function IMESafeTextInput(
-    { value, defaultValue, style, multiline, autoFocus, ...props },
+    {
+      value,
+      defaultValue,
+      style,
+      multiline,
+      autoFocus,
+      accessibilityLabel,
+      ...props
+    },
     ref,
   ) {
     const initialValue = useRef(value ?? defaultValue);
@@ -68,6 +76,7 @@ export const IMESafeTextInput = forwardRef<TextInput, TextInputProps>(
         multiline={multiline}
         style={mergedStyle}
         autoFocus={Platform.OS !== "android" ? autoFocus : undefined}
+        accessibilityLabel={accessibilityLabel}
         {...props}
       />
     );

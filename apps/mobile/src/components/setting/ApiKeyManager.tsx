@@ -77,6 +77,8 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
               if (webUrl) Linking.openURL(`${webUrl}/api-reference`);
             }}
             activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="API Reference"
           >
             <Text className="text-xs text-blue-600">API Reference</Text>
             <ExternalLink size={12} color="#2563eb" />
@@ -86,6 +88,8 @@ export function ApiKeyManager({ shadow }: { shadow: object }) {
           className="px-3 py-1.5 bg-stone-900 rounded-lg"
           onPress={() => setShowCreateDialog(true)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t("createNewKey")}
         >
           <Text className="text-sm text-white font-medium">
             {t("createNewKey")}

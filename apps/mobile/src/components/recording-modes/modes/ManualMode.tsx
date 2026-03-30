@@ -47,6 +47,7 @@ export function ManualMode(props: RecordingModeProps) {
               }
             }, 0);
           }}
+          accessibilityLabel={t("quantity")}
         />
       </View>
 

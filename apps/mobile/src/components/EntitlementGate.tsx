@@ -30,6 +30,8 @@ function DefaultFallback({ feature }: { feature: string }) {
       <TouchableOpacity
         className="bg-amber-50 dark:bg-amber-900/200 rounded-lg py-2.5 items-center"
         onPress={() => router.push("/upgrade")}
+        accessibilityRole="button"
+        accessibilityLabel="Pro プランを見る"
       >
         <Text className="text-white font-medium text-sm">Pro プランを見る</Text>
       </TouchableOpacity>

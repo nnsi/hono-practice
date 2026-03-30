@@ -31,6 +31,9 @@ export function EditGoalButtons({
         className={`flex-1 py-2 rounded-lg items-center ${saving ? "bg-gray-400" : "bg-gray-900"}`}
         onPress={onSave}
         disabled={saving}
+        accessibilityRole="button"
+        accessibilityLabel={t("saveButton")}
+        accessibilityState={{ disabled: saving }}
       >
         <Text className="text-white text-sm font-medium">
           {t("saveButton")}
@@ -42,6 +45,9 @@ export function EditGoalButtons({
           className="px-4 py-2 bg-orange-500 rounded-lg items-center"
           onPress={onDeactivateRequest}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={t("deactivateButton")}
+          accessibilityState={{ disabled: saving }}
         >
           <Text className="text-white text-sm font-medium">
             {t("deactivateButton")}
@@ -52,6 +58,9 @@ export function EditGoalButtons({
           className="px-4 py-2 bg-red-600 rounded-lg items-center"
           onPress={onDeactivateConfirm}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={t("deactivateConfirmButton")}
+          accessibilityState={{ disabled: saving }}
         >
           <Text className="text-white text-sm font-medium">
             {t("deactivateConfirmButton")}
@@ -64,6 +73,9 @@ export function EditGoalButtons({
           className="px-3 py-2 border border-red-300 rounded-lg items-center justify-center"
           onPress={onDeleteRequest}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={t("deleteButton")}
+          accessibilityState={{ disabled: saving }}
         >
           <Trash2 size={14} color="#ef4444" />
         </TouchableOpacity>
@@ -72,6 +84,9 @@ export function EditGoalButtons({
           className="px-3 py-2 bg-red-50 dark:bg-red-900/200 rounded-lg items-center justify-center"
           onPress={onDeleteConfirm}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={t("deleteButton")}
+          accessibilityState={{ disabled: saving }}
         >
           <Text className="text-white text-sm">{t("deleteButton")}</Text>
         </TouchableOpacity>

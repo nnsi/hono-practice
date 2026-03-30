@@ -37,6 +37,7 @@ export function ModalOverlay({
       animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent
+      accessibilityViewIsModal={true}
     >
       <KeyboardAvoidingView
         className="flex-1"
@@ -84,6 +85,9 @@ export function ModalOverlay({
                   onPress={onClose}
                   className="p-1.5 rounded-lg"
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <X size={20} color={colors.textTertiary} />
                 </TouchableOpacity>
