@@ -12,6 +12,7 @@ import type {
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
@@ -93,7 +94,7 @@ export function newActivityRepository(
 
     // === Create ===
     async createActivity(input: CreateActivityInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const orderIndex = await adapter.getNextOrderIndex();
 
@@ -151,7 +152,7 @@ export function newActivityRepository(
       >,
       updatedKinds?: { id?: string; name: string; color: string }[],
     ) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.updateActivity(id, {
         ...changes,
         updatedAt: now,
@@ -211,7 +212,7 @@ export function newActivityRepository(
 
     // === Delete ===
     async softDeleteActivity(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.softDeleteActivityAndKinds(id, now);
     },
 

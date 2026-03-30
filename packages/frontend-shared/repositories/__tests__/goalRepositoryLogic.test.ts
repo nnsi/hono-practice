@@ -1,5 +1,6 @@
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GoalDbAdapter } from "../goalRepositoryLogic";
@@ -62,6 +63,7 @@ describe("goalRepositoryLogic", () => {
 
   beforeEach(() => {
     uuidCounter = 0;
+    resetServerTimeForTests();
     adapter = createInMemoryAdapter();
     repo = newGoalRepository(adapter.adapter);
   });

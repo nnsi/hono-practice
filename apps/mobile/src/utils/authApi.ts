@@ -1,3 +1,5 @@
+import { trackServerTimeFromResponse } from "@packages/sync-engine";
+
 import {
   clearRefreshToken,
   clearToken,
@@ -34,6 +36,7 @@ export async function apiLogin(loginId: string, password: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ login_id: loginId, password }),
     });
+    trackServerTimeFromResponse(res);
   } catch {
     throw new Error("ネットワークに接続できません。接続を確認してください");
   }
@@ -60,6 +63,7 @@ export async function apiRegister(loginId: string, password: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ loginId, password }),
     });
+    trackServerTimeFromResponse(res);
   } catch {
     throw new Error("ネットワークに接続できません。接続を確認してください");
   }
@@ -100,6 +104,7 @@ export async function apiGoogleLogin(credential: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ credential }),
     });
+    trackServerTimeFromResponse(res);
   } catch {
     throw new Error("ネットワークに接続できません。接続を確認してください");
   }
@@ -124,6 +129,7 @@ export async function apiAppleLogin(credential: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ credential }),
     });
+    trackServerTimeFromResponse(res);
   } catch {
     throw new Error("ネットワークに接続できません。接続を確認してください");
   }

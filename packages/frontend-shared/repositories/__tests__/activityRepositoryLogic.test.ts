@@ -7,6 +7,7 @@ import type {
   ActivityIconDeleteQueueItem,
 } from "@packages/domain/activity/activityRepository";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const uuidState = { counter: 0 };
@@ -205,6 +206,7 @@ describe("activityRepositoryLogic", () => {
 
   beforeEach(() => {
     uuidState.counter = 0;
+    resetServerTimeForTests();
     mem = createInMemoryAdapter();
     repo = newActivityRepository(mem.adapter);
   });

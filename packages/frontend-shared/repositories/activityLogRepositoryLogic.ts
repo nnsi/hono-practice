@@ -8,6 +8,7 @@ import type {
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
@@ -38,7 +39,7 @@ export function newActivityLogRepository(
 ): ActivityLogRepository {
   return {
     async createActivityLog(input: CreateActivityLogInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const log: Syncable<LocalActivityLog> = {
         ...input,
         id: uuidv7(),
@@ -68,7 +69,7 @@ export function newActivityLogRepository(
         >
       >,
     ) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         ...changes,
         updatedAt: now,
@@ -77,7 +78,7 @@ export function newActivityLogRepository(
     },
 
     async softDeleteActivityLog(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         deletedAt: now,
         updatedAt: now,
@@ -86,7 +87,7 @@ export function newActivityLogRepository(
     },
 
     async softDeleteActivityLogByTaskId(taskId: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const targets = await adapter.getAll(
         (l) => l.taskId === taskId && !l.deletedAt,
       );

@@ -1,3 +1,5 @@
+import { getServerNowISOString } from "./serverTime";
+
 type PendingLog = {
   id: string;
   activityId: string;
@@ -60,7 +62,7 @@ export async function aggregateBinaryLogs(
 
     await updateLog(keeper.id, {
       quantity: totalQuantity,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getServerNowISOString(),
       _syncStatus: "pending",
     });
 

@@ -13,6 +13,7 @@ import {
   type ActivityDbAdapter,
   newActivityRepository,
 } from "@packages/frontend-shared/repositories";
+import { getServerNowISOString } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
@@ -302,7 +303,7 @@ const adapter: ActivityDbAdapter = {
 
   async reorderActivities(orderedIds) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
+    const now = getServerNowISOString();
     try {
       await db.execAsync("BEGIN");
       for (let i = 0; i < orderedIds.length; i++) {
@@ -527,7 +528,7 @@ const adapter: ActivityDbAdapter = {
 
   async clearActivityIcon(activityId) {
     const db = await getDatabase();
-    const now = new Date().toISOString();
+    const now = getServerNowISOString();
     try {
       await db.execAsync("BEGIN");
       await db.runAsync(

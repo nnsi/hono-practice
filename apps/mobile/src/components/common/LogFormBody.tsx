@@ -3,6 +3,7 @@ import { useState } from "react";
 import { emitDebtFeedback } from "@packages/frontend-shared";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
+import { getServerNowISOString } from "@packages/sync-engine";
 
 import { getDatabase } from "../../db/database";
 import { useLiveQuery } from "../../db/useLiveQuery";
@@ -78,7 +79,7 @@ export function LogFormBody({
       const existingLog = rows.length > 0 ? mapActivityLogRow(rows[0]) : null;
 
       if (existingLog) {
-        const now = new Date().toISOString();
+        const now = getServerNowISOString();
         await sqlDb.runAsync(
           "UPDATE activity_logs SET quantity = ?, updated_at = ?, sync_status = ? WHERE id = ?",
           [

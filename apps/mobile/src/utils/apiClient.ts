@@ -1,5 +1,6 @@
 import { hc } from "hono/client";
 
+import { trackServerTimeFromResponse } from "@packages/sync-engine";
 import type { AppType } from "@packages/types/api";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
@@ -84,6 +85,7 @@ async function refreshAccessToken(): Promise<string | null> {
           Authorization: `Bearer ${rt}`,
         },
       });
+      trackServerTimeFromResponse(res);
       if (!res.ok) {
         // 500系はサーバー一時障害 → リトライに任せる
         // それ以外(400/401/403等)はセッション回復不能 → 強制ログアウト
@@ -130,12 +132,14 @@ export const customFetch: typeof fetch = async (input, init) => {
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
   let res = await fetchWithTimeout(input, { ...init, headers });
+  trackServerTimeFromResponse(res);
 
   if (res.status === 401) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
       res = await fetchWithTimeout(input, { ...init, headers });
+      trackServerTimeFromResponse(res);
     }
   }
   return res;

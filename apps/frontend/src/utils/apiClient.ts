@@ -2,7 +2,10 @@ import { hc } from "hono/client";
 
 import { i18next } from "@packages/i18n";
 import type { TokenStorage } from "@packages/platform";
-import { createAuthenticatedFetch } from "@packages/sync-engine";
+import {
+  createAuthenticatedFetch,
+  trackServerTimeFromResponse,
+} from "@packages/sync-engine";
 import type { AppType } from "@packages/types/api";
 
 const API_URL = (
@@ -50,6 +53,7 @@ export async function apiLogin(loginId: string, password: string) {
       credentials: "include",
       body: JSON.stringify({ login_id: loginId, password }),
     });
+    trackServerTimeFromResponse(res);
   } catch {
     throw new Error(i18next.t("common:api.networkError"));
   }

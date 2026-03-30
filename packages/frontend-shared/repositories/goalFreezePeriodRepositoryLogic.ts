@@ -3,6 +3,7 @@ import type {
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
+import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
@@ -58,7 +59,7 @@ export function newGoalFreezePeriodRepository(
 ): GoalFreezePeriodRepository {
   return {
     async createGoalFreezePeriod(input: CreateFreezePeriodInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const period: Syncable<GoalFreezePeriodRecord> = {
         id: uuidv7(),
@@ -80,7 +81,7 @@ export function newGoalFreezePeriodRepository(
     },
 
     async updateGoalFreezePeriod(id: string, changes: UpdateFreezePeriodInput) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         ...changes,
         updatedAt: now,
@@ -89,7 +90,7 @@ export function newGoalFreezePeriodRepository(
     },
 
     async softDeleteGoalFreezePeriod(id: string) {
-      const now = new Date().toISOString();
+      const now = getServerNowISOString();
       await adapter.update(id, {
         deletedAt: now,
         updatedAt: now,

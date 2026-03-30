@@ -1,5 +1,7 @@
 import type { TokenStorage } from "@packages/platform";
 
+import { trackServerTimeFromResponse } from "../core/serverTime";
+
 type AuthenticatedFetchOptions = {
   tokenStorage: TokenStorage;
   apiUrl: string;
@@ -28,6 +30,7 @@ export function createAuthenticatedFetch(
           headers: { "Content-Type": "application/json" },
           credentials: "include",
         });
+        trackServerTimeFromResponse(res);
         if (!res.ok) {
           // 500系はサーバー一時障害 → リトライに任せる
           // それ以外(400/401/403等)はセッション回復不能 → 強制ログアウト
@@ -77,6 +80,7 @@ export function createAuthenticatedFetch(
       headers,
       credentials,
     });
+    trackServerTimeFromResponse(res);
 
     if (res.status === 401) {
       const newToken = await refreshAccessToken();
@@ -87,6 +91,7 @@ export function createAuthenticatedFetch(
           headers,
           credentials,
         });
+        trackServerTimeFromResponse(res);
       }
     }
 

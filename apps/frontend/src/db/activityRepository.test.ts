@@ -1,3 +1,4 @@
+import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted で vi.mock ファクトリ内から参照できるモックを作成
@@ -77,6 +78,7 @@ describe("activityRepository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     uuidState.counter = 0;
+    resetServerTimeForTests();
     mockDb.authState.get.mockResolvedValue({ userId: "user-1" });
   });
 

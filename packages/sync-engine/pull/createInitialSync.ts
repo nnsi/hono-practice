@@ -1,5 +1,6 @@
 import type { StorageAdapter } from "@packages/platform";
 
+import { getSafeSyncWatermarkISOString } from "../core/serverTime";
 import { getSyncGeneration, invalidateSync } from "../core/syncState";
 import type { ParsedSyncData } from "./parseResponses";
 import { type ApiResponse, parseResponses } from "./parseResponses";
@@ -114,7 +115,16 @@ export function createInitialSync(deps: InitialSyncDeps) {
     if (gen !== getSyncGeneration()) return;
 
     if (allSynced) {
-      storage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
+      storage.setItem(
+        LAST_SYNCED_KEY,
+        getSafeSyncWatermarkISOString([
+          activitiesRes,
+          logsRes,
+          goalsRes,
+          freezePeriodsRes,
+          tasksRes,
+        ]),
+      );
     }
   }
 

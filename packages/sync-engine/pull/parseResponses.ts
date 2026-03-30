@@ -7,7 +7,11 @@ import {
   mapApiTask,
 } from "../mappers/apiMappers";
 
-export type ApiResponse = { ok: boolean; json: () => Promise<unknown> };
+export type ApiResponse = {
+  ok: boolean;
+  json: () => Promise<unknown>;
+  headers?: { get(name: string): string | null };
+};
 
 export type ParsedSyncData = {
   activities: ReturnType<typeof mapApiActivity>[];

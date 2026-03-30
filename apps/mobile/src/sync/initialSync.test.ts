@@ -64,6 +64,8 @@ vi.mock("@packages/sync-engine/mappers/apiMappers", () => ({
   mapApiTask: vi.fn((x: unknown) => x),
 }));
 
+import { resetServerTimeForTests } from "@packages/sync-engine";
+
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
@@ -85,8 +87,12 @@ function createMockDb() {
   };
 }
 
-function okResponse(data: unknown) {
-  return { ok: true, json: vi.fn().mockResolvedValue(data) };
+function okResponse(data: unknown, dateHeader?: string) {
+  return {
+    ok: true,
+    json: vi.fn().mockResolvedValue(data),
+    headers: dateHeader ? new Headers({ date: dateHeader }) : undefined,
+  };
 }
 
 function errorResponse() {
@@ -95,6 +101,7 @@ function errorResponse() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetServerTimeForTests();
 });
 
 describe("clearLocalData", () => {
@@ -330,6 +337,37 @@ describe("performInitialSync", () => {
     await performInitialSync("user-1", mockStorage);
 
     expect(mockStorage.setItem).not.toHaveBeenCalled();
+  });
+
+  it("stores lastSyncedAt based on the earliest server Date header", async () => {
+    vi.mocked(activitiesApi).mockResolvedValue(
+      okResponse(
+        { activities: [], activityKinds: [] },
+        "Tue, 31 Mar 2026 03:00:05 GMT",
+      ) as never,
+    );
+    vi.mocked(logsApi).mockResolvedValue(
+      okResponse({ logs: [] }, "Tue, 31 Mar 2026 03:00:02 GMT") as never,
+    );
+    vi.mocked(goalsApi).mockResolvedValue(
+      okResponse({ goals: [] }, "Tue, 31 Mar 2026 03:00:04 GMT") as never,
+    );
+    vi.mocked(freezePeriodsApi).mockResolvedValue(
+      okResponse(
+        { freezePeriods: [] },
+        "Tue, 31 Mar 2026 03:00:03 GMT",
+      ) as never,
+    );
+    vi.mocked(tasksApi).mockResolvedValue(
+      okResponse({ tasks: [] }, "Tue, 31 Mar 2026 03:00:06 GMT") as never,
+    );
+
+    await performInitialSync("user-1", mockStorage);
+
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "actiko-v2-lastSyncedAt",
+      "2026-03-31T03:00:01.000Z",
+    );
   });
 
   it("handles empty data arrays gracefully", async () => {
