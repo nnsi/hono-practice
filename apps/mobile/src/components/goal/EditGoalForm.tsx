@@ -115,7 +115,7 @@ export function EditGoalForm({
   };
 
   return (
-    <View className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20/30 mb-3 p-4">
+    <View className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 mb-3 p-4">
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center gap-2">
           <ActivityIcon

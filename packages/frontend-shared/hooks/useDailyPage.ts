@@ -9,11 +9,12 @@ import type {
 type UseDailyPageDeps<
   TActivity extends ActivityBase,
   TKind extends { id: string },
+  TRawTask extends DailyTask = DailyTask,
 > = {
   react: Pick<ReactHooks, "useState" | "useMemo" | "useCallback">;
   useActivities: () => { activities: TActivity[] };
   useActivityLogsByDate: (date: string) => { logs: ActivityLogBase[] };
-  useTasksByDate: (date: string) => DailyTask[] | undefined;
+  useTasksByDate: (date: string) => TRawTask[] | undefined;
   useAllKinds: () => TKind[] | undefined;
   taskRepository: {
     updateTask: (
@@ -39,7 +40,8 @@ type UseDailyPageDeps<
 export function createUseDailyPage<
   TActivity extends ActivityBase,
   TKind extends { id: string },
->(deps: UseDailyPageDeps<TActivity, TKind>) {
+  TRawTask extends DailyTask = DailyTask,
+>(deps: UseDailyPageDeps<TActivity, TKind, TRawTask>) {
   const {
     react: { useState, useMemo, useCallback },
     useActivities,
@@ -134,6 +136,7 @@ export function createUseDailyPage<
       kindsMap,
       activitiesMap,
       tasks,
+      rawTasks,
       editingLog,
       setEditingLog,
       createDialogOpen,

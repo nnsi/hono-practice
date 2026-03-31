@@ -37,6 +37,7 @@ function applyColorScheme(
 export function useTheme() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const [preference, setPreference] = useState<ThemePreference>("system");
+  const [ready, setReady] = useState(false);
 
   // Load saved preference on mount
   useEffect(() => {
@@ -45,10 +46,17 @@ export function useTheme() {
         if (stored === "light" || stored === "dark" || stored === "system") {
           setPreference(stored);
           applyColorScheme(setColorScheme, stored);
+        } else {
+          // No saved preference — apply system default
+          applyColorScheme(setColorScheme, "system");
         }
       })
       .catch(() => {
-        // AsyncStorage 読み取り失敗時はデフォルトのまま
+        // AsyncStorage 読み取り失敗時はシステムデフォルトを適用
+        applyColorScheme(setColorScheme, "system");
+      })
+      .finally(() => {
+        setReady(true);
       });
   }, [setColorScheme]);
 
@@ -78,7 +86,7 @@ export function useTheme() {
 
   const isDark = colorScheme === "dark";
 
-  return { preference, isDark, setTheme } as const;
+  return { preference, isDark, ready, setTheme } as const;
 }
 
 /** ErrorBoundary 復旧時にテーマ設定もクリアする */

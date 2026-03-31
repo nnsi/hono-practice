@@ -132,6 +132,8 @@ cd <worktreeパス> && pnpm run test-once && pnpm run tsc && pnpm run fix
 
 `/browser-check` スキルの手順に従う。ただしポートはworktree環境のものを使う。
 
+**並列確認**: 複数画面の確認が必要な場合、サブエージェントに `playwright-cli -s <session名>` を使わせることで並列化できる（例: フロントエンドとmobileを同時確認）。
+
 ### worktree環境の開発サーバー起動
 
 worktree環境ではメイン環境とポートが分離されているため、自分で起動する:
@@ -242,4 +244,5 @@ npx kill-port <APIポート> <Viteポート>
 - **各Phaseの完了をユーザーに報告してから次に進む**（ただし `--auto` のPhase 7-9は連続実行）
 - **Phase間でコンテキストを引き継ぐ**: worktreeパス、ポート番号、Explore結果、検証フロー定義
 - **開発サーバーはworktree環境でのみ起動する**（メイン環境は触らない）
-- **ブラウザ確認はサブエージェントに委譲できない**（Chrome MCPアクセス権がメインエージェントのみ）
+- **Chrome MCPによるブラウザ確認はサブエージェントに委譲できない**（Chrome MCPアクセス権がメインエージェントのみ）
+- **サブエージェントにブラウザ確認を委譲したい場合は `playwright-cli` を使う**。`-s <session名>` で複数セッションを並列実行できるため、Phase 3/5のブラウザ確認を並列化可能。詳細は `/playwright-cli` スキル参照

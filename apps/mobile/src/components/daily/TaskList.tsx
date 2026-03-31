@@ -1,7 +1,12 @@
 import { useTranslation } from "@packages/i18n";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 import { ActivityIcon } from "../common/ActivityIcon";
+import {
+  SwipeCompleteAction,
+  SwipeDeleteAction,
+} from "../tasks/TaskSwipeActions";
 
 export type Task = {
   id: string;
@@ -18,7 +23,7 @@ export type Task = {
 
 type ActivityInfo = {
   emoji: string;
-  iconType?: string | null;
+  iconType?: "emoji" | "upload" | "generate" | null;
   iconUrl?: string | null;
   iconThumbnailUrl?: string | null;
 };
@@ -32,12 +37,16 @@ export function TaskList({
   tasks,
   isLoading,
   onToggle,
+  onEdit,
+  onDelete,
   activitiesMap,
   iconBlobMap,
 }: {
   tasks: Task[];
   isLoading: boolean;
   onToggle: (task: Task) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
   activitiesMap?: Map<string, ActivityInfo>;
   iconBlobMap?: Map<string, IconBlob>;
 }) {
@@ -69,78 +78,92 @@ export function TaskList({
           : undefined;
         const isPending = task._syncStatus === "pending";
         return (
-          <View
+          <Swipeable
             key={task.id}
-            className={`flex-row items-center gap-3 p-3 rounded-xl ${
-              isPending
-                ? "border border-amber-200 bg-amber-50 dark:bg-amber-900/20"
-                : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-            }`}
+            renderLeftActions={() => (
+              <SwipeCompleteAction
+                onToggleDone={() => onToggle(task)}
+                isDone={!!task.doneDate}
+              />
+            )}
+            renderRightActions={() => (
+              <SwipeDeleteAction onDelete={() => onDelete(task)} />
+            )}
           >
             <TouchableOpacity
-              onPress={() => onToggle(task)}
-              className="shrink-0 p-0.5"
-              accessibilityRole="checkbox"
-              accessibilityLabel={task.title}
-              accessibilityState={{ checked: !!task.doneDate }}
+              onPress={() => onEdit(task)}
+              activeOpacity={0.95}
+              className={`flex-row items-center gap-3 p-3 rounded-xl ${
+                isPending
+                  ? "border border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+                  : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              }`}
             >
-              <View
-                className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
-                  task.doneDate
-                    ? "bg-green-50 dark:bg-green-900/200 border-green-500"
-                    : "border-gray-300 dark:border-gray-600"
-                }`}
+              <TouchableOpacity
+                onPress={() => onToggle(task)}
+                className="shrink-0 p-0.5"
+                accessibilityRole="checkbox"
+                accessibilityLabel={task.title}
+                accessibilityState={{ checked: !!task.doneDate }}
               >
-                {task.doneDate && (
-                  <Text className="text-white text-xs font-bold">
-                    {"\u2713"}
+                <View
+                  className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
+                    task.doneDate
+                      ? "bg-green-500 border-green-500"
+                      : "border-gray-300 dark:border-gray-600"
+                  }`}
+                >
+                  {task.doneDate && (
+                    <Text className="text-white text-xs font-bold">
+                      {"\u2713"}
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+              {activity && (
+                <View className="shrink-0">
+                  <ActivityIcon
+                    iconType={activity.iconType ?? undefined}
+                    emoji={activity.emoji || "\u{1F4DD}"}
+                    iconBlob={
+                      task.activityId
+                        ? iconBlobMap?.get(task.activityId)
+                        : undefined
+                    }
+                    iconUrl={activity.iconUrl}
+                    iconThumbnailUrl={activity.iconThumbnailUrl}
+                    size={28}
+                    fontSize="text-xl"
+                  />
+                </View>
+              )}
+              <View className="flex-1 min-w-0">
+                <View className="flex-row items-center gap-1.5">
+                  <Text
+                    className={`text-base font-medium flex-shrink ${
+                      task.doneDate
+                        ? "line-through text-gray-400 dark:text-gray-500"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
+                    numberOfLines={1}
+                  >
+                    {task.title}
                   </Text>
-                )}
+                  {isPending && (
+                    <ActivityIndicator size="small" color="#f97316" />
+                  )}
+                </View>
+                {task.memo ? (
+                  <Text
+                    className="text-xs text-gray-400 dark:text-gray-500 mt-0.5"
+                    numberOfLines={1}
+                  >
+                    {task.memo}
+                  </Text>
+                ) : null}
               </View>
             </TouchableOpacity>
-            {activity && (
-              <View className="shrink-0">
-                <ActivityIcon
-                  iconType={activity.iconType as "emoji" | "upload" | undefined}
-                  emoji={activity.emoji || "\u{1F4DD}"}
-                  iconBlob={
-                    task.activityId
-                      ? iconBlobMap?.get(task.activityId)
-                      : undefined
-                  }
-                  iconUrl={activity.iconUrl}
-                  iconThumbnailUrl={activity.iconThumbnailUrl}
-                  size={28}
-                  fontSize="text-xl"
-                />
-              </View>
-            )}
-            <View className="flex-1 min-w-0">
-              <View className="flex-row items-center gap-1.5">
-                <Text
-                  className={`text-base font-medium flex-shrink ${
-                    task.doneDate
-                      ? "line-through text-gray-400 dark:text-gray-500"
-                      : "text-gray-800 dark:text-gray-200"
-                  }`}
-                  numberOfLines={1}
-                >
-                  {task.title}
-                </Text>
-                {isPending && (
-                  <ActivityIndicator size="small" color="#f97316" />
-                )}
-              </View>
-              {task.memo ? (
-                <Text
-                  className="text-xs text-gray-400 dark:text-gray-500 mt-0.5"
-                  numberOfLines={1}
-                >
-                  {task.memo}
-                </Text>
-              ) : null}
-            </View>
-          </View>
+          </Swipeable>
         );
       })}
     </View>

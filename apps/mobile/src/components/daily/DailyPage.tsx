@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react-native";
@@ -12,15 +12,17 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
-import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { DateNavHeader } from "../actiko/DateNavHeader";
 import { CalendarPopover } from "../common/CalendarPopover";
+import { DeleteConfirmDialog } from "../tasks/DeleteConfirmDialog";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
+import { TaskEditDialog } from "../tasks/TaskEditDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
+import { DailyLogSection } from "./DailyLogSection";
 import { EditLogDialog } from "./EditLogDialog";
-import { LogCard } from "./LogCard";
-import { TaskList } from "./TaskList";
+import { type Task, TaskList } from "./TaskList";
 import { useDailyPage } from "./useDailyPage";
 
 export function DailyPage() {
@@ -35,6 +37,7 @@ export function DailyPage() {
     kindsMap,
     activitiesMap,
     tasks,
+    rawTasks,
     editingLog,
     setEditingLog,
     createDialogOpen,
@@ -49,7 +52,22 @@ export function DailyPage() {
   const iconBlobMap = useIconBlobMap();
   const insets = useSafeAreaInsets();
 
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const editingFullTask = useMemo(
+    () =>
+      editingTaskId ? rawTasks?.find((t) => t.id === editingTaskId) : null,
+    [editingTaskId, rawTasks],
+  );
+
+  const handleDeleteTask = useCallback(async (id: string) => {
+    await taskRepository.softDeleteTask(id);
+    syncEngine.syncTasks();
+    setDeletingTask(null);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -83,58 +101,15 @@ export function DailyPage() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Activity logs section */}
-        <View className="px-4 pt-4">
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              {t("daily.activitySection")}
-            </Text>
-            <TouchableOpacity
-              className="flex-row items-center gap-1"
-              onPress={() => setCreateDialogOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t("daily.addButton")}
-            >
-              <Plus size={16} color="#2563eb" />
-              <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                {t("daily.addButton")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <DailyLogSection
+          logs={logs}
+          activitiesMap={activitiesMap}
+          kindsMap={kindsMap}
+          iconBlobMap={iconBlobMap}
+          onAddPress={() => setCreateDialogOpen(true)}
+          onLogPress={setEditingLog}
+        />
 
-          {logs.length > 0 ? (
-            <View className="gap-2">
-              {logs.map((log) => {
-                const activity = activitiesMap.get(log.activityId);
-                const kind = log.activityKindId
-                  ? kindsMap.get(log.activityKindId)
-                  : null;
-                return (
-                  <LogCard
-                    key={log.id}
-                    log={log}
-                    activity={activity ?? null}
-                    kind={kind ?? null}
-                    iconBlob={iconBlobMap.get(log.activityId)}
-                    onPress={() => setEditingLog(log)}
-                    onDelete={async () => {
-                      await activityLogRepository.softDeleteActivityLog(log.id);
-                      syncEngine.syncActivityLogs();
-                    }}
-                  />
-                );
-              })}
-            </View>
-          ) : (
-            <View className="items-center py-8">
-              <Text className="text-sm text-gray-400 dark:text-gray-500">
-                {t("daily.noRecords")}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Divider */}
         <View className="mx-4 my-6 border-b border-gray-200 dark:border-gray-700" />
 
         {/* Tasks section */}
@@ -159,6 +134,8 @@ export function DailyPage() {
             tasks={tasks}
             isLoading={false}
             onToggle={handleToggleTask}
+            onEdit={(task) => setEditingTaskId(task.id)}
+            onDelete={setDeletingTask}
             activitiesMap={activitiesMap}
             iconBlobMap={iconBlobMap}
           />
@@ -184,6 +161,27 @@ export function DailyPage() {
           defaultDate={date}
           onClose={() => setTaskCreateDialogOpen(false)}
           onSuccess={() => setTaskCreateDialogOpen(false)}
+        />
+      )}
+
+      {editingFullTask && (
+        <TaskEditDialog
+          task={editingFullTask}
+          onClose={() => setEditingTaskId(null)}
+          onSuccess={() => setEditingTaskId(null)}
+          onDelete={(id) => {
+            setEditingTaskId(null);
+            const task = tasks.find((t) => t.id === id);
+            if (task) setDeletingTask(task);
+          }}
+        />
+      )}
+
+      {deletingTask && (
+        <DeleteConfirmDialog
+          taskTitle={deletingTask.title}
+          onConfirm={() => handleDeleteTask(deletingTask.id)}
+          onCancel={() => setDeletingTask(null)}
         />
       )}
     </View>

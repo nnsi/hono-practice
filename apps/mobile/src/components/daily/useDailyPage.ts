@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import type { SyncStatus } from "@packages/domain";
 import type { ActivityKindRecord } from "@packages/domain/activity/activityRecord";
+import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import { createUseDailyPage } from "@packages/frontend-shared/hooks/useDailyPage";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
@@ -17,8 +18,13 @@ type Activity =
     _syncStatus: string;
   };
 type ActivityKindWithSync = ActivityKindRecord & { _syncStatus: SyncStatus };
+type TaskWithSync = TaskRecord & { _syncStatus: SyncStatus };
 
-export const useDailyPage = createUseDailyPage<Activity, ActivityKindWithSync>({
+export const useDailyPage = createUseDailyPage<
+  Activity,
+  ActivityKindWithSync,
+  TaskWithSync
+>({
   react: { useState, useMemo, useCallback },
   useActivities,
   useActivityLogsByDate,

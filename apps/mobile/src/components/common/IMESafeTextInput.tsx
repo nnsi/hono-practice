@@ -26,62 +26,71 @@ import {
  * - All forms using this component are in dialogs that remount on open,
  *   so the ref value is re-initialized correctly each time.
  */
-export const IMESafeTextInput = forwardRef<TextInput, TextInputProps>(
-  function IMESafeTextInput(
-    {
-      value,
-      defaultValue,
-      style,
-      multiline,
-      autoFocus,
-      accessibilityLabel,
-      ...props
-    },
-    ref,
-  ) {
-    const initialValue = useRef(value ?? defaultValue);
-    const internalRef = useRef<TextInput>(null);
-
-    const setRefs = useCallback(
-      (node: TextInput | null) => {
-        internalRef.current = node;
-        if (typeof ref === "function") {
-          ref(node);
-        } else if (ref) {
-          (ref as React.MutableRefObject<TextInput | null>).current = node;
-        }
-      },
-      [ref],
-    );
-
-    // Android: autoFocus sets focus but doesn't open the keyboard.
-    // Programmatic .focus() after a short delay reliably shows it.
-    useEffect(() => {
-      if (!autoFocus || Platform.OS !== "android") return;
-      const timer = setTimeout(() => {
-        internalRef.current?.focus();
-      }, 200);
-      return () => clearTimeout(timer);
-    }, [autoFocus]);
-
-    const mergedStyle = useMemo(
-      () => [styles.base, !multiline && styles.singleLine, style],
-      [style, multiline],
-    );
-
-    return (
-      <TextInput
-        ref={setRefs}
-        defaultValue={initialValue.current}
-        multiline={multiline}
-        style={mergedStyle}
-        autoFocus={Platform.OS !== "android" ? autoFocus : undefined}
-        accessibilityLabel={accessibilityLabel}
-        {...props}
-      />
-    );
+export const IMESafeTextInput = forwardRef<
+  TextInput,
+  TextInputProps & { className?: string }
+>(function IMESafeTextInput(
+  {
+    value,
+    defaultValue,
+    style,
+    multiline,
+    autoFocus,
+    accessibilityLabel,
+    className,
+    ...props
   },
-);
+  ref,
+) {
+  const initialValue = useRef(value ?? defaultValue);
+  const internalRef = useRef<TextInput>(null);
+
+  const setRefs = useCallback(
+    (node: TextInput | null) => {
+      internalRef.current = node;
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref) {
+        (ref as React.MutableRefObject<TextInput | null>).current = node;
+      }
+    },
+    [ref],
+  );
+
+  // Android: autoFocus sets focus but doesn't open the keyboard.
+  // Programmatic .focus() after a short delay reliably shows it.
+  useEffect(() => {
+    if (!autoFocus || Platform.OS !== "android") return;
+    const timer = setTimeout(() => {
+      internalRef.current?.focus();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [autoFocus]);
+
+  const mergedStyle = useMemo(
+    () => [styles.base, !multiline && styles.singleLine, style],
+    [style, multiline],
+  );
+
+  // Default text color (overridable by caller's className - later classes win)
+  const defaultTextClass = "text-gray-900 dark:text-gray-100";
+  const mergedClassName = className
+    ? `${defaultTextClass} ${className}`
+    : defaultTextClass;
+
+  return (
+    <TextInput
+      ref={setRefs}
+      defaultValue={initialValue.current}
+      multiline={multiline}
+      style={mergedStyle}
+      className={mergedClassName}
+      autoFocus={Platform.OS !== "android" ? autoFocus : undefined}
+      accessibilityLabel={accessibilityLabel}
+      {...props}
+    />
+  );
+});
 
 const styles = StyleSheet.create({
   base: { includeFontPadding: false },

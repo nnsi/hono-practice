@@ -33,7 +33,7 @@ export function DeleteConfirmDialog({
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onConfirm}
-            className="flex-1 py-2.5 bg-red-50 dark:bg-red-900/200 rounded-xl items-center"
+            className="flex-1 py-2.5 bg-red-600 rounded-xl items-center"
             accessibilityRole="button"
             accessibilityLabel={t("delete.confirm")}
           >

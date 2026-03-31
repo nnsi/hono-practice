@@ -111,7 +111,7 @@ export function CreateGoalForm({
           ) : null}
         </Text>
         <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
           value={target}
           onChangeText={setTarget}
           keyboardType="numeric"
@@ -166,7 +166,7 @@ export function CreateGoalForm({
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
             <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
+              className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
               value={debtCapValue}
               onChangeText={setDebtCapValue}
               keyboardType="numeric"

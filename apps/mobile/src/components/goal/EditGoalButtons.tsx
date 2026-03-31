@@ -81,7 +81,7 @@ export function EditGoalButtons({
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          className="px-3 py-2 bg-red-50 dark:bg-red-900/200 rounded-lg items-center justify-center"
+          className="px-3 py-2 bg-red-600 rounded-lg items-center justify-center"
           onPress={onDeleteConfirm}
           disabled={saving}
           accessibilityRole="button"
