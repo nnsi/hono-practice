@@ -63,7 +63,7 @@ export const IMESafeTextInput = forwardRef<
     if (!autoFocus || Platform.OS !== "android") return;
     const timer = setTimeout(() => {
       internalRef.current?.focus();
-    }, 200);
+    }, 400);
     return () => clearTimeout(timer);
   }, [autoFocus]);
 

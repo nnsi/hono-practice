@@ -16,7 +16,7 @@ import {
 import { useThemeContext } from "../../contexts/ThemeContext";
 
 type ModalScrollContextType = { scrollToEnd: () => void };
-const ModalScrollContext = createContext<ModalScrollContextType>({
+export const ModalScrollContext = createContext<ModalScrollContextType>({
   scrollToEnd: () => {},
 });
 export function useModalScroll() {
@@ -60,7 +60,7 @@ export function ModalOverlay({
         className="flex-1"
         behavior={Platform.select({
           ios: "padding",
-          android: "height",
+          android: "padding",
           default: undefined,
         })}
         style={{ backgroundColor: colors.modalOverlay }}

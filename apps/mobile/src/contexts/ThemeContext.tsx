@@ -6,7 +6,6 @@ import { type ThemeColors, getThemeColors } from "../utils/themeColors";
 type ThemeContextType = {
   preference: ThemePreference;
   isDark: boolean;
-  ready: boolean;
   colors: ThemeColors;
   setTheme: (next: ThemePreference) => void;
 };
@@ -14,19 +13,16 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType>({
   preference: "system",
   isDark: false,
-  ready: false,
   colors: getThemeColors(false),
   setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { preference, isDark, ready, setTheme } = useTheme();
+  const { preference, isDark, setTheme } = useTheme();
   const colors = useMemo(() => getThemeColors(isDark), [isDark]);
 
   return (
-    <ThemeContext.Provider
-      value={{ preference, isDark, ready, colors, setTheme }}
-    >
+    <ThemeContext.Provider value={{ preference, isDark, colors, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

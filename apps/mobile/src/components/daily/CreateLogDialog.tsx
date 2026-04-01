@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ChevronLeft, X } from "lucide-react-native";
 import {
   BackHandler,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +17,7 @@ import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { LogFormBody } from "../common/LogFormBody";
+import { ModalScrollContext } from "../common/ModalOverlay";
 import { OverlayPortal } from "../common/overlayPortal";
 import { ActivitySelectOverlay } from "./ActivitySelectOverlay";
 
@@ -46,6 +49,13 @@ export function CreateLogDialog({
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
   );
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollToEnd = useCallback(() => {
+    setTimeout(
+      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+      100,
+    );
+  }, []);
 
   const handleClose = () => {
     setSelectedActivity(null);
@@ -68,7 +78,14 @@ export function CreateLogDialog({
   if (selectedActivity) {
     return (
       <OverlayPortal>
-        <View className="flex-1">
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.select({
+            ios: "padding",
+            android: "padding",
+            default: undefined,
+          })}
+        >
           <Pressable
             style={[
               StyleSheet.absoluteFill,
@@ -123,16 +140,23 @@ export function CreateLogDialog({
                   <X size={20} color="#78716c" />
                 </TouchableOpacity>
               </View>
-              <ScrollView className="px-5 py-4" style={{ flexShrink: 1 }}>
-                <LogFormBody
-                  activity={selectedActivity}
-                  date={date}
-                  onDone={handleClose}
-                />
-              </ScrollView>
+              <ModalScrollContext.Provider value={{ scrollToEnd }}>
+                <ScrollView
+                  ref={scrollViewRef}
+                  className="px-5 py-4"
+                  style={{ flexShrink: 1 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <LogFormBody
+                    activity={selectedActivity}
+                    date={date}
+                    onDone={handleClose}
+                  />
+                </ScrollView>
+              </ModalScrollContext.Provider>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </OverlayPortal>
     );
   }
