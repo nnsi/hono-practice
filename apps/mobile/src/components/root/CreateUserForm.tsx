@@ -8,8 +8,8 @@ import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthContext } from "../../../app/_layout";
 import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { FormInput } from "../common/FormInput";
 import { GoogleMark } from "../common/GoogleMark";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
 import { LegalModal } from "../common/LegalModal";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -116,8 +116,8 @@ export function CreateUserForm() {
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
-      <IMESafeTextInput
-        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
+      <FormInput
+        className="mb-4"
         placeholder={t("auth.loginId")}
         value={loginId}
         onChangeText={setLoginId}
@@ -125,8 +125,8 @@ export function CreateUserForm() {
         autoCorrect={false}
         accessibilityLabel={t("auth.loginId")}
       />
-      <IMESafeTextInput
-        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 mb-4 text-base"
+      <FormInput
+        className="mb-4"
         placeholder={t("auth.passwordHint")}
         value={password}
         onChangeText={setPassword}

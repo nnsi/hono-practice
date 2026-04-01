@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TextInput,
   type TextInputProps,
+  useColorScheme,
 } from "react-native";
 
 /**
@@ -18,11 +19,9 @@ import {
  * Key design decisions:
  * - defaultValue is stored in a ref so it never changes after mount,
  *   preventing native TextInput re-layout on every keystroke.
- * - Single-line inputs get fixed height (44px) and explicit paddingVertical
- *   via inline style. This ensures:
- *   (a) Android: no height fluctuation when text changes
- *   (b) iOS: correct vertical text centering for pre-filled content
- *       (iOS ignores className padding for initial defaultValue layout)
+ * - fontSize is set in inline style (not relying on NativeWind className)
+ *   to ensure consistent rendering between empty and pre-filled states.
+ * - Single-line inputs get fixed height (44px), multiline gets minHeight (44px).
  * - All forms using this component are in dialogs that remount on open,
  *   so the ref value is re-initialized correctly each time.
  */
@@ -42,6 +41,7 @@ export const IMESafeTextInput = forwardRef<
   },
   ref,
 ) {
+  const colorScheme = useColorScheme();
   const initialValue = useRef(value ?? defaultValue);
   const internalRef = useRef<TextInput>(null);
 
@@ -68,7 +68,11 @@ export const IMESafeTextInput = forwardRef<
   }, [autoFocus]);
 
   const mergedStyle = useMemo(
-    () => [styles.base, !multiline && styles.singleLine, style],
+    () => [
+      styles.base,
+      multiline ? styles.multiLine : styles.singleLine,
+      style,
+    ],
     [style, multiline],
   );
 
@@ -78,6 +82,10 @@ export const IMESafeTextInput = forwardRef<
     ? `${defaultTextClass} ${className}`
     : defaultTextClass;
 
+  // Explicit selectionColor ensures iOS sets tintColor on the native UITextField,
+  // which controls the IME composition underline (marked text) visibility.
+  const selectionColor = colorScheme === "dark" ? "#5AC8FA" : "#007AFF";
+
   return (
     <TextInput
       ref={setRefs}
@@ -85,6 +93,7 @@ export const IMESafeTextInput = forwardRef<
       multiline={multiline}
       style={mergedStyle}
       className={mergedClassName}
+      selectionColor={selectionColor}
       autoFocus={Platform.OS !== "android" ? autoFocus : undefined}
       accessibilityLabel={accessibilityLabel}
       {...props}
@@ -93,14 +102,16 @@ export const IMESafeTextInput = forwardRef<
 });
 
 const styles = StyleSheet.create({
-  base: { includeFontPadding: false },
+  base: { includeFontPadding: false, fontSize: 16 },
   singleLine: {
     height: 44,
-    ...Platform.select({
-      // iOS positions defaultValue text lower than user-typed text.
-      // Asymmetric padding compensates: less top, more bottom pushes text up.
-      ios: { paddingTop: 0, paddingBottom: 7 },
-      android: { paddingVertical: 8 },
-    }),
+    paddingVertical: 8,
+    textAlignVertical: "center" as const,
+  },
+  multiLine: {
+    minHeight: 44,
+    maxHeight: 88,
+    paddingVertical: 8,
+    textAlignVertical: "top" as const,
   },
 });

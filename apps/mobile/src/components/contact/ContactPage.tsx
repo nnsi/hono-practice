@@ -1,12 +1,8 @@
 import { useTranslation } from "@packages/i18n";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { useContactForm } from "./useContactForm";
 
 type CategoryOption = {
@@ -67,8 +63,7 @@ export function ContactPage() {
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {t("contact.email")}
           </Text>
-          <TextInput
-            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-base text-gray-900 dark:text-gray-100"
+          <FormInput
             placeholder={t("contact.emailPlaceholder")}
             placeholderTextColor="#9ca3af"
             value={email}
@@ -121,13 +116,12 @@ export function ContactPage() {
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {t("contact.body")}
           </Text>
-          <TextInput
-            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-base text-gray-900 dark:text-gray-100 min-h-32"
+          <FormTextarea
+            className="min-h-32"
             placeholder={t("contact.bodyPlaceholder")}
             placeholderTextColor="#9ca3af"
             value={body}
             onChangeText={(v) => setBody(v.slice(0, 1000))}
-            multiline
             textAlignVertical="top"
             accessibilityLabel={t("contact.body")}
           />

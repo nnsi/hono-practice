@@ -2,6 +2,8 @@ import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { IconTypeSelector } from "./IconTypeSelector";
 import { RecordingModeSelector } from "./RecordingModeSelector";
@@ -68,11 +70,10 @@ export function CreateActivityDialog({
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t("name")}
             </label>
-            <input
+            <FormInput
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={t("namePlaceholder")}
             />
           </div>
@@ -82,11 +83,10 @@ export function CreateActivityDialog({
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t("unit")}
             </label>
-            <input
+            <FormInput
               type="text"
               value={quantityUnit}
               onChange={(e) => setQuantityUnit(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={t("unitPlaceholder")}
             />
           </div>
@@ -117,7 +117,7 @@ export function CreateActivityDialog({
             </div>
             {kinds.map((kind) => (
               <div key={kind.id} className="flex gap-2 mb-2 items-center">
-                <input
+                <FormInput
                   type="text"
                   value={kind.name}
                   onChange={(e) =>
@@ -128,7 +128,7 @@ export function CreateActivityDialog({
                     )
                   }
                   placeholder={t("kindPlaceholder")}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1"
                 />
                 <input
                   type="color"
@@ -177,13 +177,13 @@ export function CreateActivityDialog({
             </button>
           </div>
 
-          <button
+          <FormButton
             type="submit"
+            variant="primary"
+            label={t("create")}
             disabled={isSubmitting || !name.trim()}
-            className="w-full py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-          >
-            {t("create")}
-          </button>
+            className="w-full"
+          />
         </form>
       </div>
     </ModalOverlay>

@@ -1,5 +1,6 @@
 import { useTranslation } from "@packages/i18n";
 
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 
 export function DeleteConfirmDialog({
@@ -21,20 +22,18 @@ export function DeleteConfirmDialog({
           {t("delete.description", { taskTitle })}
         </p>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <FormButton
+            variant="secondary"
+            label={t("delete.cancel")}
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            {t("delete.cancel")}
-          </button>
-          <button
-            type="button"
+            className="flex-1"
+          />
+          <FormButton
+            variant="dangerConfirm"
+            label={t("delete.confirm")}
             onClick={onConfirm}
-            className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
-          >
-            {t("delete.confirm")}
-          </button>
+            className="flex-1"
+          />
         </div>
       </div>
     </ModalOverlay>

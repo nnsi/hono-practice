@@ -7,13 +7,13 @@ function slotBgColor(slot: HeatmapSlot): string {
   if (!slot.cell || slot.cell.totalGoals === 0)
     return "bg-gray-100 dark:bg-gray-800";
   const { achievedCount, activeCount, totalGoals } = slot.cell;
-  if (achievedCount === totalGoals) return "bg-green-50 dark:bg-green-900/200";
+  if (achievedCount === totalGoals) return "bg-green-600 dark:bg-green-500";
   if (achievedCount > 0) {
     const ratio = achievedCount / totalGoals;
     if (ratio >= 0.66) return "bg-green-400";
     return "bg-green-300";
   }
-  if (activeCount > 0) return "bg-yellow-300";
+  if (activeCount > 0) return "bg-yellow-200 dark:bg-yellow-700";
   return "bg-gray-200 dark:bg-gray-700";
 }
 
@@ -71,9 +71,9 @@ export function GoalHeatmap() {
           </Text>
           <View className="flex-row items-center gap-0.5 md:gap-1">
             <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-gray-200 dark:bg-gray-700" />
-            <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-yellow-300" />
+            <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-yellow-200 dark:bg-yellow-700" />
             <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-green-300" />
-            <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-green-50 dark:bg-green-900/200" />
+            <View className="w-[9px] h-[9px] md:w-3 md:h-3 rounded-[2px] bg-green-600 dark:bg-green-500" />
             <Text className="text-xs text-gray-400 dark:text-gray-500 ml-0.5">
               達成
             </Text>

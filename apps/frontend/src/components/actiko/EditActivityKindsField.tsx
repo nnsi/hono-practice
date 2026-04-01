@@ -1,6 +1,8 @@
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
 
+import { FormInput } from "../common/FormInput";
+
 type Kind = { id?: string; name: string; color: string };
 
 type EditActivityKindsFieldProps = {
@@ -19,7 +21,7 @@ export function EditActivityKindsField({
       <div className="text-sm font-medium text-gray-600 mb-2">{t("kinds")}</div>
       {kinds.map((kind, i) => (
         <div key={kind.id ?? i} className="flex gap-2 mb-2 items-center">
-          <input
+          <FormInput
             type="text"
             value={kind.name}
             onChange={(e) =>
@@ -30,7 +32,7 @@ export function EditActivityKindsField({
               )
             }
             placeholder={t("kindPlaceholder")}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1"
           />
           <input
             type="color"

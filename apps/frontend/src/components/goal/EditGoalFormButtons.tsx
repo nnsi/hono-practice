@@ -1,38 +1,35 @@
 import { useTranslation } from "@packages/i18n";
-import { View } from "react-native";
 
 import { FormButton } from "../common/FormButton";
 
-type EditGoalButtonsProps = {
+type EditGoalFormButtonsProps = {
   saving: boolean;
   showDeactivateConfirm: boolean;
+  setShowDeactivateConfirm: (v: boolean) => void;
   showDeleteConfirm: boolean;
-  onSave: () => void;
-  onDeactivateRequest: () => void;
-  onDeactivateConfirm: () => void;
-  onDeleteRequest: () => void;
-  onDeleteConfirm: () => void;
+  setShowDeleteConfirm: (v: boolean) => void;
+  onDeactivate: () => void;
+  onDelete: () => void;
 };
 
-export function EditGoalButtons({
+export function EditGoalFormButtons({
   saving,
   showDeactivateConfirm,
+  setShowDeactivateConfirm,
   showDeleteConfirm,
-  onSave,
-  onDeactivateRequest,
-  onDeactivateConfirm,
-  onDeleteRequest,
-  onDeleteConfirm,
-}: EditGoalButtonsProps) {
+  setShowDeleteConfirm,
+  onDeactivate,
+  onDelete,
+}: EditGoalFormButtonsProps) {
   const { t } = useTranslation("goal");
 
   return (
-    <View className="flex-row gap-2 pt-1">
+    <div className="flex gap-2 pt-1">
       {!showDeleteConfirm ? (
         <FormButton
           variant="danger"
           label={t("deleteButton")}
-          onPress={onDeleteRequest}
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={saving}
           className="px-3"
         />
@@ -40,17 +37,16 @@ export function EditGoalButtons({
         <FormButton
           variant="dangerConfirm"
           label={t("deleteButton")}
-          onPress={onDeleteConfirm}
+          onClick={onDelete}
           disabled={saving}
           className="px-3"
         />
       )}
-
       {!showDeactivateConfirm ? (
         <FormButton
           variant="danger"
           label={t("deactivateButton")}
-          onPress={onDeactivateRequest}
+          onClick={() => setShowDeactivateConfirm(true)}
           disabled={saving}
           className="px-4"
         />
@@ -58,19 +54,18 @@ export function EditGoalButtons({
         <FormButton
           variant="dangerConfirm"
           label={t("deactivateConfirmButton")}
-          onPress={onDeactivateConfirm}
+          onClick={onDeactivate}
           disabled={saving}
           className="px-4"
         />
       )}
-
       <FormButton
+        type="submit"
         variant="primary"
         label={t("saveButton")}
-        onPress={onSave}
         disabled={saving}
         className="flex-1"
       />
-    </View>
+    </div>
   );
 }

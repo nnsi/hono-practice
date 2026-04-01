@@ -1,5 +1,7 @@
 import { useTranslation } from "@packages/i18n";
-import { Text, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
+
+import { FormButton } from "../common/FormButton";
 
 export function TaskEditDialogFooter({
   taskId,
@@ -19,42 +21,26 @@ export function TaskEditDialogFooter({
   const { t } = useTranslation("task");
   return (
     <View className="flex-row gap-2">
-      <TouchableOpacity
+      <FormButton
+        variant="danger"
+        label={t("edit.delete")}
         onPress={() => onDelete(taskId)}
-        className="px-4 py-2.5 border border-red-300 rounded-lg items-center"
-        accessibilityRole="button"
-        accessibilityLabel={t("edit.delete")}
-      >
-        <Text className="text-sm text-red-600 dark:text-red-400">
-          {t("edit.delete")}
-        </Text>
-      </TouchableOpacity>
+        className="px-4"
+      />
       <View className="flex-1" />
-      <TouchableOpacity
+      <FormButton
+        variant="secondary"
+        label={t("delete.cancel")}
         onPress={onClose}
-        className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
-        accessibilityRole="button"
-        accessibilityLabel={t("delete.cancel")}
-      >
-        <Text className="text-sm text-gray-700 dark:text-gray-300">
-          {t("delete.cancel")}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+        className="px-4"
+      />
+      <FormButton
+        variant="primary"
+        label={isSubmitting ? t("edit.submitting") : t("edit.submit")}
         onPress={onSave}
         disabled={isSubmitting || !title.trim()}
-        className={`px-4 py-2.5 rounded-lg items-center ${
-          isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
-        }`}
-        accessibilityRole="button"
-        accessibilityLabel={
-          isSubmitting ? t("edit.submitting") : t("edit.submit")
-        }
-      >
-        <Text className="text-sm text-white font-medium">
-          {isSubmitting ? t("edit.submitting") : t("edit.submit")}
-        </Text>
-      </TouchableOpacity>
+        className="px-4"
+      />
     </View>
   );
 }

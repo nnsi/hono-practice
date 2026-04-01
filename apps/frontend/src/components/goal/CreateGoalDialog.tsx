@@ -2,10 +2,9 @@ import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
-import { DatePickerField } from "../common/DatePickerField";
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { getActivityEmoji } from "./activityHelpers";
-import { DayTargetsInput } from "./DayTargetsInput";
+import { CreateGoalFields } from "./CreateGoalFields";
 import type { CreateGoalPayload } from "./types";
 import { useCreateGoalDialog } from "./useCreateGoalDialog";
 
@@ -58,140 +57,43 @@ export function CreateGoalDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* アクティビティ選択 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              {t("activityLabel")}
-            </label>
-            {activities.length === 0 ? (
-              <p className="text-sm text-gray-400">{t("noActivities")}</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {activities.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setActivityId(a.id)}
-                    className={`flex flex-col items-center p-2 rounded-lg border transition-colors ${
-                      activityId === a.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="text-xl">{getActivityEmoji(a)}</span>
-                    <span className="text-[10px] mt-1 truncate w-full text-center">
-                      {a.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 日次目標 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              {t("dailyTargetLabel")}
-              {selectedActivity?.quantityUnit && (
-                <span className="ml-1 text-xs text-gray-400">
-                  ({selectedActivity.quantityUnit})
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min="0"
-              step="any"
-            />
-          </div>
-
-          {/* 日付 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                {t("startDateLabel")}
-              </label>
-              <DatePickerField value={startDate} onChange={setStartDate} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                {t("endDateLabel")}
-              </label>
-              <DatePickerField
-                value={endDate}
-                onChange={setEndDate}
-                placeholder={t("endDatePlaceholder")}
-                allowClear
-              />
-            </div>
-          </div>
-
-          {/* 曜日別目標 */}
-          <DayTargetsInput
-            enabled={dayTargetsEnabled}
-            onToggle={setDayTargetsEnabled}
-            values={dayTargetValues}
-            onChange={setDayTargetValues}
-            defaultTarget={target}
+          <CreateGoalFields
+            activities={activities}
+            activityId={activityId}
+            setActivityId={setActivityId}
+            target={target}
+            setTarget={setTarget}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            dayTargetsEnabled={dayTargetsEnabled}
+            setDayTargetsEnabled={setDayTargetsEnabled}
+            dayTargetValues={dayTargetValues}
+            setDayTargetValues={setDayTargetValues}
+            debtCapEnabled={debtCapEnabled}
+            setDebtCapEnabled={setDebtCapEnabled}
+            debtCapValue={debtCapValue}
+            setDebtCapValue={setDebtCapValue}
+            selectedActivity={selectedActivity}
+            errorMsg={errorMsg}
           />
-
-          {/* 負債上限 */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
-              <input
-                type="checkbox"
-                checked={debtCapEnabled}
-                onChange={(e) => {
-                  setDebtCapEnabled(e.target.checked);
-                  if (e.target.checked && !debtCapValue) {
-                    setDebtCapValue(String(Number(target) * 7));
-                  }
-                }}
-                className="rounded"
-              />
-              {t("debtCapLabel")}
-            </label>
-            {debtCapEnabled && (
-              <div className="flex items-center gap-1 mt-1">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={debtCapValue}
-                  onChange={(e) => setDebtCapValue(e.target.value)}
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  min="0"
-                  step="any"
-                />
-                <span className="text-xs text-gray-500">
-                  {selectedActivity?.quantityUnit ?? ""}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
 
           {/* ボタン */}
           <div className="flex gap-2 pt-2">
-            <button
-              type="button"
+            <FormButton
+              variant="secondary"
+              label={t("cancelButton")}
               onClick={onClose}
-              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              {t("cancelButton")}
-            </button>
-            <button
+              className="flex-1"
+            />
+            <FormButton
               type="submit"
+              variant="primary"
+              label={t("createButton")}
               disabled={submitting}
-              className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {t("createButton")}
-            </button>
+              className="flex-1"
+            />
           </div>
         </form>
       </div>

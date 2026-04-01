@@ -83,7 +83,7 @@ export function CSVExportModal({ onClose }: Props) {
             className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium rounded-lg text-white transition-colors ${
               csv.isExporting || !csv.startDate || !csv.endDate
                 ? "bg-gray-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-gray-900 hover:bg-gray-800"
             }`}
           >
             <Download size={16} />

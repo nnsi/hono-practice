@@ -1,10 +1,11 @@
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { ClipboardPaste } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
-import { SaveButton } from "../parts/SaveButton";
 import { useNumpadMode } from "./useNumpadMode";
 
 const NUMPAD_ROWS = [
@@ -42,6 +43,7 @@ async function readClipboard(): Promise<string | null> {
 }
 
 export function NumpadMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useNumpadMode(props);
 
   const handlePaste = async () => {
@@ -104,7 +106,12 @@ export function NumpadMode(props: RecordingModeProps) {
       </View>
 
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />
-      <SaveButton onPress={vm.submit} disabled={vm.isSubmitting} />
+      <FormButton
+        variant="primary"
+        label={vm.isSubmitting ? t("saving") : t("save")}
+        onPress={vm.submit}
+        disabled={vm.isSubmitting}
+      />
     </View>
   );
 }

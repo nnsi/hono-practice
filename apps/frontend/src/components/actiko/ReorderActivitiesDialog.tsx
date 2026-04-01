@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 
 import { activityRepository } from "../../db/activityRepository";
 import type { DexieActivity } from "../../db/schema";
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { renderActivityIcon } from "../goal/activityHelpers";
 
@@ -92,21 +93,19 @@ export function ReorderActivitiesDialog({
 
         {/* Footer */}
         <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
-          <button
-            type="button"
+          <FormButton
+            variant="secondary"
+            label={t("cancel")}
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-          >
-            {t("cancel")}
-          </button>
-          <button
-            type="button"
+            className="flex-1"
+          />
+          <FormButton
+            variant="primary"
+            label={saving ? t("saving") : t("save")}
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
-          >
-            {saving ? t("saving") : t("save")}
-          </button>
+            className="flex-1"
+          />
         </div>
       </div>
     </ModalOverlay>

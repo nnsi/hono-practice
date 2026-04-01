@@ -7,7 +7,8 @@ import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { MobileScopeSelector } from "./MobileScopeSelector";
 
@@ -88,22 +89,14 @@ export function CreateApiKeyDialog({
             )}
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            className={`w-full py-2.5 rounded-lg ${!name.trim() || isSubmitting || selectedScopes.length === 0 ? "bg-gray-300" : "bg-stone-900"}`}
+          <FormButton
+            variant="primary"
+            label={isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
             onPress={handleSubmit}
             disabled={
               isSubmitting || !name.trim() || selectedScopes.length === 0
             }
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")
-            }
-          >
-            <Text className="text-white font-medium text-center">
-              {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
-            </Text>
-          </TouchableOpacity>
+          />
         )
       }
     >
@@ -128,8 +121,8 @@ export function CreateApiKeyDialog({
           <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             {t("apiKeyName")}
           </Text>
-          <IMESafeTextInput
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base text-gray-900 dark:text-gray-100"
+          <FormInput
+            className="w-full"
             value={name}
             onChangeText={setName}
             placeholder={t("apiKeyNamePlaceholder")}

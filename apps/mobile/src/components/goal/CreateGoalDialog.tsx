@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { Text, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CreateGoalForm } from "./CreateGoalForm";
 import type { Activity, CreateGoalPayload } from "./types";
@@ -68,28 +69,19 @@ export function CreateGoalDialog({
       title={t("createTitle")}
       footer={
         <View className="flex-row gap-2">
-          <TouchableOpacity
-            className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
+          <FormButton
+            variant="secondary"
+            label={t("cancelButton")}
             onPress={handleClose}
-            accessibilityRole="button"
-            accessibilityLabel={t("cancelButton")}
-          >
-            <Text className="text-gray-700 dark:text-gray-300 font-medium">
-              {t("cancelButton")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-lg items-center ${
-              submitting ? "bg-gray-400" : "bg-gray-900"
-            }`}
+            className="flex-1"
+          />
+          <FormButton
+            variant="primary"
+            label={t("createButton")}
             onPress={handleSubmit}
             disabled={submitting}
-            accessibilityRole="button"
-            accessibilityLabel={t("createButton")}
-            accessibilityState={{ disabled: submitting }}
-          >
-            <Text className="text-white font-medium">{t("createButton")}</Text>
-          </TouchableOpacity>
+            className="flex-1"
+          />
         </View>
       }
     >

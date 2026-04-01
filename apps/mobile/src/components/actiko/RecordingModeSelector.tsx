@@ -17,7 +17,7 @@ import {
 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormInput } from "../common/FormInput";
 
 type RecordingModeSelectorProps = {
   recordingMode: RecordingMode;
@@ -122,8 +122,7 @@ export function RecordingModeSelector({
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {t("stepValues")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={stepsText}
             onChangeText={handleStepsTextChange}
             placeholder="1, 10, 100"

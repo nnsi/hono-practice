@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { DatePickerField } from "../common/DatePickerField";
+import { FormButton } from "../common/FormButton";
 
 export function FreezePeriodForm({
   startDate,
@@ -60,28 +61,19 @@ export function FreezePeriodForm({
         )}
       </View>
       <View className="flex-row justify-end gap-2 mt-3">
-        <TouchableOpacity
+        <FormButton
+          variant="secondary"
+          label={t("cancelButton")}
           onPress={onCancel}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
-          accessibilityRole="button"
-          accessibilityLabel={t("cancelButton")}
-        >
-          <Text className="text-xs text-gray-600 dark:text-gray-400">
-            {t("cancelButton")}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+          className="px-4"
+        />
+        <FormButton
+          variant="primary"
+          label={t("freezeConfirmButton")}
           onPress={onConfirm}
           disabled={busy}
-          className="px-4 py-2 bg-blue-600 rounded-lg"
-          accessibilityRole="button"
-          accessibilityLabel={t("freezeConfirmButton")}
-          accessibilityState={{ disabled: busy }}
-        >
-          <Text className="text-xs font-medium text-white">
-            {t("freezeConfirmButton")}
-          </Text>
-        </TouchableOpacity>
+          className="px-4"
+        />
       </View>
     </View>
   );

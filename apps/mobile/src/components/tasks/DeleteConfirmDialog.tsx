@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 
 export function DeleteConfirmDialog({
@@ -21,26 +22,18 @@ export function DeleteConfirmDialog({
       title={t("delete.title")}
       footer={
         <View className="flex-row gap-2">
-          <TouchableOpacity
+          <FormButton
+            variant="secondary"
+            label={t("delete.cancel")}
             onPress={onCancel}
-            className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl items-center"
-            accessibilityRole="button"
-            accessibilityLabel={t("delete.cancel")}
-          >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">
-              {t("delete.cancel")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            className="flex-1"
+          />
+          <FormButton
+            variant="dangerConfirm"
+            label={t("delete.confirm")}
             onPress={onConfirm}
-            className="flex-1 py-2.5 bg-red-600 rounded-xl items-center"
-            accessibilityRole="button"
-            accessibilityLabel={t("delete.confirm")}
-          >
-            <Text className="text-sm text-white font-medium">
-              {t("delete.confirm")}
-            </Text>
-          </TouchableOpacity>
+            className="flex-1"
+          />
         </View>
       }
     >

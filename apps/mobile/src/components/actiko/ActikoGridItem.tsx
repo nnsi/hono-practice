@@ -39,7 +39,7 @@ export function ActikoGridItem({
   actions: ActionItem[];
 }) {
   if (item.id.startsWith("__spacer_")) {
-    return <View className="flex-1 m-1" />;
+    return <View style={{ flex: 1 }} />;
   }
 
   const action = actions.find((a) => a.id === item.id);
@@ -67,7 +67,7 @@ export function ActikoGridItem({
   }
 
   if (Platform.OS === "web" || reduceMotion) {
-    return card;
+    return <View style={{ flex: 1 }}>{card}</View>;
   }
 
   return (

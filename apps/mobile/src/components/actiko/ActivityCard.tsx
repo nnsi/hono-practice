@@ -74,7 +74,7 @@ export function ActivityCard({
   );
 
   return (
-    <View className="flex-1 m-1 relative">
+    <View className="m-1 relative">
       <TouchableOpacity
         className={`p-4 rounded-2xl border items-center min-h-[120px] ${
           isDone
