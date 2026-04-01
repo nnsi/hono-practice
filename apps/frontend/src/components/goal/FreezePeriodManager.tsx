@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Pause, Play, Trash2 } from "lucide-react";
 
 import { DatePickerField } from "../common/DatePickerField";
+import { FormButton } from "../common/FormButton";
 import { useFreezePeriodManager } from "./useFreezePeriodManager";
 
 type FreezePeriodManagerProps = {
@@ -87,21 +88,19 @@ export function FreezePeriodManager({ goalId }: FreezePeriodManagerProps) {
               allowClear
             />
           </div>
-          <div className="flex justify-end gap-1.5 pt-1">
-            <button
-              type="button"
+          <div className="flex justify-end gap-2 mt-3">
+            <FormButton
+              variant="secondary"
+              label={t("cancelButton")}
               onClick={handleCancelForm}
-              className="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              {t("cancelButton")}
-            </button>
-            <button
-              type="button"
+              className="px-4"
+            />
+            <FormButton
+              variant="primary"
+              label={t("freezeConfirmButton")}
               onClick={handleFreezeWithDates}
-              className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              {t("freezeConfirmButton")}
-            </button>
+              className="px-4"
+            />
           </div>
         </div>
       )}

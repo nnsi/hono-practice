@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import { Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { FormInput } from "../common/FormInput";
@@ -52,12 +53,12 @@ export function EditActivityKindList({
           />
           <TouchableOpacity
             onPress={() => onRemove(index)}
-            className="px-2 py-1"
+            className="p-1.5"
             accessibilityRole="button"
             accessibilityLabel={`Remove ${kind.name}`}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text className="text-red-500 dark:text-red-400 text-base">-</Text>
+            <Trash2 size={16} className="text-red-500 dark:text-red-400" />
           </TouchableOpacity>
         </View>
       ))}

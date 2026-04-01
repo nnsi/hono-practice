@@ -5,6 +5,7 @@ import { AlertTriangle, Check, UserCircle } from "lucide-react";
 
 import { db } from "../../db/schema";
 import { apiClient, clearToken } from "../../utils/apiClient";
+import { FormButton } from "../common/FormButton";
 import { AppleSignInButton } from "../root/AppleSignInButton";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
 import { useAppleAccount, useGoogleAccount } from "./useAccountLinking";
@@ -138,20 +139,18 @@ export function AccountSection() {
                 {t("deleteAccountConfirm")}
               </p>
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <FormButton
+                  variant="dangerConfirm"
+                  label={t("deleteAccountButton")}
                   onClick={handleDeleteAccount}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  {t("deleteAccountButton")}
-                </button>
-                <button
-                  type="button"
+                  className="px-4"
+                />
+                <FormButton
+                  variant="secondary"
+                  label={t("cancel")}
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  {t("cancel")}
-                </button>
+                  className="px-4"
+                />
               </div>
             </div>
           )}

@@ -1,6 +1,6 @@
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
@@ -147,9 +147,9 @@ export function CreateActivityDialog({
                   onClick={() =>
                     setKinds((prev) => prev.filter((k) => k.id !== kind.id))
                   }
-                  className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  -
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}

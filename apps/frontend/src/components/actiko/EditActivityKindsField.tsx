@@ -1,5 +1,6 @@
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
+import { Trash2 } from "lucide-react";
 
 import { FormInput } from "../common/FormInput";
 
@@ -49,9 +50,9 @@ export function EditActivityKindsField({
           <button
             type="button"
             onClick={() => setKinds((prev) => prev.filter((_, j) => j !== i))}
-            className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
           >
-            -
+            <Trash2 size={16} />
           </button>
         </div>
       ))}
