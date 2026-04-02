@@ -26,10 +26,14 @@ export type ActivityIconDeleteQueueItem = {
 export type ActivityRepository = {
   // Read
   getAllActivities(): Promise<Syncable<ActivityRecord>[]>;
+  getAllActivitiesIncludingDeleted(): Promise<Syncable<ActivityRecord>[]>;
   getActivityKindsByActivityId(
     activityId: string,
   ): Promise<Syncable<ActivityKindRecord>[]>;
   getAllActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
+  getAllActivityKindsIncludingDeleted(): Promise<
+    Syncable<ActivityKindRecord>[]
+  >;
   // Create
   createActivity(input: CreateActivityInput): Promise<Syncable<ActivityRecord>>;
   // Update

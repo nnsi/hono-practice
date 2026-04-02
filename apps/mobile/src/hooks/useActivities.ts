@@ -7,3 +7,10 @@ export function useActivities() {
   );
   return { activities: activities ?? [], isReady: activities !== undefined };
 }
+
+export function useActivitiesIncludingDeleted() {
+  const activities = useLiveQuery("activities", () =>
+    activityRepository.getAllActivitiesIncludingDeleted(),
+  );
+  return { activities: activities ?? [], isReady: activities !== undefined };
+}
