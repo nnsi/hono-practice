@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertTriangle, Mail, Users } from "lucide-react";
+import { Activity, AlertTriangle, Crown, Mail, Users } from "lucide-react";
 
 import { adminClient } from "../../utils/apiClient";
 import { ApmSection } from "./ApmSection";
@@ -19,7 +19,7 @@ export function DashboardPage() {
     <div>
       <h2 className="mb-6 text-2xl font-bold text-gray-900">ダッシュボード</h2>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="総ユーザー数"
           value={data?.totalUsers}
@@ -36,6 +36,12 @@ export function DashboardPage() {
           label="直近7日のアクション"
           value={data?.recentActionCount}
           icon={<Activity size={20} />}
+          isLoading={isLoading}
+        />
+        <StatCard
+          label="プレミアムユーザー"
+          value={data?.premiumUsers}
+          icon={<Crown size={20} />}
           isLoading={isLoading}
         />
         <StatCard
