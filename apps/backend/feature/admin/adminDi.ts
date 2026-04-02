@@ -1,6 +1,7 @@
 import type { AppContext } from "@backend/context";
 import { newContactRepository } from "@backend/feature/contact/contactRepository";
 import { newContactUsecase } from "@backend/feature/contact/contactUsecase";
+import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
 import { noopTracer } from "@backend/lib/tracer";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
@@ -15,6 +16,7 @@ import {
 
 import { newAdminDashboardUsecase } from "./adminDashboardUsecase";
 import { newAdminHandler } from "./adminHandler";
+import { newAdminSubscriptionUsecase } from "./adminSubscriptionUsecase";
 import { newAdminUserUsecase } from "./adminUserUsecase";
 import { newWaeClientErrorProvider } from "./waeClientErrorQuery";
 import { newWaeApmProvider } from "./waeQuery";
@@ -50,11 +52,18 @@ export function resolveAdminHandler(c: {
     clientErrorProvider,
   );
   const dashboardUc = newAdminDashboardUsecase(dashboardQs, tracer);
+  const subscriptionRepo = newSubscriptionRepository(db);
+  const subscriptionUc = newAdminSubscriptionUsecase(
+    userRepo,
+    subscriptionRepo,
+    tracer,
+  );
   return newAdminHandler(
     userUc,
     contactUc,
     dashboardUc,
     clientErrorProvider,
     apmProvider,
+    subscriptionUc,
   );
 }
