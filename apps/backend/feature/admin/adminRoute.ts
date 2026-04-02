@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { adminAuthMiddleware } from "@backend/middleware/adminAuthMiddleware";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 import { resolveAdminHandler } from "./adminDi";
 import type { AdminHandler } from "./adminHandler";
@@ -43,6 +45,47 @@ function createAdminRoute() {
       const result = await c.var.adminHandler.listUsers(limit, offset);
       return c.json(result);
     })
+    .get("/users/:id", async (c) => {
+      const { id } = c.req.param();
+      const result = await c.var.adminHandler.getUserWithSubscription(id);
+      if (!result) {
+        throw new AppError("User not found", 404);
+      }
+      return c.json(result);
+    })
+    .put(
+      "/users/:id/subscription",
+      zValidator(
+        "json",
+        z.object({
+          plan: z.enum(["free", "premium"]),
+          status: z.enum(["trial", "active", "paused", "cancelled", "expired"]),
+          currentPeriodStart: z.string().date().nullable().optional(),
+          currentPeriodEnd: z.string().date().nullable().optional(),
+        }),
+      ),
+      async (c) => {
+        const { id } = c.req.param();
+        const body = c.req.valid("json");
+        const result = await c.var.adminHandler.upsertSubscriptionManually(id, {
+          plan: body.plan,
+          status: body.status,
+          currentPeriodStart:
+            body.currentPeriodStart === null
+              ? null
+              : body.currentPeriodStart
+                ? new Date(body.currentPeriodStart)
+                : undefined,
+          currentPeriodEnd:
+            body.currentPeriodEnd === null
+              ? null
+              : body.currentPeriodEnd
+                ? new Date(body.currentPeriodEnd)
+                : undefined,
+        });
+        return c.json(result);
+      },
+    )
     .get("/contacts", async (c) => {
       const limit = parsePaginationParam(c.req.query("limit"), 20, 100);
       const offset = parsePaginationParam(c.req.query("offset"), 0, 10000);

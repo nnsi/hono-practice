@@ -3,6 +3,7 @@ import type { ApmProvider } from "@backend/query/apmProvider";
 import type { ClientErrorProvider } from "@backend/query/clientErrorProvider";
 
 import type { AdminDashboardUsecase } from "./adminDashboardUsecase";
+import type { AdminSubscriptionUsecase } from "./adminSubscriptionUsecase";
 import type { AdminUserUsecase } from "./adminUserUsecase";
 
 export type AdminHandler = {
@@ -12,6 +13,8 @@ export type AdminHandler = {
   getContactById: ContactUsecase["getContactById"];
   getClientErrorDetails: ClientErrorProvider["getDetails"];
   getApiErrorDetails: ApmProvider["getErrorDetails"];
+  getUserWithSubscription: AdminSubscriptionUsecase["getUserWithSubscription"];
+  upsertSubscriptionManually: AdminSubscriptionUsecase["upsertSubscriptionManually"];
 };
 
 export function newAdminHandler(
@@ -20,6 +23,7 @@ export function newAdminHandler(
   dashboardUc: AdminDashboardUsecase,
   clientErrorProvider: ClientErrorProvider,
   apmProvider: ApmProvider,
+  subscriptionUc: AdminSubscriptionUsecase,
 ): AdminHandler {
   return {
     getDashboard: () => dashboardUc.getDashboardData(),
@@ -29,5 +33,9 @@ export function newAdminHandler(
     getClientErrorDetails: (platform) =>
       clientErrorProvider.getDetails(platform),
     getApiErrorDetails: (kind) => apmProvider.getErrorDetails(kind),
+    getUserWithSubscription: (userId) =>
+      subscriptionUc.getUserWithSubscription(userId),
+    upsertSubscriptionManually: (userId, params) =>
+      subscriptionUc.upsertSubscriptionManually(userId, params),
   };
 }

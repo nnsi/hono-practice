@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UsersIdRouteImport } from './routes/users_.$id'
 import { Route as ContactsIdRouteImport } from './routes/contacts_.$id'
 
 const UsersRoute = UsersRouteImport.update({
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsersIdRoute = UsersIdRouteImport.update({
+  id: '/users_/$id',
+  path: '/users/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsIdRoute = ContactsIdRouteImport.update({
   id: '/contacts_/$id',
   path: '/contacts/$id',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof ContactsRoute
   '/users': typeof UsersRoute
   '/contacts/$id': typeof ContactsIdRoute
+  '/users/$id': typeof UsersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contacts': typeof ContactsRoute
   '/users': typeof UsersRoute
   '/contacts/$id': typeof ContactsIdRoute
+  '/users/$id': typeof UsersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/contacts': typeof ContactsRoute
   '/users': typeof UsersRoute
   '/contacts_/$id': typeof ContactsIdRoute
+  '/users_/$id': typeof UsersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contacts' | '/users' | '/contacts/$id'
+  fullPaths: '/' | '/contacts' | '/users' | '/contacts/$id' | '/users/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contacts' | '/users' | '/contacts/$id'
-  id: '__root__' | '/' | '/contacts' | '/users' | '/contacts_/$id'
+  to: '/' | '/contacts' | '/users' | '/contacts/$id' | '/users/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/contacts'
+    | '/users'
+    | '/contacts_/$id'
+    | '/users_/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +82,7 @@ export interface RootRouteChildren {
   ContactsRoute: typeof ContactsRoute
   UsersRoute: typeof UsersRoute
   ContactsIdRoute: typeof ContactsIdRoute
+  UsersIdRoute: typeof UsersIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/users_/$id': {
+      id: '/users_/$id'
+      path: '/users/$id'
+      fullPath: '/users/$id'
+      preLoaderRoute: typeof UsersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts_/$id': {
       id: '/contacts_/$id'
       path: '/contacts/$id'
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactsRoute: ContactsRoute,
   UsersRoute: UsersRoute,
   ContactsIdRoute: ContactsIdRoute,
+  UsersIdRoute: UsersIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

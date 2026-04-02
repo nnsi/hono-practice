@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
 import { adminClient } from "../../utils/apiClient";
 
@@ -45,6 +46,7 @@ export function UsersPage() {
                 ログインID
               </th>
               <th className="px-4 py-3 font-medium text-gray-600">登録日</th>
+              <th className="w-10 px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -52,7 +54,7 @@ export function UsersPage() {
               <LoadingRows />
             ) : data?.items.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
                   ユーザーがいません
                 </td>
               </tr>
@@ -67,6 +69,15 @@ export function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     {dayjs(user.createdAt).format("YYYY/MM/DD HH:mm")}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to="/users/$id"
+                      params={{ id: user.id }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <Eye size={16} />
+                    </Link>
                   </td>
                 </tr>
               ))
@@ -119,6 +130,7 @@ function LoadingRows() {
           <td className="px-4 py-3">
             <div className="h-4 w-28 animate-pulse rounded bg-gray-200" />
           </td>
+          <td className="px-4 py-3" />
         </tr>
       ))}
     </>
