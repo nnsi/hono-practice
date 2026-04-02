@@ -9,17 +9,10 @@ import { db } from "../../db/schema";
 const _useStatsPage = createUseStatsPage({
   react: { useState, useMemo, useCallback },
   useActivities() {
-    return useLiveQuery(() =>
-      db.activities
-        .orderBy("orderIndex")
-        .filter((a) => !a.deletedAt)
-        .toArray(),
-    );
+    return useLiveQuery(() => db.activities.orderBy("orderIndex").toArray());
   },
   useAllKinds() {
-    return useLiveQuery(() =>
-      db.activityKinds.filter((k) => !k.deletedAt).toArray(),
-    );
+    return useLiveQuery(() => db.activityKinds.toArray());
   },
   useMonthLogs(startDate, endDate) {
     return useLiveQuery(

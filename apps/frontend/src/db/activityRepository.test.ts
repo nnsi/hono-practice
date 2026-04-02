@@ -103,6 +103,31 @@ describe("activityRepository", () => {
     });
   });
 
+  describe("getAllActivitiesIncludingDeleted", () => {
+    it("deletedAtがあるActivityも含めて全件返す", async () => {
+      const mockToArray = vi.fn().mockResolvedValue([
+        { id: "a1", name: "Running", deletedAt: null },
+        { id: "a2", name: "Old", deletedAt: "2024-01-01" },
+      ]);
+      mockDb.activities.orderBy.mockReturnValue({
+        toArray: mockToArray,
+        filter: vi
+          .fn()
+          .mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }),
+        reverse: vi
+          .fn()
+          .mockReturnValue({ first: vi.fn().mockResolvedValue(undefined) }),
+      });
+
+      const result =
+        await activityRepository.getAllActivitiesIncludingDeleted();
+
+      expect(mockDb.activities.orderBy).toHaveBeenCalledWith("orderIndex");
+      expect(result).toHaveLength(2);
+      expect(result[1].deletedAt).toBe("2024-01-01");
+    });
+  });
+
   describe("getActivityKindsByActivityId", () => {
     it("activityIdでwhereしてdeletedAtなしをフィルタする", async () => {
       const mockFilter = vi.fn().mockReturnValue({

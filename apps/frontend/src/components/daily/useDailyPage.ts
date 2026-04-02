@@ -7,7 +7,7 @@ import { activityLogRepository } from "../../db/activityLogRepository";
 import type { DexieActivity, DexieActivityKind } from "../../db/schema";
 import { db } from "../../db/schema";
 import { taskRepository } from "../../db/taskRepository";
-import { useActivities } from "../../hooks/useActivities";
+import { useActivitiesIncludingDeleted } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { useTasksByDate } from "../../hooks/useTasks";
 import { syncEngine } from "../../sync/syncEngine";
@@ -17,17 +17,13 @@ export const useDailyPage = createUseDailyPage<
   DexieActivityKind
 >({
   react: { useState, useMemo, useCallback },
-  useActivities,
+  useActivities: useActivitiesIncludingDeleted,
   useActivityLogsByDate,
   useTasksByDate: (date) => {
     const { tasks } = useTasksByDate(date);
     return tasks;
   },
-  useAllKinds: () =>
-    useLiveQuery(
-      () => db.activityKinds.filter((k) => !k.deletedAt).toArray(),
-      [],
-    ),
+  useAllKinds: () => useLiveQuery(() => db.activityKinds.toArray(), []),
   taskRepository,
   activityLogRepository,
   syncEngine,

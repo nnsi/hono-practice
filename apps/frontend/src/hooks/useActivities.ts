@@ -12,3 +12,10 @@ export function useActivities() {
 
   return { activities: activities ?? [], isReady: activities !== undefined };
 }
+
+export function useActivitiesIncludingDeleted() {
+  const activities = useLiveQuery(() =>
+    db.activities.orderBy("orderIndex").toArray(),
+  );
+  return { activities: activities ?? [], isReady: activities !== undefined };
+}
