@@ -4,10 +4,10 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, View } from "react-native";
 
-import { IMESafeTextInput } from "../../common/IMESafeTextInput";
+import { FormButton } from "../../common/FormButton";
+import { FormInput } from "../../common/FormInput";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
-import { SaveButton } from "../parts/SaveButton";
 import { useManualMode } from "./useManualMode";
 
 export function ManualMode(props: RecordingModeProps) {
@@ -30,9 +30,8 @@ export function ManualMode(props: RecordingModeProps) {
           {t("quantity")}
           {vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
-        <IMESafeTextInput
+        <FormInput
           ref={quantityRef}
-          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"
@@ -52,7 +51,12 @@ export function ManualMode(props: RecordingModeProps) {
       </View>
 
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />
-      <SaveButton onPress={vm.submit} disabled={vm.isSubmitting} />
+      <FormButton
+        variant="primary"
+        label={vm.isSubmitting ? t("saving") : t("save")}
+        onPress={vm.submit}
+        disabled={vm.isSubmitting}
+      />
     </View>
   );
 }

@@ -139,25 +139,6 @@ export default function RootLayout() {
     }
   }, [auth.isLoggedIn, auth.isLoading, segments]);
 
-  if (isUpdating) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-base text-stone-500 dark:text-stone-400">
-          {t("common.updating")}
-        </Text>
-      </View>
-    );
-  }
-
-  if (auth.isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
-    );
-  }
-
   return (
     <ErrorBoundary
       onRecover={async () => {
@@ -167,21 +148,34 @@ export default function RootLayout() {
     >
       <SafeAreaProvider>
         <ThemeProvider>
-          <QueryClientProvider client={queryClient}>
-            <AuthContext.Provider value={auth}>
-              <StatusBar style="auto" />
-              <View className="flex-1 bg-stone-100 dark:bg-gray-900">
-                <Slot />
-                <DebtFeedbackToast />
-                <UpdateToast
-                  visible={hasPendingUpdate}
-                  onReload={triggerReload}
-                  onDismiss={dismissPendingUpdate}
-                />
-                <OverlayHost />
-              </View>
-            </AuthContext.Provider>
-          </QueryClientProvider>
+          {isUpdating ? (
+            <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text className="text-base text-stone-500 dark:text-stone-400">
+                {t("common.updating")}
+              </Text>
+            </View>
+          ) : auth.isLoading ? (
+            <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
+              <ActivityIndicator size="large" color="#3b82f6" />
+            </View>
+          ) : (
+            <QueryClientProvider client={queryClient}>
+              <AuthContext.Provider value={auth}>
+                <StatusBar style="auto" />
+                <View className="flex-1 bg-stone-100 dark:bg-gray-900">
+                  <Slot />
+                  <DebtFeedbackToast />
+                  <UpdateToast
+                    visible={hasPendingUpdate}
+                    onReload={triggerReload}
+                    onDismiss={dismissPendingUpdate}
+                  />
+                  <OverlayHost />
+                </View>
+              </AuthContext.Provider>
+            </QueryClientProvider>
+          )}
         </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

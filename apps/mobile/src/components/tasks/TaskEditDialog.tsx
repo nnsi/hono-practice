@@ -8,7 +8,8 @@ import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { TaskActivityPicker } from "./TaskActivityPicker";
@@ -95,16 +96,16 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.title")}
           </Text>
-          <IMESafeTextInput
+          <FormInput
             value={title}
             onChangeText={setTitle}
             placeholder={t("edit.placeholder.title")}
             editable={!isArchived}
-            className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
+            className={
               isArchived
                 ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                : ""
-            }`}
+                : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+            }
             accessibilityLabel={t("create.label.title")}
           />
         </View>
@@ -128,7 +129,7 @@ export function TaskEditDialog({
                 ? `（${selectedActivity.quantityUnit}）`
                 : ""}
             </Text>
-            <IMESafeTextInput
+            <FormInput
               value={quantity !== null ? String(quantity) : ""}
               onChangeText={(v) => {
                 const parsed = parseFloat(v);
@@ -139,11 +140,11 @@ export function TaskEditDialog({
               placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
               editable={!isArchived}
-              className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base ${
+              className={
                 isArchived
                   ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  : ""
-              }`}
+                  : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+              }
             />
           </View>
         )}
@@ -181,13 +182,11 @@ export function TaskEditDialog({
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.memo")}
           </Text>
-          <IMESafeTextInput
+          <FormTextarea
             value={memo}
             onChangeText={setMemo}
             placeholder={t("edit.placeholder.memo")}
-            multiline
             numberOfLines={3}
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
             accessibilityLabel={t("create.label.memo")}
           />

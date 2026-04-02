@@ -1,11 +1,12 @@
 import type { ClipboardEvent } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
+import { useTranslation } from "@packages/i18n";
 import { ClipboardPaste, Delete } from "lucide-react";
 
+import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
-import { SaveButton } from "../parts/SaveButton";
 import { useNumpadMode } from "./useNumpadMode";
 
 const NUMPAD_KEYS = [
@@ -19,6 +20,7 @@ const canReadClipboard =
   typeof navigator !== "undefined" && !!navigator.clipboard?.readText;
 
 export function NumpadMode(props: RecordingModeProps) {
+  const { t } = useTranslation("recording");
   const vm = useNumpadMode(props);
 
   const handleButtonPaste = async () => {
@@ -99,10 +101,12 @@ export function NumpadMode(props: RecordingModeProps) {
       </div>
 
       <MemoInput value={vm.memo} onChange={vm.setMemo} />
-      <SaveButton
-        type="button"
+      <FormButton
+        variant="primary"
+        label={t("save")}
         onClick={vm.submit}
         disabled={vm.display === "" || vm.isSubmitting}
+        className="w-full"
       />
     </form>
   );

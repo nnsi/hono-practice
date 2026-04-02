@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { LegalModal } from "../common/LegalModal";
 import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
@@ -119,12 +121,11 @@ export function CreateUserForm({
           >
             {t("auth.loginId")}
           </label>
-          <input
+          <FormInput
             id="register-loginId"
             type="text"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
             required
           />
         </div>
@@ -138,12 +139,11 @@ export function CreateUserForm({
               {t("auth.passwordHint").replace(t("auth.password"), "")}
             </span>
           </label>
-          <input
+          <FormInput
             id="register-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
             required
             minLength={8}
           />
@@ -168,13 +168,13 @@ export function CreateUserForm({
           </button>
           {t("auth.legalConsentSuffix")}
         </p>
-        <button
+        <FormButton
           type="submit"
+          variant="primary"
+          label={isSubmitting ? t("auth.registering") : t("auth.signUp")}
           disabled={isSubmitting}
-          className="w-full py-2.5 px-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-        >
-          {isSubmitting ? t("auth.registering") : t("auth.signUp")}
-        </button>
+          className="w-full"
+        />
       </form>
       {legalModal && (
         <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />

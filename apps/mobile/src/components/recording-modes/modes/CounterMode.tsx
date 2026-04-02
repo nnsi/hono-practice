@@ -4,7 +4,7 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, TouchableOpacity, View } from "react-native";
 
-import { IMESafeTextInput } from "../../common/IMESafeTextInput";
+import { FormInput } from "../../common/FormInput";
 
 const tabShadow = {
   shadowColor: "#000",
@@ -14,9 +14,9 @@ const tabShadow = {
   elevation: 1,
 };
 
+import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
-import { SaveButton } from "../parts/SaveButton";
 import { useCounterMode } from "./useCounterMode";
 
 export function CounterMode(props: RecordingModeProps) {
@@ -107,8 +107,8 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
             disabled={vm.isSubmitting}
             className={`flex-1 py-3 rounded-lg items-center ${
               vm.isSubmitting
-                ? "bg-blue-300"
-                : "bg-blue-50 dark:bg-blue-900/200"
+                ? "bg-blue-300 dark:bg-blue-400"
+                : "bg-blue-500 dark:bg-blue-600"
             }`}
             accessibilityRole="button"
             accessibilityLabel={`Add ${step}`}
@@ -140,9 +140,8 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
           {t("quantity")}
           {vm.quantityUnit ? ` (${vm.quantityUnit})` : ""}
         </Text>
-        <IMESafeTextInput
+        <FormInput
           ref={quantityRef}
-          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 text-base"
           value={vm.quantity}
           onChangeText={vm.setQuantity}
           keyboardType="decimal-pad"
@@ -160,7 +159,12 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
         />
       </View>
       <MemoInput value={vm.memo} onChangeText={vm.setMemo} />
-      <SaveButton onPress={vm.submitManual} disabled={vm.isSubmitting} />
+      <FormButton
+        variant="primary"
+        label={vm.isSubmitting ? t("saving") : t("save")}
+        onPress={vm.submitManual}
+        disabled={vm.isSubmitting}
+      />
     </View>
   );
 }

@@ -1,6 +1,6 @@
+export type { ActivityDbAdapter } from "./activityDbAdapter";
 export type { ActivityLogDbAdapter } from "./activityLogRepositoryLogic";
 export { newActivityLogRepository } from "./activityLogRepositoryLogic";
-export type { ActivityDbAdapter } from "./activityRepositoryLogic";
 export { newActivityRepository } from "./activityRepositoryLogic";
 export type {
   GoalFreezePeriodDbAdapter,

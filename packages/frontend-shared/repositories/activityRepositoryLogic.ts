@@ -3,77 +3,22 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type {
-  ActivityIconBlob,
-  ActivityIconDeleteQueueItem,
   ActivityRepository,
   CreateActivityInput,
 } from "@packages/domain/activity/activityRepository";
-import type {
-  SyncStatus,
-  Syncable,
-} from "@packages/domain/sync/syncableRecord";
+import type { Syncable } from "@packages/domain/sync/syncableRecord";
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import type { ActivityDbAdapter } from "./activityDbAdapter";
+import {
+  applyKindUpdates,
+  applySyncMarkHelpers,
+  upsertActivities,
+  upsertActivityKinds,
+} from "./activityRepositorySyncLogic";
 
-export type ActivityDbAdapter = {
-  // Auth
-  getUserId(): Promise<string>;
-  // Order
-  getNextOrderIndex(): Promise<string>;
-  // Activity CRUD
-  insertActivity(activity: Syncable<ActivityRecord>): Promise<void>;
-  getAllActivities(): Promise<Syncable<ActivityRecord>[]>;
-  updateActivity(
-    id: string,
-    changes: Partial<Syncable<ActivityRecord>>,
-  ): Promise<void>;
-  softDeleteActivityAndKinds(id: string, timestamp: string): Promise<void>;
-  // ActivityKind CRUD
-  insertKinds(kinds: Syncable<ActivityKindRecord>[]): Promise<void>;
-  getKindsByActivityId(
-    activityId: string,
-  ): Promise<Syncable<ActivityKindRecord>[]>;
-  getAllKinds(): Promise<Syncable<ActivityKindRecord>[]>;
-  updateKind(
-    id: string,
-    changes: Partial<Syncable<ActivityKindRecord>>,
-  ): Promise<void>;
-  insertKind(kind: Syncable<ActivityKindRecord>): Promise<void>;
-  // Reorder (platform-specific ordering strategy)
-  reorderActivities(orderedIds: string[]): Promise<void>;
-  // Sync
-  getPendingSyncActivities(): Promise<Syncable<ActivityRecord>[]>;
-  getPendingSyncActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
-  updateActivitiesSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
-  updateKindsSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
-  getActivitiesByIds(ids: string[]): Promise<Syncable<ActivityRecord>[]>;
-  getKindsByIds(ids: string[]): Promise<Syncable<ActivityKindRecord>[]>;
-  bulkUpsertActivities(activities: Syncable<ActivityRecord>[]): Promise<void>;
-  bulkUpsertKinds(kinds: Syncable<ActivityKindRecord>[]): Promise<void>;
-  // Icon management (platform-specific passthrough)
-  saveActivityIconBlob(
-    activityId: string,
-    base64: string,
-    mimeType: string,
-  ): Promise<void>;
-  getActivityIconBlob(
-    activityId: string,
-  ): Promise<ActivityIconBlob | undefined>;
-  deleteActivityIconBlob(activityId: string): Promise<void>;
-  getAllIconBlobs(): Promise<ActivityIconBlob[]>;
-  getPendingIconBlobs(): Promise<ActivityIconBlob[]>;
-  completeActivityIconSync(
-    activityId: string,
-    iconUrl: string,
-    iconThumbnailUrl: string,
-  ): Promise<void>;
-  clearActivityIcon(activityId: string): Promise<void>;
-  getPendingIconDeletes(): Promise<ActivityIconDeleteQueueItem[]>;
-  removeIconDeleteQueue(activityId: string): Promise<void>;
-  cacheRemoteIcon(activityId: string, url: string): Promise<void>;
-};
+export type { ActivityDbAdapter } from "./activityDbAdapter";
 
 export function newActivityRepository(
   adapter: ActivityDbAdapter,
@@ -83,13 +28,17 @@ export function newActivityRepository(
     async getAllActivities() {
       return adapter.getAllActivities();
     },
-
+    async getAllActivitiesIncludingDeleted() {
+      return adapter.getAllActivitiesIncludingDeleted();
+    },
     async getActivityKindsByActivityId(activityId: string) {
       return adapter.getKindsByActivityId(activityId);
     },
-
     async getAllActivityKinds() {
       return adapter.getAllKinds();
+    },
+    async getAllActivityKindsIncludingDeleted() {
+      return adapter.getAllKindsIncludingDeleted();
     },
 
     // === Create ===
@@ -142,76 +91,25 @@ export function newActivityRepository(
     },
 
     // === Update ===
-    async updateActivity(
-      id: string,
-      changes: Partial<
-        Pick<
-          ActivityRecord,
-          "name" | "quantityUnit" | "emoji" | "showCombinedStats" | "iconType"
-        >
-      >,
-      updatedKinds?: { id?: string; name: string; color: string }[],
-    ) {
+    async updateActivity(id, changes, updatedKinds) {
       const now = getServerNowISOString();
       await adapter.updateActivity(id, {
         ...changes,
         updatedAt: now,
         _syncStatus: "pending",
       });
-
       if (updatedKinds !== undefined) {
-        const existing = await adapter.getKindsByActivityId(id);
-        const updatedIds = new Set(
-          updatedKinds.filter((k) => k.id).map((k) => k.id!),
-        );
-
-        // Soft-delete removed kinds
-        for (const existingKind of existing) {
-          if (!updatedIds.has(existingKind.id)) {
-            await adapter.updateKind(existingKind.id, {
-              deletedAt: now,
-              updatedAt: now,
-              _syncStatus: "pending",
-            });
-          }
-        }
-
-        // Update existing and add new kinds
-        for (let i = 0; i < updatedKinds.length; i++) {
-          const kind = updatedKinds[i];
-          if (kind.id) {
-            await adapter.updateKind(kind.id, {
-              name: kind.name,
-              color: kind.color || null,
-              orderIndex: String(i).padStart(6, "0"),
-              updatedAt: now,
-              _syncStatus: "pending",
-            });
-          } else {
-            const newKind: Syncable<ActivityKindRecord> = {
-              id: uuidv7(),
-              activityId: id,
-              name: kind.name,
-              color: kind.color || null,
-              orderIndex: String(i).padStart(6, "0"),
-              createdAt: now,
-              updatedAt: now,
-              deletedAt: null,
-              _syncStatus: "pending",
-            };
-            await adapter.insertKind(newKind);
-          }
-        }
+        await applyKindUpdates(adapter, id, updatedKinds, now);
       }
     },
 
-    // === Reorder (delegated to platform-specific adapter) ===
-    async reorderActivities(orderedIds: string[]) {
+    // === Reorder ===
+    async reorderActivities(orderedIds) {
       await adapter.reorderActivities(orderedIds);
     },
 
     // === Delete ===
-    async softDeleteActivity(id: string) {
+    async softDeleteActivity(id) {
       const now = getServerNowISOString();
       await adapter.softDeleteActivityAndKinds(id, now);
     },
@@ -220,39 +118,44 @@ export function newActivityRepository(
     async getPendingSyncActivities() {
       return adapter.getPendingSyncActivities();
     },
-
     async getPendingSyncActivityKinds() {
       return adapter.getPendingSyncActivityKinds();
     },
-
-    async markActivitiesSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateActivitiesSyncStatus(ids, "synced");
+    async markActivitiesSynced(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivitiesSynced",
+        ids,
+      });
     },
-
-    async markActivityKindsSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateKindsSyncStatus(ids, "synced");
+    async markActivityKindsSynced(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivityKindsSynced",
+        ids,
+      });
     },
-
-    async markActivitiesFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateActivitiesSyncStatus(ids, "failed");
+    async markActivitiesFailed(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivitiesFailed",
+        ids,
+      });
     },
-
-    async markActivityKindsFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateKindsSyncStatus(ids, "failed");
+    async markActivityKindsFailed(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivityKindsFailed",
+        ids,
+      });
     },
-
-    async markActivitiesRejected(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateActivitiesSyncStatus(ids, "rejected");
+    async markActivitiesRejected(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivitiesRejected",
+        ids,
+      });
     },
-
-    async markActivityKindsRejected(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateKindsSyncStatus(ids, "rejected");
+    async markActivityKindsRejected(ids) {
+      await applySyncMarkHelpers(adapter, {
+        type: "markActivityKindsRejected",
+        ids,
+      });
     },
 
     // === Icon management (platform-specific passthrough) ===
@@ -274,26 +177,11 @@ export function newActivityRepository(
       adapter.cacheRemoteIcon(activityId, url),
 
     // === Server upsert ===
-    async upsertActivities(activities: ActivityRecord[]) {
-      if (activities.length === 0) return;
-      const localRecords = await adapter.getActivitiesByIds(
-        activities.map((a) => a.id),
-      );
-      const safe = filterSafeUpserts(activities, localRecords);
-      if (safe.length === 0) return;
-      await adapter.bulkUpsertActivities(
-        safe.map((a) => ({ ...a, _syncStatus: "synced" as const })),
-      );
+    async upsertActivities(activities) {
+      await upsertActivities(adapter, activities);
     },
-
-    async upsertActivityKinds(kinds: ActivityKindRecord[]) {
-      if (kinds.length === 0) return;
-      const localRecords = await adapter.getKindsByIds(kinds.map((k) => k.id));
-      const safe = filterSafeUpserts(kinds, localRecords);
-      if (safe.length === 0) return;
-      await adapter.bulkUpsertKinds(
-        safe.map((k) => ({ ...k, _syncStatus: "synced" as const })),
-      );
+    async upsertActivityKinds(kinds) {
+      await upsertActivityKinds(adapter, kinds);
     },
   };
 }

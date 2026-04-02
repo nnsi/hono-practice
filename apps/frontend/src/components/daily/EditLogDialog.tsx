@@ -1,8 +1,11 @@
 import type { ActivityLogBase } from "@packages/frontend-shared/hooks/types";
 import { useTranslation } from "@packages/i18n";
-import { Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { renderActivityIcon } from "../goal/activityHelpers";
 import { useEditLogDialog } from "./useEditLogDialog";
@@ -91,13 +94,13 @@ export function EditLogDialog({
               {t("log.quantityLabel")}{" "}
               {activity?.quantityUnit && `(${activity.quantityUnit})`}
             </label>
-            <input
+            <FormInput
               type="number"
               inputMode="decimal"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               onFocus={(e) => e.target.select()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-lg"
               min="0"
               step="any"
             />
@@ -108,44 +111,39 @@ export function EditLogDialog({
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t("log.memoLabel")}
             </label>
-            <textarea
+            <FormTextarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder={t("log.memoPlaceholder")}
             />
           </div>
 
           {/* アクションボタン */}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {t("log.saveButton")}
-            </button>
             {!showDeleteConfirm ? (
-              <button
-                type="button"
+              <FormButton
+                variant="danger"
+                label={t("log.deleteButton")}
                 onClick={() => setShowDeleteConfirm(true)}
-                aria-label={t("log.deleteButton")}
-                className="px-4 py-3 border border-red-300 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                <Trash2 size={18} />
-              </button>
+                className="px-4"
+              />
             ) : (
-              <button
-                type="button"
+              <FormButton
+                variant="dangerConfirm"
+                label={t("log.deleteButton")}
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                aria-label={t("log.deleteConfirm")}
-                className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
-              >
-                {t("log.deleteButton")}
-              </button>
+                className="px-4"
+              />
             )}
+            <FormButton
+              type="submit"
+              variant="primary"
+              label={t("log.saveButton")}
+              disabled={isSubmitting}
+              className="flex-1"
+            />
           </div>
         </form>
       </div>

@@ -9,7 +9,7 @@ type ActionCardProps = {
 
 export function ActionCard({ icon: Icon, label, onPress }: ActionCardProps) {
   return (
-    <View className="flex-1 m-1">
+    <View className="m-1">
       <TouchableOpacity
         className="p-4 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 items-center justify-center min-h-[120px]"
         onPress={onPress}

@@ -16,6 +16,8 @@ import {
   ToggleLeft,
 } from "lucide-react";
 
+import { FormInput } from "../common/FormInput";
+
 type RecordingModeSelectorProps = {
   recordingMode: RecordingMode;
   onRecordingModeChange: (mode: RecordingMode) => void;
@@ -107,11 +109,10 @@ export function RecordingModeSelector({
           <label className="block text-sm text-gray-500 mb-1">
             {t("stepValues")}
           </label>
-          <input
+          <FormInput
             type="text"
             value={stepsText}
             onChange={(e) => handleStepsTextChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="1, 10, 100"
           />
         </div>

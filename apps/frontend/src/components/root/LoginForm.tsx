@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
@@ -101,12 +103,11 @@ export function LoginForm({
           >
             {t("auth.loginId")}
           </label>
-          <input
+          <FormInput
             id="loginId"
             type="text"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
             required
           />
         </div>
@@ -117,23 +118,22 @@ export function LoginForm({
           >
             {t("auth.password")}
           </label>
-          <input
+          <FormInput
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
             required
           />
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
+        <FormButton
           type="submit"
+          variant="primary"
+          label={isSubmitting ? t("auth.loggingIn") : t("auth.login")}
           disabled={isSubmitting}
-          className="w-full py-2.5 px-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-        >
-          {isSubmitting ? t("auth.loggingIn") : t("auth.login")}
-        </button>
+          className="w-full"
+        />
       </form>
     </div>
   );

@@ -2,9 +2,10 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react";
 
+import { FormButton } from "../../common/FormButton";
+import { FormInput } from "../../common/FormInput";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
-import { SaveButton } from "../parts/SaveButton";
 import { useCounterMode } from "./useCounterMode";
 
 export function CounterMode(props: RecordingModeProps) {
@@ -108,19 +109,25 @@ function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
         <label className="block text-sm font-medium text-gray-600 mb-1">
           {t("quantity")} {vm.quantityUnit && `(${vm.quantityUnit})`}
         </label>
-        <input
+        <FormInput
           type="number"
           inputMode="decimal"
           value={vm.quantity}
           onChange={(e) => vm.setQuantity(e.target.value)}
           onFocus={(e) => e.target.select()}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="text-lg"
           min="0"
           step="any"
         />
       </div>
       <MemoInput value={vm.memo} onChange={vm.setMemo} />
-      <SaveButton type="submit" disabled={vm.isSubmitting} />
+      <FormButton
+        type="submit"
+        variant="primary"
+        label={t("save")}
+        disabled={vm.isSubmitting}
+        className="w-full"
+      />
     </form>
   );
 }

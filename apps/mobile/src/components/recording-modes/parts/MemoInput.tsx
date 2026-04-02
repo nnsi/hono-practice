@@ -1,7 +1,8 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
-import { IMESafeTextInput } from "../../common/IMESafeTextInput";
+import { FormTextarea } from "../../common/FormTextarea";
+import { useModalScroll } from "../../common/ModalOverlay";
 
 type MemoInputProps = {
   value: string;
@@ -10,17 +11,17 @@ type MemoInputProps = {
 
 export function MemoInput({ value, onChangeText }: MemoInputProps) {
   const { t } = useTranslation("recording");
+  const { scrollToEnd } = useModalScroll();
   return (
     <View>
       <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
         {t("memo")}
       </Text>
-      <IMESafeTextInput
-        className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
+      <FormTextarea
         value={value}
         onChangeText={onChangeText}
+        onFocus={scrollToEnd}
         placeholder={t("memoPlaceholder")}
-        multiline
         numberOfLines={2}
         accessibilityLabel={t("memo")}
       />

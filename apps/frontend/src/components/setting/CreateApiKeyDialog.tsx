@@ -6,6 +6,8 @@ import type { CreateApiKeyRequest } from "@packages/types/request";
 import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy, X } from "lucide-react";
 
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { ScopeSelector } from "./ScopeSelector";
 
@@ -80,7 +82,7 @@ export function CreateApiKeyDialog({
             <button
               type="button"
               onClick={handleCopy}
-              className="w-full py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
             >
               {copied ? (
                 <>
@@ -101,11 +103,10 @@ export function CreateApiKeyDialog({
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 {t("apiKeyName")}
               </label>
-              <input
+              <FormInput
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={t("apiKeyNamePlaceholder")}
                 maxLength={255}
               />
@@ -121,15 +122,15 @@ export function CreateApiKeyDialog({
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <button
+            <FormButton
               type="submit"
+              variant="primary"
+              label={isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
               disabled={
                 isSubmitting || !name.trim() || selectedScopes.length === 0
               }
-              className="w-full py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {isSubmitting ? t("apiKeyCreating") : t("apiKeyCreated")}
-            </button>
+              className="w-full"
+            />
           </form>
         )}
       </div>

@@ -4,6 +4,7 @@ import { useTranslation } from "@packages/i18n";
 import { Database, Download, RefreshCw, Trash2, Upload } from "lucide-react";
 
 import { clearLocalData } from "../../sync/initialSync";
+import { FormButton } from "../common/FormButton";
 import { CSVExportModal } from "../csv/CSVExportModal";
 import { CSVImportModal } from "../csv/CSVImportModal";
 
@@ -71,20 +72,18 @@ export function DataManagementSection() {
                 {t("deleteLocalDataConfirm")}
               </p>
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <FormButton
+                  variant="dangerConfirm"
+                  label={t("deleteLocalDataButton")}
                   onClick={handleClearData}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  {t("deleteLocalDataButton")}
-                </button>
-                <button
-                  type="button"
+                  className="px-4"
+                />
+                <FormButton
+                  variant="secondary"
+                  label={t("cancel")}
                   onClick={() => setShowClearConfirm(false)}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  {t("cancel")}
-                </button>
+                  className="px-4"
+                />
               </div>
             </div>
           )}

@@ -1,0 +1,50 @@
+diff --git a/dist/runtime/native/appearance-observables.js b/dist/runtime/native/appearance-observables.js
+index b8603202ea3e43e3a35e940a5bbbc25b50a25869..efc93b3d96b3baf01d753fc35ec5c42d00ba24b8 100644
+--- a/dist/runtime/native/appearance-observables.js
++++ b/dist/runtime/native/appearance-observables.js
+@@ -15,9 +15,7 @@ exports.colorScheme = {
+         else {
+             appearance.setColorScheme(value);
+         }
+-        if (process.env.NODE_ENV === "test") {
+-            colorSchemeObservable.set(value === "system" ? "light" : value);
+-        }
++        colorSchemeObservable.set(value === "system" ? undefined : value);
+     },
+     get(effect) {
+         return colorSchemeObservable.get(effect) ?? exports.systemColorScheme.get(effect);
+diff --git a/src/runtime/native/appearance-observables.ts b/src/runtime/native/appearance-observables.ts
+index c235c2da28266a7dbde1458973c46db664f544f1..32f0e7395258cbb23d68ad3d7d79261ca7546ad7 100644
+--- a/src/runtime/native/appearance-observables.ts
++++ b/src/runtime/native/appearance-observables.ts
+@@ -2,12 +2,12 @@ import {
+   AccessibilityInfo,
+   Appearance,
+   AppState,
+-  NativeEventSubscription,
++  type NativeEventSubscription,
+ } from "react-native";
+ 
+ import { INTERNAL_RESET } from "../../shared";
+-import { ColorSchemeVariableValue, RuntimeValueDescriptor } from "../../types";
+-import { Effect, observable, ObservableOptions } from "../observable";
++import type { ColorSchemeVariableValue, RuntimeValueDescriptor } from "../../types";
++import { type Effect, observable, type ObservableOptions } from "../observable";
+ 
+ /**
+  * Color scheme
+@@ -27,10 +27,10 @@ export const colorScheme = {
+       appearance.setColorScheme(value);
+     }
+ 
+-    // Appearance.addChangeListener is not fired in a test environment
+-    if (process.env.NODE_ENV === "test") {
+-      colorSchemeObservable.set(value === "system" ? "light" : value);
+-    }
++    // Always update the observable directly so that the color scheme
++    // is applied synchronously. The Appearance change listener may not
++    // fire reliably (e.g. after expo-updates reloadAsync).
++    colorSchemeObservable.set(value === "system" ? undefined : value);
+   },
+   get(effect?: Effect) {
+     return colorSchemeObservable.get(effect) ?? systemColorScheme.get(effect);

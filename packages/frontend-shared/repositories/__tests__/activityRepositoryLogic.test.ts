@@ -44,6 +44,11 @@ function createInMemoryAdapter() {
         .filter((a) => !a.deletedAt)
         .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
     },
+    async getAllActivitiesIncludingDeleted() {
+      return [...activities.values()].sort((a, b) =>
+        a.orderIndex.localeCompare(b.orderIndex),
+      );
+    },
     async updateActivity(id, changes) {
       const a = activities.get(id);
       if (a)
@@ -79,6 +84,9 @@ function createInMemoryAdapter() {
     },
     async getAllKinds() {
       return [...kinds.values()].filter((k) => !k.deletedAt);
+    },
+    async getAllKindsIncludingDeleted() {
+      return [...kinds.values()];
     },
     async updateKind(id, changes) {
       const k = kinds.get(id);

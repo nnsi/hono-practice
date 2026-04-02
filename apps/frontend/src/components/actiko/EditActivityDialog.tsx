@@ -2,6 +2,8 @@ import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { EditActivityKindsField } from "./EditActivityKindsField";
 import { IconTypeSelector } from "./IconTypeSelector";
@@ -70,11 +72,10 @@ export function EditActivityDialog({
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t("name")}
             </label>
-            <input
+            <FormInput
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -82,11 +83,10 @@ export function EditActivityDialog({
             <label className="block text-sm font-medium text-gray-600 mb-1">
               {t("unit")}
             </label>
-            <input
+            <FormInput
               type="text"
               value={quantityUnit}
               onChange={(e) => setQuantityUnit(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={t("unitPlaceholder")}
             />
           </div>
@@ -111,31 +111,29 @@ export function EditActivityDialog({
           <EditActivityKindsField kinds={kinds} setKinds={setKinds} />
 
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isSubmitting || !name.trim()}
-              className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {t("save")}
-            </button>
             {!showDeleteConfirm ? (
-              <button
-                type="button"
+              <FormButton
+                variant="danger"
+                label={t("delete")}
                 onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-3 border border-red-300 text-red-500 rounded-lg hover:bg-red-50 transition-colors text-sm"
-              >
-                {t("delete")}
-              </button>
+                className="px-4"
+              />
             ) : (
-              <button
-                type="button"
+              <FormButton
+                variant="dangerConfirm"
+                label={t("confirmDelete")}
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 transition-colors text-sm"
-              >
-                {t("confirmDelete")}
-              </button>
+                className="px-4"
+              />
             )}
+            <FormButton
+              type="submit"
+              variant="primary"
+              label={t("save")}
+              disabled={isSubmitting || !name.trim()}
+              className="flex-1"
+            />
           </div>
         </form>
       </div>

@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -33,6 +35,11 @@ export function DailyPage() {
     setCalendarOpen,
     handleToggleTask,
   } = useDailyPage();
+
+  const activeActivities = useMemo(
+    () => activities.filter((a) => !a.deletedAt),
+    [activities],
+  );
 
   return (
     <div className="bg-white">
@@ -155,7 +162,7 @@ export function DailyPage() {
       {createDialogOpen && (
         <CreateLogDialog
           date={date}
-          activities={activities}
+          activities={activeActivities}
           onClose={() => setCreateDialogOpen(false)}
         />
       )}

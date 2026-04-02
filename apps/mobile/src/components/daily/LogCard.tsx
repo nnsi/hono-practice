@@ -13,6 +13,7 @@ type Activity = {
   iconType?: "emoji" | "upload" | "generate";
   iconUrl?: string | null;
   iconThumbnailUrl?: string | null;
+  deletedAt?: string | null;
 };
 
 type Kind = {
@@ -50,6 +51,7 @@ export function LogCard({
 }) {
   const { t } = useTranslation("activity");
   const isPending = log._syncStatus === "pending";
+  const isActivityDeleted = activity?.deletedAt != null;
 
   const renderRightActions = () => (
     <TouchableOpacity
@@ -78,6 +80,7 @@ export function LogCard({
             : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
         }`}
         style={{
+          opacity: isActivityDeleted ? 0.5 : 1,
           shadowColor: "#1c1917",
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.06,

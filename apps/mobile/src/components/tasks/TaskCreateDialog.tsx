@@ -1,13 +1,15 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
 import { DatePickerField } from "../common/DatePickerField";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { TaskActivityPicker } from "./TaskActivityPicker";
@@ -71,31 +73,19 @@ export function TaskCreateDialog({
       title={t("create.title")}
       footer={
         <View className="flex-row gap-2">
-          <TouchableOpacity
+          <FormButton
+            variant="secondary"
+            label={t("delete.cancel")}
             onPress={onClose}
-            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg items-center"
-            accessibilityRole="button"
-            accessibilityLabel={t("delete.cancel")}
-          >
-            <Text className="text-sm text-gray-700 dark:text-gray-300">
-              {t("delete.cancel")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            className="flex-1"
+          />
+          <FormButton
+            variant="primary"
+            label={isSubmitting ? t("create.submitting") : t("create.submit")}
             onPress={handleCreate}
             disabled={isSubmitting || !title.trim()}
-            className={`flex-1 py-2.5 rounded-lg items-center ${
-              isSubmitting || !title.trim() ? "bg-blue-300" : "bg-blue-600"
-            }`}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isSubmitting ? t("create.submitting") : t("create.submit")
-            }
-          >
-            <Text className="text-sm text-white font-medium">
-              {isSubmitting ? t("create.submitting") : t("create.submit")}
-            </Text>
-          </TouchableOpacity>
+            className="flex-1"
+          />
         </View>
       }
     >
@@ -105,11 +95,10 @@ export function TaskCreateDialog({
             {t("create.label.title")}{" "}
             <Text className="text-red-500 dark:text-red-400">*</Text>
           </Text>
-          <IMESafeTextInput
+          <FormInput
             value={title}
             onChangeText={setTitle}
             placeholder={t("create.placeholder.title")}
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             autoFocus
             accessibilityLabel={t("create.label.title")}
           />
@@ -133,7 +122,7 @@ export function TaskCreateDialog({
                 ? `（${selectedActivity.quantityUnit}）`
                 : ""}
             </Text>
-            <IMESafeTextInput
+            <FormInput
               value={quantity !== null ? String(quantity) : ""}
               onChangeText={(v) => {
                 const parsed = parseFloat(v);
@@ -143,7 +132,6 @@ export function TaskCreateDialog({
               }}
               placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
-              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
             />
           </View>
         )}
@@ -169,13 +157,11 @@ export function TaskCreateDialog({
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.memo")}
           </Text>
-          <IMESafeTextInput
+          <FormTextarea
             value={memo}
             onChangeText={setMemo}
             placeholder={t("create.placeholder.memo")}
-            multiline
             numberOfLines={3}
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
             style={{ textAlignVertical: "top" }}
             accessibilityLabel={t("create.label.memo")}
           />

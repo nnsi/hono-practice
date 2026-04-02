@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
-import { Trash2 } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
+
+import { FormButton } from "../common/FormButton";
 
 type EditGoalButtonsProps = {
   saving: boolean;
@@ -27,70 +28,49 @@ export function EditGoalButtons({
 
   return (
     <View className="flex-row gap-2 pt-1">
-      <TouchableOpacity
-        className={`flex-1 py-2 rounded-lg items-center ${saving ? "bg-gray-400" : "bg-gray-900"}`}
-        onPress={onSave}
-        disabled={saving}
-        accessibilityRole="button"
-        accessibilityLabel={t("saveButton")}
-        accessibilityState={{ disabled: saving }}
-      >
-        <Text className="text-white text-sm font-medium">
-          {t("saveButton")}
-        </Text>
-      </TouchableOpacity>
-
-      {!showDeactivateConfirm ? (
-        <TouchableOpacity
-          className="px-4 py-2 bg-orange-500 rounded-lg items-center"
-          onPress={onDeactivateRequest}
-          disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel={t("deactivateButton")}
-          accessibilityState={{ disabled: saving }}
-        >
-          <Text className="text-white text-sm font-medium">
-            {t("deactivateButton")}
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          className="px-4 py-2 bg-red-600 rounded-lg items-center"
-          onPress={onDeactivateConfirm}
-          disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel={t("deactivateConfirmButton")}
-          accessibilityState={{ disabled: saving }}
-        >
-          <Text className="text-white text-sm font-medium">
-            {t("deactivateConfirmButton")}
-          </Text>
-        </TouchableOpacity>
-      )}
-
       {!showDeleteConfirm ? (
-        <TouchableOpacity
-          className="px-3 py-2 border border-red-300 rounded-lg items-center justify-center"
+        <FormButton
+          variant="danger"
+          label={t("deleteButton")}
           onPress={onDeleteRequest}
           disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel={t("deleteButton")}
-          accessibilityState={{ disabled: saving }}
-        >
-          <Trash2 size={14} color="#ef4444" />
-        </TouchableOpacity>
+          className="px-3"
+        />
       ) : (
-        <TouchableOpacity
-          className="px-3 py-2 bg-red-50 dark:bg-red-900/200 rounded-lg items-center justify-center"
+        <FormButton
+          variant="dangerConfirm"
+          label={t("deleteButton")}
           onPress={onDeleteConfirm}
           disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel={t("deleteButton")}
-          accessibilityState={{ disabled: saving }}
-        >
-          <Text className="text-white text-sm">{t("deleteButton")}</Text>
-        </TouchableOpacity>
+          className="px-3"
+        />
       )}
+
+      {!showDeactivateConfirm ? (
+        <FormButton
+          variant="danger"
+          label={t("deactivateButton")}
+          onPress={onDeactivateRequest}
+          disabled={saving}
+          className="px-4"
+        />
+      ) : (
+        <FormButton
+          variant="dangerConfirm"
+          label={t("deactivateConfirmButton")}
+          onPress={onDeactivateConfirm}
+          disabled={saving}
+          className="px-4"
+        />
+      )}
+
+      <FormButton
+        variant="primary"
+        label={t("saveButton")}
+        onPress={onSave}
+        disabled={saving}
+        className="flex-1"
+      />
     </View>
   );
 }

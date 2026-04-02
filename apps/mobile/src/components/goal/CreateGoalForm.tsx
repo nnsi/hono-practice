@@ -4,7 +4,7 @@ import { Switch, Text, TouchableOpacity, View } from "react-native";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormInput } from "../common/FormInput";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { DayTargetsInput } from "./DayTargetsInput";
 import type { Activity } from "./types";
@@ -110,8 +110,8 @@ export function CreateGoalForm({
             </Text>
           ) : null}
         </Text>
-        <IMESafeTextInput
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
+        <FormInput
+          className="w-full"
           value={target}
           onChangeText={setTarget}
           keyboardType="numeric"
@@ -165,8 +165,8 @@ export function CreateGoalForm({
         </View>
         {debtCapEnabled && (
           <View className="flex-row items-center gap-2 mt-1">
-            <IMESafeTextInput
-              className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base"
+            <FormInput
+              className="w-24"
               value={debtCapValue}
               onChangeText={setDebtCapValue}
               keyboardType="numeric"

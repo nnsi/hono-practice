@@ -1,12 +1,13 @@
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { useTranslation } from "@packages/i18n";
-import { Switch, Text, TouchableOpacity, View } from "react-native";
+import { Switch, Text, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { ActivityIconPicker } from "./ActivityIconPicker";
-import { KindColorPicker } from "./KindColorPicker";
+import { EditActivityDialogFooter } from "./EditActivityDialogFooter";
+import { EditActivityKindList } from "./EditActivityKindList";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useEditActivityDialog } from "./useEditActivityDialog";
 
@@ -76,42 +77,14 @@ export function EditActivityDialog({
       onClose={onClose}
       title={t("editTitle")}
       footer={
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl items-center ${
-              isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSave}
-            disabled={isSubmitting || !name.trim()}
-          >
-            <Text className="text-white font-bold text-base">
-              {isSubmitting ? t("saving") : t("save")}
-            </Text>
-          </TouchableOpacity>
-
-          {!showDeleteConfirm ? (
-            <TouchableOpacity
-              className="px-4 py-3 rounded-xl items-center border border-red-300"
-              onPress={() => setShowDeleteConfirm(true)}
-            >
-              <Text className="text-red-500 dark:text-red-400 font-medium text-sm">
-                {t("delete")}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              className={`px-4 py-3 rounded-xl items-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-50 dark:bg-red-900/200"
-              }`}
-              onPress={handleDelete}
-              disabled={isSubmitting}
-            >
-              <Text className="text-white font-medium text-sm">
-                {t("confirmDelete")}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <EditActivityDialogFooter
+          isSubmitting={isSubmitting}
+          nameTrimmed={!!name.trim()}
+          showDeleteConfirm={showDeleteConfirm}
+          onSave={handleSave}
+          onDeleteRequest={() => setShowDeleteConfirm(true)}
+          onDeleteConfirm={handleDelete}
+        />
       }
     >
       <View className="gap-4">
@@ -131,8 +104,7 @@ export function EditActivityDialog({
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {t("name")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={name}
             onChangeText={(text) => {
               setName(text);
@@ -146,8 +118,7 @@ export function EditActivityDialog({
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {t("unitLabel")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={quantityUnit}
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
@@ -175,49 +146,13 @@ export function EditActivityDialog({
           />
         </View>
 
-        <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {t("kinds")}
-          </Text>
-          {kindEntries.map((kind, index) => (
-            <View
-              key={kind.id ?? `new-${index}`}
-              className="flex-row items-center mb-2 gap-2"
-            >
-              <IMESafeTextInput
-                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
-                value={kind.name}
-                onChangeText={(text) => updateKindName(index, text)}
-                placeholder={t("kindPlaceholder")}
-                accessibilityLabel={t("kindPlaceholder")}
-              />
-              <KindColorPicker
-                color={kind.color}
-                onColorChange={(c) => updateKindColor(index, c)}
-              />
-              <TouchableOpacity
-                onPress={() => removeKind(index)}
-                className="px-2 py-1"
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${kind.name}`}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text className="text-red-500 dark:text-red-400 text-base">
-                  -
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity
-            onPress={addKind}
-            accessibilityRole="button"
-            accessibilityLabel={t("addKind")}
-          >
-            <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-              {t("addKind")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EditActivityKindList
+          kindEntries={kindEntries}
+          onUpdateName={updateKindName}
+          onUpdateColor={updateKindColor}
+          onRemove={removeKind}
+          onAdd={addKind}
+        />
 
         {error ? (
           <Text className="text-red-500 dark:text-red-400 text-sm">

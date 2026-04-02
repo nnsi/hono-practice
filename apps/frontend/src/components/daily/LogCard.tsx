@@ -23,12 +23,15 @@ export function LogCard({
 }) {
   const { t } = useTranslation("activity");
   const isPending = log._syncStatus === "pending";
+  const isActivityDeleted = activity?.deletedAt != null;
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98] press-effect text-left ${
+        isActivityDeleted ? "opacity-50" : ""
+      } ${
         isPending
           ? "border border-amber-200 bg-amber-50/50 shadow-soft"
           : "bg-white shadow-soft hover:shadow-lifted border border-gray-200/50"

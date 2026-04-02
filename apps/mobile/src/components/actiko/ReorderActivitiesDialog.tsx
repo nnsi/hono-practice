@@ -9,6 +9,7 @@ import { useThemeContext } from "../../contexts/ThemeContext";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
 import { ActivityIcon } from "../common/ActivityIcon";
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 
 type ReorderActivitiesDialogProps = {
@@ -105,26 +106,19 @@ export function ReorderActivitiesDialog({
       </View>
 
       <View className="flex-row gap-2">
-        <TouchableOpacity
+        <FormButton
+          variant="secondary"
+          label={t("cancel")}
           onPress={onClose}
-          className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl items-center"
-          activeOpacity={0.7}
-        >
-          <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            {t("cancel")}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+          className="flex-1"
+        />
+        <FormButton
+          variant="primary"
+          label={saving ? t("saving") : t("save")}
           onPress={handleSave}
           disabled={saving}
-          className="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-gray-800 rounded-xl items-center"
-          activeOpacity={0.7}
-          style={{ opacity: saving ? 0.5 : 1 }}
-        >
-          <Text className="text-sm font-medium text-white">
-            {saving ? t("saving") : t("save")}
-          </Text>
-        </TouchableOpacity>
+          className="flex-1"
+        />
       </View>
     </ModalOverlay>
   );

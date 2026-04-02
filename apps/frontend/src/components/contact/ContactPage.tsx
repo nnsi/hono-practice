@@ -1,5 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { useContactForm } from "./useContactForm";
 
 const CATEGORIES = ["bug_report", "account_deletion", "other"] as const;
@@ -46,14 +48,13 @@ export function ContactPage() {
             >
               {t("contact.email")}
             </label>
-            <input
+            <FormInput
               id="contact-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t("contact.emailPlaceholder")}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all"
             />
           </div>
 
@@ -77,7 +78,7 @@ export function ContactPage() {
                     | "",
                 )
               }
-              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all appearance-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">{t("contact.categoryDefault")}</option>
               {CATEGORIES.map((cat) => (
@@ -101,7 +102,7 @@ export function ContactPage() {
                 {t("contact.charCount", { count: charCount })}
               </span>
             </div>
-            <textarea
+            <FormTextarea
               id="contact-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -109,7 +110,6 @@ export function ContactPage() {
               required
               maxLength={1000}
               rows={5}
-              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all resize-none"
             />
           </div>
 

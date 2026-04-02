@@ -1,11 +1,12 @@
 import { useTranslation } from "@packages/i18n";
-import { Switch, Text, TouchableOpacity, View } from "react-native";
+import { Switch, Text, View } from "react-native";
 
 import { EmojiPicker } from "../common/EmojiPicker";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { ActivityIconPicker } from "./ActivityIconPicker";
-import { KindColorPicker } from "./KindColorPicker";
+import { EditActivityKindList } from "./EditActivityKindList";
 import { RecordingModeSelector } from "./RecordingModeSelector";
 import { useCreateActivityDialog } from "./useCreateActivityDialog";
 
@@ -58,17 +59,12 @@ export function CreateActivityDialog({
       onClose={handleClose}
       title={t("createTitle")}
       footer={
-        <TouchableOpacity
-          className={`py-3 rounded-xl items-center ${
-            isSubmitting || !name.trim() ? "bg-gray-400" : "bg-gray-900"
-          }`}
+        <FormButton
+          variant="primary"
+          label={isSubmitting ? t("creating") : t("create")}
           onPress={handleCreate}
           disabled={isSubmitting || !name.trim()}
-        >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? t("creating") : t("create")}
-          </Text>
-        </TouchableOpacity>
+        />
       }
     >
       <View className="gap-4">
@@ -88,8 +84,7 @@ export function CreateActivityDialog({
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {t("name")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={name}
             onChangeText={(text) => {
               setName(text);
@@ -105,8 +100,7 @@ export function CreateActivityDialog({
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {t("unitLabel")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={quantityUnit}
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
@@ -134,46 +128,19 @@ export function CreateActivityDialog({
           />
         </View>
 
-        <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {t("kinds")}
-          </Text>
-          {kinds.map((kind) => (
-            <View key={kind.id} className="flex-row items-center mb-2 gap-2">
-              <IMESafeTextInput
-                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
-                value={kind.name}
-                onChangeText={(text) => updateKindName(kind.id, text)}
-                placeholder={t("kindPlaceholder")}
-                accessibilityLabel={t("kindPlaceholder")}
-              />
-              <KindColorPicker
-                color={kind.color}
-                onColorChange={(c) => updateKindColor(kind.id, c)}
-              />
-              <TouchableOpacity
-                onPress={() => removeKind(kind.id)}
-                className="px-2 py-1"
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${kind.name}`}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text className="text-red-500 dark:text-red-400 text-base">
-                  -
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity
-            onPress={addKind}
-            accessibilityRole="button"
-            accessibilityLabel={t("addKind")}
-          >
-            <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-              {t("addKind")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EditActivityKindList
+          kindEntries={kinds.map((k) => ({
+            id: String(k.id),
+            name: k.name,
+            color: k.color,
+          }))}
+          onUpdateName={(index, text) => updateKindName(kinds[index].id, text)}
+          onUpdateColor={(index, color) =>
+            updateKindColor(kinds[index].id, color)
+          }
+          onRemove={(index) => removeKind(kinds[index].id)}
+          onAdd={addKind}
+        />
 
         {error ? (
           <Text className="text-red-500 dark:text-red-400 text-sm">

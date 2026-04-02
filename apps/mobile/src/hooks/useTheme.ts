@@ -45,10 +45,12 @@ export function useTheme() {
         if (stored === "light" || stored === "dark" || stored === "system") {
           setPreference(stored);
           applyColorScheme(setColorScheme, stored);
+        } else {
+          applyColorScheme(setColorScheme, "system");
         }
       })
       .catch(() => {
-        // AsyncStorage 読み取り失敗時はデフォルトのまま
+        applyColorScheme(setColorScheme, "system");
       });
   }, [setColorScheme]);
 

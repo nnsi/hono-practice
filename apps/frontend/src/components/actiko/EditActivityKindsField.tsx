@@ -1,5 +1,8 @@
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
+import { Trash2 } from "lucide-react";
+
+import { FormInput } from "../common/FormInput";
 
 type Kind = { id?: string; name: string; color: string };
 
@@ -19,7 +22,7 @@ export function EditActivityKindsField({
       <div className="text-sm font-medium text-gray-600 mb-2">{t("kinds")}</div>
       {kinds.map((kind, i) => (
         <div key={kind.id ?? i} className="flex gap-2 mb-2 items-center">
-          <input
+          <FormInput
             type="text"
             value={kind.name}
             onChange={(e) =>
@@ -30,7 +33,7 @@ export function EditActivityKindsField({
               )
             }
             placeholder={t("kindPlaceholder")}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1"
           />
           <input
             type="color"
@@ -47,9 +50,9 @@ export function EditActivityKindsField({
           <button
             type="button"
             onClick={() => setKinds((prev) => prev.filter((_, j) => j !== i))}
-            className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
           >
-            -
+            <Trash2 size={16} />
           </button>
         </div>
       ))}

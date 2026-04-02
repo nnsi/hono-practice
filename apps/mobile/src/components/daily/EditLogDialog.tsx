@@ -1,10 +1,11 @@
 import { useTranslation } from "@packages/i18n";
-import { Trash2 } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { ActivityIcon } from "../common/ActivityIcon";
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormButton } from "../common/FormButton";
+import { FormInput } from "../common/FormInput";
+import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { EditLogKindSelector } from "./EditLogKindSelector";
 import { useEditLogDialog } from "./useEditLogDialog";
@@ -78,44 +79,29 @@ export function EditLogDialog({
       }
       footer={
         <View className="flex-row gap-2">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-lg items-center ${
-              isSubmitting ? "bg-gray-400" : "bg-gray-900"
-            }`}
-            onPress={handleSave}
-            disabled={isSubmitting}
-            accessibilityRole="button"
-            accessibilityLabel={t("log.saveButton")}
-          >
-            <Text className="text-white font-medium">
-              {t("log.saveButton")}
-            </Text>
-          </TouchableOpacity>
-
           {!showDeleteConfirm ? (
-            <TouchableOpacity
-              className="px-4 py-3 rounded-lg border border-red-300 items-center justify-center"
+            <FormButton
+              variant="danger"
+              label={t("log.deleteButton")}
               onPress={() => setShowDeleteConfirm(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t("log.deleteButton")}
-            >
-              <Trash2 size={18} color="#ef4444" />
-            </TouchableOpacity>
+              className="px-4"
+            />
           ) : (
-            <TouchableOpacity
-              className={`px-4 py-3 rounded-lg items-center justify-center ${
-                isSubmitting ? "bg-red-300" : "bg-red-50 dark:bg-red-900/200"
-              }`}
+            <FormButton
+              variant="dangerConfirm"
+              label={t("log.deleteButton")}
               onPress={handleDelete}
               disabled={isSubmitting}
-              accessibilityRole="button"
-              accessibilityLabel={t("log.deleteButton")}
-            >
-              <Text className="text-white font-medium">
-                {t("log.deleteButton")}
-              </Text>
-            </TouchableOpacity>
+              className="px-4"
+            />
           )}
+          <FormButton
+            variant="primary"
+            label={t("log.saveButton")}
+            onPress={handleSave}
+            disabled={isSubmitting}
+            className="flex-1"
+          />
         </View>
       }
     >
@@ -132,8 +118,7 @@ export function EditLogDialog({
             {t("log.quantityLabel")}
             {activity?.quantityUnit ? ` (${activity.quantityUnit})` : ""}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base"
+          <FormInput
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
@@ -149,12 +134,10 @@ export function EditLogDialog({
           <Text className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             {t("log.memoLabel")}
           </Text>
-          <IMESafeTextInput
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
+          <FormTextarea
             value={memo}
             onChangeText={setMemo}
             placeholder={t("log.memoPlaceholder")}
-            multiline
             numberOfLines={2}
             accessibilityLabel={t("log.memoLabel")}
           />

@@ -1,7 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
-import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { FormInput } from "../common/FormInput";
 import { KindColorPicker } from "./KindColorPicker";
 
 type Kind = {
@@ -37,8 +37,8 @@ export function KindsList({
           key={kind.id ?? `new-${index}`}
           className="flex-row items-center mb-2 gap-2"
         >
-          <IMESafeTextInput
-            className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-base"
+          <FormInput
+            className="flex-1"
             value={kind.name}
             onChangeText={(text) => onUpdateKindName(index, text)}
             placeholder={t("kindPlaceholder")}

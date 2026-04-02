@@ -1,3 +1,5 @@
+import { createContext, useCallback, useContext, useRef } from "react";
+
 import { X } from "lucide-react-native";
 import {
   KeyboardAvoidingView,
@@ -12,6 +14,14 @@ import {
 } from "react-native";
 
 import { useThemeContext } from "../../contexts/ThemeContext";
+
+type ModalScrollContextType = { scrollToEnd: () => void };
+export const ModalScrollContext = createContext<ModalScrollContextType>({
+  scrollToEnd: () => {},
+});
+export function useModalScroll() {
+  return useContext(ModalScrollContext);
+}
 
 type ModalOverlayProps = {
   visible: boolean;
@@ -29,6 +39,13 @@ export function ModalOverlay({
   footer,
 }: ModalOverlayProps) {
   const { colors } = useThemeContext();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollToEnd = useCallback(() => {
+    setTimeout(
+      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+      100,
+    );
+  }, []);
 
   return (
     <Modal
@@ -43,7 +60,7 @@ export function ModalOverlay({
         className="flex-1"
         behavior={Platform.select({
           ios: "padding",
-          android: "height",
+          android: "padding",
           default: undefined,
         })}
         style={{ backgroundColor: colors.modalOverlay }}
@@ -92,15 +109,19 @@ export function ModalOverlay({
                   <X size={20} color={colors.textTertiary} />
                 </TouchableOpacity>
               </View>
-              <ScrollView
-                className="px-5 pt-4"
-                contentContainerStyle={{ paddingBottom: 16 }}
-                style={{ flexShrink: 1 }}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="interactive"
-              >
-                {children}
-              </ScrollView>
+              <ModalScrollContext.Provider value={{ scrollToEnd }}>
+                <ScrollView
+                  ref={scrollViewRef}
+                  className="px-5 pt-4"
+                  contentContainerStyle={{ paddingBottom: 16 }}
+                  style={{ flexShrink: 1 }}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="interactive"
+                  automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+                >
+                  {children}
+                </ScrollView>
+              </ModalScrollContext.Provider>
               {footer && (
                 <View className="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
                   {footer}

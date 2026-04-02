@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { Download, FileText, Upload, X } from "lucide-react";
 
 import { useCSVImport } from "../../hooks/useCSVImport";
+import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CSVColumnMapper } from "./CSVColumnMapper";
 import { CSVImportPreview } from "./CSVImportPreview";
@@ -70,14 +71,13 @@ export function CSVImportModal({ onClose }: Props) {
                     <FileText className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">{csv.file.name}</span>
                   </div>
-                  <button
-                    type="button"
+                  <FormButton
+                    variant="primary"
+                    label={csv.isParsing ? t("parsing") : t("parseFile")}
                     onClick={csv.handleParse}
                     disabled={csv.isParsing}
-                    className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
-                  >
-                    {csv.isParsing ? t("parsing") : t("parseFile")}
-                  </button>
+                    className="px-4"
+                  />
                 </div>
               )}
 

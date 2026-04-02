@@ -12,12 +12,12 @@ const _useStatsPage = createUseStatsPage({
   react: { useState, useMemo, useCallback },
   useActivities() {
     return useLiveQuery("activities", () =>
-      activityRepository.getAllActivities(),
+      activityRepository.getAllActivitiesIncludingDeleted(),
     );
   },
   useAllKinds() {
     return useLiveQuery("activity_kinds", () =>
-      activityRepository.getAllActivityKinds(),
+      activityRepository.getAllActivityKindsIncludingDeleted(),
     );
   },
   useMonthLogs(startDate, endDate) {
