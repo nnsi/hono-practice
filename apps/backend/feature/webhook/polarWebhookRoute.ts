@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import type { SubscriptionStatus } from "@packages/domain/subscription/subscriptionSchema";
 
@@ -53,7 +54,8 @@ export function createPolarWebhookRoute() {
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
     const historyRepo = newSubscriptionHistoryRepository(db);
-    const uc = newSubscriptionUsecase(db, repo, historyRepo, tracer);
+    const txRunner = newDrizzleTransactionRunner(db);
+    const uc = newSubscriptionUsecase(txRunner, repo, historyRepo, tracer);
     c.set("subscriptionUsecase", uc);
     return next();
   });

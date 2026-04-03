@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 
 import { checkoutRoute } from "./checkoutRoute";
@@ -24,7 +25,8 @@ export function createSubscriptionRoute() {
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
     const historyRepo = newSubscriptionHistoryRepository(db);
-    const uc = newSubscriptionUsecase(db, repo, historyRepo, tracer);
+    const txRunner = newDrizzleTransactionRunner(db);
+    const uc = newSubscriptionUsecase(txRunner, repo, historyRepo, tracer);
     const h = newSubscriptionHandler(uc);
 
     c.set("h", h);

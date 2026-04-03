@@ -4,6 +4,7 @@ import { newContactUsecase } from "@backend/feature/contact/contactUsecase";
 import { newSubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 import {
@@ -55,8 +56,9 @@ export function resolveAdminHandler(c: {
   const dashboardUc = newAdminDashboardUsecase(dashboardQs, tracer);
   const subscriptionRepo = newSubscriptionRepository(db);
   const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
+  const txRunner = newDrizzleTransactionRunner(db);
   const subscriptionUc = newAdminSubscriptionUsecase(
-    db,
+    txRunner,
     userRepo,
     subscriptionRepo,
     subscriptionHistoryRepo,

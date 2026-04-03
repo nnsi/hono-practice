@@ -1,5 +1,5 @@
 import { ResourceNotFoundError } from "@backend/error";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { noopTracer } from "@backend/lib/tracer";
 import {
   type Subscription,
@@ -14,10 +14,13 @@ import type { SubscriptionRepository } from "..";
 import { newSubscriptionUsecase } from "..";
 import type { SubscriptionHistoryRepository } from "../subscriptionHistoryRepository";
 
-// トランザクションをパススルーするfake db
-const fakeDb = {
-  transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(fakeDb),
-} as unknown as QueryExecutor;
+// TransactionRunnerのfake: reposをそのままmergeしてoperationに渡す
+const fakeTxRunner: TransactionRunner = {
+  async run(repositories, operation) {
+    const merged = Object.assign({}, ...repositories);
+    return operation(merged);
+  },
+};
 
 describe("SubscriptionUsecase", () => {
   let repo: SubscriptionRepository;
@@ -27,20 +30,14 @@ describe("SubscriptionUsecase", () => {
   beforeEach(() => {
     repo = mock<SubscriptionRepository>();
     historyRepo = mock<SubscriptionHistoryRepository>();
-    // withTx が呼ばれたら同じ instance を返す
-    when(repo.withTx(anything())).thenReturn(instance(repo));
-    when(historyRepo.withTx(anything())).thenReturn(instance(historyRepo));
     usecase = newSubscriptionUsecase(
-      fakeDb,
+      fakeTxRunner,
       instance(repo),
       instance(historyRepo),
       noopTracer,
     );
     reset(repo);
     reset(historyRepo);
-    // reset 後に再設定
-    when(repo.withTx(anything())).thenReturn(instance(repo));
-    when(historyRepo.withTx(anything())).thenReturn(instance(historyRepo));
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");

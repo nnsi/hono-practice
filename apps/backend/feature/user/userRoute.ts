@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -58,8 +59,9 @@ export function createUserRoute() {
     const authH = newAuthHandler(authUc);
     const subscriptionRepo = newSubscriptionRepository(db);
     const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
+    const txRunner = newDrizzleTransactionRunner(db);
     const subscriptionUc = newSubscriptionUsecase(
-      db,
+      txRunner,
       subscriptionRepo,
       subscriptionHistoryRepo,
       tracer,

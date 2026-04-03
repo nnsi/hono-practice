@@ -2,7 +2,7 @@ import { AppError } from "@backend/error";
 import type { SubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import type { UserRepository } from "@backend/feature/user/userRepository";
-import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
 import type { SubscriptionHistory } from "@packages/domain/subscription/subscriptionHistorySchema";
 import {
@@ -46,7 +46,7 @@ export type AdminSubscriptionUsecase = {
 };
 
 export function newAdminSubscriptionUsecase(
-  db: QueryExecutor,
+  txRunner: TransactionRunner,
   userRepo: UserRepository,
   subscriptionRepo: SubscriptionRepository,
   historyRepo: SubscriptionHistoryRepository,
@@ -91,12 +91,9 @@ export function newAdminSubscriptionUsecase(
         throw new AppError("User not found", 404);
       }
 
-      return db.transaction(async (tx) => {
-        const txSubRepo = subscriptionRepo.withTx(tx);
-        const txHistoryRepo = historyRepo.withTx(tx);
-
+      return txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
         const existing = await tracer.span("db.findSubscriptionByUserId", () =>
-          txSubRepo.findByUserId(createUserId(userId)),
+          txRepos.findByUserId(createUserId(userId)),
         );
 
         const now = new Date();
@@ -130,7 +127,7 @@ export function newAdminSubscriptionUsecase(
             updatedAt: now,
           });
           result = await tracer.span("db.updateSubscription", () =>
-            txSubRepo.update(updated),
+            txRepos.update(updated),
           );
           subscriptionId = existing.id;
         } else {
@@ -154,7 +151,7 @@ export function newAdminSubscriptionUsecase(
             updatedAt: now,
           });
           result = await tracer.span("db.createSubscription", () =>
-            txSubRepo.create(created),
+            txRepos.create(created),
           );
           subscriptionId = created.id;
         }
@@ -170,7 +167,7 @@ export function newAdminSubscriptionUsecase(
           createdAt: now,
         });
         await tracer.span("db.insertSubscriptionHistory", () =>
-          txHistoryRepo.insertSubscriptionHistory(history),
+          txRepos.insertSubscriptionHistory(history),
         );
 
         return result;

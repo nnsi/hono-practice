@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -51,8 +52,9 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     );
     const subscriptionRepo = newSubscriptionRepository(db);
     const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
+    const txRunner = newDrizzleTransactionRunner(db);
     const subscriptionUc = newSubscriptionUsecase(
-      db,
+      txRunner,
       subscriptionRepo,
       subscriptionHistoryRepo,
       tracer,
