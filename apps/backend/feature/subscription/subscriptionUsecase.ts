@@ -56,7 +56,7 @@ export function newSubscriptionUsecase(
     ),
     getSubscriptionByPaymentProviderId: (providerId: string) =>
       tracer.span("db.findSubscriptionByPaymentProviderId", () =>
-        subscriptionRepo.findByPaymentProviderId(providerId),
+        subscriptionRepo.findSubscriptionByPaymentProviderId(providerId),
       ),
     canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo, tracer),
     upsertSubscriptionFromPayment: upsertSubscriptionFromPayment(
@@ -74,7 +74,7 @@ function getSubscriptionByUserId(
 ) {
   return async (userId: UserId): Promise<Subscription> => {
     const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
-      subscriptionRepo.findByUserId(userId),
+      subscriptionRepo.findSubscriptionByUserId(userId),
     );
     if (!subscription) {
       throw new ResourceNotFoundError("Subscription not found");
@@ -89,7 +89,7 @@ function getSubscriptionByUserIdOrDefault(
 ) {
   return async (userId: UserId): Promise<Subscription> => {
     const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
-      subscriptionRepo.findByUserId(userId),
+      subscriptionRepo.findSubscriptionByUserId(userId),
     );
     if (!subscription) {
       return createDefaultSubscription(userId);
@@ -104,7 +104,7 @@ function canUserAccessApiKey(
 ) {
   return async (userId: UserId): Promise<boolean> => {
     const subscription = await tracer.span("db.findSubscriptionByUserId", () =>
-      subscriptionRepo.findByUserId(userId),
+      subscriptionRepo.findSubscriptionByUserId(userId),
     );
     if (!subscription) {
       return false;

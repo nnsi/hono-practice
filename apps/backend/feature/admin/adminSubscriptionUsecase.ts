@@ -62,7 +62,7 @@ export function newAdminSubscriptionUsecase(
       }
       const subscription = await tracer.span(
         "db.findSubscriptionByUserId",
-        () => subscriptionRepo.findByUserId(createUserId(userId)),
+        () => subscriptionRepo.findSubscriptionByUserId(createUserId(userId)),
       );
       const subscriptionHistory = subscription
         ? await tracer.span("db.findSubscriptionHistories", () =>
@@ -93,7 +93,7 @@ export function newAdminSubscriptionUsecase(
 
       return txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
         const existing = await tracer.span("db.findSubscriptionByUserId", () =>
-          txRepos.findByUserId(createUserId(userId)),
+          txRepos.findSubscriptionByUserId(createUserId(userId)),
         );
 
         const now = new Date();
@@ -127,7 +127,7 @@ export function newAdminSubscriptionUsecase(
             updatedAt: now,
           });
           result = await tracer.span("db.updateSubscription", () =>
-            txRepos.update(updated),
+            txRepos.updateSubscription(updated),
           );
           subscriptionId = existing.id;
         } else {
@@ -151,7 +151,7 @@ export function newAdminSubscriptionUsecase(
             updatedAt: now,
           });
           result = await tracer.span("db.createSubscription", () =>
-            txRepos.create(created),
+            txRepos.createSubscription(created),
           );
           subscriptionId = created.id;
         }

@@ -50,7 +50,7 @@ export function upsertSubscriptionFromPayment(
 
     await txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
       const existing = await tracer.span("db.findSubscriptionByUserId", () =>
-        txRepos.findByUserId(userId),
+        txRepos.findSubscriptionByUserId(userId),
       );
 
       const now = new Date();
@@ -74,7 +74,7 @@ export function upsertSubscriptionFromPayment(
           updatedAt: now,
         });
         await tracer.span("db.updateSubscription", () =>
-          txRepos.update(updated),
+          txRepos.updateSubscription(updated),
         );
         subscriptionId = existing.id;
       } else {
@@ -97,7 +97,9 @@ export function upsertSubscriptionFromPayment(
           createdAt: now,
           updatedAt: now,
         });
-        await tracer.span("db.createSubscription", () => txRepos.create(sub));
+        await tracer.span("db.createSubscription", () =>
+          txRepos.createSubscription(sub),
+        );
         subscriptionId = sub.id;
       }
 

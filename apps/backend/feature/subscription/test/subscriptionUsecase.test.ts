@@ -67,16 +67,18 @@ describe("SubscriptionUsecase", () => {
 
   describe("getSubscriptionByUserId", () => {
     it("should return subscription when exists", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.getSubscriptionByUserId(userId1);
 
       expect(result).toEqual(mockSubscription);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should throw ResourceNotFoundError when subscription not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       await expect(usecase.getSubscriptionByUserId(userId1)).rejects.toThrow(
         ResourceNotFoundError,
@@ -86,16 +88,18 @@ describe("SubscriptionUsecase", () => {
 
   describe("getSubscriptionByUserIdOrDefault", () => {
     it("should return subscription when exists", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.getSubscriptionByUserIdOrDefault(userId1);
 
       expect(result).toEqual(mockSubscription);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return default free subscription when not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       const result = await usecase.getSubscriptionByUserIdOrDefault(userId1);
 
@@ -103,27 +107,29 @@ describe("SubscriptionUsecase", () => {
       expect(result.plan).toEqual("free");
       expect(result.status).toEqual("active");
       expect(result.canUseApiKey()).toBe(false);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
   });
 
   describe("canUserAccessApiKey", () => {
     it("should return true when user has active premium subscription", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.canUserAccessApiKey(userId1);
 
       expect(result).toBe(true);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return false when subscription not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       const result = await usecase.canUserAccessApiKey(userId1);
 
       expect(result).toBe(false);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return false when subscription is free plan", async () => {
@@ -131,7 +137,9 @@ describe("SubscriptionUsecase", () => {
         ...mockSubscription,
         plan: "free",
       });
-      when(repo.findByUserId(userId1)).thenResolve(freeSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        freeSubscription,
+      );
 
       const result = await usecase.canUserAccessApiKey(userId1);
 
@@ -141,8 +149,10 @@ describe("SubscriptionUsecase", () => {
 
   describe("upsertSubscriptionFromPayment", () => {
     it("should update existing subscription and record history", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
-      when(repo.update(anything())).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
+      when(repo.updateSubscription(anything())).thenResolve(mockSubscription);
       when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
         undefined,
       );
@@ -156,14 +166,14 @@ describe("SubscriptionUsecase", () => {
         eventType: "subscription.updated",
       });
 
-      verify(repo.findByUserId(userId1)).once();
-      verify(repo.update(anything())).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
+      verify(repo.updateSubscription(anything())).once();
       verify(historyRepo.insertSubscriptionHistory(anything())).once();
     });
 
     it("should create new subscription and record history when none exists", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
-      when(repo.create(anything())).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
+      when(repo.createSubscription(anything())).thenResolve(mockSubscription);
       when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
         undefined,
       );
@@ -177,8 +187,8 @@ describe("SubscriptionUsecase", () => {
         eventType: "subscription.created",
       });
 
-      verify(repo.findByUserId(userId1)).once();
-      verify(repo.create(anything())).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
+      verify(repo.createSubscription(anything())).once();
       verify(historyRepo.insertSubscriptionHistory(anything())).once();
     });
   });

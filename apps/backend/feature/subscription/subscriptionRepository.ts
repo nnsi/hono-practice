@@ -10,13 +10,17 @@ import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { eq } from "drizzle-orm";
 
 export type SubscriptionRepository<T = QueryExecutor> = {
-  create: (subscription: Subscription) => Promise<Subscription>;
-  findById: (id: SubscriptionId) => Promise<Subscription | undefined>;
-  findByUserId: (userId: UserId) => Promise<Subscription | undefined>;
-  findByPaymentProviderId: (
+  createSubscription: (subscription: Subscription) => Promise<Subscription>;
+  findSubscriptionById: (
+    id: SubscriptionId,
+  ) => Promise<Subscription | undefined>;
+  findSubscriptionByUserId: (
+    userId: UserId,
+  ) => Promise<Subscription | undefined>;
+  findSubscriptionByPaymentProviderId: (
     providerId: string,
   ) => Promise<Subscription | undefined>;
-  update: (subscription: Subscription) => Promise<Subscription>;
+  updateSubscription: (subscription: Subscription) => Promise<Subscription>;
   withTx: (tx: T) => SubscriptionRepository<T>;
 };
 
@@ -24,16 +28,17 @@ export function newSubscriptionRepository(
   db: QueryExecutor,
 ): SubscriptionRepository<QueryExecutor> {
   return {
-    create: create(db),
-    findById: findById(db),
-    findByUserId: findByUserId(db),
-    findByPaymentProviderId: findByPaymentProviderId(db),
-    update: update(db),
+    createSubscription: createSubscription(db),
+    findSubscriptionById: findSubscriptionById(db),
+    findSubscriptionByUserId: findSubscriptionByUserId(db),
+    findSubscriptionByPaymentProviderId:
+      findSubscriptionByPaymentProviderId(db),
+    updateSubscription: updateSubscription(db),
     withTx: (tx) => newSubscriptionRepository(tx),
   };
 }
 
-function create(db: QueryExecutor) {
+function createSubscription(db: QueryExecutor) {
   return async (subscription: Subscription): Promise<Subscription> => {
     const [result] = await db
       .insert(userSubscriptions)
@@ -62,7 +67,7 @@ function create(db: QueryExecutor) {
   };
 }
 
-function findById(db: QueryExecutor) {
+function findSubscriptionById(db: QueryExecutor) {
   return async (id: SubscriptionId): Promise<Subscription | undefined> => {
     const result = await db.query.userSubscriptions.findFirst({
       where: eq(userSubscriptions.id, id),
@@ -76,7 +81,7 @@ function findById(db: QueryExecutor) {
   };
 }
 
-function findByUserId(db: QueryExecutor) {
+function findSubscriptionByUserId(db: QueryExecutor) {
   return async (userId: UserId): Promise<Subscription | undefined> => {
     const result = await db.query.userSubscriptions.findFirst({
       where: eq(userSubscriptions.userId, userId),
@@ -90,7 +95,7 @@ function findByUserId(db: QueryExecutor) {
   };
 }
 
-function findByPaymentProviderId(db: QueryExecutor) {
+function findSubscriptionByPaymentProviderId(db: QueryExecutor) {
   return async (providerId: string): Promise<Subscription | undefined> => {
     const result = await db.query.userSubscriptions.findFirst({
       where: eq(userSubscriptions.paymentProviderId, providerId),
@@ -104,7 +109,7 @@ function findByPaymentProviderId(db: QueryExecutor) {
   };
 }
 
-function update(db: QueryExecutor) {
+function updateSubscription(db: QueryExecutor) {
   return async (subscription: Subscription): Promise<Subscription> => {
     const [result] = await db
       .update(userSubscriptions)
