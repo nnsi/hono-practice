@@ -42,7 +42,7 @@ export function UserDetailPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       <Link
         to="/users"
         className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
@@ -51,7 +51,7 @@ export function UserDetailPage() {
         ユーザー一覧に戻る
       </Link>
 
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
         <h2 className="mb-6 text-xl font-bold text-gray-900">ユーザー詳細</h2>
         <dl className="space-y-4">
           <div>
