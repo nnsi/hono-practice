@@ -10,6 +10,7 @@ import {
   text,
   time,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -396,6 +397,36 @@ export const userSubscriptions = pgTable(
     index("user_subscription_user_id_idx").on(t.userId),
     index("user_subscription_status_idx").on(t.status),
     index("user_subscription_plan_idx").on(t.plan),
+  ],
+);
+
+// SubscriptionHistory テーブル
+export const subscriptionHistories = pgTable(
+  "subscription_history",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    subscriptionId: uuid("subscription_id")
+      .notNull()
+      .references(() => userSubscriptions.id),
+    eventType: text("event_type").notNull(),
+    plan: text("plan", { enum: ["free", "premium"] }).notNull(),
+    status: text("status", {
+      enum: ["trial", "active", "paused", "cancelled", "expired"],
+    }).notNull(),
+    source: text("source").notNull(),
+    webhookId: text("webhook_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("subscription_history_sub_id_created_idx").on(
+      t.subscriptionId,
+      t.createdAt,
+    ),
+    uniqueIndex("subscription_history_webhook_id_uniq")
+      .on(t.webhookId)
+      .where(sql`${t.webhookId} IS NOT NULL`),
   ],
 );
 

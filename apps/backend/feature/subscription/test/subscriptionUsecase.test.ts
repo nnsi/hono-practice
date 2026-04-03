@@ -10,15 +10,15 @@ import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { SubscriptionRepository } from "..";
-import { newSubscriptionUsecase } from "..";
+import { newSubscriptionQueryUsecase } from "..";
 
-describe("SubscriptionUsecase", () => {
+describe("SubscriptionQueryUsecase", () => {
   let repo: SubscriptionRepository;
-  let usecase: ReturnType<typeof newSubscriptionUsecase>;
+  let usecase: ReturnType<typeof newSubscriptionQueryUsecase>;
 
   beforeEach(() => {
     repo = mock<SubscriptionRepository>();
-    usecase = newSubscriptionUsecase(instance(repo), noopTracer);
+    usecase = newSubscriptionQueryUsecase(instance(repo), noopTracer);
     reset(repo);
   });
 
@@ -49,16 +49,18 @@ describe("SubscriptionUsecase", () => {
 
   describe("getSubscriptionByUserId", () => {
     it("should return subscription when exists", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.getSubscriptionByUserId(userId1);
 
       expect(result).toEqual(mockSubscription);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should throw ResourceNotFoundError when subscription not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       await expect(usecase.getSubscriptionByUserId(userId1)).rejects.toThrow(
         ResourceNotFoundError,
@@ -68,16 +70,18 @@ describe("SubscriptionUsecase", () => {
 
   describe("getSubscriptionByUserIdOrDefault", () => {
     it("should return subscription when exists", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.getSubscriptionByUserIdOrDefault(userId1);
 
       expect(result).toEqual(mockSubscription);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return default free subscription when not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       const result = await usecase.getSubscriptionByUserIdOrDefault(userId1);
 
@@ -85,27 +89,29 @@ describe("SubscriptionUsecase", () => {
       expect(result.plan).toEqual("free");
       expect(result.status).toEqual("active");
       expect(result.canUseApiKey()).toBe(false);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
   });
 
   describe("canUserAccessApiKey", () => {
     it("should return true when user has active premium subscription", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(mockSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        mockSubscription,
+      );
 
       const result = await usecase.canUserAccessApiKey(userId1);
 
       expect(result).toBe(true);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return false when subscription not found", async () => {
-      when(repo.findByUserId(userId1)).thenResolve(undefined);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
 
       const result = await usecase.canUserAccessApiKey(userId1);
 
       expect(result).toBe(false);
-      verify(repo.findByUserId(userId1)).once();
+      verify(repo.findSubscriptionByUserId(userId1)).once();
     });
 
     it("should return false when subscription is free plan", async () => {
@@ -113,7 +119,9 @@ describe("SubscriptionUsecase", () => {
         ...mockSubscription,
         plan: "free",
       });
-      when(repo.findByUserId(userId1)).thenResolve(freeSubscription);
+      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+        freeSubscription,
+      );
 
       const result = await usecase.canUserAccessApiKey(userId1);
 

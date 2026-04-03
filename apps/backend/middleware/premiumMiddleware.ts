@@ -19,7 +19,7 @@ const prodPremiumMiddleware: MiddlewareHandler<AppContext> = async (
 
   const db = c.env.DB;
   const subscriptionRepo = newSubscriptionRepository(db);
-  const subscription = await subscriptionRepo.findByUserId(userId);
+  const subscription = await subscriptionRepo.findSubscriptionByUserId(userId);
 
   if (!subscription) {
     throw new UnauthorizedError(

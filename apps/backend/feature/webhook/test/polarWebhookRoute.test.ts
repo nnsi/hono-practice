@@ -122,6 +122,7 @@ function buildTestApp(mockUc: MockUsecase) {
           status: "active",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.created",
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
         });
@@ -152,6 +153,7 @@ function buildTestApp(mockUc: MockUsecase) {
           status,
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: payload.type,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
@@ -171,6 +173,7 @@ function buildTestApp(mockUc: MockUsecase) {
           status: "active",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.canceled",
           cancelAtPeriodEnd: true,
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
@@ -190,6 +193,7 @@ function buildTestApp(mockUc: MockUsecase) {
           status: "cancelled",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.revoked",
         });
         break;
       }
@@ -317,6 +321,7 @@ describe("Polar webhook route", () => {
           status: "active",
           paymentProvider: "polar",
           paymentProviderId: "polar_sub_001",
+          eventType: "subscription.created",
         }),
       );
     });
@@ -352,6 +357,7 @@ describe("Polar webhook route", () => {
           paymentProvider: "polar",
           status: "active",
           plan: "premium",
+          eventType: "subscription.updated",
         }),
       );
       expect(mockUc.getSubscriptionByPaymentProviderId).not.toHaveBeenCalled();
@@ -374,7 +380,10 @@ describe("Polar webhook route", () => {
         "polar_sub_001",
       );
       expect(mockUc.upsertSubscriptionFromPayment).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "existing-user-456" }),
+        expect.objectContaining({
+          userId: "existing-user-456",
+          eventType: "subscription.updated",
+        }),
       );
     });
 
@@ -392,6 +401,7 @@ describe("Polar webhook route", () => {
         expect.objectContaining({
           status: "cancelled",
           plan: "free",
+          eventType: "subscription.updated",
         }),
       );
     });
@@ -413,6 +423,7 @@ describe("Polar webhook route", () => {
           userId: "app-user-123",
           status: "active",
           plan: "premium",
+          eventType: "subscription.active",
         }),
       );
     });
@@ -435,6 +446,7 @@ describe("Polar webhook route", () => {
           plan: "premium",
           status: "active",
           cancelAtPeriodEnd: true,
+          eventType: "subscription.canceled",
         }),
       );
     });
@@ -458,6 +470,7 @@ describe("Polar webhook route", () => {
           status: "cancelled",
           paymentProvider: "polar",
           paymentProviderId: "polar_sub_001",
+          eventType: "subscription.revoked",
         }),
       );
     });
@@ -480,6 +493,7 @@ describe("Polar webhook route", () => {
           userId: "existing-user-789",
           plan: "free",
           status: "cancelled",
+          eventType: "subscription.revoked",
         }),
       );
     });
