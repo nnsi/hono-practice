@@ -5,41 +5,55 @@ import {
   newSubscriptionHistory,
 } from "@packages/domain/subscription/subscriptionHistorySchema";
 import {
-  type Subscription,
   type SubscriptionId,
+  type SubscriptionPlan,
+  type SubscriptionStatus,
   createSubscriptionId,
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
 
 import type { SubscriptionHistoryRepository } from "./subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "./subscriptionRepository";
-import type { UpsertSubscriptionFromPaymentParams } from "./subscriptionUsecase";
 
-export function createDefaultSubscription(userId: UserId): Subscription {
-  return newSubscription({
-    id: createSubscriptionId(),
-    userId,
-    plan: "free",
-    status: "active",
-    paymentProvider: null,
-    paymentProviderId: null,
-    currentPeriodStart: null,
-    currentPeriodEnd: null,
-    cancelAtPeriodEnd: false,
-    cancelledAt: null,
-    trialStart: null,
-    trialEnd: null,
-    priceAmount: null,
-    priceCurrency: "JPY",
-    metadata: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+export type UpsertSubscriptionFromPaymentParams = {
+  userId: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  paymentProvider: string;
+  paymentProviderId: string;
+  eventType: string;
+  webhookId?: string | null;
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+  cancelAtPeriodEnd?: boolean;
+  priceAmount?: number;
+  priceCurrency?: string;
+};
+
+export type SubscriptionCommandUsecase = {
+  upsertSubscriptionFromPayment: (
+    params: UpsertSubscriptionFromPaymentParams,
+  ) => Promise<void>;
+};
+
+export function newSubscriptionCommandUsecase(
+  txRunner: TransactionRunner,
+  subscriptionRepo: SubscriptionRepository,
+  historyRepo: SubscriptionHistoryRepository,
+  tracer: Tracer,
+): SubscriptionCommandUsecase {
+  return {
+    upsertSubscriptionFromPayment: upsertSubscriptionFromPayment(
+      txRunner,
+      subscriptionRepo,
+      historyRepo,
+      tracer,
+    ),
+  };
 }
 
-export function upsertSubscriptionFromPayment(
+function upsertSubscriptionFromPayment(
   txRunner: TransactionRunner,
   subscriptionRepo: SubscriptionRepository,
   historyRepo: SubscriptionHistoryRepository,

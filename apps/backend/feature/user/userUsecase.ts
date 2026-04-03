@@ -12,7 +12,7 @@ import {
 
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
-import type { SubscriptionUsecase } from "../subscription/subscriptionUsecase";
+import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import type { UserRepository } from "./userRepository";
 
 export type CreateUserInputParams = {
@@ -50,7 +50,7 @@ export type UserUsecase = {
 export function newUserUsecase(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
-  subscriptionUc: SubscriptionUsecase,
+  subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
 ): UserUsecase {
   const passwordVerifier = new MultiHashPasswordVerifier();
@@ -102,7 +102,7 @@ function createUser(
 function getUserById(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
-  subscriptionUc: SubscriptionUsecase,
+  subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<UserWithProviders> => {

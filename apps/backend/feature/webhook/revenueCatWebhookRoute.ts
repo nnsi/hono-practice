@@ -5,13 +5,16 @@ import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 
+import {
+  type SubscriptionCommandUsecase,
+  newSubscriptionCommandUsecase,
+} from "../subscription/subscriptionCommandUsecase";
 import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
-import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 
 type RevenueCatWebhookContext = AppContext & {
   Variables: {
-    subscriptionUsecase: ReturnType<typeof newSubscriptionUsecase>;
+    commandUc: SubscriptionCommandUsecase;
   };
 };
 
@@ -35,9 +38,10 @@ export function createRevenueCatWebhookRoute() {
     const repo = newSubscriptionRepository(db);
     const historyRepo = newSubscriptionHistoryRepository(db);
     const txRunner = newDrizzleTransactionRunner(db);
-    const uc = newSubscriptionUsecase(txRunner, repo, historyRepo, tracer);
-
-    c.set("subscriptionUsecase", uc);
+    c.set(
+      "commandUc",
+      newSubscriptionCommandUsecase(txRunner, repo, historyRepo, tracer),
+    );
 
     return next();
   });
@@ -55,7 +59,7 @@ export function createRevenueCatWebhookRoute() {
 
     const body = (await c.req.json()) as RevenueCatEvent;
     const event = body.event;
-    const uc = c.var.subscriptionUsecase;
+    const { commandUc } = c.var;
     const userId = event.app_user_id;
     const providerId = event.original_transaction_id ?? event.id;
 
@@ -66,7 +70,7 @@ export function createRevenueCatWebhookRoute() {
     switch (event.type) {
       case "INITIAL_PURCHASE":
       case "RENEWAL": {
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId,
           plan: "premium",
           status: "active",
@@ -81,7 +85,7 @@ export function createRevenueCatWebhookRoute() {
 
       // CANCELLATION = 期間終了時にキャンセル予定。現在の期間中はまだ有効なので plan: "premium" を維持
       case "CANCELLATION": {
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId,
           plan: "premium",
           status: "active",
@@ -95,7 +99,7 @@ export function createRevenueCatWebhookRoute() {
       }
 
       case "EXPIRATION": {
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId,
           plan: "free",
           status: "expired",

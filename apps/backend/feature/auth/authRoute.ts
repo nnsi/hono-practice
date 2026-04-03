@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
-import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -12,9 +11,8 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { loginRequestSchema } from "@packages/types/request";
 
-import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
-import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
+import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
 import { appleVerify } from "./appleVerify";
@@ -51,12 +49,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       tracer,
     );
     const subscriptionRepo = newSubscriptionRepository(db);
-    const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
-    const txRunner = newDrizzleTransactionRunner(db);
-    const subscriptionUc = newSubscriptionUsecase(
-      txRunner,
+    const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
-      subscriptionHistoryRepo,
       tracer,
     );
     const userUc = newUserUsecase(

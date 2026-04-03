@@ -6,14 +6,18 @@ import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleT
 import { noopTracer } from "@backend/lib/tracer";
 import type { SubscriptionStatus } from "@packages/domain/subscription/subscriptionSchema";
 
+import type { SubscriptionCommandUsecase } from "../subscription/subscriptionCommandUsecase";
+import { newSubscriptionCommandUsecase } from "../subscription/subscriptionCommandUsecase";
 import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
-import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
+import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
+import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { verifyPolarSignature } from "./polarSignature";
 
 type PolarWebhookContext = AppContext & {
   Variables: {
-    subscriptionUsecase: ReturnType<typeof newSubscriptionUsecase>;
+    queryUc: SubscriptionQueryUsecase;
+    commandUc: SubscriptionCommandUsecase;
   };
 };
 
@@ -55,8 +59,11 @@ export function createPolarWebhookRoute() {
     const repo = newSubscriptionRepository(db);
     const historyRepo = newSubscriptionHistoryRepository(db);
     const txRunner = newDrizzleTransactionRunner(db);
-    const uc = newSubscriptionUsecase(txRunner, repo, historyRepo, tracer);
-    c.set("subscriptionUsecase", uc);
+    c.set("queryUc", newSubscriptionQueryUsecase(repo, tracer));
+    c.set(
+      "commandUc",
+      newSubscriptionCommandUsecase(txRunner, repo, historyRepo, tracer),
+    );
     return next();
   });
 
@@ -87,7 +94,7 @@ export function createPolarWebhookRoute() {
     }
 
     const payload = JSON.parse(rawBody) as PolarWebhookPayload;
-    const uc = c.var.subscriptionUsecase;
+    const { queryUc, commandUc } = c.var;
     const sub = payload.data;
 
     switch (payload.type) {
@@ -95,7 +102,7 @@ export function createPolarWebhookRoute() {
         const userId = sub.metadata.userId;
         if (!userId) break;
 
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId,
           plan: "premium",
           status: "active",
@@ -114,12 +121,12 @@ export function createPolarWebhookRoute() {
         const userId = sub.metadata.userId;
         const existing = userId
           ? undefined
-          : await uc.getSubscriptionByPaymentProviderId(sub.id);
+          : await queryUc.getSubscriptionByPaymentProviderId(sub.id);
         const resolvedUserId = userId ?? existing?.userId;
         if (!resolvedUserId) break;
 
         const status = POLAR_STATUS_MAP[sub.status] ?? "expired";
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId: resolvedUserId,
           plan: resolvePlan(status),
           status,
@@ -138,11 +145,11 @@ export function createPolarWebhookRoute() {
         const userId = sub.metadata.userId;
         const existing = userId
           ? undefined
-          : await uc.getSubscriptionByPaymentProviderId(sub.id);
+          : await queryUc.getSubscriptionByPaymentProviderId(sub.id);
         const resolvedUserId = userId ?? existing?.userId;
         if (!resolvedUserId) break;
 
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId: resolvedUserId,
           plan: "premium",
           status: "active",
@@ -161,11 +168,11 @@ export function createPolarWebhookRoute() {
         const userId = sub.metadata.userId;
         const existing = userId
           ? undefined
-          : await uc.getSubscriptionByPaymentProviderId(sub.id);
+          : await queryUc.getSubscriptionByPaymentProviderId(sub.id);
         const resolvedUserId = userId ?? existing?.userId;
         if (!resolvedUserId) break;
 
-        await uc.upsertSubscriptionFromPayment({
+        await commandUc.upsertSubscriptionFromPayment({
           userId: resolvedUserId,
           plan: "free",
           status: "cancelled",

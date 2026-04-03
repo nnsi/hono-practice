@@ -1,5 +1,4 @@
 import { ResourceNotFoundError } from "@backend/error";
-import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { noopTracer } from "@backend/lib/tracer";
 import {
   type Subscription,
@@ -7,37 +6,20 @@ import {
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
-import { anything, instance, mock, reset, verify, when } from "ts-mockito";
+import { instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { SubscriptionRepository } from "..";
-import { newSubscriptionUsecase } from "..";
-import type { SubscriptionHistoryRepository } from "../subscriptionHistoryRepository";
+import { newSubscriptionQueryUsecase } from "..";
 
-// TransactionRunnerのfake: reposをそのままmergeしてoperationに渡す
-const fakeTxRunner: TransactionRunner = {
-  async run(repositories, operation) {
-    const merged = Object.assign({}, ...repositories);
-    return operation(merged);
-  },
-};
-
-describe("SubscriptionUsecase", () => {
+describe("SubscriptionQueryUsecase", () => {
   let repo: SubscriptionRepository;
-  let historyRepo: SubscriptionHistoryRepository;
-  let usecase: ReturnType<typeof newSubscriptionUsecase>;
+  let usecase: ReturnType<typeof newSubscriptionQueryUsecase>;
 
   beforeEach(() => {
     repo = mock<SubscriptionRepository>();
-    historyRepo = mock<SubscriptionHistoryRepository>();
-    usecase = newSubscriptionUsecase(
-      fakeTxRunner,
-      instance(repo),
-      instance(historyRepo),
-      noopTracer,
-    );
+    usecase = newSubscriptionQueryUsecase(instance(repo), noopTracer);
     reset(repo);
-    reset(historyRepo);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
@@ -144,52 +126,6 @@ describe("SubscriptionUsecase", () => {
       const result = await usecase.canUserAccessApiKey(userId1);
 
       expect(result).toBe(false);
-    });
-  });
-
-  describe("upsertSubscriptionFromPayment", () => {
-    it("should update existing subscription and record history", async () => {
-      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
-        mockSubscription,
-      );
-      when(repo.updateSubscription(anything())).thenResolve(mockSubscription);
-      when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
-        undefined,
-      );
-
-      await usecase.upsertSubscriptionFromPayment({
-        userId: userId1,
-        plan: "premium",
-        status: "active",
-        paymentProvider: "polar",
-        paymentProviderId: "sub_456",
-        eventType: "subscription.updated",
-      });
-
-      verify(repo.findSubscriptionByUserId(userId1)).once();
-      verify(repo.updateSubscription(anything())).once();
-      verify(historyRepo.insertSubscriptionHistory(anything())).once();
-    });
-
-    it("should create new subscription and record history when none exists", async () => {
-      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
-      when(repo.createSubscription(anything())).thenResolve(mockSubscription);
-      when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
-        undefined,
-      );
-
-      await usecase.upsertSubscriptionFromPayment({
-        userId: userId1,
-        plan: "premium",
-        status: "active",
-        paymentProvider: "polar",
-        paymentProviderId: "sub_789",
-        eventType: "subscription.created",
-      });
-
-      verify(repo.findSubscriptionByUserId(userId1)).once();
-      verify(repo.createSubscription(anything())).once();
-      verify(historyRepo.insertSubscriptionHistory(anything())).once();
     });
   });
 });

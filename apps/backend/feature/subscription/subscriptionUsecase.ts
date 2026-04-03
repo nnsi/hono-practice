@@ -1,53 +1,27 @@
 import { ResourceNotFoundError } from "@backend/error";
-import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
-import type {
-  Subscription,
-  SubscriptionPlan,
-  SubscriptionStatus,
+import {
+  type Subscription,
+  createSubscriptionId,
+  newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
-import type { SubscriptionHistoryRepository } from "./subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "./subscriptionRepository";
-import {
-  createDefaultSubscription,
-  upsertSubscriptionFromPayment,
-} from "./subscriptionUsecaseHelpers";
 
-export type UpsertSubscriptionFromPaymentParams = {
-  userId: string;
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  paymentProvider: string;
-  paymentProviderId: string;
-  eventType: string;
-  webhookId?: string | null;
-  currentPeriodStart?: Date;
-  currentPeriodEnd?: Date;
-  cancelAtPeriodEnd?: boolean;
-  priceAmount?: number;
-  priceCurrency?: string;
-};
-
-export type SubscriptionUsecase = {
+export type SubscriptionQueryUsecase = {
   getSubscriptionByUserId: (userId: UserId) => Promise<Subscription>;
   getSubscriptionByUserIdOrDefault: (userId: UserId) => Promise<Subscription>;
   getSubscriptionByPaymentProviderId: (
     providerId: string,
   ) => Promise<Subscription | undefined>;
   canUserAccessApiKey: (userId: UserId) => Promise<boolean>;
-  upsertSubscriptionFromPayment: (
-    params: UpsertSubscriptionFromPaymentParams,
-  ) => Promise<void>;
 };
 
-export function newSubscriptionUsecase(
-  txRunner: TransactionRunner,
+export function newSubscriptionQueryUsecase(
   subscriptionRepo: SubscriptionRepository,
-  historyRepo: SubscriptionHistoryRepository,
   tracer: Tracer,
-): SubscriptionUsecase {
+): SubscriptionQueryUsecase {
   return {
     getSubscriptionByUserId: getSubscriptionByUserId(subscriptionRepo, tracer),
     getSubscriptionByUserIdOrDefault: getSubscriptionByUserIdOrDefault(
@@ -59,12 +33,6 @@ export function newSubscriptionUsecase(
         subscriptionRepo.findSubscriptionByPaymentProviderId(providerId),
       ),
     canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo, tracer),
-    upsertSubscriptionFromPayment: upsertSubscriptionFromPayment(
-      txRunner,
-      subscriptionRepo,
-      historyRepo,
-      tracer,
-    ),
   };
 }
 
@@ -92,7 +60,25 @@ function getSubscriptionByUserIdOrDefault(
       subscriptionRepo.findSubscriptionByUserId(userId),
     );
     if (!subscription) {
-      return createDefaultSubscription(userId);
+      return newSubscription({
+        id: createSubscriptionId(),
+        userId,
+        plan: "free",
+        status: "active",
+        paymentProvider: null,
+        paymentProviderId: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        cancelledAt: null,
+        trialStart: null,
+        trialEnd: null,
+        priceAmount: null,
+        priceCurrency: "JPY",
+        metadata: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     }
     return subscription;
   };

@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
-import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -18,9 +17,8 @@ import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
-import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
-import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
+import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
 import { newUserUsecase } from "./userUsecase";
@@ -58,12 +56,8 @@ export function createUserRoute() {
     );
     const authH = newAuthHandler(authUc);
     const subscriptionRepo = newSubscriptionRepository(db);
-    const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
-    const txRunner = newDrizzleTransactionRunner(db);
-    const subscriptionUc = newSubscriptionUsecase(
-      txRunner,
+    const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
-      subscriptionHistoryRepo,
       tracer,
     );
     const uc = newUserUsecase(repo, userProviderRepo, subscriptionUc, tracer);

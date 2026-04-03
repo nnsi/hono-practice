@@ -2,7 +2,7 @@ import { AppError } from "@backend/error";
 import type { UserId } from "@packages/domain/user/userSchema";
 import { SubscriptionResponseSchema } from "@packages/types/response";
 
-import type { SubscriptionUsecase } from "./subscriptionUsecase";
+import type { SubscriptionQueryUsecase } from "./subscriptionUsecase";
 
 export type SubscriptionHandler = {
   getSubscription: (userId: UserId) => Promise<{
@@ -15,14 +15,14 @@ export type SubscriptionHandler = {
 };
 
 export function newSubscriptionHandler(
-  subscriptionUsecase: SubscriptionUsecase,
+  subscriptionUsecase: SubscriptionQueryUsecase,
 ): SubscriptionHandler {
   return {
     getSubscription: getSubscription(subscriptionUsecase),
   };
 }
 
-function getSubscription(subscriptionUsecase: SubscriptionUsecase) {
+function getSubscription(subscriptionUsecase: SubscriptionQueryUsecase) {
   return async (userId: UserId) => {
     const subscription =
       await subscriptionUsecase.getSubscriptionByUserIdOrDefault(userId);
