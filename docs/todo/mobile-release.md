@@ -97,10 +97,10 @@ eas env:create --environment preview --name EXPO_PUBLIC_CONTACT_EMAIL --value "<
 
 - [x] Apple Developer Program に登録（年額 $99）
   - https://developer.apple.com/programs/
-- [ ] Google Play Console に登録（一回 $25）
+- [x] Google Play Console に登録（一回 $25）
   - https://play.google.com/console/
 - [x] Apple: App ID (`$BUNDLE_ID`) を Apple Developer Portal で登録
-- [ ] Google: Google Play Console でアプリを新規作成
+- [x] Google: Google Play Console でアプリを新規作成
 - [x] Apple Developer アカウントを EAS に接続: `eas credentials`
 
 ---

@@ -130,7 +130,7 @@ cd <worktreeパス> && pnpm run test-once && pnpm run tsc && pnpm run fix
 
 ## Phase 3: ブラウザ動作確認（1回目）
 
-`/browser-check` スキルの手順に従う。ただしポートはworktree環境のものを使う。
+`/browser-check` スキルを実行する。ただしポートはworktree環境のものを使う。
 
 **並列確認**: 複数画面の確認が必要な場合、サブエージェントに `playwright-cli -s <session名>` を使わせることで並列化できる（例: フロントエンドとmobileを同時確認）。
 
@@ -143,12 +143,13 @@ cd <worktreeパス>/apps/backend && pnpm dev &
 cd <worktreeパス>/apps/frontend && pnpm dev &
 ```
 
+`apps/admin-frontend` 等、他のフロントエンドアプリが確認対象に含まれる場合はそれも起動し、`.env` がworktreeのバックエンドポートを向いていることを確認する。
+
 ### 確認内容
 
-1. **フロントエンド**: Viteポートにアクセスして表示確認
-2. **操作検証**: Phase 0で定義した検証フローを実施
-3. **モバイルビューポート**: UI変更時は375px × 812pxで確認
-4. **React Native Web**（mobileかつRNの範囲で動作確認できるもの）:
+1. **操作検証**: Phase 0で定義した検証フローを実施
+2. **モバイルビューポート**: UI変更時は375px × 812pxで確認
+3. **React Native Web**（mobileかつRNの範囲で動作確認できるもの）:
    - `cd <worktreeパス>/apps/mobile && npx expo start --web` で起動
    - ブラウザで操作確認
 
@@ -171,7 +172,7 @@ cd <worktreeパス>/apps/frontend && pnpm dev &
 
 Phase 4の修正でリグレッションが入っていないことを確認する。
 
-- Phase 3と同じ手順でブラウザ確認
+- `/browser-check` スキルを実行（Phase 3と同じ手順）
 - 特にレビュー修正で変更した箇所に注目
 - 問題があればPhase 4に戻る（修正 → レビュー → 確認のループ）
 

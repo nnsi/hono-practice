@@ -115,6 +115,14 @@ else
   echo "  WARNING: $MAIN_FE_ENV not found."
 fi
 
+# Admin Frontend .env (if exists)
+WT_ADMIN_FE_DIR="$WT_DIR/apps/admin-frontend"
+if [ -d "$WT_ADMIN_FE_DIR" ]; then
+  WT_ADMIN_FE_ENV="$WT_ADMIN_FE_DIR/.env"
+  echo "VITE_API_URL=http://localhost:$API_PORT" > "$WT_ADMIN_FE_ENV"
+  echo "  apps/admin-frontend/.env → OK"
+fi
+
 # Root .env (for drizzle-kit / seed scripts)
 cat > "$WT_DIR/.env" << EOF
 DATABASE_URL=postgresql://postgres:postgres@localhost:5435/$DB_NAME

@@ -9,13 +9,13 @@ import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { UserProviderRepository } from "../../auth/userProviderRepository";
-import type { SubscriptionUsecase } from "../../subscription/subscriptionUsecase";
+import type { SubscriptionQueryUsecase } from "../../subscription/subscriptionUsecase";
 import { type UserRepository, newUserUsecase } from "..";
 
 describe("UserUsecase", () => {
   let repo: UserRepository;
   let providerRepo: UserProviderRepository;
-  let subscriptionUc: SubscriptionUsecase;
+  let subscriptionUc: SubscriptionQueryUsecase;
   let usecase: ReturnType<typeof newUserUsecase>;
 
   const userId = createUserId("00000000-0000-4000-8000-000000000000");
@@ -43,7 +43,7 @@ describe("UserUsecase", () => {
   beforeEach(() => {
     repo = mock<UserRepository>();
     providerRepo = mock<UserProviderRepository>();
-    subscriptionUc = mock<SubscriptionUsecase>();
+    subscriptionUc = mock<SubscriptionQueryUsecase>();
     usecase = newUserUsecase(
       instance(repo),
       instance(providerRepo),

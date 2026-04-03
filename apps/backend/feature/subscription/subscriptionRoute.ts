@@ -6,7 +6,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import { checkoutRoute } from "./checkoutRoute";
 import { newSubscriptionHandler } from "./subscriptionHandler";
 import { newSubscriptionRepository } from "./subscriptionRepository";
-import { newSubscriptionUsecase } from "./subscriptionUsecase";
+import { newSubscriptionQueryUsecase } from "./subscriptionUsecase";
 
 export function createSubscriptionRoute() {
   const app = new Hono<
@@ -19,10 +19,9 @@ export function createSubscriptionRoute() {
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
-
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionUsecase(repo, tracer);
+    const uc = newSubscriptionQueryUsecase(repo, tracer);
     const h = newSubscriptionHandler(uc);
 
     c.set("h", h);

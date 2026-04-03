@@ -1,7 +1,14 @@
 import { AppError } from "@backend/error";
+import type { SubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import type { UserRepository } from "@backend/feature/user/userRepository";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
+import type { SubscriptionHistory } from "@packages/domain/subscription/subscriptionHistorySchema";
+import {
+  createSubscriptionHistoryId,
+  newSubscriptionHistory,
+} from "@packages/domain/subscription/subscriptionHistorySchema";
 import {
   type Subscription,
   type SubscriptionPlan,
@@ -28,6 +35,7 @@ export type AdminSubscriptionUsecase = {
           createdAt: Date;
         };
         subscription: Subscription | null;
+        subscriptionHistory: SubscriptionHistory[];
       }
     | undefined
   >;
@@ -38,8 +46,10 @@ export type AdminSubscriptionUsecase = {
 };
 
 export function newAdminSubscriptionUsecase(
+  txRunner: TransactionRunner,
   userRepo: UserRepository,
   subscriptionRepo: SubscriptionRepository,
+  historyRepo: SubscriptionHistoryRepository,
   tracer: Tracer,
 ): AdminSubscriptionUsecase {
   return {
@@ -52,8 +62,15 @@ export function newAdminSubscriptionUsecase(
       }
       const subscription = await tracer.span(
         "db.findSubscriptionByUserId",
-        () => subscriptionRepo.findByUserId(createUserId(userId)),
+        () => subscriptionRepo.findSubscriptionByUserId(createUserId(userId)),
       );
+      const subscriptionHistory = subscription
+        ? await tracer.span("db.findSubscriptionHistories", () =>
+            historyRepo.findSubscriptionHistoriesBySubscriptionId(
+              subscription.id,
+            ),
+          )
+        : [];
       return {
         user: {
           id: user.id,
@@ -62,6 +79,7 @@ export function newAdminSubscriptionUsecase(
           createdAt: user.type === "persisted" ? user.createdAt : new Date(),
         },
         subscription: subscription ?? null,
+        subscriptionHistory,
       };
     },
 
@@ -73,63 +91,87 @@ export function newAdminSubscriptionUsecase(
         throw new AppError("User not found", 404);
       }
 
-      const existing = await tracer.span("db.findSubscriptionByUserId", () =>
-        subscriptionRepo.findByUserId(createUserId(userId)),
-      );
+      return txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
+        const existing = await tracer.span("db.findSubscriptionByUserId", () =>
+          txRepos.findSubscriptionByUserId(createUserId(userId)),
+        );
 
-      if (existing) {
-        const updated = newSubscription({
-          id: existing.id,
-          userId: existing.userId,
+        const now = new Date();
+        let result: Subscription;
+        let subscriptionId: Subscription["id"];
+
+        if (existing) {
+          const updated = newSubscription({
+            id: existing.id,
+            userId: existing.userId,
+            plan: params.plan,
+            status: params.status,
+            paymentProvider: "admin_manual",
+            paymentProviderId: null,
+            currentPeriodStart:
+              params.currentPeriodStart !== undefined
+                ? params.currentPeriodStart
+                : existing.currentPeriodStart,
+            currentPeriodEnd:
+              params.currentPeriodEnd !== undefined
+                ? params.currentPeriodEnd
+                : existing.currentPeriodEnd,
+            cancelAtPeriodEnd: existing.cancelAtPeriodEnd,
+            cancelledAt: existing.cancelledAt,
+            trialStart: existing.trialStart,
+            trialEnd: existing.trialEnd,
+            priceAmount: existing.priceAmount,
+            priceCurrency: existing.priceCurrency,
+            metadata: existing.metadata,
+            createdAt: existing.createdAt,
+            updatedAt: now,
+          });
+          result = await tracer.span("db.updateSubscription", () =>
+            txRepos.updateSubscription(updated),
+          );
+          subscriptionId = existing.id;
+        } else {
+          const created = newSubscription({
+            id: createSubscriptionId(),
+            userId: createUserId(userId),
+            plan: params.plan,
+            status: params.status,
+            paymentProvider: "admin_manual",
+            paymentProviderId: null,
+            currentPeriodStart: params.currentPeriodStart ?? null,
+            currentPeriodEnd: params.currentPeriodEnd ?? null,
+            cancelAtPeriodEnd: false,
+            cancelledAt: null,
+            trialStart: null,
+            trialEnd: null,
+            priceAmount: null,
+            priceCurrency: "JPY",
+            metadata: null,
+            createdAt: now,
+            updatedAt: now,
+          });
+          result = await tracer.span("db.createSubscription", () =>
+            txRepos.createSubscription(created),
+          );
+          subscriptionId = created.id;
+        }
+
+        const history = newSubscriptionHistory({
+          id: createSubscriptionHistoryId(),
+          subscriptionId,
+          eventType: "admin_manual",
           plan: params.plan,
           status: params.status,
-          paymentProvider: "admin_manual",
-          paymentProviderId: null,
-          currentPeriodStart:
-            params.currentPeriodStart !== undefined
-              ? params.currentPeriodStart
-              : existing.currentPeriodStart,
-          currentPeriodEnd:
-            params.currentPeriodEnd !== undefined
-              ? params.currentPeriodEnd
-              : existing.currentPeriodEnd,
-          cancelAtPeriodEnd: existing.cancelAtPeriodEnd,
-          cancelledAt: existing.cancelledAt,
-          trialStart: existing.trialStart,
-          trialEnd: existing.trialEnd,
-          priceAmount: existing.priceAmount,
-          priceCurrency: existing.priceCurrency,
-          metadata: existing.metadata,
-          createdAt: existing.createdAt,
-          updatedAt: new Date(),
+          source: "admin_manual",
+          webhookId: null,
+          createdAt: now,
         });
-        return tracer.span("db.updateSubscription", () =>
-          subscriptionRepo.update(updated),
+        await tracer.span("db.insertSubscriptionHistory", () =>
+          txRepos.insertSubscriptionHistory(history),
         );
-      }
 
-      const created = newSubscription({
-        id: createSubscriptionId(),
-        userId: createUserId(userId),
-        plan: params.plan,
-        status: params.status,
-        paymentProvider: "admin_manual",
-        paymentProviderId: null,
-        currentPeriodStart: params.currentPeriodStart ?? null,
-        currentPeriodEnd: params.currentPeriodEnd ?? null,
-        cancelAtPeriodEnd: false,
-        cancelledAt: null,
-        trialStart: null,
-        trialEnd: null,
-        priceAmount: null,
-        priceCurrency: "JPY",
-        metadata: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        return result;
       });
-      return tracer.span("db.createSubscription", () =>
-        subscriptionRepo.create(created),
-      );
     },
   };
 }

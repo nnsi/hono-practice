@@ -12,7 +12,7 @@ import { zValidator } from "@hono/zod-validator";
 import { loginRequestSchema } from "@packages/types/request";
 
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
-import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
+import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newUserRepository } from "../user";
 import { newUserUsecase } from "../user/userUsecase";
 import { appleVerify } from "./appleVerify";
@@ -49,7 +49,10 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       tracer,
     );
     const subscriptionRepo = newSubscriptionRepository(db);
-    const subscriptionUc = newSubscriptionUsecase(subscriptionRepo, tracer);
+    const subscriptionUc = newSubscriptionQueryUsecase(
+      subscriptionRepo,
+      tracer,
+    );
     const userUc = newUserUsecase(
       repo,
       userProviderRepo,
