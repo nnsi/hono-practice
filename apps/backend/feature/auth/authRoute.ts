@@ -11,6 +11,7 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { loginRequestSchema } from "@packages/types/request";
 
+import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 import { newUserRepository } from "../user";
@@ -49,7 +50,13 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       tracer,
     );
     const subscriptionRepo = newSubscriptionRepository(db);
-    const subscriptionUc = newSubscriptionUsecase(subscriptionRepo, tracer);
+    const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
+    const subscriptionUc = newSubscriptionUsecase(
+      db,
+      subscriptionRepo,
+      subscriptionHistoryRepo,
+      tracer,
+    );
     const userUc = newUserUsecase(
       repo,
       userProviderRepo,

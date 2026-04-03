@@ -4,6 +4,7 @@ import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 
+import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 
@@ -31,7 +32,8 @@ export function createRevenueCatWebhookRoute() {
     const db = c.env.DB;
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionUsecase(repo, tracer);
+    const historyRepo = newSubscriptionHistoryRepository(db);
+    const uc = newSubscriptionUsecase(db, repo, historyRepo, tracer);
 
     c.set("subscriptionUsecase", uc);
 
@@ -69,6 +71,8 @@ export function createRevenueCatWebhookRoute() {
           paymentProvider: "revenuecat",
           paymentProviderId: providerId,
           currentPeriodEnd: expirationDate,
+          eventType: event.type,
+          webhookId: event.id,
         });
         break;
       }
@@ -82,6 +86,8 @@ export function createRevenueCatWebhookRoute() {
           paymentProvider: "revenuecat",
           paymentProviderId: providerId,
           cancelAtPeriodEnd: true,
+          eventType: event.type,
+          webhookId: event.id,
         });
         break;
       }
@@ -93,6 +99,8 @@ export function createRevenueCatWebhookRoute() {
           status: "expired",
           paymentProvider: "revenuecat",
           paymentProviderId: providerId,
+          eventType: event.type,
+          webhookId: event.id,
         });
         break;
       }

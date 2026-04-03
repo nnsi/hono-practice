@@ -17,6 +17,7 @@ import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
+import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 import { newUserHandler } from "./userHandler";
@@ -56,7 +57,13 @@ export function createUserRoute() {
     );
     const authH = newAuthHandler(authUc);
     const subscriptionRepo = newSubscriptionRepository(db);
-    const subscriptionUc = newSubscriptionUsecase(subscriptionRepo, tracer);
+    const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
+    const subscriptionUc = newSubscriptionUsecase(
+      db,
+      subscriptionRepo,
+      subscriptionHistoryRepo,
+      tracer,
+    );
     const uc = newUserUsecase(repo, userProviderRepo, subscriptionUc, tracer);
     const h = newUserHandler(uc, authH);
 

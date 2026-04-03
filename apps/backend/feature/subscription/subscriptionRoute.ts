@@ -5,6 +5,7 @@ import { noopTracer } from "@backend/lib/tracer";
 
 import { checkoutRoute } from "./checkoutRoute";
 import { newSubscriptionHandler } from "./subscriptionHandler";
+import { newSubscriptionHistoryRepository } from "./subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "./subscriptionRepository";
 import { newSubscriptionUsecase } from "./subscriptionUsecase";
 
@@ -22,7 +23,8 @@ export function createSubscriptionRoute() {
 
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionUsecase(repo, tracer);
+    const historyRepo = newSubscriptionHistoryRepository(db);
+    const uc = newSubscriptionUsecase(db, repo, historyRepo, tracer);
     const h = newSubscriptionHandler(uc);
 
     c.set("h", h);

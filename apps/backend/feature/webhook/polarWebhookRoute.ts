@@ -5,6 +5,7 @@ import { AppError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import type { SubscriptionStatus } from "@packages/domain/subscription/subscriptionSchema";
 
+import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionUsecase } from "../subscription/subscriptionUsecase";
 import { verifyPolarSignature } from "./polarSignature";
@@ -51,7 +52,8 @@ export function createPolarWebhookRoute() {
     const db = c.env.DB;
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionUsecase(repo, tracer);
+    const historyRepo = newSubscriptionHistoryRepository(db);
+    const uc = newSubscriptionUsecase(db, repo, historyRepo, tracer);
     c.set("subscriptionUsecase", uc);
     return next();
   });
@@ -97,6 +99,8 @@ export function createPolarWebhookRoute() {
           status: "active",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.created",
+          webhookId,
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
         });
@@ -119,6 +123,8 @@ export function createPolarWebhookRoute() {
           status,
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: payload.type,
+          webhookId,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
@@ -140,6 +146,8 @@ export function createPolarWebhookRoute() {
           status: "active",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.canceled",
+          webhookId,
           cancelAtPeriodEnd: true,
           currentPeriodStart: new Date(sub.current_period_start),
           currentPeriodEnd: new Date(sub.current_period_end),
@@ -161,6 +169,8 @@ export function createPolarWebhookRoute() {
           status: "cancelled",
           paymentProvider: "polar",
           paymentProviderId: sub.id,
+          eventType: "subscription.revoked",
+          webhookId,
         });
         break;
       }

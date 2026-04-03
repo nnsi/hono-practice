@@ -1,6 +1,7 @@
 import type { AppContext } from "@backend/context";
 import { newContactRepository } from "@backend/feature/contact/contactRepository";
 import { newContactUsecase } from "@backend/feature/contact/contactUsecase";
+import { newSubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
 import { noopTracer } from "@backend/lib/tracer";
@@ -53,9 +54,12 @@ export function resolveAdminHandler(c: {
   );
   const dashboardUc = newAdminDashboardUsecase(dashboardQs, tracer);
   const subscriptionRepo = newSubscriptionRepository(db);
+  const subscriptionHistoryRepo = newSubscriptionHistoryRepository(db);
   const subscriptionUc = newAdminSubscriptionUsecase(
+    db,
     userRepo,
     subscriptionRepo,
+    subscriptionHistoryRepo,
     tracer,
   );
   return newAdminHandler(

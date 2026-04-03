@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { ArrowLeft } from "lucide-react";
 
 import { adminClient } from "../../utils/apiClient";
+import { SubscriptionHistorySection } from "./SubscriptionHistorySection";
 import { SubscriptionSection } from "./SubscriptionSection";
 
 export function UserDetailPage() {
@@ -78,6 +79,7 @@ export function UserDetailPage() {
         subscription={data.subscription}
         userId={data.user.id}
       />
+      <SubscriptionHistorySection history={data.subscriptionHistory ?? []} />
     </div>
   );
 }
