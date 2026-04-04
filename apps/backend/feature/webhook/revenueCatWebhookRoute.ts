@@ -4,6 +4,7 @@ import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
+import { z } from "zod";
 
 import {
   type SubscriptionCommandUsecase,
@@ -18,31 +19,36 @@ type RevenueCatWebhookContext = AppContext & {
   };
 };
 
-type RevenueCatEvent = {
-  event: {
-    type: string;
-    app_user_id: string;
-    product_id?: string;
-    expiration_at_ms?: number;
-    original_transaction_id?: string;
-    id: string;
-  };
-};
+const revenueCatEventSchema = z.object({
+  event: z.object({
+    type: z.string(),
+    app_user_id: z.string(),
+    product_id: z.string().optional(),
+    expiration_at_ms: z.number().optional(),
+    original_transaction_id: z.string().optional(),
+    id: z.string(),
+  }),
+});
 
-export function createRevenueCatWebhookRoute() {
+export function createRevenueCatWebhookRoute(deps?: {
+  commandUc: SubscriptionCommandUsecase;
+}) {
   const app = new Hono<RevenueCatWebhookContext>();
 
   app.use("*", async (c, next) => {
-    const db = c.env.DB;
-    const tracer = c.get("tracer") ?? noopTracer;
-    const repo = newSubscriptionRepository(db);
-    const historyRepo = newSubscriptionHistoryRepository(db);
-    const txRunner = newDrizzleTransactionRunner(db);
-    c.set(
-      "commandUc",
-      newSubscriptionCommandUsecase(txRunner, repo, historyRepo, tracer),
-    );
-
+    if (deps) {
+      c.set("commandUc", deps.commandUc);
+    } else {
+      const db = c.env.DB;
+      const tracer = c.get("tracer") ?? noopTracer;
+      const repo = newSubscriptionRepository(db);
+      const historyRepo = newSubscriptionHistoryRepository(db);
+      const txRunner = newDrizzleTransactionRunner(db);
+      c.set(
+        "commandUc",
+        newSubscriptionCommandUsecase(txRunner, repo, historyRepo, tracer),
+      );
+    }
     return next();
   });
 
@@ -57,7 +63,11 @@ export function createRevenueCatWebhookRoute() {
       throw new AppError("Unauthorized", 401);
     }
 
-    const body = (await c.req.json()) as RevenueCatEvent;
+    const parsed = revenueCatEventSchema.safeParse(await c.req.json());
+    if (!parsed.success) {
+      throw new AppError("Invalid webhook payload", 400);
+    }
+    const body = parsed.data;
     const event = body.event;
     const { commandUc } = c.var;
     const userId = event.app_user_id;

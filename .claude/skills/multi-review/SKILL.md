@@ -1,32 +1,31 @@
 ---
 name: multi-review
-description: 最大8レビュアー（最大5サブエージェント + 最大3 Codex）を並列起動し、スコアベースで集約したレビューレポートを出力する。修正は行わない。
+description: 最大5サブエージェントを並列起動し、スコアベースで集約したレビューレポートを出力する。修正は行わない。
 user_invocable: true
 ---
 
 # マルチレビュー
 
-専門レビュアーを並列起動し、スコアベースで集約したレビューレポートを出力する。**修正は行わない**（修正込みのサイクルは `/review-cycle` を使う）。
+専門サブエージェント（`.claude/agents/reviewer-*.md`）を並列起動し、スコアベースで集約したレビューレポートを出力する。**修正は行わない**（修正込みのサイクルは `/review-cycle` を使う）。
+
+Codex版は `/codex-multi-review` を使う。
 
 ## レビュアー構成
 
-### 常時起動（6レビュアー）
+### 常時起動（4レビュアー）
 
-| # | 名前 | 種別 | モデル | 専門領域 |
-|---|------|------|--------|----------|
-| A | reviewer-security | エージェント定義 | Sonnet | セキュリティ |
-| B | reviewer-logic | エージェント定義 | Sonnet | ロジック・バグ |
-| C | reviewer-architecture | エージェント定義 | Opus | 設計・アーキテクチャ |
-| D | reviewer-testability | エージェント定義 | Sonnet | テスタビリティ・テスト網羅性 |
-| E | Codex-Design | Codex CLI | - | 設計・ロジック・バグ |
-| F | Codex-Test | Codex CLI | - | テスタビリティ・テスト網羅性 |
+| # | 名前 | モデル | 専門領域 |
+|---|------|--------|----------|
+| A | reviewer-security | Sonnet | セキュリティ |
+| B | reviewer-logic | Sonnet | ロジック・バグ |
+| C | reviewer-architecture | Opus | 設計・アーキテクチャ |
+| D | reviewer-testability | Sonnet | テスタビリティ・テスト網羅性 |
 
-### 条件付き起動（ネイティブコード含む場合のみ +2）
+### 条件付き起動（ネイティブコード含む場合のみ +1）
 
-| # | 名前 | 種別 | モデル | 専門領域 |
-|---|------|------|--------|----------|
-| G | reviewer-native | エージェント定義 | Sonnet | Swift/Kotlin（ウィジェット、共有DB、iOS/Android対称性） |
-| H | Codex-Native | Codex CLI | - | Swift/Kotlin（コンパイル安全性、ライフサイクル） |
+| # | 名前 | モデル | 専門領域 |
+|---|------|--------|----------|
+| E | reviewer-native | Sonnet | Swift/Kotlin（ウィジェット、共有DB、iOS/Android対称性） |
 
 **起動条件**: レビュー対象に `.swift` または `.kt` ファイルが含まれる場合。
 
@@ -37,13 +36,11 @@ user_invocable: true
 1. **ディレクトリの存在を必ずGlobで確認する**（エージェントの報告を鵜呑みにしない）
 2. レビュー対象のファイル一覧を取得
 3. **ネイティブコード判定**: レビュー対象に `.swift` / `.kt` ファイルが含まれるかGlobで確認
-4. ユーザーにレビュー対象を確認（ネイティブレビュアーG,Hの起動有無も明示）
+4. ユーザーにレビュー対象を確認（ネイティブレビュアーEの起動有無も明示）
 
 ### Step 2: 全レビュアー並列起動
 
-全レビュアーを**同時に**起動する（ネイティブコードなしなら6、ありなら8）。**レビュアーを省略しない。全員起動が必須。**
-
-#### サブエージェント A-D（+G）の起動方法
+全レビュアーを**同時に**起動する（ネイティブコードなしなら4、ありなら5）。**レビュアーを省略しない。全員起動が必須。**
 
 `.claude/agents/` にエージェント定義済み。Agentツールで起動する:
 
@@ -54,31 +51,11 @@ user_invocable: true
 
 起動パラメータ:
 - **name**: `reviewer-security` / `reviewer-logic` / `reviewer-architecture` / `reviewer-testability` （+ `reviewer-native`）
-- **mode**: エージェント定義側で`disallowedTools: Write, Edit`を設定済み。読み取り専用
-- **model**: エージェント定義側で指定済み（A,B,D,G=sonnet / C=opus）
+- **model**: エージェント定義側で指定済み（A,B,D,E=sonnet / C=opus）
 
 全Agentツール呼び出しを**1つのメッセージで並列実行**すること。
 
-**G (reviewer-native) にはSwift/Kotlinファイルのみ渡す。**
-
-#### Codex E-F（+H）の起動方法
-
-プロンプトテンプレート:
-- E: `prompts/codex-design-logic.md`
-- F: `prompts/codex-testability.md`
-- H: `prompts/codex-native.md`（ネイティブコード含む場合のみ）
-
-`{{TARGET_FILES}}` をレビュー対象ファイル一覧に置換して実行。**H にはSwift/Kotlinファイルのみ渡す。**
-
-**`-o` は使わず stdout で結果を受け取る**:
-
-```bash
-codex exec --full-auto --sandbox read-only -C "$PROJECT_ROOT" "<プロンプト>"
-```
-
-全Bashツール呼び出しも**並列実行**すること。
-
-**Codexが構造化された結果を返さなかった場合、stdoutを再確認。結果が空ならリトライする。**
+**E (reviewer-native) にはSwift/Kotlinファイルのみ渡す。**
 
 ### Step 3: スコアベース集約
 
@@ -110,20 +87,17 @@ codex exec --full-auto --sandbox read-only -C "$PROJECT_ROOT" "<プロンプト>
 - [confidence: XX, reporters: B] ファイル:行番号 - 指摘内容
 
 ### Info
-- [confidence: XX, reporters: D,F] ファイル:行番号 - 指摘内容
+- [confidence: XX, reporters: D] ファイル:行番号 - 指摘内容
 
 ## 報告のみ（confidence 75-79 単独）
-- [confidence: 77, reporter: E] ファイル:行番号 - 指摘内容
+- [confidence: 77, reporter: A] ファイル:行番号 - 指摘内容
 
 ## 各レビュアー判定
 - A (Security): LGTM / NOT LGTM
 - B (Logic): LGTM / NOT LGTM
 - C (Architecture): LGTM / NOT LGTM
 - D (Testability): LGTM / NOT LGTM
-- E (Codex-Design): LGTM / NOT LGTM
-- F (Codex-Test): LGTM / NOT LGTM
-- G (Native): LGTM / NOT LGTM ※ネイティブコード含む場合のみ
-- H (Codex-Native): LGTM / NOT LGTM ※ネイティブコード含む場合のみ
+- E (Native): LGTM / NOT LGTM ※ネイティブコード含む場合のみ
 ```
 
 ## レビュー結果の判断
@@ -134,6 +108,4 @@ codex exec --full-auto --sandbox read-only -C "$PROJECT_ROOT" "<プロンプト>
 
 ## 注意事項
 
-- Codexの `-C` パスはリポジトリルート（`$PROJECT_ROOT`）を使う
-- Codexは `-o` を使わず stdout で結果を受け取る
 - **計画書レビューと実装レビューは別物**: 計画書のレビュー済み≠実装コードのレビュー済み

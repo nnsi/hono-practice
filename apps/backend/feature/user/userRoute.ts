@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
+import { AppError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -103,12 +104,15 @@ export function createUserRoute() {
       return c.json({ token, refreshToken });
     })
     .get("/me", authMiddleware, async (c) => {
+      const userId = c.get("userId");
       try {
-        const userId = c.get("userId");
         const user = await c.var.h.getMe(userId);
         return c.json(user);
-      } catch (_e) {
-        return c.json({ message: "unauthorized" }, 401);
+      } catch (e) {
+        if (e instanceof AppError && e.status === 404) {
+          return c.json({ message: "unauthorized" }, 401);
+        }
+        throw e;
       }
     })
     .delete("/me", authMiddleware, async (c) => {

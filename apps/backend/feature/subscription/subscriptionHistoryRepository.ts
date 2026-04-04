@@ -11,6 +11,7 @@ import { desc, eq } from "drizzle-orm";
 
 export type SubscriptionHistoryRepository<T = QueryExecutor> = {
   insertSubscriptionHistory: (history: SubscriptionHistory) => Promise<void>;
+  existsByWebhookId: (webhookId: string) => Promise<boolean>;
   findSubscriptionHistoriesBySubscriptionId: (
     subscriptionId: SubscriptionId,
   ) => Promise<SubscriptionHistory[]>;
@@ -22,9 +23,21 @@ export function newSubscriptionHistoryRepository(
 ): SubscriptionHistoryRepository<QueryExecutor> {
   return {
     insertSubscriptionHistory: insertSubscriptionHistory(db),
+    existsByWebhookId: existsByWebhookId(db),
     findSubscriptionHistoriesBySubscriptionId:
       findSubscriptionHistoriesBySubscriptionId(db),
     withTx: (tx) => newSubscriptionHistoryRepository(tx),
+  };
+}
+
+function existsByWebhookId(db: QueryExecutor) {
+  return async (webhookId: string): Promise<boolean> => {
+    const [row] = await db
+      .select({ id: subscriptionHistories.id })
+      .from(subscriptionHistories)
+      .where(eq(subscriptionHistories.webhookId, webhookId))
+      .limit(1);
+    return !!row;
   };
 }
 

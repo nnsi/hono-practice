@@ -4,8 +4,32 @@ import {
   type Provider,
   type UserProvider,
   createUserProviderEntity,
+  providerSchema,
 } from "@packages/domain/auth/userProviderSchema";
 import { and, eq, isNull } from "drizzle-orm";
+
+type UserProviderRow = {
+  id: string;
+  userId: string;
+  provider: string;
+  providerAccountId: string;
+  email: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+function toUserProvider(row: UserProviderRow): UserProvider {
+  return createUserProviderEntity({
+    id: row.id,
+    userId: row.userId,
+    provider: providerSchema.parse(row.provider),
+    providerId: row.providerAccountId,
+    email: row.email || undefined,
+    type: "persisted",
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  });
+}
 
 export type UserProviderRepository<T = QueryExecutor> = {
   findUserProviderByIdAndProvider(
@@ -14,10 +38,7 @@ export type UserProviderRepository<T = QueryExecutor> = {
   ): Promise<UserProvider | null>;
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
   getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
-  softDeleteByUserIdAndProvider(
-    userId: string,
-    provider: Provider,
-  ): Promise<boolean>;
+  softDeleteUserProvider(userId: string, provider: Provider): Promise<boolean>;
   withTx(tx: T): UserProviderRepository<T>;
 };
 
@@ -28,7 +49,7 @@ export function newUserProviderRepository(
     findUserProviderByIdAndProvider: findUserProviderByIdAndProvider(db),
     createUserProvider: createUserProvider(db),
     getUserProvidersByUserId: getUserProvidersByUserId(db),
-    softDeleteByUserIdAndProvider: softDeleteByUserIdAndProvider(db),
+    softDeleteUserProvider: softDeleteUserProvider(db),
     withTx: (tx) => newUserProviderRepository(tx),
   };
 }
@@ -50,24 +71,7 @@ function findUserProviderByIdAndProvider(db: QueryExecutor) {
       return null;
     }
 
-    try {
-      return createUserProviderEntity({
-        id: result.id,
-        userId: result.userId,
-        provider: result.provider as Provider,
-        providerId: result.providerAccountId,
-        email: result.email || undefined,
-        type: "persisted",
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      });
-    } catch (error) {
-      console.error(
-        "Failed to create UserProvider entity from DB result:",
-        error,
-      );
-      return null;
-    }
+    return toUserProvider(result);
   };
 }
 
@@ -88,16 +92,7 @@ function createUserProvider(db: QueryExecutor) {
       .values(valuesToInsert)
       .returning();
 
-    return createUserProviderEntity({
-      id: result.id,
-      userId: result.userId,
-      provider: result.provider as Provider,
-      providerId: result.providerAccountId,
-      email: result.email || undefined,
-      type: "persisted",
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    });
+    return toUserProvider(result);
   };
 }
 
@@ -109,22 +104,11 @@ function getUserProvidersByUserId(db: QueryExecutor) {
         isNull(userProviders.deletedAt),
       ),
     });
-    return results.map((result) =>
-      createUserProviderEntity({
-        id: result.id,
-        userId: result.userId,
-        provider: result.provider as Provider,
-        providerId: result.providerAccountId,
-        email: result.email || undefined,
-        type: "persisted",
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      }),
-    );
+    return results.map(toUserProvider);
   };
 }
 
-function softDeleteByUserIdAndProvider(db: QueryExecutor) {
+function softDeleteUserProvider(db: QueryExecutor) {
   return async (userId: string, provider: Provider): Promise<boolean> => {
     const [result] = await db
       .update(userProviders)

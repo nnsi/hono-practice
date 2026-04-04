@@ -3,6 +3,7 @@ import { activityLogs } from "@infra/drizzle/schema";
 import {
   type ActivityId,
   createActivityEntity,
+  createActivityId,
 } from "@packages/domain/activity/activitySchema";
 import {
   type ActivityLog,
@@ -124,7 +125,11 @@ function getActivityLogSummariesByUserIdAndDate(db: QueryExecutor) {
         ),
       );
 
-    return rows as ActivityLogSummary[];
+    return rows.map((row) => ({
+      activityId: createActivityId(row.activityId),
+      quantity: row.quantity,
+      date: row.date,
+    }));
   };
 }
 

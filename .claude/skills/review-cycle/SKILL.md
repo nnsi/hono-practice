@@ -1,18 +1,26 @@
 ---
 name: review-cycle
-description: /multi-review → 修正 → 再レビューを全員LGTMが出るまで回す。
+description: レビュー → 修正 → 再レビューを全員LGTMが出るまで回す。デフォルトは /cross-review。
 user_invocable: true
 ---
 
 # レビューサイクル
 
-`/multi-review` のレビュー結果に基づいて修正し、全員LGTMまで繰り返す。
+レビュー結果に基づいて修正し、全員LGTMまで繰り返す。
+
+## レビュースキル選択
+
+| 指定 | スキル | レビュアー数 |
+|------|--------|-------------|
+| デフォルト（指定なし） | `/cross-review` | 2体（Claude 1 + Codex 1） |
+| ユーザーが `/multi-review` を指定 | `/multi-review` | 4-5体（Claude subagent） |
+| ユーザーが `/codex-multi-review` を指定 | `/codex-multi-review` | 4-5体（Codex） |
 
 ## 手順
 
 ### Step 1: レビュー実行
 
-`/multi-review` を実行してレビューレポートを取得する。
+選択されたレビュースキルを実行してレビューレポートを取得する。
 
 ### Step 2: 修正
 
@@ -23,7 +31,7 @@ user_invocable: true
 
 ### Step 3: 再レビュー
 
-1. 修正内容を含めて再度 `/multi-review` を実行
+1. 修正内容を含めて再度レビュースキルを実行
 2. **全レビュアーからLGTMが出たら完了**
 3. NOT LGTMが出たら Step 2 → Step 3 を繰り返す
 
@@ -31,7 +39,7 @@ user_invocable: true
 
 | ラウンド | 修正対象の条件 |
 |---------|---------------|
-| Round 1-2 | `/multi-review` の標準ルール（80+、または2人以上75+） |
+| Round 1-2 | 標準ルール（80+、または2人以上75+） |
 | Round 3以降 | confidence 90+ の Critical のみ |
 
 Round 3以降で閾値を上げるのは、偽陽性率がラウンドごとに上がるため。

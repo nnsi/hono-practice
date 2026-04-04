@@ -1,7 +1,8 @@
 import { AuthError } from "@backend/error";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
-import type { OAuthVerify, OIDCPayload } from "./oauthVerify";
+import type { OAuthVerify } from "./oauthVerify";
+import { toOIDCPayload } from "./oauthVerify";
 
 const APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
 const APPLE_ISSUER = "https://appleid.apple.com";
@@ -15,9 +16,8 @@ export const appleVerify: OAuthVerify = async (credential, clientId) => {
       maxTokenAge: "10m",
       clockTolerance: "5m",
     });
-    return payload as OIDCPayload;
-  } catch (error) {
-    console.error("[appleVerify] JWT verification failed:", error);
-    throw new AuthError("Invalid token");
+    return toOIDCPayload(payload);
+  } catch (e) {
+    throw e instanceof AuthError ? e : new AuthError("Invalid token");
   }
 };

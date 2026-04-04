@@ -1,7 +1,8 @@
 import { AuthError } from "@backend/error";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
-import type { OAuthVerify, OIDCPayload } from "./oauthVerify";
+import type { OAuthVerify } from "./oauthVerify";
+import { toOIDCPayload } from "./oauthVerify";
 
 const GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
 const GOOGLE_ISSUER = "https://accounts.google.com";
@@ -15,9 +16,8 @@ export const googleVerify: OAuthVerify = async (credential, clientId) => {
       maxTokenAge: "10m",
       clockTolerance: "5m",
     });
-    return payload as OIDCPayload;
-  } catch (error) {
-    console.error("[googleVerify] JWT verification failed:", error);
-    throw new AuthError("Invalid token");
+    return toOIDCPayload(payload);
+  } catch (e) {
+    throw e instanceof AuthError ? e : new AuthError("Invalid token");
   }
 };

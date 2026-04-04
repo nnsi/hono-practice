@@ -397,8 +397,8 @@ function linkProvider(
         );
       }
       // 同じユーザーが既に連携している場合は、既存のレコードを論理削除
-      await tracer.span("db.softDeleteByUserIdAndProvider", () =>
-        userProviderRepo.softDeleteByUserIdAndProvider(userId, provider),
+      await tracer.span("db.softDeleteUserProvider", () =>
+        userProviderRepo.softDeleteUserProvider(userId, provider),
       );
     }
 

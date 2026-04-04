@@ -7,7 +7,7 @@ import {
 } from "@packages/domain/auth/refreshTokenSchema";
 import { DomainValidateError } from "@packages/domain/errors";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { eq } from "drizzle-orm";
+import { eq, lte } from "drizzle-orm";
 
 export type RefreshTokenRepository<T = QueryExecutor> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
@@ -65,7 +65,10 @@ function getRefreshTokenByToken(db: QueryExecutor) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
     const parts = combinedToken.split(".");
     if (parts.length !== 2) {
-      console.error("Invalid combined token format received:", combinedToken);
+      console.error(
+        "Invalid combined token format received: length=",
+        combinedToken.length,
+      );
       return null;
     }
     const [selector, plainToken] = parts;
@@ -137,6 +140,6 @@ function deleteRefreshTokensPastExpiry(db: QueryExecutor) {
         deletedAt: now,
         updatedAt: now,
       })
-      .where(eq(refreshTokens.expiresAt, now));
+      .where(lte(refreshTokens.expiresAt, now));
   };
 }

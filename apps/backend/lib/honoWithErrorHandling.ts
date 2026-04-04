@@ -37,6 +37,10 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
       return c.json({ message: err.message }, 400);
     }
 
+    if (err instanceof SyntaxError) {
+      return c.json({ message: "Invalid JSON" }, 400);
+    }
+
     return c.json(
       {
         message: "internal server error",

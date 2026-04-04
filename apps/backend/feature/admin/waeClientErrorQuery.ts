@@ -4,6 +4,7 @@ import type {
   ClientErrorSummary,
 } from "@backend/query/clientErrorProvider";
 import { EMPTY_CLIENT_ERROR_SUMMARY } from "@backend/query/clientErrorProvider";
+import { z } from "zod";
 
 const QUERY_SUMMARY_24H = `
 SELECT
@@ -15,7 +16,12 @@ GROUP BY blob6
 ORDER BY cnt DESC
 `.trim();
 
+const ALLOWED_PLATFORMS = ["web", "ios", "android"] as const;
+
 function buildDetailQuery(platform: string): string {
+  if (!(ALLOWED_PLATFORMS as readonly string[]).includes(platform)) {
+    throw new Error(`Invalid platform: ${platform}`);
+  }
   return `
 SELECT
   timestamp,
@@ -31,22 +37,21 @@ LIMIT 50
   `.trim();
 }
 
-type WaeSummaryResponse = {
-  data: Array<{
-    platform: string;
-    cnt: string;
-  }>;
-};
+const waeSummaryResponseSchema = z.object({
+  data: z.array(z.object({ platform: z.string(), cnt: z.string() })),
+});
 
-type WaeDetailResponse = {
-  data: Array<{
-    timestamp: string;
-    error_type: string;
-    message: string;
-    screen: string;
-    platform: string;
-  }>;
-};
+const waeDetailResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      timestamp: z.string(),
+      error_type: z.string(),
+      message: z.string(),
+      screen: z.string(),
+      platform: z.string(),
+    }),
+  ),
+});
 
 export function newWaeClientErrorProvider(
   cfApiToken: string,
@@ -54,7 +59,7 @@ export function newWaeClientErrorProvider(
 ): ClientErrorProvider {
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/analytics_engine/sql`;
 
-  async function query<T>(sql: string): Promise<T | null> {
+  async function query(sql: string): Promise<unknown> {
     try {
       const res = await fetch(endpoint, {
         method: "POST",
@@ -70,7 +75,7 @@ export function newWaeClientErrorProvider(
         return null;
       }
 
-      return res.json() as Promise<T>;
+      return res.json();
     } catch (e) {
       console.error("WAE client error query error:", e);
       return null;
@@ -79,27 +84,32 @@ export function newWaeClientErrorProvider(
 
   return {
     getSummary: async (): Promise<ClientErrorSummary> => {
-      const json = await query<WaeSummaryResponse>(QUERY_SUMMARY_24H);
-      if (!json?.data) return EMPTY_CLIENT_ERROR_SUMMARY;
+      const raw = await query(QUERY_SUMMARY_24H);
+      const parsed = waeSummaryResponseSchema.safeParse(raw);
+      if (!parsed.success) return EMPTY_CLIENT_ERROR_SUMMARY;
 
       const result: ClientErrorSummary = { web: 0, ios: 0, android: 0 };
-      for (const row of json.data) {
-        const p = row.platform as keyof ClientErrorSummary;
-        if (p in result) {
-          result[p] = Number(row.cnt) || 0;
+      for (const row of parsed.data.data) {
+        switch (row.platform) {
+          case "web":
+          case "ios":
+          case "android":
+            result[row.platform] = Number(row.cnt) || 0;
+            break;
         }
       }
       return result;
     },
 
     getDetails: async (platform: string): Promise<ClientErrorDetail[]> => {
-      const allowed = ["web", "ios", "android"];
-      if (!allowed.includes(platform)) return [];
+      if (!(ALLOWED_PLATFORMS as readonly string[]).includes(platform))
+        return [];
 
-      const json = await query<WaeDetailResponse>(buildDetailQuery(platform));
-      if (!json?.data) return [];
+      const raw = await query(buildDetailQuery(platform));
+      const parsed = waeDetailResponseSchema.safeParse(raw);
+      if (!parsed.success) return [];
 
-      return json.data.map((row) => ({
+      return parsed.data.data.map((row) => ({
         timestamp: row.timestamp,
         errorType: row.error_type,
         message: row.message,

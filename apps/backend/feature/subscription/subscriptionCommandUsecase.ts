@@ -60,6 +60,14 @@ function upsertSubscriptionFromPayment(
   tracer: Tracer,
 ) {
   return async (params: UpsertSubscriptionFromPaymentParams): Promise<void> => {
+    // Idempotency: skip if this webhook was already processed
+    if (params.webhookId) {
+      const alreadyProcessed = await tracer.span("db.existsByWebhookId", () =>
+        historyRepo.existsByWebhookId(params.webhookId as string),
+      );
+      if (alreadyProcessed) return;
+    }
+
     const userId = createUserId(params.userId);
 
     await txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
