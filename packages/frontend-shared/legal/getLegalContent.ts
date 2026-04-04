@@ -2,6 +2,14 @@ import {
   commercialTransactionsTitle,
   createCommercialTransactionsSections,
 } from "./commercialTransactions";
+import {
+  createPrivacyPolicySectionsEn,
+  privacyPolicyTitleEn,
+} from "./en/privacyPolicy";
+import {
+  termsOfServiceSectionsEn,
+  termsOfServiceTitleEn,
+} from "./en/termsOfService";
 import type { LegalSection } from "./privacyPolicy";
 import {
   createPrivacyPolicySections,
@@ -21,28 +29,35 @@ type Options = {
   contactUrl: string;
 };
 
+function isEnglish(locale: string): boolean {
+  return /^en(?:-|$)/i.test(locale);
+}
+
 /**
  * Get legal document content for the given type and locale.
- * Currently only Japanese is available. When English versions
- * are ready, add en/ files and switch based on locale.
+ * English is available for: terms, privacy.
+ * tokushoho is Japanese-law specific and has no English version.
  */
 export function getLegalContent(
   type: LegalType,
-  _locale: string,
+  locale: string,
   options: Options,
 ): LegalContent {
-  // TODO: switch on _locale when English legal documents are available
   switch (type) {
-    case "privacy":
-      return {
-        title: privacyPolicyTitle,
-        sections: createPrivacyPolicySections(options),
-      };
     case "terms":
-      return {
-        title: termsOfServiceTitle,
-        sections: termsOfServiceSections,
-      };
+      return isEnglish(locale)
+        ? { title: termsOfServiceTitleEn, sections: termsOfServiceSectionsEn }
+        : { title: termsOfServiceTitle, sections: termsOfServiceSections };
+    case "privacy":
+      return isEnglish(locale)
+        ? {
+            title: privacyPolicyTitleEn,
+            sections: createPrivacyPolicySectionsEn(options),
+          }
+        : {
+            title: privacyPolicyTitle,
+            sections: createPrivacyPolicySections(options),
+          };
     case "tokushoho":
       return {
         title: commercialTransactionsTitle,
