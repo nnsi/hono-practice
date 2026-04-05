@@ -16,6 +16,14 @@ export type PrivacyPolicyConfig = {
 
 export const privacyPolicyTitle = "プライバシーポリシー";
 
+/**
+ * PP のバージョン識別子（ISO 日付）。同意記録時の version カラムに使用する。
+ * ja/en で共通（同一ポリシーの翻訳のため）。PP 改定時はこの値と effectiveDate を更新する。
+ */
+export const privacyPolicyVersion = "2026-05-01";
+
+export const privacyPolicyEffectiveDate = "施行日: 2026年5月1日";
+
 export const createPrivacyPolicySections = (
   config: PrivacyPolicyConfig,
 ): LegalSection[] => [

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -14,6 +15,7 @@ import { loginRequestSchema } from "@packages/types/request";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newUserRepository } from "../user";
+import { newUserConsentRepository } from "../user/userConsentRepository";
 import { newUserUsecase } from "../user/userUsecase";
 import { appleVerify } from "./appleVerify";
 import { newAuthHandler } from "./authHandler";
@@ -37,11 +39,15 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const refreshTokenRepo = newRefreshTokenRepository(db);
     const passwordVerifier = new MultiHashPasswordVerifier();
     const userProviderRepo = newUserProviderRepository(db);
+    const userConsentRepo = newUserConsentRepository(db);
+    const txRunner = newDrizzleTransactionRunner(db);
     const tracer = c.get("tracer") ?? noopTracer;
     const uc = newAuthUsecase(
       repo,
       refreshTokenRepo,
       userProviderRepo,
+      userConsentRepo,
+      txRunner,
       passwordVerifier,
       JWT_SECRET,
       JWT_AUDIENCE,
@@ -56,6 +62,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const userUc = newUserUsecase(
       repo,
       userProviderRepo,
+      userConsentRepo,
+      txRunner,
       subscriptionUc,
       tracer,
     );

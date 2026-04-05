@@ -2,6 +2,8 @@ import type { LegalSection } from "../privacyPolicy";
 
 export const termsOfServiceTitleEn = "Terms of Service";
 
+export const termsOfServiceEffectiveDateEn = "Effective Date: May 1, 2026";
+
 export const termsOfServiceSectionsEn: LegalSection[] = [
   {
     title: "1. About These Terms",

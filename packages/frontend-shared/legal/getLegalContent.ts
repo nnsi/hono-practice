@@ -4,24 +4,32 @@ import {
 } from "./commercialTransactions";
 import {
   createPrivacyPolicySectionsEn,
+  privacyPolicyEffectiveDateEn,
   privacyPolicyTitleEn,
 } from "./en/privacyPolicy";
 import {
+  termsOfServiceEffectiveDateEn,
   termsOfServiceSectionsEn,
   termsOfServiceTitleEn,
 } from "./en/termsOfService";
 import type { LegalSection } from "./privacyPolicy";
 import {
   createPrivacyPolicySections,
+  privacyPolicyEffectiveDate,
   privacyPolicyTitle,
 } from "./privacyPolicy";
-import { termsOfServiceSections, termsOfServiceTitle } from "./termsOfService";
+import {
+  termsOfServiceEffectiveDate,
+  termsOfServiceSections,
+  termsOfServiceTitle,
+} from "./termsOfService";
 
 export type LegalType = "privacy" | "terms" | "tokushoho";
 
 type LegalContent = {
   title: string;
   sections: LegalSection[];
+  effectiveDate?: string;
 };
 
 type Options = {
@@ -51,17 +59,27 @@ export function getLegalContent(
   switch (type) {
     case "terms":
       return isEnglish(locale)
-        ? { title: termsOfServiceTitleEn, sections: termsOfServiceSectionsEn }
-        : { title: termsOfServiceTitle, sections: termsOfServiceSections };
+        ? {
+            title: termsOfServiceTitleEn,
+            sections: termsOfServiceSectionsEn,
+            effectiveDate: termsOfServiceEffectiveDateEn,
+          }
+        : {
+            title: termsOfServiceTitle,
+            sections: termsOfServiceSections,
+            effectiveDate: termsOfServiceEffectiveDate,
+          };
     case "privacy":
       return isEnglish(locale)
         ? {
             title: privacyPolicyTitleEn,
             sections: createPrivacyPolicySectionsEn(options),
+            effectiveDate: privacyPolicyEffectiveDateEn,
           }
         : {
             title: privacyPolicyTitle,
             sections: createPrivacyPolicySections(options),
+            effectiveDate: privacyPolicyEffectiveDate,
           };
     case "tokushoho":
       return {

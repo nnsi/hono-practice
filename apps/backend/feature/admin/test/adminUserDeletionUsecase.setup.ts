@@ -9,6 +9,7 @@ import type { GoalFreezePeriodRepository } from "@backend/feature/goalFreezePeri
 import type { SubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import type { TaskRepository } from "@backend/feature/task/taskRepository";
+import type { UserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import type { UserRepository } from "@backend/feature/user/userRepository";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { createUserId } from "@packages/domain/user/userSchema";
@@ -54,6 +55,7 @@ export type Mocks = {
   archiveRepo: SubscriptionHistoryArchiveRepository;
   deletionLogRepo: AdminUserDeletionLogRepository;
   contactRepo: ContactRepository;
+  userConsentRepo: UserConsentRepository;
 };
 
 export function createMocks(): Mocks {
@@ -72,6 +74,7 @@ export function createMocks(): Mocks {
     archiveRepo: mock<SubscriptionHistoryArchiveRepository>(),
     deletionLogRepo: mock<AdminUserDeletionLogRepository>(),
     contactRepo: mock<ContactRepository>(),
+    userConsentRepo: mock<UserConsentRepository>(),
   };
 }
 
@@ -92,6 +95,7 @@ export function createUsecase(m: Mocks) {
     instance(m.archiveRepo),
     instance(m.deletionLogRepo),
     instance(m.contactRepo),
+    instance(m.userConsentRepo),
   );
 }
 
@@ -110,6 +114,7 @@ export function resetMocks(m: Mocks): void {
   reset(m.archiveRepo);
   reset(m.deletionLogRepo);
   reset(m.contactRepo);
+  reset(m.userConsentRepo);
 }
 
 export function setupDefaultStubs(m: Mocks): void {
@@ -152,6 +157,9 @@ export function setupDefaultStubs(m: Mocks): void {
     m.subscriptionRepo.hardDeleteUserSubscriptionsByUserId(anything()),
   ).thenResolve(0);
   when(m.contactRepo.hardDeleteContactsByUserId(anything())).thenResolve(0);
+  when(
+    m.userConsentRepo.hardDeleteUserConsentsByUserId(anything()),
+  ).thenResolve(0);
   when(m.userRepo.hardDeleteUserById(anything())).thenResolve(1);
   when(m.deletionLogRepo.insertDeletionLog(anything())).thenResolve(undefined);
 }

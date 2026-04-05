@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import type { Consents } from "@packages/types/request";
 import * as Google from "expo-auth-session/providers/google";
 import { Platform } from "react-native";
 
@@ -8,9 +9,11 @@ import { setOAuthPending } from "../utils/oauthPending";
 export function useGoogleSignIn({
   onLogin,
   onError,
+  consents,
 }: {
-  onLogin: (idToken: string) => Promise<void>;
+  onLogin: (idToken: string, consents?: Consents) => Promise<void>;
   onError: (message: string) => void;
+  consents?: Consents;
 }) {
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest(
@@ -37,7 +40,7 @@ export function useGoogleSignIn({
     if (googleResponse?.type === "success") {
       const idToken = googleResponse.authentication?.idToken;
       if (idToken) {
-        onLogin(idToken).catch((e: unknown) =>
+        onLogin(idToken, consents).catch((e: unknown) =>
           onError(
             e instanceof Error ? e.message : "Googleログインに失敗しました",
           ),

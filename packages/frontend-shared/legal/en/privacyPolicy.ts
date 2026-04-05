@@ -2,6 +2,8 @@ import type { LegalSection, PrivacyPolicyConfig } from "../privacyPolicy";
 
 export const privacyPolicyTitleEn = "Privacy Policy";
 
+export const privacyPolicyEffectiveDateEn = "Effective Date: May 1, 2026";
+
 export const createPrivacyPolicySectionsEn = (
   config: PrivacyPolicyConfig,
 ): LegalSection[] => [

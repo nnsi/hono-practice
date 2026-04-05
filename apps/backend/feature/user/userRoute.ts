@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
 import { AppError } from "@backend/error";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -20,6 +21,7 @@ import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
+import { newUserConsentRepository } from "./userConsentRepository";
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
 import { newUserUsecase } from "./userUsecase";
@@ -40,7 +42,9 @@ export function createUserRoute() {
 
     const repo = newUserRepository(db);
     const userProviderRepo = newUserProviderRepository(db);
+    const userConsentRepo = newUserConsentRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
+    const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
     ).MultiHashPasswordVerifier();
@@ -49,6 +53,8 @@ export function createUserRoute() {
       repo,
       refreshTokenRepo,
       userProviderRepo,
+      userConsentRepo,
+      txRunner,
       passwordVerifier,
       JWT_SECRET,
       JWT_AUDIENCE,
@@ -61,7 +67,14 @@ export function createUserRoute() {
       subscriptionRepo,
       tracer,
     );
-    const uc = newUserUsecase(repo, userProviderRepo, subscriptionUc, tracer);
+    const uc = newUserUsecase(
+      repo,
+      userProviderRepo,
+      userConsentRepo,
+      txRunner,
+      subscriptionUc,
+      tracer,
+    );
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);

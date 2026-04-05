@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
+import type { Consents } from "@packages/types/request";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { db } from "../db/schema";
@@ -13,9 +14,13 @@ type AuthState = {
   syncReady: boolean;
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
-  appleLogin: (credential: string) => Promise<void>;
-  register: (loginId: string, password: string) => Promise<void>;
+  googleLogin: (credential: string, consents?: Consents) => Promise<void>;
+  appleLogin: (credential: string, consents?: Consents) => Promise<void>;
+  register: (
+    loginId: string,
+    password: string,
+    consents: Consents,
+  ) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -63,9 +68,9 @@ export function useAuth(): AuthState {
   );
 
   const googleLogin = useCallback(
-    async (credential: string) => {
+    async (credential: string, consents?: Consents) => {
       const res = await apiClient.auth.google.$post({
-        json: { credential },
+        json: { credential, consents },
       });
       if (!res.ok) {
         throw new Error("Google login failed");
@@ -84,9 +89,9 @@ export function useAuth(): AuthState {
   );
 
   const appleLogin = useCallback(
-    async (credential: string) => {
+    async (credential: string, consents?: Consents) => {
       const res = await apiClient.auth.apple.$post({
-        json: { credential },
+        json: { credential, consents },
       });
       if (!res.ok) {
         throw new Error("Apple login failed");
@@ -105,9 +110,9 @@ export function useAuth(): AuthState {
   );
 
   const register = useCallback(
-    async (loginId: string, password: string) => {
+    async (loginId: string, password: string, consents: Consents) => {
       const res = await apiClient.user.$post({
-        json: { loginId, password },
+        json: { loginId, password, consents },
       });
       if (!res.ok) {
         throw new Error("Registration failed");

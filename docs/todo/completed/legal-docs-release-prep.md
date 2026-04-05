@@ -61,46 +61,68 @@
 
 ## 中優先（公開後早めに）
 
-### 2. 物理削除バッチの実装
+### 2. 物理削除の実装（方針変更: Cronバッチ → 管理画面手動）
 
-**現状:**
-- アカウント削除は**論理削除のみ**（サーバー側で soft delete）
-- 物理的なデータ削除は未実装
+> **2026-04-05 方針変更**: 当初は Cloudflare Workers Cron Triggers による自動バッチを想定していたが、初期の運用規模を鑑みて **管理画面からの手動物理削除** に切り替え。
+> 運用で「30日以内に処理する」ことを担保する前提。将来ユーザー規模が増えて手動処理が回らなくなった段階で Cron 自動化を再検討する。
+
+**現状のステータス:** `wt/admin-user-delete` ブランチで実装済み（9adc17c, ce5289f）。master へマージ待ち。
 
 **規約での約束:**
 - PP Section 8: "Account data and activity data: Deleted within 30 days of account deletion, except as required by law"
 
-**リスク:**
-- GDPR Art. 17（忘れられる権利）の観点で、原則物理削除が必要
-- 猶予期間は認められるが、最終的な物理削除は不可欠
-- DPAから開示請求があった場合に実態と乖離
+**実装内容（wt/admin-user-delete ブランチ）:**
+- `DELETE /admin/users/:id` エンドポイント（loginId 二重確認）
+- 管理画面 `UserDangerZone` UI から実行
+- 関連テーブルを FK 依存順に単一トランザクションで削除: user, activity, activity_kind, activity_log, activity_goal, goal_freeze_period, task, api_key, user_subscription, user_provider, refresh_token, contact 等
+- `subscription_history` は `subscription_history_archive` へアーカイブしてから削除
+- `admin_user_deletion_log` に監査ログ（管理者メール・削除件数）を保存
+- ts-mockito 単体テスト + 統合テスト
 
-**対応:**
-- 論理削除後、一定期間（推奨: 30-90日）経過したレコードを物理削除するバッチ
-- 関連テーブル全てをカバー: user, activity, activity_log, activity_goal, activity_kind, task, api_key, user_subscription, subscription_history, user_provider, refresh_token
-- Cloudflare Workers Cron Triggersで実装
-- 削除ログを監査用に保存
+**運用上の追加タスク（手動運用の担保）:**
+- 削除依頼の受付経路を決める（問い合わせフォーム → 管理者が管理画面で処理）
+- 「依頼受領から30日以内に処理」を運用ルールとして明文化
+- 処理漏れ防止のため、依頼受付から日数経過しているものを可視化する仕組み（将来的に）
 
-**工数:** 中（0.5-1日）
+**リスク（手動運用の弱点）:**
+- 管理者が30日以内に処理しなかった場合、PP Section 8 と実態が乖離する
+- ユーザー規模拡大時にボトルネック化する可能性
+
+**工数:** 実装済み。運用フロー整備のみ残り（0.5日程度）
+
+---
+
+### 3. 法務ページへのEffective Date表示 ✓ 対応済み（2026-04-05）
+
+**対応内容:**
+- ToS/PP（ja/en それぞれ）に `effectiveDate` 定数を追加（初版: 2026年5月1日 / May 1, 2026）
+- `getLegalContent()` の返り値に `effectiveDate` を追加
+- `LegalPage`（web 全画面）、`LegalModal`（web/mobile）でタイトル直下にグレーで表示
+- tokushoho は対象外（日本法表記のため別運用）
+
+**今後の運用:**
+- ToS/PP を改定する際は対応する `effectiveDate` 定数を更新する
+- 更新履歴の管理方法（changelog等）は将来的に必要になった時点で検討
 
 ---
 
-### 3. 法務ページへのEffective Date表示
+### 4. 年齢ゲート + 同意タイムスタンプ記録 ✓ 対応済み（2026-04-05）
 
-**現状:**
-- ToS/PPに施行日（Effective Date）/ 最終更新日（Last Updated）の記載なし
+**背景:**
+- 英語ToS Section 2 で "at least 16 years of age" を `represent and warrant` として約束しているが、signup フォームに年齢確認UIが存在せず、規約と実装の乖離があった
 
-**規約での約束/要件:**
-- GDPR、CCPA/CPRA ともにポリシーの有効日明示を推奨
+**対応内容:**
+- 新規テーブル `user_confirm`（migration 0037）を追加: `type (terms|privacy|age)`, `version`, `confirmed_at`
+- ToS/PP に `termsOfServiceVersion = "2026-05-01"` / `privacyPolicyVersion = "2026-05-01"` を導入（`effectiveDate` 表示文字列とは別）
+- 同意取得UI（提案B）: email/pw は必須 checkbox、OAuth はボタン直下の sign-in-wrap テキスト
+- signup時にトランザクションで user + 3件の同意レコード（age/terms/privacy）を atomic に作成
+- Web/Mobile 両方の CreateUserForm に適用
+- admin の物理削除フローにも `user_confirm` の hard delete を組み込み
+- 統合テストで同意レコードが正しく記録されること + consents欠落時400を検証
 
-**対応:**
-- LegalPage componentにeffectiveDate propを追加
-- 各法務ページ（ja/en）にeffective dateを表示
-- 更新履歴の管理方法も検討
-
-**工数:** 小（0.5-1時間）
-
----
+**既存ユーザーの扱い:**
+- 2026-05-01 以前に登録されたユーザーは同意レコードなし（grandfathering）
+- 将来ToS/PP改定時に再同意モーダルを出す際は「レコードなし＝旧版同意扱い」として扱う
 
 ## 参考: 「優秀な弁護士」ロールレビューで指摘された他の項目
 
@@ -121,3 +143,6 @@
 ## セッション記録
 
 - 2026-04-05: 英語版ToS/PP作成、法務レビュー3ラウンド実施、「優秀な弁護士」ロールで追加レビュー → 規約と実装の乖離を発見
+- 2026-04-05: 物理削除を Cron 自動バッチ → 管理画面手動 に方針変更（`wt/admin-user-delete` ブランチで実装）
+- 2026-04-05: Effective Date 表示を実装（LegalPage / LegalModal × web/mobile）
+- 2026-04-05: 年齢ゲート + 同意タイムスタンプ記録を実装（user_confirm テーブル、web/mobile両対応、統合テスト含む）

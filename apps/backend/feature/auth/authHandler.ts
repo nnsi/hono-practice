@@ -6,11 +6,11 @@ import type { LoginRequest } from "@packages/types/request";
 import { authResponseSchema } from "@packages/types/response";
 
 import { AppError } from "../../error";
-import type { AuthUsecase } from "./authUsecase";
+import type { AuthUsecase, OAuthConsents } from "./authUsecase";
 
 type GetUserById = (userId: UserId) => Promise<User>;
 
-type OAuthCredential = { credential: string };
+type OAuthCredential = { credential: string; consents?: OAuthConsents };
 
 type ProviderLoginResult = {
   token: string;
@@ -83,6 +83,7 @@ function providerLogin(uc: AuthUsecase, provider: Provider) {
       provider,
       params.credential,
       clientId,
+      params.consents,
     );
     const userId = result.userId ? createUserId(result.userId) : undefined;
     if (!userId) {

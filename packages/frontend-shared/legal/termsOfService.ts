@@ -2,6 +2,14 @@ import type { LegalSection } from "./privacyPolicy";
 
 export const termsOfServiceTitle = "利用規約";
 
+/**
+ * ToS のバージョン識別子（ISO 日付）。同意記録時の version カラムに使用する。
+ * ja/en で共通（同一ポリシーの翻訳のため）。ToS 改定時はこの値と effectiveDate を更新する。
+ */
+export const termsOfServiceVersion = "2026-05-01";
+
+export const termsOfServiceEffectiveDate = "施行日: 2026年5月1日";
+
 export const termsOfServiceSections: LegalSection[] = [
   {
     title: "1. 本規約について",

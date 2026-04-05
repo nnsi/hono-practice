@@ -17,6 +17,12 @@ export const iconTypeEnum = pgEnum("icon_type", [
   "generate",
 ]);
 
+export const userConsentTypeEnum = pgEnum("user_consent_type", [
+  "terms",
+  "privacy",
+  "age",
+]);
+
 export function customTypeNumeric(columnName: string) {
   return customType<{
     data: number;
@@ -99,6 +105,30 @@ export const refreshTokens = pgTable(
     index("refresh_token_user_id_idx").on(t.userId),
     index("refresh_token_selector_idx").on(t.selector),
   ],
+);
+
+// UserConsent テーブル（ToS/PP/年齢の同意記録）
+export const userConsents = pgTable(
+  "user_consent",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    type: userConsentTypeEnum("type").notNull(),
+    version: text("version"),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [index("user_consent_user_id_idx").on(t.userId)],
 );
 
 // ApiKey テーブル

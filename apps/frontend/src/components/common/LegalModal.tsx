@@ -36,16 +36,20 @@ type LegalModalProps = {
 
 export function LegalModal({ type, onClose }: LegalModalProps) {
   const { i18n } = useTranslation();
-  const { title, sections } = getLegalContent(type, i18n.language, {
-    contactEmail: CONTACT_EMAIL,
-    contactUrl: CONTACT_PATH,
-    administratorName: ADMINISTRATOR_NAME,
-  });
+  const { title, sections, effectiveDate } = getLegalContent(
+    type,
+    i18n.language,
+    {
+      contactEmail: CONTACT_EMAIL,
+      contactUrl: CONTACT_PATH,
+      administratorName: ADMINISTRATOR_NAME,
+    },
+  );
 
   return (
     <ModalOverlay onClose={onClose}>
       <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-bold">{title}</h2>
           <button
             type="button"
@@ -56,6 +60,9 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
             <X size={20} className="text-gray-500" />
           </button>
         </div>
+        {effectiveDate && (
+          <p className="text-xs text-gray-500 mb-4">{effectiveDate}</p>
+        )}
         <div className="space-y-4">
           {sections.map((section) => (
             <div key={section.title}>

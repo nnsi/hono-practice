@@ -100,6 +100,7 @@ describe("AdminUserDeletionUsecase", () => {
       refreshTokens: 9,
       userProviders: 10,
       contacts: 11,
+      userConsents: 0,
       user: 1,
     });
   });
@@ -146,6 +147,7 @@ describe("AdminUserDeletionUsecase", () => {
             userSubscriptions: 0,
             subscriptionHistoriesArchived: 0,
             contacts: 0,
+            userConsents: 0,
             user: 1,
           },
         }),

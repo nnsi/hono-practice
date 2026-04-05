@@ -10,6 +10,7 @@ import type { GoalFreezePeriodRepository } from "@backend/feature/goalFreezePeri
 import type { SubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import type { SubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import type { TaskRepository } from "@backend/feature/task/taskRepository";
+import type { UserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import type { UserRepository } from "@backend/feature/user/userRepository";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { createUserId } from "@packages/domain/user/userSchema";
@@ -33,6 +34,7 @@ type DeletionCounts = {
   userSubscriptions: number;
   subscriptionHistoriesArchived: number;
   contacts: number;
+  userConsents: number;
   user: number;
 };
 
@@ -63,6 +65,7 @@ export function newAdminUserDeletionUsecase(
   archiveRepo: SubscriptionHistoryArchiveRepository,
   deletionLogRepo: AdminUserDeletionLogRepository,
   contactRepo: ContactRepository,
+  userConsentRepo: UserConsentRepository,
 ): AdminUserDeletionUsecase {
   return {
     deleteUserPermanently: async (
@@ -97,6 +100,7 @@ export function newAdminUserDeletionUsecase(
           archiveRepo,
           deletionLogRepo,
           contactRepo,
+          userConsentRepo,
         ],
         async (tx) => {
           const subscription = await tx.findSubscriptionByUserId(uid);
@@ -144,6 +148,7 @@ export function newAdminUserDeletionUsecase(
           const userSubscriptions =
             await tx.hardDeleteUserSubscriptionsByUserId(uid);
           const contacts = await tx.hardDeleteContactsByUserId(uid);
+          const userConsents = await tx.hardDeleteUserConsentsByUserId(uid);
           const userDeleted = await tx.hardDeleteUserById(uid);
 
           const result: DeletionCounts = {
@@ -159,6 +164,7 @@ export function newAdminUserDeletionUsecase(
             userSubscriptions,
             subscriptionHistoriesArchived,
             contacts,
+            userConsents,
             user: userDeleted,
           };
 

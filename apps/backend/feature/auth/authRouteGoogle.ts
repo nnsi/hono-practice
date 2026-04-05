@@ -55,11 +55,13 @@ export function createGoogleAuthRoutes() {
           code: z.string(),
           code_verifier: z.string(),
           redirect_uri: z.string(),
+          consents: googleLoginRequestSchema.shape.consents,
         }),
       ),
       async (c) => {
         const { GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET } = c.env;
-        const { code, code_verifier, redirect_uri } = c.req.valid("json");
+        const { code, code_verifier, redirect_uri, consents } =
+          c.req.valid("json");
 
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
           method: "POST",
@@ -80,7 +82,7 @@ export function createGoogleAuthRoutes() {
 
         const clientIds = collectGoogleClientIds(c.env);
         const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
-          { credential: tokenData.id_token },
+          { credential: tokenData.id_token, consents },
           clientIds,
         );
         setRefreshCookie(c, refreshToken);

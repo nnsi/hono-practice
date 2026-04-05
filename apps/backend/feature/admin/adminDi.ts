@@ -11,6 +11,7 @@ import { newGoalFreezePeriodRepository } from "@backend/feature/goalFreezePeriod
 import { newSubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
 import { newTaskRepository } from "@backend/feature/task/taskRepository";
+import { newUserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
@@ -85,6 +86,7 @@ export function resolveAdminHandler(c: {
   const userProviderRepo = newUserProviderRepository(db);
   const archiveRepo = newSubscriptionHistoryArchiveRepository(db);
   const deletionLogRepo = newAdminUserDeletionLogRepository(db);
+  const userConsentRepo = newUserConsentRepository(db);
   const deletionUc = newAdminUserDeletionUsecase(
     txRunner,
     userRepo,
@@ -101,6 +103,7 @@ export function resolveAdminHandler(c: {
     archiveRepo,
     deletionLogRepo,
     contactRepo,
+    userConsentRepo,
   );
   return newAdminHandler(
     userUc,

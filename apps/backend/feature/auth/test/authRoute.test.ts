@@ -4,7 +4,9 @@ import { testClient } from "hono/testing";
 import { AuthError } from "@backend/error";
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
+import { newUserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import type { KeyValueStore } from "@backend/infra/kv/kv";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { noopTracer } from "@backend/lib/tracer";
@@ -110,11 +112,15 @@ describe("AuthRoute Integration Tests", () => {
       authRoutes.use("*", async (c, next) => {
         const userRepo = newUserRepository(testDB);
         const userProviderRepo = newUserProviderRepository(testDB);
+        const userConsentRepo = newUserConsentRepository(testDB);
+        const txRunner = newDrizzleTransactionRunner(testDB);
         const passwordVerifier = new SHA256PasswordVerifier();
         const uc = newAuthUsecase(
           userRepo,
           mockRefreshTokenRepo,
           userProviderRepo,
+          userConsentRepo,
+          txRunner,
           passwordVerifier,
           JWT_SECRET,
           JWT_AUDIENCE,
@@ -705,7 +711,12 @@ describe("AuthRoute Integration Tests", () => {
     it("正常系：Google認証で新規ユーザー作成", async () => {
       const client = createTestClient();
       const res = await client.google.$post(
-        { json: { credential: mockGoogleToken } },
+        {
+          json: {
+            credential: mockGoogleToken,
+            consents: { age: true, terms: "2026-05-01", privacy: "2026-05-01" },
+          },
+        },
         { headers: { "x-client-id": mockClientId } },
       );
       if (res.status !== 200) {
@@ -773,6 +784,7 @@ describe("AuthRoute Integration Tests", () => {
           code: "mock-auth-code",
           code_verifier: "mock-verifier",
           redirect_uri: "https://example.com/callback",
+          consents: { age: true, terms: "2026-05-01", privacy: "2026-05-01" },
         },
       });
 
