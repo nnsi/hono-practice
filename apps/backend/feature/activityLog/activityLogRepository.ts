@@ -53,6 +53,7 @@ export type ActivityLogRepository<T = QueryExecutor> = {
     timestamp: Date,
     limit?: number,
   ) => Promise<{ activityLogs: ActivityLog[]; hasMore: boolean }>;
+  hardDeleteActivityLogsByUserId: (userId: UserId) => Promise<number>;
   withTx: (tx: T) => ActivityLogRepository<T>;
 };
 
@@ -69,7 +70,18 @@ export function newActivityLogRepository(
     updateActivityLog: updateActivityLog(db),
     deleteActivityLog: deleteActivityLog(db),
     getActivityLogChangesAfter: getActivityLogChangesAfter(db),
+    hardDeleteActivityLogsByUserId: hardDeleteActivityLogsByUserId(db),
     withTx: (tx) => newActivityLogRepository(tx),
+  };
+}
+
+function hardDeleteActivityLogsByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(activityLogs)
+      .where(eq(activityLogs.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 
