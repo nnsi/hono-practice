@@ -21,17 +21,18 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
   {
     title: "4. Account",
     content:
-      "You may create an account using an email and password, Google account, or Apple account. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. You must notify the Operator promptly of any unauthorized use of your account.\n\nThe Operator may suspend or terminate your account if there is evidence of unauthorized use, violation of these Terms, or other conduct that the Operator reasonably determines to be harmful to the Service or other users. Except where immediate action is necessary to prevent harm, the Operator will notify you of the reason before taking such action.",
+      "You may create an account using an email and password, Google account, or Apple account. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. You must notify the Operator promptly of any unauthorized use of your account through the contact form available on the Service. Upon receiving such notice, the Operator will take reasonable measures within a reasonable time to secure the account.\n\n" +
+      "The Operator may suspend or terminate your account if there is evidence of unauthorized use, violation of these Terms, or other conduct that the Operator reasonably determines to be harmful to the Service or other users. Except where immediate action is necessary to prevent harm, the Operator will notify you of the reason before taking such action.",
   },
   {
     title: "5. Subscriptions and Payments",
     content:
-      "The Service offers a free plan and a paid plan (\u201cPro plan\u201d). The Pro plan is a monthly auto-renewing subscription. Unless you cancel before the end of the current billing period, your subscription will automatically renew each month. You can cancel at any time from the settings screen; cancellation takes effect at the end of the current billing period.\n\n" +
-      "Web subscriptions: Payments are processed by Polar via credit card (Visa, Mastercard, American Express, etc.). You are charged immediately upon purchase and on each monthly renewal date thereafter.\n\n" +
-      "Mobile subscriptions: Payments are processed through the Apple App Store or Google Play Store. Billing, refunds, and cancellation are governed by the respective store\u2019s terms and policies.\n\n" +
-      "Refunds: The Service is a digital product. Refunds for web subscriptions are not available for the current billing period after purchase, except where required by applicable law or in cases of billing errors. Refunds for App Store or Google Play purchases are subject to the respective store\u2019s refund policies.\n\n" +
+      "The Service offers a free plan and a paid plan (\u201cPro plan\u201d). The Pro plan is a monthly auto-renewing subscription. Unless you cancel before the end of the current billing period, your subscription will automatically renew each month. Cancellation takes effect at the end of the current billing period.\n\n" +
+      "Web subscriptions: Payments are processed by Polar via credit card (Visa, Mastercard, American Express, etc.). You are charged immediately upon purchase and on each monthly renewal date thereafter. You can cancel a web subscription at any time from the settings screen within the Service.\n\n" +
+      "Mobile subscriptions: Payments are processed through the Apple App Store or Google Play Store. Billing, refunds, and cancellation are governed by the respective store\u2019s terms and policies. You must cancel a mobile subscription through your Apple ID subscription settings (iOS) or Google Play subscription settings (Android); cancellation cannot be performed from within the Service.\n\n" +
+      "Refunds: The Service is a digital product. Refunds for web subscriptions are not available for the current billing period after purchase, except where required by applicable law or in cases of billing errors. Any refund request must be submitted through the contact form within 60 days of the disputed charge. Refunds for App Store or Google Play purchases are subject to the respective store\u2019s refund policies.\n\n" +
       "Price changes: The Operator may change the Pro plan pricing with at least 30 days\u2019 prior notice within the Service. The new price takes effect on the first renewal date after the notice period. You may cancel before that renewal date to avoid being charged the new price.\n\n" +
-      "Service discontinuation: If the Service is discontinued, paid subscriptions will remain active until the end of the current billing period. If the Operator is unable to provide the Service through the end of a paid period, a pro-rata refund will be issued for the remaining period.",
+      "Service discontinuation: If the Operator voluntarily discontinues the Service, paid subscriptions will remain active until the end of the current billing period, and a pro-rata refund will be issued for any period paid beyond the discontinuation date. No refund is owed where the Service is discontinued due to force majeure, third-party provider failure, legal or regulatory requirements, or your breach of these Terms. If the Operator assigns these Terms to a successor (see Section 16) and the successor continues to provide the Service, no refund obligation arises from the assignment itself.",
   },
   {
     title: "6. Prohibited Conduct",
@@ -43,12 +44,15 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
       "- Use the Service for any purpose that violates applicable law\n" +
       "- Reverse-engineer, decompile, or disassemble any part of the Service, except to the extent expressly permitted by applicable law\n" +
       "- Use automated means (bots, scrapers, etc.) to access the Service without prior written permission\n" +
-      "- Interfere with or disrupt the integrity or performance of the Service",
+      "- Interfere with or disrupt the integrity or performance of the Service\n\n" +
+      "Sensitive personal data: The Service is not designed for the storage of sensitive personal data as defined under applicable law (including data concerning health, religious or philosophical beliefs, sexual orientation, political opinions, racial or ethnic origin, genetic or biometric data, or trade union membership \u2014 see GDPR Article 9). You are responsible for the content you enter. If you choose to enter such information (for example, in activity names or memos), you do so at your own risk and provide explicit consent to its processing solely for the purpose of providing the Service to you. You may delete such entries at any time.",
   },
   {
     title: "7. Intellectual Property",
     content:
-      "All intellectual property rights in the Service (including its design, code, trademarks, and documentation) belong to the Operator. Your use of the Service does not grant you any ownership rights in the Service.\n\nYou retain all rights to the data you enter into the Service. The Operator does not claim ownership of your content.",
+      "All intellectual property rights in the Service (including its design, code, trademarks, and documentation) belong to the Operator. Your use of the Service does not grant you any ownership rights in the Service.\n\n" +
+      "You retain all rights to the data you enter into the Service. The Operator does not claim ownership of your content.\n\n" +
+      "Limited license to your content: You grant the Operator a limited, non-exclusive, royalty-free license to host, store, copy, transmit, sync across your devices, back up, display to you, and otherwise process your content solely as necessary to provide, maintain, and support the Service, investigate abuse, and comply with legal obligations. This license ends when you delete your content or your account, except to the extent the Operator is required to retain data under Section 8 of the Privacy Policy.",
   },
   {
     title: "8. Disclaimer of Warranties",
@@ -67,7 +71,7 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
   {
     title: "10. Indemnification",
     content:
-      "To the extent permitted by applicable law, you agree to indemnify, defend, and hold harmless the Operator from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys\u2019 fees) arising out of or related to: (a) your use of the Service; (b) your violation of these Terms; or (c) your violation of any rights of a third party. This section does not apply to EU/EEA residents where it would constitute an unfair contract term under applicable consumer protection law.",
+      "To the extent permitted by applicable law, you agree to indemnify, defend, and hold harmless the Operator from and against any third-party claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys\u2019 fees) arising out of or related to: (a) your breach of these Terms; (b) your wrongful or unlawful conduct in connection with the Service; or (c) your violation of any rights of a third party. This section does not apply to EU/EEA residents where it would constitute an unfair contract term under applicable consumer protection law.",
   },
   {
     title: "11. Arbitration and Class Action Waiver (United States)",
@@ -84,7 +88,8 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
   {
     title: "12. Service Changes and Termination",
     content:
-      "The Operator may modify, suspend, or discontinue any part of the Service at any time. Minor changes may be made without prior notice. The Operator will provide at least 30 days\u2019 notice within the Service before making changes that materially reduce the functionality available to you, or before discontinuing the Service entirely.\n\n" +
+      "The Operator may modify, suspend, or discontinue any part of the Service at any time. Minor changes may be made without prior notice. The Operator will provide at least 30 days\u2019 notice within the Service (and, where reasonably practicable, by email to the address associated with your account) before making changes that materially reduce the functionality available to you, or before discontinuing the Service entirely.\n\n" +
+      "Exceptions to the notice period: The 30-day notice requirement does not apply where (a) immediate action is required to address a security incident, data breach, or other urgent threat to the Service or its users; (b) changes are required to comply with applicable law, regulation, court order, or request from a competent authority; (c) a third-party provider (including Cloudflare, Neon, Apple App Store, or Google Play Store) terminates, suspends, or materially restricts services essential to the operation of the Service; or (d) the discontinuation results from force majeure or other circumstances beyond the Operator\u2019s reasonable control. In such cases, the Operator will provide as much notice as is reasonably practicable.\n\n" +
       "For EU/EEA residents with an active paid subscription: Modifications that go beyond what is necessary to maintain the Service\u2019s conformity require a valid reason. If such a modification has more than a minor adverse impact on you, the Operator will provide advance notice on a durable medium (such as email) and you may terminate your subscription free of charge within 30 days of receiving notice.\n\n" +
       "You may stop using the Service and delete your account at any time from the settings screen.",
   },

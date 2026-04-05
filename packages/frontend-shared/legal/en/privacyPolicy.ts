@@ -16,7 +16,7 @@ export const createPrivacyPolicySectionsEn = (
       "We collect the following categories of information:\n\n" +
       "Account information: Login ID, password (stored as a cryptographic hash, never in plain text), and display name. This information is required to create and maintain your account; without it, you cannot use the Service.\n\n" +
       "Third-party authentication: If you sign in with Google, we receive your Google user ID, email address, and display name. If you sign in with Apple, we receive your Apple user ID, email address, and display name. When using Sign in with Apple, your email may be a private relay address depending on your settings.\n\n" +
-      "Activity data: Activity names, dates, times, quantities, memos, goals, and other content you enter into the Service.\n\n" +
+      "Activity data: Activity names, dates, times, quantities, memos, goals, and other content you enter into the Service. The Service is not intended for storing sensitive personal data as defined under GDPR Article 9 (such as health, religious or philosophical beliefs, sexual orientation, or political opinions). We do not actively analyze or categorize the content of your activity entries. If you choose to enter such information, you provide explicit consent under GDPR Art. 9(2)(a) for its processing solely to provide the Service to you, and you may delete such entries at any time. See Section 6 of the Terms of Service for related restrictions.\n\n" +
       "Access logs: Request timestamps, IP addresses, and user-agent strings, used for service operations and abuse detection.\n\n" +
       "Cookies: We use a single HTTP-only cookie to store your authentication refresh token. This cookie is strictly necessary for the operation of the Service and does not require consent under the ePrivacy Directive. We do not use tracking cookies or third-party advertising cookies.\n\n" +
       "Subscription and billing data: Plan type, subscription status, billing period, and payment provider identifiers. We do not store credit card numbers.\n\n" +
@@ -49,18 +49,18 @@ export const createPrivacyPolicySectionsEn = (
     content:
       "We do not sell your personal information. We do not share your data with third parties except in the following circumstances:\n\n" +
       "- With your consent\n" +
-      "- When required by law, regulation, or legal process\n" +
-      "- To Google or Apple for authentication purposes (limited to the data necessary for sign-in)\n\n" +
-      "The following service providers process data on our behalf as part of operating the Service:\n\n" +
+      "- When required by law, regulation, legal process, or a lawful request from a competent authority\n" +
+      "- To prevent fraud, protect the security of the Service, or defend our legal rights\n" +
+      "- As part of a business transfer, including a merger, acquisition, reorganization, sale of assets, or bankruptcy (see below)\n\n" +
+      "Authentication providers (independent data controllers): When you choose to sign in with Google or Apple, you initiate an authentication process with those providers directly. We receive identity information from them as described in Section 2. Google and Apple process your data as independent data controllers in accordance with their own privacy policies.\n\n" +
+      "Service providers (processors acting on our behalf): The following providers process data on our instructions solely to help us operate the Service:\n\n" +
       "- Cloudflare (server, CDN, and storage infrastructure)\n" +
       "- Neon (database hosting)\n" +
-      "- Google (Google OAuth authentication)\n" +
-      "- Apple (Sign in with Apple authentication)\n" +
       "- Polar (web payment processing)\n" +
-      "- RevenueCat (mobile subscription management)\n" +
-      "- Apple App Store (mobile subscription billing and payment processing for iOS)\n" +
-      "- Google Play Store (mobile subscription billing and payment processing for Android)\n\n" +
-      "Each provider processes data in accordance with their own privacy policies. We have not sold or shared personal information with third parties for cross-context behavioral advertising in the preceding 12 months.",
+      "- RevenueCat (mobile subscription management)\n\n" +
+      "Mobile platform providers (independent data controllers for payment processing): When you purchase a mobile subscription, the Apple App Store (iOS) or Google Play Store (Android) processes your payment and billing data as an independent data controller under its own terms and privacy policy. We receive from them only the subscription status and transaction identifiers necessary to provision and maintain your subscription.\n\n" +
+      "Business transfer: If the Operator is involved in a merger, acquisition, sale of all or substantially all of its assets, corporate restructuring, or similar transaction, your personal data may be transferred to the successor entity as part of that transaction. We will notify you within the Service of any such transfer and of any material change to this Privacy Policy that results from it.\n\n" +
+      "We have not sold or shared personal information with third parties for cross-context behavioral advertising in the preceding 12 months.",
   },
   {
     title: "6. International Data Transfers",
@@ -73,7 +73,8 @@ export const createPrivacyPolicySectionsEn = (
     content:
       "Your data is stored locally on your device (IndexedDB on web, SQLite on mobile) and on our servers. Data entered or edited while offline is automatically synced to the server when you reconnect.\n\n" +
       "All communication with our servers is encrypted using HTTPS. Passwords are stored using cryptographic hashing and are never stored in plain text. Local storage security depends on the security mechanisms of your browser or operating system.\n\n" +
-      "While we take reasonable measures to protect your data, no method of transmission or storage is 100% secure.",
+      "While we take reasonable measures to protect your data, no method of transmission or storage is 100% secure.\n\n" +
+      "Your backup responsibility: You are responsible for maintaining your own backups of important data. We encourage you to periodically export your activity data using the CSV export feature available in the settings screen. The Operator is not liable for any loss of data resulting from service interruptions, technical failures, account deletion, or other causes, except as provided in these Terms and the Privacy Policy.",
   },
   {
     title: "8. Data Retention and Deletion",
@@ -110,7 +111,12 @@ export const createPrivacyPolicySectionsEn = (
       "- Right to opt out of sale/sharing: We do not sell or share your personal information for cross-context behavioral advertising\n" +
       "- Right to limit use of sensitive personal information: We do not use sensitive personal information for purposes beyond what is necessary to provide the Service\n" +
       "- Right to non-discrimination: We will not discriminate against you for exercising your privacy rights\n\n" +
-      "We will respond to verifiable requests within 30 days (or 45 days if an extension is needed). To exercise any of these rights, please contact us using the contact form below.",
+      "Identity verification: To protect your data, we will verify your identity before fulfilling any access, correction, deletion, or similar request. We may ask you to provide information that matches the information we hold about you (such as confirming you can access the email address or account associated with the request). If we cannot reasonably verify your identity, or if the information provided is insufficient, we may decline to act on the request and will notify you of the reason. We may also refuse or charge a reasonable fee for requests that are manifestly unfounded, excessive, or repetitive, as permitted by applicable law.\n\n" +
+      "Response times:\n" +
+      "- EU/EEA (GDPR): We will respond within one month of receiving a verified request. This period may be extended by up to two further months where necessary, taking into account the complexity and number of requests; we will inform you of any extension within one month.\n" +
+      "- California (CCPA/CPRA): We will respond within 45 days of receiving a verified request. This period may be extended once by an additional 45 days where reasonably necessary; we will inform you of any extension within the initial 45-day period.\n" +
+      "- Other users: We aim to respond within 30 days.\n\n" +
+      "To exercise any of these rights, please contact us using the contact form below.",
   },
   {
     title: "10. Children\u2019s Privacy",

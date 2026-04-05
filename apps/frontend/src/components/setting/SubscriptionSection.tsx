@@ -3,12 +3,14 @@ import dayjs from "dayjs";
 import { Crown, Loader2 } from "lucide-react";
 
 import { useSubscription } from "../../hooks/useSubscription";
+import { useWebSubscriptionEnabled } from "../../hooks/useWebSubscriptionEnabled";
 import { UpgradeModal } from "../subscription/UpgradeModal";
 import { useUpgrade } from "../subscription/useUpgrade";
 
 export function SubscriptionSection() {
   const { data: subscription, isLoading } = useSubscription();
   const upgrade = useUpgrade();
+  const webSubscriptionEnabled = useWebSubscriptionEnabled();
   const { t } = useTranslation("settings");
 
   if (isLoading) {
@@ -62,7 +64,7 @@ export function SubscriptionSection() {
           </p>
         )}
 
-        {!isPremium && (
+        {!isPremium && webSubscriptionEnabled && (
           <div className="space-y-2">
             <p className="text-sm text-gray-500 leading-relaxed">
               {t("upgradeText")}
@@ -79,7 +81,7 @@ export function SubscriptionSection() {
         )}
       </div>
 
-      {upgrade.isModalOpen && (
+      {webSubscriptionEnabled && upgrade.isModalOpen && (
         <UpgradeModal
           onClose={upgrade.closeUpgradeModal}
           onUpgrade={upgrade.startCheckout}

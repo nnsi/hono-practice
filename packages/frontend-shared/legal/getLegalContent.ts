@@ -27,6 +27,11 @@ type LegalContent = {
 type Options = {
   contactEmail: string;
   contactUrl: string;
+  /**
+   * 販売事業者の氏名（特商法表記で使用）。日本語の tokushoho ページ専用。
+   * 特商法11条1号により個人事業主の氏名は常時表示必須。
+   */
+  administratorName: string;
 };
 
 function isEnglish(locale: string): boolean {
@@ -61,7 +66,10 @@ export function getLegalContent(
     case "tokushoho":
       return {
         title: commercialTransactionsTitle,
-        sections: createCommercialTransactionsSections(options),
+        sections: createCommercialTransactionsSections({
+          contactEmail: options.contactEmail,
+          administratorName: options.administratorName,
+        }),
       };
   }
 }

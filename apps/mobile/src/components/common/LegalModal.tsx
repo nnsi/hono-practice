@@ -7,6 +7,7 @@ import { Text, View } from "react-native";
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || "";
+const ADMINISTRATOR_NAME = process.env.EXPO_PUBLIC_ADMINISTRATOR_NAME || "";
 const CONTACT_PATH = "/contact";
 
 type LegalModalProps = {
@@ -21,6 +22,7 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
   const { title, sections } = getLegalContent(type, i18n.language, {
     contactEmail: CONTACT_EMAIL,
     contactUrl: CONTACT_PATH,
+    administratorName: ADMINISTRATOR_NAME,
   });
 
   const handleContactPress = () => {

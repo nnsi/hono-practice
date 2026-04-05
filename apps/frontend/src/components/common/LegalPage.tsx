@@ -9,7 +9,10 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
+import { useNoIndex } from "../../hooks/useNoIndex";
+
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const ADMINISTRATOR_NAME = import.meta.env.VITE_ADMINISTRATOR_NAME || "";
 const CONTACT_PATH = "/contact";
 
 function renderContent(content: string) {
@@ -47,17 +50,20 @@ function getSections(type: LegalPageProps["type"]) {
       return createPrivacyPolicySections({
         contactEmail: CONTACT_EMAIL,
         contactUrl: CONTACT_PATH,
+        administratorName: ADMINISTRATOR_NAME,
       });
     case "terms":
       return termsOfServiceSections;
     case "tokushoho":
       return createCommercialTransactionsSections({
         contactEmail: CONTACT_EMAIL,
+        administratorName: ADMINISTRATOR_NAME,
       });
   }
 }
 
 export function LegalPage({ type }: LegalPageProps) {
+  useNoIndex();
   const navigate = useNavigate();
   const title = titleMap[type];
   const sections = getSections(type);

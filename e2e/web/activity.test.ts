@@ -93,7 +93,7 @@ describe("activity", () => {
 
     // 2段階確認で削除（赤ボーダーの「削除」→ 赤背景の「本当に削除」）
     await page.click("button.border-red-300");
-    await page.click("button.bg-red-500");
+    await page.click("button.bg-red-600");
 
     // ダイアログが閉じ、アクティビティが消える
     await page.waitForSelector(".modal-backdrop", {

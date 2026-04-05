@@ -4,6 +4,7 @@ import { useTranslation } from "@packages/i18n";
 import { Link } from "@tanstack/react-router";
 import { Info, Settings } from "lucide-react";
 
+import { useWebSubscriptionEnabled } from "../../hooks/useWebSubscriptionEnabled";
 import { LegalModal } from "../common/LegalModal";
 import { AccountSection } from "./AccountSection";
 import { ApiKeyManager } from "./ApiKeyManager";
@@ -15,6 +16,7 @@ import { useAppSettings } from "./useAppSettings";
 export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const { t } = useTranslation("settings");
+  const webSubscriptionEnabled = useWebSubscriptionEnabled();
   const [legalModal, setLegalModal] = useState<
     "privacy" | "terms" | "tokushoho" | null
   >(null);
@@ -94,13 +96,15 @@ export function SettingsPage() {
               >
                 {t("termsOfService")}
               </button>
-              <button
-                type="button"
-                onClick={() => setLegalModal("tokushoho")}
-                className="text-sm text-blue-600 hover:text-blue-700 underline"
-              >
-                {t("commercialTransactions")}
-              </button>
+              {webSubscriptionEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setLegalModal("tokushoho")}
+                  className="text-sm text-blue-600 hover:text-blue-700 underline"
+                >
+                  {t("commercialTransactions")}
+                </button>
+              )}
               <Link
                 to="/contact"
                 className="text-sm text-blue-600 hover:text-blue-700 underline"

@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const ADMINISTRATOR_NAME = import.meta.env.VITE_ADMINISTRATOR_NAME || "";
 const CONTACT_PATH = "/contact";
 
 function renderContent(content: string) {
@@ -38,6 +39,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
   const { title, sections } = getLegalContent(type, i18n.language, {
     contactEmail: CONTACT_EMAIL,
     contactUrl: CONTACT_PATH,
+    administratorName: ADMINISTRATOR_NAME,
   });
 
   return (
