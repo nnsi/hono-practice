@@ -66,10 +66,11 @@ describe("goal", () => {
     await goalCard.locator("button:has(.lucide-pencil)").click();
     await page.waitForSelector(".border-blue-300", { timeout: 15000 });
 
-    // 2段階削除：Trash アイコンボタン → 赤背景の「削除」ボタン
+    // 2段階削除：赤ボーダーの「削除」ボタン → 赤背景の「削除」ボタン
+    // （「終了」ボタンも border-red-300 のため first() で削除ボタンに絞る）
     const editForm = page.locator(".border-blue-300");
-    await editForm.locator("button.border-red-300").click();
-    await editForm.locator("button.bg-red-500").click();
+    await editForm.locator("button.border-red-300").first().click();
+    await editForm.locator("button.bg-red-600").click();
 
     // 削除した目標の表示が消える
     await page.waitForSelector("text=/99km/", {

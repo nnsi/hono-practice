@@ -1,3 +1,4 @@
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { noopTracer } from "@backend/lib/tracer";
 import {
   type Subscription,
@@ -10,11 +11,17 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import type { UserProviderRepository } from "../../auth/userProviderRepository";
 import type { SubscriptionQueryUsecase } from "../../subscription/subscriptionUsecase";
-import { type UserRepository, newUserUsecase } from "..";
+import {
+  type UserConsentRepository,
+  type UserRepository,
+  newUserUsecase,
+} from "..";
 
 describe("UserUsecase", () => {
   let repo: UserRepository;
   let providerRepo: UserProviderRepository;
+  let userConsentRepo: UserConsentRepository;
+  let txRunner: TransactionRunner;
   let subscriptionUc: SubscriptionQueryUsecase;
   let usecase: ReturnType<typeof newUserUsecase>;
 
@@ -43,15 +50,25 @@ describe("UserUsecase", () => {
   beforeEach(() => {
     repo = mock<UserRepository>();
     providerRepo = mock<UserProviderRepository>();
+    userConsentRepo = mock<UserConsentRepository>();
     subscriptionUc = mock<SubscriptionQueryUsecase>();
+    txRunner = {
+      async run(repositories, operation) {
+        const merged = Object.assign({}, ...repositories);
+        return operation(merged);
+      },
+    };
     usecase = newUserUsecase(
       instance(repo),
       instance(providerRepo),
+      instance(userConsentRepo),
+      txRunner,
       instance(subscriptionUc),
       noopTracer,
     );
     reset(repo);
     reset(providerRepo);
+    reset(userConsentRepo);
     reset(subscriptionUc);
   });
 

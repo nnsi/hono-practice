@@ -1,8 +1,10 @@
 import { sign } from "hono/jwt";
 
 import { AppError, ConflictError } from "@backend/error";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
 import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
+import { createUserConsent } from "@packages/domain/user/userConsentSchema";
 import {
   type User,
   type UserId,
@@ -13,12 +15,20 @@ import {
 import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
 import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
+import type { UserConsentRepository } from "./userConsentRepository";
 import type { UserRepository } from "./userRepository";
+
+export type ConsentsInput = {
+  age: true;
+  terms: string;
+  privacy: string;
+};
 
 export type CreateUserInputParams = {
   loginId: string;
   password: string;
   name?: string;
+  consents: ConsentsInput;
 };
 
 export type UserWithProviders = User & {
@@ -50,13 +60,21 @@ export type UserUsecase = {
 export function newUserUsecase(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
+  userConsentRepo: UserConsentRepository,
+  txRunner: TransactionRunner,
   subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
 ): UserUsecase {
   const passwordVerifier = new MultiHashPasswordVerifier();
 
   return {
-    createUser: createUser(repo, passwordVerifier, tracer),
+    createUser: createUser(
+      repo,
+      userConsentRepo,
+      txRunner,
+      passwordVerifier,
+      tracer,
+    ),
     getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
     deleteUser: deleteUser(repo, tracer),
     listUsers: listUsers(repo, tracer),
@@ -65,6 +83,8 @@ export function newUserUsecase(
 
 function createUser(
   repo: UserRepository,
+  userConsentRepo: UserConsentRepository,
+  txRunner: TransactionRunner,
   passwordVerifier: MultiHashPasswordVerifier,
   tracer: Tracer,
 ) {
@@ -86,8 +106,34 @@ function createUser(
       password: cryptedPassword,
     });
 
-    const user = await tracer.span("db.createUser", () =>
-      repo.createUser(newUser),
+    const user = await tracer.span("db.createUser.withConsents", () =>
+      txRunner.run([repo, userConsentRepo], async (tx) => {
+        const created = await tx.createUser(newUser);
+        const confirmedAt = new Date();
+        await tx.createUserConsents([
+          createUserConsent(
+            { userId: created.id, type: "age", version: null },
+            confirmedAt,
+          ),
+          createUserConsent(
+            {
+              userId: created.id,
+              type: "terms",
+              version: params.consents.terms,
+            },
+            confirmedAt,
+          ),
+          createUserConsent(
+            {
+              userId: created.id,
+              type: "privacy",
+              version: params.consents.privacy,
+            },
+            confirmedAt,
+          ),
+        ]);
+        return created;
+      }),
     );
 
     const token = await sign(

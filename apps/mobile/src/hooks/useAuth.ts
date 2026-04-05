@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
+import type { Consents } from "@packages/types/request";
+
 import { getDatabase } from "../db/database";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { clearToken } from "../utils/apiClient";
@@ -20,10 +22,14 @@ type AuthState = {
   syncReady: boolean;
   userId: string | null;
   login: (loginId: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
-  appleLogin: (credential: string) => Promise<void>;
+  googleLogin: (credential: string, consents?: Consents) => Promise<void>;
+  appleLogin: (credential: string, consents?: Consents) => Promise<void>;
   completeLogin: (userId: string) => Promise<void>;
-  register: (loginId: string, password: string) => Promise<void>;
+  register: (
+    loginId: string,
+    password: string,
+    consents: Consents,
+  ) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -82,8 +88,8 @@ export function useAuth(): AuthState {
   );
 
   const googleLogin = useCallback(
-    async (credential: string) => {
-      await apiGoogleLogin(credential);
+    async (credential: string, consents?: Consents) => {
+      await apiGoogleLogin(credential, consents);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
       await persistPlan(user.plan);
@@ -92,8 +98,8 @@ export function useAuth(): AuthState {
   );
 
   const appleLogin = useCallback(
-    async (credential: string) => {
-      await apiAppleLogin(credential);
+    async (credential: string, consents?: Consents) => {
+      await apiAppleLogin(credential, consents);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
       await persistPlan(user.plan);
@@ -102,8 +108,8 @@ export function useAuth(): AuthState {
   );
 
   const register = useCallback(
-    async (loginId: string, password: string) => {
-      await apiRegister(loginId, password);
+    async (loginId: string, password: string, consents: Consents) => {
+      await apiRegister(loginId, password, consents);
       const user = await apiGetMe();
       await loginWithUserCheck(user.id);
       await persistPlan(user.plan);

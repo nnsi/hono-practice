@@ -1,14 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import { ArrowLeft } from "lucide-react";
 
 import { adminClient } from "../../utils/apiClient";
 import { SubscriptionHistorySection } from "./SubscriptionHistorySection";
 import { SubscriptionSection } from "./SubscriptionSection";
+import { UserDangerZone } from "./UserDangerZone";
 
 export function UserDetailPage() {
   const { id } = useParams({ from: "/users_/$id" });
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin", "users", id],
@@ -80,6 +82,11 @@ export function UserDetailPage() {
         userId={data.user.id}
       />
       <SubscriptionHistorySection history={data.subscriptionHistory ?? []} />
+      <UserDangerZone
+        userId={data.user.id}
+        loginId={data.user.loginId}
+        onDeleted={() => navigate({ to: "/users" })}
+      />
     </div>
   );
 }

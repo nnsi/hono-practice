@@ -193,9 +193,9 @@ describe("daily", () => {
     // EditLogDialog が開く
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
-    // 2段階削除: ゴミ箱ボタン（aria-label="削除"） → 確認ボタン（aria-label="削除を確認"）
-    await page.click('.modal-backdrop button[aria-label="削除"]');
-    await page.click('.modal-backdrop button[aria-label="削除を確認"]');
+    // 2段階削除: 赤ボーダーの「削除」→ 赤背景の「削除」
+    await page.click(".modal-backdrop button.border-red-300");
+    await page.click(".modal-backdrop button.bg-red-600");
 
     // ダイアログが閉じる
     await page.waitForSelector(".modal-backdrop", {

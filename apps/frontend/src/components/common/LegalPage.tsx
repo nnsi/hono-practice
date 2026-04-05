@@ -2,14 +2,19 @@ import {
   commercialTransactionsTitle,
   createCommercialTransactionsSections,
   createPrivacyPolicySections,
+  privacyPolicyEffectiveDate,
   privacyPolicyTitle,
+  termsOfServiceEffectiveDate,
   termsOfServiceSections,
   termsOfServiceTitle,
 } from "@packages/frontend-shared/legal";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
+import { useNoIndex } from "../../hooks/useNoIndex";
+
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const ADMINISTRATOR_NAME = import.meta.env.VITE_ADMINISTRATOR_NAME || "";
 const CONTACT_PATH = "/contact";
 
 function renderContent(content: string) {
@@ -41,25 +46,35 @@ const titleMap = {
   tokushoho: commercialTransactionsTitle,
 } as const;
 
+const effectiveDateMap = {
+  privacy: privacyPolicyEffectiveDate,
+  terms: termsOfServiceEffectiveDate,
+  tokushoho: undefined,
+} as const;
+
 function getSections(type: LegalPageProps["type"]) {
   switch (type) {
     case "privacy":
       return createPrivacyPolicySections({
         contactEmail: CONTACT_EMAIL,
         contactUrl: CONTACT_PATH,
+        administratorName: ADMINISTRATOR_NAME,
       });
     case "terms":
       return termsOfServiceSections;
     case "tokushoho":
       return createCommercialTransactionsSections({
         contactEmail: CONTACT_EMAIL,
+        administratorName: ADMINISTRATOR_NAME,
       });
   }
 }
 
 export function LegalPage({ type }: LegalPageProps) {
+  useNoIndex();
   const navigate = useNavigate();
   const title = titleMap[type];
+  const effectiveDate = effectiveDateMap[type];
   const sections = getSections(type);
 
   return (
@@ -73,7 +88,10 @@ export function LegalPage({ type }: LegalPageProps) {
           <ArrowLeft size={16} />
           戻る
         </button>
-        <h1 className="text-xl font-bold mb-6">{title}</h1>
+        <h1 className="text-xl font-bold mb-1">{title}</h1>
+        {effectiveDate && (
+          <p className="text-xs text-gray-500 mb-6">{effectiveDate}</p>
+        )}
         <div className="space-y-6">
           {sections.map((section) => (
             <div key={section.title}>

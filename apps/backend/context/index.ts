@@ -30,6 +30,7 @@ export type AppContext = {
     apiKeyScopes?: ApiKeyScope[];
     logger: Logger;
     tracer: Tracer;
+    adminEmail?: string;
   };
   Bindings: Config & {
     DB: QueryExecutor;

@@ -19,6 +19,7 @@ function base64Encode(buffer: ArrayBuffer): string {
 }
 
 async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+  if (a.length !== b.length) return false;
   const encoder = new TextEncoder();
   const keyData = crypto.getRandomValues(new Uint8Array(32));
   const key = await crypto.subtle.importKey(
@@ -36,7 +37,7 @@ async function timingSafeEqual(a: string, b: string): Promise<boolean> {
   for (let i = 0; i < arrA.length; i++) {
     diff |= arrA[i] ^ arrB[i];
   }
-  return diff === 0 && a.length === b.length;
+  return diff === 0;
 }
 
 async function computeHmacBase64(

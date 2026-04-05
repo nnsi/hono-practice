@@ -7,7 +7,7 @@ import {
 } from "@packages/domain/auth/refreshTokenSchema";
 import { DomainValidateError } from "@packages/domain/errors";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { eq } from "drizzle-orm";
+import { eq, lte } from "drizzle-orm";
 
 export type RefreshTokenRepository<T = QueryExecutor> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
@@ -15,6 +15,7 @@ export type RefreshTokenRepository<T = QueryExecutor> = {
   revokeRefreshToken(token: RefreshToken): Promise<void>;
   revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
   deleteRefreshTokensPastExpiry(): Promise<void>;
+  hardDeleteRefreshTokensByUserId(userId: UserId): Promise<number>;
   withTx: (tx: T) => RefreshTokenRepository<T>;
 };
 
@@ -27,7 +28,18 @@ export function newRefreshTokenRepository(
     revokeRefreshToken: revokeRefreshToken(db),
     revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
     deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
+    hardDeleteRefreshTokensByUserId: hardDeleteRefreshTokensByUserId(db),
     withTx: (tx) => newRefreshTokenRepository(tx),
+  };
+}
+
+function hardDeleteRefreshTokensByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 
@@ -65,7 +77,10 @@ function getRefreshTokenByToken(db: QueryExecutor) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
     const parts = combinedToken.split(".");
     if (parts.length !== 2) {
-      console.error("Invalid combined token format received:", combinedToken);
+      console.error(
+        "Invalid combined token format received: length=",
+        combinedToken.length,
+      );
       return null;
     }
     const [selector, plainToken] = parts;
@@ -137,6 +152,6 @@ function deleteRefreshTokensPastExpiry(db: QueryExecutor) {
         deletedAt: now,
         updatedAt: now,
       })
-      .where(eq(refreshTokens.expiresAt, now));
+      .where(lte(refreshTokens.expiresAt, now));
   };
 }

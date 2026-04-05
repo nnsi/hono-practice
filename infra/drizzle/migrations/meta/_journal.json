@@ -253,6 +253,20 @@
       "when": 1775201858477,
       "tag": "0035_wide_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1775389854650,
+      "tag": "0036_sleepy_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1775407531887,
+      "tag": "0037_soft_ben_urich",
+      "breakpoints": true
     }
   ]
 }

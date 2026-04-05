@@ -3,6 +3,13 @@
     "version": ">= 15.0.0",
     "appVersionSource": "remote"
   },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
+  },
   "build": {
     "development": {
       "developmentClient": true,

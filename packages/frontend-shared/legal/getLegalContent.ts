@@ -2,51 +2,92 @@ import {
   commercialTransactionsTitle,
   createCommercialTransactionsSections,
 } from "./commercialTransactions";
+import {
+  createPrivacyPolicySectionsEn,
+  privacyPolicyEffectiveDateEn,
+  privacyPolicyTitleEn,
+} from "./en/privacyPolicy";
+import {
+  termsOfServiceEffectiveDateEn,
+  termsOfServiceSectionsEn,
+  termsOfServiceTitleEn,
+} from "./en/termsOfService";
 import type { LegalSection } from "./privacyPolicy";
 import {
   createPrivacyPolicySections,
+  privacyPolicyEffectiveDate,
   privacyPolicyTitle,
 } from "./privacyPolicy";
-import { termsOfServiceSections, termsOfServiceTitle } from "./termsOfService";
+import {
+  termsOfServiceEffectiveDate,
+  termsOfServiceSections,
+  termsOfServiceTitle,
+} from "./termsOfService";
 
 export type LegalType = "privacy" | "terms" | "tokushoho";
 
 type LegalContent = {
   title: string;
   sections: LegalSection[];
+  effectiveDate?: string;
 };
 
 type Options = {
   contactEmail: string;
   contactUrl: string;
+  /**
+   * 販売事業者の氏名（特商法表記で使用）。日本語の tokushoho ページ専用。
+   * 特商法11条1号により個人事業主の氏名は常時表示必須。
+   */
+  administratorName: string;
 };
+
+function isEnglish(locale: string): boolean {
+  return /^en(?:-|$)/i.test(locale);
+}
 
 /**
  * Get legal document content for the given type and locale.
- * Currently only Japanese is available. When English versions
- * are ready, add en/ files and switch based on locale.
+ * English is available for: terms, privacy.
+ * tokushoho is Japanese-law specific and has no English version.
  */
 export function getLegalContent(
   type: LegalType,
-  _locale: string,
+  locale: string,
   options: Options,
 ): LegalContent {
-  // TODO: switch on _locale when English legal documents are available
   switch (type) {
-    case "privacy":
-      return {
-        title: privacyPolicyTitle,
-        sections: createPrivacyPolicySections(options),
-      };
     case "terms":
-      return {
-        title: termsOfServiceTitle,
-        sections: termsOfServiceSections,
-      };
+      return isEnglish(locale)
+        ? {
+            title: termsOfServiceTitleEn,
+            sections: termsOfServiceSectionsEn,
+            effectiveDate: termsOfServiceEffectiveDateEn,
+          }
+        : {
+            title: termsOfServiceTitle,
+            sections: termsOfServiceSections,
+            effectiveDate: termsOfServiceEffectiveDate,
+          };
+    case "privacy":
+      return isEnglish(locale)
+        ? {
+            title: privacyPolicyTitleEn,
+            sections: createPrivacyPolicySectionsEn(options),
+            effectiveDate: privacyPolicyEffectiveDateEn,
+          }
+        : {
+            title: privacyPolicyTitle,
+            sections: createPrivacyPolicySections(options),
+            effectiveDate: privacyPolicyEffectiveDate,
+          };
     case "tokushoho":
       return {
         title: commercialTransactionsTitle,
-        sections: createCommercialTransactionsSections(options),
+        sections: createCommercialTransactionsSections({
+          contactEmail: options.contactEmail,
+          administratorName: options.administratorName,
+        }),
       };
   }
 }

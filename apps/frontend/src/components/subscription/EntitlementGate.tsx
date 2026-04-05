@@ -10,7 +10,11 @@ type EntitlementGateProps = {
   feature: EntitlementFeature;
   children: ReactNode;
   fallback?: ReactNode;
-  onUpgrade: () => void;
+  /**
+   * アップグレード導線のハンドラ。undefined の場合は CTA を表示しない
+   * （Web 課金無効時や iOS/Android 経由のみアップグレード可能な場合）。
+   */
+  onUpgrade?: () => void;
 };
 
 const FEATURE_LABELS: Record<EntitlementFeature, string> = {
@@ -47,17 +51,19 @@ export function EntitlementGate({
         <span className="text-sm font-medium">Pro プラン限定機能</span>
       </div>
       <p className="text-sm text-gray-500 leading-relaxed">
-        {FEATURE_LABELS[feature]}は Pro
-        プランでご利用いただけます。アップグレードして全機能をお使いください。
+        {FEATURE_LABELS[feature]}は Pro プランでご利用いただけます。
+        {onUpgrade && "アップグレードして全機能をお使いください。"}
       </p>
-      <button
-        type="button"
-        onClick={onUpgrade}
-        className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-      >
-        <Crown size={14} />
-        Pro にアップグレード
-      </button>
+      {onUpgrade && (
+        <button
+          type="button"
+          onClick={onUpgrade}
+          className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          <Crown size={14} />
+          Pro にアップグレード
+        </button>
+      )}
     </div>
   );
 }

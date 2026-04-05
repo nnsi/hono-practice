@@ -198,6 +198,7 @@ jobs:
           VITE_GOOGLE_OAUTH_CLIENT_ID: dummy-for-ci
           VITE_API_URL: https://dummy-for-ci.example.com
           VITE_CONTACT_EMAIL: ci@example.com
+          VITE_ADMINISTRATOR_NAME: CI Test Administrator
 
   build-admin-frontend:
     needs: detect-changes

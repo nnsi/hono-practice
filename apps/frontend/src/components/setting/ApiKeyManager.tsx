@@ -9,6 +9,7 @@ import {
   useDeleteApiKey,
 } from "../../hooks/useApiKeys";
 import { useSubscription } from "../../hooks/useSubscription";
+import { useWebSubscriptionEnabled } from "../../hooks/useWebSubscriptionEnabled";
 import { EntitlementGate } from "../subscription/EntitlementGate";
 import { UpgradeModal } from "../subscription/UpgradeModal";
 import { useUpgrade } from "../subscription/useUpgrade";
@@ -26,6 +27,7 @@ export function ApiKeyManager() {
   const deleteApiKey = useDeleteApiKey();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const upgrade = useUpgrade();
+  const webSubscriptionEnabled = useWebSubscriptionEnabled();
 
   if (subLoading) {
     return (
@@ -37,7 +39,12 @@ export function ApiKeyManager() {
 
   return (
     <>
-      <EntitlementGate feature="apiKey" onUpgrade={upgrade.openUpgradeModal}>
+      <EntitlementGate
+        feature="apiKey"
+        onUpgrade={
+          webSubscriptionEnabled ? upgrade.openUpgradeModal : undefined
+        }
+      >
         <div className="rounded-xl border border-gray-200 p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -76,7 +83,7 @@ export function ApiKeyManager() {
         </div>
       </EntitlementGate>
 
-      {upgrade.isModalOpen && (
+      {webSubscriptionEnabled && upgrade.isModalOpen && (
         <UpgradeModal
           onClose={upgrade.closeUpgradeModal}
           onUpgrade={upgrade.startCheckout}

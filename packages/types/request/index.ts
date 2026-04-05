@@ -1,5 +1,6 @@
 export * from "./AppleLoginRequest";
 export * from "./CheckDuplicatesRequest";
+export * from "./ConsentsRequest";
 export { type ContactRequest, contactRequestSchema } from "./ContactRequest";
 export * from "./CreateActivityLogBatchRequest";
 export * from "./CreateActivityLogRequest";

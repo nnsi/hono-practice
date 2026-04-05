@@ -35,6 +35,8 @@ export const adminAuthMiddleware = createMiddleware<AppContext>(
       if (typeof payload.email !== "string" || payload.email.length === 0) {
         throw new UnauthorizedError("unauthorized");
       }
+
+      c.set("adminEmail", payload.email);
     } catch (e) {
       if (e instanceof AppError) throw e;
       throw new UnauthorizedError("unauthorized");

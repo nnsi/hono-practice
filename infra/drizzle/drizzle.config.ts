@@ -13,7 +13,7 @@ interface DrizzleConfig {
 
 const config: DrizzleConfig = {
   dialect: "postgresql",
-  schema: "./infra/drizzle/schema.ts",
+  schema: "./infra/drizzle/schema",
   out: "./infra/drizzle/migrations",
   dbCredentials: {
     url: process.env.DATABASE_URL!,

@@ -1,4 +1,5 @@
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
+import type { Consents } from "@packages/types/request";
 
 import {
   clearRefreshToken,
@@ -55,13 +56,17 @@ export async function apiLogin(loginId: string, password: string) {
   return data;
 }
 
-export async function apiRegister(loginId: string, password: string) {
+export async function apiRegister(
+  loginId: string,
+  password: string,
+  consents: Consents,
+) {
   let res: Response;
   try {
     res = await fetchWithTimeout(`${API_URL}/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ loginId, password }),
+      body: JSON.stringify({ loginId, password, consents }),
     });
     trackServerTimeFromResponse(res);
   } catch {
@@ -96,13 +101,13 @@ export async function apiLogout() {
   await clearRefreshToken();
 }
 
-export async function apiGoogleLogin(credential: string) {
+export async function apiGoogleLogin(credential: string, consents?: Consents) {
   let res: Response;
   try {
     res = await fetchWithTimeout(`${API_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential }),
+      body: JSON.stringify({ credential, consents }),
     });
     trackServerTimeFromResponse(res);
   } catch {
@@ -121,13 +126,13 @@ export async function apiGoogleLogin(credential: string) {
   return data;
 }
 
-export async function apiAppleLogin(credential: string) {
+export async function apiAppleLogin(credential: string, consents?: Consents) {
   let res: Response;
   try {
     res = await fetchWithTimeout(`${API_URL}/auth/apple`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential }),
+      body: JSON.stringify({ credential, consents }),
     });
     trackServerTimeFromResponse(res);
   } catch {

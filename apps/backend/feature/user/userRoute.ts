@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 
+import { AppError } from "@backend/error";
+import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -19,6 +21,7 @@ import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
 import { newUserProviderRepository } from "../auth/userProviderRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
+import { newUserConsentRepository } from "./userConsentRepository";
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
 import { newUserUsecase } from "./userUsecase";
@@ -39,7 +42,9 @@ export function createUserRoute() {
 
     const repo = newUserRepository(db);
     const userProviderRepo = newUserProviderRepository(db);
+    const userConsentRepo = newUserConsentRepository(db);
     const refreshTokenRepo = newRefreshTokenRepository(db);
+    const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
     ).MultiHashPasswordVerifier();
@@ -48,6 +53,8 @@ export function createUserRoute() {
       repo,
       refreshTokenRepo,
       userProviderRepo,
+      userConsentRepo,
+      txRunner,
       passwordVerifier,
       JWT_SECRET,
       JWT_AUDIENCE,
@@ -60,7 +67,14 @@ export function createUserRoute() {
       subscriptionRepo,
       tracer,
     );
-    const uc = newUserUsecase(repo, userProviderRepo, subscriptionUc, tracer);
+    const uc = newUserUsecase(
+      repo,
+      userProviderRepo,
+      userConsentRepo,
+      txRunner,
+      subscriptionUc,
+      tracer,
+    );
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);
@@ -103,12 +117,15 @@ export function createUserRoute() {
       return c.json({ token, refreshToken });
     })
     .get("/me", authMiddleware, async (c) => {
+      const userId = c.get("userId");
       try {
-        const userId = c.get("userId");
         const user = await c.var.h.getMe(userId);
         return c.json(user);
-      } catch (_e) {
-        return c.json({ message: "unauthorized" }, 401);
+      } catch (e) {
+        if (e instanceof AppError && e.status === 404) {
+          return c.json({ message: "unauthorized" }, 401);
+        }
+        throw e;
       }
     })
     .delete("/me", authMiddleware, async (c) => {

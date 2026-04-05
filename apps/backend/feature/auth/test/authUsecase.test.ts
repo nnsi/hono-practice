@@ -1,5 +1,7 @@
 import type { RefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import type { UserProviderRepository } from "@backend/feature/auth/userProviderRepository";
+import type { UserConsentRepository } from "@backend/feature/user/userConsentRepository";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import {
@@ -46,6 +48,7 @@ describe("AuthUsecase", () => {
   let userRepo: UserRepository;
   let refreshTokenRepo: RefreshTokenRepository;
   let userProviderRepo: UserProviderRepository;
+  let userConsentRepo: UserConsentRepository;
   let passwordVerifier: PasswordVerifier;
   let mockVerifier: OAuthVerify;
   const JWT_SECRET = "test-secret";
@@ -55,12 +58,21 @@ describe("AuthUsecase", () => {
     userRepo = mock<UserRepository>();
     refreshTokenRepo = mock<RefreshTokenRepository>();
     userProviderRepo = mock<UserProviderRepository>();
+    userConsentRepo = mock<UserConsentRepository>();
     passwordVerifier = mock<PasswordVerifier>();
     mockVerifier = mock<OAuthVerify>();
+    const txRunner: TransactionRunner = {
+      async run(repositories, operation) {
+        const merged = Object.assign({}, ...repositories);
+        return operation(merged);
+      },
+    };
     usecase = newAuthUsecase(
       instance(userRepo),
       instance(refreshTokenRepo),
       instance(userProviderRepo),
+      instance(userConsentRepo),
+      txRunner,
       instance(passwordVerifier),
       JWT_SECRET,
       JWT_AUDIENCE,

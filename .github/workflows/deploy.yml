@@ -83,6 +83,8 @@ jobs:
           VITE_APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
           VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+          VITE_ADMINISTRATOR_NAME: ${{ secrets.VITE_ADMINISTRATOR_NAME }}
+          VITE_ENABLE_WEB_SUBSCRIPTION: ${{ vars.VITE_ENABLE_WEB_SUBSCRIPTION_STG }}
 
       - name: Build frontend (release)
         if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
@@ -92,6 +94,8 @@ jobs:
           VITE_APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
           VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+          VITE_ADMINISTRATOR_NAME: ${{ secrets.VITE_ADMINISTRATOR_NAME }}
+          VITE_ENABLE_WEB_SUBSCRIPTION: ${{ vars.VITE_ENABLE_WEB_SUBSCRIPTION_PROD }}
 
       # --- admin-frontend ---
       - name: Build admin-frontend (stg)

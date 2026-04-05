@@ -1,17 +1,20 @@
-import { useState } from "react";
-
-import { useTranslation } from "@packages/i18n";
+import type { Consents } from "@packages/types/request";
 
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
 import { LegalModal } from "../common/LegalModal";
 import { AppleSignInButton } from "./AppleSignInButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import { useCreateUserForm } from "./useCreateUserForm";
 
 type CreateUserFormProps = {
-  onRegister: (loginId: string, password: string) => Promise<void>;
-  onGoogleLogin: (credential: string) => Promise<void>;
-  onAppleLogin: (credential: string) => Promise<void>;
+  onRegister: (
+    loginId: string,
+    password: string,
+    consents: Consents,
+  ) => Promise<void>;
+  onGoogleLogin: (credential: string, consents?: Consents) => Promise<void>;
+  onAppleLogin: (credential: string, consents?: Consents) => Promise<void>;
 };
 
 export function CreateUserForm({
@@ -19,71 +22,24 @@ export function CreateUserForm({
   onGoogleLogin,
   onAppleLogin,
 }: CreateUserFormProps) {
-  const { t } = useTranslation("common");
-  const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
-    null,
-  );
-
-  const validate = (): string | null => {
-    if (!loginId.trim()) return t("auth.loginIdRequired");
-    if (!password) return t("auth.passwordRequired");
-    if (password.length < 8) return t("auth.passwordMinLength");
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setError("");
-    setIsSubmitting(true);
-    try {
-      await onRegister(loginId, password);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("auth.registerError"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credential: string) => {
-    setError("");
-    setIsSubmitting(true);
-    try {
-      await onGoogleLogin(credential);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("auth.googleRegisterError"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError(t("auth.googleRegisterError"));
-  };
-
-  const handleAppleSuccess = async (credential: string) => {
-    setError("");
-    setIsSubmitting(true);
-    try {
-      await onAppleLogin(credential);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("auth.appleRegisterError"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAppleError = () => {
-    setError(t("auth.appleRegisterError"));
-  };
+  const {
+    t,
+    loginId,
+    setLoginId,
+    password,
+    setPassword,
+    consentChecked,
+    setConsentChecked,
+    error,
+    isSubmitting,
+    legalModal,
+    setLegalModal,
+    handleSubmit,
+    handleGoogleSuccess,
+    handleGoogleError,
+    handleAppleSuccess,
+    handleAppleError,
+  } = useCreateUserForm({ onRegister, onGoogleLogin, onAppleLogin });
 
   return (
     <div className="w-full max-w-sm">
@@ -94,13 +50,16 @@ export function CreateUserForm({
           text="signup_with"
         />
       </div>
-      <div className="mb-6">
+      <div className="mb-3">
         <AppleSignInButton
           onSuccess={handleAppleSuccess}
           onError={handleAppleError}
           text="signup"
         />
       </div>
+      <p className="mb-6 text-xs text-gray-400 leading-relaxed">
+        {t("auth.oauthConsent")}
+      </p>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
@@ -149,30 +108,39 @@ export function CreateUserForm({
           />
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        <p className="text-xs text-gray-400 leading-relaxed">
-          {t("auth.legalConsentPrefix")}
-          <button
-            type="button"
-            onClick={() => setLegalModal("terms")}
-            className="underline hover:text-gray-600 transition-colors"
-          >
-            {t("auth.termsOfService")}
-          </button>
-          {t("auth.legalConsentAnd")}
-          <button
-            type="button"
-            onClick={() => setLegalModal("privacy")}
-            className="underline hover:text-gray-600 transition-colors"
-          >
-            {t("auth.privacyPolicy")}
-          </button>
-          {t("auth.legalConsentSuffix")}
-        </p>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consentChecked}
+            onChange={(e) => setConsentChecked(e.target.checked)}
+            className="mt-0.5 shrink-0"
+            required
+          />
+          <span className="text-xs text-gray-400 leading-relaxed">
+            {t("auth.legalConsentPrefix")}
+            <button
+              type="button"
+              onClick={() => setLegalModal("terms")}
+              className="underline hover:text-gray-600 transition-colors"
+            >
+              {t("auth.termsOfService")}
+            </button>
+            {t("auth.legalConsentAnd")}
+            <button
+              type="button"
+              onClick={() => setLegalModal("privacy")}
+              className="underline hover:text-gray-600 transition-colors"
+            >
+              {t("auth.privacyPolicy")}
+            </button>
+            {t("auth.legalConsentSuffix")}
+          </span>
+        </label>
         <FormButton
           type="submit"
           variant="primary"
           label={isSubmitting ? t("auth.registering") : t("auth.signUp")}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !consentChecked}
           className="w-full"
         />
       </form>

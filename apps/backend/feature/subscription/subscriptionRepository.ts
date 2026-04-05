@@ -21,6 +21,7 @@ export type SubscriptionRepository<T = QueryExecutor> = {
     providerId: string,
   ) => Promise<Subscription | undefined>;
   updateSubscription: (subscription: Subscription) => Promise<Subscription>;
+  hardDeleteUserSubscriptionsByUserId: (userId: UserId) => Promise<number>;
   withTx: (tx: T) => SubscriptionRepository<T>;
 };
 
@@ -34,7 +35,19 @@ export function newSubscriptionRepository(
     findSubscriptionByPaymentProviderId:
       findSubscriptionByPaymentProviderId(db),
     updateSubscription: updateSubscription(db),
+    hardDeleteUserSubscriptionsByUserId:
+      hardDeleteUserSubscriptionsByUserId(db),
     withTx: (tx) => newSubscriptionRepository(tx),
+  };
+}
+
+function hardDeleteUserSubscriptionsByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 

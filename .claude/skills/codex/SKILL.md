@@ -13,7 +13,7 @@ Codex CLI をBashから呼び出し、結果を報告するスキル。
 | 項目 | 値 |
 |------|------|
 | 出力先 | `%TEMP%\codex-output.md`（`-o` フラグ） |
-| プロジェクト | `-C "D:\workspace\hono-practice"` |
+| プロジェクト | `-C "$PROJECT_ROOT"`（リポジトリルート） |
 | Bashタイムアウト | 300000ms（5分） |
 | デフォルトsandbox | `read-only`（分析用） |
 
@@ -22,23 +22,23 @@ Codex CLI をBashから呼び出し、結果を報告するスキル。
 ### 1. 汎用タスク（分析・質問・調査）
 
 ```bash
-codex exec --full-auto --sandbox read-only -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md" "<依頼内容>"
+codex exec --full-auto --sandbox read-only -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md" "<依頼内容>"
 ```
 
 ### 2. コードレビュー
 
 ```bash
 # 未コミット変更
-codex exec review --uncommitted --full-auto -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md"
+codex exec review --uncommitted --full-auto -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md"
 
 # ブランチ差分
-codex exec review --base main --full-auto -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md"
+codex exec review --base main --full-auto -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md"
 
 # 特定コミット（--title でコミットメッセージを渡すと精度向上）
-codex exec review --commit <SHA> --title "<コミットタイトル>" --full-auto -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md"
+codex exec review --commit <SHA> --title "<コミットタイトル>" --full-auto -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md"
 
 # カスタム指示付きレビュー
-codex exec review --uncommitted --full-auto -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md" "<レビュー観点>"
+codex exec review --uncommitted --full-auto -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md" "<レビュー観点>"
 ```
 
 ### 3. 実装タスク（ファイル書き込みあり）
@@ -46,7 +46,7 @@ codex exec review --uncommitted --full-auto -C "D:\workspace\hono-practice" -o "
 sandbox を `workspace-write` に昇格。**実行前にユーザーへ確認を取ること。**
 
 ```bash
-codex exec --full-auto --sandbox workspace-write -C "D:\workspace\hono-practice" -o "%TEMP%\codex-output.md" "<依頼内容>"
+codex exec --full-auto --sandbox workspace-write -C "$PROJECT_ROOT" -o "%TEMP%\codex-output.md" "<依頼内容>"
 ```
 
 ### 4. セッション継続（resume）

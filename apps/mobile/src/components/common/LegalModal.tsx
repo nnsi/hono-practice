@@ -7,6 +7,7 @@ import { Text, View } from "react-native";
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || "";
+const ADMINISTRATOR_NAME = process.env.EXPO_PUBLIC_ADMINISTRATOR_NAME || "";
 const CONTACT_PATH = "/contact";
 
 type LegalModalProps = {
@@ -18,10 +19,15 @@ type LegalModalProps = {
 export function LegalModal({ visible, type, onClose }: LegalModalProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
-  const { title, sections } = getLegalContent(type, i18n.language, {
-    contactEmail: CONTACT_EMAIL,
-    contactUrl: CONTACT_PATH,
-  });
+  const { title, sections, effectiveDate } = getLegalContent(
+    type,
+    i18n.language,
+    {
+      contactEmail: CONTACT_EMAIL,
+      contactUrl: CONTACT_PATH,
+      administratorName: ADMINISTRATOR_NAME,
+    },
+  );
 
   const handleContactPress = () => {
     onClose();
@@ -57,6 +63,11 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
   return (
     <ModalOverlay visible={visible} onClose={onClose} title={title}>
       <View className="space-y-4">
+        {effectiveDate && (
+          <Text className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            {effectiveDate}
+          </Text>
+        )}
         {sections.map((section) => (
           <View key={section.title} className="mb-4">
             <Text className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">

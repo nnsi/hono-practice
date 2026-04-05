@@ -4,6 +4,7 @@ import type { ClientErrorProvider } from "@backend/query/clientErrorProvider";
 
 import type { AdminDashboardUsecase } from "./adminDashboardUsecase";
 import type { AdminSubscriptionUsecase } from "./adminSubscriptionUsecase";
+import type { AdminUserDeletionUsecase } from "./adminUserDeletionUsecase";
 import type { AdminUserUsecase } from "./adminUserUsecase";
 
 export type AdminHandler = {
@@ -15,6 +16,7 @@ export type AdminHandler = {
   getApiErrorDetails: ApmProvider["getErrorDetails"];
   getUserWithSubscription: AdminSubscriptionUsecase["getUserWithSubscription"];
   upsertSubscriptionManually: AdminSubscriptionUsecase["upsertSubscriptionManually"];
+  deleteUserPermanently: AdminUserDeletionUsecase["deleteUserPermanently"];
 };
 
 export function newAdminHandler(
@@ -24,6 +26,7 @@ export function newAdminHandler(
   clientErrorProvider: ClientErrorProvider,
   apmProvider: ApmProvider,
   subscriptionUc: AdminSubscriptionUsecase,
+  deletionUc: AdminUserDeletionUsecase,
 ): AdminHandler {
   return {
     getDashboard: () => dashboardUc.getDashboardData(),
@@ -37,5 +40,15 @@ export function newAdminHandler(
       subscriptionUc.getUserWithSubscription(userId),
     upsertSubscriptionManually: (userId, params) =>
       subscriptionUc.upsertSubscriptionManually(userId, params),
+    deleteUserPermanently: (
+      userId,
+      loginIdConfirmation,
+      performedByAdminEmail,
+    ) =>
+      deletionUc.deleteUserPermanently(
+        userId,
+        loginIdConfirmation,
+        performedByAdminEmail,
+      ),
   };
 }

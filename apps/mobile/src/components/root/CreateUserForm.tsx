@@ -1,13 +1,10 @@
-import { useState } from "react";
-
-import { useTranslation } from "@packages/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Check, Square } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
-import { useAuthContext } from "../../../app/_layout";
-import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { useCreateUserForm } from "../../hooks/useCreateUserForm";
 import { FormInput } from "../common/FormInput";
 import { GoogleMark } from "../common/GoogleMark";
 import { LegalModal } from "../common/LegalModal";
@@ -15,37 +12,26 @@ import { LegalModal } from "../common/LegalModal";
 WebBrowser.maybeCompleteAuthSession();
 
 export function CreateUserForm() {
-  const { t } = useTranslation("common");
-  const { register, googleLogin, appleLogin } = useAuthContext();
   const router = useRouter();
-  const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
-    null,
-  );
-
-  const { googleRequest, handleGooglePress } = useGoogleSignIn({
-    onLogin: googleLogin,
-    onError: setError,
-  });
-
-  const handleRegister = async () => {
-    if (!loginId || !password) {
-      setError(t("auth.idAndPasswordRequired"));
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      await register(loginId, password);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("auth.registerError"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    t,
+    loginId,
+    setLoginId,
+    password,
+    setPassword,
+    loading,
+    error,
+    setError,
+    legalModal,
+    setLegalModal,
+    consentChecked,
+    setConsentChecked,
+    googleRequest,
+    handleGooglePress,
+    handleRegister,
+    buildAppleConsents,
+    appleLogin,
+  } = useCreateUserForm();
 
   return (
     <View className="flex-1 justify-center px-8 bg-white dark:bg-gray-800">
@@ -91,7 +77,10 @@ export function CreateUserForm() {
                 ],
               });
               if (credential.identityToken) {
-                await appleLogin(credential.identityToken);
+                await appleLogin(
+                  credential.identityToken,
+                  buildAppleConsents(),
+                );
               }
             } catch (e: unknown) {
               const code =
@@ -107,6 +96,10 @@ export function CreateUserForm() {
           }}
         />
       )}
+
+      <Text className="text-xs text-gray-400 dark:text-gray-500 text-center mb-3">
+        {t("auth.oauthConsent")}
+      </Text>
 
       <View className="flex-row items-center mb-4">
         <View className="flex-1 h-px bg-gray-300" />
@@ -134,30 +127,44 @@ export function CreateUserForm() {
         accessibilityLabel={t("auth.password")}
       />
 
-      <Text className="text-xs text-gray-400 dark:text-gray-500 leading-5 mb-4">
-        {t("auth.legalConsentPrefix")}
-        <Text
-          className="underline"
-          onPress={() => setLegalModal("terms")}
-          accessibilityRole="link"
-        >
-          {t("auth.termsOfService")}
+      <TouchableOpacity
+        className="flex-row items-start mb-4"
+        onPress={() => setConsentChecked(!consentChecked)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: consentChecked }}
+      >
+        <View className="mt-0.5 mr-2">
+          {consentChecked ? (
+            <Check size={20} color="#111827" />
+          ) : (
+            <Square size={20} color="#9CA3AF" />
+          )}
+        </View>
+        <Text className="flex-1 text-xs text-gray-500 dark:text-gray-400 leading-5">
+          {t("auth.legalConsentPrefix")}
+          <Text
+            className="underline"
+            onPress={() => setLegalModal("terms")}
+            accessibilityRole="link"
+          >
+            {t("auth.termsOfService")}
+          </Text>
+          {t("auth.legalConsentAnd")}
+          <Text
+            className="underline"
+            onPress={() => setLegalModal("privacy")}
+            accessibilityRole="link"
+          >
+            {t("auth.privacyPolicy")}
+          </Text>
+          {t("auth.legalConsentSuffix")}
         </Text>
-        {t("auth.legalConsentAnd")}
-        <Text
-          className="underline"
-          onPress={() => setLegalModal("privacy")}
-          accessibilityRole="link"
-        >
-          {t("auth.privacyPolicy")}
-        </Text>
-        {t("auth.legalConsentSuffix")}
-      </Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
-        className={`bg-gray-900 dark:bg-gray-100 rounded-lg py-3 items-center ${loading ? "opacity-50" : ""}`}
+        className={`bg-gray-900 dark:bg-gray-100 rounded-lg py-3 items-center ${loading || !consentChecked ? "opacity-50" : ""}`}
         onPress={handleRegister}
-        disabled={loading}
+        disabled={loading || !consentChecked}
         accessibilityRole="button"
         accessibilityLabel={
           loading ? t("auth.registering") : t("auth.register")
