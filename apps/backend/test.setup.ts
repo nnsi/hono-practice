@@ -37,6 +37,8 @@ afterEach(async () => {
     contact,
     refresh_token,
     user_provider,
+    subscription_history_archive,
+    admin_user_deletion_log,
     "user"
     CASCADE`);
   await seed();
