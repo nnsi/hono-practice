@@ -39,6 +39,7 @@ export type UserProviderRepository<T = QueryExecutor> = {
   createUserProvider(userProvider: UserProvider): Promise<UserProvider>;
   getUserProvidersByUserId(userId: string): Promise<UserProvider[]>;
   softDeleteUserProvider(userId: string, provider: Provider): Promise<boolean>;
+  hardDeleteUserProvidersByUserId(userId: string): Promise<number>;
   withTx(tx: T): UserProviderRepository<T>;
 };
 
@@ -50,7 +51,18 @@ export function newUserProviderRepository(
     createUserProvider: createUserProvider(db),
     getUserProvidersByUserId: getUserProvidersByUserId(db),
     softDeleteUserProvider: softDeleteUserProvider(db),
+    hardDeleteUserProvidersByUserId: hardDeleteUserProvidersByUserId(db),
     withTx: (tx) => newUserProviderRepository(tx),
+  };
+}
+
+function hardDeleteUserProvidersByUserId(db: QueryExecutor) {
+  return async (userId: string): Promise<number> => {
+    const result = await db
+      .delete(userProviders)
+      .where(eq(userProviders.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 

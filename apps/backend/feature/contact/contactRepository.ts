@@ -1,5 +1,6 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { contacts } from "@infra/drizzle/schema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import { count, desc, eq } from "drizzle-orm";
 
 type CreateContactParams = {
@@ -20,16 +21,20 @@ type ContactItem = {
   createdAt: Date;
 };
 
-export type ContactRepository = {
+export type ContactRepository<T = QueryExecutor> = {
   createContact: (params: CreateContactParams) => Promise<void>;
   listContacts: (
     limit: number,
     offset: number,
   ) => Promise<{ items: ContactItem[]; total: number }>;
   getContactById: (id: string) => Promise<ContactItem | undefined>;
+  hardDeleteContactsByUserId: (userId: UserId) => Promise<number>;
+  withTx: (tx: T) => ContactRepository<T>;
 };
 
-export function newContactRepository(db: QueryExecutor): ContactRepository {
+export function newContactRepository(
+  db: QueryExecutor,
+): ContactRepository<QueryExecutor> {
   return {
     createContact: async (params: CreateContactParams) => {
       await db.insert(contacts).values({
@@ -42,6 +47,8 @@ export function newContactRepository(db: QueryExecutor): ContactRepository {
     },
     listContacts: listContacts(db),
     getContactById: getContactById(db),
+    hardDeleteContactsByUserId: hardDeleteContactsByUserId(db),
+    withTx: (tx) => newContactRepository(tx),
   };
 }
 
@@ -70,5 +77,15 @@ function getContactById(db: QueryExecutor) {
       .limit(1);
 
     return result;
+  };
+}
+
+function hardDeleteContactsByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(contacts)
+      .where(eq(contacts.userId, userId))
+      .returning();
+    return result.length;
   };
 }

@@ -25,6 +25,7 @@ export type UserRepository<T = QueryExecutor> = {
     }[];
     total: number;
   }>;
+  hardDeleteUserById: (userId: UserId) => Promise<number>;
   withTx: (tx: T) => UserRepository<T>;
 };
 
@@ -37,6 +38,7 @@ export function newUserRepository(
     getUserByLoginId: getUserByLoginId(db),
     deleteUser: deleteUser(db),
     listUsers: listUsers(db),
+    hardDeleteUserById: hardDeleteUserById(db),
     withTx: (tx) => newUserRepository(tx),
   };
 }
@@ -134,5 +136,15 @@ function listUsers(db: QueryExecutor) {
     ]);
 
     return { items, total };
+  };
+}
+
+function hardDeleteUserById(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, userId))
+      .returning();
+    return result.length;
   };
 }
