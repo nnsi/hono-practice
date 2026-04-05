@@ -6,6 +6,8 @@ import {
 import type { UserId } from "@packages/domain/user/userSchema";
 import { and, eq, isNull } from "drizzle-orm";
 
+import { hardDeleteGoalFreezePeriodsByUserId } from "./goalFreezePeriodHardDeleteRepository";
+
 type FreezePeriodRow = typeof activityGoalFreezePeriods.$inferSelect;
 
 export type GoalFreezePeriodRecord = {
@@ -18,7 +20,7 @@ export type GoalFreezePeriodRecord = {
   updatedAt: string;
 };
 
-export type GoalFreezePeriodRepository = {
+export type GoalFreezePeriodRepository<T = QueryExecutor> = {
   getFreezePeriodsByGoalId(
     userId: UserId,
     goalId: string,
@@ -40,6 +42,8 @@ export type GoalFreezePeriodRepository = {
   ): Promise<GoalFreezePeriodRecord>;
   deleteGoalFreezePeriod(id: string, userId: UserId): Promise<void>;
   isGoalOwnedByUser(goalId: string, userId: UserId): Promise<boolean>;
+  hardDeleteGoalFreezePeriodsByUserId(userId: UserId): Promise<number>;
+  withTx(tx: T): GoalFreezePeriodRepository<T>;
 };
 
 function rowToRecord(row: FreezePeriodRow): GoalFreezePeriodRecord {
@@ -56,7 +60,7 @@ function rowToRecord(row: FreezePeriodRow): GoalFreezePeriodRecord {
 
 export function newGoalFreezePeriodRepository(
   db: QueryExecutor,
-): GoalFreezePeriodRepository {
+): GoalFreezePeriodRepository<QueryExecutor> {
   return {
     getFreezePeriodsByGoalId: getFreezePeriodsByGoalId(db),
     getFreezePeriodByIdAndUserId: getFreezePeriodByIdAndUserId(db),
@@ -64,6 +68,9 @@ export function newGoalFreezePeriodRepository(
     updateGoalFreezePeriod: updateGoalFreezePeriod(db),
     deleteGoalFreezePeriod: deleteGoalFreezePeriod(db),
     isGoalOwnedByUser: isGoalOwnedByUser(db),
+    hardDeleteGoalFreezePeriodsByUserId:
+      hardDeleteGoalFreezePeriodsByUserId(db),
+    withTx: (tx) => newGoalFreezePeriodRepository(tx),
   };
 }
 
@@ -82,7 +89,6 @@ function getFreezePeriodsByGoalId(db: QueryExecutor) {
           isNull(activityGoalFreezePeriods.deletedAt),
         ),
       );
-
     return rows.map(rowToRecord);
   };
 }
@@ -102,10 +108,8 @@ function getFreezePeriodByIdAndUserId(db: QueryExecutor) {
           isNull(activityGoalFreezePeriods.deletedAt),
         ),
       );
-
     const row = rows[0];
     if (!row) return undefined;
-
     return rowToRecord(row);
   };
 }
@@ -119,14 +123,8 @@ function createGoalFreezePeriod(db: QueryExecutor) {
   ): Promise<GoalFreezePeriodRecord> => {
     const [row] = await db
       .insert(activityGoalFreezePeriods)
-      .values({
-        userId,
-        goalId,
-        startDate,
-        endDate,
-      })
+      .values({ userId, goalId, startDate, endDate })
       .returning();
-
     return rowToRecord(row);
   };
 }
@@ -153,7 +151,6 @@ function updateGoalFreezePeriod(db: QueryExecutor) {
         ),
       )
       .returning();
-
     return rowToRecord(row);
   };
 }
@@ -162,10 +159,7 @@ function deleteGoalFreezePeriod(db: QueryExecutor) {
   return async (id: string, userId: UserId): Promise<void> => {
     await db
       .update(activityGoalFreezePeriods)
-      .set({
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
       .where(
         and(
           eq(activityGoalFreezePeriods.id, id),
@@ -187,7 +181,6 @@ function isGoalOwnedByUser(db: QueryExecutor) {
           isNull(activityGoals.deletedAt),
         ),
       );
-
     return rows.length > 0;
   };
 }

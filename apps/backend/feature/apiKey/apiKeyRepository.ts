@@ -47,6 +47,7 @@ export type ApiKeyRepository<T = QueryExecutor> = {
   findApiKeyById: (id: string, userId: string) => Promise<ApiKey | null>;
   updateApiKey: (id: string, data: UpdateApiKeyData) => Promise<ApiKey | null>;
   softDeleteApiKey: (id: string) => Promise<boolean>;
+  hardDeleteApiKeysByUserId: (userId: string) => Promise<number>;
   withTx: (tx: T) => ApiKeyRepository<T>;
 };
 
@@ -60,7 +61,18 @@ export function newApiKeyRepository(
     findApiKeyById: findApiKeyById(db),
     updateApiKey: updateApiKey(db),
     softDeleteApiKey: softDeleteApiKey(db),
+    hardDeleteApiKeysByUserId: hardDeleteApiKeysByUserId(db),
     withTx: (tx) => newApiKeyRepository(tx),
+  };
+}
+
+function hardDeleteApiKeysByUserId(db: QueryExecutor) {
+  return async (userId: string): Promise<number> => {
+    const result = await db
+      .delete(apiKeys)
+      .where(eq(apiKeys.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 

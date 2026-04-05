@@ -1,14 +1,24 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { activityGoals } from "@infra/drizzle/schema";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
-import { parseDayTargets } from "@packages/domain/goal/dayTargets";
-import {
-  type ActivityGoal,
-  type ActivityGoalId,
-  createActivityGoalEntity,
+import type {
+  ActivityGoal,
+  ActivityGoalId,
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { and, asc, eq, gt, isNull } from "drizzle-orm";
+
+import {
+  getActiveActivityGoalByActivityId,
+  getActivityGoalByIdAndUserId,
+  getActivityGoalChangesAfter,
+  getActivityGoalsByActivityId,
+  getActivityGoalsByUserId,
+} from "./activityGoalQueryRepository";
+import {
+  createActivityGoal,
+  deleteActivityGoal,
+  hardDeleteActivityGoalsByUserId,
+  updateActivityGoal,
+} from "./activityGoalWriteRepository";
 
 export type ActivityGoalRepository<T = QueryExecutor> = {
   getActivityGoalsByUserId(userId: UserId): Promise<ActivityGoal[]>;
@@ -32,6 +42,7 @@ export type ActivityGoalRepository<T = QueryExecutor> = {
     timestamp: Date,
     limit?: number,
   ): Promise<{ goals: ActivityGoal[]; hasMore: boolean }>;
+  hardDeleteActivityGoalsByUserId(userId: UserId): Promise<number>;
   withTx(tx: T): ActivityGoalRepository<T>;
 };
 
@@ -47,191 +58,7 @@ export function newActivityGoalRepository(
     updateActivityGoal: updateActivityGoal(db),
     deleteActivityGoal: deleteActivityGoal(db),
     getActivityGoalChangesAfter: getActivityGoalChangesAfter(db),
+    hardDeleteActivityGoalsByUserId: hardDeleteActivityGoalsByUserId(db),
     withTx: (tx) => newActivityGoalRepository(tx),
-  };
-}
-
-function rowToEntity(row: typeof activityGoals.$inferSelect): ActivityGoal {
-  return createActivityGoalEntity({
-    id: row.id,
-    userId: row.userId,
-    activityId: row.activityId,
-    dailyTargetQuantity: row.dailyTargetQuantity,
-    startDate: row.startDate || "",
-    endDate: row.endDate,
-    isActive: row.isActive,
-    description: row.description,
-    debtCap: row.debtCap ?? null,
-    dayTargets: parseDayTargets(row.dayTargets),
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    type: "persisted",
-  });
-}
-
-function getActivityGoalsByUserId(db: QueryExecutor) {
-  return async (userId: UserId): Promise<ActivityGoal[]> => {
-    const rows = await db.query.activityGoals.findMany({
-      where: and(
-        eq(activityGoals.userId, userId),
-        isNull(activityGoals.deletedAt),
-      ),
-      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
-    });
-
-    return rows.map(rowToEntity);
-  };
-}
-
-function getActivityGoalByIdAndUserId(db: QueryExecutor) {
-  return async (
-    id: ActivityGoalId,
-    userId: UserId,
-  ): Promise<ActivityGoal | undefined> => {
-    const row = await db.query.activityGoals.findFirst({
-      where: and(
-        eq(activityGoals.id, id),
-        eq(activityGoals.userId, userId),
-        isNull(activityGoals.deletedAt),
-      ),
-    });
-
-    if (!row) return undefined;
-
-    return rowToEntity(row);
-  };
-}
-
-function getActivityGoalsByActivityId(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    activityId: ActivityId,
-  ): Promise<ActivityGoal[]> => {
-    const rows = await db.query.activityGoals.findMany({
-      where: and(
-        eq(activityGoals.userId, userId),
-        eq(activityGoals.activityId, activityId),
-        isNull(activityGoals.deletedAt),
-      ),
-      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
-    });
-
-    return rows.map(rowToEntity);
-  };
-}
-
-function getActiveActivityGoalByActivityId(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    activityId: ActivityId,
-  ): Promise<ActivityGoal | undefined> => {
-    const row = await db.query.activityGoals.findFirst({
-      where: and(
-        eq(activityGoals.userId, userId),
-        eq(activityGoals.activityId, activityId),
-        eq(activityGoals.isActive, true),
-        isNull(activityGoals.deletedAt),
-      ),
-      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
-    });
-
-    if (!row) return undefined;
-
-    return rowToEntity(row);
-  };
-}
-
-function createActivityGoal(db: QueryExecutor) {
-  return async (goal: ActivityGoal): Promise<ActivityGoal> => {
-    if (goal.type !== "new") {
-      throw new Error("Cannot create persisted goal");
-    }
-
-    const [row] = await db
-      .insert(activityGoals)
-      .values({
-        id: goal.id,
-        userId: goal.userId,
-        activityId: goal.activityId,
-        dailyTargetQuantity: goal.dailyTargetQuantity,
-        startDate: goal.startDate,
-        endDate: goal.endDate,
-        isActive: goal.isActive,
-        description: goal.description,
-        debtCap: goal.debtCap ?? null,
-        dayTargets: goal.dayTargets ?? null,
-      })
-      .returning();
-
-    return rowToEntity(row);
-  };
-}
-
-function updateActivityGoal(db: QueryExecutor) {
-  return async (goal: ActivityGoal): Promise<ActivityGoal> => {
-    if (goal.type !== "persisted") {
-      throw new Error("Cannot update non-persisted goal");
-    }
-
-    const [row] = await db
-      .update(activityGoals)
-      .set({
-        dailyTargetQuantity: goal.dailyTargetQuantity,
-        startDate: goal.startDate,
-        endDate: goal.endDate,
-        isActive: goal.isActive,
-        description: goal.description,
-        debtCap: goal.debtCap ?? null,
-        dayTargets: goal.dayTargets ?? null,
-        updatedAt: new Date(),
-      })
-      .where(eq(activityGoals.id, goal.id))
-      .returning();
-
-    return rowToEntity(row);
-  };
-}
-
-function deleteActivityGoal(db: QueryExecutor) {
-  return async (goal: ActivityGoal): Promise<void> => {
-    if (goal.type !== "persisted") {
-      throw new Error("Cannot delete non-persisted goal");
-    }
-
-    await db
-      .update(activityGoals)
-      .set({
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(activityGoals.id, goal.id));
-  };
-}
-
-function getActivityGoalChangesAfter(db: QueryExecutor) {
-  return async (
-    userId: UserId,
-    timestamp: Date,
-    limit = 100,
-  ): Promise<{ goals: ActivityGoal[]; hasMore: boolean }> => {
-    const rows = await db
-      .select()
-      .from(activityGoals)
-      .where(
-        and(
-          eq(activityGoals.userId, userId),
-          gt(activityGoals.updatedAt, timestamp),
-        ),
-      )
-      .orderBy(asc(activityGoals.updatedAt))
-      .limit(limit + 1); // +1 to check if there are more
-
-    const hasMore = rows.length > limit;
-    const goalsData = rows.slice(0, limit);
-
-    return {
-      goals: goalsData.map(rowToEntity),
-      hasMore,
-    };
   };
 }

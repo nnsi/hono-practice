@@ -15,6 +15,7 @@ export type RefreshTokenRepository<T = QueryExecutor> = {
   revokeRefreshToken(token: RefreshToken): Promise<void>;
   revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
   deleteRefreshTokensPastExpiry(): Promise<void>;
+  hardDeleteRefreshTokensByUserId(userId: UserId): Promise<number>;
   withTx: (tx: T) => RefreshTokenRepository<T>;
 };
 
@@ -27,7 +28,18 @@ export function newRefreshTokenRepository(
     revokeRefreshToken: revokeRefreshToken(db),
     revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
     deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
+    hardDeleteRefreshTokensByUserId: hardDeleteRefreshTokensByUserId(db),
     withTx: (tx) => newRefreshTokenRepository(tx),
+  };
+}
+
+function hardDeleteRefreshTokensByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<number> => {
+    const result = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.userId, userId))
+      .returning();
+    return result.length;
   };
 }
 

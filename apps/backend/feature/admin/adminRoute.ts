@@ -112,7 +112,30 @@ function createAdminRoute() {
       }
       const details = await c.var.adminHandler.getApiErrorDetails(kind);
       return c.json(details);
-    });
+    })
+    .delete(
+      "/users/:id",
+      zValidator(
+        "json",
+        z.object({
+          loginIdConfirmation: z.string().min(1),
+        }),
+      ),
+      async (c) => {
+        const { id } = c.req.param();
+        const body = c.req.valid("json");
+        const adminEmail = c.var.adminEmail;
+        if (!adminEmail) {
+          throw new AppError("admin email not available", 500);
+        }
+        const result = await c.var.adminHandler.deleteUserPermanently(
+          id,
+          body.loginIdConfirmation,
+          adminEmail,
+        );
+        return c.json(result);
+      },
+    );
 }
 
 export const adminRoute = createAdminRoute();

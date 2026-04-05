@@ -1,8 +1,16 @@
 import type { AppContext } from "@backend/context";
+import { newActivityRepository } from "@backend/feature/activity/activityRepository";
+import { newActivityGoalRepository } from "@backend/feature/activitygoal/activityGoalRepository";
+import { newActivityLogRepository } from "@backend/feature/activityLog/activityLogRepository";
+import { newApiKeyRepository } from "@backend/feature/apiKey/apiKeyRepository";
+import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
+import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { newContactRepository } from "@backend/feature/contact/contactRepository";
 import { newContactUsecase } from "@backend/feature/contact/contactUsecase";
+import { newGoalFreezePeriodRepository } from "@backend/feature/goalFreezePeriod/goalFreezePeriodRepository";
 import { newSubscriptionHistoryRepository } from "@backend/feature/subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
+import { newTaskRepository } from "@backend/feature/task/taskRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopTracer } from "@backend/lib/tracer";
@@ -19,7 +27,10 @@ import {
 import { newAdminDashboardUsecase } from "./adminDashboardUsecase";
 import { newAdminHandler } from "./adminHandler";
 import { newAdminSubscriptionUsecase } from "./adminSubscriptionUsecase";
+import { newAdminUserDeletionLogRepository } from "./adminUserDeletionLogRepository";
+import { newAdminUserDeletionUsecase } from "./adminUserDeletionUsecase";
 import { newAdminUserUsecase } from "./adminUserUsecase";
+import { newSubscriptionHistoryArchiveRepository } from "./subscriptionHistoryArchiveRepository";
 import { newWaeClientErrorProvider } from "./waeClientErrorQuery";
 import { newWaeApmProvider } from "./waeQuery";
 
@@ -64,6 +75,33 @@ export function resolveAdminHandler(c: {
     subscriptionHistoryRepo,
     tracer,
   );
+  const activityRepo = newActivityRepository(db);
+  const activityLogRepo = newActivityLogRepository(db);
+  const activityGoalRepo = newActivityGoalRepository(db);
+  const freezePeriodRepo = newGoalFreezePeriodRepository(db);
+  const taskRepo = newTaskRepository(db);
+  const apiKeyRepo = newApiKeyRepository(db);
+  const refreshTokenRepo = newRefreshTokenRepository(db);
+  const userProviderRepo = newUserProviderRepository(db);
+  const archiveRepo = newSubscriptionHistoryArchiveRepository(db);
+  const deletionLogRepo = newAdminUserDeletionLogRepository(db);
+  const deletionUc = newAdminUserDeletionUsecase(
+    txRunner,
+    userRepo,
+    activityRepo,
+    activityLogRepo,
+    activityGoalRepo,
+    freezePeriodRepo,
+    taskRepo,
+    apiKeyRepo,
+    refreshTokenRepo,
+    userProviderRepo,
+    subscriptionRepo,
+    subscriptionHistoryRepo,
+    archiveRepo,
+    deletionLogRepo,
+    contactRepo,
+  );
   return newAdminHandler(
     userUc,
     contactUc,
@@ -71,5 +109,6 @@ export function resolveAdminHandler(c: {
     clientErrorProvider,
     apmProvider,
     subscriptionUc,
+    deletionUc,
   );
 }
