@@ -3,6 +3,7 @@ import type * as SQLite from "expo-sqlite";
 import {
   MIGRATION_V1,
   MIGRATION_V10,
+  MIGRATION_V11,
   MIGRATION_V2,
   MIGRATION_V3,
   MIGRATION_V4,
@@ -13,7 +14,7 @@ import {
   MIGRATION_V9,
 } from "./migrationSql";
 
-const SCHEMA_VERSION = 10;
+const SCHEMA_VERSION = 11;
 
 export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(
@@ -50,6 +51,9 @@ export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   }
   if (currentVersion < 10) {
     await db.execAsync(MIGRATION_V10);
+  }
+  if (currentVersion < 11) {
+    await db.execAsync(MIGRATION_V11);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);

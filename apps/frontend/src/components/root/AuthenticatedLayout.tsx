@@ -6,6 +6,7 @@ import {
   BarChart3,
   CalendarDays,
   CheckSquare,
+  FileText,
   Globe,
   LayoutGrid,
   LogOut,
@@ -64,6 +65,14 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
               <Globe size={16} className="text-gray-400" />
               {i18n.language === "ja" ? "English" : "日本語"}
             </button>
+            <Link
+              to="/notes"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <FileText size={16} className="text-gray-400" />
+              Notes
+            </Link>
             <Link
               to="/settings"
               onClick={() => setMenuOpen(false)}

@@ -9,6 +9,8 @@ export type {
 export { newGoalFreezePeriodRepository } from "./goalFreezePeriodRepositoryLogic";
 export type { GoalDbAdapter } from "./goalRepositoryLogic";
 export { newGoalRepository } from "./goalRepositoryLogic";
+export type { NoteDbAdapter } from "./noteRepositoryLogic";
+export { newNoteRepository } from "./noteRepositoryLogic";
 export type { BaseSyncDbAdapter } from "./syncHelpers";
 export { filterSafeUpserts } from "./syncHelpers";
 export type { TaskDbAdapter } from "./taskRepositoryLogic";

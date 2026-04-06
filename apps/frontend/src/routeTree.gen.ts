@@ -15,6 +15,7 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as NotesRouteImport } from './routes/notes'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -50,6 +51,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DailyRoute: typeof DailyRoute
   GoalsRoute: typeof GoalsRoute
+  NotesRoute: typeof NotesRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals': {
@@ -282,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DailyRoute: DailyRoute,
   GoalsRoute: GoalsRoute,
+  NotesRoute: NotesRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,

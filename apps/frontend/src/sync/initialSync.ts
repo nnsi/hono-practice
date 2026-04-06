@@ -5,6 +5,7 @@ import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";
 import { goalRepository } from "../db/goalRepository";
+import { noteRepository } from "../db/noteRepository";
 import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
 import { apiClient, customFetch } from "../utils/apiClient";
@@ -22,6 +23,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     await db.goals.clear();
     await db.goalFreezePeriods.clear();
     await db.tasks.clear();
+    await db.notes.clear();
     await db.activityIconBlobs.clear();
     await db.activityIconDeleteQueue.clear();
   },
@@ -35,41 +37,51 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     });
   },
   isLocalDataEmpty: async () => {
-    const [logCount, goalCount, freezePeriodCount, taskCount] =
+    const [logCount, goalCount, freezePeriodCount, taskCount, noteCount] =
       await Promise.all([
         db.activityLogs.count(),
         db.goals.count(),
         db.goalFreezePeriods.count(),
         db.tasks.count(),
+        db.notes.count(),
       ]);
     return (
       logCount === 0 &&
       goalCount === 0 &&
       freezePeriodCount === 0 &&
-      taskCount === 0
+      taskCount === 0 &&
+      noteCount === 0
     );
   },
   fetchAllApis: async (sinceQuery) => {
     const freezePeriodsUrl = sinceQuery.since
       ? `${API_URL}/users/v2/goal-freeze-periods?since=${encodeURIComponent(sinceQuery.since)}`
       : `${API_URL}/users/v2/goal-freeze-periods`;
-    const [activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes] =
-      await Promise.all([
-        apiClient.users.v2.activities.$get(),
-        apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-        apiClient.users.v2.goals.$get({
-          query: { ...sinceQuery, clientDate: getToday() },
-        }),
-        // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
-        customFetch(freezePeriodsUrl).catch(() => null),
-        apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-      ]);
+    const [
+      activitiesRes,
+      logsRes,
+      goalsRes,
+      freezePeriodsRes,
+      tasksRes,
+      notesRes,
+    ] = await Promise.all([
+      apiClient.users.v2.activities.$get(),
+      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+      apiClient.users.v2.goals.$get({
+        query: { ...sinceQuery, clientDate: getToday() },
+      }),
+      // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
+      customFetch(freezePeriodsUrl).catch(() => null),
+      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
+      apiClient.users.v2.notes.$get({ query: sinceQuery }),
+    ]);
     return {
       activitiesRes,
       logsRes,
       goalsRes,
       freezePeriodsRes,
       tasksRes,
+      notesRes,
     };
   },
   writeAllData: async (data) => {
@@ -82,6 +94,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
         db.goals,
         db.goalFreezePeriods,
         db.tasks,
+        db.notes,
       ],
       async () => {
         if (data.activities.length > 0) {
@@ -103,6 +116,9 @@ const { clearLocalData, performInitialSync } = createInitialSync({
         }
         if (data.tasks.length > 0) {
           await taskRepository.upsertTasksFromServer(data.tasks);
+        }
+        if (data.notes.length > 0) {
+          await noteRepository.upsertNotesFromServer(data.notes);
         }
       },
     );

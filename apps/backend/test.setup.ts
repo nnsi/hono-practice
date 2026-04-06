@@ -32,6 +32,7 @@ afterEach(async () => {
     activity_goal,
     activity,
     task,
+    note,
     api_key,
     user_subscription,
     contact,
