@@ -13,6 +13,7 @@ type FetchAllApis = (sinceQuery: { since?: string }) => Promise<{
   goalsRes: ApiResponse;
   freezePeriodsRes: ApiResponse | null;
   tasksRes: ApiResponse;
+  notesRes?: ApiResponse | null;
 }>;
 
 type InitialSyncDeps = {
@@ -73,8 +74,14 @@ export function createInitialSync(deps: InitialSyncDeps) {
       console.error("[sync] fetchAllApis failed:", err);
       throw err;
     }
-    const { activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes } =
-      responses;
+    const {
+      activitiesRes,
+      logsRes,
+      goalsRes,
+      freezePeriodsRes,
+      tasksRes,
+      notesRes,
+    } = responses;
 
     if (gen !== getSyncGeneration()) return;
 
@@ -86,6 +93,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
         goalsRes,
         freezePeriodsRes,
         tasksRes,
+        notesRes,
       );
     } catch (err) {
       console.error("[sync] parseResponses failed:", err);
@@ -101,6 +109,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
       parsed.data.logs.length > 0 ||
       parsed.data.goals.length > 0 ||
       parsed.data.freezePeriods.length > 0 ||
+      parsed.data.notes.length > 0 ||
       parsed.data.tasks.length > 0;
 
     if (hasData) {
@@ -123,6 +132,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
           goalsRes,
           freezePeriodsRes,
           tasksRes,
+          notesRes,
         ]),
       );
     }

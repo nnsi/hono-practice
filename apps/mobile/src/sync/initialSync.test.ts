@@ -33,6 +33,12 @@ vi.mock("../repositories/taskRepository", () => ({
   },
 }));
 
+vi.mock("../repositories/noteRepository", () => ({
+  noteRepository: {
+    upsertNotesFromServer: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock("../utils/apiClient", () => ({
   apiClient: {
     users: {
@@ -42,6 +48,7 @@ vi.mock("../utils/apiClient", () => ({
         goals: { $get: vi.fn() },
         "goal-freeze-periods": { $get: vi.fn() },
         tasks: { $get: vi.fn() },
+        notes: { $get: vi.fn() },
       },
     },
   },
@@ -62,6 +69,7 @@ vi.mock("@packages/sync-engine/mappers/apiMappers", () => ({
   mapApiGoal: vi.fn((x: unknown) => x),
   mapApiGoalFreezePeriod: vi.fn((x: unknown) => x),
   mapApiTask: vi.fn((x: unknown) => x),
+  mapApiNote: vi.fn((x: unknown) => x),
 }));
 
 import { resetServerTimeForTests } from "@packages/sync-engine";
@@ -161,6 +169,7 @@ describe("performInitialSync", () => {
   const goalsApi = apiClient.users.v2.goals.$get;
   const freezePeriodsApi = apiClient.users.v2["goal-freeze-periods"].$get;
   const tasksApi = apiClient.users.v2.tasks.$get;
+  const notesApi = apiClient.users.v2.notes.$get;
 
   beforeEach(() => {
     mockDb = createMockDb();
@@ -181,6 +190,7 @@ describe("performInitialSync", () => {
       okResponse({ freezePeriods: [] }) as never,
     );
     vi.mocked(tasksApi).mockResolvedValue(okResponse({ tasks: [] }) as never);
+    vi.mocked(notesApi).mockResolvedValue(okResponse({ notes: [] }) as never);
   });
 
   it("updates auth_state with userId", async () => {

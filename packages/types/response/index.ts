@@ -9,6 +9,7 @@ export * from "./GetActivityLogsResponse";
 export * from "./GetActivityStatsResponse";
 export * from "./GetFreezePeriodResponse";
 export * from "./GetGoalsResponse";
+export * from "./GetNotesResponse";
 export * from "./GetTasksResponse";
 export * from "./GetUserResponse";
 export * from "./GoalStatsResponse";

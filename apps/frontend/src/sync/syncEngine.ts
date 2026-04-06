@@ -4,6 +4,7 @@ import {
   createSyncEngine,
   createSyncGoalFreezePeriods,
   createSyncGoals,
+  createSyncNotes,
   createSyncTasks,
 } from "@packages/sync-engine";
 import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
@@ -11,6 +12,7 @@ import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";
 import { goalRepository } from "../db/goalRepository";
+import { noteRepository } from "../db/noteRepository";
 import { taskRepository } from "../db/taskRepository";
 import { apiClient, customFetch } from "../utils/apiClient";
 import {
@@ -71,6 +73,20 @@ const syncTasks = createSyncTasks({
   upsertTasksFromServer: (wins) => taskRepository.upsertTasksFromServer(wins),
 });
 
+const syncNotes = createSyncNotes({
+  getPendingSyncNotes: () => noteRepository.getPendingSyncNotes(),
+  postChunk: async (chunk) => {
+    const res = await apiClient.users.v2.notes.sync.$post({
+      json: { notes: chunk },
+    });
+    if (!res.ok) throw new Error(`syncNotes failed: ${res.status}`);
+    return (await res.json()) as SyncResult;
+  },
+  markNotesSynced: (ids) => noteRepository.markNotesSynced(ids),
+  markNotesFailed: (ids) => noteRepository.markNotesFailed(ids),
+  upsertNotesFromServer: (wins) => noteRepository.upsertNotesFromServer(wins),
+});
+
 const syncGoalFreezePeriods = createSyncGoalFreezePeriods({
   getPendingSyncFreezePeriods: () =>
     goalFreezePeriodRepository.getPendingSyncFreezePeriods(),
@@ -102,6 +118,7 @@ export const syncEngine = createSyncEngine(
     syncActivityLogs,
     syncGoals,
     syncGoalFreezePeriods,
+    syncNotes,
     syncTasks,
   },
   webNetworkAdapter,

@@ -10,6 +10,7 @@ import {
   contactRoute,
   newActivityLogRoute,
   newActivityRoute,
+  noteRoute,
   taskRoute,
   userRoute,
 } from "./feature";
@@ -26,6 +27,7 @@ import {
   activitySyncRoute,
   goalFreezePeriodSyncRoute,
   goalSyncRoute,
+  noteSyncRoute,
   taskSyncRoute,
 } from "./feature-sync";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
@@ -83,6 +85,7 @@ const routes = app
   .route("/webhooks/revenuecat", revenueCatWebhookRoute)
   .route("/user", userRoute)
   .route("/users/tasks", taskRoute)
+  .route("/users/notes", noteRoute)
   .route("/users/activities", newActivityRoute)
   .route("/users/activity-logs", newActivityLogRoute)
   .route("/users/ai/activity-logs", aiActivityLogRoute)
@@ -95,6 +98,7 @@ const routes = app
   .route("/users/v2", goalSyncRoute)
   .route("/users/v2", goalFreezePeriodSyncRoute)
   .route("/users/v2", taskSyncRoute)
+  .route("/users/v2", noteSyncRoute)
   .route("/api/v1", apiV1Route)
   .route("/r2", r2ProxyRoute)
   .route("/contact", contactRoute)

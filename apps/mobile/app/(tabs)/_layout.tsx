@@ -135,6 +135,7 @@ export default function TabLayout() {
         <Tabs.Screen name="stats" options={{ title: "Stats" }} />
         <Tabs.Screen name="goals" options={{ title: "Goal" }} />
         <Tabs.Screen name="tasks" options={{ title: "Tasks" }} />
+        <Tabs.Screen name="notes" options={{ href: null }} />
         <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="contact" options={{ href: null }} />
       </Tabs>

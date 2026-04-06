@@ -12,6 +12,7 @@ function createMockFns() {
     syncActivityLogs: vi.fn().mockResolvedValue(undefined),
     syncGoals: vi.fn().mockResolvedValue(undefined),
     syncGoalFreezePeriods: vi.fn().mockResolvedValue(undefined),
+    syncNotes: vi.fn().mockResolvedValue(undefined),
     syncTasks: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -55,6 +56,9 @@ describe("createSyncEngine", () => {
       });
       fns.syncTasks.mockImplementation(async () => {
         callOrder.push("tasks");
+      });
+      fns.syncNotes.mockImplementation(async () => {
+        callOrder.push("notes");
       });
       fns.syncGoalFreezePeriods.mockImplementation(async () => {
         callOrder.push("goalFreezePeriods");
@@ -195,6 +199,7 @@ describe("createSyncEngine", () => {
       fns.syncActivityIcons.mockRejectedValue(err);
       fns.syncActivityLogs.mockRejectedValue(err);
       fns.syncGoals.mockRejectedValue(err);
+      fns.syncNotes.mockRejectedValue(err);
       fns.syncTasks.mockRejectedValue(err);
       fns.syncGoalFreezePeriods.mockRejectedValue(err);
 

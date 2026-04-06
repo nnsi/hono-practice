@@ -267,6 +267,13 @@
       "when": 1775407531887,
       "tag": "0037_soft_ben_urich",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1775485893855,
+      "tag": "0038_sharp_sasquatch",
+      "breakpoints": true
     }
   ]
 }

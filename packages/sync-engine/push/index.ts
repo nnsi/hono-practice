@@ -6,4 +6,5 @@ export {
 export { createSyncActivityLogs } from "./createSyncActivityLogs";
 export { createSyncGoalFreezePeriods } from "./createSyncGoalFreezePeriods";
 export { createSyncGoals } from "./createSyncGoals";
+export { createSyncNotes } from "./createSyncNotes";
 export { createSyncTasks } from "./createSyncTasks";
