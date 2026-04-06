@@ -73,6 +73,34 @@ describe("noteRoute", () => {
     expect(body.activityId).toEqual(activity.id);
   });
 
+  it("POST / with non-owned activityId returns 400", async () => {
+    const client = createClient();
+    const res = await client.index.$post({
+      json: {
+        title: "Bad Activity",
+        content: "",
+        activityId: "00000000-0000-4000-8000-999999999999",
+      },
+    });
+    expect(res.status).toEqual(400);
+  });
+
+  it("PUT /:id with non-owned activityId returns 400", async () => {
+    const client = createClient();
+    const createRes = await client.index.$post({
+      json: { title: "Original", content: "Body" },
+    });
+    const created = await createRes.json();
+
+    const res = await client[":id"].$put({
+      param: { id: created.id },
+      json: {
+        activityId: "00000000-0000-4000-8000-999999999999",
+      },
+    });
+    expect(res.status).toEqual(400);
+  });
+
   it("GET /:id returns a created note", async () => {
     const client = createClient();
     const createRes = await client.index.$post({
