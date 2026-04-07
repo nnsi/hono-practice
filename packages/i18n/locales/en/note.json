@@ -30,5 +30,11 @@
   "delete.inline": "Delete this note?",
   "tab.edit": "Edit",
   "tab.preview": "Preview",
-  "preview.empty": "Nothing to preview"
+  "preview.empty": "Nothing to preview",
+  "detail.back": "Back",
+  "detail.save": "Save",
+  "detail.saving": "Saving...",
+  "detail.settings": "Settings",
+  "detail.newNote": "New Note",
+  "detail.untitled": "Untitled"
 }

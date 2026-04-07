@@ -1,6 +1,6 @@
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { FileText, Pencil, Trash2 } from "lucide-react-native";
+import { FileText, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -10,14 +10,14 @@ export function NoteCard({
   content,
   updatedAt,
   activityName,
-  onEdit,
+  onPress,
   onDelete,
 }: {
   title: string;
   content: string;
   updatedAt: string;
   activityName: string | null;
-  onEdit: () => void;
+  onPress: () => void;
   onDelete: () => void;
 }) {
   const preview = content.length > 80 ? `${content.slice(0, 80)}...` : content;
@@ -34,7 +34,7 @@ export function NoteCard({
         elevation: 2,
       }}
     >
-      <TouchableOpacity onPress={onEdit} activeOpacity={0.7}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
         <View className="flex-row items-center gap-2 mb-1">
           <FileText size={16} color="#9ca3af" />
           <Text
@@ -69,15 +69,6 @@ export function NoteCard({
       </TouchableOpacity>
 
       <View className="flex-row justify-end gap-0.5 mt-1">
-        <TouchableOpacity
-          onPress={onEdit}
-          className="p-1.5"
-          hitSlop={HIT_SLOP}
-          accessibilityRole="button"
-          accessibilityLabel={t("edit.editNote")}
-        >
-          <Pencil size={16} color="#9ca3af" />
-        </TouchableOpacity>
         <TouchableOpacity
           onPress={onDelete}
           className="p-1.5"
