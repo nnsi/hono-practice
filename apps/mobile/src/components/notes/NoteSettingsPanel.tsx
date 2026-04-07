@@ -1,13 +1,5 @@
-import { useEffect, useRef } from "react";
-
 import { useTranslation } from "@packages/i18n";
-import {
-  Animated,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { FormInput } from "../common/FormInput";
 
@@ -34,22 +26,11 @@ export function NoteSettingsPanel({
   isOpen,
 }: NoteSettingsPanelProps) {
   const { t } = useTranslation("note");
-  const slideAnim = useRef(new Animated.Value(-300)).current;
 
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: isOpen ? 0 : -300,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [isOpen, slideAnim]);
+  if (!isOpen) return null;
 
   return (
-    <Animated.View
-      className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-10"
-      style={{ transform: [{ translateY: slideAnim }] }}
-      pointerEvents={isOpen ? "auto" : "none"}
-    >
+    <View className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       <View className="px-4 pt-4 pb-6 gap-4">
         <View>
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -119,6 +100,6 @@ export function NoteSettingsPanel({
           </ScrollView>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }

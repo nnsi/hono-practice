@@ -26,7 +26,7 @@ export function useNoteDetailPage() {
   );
 
   const [mode, setMode] = useState<NoteDetailMode>(isNew ? "edit" : "view");
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(isNew);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [activityId, setActivityId] = useState<string | null>(null);
