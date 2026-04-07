@@ -30,5 +30,11 @@
   "delete.inline": "このノートを削除しますか？",
   "tab.edit": "編集",
   "tab.preview": "プレビュー",
-  "preview.empty": "プレビューする内容がありません"
+  "preview.empty": "プレビューする内容がありません",
+  "detail.back": "戻る",
+  "detail.save": "保存",
+  "detail.saving": "保存中...",
+  "detail.settings": "設定",
+  "detail.newNote": "新しいノート",
+  "detail.untitled": "無題"
 }
