@@ -1,6 +1,7 @@
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
-import { testDB } from "@backend/test.setup";
+import { TEST_USER_ID, testDB } from "@backend/test.setup";
+import { activityGoalFreezePeriods } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
 import { goalSyncRoute } from "../goal";
@@ -171,5 +172,157 @@ describe("GET /users/v2/goal-freeze-periods", () => {
 
     const json = await res.json();
     expect(Array.isArray(json.freezePeriods)).toBe(true);
+  });
+});
+
+describe("clock skew handling - 時計が遅いケース", () => {
+  test("新規のupdatedAtがNOW()に引き上がりpull可能", async () => {
+    const app = createApp();
+    await createGoal(app, TEST_GOAL_ID);
+    const beforePush = new Date(Date.now() - 1000).toISOString();
+
+    const period = makeFreezePeriod({
+      id: "10000000-0000-4000-8000-000000000070",
+      updatedAt: "2020-01-01T00:00:00.000Z",
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { freezePeriods: [period] });
+    expect(pushRes.status).toBe(200);
+    expect((await pushRes.json()).syncedIds).toContain(period.id);
+
+    // fix-up により updatedAt >= NOW() → beforePush 以降の since で取得可能
+    const pullRes = await getFreezePeriods(app, `since=${beforePush}`);
+    const pullJson = await pullRes.json();
+    expect(pullJson.freezePeriods.map((r: { id: string }) => r.id)).toContain(
+      period.id,
+    );
+  });
+
+  test("既存レコードの更新でupdatedAtがGREATESTで引き上がりpull可能", async () => {
+    const app = createApp();
+    await createGoal(app, TEST_GOAL_ID);
+    const periodId = crypto.randomUUID();
+
+    // DB直接挿入: fix-upを経由しない既知のupdatedAtを持つレコード
+    await testDB.insert(activityGoalFreezePeriods).values({
+      id: periodId,
+      userId: TEST_USER_ID,
+      goalId: TEST_GOAL_ID,
+      startDate: "2025-01-01",
+      createdAt: new Date("2020-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    const beforeUpdate = new Date(Date.now() - 1000).toISOString();
+
+    // DBより新しいがNOW()より古い updatedAt で更新（時計遅れを再現）
+    const clockBehindTime = "2023-06-01T00:00:00.000Z";
+    const updatedPeriod = makeFreezePeriod({
+      id: periodId,
+      startDate: "2025-03-01",
+      updatedAt: clockBehindTime,
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { freezePeriods: [updatedPeriod] });
+    const pushJson = await pushRes.json();
+    // LWW: DB(2020) < client(2023) → client wins
+    expect(pushJson.syncedIds).toContain(periodId);
+
+    // SET GREATEST(2023, NOW()) = NOW() → pull可能
+    const pullRes = await getFreezePeriods(app, `since=${beforeUpdate}`);
+    const pullJson = await pullRes.json();
+    const found = pullJson.freezePeriods.find(
+      (r: { id: string }) => r.id === periodId,
+    );
+    expect(found).toBeDefined();
+    expect(found.startDate).toBe("2025-03-01");
+  });
+
+  test("古い更新はserver winsを維持（LWW不変）", async () => {
+    const app = createApp();
+    await createGoal(app, TEST_GOAL_ID);
+
+    const periodId = "10000000-0000-4000-8000-000000000071";
+    await postSync(app, {
+      freezePeriods: [
+        makeFreezePeriod({ id: periodId, startDate: "2025-01-01" }),
+      ],
+    });
+
+    const oldPeriod = makeFreezePeriod({
+      id: periodId,
+      startDate: "2024-01-01",
+      updatedAt: "2020-01-01T00:00:00.000Z",
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { freezePeriods: [oldPeriod] });
+    const pushJson = await pushRes.json();
+    expect(pushJson.syncedIds).not.toContain(periodId);
+    expect(pushJson.serverWins).toHaveLength(1);
+    expect(pushJson.serverWins[0].id).toBe(periodId);
+  });
+});
+
+describe("clock skew handling - 時計が早いケース", () => {
+  test("5分以内の新規レコードが同期・pull可能", async () => {
+    const app = createApp();
+    await createGoal(app, TEST_GOAL_ID);
+    const threeMinAhead = new Date(Date.now() + 3 * 60 * 1000).toISOString();
+
+    const period = makeFreezePeriod({
+      id: "10000000-0000-4000-8000-000000000072",
+      updatedAt: threeMinAhead,
+    });
+
+    const pushRes = await postSync(app, { freezePeriods: [period] });
+    const pushJson = await pushRes.json();
+    expect(pushJson.syncedIds).toContain(period.id);
+    expect(pushJson.skippedIds).toHaveLength(0);
+
+    // updatedAt > NOW() なので since=NOW でも取得可能
+    const pullRes = await getFreezePeriods(app, `since=${NOW}`);
+    const pullJson = await pullRes.json();
+    expect(pullJson.freezePeriods.map((r: { id: string }) => r.id)).toContain(
+      period.id,
+    );
+  });
+
+  test("5分以内の更新がクライアント値のまま保存される", async () => {
+    const app = createApp();
+    await createGoal(app, TEST_GOAL_ID);
+    const periodId = crypto.randomUUID();
+
+    await testDB.insert(activityGoalFreezePeriods).values({
+      id: periodId,
+      userId: TEST_USER_ID,
+      goalId: TEST_GOAL_ID,
+      startDate: "2025-01-01",
+      createdAt: new Date("2020-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    const twoMinAhead = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+    const updatedPeriod = makeFreezePeriod({
+      id: periodId,
+      startDate: "2025-06-01",
+      updatedAt: twoMinAhead,
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { freezePeriods: [updatedPeriod] });
+    expect((await pushRes.json()).syncedIds).toContain(periodId);
+
+    // クライアント値(NOW+2m) > NOW() → GREATESTはクライアント値を採用
+    // since=NOW でも取得可能（updatedAt > NOW）
+    const pullRes = await getFreezePeriods(app, `since=${NOW}`);
+    const pullJson = await pullRes.json();
+    const found = pullJson.freezePeriods.find(
+      (r: { id: string }) => r.id === periodId,
+    );
+    expect(found).toBeDefined();
+    expect(found.startDate).toBe("2025-06-01");
   });
 });

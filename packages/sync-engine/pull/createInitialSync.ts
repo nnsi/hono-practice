@@ -6,8 +6,18 @@ import type { ParsedSyncData } from "./parseResponses";
 import { type ApiResponse, parseResponses } from "./parseResponses";
 
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
+const BOOTSTRAPPED_RESOURCES_KEY = "actiko-v2-bootstrappedResources";
 
-type FetchAllApis = (sinceQuery: { since?: string }) => Promise<{
+type DeltaSyncResource =
+  | "logs"
+  | "goals"
+  | "freezePeriods"
+  | "tasks"
+  | "notes";
+
+type SinceByResource = Partial<Record<DeltaSyncResource, string>>;
+
+type FetchAllApis = (sinceByResource: SinceByResource) => Promise<{
   activitiesRes: ApiResponse;
   logsRes: ApiResponse;
   goalsRes: ApiResponse;
@@ -22,8 +32,40 @@ type InitialSyncDeps = {
   isLocalDataEmpty: () => Promise<boolean>;
   fetchAllApis: FetchAllApis;
   writeAllData: (data: ParsedSyncData) => Promise<void>;
+  deltaResources: readonly DeltaSyncResource[];
+  legacyBootstrappedResources: readonly DeltaSyncResource[];
   defaultStorage: StorageAdapter;
 };
+
+function readBootstrappedResources(
+  storage: StorageAdapter,
+  fallback: readonly DeltaSyncResource[],
+): Set<DeltaSyncResource> {
+  const raw = storage.getItem(BOOTSTRAPPED_RESOURCES_KEY);
+  if (!raw) return new Set(fallback);
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set(fallback);
+    return new Set(
+      parsed.filter(
+        (resource): resource is DeltaSyncResource => typeof resource === "string",
+      ),
+    );
+  } catch {
+    return new Set(fallback);
+  }
+}
+
+function writeBootstrappedResources(
+  storage: StorageAdapter,
+  resources: Iterable<DeltaSyncResource>,
+): void {
+  storage.setItem(
+    BOOTSTRAPPED_RESOURCES_KEY,
+    JSON.stringify([...new Set(resources)]),
+  );
+}
 
 export function createInitialSync(deps: InitialSyncDeps) {
   let isPulling = false;
@@ -34,6 +76,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
     invalidateSync();
     await deps.clearAllTables();
     storage.removeItem(LAST_SYNCED_KEY);
+    storage.removeItem(BOOTSTRAPPED_RESOURCES_KEY);
   }
 
   async function performInitialSync(
@@ -56,20 +99,34 @@ export function createInitialSync(deps: InitialSyncDeps) {
     await deps.updateAuthState(userId);
 
     let lastSyncedAt = storage.getItem(LAST_SYNCED_KEY);
+    let bootstrappedResources = readBootstrappedResources(
+      storage,
+      deps.legacyBootstrappedResources,
+    );
     if (lastSyncedAt) {
       const isEmpty = await deps.isLocalDataEmpty();
       if (isEmpty) {
         storage.removeItem(LAST_SYNCED_KEY);
+        storage.removeItem(BOOTSTRAPPED_RESOURCES_KEY);
         lastSyncedAt = null;
+        bootstrappedResources = new Set();
       }
     }
-    const sinceQuery = lastSyncedAt ? { since: lastSyncedAt } : {};
+    const sinceByResource = deps.deltaResources.reduce<SinceByResource>(
+      (acc, resource) => {
+        if (lastSyncedAt && bootstrappedResources.has(resource)) {
+          acc[resource] = lastSyncedAt;
+        }
+        return acc;
+      },
+      {},
+    );
 
     const gen = getSyncGeneration();
 
     let responses: Awaited<ReturnType<FetchAllApis>>;
     try {
-      responses = await deps.fetchAllApis(sinceQuery);
+      responses = await deps.fetchAllApis(sinceByResource);
     } catch (err) {
       console.error("[sync] fetchAllApis failed:", err);
       throw err;
@@ -135,6 +192,10 @@ export function createInitialSync(deps: InitialSyncDeps) {
           notesRes,
         ]),
       );
+      writeBootstrappedResources(storage, [
+        ...bootstrappedResources,
+        ...deps.deltaResources,
+      ]);
     }
   }
 

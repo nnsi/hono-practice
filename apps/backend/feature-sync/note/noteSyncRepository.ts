@@ -47,7 +47,7 @@ function upsertNotes(db: QueryExecutor) {
     userId: UserId,
     validNotes: UpsertNoteRequest[],
   ): Promise<NoteRow[]> => {
-    return await db
+    const rows = await db
       .insert(notes)
       .values(
         validNotes.map((note) => ({
@@ -67,7 +67,7 @@ function upsertNotes(db: QueryExecutor) {
           title: sql`excluded.title`,
           content: sql`excluded.content`,
           activityId: sql`excluded.activity_id`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -76,6 +76,17 @@ function upsertNotes(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    // Ensure updatedAt >= NOW() for pull visibility (fixes clock-behind inserts)
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(notes)
+        .set({ updatedAt: sql`NOW()` })
+        .where(and(inArray(notes.id, ids), lt(notes.updatedAt, sql`NOW()`)));
+    }
+
+    return rows;
   };
 }
 

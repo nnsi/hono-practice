@@ -79,7 +79,7 @@ function upsertFreezePeriods(db: QueryExecutor) {
     userId: UserId,
     periods: UpsertGoalFreezePeriodRequest[],
   ): Promise<FreezePeriodRow[]> => {
-    return await db
+    const rows = await db
       .insert(activityGoalFreezePeriods)
       .values(
         periods.map((p) => ({
@@ -99,7 +99,7 @@ function upsertFreezePeriods(db: QueryExecutor) {
           goalId: sql`excluded.goal_id`,
           startDate: sql`excluded.start_date`,
           endDate: sql`excluded.end_date`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -108,6 +108,21 @@ function upsertFreezePeriods(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(activityGoalFreezePeriods)
+        .set({ updatedAt: sql`NOW()` })
+        .where(
+          and(
+            inArray(activityGoalFreezePeriods.id, ids),
+            lt(activityGoalFreezePeriods.updatedAt, sql`NOW()`),
+          ),
+        );
+    }
+
+    return rows;
   };
 }
 

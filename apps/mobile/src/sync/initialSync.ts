@@ -11,6 +11,23 @@ import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
+const DELTA_SYNC_RESOURCES = [
+  "logs",
+  "goals",
+  "freezePeriods",
+  "tasks",
+  "notes",
+] as const;
+
+// Keep this list frozen. Future sync resources should be added only to
+// DELTA_SYNC_RESOURCES so older clients full-pull the new resource once.
+const LEGACY_BOOTSTRAPPED_RESOURCES = [
+  "logs",
+  "goals",
+  "freezePeriods",
+  "tasks",
+] as const;
+
 const { clearLocalData, performInitialSync } = createInitialSync({
   clearAllTables: async () => {
     const db = await getDatabase();
@@ -64,7 +81,22 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       (noteRow?.count ?? 0) === 0
     );
   },
-  fetchAllApis: async (sinceQuery) => {
+  fetchAllApis: async (sinceByResource) => {
+    const logsQuery = sinceByResource.logs
+      ? { since: sinceByResource.logs }
+      : {};
+    const goalsQuery = sinceByResource.goals
+      ? { since: sinceByResource.goals, clientDate: getToday() }
+      : { clientDate: getToday() };
+    const freezePeriodsQuery = sinceByResource.freezePeriods
+      ? { since: sinceByResource.freezePeriods }
+      : {};
+    const tasksQuery = sinceByResource.tasks
+      ? { since: sinceByResource.tasks }
+      : {};
+    const notesQuery = sinceByResource.notes
+      ? { since: sinceByResource.notes }
+      : {};
     const [
       activitiesRes,
       logsRes,
@@ -74,16 +106,14 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       notesRes,
     ] = await Promise.all([
       apiClient.users.v2.activities.$get(),
-      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-      apiClient.users.v2.goals.$get({
-        query: { ...sinceQuery, clientDate: getToday() },
-      }),
+      apiClient.users.v2["activity-logs"].$get({ query: logsQuery }),
+      apiClient.users.v2.goals.$get({ query: goalsQuery }),
       // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
       apiClient.users.v2["goal-freeze-periods"]
-        .$get({ query: sinceQuery })
+        .$get({ query: freezePeriodsQuery })
         .catch(() => null),
-      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-      apiClient.users.v2.notes.$get({ query: sinceQuery }).catch(() => null),
+      apiClient.users.v2.tasks.$get({ query: tasksQuery }),
+      apiClient.users.v2.notes.$get({ query: notesQuery }).catch(() => null),
     ]);
     return {
       activitiesRes,
@@ -121,6 +151,8 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       await noteRepository.upsertNotesFromServer(data.notes);
     }
   },
+  deltaResources: DELTA_SYNC_RESOURCES,
+  legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
   defaultStorage: rnStorageAdapter,
 });
 

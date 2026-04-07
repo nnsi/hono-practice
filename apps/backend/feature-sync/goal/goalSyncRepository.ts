@@ -95,7 +95,7 @@ function upsertGoals(db: QueryExecutor) {
     userId: UserId,
     validGoals: UpsertGoalRequest[],
   ): Promise<GoalRow[]> => {
-    return await db
+    const rows = await db
       .insert(activityGoals)
       .values(
         validGoals.map((goal) => ({
@@ -125,7 +125,7 @@ function upsertGoals(db: QueryExecutor) {
           description: sql`excluded.description`,
           debtCap: sql`excluded.debt_cap`,
           dayTargets: sql`excluded.day_targets`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -134,6 +134,21 @@ function upsertGoals(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(activityGoals)
+        .set({ updatedAt: sql`NOW()` })
+        .where(
+          and(
+            inArray(activityGoals.id, ids),
+            lt(activityGoals.updatedAt, sql`NOW()`),
+          ),
+        );
+    }
+
+    return rows;
   };
 }
 

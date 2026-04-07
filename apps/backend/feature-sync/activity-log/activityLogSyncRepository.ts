@@ -105,7 +105,7 @@ function upsertActivityLogs(db: QueryExecutor) {
     userId: UserId,
     validLogs: UpsertActivityLogRequest[],
   ): Promise<ActivityLogRow[]> => {
-    return await db
+    const rows = await db
       .insert(activityLogs)
       .values(
         validLogs.map((log) => ({
@@ -133,8 +133,7 @@ function upsertActivityLogs(db: QueryExecutor) {
           date: sql`excluded.date`,
           time: sql`excluded.done_hour`,
           taskId: sql`excluded.task_id`,
-          createdAt: sql`excluded.created_at`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -143,6 +142,21 @@ function upsertActivityLogs(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(activityLogs)
+        .set({ updatedAt: sql`NOW()` })
+        .where(
+          and(
+            inArray(activityLogs.id, ids),
+            lt(activityLogs.updatedAt, sql`NOW()`),
+          ),
+        );
+    }
+
+    return rows;
   };
 }
 

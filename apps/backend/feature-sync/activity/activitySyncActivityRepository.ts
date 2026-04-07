@@ -34,7 +34,7 @@ export function upsertActivities(db: QueryExecutor) {
     userId: UserId,
     validActivities: UpsertActivityRequest[],
   ): Promise<ActivityRow[]> => {
-    return await db
+    const rows = await db
       .insert(activities)
       .values(
         validActivities.map((activity) => ({
@@ -72,7 +72,7 @@ export function upsertActivities(db: QueryExecutor) {
           showCombinedStats: sql`excluded.show_combined_stats`,
           recordingMode: sql`excluded.recording_mode`,
           recordingModeConfig: sql`excluded.recording_mode_config`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -81,6 +81,21 @@ export function upsertActivities(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(activities)
+        .set({ updatedAt: sql`NOW()` })
+        .where(
+          and(
+            inArray(activities.id, ids),
+            lt(activities.updatedAt, sql`NOW()`),
+          ),
+        );
+    }
+
+    return rows;
   };
 }
 
