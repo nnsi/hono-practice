@@ -282,7 +282,9 @@ db.version(8).stores({
 
 **Markdownエディタ方針**:
 - 初期リリース: プレーンテキスト入力 + プレビュー切り替え（編集/プレビュータブ）
-- Markdownレンダリング: `react-markdown` + `rehype-sanitize` でXSS対策（ユーザー入力を直接innerHTMLしない）
+- Markdownレンダリング:
+  - **Web**: `react-markdown` + `rehype-sanitize` でXSS対策（ユーザー入力を直接innerHTMLしない）
+  - **Mobile**: `react-native-marked`（JS-only、OTA Update可、FlatListベースで長文対応）
 - リッチエディタは後回し
 
 ---
@@ -321,6 +323,14 @@ CREATE INDEX IF NOT EXISTS note_updated_at_idx ON note(updated_at);`
 ### initialSync
 
 `apps/mobile/src/sync/initialSync.ts` にnotes対応追加（frontendと同じ4段処理）。
+
+### Markdownレンダリング
+
+`react-native-marked` を使用:
+- JS-onlyパッケージ（ネイティブビルド不要、OTA Update可）
+- FlatListベースの描画で長文ノートにも対応
+- カスタムレンダラーでアプリのデザインに合わせたスタイリングが可能
+- 将来的にNew Architecture完全移行後、`react-native-enriched-markdown`（Software Mansion、Fabric専用）への乗り換えも選択肢
 
 ---
 
