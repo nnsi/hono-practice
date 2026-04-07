@@ -8,6 +8,7 @@ import contactEn from "./locales/en/contact.json";
 import csvEn from "./locales/en/csv.json";
 import feedbackEn from "./locales/en/feedback.json";
 import goalEn from "./locales/en/goal.json";
+import noteEn from "./locales/en/note.json";
 import recordingEn from "./locales/en/recording.json";
 import settingsEn from "./locales/en/settings.json";
 import statsEn from "./locales/en/stats.json";
@@ -20,6 +21,7 @@ import contactJa from "./locales/ja/contact.json";
 import csvJa from "./locales/ja/csv.json";
 import feedbackJa from "./locales/ja/feedback.json";
 import goalJa from "./locales/ja/goal.json";
+import noteJa from "./locales/ja/note.json";
 import recordingJa from "./locales/ja/recording.json";
 import settingsJa from "./locales/ja/settings.json";
 import statsJa from "./locales/ja/stats.json";
@@ -42,6 +44,7 @@ const allNS = [
   "actiko",
   "recording",
   "contact",
+  "note",
 ] as const;
 
 export const resources = {
@@ -58,6 +61,7 @@ export const resources = {
     actiko: actikoJa,
     recording: recordingJa,
     contact: contactJa,
+    note: noteJa,
   },
   en: {
     common: commonEn,
@@ -72,6 +76,7 @@ export const resources = {
     actiko: actikoEn,
     recording: recordingEn,
     contact: contactEn,
+    note: noteEn,
   },
 } as const;
 

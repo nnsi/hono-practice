@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
@@ -16,12 +17,13 @@ export function NotesPage() {
     setDeleteConfirmId,
     handleDelete,
   } = useNotesPage();
+  const { t } = useTranslation("note");
 
   return (
     <div className="bg-white min-h-full">
       <div className="sticky top-0 sticky-header z-10">
         <div className="flex items-center justify-between px-4 pr-14 h-12">
-          <h1 className="text-lg font-bold text-gray-900">Notes</h1>
+          <h1 className="text-lg font-bold text-gray-900">{t("page.title")}</h1>
           <button
             type="button"
             onClick={() => setCreateDialogOpen(true)}
@@ -35,13 +37,13 @@ export function NotesPage() {
       <div className="p-4">
         {notes.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No notes yet</p>
+            <p className="text-gray-500 mb-4">{t("page.empty")}</p>
             <button
               type="button"
               onClick={() => setCreateDialogOpen(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
             >
-              Create your first note
+              {t("page.firstNote")}
             </button>
           </div>
         )}
@@ -147,19 +149,21 @@ function DeleteConfirmInline({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation("note");
+
   return (
     <div className="flex items-center justify-between">
-      <p className="text-sm text-red-600 font-medium">Delete this note?</p>
+      <p className="text-sm text-red-600 font-medium">{t("delete.inline")}</p>
       <div className="flex gap-2">
         <FormButton
           variant="secondary"
-          label="Cancel"
+          label={t("delete.cancel")}
           onClick={onCancel}
           className="px-3 text-xs"
         />
         <FormButton
           variant="dangerConfirm"
-          label="Delete"
+          label={t("delete.confirm")}
           onClick={onConfirm}
           className="px-3 text-xs"
         />

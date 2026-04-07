@@ -366,21 +366,21 @@ CREATE INDEX IF NOT EXISTS note_updated_at_idx ON note(updated_at);`
 ## 実装スコープ（段階）
 
 ### Phase 1: コア機能
-- [ ] DBマイグレーション（noteテーブル、`$onUpdate`フック含む）
-- [ ] ドメイン型定義（`packages/domain/note/`）
-- [ ] 同期リクエスト/レスポンス型（`packages/types/sync/request/note.ts`, `response/note.ts`）
-- [ ] バックエンドCRUD API（`feature/note/`）
-- [ ] バックエンド同期エンドポイント（`feature-sync/note/`、**ownership検証必須**）
-- [ ] バックエンドテスト（usecase/route/repository）
-- [ ] フロントエンドDexieスキーマ追加（v8 bump）
-- [ ] フロントエンドリポジトリ（`noteRepository.ts`）+ 共有logic
-- [ ] `syncEngine.ts` にnote同期タスク追加
-- [ ] **`initialSync.ts` にnotes対応追加（必須）**
-- [ ] UIコンポーネント（一覧・編集・プレビュー）
-- [ ] HamburgerMenuにNotesリンク追加
-- [ ] モバイルSQLiteマイグレーション追加
-- [ ] モバイルリポジトリ・initialSync対応
-- [ ] モバイルUIコンポーネント
+- [x] DBマイグレーション（noteテーブル、`$onUpdate`フック含む）
+- [x] ドメイン型定義（`packages/domain/note/`）
+- [x] 同期リクエスト/レスポンス型（`packages/types/sync/request/note.ts`, `response/note.ts`）
+- [x] バックエンドCRUD API（`feature/note/`）
+- [x] バックエンド同期エンドポイント（`feature-sync/note/`、**ownership検証必須**）
+- [x] バックエンドテスト（usecase/route/repository）
+- [x] フロントエンドDexieスキーマ追加（v8 bump）
+- [x] フロントエンドリポジトリ（`noteRepository.ts`）+ 共有logic
+- [x] `syncEngine.ts` にnote同期タスク追加
+- [x] **`initialSync.ts` にnotes対応追加（必須）**
+- [x] UIコンポーネント（一覧・編集・プレビュー）
+- [x] HamburgerMenuにNotesリンク追加
+- [x] モバイルSQLiteマイグレーション追加
+- [x] モバイルリポジトリ・initialSync対応
+- [x] モバイルUIコンポーネント
 
 ### Phase 2: 連携強化
 - [ ] Activity詳細画面にNotesセクション追加

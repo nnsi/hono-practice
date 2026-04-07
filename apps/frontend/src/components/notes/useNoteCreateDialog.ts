@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { noteRepository } from "../../db/noteRepository";
 import { useActivities } from "../../hooks/useActivities";
+import { syncEngine } from "../../sync/syncEngine";
 
 export function useNoteCreateDialog(onSuccess: () => void) {
   const [title, setTitle] = useState("");
@@ -29,6 +30,7 @@ export function useNoteCreateDialog(onSuccess: () => void) {
       });
       resetForm();
       onSuccess();
+      syncEngine.syncNotes();
     } finally {
       setIsSubmitting(false);
     }

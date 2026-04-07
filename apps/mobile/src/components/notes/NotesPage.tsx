@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react-native";
 import {
   RefreshControl,
@@ -32,6 +33,7 @@ export function NotesPage() {
     handleCreateSuccess,
     handleEditSuccess,
   } = useNotesPage();
+  const { t } = useTranslation("note");
 
   const insets = useSafeAreaInsets();
 
@@ -48,13 +50,13 @@ export function NotesPage() {
     <View className="flex-1 bg-white dark:bg-gray-800">
       <View className="flex-row items-center justify-between px-4 h-12 border-b border-gray-100 dark:border-gray-800">
         <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
-          Notes
+          {t("page.title")}
         </Text>
         <TouchableOpacity
           onPress={() => setCreateDialogOpen(true)}
           className="p-2"
           accessibilityRole="button"
-          accessibilityLabel="Create note"
+          accessibilityLabel={t("page.createNote")}
         >
           <Plus size={22} color="#6b7280" />
         </TouchableOpacity>
@@ -73,16 +75,16 @@ export function NotesPage() {
         {notes.length === 0 && (
           <View className="items-center py-12">
             <Text className="text-gray-500 dark:text-gray-400">
-              No notes yet
+              {t("page.empty")}
             </Text>
             <TouchableOpacity
               onPress={() => setCreateDialogOpen(true)}
               className="mt-4 px-4 py-2 bg-gray-900 dark:bg-gray-100 rounded-lg"
               accessibilityRole="button"
-              accessibilityLabel="Create first note"
+              accessibilityLabel={t("page.firstNote")}
             >
               <Text className="text-white dark:text-gray-900 font-medium text-sm">
-                Create your first note
+                {t("page.firstNote")}
               </Text>
             </TouchableOpacity>
           </View>

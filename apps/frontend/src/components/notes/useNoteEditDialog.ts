@@ -5,6 +5,7 @@ import type { Syncable } from "@packages/domain/sync/syncableRecord";
 
 import { noteRepository } from "../../db/noteRepository";
 import { useActivities } from "../../hooks/useActivities";
+import { syncEngine } from "../../sync/syncEngine";
 
 export function useNoteEditDialog(
   note: Syncable<NoteRecord>,
@@ -28,6 +29,7 @@ export function useNoteEditDialog(
         activityId,
       });
       onSuccess();
+      syncEngine.syncNotes();
     } finally {
       setIsSubmitting(false);
     }

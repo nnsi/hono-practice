@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { FileText, Pencil, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -20,6 +21,7 @@ export function NoteCard({
   onDelete: () => void;
 }) {
   const preview = content.length > 80 ? `${content.slice(0, 80)}...` : content;
+  const { t } = useTranslation("note");
 
   return (
     <View
@@ -48,7 +50,6 @@ export function NoteCard({
             className="text-sm text-gray-500 dark:text-gray-400 mb-2 ml-6"
             numberOfLines={2}
           >
-            {/* TODO: react-native-marked導入後にMarkdownレンダリングに置き換え */}
             {preview}
           </Text>
         )}
@@ -73,7 +74,7 @@ export function NoteCard({
           className="p-1.5"
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
-          accessibilityLabel="Edit note"
+          accessibilityLabel={t("edit.editNote")}
         >
           <Pencil size={16} color="#9ca3af" />
         </TouchableOpacity>
@@ -82,7 +83,7 @@ export function NoteCard({
           className="p-1.5"
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
-          accessibilityLabel="Delete note"
+          accessibilityLabel={t("edit.deleteNote")}
         >
           <Trash2 size={16} color="#9ca3af" />
         </TouchableOpacity>

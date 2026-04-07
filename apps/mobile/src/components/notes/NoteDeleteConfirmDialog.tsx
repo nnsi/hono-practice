@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
 import { FormButton } from "../common/FormButton";
@@ -12,22 +13,24 @@ export function NoteDeleteConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation("note");
+
   return (
     <ModalOverlay
       visible
       onClose={onCancel}
-      title="Delete Note"
+      title={t("delete.title")}
       footer={
         <View className="flex-row gap-2">
           <FormButton
             variant="secondary"
-            label="Cancel"
+            label={t("delete.cancel")}
             onPress={onCancel}
             className="flex-1"
           />
           <FormButton
             variant="dangerConfirm"
-            label="Delete"
+            label={t("delete.confirm")}
             onPress={onConfirm}
             className="flex-1"
           />
@@ -35,8 +38,7 @@ export function NoteDeleteConfirmDialog({
       }
     >
       <Text className="text-sm text-gray-500 dark:text-gray-400">
-        This action cannot be undone. The note "{noteTitle}" will be permanently
-        deleted.
+        {t("delete.description", { noteTitle })}
       </Text>
     </ModalOverlay>
   );

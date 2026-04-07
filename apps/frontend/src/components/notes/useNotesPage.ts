@@ -5,6 +5,7 @@ import type { Syncable } from "@packages/domain/sync/syncableRecord";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import { noteRepository } from "../../db/noteRepository";
+import { syncEngine } from "../../sync/syncEngine";
 
 export function useNotesPage() {
   const notes = useLiveQuery(() =>
@@ -22,6 +23,7 @@ export function useNotesPage() {
   const handleDelete = async (id: string) => {
     await noteRepository.softDeleteNote(id);
     setDeleteConfirmId(null);
+    syncEngine.syncNotes();
   };
 
   return {
