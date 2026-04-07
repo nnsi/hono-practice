@@ -123,6 +123,14 @@ if [ -d "$WT_ADMIN_FE_DIR" ]; then
   echo "  apps/admin-frontend/.env → OK"
 fi
 
+# Mobile .env (Expo uses EXPO_PUBLIC_ prefix)
+WT_MOBILE_DIR="$WT_DIR/apps/mobile"
+if [ -d "$WT_MOBILE_DIR" ]; then
+  WT_MOBILE_ENV="$WT_MOBILE_DIR/.env"
+  echo "EXPO_PUBLIC_API_URL=http://localhost:$API_PORT" > "$WT_MOBILE_ENV"
+  echo "  apps/mobile/.env → OK"
+fi
+
 # Root .env (for drizzle-kit / seed scripts)
 cat > "$WT_DIR/.env" << EOF
 DATABASE_URL=postgresql://postgres:postgres@localhost:5435/$DB_NAME

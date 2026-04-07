@@ -383,7 +383,6 @@ CREATE INDEX IF NOT EXISTS note_updated_at_idx ON note(updated_at);`
 - [x] モバイルUIコンポーネント
 
 ### Phase 2: 連携強化
-- [ ] Activity詳細画面にNotesセクション追加
 - [ ] ノート一覧のActivity別フィルタ
 - [ ] ノート検索（タイトル・本文全文検索）
 
