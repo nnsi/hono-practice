@@ -156,3 +156,20 @@ ALTER TABLE activity_logs ADD COLUMN task_id TEXT;
 export const MIGRATION_V10 = `
 ALTER TABLE auth_state ADD COLUMN plan TEXT DEFAULT 'free';
 `;
+
+export const MIGRATION_V11 = `
+CREATE TABLE IF NOT EXISTS note (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL DEFAULT '',
+  activity_id TEXT,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  sync_status TEXT NOT NULL DEFAULT 'synced'
+);
+CREATE INDEX IF NOT EXISTS idx_note_user_id ON note(user_id);
+CREATE INDEX IF NOT EXISTS idx_note_activity_id ON note(activity_id);
+CREATE INDEX IF NOT EXISTS idx_note_updated_at ON note(updated_at);
+`;

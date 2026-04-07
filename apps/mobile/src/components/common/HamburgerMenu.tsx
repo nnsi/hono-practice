@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
-import { Globe, LogOut, Menu, Settings } from "lucide-react-native";
+import { FileText, Globe, LogOut, Menu, Settings } from "lucide-react-native";
 import {
   Animated,
   Pressable,
@@ -48,6 +48,11 @@ export function HamburgerMenu() {
     i18n.changeLanguage(next);
     close();
   }, [i18n, close]);
+
+  const goToNotes = useCallback(() => {
+    close();
+    router.push("/(tabs)/notes");
+  }, [router, close]);
 
   const goToSettings = useCallback(() => {
     close();
@@ -102,6 +107,12 @@ export function HamburgerMenu() {
               icon={<Globe size={16} color={colors.textMuted} />}
               label={i18n.language === "ja" ? "English" : "日本語"}
               onPress={switchLanguage}
+              textColor={colors.text}
+            />
+            <MenuItem
+              icon={<FileText size={16} color={colors.textMuted} />}
+              label="Notes"
+              onPress={goToNotes}
               textColor={colors.text}
             />
             <MenuItem

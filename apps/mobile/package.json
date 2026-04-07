@@ -53,6 +53,7 @@
     "react-dom": "19.2.0",
     "react-native": "0.83.2",
     "react-native-gesture-handler": "~2.30.0",
+    "react-native-marked": "^8.0.1",
     "react-native-purchases": "^9.14.0",
     "react-native-reanimated": "~4.2.1",
     "react-native-safe-area-context": "~5.6.2",

@@ -9,6 +9,7 @@ vi.mock("../db/activityLogRepository");
 vi.mock("../db/goalRepository");
 vi.mock("../db/goalFreezePeriodRepository");
 vi.mock("../db/taskRepository");
+vi.mock("../db/noteRepository");
 vi.mock("../db/schema", () => ({
   db: {
     activityLogs: { clear: vi.fn() },
@@ -17,6 +18,7 @@ vi.mock("../db/schema", () => ({
     goals: { clear: vi.fn() },
     goalFreezePeriods: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     tasks: { clear: vi.fn() },
+    notes: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
     authState: { put: vi.fn(), get: vi.fn().mockResolvedValue(undefined) },
@@ -165,6 +167,10 @@ describe("initialSync", () => {
             tasks: [{ id: "t1", title: "Task 1" }],
           }),
       });
+      const notesGet = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ notes: [] }),
+      });
 
       mockApiClientObj.users = {
         v2: {
@@ -172,10 +178,11 @@ describe("initialSync", () => {
           "activity-logs": { $get: logsGet },
           goals: { $get: goalsGet },
           tasks: { $get: tasksGet },
+          notes: { $get: notesGet },
         },
       };
 
-      return { activitiesGet, logsGet, goalsGet, tasksGet };
+      return { activitiesGet, logsGet, goalsGet, tasksGet, notesGet };
     }
 
     it("updates authState with userId", async () => {
@@ -333,6 +340,12 @@ describe("initialSync", () => {
               json: () => Promise.resolve({ tasks: [] }),
             }),
           },
+          notes: {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: () => Promise.resolve({ notes: [] }),
+            }),
+          },
         },
       };
 
@@ -364,6 +377,7 @@ describe("initialSync", () => {
           },
           goals: { $get: vi.fn().mockResolvedValue(okRes({ goals: [] })) },
           tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
+          notes: { $get: vi.fn().mockResolvedValue(okRes({ notes: [] })) },
         },
       };
 
@@ -396,6 +410,7 @@ describe("initialSync", () => {
             $get: vi.fn().mockResolvedValue(okRes({ goals: userBGoals })),
           },
           tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
+          notes: { $get: vi.fn().mockResolvedValue(okRes({ notes: [] })) },
         },
       };
 

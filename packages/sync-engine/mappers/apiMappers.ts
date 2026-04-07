@@ -10,6 +10,7 @@ import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLog
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 
 // Loose record type for API responses — mappers use `??` to handle both null and undefined
@@ -185,5 +186,18 @@ export function mapApiTask(t: ApiRecord): TaskRecord {
     createdAt: toISOString(t.createdAt ?? t.created_at),
     updatedAt: toISOString(t.updatedAt ?? t.updated_at),
     deletedAt: strOrNull(t.deletedAt ?? t.deleted_at),
+  };
+}
+
+export function mapApiNote(n: ApiRecord): NoteRecord {
+  return {
+    id: n.id,
+    userId: str(n.userId ?? n.user_id),
+    activityId: strOrNull(n.activityId ?? n.activity_id),
+    title: str(n.title),
+    content: str(n.content),
+    createdAt: toISOString(n.createdAt ?? n.created_at),
+    updatedAt: toISOString(n.updatedAt ?? n.updated_at),
+    deletedAt: strOrNull(n.deletedAt ?? n.deleted_at),
   };
 }

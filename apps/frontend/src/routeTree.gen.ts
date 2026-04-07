@@ -15,12 +15,14 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as NotesRouteImport } from './routes/notes'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as ActikoRouteImport } from './routes/actiko'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NotesNoteIdRouteImport } from './routes/notes_.$noteId'
 
 const TokushohoRoute = TokushohoRouteImport.update({
   id: '/tokushoho',
@@ -50,6 +52,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -82,6 +89,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotesNoteIdRoute = NotesNoteIdRouteImport.update({
+  id: '/notes_/$noteId',
+  path: '/notes/$noteId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,12 +102,14 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tokushoho': typeof TokushohoRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,12 +118,14 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tokushoho': typeof TokushohoRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,12 +135,14 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/daily': typeof DailyRoute
   '/goals': typeof GoalsRoute
+  '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tokushoho': typeof TokushohoRoute
+  '/notes_/$noteId': typeof NotesNoteIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,12 +153,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
     | '/tasks'
     | '/terms'
     | '/tokushoho'
+    | '/notes/$noteId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -149,12 +169,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
     | '/tasks'
     | '/terms'
     | '/tokushoho'
+    | '/notes/$noteId'
   id:
     | '__root__'
     | '/'
@@ -163,12 +185,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/daily'
     | '/goals'
+    | '/notes'
     | '/privacy'
     | '/settings'
     | '/stats'
     | '/tasks'
     | '/terms'
     | '/tokushoho'
+    | '/notes_/$noteId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,12 +202,14 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DailyRoute: typeof DailyRoute
   GoalsRoute: typeof GoalsRoute
+  NotesRoute: typeof NotesRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   TasksRoute: typeof TasksRoute
   TermsRoute: typeof TermsRoute
   TokushohoRoute: typeof TokushohoRoute
+  NotesNoteIdRoute: typeof NotesNoteIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -230,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goals': {
       id: '/goals'
       path: '/goals'
@@ -272,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes_/$noteId': {
+      id: '/notes_/$noteId'
+      path: '/notes/$noteId'
+      fullPath: '/notes/$noteId'
+      preLoaderRoute: typeof NotesNoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -282,12 +322,14 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DailyRoute: DailyRoute,
   GoalsRoute: GoalsRoute,
+  NotesRoute: NotesRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   TasksRoute: TasksRoute,
   TermsRoute: TermsRoute,
   TokushohoRoute: TokushohoRoute,
+  NotesNoteIdRoute: NotesNoteIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

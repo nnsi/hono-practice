@@ -6,6 +6,7 @@ import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
+import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
@@ -20,6 +21,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       DELETE FROM goals;
       DELETE FROM goal_freeze_periods;
       DELETE FROM tasks;
+      DELETE FROM note;
       DELETE FROM activity_icon_blobs;
       DELETE FROM activity_icon_delete_queue;
     `);
@@ -36,47 +38,60 @@ const { clearLocalData, performInitialSync } = createInitialSync({
   },
   isLocalDataEmpty: async () => {
     const db = await getDatabase();
-    const [logRow, goalRow, taskRow, freezePeriodRow] = await Promise.all([
-      db.getFirstAsync<{ count: number }>(
-        "SELECT COUNT(*) as count FROM activity_logs",
-      ),
-      db.getFirstAsync<{ count: number }>(
-        "SELECT COUNT(*) as count FROM goals",
-      ),
-      db.getFirstAsync<{ count: number }>(
-        "SELECT COUNT(*) as count FROM tasks",
-      ),
-      db.getFirstAsync<{ count: number }>(
-        "SELECT COUNT(*) as count FROM goal_freeze_periods",
-      ),
-    ]);
+    const [logRow, goalRow, taskRow, freezePeriodRow, noteRow] =
+      await Promise.all([
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM activity_logs",
+        ),
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM goals",
+        ),
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM tasks",
+        ),
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM goal_freeze_periods",
+        ),
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM note",
+        ),
+      ]);
     return (
       (logRow?.count ?? 0) === 0 &&
       (goalRow?.count ?? 0) === 0 &&
       (taskRow?.count ?? 0) === 0 &&
-      (freezePeriodRow?.count ?? 0) === 0
+      (freezePeriodRow?.count ?? 0) === 0 &&
+      (noteRow?.count ?? 0) === 0
     );
   },
   fetchAllApis: async (sinceQuery) => {
-    const [activitiesRes, logsRes, goalsRes, freezePeriodsRes, tasksRes] =
-      await Promise.all([
-        apiClient.users.v2.activities.$get(),
-        apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-        apiClient.users.v2.goals.$get({
-          query: { ...sinceQuery, clientDate: getToday() },
-        }),
-        // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
-        apiClient.users.v2["goal-freeze-periods"]
-          .$get({ query: sinceQuery })
-          .catch(() => null),
-        apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-      ]);
+    const [
+      activitiesRes,
+      logsRes,
+      goalsRes,
+      freezePeriodsRes,
+      tasksRes,
+      notesRes,
+    ] = await Promise.all([
+      apiClient.users.v2.activities.$get(),
+      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
+      apiClient.users.v2.goals.$get({
+        query: { ...sinceQuery, clientDate: getToday() },
+      }),
+      // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
+      apiClient.users.v2["goal-freeze-periods"]
+        .$get({ query: sinceQuery })
+        .catch(() => null),
+      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
+      apiClient.users.v2.notes.$get({ query: sinceQuery }).catch(() => null),
+    ]);
     return {
       activitiesRes,
       logsRes,
       goalsRes,
       freezePeriodsRes,
       tasksRes,
+      notesRes,
     };
   },
   writeAllData: async (data) => {
@@ -101,6 +116,9 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     }
     if (data.tasks.length > 0) {
       await taskRepository.upsertTasksFromServer(data.tasks);
+    }
+    if (data.notes.length > 0) {
+      await noteRepository.upsertNotesFromServer(data.notes);
     }
   },
   defaultStorage: rnStorageAdapter,

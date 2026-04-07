@@ -9,6 +9,7 @@ type SyncFunctions = {
   syncActivityLogs: () => Promise<void>;
   syncGoals: () => Promise<void>;
   syncGoalFreezePeriods: () => Promise<void>;
+  syncNotes: () => Promise<void>;
   syncTasks: () => Promise<void>;
 };
 
@@ -30,6 +31,7 @@ export function createSyncEngine(
     syncActivityIcons: fns.syncActivityIcons,
     syncGoals: fns.syncGoals,
     syncGoalFreezePeriods: fns.syncGoalFreezePeriods,
+    syncNotes: fns.syncNotes,
     syncTasks: fns.syncTasks,
     mutex,
 
@@ -78,10 +80,13 @@ export function createSyncEngine(
         // 5. Tasks (before activity logs — logs can reference taskId)
         await tryStep("syncTasks", fns.syncTasks);
 
-        // 6. Activity logs
+        // 6. Notes
+        await tryStep("syncNotes", fns.syncNotes);
+
+        // 7. Activity logs
         await tryStep("syncActivityLogs", fns.syncActivityLogs);
 
-        // 7. Freeze periods (depends on goals existing on server)
+        // 8. Freeze periods (depends on goals existing on server)
         if (goalsOk) {
           await tryStep("syncGoalFreezePeriods", fns.syncGoalFreezePeriods);
         } else {

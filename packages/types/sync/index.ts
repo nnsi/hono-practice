@@ -25,6 +25,12 @@ export {
   UpsertGoalFreezePeriodRequestSchema,
 } from "./request/goalFreezePeriod";
 export {
+  type SyncNotesRequest,
+  SyncNotesRequestSchema,
+  type UpsertNoteRequest,
+  UpsertNoteRequestSchema,
+} from "./request/note";
+export {
   type SyncTasksRequest,
   SyncTasksRequestSchema,
   type UpsertTaskRequest,
@@ -54,6 +60,12 @@ export {
   type SyncGoalFreezePeriodsResponse,
   SyncGoalFreezePeriodsV2ResponseSchema,
 } from "./response/goalFreezePeriod";
+export {
+  type GetNotesV2Response,
+  GetNotesV2ResponseSchema,
+  type SyncNotesResponse,
+  SyncNotesV2ResponseSchema,
+} from "./response/note";
 export {
   type GetTasksV2Response,
   GetTasksV2ResponseSchema,

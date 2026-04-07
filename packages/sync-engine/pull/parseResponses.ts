@@ -4,6 +4,7 @@ import {
   mapApiActivityLog,
   mapApiGoal,
   mapApiGoalFreezePeriod,
+  mapApiNote,
   mapApiTask,
 } from "../mappers/apiMappers";
 
@@ -19,6 +20,7 @@ export type ParsedSyncData = {
   logs: ReturnType<typeof mapApiActivityLog>[];
   goals: ReturnType<typeof mapApiGoal>[];
   freezePeriods: ReturnType<typeof mapApiGoalFreezePeriod>[];
+  notes: ReturnType<typeof mapApiNote>[];
   tasks: ReturnType<typeof mapApiTask>[];
 };
 
@@ -28,6 +30,7 @@ export async function parseResponses(
   goalsRes: ApiResponse,
   freezePeriodsRes: ApiResponse | null,
   tasksRes: ApiResponse,
+  notesRes?: ApiResponse | null,
 ): Promise<{ allSynced: boolean; data: ParsedSyncData }> {
   let allSynced = true;
   const data: ParsedSyncData = {
@@ -36,6 +39,7 @@ export async function parseResponses(
     logs: [],
     goals: [],
     freezePeriods: [],
+    notes: [],
     tasks: [],
   };
 
@@ -93,6 +97,17 @@ export async function parseResponses(
       data.tasks = raw.tasks.map(mapApiTask);
     }
   } else {
+    allSynced = false;
+  }
+
+  if (notesRes?.ok) {
+    const raw = (await notesRes.json()) as {
+      notes?: (Record<string, unknown> & { id: string })[];
+    };
+    if (raw.notes && raw.notes.length > 0) {
+      data.notes = raw.notes.map(mapApiNote);
+    }
+  } else if (notesRes === null || (notesRes !== undefined && !notesRes?.ok)) {
     allSynced = false;
   }
 

@@ -6,6 +6,7 @@ import type {
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import Dexie, { type Table } from "dexie";
 
@@ -17,6 +18,7 @@ export type DexieActivityKind = Syncable<ActivityKindRecord>;
 export type DexieGoal = Syncable<GoalRecord>;
 export type DexieGoalFreezePeriod = Syncable<GoalFreezePeriodRecord>;
 export type DexieTask = Syncable<TaskRecord>;
+export type DexieNote = Syncable<NoteRecord>;
 
 export type DexieActivityIconBlob = {
   activityId: string;
@@ -43,6 +45,7 @@ export class ActikoDatabase extends Dexie {
   goals!: Table<DexieGoal, string>;
   goalFreezePeriods!: Table<DexieGoalFreezePeriod, string>;
   tasks!: Table<DexieTask, string>;
+  notes!: Table<DexieNote, string>;
   activityIconBlobs!: Table<DexieActivityIconBlob, string>;
   activityIconDeleteQueue!: Table<DexieActivityIconDeleteQueue, string>;
   authState!: Table<DexieAuthState, string>;
@@ -169,6 +172,19 @@ export class ActikoDatabase extends Dexie {
             }
           });
       });
+    this.version(8).stores({
+      activityLogs:
+        "id, activityId, date, _syncStatus, [date+activityId], taskId",
+      activities: "id, orderIndex, _syncStatus",
+      activityKinds: "id, activityId, _syncStatus",
+      goals: "id, activityId, _syncStatus",
+      goalFreezePeriods: "id, goalId, _syncStatus",
+      tasks: "id, _syncStatus, startDate, dueDate",
+      notes: "id, _syncStatus, activityId, updatedAt",
+      activityIconBlobs: "activityId",
+      activityIconDeleteQueue: "activityId",
+      authState: "id",
+    });
   }
 }
 
