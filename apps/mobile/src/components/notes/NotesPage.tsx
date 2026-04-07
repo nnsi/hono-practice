@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
+import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import {
   RefreshControl,
@@ -13,28 +14,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { syncEngine } from "../../sync/syncEngine";
 import { NoteCard } from "./NoteCard";
-import { NoteCreateDialog } from "./NoteCreateDialog";
 import { NoteDeleteConfirmDialog } from "./NoteDeleteConfirmDialog";
-import { NoteEditDialog } from "./NoteEditDialog";
 import { useNotesPage } from "./useNotesPage";
 
 export function NotesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const {
     notes,
-    createDialogOpen,
-    setCreateDialogOpen,
-    editingNote,
-    setEditingNote,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,
     handleDelete,
-    handleCreateSuccess,
-    handleEditSuccess,
   } = useNotesPage();
   const { t } = useTranslation("note");
-
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const onRefresh = async () => {
@@ -53,7 +46,7 @@ export function NotesPage() {
           {t("page.title")}
         </Text>
         <TouchableOpacity
-          onPress={() => setCreateDialogOpen(true)}
+          onPress={() => router.push("/notes/new")}
           className="p-2"
           accessibilityRole="button"
           accessibilityLabel={t("page.createNote")}
@@ -78,7 +71,7 @@ export function NotesPage() {
               {t("page.empty")}
             </Text>
             <TouchableOpacity
-              onPress={() => setCreateDialogOpen(true)}
+              onPress={() => router.push("/notes/new")}
               className="mt-4 px-4 py-2 bg-gray-900 dark:bg-gray-100 rounded-lg"
               accessibilityRole="button"
               accessibilityLabel={t("page.firstNote")}
@@ -98,31 +91,12 @@ export function NotesPage() {
               content={note.content}
               updatedAt={note.updatedAt}
               activityName={getActivityName(note.activityId)}
-              onEdit={() => setEditingNote(note)}
+              onPress={() => router.push(`/notes/${note.id}`)}
               onDelete={() => setDeleteConfirmId(note.id)}
             />
           ))}
         </View>
       </ScrollView>
-
-      {createDialogOpen && (
-        <NoteCreateDialog
-          onClose={() => setCreateDialogOpen(false)}
-          onSuccess={handleCreateSuccess}
-        />
-      )}
-
-      {editingNote && (
-        <NoteEditDialog
-          note={editingNote}
-          onClose={() => setEditingNote(null)}
-          onSuccess={handleEditSuccess}
-          onDelete={(id) => {
-            setEditingNote(null);
-            setDeleteConfirmId(id);
-          }}
-        />
-      )}
 
       {deleteConfirmId && (
         <NoteDeleteConfirmDialog

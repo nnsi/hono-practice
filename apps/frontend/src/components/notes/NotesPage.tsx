@@ -1,23 +1,20 @@
 import { useTranslation } from "@packages/i18n";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Plus, Trash2 } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
-import { NoteCreateDialog } from "./NoteCreateDialog";
-import { NoteEditDialog } from "./NoteEditDialog";
 import { useNotesPage } from "./useNotesPage";
 
 export function NotesPage() {
   const {
     notes,
-    createDialogOpen,
-    setCreateDialogOpen,
-    editingNote,
-    setEditingNote,
     deleteConfirmId,
     setDeleteConfirmId,
+    getActivityName,
     handleDelete,
   } = useNotesPage();
   const { t } = useTranslation("note");
+  const navigate = useNavigate();
 
   return (
     <div className="bg-white min-h-full">
@@ -26,7 +23,9 @@ export function NotesPage() {
           <h1 className="text-lg font-bold text-gray-900">{t("page.title")}</h1>
           <button
             type="button"
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={() =>
+              navigate({ to: "/notes/$noteId", params: { noteId: "new" } })
+            }
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Plus size={20} className="text-gray-600" />
@@ -40,7 +39,9 @@ export function NotesPage() {
             <p className="text-gray-500 mb-4">{t("page.empty")}</p>
             <button
               type="button"
-              onClick={() => setCreateDialogOpen(true)}
+              onClick={() =>
+                navigate({ to: "/notes/$noteId", params: { noteId: "new" } })
+              }
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
             >
               {t("page.firstNote")}
@@ -65,7 +66,13 @@ export function NotesPage() {
                     title={note.title}
                     content={note.content}
                     updatedAt={note.updatedAt}
-                    onEdit={() => setEditingNote(note)}
+                    activityName={getActivityName(note.activityId)}
+                    onClick={() =>
+                      navigate({
+                        to: "/notes/$noteId",
+                        params: { noteId: note.id },
+                      })
+                    }
                     onDelete={() => setDeleteConfirmId(note.id)}
                   />
                 )}
@@ -74,25 +81,6 @@ export function NotesPage() {
           </div>
         )}
       </div>
-
-      {createDialogOpen && (
-        <NoteCreateDialog
-          onClose={() => setCreateDialogOpen(false)}
-          onSuccess={() => setCreateDialogOpen(false)}
-        />
-      )}
-
-      {editingNote && (
-        <NoteEditDialog
-          note={editingNote}
-          onClose={() => setEditingNote(null)}
-          onSuccess={() => setEditingNote(null)}
-          onDelete={(id) => {
-            setEditingNote(null);
-            setDeleteConfirmId(id);
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -101,13 +89,15 @@ function NoteCardContent({
   title,
   content,
   updatedAt,
-  onEdit,
+  activityName,
+  onClick,
   onDelete,
 }: {
   title: string;
   content: string;
   updatedAt: string;
-  onEdit: () => void;
+  activityName: string | null;
+  onClick: () => void;
   onDelete: () => void;
 }) {
   const preview = content.length > 50 ? `${content.slice(0, 50)}...` : content;
@@ -115,21 +105,25 @@ function NoteCardContent({
 
   return (
     <div className="flex items-start justify-between gap-2">
-      <div className="flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex-1 min-w-0 text-left"
+      >
         <h3 className="font-semibold text-gray-900 truncate">{title}</h3>
         {preview && (
           <p className="text-sm text-gray-500 mt-1 truncate">{preview}</p>
         )}
-        <p className="text-xs text-gray-400 mt-1.5">{formattedDate}</p>
-      </div>
+        <div className="flex items-center gap-2 mt-1.5">
+          <p className="text-xs text-gray-400">{formattedDate}</p>
+          {activityName && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+              {activityName}
+            </span>
+          )}
+        </div>
+      </button>
       <div className="flex items-center gap-1 shrink-0">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <Pencil size={16} className="text-gray-400" />
-        </button>
         <button
           type="button"
           onClick={onDelete}
