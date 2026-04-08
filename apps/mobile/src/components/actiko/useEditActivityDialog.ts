@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
+import { createUseActivityKindEntries } from "@packages/frontend-shared/hooks/useActivityKindEntries";
 
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityRepository } from "../../repositories/activityRepository";
@@ -19,11 +19,9 @@ type Activity = {
   recordingModeConfig?: string | null;
 };
 
-type KindEntry = {
-  id?: string;
-  name: string;
-  color: string;
-};
+const useActivityKindEntries = createUseActivityKindEntries({
+  react: { useState, useCallback },
+});
 
 export function useEditActivityDialog(
   activity: Activity | null,
@@ -35,7 +33,6 @@ export function useEditActivityDialog(
   const [emoji, setEmoji] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
-  const [kindEntries, setKindEntries] = useState<KindEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
@@ -45,6 +42,14 @@ export function useEditActivityDialog(
   const [error, setError] = useState("");
 
   const iconPicker = useActivityIconPicker(activity);
+  const {
+    kinds: kindEntries,
+    setKinds: setKindEntries,
+    addKind,
+    removeKind,
+    updateKindName,
+    updateKindColor,
+  } = useActivityKindEntries();
 
   useEffect(() => {
     if (activity) {
@@ -69,7 +74,7 @@ export function useEditActivityDialog(
         })),
       );
     }
-  }, [existingKinds]);
+  }, [existingKinds, setKindEntries]);
 
   const handleSave = async () => {
     if (!activity) return;
@@ -91,7 +96,13 @@ export function useEditActivityDialog(
       await activityRepository.updateActivity(
         activity.id,
         changes,
-        kindEntries.filter((k) => k.name.trim()),
+        kindEntries
+          .filter((k) => k.name.trim())
+          .map((k) => ({
+            id: typeof k.id === "string" ? k.id : undefined,
+            name: k.name,
+            color: k.color,
+          })),
       );
       syncEngine.syncAll();
       onUpdated();
@@ -116,32 +127,6 @@ export function useEditActivityDialog(
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const addKind = () => {
-    setKindEntries((prev) => {
-      const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
-      const nextColor =
-        COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ??
-        COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
-      return [...prev, { name: "", color: nextColor }];
-    });
-  };
-
-  const removeKind = (index: number) => {
-    setKindEntries((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateKindName = (index: number, text: string) => {
-    setKindEntries((prev) =>
-      prev.map((k, i) => (i === index ? { ...k, name: text } : k)),
-    );
-  };
-
-  const updateKindColor = (index: number, color: string) => {
-    setKindEntries((prev) =>
-      prev.map((k, i) => (i === index ? { ...k, color } : k)),
-    );
   };
 
   return {

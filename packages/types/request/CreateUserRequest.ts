@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { VALIDATION as V } from "../validation";
 import { consentsSchema } from "./ConsentsRequest";
 
 export const createUserRequestSchema = z.object({
@@ -7,11 +8,11 @@ export const createUserRequestSchema = z.object({
   loginId: z
     .string()
     .min(1, "validation:loginIdRequired")
-    .max(100, "validation:loginIdMax100"),
+    .max(V.LOGIN_ID_MAX, "validation:loginIdMax100"),
   password: z
     .string()
-    .min(8, "validation:passwordMin8")
-    .max(100, "validation:passwordMax100"),
+    .min(V.PASSWORD_MIN, "validation:passwordMin8")
+    .max(V.LOGIN_ID_MAX, "validation:passwordMax100"),
   consents: consentsSchema,
 });
 

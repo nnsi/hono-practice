@@ -10,6 +10,8 @@ export type {
   UpdateGoalPayload,
 } from "./types";
 export { createUseActikoPage } from "./useActikoPage";
+export type { KindEntry } from "./useActivityKindEntries";
+export { createUseActivityKindEntries } from "./useActivityKindEntries";
 export type { ApiKeyMutationOptions, UseApiKeysOptions } from "./useApiKeys";
 export {
   createUseApiKeys,
@@ -19,6 +21,8 @@ export {
 export { createUseCreateGoalDialog } from "./useCreateGoalDialog";
 export { createUseDailyPage } from "./useDailyPage";
 export { createUseEditLogDialog } from "./useEditLogDialog";
+export type { GoalCardResult, GoalForCard, StatusBadge } from "./useGoalCard";
+export { createUseGoalCard, getStatusBadge } from "./useGoalCard";
 export { createUseGoalHeatmap } from "./useGoalHeatmap";
 export { createUseGoalsPage } from "./useGoalsPage";
 export { createUseLogForm } from "./useLogForm";

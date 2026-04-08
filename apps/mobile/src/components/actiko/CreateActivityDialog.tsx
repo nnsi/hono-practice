@@ -134,11 +134,16 @@ export function CreateActivityDialog({
             name: k.name,
             color: k.color,
           }))}
-          onUpdateName={(index, text) => updateKindName(kinds[index].id, text)}
-          onUpdateColor={(index, color) =>
-            updateKindColor(kinds[index].id, color)
-          }
-          onRemove={(index) => removeKind(kinds[index].id)}
+          onUpdateName={(index, text) => {
+            if (kinds[index].id != null) updateKindName(kinds[index].id, text);
+          }}
+          onUpdateColor={(index, color) => {
+            if (kinds[index].id != null)
+              updateKindColor(kinds[index].id, color);
+          }}
+          onRemove={(index) => {
+            if (kinds[index].id != null) removeKind(kinds[index].id);
+          }}
           onAdd={addKind}
         />
 
