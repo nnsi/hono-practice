@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FormButton } from "../common/FormButton";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { NoteDetailFab } from "./NoteDetailFab";
+import { NoteDiscardConfirmInline, NoteNotFound } from "./NoteDetailStates";
 import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
@@ -21,6 +22,7 @@ export function NoteDetailPage() {
   const {
     isNew,
     isLoading,
+    notFound,
     mode,
     settingsOpen,
     title,
@@ -31,12 +33,15 @@ export function NoteDetailPage() {
     setActivityId,
     isSubmitting,
     canSave,
+    showDiscardConfirm,
     activities,
     enterEditMode,
     togglePreview,
     toggleSettings,
     handleSave,
     handleBack,
+    confirmDiscard,
+    cancelDiscard,
   } = useNoteDetailPage();
 
   const headerTitle = isNew
@@ -49,9 +54,15 @@ export function NoteDetailPage() {
         className="flex-1 bg-white dark:bg-gray-900 items-center justify-center"
         style={{ paddingTop: insets.top }}
       >
-        <Text className="text-gray-400 dark:text-gray-500 text-sm">...</Text>
+        <Text className="text-gray-400 dark:text-gray-500 text-sm">
+          {t("detail.loading")}
+        </Text>
       </View>
     );
+  }
+
+  if (notFound) {
+    return <NoteNotFound onBack={handleBack} topInset={insets.top} />;
   }
 
   return (
@@ -59,11 +70,11 @@ export function NoteDetailPage() {
       className="flex-1 bg-white dark:bg-gray-900"
       style={{ paddingTop: insets.top }}
     >
-      {/* Header */}
       <View className="flex-row items-center px-2 h-12 border-b border-gray-100 dark:border-gray-800">
         <TouchableOpacity
           onPress={handleBack}
           className="p-2 mr-1"
+          hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
           accessibilityRole="button"
           accessibilityLabel={t("detail.back")}
         >
@@ -90,7 +101,13 @@ export function NoteDetailPage() {
         )}
       </View>
 
-      {/* Settings Panel (slides down from top) */}
+      {showDiscardConfirm && (
+        <NoteDiscardConfirmInline
+          onConfirm={confirmDiscard}
+          onCancel={cancelDiscard}
+        />
+      )}
+
       <NoteSettingsPanel
         title={title}
         onChangeTitle={setTitle}
@@ -100,7 +117,6 @@ export function NoteDetailPage() {
         isOpen={settingsOpen}
       />
 
-      {/* Main Content */}
       <View className="flex-1">
         {mode === "view" && (
           <ScrollView
@@ -115,16 +131,24 @@ export function NoteDetailPage() {
         )}
 
         {mode === "edit" && (
-          <TextInput
-            className="flex-1 px-4 py-3 text-base text-gray-900 dark:text-gray-100"
-            value={content}
-            onChangeText={setContent}
-            multiline
-            textAlignVertical="top"
-            placeholder={t("create.placeholder.contentMobile")}
-            placeholderTextColor="#9ca3af"
-            style={{ paddingBottom: 80 + insets.bottom }}
-          />
+          <ScrollView
+            className="flex-1"
+            automaticallyAdjustKeyboardInsets
+            keyboardDismissMode="interactive"
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            <TextInput
+              className="flex-1 px-4 py-3 text-base text-gray-900 dark:text-gray-100"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              scrollEnabled={false}
+              textAlignVertical="top"
+              placeholder={t("create.placeholder.contentMobile")}
+              placeholderTextColor="#9ca3af"
+              style={{ paddingBottom: 80 + insets.bottom }}
+            />
+          </ScrollView>
         )}
 
         {mode === "preview" && (
@@ -140,7 +164,6 @@ export function NoteDetailPage() {
         )}
       </View>
 
-      {/* FAB */}
       <NoteDetailFab
         mode={mode}
         onEditPress={enterEditMode}

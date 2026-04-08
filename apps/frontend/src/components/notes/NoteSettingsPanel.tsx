@@ -26,11 +26,11 @@ export function NoteSettingsPanel({
   return (
     <div
       className="overflow-hidden transition-all duration-300 ease-in-out"
-      style={{ maxHeight: isOpen ? "300px" : "0px" }}
+      style={{ maxHeight: isOpen ? "500px" : "0px" }}
     >
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 space-y-3">
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t("create.label.title")}
           </label>
           <FormInput

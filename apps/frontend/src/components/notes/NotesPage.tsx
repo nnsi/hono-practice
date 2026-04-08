@@ -1,8 +1,9 @@
 import { useTranslation } from "@packages/i18n";
 import { useNavigate } from "@tanstack/react-router";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
+import { NoteCard } from "./NoteCard";
 import { useNotesPage } from "./useNotesPage";
 
 export function NotesPage() {
@@ -17,18 +18,21 @@ export function NotesPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white min-h-full">
+    <div className="bg-white dark:bg-gray-900 min-h-full">
       <div className="sticky top-0 sticky-header z-10">
         <div className="flex items-center justify-between px-4 pr-14 h-12">
-          <h1 className="text-lg font-bold text-gray-900">{t("page.title")}</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {t("page.title")}
+          </h1>
           <button
             type="button"
             onClick={() =>
               navigate({ to: "/notes/$noteId", params: { noteId: "new" } })
             }
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label={t("page.createNote")}
           >
-            <Plus size={20} className="text-gray-600" />
+            <Plus size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -36,7 +40,9 @@ export function NotesPage() {
       <div className="p-4">
         {notes.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">{t("page.empty")}</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {t("page.empty")}
+            </p>
             <button
               type="button"
               onClick={() =>
@@ -54,7 +60,11 @@ export function NotesPage() {
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+                className={`rounded-xl p-4 shadow-sm ${
+                  note._syncStatus === "pending"
+                    ? "border border-amber-200 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/20"
+                    : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                }`}
               >
                 {deleteConfirmId === note.id ? (
                   <DeleteConfirmInline
@@ -62,11 +72,12 @@ export function NotesPage() {
                     onCancel={() => setDeleteConfirmId(null)}
                   />
                 ) : (
-                  <NoteCardContent
+                  <NoteCard
                     title={note.title}
                     content={note.content}
                     updatedAt={note.updatedAt}
                     activityName={getActivityName(note.activityId)}
+                    syncStatus={note._syncStatus}
                     onClick={() =>
                       navigate({
                         to: "/notes/$noteId",
@@ -85,57 +96,6 @@ export function NotesPage() {
   );
 }
 
-function NoteCardContent({
-  title,
-  content,
-  updatedAt,
-  activityName,
-  onClick,
-  onDelete,
-}: {
-  title: string;
-  content: string;
-  updatedAt: string;
-  activityName: string | null;
-  onClick: () => void;
-  onDelete: () => void;
-}) {
-  const preview = content.length > 50 ? `${content.slice(0, 50)}...` : content;
-  const formattedDate = new Date(updatedAt).toLocaleDateString();
-
-  return (
-    <div className="flex items-start justify-between gap-2">
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex-1 min-w-0 text-left"
-      >
-        <h3 className="font-semibold text-gray-900 truncate">{title}</h3>
-        {preview && (
-          <p className="text-sm text-gray-500 mt-1 truncate">{preview}</p>
-        )}
-        <div className="flex items-center gap-2 mt-1.5">
-          <p className="text-xs text-gray-400">{formattedDate}</p>
-          {activityName && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-              {activityName}
-            </span>
-          )}
-        </div>
-      </button>
-      <div className="flex items-center gap-1 shrink-0">
-        <button
-          type="button"
-          onClick={onDelete}
-          className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <Trash2 size={16} className="text-gray-400" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function DeleteConfirmInline({
   onConfirm,
   onCancel,
@@ -147,7 +107,9 @@ function DeleteConfirmInline({
 
   return (
     <div className="flex items-center justify-between">
-      <p className="text-sm text-red-600 font-medium">{t("delete.inline")}</p>
+      <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+        {t("delete.inline")}
+      </p>
       <div className="flex gap-2">
         <FormButton
           variant="secondary"

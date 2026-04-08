@@ -1,6 +1,7 @@
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { FileText, Trash2 } from "lucide-react-native";
+import { FileText, Loader2, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -10,6 +11,7 @@ export function NoteCard({
   content,
   updatedAt,
   activityName,
+  syncStatus,
   onPress,
   onDelete,
 }: {
@@ -17,15 +19,17 @@ export function NoteCard({
   content: string;
   updatedAt: string;
   activityName: string | null;
+  syncStatus?: SyncStatus;
   onPress: () => void;
   onDelete: () => void;
 }) {
   const preview = content.length > 80 ? `${content.slice(0, 80)}...` : content;
   const { t } = useTranslation("note");
+  const isPending = syncStatus === "pending";
 
   return (
     <View
-      className="p-3.5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800"
+      className={`p-3.5 rounded-2xl ${isPending ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700" : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800"}`}
       style={{
         shadowColor: "#1c1917",
         shadowOffset: { width: 0, height: 1 },
@@ -43,6 +47,7 @@ export function NoteCard({
           >
             {title}
           </Text>
+          {isPending && <Loader2 size={14} color="#f97316" />}
         </View>
 
         {preview.length > 0 && (

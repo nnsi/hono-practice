@@ -41,13 +41,14 @@ export function NotesPage() {
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-800">
-      <View className="flex-row items-center justify-between px-4 h-12 border-b border-gray-100 dark:border-gray-800">
+      <View className="flex-row items-center justify-between pl-4 pr-16 h-12 border-b border-gray-100 dark:border-gray-800">
         <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
           {t("page.title")}
         </Text>
         <TouchableOpacity
           onPress={() => router.push("/notes/new")}
           className="p-2"
+          hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
           accessibilityRole="button"
           accessibilityLabel={t("page.createNote")}
         >
@@ -91,6 +92,7 @@ export function NotesPage() {
               content={note.content}
               updatedAt={note.updatedAt}
               activityName={getActivityName(note.activityId)}
+              syncStatus={note._syncStatus}
               onPress={() => router.push(`/notes/${note.id}`)}
               onDelete={() => setDeleteConfirmId(note.id)}
             />
