@@ -20,7 +20,7 @@ export function setupBrowser() {
   });
 
   beforeEach(async () => {
-    context = await browser.newContext();
+    context = await browser.newContext({ locale: "ja-JP" });
     page = await context.newPage();
   });
 
