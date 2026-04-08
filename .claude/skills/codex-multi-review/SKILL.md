@@ -1,6 +1,6 @@
 ---
 name: codex-multi-review
-description: Codex 4体（+ネイティブ1体）に専門レビュアーロールを割り当てて並列レビュー。トークン消費を抑えた軽量版multi-review。修正は行わない。
+description: Codexに専門レビュアーロールを割り当てて並列レビュー。修正は行わない。
 user_invocable: true
 ---
 

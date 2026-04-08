@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useLocalSearchParams, useRouter } from "expo-router";
 
@@ -16,14 +16,19 @@ export function useNoteDetailPage() {
 
   const isNew = noteId === "new";
 
-  const note = useLiveQuery(
+  // null sentinel: undefined=loading, null=not found, object=found
+  const noteQueryResult = useLiveQuery(
     "notes",
     () =>
       !isNew && noteId
-        ? noteRepository.getNoteById(noteId)
+        ? noteRepository.getNoteById(noteId).then((n) => n ?? null)
         : Promise.resolve(undefined),
     [noteId, isNew],
   );
+
+  const note = noteQueryResult ?? undefined;
+  const isLoading = !isNew && noteQueryResult === undefined;
+  const notFound = !isNew && noteQueryResult === null;
 
   const [mode, setMode] = useState<NoteDetailMode>(isNew ? "edit" : "view");
   const [settingsOpen, setSettingsOpen] = useState(isNew);
@@ -32,6 +37,7 @@ export function useNoteDetailPage() {
   const [activityId, setActivityId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   useEffect(() => {
     if (!isNew && note && !initialized) {
@@ -42,8 +48,21 @@ export function useNoteDetailPage() {
     }
   }, [isNew, note, initialized]);
 
-  const isLoading = !isNew && note === undefined && !initialized;
   const canSave = title.trim() !== "" && !isSubmitting;
+
+  const isDirty = useMemo(() => {
+    if (mode === "view") return false;
+    if (isNew)
+      return (
+        title.trim() !== "" || content.trim() !== "" || activityId !== null
+      );
+    if (!note) return false;
+    return (
+      title !== note.title ||
+      content !== note.content ||
+      activityId !== note.activityId
+    );
+  }, [mode, isNew, note, title, content, activityId]);
 
   const enterEditMode = useCallback(() => {
     setMode("edit");
@@ -68,7 +87,7 @@ export function useNoteDetailPage() {
           activityId,
         });
         syncEngine.syncAll();
-        router.back();
+        router.navigate("/(tabs)/notes");
       } else if (noteId) {
         await noteRepository.updateNote(noteId, {
           title: title.trim(),
@@ -85,12 +104,26 @@ export function useNoteDetailPage() {
   }, [canSave, isNew, noteId, title, content, activityId, router]);
 
   const handleBack = useCallback(() => {
-    router.back();
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    router.navigate("/(tabs)/notes");
+  }, [isDirty, router]);
+
+  const confirmDiscard = useCallback(() => {
+    setShowDiscardConfirm(false);
+    router.navigate("/(tabs)/notes");
   }, [router]);
+
+  const cancelDiscard = useCallback(() => {
+    setShowDiscardConfirm(false);
+  }, []);
 
   return {
     isNew,
     isLoading,
+    notFound,
     mode,
     settingsOpen,
     title,
@@ -101,6 +134,8 @@ export function useNoteDetailPage() {
     setActivityId,
     isSubmitting,
     canSave,
+    isDirty,
+    showDiscardConfirm,
     activities,
     note,
     enterEditMode,
@@ -108,5 +143,7 @@ export function useNoteDetailPage() {
     toggleSettings,
     handleSave,
     handleBack,
+    confirmDiscard,
+    cancelDiscard,
   };
 }

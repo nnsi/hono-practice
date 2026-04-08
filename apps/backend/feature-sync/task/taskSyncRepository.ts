@@ -58,7 +58,7 @@ function upsertTasks(db: QueryExecutor) {
     userId: UserId,
     validTasks: UpsertTaskRequest[],
   ): Promise<TaskRow[]> => {
-    return await db
+    const rows = await db
       .insert(tasks)
       .values(
         validTasks.map((task) => ({
@@ -90,7 +90,7 @@ function upsertTasks(db: QueryExecutor) {
           doneDate: sql`excluded.done_date`,
           memo: sql`excluded.memo`,
           archivedAt: sql`excluded.archived_at`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -99,6 +99,16 @@ function upsertTasks(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(tasks)
+        .set({ updatedAt: sql`NOW()` })
+        .where(and(inArray(tasks.id, ids), lt(tasks.updatedAt, sql`NOW()`)));
+    }
+
+    return rows;
   };
 }
 

@@ -1,6 +1,7 @@
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
-import { testDB } from "@backend/test.setup";
+import { TEST_USER_ID, testDB } from "@backend/test.setup";
+import { tasks } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
 import { taskSyncRoute } from ".";
@@ -208,5 +209,131 @@ describe("GET /users/v2/tasks", () => {
 
     const json = await res.json();
     expect(json.tasks).toHaveLength(0);
+  });
+});
+
+describe("clock skew handling - 時計が遅いケース", () => {
+  test("新規のupdatedAtがNOW()に引き上がりpull可能", async () => {
+    const app = createApp();
+    const beforePush = new Date(Date.now() - 1000).toISOString();
+
+    const task = makeTask({
+      updatedAt: "2020-01-01T00:00:00.000Z",
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { tasks: [task] });
+    expect(pushRes.status).toBe(200);
+    expect((await pushRes.json()).syncedIds).toContain(task.id);
+
+    // fix-up により updatedAt >= NOW() → beforePush 以降の since で取得可能
+    const pullRes = await getTasks(app, `since=${beforePush}`);
+    const pullJson = await pullRes.json();
+    expect(pullJson.tasks.map((r: { id: string }) => r.id)).toContain(task.id);
+  });
+
+  test("既存レコードの更新でupdatedAtがGREATESTで引き上がりpull可能", async () => {
+    const app = createApp();
+    const taskId = crypto.randomUUID();
+
+    // DB直接挿入: fix-upを経由しない既知のupdatedAtを持つレコード
+    await testDB.insert(tasks).values({
+      id: taskId,
+      userId: TEST_USER_ID,
+      title: "Original",
+      createdAt: new Date("2020-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    const beforeUpdate = new Date(Date.now() - 1000).toISOString();
+
+    // DBより新しいがNOW()より古い updatedAt で更新（時計遅れを再現）
+    const clockBehindTime = "2023-06-01T00:00:00.000Z";
+    const updatedTask = makeTask({
+      id: taskId,
+      title: "Updated from slow-clock device",
+      updatedAt: clockBehindTime,
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { tasks: [updatedTask] });
+    const pushJson = await pushRes.json();
+    // LWW: DB(2020) < client(2023) → client wins
+    expect(pushJson.syncedIds).toContain(taskId);
+
+    // SET GREATEST(2023, NOW()) = NOW() → pull可能
+    const pullRes = await getTasks(app, `since=${beforeUpdate}`);
+    const pullJson = await pullRes.json();
+    const found = pullJson.tasks.find((r: { id: string }) => r.id === taskId);
+    expect(found).toBeDefined();
+    expect(found.title).toBe("Updated from slow-clock device");
+  });
+
+  test("古い更新はserver winsを維持（LWW不変）", async () => {
+    const app = createApp();
+
+    const oldTask = makeTask({
+      id: SEED_TASK_ID_1,
+      title: "old title",
+      updatedAt: "2020-01-01T00:00:00.000Z",
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { tasks: [oldTask] });
+    const pushJson = await pushRes.json();
+    expect(pushJson.syncedIds).not.toContain(SEED_TASK_ID_1);
+    expect(pushJson.serverWins).toHaveLength(1);
+    expect(pushJson.serverWins[0].id).toBe(SEED_TASK_ID_1);
+  });
+});
+
+describe("clock skew handling - 時計が早いケース", () => {
+  test("5分以内の新規レコードが同期・pull可能", async () => {
+    const app = createApp();
+    const threeMinAhead = new Date(Date.now() + 3 * 60 * 1000).toISOString();
+
+    const task = makeTask({ updatedAt: threeMinAhead });
+
+    const pushRes = await postSync(app, { tasks: [task] });
+    const pushJson = await pushRes.json();
+    expect(pushJson.syncedIds).toContain(task.id);
+    expect(pushJson.skippedIds).toHaveLength(0);
+
+    // updatedAt > NOW() なので since=NOW でも取得可能
+    const pullRes = await getTasks(app, `since=${NOW}`);
+    const pullJson = await pullRes.json();
+    expect(pullJson.tasks.map((r: { id: string }) => r.id)).toContain(task.id);
+  });
+
+  test("5分以内の更新がクライアント値のまま保存される", async () => {
+    const app = createApp();
+    const taskId = crypto.randomUUID();
+
+    await testDB.insert(tasks).values({
+      id: taskId,
+      userId: TEST_USER_ID,
+      title: "Original",
+      createdAt: new Date("2020-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    const twoMinAhead = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+    const updatedTask = makeTask({
+      id: taskId,
+      title: "Updated from fast-clock device",
+      updatedAt: twoMinAhead,
+      createdAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const pushRes = await postSync(app, { tasks: [updatedTask] });
+    expect((await pushRes.json()).syncedIds).toContain(taskId);
+
+    // クライアント値(NOW+2m) > NOW() → GREATESTはクライアント値を採用
+    // since=NOW でも取得可能（updatedAt > NOW）
+    const pullRes = await getTasks(app, `since=${NOW}`);
+    const pullJson = await pullRes.json();
+    const found = pullJson.tasks.find((r: { id: string }) => r.id === taskId);
+    expect(found).toBeDefined();
+    expect(found.title).toBe("Updated from fast-clock device");
   });
 });

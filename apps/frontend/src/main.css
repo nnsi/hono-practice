@@ -100,6 +100,11 @@
     border-bottom: 1px solid rgba(231, 229, 228, 0.6);
   }
 
+  .dark .sticky-header {
+    background: rgba(17, 24, 39, 0.88);
+    border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+  }
+
   /* ── Activity done glow ── */
   .activity-done {
     background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);

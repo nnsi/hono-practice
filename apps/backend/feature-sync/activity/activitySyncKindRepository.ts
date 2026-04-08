@@ -25,7 +25,7 @@ export function upsertActivityKinds(db: QueryExecutor) {
     validKinds: UpsertActivityKindRequest[],
     ownedActivityIds: string[],
   ): Promise<ActivityKindRow[]> => {
-    return await db
+    const rows = await db
       .insert(activityKinds)
       .values(
         validKinds.map((kind) => ({
@@ -46,7 +46,7 @@ export function upsertActivityKinds(db: QueryExecutor) {
           name: sql`excluded.name`,
           color: sql`excluded.color`,
           orderIndex: sql`excluded.order_index`,
-          updatedAt: sql`excluded.updated_at`,
+          updatedAt: sql`GREATEST(excluded.updated_at, NOW())`,
           deletedAt: sql`excluded.deleted_at`,
         },
         setWhere: and(
@@ -55,6 +55,21 @@ export function upsertActivityKinds(db: QueryExecutor) {
         ),
       })
       .returning();
+
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      await db
+        .update(activityKinds)
+        .set({ updatedAt: sql`NOW()` })
+        .where(
+          and(
+            inArray(activityKinds.id, ids),
+            lt(activityKinds.updatedAt, sql`NOW()`),
+          ),
+        );
+    }
+
+    return rows;
   };
 }
 

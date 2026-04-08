@@ -15,6 +15,23 @@ const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3456"
 ).replace(/\/+$/, "");
 
+const DELTA_SYNC_RESOURCES = [
+  "logs",
+  "goals",
+  "freezePeriods",
+  "tasks",
+  "notes",
+] as const;
+
+// Keep this list frozen. Future sync resources should be added only to
+// DELTA_SYNC_RESOURCES so older clients full-pull the new resource once.
+const LEGACY_BOOTSTRAPPED_RESOURCES = [
+  "logs",
+  "goals",
+  "freezePeriods",
+  "tasks",
+] as const;
+
 const { clearLocalData, performInitialSync } = createInitialSync({
   clearAllTables: async () => {
     await db.activityLogs.clear();
@@ -53,9 +70,23 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       noteCount === 0
     );
   },
-  fetchAllApis: async (sinceQuery) => {
-    const freezePeriodsUrl = sinceQuery.since
-      ? `${API_URL}/users/v2/goal-freeze-periods?since=${encodeURIComponent(sinceQuery.since)}`
+  fetchAllApis: async (sinceByResource) => {
+    const logsQuery = sinceByResource.logs
+      ? { since: sinceByResource.logs }
+      : {};
+    const goalsQuery = sinceByResource.goals
+      ? { since: sinceByResource.goals, clientDate: getToday() }
+      : { clientDate: getToday() };
+    const tasksQuery = sinceByResource.tasks
+      ? { since: sinceByResource.tasks }
+      : {};
+    const notesQuery = sinceByResource.notes
+      ? { since: sinceByResource.notes }
+      : {};
+    const freezePeriodsUrl = sinceByResource.freezePeriods
+      ? `${API_URL}/users/v2/goal-freeze-periods?since=${encodeURIComponent(
+          sinceByResource.freezePeriods,
+        )}`
       : `${API_URL}/users/v2/goal-freeze-periods`;
     const [
       activitiesRes,
@@ -66,14 +97,12 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       notesRes,
     ] = await Promise.all([
       apiClient.users.v2.activities.$get(),
-      apiClient.users.v2["activity-logs"].$get({ query: sinceQuery }),
-      apiClient.users.v2.goals.$get({
-        query: { ...sinceQuery, clientDate: getToday() },
-      }),
+      apiClient.users.v2["activity-logs"].$get({ query: logsQuery }),
+      apiClient.users.v2.goals.$get({ query: goalsQuery }),
       // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
       customFetch(freezePeriodsUrl).catch(() => null),
-      apiClient.users.v2.tasks.$get({ query: sinceQuery }),
-      apiClient.users.v2.notes.$get({ query: sinceQuery }),
+      apiClient.users.v2.tasks.$get({ query: tasksQuery }),
+      apiClient.users.v2.notes.$get({ query: notesQuery }),
     ]);
     return {
       activitiesRes,
@@ -123,6 +152,8 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       },
     );
   },
+  deltaResources: DELTA_SYNC_RESOURCES,
+  legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
   defaultStorage: webStorageAdapter,
 });
 

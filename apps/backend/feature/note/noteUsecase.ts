@@ -98,7 +98,7 @@ function updateNote(repo: NoteRepository, tracer: Tracer) {
     params: UpdateNoteInputParams,
   ) => {
     const activityIdForUpdate = params.activityId;
-    if (activityIdForUpdate) {
+    if (typeof activityIdForUpdate === "string") {
       const owned = await tracer.span("db.getOwnedActivityIds", () =>
         repo.getOwnedActivityIds(userId, [activityIdForUpdate]),
       );
