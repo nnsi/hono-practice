@@ -20,6 +20,8 @@ describe("auth", () => {
     await page.click('button:has-text("新規登録")');
     await page.fill("#register-loginId", "e2e-register@example.com");
     await page.fill("#register-password", "password123");
+    // 利用規約同意チェックボックスを押す
+    await page.locator('input[type="checkbox"]').check();
     await page.click('button[type="submit"]');
 
     await page.waitForSelector("nav", { timeout: 15000 });
