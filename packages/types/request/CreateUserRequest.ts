@@ -12,7 +12,7 @@ export const createUserRequestSchema = z.object({
   password: z
     .string()
     .min(V.PASSWORD_MIN, "validation:passwordMin8")
-    .max(V.LOGIN_ID_MAX, "validation:passwordMax100"),
+    .max(V.PASSWORD_MAX, "validation:passwordMax100"),
   consents: consentsSchema,
 });
 

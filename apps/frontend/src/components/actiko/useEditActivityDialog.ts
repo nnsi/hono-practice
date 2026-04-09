@@ -114,7 +114,7 @@ export function useEditActivityDialog(
       kinds
         .filter((k) => k.name.trim())
         .map((k) => ({
-          id: k.id as string | undefined,
+          id: typeof k.id === "string" ? k.id : undefined,
           name: k.name,
           color: k.color,
         })),

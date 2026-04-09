@@ -4,7 +4,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { createActivityRoute } from "..";
 
@@ -309,4 +309,70 @@ test("DELETE activities/:id/icon / activity not found", async () => {
   expect(res.status).toEqual(404);
   const resJson = await res.json();
   expect(resJson.message).toContain("activity not found");
+});
+
+describe("recordingMode バリデーション", () => {
+  test("POST activities / 無効な recordingMode は 400 を返す", async () => {
+    const route = createActivityRoute();
+    const app = newHonoWithErrorHandling()
+      .use(mockAuthMiddleware)
+      .route("/", route);
+
+    const res = await app.request(
+      "/",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name: "test",
+          label: "test",
+          emoji: "🏃",
+          quantityUnit: "回",
+          showCombinedStats: true,
+          recordingMode: "invalid_mode",
+        }),
+        headers: {
+          "x-user-id": "00000000-0000-4000-8000-000000000001",
+          "Content-Type": "application/json",
+        },
+      },
+      {
+        DB: testDB,
+      },
+    );
+
+    expect(res.status).toEqual(400);
+  });
+
+  test("PUT activities/:id / 無効な recordingMode は 400 を返す", async () => {
+    const route = createActivityRoute();
+    const app = newHonoWithErrorHandling()
+      .use(mockAuthMiddleware)
+      .route("/", route);
+
+    const res = await app.request(
+      "/00000000-0000-4000-8000-000000000001",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          activity: {
+            name: "test",
+            emoji: "🏃",
+            quantityUnit: "回",
+            showCombinedStats: true,
+            recordingMode: "invalid_mode",
+          },
+          kinds: [],
+        }),
+        headers: {
+          "x-user-id": "00000000-0000-4000-8000-000000000001",
+          "Content-Type": "application/json",
+        },
+      },
+      {
+        DB: testDB,
+      },
+    );
+
+    expect(res.status).toEqual(400);
+  });
 });

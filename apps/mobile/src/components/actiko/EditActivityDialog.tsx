@@ -148,9 +148,18 @@ export function EditActivityDialog({
 
         <EditActivityKindList
           kindEntries={kindEntries}
-          onUpdateName={updateKindName}
-          onUpdateColor={updateKindColor}
-          onRemove={removeKind}
+          onUpdateName={(index, text) => {
+            if (kindEntries[index].id != null)
+              updateKindName(kindEntries[index].id, text);
+          }}
+          onUpdateColor={(index, color) => {
+            if (kindEntries[index].id != null)
+              updateKindColor(kindEntries[index].id, color);
+          }}
+          onRemove={(index) => {
+            if (kindEntries[index].id != null)
+              removeKind(kindEntries[index].id);
+          }}
           onAdd={addKind}
         />
 

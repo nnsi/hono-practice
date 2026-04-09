@@ -10,7 +10,7 @@ export const loginRequestSchema = z.object({
   password: z
     .string()
     .min(V.PASSWORD_MIN, "validation:passwordMin8")
-    .max(V.LOGIN_ID_MAX, "validation:passwordTooLong"),
+    .max(V.PASSWORD_MAX, "validation:passwordTooLong"),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;

@@ -57,7 +57,7 @@ export function getStatusBadge(
     };
   }
   return {
-    label: "達成ペース",
+    label: t("statusOnPace"),
     bgClass: "bg-green-50",
     textClass: "text-green-600",
   };
@@ -123,7 +123,7 @@ export function createUseGoalCard(deps: GoalCardDeps) {
       const start = dayjs(goal.startDate);
       const end = goal.endDate ? dayjs(goal.endDate) : dayjs();
       return Math.max(end.diff(start, "day") + 1, 1);
-    }, [goal.startDate, goal.endDate]);
+    }, [goal.startDate, goal.endDate, today]);
 
     const todayLogCount = useTodayLogCount(goal.activityId, today);
     const hasTodayLog = (todayLogCount ?? 0) > 0;

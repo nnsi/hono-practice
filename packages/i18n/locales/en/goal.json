@@ -71,5 +71,6 @@
   "cardCancel": "Cancel",
   "statusEnded": "Ended",
   "statusInDebt": "In Debt",
-  "statusOnTrack": "On Track"
+  "statusOnTrack": "On Track",
+  "statusOnPace": "On Pace"
 }
