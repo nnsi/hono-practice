@@ -8,12 +8,7 @@ import { type ApiResponse, parseResponses } from "./parseResponses";
 const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
 const BOOTSTRAPPED_RESOURCES_KEY = "actiko-v2-bootstrappedResources";
 
-type DeltaSyncResource =
-  | "logs"
-  | "goals"
-  | "freezePeriods"
-  | "tasks"
-  | "notes";
+type DeltaSyncResource = "logs" | "goals" | "freezePeriods" | "tasks" | "notes";
 
 type SinceByResource = Partial<Record<DeltaSyncResource, string>>;
 
@@ -49,7 +44,8 @@ function readBootstrappedResources(
     if (!Array.isArray(parsed)) return new Set(fallback);
     return new Set(
       parsed.filter(
-        (resource): resource is DeltaSyncResource => typeof resource === "string",
+        (resource): resource is DeltaSyncResource =>
+          typeof resource === "string",
       ),
     );
   } catch {

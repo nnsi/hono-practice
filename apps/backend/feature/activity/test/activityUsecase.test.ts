@@ -7,6 +7,7 @@ import {
   createActivityId,
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -161,7 +162,7 @@ describe("ActivityUsecase", () => {
         iconType: "emoji" | "upload" | "generate";
         description?: string;
         quantityUnit: string;
-        recordingMode: string;
+        recordingMode: RecordingMode;
       };
       mockLastOrderIndex: string | undefined;
       mockReturn: Activity;
@@ -178,7 +179,7 @@ describe("ActivityUsecase", () => {
           emoji: "🏃",
           iconType: "emoji" as const,
           quantityUnit: "km",
-          recordingMode: "manual",
+          recordingMode: "manual" as const,
         },
         mockLastOrderIndex: undefined,
         mockReturn: {
@@ -197,7 +198,7 @@ describe("ActivityUsecase", () => {
           iconType: "emoji" as const,
           description: "Swimming practice",
           quantityUnit: "m",
-          recordingMode: "manual",
+          recordingMode: "manual" as const,
         },
         mockLastOrderIndex: "a",
         mockReturn: {

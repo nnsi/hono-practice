@@ -1,79 +1,48 @@
+import type { DebtFeedbackResult } from "@packages/domain/goal/goalDebtFeedback";
 import {
-  type DebtFeedbackResult,
-  calculateDebtFeedback,
-} from "@packages/domain/goal/goalDebtFeedback";
-import { getToday } from "@packages/frontend-shared/utils/dateUtils";
+  type DebtFeedbackDataSource,
+  computeDebtFeedbackForActivity,
+} from "@packages/frontend-shared/hooks/computeDebtFeedback";
 
 import { db } from "../../db/schema";
 
-/**
- * あるアクティビティに紐づく全アクティブゴールの DebtFeedback を計算する。
- * 表示すべきフィードバックがなければ空配列を返す。
- */
-export async function computeDebtFeedbackForActivity(
+const dexieDataSource: DebtFeedbackDataSource = {
+  async getActiveGoalsForActivity(activityId) {
+    return db.goals
+      .where("activityId")
+      .equals(activityId)
+      .filter(
+        (g) => g.deletedAt === null && g.isActive && g.dailyTargetQuantity > 0,
+      )
+      .toArray();
+  },
+  async getActivityLogs(activityId, startDate, endDate) {
+    return db.activityLogs
+      .where("activityId")
+      .equals(activityId)
+      .filter(
+        (l) => l.deletedAt === null && l.date >= startDate && l.date <= endDate,
+      )
+      .toArray();
+  },
+  async getFreezePeriods(goalId) {
+    return db.goalFreezePeriods
+      .where("goalId")
+      .equals(goalId)
+      .filter((fp) => fp.deletedAt === null)
+      .toArray();
+  },
+};
+
+export async function computeDebtFeedbackForAllGoals(
   activityId: string,
   quantityRecorded: number,
   date: string,
 ): Promise<DebtFeedbackResult[]> {
-  if (quantityRecorded <= 0) return [];
-
-  const today = getToday();
-
-  const goals = await db.goals
-    .where("activityId")
-    .equals(activityId)
-    .filter(
-      (g) => g.deletedAt === null && g.isActive && g.dailyTargetQuantity > 0,
-    )
-    .toArray();
-
-  if (goals.length === 0) return [];
-
-  const results: DebtFeedbackResult[] = [];
-
-  for (const goal of goals) {
-    // Skip goals whose date range doesn't cover the recording date
-    if (date < goal.startDate) continue;
-    if (goal.endDate && date > goal.endDate) continue;
-
-    const effectiveEnd =
-      goal.endDate && today > goal.endDate ? goal.endDate : today;
-    const logsBefore = await db.activityLogs
-      .where("activityId")
-      .equals(activityId)
-      .filter(
-        (l) =>
-          l.deletedAt === null &&
-          l.date >= goal.startDate &&
-          l.date <= effectiveEnd,
-      )
-      .toArray();
-
-    const freezePeriods = await db.goalFreezePeriods
-      .where("goalId")
-      .equals(goal.id)
-      .filter((fp) => fp.deletedAt === null)
-      .toArray();
-
-    const result = calculateDebtFeedback(
-      goal,
-      logsBefore.map((l) => ({ date: l.date, quantity: l.quantity })),
-      quantityRecorded,
-      date,
-      today,
-      freezePeriods.map((fp) => ({
-        startDate: fp.startDate,
-        endDate: fp.endDate,
-      })),
-    );
-
-    result.goalLabel =
-      goals.length > 1
-        ? goal.description || `目標${goal.dailyTargetQuantity}/日`
-        : null;
-
-    results.push(result);
-  }
-
-  return results;
+  return computeDebtFeedbackForActivity(
+    activityId,
+    quantityRecorded,
+    date,
+    dexieDataSource,
+  );
 }

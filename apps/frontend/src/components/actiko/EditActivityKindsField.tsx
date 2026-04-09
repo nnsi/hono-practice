@@ -1,14 +1,13 @@
+import type { KindEntry } from "@packages/frontend-shared/hooks/useActivityKindEntries";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { useTranslation } from "@packages/i18n";
 import { Trash2 } from "lucide-react";
 
 import { FormInput } from "../common/FormInput";
 
-type Kind = { id?: string; name: string; color: string };
-
 type EditActivityKindsFieldProps = {
-  kinds: Kind[];
-  setKinds: React.Dispatch<React.SetStateAction<Kind[]>>;
+  kinds: KindEntry[];
+  setKinds: (value: KindEntry[] | ((prev: KindEntry[]) => KindEntry[])) => void;
 };
 
 export function EditActivityKindsField({

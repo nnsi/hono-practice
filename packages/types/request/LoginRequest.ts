@@ -1,14 +1,16 @@
 import { z } from "zod";
 
+import { VALIDATION as V } from "../validation";
+
 export const loginRequestSchema = z.object({
   login_id: z
     .string()
     .min(1, "validation:loginIdRequired")
-    .max(100, "validation:loginIdTooLong"),
+    .max(V.LOGIN_ID_MAX, "validation:loginIdTooLong"),
   password: z
     .string()
-    .min(8, "validation:passwordMin8")
-    .max(100, "validation:passwordTooLong"),
+    .min(V.PASSWORD_MIN, "validation:passwordMin8")
+    .max(V.PASSWORD_MAX, "validation:passwordTooLong"),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;

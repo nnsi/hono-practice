@@ -1,15 +1,13 @@
-import { useCallback, useRef, useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp, Pause } from "lucide-react";
 
-import { goalRepository } from "../../db/goalRepository";
 import type { DexieActivity } from "../../db/schema";
-import { syncEngine } from "../../sync/syncEngine";
 import { getActivityIcon } from "./activityHelpers";
 import { GoalCardActions } from "./GoalCardActions";
 import type { Goal } from "./types";
+import { useGoalInlineEdit } from "./useGoalInlineEdit";
+
 export function GoalCardHeader({
   goal,
   activity,
@@ -37,7 +35,7 @@ export function GoalCardHeader({
   localBalance: number;
   debtCapped: boolean;
   balanceColor: string;
-  statusBadge: { label: string; className: string };
+  statusBadge: { label: string; bgClass: string; textClass: string };
   isCurrentlyFrozen: boolean;
   showDeleteConfirm: boolean;
   deleting: boolean;
@@ -50,41 +48,15 @@ export function GoalCardHeader({
   onHandleDelete: () => void;
 }) {
   const { t } = useTranslation("goal");
-  // --- インライン編集 ---
-  const [inlineEditing, setInlineEditing] = useState(false);
-  const [inlineValue, setInlineValue] = useState("");
-  const inlineInputRef = useRef<HTMLInputElement>(null);
-
-  const startInlineEdit = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (isPast) return;
-      setInlineValue(String(goal.dailyTargetQuantity));
-      setInlineEditing(true);
-      requestAnimationFrame(() => inlineInputRef.current?.select());
-    },
-    [goal.dailyTargetQuantity, isPast],
-  );
-
-  const commitInlineEdit = useCallback(async () => {
-    setInlineEditing(false);
-    const num = Number(inlineValue);
-    if (Number.isNaN(num) || num <= 0 || num === goal.dailyTargetQuantity)
-      return;
-    await goalRepository.updateGoal(goal.id, { dailyTargetQuantity: num });
-    syncEngine.syncGoals();
-  }, [inlineValue, goal.id, goal.dailyTargetQuantity]);
-
-  const handleInlineKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commitInlineEdit();
-      } else if (e.key === "Escape") {
-        setInlineEditing(false);
-      }
-    },
-    [commitInlineEdit],
-  );
+  const {
+    inlineEditing,
+    inlineValue,
+    inlineInputRef,
+    setInlineValue,
+    startInlineEdit,
+    commitInlineEdit,
+    handleInlineKeyDown,
+  } = useGoalInlineEdit(goal.id, goal.dailyTargetQuantity, isPast);
 
   return (
     <div
@@ -130,7 +102,7 @@ export function GoalCardHeader({
           {/* 行2: バッジ + メタ情報 + アクションボタン */}
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.className}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap flex-shrink-0 ${statusBadge.bgClass} ${statusBadge.textClass}`}
             >
               {statusBadge.label}
             </span>

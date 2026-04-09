@@ -32,7 +32,31 @@ async function sendRevenueCatWebhook(
   return res;
 }
 
-async function getDexiePlan(page: import("playwright").Page): Promise<string> {
+async function waitForDexiePlan(
+  page: import("playwright").Page,
+  expected: string,
+  timeoutMs = 5000,
+): Promise<string> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const plan = await page.evaluate(() => {
+      return new Promise<string>((resolve, reject) => {
+        const request = indexedDB.open("actiko");
+        request.onsuccess = () => {
+          const db = request.result;
+          const tx = db.transaction("authState", "readonly");
+          const store = tx.objectStore("authState");
+          const getReq = store.get("current");
+          getReq.onsuccess = () => resolve(getReq.result?.plan ?? "none");
+          getReq.onerror = () => reject(getReq.error);
+        };
+        request.onerror = () => reject(request.error);
+      });
+    });
+    if (plan === expected) return plan;
+    await page.waitForTimeout(300);
+  }
+  // タイムアウト: 最終値を返す
   return page.evaluate(() => {
     return new Promise<string>((resolve, reject) => {
       const request = indexedDB.open("actiko");
@@ -57,7 +81,7 @@ describe("entitlement", () => {
     await login(page, "e2e@example.com", "password123");
 
     // seed で premium subscription が入っているので premium のはず
-    const plan = await getDexiePlan(page);
+    const plan = await waitForDexiePlan(page, "premium");
     expect(plan).toBe("premium");
   });
 
@@ -66,7 +90,7 @@ describe("entitlement", () => {
     await login(page, "e2e@example.com", "password123");
 
     // 初期状態: premium
-    expect(await getDexiePlan(page)).toBe("premium");
+    expect(await waitForDexiePlan(page, "premium")).toBe("premium");
 
     // EXPIRATION webhook → free に
     const res = await sendRevenueCatWebhook(
@@ -80,7 +104,7 @@ describe("entitlement", () => {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForSelector("nav", { timeout: 15000 });
 
-    expect(await getDexiePlan(page)).toBe("free");
+    expect(await waitForDexiePlan(page, "free")).toBe("free");
   });
 
   it("Webhook で plan が premium に戻る", async () => {
@@ -88,7 +112,7 @@ describe("entitlement", () => {
     await login(page, "e2e@example.com", "password123");
 
     // 前テストで free になっている
-    expect(await getDexiePlan(page)).toBe("free");
+    expect(await waitForDexiePlan(page, "free")).toBe("free");
 
     // INITIAL_PURCHASE webhook → premium に
     const res = await sendRevenueCatWebhook(
@@ -101,7 +125,7 @@ describe("entitlement", () => {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForSelector("nav", { timeout: 15000 });
 
-    expect(await getDexiePlan(page)).toBe("premium");
+    expect(await waitForDexiePlan(page, "premium")).toBe("premium");
   });
 
   it("不正な認証キーで 401 が返る", async () => {

@@ -1,3 +1,5 @@
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+
 /**
  * React hooks DI型（Metro + pnpm 環境で packages/ から react を
  * 直接 import すると CJS 初期化問題が起きるため）。
@@ -46,7 +48,7 @@ export type ActivityLogBase = {
   memo: string;
   date: string;
   time: string | null;
-  _syncStatus?: "synced" | "pending" | "failed" | "rejected";
+  _syncStatus?: SyncStatus;
 };
 
 /**
@@ -110,7 +112,7 @@ export type DailyTask = {
   memo: string;
   startDate: string | null;
   dueDate: string | null;
-  _syncStatus?: "synced" | "pending" | "failed" | "rejected";
+  _syncStatus?: SyncStatus;
 };
 
 /**

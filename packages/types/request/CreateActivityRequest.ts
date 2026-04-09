@@ -1,26 +1,32 @@
+import { RECORDING_MODES } from "@packages/domain/activity/recordingMode";
 import { z } from "zod";
+
+import { VALIDATION as V } from "../validation";
 
 export const CreateActivityRequestSchema = z.object({
   name: z
     .string()
     .min(1, "validation:titleRequired")
-    .max(20, "validation:max20Chars"),
-  description: z.string().max(500).optional(),
-  label: z.string().max(50).optional(),
-  emoji: z.string().min(1, "validation:emojiRequired").max(20),
+    .max(V.ACTIVITY_NAME_MAX, "validation:max20Chars"),
+  description: z.string().max(V.ACTIVITY_DESCRIPTION_MAX).optional(),
+  label: z.string().max(V.ACTIVITY_LABEL_MAX).optional(),
+  emoji: z
+    .string()
+    .min(1, "validation:emojiRequired")
+    .max(V.ACTIVITY_EMOJI_MAX),
   iconType: z.enum(["emoji", "upload", "generate"]).optional().default("emoji"),
   quantityUnit: z
     .string()
     .min(1, "validation:unitRequired")
-    .max(10, "validation:max10Chars"),
-  recordingMode: z.string().optional().default("manual"),
+    .max(V.ACTIVITY_UNIT_MAX, "validation:max10Chars"),
+  recordingMode: z.enum(RECORDING_MODES).optional().default("manual"),
   recordingModeConfig: z.string().nullable().optional(),
   showCombinedStats: z.boolean().optional(),
   kinds: z
     .array(
       z.object({
-        name: z.string().max(10, "validation:max10Chars"),
-        color: z.string().max(20).optional(),
+        name: z.string().max(V.KIND_NAME_MAX, "validation:max10Chars"),
+        color: z.string().max(V.KIND_COLOR_MAX).optional(),
       }),
     )
     .optional(),

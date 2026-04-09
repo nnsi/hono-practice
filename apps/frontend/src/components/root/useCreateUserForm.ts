@@ -6,6 +6,7 @@ import {
 } from "@packages/frontend-shared/legal";
 import { useTranslation } from "@packages/i18n";
 import type { Consents } from "@packages/types/request";
+import { VALIDATION } from "@packages/types/validation";
 
 type UseCreateUserFormProps = {
   onRegister: (
@@ -41,7 +42,8 @@ export function useCreateUserForm({
   const validate = (): string | null => {
     if (!loginId.trim()) return t("auth.loginIdRequired");
     if (!password) return t("auth.passwordRequired");
-    if (password.length < 8) return t("auth.passwordMinLength");
+    if (password.length < VALIDATION.PASSWORD_MIN)
+      return t("auth.passwordMinLength");
     return null;
   };
 
