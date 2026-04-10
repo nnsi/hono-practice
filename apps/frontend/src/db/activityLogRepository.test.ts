@@ -1,7 +1,11 @@
 import type { UpsertActivityLogFromServerInput } from "@packages/domain/activityLog/activityLogRepository";
+import {
+  type ActivityLogDbAdapter,
+  newActivityLogRepository,
+} from "@packages/frontend-shared/repositories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, uuidState } = vi.hoisted(() => {
+const { mockDb } = vi.hoisted(() => {
   function createMockCollection() {
     return {
       filter: vi.fn().mockReturnThis(),
@@ -23,6 +27,7 @@ const { mockDb, uuidState } = vi.hoisted(() => {
       where: vi.fn().mockReturnValue({
         equals: vi.fn().mockReturnValue(mockCollection),
         anyOf: vi.fn().mockReturnValue(mockCollection),
+        between: vi.fn().mockReturnValue(mockCollection),
       }),
       filter: vi.fn().mockReturnValue({
         toArray: vi.fn().mockResolvedValue([]),
@@ -31,25 +36,59 @@ const { mockDb, uuidState } = vi.hoisted(() => {
     };
   }
 
-  const state = { counter: 0 };
-
   return {
     mockDb: {
       activityLogs: createMockTable(),
     },
-    uuidState: state,
   };
 });
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
 
 vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
-import { activityLogRepository } from "./activityLogRepository";
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
+
+const adapter: ActivityLogDbAdapter = {
+  async insert(log) {
+    await mockDb.activityLogs.add(log);
+  },
+  async getAll(filter) {
+    return mockDb.activityLogs.filter(filter).toArray();
+  },
+  async getByDate(date) {
+    return mockDb.activityLogs
+      .where("date")
+      .equals(date)
+      .filter((log: { deletedAt: string | null }) => log.deletedAt === null)
+      .toArray();
+  },
+  async getByDateRange(startDate, endDate) {
+    return mockDb.activityLogs
+      .where("date")
+      .between(startDate, endDate, true, true)
+      .filter((log: { deletedAt: string | null }) => log.deletedAt === null)
+      .toArray();
+  },
+  async update(id, changes) {
+    await mockDb.activityLogs.update(id, changes);
+  },
+  async getByIds(ids) {
+    return mockDb.activityLogs.where("id").anyOf(ids).toArray();
+  },
+  async updateSyncStatus(ids, status) {
+    await mockDb.activityLogs
+      .where("id")
+      .anyOf(ids)
+      .modify({ _syncStatus: status });
+  },
+  async bulkUpsertSynced(logs) {
+    await mockDb.activityLogs.bulkPut(logs);
+  },
+};
+
+const activityLogRepository = newActivityLogRepository(adapter, mockGenerateId);
 
 describe("activityLogRepository", () => {
   beforeEach(() => {

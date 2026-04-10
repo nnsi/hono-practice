@@ -3,14 +3,11 @@ import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const uuidState = vi.hoisted(() => ({ counter: 0 }));
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
-
 import type { TaskDbAdapter } from "../taskRepositoryLogic";
 import { newTaskRepository } from "../taskRepositoryLogic";
+
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
 
 function createInMemoryAdapter() {
   const store = new Map<string, Syncable<TaskRecord>>();
@@ -91,8 +88,8 @@ describe("taskRepositoryLogic", () => {
     adapter = env.adapter;
     store = env.store;
     setUserId = env.setUserId;
-    repo = newTaskRepository(adapter);
     uuidState.counter = 0;
+    repo = newTaskRepository(adapter, mockGenerateId);
     resetServerTimeForTests();
   });
 

@@ -4,7 +4,7 @@ import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { tasks } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
-import { taskSyncRoute } from ".";
+import { taskSyncRoute } from "./taskSyncRoute";
 
 const SEED_TASK_ID_1 = "00000000-0000-4000-8000-000000000001";
 const SEED_TASK_ID_2 = "00000000-0000-4000-8000-000000000002";

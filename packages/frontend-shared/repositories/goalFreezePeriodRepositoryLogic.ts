@@ -56,13 +56,14 @@ export type GoalFreezePeriodRepository = {
 
 export function newGoalFreezePeriodRepository(
   adapter: GoalFreezePeriodDbAdapter,
+  generateId: () => string = uuidv7,
 ): GoalFreezePeriodRepository {
   return {
     async createGoalFreezePeriod(input: CreateFreezePeriodInput) {
       const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const period: Syncable<GoalFreezePeriodRecord> = {
-        id: uuidv7(),
+        id: generateId(),
         goalId: input.goalId,
         userId,
         startDate: input.startDate,

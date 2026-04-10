@@ -1,7 +1,6 @@
 import type { RefreshToken as RefreshTokenEntity } from "@packages/domain/auth/refreshTokenSchema";
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import type { createRemoteJWKSet, jwtVerify as defaultJwtVerify } from "jose";
 
 import type { OAuthVerify } from "./oauthVerify";
 
@@ -21,13 +20,6 @@ export type AuthOutput = {
   refreshToken: string;
   userId?: string;
 };
-
-// jwtVerifyの型定義
-export type JwtVerifyFn = (
-  jwt: string,
-  jwks: ReturnType<typeof createRemoteJWKSet>,
-  options: Parameters<typeof defaultJwtVerify>[2],
-) => ReturnType<typeof defaultJwtVerify>;
 
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;

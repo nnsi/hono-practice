@@ -5,7 +5,6 @@ import {
   type TimerPersistData,
   type TimerStorageAdapter,
   createUseTimer,
-  getTimerStorageKey,
 } from "@packages/frontend-shared";
 
 const localStorageAdapter: TimerStorageAdapter = {
@@ -48,5 +47,3 @@ export const useTimer = createUseTimer({
   useRef,
   storage: localStorageAdapter,
 });
-
-export { getTimerStorageKey };

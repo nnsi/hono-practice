@@ -12,9 +12,9 @@ import {
 import type { ApiKeyRepository } from "./apiKeyRepository";
 
 export type ApiKeyUsecase = {
-  createApiKey: (data: CreateApiKeyData) => Promise<ApiKey>; // throwする：DomainValidateError, SqlExecutionError
-  listApiKeys: (userId: string) => Promise<ApiKey[]>; // throwする：SqlExecutionError
-  deleteApiKey: (id: string, userId: string) => Promise<void>; // throwする：ResourceNotFoundError, SqlExecutionError
+  createApiKey: (data: CreateApiKeyData) => Promise<ApiKey>; // throwする：DomainValidateError
+  listApiKeys: (userId: string) => Promise<ApiKey[]>;
+  deleteApiKey: (id: string, userId: string) => Promise<void>; // throwする：ResourceNotFoundError
   validateApiKey: (key: string) => Promise<ApiKey | null>;
 };
 

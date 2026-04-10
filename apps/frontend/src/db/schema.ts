@@ -15,10 +15,10 @@ export type { SyncStatus } from "@packages/domain";
 export type DexieActivityLog = Syncable<Omit<ActivityLogRecord, "userId">>;
 export type DexieActivity = Syncable<ActivityRecord>;
 export type DexieActivityKind = Syncable<ActivityKindRecord>;
-export type DexieGoal = Syncable<GoalRecord>;
-export type DexieGoalFreezePeriod = Syncable<GoalFreezePeriodRecord>;
-export type DexieTask = Syncable<TaskRecord>;
-export type DexieNote = Syncable<NoteRecord>;
+type DexieGoal = Syncable<GoalRecord>;
+type DexieGoalFreezePeriod = Syncable<GoalFreezePeriodRecord>;
+type DexieTask = Syncable<TaskRecord>;
+type DexieNote = Syncable<NoteRecord>;
 
 export type DexieActivityIconBlob = {
   activityId: string;
@@ -27,18 +27,18 @@ export type DexieActivityIconBlob = {
   synced?: boolean;
 };
 
-export type DexieActivityIconDeleteQueue = {
+type DexieActivityIconDeleteQueue = {
   activityId: string;
 };
 
-export type DexieAuthState = {
+type DexieAuthState = {
   id: "current";
   userId: string;
   lastLoginAt: string;
   plan?: string;
 };
 
-export class ActikoDatabase extends Dexie {
+class ActikoDatabase extends Dexie {
   activityLogs!: Table<DexieActivityLog, string>;
   activities!: Table<DexieActivity, string>;
   activityKinds!: Table<DexieActivityKind, string>;

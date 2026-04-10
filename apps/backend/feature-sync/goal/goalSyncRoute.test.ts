@@ -4,7 +4,7 @@ import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { activityGoals } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
-import { goalSyncRoute } from ".";
+import { goalSyncRoute } from "./goalSyncRoute";
 
 const SEED_ACTIVITY_ID = "00000000-0000-4000-8000-000000000001";
 

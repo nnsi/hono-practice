@@ -6,11 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GoalFreezePeriodDbAdapter } from "../goalFreezePeriodRepositoryLogic";
 import { newGoalFreezePeriodRepository } from "../goalFreezePeriodRepositoryLogic";
 
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidCounter}`),
-}));
-
 let uuidCounter = 0;
+const mockGenerateId = () => `mock-uuid-${++uuidCounter}`;
 
 function createInMemoryAdapter() {
   const store = new Map<string, Syncable<GoalFreezePeriodRecord>>();
@@ -72,7 +69,7 @@ describe("goalFreezePeriodRepositoryLogic", () => {
     uuidCounter = 0;
     resetServerTimeForTests();
     adapter = createInMemoryAdapter();
-    repo = newGoalFreezePeriodRepository(adapter.adapter);
+    repo = newGoalFreezePeriodRepository(adapter.adapter, mockGenerateId);
   });
 
   // ========== Create ==========

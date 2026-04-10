@@ -5,7 +5,7 @@ import { notes } from "@infra/drizzle/schema";
 import type { UpsertNoteRequest } from "@packages/types";
 import { describe, expect, test } from "vitest";
 
-import { createNoteSyncRoute } from "..";
+import { createNoteSyncRoute } from "../noteSyncRoute";
 
 const NOW = new Date().toISOString();
 

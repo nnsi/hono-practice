@@ -1,8 +1,16 @@
-import { resetServerTimeForTests } from "@packages/sync-engine";
+import {
+  type ActivityDbAdapter,
+  newActivityRepository,
+} from "@packages/frontend-shared/repositories";
+import {
+  getServerNowISOString,
+  resetServerTimeForTests,
+} from "@packages/sync-engine";
+import { generateOrder } from "@packages/utils/lexicalOrder";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted で vi.mock ファクトリ内から参照できるモックを作成
-const { mockDb, uuidState } = vi.hoisted(() => {
+const { mockDb } = vi.hoisted(() => {
   function createMockCollection() {
     return {
       filter: vi.fn().mockReturnThis(),
@@ -41,8 +49,6 @@ const { mockDb, uuidState } = vi.hoisted(() => {
     };
   }
 
-  const state = { counter: 0 };
-
   return {
     mockDb: {
       activities: createMockTable(),
@@ -54,13 +60,8 @@ const { mockDb, uuidState } = vi.hoisted(() => {
         (_mode: string, _tables: unknown[], fn: () => unknown) => fn(),
       ),
     },
-    uuidState: state,
   };
 });
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
 
 vi.mock("./schema", () => ({
   db: mockDb,
@@ -71,8 +72,136 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 
-import { activityRepository } from "./activityRepository";
+import { activityIconAdapter } from "./activityIconAdapter";
 import { db } from "./schema";
+
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
+
+const adapter: ActivityDbAdapter = {
+  async getUserId() {
+    const authState = await mockDb.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create activity: userId is not set");
+    }
+    return authState.userId;
+  },
+  async getNextOrderIndex() {
+    const lastActivity = await mockDb.activities
+      .orderBy("orderIndex")
+      .reverse()
+      .first();
+    return generateOrder(lastActivity?.orderIndex ?? null, null);
+  },
+  async insertActivity(activity) {
+    await mockDb.activities.add(activity);
+  },
+  async getAllActivities() {
+    return mockDb.activities
+      .orderBy("orderIndex")
+      .filter((a: { deletedAt: string | null }) => !a.deletedAt)
+      .toArray();
+  },
+  async getAllActivitiesIncludingDeleted() {
+    return mockDb.activities.orderBy("orderIndex").toArray();
+  },
+  async updateActivity(id, changes) {
+    await mockDb.activities.update(id, changes);
+  },
+  async softDeleteActivityAndKinds(id, timestamp) {
+    await mockDb.activities.update(id, {
+      deletedAt: timestamp,
+      updatedAt: timestamp,
+      _syncStatus: "pending",
+    });
+    await mockDb.activityKinds
+      .where("activityId")
+      .equals(id)
+      .modify({
+        deletedAt: timestamp,
+        updatedAt: timestamp,
+        _syncStatus: "pending" as const,
+      });
+  },
+  async insertKinds(kinds) {
+    await mockDb.activityKinds.bulkAdd(kinds);
+  },
+  async getKindsByActivityId(activityId) {
+    return mockDb.activityKinds
+      .where("activityId")
+      .equals(activityId)
+      .filter((k: { deletedAt: string | null }) => !k.deletedAt)
+      .toArray();
+  },
+  async getAllKinds() {
+    return mockDb.activityKinds
+      .filter((k: { deletedAt: string | null }) => !k.deletedAt)
+      .toArray();
+  },
+  async getAllKindsIncludingDeleted() {
+    return mockDb.activityKinds.toArray();
+  },
+  async updateKind(id, changes) {
+    await mockDb.activityKinds.update(id, changes);
+  },
+  async insertKind(kind) {
+    await mockDb.activityKinds.add(kind);
+  },
+  async reorderActivities(orderedIds) {
+    const now = getServerNowISOString();
+    await mockDb.transaction("rw", [mockDb.activities], async () => {
+      let prev: string | null = null;
+      for (const id of orderedIds) {
+        const orderIndex = generateOrder(prev, null);
+        await mockDb.activities.update(id, {
+          orderIndex,
+          updatedAt: now,
+          _syncStatus: "pending" as const,
+        });
+        prev = orderIndex;
+      }
+    });
+  },
+  async getPendingSyncActivities() {
+    return mockDb.activities
+      .where("_syncStatus")
+      .anyOf(["pending", "failed"])
+      .toArray();
+  },
+  async getPendingSyncActivityKinds() {
+    return mockDb.activityKinds
+      .where("_syncStatus")
+      .anyOf(["pending", "failed"])
+      .toArray();
+  },
+  async updateActivitiesSyncStatus(ids, status) {
+    await mockDb.activities
+      .where("id")
+      .anyOf(ids)
+      .modify({ _syncStatus: status });
+  },
+  async updateKindsSyncStatus(ids, status) {
+    await mockDb.activityKinds
+      .where("id")
+      .anyOf(ids)
+      .modify({ _syncStatus: status });
+  },
+  async getActivitiesByIds(ids) {
+    return mockDb.activities.where("id").anyOf(ids).toArray();
+  },
+  async getKindsByIds(ids) {
+    return mockDb.activityKinds.where("id").anyOf(ids).toArray();
+  },
+  async bulkUpsertActivities(activities) {
+    await mockDb.activities.bulkPut(activities);
+  },
+  async bulkUpsertKinds(kinds) {
+    await mockDb.activityKinds.bulkPut(kinds);
+  },
+  ...activityIconAdapter,
+};
+
+const activityRepository = newActivityRepository(adapter, mockGenerateId);
 
 describe("activityRepository", () => {
   beforeEach(() => {

@@ -1,5 +1,1 @@
-export type {
-  GroupedTasks,
-  GroupingOptions,
-  TaskItem,
-} from "@packages/domain/task/types";
+export type { TaskItem } from "@packages/domain/task/types";

@@ -36,13 +36,14 @@ export type ActivityLogDbAdapter = {
 
 export function newActivityLogRepository(
   adapter: ActivityLogDbAdapter,
+  generateId: () => string = uuidv7,
 ): ActivityLogRepository {
   return {
     async createActivityLog(input: CreateActivityLogInput) {
       const now = getServerNowISOString();
       const log: Syncable<LocalActivityLog> = {
         ...input,
-        id: uuidv7(),
+        id: generateId(),
         createdAt: now,
         updatedAt: now,
         deletedAt: null,

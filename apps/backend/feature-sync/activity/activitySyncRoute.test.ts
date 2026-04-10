@@ -3,7 +3,7 @@ import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
 import { describe, expect, test } from "vitest";
 
-import { activitySyncRoute } from ".";
+import { activitySyncRoute } from "./activitySyncRoute";
 
 const SEED_ACTIVITY_ID_1 = "00000000-0000-4000-8000-000000000001";
 const SEED_ACTIVITY_ID_2 = "00000000-0000-4000-8000-000000000002";

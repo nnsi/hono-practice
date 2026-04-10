@@ -10,7 +10,7 @@ const AppSettingsSchema = z.object({
   praiseMode: z.boolean().default(false),
 });
 
-export type AppSettings = z.infer<typeof AppSettingsSchema>;
+type AppSettings = z.infer<typeof AppSettingsSchema>;
 
 const defaultSettings: AppSettings = {
   showGoalOnStartup: false,

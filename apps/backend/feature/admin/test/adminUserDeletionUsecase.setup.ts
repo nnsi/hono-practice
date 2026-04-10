@@ -19,7 +19,7 @@ import type { AdminUserDeletionLogRepository } from "../adminUserDeletionLogRepo
 import { newAdminUserDeletionUsecase } from "../adminUserDeletionUsecase";
 import type { SubscriptionHistoryArchiveRepository } from "../subscriptionHistoryArchiveRepository";
 
-export const fakeTxRunner: TransactionRunner = {
+const fakeTxRunner: TransactionRunner = {
   async run(repositories, operation) {
     const merged = Object.assign({}, ...repositories);
     return operation(merged);

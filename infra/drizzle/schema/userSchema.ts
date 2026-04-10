@@ -17,6 +17,7 @@ export const iconTypeEnum = pgEnum("icon_type", [
   "generate",
 ]);
 
+/** @public drizzle-kit が migration 生成で使用（外部 import 無し） */
 export const userConsentTypeEnum = pgEnum("user_consent_type", [
   "terms",
   "privacy",

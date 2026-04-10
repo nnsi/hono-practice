@@ -25,7 +25,7 @@ export type HeatmapSlot = {
 };
 
 /** 7行（月〜日）× N列（週）のグリッド */
-export type HeatmapGrid = {
+type HeatmapGrid = {
   columns: Array<{
     key: string;
     slots: [
@@ -43,7 +43,7 @@ export type HeatmapGrid = {
   endLabel: string;
 };
 
-export type GoalHeatmapViewModel = {
+type GoalHeatmapViewModel = {
   grid: HeatmapGrid;
   isLoading: boolean;
 };

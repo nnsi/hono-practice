@@ -26,13 +26,16 @@ export type TaskDbAdapter = {
   bulkUpsertSynced(tasks: Syncable<TaskRecord>[]): Promise<void>;
 };
 
-export function newTaskRepository(adapter: TaskDbAdapter): TaskRepository {
+export function newTaskRepository(
+  adapter: TaskDbAdapter,
+  generateId: () => string = uuidv7,
+): TaskRepository {
   return {
     async createTask(input: CreateTaskInput) {
       const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const task: Syncable<TaskRecord> = {
-        id: uuidv7(),
+        id: generateId(),
         userId,
         activityId: input.activityId ?? null,
         activityKindId: input.activityKindId ?? null,

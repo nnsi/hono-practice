@@ -1,5 +1,3 @@
-import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-
 import type { ActivityBase, ReactHooks } from "../hooks/types";
 
 export type { ActivityBase, ReactHooks };
@@ -45,11 +43,6 @@ export type TimerReturn = {
 // ここでは re-export して集約する。
 // 実体の import は index.ts が担当するので、このファイルでは型のみ扱う。
 
-/** 全 ViewModel が最低限持つフィールド */
-export type RecordingModeViewModelBase = {
-  isSubmitting: boolean;
-};
-
 /**
  * RecordingMode → ViewModel の対応表。
  * 新モード追加時はここにエントリを足す。型を満たさなければコンパイルエラー。
@@ -65,20 +58,6 @@ export type RecordingModeViewModelMap = {
   binary: import("./modes/createUseBinaryMode").BinaryModeViewModel;
   check: import("./modes/createUseCheckMode").CheckModeViewModel;
 };
-
-/**
- * ViewModelMap が全 RecordingMode をカバーしていることのチェック用ユーティリティ。
- * RecordingMode に新しい値を追加したのに ViewModelMap にエントリがない場合、
- * この型が never にならず、UseRecordingModeHook の M 制約でエラーが出る。
- */
-export type UncoveredRecordingModes = Exclude<
-  RecordingMode,
-  keyof RecordingModeViewModelMap
->;
-
-/** 全 ViewModel の Union 型 */
-export type RecordingModeViewModel =
-  RecordingModeViewModelMap[keyof RecordingModeViewModelMap];
 
 /**
  * モード Hook の型。RecordingModeProps を受け取り、対応する ViewModel を返す。

@@ -164,5 +164,3 @@ const routes = app
   });
 
 export type AppType = typeof routes;
-
-export default app;

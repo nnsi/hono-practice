@@ -1,7 +1,4 @@
-import type {
-  SyncStatus,
-  Syncable,
-} from "@packages/domain/sync/syncableRecord";
+import type { Syncable } from "@packages/domain/sync/syncableRecord";
 
 /**
  * サーバーからのupsert時に、ローカルのpendingレコードや
@@ -21,13 +18,3 @@ export function filterSafeUpserts<T extends { id: string; updatedAt: string }>(
     return true;
   });
 }
-
-/**
- * DB操作を抽象化する汎用アダプタインターフェース。
- * 各リポジトリが拡張して使う。
- */
-export type BaseSyncDbAdapter<T extends { id: string }> = {
-  getByIds(ids: string[]): Promise<Syncable<T>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
-  bulkUpsertSynced(records: Syncable<T>[]): Promise<void>;
-};
