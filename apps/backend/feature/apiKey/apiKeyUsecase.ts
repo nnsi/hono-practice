@@ -1,4 +1,5 @@
 import { ResourceNotFoundError } from "@backend/error/resourceNotFoundError";
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import type { Tracer } from "@backend/lib/tracer";
 import type {
   ApiKey,
@@ -21,12 +22,14 @@ export type ApiKeyUsecase = {
 export function newApiKeyUsecase(
   apiKeyRepository: ApiKeyRepository,
   tracer: Tracer,
+  logger: Logger = noopLogger,
 ): ApiKeyUsecase {
+  const apiKeyLogger = logger.child({ feature: "apiKeyUsecase" });
   return {
     createApiKey: createApiKey(apiKeyRepository, tracer),
     listApiKeys: listApiKeys(apiKeyRepository, tracer),
     deleteApiKey: deleteApiKey(apiKeyRepository, tracer),
-    validateApiKey: validateApiKey(apiKeyRepository, tracer),
+    validateApiKey: validateApiKey(apiKeyRepository, tracer, apiKeyLogger),
   };
 }
 
@@ -72,27 +75,26 @@ function deleteApiKey(repo: ApiKeyRepository, tracer: Tracer) {
       throw new ResourceNotFoundError(`APIキーが見つかりません: ${id}`);
     }
 
-    // TODO: KVストアからキャッシュを削除する実装を追加
+    // API key validation is intentionally DB-only.
+    // Avoid caching hashed credentials until we have a dedicated invalidation design.
   };
 }
 
-function validateApiKey(repo: ApiKeyRepository, tracer: Tracer) {
+function validateApiKey(
+  repo: ApiKeyRepository,
+  tracer: Tracer,
+  logger: Logger,
+) {
   return async (key: string): Promise<ApiKey | null> => {
-    // TODO: KVストアからキャッシュを確認する実装を追加
-
-    // データベースから取得
+    // API key validation is intentionally DB-only.
     const apiKey = await tracer.span("db.findApiKeyByKey", () =>
       repo.findApiKeyByKey(key),
     );
     if (!apiKey || !apiKey.isActive) return null;
 
-    // TODO: KVストアにキャッシュする実装を追加
-
     // 最終使用日時を更新（fire-and-forget: リクエスト完了後に実行されるためtracer計測対象外）
-    // エラーが発生しても認証は成功させるが、監視ツールへの通知を推奨
     repo.updateApiKey(apiKey.id, { lastUsedAt: new Date() }).catch((error) => {
-      // TODO: 監視ツール（Sentry、DataDogなど）への通知を実装
-      console.error("Failed to update lastUsedAt for API key:", {
+      logger.error("Failed to update api key lastUsedAt", {
         apiKeyId: apiKey.id,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),

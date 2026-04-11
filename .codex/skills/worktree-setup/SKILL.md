@@ -34,6 +34,6 @@ bash ./scripts/worktree-setup.sh <name> [port-offset] [--no-seed]
 
 ## 注意事項
 
-- このスクリプトは `apps/backend/.env.local`、`apps/frontend/.env`、`apps/admin-frontend/.env`、`apps/mobile/.env` を worktree 用に整える
+- このスクリプトは `apps/backend/.env.example` を元に `apps/backend/.env` を作成し、`apps/frontend/.env`、`apps/admin-frontend/.env`、`apps/mobile/.env` を worktree 用に整える
 - 依存インストールと migrate まで自動で行う
 - worktree 用の接続先を確認せずにブラウザ確認へ進まない

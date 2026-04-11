@@ -1,5 +1,6 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { hashWithSHA256 } from "@backend/lib/hash";
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import { refreshTokens } from "@infra/drizzle/schema";
 import {
   type RefreshToken,
@@ -21,15 +22,16 @@ export type RefreshTokenRepository<T = QueryExecutor> = {
 
 export function newRefreshTokenRepository(
   db: QueryExecutor,
+  logger: Logger = noopLogger,
 ): RefreshTokenRepository<QueryExecutor> {
   return {
-    createRefreshToken: createRefreshToken(db),
-    getRefreshTokenByToken: getRefreshTokenByToken(db),
+    createRefreshToken: createRefreshToken(db, logger),
+    getRefreshTokenByToken: getRefreshTokenByToken(db, logger),
     revokeRefreshToken: revokeRefreshToken(db),
     revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
     deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
     hardDeleteRefreshTokensByUserId: hardDeleteRefreshTokensByUserId(db),
-    withTx: (tx) => newRefreshTokenRepository(tx),
+    withTx: (tx) => newRefreshTokenRepository(tx, logger),
   };
 }
 
@@ -43,7 +45,7 @@ function hardDeleteRefreshTokensByUserId(db: QueryExecutor) {
   };
 }
 
-function createRefreshToken(db: QueryExecutor) {
+function createRefreshToken(db: QueryExecutor, logger: Logger) {
   return async (token: RefreshToken): Promise<RefreshToken> => {
     const [result] = await db
       .insert(refreshTokens)
@@ -61,10 +63,9 @@ function createRefreshToken(db: QueryExecutor) {
       .returning();
     const parsedToken = refreshTokenSchema.safeParse(result);
     if (!parsedToken.success) {
-      console.error(
-        "Failed to parse refresh token from DB:",
-        parsedToken.error,
-      );
+      logger.error("Failed to parse refresh token from DB", {
+        error: parsedToken.error.message,
+      });
       throw new DomainValidateError(
         "RefreshTokenRepository.create: Failed to parse token from DB",
       );
@@ -73,14 +74,13 @@ function createRefreshToken(db: QueryExecutor) {
   };
 }
 
-function getRefreshTokenByToken(db: QueryExecutor) {
+function getRefreshTokenByToken(db: QueryExecutor, logger: Logger) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
     const parts = combinedToken.split(".");
     if (parts.length !== 2) {
-      console.error(
-        "Invalid combined token format received: length=",
-        combinedToken.length,
-      );
+      logger.warn("Invalid combined refresh token format", {
+        tokenLength: combinedToken.length,
+      });
       return null;
     }
     const [selector, plainToken] = parts;
@@ -103,10 +103,9 @@ function getRefreshTokenByToken(db: QueryExecutor) {
     }
     const parsedToken = refreshTokenSchema.safeParse(storedRawToken);
     if (!parsedToken.success) {
-      console.error(
-        "Failed to parse refresh token from DB after validation:",
-        parsedToken.error,
-      );
+      logger.error("Failed to parse validated refresh token from DB", {
+        error: parsedToken.error.message,
+      });
       throw new DomainValidateError(
         "RefreshTokenRepository.findByToken: Failed to parse valid token from DB",
       );

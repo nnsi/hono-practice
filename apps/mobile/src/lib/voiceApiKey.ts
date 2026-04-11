@@ -11,7 +11,6 @@ const VOICE_BACKEND_URL_KEY = "voice_backend_url";
 export async function saveVoiceApiKey(apiKey: string): Promise<void> {
   if (Platform.OS !== "ios") {
     // Android uses EncryptedSharedPreferences written from native code
-    console.warn("saveVoiceApiKey: not supported on this platform");
     return;
   }
   const groupId = getAppGroupId();
@@ -54,7 +53,6 @@ export async function deleteVoiceApiKey(): Promise<void> {
 export function saveVoiceBackendUrl(backendUrl: string): void {
   if (Platform.OS !== "ios") return;
   if (!backendUrl.startsWith("https://")) {
-    console.warn("saveVoiceBackendUrl: URL must use HTTPS");
     return;
   }
   const storage = getExtensionStorage();

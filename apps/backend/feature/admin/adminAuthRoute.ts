@@ -4,6 +4,8 @@ import { sign } from "hono/jwt";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { googleVerify } from "@backend/feature/auth/googleVerify";
+import { zValidator } from "@hono/zod-validator";
+import { AdminGoogleAuthRequestSchema } from "@packages/types/request";
 
 const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
 
@@ -19,12 +21,8 @@ function createAdminAuthRoute() {
   const app = new Hono<AppContext>();
 
   return app
-    .post("/google", async (c) => {
-      const { credential } = await c.req.json<{ credential: string }>();
-      if (!credential) {
-        throw new AppError("credential is required", 400);
-      }
-
+    .post("/google", zValidator("json", AdminGoogleAuthRequestSchema), async (c) => {
+      const { credential } = c.req.valid("json");
       const clientIds = [c.env.GOOGLE_OAUTH_CLIENT_ID];
       const payload = await googleVerify(credential, clientIds);
 

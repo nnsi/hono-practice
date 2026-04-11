@@ -115,7 +115,6 @@ export const syncEngine = createSyncEngine(
   },
   rnNetworkAdapter,
   (error, phase) => {
-    console.error(`[sync] ${phase} failed:`, error);
     reportError({
       errorType: "unhandled_error",
       message: `Push sync failed (${phase}): ${error instanceof Error ? error.message : String(error)}`,

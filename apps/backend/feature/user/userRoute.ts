@@ -3,6 +3,7 @@ import { setCookie } from "hono/cookie";
 
 import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -43,7 +44,11 @@ export function createUserRoute() {
     const repo = newUserRepository(db);
     const userProviderRepo = newUserProviderRepository(db);
     const userConsentRepo = newUserConsentRepository(db);
-    const refreshTokenRepo = newRefreshTokenRepository(db);
+    const logger = c.get("logger") ?? noopLogger;
+    const refreshTokenRepo = newRefreshTokenRepository(
+      db,
+      logger.child({ repository: "refresh-token" }),
+    );
     const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")

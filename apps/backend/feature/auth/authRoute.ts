@@ -3,6 +3,7 @@ import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -36,7 +37,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const db = c.env.DB;
     const { JWT_SECRET, JWT_AUDIENCE } = c.env;
     const repo = newUserRepository(db);
-    const refreshTokenRepo = newRefreshTokenRepository(db);
+    const logger = c.get("logger") ?? noopLogger;
+    const refreshTokenRepo = newRefreshTokenRepository(
+      db,
+      logger.child({ repository: "refresh-token" }),
+    );
     const passwordVerifier = new MultiHashPasswordVerifier();
     const userProviderRepo = newUserProviderRepository(db);
     const userConsentRepo = newUserConsentRepository(db);

@@ -84,8 +84,8 @@ fi
 echo "[3/5] Setting up environment files..."
 
 # Backend .env (dotenv reads .env by default)
-# .env.local is the git-tracked template; copy it to .env for actual use
-MAIN_BE_TEMPLATE="$REPO_ROOT/apps/backend/.env.local"
+# .env.example is the git-tracked template; copy it to .env for actual use
+MAIN_BE_TEMPLATE="$REPO_ROOT/apps/backend/.env.example"
 WT_BE_ENV="$WT_DIR/apps/backend/.env"
 if [ -f "$MAIN_BE_TEMPLATE" ]; then
   cp "$MAIN_BE_TEMPLATE" "$WT_BE_ENV"

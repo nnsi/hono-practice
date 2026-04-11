@@ -1,4 +1,7 @@
 export * from "./AppleLoginRequest";
+export * from "./ActivityIconUploadRequest";
+export * from "./AdminGoogleAuthRequest";
+export * from "./BatchRequest";
 export * from "./CheckDuplicatesRequest";
 export * from "./ConsentsRequest";
 export { type ContactRequest, contactRequestSchema } from "./ContactRequest";

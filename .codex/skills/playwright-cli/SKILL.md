@@ -11,7 +11,7 @@ description: "`playwright-cli` を shell から使ってブラウザ操作、動
 
 1. ポートを読む。
 - frontend は `apps/frontend/vite.config.ts`
-- backend は `apps/backend/.env.local`
+- backend は `apps/backend/.env`
 
 2. ブラウザを開く。
 

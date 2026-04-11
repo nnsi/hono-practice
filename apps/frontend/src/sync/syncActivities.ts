@@ -8,6 +8,7 @@ import {
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
 import { apiClient, customFetch } from "../utils/apiClient";
+import { reportError } from "../utils/errorReporter";
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3456"
@@ -24,7 +25,10 @@ export const syncActivities = createSyncActivities({
     if (!res.ok) {
       if (res.status >= 400 && res.status < 500) {
         // バリデーションエラー等 → リトライしても治らないので "rejected" にして除外
-        console.warn(`syncActivities rejected (${res.status})`);
+        reportError({
+          errorType: "network_error",
+          message: `syncActivities rejected (${res.status})`,
+        });
         const aIds = activities.map((a) => (a as { id: string }).id);
         const kIds = activityKinds.map((k) => (k as { id: string }).id);
         if (aIds.length > 0)

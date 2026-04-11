@@ -30,6 +30,10 @@ type InitialSyncDeps = {
   deltaResources: readonly DeltaSyncResource[];
   legacyBootstrappedResources: readonly DeltaSyncResource[];
   defaultStorage: StorageAdapter;
+  onError?: (
+    error: unknown,
+    phase: "fetchAllApis" | "parseResponses" | "writeAllData",
+  ) => void;
 };
 
 function readBootstrappedResources(
@@ -124,7 +128,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
     try {
       responses = await deps.fetchAllApis(sinceByResource);
     } catch (err) {
-      console.error("[sync] fetchAllApis failed:", err);
+      deps.onError?.(err, "fetchAllApis");
       throw err;
     }
     const {
@@ -149,7 +153,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
         notesRes,
       );
     } catch (err) {
-      console.error("[sync] parseResponses failed:", err);
+      deps.onError?.(err, "parseResponses");
       throw err;
     }
     const allSynced = parsed.allSynced;
@@ -169,7 +173,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
       try {
         await deps.writeAllData(parsed.data);
       } catch (err) {
-        console.error("[sync] writeAllData failed:", err);
+        deps.onError?.(err, "writeAllData");
         throw err;
       }
     }

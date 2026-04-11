@@ -5,9 +5,38 @@ on:
     branches:
       - master
       - release
+  workflow_dispatch:
+    inputs:
+      mobile_environment:
+        description: "Deploy target for the mobile app"
+        required: true
+        type: choice
+        options:
+          - stg
+          - prod
+      mobile_operation:
+        description: "Release operation for the mobile app"
+        required: true
+        type: choice
+        options:
+          - build
+          - ota
+      mobile_platform:
+        description: "Target platform"
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - all
+      mobile_message:
+        description: "Optional OTA message"
+        required: false
+        type: string
 
 jobs:
   publish:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -301,3 +330,91 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+  mobile-release:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+        working-directory: .
+
+      - name: Resolve mobile environment
+        shell: bash
+        run: |
+          echo "EAS_PROJECT_ID=${{ vars.EAS_PROJECT_ID }}" >> "$GITHUB_ENV"
+          echo "EAS_OWNER=${{ vars.EAS_OWNER }}" >> "$GITHUB_ENV"
+          echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_CONTACT_EMAIL=${{ vars.VITE_CONTACT_EMAIL }}" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID_ANDROID }}" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=${{ secrets.GOOGLE_OAUTH_CLIENT_ID_IOS }}" >> "$GITHUB_ENV"
+          if [ "${{ github.event.inputs.mobile_environment }}" = "stg" ]; then
+            echo "EAS_PROFILE=preview" >> "$GITHUB_ENV"
+            echo "EAS_CHANNEL=preview" >> "$GITHUB_ENV"
+            echo "BUNDLE_ID=${{ vars.MOBILE_BUNDLE_ID_STG }}" >> "$GITHUB_ENV"
+            echo "EXPO_PUBLIC_API_URL=${{ vars.VITE_API_URL_STG }}" >> "$GITHUB_ENV"
+            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" >> "$GITHUB_ENV"
+          else
+            echo "EAS_PROFILE=production" >> "$GITHUB_ENV"
+            echo "EAS_CHANNEL=production" >> "$GITHUB_ENV"
+            echo "BUNDLE_ID=${{ vars.MOBILE_BUNDLE_ID_PROD }}" >> "$GITHUB_ENV"
+            echo "EXPO_PUBLIC_API_URL=${{ vars.VITE_API_URL_PROD }}" >> "$GITHUB_ENV"
+            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Validate OTA platform
+        if: github.event.inputs.mobile_operation == 'ota'
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.mobile_platform }}" = "all" ]; then
+            echo "OTA requires ios or android. Use separate dispatches per platform."
+            exit 1
+          fi
+
+      - name: Run EAS build
+        if: github.event.inputs.mobile_operation == 'build'
+        run: eas build --platform ${{ github.event.inputs.mobile_platform }} --profile $EAS_PROFILE --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Run EAS update
+        if: github.event.inputs.mobile_operation == 'ota'
+        shell: bash
+        run: |
+          MESSAGE="${{ github.event.inputs.mobile_message }}"
+          if [ -z "$MESSAGE" ]; then
+            MESSAGE="GitHub Actions OTA release"
+          fi
+          eas update --channel "$EAS_CHANNEL" --platform ${{ github.event.inputs.mobile_platform }} --message "$MESSAGE" --non-interactive --clear-cache
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

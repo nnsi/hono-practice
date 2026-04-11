@@ -5,7 +5,7 @@ type NavigationSyncDeps = {
   pullSync: () => Promise<void>;
   isOnline: () => boolean;
   mutex: SyncMutex;
-  onError?: (error: unknown) => void;
+  onError?: (error: unknown, phase: "pull" | "push") => void;
 };
 
 const THROTTLE_MS = 5000;
@@ -23,14 +23,12 @@ export function createNavigationSync(deps: NavigationSyncDeps) {
       try {
         await deps.mutex.run(() => deps.pullSync());
       } catch (err) {
-        console.error("[nav-sync:pull]", err);
-        deps.onError?.(err);
+        deps.onError?.(err, "pull");
       }
       try {
         await deps.syncAll();
       } catch (err) {
-        console.error("[nav-sync:push]", err);
-        deps.onError?.(err);
+        deps.onError?.(err, "push");
       }
     })();
   };

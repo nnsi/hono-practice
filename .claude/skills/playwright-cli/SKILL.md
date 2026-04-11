@@ -23,7 +23,7 @@ playwright-cliを使ったブラウザ操作スキル。Bashツールから`play
 
 ポートはworktreeごとに異なる。推測せず、以下から読み取る:
 - **frontend**: `apps/frontend/vite.config.ts` の `server.port`
-- **backend API**: `apps/backend/.env.local` の `API_PORT`
+- **backend API**: `apps/backend/.env` の `API_PORT`
 
 ```bash
 playwright-cli open http://localhost:<確認したポート>

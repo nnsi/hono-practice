@@ -4,6 +4,7 @@ import type {
   ClientErrorSummary,
 } from "@backend/query/clientErrorProvider";
 import { EMPTY_CLIENT_ERROR_SUMMARY } from "@backend/query/clientErrorProvider";
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import { z } from "zod";
 
 const QUERY_SUMMARY_24H = `
@@ -56,6 +57,7 @@ const waeDetailResponseSchema = z.object({
 export function newWaeClientErrorProvider(
   cfApiToken: string,
   cfAccountId: string,
+  logger: Logger = noopLogger,
 ): ClientErrorProvider {
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/analytics_engine/sql`;
 
@@ -71,13 +73,15 @@ export function newWaeClientErrorProvider(
       });
 
       if (!res.ok) {
-        console.error(`WAE client error query failed: ${res.status}`);
+        logger.error("WAE client error query failed", { status: res.status });
         return null;
       }
 
       return res.json();
     } catch (e) {
-      console.error("WAE client error query error:", e);
+      logger.error("WAE client error query error", {
+        error: e instanceof Error ? e.message : String(e),
+      });
       return null;
     }
   }

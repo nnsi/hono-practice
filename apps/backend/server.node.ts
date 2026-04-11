@@ -7,10 +7,14 @@ import { createClient } from "redis";
 import { app } from "./app";
 import { configSchema } from "./config";
 import { newRedisStore } from "./infra/kv/redis";
+import { createLogger } from "./lib/logger";
 
 dotenv.config();
 
 const config = configSchema.parse(process.env);
+const logger = createLogger({
+  bindings: { runtime: "backend-node" },
+});
 
 function createInstance() {
   return drizzle(config.DATABASE_URL, { schema });
@@ -37,7 +41,7 @@ let rateLimitKv:
 
 async function initRedis() {
   if (!config.REDIS_URL) {
-    console.log("REDIS_URL not set, rate limiting disabled");
+    logger.info("Rate limiting disabled because REDIS_URL is not set");
     return;
   }
 
@@ -56,9 +60,11 @@ async function initRedis() {
     rateLimitKv = newRedisStore<{ count: number; windowStart: number }>(
       redisClient,
     );
-    console.log("Redis connected for rate limiting");
+    logger.info("Redis connected for rate limiting");
   } catch (error) {
-    console.error("Failed to connect to Redis:", error);
+    logger.error("Failed to connect to Redis", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -66,7 +72,10 @@ async function main() {
   await initRedis();
 
   const port = config.API_PORT;
-  console.log(`Server is running on port ${port} / ${config.NODE_ENV}`);
+  logger.info("Backend server is starting", {
+    port,
+    nodeEnv: config.NODE_ENV,
+  });
 
   serve({
     fetch: (request) => {

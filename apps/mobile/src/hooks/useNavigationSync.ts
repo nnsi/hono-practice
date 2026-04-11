@@ -15,10 +15,10 @@ export const useNavigationSync = createUseNavigationSync({
   pullSync: (uid) => performInitialSync(uid),
   isOnline: () => rnNetworkAdapter.isOnline(),
   mutex: syncEngine.mutex,
-  onError: (error) => {
+  onError: (error, phase) => {
     reportError({
       errorType: "unhandled_error",
-      message: `Navigation sync failed: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Navigation sync ${phase} failed: ${error instanceof Error ? error.message : String(error)}`,
       stack: error instanceof Error ? error.stack : undefined,
     });
   },

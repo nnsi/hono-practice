@@ -1,6 +1,9 @@
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
+import { zValidator } from "@hono/zod-validator";
+import { BatchRequestSchema } from "@packages/types/request";
+
 import { apiV1Route } from "./api/v1";
 import { AppError } from "./error";
 import {
@@ -105,8 +108,8 @@ const routes = app
   .route("/admin/auth", adminAuthRoute)
   .route("/admin", adminRoute)
   .route("/client-errors", clientErrorRoute)
-  .post("/batch", authMiddleware, async (c) => {
-    const requests = await c.req.json<{ path: string }[]>();
+  .post("/batch", authMiddleware, zValidator("json", BatchRequestSchema), async (c) => {
+    const requests = c.req.valid("json");
 
     if (requests.length > 5) {
       throw new AppError("Too many batch requests (max 5)", 400);

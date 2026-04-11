@@ -1,6 +1,7 @@
 import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { StorageService } from "@backend/infra/storage";
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import type { Tracer } from "@backend/lib/tracer";
 import { generateIconKey } from "@backend/utils/imageValidator";
 import {
@@ -55,7 +56,9 @@ export function newActivityUsecase(
   tx: TransactionRunner,
   tracer: Tracer,
   storage?: StorageService,
+  logger: Logger = noopLogger,
 ): ActivityUsecase {
+  const activityLogger = logger.child({ feature: "activityUsecase" });
   return {
     getActivities: getActivities(repo, tracer),
     getActivity: getActivity(repo, tracer),
@@ -63,8 +66,8 @@ export function newActivityUsecase(
     updateActivity: updateActivity(repo, tx, tracer),
     updateActivityOrder: updateActivityOrder(repo, tx, tracer),
     deleteActivity: deleteActivity(repo, tracer),
-    uploadActivityIcon: uploadActivityIcon(repo, tracer, storage),
-    deleteActivityIcon: deleteActivityIcon(repo, tracer, storage),
+    uploadActivityIcon: uploadActivityIcon(repo, tracer, activityLogger, storage),
+    deleteActivityIcon: deleteActivityIcon(repo, tracer, activityLogger, storage),
   };
 }
 
@@ -160,7 +163,7 @@ function updateActivity(
         };
       });
 
-      const kinds = inputKinds.length > 0 ? inputKinds : activity.kinds;
+      const kinds = inputKinds;
 
       const newActivity = createActivityEntity({
         ...activity,
@@ -235,14 +238,20 @@ function deleteActivity(repo: ActivityRepository, tracer: Tracer) {
 
 const ALLOWED_ICON_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-function extractR2Key(url: string): string {
+function extractStorageKey(url: string): string {
   const match = url.match(/\/r2\/(.+)$/);
-  return match ? match[1] : url.split("/").slice(-4).join("/");
+  if (match) return match[1];
+
+  const localMatch = url.match(/\/public\/uploads\/(.+)$/);
+  if (localMatch) return localMatch[1];
+
+  return url.split("/").slice(-3).join("/");
 }
 
 function uploadActivityIcon(
   repo: ActivityRepository,
   tracer: Tracer,
+  logger: Logger,
   storage?: StorageService,
 ) {
   return async (
@@ -280,15 +289,33 @@ function uploadActivityIcon(
     );
 
     // 相対URLを絶対URLに変換
-    const iconUrl = uploaded.url.startsWith("/")
-      ? `${apiBaseUrl}${uploaded.url}`
-      : uploaded.url;
+    const storageUrl = storage.getUrl(uploaded.key);
+    const iconUrl = storageUrl.startsWith("/")
+      ? `${apiBaseUrl}${storageUrl}`
+      : storageUrl;
     const iconThumbnailUrl = iconUrl;
 
-    // DB更新
-    await tracer.span("db.updateActivityIcon", () =>
-      repo.updateActivityIcon(activityId, "upload", iconUrl, iconThumbnailUrl),
-    );
+    try {
+      await tracer.span("db.updateActivityIcon", () =>
+        repo.updateActivityIcon(activityId, "upload", iconUrl, iconThumbnailUrl),
+      );
+    } catch (error) {
+      try {
+        await tracer.span("r2.delete.compensation", () =>
+          storage.delete(uploaded.key),
+        );
+      } catch (compensationError) {
+        logger.error("Failed to rollback uploaded activity icon", {
+          activityId,
+          uploadedKey: uploaded.key,
+          error:
+            compensationError instanceof Error
+              ? compensationError.message
+              : String(compensationError),
+        });
+      }
+      throw error;
+    }
 
     return { iconUrl, iconThumbnailUrl };
   };
@@ -297,6 +324,7 @@ function uploadActivityIcon(
 function deleteActivityIcon(
   repo: ActivityRepository,
   tracer: Tracer,
+  logger: Logger,
   storage?: StorageService,
 ) {
   return async (userId: UserId, activityId: ActivityId): Promise<void> => {
@@ -307,31 +335,65 @@ function deleteActivityIcon(
     );
     if (!activity) throw new ResourceNotFoundError("activity not found");
 
-    // R2からアイコンを削除
-    if (activity.iconUrl) {
-      const key = extractR2Key(activity.iconUrl);
-      try {
-        await tracer.span("r2.delete", () => storage.delete(key));
-      } catch (error) {
-        console.error("Failed to delete main icon:", error);
-      }
-    }
+    const iconEntries = [
+      activity.iconUrl
+        ? { url: activity.iconUrl, key: extractStorageKey(activity.iconUrl) }
+        : null,
+      activity.iconThumbnailUrl
+        ? {
+            url: activity.iconThumbnailUrl,
+            key: extractStorageKey(activity.iconThumbnailUrl),
+          }
+        : null,
+    ].filter((entry): entry is { url: string; key: string } => Boolean(entry));
+    const deleteKeys = [...new Set(iconEntries.map((entry) => entry.key))];
+    const deletedKeys: string[] = [];
 
-    if (
-      activity.iconThumbnailUrl &&
-      activity.iconThumbnailUrl !== activity.iconUrl
-    ) {
-      const key = extractR2Key(activity.iconThumbnailUrl);
-      try {
-        await tracer.span("r2.delete", () => storage.delete(key));
-      } catch (error) {
-        console.error("Failed to delete thumbnail icon:", error);
-      }
-    }
-
-    // emojiにリセット
     await tracer.span("db.updateActivityIcon", () =>
       repo.updateActivityIcon(activityId, "emoji", null, null),
     );
+
+    try {
+      for (const key of deleteKeys) {
+        await tracer.span("r2.delete", () => storage.delete(key));
+        deletedKeys.push(key);
+      }
+    } catch (error) {
+      const remainingKeys = deleteKeys.filter((key) => !deletedKeys.includes(key));
+
+      if (deletedKeys.length === 0) {
+        try {
+          await tracer.span("db.updateActivityIcon.rollback", () =>
+            repo.updateActivityIcon(
+              activityId,
+              activity.iconType,
+              activity.iconUrl,
+              activity.iconThumbnailUrl,
+            ),
+          );
+        } catch (rollbackError) {
+          logger.error("Failed to rollback activity icon metadata", {
+            activityId,
+            deletedKeys,
+            remainingKeys,
+            deleteError: error instanceof Error ? error.message : String(error),
+            rollbackError:
+              rollbackError instanceof Error
+                ? rollbackError.message
+                : String(rollbackError),
+          });
+        }
+      } else {
+        logger.error("Failed to fully delete activity icon from storage", {
+          activityId,
+          deletedKeys,
+          remainingKeys,
+          deleteError: error instanceof Error ? error.message : String(error),
+        });
+      }
+      throw new AppError("Failed to delete activity icon from storage", 500);
+    }
+
+    // emojiにリセット
   };
 }

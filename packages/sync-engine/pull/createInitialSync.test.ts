@@ -62,6 +62,7 @@ function createDeps(
       "tasks",
     ] as const,
     defaultStorage: createStorage(),
+    onError: vi.fn(),
     ...overrides,
   };
 }
@@ -186,5 +187,60 @@ describe("createInitialSync bootstrap resources", () => {
       storage.getItem("actiko-v2-bootstrappedResources") ?? "[]",
     );
     expect(stored).toContain("notes");
+  });
+
+  it("reports fetchAllApis failures with phase", async () => {
+    const deps = createDeps({
+      fetchAllApis: vi.fn().mockRejectedValue(new Error("fetch failed")),
+    });
+    const { performInitialSync } = createInitialSync(deps);
+
+    await expect(performInitialSync("user-1")).rejects.toThrow("fetch failed");
+
+    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "fetchAllApis");
+  });
+
+  it("reports parseResponses failures with phase", async () => {
+    const deps = createDeps({
+      fetchAllApis: vi.fn().mockResolvedValue({
+        activitiesRes: okResponse({ activities: [], activityKinds: [] }),
+        logsRes: {
+          ok: true,
+          json: vi.fn().mockRejectedValue(new Error("parse failed")),
+          headers: new Headers({ date: "Tue, 31 Mar 2026 03:00:02 GMT" }),
+        },
+        goalsRes: okResponse({ goals: [] }),
+        freezePeriodsRes: okResponse({ freezePeriods: [] }),
+        tasksRes: okResponse({ tasks: [] }),
+        notesRes: okResponse({ notes: [] }),
+      }),
+    });
+    const { performInitialSync } = createInitialSync(deps);
+
+    await expect(performInitialSync("user-1")).rejects.toThrow("parse failed");
+
+    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "parseResponses");
+  });
+
+  it("reports writeAllData failures with phase", async () => {
+    const deps = createDeps({
+      writeAllData: vi.fn().mockRejectedValue(new Error("write failed")),
+      fetchAllApis: vi.fn().mockResolvedValue({
+        activitiesRes: okResponse({
+          activities: [{ id: "activity-1" }],
+          activityKinds: [],
+        }),
+        logsRes: okResponse({ logs: [] }),
+        goalsRes: okResponse({ goals: [] }),
+        freezePeriodsRes: okResponse({ freezePeriods: [] }),
+        tasksRes: okResponse({ tasks: [] }),
+        notesRes: okResponse({ notes: [] }),
+      }),
+    });
+    const { performInitialSync } = createInitialSync(deps);
+
+    await expect(performInitialSync("user-1")).rejects.toThrow("write failed");
+
+    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "writeAllData");
   });
 });

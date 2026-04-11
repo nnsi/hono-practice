@@ -5,10 +5,12 @@ import { join } from "node:path";
 
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { zValidator } from "@hono/zod-validator";
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 import {
+  ActivityIconUploadRequestSchema,
   CreateActivityRequestSchema,
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
@@ -24,6 +26,7 @@ import { newActivityUsecase } from "./activityUsecase";
 async function convertImageUrlsToBase64(
   activity: GetActivityResponse,
   env: AppContext["Bindings"],
+  logger = noopLogger,
 ): Promise<GetActivityResponse> {
   if (env.NODE_ENV !== "development") {
     return activity;
@@ -54,7 +57,10 @@ async function convertImageUrlsToBase64(
 
       return `data:${contentType};base64,${data.toString("base64")}`;
     } catch (error) {
-      console.error("Failed to convert image URL to base64:", error);
+      logger.warn("Failed to convert activity icon URL to base64", {
+        url,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return url;
     }
   };
@@ -78,10 +84,11 @@ export function createActivityRoute() {
   app.use("*", async (c, next) => {
     const db = c.env.DB;
     const tracer = c.get("tracer") ?? noopTracer;
+    const logger = c.get("logger") ?? noopLogger;
     const repo = newActivityRepository(db);
     const tx = newDrizzleTransactionRunner(db);
     const storage = createStorageService(c.env);
-    const uc = newActivityUsecase(repo, tx, tracer, storage);
+    const uc = newActivityUsecase(repo, tx, tracer, storage, logger);
     const h = newActivityHandler(uc);
 
     c.set("h", h);
@@ -94,10 +101,13 @@ export function createActivityRoute() {
       const userId = c.get("userId");
 
       const activities = await c.var.h.getActivities(userId);
+      const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
       const convertedActivities = await Promise.all(
-        activities.map((activity) => convertImageUrlsToBase64(activity, c.env)),
+        activities.map((activity) =>
+          convertImageUrlsToBase64(activity, c.env, logger),
+        ),
       );
 
       return c.json(convertedActivities);
@@ -108,9 +118,14 @@ export function createActivityRoute() {
       const activityId = createActivityId(id);
 
       const activity = await c.var.h.getActivity(userId, activityId);
+      const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
-      const convertedActivity = await convertImageUrlsToBase64(activity, c.env);
+      const convertedActivity = await convertImageUrlsToBase64(
+        activity,
+        c.env,
+        logger,
+      );
 
       return c.json(convertedActivity);
     })
@@ -157,28 +172,29 @@ export function createActivityRoute() {
       const res = await c.var.h.deleteActivity(userId, activityId);
       return c.json(res);
     })
-    .post("/:id/icon", async (c) => {
-      const userId = c.get("userId");
-      const { id } = c.req.param();
-      const activityId = createActivityId(id);
-      const { base64, mimeType } = await c.req.json<{
-        base64: string;
-        mimeType: string;
-      }>();
+    .post(
+      "/:id/icon",
+      zValidator("json", ActivityIconUploadRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const { id } = c.req.param();
+        const activityId = createActivityId(id);
+        const { base64, mimeType } = c.req.valid("json");
 
-      const protocol = c.req.header("x-forwarded-proto") || "http";
-      const host = c.req.header("host") || "localhost";
-      const apiBaseUrl = `${protocol}://${host}`;
+        const protocol = c.req.header("x-forwarded-proto") || "http";
+        const host = c.req.header("host") || "localhost";
+        const apiBaseUrl = `${protocol}://${host}`;
 
-      const res = await c.var.h.uploadActivityIcon(
-        userId,
-        activityId,
-        base64,
-        mimeType,
-        apiBaseUrl,
-      );
-      return c.json(res);
-    })
+        const res = await c.var.h.uploadActivityIcon(
+          userId,
+          activityId,
+          base64,
+          mimeType,
+          apiBaseUrl,
+        );
+        return c.json(res);
+      },
+    )
     .delete("/:id/icon", async (c) => {
       const userId = c.get("userId");
       const { id } = c.req.param();

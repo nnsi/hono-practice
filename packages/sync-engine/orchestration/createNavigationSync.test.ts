@@ -110,6 +110,7 @@ describe("createNavigationSync", () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(deps.onError).toHaveBeenCalledTimes(1);
+    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "pull");
     expect(deps.syncAll).toHaveBeenCalledTimes(1);
   });
 
@@ -122,6 +123,6 @@ describe("createNavigationSync", () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(deps.onError).toHaveBeenCalledTimes(1);
-    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error));
+    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "push");
   });
 });
