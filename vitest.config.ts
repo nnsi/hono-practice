@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    setupFiles: ["./apps/mobile/test.setup.ts"],
     hookTimeout: 30000, // 30秒のタイムアウトを設定
     testTimeout: 30000, // テスト自体のタイムアウトも30秒
     include: [
