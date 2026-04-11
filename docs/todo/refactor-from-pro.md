@@ -133,37 +133,110 @@
 
 ## P1: 近いうちに返済したい設計・品質負債
 
-- [ ] 200 行超ファイル 10 件を分割する
+> 評価軸: 実装コストを度外視した「理想として直す価値があるか」で 3 段階にグルーピング。
+> 着手順の推奨は「明確にやる価値がある」の API 契約単一ソース化 (手書き API リファレンス廃止 → 逆依存解消 → scope 二重管理) から。
+
+### 明確にやる価値がある
+
+- [ ] 手書き API リファレンスをやめ、契約から生成する
+  - 対象: `apps/frontend/src/components/api-reference/apiReferenceData.ts`
+  - 現状: ルート/スキーマと二重管理でドリフトしやすい
+  - 対応: contract/OpenAPI/schema から生成
+  - 評価: API 契約の単一ソース化は最優先級。次項 (逆依存解消・scope 二重管理) とセットで解決する
+
+- [ ] `packages/types/api.ts` の packages → apps 逆依存を解消する
+  - 現状: `@backend/app` の `AppType` を再 export しており、レイヤー例外が残る
+  - 対応: 生成済み API contract package へ分離
+  - 評価: レイヤー違反として教科書的。依存グラフに 1 本でも逆向きの矢印があると全体が汚染される
+
+- [ ] API scope 定義の二重管理をやめる
+  - 重複対象:
+    - `packages/domain/apiKey/apiKeySchema.ts`
+    - `apps/frontend/src/components/api-reference/apiReferenceData.ts`
+  - 評価: 手書き API リファレンス廃止と同時解決すべき。単一ソース化はドメイン駆動の基本
+
+- [ ] shared package のエラー処理を注入式に統一する
   - 対象:
+    - `packages/sync-engine/orchestration/createNavigationSync.ts`
+    - `packages/sync-engine/pull/createInitialSync.ts`
+  - 現状: `console.error` 直書き
+  - 対応: logger / reportError / telemetry adapter を外から受ける
+  - 評価: 共有パッケージが `console.error` 直呼びはテスタビリティ・監視統合の両方で詰む。DI が正しい設計
+
+- [ ] 200 行超ファイルを凝集度ベースで分割する
+  - 優先対象 (責務分離が明確):
     - `apps/frontend/src/hooks/useCSVImport.ts` (485)
     - `apps/backend/feature/activity/activityUsecase.ts` (338)
-    - `apps/frontend/src/components/api-reference/apiReferenceData.ts` (338)
     - `apps/frontend/src/components/tasks/TasksPage.tsx` (315)
+  - その他検討対象:
     - `apps/frontend/src/components/csv/CSVColumnMapper.tsx` (258)
     - `apps/mobile/src/repositories/activityRepository.ts` (240)
     - `packages/domain/csv/csvParser.ts` (234)
     - `apps/mobile/src/components/common/HamburgerMenu.tsx` (206)
     - `apps/mobile/src/components/csv/CSVImportModal.tsx` (206)
     - `packages/sync-engine/mappers/apiMappers.ts` (204)
+  - 除外:
+    - `apps/frontend/src/components/api-reference/apiReferenceData.ts` (338) → 「手書き API リファレンス廃止」で消える
   - 分割方針:
     - CSV: parse / validate / mapping / import execution / progress state
     - activityUsecase: query / mutation / icon / ordering
     - TasksPage: section definition / rendering / handlers
     - mappers: entity 単位分割
+  - 評価: 行数ではなく凝集度で判断。機械的分割は逆効果。API 契約や shared DI を先に進めれば副次的に自然に分割される
 
-- [ ] 手書き API リファレンスをやめ、契約から生成する
-  - 対象: `apps/frontend/src/components/api-reference/apiReferenceData.ts`
-  - 現状: ルート/スキーマと二重管理でドリフトしやすい
-  - 対応: contract/OpenAPI/schema から生成
-
-- [ ] `packages/types/api.ts` の packages → apps 逆依存を解消する
-  - 現状: `@backend/app` の `AppType` を再 export しており、レイヤー例外が残る
-  - 対応: 生成済み API contract package へ分離
+### やる価値はある
 
 - [ ] base64 変換ロジックを共通化する
   - 重複対象:
     - `apps/backend/feature/activity/activityRoute.ts`
     - `apps/backend/feature/activityLog/activityLogRoute.ts`
+  - 評価: DRY として妥当。2 箇所なら軽量な共通化 (例: `packages/backend-shared/utils`) で十分。大仰な抽象化は不要
+
+- [ ] `as unknown as` を本番コードから除去する
+  - 本番コード対象:
+    - `apps/admin-frontend/src/components/login/LoginPage.tsx`
+    - `apps/mobile/src/db/expo-sqlite-web-shim.ts`
+  - テスト補助コード対象:
+    - `apps/backend/feature/webhook/test/polarWebhookTestHelpers.ts`
+    - `apps/backend/feature/webhook/test/revenueCatTestHelpers.ts`
+  - 評価: 原則として正しい。本番 2 件は個別に「なぜ必要か」を見て型宣言側で解決する
+
+- [ ] admin frontend の最低限のテストを追加する
+  - 対象: `apps/admin-frontend`
+  - 現状: テスト 0 件
+  - 最低ライン:
+    - ログイン成功/失敗
+    - 認証ガード
+    - dashboard の empty/loading/error
+    - destructive action の確認フロー
+  - 評価: 0 件は危険信号。admin 機能は failure cost が高いので最低ラインは必須
+
+- [ ] failure path のテストを増やす
+  - 優先対象:
+    - `packages/frontend-shared/hooks/useTasksPage.test.tsx`
+    - `packages/frontend-shared/hooks/useDailyPage.test.tsx`
+    - `apps/frontend/src/components/common/useLogForm.test.ts`
+    - `packages/sync-engine` 一式
+    - `apps/frontend/src/sync/initialSync.ts`
+    - `apps/mobile/src/sync/initialSync.ts`
+  - 評価: P0 で整合性問題を直した以上、テストで固める必要がある。P0 の完了と対になる
+
+- [ ] `apps/mobile/src/components/csv/CSVImportModal.tsx` の文言を i18n 化する
+  - 現状: 日本語文言が直書き
+  - 関連確認: `packages/i18n` はテスト 0 件
+  - 評価: `packages/i18n` がある以上は統一すべき。ただし i18n 基盤自体の健全性確認とセットで進める
+
+- [ ] Web / Mobile の initial sync 差分を棚卸しする
+  - 対象:
+    - `apps/frontend/src/sync/initialSync.ts`
+    - `apps/mobile/src/sync/initialSync.ts`
+  - 現状:
+    - `freezePeriods` の `.catch(() => null)` TODO が両方に残る
+    - fallback 差分があり、意図的差分か不明
+  - 対応: intentional / accidental に仕分ける
+  - 評価: 棚卸しだけで終わらせず、差分の扱いを明文化するところまでやって初めて意味がある
+
+### 条件付き / 再検討
 
 - [ ] Web/Mobile で残っている共通化漏れを解消する
   - 対象:
@@ -175,11 +248,7 @@
     - `apps/mobile/src/components/contact/useContactForm.ts`
     - `apps/frontend/src/components/setting/useAccountLinking.ts`
   - 対応: `packages/frontend-shared` に metadata / hook / adapter を寄せる
-
-- [ ] API scope 定義の二重管理をやめる
-  - 重複対象:
-    - `packages/domain/apiKey/apiKeySchema.ts`
-    - `apps/frontend/src/components/api-reference/apiReferenceData.ts`
+  - 条件: 共通化はロジック層 (hook) に留める。UI は RN と Web DOM の adapter pattern を前提にしないと型崩壊する。単純に shared に寄せない
 
 - [ ] CSV パーサ仕様を明文化し、曖昧挙動を減らす
   - 対象: `packages/domain/csv/csvParser.ts`
@@ -190,6 +259,7 @@
     - 対応 dialect を固定
     - 仕様テストを追加
     - 必要なら専用 parser へ置換
+  - 条件: 自前パーサを仕様化するより `papaparse` 等の標準ライブラリに乗り換える判断を先にする。仕様化は捨てられない場合のフォールバック
 
 - [ ] CSV import の Web / Mobile 機能差を解消する
   - Web:
@@ -201,28 +271,13 @@
   - 現状:
     - Web は column mapping / fixed activity / 新規 activity 作成 / kind 解決あり
     - Mobile は単一 activity 選択前提で機能が薄い
+  - 条件: 機能パリティを目的化すると過剰投資になる。ユーザーが mobile で CSV import を実際に使うかの利用実態確認が先
 
 - [ ] `apps/mobile/src/db/expo-sqlite-web-shim.ts` の CDN 依存を解消する
   - 現状: `sql.js` / wasm をランタイムで CDN から取得
   - リスク: 可用性、供給網、オフライン、整合性
-  - 対応: bundle / self-host / integrity pinning / dev-only 明確化
-
-- [ ] `as unknown as` を本番コードから除去する
-  - 本番コード対象:
-    - `apps/admin-frontend/src/components/login/LoginPage.tsx`
-    - `apps/mobile/src/db/expo-sqlite-web-shim.ts`
-  - テスト補助コード対象:
-    - `apps/backend/feature/webhook/test/polarWebhookTestHelpers.ts`
-    - `apps/backend/feature/webhook/test/revenueCatTestHelpers.ts`
-
-- [ ] admin frontend の最低限のテストを追加する
-  - 対象: `apps/admin-frontend`
-  - 現状: テスト 0 件
-  - 最低ライン:
-    - ログイン成功/失敗
-    - 認証ガード
-    - dashboard の empty/loading/error
-    - destructive action の確認フロー
+  - 対応: dev-only であることをコード/README に明記する (最小対応)
+  - 条件: production は expo-sqlite ネイティブで動くので web shim は Claude Code 動作確認用の dev-only。self-host / bundle は過剰対応。「dev-only と明確化」だけで十分
 
 - [ ] mobile の UI / 機能テストを増やす
   - 対象: `apps/mobile`
@@ -233,35 +288,7 @@
     - settings / account / OAuth
     - OTA / sync failure
     - API key / subscription UI
-
-- [ ] failure path のテストを増やす
-  - 優先対象:
-    - `packages/frontend-shared/hooks/useTasksPage.test.tsx`
-    - `packages/frontend-shared/hooks/useDailyPage.test.tsx`
-    - `apps/frontend/src/components/common/useLogForm.test.ts`
-    - `packages/sync-engine` 一式
-    - `apps/frontend/src/sync/initialSync.ts`
-    - `apps/mobile/src/sync/initialSync.ts`
-
-- [ ] shared package のエラー処理を注入式に統一する
-  - 対象:
-    - `packages/sync-engine/orchestration/createNavigationSync.ts`
-    - `packages/sync-engine/pull/createInitialSync.ts`
-  - 現状: `console.error` 直書き
-  - 対応: logger / reportError / telemetry adapter を外から受ける
-
-- [ ] `apps/mobile/src/components/csv/CSVImportModal.tsx` の文言を i18n 化する
-  - 現状: 日本語文言が直書き
-  - 関連確認: `packages/i18n` はテスト 0 件
-
-- [ ] Web / Mobile の initial sync 差分を棚卸しする
-  - 対象:
-    - `apps/frontend/src/sync/initialSync.ts`
-    - `apps/mobile/src/sync/initialSync.ts`
-  - 現状:
-    - `freezePeriods` の `.catch(() => null)` TODO が両方に残る
-    - fallback 差分があり、意図的差分か不明
-  - 対応: intentional / accidental に仕分ける
+  - 条件: RN の単体 UI テストは ROI が悪い。Detox / Maestro 等の E2E シナリオ整備を先に検討する。書き方を決めずに数だけ増やすのは非推奨
 
 ## P1.5: ドキュメント・運用整合性の修正
 
