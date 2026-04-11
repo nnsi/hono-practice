@@ -1,7 +1,23 @@
+import type { Page } from "playwright";
 import { describe, expect, it } from "vitest";
 
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
+
+async function recordRunningOnActiko(page: Page, quantity: string) {
+  await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
+  await page.click('text="E2Eランニング"');
+  await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
+
+  const modal = page.locator(".modal-backdrop");
+  await modal.locator('input[type="number"]').fill(quantity);
+  await modal.locator('button:has-text("記録する")').click();
+
+  await page.waitForSelector(".modal-backdrop", {
+    state: "detached",
+    timeout: 15000,
+  });
+}
 
 describe("daily", () => {
   const { getPage } = setupBrowser();
@@ -120,20 +136,17 @@ describe("daily", () => {
     const page = getPage();
     await login(page, "e2e@example.com", "password123");
 
+    await recordRunningOnActiko(page, "21");
+
     await page.click('a[href="/daily"]');
     await page.waitForURL("**/daily", { timeout: 15000 });
 
-    // ログが表示されるのを待つ
-    await page
-      .locator('text="E2Eランニング"')
-      .first()
-      .waitFor({ state: "visible", timeout: 15000 });
-
-    // LogCard（E2Eランニングを含むbutton）をクリックして EditLogDialog を開く
     const logCard = page
       .locator("button")
       .filter({ hasText: "E2Eランニング" })
+      .filter({ hasText: "21km" })
       .first();
+    await logCard.waitFor({ state: "visible", timeout: 15000 });
     await logCard.click();
 
     // EditLogDialog が開く
