@@ -21,41 +21,49 @@ function createAdminAuthRoute() {
   const app = new Hono<AppContext>();
 
   return app
-    .post("/google", zValidator("json", AdminGoogleAuthRequestSchema), async (c) => {
-      const { credential } = c.req.valid("json");
-      const clientIds = [c.env.GOOGLE_OAUTH_CLIENT_ID];
-      const payload = await googleVerify(credential, clientIds);
+    .post(
+      "/google",
+      zValidator("json", AdminGoogleAuthRequestSchema),
+      async (c) => {
+        const { credential } = c.req.valid("json");
+        const clientIds = [c.env.GOOGLE_OAUTH_CLIENT_ID];
+        const payload = await googleVerify(credential, clientIds);
 
-      if (!payload.email || !payload.email_verified) {
-        throw new AppError("Email not verified", 403);
-      }
+        if (!payload.email || !payload.email_verified) {
+          throw new AppError("Email not verified", 403);
+        }
 
-      const allowedEmails = parseAllowedEmails(c.env.ADMIN_ALLOWED_EMAILS);
-      if (allowedEmails.length === 0) {
-        throw new AppError("Admin access not configured", 500);
-      }
+        const allowedEmails = parseAllowedEmails(c.env.ADMIN_ALLOWED_EMAILS);
+        if (allowedEmails.length === 0) {
+          throw new AppError("Admin access not configured", 500);
+        }
 
-      if (!allowedEmails.includes(payload.email.toLowerCase())) {
-        throw new AppError("Access denied", 403);
-      }
+        if (!allowedEmails.includes(payload.email.toLowerCase())) {
+          throw new AppError("Access denied", 403);
+        }
 
-      const { JWT_SECRET, JWT_AUDIENCE } = c.env;
-      const now = Math.floor(Date.now() / 1000);
-      const token = await sign(
-        {
+        const { JWT_SECRET, JWT_AUDIENCE } = c.env;
+        const now = Math.floor(Date.now() / 1000);
+        const token = await sign(
+          {
+            email: payload.email,
+            name: payload.name ?? "",
+            role: "admin",
+            aud: JWT_AUDIENCE,
+            iat: now,
+            exp: now + ADMIN_TOKEN_EXPIRES_IN_SECONDS,
+          },
+          JWT_SECRET,
+          "HS256",
+        );
+
+        return c.json({
+          token,
           email: payload.email,
           name: payload.name ?? "",
-          role: "admin",
-          aud: JWT_AUDIENCE,
-          iat: now,
-          exp: now + ADMIN_TOKEN_EXPIRES_IN_SECONDS,
-        },
-        JWT_SECRET,
-        "HS256",
-      );
-
-      return c.json({ token, email: payload.email, name: payload.name ?? "" });
-    })
+        });
+      },
+    )
     .post("/dev-login", async (c) => {
       if (c.env.NODE_ENV !== "development") {
         throw new AppError("Not available", 404);

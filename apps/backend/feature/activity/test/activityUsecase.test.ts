@@ -266,10 +266,12 @@ describe("ActivityUsecase", () => {
           },
         ],
       };
-      when(
-        txRepo.getActivityByIdAndUserId(userId1, activityId1),
-      ).thenResolve(existingActivity);
-      when(txRepo.updateActivity(anything())).thenCall(async (activity) => activity);
+      when(txRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        existingActivity,
+      );
+      when(txRepo.updateActivity(anything())).thenCall(
+        async (activity) => activity,
+      );
       when(tx.run(anything(), anything())).thenCall(
         async (_, callback) => await callback(instance(txRepo)),
       );
@@ -578,9 +580,7 @@ describe("ActivityUsecase", () => {
       ).rejects.toThrow("db failed");
 
       verify(storage.delete("stored/activities/icon.webp")).once();
-      verify(
-        repo.updateActivityIcon(activityId1, "emoji", null, null),
-      ).never();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).never();
     });
 
     it("deleteActivityIcon: ストレージ削除が失敗したらDBを更新しない", async () => {
@@ -590,7 +590,9 @@ describe("ActivityUsecase", () => {
         iconUrl: "https://cdn.example.com/r2/icons/main.webp",
         iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
       });
-      when(repo.updateActivityIcon(activityId1, "emoji", null, null)).thenResolve();
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
       when(
         repo.updateActivityIcon(
           activityId1,
@@ -606,9 +608,7 @@ describe("ActivityUsecase", () => {
       ).rejects.toThrow("Failed to delete activity icon from storage");
 
       verify(storage.delete(anything())).once();
-      verify(
-        repo.updateActivityIcon(activityId1, "emoji", null, null),
-      ).once();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).once();
       verify(
         repo.updateActivityIcon(
           activityId1,
@@ -625,9 +625,9 @@ describe("ActivityUsecase", () => {
         iconUrl: "https://cdn.example.com/r2/icons/main.webp",
         iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
       });
-      when(repo.updateActivityIcon(activityId1, "emoji", null, null)).thenReject(
-        new Error("db failed"),
-      );
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenReject(new Error("db failed"));
 
       await expect(
         usecase.deleteActivityIcon(userId1, activityId1),
@@ -644,7 +644,9 @@ describe("ActivityUsecase", () => {
         iconThumbnailUrl:
           "https://api.example.com/public/uploads/icons/user-1/icon.webp",
       });
-      when(repo.updateActivityIcon(activityId1, "emoji", null, null)).thenResolve();
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
       when(storage.delete("icons/user-1/icon.webp")).thenResolve();
 
       await usecase.deleteActivityIcon(userId1, activityId1);
@@ -658,9 +660,13 @@ describe("ActivityUsecase", () => {
         iconUrl: "https://cdn.example.com/r2/icons/main.webp",
         iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
       });
-      when(repo.updateActivityIcon(activityId1, "emoji", null, null)).thenResolve();
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
       when(storage.delete("icons/main.webp")).thenResolve();
-      when(storage.delete("icons/thumb.webp")).thenReject(new Error("r2 failed"));
+      when(storage.delete("icons/thumb.webp")).thenReject(
+        new Error("r2 failed"),
+      );
 
       await expect(
         usecase.deleteActivityIcon(userId1, activityId1),

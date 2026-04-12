@@ -108,9 +108,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
         const convertedQuantity = convertSecondsToUnit(seconds, timeUnitType);
         const startDate = timer.getStartDate();
         const endDate = new Date();
-        const timerMemo = startDate
-          ? generateTimeMemo(startDate, endDate)
-          : "";
+        const timerMemo = startDate ? generateTimeMemo(startDate, endDate) : "";
 
         await saveLog({
           quantity: convertedQuantity,

@@ -66,8 +66,18 @@ export function newActivityUsecase(
     updateActivity: updateActivity(repo, tx, tracer),
     updateActivityOrder: updateActivityOrder(repo, tx, tracer),
     deleteActivity: deleteActivity(repo, tracer),
-    uploadActivityIcon: uploadActivityIcon(repo, tracer, activityLogger, storage),
-    deleteActivityIcon: deleteActivityIcon(repo, tracer, activityLogger, storage),
+    uploadActivityIcon: uploadActivityIcon(
+      repo,
+      tracer,
+      activityLogger,
+      storage,
+    ),
+    deleteActivityIcon: deleteActivityIcon(
+      repo,
+      tracer,
+      activityLogger,
+      storage,
+    ),
   };
 }
 
@@ -297,7 +307,12 @@ function uploadActivityIcon(
 
     try {
       await tracer.span("db.updateActivityIcon", () =>
-        repo.updateActivityIcon(activityId, "upload", iconUrl, iconThumbnailUrl),
+        repo.updateActivityIcon(
+          activityId,
+          "upload",
+          iconUrl,
+          iconThumbnailUrl,
+        ),
       );
     } catch (error) {
       try {
@@ -359,7 +374,9 @@ function deleteActivityIcon(
         deletedKeys.push(key);
       }
     } catch (error) {
-      const remainingKeys = deleteKeys.filter((key) => !deletedKeys.includes(key));
+      const remainingKeys = deleteKeys.filter(
+        (key) => !deletedKeys.includes(key),
+      );
 
       if (deletedKeys.length === 0) {
         try {

@@ -12,6 +12,8 @@ import {
   CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
+  getActivityLogStatsRequestSchema,
+  getActivityLogsRequestSchema,
 } from "@packages/types/request";
 import type { GetActivityLogResponse } from "@packages/types/response";
 
@@ -98,8 +100,11 @@ export function createActivityLogRoute() {
   });
 
   return app
-    .get("/", async (c) => {
-      const res = await c.var.h.getActivityLogs(c.get("userId"), c.req.query());
+    .get("/", zValidator("query", getActivityLogsRequestSchema), async (c) => {
+      const res = await c.var.h.getActivityLogs(
+        c.get("userId"),
+        c.req.valid("query"),
+      );
       const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
@@ -109,11 +114,18 @@ export function createActivityLogRoute() {
 
       return c.json(convertedLogs);
     })
-    .get("/stats", async (c) => {
-      const res = await c.var.h.getStats(c.get("userId"), c.req.query());
+    .get(
+      "/stats",
+      zValidator("query", getActivityLogStatsRequestSchema),
+      async (c) => {
+        const res = await c.var.h.getStats(
+          c.get("userId"),
+          c.req.valid("query"),
+        );
 
-      return c.json(res);
-    })
+        return c.json(res);
+      },
+    )
     .get("/:id", async (c) => {
       const { id } = c.req.param();
 

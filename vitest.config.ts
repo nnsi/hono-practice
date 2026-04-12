@@ -23,6 +23,8 @@ export default defineConfig({
       "**/apps/frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // mobileのテスト
       "**/apps/mobile/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // scriptsのテスト (generator 等)
+      "**/scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
     ],
     exclude: [
       "**/node_modules/**",

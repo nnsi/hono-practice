@@ -1,10 +1,10 @@
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import type {
   ClientErrorDetail,
   ClientErrorProvider,
   ClientErrorSummary,
 } from "@backend/query/clientErrorProvider";
 import { EMPTY_CLIENT_ERROR_SUMMARY } from "@backend/query/clientErrorProvider";
-import { type Logger, noopLogger } from "@backend/lib/logger";
 import { z } from "zod";
 
 const QUERY_SUMMARY_24H = `

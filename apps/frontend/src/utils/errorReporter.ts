@@ -13,9 +13,7 @@ const API_URL = (
 type ErrorReporterState = {
   cachedUserId: string;
   registeredDb: typeof db | null;
-  creatingHook:
-    | ((primKey: string, obj: AuthStateRecord) => void)
-    | null;
+  creatingHook: ((primKey: string, obj: AuthStateRecord) => void) | null;
   updatingHook:
     | ((
         modifications: Partial<AuthStateRecord>,
@@ -60,10 +58,14 @@ function ensureAuthStateTracking(): ErrorReporterState {
   if (state.registeredDb === activeDb) return state;
 
   if (state.registeredDb && state.creatingHook) {
-    state.registeredDb.authState.hook("creating").unsubscribe(state.creatingHook);
+    state.registeredDb.authState
+      .hook("creating")
+      .unsubscribe(state.creatingHook);
   }
   if (state.registeredDb && state.updatingHook) {
-    state.registeredDb.authState.hook("updating").unsubscribe(state.updatingHook);
+    state.registeredDb.authState
+      .hook("updating")
+      .unsubscribe(state.updatingHook);
   }
 
   state.registeredDb = activeDb;

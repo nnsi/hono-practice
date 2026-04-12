@@ -158,7 +158,9 @@ describe("useTasksPage handleToggleDone", () => {
       }
     });
 
-    expect(caughtError).toEqual(expect.objectContaining({ message: "log failed" }));
+    expect(caughtError).toEqual(
+      expect.objectContaining({ message: "log failed" }),
+    );
     expect(mockUpdateTask).toHaveBeenNthCalledWith(1, "task-1", {
       doneDate: expect.any(String),
     });

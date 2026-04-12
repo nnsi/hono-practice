@@ -52,7 +52,9 @@ describe("notes", () => {
     await page.locator("select").selectOption({ index: 1 });
 
     await page.click('button[aria-label="プレビュー"]');
-    await page.locator("textarea").waitFor({ state: "detached", timeout: 15000 });
+    await page
+      .locator("textarea")
+      .waitFor({ state: "detached", timeout: 15000 });
     await page.waitForSelector(`text="${title}"`, { timeout: 15000 });
     await page.waitForSelector('text="作成したノートの本文です。"', {
       timeout: 15000,
@@ -80,7 +82,11 @@ describe("notes", () => {
     await page.click('button:has-text("保存")');
     await page.waitForURL("**/notes", { timeout: 15000 });
 
-    await page.locator("button").filter({ hasText: originalTitle }).first().click();
+    await page
+      .locator("button")
+      .filter({ hasText: originalTitle })
+      .first()
+      .click();
     await page.waitForURL("**/notes/*", { timeout: 15000 });
 
     await page.click('button[aria-label="ノートを編集"]');
@@ -120,7 +126,10 @@ describe("notes", () => {
     await page.click('button:has-text("保存")');
     await page.waitForURL("**/notes", { timeout: 15000 });
 
-    const noteButton = page.locator("button").filter({ hasText: title }).first();
+    const noteButton = page
+      .locator("button")
+      .filter({ hasText: title })
+      .first();
     const noteCard = noteButton.locator(
       "xpath=ancestor::div[contains(@class, 'rounded-xl')][1]",
     );

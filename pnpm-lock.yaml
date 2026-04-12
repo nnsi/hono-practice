@@ -91,6 +91,9 @@ importers:
       wrangler:
         specifier: ^4.26.1
         version: 4.67.0(@cloudflare/workers-types@4.20260228.0)
+      zod:
+        specifier: ^4.0.1
+        version: 4.3.6
 
   apps/admin-frontend:
     dependencies:

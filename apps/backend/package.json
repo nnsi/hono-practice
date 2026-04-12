@@ -1,5 +1,6 @@
 {
   "name": "actiko-backend",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch ./server.node.ts"
   },

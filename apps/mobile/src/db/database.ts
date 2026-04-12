@@ -1,9 +1,9 @@
 import * as SQLite from "expo-sqlite";
 import { Platform } from "react-native";
 
+import { reportError } from "../utils/errorReporter";
 import { getAppGroupDirectory } from "./appGroupDirectory";
 import { migrateDb } from "./migrations";
-import { reportError } from "../utils/errorReporter";
 
 const DB_NAME = "actiko.db";
 

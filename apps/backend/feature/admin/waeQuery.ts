@@ -1,9 +1,9 @@
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import type {
   ApiErrorDetail,
   ApmProvider,
   ApmSummary,
 } from "@backend/query/apmProvider";
-import { type Logger, noopLogger } from "@backend/lib/logger";
 
 const QUERY_24H = `
 SELECT

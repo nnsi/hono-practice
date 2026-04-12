@@ -138,22 +138,24 @@
 
 ### 明確にやる価値がある
 
-- [ ] 手書き API リファレンスをやめ、契約から生成する
+- [x] 手書き API リファレンスをやめ、契約から生成する
   - 対象: `apps/frontend/src/components/api-reference/apiReferenceData.ts`
   - 現状: ルート/スキーマと二重管理でドリフトしやすい
   - 対応: contract/OpenAPI/schema から生成
   - 評価: API 契約の単一ソース化は最優先級。次項 (逆依存解消・scope 二重管理) とセットで解決する
+  - 完了: `scripts/generate-api-reference.ts` が `apiV1Route.routes` と `endpointMetadata.ts` を突き合わせて `apiReferenceData.generated.ts` を生成する方式に移行。description は Zod schema の `.describe()` と metadata ファイルに分散配置
 
 - [ ] `packages/types/api.ts` の packages → apps 逆依存を解消する
   - 現状: `@backend/app` の `AppType` を再 export しており、レイヤー例外が残る
   - 対応: 生成済み API contract package へ分離
   - 評価: レイヤー違反として教科書的。依存グラフに 1 本でも逆向きの矢印があると全体が汚染される
 
-- [ ] API scope 定義の二重管理をやめる
+- [x] API scope 定義の二重管理をやめる
   - 重複対象:
     - `packages/domain/apiKey/apiKeySchema.ts`
     - `apps/frontend/src/components/api-reference/apiReferenceData.ts`
   - 評価: 手書き API リファレンス廃止と同時解決すべき。単一ソース化はドメイン駆動の基本
+  - 完了: `API_KEY_SCOPE_DESCRIPTIONS` を `apiKeySchema.ts` に追加して generator から参照。`V1_SCOPE_MAPPING` を `apps/backend/api/v1/scopeMapping.ts` に置き、middleware と generator で共有
 
 - [ ] shared package のエラー処理を注入式に統一する
   - 対象:

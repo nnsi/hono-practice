@@ -5,6 +5,7 @@ import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 import { describe, expect, it } from "vitest";
 
+import type { ResourceName } from "../../api/v1/scopeMapping";
 import { requireResourceScope, requireScope } from "../scopeGuard";
 
 function createTestApp(requiredScopes: ApiKeyScope[]) {
@@ -16,7 +17,7 @@ function createTestApp(requiredScopes: ApiKeyScope[]) {
   return wrapper;
 }
 
-function createResourceTestApp(resource: string) {
+function createResourceTestApp(resource: ResourceName) {
   const wrapper = newHonoWithErrorHandling();
 
   wrapper.use("*", requireResourceScope(resource));

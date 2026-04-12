@@ -90,6 +90,12 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: API reference drift check
+        run: |
+          pnpm run generate:api-reference
+          git diff --exit-code apps/frontend/src/components/api-reference/apiReferenceData.generated.ts \
+            || (echo "::error::apiReferenceData.generated.ts is out of date. Run 'pnpm run generate:api-reference' locally." && exit 1)
+
   typecheck:
     needs: detect-changes
     if: needs.detect-changes.outputs.code == 'true'

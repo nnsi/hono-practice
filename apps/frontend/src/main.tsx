@@ -1,9 +1,7 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import {
-  setupGlobalErrorHandler,
-} from "@packages/frontend-shared";
+import { setupGlobalErrorHandler } from "@packages/frontend-shared";
 import { initI18n } from "@packages/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";

@@ -1,6 +1,6 @@
-export * from "./AppleLoginRequest";
 export * from "./ActivityIconUploadRequest";
 export * from "./AdminGoogleAuthRequest";
+export * from "./AppleLoginRequest";
 export * from "./BatchRequest";
 export * from "./CheckDuplicatesRequest";
 export * from "./ConsentsRequest";
@@ -15,6 +15,7 @@ export * from "./CreateGoalRequest";
 export * from "./CreateNoteRequest";
 export * from "./CreateTaskRequest";
 export * from "./CreateUserRequest";
+export * from "./GetActivityLogsRequest";
 export * from "./GetTasksRequest";
 export * from "./GoogleLoginRequest";
 export * from "./LoginRequest";

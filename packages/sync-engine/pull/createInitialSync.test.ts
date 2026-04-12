@@ -197,7 +197,10 @@ describe("createInitialSync bootstrap resources", () => {
 
     await expect(performInitialSync("user-1")).rejects.toThrow("fetch failed");
 
-    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "fetchAllApis");
+    expect(deps.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "fetchAllApis",
+    );
   });
 
   it("reports parseResponses failures with phase", async () => {
@@ -219,7 +222,10 @@ describe("createInitialSync bootstrap resources", () => {
 
     await expect(performInitialSync("user-1")).rejects.toThrow("parse failed");
 
-    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "parseResponses");
+    expect(deps.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "parseResponses",
+    );
   });
 
   it("reports writeAllData failures with phase", async () => {
@@ -241,6 +247,9 @@ describe("createInitialSync bootstrap resources", () => {
 
     await expect(performInitialSync("user-1")).rejects.toThrow("write failed");
 
-    expect(deps.onError).toHaveBeenCalledWith(expect.any(Error), "writeAllData");
+    expect(deps.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "writeAllData",
+    );
   });
 });
