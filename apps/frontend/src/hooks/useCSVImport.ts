@@ -21,7 +21,7 @@ import { activityRepository } from "../db/activityRepository";
 import type { DexieActivity, DexieActivityKind } from "../db/schema";
 import { syncEngine } from "../sync/syncEngine";
 
-export type { ColumnMapping, ValidatedActivityLog, ActivityLogValidationError };
+export type { ValidatedActivityLog };
 
 async function parseCSVFile(file: File): Promise<CSVParseResult> {
   const buffer = await file.slice(0, 1024).arrayBuffer();
@@ -112,22 +112,12 @@ function validateRowWithMapping(
 
 // --- Import Progress ---
 
-export type ImportProgress = {
+type ImportProgress = {
   total: number;
   processed: number;
   succeeded: number;
   skipped: number;
   failed: number;
-};
-
-export type ImportResult = {
-  success: boolean;
-  summary: {
-    total: number;
-    succeeded: number;
-    skipped: number;
-    failed: number;
-  };
 };
 
 // --- Main Hook ---

@@ -9,7 +9,7 @@ export const firstStackFrame = (stack?: string): string => {
   return line?.trim() ?? "";
 };
 
-export type WAEEntry = {
+type WAEEntry = {
   level: string;
   requestId: string;
   method: string;

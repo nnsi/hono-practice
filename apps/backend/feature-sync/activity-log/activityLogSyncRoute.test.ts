@@ -4,7 +4,7 @@ import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { activityLogs } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
-import { activityLogSyncRoute } from ".";
+import { activityLogSyncRoute } from "./activityLogSyncRoute";
 
 const SEED_ACTIVITY_ID = "00000000-0000-4000-8000-000000000001";
 const SEED_ACTIVITY_KIND_ID = "00000000-0000-4000-8000-000000000001";

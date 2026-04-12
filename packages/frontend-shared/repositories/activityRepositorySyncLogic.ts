@@ -2,7 +2,6 @@ import type {
   ActivityKindRecord,
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
-import { v7 as uuidv7 } from "uuid";
 
 import type { ActivityDbAdapter } from "./activityDbAdapter";
 import { filterSafeUpserts } from "./syncHelpers";
@@ -67,6 +66,7 @@ export async function applyKindUpdates(
   activityId: string,
   updatedKinds: { id?: string; name: string; color: string }[],
   now: string,
+  generateId: () => string,
 ) {
   const existing = await adapter.getKindsByActivityId(activityId);
   const updatedIds = new Set(
@@ -95,7 +95,7 @@ export async function applyKindUpdates(
       });
     } else {
       await adapter.insertKind({
-        id: uuidv7(),
+        id: generateId(),
         activityId,
         name: kind.name,
         color: kind.color || null,

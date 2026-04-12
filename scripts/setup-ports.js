@@ -114,8 +114,9 @@ async function main() {
     console.log(`  - Mobile Dev Server: ${expoPort}`);
     console.log();
 
-    // .env.exampleから必要な環境変数をコピー
+    // root / backend の .env.example から必要な環境変数をコピー
     const exampleEnv = loadEnvFile(".env.example");
+    const backendExampleEnv = loadEnvFile("apps/backend/.env.example");
 
     // 1. ルートの.envを更新（データベーススクリプト用）
     const rootEnv = loadEnvFile(".env");
@@ -139,20 +140,13 @@ async function main() {
     const backendEnvPath = "apps/backend/.env";
     const backendEnv = loadEnvFile(backendEnvPath);
     const backendEnvUpdates = {
+      ...Object.fromEntries(
+        Object.entries(backendExampleEnv).filter(([key]) => !(key in backendEnv))
+      ),
       API_PORT: apiPort.toString(),
       APP_URL: `http://localhost:${vitePort}`,
+      APP_URL_V2: `http://localhost:${vitePort}`,
     };
-    const backendRequiredKeys = [
-      "DATABASE_URL",
-      "JWT_SECRET",
-      "NODE_ENV",
-      "GOOGLE_OAUTH_CLIENT_ID",
-    ];
-    backendRequiredKeys.forEach((key) => {
-      if (!(key in backendEnv) && key in exampleEnv) {
-        backendEnvUpdates[key] = exampleEnv[key];
-      }
-    });
     updateEnvFile(backendEnvPath, backendEnvUpdates);
     console.log("✅ バックエンドの.envファイルを更新しました");
 

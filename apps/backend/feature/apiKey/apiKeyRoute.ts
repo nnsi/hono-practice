@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
 import { zValidator } from "@hono/zod-validator";
@@ -26,8 +27,9 @@ export function createApiKeyRoute() {
     const db = c.env.DB;
 
     const tracer = c.get("tracer") ?? noopTracer;
+    const logger = c.get("logger") ?? noopLogger;
     const repo = newApiKeyRepository(db);
-    const uc = newApiKeyUsecase(repo, tracer);
+    const uc = newApiKeyUsecase(repo, tracer, logger);
     const h = newApiKeyHandler(uc);
 
     c.set("h", h);

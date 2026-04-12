@@ -21,6 +21,7 @@ import { AppleLinkSection } from "./AppleLinkSection";
 import { GoogleLinkSection } from "./GoogleLinkSection";
 import { Divider, Section, SettingSwitch } from "./SettingsParts";
 import { SubscriptionSection } from "./SubscriptionSection";
+import { TabCustomizationSection } from "./TabCustomizationSection";
 import { ThemeSelector } from "./ThemeSelector";
 import { useAppSettings } from "./useAppSettings";
 
@@ -42,9 +43,11 @@ export function SettingsPage() {
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
   );
+  const [isTabCustomizationDragging, setIsTabCustomizationDragging] =
+    useState(false);
 
   return (
-    <ScrollView className="flex-1">
+    <ScrollView className="flex-1" scrollEnabled={!isTabCustomizationDragging}>
       {/* User info */}
       <View
         className="mx-4 mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
@@ -98,6 +101,11 @@ export function SettingsPage() {
         <Divider />
         <ThemeSelector />
       </Section>
+
+      <TabCustomizationSection
+        shadow={shadow}
+        onDragStateChange={setIsTabCustomizationDragging}
+      />
 
       <DataManagementSection shadow={shadow} />
       <AccountAndDangerSection shadow={shadow} logout={logout} />

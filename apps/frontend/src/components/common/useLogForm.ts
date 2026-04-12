@@ -8,8 +8,6 @@ import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { useTimer } from "../../hooks/useTimer";
 import { syncEngine } from "../../sync/syncEngine";
 
-export type UseTimerReturn = ReturnType<typeof useTimer>;
-
 const useLogFormBase = createUseLogForm({
   react: { useState },
   useActivityKinds,

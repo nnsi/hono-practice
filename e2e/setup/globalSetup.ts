@@ -57,12 +57,15 @@ export async function setup() {
     server: {
       port: FRONTEND_PORT,
       host: "127.0.0.1",
-      proxy: Object.fromEntries(
-        ["/auth", "/user", "/users", "/api", "/batch", "/webhooks"].map((p) => [
-          p,
-          `http://localhost:${BACKEND_PORT}`,
-        ]),
-      ),
+      proxy: {
+        "^/auth(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/user(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/users(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/api(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/batch$": `http://localhost:${BACKEND_PORT}`,
+        "^/contact(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/webhooks(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+      },
     },
     define: {
       // プロキシ経由で同一オリジンにする（"" だと || fallback で 3456 に行く）

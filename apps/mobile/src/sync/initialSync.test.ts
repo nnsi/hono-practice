@@ -52,6 +52,7 @@ vi.mock("../utils/apiClient", () => ({
       },
     },
   },
+  getApiUrl: vi.fn(() => "http://localhost:3456"),
 }));
 
 vi.mock("./rnPlatformAdapters", () => ({

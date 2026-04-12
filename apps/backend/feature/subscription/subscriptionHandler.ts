@@ -4,7 +4,7 @@ import { SubscriptionResponseSchema } from "@packages/types/response";
 
 import type { SubscriptionQueryUsecase } from "./subscriptionUsecase";
 
-export type SubscriptionHandler = {
+type SubscriptionHandler = {
   getSubscription: (userId: UserId) => Promise<{
     plan: string;
     status: string;

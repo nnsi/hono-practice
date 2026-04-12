@@ -15,7 +15,7 @@ test("GET activityLogs / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.index.$get();
+  const res = await client.index.$get({ query: {} });
 
   expect(res.status).toEqual(200);
 });
@@ -91,6 +91,36 @@ test("DELETE activityLogs/:id / success", async () => {
       id: "00000000-0000-4000-8000-000000000001",
     },
   });
+
+  expect(res.status).toEqual(200);
+});
+
+test("GET activityLogs/stats / required date 欠落で 400", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/stats",
+    { method: "GET" },
+    { DB: testDB, NODE_ENV: "test" },
+  );
+
+  expect(res.status).toEqual(400);
+});
+
+test("GET activityLogs/stats / date 指定で 200", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/stats?date=2026-04-12",
+    { method: "GET" },
+    { DB: testDB, NODE_ENV: "test" },
+  );
 
   expect(res.status).toEqual(200);
 });

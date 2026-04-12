@@ -46,6 +46,7 @@ export const activityGoals = pgTable(
   ],
 );
 
+/** @public drizzle が `* as schema` で拾うため knip の false positive 回避 */
 export const activityGoalsRelations = relations(activityGoals, ({ one }) => ({
   user: one(users, {
     fields: [activityGoals.userId],

@@ -22,6 +22,7 @@ export type { ActivityDbAdapter } from "./activityDbAdapter";
 
 export function newActivityRepository(
   adapter: ActivityDbAdapter,
+  generateId: () => string = uuidv7,
 ): ActivityRepository {
   return {
     // === Read ===
@@ -48,7 +49,7 @@ export function newActivityRepository(
       const orderIndex = await adapter.getNextOrderIndex();
 
       const activity: Syncable<ActivityRecord> = {
-        id: uuidv7(),
+        id: generateId(),
         userId,
         name: input.name,
         label: "",
@@ -73,7 +74,7 @@ export function newActivityRepository(
       if (input.kinds && input.kinds.length > 0) {
         const kinds: Syncable<ActivityKindRecord>[] = input.kinds.map(
           (k, i) => ({
-            id: uuidv7(),
+            id: generateId(),
             activityId: activity.id,
             name: k.name,
             color: k.color || null,
@@ -99,7 +100,7 @@ export function newActivityRepository(
         _syncStatus: "pending",
       });
       if (updatedKinds !== undefined) {
-        await applyKindUpdates(adapter, id, updatedKinds, now);
+        await applyKindUpdates(adapter, id, updatedKinds, now, generateId);
       }
     },
 

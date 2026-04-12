@@ -71,7 +71,7 @@ v2リリース日: 2026-02-25
 
 ### 2026-03-04
 
-- `docs/knowledges` をコードベース実態に合わせて全面更新
+- 旧 knowledge docs をコードベース実態に合わせて全面更新
 - `ENABLE_TOOL_SEARCH`、PreCompact hook、`cc-log-to-md.js`、`write-diary` 改修でコンテキスト運用を改善
 - WAE の client error 収集ルートと mobile 側 global error handler を追加
 - モバイルのリリース準備評価を行い、法律文書と TODO を整理
@@ -196,7 +196,7 @@ v2リリース日: 2026-02-25
 ### 2026-03-28
 
 - Harness Engineering の自己レビューを行い、エージェント運用上の弱点を整理
-- quality scan を実施し、不要になった `docs/knowledges` を削除
+- quality scan を実施し、不要になった旧 knowledge docs を削除
 - `as unknown as` 撤廃パターンを複数箇所に適用
 - `auth_flow.md` を ADR として再配置
 

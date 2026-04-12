@@ -106,6 +106,7 @@ export const activities = pgTable(
   ],
 );
 
+/** @public drizzle が `* as schema` で拾うため knip の false positive 回避 */
 export const activitiesRelations = relations(activities, ({ many }) => ({
   kinds: many(activityKinds),
   activityLogs: many(activityLogs),
@@ -134,6 +135,7 @@ export const activityKinds = pgTable(
   (t) => [index("activity_kind_activity_id_idx").on(t.activityId)],
 );
 
+/** @public drizzle が `* as schema` で拾うため knip の false positive 回避 */
 export const activityKindsRelations = relations(activityKinds, ({ one }) => ({
   activity: one(activities, {
     fields: [activityKinds.activityId],
@@ -176,6 +178,7 @@ export const activityLogs = pgTable(
   ],
 );
 
+/** @public drizzle が `* as schema` で拾うため knip の false positive 回避 */
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   activity: one(activities, {
     fields: [activityLogs.activityId],

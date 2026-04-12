@@ -1,3 +1,4 @@
+import { type Logger, noopLogger } from "@backend/lib/logger";
 import type {
   ApiErrorDetail,
   ApmProvider,
@@ -67,6 +68,7 @@ const EMPTY_APM: ApmSummary = {
 export function newWaeApmProvider(
   cfApiToken: string,
   cfAccountId: string,
+  logger: Logger = noopLogger,
 ): ApmProvider {
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/analytics_engine/sql`;
 
@@ -83,7 +85,7 @@ export function newWaeApmProvider(
         });
 
         if (!res.ok) {
-          console.error(`WAE query failed: ${res.status}`);
+          logger.error("WAE summary query failed", { status: res.status });
           return EMPTY_APM;
         }
 
@@ -100,7 +102,9 @@ export function newWaeApmProvider(
             Math.round((Number(row.avg_response_time) || 0) * 100) / 100,
         };
       } catch (e) {
-        console.error("WAE query error:", e);
+        logger.error("WAE summary query error", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         return EMPTY_APM;
       }
     },
@@ -117,7 +121,7 @@ export function newWaeApmProvider(
         });
 
         if (!res.ok) {
-          console.error(`WAE error detail query failed: ${res.status}`);
+          logger.error("WAE error detail query failed", { status: res.status });
           return [];
         }
 
@@ -133,7 +137,9 @@ export function newWaeApmProvider(
           durationMs: Math.round((Number(row.duration) || 0) * 100) / 100,
         }));
       } catch (e) {
-        console.error("WAE error detail query error:", e);
+        logger.error("WAE error detail query error", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         return [];
       }
     },

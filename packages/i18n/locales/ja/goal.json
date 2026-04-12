@@ -71,5 +71,6 @@
   "cardCancel": "取消",
   "statusEnded": "終了",
   "statusInDebt": "負債あり",
-  "statusOnTrack": "順調"
+  "statusOnTrack": "順調",
+  "statusOnPace": "達成ペース"
 }

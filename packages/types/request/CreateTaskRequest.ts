@@ -1,16 +1,32 @@
 import { z } from "zod";
 
+import { VALIDATION as V } from "../validation";
+
 export const createTaskRequestSchema = z.object({
   title: z
     .string()
     .min(1, "validation:titleRequired")
-    .max(20, "validation:max20Chars"),
-  activityId: z.string().uuid().optional(),
-  activityKindId: z.string().uuid().optional(),
-  quantity: z.number().min(0).max(999999).optional(),
-  startDate: z.string().min(1, "validation:startDateRequired").max(10),
-  dueDate: z.string().max(10).optional(),
-  memo: z.string().max(1000, "validation:memoMax1000").optional(),
+    .max(V.TASK_TITLE_MAX, "validation:max20Chars")
+    .describe("タイトル（1〜20文字）"),
+  activityId: z.string().uuid().optional().describe("紐付けるアクティビティID"),
+  activityKindId: z.string().uuid().optional().describe("アクティビティ種別ID"),
+  quantity: z
+    .number()
+    .min(V.QUANTITY_MIN)
+    .max(V.QUANTITY_MAX)
+    .optional()
+    .describe("目標数量（0〜999999）"),
+  startDate: z
+    .string()
+    .min(1, "validation:startDateRequired")
+    .max(V.DATE_MAX)
+    .describe("開始日 YYYY-MM-DD"),
+  dueDate: z.string().max(V.DATE_MAX).optional().describe("期限日 YYYY-MM-DD"),
+  memo: z
+    .string()
+    .max(V.MEMO_MAX, "validation:memoMax1000")
+    .optional()
+    .describe("メモ（最大1000文字）"),
 });
 
 export type CreateTaskRequest = z.infer<typeof createTaskRequestSchema>;

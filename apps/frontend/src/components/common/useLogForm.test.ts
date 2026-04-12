@@ -34,7 +34,7 @@ vi.mock("../../db/activityLogRepository", () => ({
 
 vi.mock("../../sync/syncEngine", () => ({
   syncEngine: {
-    syncActivityLogs: vi.fn(),
+    syncActivityLogs: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -376,15 +376,14 @@ describe("useLogForm", () => {
         useLogForm(activity, "2025-06-01", onDone),
       );
 
-      // handleManualSubmitはtry/finallyがないため、rejectされるとonDoneは呼ばれない
       await expect(
         act(async () => {
           await result.current.handleManualSubmit(createFormEvent());
         }),
       ).rejects.toThrow("DB error");
 
-      // onDoneは呼ばれない（エラー時にはsetIsSubmitting(false)も到達しない）
       expect(onDone).not.toHaveBeenCalled();
+      expect(result.current.isSubmitting).toBe(false);
     });
 
     it("handleTimerSave: createActivityLogが失敗するとエラーが伝播しonDoneは呼ばれない", async () => {
@@ -414,6 +413,7 @@ describe("useLogForm", () => {
       ).rejects.toThrow("DB error");
 
       expect(onDone).not.toHaveBeenCalled();
+      expect(result.current.isSubmitting).toBe(false);
     });
   });
 });

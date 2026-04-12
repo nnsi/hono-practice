@@ -31,6 +31,15 @@ export const API_KEY_SCOPES = [
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
+export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
+  all: "全リソースへのフルアクセス",
+  "activity-logs:read": "活動ログの取得",
+  "activity-logs:write": "活動ログの作成・更新・削除",
+  "tasks:read": "タスクの取得",
+  "tasks:write": "タスクの作成・更新・削除",
+  voice: "音声入力による活動ログ作成",
+};
+
 export type ApiKey = {
   id: ApiKeyId;
   userId: string;

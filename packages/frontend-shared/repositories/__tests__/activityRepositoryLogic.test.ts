@@ -10,14 +10,11 @@ import type { Syncable } from "@packages/domain/sync/syncableRecord";
 import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const uuidState = { counter: 0 };
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
-
 import type { ActivityDbAdapter } from "../activityRepositoryLogic";
 import { newActivityRepository } from "../activityRepositoryLogic";
+
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
 
 function createInMemoryAdapter() {
   const activities = new Map<string, Syncable<ActivityRecord>>();
@@ -216,7 +213,7 @@ describe("activityRepositoryLogic", () => {
     uuidState.counter = 0;
     resetServerTimeForTests();
     mem = createInMemoryAdapter();
-    repo = newActivityRepository(mem.adapter);
+    repo = newActivityRepository(mem.adapter, mockGenerateId);
   });
 
   // ========== Create ==========

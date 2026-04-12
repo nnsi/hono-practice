@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import type { AppContext } from "@backend/context";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { newActivityQueryService } from "@backend/query";
 import { zValidator } from "@hono/zod-validator";
@@ -11,6 +12,8 @@ import {
   CreateActivityLogBatchRequestSchema,
   CreateActivityLogRequestSchema,
   UpdateActivityLogRequestSchema,
+  getActivityLogStatsRequestSchema,
+  getActivityLogsRequestSchema,
 } from "@packages/types/request";
 import type { GetActivityLogResponse } from "@packages/types/response";
 
@@ -23,6 +26,7 @@ import { newActivityLogUsecase } from "./activityLogUsecase";
 async function convertActivityIconUrlsToBase64(
   log: GetActivityLogResponse,
   env: AppContext["Bindings"],
+  logger = noopLogger,
 ): Promise<GetActivityLogResponse> {
   if (env.NODE_ENV !== "development") {
     return log;
@@ -53,7 +57,10 @@ async function convertActivityIconUrlsToBase64(
 
       return `data:${contentType};base64,${data.toString("base64")}`;
     } catch (error) {
-      console.error("Failed to convert image URL to base64:", error);
+      logger.warn("Failed to convert activity log icon URL to base64", {
+        url,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return url;
     }
   };
@@ -93,28 +100,44 @@ export function createActivityLogRoute() {
   });
 
   return app
-    .get("/", async (c) => {
-      const res = await c.var.h.getActivityLogs(c.get("userId"), c.req.query());
+    .get("/", zValidator("query", getActivityLogsRequestSchema), async (c) => {
+      const res = await c.var.h.getActivityLogs(
+        c.get("userId"),
+        c.req.valid("query"),
+      );
+      const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
       const convertedLogs = await Promise.all(
-        res.map((log) => convertActivityIconUrlsToBase64(log, c.env)),
+        res.map((log) => convertActivityIconUrlsToBase64(log, c.env, logger)),
       );
 
       return c.json(convertedLogs);
     })
-    .get("/stats", async (c) => {
-      const res = await c.var.h.getStats(c.get("userId"), c.req.query());
+    .get(
+      "/stats",
+      zValidator("query", getActivityLogStatsRequestSchema),
+      async (c) => {
+        const res = await c.var.h.getStats(
+          c.get("userId"),
+          c.req.valid("query"),
+        );
 
-      return c.json(res);
-    })
+        return c.json(res);
+      },
+    )
     .get("/:id", async (c) => {
       const { id } = c.req.param();
 
       const res = await c.var.h.getActivityLog(c.get("userId"), id);
+      const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
-      const convertedLog = await convertActivityIconUrlsToBase64(res, c.env);
+      const convertedLog = await convertActivityIconUrlsToBase64(
+        res,
+        c.env,
+        logger,
+      );
 
       return c.json(convertedLog);
     })

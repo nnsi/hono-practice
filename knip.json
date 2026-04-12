@@ -1,0 +1,118 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignoreDependencies": [
+    "@packages/domain",
+    "@packages/types",
+    "@packages/frontend-shared",
+    "@packages/sync-engine",
+    "@packages/platform",
+    "@packages/utils",
+    "@packages/i18n"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "apps/backend/server.cf.ts",
+        "apps/backend/server.node.ts",
+        "scripts/**/*.{js,ts}",
+        "infra/drizzle/drizzle.config.ts",
+        "vitest.config.ts",
+        "vitest.e2e.config.ts"
+      ],
+      "project": ["scripts/**/*.{js,ts}", "infra/**/*.ts"],
+      "ignoreDependencies": ["@expo/plist", "lefthook", "sharp"]
+    },
+    "apps/backend": {
+      "entry": [
+        "server.cf.ts",
+        "server.node.ts",
+        "test.setup.ts",
+        "**/*.test.ts"
+      ],
+      "project": ["**/*.ts"],
+      "ignore": ["tmp/**", "public/**"]
+    },
+    "apps/frontend": {
+      "entry": [
+        "src/main.tsx",
+        "src/routeTree.gen.ts",
+        "vite.config.ts",
+        "tailwind.config.ts",
+        "postcss.config.js",
+        "index.html",
+        "src/**/*.test.{ts,tsx}"
+      ],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/routeTree.gen.ts"],
+      "ignoreDependencies": ["i18next"]
+    },
+    "apps/admin-frontend": {
+      "entry": [
+        "src/main.tsx",
+        "vite.config.ts",
+        "tailwind.config.ts",
+        "postcss.config.js",
+        "index.html"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/mobile": {
+      "entry": [
+        "app.config.ts",
+        "app/**/*.{ts,tsx}",
+        "src/**/*.{ts,tsx}",
+        "modules/**/*.{ts,tsx,js}",
+        "targets/**/*.{ts,tsx,js}",
+        "nativewind-env.d.ts",
+        "src/**/*.test.{ts,tsx}"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+      "ignore": [
+        "metro.config.js",
+        "babel.config.js",
+        "tailwind.config.js",
+        "dist/**",
+        "android/**",
+        "ios/**"
+      ],
+      "ignoreDependencies": ["babel-preset-expo", "@expo/plist", "uuid"],
+      "metro": false
+    },
+    "apps/tail-worker": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/domain": {
+      "entry": ["index.ts", "**/*.test.ts"],
+      "project": ["**/*.ts"]
+    },
+    "packages/types": {
+      "entry": ["index.ts"],
+      "project": ["**/*.ts"]
+    },
+    "packages/frontend-shared": {
+      "entry": ["index.ts", "hooks/index.ts", "**/*.test.{ts,tsx}"],
+      "project": ["**/*.{ts,tsx}"]
+    },
+    "packages/i18n": {
+      "entry": ["index.ts"],
+      "project": ["**/*.ts"]
+    },
+    "packages/platform": {
+      "entry": ["index.ts"],
+      "project": ["**/*.ts"]
+    },
+    "packages/sync-engine": {
+      "entry": ["index.ts", "**/*.test.ts"],
+      "project": ["**/*.ts"]
+    },
+    "packages/utils": {
+      "entry": ["index.ts", "**/*.test.ts"],
+      "project": ["**/*.ts"]
+    }
+  }
+}

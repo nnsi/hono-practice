@@ -3,6 +3,7 @@ import {
   boolean,
   customType,
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -17,6 +18,7 @@ export const iconTypeEnum = pgEnum("icon_type", [
   "generate",
 ]);
 
+/** @public drizzle-kit が migration 生成で使用（外部 import 無し） */
 export const userConsentTypeEnum = pgEnum("user_consent_type", [
   "terms",
   "privacy",
@@ -55,6 +57,15 @@ export const users = pgTable(
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+    tabPreferences: jsonb("tab_preferences")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'["home","daily","stats","goals","tasks"]'::jsonb`),
+    tabPreferencesUpdatedAt: timestamp("tab_preferences_updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [index("user_login_id_idx").on(t.loginId)],

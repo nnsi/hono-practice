@@ -33,13 +33,16 @@ type UpdateNoteInput = {
   activityId?: string | null;
 };
 
-export function newNoteRepository(adapter: NoteDbAdapter) {
+export function newNoteRepository(
+  adapter: NoteDbAdapter,
+  generateId: () => string = uuidv7,
+) {
   return {
     async createNote(input: CreateNoteInput) {
       const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const note: Syncable<NoteRecord> = {
-        id: uuidv7(),
+        id: generateId(),
         userId,
         activityId: input.activityId ?? null,
         title: input.title,

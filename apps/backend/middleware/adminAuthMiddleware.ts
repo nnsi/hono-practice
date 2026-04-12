@@ -17,8 +17,9 @@ export const adminAuthMiddleware = createMiddleware<AppContext>(
     }
 
     try {
-      const { JWT_SECRET, JWT_AUDIENCE } = c.env;
-      const payload = await verify(jwt, JWT_SECRET, "HS256");
+      const { JWT_AUDIENCE } = c.env;
+      const adminSecret = c.env.JWT_SECRET_ADMIN ?? c.env.JWT_SECRET;
+      const payload = await verify(jwt, adminSecret, "HS256");
 
       if (
         !payload ||

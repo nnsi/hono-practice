@@ -10,7 +10,7 @@ type UseNavigationSyncDeps = {
   pullSync: (userId: string) => Promise<void>;
   isOnline: () => boolean;
   mutex: SyncMutex;
-  onError: (error: unknown) => void;
+  onError: (error: unknown, phase: "pull" | "push") => void;
 };
 
 export function createUseNavigationSync(deps: UseNavigationSyncDeps) {

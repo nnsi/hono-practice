@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, uuidState } = vi.hoisted(() => {
+const { mockDb } = vi.hoisted(() => {
   function createMockCollection() {
     return {
       filter: vi.fn().mockReturnThis(),
@@ -29,28 +29,56 @@ const { mockDb, uuidState } = vi.hoisted(() => {
     };
   }
 
-  const state = { counter: 0 };
-
   return {
     mockDb: {
       goals: createMockTable(),
       authState: createMockTable(),
     },
-    uuidState: state,
   };
 });
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
 
 vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
+import {
+  type GoalDbAdapter,
+  newGoalRepository,
+} from "@packages/frontend-shared/repositories";
 
-import { goalRepository } from "./goalRepository";
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
+
+const adapter: GoalDbAdapter = {
+  async getUserId() {
+    const authState = await mockDb.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create goal: userId is not set");
+    }
+    return authState.userId;
+  },
+  async insert(goal) {
+    await mockDb.goals.add(goal);
+  },
+  async getAll(filter) {
+    return mockDb.goals.filter(filter).toArray();
+  },
+  async update(id, changes) {
+    await mockDb.goals.update(id, changes);
+  },
+  async getByIds(ids) {
+    return mockDb.goals.where("id").anyOf(ids).toArray();
+  },
+  async updateSyncStatus(ids, status) {
+    await mockDb.goals.where("id").anyOf(ids).modify({ _syncStatus: status });
+  },
+  async bulkUpsertSynced(goals) {
+    await mockDb.goals.bulkPut(goals);
+  },
+};
+
+const goalRepository = newGoalRepository(adapter, mockGenerateId);
 
 describe("goalRepository", () => {
   beforeEach(() => {

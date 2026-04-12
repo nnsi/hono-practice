@@ -6,11 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GoalDbAdapter } from "../goalRepositoryLogic";
 import { newGoalRepository } from "../goalRepositoryLogic";
 
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidCounter}`),
-}));
-
 let uuidCounter = 0;
+const mockGenerateId = () => `mock-uuid-${++uuidCounter}`;
 
 function createInMemoryAdapter() {
   const store = new Map<string, Syncable<GoalRecord>>();
@@ -65,7 +62,7 @@ describe("goalRepositoryLogic", () => {
     uuidCounter = 0;
     resetServerTimeForTests();
     adapter = createInMemoryAdapter();
-    repo = newGoalRepository(adapter.adapter);
+    repo = newGoalRepository(adapter.adapter, mockGenerateId);
   });
 
   // ========== Create ==========

@@ -39,7 +39,7 @@ type UseLogFormDeps = {
       taskId: string | null;
     }) => Promise<unknown>;
   };
-  syncEngine: { syncActivityLogs: () => void };
+  syncEngine: { syncActivityLogs: () => Promise<unknown> };
 };
 
 export function createUseLogForm(deps: UseLogFormDeps) {
@@ -85,7 +85,7 @@ export function createUseLogForm(deps: UseLogFormDeps) {
         time: null,
         taskId: null,
       });
-      syncEngine.syncActivityLogs();
+      void syncEngine.syncActivityLogs().catch(() => {});
     };
 
     const handleManualSubmit = async () => {
@@ -93,27 +93,33 @@ export function createUseLogForm(deps: UseLogFormDeps) {
       if (parsed !== null && !Number.isFinite(parsed)) return;
       if (parsed !== null && (parsed < 0 || parsed > 999999)) return;
       setIsSubmitting(true);
-      await saveLog({ quantity: parsed, memo, selectedKindId });
-      setIsSubmitting(false);
-      onDone();
+      try {
+        await saveLog({ quantity: parsed, memo, selectedKindId });
+        onDone();
+      } finally {
+        setIsSubmitting(false);
+      }
     };
 
     const handleTimerSave = async () => {
       setIsSubmitting(true);
-      const seconds = timer.getElapsedSeconds();
-      const convertedQuantity = convertSecondsToUnit(seconds, timeUnitType);
-      const startDate = timer.getStartDate();
-      const endDate = new Date();
-      const timerMemo = startDate ? generateTimeMemo(startDate, endDate) : "";
+      try {
+        const seconds = timer.getElapsedSeconds();
+        const convertedQuantity = convertSecondsToUnit(seconds, timeUnitType);
+        const startDate = timer.getStartDate();
+        const endDate = new Date();
+        const timerMemo = startDate ? generateTimeMemo(startDate, endDate) : "";
 
-      await saveLog({
-        quantity: convertedQuantity,
-        memo: timerMemo,
-        selectedKindId,
-      });
-      timer.reset();
-      setIsSubmitting(false);
-      onDone();
+        await saveLog({
+          quantity: convertedQuantity,
+          memo: timerMemo,
+          selectedKindId,
+        });
+        timer.reset();
+        onDone();
+      } finally {
+        setIsSubmitting(false);
+      }
     };
 
     return {

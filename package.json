@@ -7,7 +7,8 @@
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
-    "ci-check": "vitest run --reporter=dot && biome lint && pnpm run tsc",
+    "guard:backend": "node scripts/check-backend-rules.js",
+    "ci-check": "pnpm run guard:backend && vitest run --reporter=dot && biome lint && pnpm run tsc",
     "tsc": "tsc --noEmit && pnpm --filter actiko-admin-frontend typecheck && pnpm --filter actiko-mobile typecheck",
     "lint": "biome lint",
     "fix": "biome check . --write --unsafe",
@@ -23,11 +24,13 @@
     "deploy:admin-prod": "cd apps/admin-frontend && pnpm exec wrangler deploy --env production",
     "deploy:tail-stg": "cd apps/tail-worker && pnpm exec wrangler deploy --env stg",
     "deploy:tail-prod": "cd apps/tail-worker && pnpm exec wrangler deploy --env production",
+    "env:setup": "node scripts/setup-ports.js",
     "db-generate": "drizzle-kit generate --config=infra/drizzle/drizzle.config.ts",
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
     "gen-be": "node scripts/gen-be.js",
+    "generate:api-reference": "tsx scripts/generate-api-reference.ts && biome check apps/frontend/src/components/api-reference/apiReferenceData.generated.ts --write --unsafe",
     "mobile": "pnpm --filter actiko-mobile"
   },
   "packageManager": "pnpm@10.27.0",
@@ -41,6 +44,7 @@
     "overrides": {
       "drizzle-orm>expo-sqlite": "-",
       "hono": "4.12.3",
+      "jiti": "2.6.1",
       "miniflare>sharp": "-",
       "react": "19.2.0",
       "react-dom": "19.2.0"
@@ -55,13 +59,13 @@
     "@electric-sql/pglite": "^0.3.15",
     "@hono/node-server": "^1.19.9",
     "@testing-library/react": "^16.3.0",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.10.13",
     "@types/react": "^19.2.14",
     "bcryptjs": "^3.0.3",
     "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.44.7",
     "jsdom": "^26.1.0",
+    "knip": "^6.3.1",
     "lefthook": "^1.10.1",
     "playwright": "^1.58.2",
     "postgres": "^3.4.8",
@@ -72,11 +76,10 @@
     "vite": "^6.0.6",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9",
-    "wrangler": "^4.26.1"
+    "wrangler": "^4.26.1",
+    "zod": "^4.0.1"
   },
   "dependencies": {
-    "@expo/plist": "^0.5.2",
-    "i18next": "^25.10.10",
-    "react-i18next": "^16.6.6"
+    "@expo/plist": "^0.5.2"
   }
 }

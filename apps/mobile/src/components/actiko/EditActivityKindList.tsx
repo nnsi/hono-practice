@@ -1,3 +1,4 @@
+import type { KindEntry } from "@packages/frontend-shared/hooks/useActivityKindEntries";
 import { useTranslation } from "@packages/i18n";
 import { Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -5,12 +6,6 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { FormInput } from "../common/FormInput";
 import { useModalScroll } from "../common/ModalOverlay";
 import { KindColorPicker } from "./KindColorPicker";
-
-type KindEntry = {
-  id?: string;
-  name: string;
-  color: string;
-};
 
 type EditActivityKindListProps = {
   kindEntries: KindEntry[];

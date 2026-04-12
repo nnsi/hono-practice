@@ -1,4 +1,5 @@
 import { addDays, getToday } from "../utils/dateUtils";
+import { toggleTaskWithActivityLog } from "./taskToggleWithActivityLog";
 import type {
   ActivityBase,
   ActivityLogBase,
@@ -34,7 +35,10 @@ type UseDailyPageDeps<
     }) => Promise<unknown>;
     softDeleteActivityLogByTaskId: (taskId: string) => Promise<void>;
   };
-  syncEngine: { syncTasks: () => void; syncActivityLogs: () => void };
+  syncEngine: {
+    syncTasks: () => Promise<unknown>;
+    syncActivityLogs: () => Promise<unknown>;
+  };
 };
 
 export function createUseDailyPage<
@@ -97,32 +101,26 @@ export function createUseDailyPage<
     const goToPrev = useCallback(() => setDate((d) => addDays(d, -1)), []);
     const goToNext = useCallback(() => setDate((d) => addDays(d, 1)), []);
     const isToday = date === getToday();
+    const pendingToggleTaskIds = useMemo(() => new Set<string>(), []);
 
     const handleToggleTask = useCallback(async (task: DailyTask) => {
-      const newDoneDate = task.doneDate ? null : getToday();
-      await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
-      if (
-        !task.doneDate &&
-        newDoneDate &&
-        task.activityId &&
-        task.quantity != null
-      ) {
-        await activityLogRepository.createActivityLog({
-          activityId: task.activityId,
-          activityKindId: task.activityKindId ?? null,
-          quantity: task.quantity ?? null,
-          memo: "",
-          date: newDoneDate,
-          time: null,
-          taskId: task.id,
-        });
-        syncEngine.syncActivityLogs();
+      if (pendingToggleTaskIds.has(task.id)) {
+        return;
       }
-      if (task.doneDate && !newDoneDate) {
-        await activityLogRepository.softDeleteActivityLogByTaskId(task.id);
-        syncEngine.syncActivityLogs();
+      pendingToggleTaskIds.add(task.id);
+      try {
+        await toggleTaskWithActivityLog(
+          {
+            taskRepository,
+            activityLogRepository,
+            syncEngine,
+          },
+          task,
+          getToday(),
+        );
+      } finally {
+        pendingToggleTaskIds.delete(task.id);
       }
-      syncEngine.syncTasks();
     }, []);
 
     return {

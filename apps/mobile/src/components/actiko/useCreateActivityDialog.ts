@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
-import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
+import { createUseActivityKindEntries } from "@packages/frontend-shared/hooks/useActivityKindEntries";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
@@ -9,23 +9,18 @@ import * as ImagePicker from "expo-image-picker";
 import { activityRepository } from "../../repositories/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
 
-type KindEntry = {
-  id: number;
-  name: string;
-  color: string;
-};
+const useActivityKindEntries = createUseActivityKindEntries({
+  react: { useState, useCallback },
+});
 
 export function useCreateActivityDialog(
   onCreated: () => void,
   onClose: () => void,
 ) {
-  // state
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("");
   const [showCombinedStats, setShowCombinedStats] = useState(false);
-  const [kinds, setKinds] = useState<KindEntry[]>([]);
-  const [nextKindId, setNextKindId] = useState(0);
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
     null,
@@ -39,7 +34,15 @@ export function useCreateActivityDialog(
   } | null>(null);
   const [isPickingImage, setIsPickingImage] = useState(false);
 
-  // handlers
+  const {
+    kinds,
+    setKinds,
+    addKind,
+    removeKind,
+    updateKindName,
+    updateKindColor,
+  } = useActivityKindEntries();
+
   const resetForm = () => {
     setName("");
     setEmoji("");
@@ -48,7 +51,6 @@ export function useCreateActivityDialog(
     setRecordingMode("manual");
     setRecordingModeConfig(null);
     setKinds([]);
-    setNextKindId(0);
     setError("");
     setIconType("emoji");
     setPendingImage(null);
@@ -129,33 +131,7 @@ export function useCreateActivityDialog(
     onClose();
   };
 
-  const addKind = () => {
-    setKinds((prev) => {
-      const usedColors = new Set(prev.map((k) => k.color.toUpperCase()));
-      const nextColor =
-        COLOR_PALETTE.find((c) => !usedColors.has(c.toUpperCase())) ??
-        COLOR_PALETTE[prev.length % COLOR_PALETTE.length];
-      return [...prev, { id: nextKindId, name: "", color: nextColor }];
-    });
-    setNextKindId((n) => n + 1);
-  };
-
-  const removeKind = (id: number) => {
-    setKinds((prev) => prev.filter((k) => k.id !== id));
-  };
-
-  const updateKindName = (id: number, text: string) => {
-    setKinds((prev) =>
-      prev.map((k) => (k.id === id ? { ...k, name: text } : k)),
-    );
-  };
-
-  const updateKindColor = (id: number, color: string) => {
-    setKinds((prev) => prev.map((k) => (k.id === id ? { ...k, color } : k)));
-  };
-
   return {
-    // form state
     name,
     setName,
     emoji,
@@ -175,7 +151,6 @@ export function useCreateActivityDialog(
     iconType,
     pendingImage,
     isPickingImage,
-    // handlers
     handleCreate,
     handleClose,
     handlePickImage,

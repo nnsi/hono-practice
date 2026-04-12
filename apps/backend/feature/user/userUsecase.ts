@@ -1,9 +1,11 @@
-import { sign } from "hono/jwt";
-
 import { AppError, ConflictError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
 import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
+import {
+  type TabPreference,
+  createDefaultTabPreference,
+} from "@packages/domain/user/tabPreferenceSchema";
 import { createUserConsent } from "@packages/domain/user/userConsentSchema";
 import {
   type User,
@@ -17,6 +19,10 @@ import type { UserProviderRepository } from "../auth/userProviderRepository";
 import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import type { UserConsentRepository } from "./userConsentRepository";
 import type { UserRepository } from "./userRepository";
+import {
+  getTabPreference,
+  updateTabPreference,
+} from "./userTabPreferenceUsecase";
 
 export type ConsentsInput = {
   age: true;
@@ -35,6 +41,7 @@ export type UserWithProviders = User & {
   providers: string[];
   providerEmails?: Record<string, string>;
   plan: SubscriptionPlan;
+  tabPreference: TabPreference;
 };
 
 type UserListResult = {
@@ -48,11 +55,13 @@ type UserListResult = {
 };
 
 export type UserUsecase = {
-  createUser: (
-    params: CreateUserInputParams,
-    secret: string,
-  ) => Promise<string>;
+  createUser: (params: CreateUserInputParams) => Promise<void>;
   getUserById: (userId: UserId) => Promise<UserWithProviders>;
+  getTabPreference: (userId: UserId) => Promise<TabPreference>;
+  updateTabPreference: (
+    userId: UserId,
+    preference: TabPreference,
+  ) => Promise<TabPreference>;
   deleteUser: (userId: UserId) => Promise<void>;
   listUsers: (limit: number, offset: number) => Promise<UserListResult>;
 };
@@ -64,9 +73,8 @@ export function newUserUsecase(
   txRunner: TransactionRunner,
   subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
+  passwordVerifier = new MultiHashPasswordVerifier(),
 ): UserUsecase {
-  const passwordVerifier = new MultiHashPasswordVerifier();
-
   return {
     createUser: createUser(
       repo,
@@ -76,6 +84,8 @@ export function newUserUsecase(
       tracer,
     ),
     getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
+    getTabPreference: getTabPreference(repo, tracer),
+    updateTabPreference: updateTabPreference(repo, tracer),
     deleteUser: deleteUser(repo, tracer),
     listUsers: listUsers(repo, tracer),
   };
@@ -88,8 +98,7 @@ function createUser(
   passwordVerifier: MultiHashPasswordVerifier,
   tracer: Tracer,
 ) {
-  return async (params: CreateUserInputParams, secret: string) => {
-    // ログインIDの重複チェック
+  return async (params: CreateUserInputParams) => {
     const existingUser = await tracer.span("db.getUserByLoginId", () =>
       repo.getUserByLoginId(params.loginId),
     );
@@ -106,7 +115,7 @@ function createUser(
       password: cryptedPassword,
     });
 
-    const user = await tracer.span("db.createUser.withConsents", () =>
+    await tracer.span("db.createUser.withConsents", () =>
       txRunner.run([repo, userConsentRepo], async (tx) => {
         const created = await tx.createUser(newUser);
         const confirmedAt = new Date();
@@ -132,16 +141,8 @@ function createUser(
             confirmedAt,
           ),
         ]);
-        return created;
       }),
     );
-
-    const token = await sign(
-      { id: user.id, exp: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60 },
-      secret,
-    );
-
-    return token;
   };
 }
 
@@ -152,16 +153,20 @@ function getUserById(
   tracer: Tracer,
 ) {
   return async (userId: UserId): Promise<UserWithProviders> => {
-    const [user, userProviders, subscription] = await Promise.all([
-      tracer.span("db.getUserById", () => repo.getUserById(userId)),
-      tracer.span("db.getUserProvidersByUserId", () =>
-        userProviderRepo.getUserProvidersByUserId(userId),
-      ),
-      subscriptionUc.getSubscriptionByUserIdOrDefault(userId),
-    ]);
-    if (!user) throw new AppError("user not found", 404);
-    const providers = userProviders.map((p) => p.provider);
+    const [user, userProviders, subscription, tabPreference] =
+      await Promise.all([
+        tracer.span("db.getUserById", () => repo.getUserById(userId)),
+        tracer.span("db.getUserProvidersByUserId", () =>
+          userProviderRepo.getUserProvidersByUserId(userId),
+        ),
+        subscriptionUc.getSubscriptionByUserIdOrDefault(userId),
+        tracer.span("db.getTabPreference", () => repo.getTabPreference(userId)),
+      ]);
+    if (!user) {
+      throw new AppError("user not found", 404);
+    }
 
+    const providers = userProviders.map((p) => p.provider);
     const providerEmails: Record<string, string> = {};
     for (const userProvider of userProviders) {
       if (userProvider.email) {
@@ -175,6 +180,7 @@ function getUserById(
       providerEmails:
         Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
       plan: subscription.plan,
+      tabPreference: tabPreference ?? createDefaultTabPreference(),
     };
   };
 }

@@ -3,6 +3,7 @@ import { setCookie } from "hono/cookie";
 
 import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -10,7 +11,10 @@ import {
   registerRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
 import { zValidator } from "@hono/zod-validator";
-import { createUserRequestSchema } from "@packages/types/request";
+import {
+  createUserRequestSchema,
+  updateTabPreferenceRequestSchema,
+} from "@packages/types/request";
 
 import type { AppContext } from "../../context";
 import { appleVerify } from "../auth/appleVerify";
@@ -43,7 +47,11 @@ export function createUserRoute() {
     const repo = newUserRepository(db);
     const userProviderRepo = newUserProviderRepository(db);
     const userConsentRepo = newUserConsentRepository(db);
-    const refreshTokenRepo = newRefreshTokenRepository(db);
+    const logger = c.get("logger") ?? noopLogger;
+    const refreshTokenRepo = newRefreshTokenRepository(
+      db,
+      logger.child({ repository: "refresh-token" }),
+    );
     const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
@@ -74,6 +82,7 @@ export function createUserRoute() {
       txRunner,
       subscriptionUc,
       tracer,
+      passwordVerifier,
     );
     const h = newUserHandler(uc, authH);
 
@@ -98,12 +107,19 @@ export function createUserRoute() {
 
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
-      const { JWT_SECRET, NODE_ENV } = c.env;
-
-      const { token, refreshToken } = await c.var.h.createUser(
-        c.req.valid("json"),
-        JWT_SECRET,
-      );
+      const { NODE_ENV } = c.env;
+      let token: string;
+      let refreshToken: string;
+      try {
+        const result = await c.var.h.createUser(c.req.valid("json"));
+        token = result.token;
+        refreshToken = result.refreshToken;
+      } catch (e) {
+        if (e instanceof AppError && e.status === 409) {
+          return c.json({ message: e.message }, 409);
+        }
+        throw e;
+      }
 
       const isDev = NODE_ENV === "development" || NODE_ENV === "test";
       // Only set refresh token cookie, access token is returned in response body
@@ -128,6 +144,30 @@ export function createUserRoute() {
         throw e;
       }
     })
+    .get("/tab-preference", authMiddleware, async (c) => {
+      const userId = c.get("userId");
+      try {
+        const preference = await c.var.h.getTabPreference(userId);
+        return c.json(preference);
+      } catch (e) {
+        return mapUserNotFoundToUnauthorized(e);
+      }
+    })
+    .put(
+      "/tab-preference",
+      authMiddleware,
+      zValidator("json", updateTabPreferenceRequestSchema),
+      async (c) => {
+        const userId = c.get("userId");
+        const preference = c.req.valid("json");
+        try {
+          const res = await c.var.h.updateTabPreference(userId, preference);
+          return c.json(res);
+        } catch (e) {
+          return mapUserNotFoundToUnauthorized(e);
+        }
+      },
+    )
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
       await c.var.h.deleteMe(userId);
@@ -136,3 +176,13 @@ export function createUserRoute() {
 }
 
 export const userRoute = createUserRoute();
+
+function mapUserNotFoundToUnauthorized(error: unknown) {
+  if (error instanceof AppError && error.status === 404) {
+    return new Response(JSON.stringify({ message: "unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  throw error;
+}

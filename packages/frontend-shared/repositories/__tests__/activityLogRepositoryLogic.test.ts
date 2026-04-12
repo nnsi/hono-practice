@@ -4,14 +4,10 @@ import { resetServerTimeForTests } from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityLogDbAdapter } from "../activityLogRepositoryLogic";
+import { newActivityLogRepository } from "../activityLogRepositoryLogic";
 
 const uuidState = { counter: 0 };
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
-
-import { newActivityLogRepository } from "../activityLogRepositoryLogic";
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
 
 type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
 
@@ -70,7 +66,7 @@ describe("activityLogRepositoryLogic", () => {
     resetServerTimeForTests();
     const mem = createInMemoryAdapter();
     store = mem.store;
-    repo = newActivityLogRepository(mem.adapter);
+    repo = newActivityLogRepository(mem.adapter, mockGenerateId);
   });
 
   // ========== Create ==========

@@ -1,3 +1,4 @@
+import { tabPreferenceSchema } from "@packages/domain/user/tabPreferenceSchema";
 import { z } from "zod";
 
 export const GetUserResponseSchema = z.object({
@@ -6,6 +7,7 @@ export const GetUserResponseSchema = z.object({
   providers: z.array(z.string()),
   providerEmails: z.record(z.string(), z.string()).optional(),
   plan: z.enum(["free", "premium"]).default("free"),
+  tabPreference: tabPreferenceSchema,
 });
 
 export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;

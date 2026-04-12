@@ -2,6 +2,7 @@ import { groupTasksByTimeline as groupTasksByTimelineCore } from "@packages/doma
 import type { TaskItem } from "@packages/domain/task/types";
 
 import { getToday } from "../utils/dateUtils";
+import { toggleTaskWithActivityLog } from "./taskToggleWithActivityLog";
 import type { ReactHooks } from "./types";
 
 type UseTasksPageDeps = {
@@ -28,7 +29,10 @@ type UseTasksPageDeps = {
     }) => Promise<unknown>;
     softDeleteActivityLogByTaskId: (taskId: string) => Promise<void>;
   };
-  syncEngine: { syncTasks: () => void; syncActivityLogs: () => void };
+  syncEngine: {
+    syncTasks: () => Promise<unknown>;
+    syncActivityLogs: () => Promise<unknown>;
+  };
 };
 
 export function createUseTasksPage(deps: UseTasksPageDeps) {
@@ -84,54 +88,46 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
 
     const completedCount = allGrouped.completed.length;
     const futureCount = allGrouped.notStarted.length + allGrouped.future.length;
+    const pendingToggleTaskIds = useMemo(() => new Set<string>(), []);
 
     const hasAnyTasks =
       tasks.length > 0 || Object.values(groupedTasks).some((g) => g.length > 0);
 
     // handlers
     const handleToggleDone = async (task: TaskItem) => {
-      const newDoneDate = task.doneDate ? null : getToday();
-      await taskRepository.updateTask(task.id, { doneDate: newDoneDate });
-      // タスク完了時にactivityId+quantityがあればActivityLogを自動作成
-      if (
-        !task.doneDate &&
-        newDoneDate &&
-        task.activityId &&
-        task.quantity != null
-      ) {
-        await activityLogRepository.createActivityLog({
-          activityId: task.activityId,
-          activityKindId: task.activityKindId ?? null,
-          quantity: task.quantity ?? null,
-          memo: "",
-          date: newDoneDate,
-          time: null,
-          taskId: task.id,
-        });
-        syncEngine.syncActivityLogs();
+      if (pendingToggleTaskIds.has(task.id)) {
+        return;
       }
-      // タスク未完了に戻す時は自動作成したActivityLogを削除
-      if (task.doneDate && !newDoneDate) {
-        await activityLogRepository.softDeleteActivityLogByTaskId(task.id);
-        syncEngine.syncActivityLogs();
+      pendingToggleTaskIds.add(task.id);
+      try {
+        await toggleTaskWithActivityLog(
+          {
+            taskRepository,
+            activityLogRepository,
+            syncEngine,
+          },
+          task,
+          getToday(),
+        );
+      } finally {
+        pendingToggleTaskIds.delete(task.id);
       }
-      syncEngine.syncTasks();
     };
 
     const handleDelete = async (id: string) => {
       await taskRepository.softDeleteTask(id);
       setDeleteConfirmId(null);
-      syncEngine.syncTasks();
+      void syncEngine.syncTasks().catch(() => {});
     };
 
     const handleArchive = async (task: TaskItem) => {
       await taskRepository.archiveTask(task.id);
-      syncEngine.syncTasks();
+      void syncEngine.syncTasks().catch(() => {});
     };
 
     const handleMoveToToday = async (task: TaskItem) => {
       await taskRepository.updateTask(task.id, { startDate: getToday() });
-      syncEngine.syncTasks();
+      void syncEngine.syncTasks().catch(() => {});
     };
 
     const handleCreateSuccess = () => {

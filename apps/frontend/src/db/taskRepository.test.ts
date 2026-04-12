@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, uuidState } = vi.hoisted(() => {
+const { mockDb } = vi.hoisted(() => {
   function createMockCollection() {
     return {
       filter: vi.fn().mockReturnThis(),
@@ -29,28 +29,56 @@ const { mockDb, uuidState } = vi.hoisted(() => {
     };
   }
 
-  const state = { counter: 0 };
-
   return {
     mockDb: {
       tasks: createMockTable(),
       authState: createMockTable(),
     },
-    uuidState: state,
   };
 });
-
-vi.mock("uuid", () => ({
-  v7: vi.fn(() => `mock-uuid-${++uuidState.counter}`),
-}));
 
 vi.mock("./schema", () => ({
   db: mockDb,
 }));
 
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import {
+  type TaskDbAdapter,
+  newTaskRepository,
+} from "@packages/frontend-shared/repositories";
 
-import { taskRepository } from "./taskRepository";
+const uuidState = { counter: 0 };
+const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
+
+const adapter: TaskDbAdapter = {
+  async getUserId() {
+    const authState = await mockDb.authState.get("current");
+    if (!authState?.userId) {
+      throw new Error("Cannot create task: userId is not set");
+    }
+    return authState.userId;
+  },
+  async insert(task) {
+    await mockDb.tasks.add(task);
+  },
+  async getAll(filter) {
+    return mockDb.tasks.filter(filter).toArray();
+  },
+  async update(id, changes) {
+    await mockDb.tasks.update(id, changes);
+  },
+  async getByIds(ids) {
+    return mockDb.tasks.where("id").anyOf(ids).toArray();
+  },
+  async updateSyncStatus(ids, status) {
+    await mockDb.tasks.where("id").anyOf(ids).modify({ _syncStatus: status });
+  },
+  async bulkUpsertSynced(tasks) {
+    await mockDb.tasks.bulkPut(tasks);
+  },
+};
+
+const taskRepository = newTaskRepository(adapter, mockGenerateId);
 
 describe("taskRepository", () => {
   beforeEach(() => {

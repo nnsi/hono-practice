@@ -8,7 +8,7 @@ type UseCheckModeDeps = {
   react: Pick<ReactHooks, "useState">;
 };
 
-export type CheckKindItem = {
+type CheckKindItem = {
   id: string;
   name: string;
   color: string | null;

@@ -1,11 +1,8 @@
+import { roundQuantity } from "../formatting";
 import type { DebtFeedbackResult } from "./goalDebtFeedback";
 
 // biome-ignore lint: i18next TFunction has complex overloads; use loose signature for compatibility
 type TFunc = (...args: any[]) => string;
-
-function fmt(n: number): number {
-  return Math.round(n * 10) / 10;
-}
 
 function buildMessage(
   result: DebtFeedbackResult,
@@ -29,20 +26,20 @@ function buildMessage(
   } else if (result.debtCleared) {
     lines.push(
       t(praise ? "feedback:debtClearedPraise" : "feedback:debtCleared", {
-        before: fmt(result.balanceBefore),
+        before: roundQuantity(result.balanceBefore),
       }),
     );
   } else if (result.debtReduced) {
     lines.push(
       t(praise ? "feedback:debtReducedPraise" : "feedback:debtReduced", {
-        before: fmt(result.balanceBefore),
-        after: fmt(result.balanceAfter),
+        before: roundQuantity(result.balanceBefore),
+        after: roundQuantity(result.balanceAfter),
       }),
     );
   } else if (result.savedAmount > 0 && !result.targetAchievedToday) {
     lines.push(
       t(praise ? "feedback:debtAvoidedPraise" : "feedback:debtAvoided", {
-        amount: fmt(result.savedAmount),
+        amount: roundQuantity(result.savedAmount),
       }),
     );
   }
@@ -50,7 +47,7 @@ function buildMessage(
   if (result.debtCapSaved > 0) {
     lines.push(
       t(praise ? "feedback:debtCapSavedPraise" : "feedback:debtCapSaved", {
-        amount: fmt(result.debtCapSaved),
+        amount: roundQuantity(result.debtCapSaved),
       }),
     );
   }

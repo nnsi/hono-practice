@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { createUseActivityKindEntries } from "@packages/frontend-shared/hooks/useActivityKindEntries";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import { activityRepository } from "../../db/activityRepository";
@@ -10,21 +11,21 @@ import { syncEngine } from "../../sync/syncEngine";
 import { resizeImage } from "../../utils/imageResizer";
 import type { IconSelectorValue } from "./IconTypeSelector";
 
+const useActivityKindEntries = createUseActivityKindEntries({
+  react: { useState, useCallback },
+});
+
 export function useEditActivityDialog(
   activity: DexieActivity,
   onUpdated: () => void,
   onClose: () => void,
 ) {
-  // state
   const [name, setName] = useState(activity.name);
   const [quantityUnit, setQuantityUnit] = useState(activity.quantityUnit);
   const [showCombinedStats, setShowCombinedStats] = useState(
     activity.showCombinedStats,
   );
   const { kinds: existingKinds } = useActivityKinds(activity.id);
-  const [kinds, setKinds] = useState<
-    { id?: string; name: string; color: string }[]
-  >([]);
   const [recordingMode, setRecordingMode] = useState(
     activity.recordingMode ?? "manual",
   );
@@ -35,13 +36,20 @@ export function useEditActivityDialog(
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [iconChanged, setIconChanged] = useState(false);
 
-  // data
+  const {
+    kinds,
+    setKinds,
+    addKind,
+    removeKind,
+    updateKindName,
+    updateKindColor,
+  } = useActivityKindEntries();
+
   const existingBlob = useLiveQuery(
     () => db.activityIconBlobs.get(activity.id),
     [activity.id],
   );
 
-  // computed
   const buildInitialPreview = () => {
     if (existingBlob) {
       return `data:${existingBlob.mimeType};base64,${existingBlob.base64}`;
@@ -61,7 +69,6 @@ export function useEditActivityDialog(
     preview: buildInitialPreview(),
   });
 
-  // existingBlobが後から読み込まれた場合にpreviewを更新
   useEffect(() => {
     if (existingBlob && !icon.file && icon.type === "upload" && !icon.preview) {
       setIcon((prev) => ({
@@ -71,7 +78,6 @@ export function useEditActivityDialog(
     }
   }, [existingBlob, icon.file, icon.type, icon.preview]);
 
-  // existingKindsが読み込まれたら初期化
   useEffect(() => {
     if (existingKinds.length > 0) {
       setKinds(
@@ -82,9 +88,8 @@ export function useEditActivityDialog(
         })),
       );
     }
-  }, [existingKinds]);
+  }, [existingKinds, setKinds]);
 
-  // handlers
   const handleIconChange = (newIcon: IconSelectorValue) => {
     setIcon(newIcon);
     setIconChanged(true);
@@ -109,7 +114,7 @@ export function useEditActivityDialog(
       kinds
         .filter((k) => k.name.trim())
         .map((k) => ({
-          id: k.id,
+          id: typeof k.id === "string" ? k.id : undefined,
           name: k.name,
           color: k.color,
         })),
@@ -144,7 +149,6 @@ export function useEditActivityDialog(
   };
 
   return {
-    // form state
     name,
     setName,
     quantityUnit,
@@ -161,9 +165,12 @@ export function useEditActivityDialog(
     isSubmitting,
     showDeleteConfirm,
     setShowDeleteConfirm,
-    // handlers
     handleIconChange,
     handleSubmit,
     handleDelete,
+    addKind,
+    removeKind,
+    updateKindName,
+    updateKindColor,
   };
 }

@@ -9,6 +9,7 @@ import { noteRepository } from "../db/noteRepository";
 import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
 import { apiClient, customFetch } from "../utils/apiClient";
+import { reportError } from "../utils/errorReporter";
 import { webStorageAdapter } from "./webPlatformAdapters";
 
 const API_URL = (
@@ -155,6 +156,13 @@ const { clearLocalData, performInitialSync } = createInitialSync({
   deltaResources: DELTA_SYNC_RESOURCES,
   legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
   defaultStorage: webStorageAdapter,
+  onError: (error, phase) => {
+    reportError({
+      errorType: "unhandled_error",
+      message: `Initial sync ${phase} failed: ${error instanceof Error ? error.message : String(error)}`,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  },
 });
 
 export { clearLocalData, performInitialSync };

@@ -7,6 +7,7 @@ export const configSchema = z.object({
   // 例: "actiko-backend"
   JWT_AUDIENCE: z.string().min(1).default("actiko-backend"),
   JWT_SECRET: z.string().min(32),
+  JWT_SECRET_ADMIN: z.string().min(32).optional(),
   NODE_ENV: z.enum(["development", "stg", "production", "test"]),
   DATABASE_URL: z.string(),
   API_PORT: z.coerce.number().optional(),

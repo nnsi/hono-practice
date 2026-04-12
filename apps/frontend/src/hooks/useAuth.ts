@@ -1,8 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 
 import type { Consents } from "@packages/types/request";
+import type { GetUserResponse } from "@packages/types/response";
 import { useQueryClient } from "@tanstack/react-query";
 
+import {
+  clearStoredTabPreference,
+  flushPendingTabPreference,
+  reconcileTabPreferenceFromServer,
+} from "../components/setting/tabPreferenceStore";
 import { db } from "../db/schema";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { apiClient, apiLogin, clearToken, setToken } from "../utils/apiClient";
@@ -53,18 +59,35 @@ export function useAuth(): AuthState {
     setSyncReady(true);
   }, []);
 
-  const login = useCallback(
-    async (loginId: string, password: string) => {
-      await apiLogin(loginId, password);
+  const fetchAuthenticatedUser = useCallback(
+    async (errorMessage: string): Promise<GetUserResponse> => {
       const userRes = await apiClient.user.me.$get();
       if (!userRes.ok) {
-        throw new Error("Failed to fetch user after login");
+        throw new Error(errorMessage);
       }
-      const user = await userRes.json();
+      return userRes.json();
+    },
+    [],
+  );
+
+  const finalizeLogin = useCallback(
+    async (user: GetUserResponse) => {
+      await reconcileTabPreferenceFromServer(user.tabPreference);
+      await flushPendingTabPreference();
       await loginWithUserCheck(user.id);
       await db.authState.update("current", { plan: user.plan });
     },
     [loginWithUserCheck],
+  );
+
+  const login = useCallback(
+    async (loginId: string, password: string) => {
+      await apiLogin(loginId, password);
+      await finalizeLogin(
+        await fetchAuthenticatedUser("Failed to fetch user after login"),
+      );
+    },
+    [fetchAuthenticatedUser, finalizeLogin],
   );
 
   const googleLogin = useCallback(
@@ -77,15 +100,11 @@ export function useAuth(): AuthState {
       }
       const data = await res.json();
       setToken(data.token);
-      const userRes = await apiClient.user.me.$get();
-      if (!userRes.ok) {
-        throw new Error("Failed to fetch user after Google login");
-      }
-      const user = await userRes.json();
-      await loginWithUserCheck(user.id);
-      await db.authState.update("current", { plan: user.plan });
+      await finalizeLogin(
+        await fetchAuthenticatedUser("Failed to fetch user after Google login"),
+      );
     },
-    [loginWithUserCheck],
+    [fetchAuthenticatedUser, finalizeLogin],
   );
 
   const appleLogin = useCallback(
@@ -98,15 +117,11 @@ export function useAuth(): AuthState {
       }
       const data = await res.json();
       setToken(data.token);
-      const userRes = await apiClient.user.me.$get();
-      if (!userRes.ok) {
-        throw new Error("Failed to fetch user after Apple login");
-      }
-      const user = await userRes.json();
-      await loginWithUserCheck(user.id);
-      await db.authState.update("current", { plan: user.plan });
+      await finalizeLogin(
+        await fetchAuthenticatedUser("Failed to fetch user after Apple login"),
+      );
     },
-    [loginWithUserCheck],
+    [fetchAuthenticatedUser, finalizeLogin],
   );
 
   const register = useCallback(
@@ -119,15 +134,11 @@ export function useAuth(): AuthState {
       }
       const data = await res.json();
       setToken(data.token);
-      const userRes = await apiClient.user.me.$get();
-      if (!userRes.ok) {
-        throw new Error("Failed to fetch user after registration");
-      }
-      const user = await userRes.json();
-      await loginWithUserCheck(user.id);
-      await db.authState.update("current", { plan: user.plan });
+      await finalizeLogin(
+        await fetchAuthenticatedUser("Failed to fetch user after registration"),
+      );
     },
-    [loginWithUserCheck],
+    [fetchAuthenticatedUser, finalizeLogin],
   );
 
   const logout = useCallback(async () => {
@@ -138,6 +149,7 @@ export function useAuth(): AuthState {
     }
     apiClient.auth.logout.$post().catch(() => {});
     clearToken();
+    clearStoredTabPreference();
     setIsLoggedIn(false);
     setSyncReady(false);
     setUserId(null);

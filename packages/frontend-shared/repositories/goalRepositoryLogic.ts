@@ -25,13 +25,16 @@ export type GoalDbAdapter = {
   bulkUpsertSynced(goals: Syncable<GoalRecord>[]): Promise<void>;
 };
 
-export function newGoalRepository(adapter: GoalDbAdapter): GoalRepository {
+export function newGoalRepository(
+  adapter: GoalDbAdapter,
+  generateId: () => string = uuidv7,
+): GoalRepository {
   return {
     async createGoal(input: CreateGoalInput) {
       const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const goal: Syncable<GoalRecord> = {
-        id: uuidv7(),
+        id: generateId(),
         userId,
         activityId: input.activityId,
         dailyTargetQuantity: input.dailyTargetQuantity,

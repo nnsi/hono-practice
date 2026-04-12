@@ -4,6 +4,13 @@ import { sign } from "hono/jwt";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { googleVerify } from "@backend/feature/auth/googleVerify";
+import { isLocalOrigin } from "@backend/utils/isLocalOrigin";
+import { zValidator } from "@hono/zod-validator";
+import { AdminGoogleAuthRequestSchema } from "@packages/types/request";
+
+function getAdminJwtSecret(env: AppContext["Bindings"]): string {
+  return env.JWT_SECRET_ADMIN ?? env.JWT_SECRET;
+}
 
 const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
 
@@ -19,51 +26,61 @@ function createAdminAuthRoute() {
   const app = new Hono<AppContext>();
 
   return app
-    .post("/google", async (c) => {
-      const { credential } = await c.req.json<{ credential: string }>();
-      if (!credential) {
-        throw new AppError("credential is required", 400);
-      }
+    .post(
+      "/google",
+      zValidator("json", AdminGoogleAuthRequestSchema),
+      async (c) => {
+        const { credential } = c.req.valid("json");
+        const clientIds = [c.env.GOOGLE_OAUTH_CLIENT_ID];
+        const payload = await googleVerify(credential, clientIds);
 
-      const clientIds = [c.env.GOOGLE_OAUTH_CLIENT_ID];
-      const payload = await googleVerify(credential, clientIds);
+        if (!payload.email || !payload.email_verified) {
+          throw new AppError("Email not verified", 403);
+        }
 
-      if (!payload.email || !payload.email_verified) {
-        throw new AppError("Email not verified", 403);
-      }
+        const allowedEmails = parseAllowedEmails(c.env.ADMIN_ALLOWED_EMAILS);
+        if (allowedEmails.length === 0) {
+          throw new AppError("Admin access not configured", 500);
+        }
 
-      const allowedEmails = parseAllowedEmails(c.env.ADMIN_ALLOWED_EMAILS);
-      if (allowedEmails.length === 0) {
-        throw new AppError("Admin access not configured", 500);
-      }
+        if (!allowedEmails.includes(payload.email.toLowerCase())) {
+          throw new AppError("Access denied", 403);
+        }
 
-      if (!allowedEmails.includes(payload.email.toLowerCase())) {
-        throw new AppError("Access denied", 403);
-      }
+        const adminSecret = getAdminJwtSecret(c.env);
+        const now = Math.floor(Date.now() / 1000);
+        const token = await sign(
+          {
+            email: payload.email,
+            name: payload.name ?? "",
+            role: "admin",
+            aud: c.env.JWT_AUDIENCE,
+            iat: now,
+            exp: now + ADMIN_TOKEN_EXPIRES_IN_SECONDS,
+          },
+          adminSecret,
+          "HS256",
+        );
 
-      const { JWT_SECRET, JWT_AUDIENCE } = c.env;
-      const now = Math.floor(Date.now() / 1000);
-      const token = await sign(
-        {
+        return c.json({
+          token,
           email: payload.email,
           name: payload.name ?? "",
-          role: "admin",
-          aud: JWT_AUDIENCE,
-          iat: now,
-          exp: now + ADMIN_TOKEN_EXPIRES_IN_SECONDS,
-        },
-        JWT_SECRET,
-        "HS256",
-      );
-
-      return c.json({ token, email: payload.email, name: payload.name ?? "" });
-    })
+        });
+      },
+    )
     .post("/dev-login", async (c) => {
       if (c.env.NODE_ENV !== "development") {
         throw new AppError("Not available", 404);
       }
 
-      const { JWT_SECRET, JWT_AUDIENCE } = c.env;
+      const origin = c.req.header("Origin") ?? "";
+      const host = c.req.header("Host") ?? "";
+      if (!isLocalOrigin(origin) && !host.startsWith("localhost")) {
+        throw new AppError("Not available", 403);
+      }
+
+      const adminSecret = getAdminJwtSecret(c.env);
       const now = Math.floor(Date.now() / 1000);
       const email = "dev@localhost";
       const name = "Dev Admin";
@@ -72,11 +89,11 @@ function createAdminAuthRoute() {
           email,
           name,
           role: "admin",
-          aud: JWT_AUDIENCE,
+          aud: c.env.JWT_AUDIENCE,
           iat: now,
           exp: now + ADMIN_TOKEN_EXPIRES_IN_SECONDS,
         },
-        JWT_SECRET,
+        adminSecret,
         "HS256",
       );
 

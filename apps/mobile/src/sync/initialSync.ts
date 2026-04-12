@@ -9,6 +9,7 @@ import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { apiClient } from "../utils/apiClient";
+import { reportError } from "../utils/errorReporter";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
 const DELTA_SYNC_RESOURCES = [
@@ -154,6 +155,13 @@ const { clearLocalData, performInitialSync } = createInitialSync({
   deltaResources: DELTA_SYNC_RESOURCES,
   legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
   defaultStorage: rnStorageAdapter,
+  onError: (error, phase) => {
+    reportError({
+      errorType: "unhandled_error",
+      message: `Initial sync ${phase} failed: ${error instanceof Error ? error.message : String(error)}`,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  },
 });
 
 export { clearLocalData, performInitialSync };

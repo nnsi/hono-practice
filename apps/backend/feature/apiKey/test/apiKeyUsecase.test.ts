@@ -148,5 +148,17 @@ describe("ApiKeyUsecase", () => {
       expect(result).toBeNull();
       verify(repo.findApiKeyByKey(deletedKey.key)).once();
     });
+
+    it("should succeed even when lastUsedAt update fails", async () => {
+      when(repo.findApiKeyByKey(mockApiKey.key)).thenResolve(mockApiKey);
+      when(repo.updateApiKey(anything(), anything())).thenReject(
+        new Error("update failed"),
+      );
+
+      const result = await usecase.validateApiKey(mockApiKey.key);
+
+      expect(result).toEqual(mockApiKey);
+      verify(repo.findApiKeyByKey(mockApiKey.key)).once();
+    });
   });
 });

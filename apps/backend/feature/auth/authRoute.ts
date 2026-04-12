@@ -3,6 +3,7 @@ import { getCookie, setCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
@@ -36,7 +37,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const db = c.env.DB;
     const { JWT_SECRET, JWT_AUDIENCE } = c.env;
     const repo = newUserRepository(db);
-    const refreshTokenRepo = newRefreshTokenRepository(db);
+    const logger = c.get("logger") ?? noopLogger;
+    const refreshTokenRepo = newRefreshTokenRepository(
+      db,
+      logger.child({ repository: "refresh-token" }),
+    );
     const passwordVerifier = new MultiHashPasswordVerifier();
     const userProviderRepo = newUserProviderRepository(db);
     const userConsentRepo = newUserConsentRepository(db);
@@ -99,23 +104,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         return c.json({ message: "refresh token not found" }, 401);
       }
       try {
-        const fireAndForgetFn = (p: Promise<unknown>) => {
-          try {
-            const ctx = c.executionCtx;
-            if (ctx?.waitUntil) {
-              ctx.waitUntil(p);
-              return;
-            }
-          } catch {
-            // テスト環境では executionCtx がthrowする
-          }
-          p.catch(() => {});
-        };
-        const storedToken = await c.var.h.fetchRefreshToken(refreshTokenValue);
-        const { token, refreshToken } = await c.var.h.rotateRefreshToken(
-          storedToken,
-          fireAndForgetFn,
-        );
+        const { token, refreshToken } =
+          await c.var.h.atomicRotateRefreshToken(refreshTokenValue);
         setRefreshCookie(c, refreshToken);
         return c.json({ token, refreshToken });
       } catch (_error) {

@@ -13,12 +13,10 @@ import { createGoal, deleteGoal, updateGoal } from "./goalWriteUsecase";
 
 export type {
   CreateGoalRequest,
-  Goal,
   GoalFilters,
   GoalUsecase,
   UpdateGoalRequest,
 } from "./goalTypes";
-export { goalEntityToResponse } from "./goalTypes";
 
 export function newGoalUsecase(
   activityGoalRepo: ActivityGoalRepository,

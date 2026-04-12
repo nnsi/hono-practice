@@ -2,6 +2,8 @@ import type { Next } from "hono";
 
 import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 
+import type { ResourceName } from "../api/v1/scopeMapping";
+import { resolveScope } from "../api/v1/scopeMapping";
 import type { HonoContext } from "../context";
 import { AppError } from "../error";
 
@@ -38,8 +40,10 @@ export function requireScope(...requiredScopes: ApiKeyScope[]) {
 /**
  * リソースベースのスコープ検証。
  * GET/HEAD → `${resource}:read`、それ以外 → `${resource}:write` に自動マッピング。
+ * method→suffix の変換ロジックは `scopeMapping.ts` の `resolveScope` に集約し、
+ * generator と middleware で単一ソース化する。
  */
-export function requireResourceScope(resource: string) {
+export function requireResourceScope(resource: ResourceName) {
   return async (c: HonoContext, next: Next) => {
     const scopes = c.get("apiKeyScopes");
 
@@ -51,9 +55,7 @@ export function requireResourceScope(resource: string) {
       return next();
     }
 
-    const method = c.req.method.toUpperCase();
-    const suffix = method === "GET" || method === "HEAD" ? "read" : "write";
-    const required = `${resource}:${suffix}` as ApiKeyScope;
+    const required = resolveScope({ kind: "resource", resource }, c.req.method);
 
     if (!scopes.includes(required)) {
       throw new AppError(

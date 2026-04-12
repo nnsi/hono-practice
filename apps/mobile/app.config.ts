@@ -2,6 +2,7 @@ import type { ExpoConfig } from "expo/config";
 
 const bundleId = process.env.BUNDLE_ID;
 const easProjectId = process.env.EAS_PROJECT_ID;
+const appleTeamId = process.env.APPLE_TEAM_ID;
 
 const config: ExpoConfig = {
   name: "Actiko",
@@ -19,6 +20,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: bundleId,
+    ...(appleTeamId && { appleTeamId }),
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },

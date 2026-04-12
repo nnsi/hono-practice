@@ -26,7 +26,6 @@ export function useOtaUpdate() {
         }
       })
       .catch((err) => {
-        console.error("[updates] check failed:", err);
         reportError({
           errorType: "unhandled_error",
           message: `[updates] check failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -52,7 +51,11 @@ export function useOtaUpdate() {
           });
         })
         .catch((err) => {
-          console.error("[updates] foreground check failed:", err);
+          reportError({
+            errorType: "unhandled_error",
+            message: `[updates] foreground check failed: ${err instanceof Error ? err.message : String(err)}`,
+            stack: err instanceof Error ? err.stack : undefined,
+          });
         });
     });
 

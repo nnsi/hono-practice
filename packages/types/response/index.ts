@@ -17,3 +17,4 @@ export * from "./LoginResponse";
 export * from "./ProcessSyncResponse";
 export * from "./SubscriptionResponse";
 export * from "./SyncStatusResponse";
+export * from "./TabPreferenceResponse";

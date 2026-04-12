@@ -1,4 +1,4 @@
-export type SpanData = {
+type SpanData = {
   name: string;
   duration: number;
 };

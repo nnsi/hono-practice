@@ -1,6 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import { Platform } from "react-native";
 
+import { reportError } from "../utils/errorReporter";
 import { getAppGroupDirectory } from "./appGroupDirectory";
 import { migrateDb } from "./migrations";
 
@@ -31,7 +32,11 @@ function migrateDbToAppGroup(appGroupDir: string): void {
       }
     }
   } catch (e) {
-    console.warn("[DB Migration] Failed to migrate DB to App Group:", e);
+    reportError({
+      errorType: "storage_error",
+      message: `[DB Migration] Failed to migrate DB to App Group: ${e instanceof Error ? e.message : String(e)}`,
+      stack: e instanceof Error ? e.stack : undefined,
+    });
   }
 }
 

@@ -49,7 +49,7 @@ export function createSyncActivityLogs(deps: {
 ```
 
 ```typescript
-// apps/frontend/src/sync/index.ts（wiring）
+// apps/frontend/src/sync/syncEngine.ts（wiring）
 export const syncActivityLogs = createSyncActivityLogs({
   repo: activityLogRepository,
   postSync: async (chunk) => {

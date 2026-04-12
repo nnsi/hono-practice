@@ -46,8 +46,8 @@ export class MultiHashPasswordVerifier implements PasswordVerifier {
         if (isValid) {
           return true;
         }
-      } catch (error) {
-        console.debug("Password verification failed with verifier:", error);
+      } catch {
+        // Try the next verifier for backward compatibility.
       }
     }
     return false;

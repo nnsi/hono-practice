@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from "react-native";
 
 import { getApiUrl, setRefreshToken, setToken } from "../src/utils/apiClient";
 import { apiGetMe } from "../src/utils/authApi";
+import { reportError } from "../src/utils/errorReporter";
 import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
 import { useAuthContext } from "./_layout";
 
@@ -30,7 +31,11 @@ export default function OAuthRedirect() {
     }
 
     handleCodeExchange(code, pending).catch((e) => {
-      console.error("[OAuthRedirect]", e);
+      reportError({
+        errorType: "unhandled_error",
+        message: `[OAuthRedirect] ${e instanceof Error ? e.message : String(e)}`,
+        stack: e instanceof Error ? e.stack : undefined,
+      });
       router.replace("/(auth)/login");
     });
   }, []);

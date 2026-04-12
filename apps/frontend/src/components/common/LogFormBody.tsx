@@ -12,7 +12,7 @@ import { db } from "../../db/schema";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
-import { computeDebtFeedbackForActivity } from "./computeDebtFeedback";
+import { computeDebtFeedbackForAllGoals } from "./computeDebtFeedback";
 
 export function LogFormBody({
   activity,
@@ -43,7 +43,7 @@ export function LogFormBody({
     setIsSubmitting(true);
 
     // Compute debt feedback BEFORE creating the log
-    const feedbackResults = await computeDebtFeedbackForActivity(
+    const feedbackResults = await computeDebtFeedbackForAllGoals(
       activity.id,
       params.quantity ?? 0,
       date,

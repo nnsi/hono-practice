@@ -29,8 +29,8 @@ describe("useTasksPage handleToggleDone", () => {
   const mockArchiveTask = vi.fn().mockResolvedValue(undefined);
   const mockCreateActivityLog = vi.fn().mockResolvedValue(undefined);
   const mockSoftDeleteByTaskId = vi.fn().mockResolvedValue(undefined);
-  const mockSyncTasks = vi.fn();
-  const mockSyncActivityLogs = vi.fn();
+  const mockSyncTasks = vi.fn().mockResolvedValue(undefined);
+  const mockSyncActivityLogs = vi.fn().mockResolvedValue(undefined);
 
   let activeTasks: TaskItem[] = [];
 
@@ -137,5 +137,116 @@ describe("useTasksPage handleToggleDone", () => {
 
     expect(mockCreateActivityLog).not.toHaveBeenCalled();
     expect(mockSyncActivityLogs).not.toHaveBeenCalled();
+  });
+
+  it("task更新後にlog作成が失敗したらdoneDateを元に戻す", async () => {
+    const task = makeTask({
+      activityId: "act-1",
+      activityKindId: "kind-1",
+      quantity: 5,
+    });
+    mockCreateActivityLog.mockRejectedValueOnce(new Error("log failed"));
+
+    const { result } = renderHook(() => useTasksPage());
+    let caughtError: unknown;
+
+    await act(async () => {
+      try {
+        await result.current.handleToggleDone(task);
+      } catch (error) {
+        caughtError = error;
+      }
+    });
+
+    expect(caughtError).toEqual(
+      expect.objectContaining({ message: "log failed" }),
+    );
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(1, "task-1", {
+      doneDate: expect.any(String),
+    });
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(2, "task-1", {
+      doneDate: null,
+    });
+    expect(mockSyncTasks).not.toHaveBeenCalled();
+  });
+
+  it("log削除が失敗したらdoneDateを元に戻す", async () => {
+    const task = makeTask({
+      activityId: "act-1",
+      doneDate: "2026-03-14",
+    });
+    mockSoftDeleteByTaskId.mockRejectedValueOnce(new Error("delete failed"));
+
+    const { result } = renderHook(() => useTasksPage());
+    let caughtError: unknown;
+
+    await act(async () => {
+      try {
+        await result.current.handleToggleDone(task);
+      } catch (error) {
+        caughtError = error;
+      }
+    });
+
+    expect(caughtError).toEqual(
+      expect.objectContaining({ message: "delete failed" }),
+    );
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(1, "task-1", {
+      doneDate: null,
+    });
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(2, "task-1", {
+      doneDate: "2026-03-14",
+    });
+    expect(mockSyncActivityLogs).not.toHaveBeenCalled();
+  });
+
+  it("syncが失敗してもtask/logのローカル更新は成功扱いにする", async () => {
+    const task = makeTask({
+      activityId: "act-1",
+      activityKindId: "kind-1",
+      quantity: 5,
+    });
+    mockSyncTasks.mockRejectedValueOnce(new Error("sync failed"));
+    mockSyncActivityLogs.mockRejectedValueOnce(new Error("sync failed"));
+
+    const { result } = renderHook(() => useTasksPage());
+
+    await act(async () => {
+      await result.current.handleToggleDone(task);
+    });
+
+    expect(mockUpdateTask).toHaveBeenCalledTimes(1);
+    expect(mockCreateActivityLog).toHaveBeenCalledTimes(1);
+  });
+
+  it("同一taskの重複実行を抑止する", async () => {
+    const task = makeTask({
+      activityId: "act-1",
+      activityKindId: "kind-1",
+      quantity: 5,
+    });
+    let resolveUpdate!: () => void;
+    mockUpdateTask.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
+
+    const { result } = renderHook(() => useTasksPage());
+
+    const firstCall = act(async () => {
+      await result.current.handleToggleDone(task);
+    });
+    const secondCall = act(async () => {
+      await result.current.handleToggleDone(task);
+    });
+
+    resolveUpdate();
+    await firstCall;
+    await secondCall;
+
+    expect(mockUpdateTask).toHaveBeenCalledTimes(1);
+    expect(mockCreateActivityLog).toHaveBeenCalledTimes(1);
   });
 });

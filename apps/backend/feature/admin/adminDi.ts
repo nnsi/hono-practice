@@ -14,6 +14,7 @@ import { newTaskRepository } from "@backend/feature/task/taskRepository";
 import { newUserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import { newUserRepository } from "@backend/feature/user/userRepository";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { newAdminDashboardQueryService } from "@backend/query/adminDashboardQueryService";
 import {
@@ -37,10 +38,13 @@ import { newWaeApmProvider } from "./waeQuery";
 
 export function resolveAdminHandler(c: {
   env: AppContext["Bindings"];
-  get: (key: "tracer") => AppContext["Variables"]["tracer"] | undefined;
+  get: <T extends "tracer" | "logger">(
+    key: T,
+  ) => AppContext["Variables"][T] | undefined;
 }) {
   const db = c.env.DB;
   const tracer = c.get("tracer") ?? noopTracer;
+  const logger = c.get("logger") ?? noopLogger;
   const userRepo = newUserRepository(db);
   const contactRepo = newContactRepository(db);
   const userUc = newAdminUserUsecase(userRepo, tracer);
@@ -50,13 +54,21 @@ export function resolveAdminHandler(c: {
   const cfAccountId = c.env.CF_ACCOUNT_ID;
   const apmProvider =
     cfApiToken && cfAccountId
-      ? newWaeApmProvider(cfApiToken, cfAccountId)
+      ? newWaeApmProvider(
+          cfApiToken,
+          cfAccountId,
+          logger.child({ provider: "wae-apm" }),
+        )
       : isDev
         ? newMockApmProvider()
         : newNullApmProvider();
   const clientErrorProvider =
     cfApiToken && cfAccountId
-      ? newWaeClientErrorProvider(cfApiToken, cfAccountId)
+      ? newWaeClientErrorProvider(
+          cfApiToken,
+          cfAccountId,
+          logger.child({ provider: "wae-client-errors" }),
+        )
       : isDev
         ? newMockClientErrorProvider()
         : newNullClientErrorProvider();
@@ -82,7 +94,10 @@ export function resolveAdminHandler(c: {
   const freezePeriodRepo = newGoalFreezePeriodRepository(db);
   const taskRepo = newTaskRepository(db);
   const apiKeyRepo = newApiKeyRepository(db);
-  const refreshTokenRepo = newRefreshTokenRepository(db);
+  const refreshTokenRepo = newRefreshTokenRepository(
+    db,
+    logger.child({ repository: "refresh-token" }),
+  );
   const userProviderRepo = newUserProviderRepository(db);
   const archiveRepo = newSubscriptionHistoryArchiveRepository(db);
   const deletionLogRepo = newAdminUserDeletionLogRepository(db);

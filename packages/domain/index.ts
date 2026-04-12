@@ -29,6 +29,8 @@ export * from "./activityLog/activityLogValidation";
 export * from "./csv";
 // Errors
 export { DomainValidateError } from "./errors";
+// Formatting
+export { roundQuantity } from "./formatting";
 export type { DayTargets } from "./goal/dayTargets";
 export { getDailyTargetForDate } from "./goal/dayTargets";
 export * from "./goal/goalBalance";

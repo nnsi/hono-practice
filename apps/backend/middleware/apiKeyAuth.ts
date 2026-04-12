@@ -5,6 +5,7 @@ import { createUserId } from "@packages/domain/user/userSchema";
 import type { HonoContext } from "../context";
 import { UnauthorizedError } from "../error";
 import { newApiKeyRepository, newApiKeyUsecase } from "../feature/apiKey";
+import { noopLogger } from "../lib/logger";
 import { noopTracer } from "../lib/tracer";
 
 export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
@@ -26,7 +27,8 @@ export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
     const db = c.env.DB;
     const apiKeyRepository = newApiKeyRepository(db);
     const tracer = c.get("tracer") ?? noopTracer;
-    const apiKeyUsecase = newApiKeyUsecase(apiKeyRepository, tracer);
+    const logger = c.get("logger") ?? noopLogger;
+    const apiKeyUsecase = newApiKeyUsecase(apiKeyRepository, tracer, logger);
 
     const apiKey = await apiKeyUsecase.validateApiKey(token);
 

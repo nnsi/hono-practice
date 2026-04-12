@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Check, Copy } from "lucide-react";
 
-import { API_SCOPES, ENDPOINT_GROUPS } from "./apiReferenceData";
+import { API_SCOPES, ENDPOINT_GROUPS } from "./apiReferenceData.generated";
 import { EndpointSection } from "./EndpointSection";
 
 const BASE_URL = "https://api.actiko.app/api/v1";

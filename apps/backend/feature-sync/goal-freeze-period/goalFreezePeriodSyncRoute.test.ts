@@ -4,8 +4,8 @@ import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { activityGoalFreezePeriods } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
-import { goalSyncRoute } from "../goal";
-import { goalFreezePeriodSyncRoute } from ".";
+import { goalSyncRoute } from "../goal/goalSyncRoute";
+import { goalFreezePeriodSyncRoute } from "./goalFreezePeriodSyncRoute";
 
 const SEED_ACTIVITY_ID = "00000000-0000-4000-8000-000000000001";
 const TEST_GOAL_ID = "10000000-0000-4000-8000-000000000099";

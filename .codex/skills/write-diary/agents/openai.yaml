@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Diary"
+  short_description: "Write a private Codex diary entry in docs/diary-codex"
+  default_prompt: "Use $write-diary to write today's Codex diary entry in docs/diary-codex."

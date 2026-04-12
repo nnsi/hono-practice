@@ -3,7 +3,7 @@ import type {
   EndpointGroup,
   HttpMethod,
   Param,
-} from "./apiReferenceData";
+} from "./apiReferenceData.generated";
 
 const METHOD_STYLES: Record<HttpMethod, string> = {
   GET: "bg-emerald-100 text-emerald-700",

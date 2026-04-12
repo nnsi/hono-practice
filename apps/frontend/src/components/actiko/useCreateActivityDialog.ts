@@ -4,6 +4,7 @@ import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 
 import { activityRepository } from "../../db/activityRepository";
 import { syncEngine } from "../../sync/syncEngine";
+import { reportError } from "../../utils/errorReporter";
 import { resizeImage } from "../../utils/imageResizer";
 import type { IconSelectorValue } from "./IconTypeSelector";
 
@@ -60,7 +61,11 @@ export function useCreateActivityDialog(
       onCreated();
       onClose();
     } catch (err) {
-      console.error("Failed to create activity:", err);
+      reportError({
+        errorType: "unhandled_error",
+        message: `Failed to create activity: ${err instanceof Error ? err.message : String(err)}`,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
     } finally {
       setIsSubmitting(false);
     }

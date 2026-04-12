@@ -1,6 +1,11 @@
 import type { MutableRefObject } from "react";
 import { useEffect } from "react";
 
+import {
+  clearStoredTabPreference,
+  flushPendingTabPreference,
+  reconcileTabPreferenceFromServer,
+} from "../components/setting/tabPreferenceStore";
 import { db } from "../db/schema";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import {
@@ -62,6 +67,8 @@ export function useAuthInit(deps: AuthInitDeps): void {
       if (gen !== authGenRef.current) return false;
       const user = await userRes.json();
       if (gen !== authGenRef.current) return false;
+      reconcileTabPreferenceFromServer(user.tabPreference);
+      void flushPendingTabPreference();
       setUserId(user.id);
       setIsLoggedIn(true);
       await syncWithUserCheck(user.id);
@@ -110,6 +117,7 @@ export function useAuthInit(deps: AuthInitDeps): void {
     setOnAuthExpired(() => {
       authGenRef.current++;
       clearToken();
+      clearStoredTabPreference();
       setIsLoggedIn(false);
       setSyncReady(false);
       setUserId(null);

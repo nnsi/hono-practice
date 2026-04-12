@@ -1,7 +1,10 @@
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
-import { apiV1Route } from "./api/v1";
+import { zValidator } from "@hono/zod-validator";
+import { BatchRequestSchema } from "@packages/types/request";
+
+import { createApiV1Route } from "./api/v1";
 import { AppError } from "./error";
 import {
   aiActivityLogRoute,
@@ -99,70 +102,73 @@ const routes = app
   .route("/users/v2", goalFreezePeriodSyncRoute)
   .route("/users/v2", taskSyncRoute)
   .route("/users/v2", noteSyncRoute)
-  .route("/api/v1", apiV1Route)
+  .route("/api/v1", createApiV1Route())
   .route("/r2", r2ProxyRoute)
   .route("/contact", contactRoute)
   .route("/admin/auth", adminAuthRoute)
   .route("/admin", adminRoute)
   .route("/client-errors", clientErrorRoute)
-  .post("/batch", authMiddleware, async (c) => {
-    const requests = await c.req.json<{ path: string }[]>();
+  .post(
+    "/batch",
+    authMiddleware,
+    zValidator("json", BatchRequestSchema),
+    async (c) => {
+      const requests = c.req.valid("json");
 
-    if (requests.length > 5) {
-      throw new AppError("Too many batch requests (max 5)", 400);
-    }
-
-    for (const req of requests) {
-      // クエリストリングを除いたパスを取得
-      const path = req.path.split("?")[0];
-
-      // パストラバーサル検出（.. や URLエンコードされた %2e/%2E）
-      if (path.includes("..") || path.toLowerCase().includes("%2e")) {
-        throw new AppError("Invalid path: path traversal detected", 400);
+      if (requests.length > 5) {
+        throw new AppError("Too many batch requests (max 5)", 400);
       }
 
-      if (!path.startsWith("/users/")) {
-        throw new AppError("Invalid batch request path", 400);
+      for (const req of requests) {
+        // クエリストリングを除いたパスを取得
+        const path = req.path.split("?")[0];
+
+        // パストラバーサル検出（.. や URLエンコードされた %2e/%2E）
+        if (path.includes("..") || path.toLowerCase().includes("%2e")) {
+          throw new AppError("Invalid path: path traversal detected", 400);
+        }
+
+        if (!path.startsWith("/users/")) {
+          throw new AppError("Invalid batch request path", 400);
+        }
       }
-    }
 
-    const userId = c.get("userId");
-    const results = await Promise.all(
-      requests.map((req) => {
-        return app.request(
-          req.path,
-          {
-            method: "GET",
-            headers: c.req.raw.headers,
-          },
-          {
-            ...c.env,
-            __authenticatedUserId: userId,
-          },
-        );
-      }),
-    );
+      const userId = c.get("userId");
+      const results = await Promise.all(
+        requests.map((req) => {
+          return app.request(
+            req.path,
+            {
+              method: "GET",
+              headers: c.req.raw.headers,
+            },
+            {
+              ...c.env,
+              __authenticatedUserId: userId,
+            },
+          );
+        }),
+      );
 
-    // サブリクエストのトレーサーサマリーを親トレーサーに集約（観測性改善）
-    const tracer = c.get("tracer");
-    for (const result of results) {
-      const summaryHeader = result.headers.get("X-Tracer-Summary");
-      if (summaryHeader) {
-        const sub = JSON.parse(summaryHeader) as TracerSummary;
-        if (sub.dbMs) tracer.addSpan("db.batch-sub", sub.dbMs);
-        if (sub.r2Ms) tracer.addSpan("r2.batch-sub", sub.r2Ms);
-        if (sub.kvMs) tracer.addSpan("kv.batch-sub", sub.kvMs);
-        if (sub.extMs) tracer.addSpan("ext.batch-sub", sub.extMs);
+      // サブリクエストのトレーサーサマリーを親トレーサーに集約（観測性改善）
+      const tracer = c.get("tracer");
+      for (const result of results) {
+        const summaryHeader = result.headers.get("X-Tracer-Summary");
+        if (summaryHeader) {
+          const sub = JSON.parse(summaryHeader) as TracerSummary;
+          if (sub.dbMs) tracer.addSpan("db.batch-sub", sub.dbMs);
+          if (sub.r2Ms) tracer.addSpan("r2.batch-sub", sub.r2Ms);
+          if (sub.kvMs) tracer.addSpan("kv.batch-sub", sub.kvMs);
+          if (sub.extMs) tracer.addSpan("ext.batch-sub", sub.extMs);
+        }
       }
-    }
 
-    const responses = await Promise.all(
-      results.map(async (result) => await result.json()),
-    );
+      const responses = await Promise.all(
+        results.map(async (result) => await result.json()),
+      );
 
-    return c.json(responses, 200);
-  });
+      return c.json(responses, 200);
+    },
+  );
 
 export type AppType = typeof routes;
-
-export default app;

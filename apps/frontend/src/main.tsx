@@ -1,10 +1,7 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import {
-  reportError,
-  setupGlobalErrorHandler,
-} from "@packages/frontend-shared";
+import { setupGlobalErrorHandler } from "@packages/frontend-shared";
 import { initI18n } from "@packages/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
@@ -15,39 +12,14 @@ import "dayjs/locale/en";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import { ErrorBoundary } from "./components/root";
-import { db } from "./db/schema";
 import { routeTree } from "./routeTree.gen";
+import { reportError, webReportErrorOptions } from "./utils/errorReporter";
 import "./main.css";
 
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient();
 
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:3456"
-).replace(/\/+$/, "");
-
-let cachedUserId = "";
-db.authState.get("current").then((state) => {
-  cachedUserId = state?.lastLoginAt ? state.userId : "";
-});
-db.authState.hook("creating", (_primKey, obj) => {
-  cachedUserId = obj.lastLoginAt ? obj.userId : "";
-});
-db.authState.hook("updating", (modifications, _primKey, obj) => {
-  const merged = { ...obj, ...modifications };
-  cachedUserId = merged.lastLoginAt ? merged.userId : "";
-});
-
-const reportErrorOptions = {
-  apiUrl: API_URL,
-  platform: "web" as const,
-  getContext: () => ({
-    screen: window.location.pathname,
-    userId: cachedUserId || undefined,
-  }),
-};
-
-setupGlobalErrorHandler((report) => reportError(report, reportErrorOptions));
+setupGlobalErrorHandler((report) => reportError(report));
 
 initI18n({
   plugins: [LanguageDetector],
@@ -84,7 +56,7 @@ document.addEventListener(
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ErrorBoundary reportErrorOptions={reportErrorOptions}>
+    <ErrorBoundary reportErrorOptions={webReportErrorOptions}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

@@ -11,7 +11,7 @@
 
 ### 1. app.config.ts 用の環境変数をセット
 
-`eas` コマンドが `app.config.ts` を読み込むために必要。`apps/mobile/.env` に記載されている。
+`eas` コマンドが `app.config.ts` を読み込むために必要。必要なキー一覧は `apps/mobile/.env.example` に記載されている。
 
 ```bash
 cd apps/mobile

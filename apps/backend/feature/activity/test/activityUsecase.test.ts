@@ -1,5 +1,6 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import type { StorageService } from "@backend/infra/storage";
 import { noopTracer } from "@backend/lib/tracer";
 import {
   type Activity,
@@ -7,6 +8,7 @@ import {
   createActivityId,
   createActivityKindId,
 } from "@packages/domain/activity/activitySchema";
+import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -17,14 +19,22 @@ import { newActivityUsecase } from "..";
 describe("ActivityUsecase", () => {
   let repo: ActivityRepository;
   let tx: TransactionRunner;
+  let storage: StorageService;
   let usecase: ReturnType<typeof newActivityUsecase>;
 
   beforeEach(() => {
     repo = mock<ActivityRepository>();
     tx = mock<TransactionRunner>();
-    usecase = newActivityUsecase(instance(repo), instance(tx), noopTracer);
+    storage = mock<StorageService>();
+    usecase = newActivityUsecase(
+      instance(repo),
+      instance(tx),
+      noopTracer,
+      instance(storage),
+    );
     reset(repo);
     reset(tx);
+    reset(storage);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
@@ -161,7 +171,7 @@ describe("ActivityUsecase", () => {
         iconType: "emoji" | "upload" | "generate";
         description?: string;
         quantityUnit: string;
-        recordingMode: string;
+        recordingMode: RecordingMode;
       };
       mockLastOrderIndex: string | undefined;
       mockReturn: Activity;
@@ -178,7 +188,7 @@ describe("ActivityUsecase", () => {
           emoji: "🏃",
           iconType: "emoji" as const,
           quantityUnit: "km",
-          recordingMode: "manual",
+          recordingMode: "manual" as const,
         },
         mockLastOrderIndex: undefined,
         mockReturn: {
@@ -197,7 +207,7 @@ describe("ActivityUsecase", () => {
           iconType: "emoji" as const,
           description: "Swimming practice",
           quantityUnit: "m",
-          recordingMode: "manual",
+          recordingMode: "manual" as const,
         },
         mockLastOrderIndex: "a",
         mockReturn: {
@@ -242,6 +252,42 @@ describe("ActivityUsecase", () => {
         });
       },
     );
+
+    it("success / clear all kinds", async () => {
+      const txRepo = mock<ActivityRepository>();
+      const existingActivity = {
+        ...mockActivity,
+        kinds: [
+          {
+            id: activityKindId1,
+            name: "Sprint",
+            orderIndex: null,
+            color: null,
+          },
+        ],
+      };
+      when(txRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        existingActivity,
+      );
+      when(txRepo.updateActivity(anything())).thenCall(
+        async (activity) => activity,
+      );
+      when(tx.run(anything(), anything())).thenCall(
+        async (_, callback) => await callback(instance(txRepo)),
+      );
+
+      const result = await usecase.updateActivity(userId1, activityId1, {
+        activity: {
+          name: "Sprint Running",
+          emoji: "🏃",
+          iconType: "emoji",
+          quantityUnit: "km",
+        },
+        kinds: [],
+      });
+
+      expect(result.kinds).toEqual([]);
+    });
   });
 
   describe("updateActivity", () => {
@@ -502,5 +548,140 @@ describe("ActivityUsecase", () => {
         });
       },
     );
+  });
+
+  describe("activity icon consistency", () => {
+    it("uploadActivityIcon: DB更新が失敗したらアップロード済みオブジェクトを削除する", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        mockActivity,
+      );
+      when(storage.upload(anything(), anything(), anything())).thenResolve({
+        url: "/r2/activities/icon.webp",
+        key: "stored/activities/icon.webp",
+        size: 10,
+        contentType: "image/png",
+      });
+      when(storage.getUrl("stored/activities/icon.webp")).thenReturn(
+        "/r2/stored/activities/icon.webp",
+      );
+      when(
+        repo.updateActivityIcon(activityId1, "upload", anything(), anything()),
+      ).thenReject(new Error("db failed"));
+      when(storage.delete(anything())).thenResolve();
+
+      await expect(
+        usecase.uploadActivityIcon(
+          userId1,
+          activityId1,
+          Buffer.from("icon").toString("base64"),
+          "image/png",
+          "https://api.example.com",
+        ),
+      ).rejects.toThrow("db failed");
+
+      verify(storage.delete("stored/activities/icon.webp")).once();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).never();
+    });
+
+    it("deleteActivityIcon: ストレージ削除が失敗したらDBを更新しない", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
+        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+      when(
+        repo.updateActivityIcon(
+          activityId1,
+          "upload",
+          "https://cdn.example.com/r2/icons/main.webp",
+          "https://cdn.example.com/r2/icons/thumb.webp",
+        ),
+      ).thenResolve();
+      when(storage.delete(anything())).thenReject(new Error("r2 failed"));
+
+      await expect(
+        usecase.deleteActivityIcon(userId1, activityId1),
+      ).rejects.toThrow("Failed to delete activity icon from storage");
+
+      verify(storage.delete(anything())).once();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).once();
+      verify(
+        repo.updateActivityIcon(
+          activityId1,
+          "upload",
+          "https://cdn.example.com/r2/icons/main.webp",
+          "https://cdn.example.com/r2/icons/thumb.webp",
+        ),
+      ).once();
+    });
+    it("deleteActivityIcon: DB更新が失敗したらストレージ削除しない", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
+        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenReject(new Error("db failed"));
+
+      await expect(
+        usecase.deleteActivityIcon(userId1, activityId1),
+      ).rejects.toThrow("db failed");
+
+      verify(storage.delete(anything())).never();
+    });
+    it("deleteActivityIcon: local storage URLから元のkeyを復元して削除する", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl:
+          "https://api.example.com/public/uploads/icons/user-1/icon.webp",
+        iconThumbnailUrl:
+          "https://api.example.com/public/uploads/icons/user-1/icon.webp",
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+      when(storage.delete("icons/user-1/icon.webp")).thenResolve();
+
+      await usecase.deleteActivityIcon(userId1, activityId1);
+
+      verify(storage.delete("icons/user-1/icon.webp")).once();
+    });
+    it("deleteActivityIcon: partial delete failureではDB rollbackしない", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
+        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+      when(storage.delete("icons/main.webp")).thenResolve();
+      when(storage.delete("icons/thumb.webp")).thenReject(
+        new Error("r2 failed"),
+      );
+
+      await expect(
+        usecase.deleteActivityIcon(userId1, activityId1),
+      ).rejects.toThrow("Failed to delete activity icon from storage");
+
+      verify(storage.delete("icons/main.webp")).once();
+      verify(storage.delete("icons/thumb.webp")).once();
+      verify(
+        repo.updateActivityIcon(
+          activityId1,
+          "upload",
+          "https://cdn.example.com/r2/icons/main.webp",
+          "https://cdn.example.com/r2/icons/thumb.webp",
+        ),
+      ).never();
+    });
   });
 });

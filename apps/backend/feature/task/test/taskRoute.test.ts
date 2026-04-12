@@ -226,9 +226,6 @@ test("POST tasks/:id/archive / success", async () => {
   expect(found).toBeDefined();
   expect(found?.title).toEqual("タスクをアーカイブするテスト");
 });
-/*
-TODO: zod/v4でz.iso.date()が使えるようになったら追加
-
 test("GET tasks / with invalid date query", async () => {
   const route = createTaskRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);
@@ -239,4 +236,3 @@ test("GET tasks / with invalid date query", async () => {
   const res = await client.index.$get({ query: { date: "invalid-date" } });
   expect(res.status).toEqual(400);
 });
-*/
