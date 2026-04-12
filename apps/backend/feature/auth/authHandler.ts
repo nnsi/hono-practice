@@ -1,4 +1,3 @@
-import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
 import type { User } from "@packages/domain/user/userSchema";
 import { type UserId, createUserId } from "@packages/domain/user/userSchema";
@@ -27,10 +26,8 @@ type ProviderLoginWithUserResult = {
 export type AuthHandler = {
   login(params: LoginRequest): Promise<{ token: string; refreshToken: string }>;
   refreshToken(token: string): Promise<{ token: string; refreshToken: string }>;
-  fetchRefreshToken(token: string): Promise<RefreshToken>;
-  rotateRefreshToken(
-    storedToken: RefreshToken,
-    fireAndForgetFn?: (p: Promise<unknown>) => void,
+  atomicRotateRefreshToken(
+    combinedToken: string,
   ): Promise<{ token: string; refreshToken: string }>;
   logout(userId: UserId, refreshToken: string): Promise<{ message: string }>;
   googleLogin(
@@ -149,11 +146,8 @@ export function newAuthHandler(
     login: login(uc),
     refreshToken: async (token) =>
       parseAuthResponse(await uc.refreshToken(token)),
-    fetchRefreshToken: (token) => uc.fetchRefreshToken(token),
-    rotateRefreshToken: async (storedToken, fireAndForgetFn) =>
-      parseAuthResponse(
-        await uc.rotateRefreshToken(storedToken, fireAndForgetFn),
-      ),
+    atomicRotateRefreshToken: async (combinedToken) =>
+      parseAuthResponse(await uc.atomicRotateRefreshToken(combinedToken)),
     logout: async (userId, refreshToken) => {
       await uc.logout(userId, refreshToken);
       return { message: "success" };

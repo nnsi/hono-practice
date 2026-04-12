@@ -206,6 +206,7 @@ jobs:
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env stg
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env stg
+          if [ -n "$JWT_SECRET_ADMIN" ]; then printf '%s' "$JWT_SECRET_ADMIN" | pnpm exec wrangler secret put JWT_SECRET_ADMIN --env stg; fi
           printf '%s' "$APP_URL" | pnpm exec wrangler secret put APP_URL --env stg
           printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env stg
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env stg
@@ -229,6 +230,7 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
           JWT_SECRET: ${{ secrets.JWT_SECRET_STG }}
+          JWT_SECRET_ADMIN: ${{ secrets.JWT_SECRET_ADMIN_STG }}
           APP_URL: ${{ vars.APP_URL_STG }}
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_STG }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
@@ -249,6 +251,7 @@ jobs:
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env production
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env production
+          if [ -n "$JWT_SECRET_ADMIN" ]; then printf '%s' "$JWT_SECRET_ADMIN" | pnpm exec wrangler secret put JWT_SECRET_ADMIN --env production; fi
           printf '%s' "$APP_URL" | pnpm exec wrangler secret put APP_URL --env production
           printf '%s' "$R2_PUBLIC_URL" | pnpm exec wrangler secret put R2_PUBLIC_URL --env production
           printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | pnpm exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID --env production
@@ -272,6 +275,7 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET_PROD }}
+          JWT_SECRET_ADMIN: ${{ secrets.JWT_SECRET_ADMIN_PROD }}
           APP_URL: ${{ vars.APP_URL_PROD }}
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL_PROD }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}

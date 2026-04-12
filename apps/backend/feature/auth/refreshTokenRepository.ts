@@ -8,12 +8,13 @@ import {
 } from "@packages/domain/auth/refreshTokenSchema";
 import { DomainValidateError } from "@packages/domain/errors";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { eq, lte } from "drizzle-orm";
+import { and, eq, isNull, lte } from "drizzle-orm";
 
 export type RefreshTokenRepository<T = QueryExecutor> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
   getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;
   revokeRefreshToken(token: RefreshToken): Promise<void>;
+  revokeAndGetRefreshToken(combinedToken: string): Promise<RefreshToken | null>;
   revokeRefreshTokenAllByUserId(userId: UserId): Promise<void>;
   deleteRefreshTokensPastExpiry(): Promise<void>;
   hardDeleteRefreshTokensByUserId(userId: UserId): Promise<number>;
@@ -28,11 +29,28 @@ export function newRefreshTokenRepository(
     createRefreshToken: createRefreshToken(db, logger),
     getRefreshTokenByToken: getRefreshTokenByToken(db, logger),
     revokeRefreshToken: revokeRefreshToken(db),
+    revokeAndGetRefreshToken: revokeAndGetRefreshToken(db),
     revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
     deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
     hardDeleteRefreshTokensByUserId: hardDeleteRefreshTokensByUserId(db),
     withTx: (tx) => newRefreshTokenRepository(tx, logger),
   };
+}
+
+function parseCombinedToken(combinedToken: string): [string, string] | null {
+  const parts = combinedToken.split(".");
+  return parts.length === 2 ? [parts[0], parts[1]] : null;
+}
+
+function parseOrThrow(raw: unknown, logger: Logger, ctx: string): RefreshToken {
+  const parsed = refreshTokenSchema.safeParse(raw);
+  if (!parsed.success) {
+    logger.error(`Failed to parse refresh token (${ctx})`, {
+      error: parsed.error.message,
+    });
+    throw new DomainValidateError(`RefreshTokenRepository.${ctx}`);
+  }
+  return parsed.data;
 }
 
 function hardDeleteRefreshTokensByUserId(db: QueryExecutor) {
@@ -47,85 +65,63 @@ function hardDeleteRefreshTokensByUserId(db: QueryExecutor) {
 
 function createRefreshToken(db: QueryExecutor, logger: Logger) {
   return async (token: RefreshToken): Promise<RefreshToken> => {
-    const [result] = await db
-      .insert(refreshTokens)
-      .values({
-        id: token.id,
-        userId: token.userId,
-        selector: token.selector,
-        token: token.token,
-        expiresAt: token.expiresAt,
-        revokedAt: token.revokedAt,
-        createdAt: token.createdAt,
-        updatedAt: token.updatedAt,
-        deletedAt: token.deletedAt,
-      })
-      .returning();
-    const parsedToken = refreshTokenSchema.safeParse(result);
-    if (!parsedToken.success) {
-      logger.error("Failed to parse refresh token from DB", {
-        error: parsedToken.error.message,
-      });
-      throw new DomainValidateError(
-        "RefreshTokenRepository.create: Failed to parse token from DB",
-      );
-    }
-    return parsedToken.data;
+    const [result] = await db.insert(refreshTokens).values(token).returning();
+    return parseOrThrow(result, logger, "create");
   };
 }
 
 function getRefreshTokenByToken(db: QueryExecutor, logger: Logger) {
   return async (combinedToken: string): Promise<RefreshToken | null> => {
-    const parts = combinedToken.split(".");
-    if (parts.length !== 2) {
-      logger.warn("Invalid combined refresh token format", {
-        tokenLength: combinedToken.length,
-      });
-      return null;
-    }
-    const [selector, plainToken] = parts;
-    const [storedRawToken] = await db
+    const parsed = parseCombinedToken(combinedToken);
+    if (!parsed) return null;
+    const [selector, plainToken] = parsed;
+    const [row] = await db
       .select()
       .from(refreshTokens)
       .where(eq(refreshTokens.selector, selector))
       .limit(1);
-    if (
-      !storedRawToken ||
-      storedRawToken.revokedAt ||
-      storedRawToken.deletedAt
-    ) {
-      return null;
-    }
-    const hashedToken = await hashWithSHA256(plainToken);
-    const isValid = hashedToken === storedRawToken.token;
-    if (!isValid) {
-      return null;
-    }
-    const parsedToken = refreshTokenSchema.safeParse(storedRawToken);
-    if (!parsedToken.success) {
-      logger.error("Failed to parse validated refresh token from DB", {
-        error: parsedToken.error.message,
-      });
-      throw new DomainValidateError(
-        "RefreshTokenRepository.findByToken: Failed to parse valid token from DB",
-      );
-    }
-    if (parsedToken.data.expiresAt <= new Date()) {
-      return null;
-    }
-    return parsedToken.data;
+    if (!row || row.revokedAt || row.deletedAt) return null;
+    if ((await hashWithSHA256(plainToken)) !== row.token) return null;
+    const token = parseOrThrow(row, logger, "findByToken");
+    return token.expiresAt <= new Date() ? null : token;
   };
 }
 
 function revokeRefreshToken(db: QueryExecutor) {
   return async (token: RefreshToken): Promise<void> => {
+    const now = new Date();
     await db
       .update(refreshTokens)
-      .set({
-        revokedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .set({ revokedAt: now, updatedAt: now })
       .where(eq(refreshTokens.id, token.id));
+  };
+}
+
+function revokeAndGetRefreshToken(db: QueryExecutor) {
+  return async (combinedToken: string): Promise<RefreshToken | null> => {
+    const parsed = parseCombinedToken(combinedToken);
+    if (!parsed) return null;
+    const [selector, plainToken] = parsed;
+    const now = new Date();
+    const [revoked] = await db
+      .update(refreshTokens)
+      .set({ revokedAt: now, updatedAt: now })
+      .where(
+        and(
+          eq(refreshTokens.selector, selector),
+          isNull(refreshTokens.revokedAt),
+          isNull(refreshTokens.deletedAt),
+        ),
+      )
+      .returning();
+    if (!revoked) return null;
+    if ((await hashWithSHA256(plainToken)) !== revoked.token) return null;
+    const result = refreshTokenSchema.safeParse({
+      ...revoked,
+      revokedAt: null,
+    });
+    if (!result.success) return null;
+    return result.data.expiresAt <= new Date() ? null : result.data;
   };
 }
 
@@ -134,10 +130,7 @@ function revokeRefreshTokenAllByUserId(db: QueryExecutor) {
     const now = new Date();
     await db
       .update(refreshTokens)
-      .set({
-        revokedAt: now,
-        updatedAt: now,
-      })
+      .set({ revokedAt: now, updatedAt: now })
       .where(eq(refreshTokens.userId, userId));
   };
 }
@@ -147,10 +140,7 @@ function deleteRefreshTokensPastExpiry(db: QueryExecutor) {
     const now = new Date();
     await db
       .update(refreshTokens)
-      .set({
-        deletedAt: now,
-        updatedAt: now,
-      })
+      .set({ deletedAt: now, updatedAt: now })
       .where(lte(refreshTokens.expiresAt, now));
   };
 }

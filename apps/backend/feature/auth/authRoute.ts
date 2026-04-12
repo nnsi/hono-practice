@@ -104,23 +104,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         return c.json({ message: "refresh token not found" }, 401);
       }
       try {
-        const fireAndForgetFn = (p: Promise<unknown>) => {
-          try {
-            const ctx = c.executionCtx;
-            if (ctx?.waitUntil) {
-              ctx.waitUntil(p);
-              return;
-            }
-          } catch {
-            // テスト環境では executionCtx がthrowする
-          }
-          p.catch(() => {});
-        };
-        const storedToken = await c.var.h.fetchRefreshToken(refreshTokenValue);
-        const { token, refreshToken } = await c.var.h.rotateRefreshToken(
-          storedToken,
-          fireAndForgetFn,
-        );
+        const { token, refreshToken } =
+          await c.var.h.atomicRotateRefreshToken(refreshTokenValue);
         setRefreshCookie(c, refreshToken);
         return c.json({ token, refreshToken });
       } catch (_error) {

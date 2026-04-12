@@ -1,4 +1,3 @@
-import type { RefreshToken as RefreshTokenEntity } from "@packages/domain/auth/refreshTokenSchema";
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -24,13 +23,8 @@ export type AuthOutput = {
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;
   refreshToken(token: string): Promise<AuthOutput>;
-  /** DB読み取りのみ: トークン取得+バリデーション（書き込みなし、ただしバリデーション失敗時はrevoke） */
-  fetchRefreshToken(token: string): Promise<RefreshTokenEntity>;
-  /** DB書き込み: JWT生成 + 新トークン作成 + 旧トークン失効 */
-  rotateRefreshToken(
-    storedToken: RefreshTokenEntity,
-    fireAndForgetFn?: (p: Promise<unknown>) => void,
-  ): Promise<AuthOutput>;
+  /** UPDATE RETURNING でアトミックにrevoke+取得+新トークン発行（TOCTOU防止） */
+  atomicRotateRefreshToken(combinedToken: string): Promise<AuthOutput>;
   logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,

@@ -5,7 +5,7 @@ export const UpsertTaskRequestSchema = z.object({
   activityId: z.string().uuid().nullable(),
   activityKindId: z.string().uuid().nullable(),
   quantity: z.number().nullable(),
-  title: z.string().min(1),
+  title: z.string().min(1).max(500),
   startDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -18,7 +18,7 @@ export const UpsertTaskRequestSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable(),
-  memo: z.string(),
+  memo: z.string().max(10_000),
   archivedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

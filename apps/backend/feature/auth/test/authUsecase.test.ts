@@ -175,7 +175,7 @@ describe("AuthUsecase", () => {
       });
 
       when(
-        refreshTokenRepo.getRefreshTokenByToken(
+        refreshTokenRepo.revokeAndGetRefreshToken(
           `${oldSelector}.${oldPlainToken}`,
         ),
       ).thenResolve(oldToken);
@@ -191,11 +191,15 @@ describe("AuthUsecase", () => {
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
 
-      verify(refreshTokenRepo.revokeRefreshToken(oldToken)).once();
+      verify(
+        refreshTokenRepo.revokeAndGetRefreshToken(
+          `${oldSelector}.${oldPlainToken}`,
+        ),
+      ).once();
     });
 
     it("異常系：無効なリフレッシュトークン", async () => {
-      when(refreshTokenRepo.getRefreshTokenByToken(anything())).thenResolve(
+      when(refreshTokenRepo.revokeAndGetRefreshToken(anything())).thenResolve(
         null,
       );
 
@@ -216,7 +220,7 @@ describe("AuthUsecase", () => {
       });
 
       when(
-        refreshTokenRepo.getRefreshTokenByToken(
+        refreshTokenRepo.revokeAndGetRefreshToken(
           `${revokedSelector}.${revokedPlainToken}`,
         ),
       ).thenResolve(revokedToken);
@@ -236,11 +240,11 @@ describe("AuthUsecase", () => {
       const expiredHashedToken = await hashWithSHA256(expiredPlainToken);
       const expiredToken = createMockRefreshToken(userId, expiredHashedToken, {
         selector: expiredSelector,
-        expiresAt: new Date(Date.now() - 1000), // 期限切れ
+        expiresAt: new Date(Date.now() - 1000),
       });
 
       when(
-        refreshTokenRepo.getRefreshTokenByToken(
+        refreshTokenRepo.revokeAndGetRefreshToken(
           `${expiredSelector}.${expiredPlainToken}`,
         ),
       ).thenResolve(expiredToken);

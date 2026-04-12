@@ -10,7 +10,7 @@ export const UpsertGoalRequestSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable(),
   isActive: z.boolean(),
-  description: z.string(),
+  description: z.string().max(1000),
   debtCap: z.number().min(0).nullable(),
   dayTargets: z
     .record(z.enum(["1", "2", "3", "4", "5", "6", "7"]), z.number().min(0))
