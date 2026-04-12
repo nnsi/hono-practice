@@ -2,20 +2,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import {
-  BarChart3,
-  CalendarDays,
-  CheckSquare,
-  FileText,
-  Globe,
-  LayoutGrid,
-  LogOut,
-  Menu,
-  Settings,
-  Target,
-} from "lucide-react";
+import { Globe, LogOut, Menu, Settings } from "lucide-react";
 
 import { DebtFeedbackToast } from "../common/DebtFeedbackToast";
+import {
+  useTabPreference,
+  useTabPreferenceSync,
+} from "../setting/tabPreferenceStore";
+import { WEB_TAB_METADATA } from "./tabMetadata";
 
 export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
   const { t, i18n } = useTranslation(["common", "settings"]);
@@ -23,6 +17,13 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
+  const { preference } = useTabPreference();
+  useTabPreferenceSync();
+
+  const visibleTabs = preference.tabs.map((key) => WEB_TAB_METADATA[key]);
+  const hiddenTabs = Object.values(WEB_TAB_METADATA).filter(
+    (tab) => !preference.tabs.includes(tab.key),
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -65,14 +66,20 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
               <Globe size={16} className="text-gray-400" />
               {i18n.language === "ja" ? "English" : "日本語"}
             </button>
-            <Link
-              to="/notes"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <FileText size={16} className="text-gray-400" />
-              Notes
-            </Link>
+            {hiddenTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <Link
+                  key={tab.key}
+                  to={tab.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Icon size={16} className="text-gray-400" />
+                  {tab.label}
+                </Link>
+              );
+            })}
             <Link
               to="/settings"
               onClick={() => setMenuOpen(false)}
@@ -105,36 +112,15 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 glass-nav z-40">
         <div className="max-w-3xl mx-auto flex justify-around items-center pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <NavItem
-            to="/actiko"
-            icon={LayoutGrid}
-            label="Actiko"
-            currentPath={currentPath}
-          />
-          <NavItem
-            to="/daily"
-            icon={CalendarDays}
-            label="Daily"
-            currentPath={currentPath}
-          />
-          <NavItem
-            to="/stats"
-            icon={BarChart3}
-            label="Stats"
-            currentPath={currentPath}
-          />
-          <NavItem
-            to="/goals"
-            icon={Target}
-            label="Goal"
-            currentPath={currentPath}
-          />
-          <NavItem
-            to="/tasks"
-            icon={CheckSquare}
-            label="Tasks"
-            currentPath={currentPath}
-          />
+          {visibleTabs.map((tab) => (
+            <NavItem
+              key={tab.key}
+              to={tab.to}
+              icon={tab.icon}
+              label={tab.label}
+              currentPath={currentPath}
+            />
+          ))}
         </div>
       </nav>
 

@@ -5,6 +5,10 @@ import {
   createSubscriptionId,
   newSubscription,
 } from "@packages/domain/subscription/subscriptionSchema";
+import {
+  createDefaultTabPreference,
+  markTabPreferencePending,
+} from "@packages/domain/user/tabPreferenceSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -84,6 +88,9 @@ describe("UserUsecase", () => {
         updatedAt: new Date(),
       });
       when(providerRepo.getUserProvidersByUserId(userId)).thenResolve([]);
+      when(repo.getTabPreference(userId)).thenResolve(
+        createDefaultTabPreference(),
+      );
       when(subscriptionUc.getSubscriptionByUserIdOrDefault(userId)).thenResolve(
         freeSubscription,
       );
@@ -92,6 +99,13 @@ describe("UserUsecase", () => {
 
       expect(result.plan).toBe("free");
       expect(result.providers).toEqual([]);
+      expect(result.tabPreference.tabs).toEqual([
+        "home",
+        "daily",
+        "stats",
+        "goals",
+        "tasks",
+      ]);
     });
 
     it("premium ユーザーの plan が返る", async () => {
@@ -109,6 +123,9 @@ describe("UserUsecase", () => {
         updatedAt: new Date(),
       });
       when(providerRepo.getUserProvidersByUserId(userId)).thenResolve([]);
+      when(repo.getTabPreference(userId)).thenResolve(
+        createDefaultTabPreference(),
+      );
       when(subscriptionUc.getSubscriptionByUserIdOrDefault(userId)).thenResolve(
         premiumSub,
       );
@@ -121,11 +138,49 @@ describe("UserUsecase", () => {
     it("ユーザーが存在しない場合 404 エラー", async () => {
       when(repo.getUserById(userId)).thenResolve(undefined);
       when(providerRepo.getUserProvidersByUserId(userId)).thenResolve([]);
+      when(repo.getTabPreference(userId)).thenResolve(
+        createDefaultTabPreference(),
+      );
       when(
         subscriptionUc.getSubscriptionByUserIdOrDefault(anything()),
       ).thenResolve(freeSubscription);
 
       await expect(usecase.getUserById(userId)).rejects.toThrow(
+        "user not found",
+      );
+    });
+  });
+
+  describe("updateTabPreference", () => {
+    it("新しい updatedAt の設定を保存する", async () => {
+      const next = markTabPreferencePending([
+        "home",
+        "daily",
+        "stats",
+        "notes",
+        "tasks",
+      ]);
+      when(repo.saveTabPreference(userId, next)).thenResolve({
+        tabs: next.tabs,
+        updatedAt: next.updatedAt,
+      });
+
+      const result = await usecase.updateTabPreference(userId, next);
+
+      expect(result.tabs).toEqual(next.tabs);
+      verify(repo.saveTabPreference(userId, next)).once();
+    });
+
+    it("ユーザーが存在しない場合は 404 エラー", async () => {
+      const next = markTabPreferencePending([
+        "home",
+        "daily",
+        "stats",
+        "notes",
+      ]);
+      when(repo.saveTabPreference(userId, next)).thenResolve(undefined);
+
+      await expect(usecase.updateTabPreference(userId, next)).rejects.toThrow(
         "user not found",
       );
     });

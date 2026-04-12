@@ -4,6 +4,11 @@ import { useEffect } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { AppState } from "react-native";
 
+import {
+  clearStoredTabPreference,
+  flushPendingTabPreference,
+  reconcileTabPreferenceFromServer,
+} from "../components/setting/tabPreferenceStore";
 import { getDatabase } from "../db/database";
 import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
@@ -62,6 +67,8 @@ export function useAuthInit(deps: AuthInitDeps): void {
       setToken(data.token);
       const user = await apiGetMe();
       if (gen !== authGenRef.current) return false;
+      await reconcileTabPreferenceFromServer(user.tabPreference);
+      void flushPendingTabPreference();
       setUserId(user.id);
       setIsLoggedIn(true);
       await syncWithUserCheck(user.id);
@@ -159,6 +166,7 @@ export function useAuthInit(deps: AuthInitDeps): void {
     setOnAuthExpired(() => {
       authGenRef.current++;
       clearToken();
+      void clearStoredTabPreference();
       setIsLoggedIn(false);
       setSyncReady(false);
       setUserId(null);

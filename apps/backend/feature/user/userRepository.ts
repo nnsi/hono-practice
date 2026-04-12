@@ -1,12 +1,18 @@
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { users } from "@infra/drizzle/schema";
+import type { TabPreference } from "@packages/domain/user/tabPreferenceSchema";
 import {
   type User,
   type UserId,
   createUserEntity,
 } from "@packages/domain/user/userSchema";
 import { and, count, desc, eq, isNull } from "drizzle-orm";
+
+import {
+  getTabPreference,
+  saveTabPreference,
+} from "./userTabPreferenceRepository";
 
 export type UserRepository<T = QueryExecutor> = {
   createUser: (user: User) => Promise<User>;
@@ -26,6 +32,11 @@ export type UserRepository<T = QueryExecutor> = {
     total: number;
   }>;
   hardDeleteUserById: (userId: UserId) => Promise<number>;
+  getTabPreference: (userId: UserId) => Promise<TabPreference | undefined>;
+  saveTabPreference: (
+    userId: UserId,
+    preference: TabPreference,
+  ) => Promise<TabPreference | undefined>;
   withTx: (tx: T) => UserRepository<T>;
 };
 
@@ -39,6 +50,8 @@ export function newUserRepository(
     deleteUser: deleteUser(db),
     listUsers: listUsers(db),
     hardDeleteUserById: hardDeleteUserById(db),
+    getTabPreference: getTabPreference(db),
+    saveTabPreference: saveTabPreference(db),
     withTx: (tx) => newUserRepository(tx),
   };
 }

@@ -7,7 +7,45 @@ import { describe, expect, it } from "vitest";
 
 import { createUserRoute } from "..";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function expectAuthResponse(
+  body: unknown,
+): asserts body is { token: string; refreshToken: string } {
+  if (
+    !isRecord(body) ||
+    typeof body.token !== "string" ||
+    typeof body.refreshToken !== "string"
+  ) {
+    throw new Error("auth response is invalid");
+  }
+}
+
+function expectTabPreferenceResponse(
+  body: unknown,
+): asserts body is { tabs: string[]; updatedAt?: string } {
+  if (
+    !isRecord(body) ||
+    !Array.isArray(body.tabs) ||
+    !body.tabs.every((tab) => typeof tab === "string")
+  ) {
+    throw new Error("tab preference response is invalid");
+  }
+}
+
 describe("userRoute", () => {
+  const createAuthClient = () => {
+    const route = createUserRoute();
+    return testClient(route, {
+      DB: testDB,
+      JWT_SECRET: "test",
+      JWT_AUDIENCE: "test-audience",
+      __authenticatedUserId: TEST_USER_ID,
+    } as unknown as Parameters<typeof testClient>[1]);
+  };
+
   it("POST / ユーザー作成が成功する", async () => {
     const route = createUserRoute();
     const client = testClient(route, {
@@ -33,6 +71,7 @@ describe("userRoute", () => {
     expect(res.status).toEqual(200);
 
     const body = await res.json();
+    expectAuthResponse(body);
     expect(body.token).toBeDefined();
     expect(body.refreshToken).toBeDefined();
   });
@@ -97,17 +136,144 @@ describe("userRoute", () => {
     expect(res.status).toEqual(400);
   });
 
-  describe("DELETE /me", () => {
-    const createAuthClient = () => {
-      const route = createUserRoute();
-      return testClient(route, {
-        DB: testDB,
-        JWT_SECRET: "test",
-        JWT_AUDIENCE: "test-audience",
-        __authenticatedUserId: TEST_USER_ID,
-      } as unknown as Parameters<typeof testClient>[1]);
+  it("POST / 重複した loginId は 409 エラーになる", async () => {
+    const route = createUserRoute();
+    const client = testClient(route, {
+      JWT_SECRET: "test",
+      JWT_AUDIENCE: "test-audience",
+      NODE_ENV: "test",
+      DB: testDB,
+    });
+    const json: Parameters<typeof client.index.$post>[0]["json"] = {
+      loginId: "duplicate-user",
+      password: "testtest",
+      name: "test",
+      consents: {
+        age: true,
+        terms: "2026-05-01",
+        privacy: "2026-05-01",
+      },
     };
 
+    expect((await client.index.$post({ json })).status).toEqual(200);
+    expect((await client.index.$post({ json })).status).toEqual(409);
+  });
+
+  describe("tab preference", () => {
+    it("GET /me に tabPreference が含まれる", async () => {
+      const client = createAuthClient();
+
+      const res = await client.me.$get();
+
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expect("tabPreference" in body).toBe(true);
+      if (!("tabPreference" in body)) {
+        throw new Error("tabPreference is missing");
+      }
+      expect(body.tabPreference.tabs).toEqual([
+        "home",
+        "daily",
+        "stats",
+        "goals",
+        "tasks",
+      ]);
+    });
+
+    it("GET /tab-preference で現在の設定を取得する", async () => {
+      const client = createAuthClient();
+
+      const res = await client["tab-preference"].$get();
+
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expectTabPreferenceResponse(body);
+      expect(body.tabs).toEqual(["home", "daily", "stats", "goals", "tasks"]);
+    });
+
+    it("PUT /tab-preference で新しい設定を保存する", async () => {
+      const client = createAuthClient();
+      const updatedAt = "2099-04-12T10:00:00.000Z";
+
+      const res = await client["tab-preference"].$put({
+        json: {
+          tabs: ["home", "daily", "stats", "notes", "tasks"],
+          updatedAt,
+        },
+      });
+
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expectTabPreferenceResponse(body);
+      expect(body.tabs).toEqual(["home", "daily", "stats", "notes", "tasks"]);
+      expect(body.updatedAt).toBe(updatedAt);
+
+      const [user] = await testDB
+        .select({
+          tabs: users.tabPreferences,
+          updatedAt: users.tabPreferencesUpdatedAt,
+        })
+        .from(users)
+        .where(eq(users.id, TEST_USER_ID));
+
+      expect(user.tabs).toEqual(["home", "daily", "stats", "notes", "tasks"]);
+      expect(user.updatedAt.toISOString()).toBe(updatedAt);
+    });
+
+    it("PUT /tab-preference は古い updatedAt を無視して server-wins を返す", async () => {
+      const client = createAuthClient();
+
+      await client["tab-preference"].$put({
+        json: {
+          tabs: ["home", "daily", "stats", "notes", "tasks"],
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        },
+      });
+
+      const res = await client["tab-preference"].$put({
+        json: {
+          tabs: ["home", "daily", "notes", "goals", "tasks"],
+          updatedAt: "2099-04-12T09:00:00.000Z",
+        },
+      });
+
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expectTabPreferenceResponse(body);
+      expect(body.tabs).toEqual(["home", "daily", "stats", "notes", "tasks"]);
+      expect(body.updatedAt).toBe("2099-04-12T10:00:00.000Z");
+    });
+
+    it("PUT /tab-preference は不正な payload を 400 で弾く", async () => {
+      const client = createAuthClient();
+      type PutPayload = Parameters<
+        (typeof client)["tab-preference"]["$put"]
+      >[0]["json"];
+      const invalidPayloads = [
+        {
+          tabs: ["daily", "home"],
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        },
+        {
+          tabs: ["home", "daily", "daily"],
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        },
+        {
+          tabs: ["home", "daily", "stats", "goals", "tasks", "notes"],
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        },
+      ];
+
+      for (const json of invalidPayloads) {
+        const res = await client["tab-preference"].$put({
+          json: json as PutPayload,
+        });
+        expect(res.status).toEqual(400);
+      }
+    });
+  });
+
+  describe("DELETE /me", () => {
     it("正常系：アカウント削除が成功する（204）", async () => {
       const client = createAuthClient();
 
@@ -131,6 +297,24 @@ describe("userRoute", () => {
       // 削除後に/meを取得 → user not found → 401
       const res = await client.me.$get();
       expect(res.status).toEqual(401);
+    });
+
+    it("削除済みユーザーは /tab-preference を取得・更新できない", async () => {
+      const client = createAuthClient();
+
+      await client.me.$delete();
+
+      expect((await client["tab-preference"].$get()).status).toEqual(401);
+      expect(
+        (
+          await client["tab-preference"].$put({
+            json: {
+              tabs: ["home", "daily", "stats", "notes"],
+              updatedAt: "2099-04-12T10:00:00.000Z",
+            },
+          })
+        ).status,
+      ).toEqual(401);
     });
   });
 });

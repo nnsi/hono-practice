@@ -11,6 +11,7 @@ import { ApiKeyManager } from "./ApiKeyManager";
 import { DataManagementSection } from "./DataManagementSection";
 import { SettingCheckbox } from "./SettingCheckbox";
 import { SubscriptionSection } from "./SubscriptionSection";
+import { TabCustomizationSection } from "./TabCustomizationSection";
 import { useAppSettings } from "./useAppSettings";
 
 export function SettingsPage() {
@@ -61,6 +62,8 @@ export function SettingsPage() {
             />
           </div>
         </section>
+
+        <TabCustomizationSection />
 
         <SubscriptionSection />
 

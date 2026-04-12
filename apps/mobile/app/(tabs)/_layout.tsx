@@ -1,36 +1,24 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import type { LucideIcon } from "lucide-react-native";
-import {
-  BarChart3,
-  CalendarDays,
-  CheckSquare,
-  LayoutGrid,
-  Target,
-} from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HamburgerMenu } from "../../src/components/common/HamburgerMenu";
+import { MOBILE_TAB_METADATA } from "../../src/components/common/tabMetadata";
+import {
+  useTabPreference,
+  useTabPreferenceSync,
+} from "../../src/components/setting/tabPreferenceStore";
 import { useThemeContext } from "../../src/contexts/ThemeContext";
 import { useNavigationSync } from "../../src/hooks/useNavigationSync";
 import { useAuthContext } from "../_layout";
 
-const TAB_ITEMS: {
-  name: string;
-  title: string;
-  icon: LucideIcon;
-}[] = [
-  { name: "index", title: "Actiko", icon: LayoutGrid },
-  { name: "daily", title: "Daily", icon: CalendarDays },
-  { name: "stats", title: "Stats", icon: BarChart3 },
-  { name: "goals", title: "Goal", icon: Target },
-  { name: "tasks", title: "Tasks", icon: CheckSquare },
-];
-
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useThemeContext();
+  const { preference } = useTabPreference();
+  const visibleTabs = preference.tabs.map((key) => MOBILE_TAB_METADATA[key]);
+  const activeRouteName = state.routes[state.index]?.name;
   return (
     <View
       style={{
@@ -58,16 +46,16 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           alignSelf: "center",
         }}
       >
-        {TAB_ITEMS.map((tab, index) => {
-          const isActive = state.index === index;
+        {visibleTabs.map((tab) => {
+          const isActive = activeRouteName === tab.routeName;
           const Icon = tab.icon;
           return (
             <TouchableOpacity
-              key={tab.name}
-              onPress={() => navigation.navigate(state.routes[index].name)}
+              key={tab.key}
+              onPress={() => navigation.navigate(tab.routeName)}
               activeOpacity={0.7}
               accessibilityRole="tab"
-              accessibilityLabel={tab.title}
+              accessibilityLabel={tab.label}
               accessibilityState={{ selected: isActive }}
               style={{
                 alignItems: "center",
@@ -89,7 +77,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                   fontWeight: isActive ? "600" : "500",
                 }}
               >
-                {tab.title}
+                {tab.label}
               </Text>
               {/* Active indicator pill */}
               <View
@@ -114,6 +102,7 @@ export default function TabLayout() {
   const { syncReady, userId } = useAuthContext();
   const { colors } = useThemeContext();
   useNavigationSync(syncReady, userId);
+  useTabPreferenceSync();
 
   return (
     <View style={{ flex: 1 }}>

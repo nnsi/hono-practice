@@ -26,4 +26,5 @@ export * from "./UpdateActivityRequest";
 export * from "./UpdateFreezePeriodRequest";
 export * from "./UpdateGoalRequest";
 export * from "./UpdateNoteRequest";
+export * from "./UpdateTabPreferenceRequest";
 export * from "./UpdateTaskRequest";

@@ -1,7 +1,13 @@
 import { useCallback, useRef, useState } from "react";
 
 import type { Consents } from "@packages/types/request";
+import type { GetUserResponse } from "@packages/types/response";
 
+import {
+  clearStoredTabPreference,
+  flushPendingTabPreference,
+  reconcileTabPreferenceFromServer,
+} from "../components/setting/tabPreferenceStore";
 import { getDatabase } from "../db/database";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { clearToken } from "../utils/apiClient";
@@ -77,44 +83,46 @@ export function useAuth(): AuthState {
     ]);
   }, []);
 
-  const login = useCallback(
-    async (loginId: string, password: string) => {
-      await apiLogin(loginId, password);
-      const user = await apiGetMe();
+  const finalizeLogin = useCallback(
+    async (user: GetUserResponse) => {
+      await reconcileTabPreferenceFromServer(user.tabPreference);
+      await flushPendingTabPreference();
       await loginWithUserCheck(user.id);
       await persistPlan(user.plan);
     },
     [loginWithUserCheck, persistPlan],
+  );
+
+  const login = useCallback(
+    async (loginId: string, password: string) => {
+      await apiLogin(loginId, password);
+      await finalizeLogin(await apiGetMe());
+    },
+    [finalizeLogin],
   );
 
   const googleLogin = useCallback(
     async (credential: string, consents?: Consents) => {
       await apiGoogleLogin(credential, consents);
-      const user = await apiGetMe();
-      await loginWithUserCheck(user.id);
-      await persistPlan(user.plan);
+      await finalizeLogin(await apiGetMe());
     },
-    [loginWithUserCheck, persistPlan],
+    [finalizeLogin],
   );
 
   const appleLogin = useCallback(
     async (credential: string, consents?: Consents) => {
       await apiAppleLogin(credential, consents);
-      const user = await apiGetMe();
-      await loginWithUserCheck(user.id);
-      await persistPlan(user.plan);
+      await finalizeLogin(await apiGetMe());
     },
-    [loginWithUserCheck, persistPlan],
+    [finalizeLogin],
   );
 
   const register = useCallback(
     async (loginId: string, password: string, consents: Consents) => {
       await apiRegister(loginId, password, consents);
-      const user = await apiGetMe();
-      await loginWithUserCheck(user.id);
-      await persistPlan(user.plan);
+      await finalizeLogin(await apiGetMe());
     },
-    [loginWithUserCheck, persistPlan],
+    [finalizeLogin],
   );
 
   const logout = useCallback(async () => {
@@ -131,6 +139,7 @@ export function useAuth(): AuthState {
       });
     });
     clearToken();
+    await clearStoredTabPreference();
     setIsLoggedIn(false);
     setSyncReady(false);
     setUserId(null);

@@ -16,22 +16,66 @@ const defaultSettings: AppSettings = {
   praiseMode: false,
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function readStoredSettingsObject(raw: string | null) {
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    return isRecord(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function normalizeAppSettings(
+  storedSettings: Record<string, unknown>,
+): AppSettings {
+  return {
+    showGoalOnStartup:
+      typeof storedSettings.showGoalOnStartup === "boolean"
+        ? storedSettings.showGoalOnStartup
+        : defaultSettings.showGoalOnStartup,
+    showInactiveDates:
+      typeof storedSettings.showInactiveDates === "boolean"
+        ? storedSettings.showInactiveDates
+        : defaultSettings.showInactiveDates,
+    praiseMode:
+      typeof storedSettings.praiseMode === "boolean"
+        ? storedSettings.praiseMode
+        : defaultSettings.praiseMode,
+  };
+}
+
 export function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   useEffect(() => {
     AsyncStorage.getItem(SETTINGS_KEY).then((raw) => {
-      if (!raw) return;
-      try {
-        setSettings({ ...defaultSettings, ...JSON.parse(raw) });
-      } catch {
-        AsyncStorage.removeItem(SETTINGS_KEY);
+      const storedSettings = readStoredSettingsObject(raw);
+      if (!raw && Object.keys(storedSettings).length === 0) {
+        return;
       }
+
+      const next = normalizeAppSettings(storedSettings);
+      setSettings(next);
+      void AsyncStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({ ...storedSettings, ...next }),
+      );
     });
   }, []);
   const updateSetting = (key: keyof AppSettings, value: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, [key]: value };
-      AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+      AsyncStorage.getItem(SETTINGS_KEY).then((raw) => {
+        void AsyncStorage.setItem(
+          SETTINGS_KEY,
+          JSON.stringify({ ...readStoredSettingsObject(raw), ...next }),
+        );
+      });
       return next;
     });
   };

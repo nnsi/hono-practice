@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
-import { FileText, Globe, LogOut, Menu, Settings } from "lucide-react-native";
+import { Globe, LogOut, Menu, Settings } from "lucide-react-native";
 import {
   Animated,
   Pressable,
@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "../../../app/_layout";
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { useTabPreference } from "../setting/tabPreferenceStore";
+import { MOBILE_TAB_METADATA } from "./tabMetadata";
 
 export function HamburgerMenu() {
   const { t, i18n } = useTranslation(["common", "settings"]);
@@ -22,9 +24,13 @@ export function HamburgerMenu() {
   const { colors } = useThemeContext();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { preference } = useTabPreference();
   const [open, setOpen] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.95)).current;
+  const hiddenTabs = Object.values(MOBILE_TAB_METADATA).filter(
+    (tab) => !preference.tabs.includes(tab.key),
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -49,10 +55,13 @@ export function HamburgerMenu() {
     close();
   }, [i18n, close]);
 
-  const goToNotes = useCallback(() => {
-    close();
-    router.push("/(tabs)/notes");
-  }, [router, close]);
+  const goToTab = useCallback(
+    (routeName: string) => {
+      close();
+      router.push(routeName === "index" ? "/(tabs)" : `/(tabs)/${routeName}`);
+    },
+    [router, close],
+  );
 
   const goToSettings = useCallback(() => {
     close();
@@ -109,12 +118,18 @@ export function HamburgerMenu() {
               onPress={switchLanguage}
               textColor={colors.text}
             />
-            <MenuItem
-              icon={<FileText size={16} color={colors.textMuted} />}
-              label="Notes"
-              onPress={goToNotes}
-              textColor={colors.text}
-            />
+            {hiddenTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <MenuItem
+                  key={tab.key}
+                  icon={<Icon size={16} color={colors.textMuted} />}
+                  label={tab.label}
+                  onPress={() => goToTab(tab.routeName)}
+                  textColor={colors.text}
+                />
+              );
+            })}
             <MenuItem
               icon={<Settings size={16} color={colors.textMuted} />}
               label={t("settings:heading")}
