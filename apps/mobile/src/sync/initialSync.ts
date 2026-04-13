@@ -109,12 +109,17 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       apiClient.users.v2.activities.$get(),
       apiClient.users.v2["activity-logs"].$get({ query: logsQuery }),
       apiClient.users.v2.goals.$get({ query: goalsQuery }),
-      // TODO: freeze periodsの.catch(() => null)は後方互換のために残っている。エンドポイント安定後に削除を検討
+      // Older backend deployments may still lack this endpoint during staged rollout.
+      // Keep the same backward-compatibility fallback on both Web and Mobile.
       apiClient.users.v2["goal-freeze-periods"]
         .$get({ query: freezePeriodsQuery })
         .catch(() => null),
       apiClient.users.v2.tasks.$get({ query: tasksQuery }),
-      apiClient.users.v2.notes.$get({ query: notesQuery }).catch(() => null),
+      // Notes are best-effort during bootstrap. Treat network failures as a
+      // partial sync so other resources can still hydrate and watermark stays put.
+      apiClient.users.v2.notes
+        .$get({ query: notesQuery })
+        .catch(() => null),
     ]);
     return {
       activitiesRes,
@@ -126,8 +131,8 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     };
   },
   writeAllData: async (data) => {
-    // 各 repository が独自に BEGIN/COMMIT を管理しているため
-    // ここで withTransactionAsync を使うとネストして失敗する
+    // Mobile repositories manage sqlite transactions internally, so
+    // adding an outer withTransactionAsync here would nest BEGIN/COMMIT.
     if (data.activities.length > 0) {
       await activityRepository.upsertActivities(data.activities);
     }

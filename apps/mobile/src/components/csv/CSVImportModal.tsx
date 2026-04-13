@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Download, FileText, Upload } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
@@ -7,6 +8,7 @@ import { useActivities } from "../../hooks/useActivities";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CSVImportStepIndicator } from "./CSVImportStepIndicator";
 import { CSVPreviewSection } from "./CSVPreviewSection";
+import { type CSVImportStep, shouldShowCSVPreview } from "./csvImportViewState";
 import { runCSVImport } from "./useCSVImport";
 import {
   downloadTemplateWeb,
@@ -16,11 +18,11 @@ import {
 
 type CSVImportModalProps = { visible: boolean; onClose: () => void };
 type ParsedRow = { date: string; time: string; quantity: string; memo: string };
-type Step = "file" | "preview";
 
 export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
+  const { t } = useTranslation("csv");
   const { activities } = useActivities();
-  const [step, setStep] = useState<Step>("file");
+  const [step, setStep] = useState<CSVImportStep>("file");
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
     null,
   );
@@ -78,14 +80,18 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={handleClose} title="CSVインポート">
+    <ModalOverlay
+      visible={visible}
+      onClose={handleClose}
+      title={t("importModal")}
+    >
       <View className="gap-4 pb-4">
         <CSVImportStepIndicator current={step} />
 
         {/* Activity picker */}
         <View>
           <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            アクティビティ
+            {t("activityLabel")}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {activities.map((a) => (
@@ -120,12 +126,12 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               disabled={isParsing}
               accessibilityRole="button"
               accessibilityLabel={
-                isParsing ? "解析中..." : "CSVファイルを選択して解析"
+                isParsing ? t("parsing") : t("selectFileAndParse")
               }
             >
               <Upload size={28} color="#9ca3af" />
               <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {isParsing ? "解析中..." : "CSVファイルを選択して解析"}
+                {isParsing ? t("parsing") : t("selectFileAndParse")}
               </Text>
               {fileName && (
                 <View className="flex-row items-center mt-1">
@@ -141,11 +147,11 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 className="flex-row items-center justify-center gap-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 onPress={downloadTemplateWeb}
                 accessibilityRole="button"
-                accessibilityLabel="CSVテンプレートをダウンロード"
+                accessibilityLabel={t("downloadTemplate")}
               >
                 <Download size={14} color="#6b7280" />
                 <Text className="text-sm text-gray-600 dark:text-gray-400">
-                  CSVテンプレートをダウンロード
+                  {t("downloadTemplate")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -162,7 +168,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
         {successCount !== null && (
           <View className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <Text className="text-sm text-green-700 dark:text-green-400">
-              {successCount}件のログをインポートしました
+              {t("importSuccessCount", { count: successCount })}
             </Text>
           </View>
         )}
@@ -177,13 +183,16 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               />
             </View>
             <Text className="text-xs text-center text-gray-600 dark:text-gray-400">
-              {progress.succeeded} / {progress.total} 件処理中...
+              {t("processingProgress", {
+                processed: progress.processed,
+                total: progress.total,
+              })}
             </Text>
           </View>
         )}
 
         {/* Preview step */}
-        {step === "preview" && parsedRows.length > 0 && !successCount && (
+        {shouldShowCSVPreview(step, parsedRows.length, successCount) && (
           <CSVPreviewSection
             parsedRows={parsedRows}
             validationResults={validationResults}

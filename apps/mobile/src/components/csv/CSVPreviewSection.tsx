@@ -1,3 +1,4 @@
+import { useTranslation } from "@packages/i18n";
 import { AlertCircle, CheckCircle } from "lucide-react-native";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -22,24 +23,25 @@ export function CSVPreviewSection({
   onImport: () => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("csv");
   return (
     <View className="gap-3">
       {/* Summary badges */}
       <View className="flex-row gap-2">
         <View className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
           <Text className="text-xs text-gray-600 dark:text-gray-400">
-            全{parsedRows.length}件
+            {t("summaryTotal", { count: parsedRows.length })}
           </Text>
         </View>
         <View className="px-2 py-1 bg-green-100 rounded">
           <Text className="text-xs text-green-700 dark:text-green-400">
-            有効 {validCount}件
+            {t("summaryValid", { count: validCount })}
           </Text>
         </View>
         {errorCount > 0 && (
           <View className="px-2 py-1 bg-red-100 rounded">
             <Text className="text-xs text-red-700 dark:text-red-400">
-              エラー {errorCount}件
+              {t("summaryErrors", { count: errorCount })}
             </Text>
           </View>
         )}
@@ -55,16 +57,16 @@ export function CSVPreviewSection({
         <View className="flex-row py-1 border-b border-gray-300 dark:border-gray-600">
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-6" />
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-24">
-            日付
+            {t("tableDate")}
           </Text>
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14">
-            時刻
+            {t("tableTime")}
           </Text>
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14">
-            数量
+            {t("tableQuantity")}
           </Text>
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-1">
-            メモ
+            {t("tableMemo")}
           </Text>
         </View>
         {parsedRows.map((row, i) => {
@@ -111,7 +113,7 @@ export function CSVPreviewSection({
 
       {errorCount > 0 && (
         <Text className="text-xs text-gray-500 dark:text-gray-400">
-          エラーのある行はスキップされます
+          {t("errorSkipMessage")}
         </Text>
       )}
 
@@ -121,21 +123,25 @@ export function CSVPreviewSection({
         disabled={isImporting || !selectedActivityId || validCount === 0}
         accessibilityRole="button"
         accessibilityLabel={
-          isImporting ? "インポート中..." : `インポート (${validCount}件)`
+          isImporting
+            ? t("importing")
+            : t("importButtonWithCount", { count: validCount })
         }
       >
         <Text className="text-white font-bold text-base">
-          {isImporting ? "インポート中..." : `インポート (${validCount}件)`}
+          {isImporting
+            ? t("importing")
+            : t("importButtonWithCount", { count: validCount })}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
         className="py-2 items-center"
         onPress={onBack}
         accessibilityRole="button"
-        accessibilityLabel="ファイルを選び直す"
+        accessibilityLabel={t("reselectFile")}
       >
         <Text className="text-sm text-gray-500 dark:text-gray-400">
-          ファイルを選び直す
+          {t("reselectFile")}
         </Text>
       </TouchableOpacity>
     </View>

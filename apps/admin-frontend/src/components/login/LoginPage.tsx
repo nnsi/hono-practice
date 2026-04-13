@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 
+declare global {
+  interface Window {
+    google?: GoogleIdentity;
+  }
+}
+
 type Props = {
   auth: {
     googleLogin: (credential: string) => Promise<void>;
@@ -10,10 +16,18 @@ type Props = {
 
 const isDev = import.meta.env.DEV;
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ??
+  import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID ??
+  "";
+
+function isValidGoogleClientId(clientId: string): boolean {
+  return /^\d+-[A-Za-z0-9._-]+\.apps\.googleusercontent\.com$/.test(clientId);
+}
 
 export function LoginPage({ auth }: Props) {
   const buttonRef = useRef<HTMLDivElement>(null);
+  const canUseGoogleLogin = isValidGoogleClientId(GOOGLE_CLIENT_ID);
 
   const handleCredentialResponse = useCallback(
     async (response: { credential: string }) => {
@@ -27,12 +41,19 @@ export function LoginPage({ auth }: Props) {
   );
 
   useEffect(() => {
+    if (!canUseGoogleLogin) {
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      const google = (window as unknown as { google: GoogleIdentity }).google;
+      const google = window.google;
+      if (!google) {
+        return;
+      }
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
@@ -50,7 +71,7 @@ export function LoginPage({ auth }: Props) {
     return () => {
       script.remove();
     };
-  }, [handleCredentialResponse]);
+  }, [canUseGoogleLogin, handleCredentialResponse]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -62,9 +83,15 @@ export function LoginPage({ auth }: Props) {
           管理者アカウントでログインしてください
         </p>
 
-        <div className="flex justify-center">
-          <div ref={buttonRef} />
-        </div>
+        {canUseGoogleLogin ? (
+          <div className="flex justify-center">
+            <div ref={buttonRef} />
+          </div>
+        ) : (
+          <p className="text-center text-sm text-gray-500">
+            Google ログインは現在利用できません
+          </p>
+        )}
 
         {isDev && (
           <div className="mt-4 border-t border-gray-200 pt-4">

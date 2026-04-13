@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 
 import type { ColumnMapping } from "@packages/domain/csv/csvParser";
 import { autoDetectMapping } from "@packages/domain/csv/csvParser";
-import { useTranslation } from "@packages/i18n";
+import { type resources, useTranslation } from "@packages/i18n";
 
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
@@ -22,9 +22,11 @@ import {
 
 export type { ValidatedActivityLog };
 
+type CsvTranslationKey = keyof (typeof resources)["ja"]["csv"];
+
 export function useCSVImport(onComplete: () => void) {
   const { t } = useTranslation("csv");
-  const translate = t as unknown as (key: string) => string;
+  const translate = (key: string) => t(key as CsvTranslationKey);
   const [step, setStep] = useState<CSVImportStep>("file");
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);

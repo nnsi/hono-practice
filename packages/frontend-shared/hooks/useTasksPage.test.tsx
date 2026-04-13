@@ -200,6 +200,48 @@ describe("useTasksPage handleToggleDone", () => {
     expect(mockSyncActivityLogs).not.toHaveBeenCalled();
   });
 
+  it("rollback自体が失敗したら元エラーとrollbackエラーを保持して投げる", async () => {
+    const task = makeTask({
+      activityId: "act-1",
+      activityKindId: "kind-1",
+      quantity: 5,
+    });
+    const rollbackError = new Error("rollback failed");
+    mockCreateActivityLog.mockRejectedValueOnce(new Error("log failed"));
+    mockUpdateTask
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(rollbackError);
+
+    const { result } = renderHook(() => useTasksPage());
+    let caughtError: unknown;
+
+    await act(async () => {
+      try {
+        await result.current.handleToggleDone(task);
+      } catch (error) {
+        caughtError = error;
+      }
+    });
+
+    expect(caughtError).toEqual(
+      expect.objectContaining({
+        message: "Failed to rollback task toggle",
+        cause: expect.objectContaining({
+          originalError: expect.objectContaining({ message: "log failed" }),
+          rollbackError,
+        }),
+      }),
+    );
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(1, "task-1", {
+      doneDate: expect.any(String),
+    });
+    expect(mockUpdateTask).toHaveBeenNthCalledWith(2, "task-1", {
+      doneDate: null,
+    });
+    expect(mockSyncTasks).not.toHaveBeenCalled();
+    expect(mockSyncActivityLogs).not.toHaveBeenCalled();
+  });
+
   it("syncが失敗してもtask/logのローカル更新は成功扱いにする", async () => {
     const task = makeTask({
       activityId: "act-1",
@@ -235,16 +277,13 @@ describe("useTasksPage handleToggleDone", () => {
 
     const { result } = renderHook(() => useTasksPage());
 
-    const firstCall = act(async () => {
-      await result.current.handleToggleDone(task);
-    });
-    const secondCall = act(async () => {
-      await result.current.handleToggleDone(task);
-    });
+    await act(async () => {
+      const firstCall = result.current.handleToggleDone(task);
+      const secondCall = result.current.handleToggleDone(task);
 
-    resolveUpdate();
-    await firstCall;
-    await secondCall;
+      resolveUpdate();
+      await Promise.all([firstCall, secondCall]);
+    });
 
     expect(mockUpdateTask).toHaveBeenCalledTimes(1);
     expect(mockCreateActivityLog).toHaveBeenCalledTimes(1);

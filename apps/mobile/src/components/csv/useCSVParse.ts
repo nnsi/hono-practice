@@ -5,6 +5,7 @@ import {
   validateQuantity,
 } from "@packages/domain/csv/csvParser";
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
+import { i18next } from "@packages/i18n";
 import * as DocumentPicker from "expo-document-picker";
 import { EncodingType, readAsStringAsync } from "expo-file-system/legacy";
 
@@ -61,7 +62,7 @@ export async function pickAndParseCSV(
 
     const csvResult = parseCSVText(content);
     if (csvResult.data.length === 0) {
-      setError("CSVデータが空です");
+      setError(i18next.t("noData", { ns: "csv" }));
       setIsParsing(false);
       return;
     }
@@ -88,7 +89,7 @@ export async function pickAndParseCSV(
 
     onParsed(rows);
   } catch {
-    setError("ファイルの読み込みに失敗しました");
+    setError(i18next.t("parseError", { ns: "csv" }));
   } finally {
     setIsParsing(false);
   }

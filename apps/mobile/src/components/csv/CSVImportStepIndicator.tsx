@@ -1,11 +1,13 @@
+import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
 type Step = "file" | "preview";
 
 export function CSVImportStepIndicator({ current }: { current: Step }) {
+  const { t } = useTranslation("csv");
   const steps: Array<{ key: Step; label: string }> = [
-    { key: "file", label: "ファイル選択" },
-    { key: "preview", label: "プレビュー" },
+    { key: "file", label: t("stepFileSelect") },
+    { key: "preview", label: t("stepPreview") },
   ];
   return (
     <View className="flex-row items-center justify-center gap-2">
