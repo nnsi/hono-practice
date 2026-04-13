@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock hono/client at top level (hc is called at module level)
 vi.mock("hono/client", () => ({ hc: vi.fn(() => ({})) }));
-vi.mock("@backend/app", () => ({}));
 
 // Mock i18next to return the key as-is (no actual translation)
 vi.mock("@packages/i18n", () => ({

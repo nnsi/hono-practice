@@ -145,10 +145,11 @@
   - 評価: API 契約の単一ソース化は最優先級。次項 (逆依存解消・scope 二重管理) とセットで解決する
   - 完了: `scripts/generate-api-reference.ts` が `apiV1Route.routes` と `endpointMetadata.ts` を突き合わせて `apiReferenceData.generated.ts` を生成する方式に移行。description は Zod schema の `.describe()` と metadata ファイルに分散配置
 
-- [ ] `packages/types/api.ts` の packages → apps 逆依存を解消する
+- [x] `packages/types/api.ts` の packages → apps 逆依存を解消する
   - 現状: `@backend/app` の `AppType` を再 export しており、レイヤー例外が残る
   - 対応: 生成済み API contract package へ分離
   - 評価: レイヤー違反として教科書的。依存グラフに 1 本でも逆向きの矢印があると全体が汚染される
+  - 完了: `packages/frontend-shared` から `AppType` 依存を撤去し、shared hook は API 操作関数の注入だけを受ける形へ変更。`apps/*/utils/apiClient.ts` の adapter 境界だけが `@backend/app` の `AppType` を参照し、`packages/types/api.ts` は不要になったため削除
 
 - [x] API scope 定義の二重管理をやめる
   - 重複対象:
@@ -157,15 +158,16 @@
   - 評価: 手書き API リファレンス廃止と同時解決すべき。単一ソース化はドメイン駆動の基本
   - 完了: `API_KEY_SCOPE_DESCRIPTIONS` を `apiKeySchema.ts` に追加して generator から参照。`V1_SCOPE_MAPPING` を `apps/backend/api/v1/scopeMapping.ts` に置き、middleware と generator で共有
 
-- [ ] shared package のエラー処理を注入式に統一する
+- [x] shared package のエラー処理を注入式に統一する
   - 対象:
     - `packages/sync-engine/orchestration/createNavigationSync.ts`
     - `packages/sync-engine/pull/createInitialSync.ts`
   - 現状: `console.error` 直書き
   - 対応: logger / reportError / telemetry adapter を外から受ける
   - 評価: 共有パッケージが `console.error` 直呼びはテスタビリティ・監視統合の両方で詰む。DI が正しい設計
+  - 完了: 両ファイルとも `onError` 注入で統一済みであることを確認し、apps 側から `reportError` を渡す既存実装とテストで担保
 
-- [ ] 200 行超ファイルを凝集度ベースで分割する
+- [x] 200 行超ファイルを凝集度ベースで分割する
   - 優先対象 (責務分離が明確):
     - `apps/frontend/src/hooks/useCSVImport.ts` (485)
     - `apps/backend/feature/activity/activityUsecase.ts` (338)
@@ -185,6 +187,10 @@
     - TasksPage: section definition / rendering / handlers
     - mappers: entity 単位分割
   - 評価: 行数ではなく凝集度で判断。機械的分割は逆効果。API 契約や shared DI を先に進めれば副次的に自然に分割される
+  - 完了:
+    - `useCSVImport.ts` を `csvImportUtils.ts` / `csvImportExecutor.ts` へ分離
+    - `activityUsecase.ts` を read / write / icon usecase に分割
+    - `TasksPage.tsx` を tabs / active / archived / dialogs に分割
 
 ### やる価値はある
 

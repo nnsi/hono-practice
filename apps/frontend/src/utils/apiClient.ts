@@ -1,12 +1,13 @@
 import { hc } from "hono/client";
 
+// biome-ignore lint/style/noRestrictedImports: Hono adapter boundary intentionally depends on AppType.
+import type { AppType } from "@backend/app";
 import { i18next } from "@packages/i18n";
 import type { TokenStorage } from "@packages/platform";
 import {
   createAuthenticatedFetch,
   trackServerTimeFromResponse,
 } from "@packages/sync-engine";
-import type { AppType } from "@packages/types/api";
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3456"

@@ -1,4 +1,3 @@
-import type { AppType } from "@packages/types/api";
 import {
   type CreateApiKeyRequest,
   CreateApiKeyRequestSchema,
@@ -16,15 +15,17 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-type HonoClient = ReturnType<typeof import("hono/client").hc<AppType>>;
-
 export type UseApiKeysOptions = {
-  apiClient: HonoClient;
+  fetchApiKeys: () => Promise<unknown>;
   enabled?: boolean;
 };
 
 export type ApiKeyMutationOptions = {
-  apiClient: HonoClient;
+  createApiKey: (input: CreateApiKeyRequest) => Promise<CreateApiKeyResponse>;
+};
+
+export type DeleteApiKeyMutationOptions = {
+  deleteApiKey: (id: string) => Promise<unknown>;
 };
 
 /**
@@ -33,20 +34,14 @@ export type ApiKeyMutationOptions = {
 export function createUseApiKeys(
   options: UseApiKeysOptions,
 ): UseQueryResult<GetApiKeysResponse> {
-  const { apiClient, enabled } = options;
+  const { fetchApiKeys, enabled } = options;
 
   return useQuery<GetApiKeysResponse>({
     queryKey: ["apiKeys"],
     enabled,
     staleTime: 1000 * 60 * 5,
     queryFn: async () => {
-      const res = await apiClient.users["api-keys"].$get();
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch API keys");
-      }
-
-      const json = await res.json();
+      const json = await fetchApiKeys();
       const parsed = GetApiKeysResponseSchema.safeParse(json);
 
       if (!parsed.success) {
@@ -64,21 +59,13 @@ export function createUseApiKeys(
 export function createUseCreateApiKey(
   options: ApiKeyMutationOptions,
 ): UseMutationResult<CreateApiKeyResponse, Error, CreateApiKeyRequest> {
-  const { apiClient } = options;
+  const { createApiKey } = options;
   const queryClient = useQueryClient();
 
   return useMutation<CreateApiKeyResponse, Error, CreateApiKeyRequest>({
     mutationFn: async (data: CreateApiKeyRequest) => {
       const validated = CreateApiKeyRequestSchema.parse(data);
-      const res = await apiClient.users["api-keys"].$post({
-        json: validated,
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to create API key");
-      }
-
-      return res.json();
+      return createApiKey(validated);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
@@ -90,23 +77,13 @@ export function createUseCreateApiKey(
  * APIキー削除用の共通フック
  */
 export function createUseDeleteApiKey(
-  options: ApiKeyMutationOptions,
+  options: DeleteApiKeyMutationOptions,
 ): UseMutationResult<unknown, Error, string> {
-  const { apiClient } = options;
+  const { deleteApiKey } = options;
   const queryClient = useQueryClient();
 
   return useMutation<unknown, Error, string>({
-    mutationFn: async (id: string) => {
-      const res = await apiClient.users["api-keys"][":id"].$delete({
-        param: { id },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete API key");
-      }
-
-      return res.json();
-    },
+    mutationFn: deleteApiKey,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
     },

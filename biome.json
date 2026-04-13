@@ -135,6 +135,46 @@
       }
     },
     {
+      "includes": ["apps/mobile/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@backend/*"],
+                    "message": "mobile から backend への直接import禁止。共有型や adapter 境界だけを例外で扱う"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/admin-frontend/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@backend/*"],
+                    "message": "admin frontend から backend への直接import禁止。共有型や adapter 境界だけを例外で扱う"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["apps/backend/**"],
       "linter": {
         "rules": {
