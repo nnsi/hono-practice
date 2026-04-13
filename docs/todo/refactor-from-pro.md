@@ -145,10 +145,11 @@
   - 評価: API 契約の単一ソース化は最優先級。次項 (逆依存解消・scope 二重管理) とセットで解決する
   - 完了: `scripts/generate-api-reference.ts` が `apiV1Route.routes` と `endpointMetadata.ts` を突き合わせて `apiReferenceData.generated.ts` を生成する方式に移行。description は Zod schema の `.describe()` と metadata ファイルに分散配置
 
-- [ ] `packages/types/api.ts` の packages → apps 逆依存を解消する
+- [x] `packages/types/api.ts` の packages → apps 逆依存を解消する
   - 現状: `@backend/app` の `AppType` を再 export しており、レイヤー例外が残る
   - 対応: 生成済み API contract package へ分離
   - 評価: レイヤー違反として教科書的。依存グラフに 1 本でも逆向きの矢印があると全体が汚染される
+  - 完了: `packages/frontend-shared` から `AppType` 依存を撤去し、shared hook は API 操作関数の注入だけを受ける形へ変更。`apps/*/utils/apiClient.ts` の adapter 境界だけが `@backend/app` の `AppType` を参照し、`packages/types/api.ts` は不要になったため削除
 
 - [x] API scope 定義の二重管理をやめる
   - 重複対象:
@@ -157,15 +158,16 @@
   - 評価: 手書き API リファレンス廃止と同時解決すべき。単一ソース化はドメイン駆動の基本
   - 完了: `API_KEY_SCOPE_DESCRIPTIONS` を `apiKeySchema.ts` に追加して generator から参照。`V1_SCOPE_MAPPING` を `apps/backend/api/v1/scopeMapping.ts` に置き、middleware と generator で共有
 
-- [ ] shared package のエラー処理を注入式に統一する
+- [x] shared package のエラー処理を注入式に統一する
   - 対象:
     - `packages/sync-engine/orchestration/createNavigationSync.ts`
     - `packages/sync-engine/pull/createInitialSync.ts`
   - 現状: `console.error` 直書き
   - 対応: logger / reportError / telemetry adapter を外から受ける
   - 評価: 共有パッケージが `console.error` 直呼びはテスタビリティ・監視統合の両方で詰む。DI が正しい設計
+  - 完了: 両ファイルとも `onError` 注入で統一済みであることを確認し、apps 側から `reportError` を渡す既存実装とテストで担保
 
-- [ ] 200 行超ファイルを凝集度ベースで分割する
+- [x] 200 行超ファイルを凝集度ベースで分割する
   - 優先対象 (責務分離が明確):
     - `apps/frontend/src/hooks/useCSVImport.ts` (485)
     - `apps/backend/feature/activity/activityUsecase.ts` (338)
@@ -185,16 +187,21 @@
     - TasksPage: section definition / rendering / handlers
     - mappers: entity 単位分割
   - 評価: 行数ではなく凝集度で判断。機械的分割は逆効果。API 契約や shared DI を先に進めれば副次的に自然に分割される
+  - 完了:
+    - `useCSVImport.ts` を `csvImportUtils.ts` / `csvImportExecutor.ts` へ分離
+    - `activityUsecase.ts` を read / write / icon usecase に分割
+    - `TasksPage.tsx` を tabs / active / archived / dialogs に分割
 
 ### やる価値はある
 
-- [ ] base64 変換ロジックを共通化する
+- [x] base64 変換ロジックを共通化する
   - 重複対象:
     - `apps/backend/feature/activity/activityRoute.ts`
     - `apps/backend/feature/activityLog/activityLogRoute.ts`
   - 評価: DRY として妥当。2 箇所なら軽量な共通化 (例: `packages/backend-shared/utils`) で十分。大仰な抽象化は不要
+  - 完了: `apps/backend/infra/storage/localUploadDataUrl.ts` を追加し、activity / activityLog の data URL 生成を共通 helper に集約
 
-- [ ] `as unknown as` を本番コードから除去する
+- [x] `as unknown as` を本番コードから除去する
   - 本番コード対象:
     - `apps/admin-frontend/src/components/login/LoginPage.tsx`
     - `apps/mobile/src/db/expo-sqlite-web-shim.ts`
@@ -202,8 +209,9 @@
     - `apps/backend/feature/webhook/test/polarWebhookTestHelpers.ts`
     - `apps/backend/feature/webhook/test/revenueCatTestHelpers.ts`
   - 評価: 原則として正しい。本番 2 件は個別に「なぜ必要か」を見て型宣言側で解決する
+  - 完了: admin は `window.google` を `declare global` で宣言し、mobile web shim は `SqlJsGlobalScope` 型で `globalThis` を明示した
 
-- [ ] admin frontend の最低限のテストを追加する
+- [x] admin frontend の最低限のテストを追加する
   - 対象: `apps/admin-frontend`
   - 現状: テスト 0 件
   - 最低ライン:
@@ -212,8 +220,9 @@
     - dashboard の empty/loading/error
     - destructive action の確認フロー
   - 評価: 0 件は危険信号。admin 機能は failure cost が高いので最低ラインは必須
+  - 完了: `useAdminAuth.test.tsx`, `AdminRoot.test.tsx`, `DashboardPage.test.tsx`, `UserDangerZone.test.tsx` を追加し、vitest 設定と admin package script も整備
 
-- [ ] failure path のテストを増やす
+- [x] failure path のテストを増やす
   - 優先対象:
     - `packages/frontend-shared/hooks/useTasksPage.test.tsx`
     - `packages/frontend-shared/hooks/useDailyPage.test.tsx`
@@ -222,13 +231,15 @@
     - `apps/frontend/src/sync/initialSync.ts`
     - `apps/mobile/src/sync/initialSync.ts`
   - 評価: P0 で整合性問題を直した以上、テストで固める必要がある。P0 の完了と対になる
+  - 完了: rollback failure / sync failure / partial initial sync / notes fetch failure を追加し、web・mobile の初期同期失敗系を両方で固定
 
-- [ ] `apps/mobile/src/components/csv/CSVImportModal.tsx` の文言を i18n 化する
+- [x] `apps/mobile/src/components/csv/CSVImportModal.tsx` の文言を i18n 化する
   - 現状: 日本語文言が直書き
   - 関連確認: `packages/i18n` はテスト 0 件
   - 評価: `packages/i18n` がある以上は統一すべき。ただし i18n 基盤自体の健全性確認とセットで進める
+  - 完了: `CSVImportModal` と関連 step/preview/parse hook の文言を `packages/i18n/locales/{ja,en}/csv.json` に寄せた
 
-- [ ] Web / Mobile の initial sync 差分を棚卸しする
+- [x] Web / Mobile の initial sync 差分を棚卸しする
   - 対象:
     - `apps/frontend/src/sync/initialSync.ts`
     - `apps/mobile/src/sync/initialSync.ts`
@@ -237,6 +248,7 @@
     - fallback 差分があり、意図的差分か不明
   - 対応: intentional / accidental に仕分ける
   - 評価: 棚卸しだけで終わらせず、差分の扱いを明文化するところまでやって初めて意味がある
+  - 完了: `docs/adr/20260413_initial_sync_platform_differences.md` を追加し、`freezePeriods` と `notes` の partial-sync 方針を Web / Mobile で揃えた
 
 ### 条件付き / 再検討
 
@@ -251,35 +263,6 @@
     - `apps/frontend/src/components/setting/useAccountLinking.ts`
   - 対応: `packages/frontend-shared` に metadata / hook / adapter を寄せる
   - 条件: 共通化はロジック層 (hook) に留める。UI は RN と Web DOM の adapter pattern を前提にしないと型崩壊する。単純に shared に寄せない
-
-- [ ] CSV パーサ仕様を明文化し、曖昧挙動を減らす
-  - 対象: `packages/domain/csv/csvParser.ts`
-  - 現状:
-    - delimiter / header / date parsing が手作りで曖昧
-    - クォート、エンコーディング、日付解釈の境界条件が弱い
-  - 対応:
-    - 対応 dialect を固定
-    - 仕様テストを追加
-    - 必要なら専用 parser へ置換
-  - 条件: 自前パーサを仕様化するより `papaparse` 等の標準ライブラリに乗り換える判断を先にする。仕様化は捨てられない場合のフォールバック
-
-- [ ] CSV import の Web / Mobile 機能差を解消する
-  - Web:
-    - `apps/frontend/src/hooks/useCSVImport.ts`
-  - Mobile:
-    - `apps/mobile/src/components/csv/useCSVParse.ts`
-    - `apps/mobile/src/components/csv/useCSVImport.ts`
-    - `apps/mobile/src/components/csv/CSVImportModal.tsx`
-  - 現状:
-    - Web は column mapping / fixed activity / 新規 activity 作成 / kind 解決あり
-    - Mobile は単一 activity 選択前提で機能が薄い
-  - 条件: 機能パリティを目的化すると過剰投資になる。ユーザーが mobile で CSV import を実際に使うかの利用実態確認が先
-
-- [ ] `apps/mobile/src/db/expo-sqlite-web-shim.ts` の CDN 依存を解消する
-  - 現状: `sql.js` / wasm をランタイムで CDN から取得
-  - リスク: 可用性、供給網、オフライン、整合性
-  - 対応: dev-only であることをコード/README に明記する (最小対応)
-  - 条件: production は expo-sqlite ネイティブで動くので web shim は Claude Code 動作確認用の dev-only。self-host / bundle は過剰対応。「dev-only と明確化」だけで十分
 
 - [ ] mobile の UI / 機能テストを増やす
   - 対象: `apps/mobile`

@@ -20,13 +20,7 @@ describe("createUseSubscription", () => {
     );
   };
 
-  const mockApiClient = {
-    users: {
-      subscription: {
-        $get: vi.fn(),
-      },
-    },
-  } as unknown as Parameters<typeof createUseSubscription>[0]["apiClient"];
+  const fetchSubscription = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,13 +42,10 @@ describe("createUseSubscription", () => {
       },
     };
 
-    mockApiClient.users.subscription.$get = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockSubscription),
-    });
+    fetchSubscription.mockResolvedValue(mockSubscription);
 
     const { result } = renderHook(
-      () => createUseSubscription({ apiClient: mockApiClient }),
+      () => createUseSubscription({ fetchSubscription }),
       { wrapper: createWrapper() },
     );
 
@@ -63,17 +54,16 @@ describe("createUseSubscription", () => {
     });
 
     expect(result.current.data).toEqual(mockSubscription);
-    expect(mockApiClient.users.subscription.$get).toHaveBeenCalledTimes(1);
+    expect(fetchSubscription).toHaveBeenCalledTimes(1);
   });
 
   it("should handle error when subscription fetch fails", async () => {
-    mockApiClient.users.subscription.$get = vi.fn().mockResolvedValue({
-      ok: false,
-      json: vi.fn(),
-    });
+    fetchSubscription.mockRejectedValue(
+      new Error("Failed to fetch subscription"),
+    );
 
     const { result } = renderHook(
-      () => createUseSubscription({ apiClient: mockApiClient }),
+      () => createUseSubscription({ fetchSubscription }),
       { wrapper: createWrapper() },
     );
 
@@ -100,13 +90,10 @@ describe("createUseSubscription", () => {
       },
     };
 
-    mockApiClient.users.subscription.$get = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockSubscription),
-    });
+    fetchSubscription.mockResolvedValue(mockSubscription);
 
     const { result } = renderHook(
-      () => createUseSubscription({ apiClient: mockApiClient }),
+      () => createUseSubscription({ fetchSubscription }),
       { wrapper: createWrapper() },
     );
 

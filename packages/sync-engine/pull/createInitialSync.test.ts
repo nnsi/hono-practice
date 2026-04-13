@@ -189,6 +189,31 @@ describe("createInitialSync bootstrap resources", () => {
     expect(stored).toContain("notes");
   });
 
+  it("treats notesRes null as a partial sync and skips lastSyncedAt", async () => {
+    const storage = createStorage();
+    const deps = createDeps({
+      defaultStorage: storage,
+      fetchAllApis: vi.fn().mockResolvedValue({
+        activitiesRes: okResponse({
+          activities: [{ id: "activity-1" }],
+          activityKinds: [],
+        }),
+        logsRes: okResponse({ logs: [] }),
+        goalsRes: okResponse({ goals: [] }),
+        freezePeriodsRes: okResponse({ freezePeriods: [] }),
+        tasksRes: okResponse({ tasks: [] }),
+        notesRes: null,
+      }),
+    });
+    const { performInitialSync } = createInitialSync(deps);
+
+    await performInitialSync("user-1");
+
+    expect(deps.writeAllData).toHaveBeenCalled();
+    expect(storage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
+    expect(storage.getItem("actiko-v2-bootstrappedResources")).toBeNull();
+  });
+
   it("reports fetchAllApis failures with phase", async () => {
     const deps = createDeps({
       fetchAllApis: vi.fn().mockRejectedValue(new Error("fetch failed")),

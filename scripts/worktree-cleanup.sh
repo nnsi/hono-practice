@@ -8,7 +8,7 @@ set -euo pipefail
 #
 # Removes:
 #   .worktrees/<name>/      — git worktree directory
-#   wt/<name>               — git branch (if exists)
+#   <actual worktree branch> — git branch currently checked out in the worktree (if any)
 #   db_wt_<name> (Postgres) — isolated database
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -17,11 +17,21 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 NAME="${1:?Usage: worktree-cleanup.sh <name>}"
 DB_NAME="db_wt_$(echo "$NAME" | tr '.-' '__')"
 WT_DIR="$REPO_ROOT/.worktrees/$NAME"
+WT_BRANCH=""
+
+if [ -d "$WT_DIR" ]; then
+  WT_BRANCH="$(git -C "$WT_DIR" branch --show-current 2>/dev/null || true)"
+fi
 
 echo "=== Worktree Cleanup ==="
 echo "  Name:     $NAME"
 echo "  Path:     .worktrees/$NAME"
 echo "  Database: $DB_NAME"
+if [ -n "$WT_BRANCH" ]; then
+  echo "  Branch:   $WT_BRANCH"
+else
+  echo "  Branch:   (detached HEAD or unavailable)"
+fi
 echo ""
 
 # --- 1. Drop database ---
@@ -46,24 +56,32 @@ fi
 # --- 2. Kill processes using worktree ---
 echo "[2/4] Killing processes using worktree..."
 if [ -d "$WT_DIR" ]; then
-  KILLED=0
+  PIDS=()
   if command -v wmic &>/dev/null; then
     # Windows: kill node.exe processes whose commandline contains the worktree name
-    wmic process where "name='node.exe' and commandline like '%$NAME%'" get processid 2>/dev/null \
-      | grep -oP '\d+' \
-      | while read -r pid; do
-          taskkill //PID "$pid" //F 2>/dev/null && echo "  Killed PID $pid" || true
-        done
-    KILLED=1
+    mapfile -t PIDS < <(
+      wmic process where "name='node.exe' and commandline like '%$NAME%'" get processid 2>/dev/null \
+        | grep -oP '\d+' || true
+    )
   elif command -v lsof &>/dev/null; then
     # Unix: use lsof to find processes with open files in worktree
-    lsof +D "$WT_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u \
-      | while read -r pid; do
-          kill "$pid" 2>/dev/null && echo "  Killed PID $pid" || true
-        done
-    KILLED=1
+    mapfile -t PIDS < <(
+      lsof +D "$WT_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u || true
+    )
   fi
-  [ "$KILLED" -eq 1 ] && sleep 1
+
+  if [ "${#PIDS[@]}" -gt 0 ]; then
+    for pid in "${PIDS[@]}"; do
+      if command -v taskkill &>/dev/null; then
+        taskkill //PID "$pid" //F 2>/dev/null && echo "  Killed PID $pid" || true
+      else
+        kill "$pid" 2>/dev/null && echo "  Killed PID $pid" || true
+      fi
+    done
+    sleep 1
+  else
+    echo "  No processes found."
+  fi
 else
   echo "  No worktree directory found, skipping."
 fi
@@ -84,7 +102,13 @@ fi
 
 # --- 4. Delete branch ---
 echo "[4/4] Cleaning up branch..."
-git -C "$REPO_ROOT" branch -D "wt/$NAME" 2>/dev/null && echo "  Branch 'wt/$NAME' deleted." || echo "  No branch 'wt/$NAME' found."
+if [ -n "$WT_BRANCH" ]; then
+  git -C "$REPO_ROOT" branch -D "$WT_BRANCH" 2>/dev/null \
+    && echo "  Branch '$WT_BRANCH' deleted." \
+    || echo "  Branch '$WT_BRANCH' could not be deleted."
+else
+  echo "  No checked-out branch found for this worktree. Skipping branch deletion."
+fi
 
 echo ""
 echo "=== Cleanup Complete ==="

@@ -6,7 +6,8 @@
     "dev": "vite --host --port 2462",
     "build": "vite build",
     "build-stg": "vite build --mode stg",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --disable-console-intercept"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",

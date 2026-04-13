@@ -11,7 +11,7 @@ type Props = {
 };
 
 const fabClass =
-  "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full shadow-lg p-3 hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors";
+  "bg-gray-900 text-white rounded-full shadow-lg p-3 hover:bg-gray-800 transition-colors";
 
 export function NoteDetailFab({
   mode,

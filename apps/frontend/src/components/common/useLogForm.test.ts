@@ -366,6 +366,26 @@ describe("useLogForm", () => {
   });
 
   describe("エラーハンドリング", () => {
+    it("handleManualSubmit: sync失敗は握りつぶしてonDoneを呼ぶ", async () => {
+      vi.mocked(syncEngine.syncActivityLogs).mockRejectedValueOnce(
+        new Error("sync failed"),
+      );
+
+      const activity = createActivity({ quantityUnit: "回" });
+      const { result } = renderHook(() =>
+        useLogForm(activity, "2025-06-01", onDone),
+      );
+
+      await act(async () => {
+        await result.current.handleManualSubmit(createFormEvent());
+      });
+
+      expect(activityLogRepository.createActivityLog).toHaveBeenCalled();
+      expect(syncEngine.syncActivityLogs).toHaveBeenCalled();
+      expect(onDone).toHaveBeenCalled();
+      expect(result.current.isSubmitting).toBe(false);
+    });
+
     it("handleManualSubmit: createActivityLogが失敗するとエラーが伝播しonDoneは呼ばれない", async () => {
       vi.mocked(activityLogRepository.createActivityLog).mockRejectedValueOnce(
         new Error("DB error"),
@@ -383,6 +403,36 @@ describe("useLogForm", () => {
       ).rejects.toThrow("DB error");
 
       expect(onDone).not.toHaveBeenCalled();
+      expect(result.current.isSubmitting).toBe(false);
+    });
+
+    it("handleTimerSave: sync失敗は握りつぶしてonDoneを呼ぶ", async () => {
+      vi.mocked(syncEngine.syncActivityLogs).mockRejectedValueOnce(
+        new Error("sync failed"),
+      );
+
+      vi.mocked(useTimer).mockReturnValue({
+        isRunning: true,
+        elapsedTime: 3600000,
+        start: vi.fn(() => true),
+        stop: vi.fn(),
+        reset: vi.fn(),
+        getElapsedSeconds: vi.fn(() => 3600),
+        getStartDate: vi.fn(() => new Date("2025-06-01T10:00:00Z")),
+      });
+
+      const activity = createActivity({ quantityUnit: "時間" });
+      const { result } = renderHook(() =>
+        useLogForm(activity, "2025-06-01", onDone),
+      );
+
+      await act(async () => {
+        await result.current.handleTimerSave();
+      });
+
+      expect(activityLogRepository.createActivityLog).toHaveBeenCalled();
+      expect(syncEngine.syncActivityLogs).toHaveBeenCalled();
+      expect(onDone).toHaveBeenCalled();
       expect(result.current.isSubmitting).toBe(false);
     });
 

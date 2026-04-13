@@ -1,9 +1,7 @@
 import { Hono } from "hono";
 
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 import type { AppContext } from "@backend/context";
+import { convertLocalUploadUrlToDataUrl } from "@backend/infra/storage/localUploadDataUrl";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { newActivityQueryService } from "@backend/query";
@@ -28,49 +26,25 @@ async function convertActivityIconUrlsToBase64(
   env: AppContext["Bindings"],
   logger = noopLogger,
 ): Promise<GetActivityLogResponse> {
-  if (env.NODE_ENV !== "development") {
-    return log;
-  }
-
-  const convertUrl = async (
-    url: string | null | undefined,
-  ): Promise<string | null | undefined> => {
-    if (!url || !url.includes("/public/uploads/")) {
-      return url;
-    }
-
-    try {
-      // URLからファイルパスを抽出
-      const match = url.match(/\/public\/uploads\/(.*)/);
-      if (!match || !match[1]) return url;
-
-      const filePath = join(process.cwd(), "public", "uploads", match[1]);
-      const data = await readFile(filePath);
-
-      // MIMEタイプを推測
-      let contentType = "application/octet-stream";
-      if (url.endsWith(".webp")) contentType = "image/webp";
-      else if (url.endsWith(".jpg") || url.endsWith(".jpeg"))
-        contentType = "image/jpeg";
-      else if (url.endsWith(".png")) contentType = "image/png";
-      else if (url.endsWith(".gif")) contentType = "image/gif";
-
-      return `data:${contentType};base64,${data.toString("base64")}`;
-    } catch (error) {
-      logger.warn("Failed to convert activity log icon URL to base64", {
-        url,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return url;
-    }
-  };
-
   return {
     ...log,
     activity: {
       ...log.activity,
-      iconUrl: await convertUrl(log.activity.iconUrl),
-      iconThumbnailUrl: await convertUrl(log.activity.iconThumbnailUrl),
+      iconUrl: await convertLocalUploadUrlToDataUrl(log.activity.iconUrl, {
+        isDevelopment: env.NODE_ENV === "development",
+        uploadDir: env.UPLOAD_DIR,
+        logger,
+        warnMessage: "Failed to convert activity log icon URL to base64",
+      }),
+      iconThumbnailUrl: await convertLocalUploadUrlToDataUrl(
+        log.activity.iconThumbnailUrl,
+        {
+          isDevelopment: env.NODE_ENV === "development",
+          uploadDir: env.UPLOAD_DIR,
+          logger,
+          warnMessage: "Failed to convert activity log icon URL to base64",
+        },
+      ),
     },
   };
 }

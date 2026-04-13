@@ -20,6 +20,12 @@ type SqlJsStatic = {
   Database: new () => SqlJsDatabase;
 };
 
+type SqlJsGlobalScope = typeof globalThis & {
+  initSqlJs?: (config: {
+    locateFile: (file: string) => string;
+  }) => Promise<SqlJsStatic>;
+};
+
 let sqlJsPromise: Promise<SqlJsStatic> | null = null;
 
 function getSqlJs(): Promise<SqlJsStatic> {
@@ -29,13 +35,11 @@ function getSqlJs(): Promise<SqlJsStatic> {
       script.src = "https://sql.js.org/dist/sql-wasm.js";
       script.onload = () => {
         // sql.js sets window.initSqlJs when loaded via script tag
-        const initSqlJs = (
-          globalThis as unknown as {
-            initSqlJs: (config: {
-              locateFile: (file: string) => string;
-            }) => Promise<SqlJsStatic>;
-          }
-        ).initSqlJs;
+        const initSqlJs = (globalThis as SqlJsGlobalScope).initSqlJs;
+        if (!initSqlJs) {
+          reject(new Error("sql.js did not expose initSqlJs"));
+          return;
+        }
         initSqlJs({
           locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
         }).then(resolve, reject);

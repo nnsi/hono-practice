@@ -350,6 +350,22 @@ describe("performInitialSync", () => {
     expect(mockStorage.setItem).not.toHaveBeenCalled();
   });
 
+  it("treats notes fetch failure as partial sync and skips lastSyncedAt", async () => {
+    vi.mocked(tasksApi).mockResolvedValue(
+      okResponse({ tasks: [{ id: "task-1" }] }) as never,
+    );
+    vi.mocked(notesApi).mockRejectedValueOnce(new Error("notes failed"));
+
+    await expect(performInitialSync("user-1", mockStorage)).resolves.toBe(
+      undefined,
+    );
+
+    expect(mockStorage.setItem).not.toHaveBeenCalled();
+    expect(taskRepository.upsertTasksFromServer).toHaveBeenCalledWith([
+      { id: "task-1" },
+    ]);
+  });
+
   it("stores lastSyncedAt based on the earliest server Date header", async () => {
     vi.mocked(activitiesApi).mockResolvedValue(
       okResponse(

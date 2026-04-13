@@ -6,7 +6,7 @@ import { ApmSection } from "./ApmSection";
 import { ClientErrorSection } from "./ClientErrorSection";
 
 export function DashboardPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: async () => {
       const res = await adminClient.admin.dashboard.$get();
@@ -14,6 +14,14 @@ export function DashboardPage() {
       return res.json();
     },
   });
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-5 text-center text-sm text-red-700">
+        ダッシュボードの取得に失敗しました
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -1,7 +1,8 @@
 import { hc } from "hono/client";
 
+// biome-ignore lint/style/noRestrictedImports: Hono adapter boundary intentionally depends on AppType.
+import type { AppType } from "@backend/app";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
-import type { AppType } from "@packages/types/api";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";

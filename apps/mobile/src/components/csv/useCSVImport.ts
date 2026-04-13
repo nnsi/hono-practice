@@ -1,4 +1,5 @@
 import { buildDedupKey, buildDedupSet } from "@packages/domain/csv/csvDedup";
+import { i18next } from "@packages/i18n";
 
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { syncEngine } from "../../sync/syncEngine";
@@ -22,11 +23,11 @@ export async function runCSVImport(
   setSuccessCount: (v: number) => void,
 ): Promise<void> {
   if (!selectedActivityId) {
-    setError("アクティビティを選択してください");
+    setError(i18next.t("activityRequiredForImport", { ns: "csv" }));
     return;
   }
   if (parsedRows.length === 0) {
-    setError("インポートするデータがありません");
+    setError(i18next.t("noImportData", { ns: "csv" }));
     return;
   }
 
@@ -34,7 +35,7 @@ export async function runCSVImport(
     (_, i) => validationResults[i].length === 0,
   );
   if (validRows.length === 0) {
-    setError("有効なデータがありません");
+    setError(i18next.t("noValidImportData", { ns: "csv" }));
     return;
   }
 
@@ -77,19 +78,19 @@ export async function runCSVImport(
         });
         if (dedupSet.has(dedupKey)) {
           skipped++;
-          continue;
+        } else {
+          await activityLogRepository.createActivityLog({
+            activityId: selectedActivityId,
+            activityKindId: null,
+            quantity,
+            memo,
+            date,
+            time: row.time || null,
+            taskId: null,
+          });
+          dedupSet.add(dedupKey);
+          succeeded++;
         }
-        await activityLogRepository.createActivityLog({
-          activityId: selectedActivityId,
-          activityKindId: null,
-          quantity,
-          memo,
-          date,
-          time: row.time || null,
-          taskId: null,
-        });
-        dedupSet.add(dedupKey);
-        succeeded++;
       } catch {
         failed++;
       }
@@ -104,15 +105,19 @@ export async function runCSVImport(
     syncEngine.syncAll();
 
     const messages: string[] = [];
-    if (skipped > 0) messages.push(`${skipped}件は重複のためスキップ`);
-    if (failed > 0) messages.push(`${failed}件のインポートに失敗`);
+    if (skipped > 0) {
+      messages.push(i18next.t("skipDuplicate", { ns: "csv", count: skipped }));
+    }
+    if (failed > 0) {
+      messages.push(i18next.t("importFailed", { ns: "csv", count: failed }));
+    }
 
     setSuccessCount(succeeded);
     if (messages.length > 0) {
-      setError(messages.join("、"));
+      setError(messages.join(i18next.t("messageSeparator", { ns: "csv" })));
     }
   } catch {
-    setError("インポートに失敗しました");
+    setError(i18next.t("importError", { ns: "csv" }));
   } finally {
     setIsImporting(false);
   }

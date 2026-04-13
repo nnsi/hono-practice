@@ -17,6 +17,8 @@ export default defineConfig({
     include: [
       // バックエンドのテスト
       "**/apps/backend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      // admin frontendのテスト
+      "**/apps/admin-frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // 共通パッケージのテスト
       "**/packages/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       // frontendのテスト
@@ -53,6 +55,8 @@ export default defineConfig({
       ["**/packages/frontend-shared/adapters/**", "jsdom"],
       // frontend-shared/hooksのテストもDOM環境が必要
       ["**/packages/frontend-shared/hooks/**", "jsdom"],
+      // admin frontendのテストはjsdom環境が必要
+      ["**/apps/admin-frontend/**", "jsdom"],
       // frontendのテストはjsdom環境が必要（React hooks, DOM API）
       ["**/apps/frontend/**", "jsdom"],
     ],

@@ -1,6 +1,7 @@
 import { hc } from "hono/client";
 
-import type { AppType } from "@packages/types/api";
+// biome-ignore lint/style/noRestrictedImports: Hono adapter boundary intentionally depends on AppType.
+import type { AppType } from "@backend/app";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3456";
 

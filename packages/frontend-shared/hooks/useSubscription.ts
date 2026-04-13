@@ -1,9 +1,8 @@
-import type { AppType } from "@packages/types/api";
 import type { SubscriptionResponse } from "@packages/types/response";
 import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 
 export type UseSubscriptionOptions = {
-  apiClient: ReturnType<typeof import("hono/client").hc<AppType>>;
+  fetchSubscription: () => Promise<SubscriptionResponse>;
 };
 
 /**
@@ -12,17 +11,11 @@ export type UseSubscriptionOptions = {
 export function createUseSubscription(
   options: UseSubscriptionOptions,
 ): UseQueryResult<SubscriptionResponse> {
-  const { apiClient } = options;
+  const { fetchSubscription } = options;
 
   return useQuery<SubscriptionResponse>({
     queryKey: ["subscription"],
-    queryFn: async () => {
-      const res = await apiClient.users.subscription.$get();
-      if (!res.ok) {
-        throw new Error("Failed to fetch subscription");
-      }
-      return res.json();
-    },
+    queryFn: fetchSubscription,
     staleTime: 1000 * 60 * 5, // 5分間はキャッシュを利用
   });
 }
