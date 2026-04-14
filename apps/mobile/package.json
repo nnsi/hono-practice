@@ -5,9 +5,13 @@
   "scripts": {
     "dev": "expo start",
     "start": "expo start",
+    "start:dev-client": "expo start --dev-client",
     "web": "expo start --web",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "e2e:smoke": "maestro test .maestro/smoke.yaml",
+    "e2e:smoke:android": "maestro test .maestro/smoke.yaml",
+    "e2e:smoke:ios": "maestro test .maestro/smoke.yaml",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint ./src",
     "test-once": "vitest run --config ../../vitest.config.ts apps/mobile"

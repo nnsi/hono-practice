@@ -52,6 +52,62 @@ cd apps/mobile
 npx expo start --web
 ```
 
+## Maestro E2E
+
+`apps/mobile/.maestro/smoke.yaml` に Android / iOS 共通の smoke flow を置いている。対象は `ログイン -> Tasks タブ移動 -> タスク作成`。
+
+### 前提
+
+- Maestro CLI をインストール済み
+- Android は emulator、iOS は Simulator を起動済み
+- Mac の local smoke は backend を別ターミナルで起動
+
+```bash
+pnpm mobile:e2e:server
+```
+
+### Windows で Android smoke
+
+Windows は `expo run:android` のネイティブ build が path length 制限に当たりやすいので、`e2e-local-android` で作った APK を emulator に入れて smoke を回す。
+
+1. Android APK を EAS で作る
+
+```bash
+cd apps/mobile
+eas build --platform android --profile e2e-local-android
+```
+
+2. smoke runner を実行する
+
+```bash
+pnpm mobile:e2e:android:windows -- -ApkPath C:\path\to\actiko-e2e.apk
+```
+
+この runner は local backend 起動、emulator 起動、`adb install`、Maestro 実行までまとめて行う。`maestro` が PATH に無い場合は `-MaestroPath C:\path\to\maestro.bat` を付ける。
+
+### Mac で iOS smoke
+
+1. Simulator へアプリを入れる
+
+```bash
+pnpm --filter actiko-mobile ios
+pnpm --filter actiko-mobile start:dev-client
+```
+
+2. Maestro を実行する
+
+```bash
+cd apps/mobile
+maestro test .maestro/smoke.yaml
+```
+
+### EAS Workflows
+
+- Android: `apps/mobile/.eas/workflows/e2e-test-android.yml`
+- iOS: `apps/mobile/.eas/workflows/e2e-test-ios.yml`
+
+`e2e-test` profile は emulator / simulator 用 artifact を作る。EAS 上で実行する場合、`EXPO_PUBLIC_API_URL` は EAS 環境変数として到達可能な backend を指す必要がある。
+
 ## 環境変数
 
 - ローカル: `.env` から読み込み（git管理外）

@@ -11,7 +11,17 @@ import {
 } from "../../src/components/setting/tabPreferenceStore";
 import { useThemeContext } from "../../src/contexts/ThemeContext";
 import { useNavigationSync } from "../../src/hooks/useNavigationSync";
+import { mobileTestIds } from "../../src/testing/testIds";
 import { useAuthContext } from "../_layout";
+
+const TAB_TEST_IDS: Record<keyof typeof MOBILE_TAB_METADATA, string> = {
+  home: mobileTestIds.tabs.home,
+  daily: mobileTestIds.tabs.daily,
+  stats: mobileTestIds.tabs.stats,
+  goals: mobileTestIds.tabs.goals,
+  tasks: mobileTestIds.tabs.tasks,
+  notes: mobileTestIds.tabs.notes,
+};
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -57,6 +67,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityRole="tab"
               accessibilityLabel={tab.label}
               accessibilityState={{ selected: isActive }}
+              testID={TAB_TEST_IDS[tab.key]}
               style={{
                 alignItems: "center",
                 gap: 2,

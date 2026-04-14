@@ -1,0 +1,6 @@
+appId: com.actiko.app
+---
+- tapOn:
+    id: tabs.tasks
+- assertVisible:
+    id: tasks.page

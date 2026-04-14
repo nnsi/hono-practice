@@ -50,6 +50,7 @@ const config: ExpoConfig = {
     "expo-updates",
     "expo-apple-authentication",
     "expo-image-picker",
+    "./plugins/with-android-cleartext.js",
     "./modules/timer-widget/app.plugin.js",
     "@bacons/apple-targets",
   ],
@@ -60,9 +61,7 @@ const config: ExpoConfig = {
     },
   },
   owner: process.env.EAS_OWNER,
-  runtimeVersion: {
-    policy: "appVersion",
-  },
+  runtimeVersion: "1.0.0",
   ...(easProjectId && {
     updates: {
       url: `https://u.expo.dev/${easProjectId}`,

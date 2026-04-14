@@ -1,0 +1,26 @@
+appId: com.actiko.app
+---
+- runFlow:
+    when:
+      visible:
+        id: tasks.emptyCreate
+    commands:
+      - tapOn:
+          id: tasks.emptyCreate
+- runFlow:
+    when:
+      visible:
+        id: tasks.add
+    commands:
+      - tapOn:
+          id: tasks.add
+- assertVisible:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.titleInput
+- inputText: ${TASK_TITLE}
+- tapOn:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.submit
+- assertVisible: ${TASK_TITLE}
