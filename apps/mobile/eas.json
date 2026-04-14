@@ -17,6 +17,7 @@
       "channel": "development"
     },
     "e2e-test": {
+      "environment": "preview",
       "withoutCredentials": true,
       "android": {
         "buildType": "apk"

@@ -106,7 +106,7 @@ maestro test .maestro/smoke.yaml
 - Android: `apps/mobile/.eas/workflows/e2e-test-android.yml`
 - iOS: `apps/mobile/.eas/workflows/e2e-test-ios.yml`
 
-`e2e-test` profile は emulator / simulator 用 artifact を作る。EAS 上で実行する場合、`EXPO_PUBLIC_API_URL` は EAS 環境変数として到達可能な backend を指す必要がある。
+`e2e-test` profile は emulator / simulator 用 artifact を作り、EAS の `preview` environment を使う。`EXPO_PUBLIC_API_URL` はその environment に登録した到達可能な backend を指す必要がある。`BUNDLE_ID` を preview environment で上書きした場合、workflow 側の `MAESTRO_APP_ID` も同じ値を参照する。未指定時の既定値は `com.actiko.app`。
 
 ## 環境変数
 

@@ -272,7 +272,7 @@ try {
 
   Push-Location (Join-Path $repoRoot "apps/mobile")
   try {
-    & $maestroExecutable test ".maestro/smoke.yaml" -e "APP_ID=$AppId"
+    & $maestroExecutable test ".maestro/smoke.yaml" -e "MAESTRO_APP_ID=$AppId"
     if ($LASTEXITCODE -ne 0) {
       throw "Maestro smoke test failed."
     }
