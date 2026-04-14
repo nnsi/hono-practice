@@ -61,7 +61,9 @@ const config: ExpoConfig = {
     },
   },
   owner: process.env.EAS_OWNER,
-  runtimeVersion: "1.0.0",
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   ...(easProjectId && {
     updates: {
       url: `https://u.expo.dev/${easProjectId}`,

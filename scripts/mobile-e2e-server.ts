@@ -6,6 +6,7 @@ import { app } from "@backend/app";
 import { PGlite } from "@electric-sql/pglite";
 import { serve } from "@hono/node-server";
 import * as schema from "@infra/drizzle/schema";
+import { DEFAULT_DEV_API_PORT } from "@packages/platform";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
@@ -39,7 +40,9 @@ function loadEnvFile(filePath: string): Record<string, string> {
 const backendEnv = loadEnvFile(path.join(repoRoot, "apps/backend/.env"));
 
 const migrationsFolder = "./infra/drizzle/migrations";
-const apiPort = Number(process.env.API_PORT ?? backendEnv.API_PORT ?? 3457);
+const apiPort = Number(
+  process.env.API_PORT ?? backendEnv.API_PORT ?? DEFAULT_DEV_API_PORT,
+);
 const appUrl =
   process.env.APP_URL ?? backendEnv.APP_URL ?? "http://localhost:2540";
 const appUrlV2 = process.env.APP_URL_V2 ?? backendEnv.APP_URL_V2 ?? appUrl;
@@ -129,6 +132,7 @@ async function main() {
 
   server = serve({
     fetch: (request) => app.fetch(request, testEnv),
+    hostname: "127.0.0.1",
     port: apiPort,
   });
 

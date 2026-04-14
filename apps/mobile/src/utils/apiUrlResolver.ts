@@ -1,4 +1,5 @@
-export const DEFAULT_DEV_API_PORT = 3456;
+import { DEFAULT_DEV_API_PORT } from "@packages/platform";
+
 const ANDROID_EMULATOR_HOST = "10.0.2.2";
 
 type ResolveApiUrlOptions = {

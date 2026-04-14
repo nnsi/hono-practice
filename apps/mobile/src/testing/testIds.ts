@@ -37,8 +37,8 @@ function sanitizeTestIdSegment(value: string): string {
   return normalized || "item";
 }
 
-export function buildTaskCardTestIds(title: string) {
-  const suffix = sanitizeTestIdSegment(title);
+export function buildTaskCardTestIds(taskId: string) {
+  const suffix = sanitizeTestIdSegment(taskId);
   return {
     card: `tasks.card.${suffix}`,
     toggle: `tasks.toggle.${suffix}`,

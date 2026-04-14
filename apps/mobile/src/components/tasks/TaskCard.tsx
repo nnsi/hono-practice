@@ -42,7 +42,7 @@ export function TaskCard({
   const { t } = useTranslation("task");
   const { linkedActivity, linkedKind, iconBlobMap, showMoveToToday } =
     useTaskCard(task, archived, onMoveToToday);
-  const testIds = buildTaskCardTestIds(task.title);
+  const testIds = buildTaskCardTestIds(task.id);
 
   return (
     <Swipeable
