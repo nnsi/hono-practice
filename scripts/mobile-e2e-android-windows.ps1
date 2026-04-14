@@ -251,13 +251,15 @@ try {
   Wait-ForAndroidDevice -Serial $targetDeviceSerial
 
   if (-not $SkipBackend) {
-    if (-not (Test-ListeningPort -Port $ApiPort)) {
-      $backendOutLog = Join-Path $logDir "mobile-e2e-server.out.log"
-      $backendErrLog = Join-Path $logDir "mobile-e2e-server.err.log"
-      $backendCommand = "Set-Location '$repoRoot'; `$env:API_PORT='$ApiPort'; pnpm mobile:e2e:server"
-
-      $backendProcess = Start-Process -FilePath "powershell" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $backendCommand -RedirectStandardOutput $backendOutLog -RedirectStandardError $backendErrLog -PassThru
+    if (Test-ListeningPort -Port $ApiPort) {
+      throw "Port $ApiPort is already in use. Stop the existing process or pass -SkipBackend to reuse a running backend intentionally."
     }
+
+    $backendOutLog = Join-Path $logDir "mobile-e2e-server.out.log"
+    $backendErrLog = Join-Path $logDir "mobile-e2e-server.err.log"
+    $backendCommand = "Set-Location '$repoRoot'; `$env:API_PORT='$ApiPort'; pnpm mobile:e2e:server"
+
+    $backendProcess = Start-Process -FilePath "powershell" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $backendCommand -RedirectStandardOutput $backendOutLog -RedirectStandardError $backendErrLog -PassThru
 
     Wait-ForBackend -Port $ApiPort
   }

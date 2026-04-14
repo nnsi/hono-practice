@@ -83,7 +83,7 @@ eas build --platform android --profile e2e-local-android
 pnpm mobile:e2e:android:windows -- -ApkPath C:\path\to\actiko-e2e.apk
 ```
 
-この runner は local backend 起動、emulator 起動、`adb install`、Maestro 実行までまとめて行う。`maestro` が PATH に無い場合は `-MaestroPath C:\path\to\maestro.bat` を付ける。
+この runner は local backend 起動、emulator 起動、`adb install`、Maestro 実行までまとめて行う。`maestro` が PATH に無い場合は `-MaestroPath C:\path\to\maestro.bat` を付ける。既に backend を自分で起動している場合だけ `-SkipBackend` を使う。
 
 ### Mac で iOS smoke
 
