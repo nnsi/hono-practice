@@ -14,20 +14,28 @@ function getDebuggerHostName(debuggerHost?: string | null): string | null {
   return debuggerHost.split(":")[0] || null;
 }
 
+function isLoopbackHost(host?: string | null): boolean {
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
+function getAndroidDevHost(debuggerHost?: string | null): string {
+  const host = getDebuggerHostName(debuggerHost);
+  if (!host || isLoopbackHost(host)) {
+    return ANDROID_EMULATOR_HOST;
+  }
+  return host;
+}
+
 function rewriteConfiguredUrlForAndroidDev(
   configuredUrl: string,
   debuggerHost?: string | null,
 ): string {
   const parsed = new URL(configuredUrl);
-  if (
-    parsed.hostname !== "localhost" &&
-    parsed.hostname !== "127.0.0.1" &&
-    parsed.hostname !== "::1"
-  ) {
+  if (!isLoopbackHost(parsed.hostname)) {
     return configuredUrl;
   }
 
-  parsed.hostname = getDebuggerHostName(debuggerHost) ?? ANDROID_EMULATOR_HOST;
+  parsed.hostname = getAndroidDevHost(debuggerHost);
   return parsed.toString().replace(/\/$/, "");
 }
 
@@ -51,7 +59,7 @@ export function resolveNativeApiUrl({
   }
 
   const host = getDebuggerHostName(debuggerHost);
-  if (host) {
+  if (host && (platform !== "android" || !isLoopbackHost(host))) {
     return `http://${host}:${DEFAULT_DEV_API_PORT}`;
   }
 

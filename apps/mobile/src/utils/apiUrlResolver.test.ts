@@ -23,6 +23,27 @@ describe("resolveNativeApiUrl", () => {
     ).toBe("http://10.0.2.2:3456");
   });
 
+  it("ignores localhost debugger host on Android dev", () => {
+    expect(
+      resolveNativeApiUrl({
+        configuredUrl: "http://localhost:3536",
+        debuggerHost: "localhost:8081",
+        isDev: true,
+        platform: "android",
+      }),
+    ).toBe("http://10.0.2.2:3536");
+  });
+
+  it("falls back to Android emulator host when debugger host is localhost", () => {
+    expect(
+      resolveNativeApiUrl({
+        debuggerHost: "localhost:8081",
+        isDev: true,
+        platform: "android",
+      }),
+    ).toBe("http://10.0.2.2:3456");
+  });
+
   it("keeps localhost for iOS dev", () => {
     expect(
       resolveNativeApiUrl({
