@@ -8,6 +8,7 @@ type FormButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   className?: string;
+  testID?: string;
 };
 
 const variantStyles: Record<
@@ -42,6 +43,7 @@ export function FormButton({
   onPress,
   disabled,
   className = "",
+  testID,
 }: FormButtonProps) {
   const style = variantStyles[variant];
   const buttonStyle = disabled ? style.buttonDisabled : style.button;
@@ -54,6 +56,7 @@ export function FormButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled }}
+      testID={testID}
     >
       <Text className={`font-medium text-sm ${style.text}`}>{label}</Text>
     </TouchableOpacity>

@@ -1,6 +1,6 @@
 import type { ExpoConfig } from "expo/config";
 
-const bundleId = process.env.BUNDLE_ID;
+const bundleId = process.env.BUNDLE_ID ?? "com.actiko.app";
 const easProjectId = process.env.EAS_PROJECT_ID;
 const appleTeamId = process.env.APPLE_TEAM_ID;
 
@@ -50,6 +50,7 @@ const config: ExpoConfig = {
     "expo-updates",
     "expo-apple-authentication",
     "expo-image-picker",
+    "./plugins/with-android-cleartext.js",
     "./modules/timer-widget/app.plugin.js",
     "@bacons/apple-targets",
   ],

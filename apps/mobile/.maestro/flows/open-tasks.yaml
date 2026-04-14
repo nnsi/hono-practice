@@ -1,0 +1,6 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: tabs.tasks
+- assertVisible:
+    id: tasks.page

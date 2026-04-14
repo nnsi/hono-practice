@@ -16,6 +16,7 @@ type IconBlob = { base64: string; mimeType: string };
 
 type TaskCardBodyProps = {
   title: string;
+  testID?: string;
   completed: boolean;
   doneDate?: string | null;
   startDate?: string | null;
@@ -31,6 +32,7 @@ type TaskCardBodyProps = {
 
 export function TaskCardBody({
   title,
+  testID,
   completed,
   doneDate,
   startDate,
@@ -46,7 +48,11 @@ export function TaskCardBody({
   const iconBlob = activityId ? iconBlobMap.get(activityId) : undefined;
 
   return (
-    <TouchableOpacity className="flex-1 min-w-0" onPress={onEdit}>
+    <TouchableOpacity
+      className="flex-1 min-w-0"
+      onPress={onEdit}
+      testID={testID}
+    >
       <Text
         className={`text-sm font-medium ${
           completed || doneDate

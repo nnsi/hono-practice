@@ -7,23 +7,25 @@ import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
+import { resolveNativeApiUrl } from "./apiUrlResolver";
+
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function resolveApiUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
-  // Expo Go / dev client: use the same host IP that Metro bundler uses
-  if (__DEV__) {
-    const debuggerHost = Constants.expoGoConfig?.debuggerHost;
-    if (debuggerHost) {
-      const host = debuggerHost.split(":")[0];
-      return `http://${host}:3456`;
-    }
-    return "http://localhost:3456";
-  }
-  // 本番ビルドで EXPO_PUBLIC_API_URL が未設定 → 起動時にクラッシュさせて気付けるようにする
-  throw new Error(
-    "EXPO_PUBLIC_API_URL is not set. Production builds require this environment variable.",
-  );
+  const configuredUrl =
+    (Platform.OS === "android"
+      ? process.env.EXPO_PUBLIC_API_URL_ANDROID
+      : Platform.OS === "ios"
+        ? process.env.EXPO_PUBLIC_API_URL_IOS
+        : process.env.EXPO_PUBLIC_API_URL_WEB) ??
+    process.env.EXPO_PUBLIC_API_URL;
+
+  return resolveNativeApiUrl({
+    configuredUrl,
+    debuggerHost: Constants.expoGoConfig?.debuggerHost,
+    isDev: __DEV__,
+    platform: Platform.OS,
+  });
 }
 
 const API_URL = resolveApiUrl();

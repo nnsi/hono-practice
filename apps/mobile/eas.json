@@ -16,6 +16,26 @@
       "distribution": "internal",
       "channel": "development"
     },
+    "e2e-test": {
+      "environment": "preview",
+      "withoutCredentials": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "e2e-local-android": {
+      "withoutCredentials": true,
+      "env": {
+        "ANDROID_USES_CLEARTEXT_TRAFFIC": "true",
+        "EXPO_PUBLIC_API_URL_ANDROID": "http://10.0.2.2:3536"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "channel": "preview",

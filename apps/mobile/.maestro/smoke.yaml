@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  TASK_TITLE: e2e-smoke-task
+---
+- launchApp:
+    clearState: true
+- runFlow: flows/login.yaml
+- runFlow: flows/open-tasks.yaml
+- runFlow: flows/create-task.yaml
