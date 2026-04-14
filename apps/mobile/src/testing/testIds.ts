@@ -43,5 +43,9 @@ export function buildTaskCardTestIds(taskId: string) {
     card: `tasks.card.${suffix}`,
     toggle: `tasks.toggle.${suffix}`,
     title: `tasks.title.${suffix}`,
+    moveToToday: `tasks.moveToToday.${suffix}`,
+    archive: `tasks.archive.${suffix}`,
+    edit: `tasks.edit.${suffix}`,
+    delete: `tasks.delete.${suffix}`,
   };
 }

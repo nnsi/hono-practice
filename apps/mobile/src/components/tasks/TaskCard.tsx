@@ -121,6 +121,7 @@ export function TaskCard({
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
               accessibilityLabel={t("card.moveToToday")}
+              testID={testIds.moveToToday}
             >
               <CalendarCheck size={16} color="#9ca3af" />
             </TouchableOpacity>
@@ -132,6 +133,7 @@ export function TaskCard({
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
               accessibilityLabel={t("card.archive")}
+              testID={testIds.archive}
             >
               <Archive size={16} color="#9ca3af" />
             </TouchableOpacity>
@@ -142,6 +144,7 @@ export function TaskCard({
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
             accessibilityLabel={t("card.edit")}
+            testID={testIds.edit}
           >
             <Pencil size={16} color="#9ca3af" />
           </TouchableOpacity>
@@ -151,6 +154,7 @@ export function TaskCard({
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
             accessibilityLabel={t("card.delete")}
+            testID={testIds.delete}
           >
             <Trash2 size={16} color="#9ca3af" />
           </TouchableOpacity>
