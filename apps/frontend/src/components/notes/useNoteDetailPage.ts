@@ -7,14 +7,11 @@ import { noteRepository } from "../../db/noteRepository";
 import { useActivities } from "../../hooks/useActivities";
 import { syncEngine } from "../../sync/syncEngine";
 
-type Mode = "view" | "edit" | "preview";
-
 export function useNoteDetailPage() {
   const { noteId } = useParams({ from: "/notes_/$noteId" });
   const navigate = useNavigate();
   const isNew = noteId === "new";
 
-  // null sentinel: undefined=loading, null=not found, object=found
   const noteQueryResult = useLiveQuery(
     () =>
       !isNew
@@ -29,7 +26,6 @@ export function useNoteDetailPage() {
 
   const { activities } = useActivities();
 
-  const [mode, setMode] = useState<Mode>(isNew ? "edit" : "view");
   const [settingsOpen, setSettingsOpen] = useState(isNew);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -45,28 +41,23 @@ export function useNoteDetailPage() {
       setActivityId(note.activityId);
       setInitialized(true);
     }
-  }, [note, isNew, initialized]);
-
-  const canSave = title.trim() !== "" && !isSubmitting;
+  }, [initialized, isNew, note]);
 
   const isDirty = useMemo(() => {
-    if (mode === "view") return false;
-    if (isNew)
+    if (isNew) {
       return (
         title.trim() !== "" || content.trim() !== "" || activityId !== null
       );
+    }
     if (!note) return false;
     return (
       title !== note.title ||
       content !== note.content ||
       activityId !== note.activityId
     );
-  }, [mode, isNew, note, title, content, activityId]);
+  }, [activityId, content, isNew, note, title]);
 
-  const enterEditMode = () => setMode("edit");
-
-  const togglePreview = () =>
-    setMode((prev) => (prev === "edit" ? "preview" : "edit"));
+  const canSave = title.trim() !== "" && isDirty && !isSubmitting;
 
   const toggleSettings = () => setSettingsOpen((prev) => !prev);
 
@@ -90,7 +81,6 @@ export function useNoteDetailPage() {
         });
         syncEngine.syncNotes();
         setSettingsOpen(false);
-        setMode("view");
       }
     } finally {
       setIsSubmitting(false);
@@ -120,7 +110,6 @@ export function useNoteDetailPage() {
     isLoading,
     notFound,
     note,
-    mode,
     settingsOpen,
     title,
     setTitle,
@@ -133,8 +122,6 @@ export function useNoteDetailPage() {
     isDirty,
     showDiscardConfirm,
     activities,
-    enterEditMode,
-    togglePreview,
     toggleSettings,
     handleSave,
     handleBack,

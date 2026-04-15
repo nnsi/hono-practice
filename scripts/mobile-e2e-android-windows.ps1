@@ -3,6 +3,7 @@ param(
   [string]$ApkPath,
   [string]$AvdName,
   [string]$MaestroPath,
+  [string]$FlowPath = ".maestro/smoke.yaml",
   [int]$ApiPort = 3536,
   [string]$AppId = "com.actiko.app",
   [switch]$SkipBackend
@@ -32,13 +33,13 @@ function Resolve-CommandPath {
 }
 
 function Get-ConnectedDeviceSerials {
-  $lines = & $script:AdbExecutable devices
+  $lines = @(& $script:AdbExecutable devices)
 
-  return $lines |
+  return @($lines |
     Select-Object -Skip 1 |
     Where-Object { $_ -match "`tdevice$" } |
     ForEach-Object { ($_ -split "`t")[0].Trim() } |
-    Where-Object { $_ }
+    Where-Object { $_ })
 }
 
 function Get-EmulatorSerials {
@@ -97,7 +98,7 @@ function Find-RunningEmulatorSerial {
     [string]$AvdName
   )
 
-  $emulatorSerials = Get-EmulatorSerials
+  $emulatorSerials = @(Get-EmulatorSerials)
   if (-not $emulatorSerials) {
     return $null
   }
@@ -111,7 +112,7 @@ function Find-RunningEmulatorSerial {
     return $null
   }
 
-  if ($emulatorSerials.Count -eq 1) {
+  if (@($emulatorSerials).Count -eq 1) {
     return $emulatorSerials[0]
   }
 
@@ -133,7 +134,7 @@ function Start-AndroidEmulator {
   $deadline = (Get-Date).AddSeconds(240)
   do {
     Start-Sleep -Seconds 5
-    $currentEmulatorSerials = Get-EmulatorSerials
+    $currentEmulatorSerials = @(Get-EmulatorSerials)
     foreach ($serial in $currentEmulatorSerials) {
       $matchesAvd =
         -not $ResolvedAvdName -or
@@ -142,7 +143,7 @@ function Start-AndroidEmulator {
         continue
       }
 
-      if (($ExistingEmulatorSerials -notcontains $serial) -or $currentEmulatorSerials.Count -eq 1) {
+      if (($ExistingEmulatorSerials -notcontains $serial) -or @($currentEmulatorSerials).Count -eq 1) {
         try {
           $bootCompleted = (& $script:AdbExecutable -s $serial shell getprop sys.boot_completed 2>$null).Trim()
           if ($bootCompleted -eq "1") {
@@ -208,8 +209,8 @@ function Resolve-AvdName {
     return $ExplicitName
   }
 
-  $avds = (& $script:EmulatorExecutable -list-avds) | Where-Object { $_.Trim().Length -gt 0 }
-  if ($avds.Count -eq 1) {
+  $avds = @((& $script:EmulatorExecutable -list-avds) | Where-Object { $_.Trim().Length -gt 0 })
+  if (@($avds).Count -eq 1) {
     return $avds[0].Trim()
   }
 
@@ -274,9 +275,9 @@ try {
 
   Push-Location (Join-Path $repoRoot "apps/mobile")
   try {
-    & $maestroExecutable test ".maestro/smoke.yaml" -e "MAESTRO_APP_ID=$AppId"
+    & $maestroExecutable test $FlowPath -e "MAESTRO_APP_ID=$AppId"
     if ($LASTEXITCODE -ne 0) {
-      throw "Maestro smoke test failed."
+      throw "Maestro test failed for flow: $FlowPath"
     }
   } finally {
     Pop-Location

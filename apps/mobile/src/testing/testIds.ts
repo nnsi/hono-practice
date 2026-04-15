@@ -13,6 +13,18 @@ export const mobileTestIds = {
     tasks: "tabs.tasks",
     notes: "tabs.notes",
   },
+  notes: {
+    page: "notes.page",
+    detailPage: "notes.detail.page",
+    addButton: "notes.add",
+    emptyCreateButton: "notes.emptyCreate",
+    settingsButton: "notes.settings",
+    settingsPanel: "notes.settings.panel",
+    titleInput: "notes.titleInput",
+    saveButton: "notes.save",
+    e2eFillSampleButton: "notes.e2e.fillSample",
+    e2ePreviewText: "notes.e2e.preview",
+  },
   tasks: {
     page: "tasks.page",
     activeTab: "tasks.tab.active",

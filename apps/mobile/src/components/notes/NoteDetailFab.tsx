@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { Eye, Pencil, Settings } from "lucide-react-native";
+import { Settings } from "lucide-react-native";
 import {
   Keyboard,
   Platform,
@@ -10,12 +10,9 @@ import {
   useColorScheme,
 } from "react-native";
 
-import type { NoteDetailMode } from "./useNoteDetailPage";
+import { mobileTestIds } from "../../testing/testIds";
 
 type NoteDetailFabProps = {
-  mode: NoteDetailMode;
-  onEditPress: () => void;
-  onPreviewToggle: () => void;
   onSettingsToggle: () => void;
   bottomInset?: number;
 };
@@ -25,15 +22,17 @@ const ICON_SIZE = 22;
 function FabButton({
   onPress,
   label,
+  testID,
   children,
 }: {
   onPress: () => void;
   label: string;
+  testID?: string;
   children: React.ReactNode;
 }) {
   return (
     <TouchableOpacity
-      className="bg-gray-900 dark:bg-gray-100 rounded-full shadow-lg p-3.5 items-center justify-center"
+      className="items-center justify-center rounded-full bg-gray-900 p-3.5 shadow-lg dark:bg-gray-100"
       onPress={() => {
         Keyboard.dismiss();
         onPress();
@@ -41,6 +40,7 @@ function FabButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       activeOpacity={0.8}
+      testID={testID}
     >
       {children}
     </TouchableOpacity>
@@ -48,9 +48,6 @@ function FabButton({
 }
 
 export function NoteDetailFab({
-  mode,
-  onEditPress,
-  onPreviewToggle,
   onSettingsToggle,
   bottomInset = 0,
 }: NoteDetailFabProps) {
@@ -75,37 +72,14 @@ export function NoteDetailFab({
 
   const bottom = keyboardHeight > 0 ? keyboardHeight + 8 : 24 + bottomInset;
 
-  if (mode === "view") {
-    return (
-      <View className="absolute right-6" style={{ bottom }}>
-        <FabButton onPress={onEditPress} label={t("edit.editNote")}>
-          <Pencil size={ICON_SIZE} color={iconColor} />
-        </FabButton>
-      </View>
-    );
-  }
-
-  if (mode === "edit") {
-    return (
-      <View className="absolute right-6 gap-3" style={{ bottom }}>
-        <FabButton onPress={onSettingsToggle} label={t("detail.settings")}>
-          <Settings size={ICON_SIZE} color={iconColor} />
-        </FabButton>
-        <FabButton onPress={onPreviewToggle} label={t("tab.preview")}>
-          <Eye size={ICON_SIZE} color={iconColor} />
-        </FabButton>
-      </View>
-    );
-  }
-
-  // mode === "preview"
   return (
-    <View className="absolute right-6 gap-3" style={{ bottom }}>
-      <FabButton onPress={onSettingsToggle} label={t("detail.settings")}>
+    <View className="absolute right-6" style={{ bottom }}>
+      <FabButton
+        onPress={onSettingsToggle}
+        label={t("detail.settings")}
+        testID={mobileTestIds.notes.settingsButton}
+      >
         <Settings size={ICON_SIZE} color={iconColor} />
-      </FabButton>
-      <FabButton onPress={onPreviewToggle} label={t("tab.edit")}>
-        <Pencil size={ICON_SIZE} color={iconColor} />
       </FabButton>
     </View>
   );
