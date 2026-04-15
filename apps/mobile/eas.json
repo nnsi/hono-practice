@@ -19,6 +19,9 @@
     "e2e-test": {
       "environment": "preview",
       "withoutCredentials": true,
+      "env": {
+        "EXPO_PUBLIC_E2E_MODE": "1"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -30,7 +33,8 @@
       "withoutCredentials": true,
       "env": {
         "ANDROID_USES_CLEARTEXT_TRAFFIC": "true",
-        "EXPO_PUBLIC_API_URL_ANDROID": "http://10.0.2.2:3536"
+        "EXPO_PUBLIC_API_URL_ANDROID": "http://10.0.2.2:3536",
+        "EXPO_PUBLIC_E2E_MODE": "1"
       },
       "android": {
         "buildType": "apk"

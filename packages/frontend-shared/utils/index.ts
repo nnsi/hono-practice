@@ -34,5 +34,18 @@ export type {
 export { reportError } from "./errorReporter";
 export { setupGlobalErrorHandler } from "./globalErrorHandler";
 export { generateGoalLines } from "./goalLineGeneration";
+export type {
+  NoteRichTextCommand,
+  NoteRichTextEditorMessage,
+  NoteRichTextLabels,
+} from "./noteRichText";
+export {
+  NOTE_RICH_TEXT_EDITOR_SOURCE,
+  createNoteRichTextEditorDocument,
+  markdownToNoteEditorHtml,
+  markdownToNotePreviewText,
+  noteEditorHtmlToMarkdown,
+  parseNoteRichTextEditorMessage,
+} from "./noteRichText";
 export { formatQuantityWithUnit, roundQuantity } from "./statsFormatting";
 export { groupTasksByTimeline } from "./taskGrouping";

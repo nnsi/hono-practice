@@ -1,0 +1,34 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      visible:
+        id: notes.emptyCreate
+    commands:
+      - tapOn:
+          id: notes.emptyCreate
+- runFlow:
+    when:
+      visible:
+        id: notes.add
+    commands:
+      - tapOn:
+          id: notes.add
+- assertVisible:
+    id: notes.settings.panel
+- tapOn:
+    id: notes.titleInput
+- inputText: ${NOTE_TITLE}
+- hideKeyboard
+- tapOn:
+    id: notes.e2e.fillSample
+- tapOn:
+    id: notes.save
+- assertVisible: ${NOTE_TITLE}
+- assertVisible: ${NOTE_PREVIEW}
+- tapOn: ${NOTE_TITLE}
+- assertVisible:
+    id: notes.detail.page
+- assertVisible:
+    id: notes.e2e.preview
+- assertVisible: ${NOTE_PREVIEW}

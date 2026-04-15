@@ -1,18 +1,13 @@
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft } from "lucide-react-native";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { NoteDetailFab } from "./NoteDetailFab";
 import { NoteDiscardConfirmInline, NoteNotFound } from "./NoteDetailStates";
+import { NoteRichTextEditor } from "./NoteRichTextEditor";
 import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
@@ -23,7 +18,6 @@ export function NoteDetailPage() {
     isNew,
     isLoading,
     notFound,
-    mode,
     settingsOpen,
     title,
     setTitle,
@@ -35,8 +29,6 @@ export function NoteDetailPage() {
     canSave,
     showDiscardConfirm,
     activities,
-    enterEditMode,
-    togglePreview,
     toggleSettings,
     handleSave,
     handleBack,
@@ -51,10 +43,10 @@ export function NoteDetailPage() {
   if (isLoading) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-gray-900 items-center justify-center"
+        className="flex-1 items-center justify-center bg-white dark:bg-gray-900"
         style={{ paddingTop: insets.top }}
       >
-        <Text className="text-gray-400 dark:text-gray-500 text-sm">
+        <Text className="text-sm text-gray-400 dark:text-gray-500">
           {t("detail.loading")}
         </Text>
       </View>
@@ -69,11 +61,12 @@ export function NoteDetailPage() {
     <View
       className="flex-1 bg-white dark:bg-gray-900"
       style={{ paddingTop: insets.top }}
+      testID={mobileTestIds.notes.detailPage}
     >
-      <View className="flex-row items-center px-2 h-12 border-b border-gray-100 dark:border-gray-800">
+      <View className="flex-row items-center border-b border-gray-100 px-2 h-12 dark:border-gray-800">
         <TouchableOpacity
           onPress={handleBack}
-          className="p-2 mr-1"
+          className="mr-1 p-2"
           hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
           accessibilityRole="button"
           accessibilityLabel={t("detail.back")}
@@ -88,17 +81,16 @@ export function NoteDetailPage() {
           {headerTitle}
         </Text>
 
-        {mode !== "view" && (
-          <View className="ml-2">
-            <FormButton
-              variant="primary"
-              label={isSubmitting ? t("detail.saving") : t("detail.save")}
-              onPress={handleSave}
-              disabled={!canSave}
-              className="px-4 py-1.5"
-            />
-          </View>
-        )}
+        <View className="ml-2">
+          <FormButton
+            variant="primary"
+            label={isSubmitting ? t("detail.saving") : t("detail.save")}
+            onPress={handleSave}
+            disabled={!canSave}
+            className="px-4 py-1.5"
+            testID={mobileTestIds.notes.saveButton}
+          />
+        </View>
       </View>
 
       {showDiscardConfirm && (
@@ -117,57 +109,29 @@ export function NoteDetailPage() {
         isOpen={settingsOpen}
       />
 
-      <View className="flex-1">
-        {mode === "view" && (
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{
-              padding: 16,
-              paddingBottom: 80 + insets.bottom,
-            }}
-          >
-            <MarkdownPreview content={content} />
-          </ScrollView>
-        )}
-
-        {mode === "edit" && (
-          <ScrollView
-            className="flex-1"
-            automaticallyAdjustKeyboardInsets
-            keyboardDismissMode="interactive"
-            contentContainerStyle={{ flexGrow: 1 }}
-          >
-            <TextInput
-              className="flex-1 px-4 py-3 text-base text-gray-900 dark:text-gray-100"
-              value={content}
-              onChangeText={setContent}
-              multiline
-              scrollEnabled={false}
-              textAlignVertical="top"
-              placeholder={t("create.placeholder.contentMobile")}
-              placeholderTextColor="#9ca3af"
-              style={{ paddingBottom: 80 + insets.bottom }}
-            />
-          </ScrollView>
-        )}
-
-        {mode === "preview" && (
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{
-              padding: 16,
-              paddingBottom: 80 + insets.bottom,
-            }}
-          >
-            <MarkdownPreview content={content} />
-          </ScrollView>
-        )}
-      </View>
+      <ScrollView
+        className="flex-1"
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 96 + insets.bottom,
+        }}
+      >
+        <View className="gap-3">
+          <Text className="px-1 text-xs font-medium uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+            {t("create.label.content")}
+          </Text>
+          <NoteRichTextEditor
+            value={content}
+            onChange={setContent}
+            placeholder={t("create.placeholder.contentMobile")}
+          />
+        </View>
+      </ScrollView>
 
       <NoteDetailFab
-        mode={mode}
-        onEditPress={enterEditMode}
-        onPreviewToggle={togglePreview}
         onSettingsToggle={toggleSettings}
         bottomInset={insets.bottom}
       />

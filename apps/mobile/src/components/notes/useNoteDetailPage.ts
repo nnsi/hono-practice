@@ -7,8 +7,6 @@ import { useActivities } from "../../hooks/useActivities";
 import { noteRepository } from "../../repositories/noteRepository";
 import { syncEngine } from "../../sync/syncEngine";
 
-export type NoteDetailMode = "view" | "edit" | "preview";
-
 export function useNoteDetailPage() {
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const router = useRouter();
@@ -16,7 +14,6 @@ export function useNoteDetailPage() {
 
   const isNew = noteId === "new";
 
-  // null sentinel: undefined=loading, null=not found, object=found
   const noteQueryResult = useLiveQuery(
     "notes",
     () =>
@@ -30,7 +27,6 @@ export function useNoteDetailPage() {
   const isLoading = !isNew && noteQueryResult === undefined;
   const notFound = !isNew && noteQueryResult === null;
 
-  const [mode, setMode] = useState<NoteDetailMode>(isNew ? "edit" : "view");
   const [settingsOpen, setSettingsOpen] = useState(isNew);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -46,31 +42,23 @@ export function useNoteDetailPage() {
       setActivityId(note.activityId);
       setInitialized(true);
     }
-  }, [isNew, note, initialized]);
-
-  const canSave = title.trim() !== "" && !isSubmitting;
+  }, [initialized, isNew, note]);
 
   const isDirty = useMemo(() => {
-    if (mode === "view") return false;
-    if (isNew)
+    if (isNew) {
       return (
         title.trim() !== "" || content.trim() !== "" || activityId !== null
       );
+    }
     if (!note) return false;
     return (
       title !== note.title ||
       content !== note.content ||
       activityId !== note.activityId
     );
-  }, [mode, isNew, note, title, content, activityId]);
+  }, [activityId, content, isNew, note, title]);
 
-  const enterEditMode = useCallback(() => {
-    setMode("edit");
-  }, []);
-
-  const togglePreview = useCallback(() => {
-    setMode((prev) => (prev === "edit" ? "preview" : "edit"));
-  }, []);
+  const canSave = title.trim() !== "" && isDirty && !isSubmitting;
 
   const toggleSettings = useCallback(() => {
     setSettingsOpen((prev) => !prev);
@@ -96,12 +84,11 @@ export function useNoteDetailPage() {
         });
         syncEngine.syncAll();
         setSettingsOpen(false);
-        setMode("view");
       }
     } finally {
       setIsSubmitting(false);
     }
-  }, [canSave, isNew, noteId, title, content, activityId, router]);
+  }, [activityId, canSave, content, isNew, noteId, router, title]);
 
   const handleBack = useCallback(() => {
     if (isDirty) {
@@ -124,7 +111,6 @@ export function useNoteDetailPage() {
     isNew,
     isLoading,
     notFound,
-    mode,
     settingsOpen,
     title,
     setTitle,
@@ -138,8 +124,6 @@ export function useNoteDetailPage() {
     showDiscardConfirm,
     activities,
     note,
-    enterEditMode,
-    togglePreview,
     toggleSettings,
     handleSave,
     handleBack,
