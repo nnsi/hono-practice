@@ -131,7 +131,13 @@ export function NoteRichTextEditor({
         onMessage={handleMessage}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}
+        containerStyle={{
+          flex: 0,
+          height,
+          backgroundColor: "transparent",
+        }}
         style={{
+          flex: 0,
           height,
           backgroundColor: "transparent",
         }}

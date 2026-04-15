@@ -18,6 +18,7 @@ export type NoteRichTextCommand =
   | "bulletList"
   | "orderedList"
   | "blockquote"
+  | "codeBlock"
   | "clear";
 
 export type NoteRichTextLabels = {
@@ -55,7 +56,14 @@ type CreateNoteRichTextEditorDocumentOptions = {
 
 const noteEditorSchema = {
   ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), "h1", "h2", "blockquote"],
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    "h1",
+    "h2",
+    "blockquote",
+    "pre",
+    "code",
+  ],
 };
 
 const markdownToHtmlProcessor = unified()
@@ -90,6 +98,16 @@ const buttonOrder: Array<{
   { command: "clear", labelKey: "clear" },
 ];
 
+const markdownShortcutEntries: Array<{
+  trigger: string;
+  command: NoteRichTextCommand;
+}> = [
+  { trigger: "#", command: "heading1" },
+  { trigger: "-", command: "bulletList" },
+  { trigger: ">", command: "blockquote" },
+  { trigger: "```", command: "codeBlock" },
+];
+
 function escapeHtml(text: string) {
   return text
     .replaceAll("&", "&amp;")
@@ -122,6 +140,14 @@ function decodeHtmlEntities(text: string) {
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'");
+}
+
+export function matchNoteBlockMarkdownShortcut(text: string) {
+  const normalized = text.replaceAll("\u00a0", " ");
+  const matchedShortcut = markdownShortcutEntries.find(
+    ({ trigger }) => trigger === normalized,
+  );
+  return matchedShortcut?.command ?? null;
 }
 
 export function markdownToNoteEditorHtml(markdown: string) {
@@ -230,6 +256,7 @@ export function createNoteRichTextEditorDocument({
         buttonHover: "#374151",
         quoteBorder: "#60a5fa",
         quoteBackground: "#0f172a",
+        codeBackground: "#020617",
       }
     : {
         background: "#ffffff",
@@ -243,6 +270,7 @@ export function createNoteRichTextEditorDocument({
         buttonHover: "#f3f4f6",
         quoteBorder: "#93c5fd",
         quoteBackground: "#eff6ff",
+        codeBackground: "#f3f4f6",
       };
 
   const toolbarButtons = buttonOrder
@@ -254,6 +282,7 @@ export function createNoteRichTextEditorDocument({
 
   const config = JSON.stringify({
     emptyHtml: EMPTY_EDITOR_HTML,
+    markdownShortcuts: markdownShortcutEntries,
     source: NOTE_RICH_TEXT_EDITOR_SOURCE,
   });
 
@@ -275,7 +304,7 @@ export function createNoteRichTextEditorDocument({
       body {
         margin: 0;
         padding: 0;
-        background: ${palette.background};
+        background: transparent;
         color: ${palette.text};
         font-family:
           ui-sans-serif,
@@ -291,10 +320,7 @@ export function createNoteRichTextEditorDocument({
       }
 
       .shell {
-        border: 1px solid ${palette.border};
-        border-radius: 24px;
-        overflow: hidden;
-        background: ${palette.background};
+        background: transparent;
       }
 
       .toolbar {
@@ -385,6 +411,30 @@ export function createNoteRichTextEditorDocument({
         border-radius: 0 12px 12px 0;
       }
 
+      #editor pre {
+        margin: 0 0 1em;
+        padding: 0.875em 1em;
+        border-radius: 16px;
+        background: ${palette.codeBackground};
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+
+      #editor pre code {
+        display: block;
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          "Liberation Mono",
+          "Courier New",
+          monospace;
+        font-size: 0.9375rem;
+      }
+
       #editor strong {
         font-weight: 700;
       }
@@ -404,6 +454,7 @@ export function createNoteRichTextEditorDocument({
         const config = ${config};
         const editor = document.getElementById("editor");
         const toolbar = document.querySelector(".toolbar");
+        const shell = document.querySelector(".shell");
         let applyingExternalUpdate = false;
         let lastSentHtml = "";
         let lastSentHeight = 0;
@@ -431,9 +482,18 @@ export function createNoteRichTextEditorDocument({
         };
 
         const reportHeight = () => {
+          const shellHeight =
+            shell instanceof HTMLElement
+              ? Math.ceil(shell.getBoundingClientRect().height)
+              : 0;
+          const toolbarHeight =
+            toolbar instanceof HTMLElement
+              ? Math.ceil(toolbar.getBoundingClientRect().height)
+              : 0;
+          const editorHeight = Math.ceil(editor.scrollHeight);
           const nextHeight = Math.max(
-            document.documentElement.scrollHeight,
-            document.body.scrollHeight,
+            shellHeight,
+            toolbarHeight + editorHeight,
             340,
           );
           if (Math.abs(nextHeight - lastSentHeight) > 1) {
@@ -461,6 +521,18 @@ export function createNoteRichTextEditorDocument({
           editor.focus();
         };
 
+        const setCaret = (node, offset = 0) => {
+          const selection = document.getSelection();
+          if (!selection) return;
+
+          const range = document.createRange();
+          range.setStart(node, offset);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          focusEditor();
+        };
+
         const formatBlock = (tagName) => {
           document.execCommand("formatBlock", false, "<" + tagName + ">");
         };
@@ -480,6 +552,137 @@ export function createNoteRichTextEditorDocument({
           document.execCommand("removeFormat");
           document.execCommand("unlink");
           formatBlock("p");
+        };
+
+        const insertLineBreak = () => {
+          document.execCommand("insertLineBreak");
+        };
+
+        const insertParagraphAfterBlock = (block, range) => {
+          const trailingRange = document.createRange();
+          trailingRange.selectNodeContents(block);
+          trailingRange.setStart(range.startContainer, range.startOffset);
+          const trailingFragment = trailingRange.extractContents();
+
+          const paragraph = document.createElement("p");
+          if (trailingFragment.childNodes.length > 0) {
+            paragraph.appendChild(trailingFragment);
+          } else {
+            paragraph.appendChild(document.createElement("br"));
+          }
+
+          block.after(paragraph);
+          setCaret(paragraph, 0);
+        };
+
+        const trimTrailingBreaks = (element) => {
+          while (element.lastChild instanceof HTMLBRElement) {
+            element.lastChild.remove();
+          }
+        };
+
+        const exitBlockquote = (blockquote, range) => {
+          insertParagraphAfterBlock(blockquote, range);
+          trimTrailingBreaks(blockquote);
+          if (!blockquote.textContent?.replace(/\\u200B/g, "").trim()) {
+            blockquote.remove();
+          }
+        };
+
+        const getCurrentBlockContext = () => {
+          const selection = document.getSelection();
+          if (!selection || !selection.rangeCount || !selection.isCollapsed) {
+            return null;
+          }
+
+          const range = selection.getRangeAt(0);
+          const anchorNode = selection.anchorNode;
+          const parentElement =
+            anchorNode?.nodeType === Node.ELEMENT_NODE
+              ? anchorNode
+              : anchorNode?.parentElement;
+          const block = parentElement?.closest("p, h1, h2, blockquote, li");
+          if (!(block instanceof HTMLElement)) {
+            return null;
+          }
+
+          return { block, range };
+        };
+
+        const getMarkdownShortcutCommand = (text) => {
+          const matchedShortcut = config.markdownShortcuts.find(
+            (shortcut) => shortcut.trigger === text.replace(/\\u00a0/g, " "),
+          );
+          return matchedShortcut?.command ?? null;
+        };
+
+        const isCurrentBlockquoteLineEmpty = (blockquote, range) => {
+          const beforeCaret = document.createRange();
+          beforeCaret.selectNodeContents(blockquote);
+          beforeCaret.setEnd(range.endContainer, range.endOffset);
+
+          const container = document.createElement("div");
+          container.appendChild(beforeCaret.cloneContents());
+          const html = container.innerHTML
+            .replace(/<\\/?span[^>]*>/g, "")
+            .replaceAll("&nbsp;", " ");
+          const lastBreakIndex = html.toLowerCase().lastIndexOf("<br>");
+          const currentLineHtml =
+            lastBreakIndex >= 0 ? html.slice(lastBreakIndex + 4) : html;
+          const currentLineText = currentLineHtml
+            .replace(/<[^>]+>/g, "")
+            .replace(/\\u200B/g, "")
+            .trim();
+
+          return currentLineText.length === 0 && html.length > 0;
+        };
+
+        const applyMarkdownShortcut = (command, context) => {
+          const shortcutRange = context.range.cloneRange();
+          shortcutRange.selectNodeContents(context.block);
+          shortcutRange.setEnd(context.range.endContainer, context.range.endOffset);
+          shortcutRange.deleteContents();
+
+          const replaceBlock = (nextBlock, caretNode, caretOffset = 0) => {
+            context.block.replaceWith(nextBlock);
+            setCaret(caretNode, caretOffset);
+          };
+
+          switch (command) {
+            case "heading1": {
+              const heading = document.createElement("h1");
+              heading.appendChild(document.createElement("br"));
+              replaceBlock(heading, heading, 0);
+              break;
+            }
+            case "bulletList": {
+              const list = document.createElement("ul");
+              const item = document.createElement("li");
+              item.appendChild(document.createElement("br"));
+              list.appendChild(item);
+              replaceBlock(list, item, 0);
+              break;
+            }
+            case "blockquote": {
+              const blockquote = document.createElement("blockquote");
+              blockquote.appendChild(document.createElement("br"));
+              replaceBlock(blockquote, blockquote, 0);
+              break;
+            }
+            case "codeBlock": {
+              const pre = document.createElement("pre");
+              const code = document.createElement("code");
+              const caretNode = document.createTextNode("");
+              code.appendChild(caretNode);
+              pre.appendChild(code);
+              replaceBlock(pre, caretNode, 0);
+              break;
+            }
+            default:
+              return;
+          }
+
+          window.requestAnimationFrame(emitChange);
         };
 
         const runCommand = (command) => {
@@ -524,22 +727,74 @@ export function createNoteRichTextEditorDocument({
           reportHeight();
         };
 
-        const handleListExit = (event) => {
+        const handleEnter = (event) => {
           if (event.key !== "Enter") return;
-          const selection = document.getSelection();
-          const anchorNode = selection?.anchorNode;
+          if (event.isComposing) return;
+          const context = getCurrentBlockContext();
+          if (!context) return;
+
           const parentElement =
-            anchorNode?.nodeType === Node.ELEMENT_NODE
-              ? anchorNode
-              : anchorNode?.parentElement;
+            context.range.startContainer?.nodeType === Node.ELEMENT_NODE
+              ? context.range.startContainer
+              : context.range.startContainer?.parentElement;
+          const headingBlock =
+            context.block.tagName === "H1" || context.block.tagName === "H2"
+              ? context.block
+              : parentElement?.closest("h1, h2");
+          if (headingBlock instanceof HTMLElement) {
+            event.preventDefault();
+            insertParagraphAfterBlock(headingBlock, context.range);
+            window.requestAnimationFrame(emitChange);
+            return;
+          }
+
+          const blockquote = parentElement?.closest("blockquote");
+          if (blockquote instanceof HTMLElement) {
+            event.preventDefault();
+            if (isCurrentBlockquoteLineEmpty(blockquote, context.range)) {
+              exitBlockquote(blockquote, context.range);
+            } else {
+              insertLineBreak();
+            }
+            window.requestAnimationFrame(emitChange);
+            return;
+          }
+
           const listItem = parentElement?.closest("li");
-          if (!listItem) return;
+          if (!listItem) {
+            event.preventDefault();
+            insertLineBreak();
+            window.requestAnimationFrame(emitChange);
+            return;
+          }
+
           if (listItem.textContent?.trim()) return;
 
           event.preventDefault();
           document.execCommand("outdent");
           formatBlock("p");
           window.requestAnimationFrame(emitChange);
+          return;
+        };
+
+        const handleMarkdownShortcut = (event) => {
+          if (event.inputType !== "insertText") return;
+          if (event.data !== " ") return;
+          if (event.isComposing) return;
+
+          const context = getCurrentBlockContext();
+          if (!context) return;
+
+          const shortcutRange = context.range.cloneRange();
+          shortcutRange.selectNodeContents(context.block);
+          shortcutRange.setEnd(context.range.endContainer, context.range.endOffset);
+          const command = getMarkdownShortcutCommand(
+            shortcutRange.toString().replace(/\\u200B/g, ""),
+          );
+          if (!command) return;
+
+          event.preventDefault();
+          applyMarkdownShortcut(command, context);
         };
 
         const receiveHostMessage = (raw) => {
@@ -569,7 +824,8 @@ export function createNoteRichTextEditorDocument({
           runCommand(target.dataset.command);
         });
 
-        editor.addEventListener("keydown", handleListExit);
+        editor.addEventListener("keydown", handleEnter);
+        editor.addEventListener("beforeinput", handleMarkdownShortcut);
         editor.addEventListener("input", () =>
           window.requestAnimationFrame(emitChange),
         );

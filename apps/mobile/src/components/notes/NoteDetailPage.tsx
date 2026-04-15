@@ -119,10 +119,7 @@ export function NoteDetailPage() {
           paddingBottom: 96 + insets.bottom,
         }}
       >
-        <View className="gap-3">
-          <Text className="px-1 text-xs font-medium uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
-            {t("create.label.content")}
-          </Text>
+        <View>
           <NoteRichTextEditor
             value={content}
             onChange={setContent}

@@ -160,7 +160,7 @@ export function ActivityChart({
           {data.map((d, i) => (
             <div
               key={d.date}
-              className="flex-1 flex items-center justify-center"
+              className="flex-1 min-w-0 flex items-center justify-center"
             >
               {shouldShowXLabel(i, data.length, tickStep) && (
                 <span className="text-[10px] text-gray-500 whitespace-nowrap">

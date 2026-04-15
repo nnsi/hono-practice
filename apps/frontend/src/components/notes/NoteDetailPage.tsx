@@ -129,9 +129,6 @@ export function NoteDetailPage() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl p-4 pb-24">
-          <div className="mb-3 px-1 text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
-            {t("create.label.content")}
-          </div>
           <NoteRichTextEditor
             value={content}
             onChange={setContent}
