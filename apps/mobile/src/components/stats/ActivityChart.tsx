@@ -8,13 +8,13 @@ import {
   computeChartScale,
   computeXLabelStep,
   formatTickValue,
-  shouldShowXLabel,
   tickBottomPct,
 } from "@packages/frontend-shared/utils/chartUtils";
 import { Text, View, useWindowDimensions } from "react-native";
 
 import { ChartBars } from "./ChartBars";
 import { ChartGoalLines } from "./ChartGoalLines";
+import { ChartXAxis } from "./ChartXAxis";
 import { DashedLine } from "./DashedLine";
 
 export function ActivityChart({
@@ -135,38 +135,7 @@ export function ActivityChart({
           </View>
         </View>
 
-        {/* X-axis */}
-        <View
-          style={{
-            flexDirection: "row",
-            height: 24,
-            marginLeft: yAxisWidth,
-            borderTopWidth: 1,
-            borderColor: "#e5e7eb",
-          }}
-        >
-          {data.map((d, i) => (
-            <View
-              key={d.date}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "visible",
-              }}
-            >
-              {shouldShowXLabel(i, data.length, tickStep) && (
-                <Text
-                  style={{ fontSize: 9, color: "#6b7280" }}
-                  numberOfLines={1}
-                >
-                  {d.date}
-                </Text>
-              )}
-            </View>
-          ))}
-        </View>
+        <ChartXAxis data={data} tickStep={tickStep} yAxisWidth={yAxisWidth} />
       </View>
     </View>
   );
