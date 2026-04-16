@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormInput } from "../common/FormInput";
 
 type Activity = {
@@ -30,7 +31,10 @@ export function NoteSettingsPanel({
   if (!isOpen) return null;
 
   return (
-    <View className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <View
+      className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
+      testID={mobileTestIds.notes.settingsPanel}
+    >
       <View className="px-4 pt-4 pb-6 gap-4">
         <View>
           <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -42,6 +46,7 @@ export function NoteSettingsPanel({
             onChangeText={onChangeTitle}
             placeholder={t("create.placeholder.title")}
             accessibilityLabel={t("create.label.title")}
+            testID={mobileTestIds.notes.titleInput}
           />
         </View>
 

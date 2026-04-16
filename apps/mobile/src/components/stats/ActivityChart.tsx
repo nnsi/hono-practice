@@ -8,12 +8,13 @@ import {
   computeChartScale,
   computeXLabelStep,
   formatTickValue,
-  shouldShowXLabel,
   tickBottomPct,
 } from "@packages/frontend-shared/utils/chartUtils";
 import { Text, View, useWindowDimensions } from "react-native";
 
 import { ChartBars } from "./ChartBars";
+import { ChartGoalLines } from "./ChartGoalLines";
+import { ChartXAxis } from "./ChartXAxis";
 import { DashedLine } from "./DashedLine";
 
 export function ActivityChart({
@@ -120,41 +121,10 @@ export function ActivityChart({
               left: yAxisWidth,
             }}
           >
-            {/* Goal lines */}
-            {goalLines.map((goal) => {
-              const pct = Math.min(
-                tickBottomPct(goal.value, effectiveYMax),
-                100,
-              );
-              return (
-                <View
-                  key={goal.id}
-                  style={{
-                    position: "absolute",
-                    bottom: `${pct}%`,
-                    left: 0,
-                    right: 0,
-                    zIndex: 1,
-                  }}
-                >
-                  <DashedLine color={goal.color} />
-                  <Text
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      bottom: 4,
-                      fontSize: 9,
-                      color: goal.color,
-                      textShadowColor: "#fff",
-                      textShadowOffset: { width: 0, height: 0 },
-                      textShadowRadius: 3,
-                    }}
-                  >
-                    {goal.label}
-                  </Text>
-                </View>
-              );
-            })}
+            <ChartGoalLines
+              goalLines={goalLines}
+              effectiveYMax={effectiveYMax}
+            />
 
             <ChartBars
               data={data}
@@ -165,27 +135,7 @@ export function ActivityChart({
           </View>
         </View>
 
-        {/* X-axis */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            height: 24,
-            marginLeft: yAxisWidth,
-            borderTopWidth: 1,
-            borderColor: "#e5e7eb",
-            alignItems: "center",
-          }}
-        >
-          {data
-            .map((d, i) => ({ label: d.date, index: i }))
-            .filter((d) => shouldShowXLabel(d.index, data.length, tickStep))
-            .map((d) => (
-              <Text key={d.label} style={{ fontSize: 9, color: "#6b7280" }}>
-                {d.label}
-              </Text>
-            ))}
-        </View>
+        <ChartXAxis data={data} tickStep={tickStep} yAxisWidth={yAxisWidth} />
       </View>
     </View>
   );

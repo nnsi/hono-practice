@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { TaskGroup } from "./TaskGroup";
 import { TasksCompletedSection } from "./TasksCompletedSection";
 import { TasksFutureSection } from "./TasksFutureSection";
@@ -65,6 +66,7 @@ export function TasksActiveTab({
             className="px-4 py-2 bg-blue-600 rounded-lg"
             accessibilityRole="button"
             accessibilityLabel={t("page.firstTask")}
+            testID={mobileTestIds.tasks.emptyCreateButton}
           >
             <Text className="text-white text-sm">{t("page.firstTask")}</Text>
           </TouchableOpacity>
@@ -167,6 +169,7 @@ export function TasksActiveTab({
           className="py-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 flex-row items-center justify-center gap-2"
           accessibilityRole="button"
           accessibilityLabel={t("page.addNew")}
+          testID={mobileTestIds.tasks.addButton}
         >
           <Plus size={18} color="#9ca3af" />
           <Text className="text-sm text-gray-500 dark:text-gray-400">

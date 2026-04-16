@@ -1,0 +1,13 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  NOTE_TITLE: e2e-note
+  NOTE_PREVIEW: Morning plan one two after list
+---
+- launchApp:
+    clearState: true
+- runFlow: flows/login.yaml
+- runFlow: flows/open-notes.yaml
+- runFlow: flows/create-note.yaml

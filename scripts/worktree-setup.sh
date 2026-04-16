@@ -77,6 +77,10 @@ else
   git -C "$REPO_ROOT" worktree add "$WT_DIR" -b "wt/$NAME" 2>/dev/null \
     || git -C "$REPO_ROOT" worktree add "$WT_DIR" "wt/$NAME" 2>/dev/null \
     || git -C "$REPO_ROOT" worktree add --detach "$WT_DIR"
+  # Use a relative gitdir so the worktree is valid from both Windows and WSL.
+  if [ -f "$WT_DIR/.git" ]; then
+    printf 'gitdir: ../../.git/worktrees/%s\n' "$NAME" > "$WT_DIR/.git"
+  fi
   echo "  Created."
 fi
 
@@ -127,7 +131,23 @@ fi
 WT_MOBILE_DIR="$WT_DIR/apps/mobile"
 if [ -d "$WT_MOBILE_DIR" ]; then
   WT_MOBILE_ENV="$WT_MOBILE_DIR/.env"
-  echo "EXPO_PUBLIC_API_URL=http://localhost:$API_PORT" > "$WT_MOBILE_ENV"
+  MAIN_MOBILE_ENV="$REPO_ROOT/apps/mobile/.env"
+  MAIN_MOBILE_ENV_EXAMPLE="$REPO_ROOT/apps/mobile/.env.example"
+
+  if [ -f "$MAIN_MOBILE_ENV" ]; then
+    cp "$MAIN_MOBILE_ENV" "$WT_MOBILE_ENV"
+  elif [ -f "$MAIN_MOBILE_ENV_EXAMPLE" ]; then
+    cp "$MAIN_MOBILE_ENV_EXAMPLE" "$WT_MOBILE_ENV"
+  else
+    : > "$WT_MOBILE_ENV"
+  fi
+
+  if grep -q "^EXPO_PUBLIC_API_URL=" "$WT_MOBILE_ENV" 2>/dev/null; then
+    sed -i "s|^EXPO_PUBLIC_API_URL=.*|EXPO_PUBLIC_API_URL=http://localhost:$API_PORT|" "$WT_MOBILE_ENV"
+  else
+    echo "EXPO_PUBLIC_API_URL=http://localhost:$API_PORT" >> "$WT_MOBILE_ENV"
+  fi
+
   echo "  apps/mobile/.env → OK"
 fi
 

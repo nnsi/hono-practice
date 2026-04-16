@@ -1,6 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { ActikoLogo } from "../common/ActikoLogo";
 import { FormInput } from "../common/FormInput";
 import { GoogleMark } from "../common/GoogleMark";
@@ -27,7 +28,10 @@ export function LoginForm() {
   } = useLoginForm();
 
   return (
-    <View className="flex-1 justify-center px-8 bg-white dark:bg-gray-800">
+    <View
+      className="flex-1 justify-center px-8 bg-white dark:bg-gray-800"
+      testID={mobileTestIds.login.screen}
+    >
       <View className="items-center mb-8">
         <ActikoLogo width={200} height={83} />
       </View>
@@ -46,6 +50,7 @@ export function LoginForm() {
         autoCapitalize="none"
         autoCorrect={false}
         accessibilityLabel={t("auth.loginId")}
+        testID={mobileTestIds.login.loginIdInput}
       />
 
       <FormInput
@@ -55,6 +60,7 @@ export function LoginForm() {
         onChangeText={setPassword}
         secureTextEntry
         accessibilityLabel={t("auth.password")}
+        testID={mobileTestIds.login.passwordInput}
       />
 
       <TouchableOpacity
@@ -63,6 +69,7 @@ export function LoginForm() {
         disabled={loading}
         accessibilityRole="button"
         accessibilityLabel={loading ? t("auth.loggingIn") : t("auth.login")}
+        testID={mobileTestIds.login.submitButton}
       >
         <Text className="text-white dark:text-gray-900 text-base font-semibold">
           {loading ? t("auth.loggingIn") : t("auth.login")}

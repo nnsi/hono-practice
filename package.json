@@ -29,6 +29,8 @@
     "db-migrate": "drizzle-kit migrate --config=infra/drizzle/drizzle.config.ts",
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
+    "mobile:e2e:android:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mobile-e2e-android-windows.ps1",
+    "mobile:e2e:server": "tsx scripts/mobile-e2e-server.ts",
     "gen-be": "node scripts/gen-be.js",
     "generate:api-reference": "tsx scripts/generate-api-reference.ts && biome check apps/frontend/src/components/api-reference/apiReferenceData.generated.ts --write --unsafe",
     "mobile": "pnpm --filter actiko-mobile"

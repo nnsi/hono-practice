@@ -2,8 +2,8 @@ import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, FileX } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { NoteDetailFab } from "./NoteDetailFab";
+import { NoteRichTextEditor } from "./NoteRichTextEditor";
 import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
@@ -12,7 +12,6 @@ export function NoteDetailPage() {
     isNew,
     isLoading,
     notFound,
-    mode,
     settingsOpen,
     title,
     setTitle,
@@ -24,8 +23,6 @@ export function NoteDetailPage() {
     canSave,
     showDiscardConfirm,
     activities,
-    enterEditMode,
-    togglePreview,
     toggleSettings,
     handleSave,
     handleBack,
@@ -34,39 +31,37 @@ export function NoteDetailPage() {
   } = useNoteDetailPage();
   const { t } = useTranslation("note");
 
-  const headerTitle = (() => {
-    if (isNew) return t("detail.newNote");
-    if (mode === "view") return title || t("detail.untitled");
-    return t("edit.title");
-  })();
+  const headerTitle = isNew
+    ? t("detail.newNote")
+    : title || t("detail.untitled");
 
   if (isLoading) {
     return (
-      <div className="flex flex-col min-h-full bg-white items-center justify-center">
-        <p className="text-gray-400 text-sm">{t("detail.loading")}</p>
+      <div className="flex min-h-full flex-col items-center justify-center bg-white">
+        <p className="text-sm text-gray-400">{t("detail.loading")}</p>
       </div>
     );
   }
 
   if (notFound) {
     return (
-      <div className="flex flex-col min-h-full bg-white">
+      <div className="flex min-h-full flex-col bg-white">
         <div className="sticky top-0 z-10 sticky-header">
-          <div className="flex items-center px-4 h-12">
+          <div className="flex h-12 items-center px-4">
             <button
               type="button"
               onClick={handleBack}
-              className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1 text-gray-600 transition-colors hover:text-gray-900"
             >
               <ArrowLeft size={18} />
               <span className="text-sm">{t("detail.back")}</span>
             </button>
           </div>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
           <FileX size={48} className="text-gray-300" />
-          <p className="text-gray-900 font-semibold">{t("detail.notFound")}</p>
-          <p className="text-gray-500 text-sm">
+          <p className="font-semibold text-gray-900">{t("detail.notFound")}</p>
+          <p className="text-sm text-gray-500">
             {t("detail.notFoundDescription")}
           </p>
         </div>
@@ -75,41 +70,35 @@ export function NoteDetailPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-white">
-      {/* Header */}
+    <div className="flex min-h-full flex-col bg-white">
       <div className="sticky top-0 z-10 sticky-header">
-        <div className="flex items-center justify-between px-4 pr-14 h-12">
+        <div className="flex h-12 items-center justify-between px-4 pr-14">
           <button
             type="button"
             onClick={handleBack}
-            className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1 text-gray-600 transition-colors hover:text-gray-900"
           >
             <ArrowLeft size={18} />
             <span className="text-sm">{t("detail.back")}</span>
           </button>
 
-          <h1 className="text-base font-semibold text-gray-900 truncate mx-4 flex-1 text-center">
+          <h1 className="mx-4 flex-1 truncate text-center text-base font-semibold text-gray-900">
             {headerTitle}
           </h1>
 
-          {(mode === "edit" || mode === "preview") && (
-            <FormButton
-              variant="primary"
-              label={isSubmitting ? t("detail.saving") : t("detail.save")}
-              onClick={handleSave}
-              disabled={!canSave}
-              className="text-sm px-3 py-1.5 shrink-0"
-            />
-          )}
-
-          {mode === "view" && <div className="w-16" />}
+          <FormButton
+            variant="primary"
+            label={isSubmitting ? t("detail.saving") : t("detail.save")}
+            onClick={handleSave}
+            disabled={!canSave}
+            className="shrink-0 px-3 py-1.5 text-sm"
+          />
         </div>
       </div>
 
-      {/* Discard Confirm */}
       {showDiscardConfirm && (
-        <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
-          <p className="text-sm text-amber-800 font-medium">
+        <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800">
             {t("detail.discardTitle")}
           </p>
           <div className="flex gap-2">
@@ -117,19 +106,18 @@ export function NoteDetailPage() {
               variant="secondary"
               label={t("detail.keepEditing")}
               onClick={cancelDiscard}
-              className="text-xs px-3"
+              className="px-3 text-xs"
             />
             <FormButton
               variant="dangerConfirm"
               label={t("detail.discard")}
               onClick={confirmDiscard}
-              className="text-xs px-3"
+              className="px-3 text-xs"
             />
           </div>
         </div>
       )}
 
-      {/* Settings Panel */}
       <NoteSettingsPanel
         title={title}
         setTitle={setTitle}
@@ -139,38 +127,17 @@ export function NoteDetailPage() {
         isOpen={settingsOpen}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative">
-        {mode === "view" && (
-          <div className="flex-1 p-4 overflow-y-auto pb-24">
-            <MarkdownPreview content={content} />
-          </div>
-        )}
-
-        {mode === "edit" && (
-          <textarea
-            className="flex-1 w-full p-4 text-sm text-gray-800 bg-transparent resize-none focus:outline-none pb-24"
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-5xl p-4 pb-24">
+          <NoteRichTextEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             placeholder={t("create.placeholder.content")}
-            autoFocus={false}
           />
-        )}
-
-        {mode === "preview" && (
-          <div className="flex-1 p-4 overflow-y-auto pb-24">
-            <MarkdownPreview content={content} />
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* FAB */}
-      <NoteDetailFab
-        mode={mode}
-        onEditClick={enterEditMode}
-        onPreviewToggle={togglePreview}
-        onSettingsToggle={toggleSettings}
-      />
+      <NoteDetailFab onSettingsToggle={toggleSettings} />
     </div>
   );
 }

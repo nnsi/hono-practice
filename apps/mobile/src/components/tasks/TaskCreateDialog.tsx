@@ -6,6 +6,7 @@ import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
+import { mobileTestIds } from "../../testing/testIds";
 import { DatePickerField } from "../common/DatePickerField";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
@@ -71,6 +72,7 @@ export function TaskCreateDialog({
       visible
       onClose={onClose}
       title={t("create.title")}
+      testID={mobileTestIds.tasks.createDialog}
       footer={
         <View className="flex-row gap-2">
           <FormButton
@@ -78,6 +80,7 @@ export function TaskCreateDialog({
             label={t("delete.cancel")}
             onPress={onClose}
             className="flex-1"
+            testID={mobileTestIds.tasks.createCancelButton}
           />
           <FormButton
             variant="primary"
@@ -85,6 +88,7 @@ export function TaskCreateDialog({
             onPress={handleCreate}
             disabled={isSubmitting || !title.trim()}
             className="flex-1"
+            testID={mobileTestIds.tasks.createSubmitButton}
           />
         </View>
       }
@@ -101,6 +105,7 @@ export function TaskCreateDialog({
             placeholder={t("create.placeholder.title")}
             autoFocus
             accessibilityLabel={t("create.label.title")}
+            testID={mobileTestIds.tasks.createTitleInput}
           />
         </View>
 
@@ -164,6 +169,7 @@ export function TaskCreateDialog({
             numberOfLines={3}
             style={{ textAlignVertical: "top" }}
             accessibilityLabel={t("create.label.memo")}
+            testID={mobileTestIds.tasks.createMemoInput}
           />
         </View>
       </View>

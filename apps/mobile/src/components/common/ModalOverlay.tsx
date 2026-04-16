@@ -29,6 +29,7 @@ type ModalOverlayProps = {
   title: string | React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  testID?: string;
 };
 
 export function ModalOverlay({
@@ -37,6 +38,7 @@ export function ModalOverlay({
   title,
   children,
   footer,
+  testID,
 }: ModalOverlayProps) {
   const { colors } = useThemeContext();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -79,6 +81,7 @@ export function ModalOverlay({
           >
             <View
               className="bg-white dark:bg-gray-800 rounded-2xl w-full max-h-[85%]"
+              testID={testID}
               style={{
                 maxWidth: 448,
                 shadowColor: colors.shadowColor,

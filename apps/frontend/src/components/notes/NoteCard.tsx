@@ -1,4 +1,5 @@
 import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
+import { markdownToNotePreviewText } from "@packages/frontend-shared/utils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Loader2, Trash2 } from "lucide-react";
@@ -21,7 +22,9 @@ export function NoteCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("note");
-  const preview = content.length > 50 ? `${content.slice(0, 50)}...` : content;
+  const previewText = markdownToNotePreviewText(content);
+  const preview =
+    previewText.length > 50 ? `${previewText.slice(0, 50)}...` : previewText;
   const formattedDate = dayjs(updatedAt).format("YYYY/MM/DD HH:mm");
   const isPending = syncStatus === "pending";
 

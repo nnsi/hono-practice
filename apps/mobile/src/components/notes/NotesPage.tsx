@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { syncEngine } from "../../sync/syncEngine";
+import { mobileTestIds } from "../../testing/testIds";
 import { NoteCard } from "./NoteCard";
 import { NoteDeleteConfirmDialog } from "./NoteDeleteConfirmDialog";
 import { useNotesPage } from "./useNotesPage";
@@ -40,7 +41,10 @@ export function NotesPage() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-800">
+    <View
+      className="flex-1 bg-white dark:bg-gray-800"
+      testID={mobileTestIds.notes.page}
+    >
       <View className="flex-row items-center justify-between pl-4 pr-16 h-12 border-b border-gray-100 dark:border-gray-800">
         <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
           {t("page.title")}
@@ -51,6 +55,7 @@ export function NotesPage() {
           hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
           accessibilityRole="button"
           accessibilityLabel={t("page.createNote")}
+          testID={mobileTestIds.notes.addButton}
         >
           <Plus size={22} color="#6b7280" />
         </TouchableOpacity>
@@ -76,6 +81,7 @@ export function NotesPage() {
               className="mt-4 px-4 py-2 bg-gray-900 dark:bg-gray-100 rounded-lg"
               accessibilityRole="button"
               accessibilityLabel={t("page.firstNote")}
+              testID={mobileTestIds.notes.emptyCreateButton}
             >
               <Text className="text-white dark:text-gray-900 font-medium text-sm">
                 {t("page.firstNote")}

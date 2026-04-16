@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { syncEngine } from "../../sync/syncEngine";
+import { mobileTestIds } from "../../testing/testIds";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
@@ -60,7 +61,10 @@ export function TasksPage() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-800">
+    <View
+      className="flex-1 bg-white dark:bg-gray-800"
+      testID={mobileTestIds.tasks.page}
+    >
       {/* Tabs */}
       <View
         className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800"
@@ -74,6 +78,7 @@ export function TasksPage() {
           accessibilityRole="tab"
           accessibilityLabel={t("page.tab.active")}
           accessibilityState={{ selected: activeTab === "active" }}
+          testID={mobileTestIds.tasks.activeTab}
         >
           <Text
             className={`text-sm font-medium ${
@@ -93,6 +98,7 @@ export function TasksPage() {
           accessibilityRole="tab"
           accessibilityLabel={t("page.tab.archived")}
           accessibilityState={{ selected: activeTab === "archived" }}
+          testID={mobileTestIds.tasks.archivedTab}
         >
           <Text
             className={`text-sm font-medium ${

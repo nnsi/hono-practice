@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+- assertVisible:
+    id: login.screen
+- tapOn:
+    id: login.loginIdInput
+- inputText: ${LOGIN_ID}
+- tapOn:
+    id: login.passwordInput
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: login.submit
+- assertVisible:
+    id: tabs.tasks

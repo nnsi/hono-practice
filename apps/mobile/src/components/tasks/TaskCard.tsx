@@ -10,6 +10,7 @@ import {
 import { TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
+import { buildTaskCardTestIds } from "../../testing/testIds";
 import { TaskCardBody } from "./TaskCardBody";
 import { SwipeCompleteAction, SwipeDeleteAction } from "./TaskSwipeActions";
 import type { TaskItem } from "./types";
@@ -41,6 +42,7 @@ export function TaskCard({
   const { t } = useTranslation("task");
   const { linkedActivity, linkedKind, iconBlobMap, showMoveToToday } =
     useTaskCard(task, archived, onMoveToToday);
+  const testIds = buildTaskCardTestIds(task.id);
 
   return (
     <Swipeable
@@ -75,6 +77,7 @@ export function TaskCard({
               }
             : undefined
         }
+        testID={testIds.card}
       >
         {!archived && (
           <TouchableOpacity
@@ -84,6 +87,7 @@ export function TaskCard({
             accessibilityRole="checkbox"
             accessibilityState={{ checked: !!task.doneDate }}
             accessibilityLabel={task.title}
+            testID={testIds.toggle}
           >
             {task.doneDate ? (
               <CheckCircle2 size={22} color="#22c55e" />
@@ -95,6 +99,7 @@ export function TaskCard({
 
         <TaskCardBody
           title={task.title}
+          testID={testIds.title}
           completed={completed}
           doneDate={task.doneDate}
           startDate={task.startDate}
@@ -116,6 +121,7 @@ export function TaskCard({
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
               accessibilityLabel={t("card.moveToToday")}
+              testID={testIds.moveToToday}
             >
               <CalendarCheck size={16} color="#9ca3af" />
             </TouchableOpacity>
@@ -127,6 +133,7 @@ export function TaskCard({
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
               accessibilityLabel={t("card.archive")}
+              testID={testIds.archive}
             >
               <Archive size={16} color="#9ca3af" />
             </TouchableOpacity>
@@ -137,6 +144,7 @@ export function TaskCard({
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
             accessibilityLabel={t("card.edit")}
+            testID={testIds.edit}
           >
             <Pencil size={16} color="#9ca3af" />
           </TouchableOpacity>
@@ -146,6 +154,7 @@ export function TaskCard({
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
             accessibilityLabel={t("card.delete")}
+            testID={testIds.delete}
           >
             <Trash2 size={16} color="#9ca3af" />
           </TouchableOpacity>
