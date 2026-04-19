@@ -11,7 +11,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(fileURLToPath(import.meta.url), "../..");
 const SCAN_DIRS = ["apps", "packages"];
-const DOC_DIRS = ["docs/knowledges", "docs/adr"];
+const DOC_PATHS = [
+  "docs/adr",
+  "docs/ops",
+  "docs/release-note-dev.md",
+];
 const INSTRUCTION_FILES = [
   "CLAUDE.md",
   "apps/backend/CLAUDE.md",
@@ -91,21 +95,28 @@ function scanTypeCasts(files) {
   ];
 }
 
+function collectMdFiles(path) {
+  const abs = join(ROOT, path);
+  if (!existsSync(abs)) return [];
+  const st = statSync(abs);
+  if (st.isFile()) {
+    return extname(path) === ".md" ? [path] : [];
+  }
+  return readdirSync(abs, { recursive: true, withFileTypes: false })
+    .filter((f) => extname(f) === ".md" && !f.includes("node_modules"))
+    .map((f) => `${path}/${f}`.replace(/\\/g, "/"));
+}
+
 function scanStaleDocs() {
   const pathPattern = /(?:apps|packages|infra|feature|scripts|src)\/[\w\-/.]+(?:\.\w+)/g;
   const hits = [];
-  for (const dir of DOC_DIRS) {
-    const abs = join(ROOT, dir);
-    if (!existsSync(abs)) continue;
-    for (const f of readdirSync(abs)) {
-      if (extname(f) !== ".md") continue;
-      const relDoc = `${dir}/${f}`;
-      const content = readFileSync(join(abs, f), "utf-8");
-      const matches = content.match(pathPattern) || [];
-      for (const ref of [...new Set(matches)]) {
-        if (!existsSync(join(ROOT, ref))) {
-          hits.push({ file: relDoc, detail: `存在しない参照: ${ref}` });
-        }
+  const mdFiles = DOC_PATHS.flatMap(collectMdFiles);
+  for (const relDoc of mdFiles) {
+    const content = readFileSync(join(ROOT, relDoc), "utf-8");
+    const matches = content.match(pathPattern) || [];
+    for (const ref of [...new Set(matches)]) {
+      if (!existsSync(join(ROOT, ref))) {
+        hits.push({ file: relDoc, detail: `存在しない参照: ${ref}` });
       }
     }
   }
