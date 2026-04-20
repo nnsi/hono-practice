@@ -1,98 +1,18 @@
 resource "cloudflare_r2_bucket" "storage" {
   account_id = var.cloudflare_account_id
-  name       = "${var.r2_bucket_name}-${var.environment}"
-  location   = var.r2_bucket_location
-}
+  name       = "actiko-${var.environment}"
+  location   = "APAC"
 
-resource "cloudflare_r2_bucket" "backups" {
-  count      = var.environment == "production" ? 1 : 0
-  account_id = var.cloudflare_account_id
-  name       = "${var.r2_bucket_name}-backups"
-  location   = var.r2_bucket_location
-}
-
-resource "cloudflare_r2_bucket" "uploads" {
-  account_id = var.cloudflare_account_id
-  name       = "${var.r2_bucket_name}-uploads-${var.environment}"
-  location   = var.r2_bucket_location
-}
-
-resource "cloudflare_r2_bucket_cors_configuration" "storage_cors" {
-  bucket_name = cloudflare_r2_bucket.storage.name
-  account_id  = var.cloudflare_account_id
-
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "HEAD", "POST", "PUT", "DELETE"]
-    allowed_origins = var.custom_domain != "" ? [
-      "https://${var.custom_domain}",
-      "https://api.${var.custom_domain}"
-    ] : ["*"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3600
+  lifecycle {
+    prevent_destroy = true
+    # location は作成時のみ設定される。既存と差分が出ても re-create しないよう無視。
+    ignore_changes = [location]
   }
 }
 
-resource "cloudflare_r2_bucket_cors_configuration" "uploads_cors" {
-  bucket_name = cloudflare_r2_bucket.uploads.name
-  account_id  = var.cloudflare_account_id
-
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "HEAD", "POST", "PUT"]
-    allowed_origins = var.custom_domain != "" ? [
-      "https://${var.custom_domain}",
-      "https://api.${var.custom_domain}"
-    ] : ["*"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3600
-  }
-}
-
-resource "cloudflare_r2_bucket_lifecycle_configuration" "uploads_lifecycle" {
-  bucket_name = cloudflare_r2_bucket.uploads.name
-  account_id  = var.cloudflare_account_id
-
-  rule {
-    id     = "delete-old-uploads"
-    status = "Enabled"
-
-    filter {
-      prefix = "temp/"
-    }
-
-    expiration {
-      days = 7
-    }
-  }
-
-  rule {
-    id     = "delete-orphaned-uploads"
-    status = "Enabled"
-
-    filter {
-      prefix = "orphaned/"
-    }
-
-    expiration {
-      days = 30
-    }
-  }
-}
-
-resource "cloudflare_r2_bucket_lifecycle_configuration" "backups_lifecycle" {
-  count       = var.environment == "production" ? 1 : 0
-  bucket_name = cloudflare_r2_bucket.backups[0].name
-  account_id  = var.cloudflare_account_id
-
-  rule {
-    id     = "delete-old-backups"
-    status = "Enabled"
-
-    filter {}
-
-    expiration {
-      days = 90
-    }
-  }
+# 既存の手動作成された R2 bucket を state に取り込む。
+# 初回 apply 後、この import block はフォローアップ PR で削除する。
+import {
+  to = cloudflare_r2_bucket.storage
+  id = "${var.cloudflare_account_id}/actiko-${var.environment}"
 }
