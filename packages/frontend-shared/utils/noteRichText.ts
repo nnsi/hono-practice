@@ -46,6 +46,11 @@ export type NoteRichTextEditorMessage =
       source: typeof NOTE_RICH_TEXT_EDITOR_SOURCE;
       type: "height";
       height: number;
+    }
+  | {
+      source: typeof NOTE_RICH_TEXT_EDITOR_SOURCE;
+      type: "paste-request";
+      text: string;
     };
 
 type CreateNoteRichTextEditorDocumentOptions = {
@@ -142,6 +147,22 @@ function decodeHtmlEntities(text: string) {
     .replaceAll("&#39;", "'");
 }
 
+const markdownDetectionPatterns: RegExp[] = [
+  /^\s{0,3}#{1,6} /m,
+  /^\s{0,3}[-*+] /m,
+  /^\s{0,3}\d+\. /m,
+  /^\s{0,3}> /m,
+  /```/,
+  /\*\*[^*\n]+\*\*/,
+  /(^|\s)\*[^*\s][^*\n]*\*(\s|$)/,
+  /\[[^\]\n]+\]\([^)\n]+\)/,
+];
+
+export function looksLikeNoteMarkdown(text: string) {
+  if (!text) return false;
+  return markdownDetectionPatterns.some((pattern) => pattern.test(text));
+}
+
 export function matchNoteBlockMarkdownShortcut(text: string) {
   const normalized = text.replaceAll("\u00a0", " ");
   const matchedShortcut = markdownShortcutEntries.find(
@@ -171,6 +192,23 @@ export function noteEditorHtmlToMarkdown(html: string) {
 
   const markdown = htmlToMarkdownProcessor.processSync(normalized).toString();
   return normalizeMarkdown(markdown);
+}
+
+export function markdownToNotePasteHtml(text: string) {
+  const html = markdownToNoteEditorHtml(text);
+  if (html === EMPTY_EDITOR_HTML) {
+    return "";
+  }
+
+  const trimmed = html.trim();
+  const singleParagraph = /^<p>([\s\S]*)<\/p>$/.exec(trimmed);
+  if (singleParagraph) {
+    const inner = singleParagraph[1];
+    if (!/<(p|h1|h2|h3|ul|ol|li|blockquote|pre)(\s|>)/i.test(inner)) {
+      return inner;
+    }
+  }
+  return trimmed;
 }
 
 export function markdownToNotePreviewText(markdown: string) {
@@ -231,6 +269,14 @@ export function parseNoteRichTextEditorMessage(
         height: parsed.height,
       };
     }
+
+    if (parsed.type === "paste-request" && typeof parsed.text === "string") {
+      return {
+        source: NOTE_RICH_TEXT_EDITOR_SOURCE,
+        type: "paste-request",
+        text: parsed.text,
+      };
+    }
   } catch {
     return null;
   }
@@ -283,6 +329,10 @@ export function createNoteRichTextEditorDocument({
   const config = JSON.stringify({
     emptyHtml: EMPTY_EDITOR_HTML,
     markdownShortcuts: markdownShortcutEntries,
+    markdownDetectionPatterns: markdownDetectionPatterns.map((pattern) => ({
+      source: pattern.source,
+      flags: pattern.flags,
+    })),
     source: NOTE_RICH_TEXT_EDITOR_SOURCE,
   });
 
@@ -797,12 +847,23 @@ export function createNoteRichTextEditorDocument({
           applyMarkdownShortcut(command, context);
         };
 
+        const insertHtmlAtCaret = (html) => {
+          if (!html) return;
+          focusEditor();
+          document.execCommand("insertHTML", false, html);
+          window.requestAnimationFrame(emitChange);
+        };
+
         const receiveHostMessage = (raw) => {
           try {
             const message =
               typeof raw === "string" ? JSON.parse(raw) : raw;
             if (message?.type === "set-html" && typeof message.html === "string") {
               setHtml(message.html);
+              return;
+            }
+            if (message?.type === "insert-html" && typeof message.html === "string") {
+              insertHtmlAtCaret(message.html);
             }
           } catch {
             // Ignore malformed host messages.
@@ -829,9 +890,30 @@ export function createNoteRichTextEditorDocument({
         editor.addEventListener("input", () =>
           window.requestAnimationFrame(emitChange),
         );
-        editor.addEventListener("paste", () =>
-          window.setTimeout(emitChange, 0),
+        const markdownDetectionRegexes = (config.markdownDetectionPatterns || []).map(
+          (entry) => new RegExp(entry.source, entry.flags),
         );
+        const looksLikeMarkdown = (text) => {
+          if (!text) return false;
+          return markdownDetectionRegexes.some((pattern) => pattern.test(text));
+        };
+
+        editor.addEventListener("paste", (event) => {
+          const clipboard = event.clipboardData;
+          if (!clipboard) {
+            window.setTimeout(emitChange, 0);
+            return;
+          }
+          const types = clipboard.types ? Array.from(clipboard.types) : [];
+          const text = clipboard.getData("text/plain");
+          const hasHtml = types.includes("text/html");
+          if (text && (looksLikeMarkdown(text) || !hasHtml)) {
+            event.preventDefault();
+            postMessage({ type: "paste-request", text });
+            return;
+          }
+          window.setTimeout(emitChange, 0);
+        });
         window.addEventListener("resize", reportHeight);
 
         document.execCommand("defaultParagraphSeparator", false, "p");

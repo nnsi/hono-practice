@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createNoteRichTextEditorDocument,
   markdownToNoteEditorHtml,
+  markdownToNotePasteHtml,
   noteEditorHtmlToMarkdown,
   parseNoteRichTextEditorMessage,
 } from "@packages/frontend-shared/utils/noteRichText";
@@ -76,6 +77,14 @@ export function NoteRichTextEditor({
 
       if (message.type === "height") {
         setHeight(Math.max(360, Math.ceil(message.height)));
+        return;
+      }
+
+      if (message.type === "paste-request") {
+        const html = markdownToNotePasteHtml(message.text);
+        if (!html) return;
+        const serialized = JSON.stringify({ type: "insert-html", html });
+        iframeRef.current?.contentWindow?.postMessage(serialized, "*");
         return;
       }
 
