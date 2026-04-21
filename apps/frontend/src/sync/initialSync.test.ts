@@ -198,6 +198,44 @@ describe("initialSync", () => {
       );
     });
 
+    it("preserves existing tutorialStatus when updating authState", async () => {
+      setupMockApi();
+      mockDb.authState.get.mockResolvedValue({
+        id: "current",
+        userId: "user-123",
+        lastLoginAt: "2025-01-01T00:00:00Z",
+        plan: "free",
+        tutorialStatus: "pending",
+      });
+
+      await performInitialSync("user-123");
+
+      expect(mockDb.authState.put).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tutorialStatus: "pending",
+        }),
+      );
+    });
+
+    it("preserves tutorialStatus=done when updating authState", async () => {
+      setupMockApi();
+      mockDb.authState.get.mockResolvedValue({
+        id: "current",
+        userId: "user-123",
+        lastLoginAt: "2025-01-01T00:00:00Z",
+        plan: "free",
+        tutorialStatus: "done",
+      });
+
+      await performInitialSync("user-123");
+
+      expect(mockDb.authState.put).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tutorialStatus: "done",
+        }),
+      );
+    });
+
     it("fetches all APIs in parallel", async () => {
       const { activitiesGet, logsGet, goalsGet, tasksGet } = setupMockApi();
 

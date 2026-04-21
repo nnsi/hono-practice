@@ -52,6 +52,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       userId,
       lastLoginAt: new Date().toISOString(),
       plan: existing?.plan,
+      tutorialStatus: existing?.tutorialStatus,
     });
   },
   isLocalDataEmpty: async () => {

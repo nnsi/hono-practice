@@ -137,6 +137,7 @@ export function useAuth(): AuthState {
       await finalizeLogin(
         await fetchAuthenticatedUser("Failed to fetch user after registration"),
       );
+      await db.authState.update("current", { tutorialStatus: "pending" });
     },
     [fetchAuthenticatedUser, finalizeLogin],
   );

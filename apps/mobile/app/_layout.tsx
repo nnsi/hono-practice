@@ -23,11 +23,13 @@ import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
 import { OverlayHost } from "../src/components/common/overlayPortal";
 import { UpdateToast } from "../src/components/common/UpdateToast";
 import { ErrorBoundary } from "../src/components/root/ErrorBoundary";
+import { TutorialWizard } from "../src/components/tutorial/TutorialWizard";
 import { ThemeProvider } from "../src/contexts/ThemeContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useOtaUpdate } from "../src/hooks/useOtaUpdate";
 import { useSyncEngine } from "../src/hooks/useSyncEngine";
 import { clearThemePreference } from "../src/hooks/useTheme";
+import { useTutorial } from "../src/hooks/useTutorial";
 import { initRevenueCat } from "../src/lib/revenueCat";
 import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
@@ -86,6 +88,7 @@ export default function RootLayout() {
     useOtaUpdate();
 
   useSyncEngine(auth.syncReady);
+  const tutorial = useTutorial();
 
   useEffect(() => {
     setupGlobalErrorHandler();
@@ -177,6 +180,12 @@ export default function RootLayout() {
                     onDismiss={dismissPendingUpdate}
                   />
                   <OverlayHost />
+                  {tutorial.isOpen && (
+                    <TutorialWizard
+                      complete={tutorial.complete}
+                      skip={tutorial.skip}
+                    />
+                  )}
                 </View>
               </AuthContext.Provider>
             </QueryClientProvider>

@@ -1,4 +1,14 @@
 export type {
+  TutorialAdapter,
+  TutorialStatus,
+  TutorialStep,
+  UseTutorialReturn,
+} from "./createUseTutorial";
+export {
+  TUTORIAL_STEPS,
+  createUseTutorial,
+} from "./createUseTutorial";
+export type {
   ActivityBase,
   ActivityKindBase,
   ActivityLogBase,

@@ -13,6 +13,7 @@ import recordingEn from "./locales/en/recording.json";
 import settingsEn from "./locales/en/settings.json";
 import statsEn from "./locales/en/stats.json";
 import taskEn from "./locales/en/task.json";
+import tutorialEn from "./locales/en/tutorial.json";
 import validationEn from "./locales/en/validation.json";
 import actikoJa from "./locales/ja/actiko.json";
 import activityJa from "./locales/ja/activity.json";
@@ -26,6 +27,7 @@ import recordingJa from "./locales/ja/recording.json";
 import settingsJa from "./locales/ja/settings.json";
 import statsJa from "./locales/ja/stats.json";
 import taskJa from "./locales/ja/task.json";
+import tutorialJa from "./locales/ja/tutorial.json";
 import validationJa from "./locales/ja/validation.json";
 import "./types";
 
@@ -45,6 +47,7 @@ const allNS = [
   "recording",
   "contact",
   "note",
+  "tutorial",
 ] as const;
 
 export const resources = {
@@ -62,6 +65,7 @@ export const resources = {
     recording: recordingJa,
     contact: contactJa,
     note: noteJa,
+    tutorial: tutorialJa,
   },
   en: {
     common: commonEn,
@@ -77,6 +81,7 @@ export const resources = {
     recording: recordingEn,
     contact: contactEn,
     note: noteEn,
+    tutorial: tutorialEn,
   },
 } as const;
 
