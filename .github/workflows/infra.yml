@@ -1,0 +1,258 @@
+name: Infra (Terraform)
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/infra.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      env:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - stg
+          - prod
+
+# 同じ環境に対する並列実行を禁止（state lock 競合の根本回避）。
+# PR 側は PR 番号でグルーピング。
+concurrency:
+  group: terraform-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.env || format('pr-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: 1.9.8
+  TF_STATE_BUCKET: terraform-state
+  TF_STATE_KEY_PREFIX: actiko
+
+jobs:
+  # ------------------------------------------------------------------
+  # PR: terraform/** に変更があれば両環境の plan を PR コメントに貼る
+  # ------------------------------------------------------------------
+  pr-plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [stg, prod]
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: '0'
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.CF_ACCOUNT_ID }}
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Generate backend config
+        run: |
+          cat > backend.runtime.tfbackend <<EOF
+          bucket = "${TF_STATE_BUCKET}"
+          key    = "${TF_STATE_KEY_PREFIX}/${{ matrix.env }}/terraform.tfstate"
+          region = "auto"
+          endpoints = { s3 = "https://${{ secrets.CF_ACCOUNT_ID }}.r2.cloudflarestorage.com" }
+          skip_credentials_validation = true
+          skip_metadata_api_check     = true
+          skip_region_validation      = true
+          skip_requesting_account_id  = true
+          skip_s3_checksum            = true
+          use_path_style              = true
+          EOF
+
+      - name: Export env-specific TF_VARs (one-shot import IDs)
+        env:
+          TARGET_ENV: ${{ matrix.env }}
+          KV_STG: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
+          KV_PROD: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
+        run: |
+          if [ "$TARGET_ENV" = "stg" ]; then
+            echo "TF_VAR_kv_rate_limit_id_existing=$KV_STG" >> "$GITHUB_ENV"
+          else
+            echo "TF_VAR_kv_rate_limit_id_existing=$KV_PROD" >> "$GITHUB_ENV"
+          fi
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init -backend-config=backend.runtime.tfbackend
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform plan \
+            -no-color \
+            -input=false \
+            -var-file=env/${{ matrix.env }}.tfvars \
+            -out=tfplan \
+            -detailed-exitcode
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          terraform show -no-color tfplan > plan.txt
+          # exit codes: 0 = no diff, 1 = error, 2 = diff present. 2 は成功扱い。
+          if [ "$code" = "1" ]; then exit 1; fi
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const env = '${{ matrix.env }}';
+            const exitCode = '${{ steps.plan.outputs.exitcode }}';
+            const status = exitCode === '2' ? 'changes' : 'no changes';
+            const plan = fs.readFileSync('terraform/plan.txt', 'utf8');
+            const header = `### Terraform Plan (\`${env}\`) — ${status}`;
+            const MAX = 60000;
+            const truncated = plan.length > MAX
+              ? plan.slice(0, MAX) + '\n... (truncated; full output in workflow logs)'
+              : plan;
+            const body = [
+              header,
+              '',
+              '```hcl',
+              truncated,
+              '```',
+              '',
+              `<sub>commit: \`${context.sha.slice(0, 7)}\` • workflow: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})</sub>`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(
+              c => c.user.type === 'Bot' && c.body.startsWith(`### Terraform Plan (\`${env}\`)`)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ------------------------------------------------------------------
+  # workflow_dispatch: plan / apply / destroy を手動実行
+  # apply / destroy は environment protection rules でレビューをゲート
+  # ------------------------------------------------------------------
+  dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: infra-${{ github.event.inputs.env }}
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: '0'
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.CF_ACCOUNT_ID }}
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Generate backend config
+        run: |
+          cat > backend.runtime.tfbackend <<EOF
+          bucket = "${TF_STATE_BUCKET}"
+          key    = "${TF_STATE_KEY_PREFIX}/${{ github.event.inputs.env }}/terraform.tfstate"
+          region = "auto"
+          endpoints = { s3 = "https://${{ secrets.CF_ACCOUNT_ID }}.r2.cloudflarestorage.com" }
+          skip_credentials_validation = true
+          skip_metadata_api_check     = true
+          skip_region_validation      = true
+          skip_requesting_account_id  = true
+          skip_s3_checksum            = true
+          use_path_style              = true
+          EOF
+
+      - name: Export env-specific TF_VARs (one-shot import IDs)
+        env:
+          TARGET_ENV: ${{ github.event.inputs.env }}
+          KV_STG: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
+          KV_PROD: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
+        run: |
+          if [ "$TARGET_ENV" = "stg" ]; then
+            echo "TF_VAR_kv_rate_limit_id_existing=$KV_STG" >> "$GITHUB_ENV"
+          else
+            echo "TF_VAR_kv_rate_limit_id_existing=$KV_PROD" >> "$GITHUB_ENV"
+          fi
+
+      - name: Terraform init
+        run: terraform init -backend-config=backend.runtime.tfbackend
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        if: github.event.inputs.action == 'plan'
+        run: |
+          terraform plan \
+            -no-color \
+            -input=false \
+            -var-file=env/${{ github.event.inputs.env }}.tfvars
+
+      - name: Terraform apply
+        if: github.event.inputs.action == 'apply'
+        run: |
+          terraform apply \
+            -no-color \
+            -input=false \
+            -auto-approve \
+            -var-file=env/${{ github.event.inputs.env }}.tfvars
+
+      - name: Terraform destroy
+        if: github.event.inputs.action == 'destroy'
+        run: |
+          terraform destroy \
+            -no-color \
+            -input=false \
+            -auto-approve \
+            -var-file=env/${{ github.event.inputs.env }}.tfvars

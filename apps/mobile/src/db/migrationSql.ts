@@ -173,3 +173,7 @@ CREATE INDEX IF NOT EXISTS idx_note_user_id ON note(user_id);
 CREATE INDEX IF NOT EXISTS idx_note_activity_id ON note(activity_id);
 CREATE INDEX IF NOT EXISTS idx_note_updated_at ON note(updated_at);
 `;
+
+export const MIGRATION_V12 = `
+ALTER TABLE auth_state ADD COLUMN tutorial_status TEXT;
+`;

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createNoteRichTextEditorDocument,
   markdownToNoteEditorHtml,
+  markdownToNotePasteHtml,
   markdownToNotePreviewText,
   noteEditorHtmlToMarkdown,
   parseNoteRichTextEditorMessage,
@@ -78,7 +79,11 @@ export function NoteRichTextEditor({
   );
 
   const sendHostMessage = useCallback(
-    (message: { type: "set-html"; html: string }) => {
+    (
+      message:
+        | { type: "set-html"; html: string }
+        | { type: "insert-html"; html: string },
+    ) => {
       const serialized = JSON.stringify(JSON.stringify(message));
       webViewRef.current?.injectJavaScript(
         `window.__noteEditorHandleHostMessage(${serialized}); true;`,
@@ -99,6 +104,13 @@ export function NoteRichTextEditor({
 
       if (message.type === "height") {
         setHeight(Math.max(360, Math.ceil(message.height)));
+        return;
+      }
+
+      if (message.type === "paste-request") {
+        const html = markdownToNotePasteHtml(message.text);
+        if (!html) return;
+        sendHostMessage({ type: "insert-html", html });
         return;
       }
 

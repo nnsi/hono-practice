@@ -39,3 +39,5 @@ terraform/.terraformrc
 terraform/terraform.rc
 terraform/.env.secrets
 terraform/.env
+terraform/*.tfbackend
+terraform/tfplan

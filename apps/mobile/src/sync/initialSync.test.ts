@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 vi.mock("../db/database", () => ({
   getDatabase: vi.fn(),
 }));
@@ -73,9 +75,17 @@ vi.mock("@packages/sync-engine/mappers/apiMappers", () => ({
   mapApiNote: vi.fn((x: unknown) => x),
 }));
 
+vi.mock("../db/dbEvents", () => ({
+  dbEvents: {
+    emit: vi.fn(),
+    subscribe: vi.fn(),
+  },
+}));
+
 import { resetServerTimeForTests } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
+import { dbEvents } from "../db/dbEvents";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
@@ -201,6 +211,40 @@ describe("performInitialSync", () => {
       expect.stringContaining("INSERT OR REPLACE INTO auth_state"),
       expect.arrayContaining(["user-123"]),
     );
+  });
+
+  it("preserves existing tutorial_status when updating auth_state", async () => {
+    mockDb.getFirstAsync.mockResolvedValueOnce({
+      plan: "free",
+      tutorial_status: "pending",
+    });
+
+    await performInitialSync("user-123", mockStorage);
+
+    expect(mockDb.runAsync).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT OR REPLACE INTO auth_state"),
+      expect.arrayContaining(["pending"]),
+    );
+  });
+
+  it("preserves tutorial_status=done when updating auth_state", async () => {
+    mockDb.getFirstAsync.mockResolvedValueOnce({
+      plan: "premium",
+      tutorial_status: "done",
+    });
+
+    await performInitialSync("user-123", mockStorage);
+
+    expect(mockDb.runAsync).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT OR REPLACE INTO auth_state"),
+      expect.arrayContaining(["done"]),
+    );
+  });
+
+  it("emits auth_state event after updating auth_state", async () => {
+    await performInitialSync("user-123", mockStorage);
+
+    expect(vi.mocked(dbEvents.emit)).toHaveBeenCalledWith("auth_state");
   });
 
   it("performs full sync when no lastSyncedAt", async () => {

@@ -10,6 +10,7 @@ import type recording from "./locales/ja/recording.json";
 import type settings from "./locales/ja/settings.json";
 import type stats from "./locales/ja/stats.json";
 import type task from "./locales/ja/task.json";
+import type tutorial from "./locales/ja/tutorial.json";
 import type validation from "./locales/ja/validation.json";
 
 export type Resources = {
@@ -26,6 +27,7 @@ export type Resources = {
   recording: typeof recording;
   contact: typeof contact;
   note: typeof note;
+  tutorial: typeof tutorial;
 };
 
 declare module "i18next" {

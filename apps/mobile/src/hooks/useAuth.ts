@@ -9,6 +9,7 @@ import {
   reconcileTabPreferenceFromServer,
 } from "../components/setting/tabPreferenceStore";
 import { getDatabase } from "../db/database";
+import { setTutorialStatus } from "../repositories/authStateRepository";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { clearToken } from "../utils/apiClient";
 import {
@@ -121,6 +122,7 @@ export function useAuth(): AuthState {
     async (loginId: string, password: string, consents: Consents) => {
       await apiRegister(loginId, password, consents);
       await finalizeLogin(await apiGetMe());
+      await setTutorialStatus("pending");
     },
     [finalizeLogin],
   );

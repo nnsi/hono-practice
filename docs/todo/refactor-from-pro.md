@@ -290,9 +290,10 @@
     - `scripts/setup-ports.js`
     - `scripts/worktree-setup.sh`
 
-- [ ] `scripts/quality-scan.js` の対象ディレクトリを更新する
+- [x] `scripts/quality-scan.js` の対象ディレクトリを更新する
   - 現状: `DOC_DIRS = ["docs/knowledges", "docs/adr"]`
   - 対応: `docs/release-note-dev.md`, `docs/ops`, `docs/plan` など active docs も含める
+  - 完了: `DOC_DIRS` を `DOC_PATHS` にリネームし、`collectMdFiles` helper でディレクトリ/ファイル両対応に拡張。既に存在しない `docs/knowledges` を除去し、`docs/adr` / `docs/ops` / `docs/release-note-dev.md` を対象化 (`docs/plan` は archived 済みのため除外)
 
 - [ ] active docs と archive docs を分離して扱う
   - 方針:
