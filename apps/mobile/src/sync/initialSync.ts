@@ -4,6 +4,7 @@ import { createInitialSync } from "@packages/sync-engine";
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
+import { setUserIdAndLastLogin } from "../repositories/authStateRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
@@ -45,14 +46,7 @@ const { clearLocalData, performInitialSync } = createInitialSync({
     `);
   },
   updateAuthState: async (userId) => {
-    const db = await getDatabase();
-    const existing = await db.getFirstAsync<{ plan: string | null }>(
-      "SELECT plan FROM auth_state WHERE id = 'current'",
-    );
-    await db.runAsync(
-      "INSERT OR REPLACE INTO auth_state (id, user_id, last_login_at, plan) VALUES ('current', ?, ?, ?)",
-      [userId, new Date().toISOString(), existing?.plan ?? "free"],
-    );
+    await setUserIdAndLastLogin(userId, new Date().toISOString());
   },
   isLocalDataEmpty: async () => {
     const db = await getDatabase();

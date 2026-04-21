@@ -8,6 +8,7 @@ import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePer
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import type { TutorialStatus } from "@packages/frontend-shared/hooks";
 import Dexie, { type Table } from "dexie";
 
 export type { SyncStatus } from "@packages/domain";
@@ -36,6 +37,7 @@ type DexieAuthState = {
   userId: string;
   lastLoginAt: string;
   plan?: string;
+  tutorialStatus?: TutorialStatus;
 };
 
 class ActikoDatabase extends Dexie {

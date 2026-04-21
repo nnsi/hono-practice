@@ -1,0 +1,28 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "Welcome to Actiko",
+      "body": "Track your daily activities with a single tap. Here's a quick 1-minute tour.",
+      "cta": "Get started"
+    },
+    "createActivity": {
+      "title": "Create your first activity",
+      "body": "Add an activity you want to track — like exercise, reading, or studying.",
+      "cta": "Create activity"
+    },
+    "record": {
+      "title": "Tap to record",
+      "body": "Just tap an activity card to log it. No friction, no fuss — easy to keep up.",
+      "cta": "Next"
+    },
+    "done": {
+      "title": "You're all set",
+      "body": "That's everything you need to know. Start recording your every day.",
+      "cta": "Let's go"
+    }
+  },
+  "skip": "Skip",
+  "next": "Next",
+  "back": "Back",
+  "stepIndicator": "{{current}} / {{total}}"
+}

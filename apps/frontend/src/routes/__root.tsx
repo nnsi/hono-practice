@@ -15,9 +15,11 @@ import {
   CreateUserForm,
   LoginForm,
 } from "../components/root";
+import { TutorialWizard } from "../components/tutorial";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigationSync } from "../hooks/useNavigationSync";
 import { useSyncEngine } from "../hooks/useSyncEngine";
+import { useTutorial } from "../hooks/useTutorial";
 
 type AuthTab = "login" | "register";
 
@@ -38,6 +40,7 @@ function RootComponent() {
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(
     null,
   );
+  const { isOpen: isTutorialOpen } = useTutorial();
 
   const routerState = useRouterState();
   const isLegalPage =
@@ -144,7 +147,12 @@ function RootComponent() {
     return <NotFoundPage />;
   }
 
-  return <AuthenticatedLayout onLogout={logout} />;
+  return (
+    <>
+      <AuthenticatedLayout onLogout={logout} />
+      {isTutorialOpen && <TutorialWizard />}
+    </>
+  );
 }
 
 export const Route = createRootRoute({
