@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  looksLikeNoteMarkdown,
   markdownToNoteEditorHtml,
+  markdownToNotePasteHtml,
   markdownToNotePreviewText,
   matchNoteBlockMarkdownShortcut,
   noteEditorHtmlToMarkdown,
+  parseNoteRichTextEditorMessage,
 } from "./noteRichText";
 
 describe("noteRichText", () => {
@@ -61,6 +64,56 @@ describe("noteRichText", () => {
     );
 
     expect(markdown).toBe("> a\\\n> b");
+  });
+
+  test("paste用に単一段落のplain textは<p>を外してinline挿入できる形にする", () => {
+    expect(markdownToNotePasteHtml("hello world")).toBe("hello world");
+    expect(markdownToNotePasteHtml("**bold**")).toBe("<strong>bold</strong>");
+    expect(markdownToNotePasteHtml("")).toBe("");
+  });
+
+  test("paste用にmarkdown構文を含むテキストはブロック要素のHTMLとして返す", () => {
+    const html = markdownToNotePasteHtml("# Title\n\n- one\n- two");
+    expect(html).toContain("<h1>Title</h1>");
+    expect(html).toContain("<ul>");
+  });
+
+  test("paste用に複数段落のplain textはそのまま<p>を保持する", () => {
+    const html = markdownToNotePasteHtml("first para\n\nsecond para");
+    expect(html).toContain("<p>first para</p>");
+    expect(html).toContain("<p>second para</p>");
+  });
+
+  test("plain textがMarkdown構文を含むかを判定できる", () => {
+    expect(looksLikeNoteMarkdown("# Title")).toBe(true);
+    expect(looksLikeNoteMarkdown("## Heading")).toBe(true);
+    expect(looksLikeNoteMarkdown("- item")).toBe(true);
+    expect(looksLikeNoteMarkdown("* item")).toBe(true);
+    expect(looksLikeNoteMarkdown("1. item")).toBe(true);
+    expect(looksLikeNoteMarkdown("> quote")).toBe(true);
+    expect(looksLikeNoteMarkdown("text with **bold** inline")).toBe(true);
+    expect(looksLikeNoteMarkdown("see [link](https://example.com)")).toBe(true);
+    expect(looksLikeNoteMarkdown("```\ncode\n```")).toBe(true);
+    expect(looksLikeNoteMarkdown("just plain text with no markers")).toBe(
+      false,
+    );
+    expect(looksLikeNoteMarkdown("")).toBe(false);
+    expect(looksLikeNoteMarkdown("a*b*c")).toBe(false);
+  });
+
+  test("paste-requestメッセージをparseできる", () => {
+    const parsed = parseNoteRichTextEditorMessage(
+      JSON.stringify({
+        source: "note-rich-text-editor",
+        type: "paste-request",
+        text: "# Hello",
+      }),
+    );
+    expect(parsed).toEqual({
+      source: "note-rich-text-editor",
+      type: "paste-request",
+      text: "# Hello",
+    });
   });
 
   test("block先頭のmarkdown shortcutを判定できる", () => {
