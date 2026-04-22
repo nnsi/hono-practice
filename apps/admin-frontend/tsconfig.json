@@ -15,7 +15,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
       "@packages/types": ["../../packages/types/index.ts"],
       "@packages/types/*": ["../../packages/types/*"],
