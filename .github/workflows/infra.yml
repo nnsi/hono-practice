@@ -2,6 +2,8 @@ name: Infra (Terraform)
 
 on:
   pull_request:
+    branches:
+      - master
     paths:
       - 'terraform/**'
       - '.github/workflows/infra.yml'
