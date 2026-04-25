@@ -236,7 +236,7 @@ describe("ActivityLogUsecase", () => {
       name: string;
       userId: UserId;
       activityId: ActivityId;
-      activityKindId: ActivityKindId;
+      activityKindId: ActivityKindId | null;
       params: {
         date: string;
         quantity: number;
@@ -358,6 +358,44 @@ describe("ActivityLogUsecase", () => {
         });
       },
     );
+
+    it("アクティビティ種別なしでログを作成できる", async () => {
+      when(acRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        mockActivity,
+      );
+      when(repo.createActivityLog(anything())).thenCall((log) => log);
+
+      const result = await usecase.createActivityLog(
+        userId1,
+        activityId1,
+        null,
+        {
+          date: "2025-01-01",
+          quantity: 5,
+        },
+      );
+
+      expect(result.activityKind).toBeNull();
+      verify(repo.createActivityLog(anything())).once();
+    });
+
+    it("指定したアクティビティ種別が存在しない場合は作成しない", async () => {
+      const missingKindId = createActivityKindId(
+        "00000000-0000-4000-8000-000000000004",
+      );
+      when(acRepo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve(
+        mockActivity,
+      );
+
+      await expect(
+        usecase.createActivityLog(userId1, activityId1, missingKindId, {
+          date: "2025-01-01",
+          quantity: 5,
+        }),
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      verify(repo.createActivityLog(anything())).never();
+    });
   });
 
   describe("updateActivityLog", () => {
@@ -368,6 +406,7 @@ describe("ActivityLogUsecase", () => {
       params: {
         quantity?: number;
         memo?: string;
+        activityKindId?: string | null;
       };
       existingActivityLog: ActivityLog | undefined;
       updatedActivityLog: ActivityLog | undefined;
@@ -471,6 +510,58 @@ describe("ActivityLogUsecase", () => {
         });
       },
     );
+
+    it("activityKindId未指定の更新では既存の種別を保持する", async () => {
+      when(
+        repo.getActivityLogByIdAndUserId(userId1, activityLogId1),
+      ).thenResolve(mockActivityLog);
+      when(repo.updateActivityLog(anything())).thenCall((log) => log);
+
+      const result = await usecase.updateActivityLog(userId1, activityLogId1, {
+        quantity: 7,
+      });
+
+      expect(result.activityKind).toEqual(mockActivityKind);
+      verify(repo.updateActivityLog(anything())).once();
+      verify(
+        acRepo.getActivityByUserIdAndActivityKindId(userId1, anything()),
+      ).never();
+    });
+
+    it("activityKindId null の更新では種別を明示的に解除する", async () => {
+      when(
+        repo.getActivityLogByIdAndUserId(userId1, activityLogId1),
+      ).thenResolve(mockActivityLog);
+      when(repo.updateActivityLog(anything())).thenCall((log) => log);
+
+      const result = await usecase.updateActivityLog(userId1, activityLogId1, {
+        activityKindId: null,
+      });
+
+      expect(result.activityKind).toBeNull();
+      verify(repo.updateActivityLog(anything())).once();
+    });
+
+    it("存在しないactivityKindIdへの更新では保存しない", async () => {
+      const missingKindId = "00000000-0000-4000-8000-000000000004";
+      when(
+        repo.getActivityLogByIdAndUserId(userId1, activityLogId1),
+      ).thenResolve(mockActivityLog);
+      when(
+        acRepo.getActivityByUserIdAndActivityKindId(
+          userId1,
+          createActivityKindId(missingKindId),
+        ),
+      ).thenResolve(undefined);
+
+      await expect(
+        usecase.updateActivityLog(userId1, activityLogId1, {
+          activityKindId: missingKindId,
+        }),
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      verify(repo.updateActivityLog(anything())).never();
+    });
   });
 
   describe("deleteActivityLog", () => {
@@ -631,7 +722,7 @@ describe("ActivityLogUsecase", () => {
         quantity: number;
         memo?: string;
         activityId: string;
-        activityKindId?: string;
+        activityKindId?: string | null;
       }>;
       mockActivities: Array<Activity | undefined>;
       mockCreatedLogs: ActivityLog[];
@@ -821,7 +912,7 @@ describe("ActivityLogUsecase", () => {
       },
     );
 
-    it("アクティビティ種別が存在しない場合でも正常に処理される", async () => {
+    it("activityKindIdなしなら種別なしログとして処理される", async () => {
       const activityWithoutKinds: Activity = {
         ...mockActivity,
         kinds: undefined as unknown as ActivityKind[],
@@ -850,12 +941,39 @@ describe("ActivityLogUsecase", () => {
           date: "2025-01-01",
           quantity: 5,
           activityId: activityId1,
-          activityKindId: activityKindId1,
         },
       ]);
 
       expect(result.summary.succeeded).toBe(1);
       expect(result.summary.failed).toBe(0);
+    });
+
+    it("指定したactivityKindIdが存在しない場合はバッチ全体を失敗にする", async () => {
+      const txRepo = mock<ActivityLogRepository>();
+      const txAcRepo = mock<ActivityRepository>();
+
+      when(repo.withTx(anything())).thenReturn(instance(txRepo));
+      when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
+      when(
+        txAcRepo.getActivitiesByIdsAndUserId(userId1, anything()),
+      ).thenResolve([mockActivity]);
+      when(db.transaction(anything())).thenCall(async (callback) => {
+        return callback({ withTx: () => {} } as unknown as QueryExecutor);
+      });
+
+      const result = await usecase.createActivityLogBatch(userId1, [
+        {
+          date: "2025-01-01",
+          quantity: 5,
+          activityId: activityId1,
+          activityKindId: "00000000-0000-4000-8000-000000000004",
+        },
+      ]);
+
+      expect(result.summary.succeeded).toBe(0);
+      expect(result.summary.failed).toBe(1);
+      expect(result.results[0].error).toContain("Activity kind not found");
+      verify(txRepo.createActivityLogBatch(anything())).never();
     });
 
     it("空の配列を渡した場合は空の結果を返す", async () => {

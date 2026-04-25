@@ -169,7 +169,7 @@ describe("TaskUsecase", () => {
     type CreateTaskTestCase = {
       name: string;
       userId: UserId;
-      inputParams: { title: string };
+      inputParams: { title: string; startDate?: string; dueDate?: string };
       mockReturn: Task | undefined;
       expectError: boolean;
     };
@@ -218,6 +218,18 @@ describe("TaskUsecase", () => {
         });
       },
     );
+
+    it("failed / dueDate before startDate", async () => {
+      await expect(
+        usecase.createTask(userId1, {
+          title: "new task",
+          startDate: "2021-01-10",
+          dueDate: "2021-01-09",
+        }),
+      ).rejects.toThrow("dueDate must be on or after startDate");
+
+      verify(repo.createTask(anything())).never();
+    });
   });
 
   describe("updateTask", () => {
@@ -230,6 +242,8 @@ describe("TaskUsecase", () => {
         title?: string;
         doneDate?: string | null;
         memo?: string | null;
+        startDate?: string;
+        dueDate?: string | null;
       };
       updatedTask: Task | undefined;
       expectError?: {
@@ -379,6 +393,31 @@ describe("TaskUsecase", () => {
         });
       },
     );
+
+    it("failed / update makes dueDate before startDate", async () => {
+      const existingTask: Task = {
+        id: taskId1,
+        userId: userId1,
+        title: "title",
+        doneDate: null,
+        memo: null,
+        startDate: "2021-01-01",
+        dueDate: "2021-01-31",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "persisted",
+      };
+
+      when(repo.getTaskByUserIdAndTaskId(userId1, taskId1)).thenResolve(
+        existingTask,
+      );
+
+      await expect(
+        usecase.updateTask(userId1, taskId1, { startDate: "2021-02-01" }),
+      ).rejects.toThrow("dueDate must be on or after startDate");
+
+      verify(repo.updateTask(anything())).never();
+    });
   });
 
   describe("deleteTask", () => {

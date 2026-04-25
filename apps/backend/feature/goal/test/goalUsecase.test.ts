@@ -336,6 +336,22 @@ describe("GoalUsecase", () => {
       expect(result.dayTargets).toEqual({ 1: 5, 2: 10 });
       verify(activityGoalRepo.createActivityGoal(anything())).once();
     });
+
+    it("should reject a goal whose endDate is before startDate", async () => {
+      const userId = createUserId();
+      const activityId = createActivityId();
+      const request: CreateGoalRequest = {
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-02-01",
+        endDate: "2024-01-31",
+      };
+
+      await expect(usecase.createGoal(userId, request)).rejects.toThrow(
+        "endDate must be on or after startDate",
+      );
+      verify(activityGoalRepo.createActivityGoal(anything())).never();
+    });
   });
 
   describe("updateGoal", () => {
@@ -462,6 +478,38 @@ describe("GoalUsecase", () => {
       await expect(usecase.updateGoal(userId, goalId, {})).rejects.toThrow(
         ResourceNotFoundError,
       );
+    });
+
+    it("should reject an update that makes the date range invalid", async () => {
+      const userId = createUserId();
+      const goalId = "00000000-0000-4000-8000-000000000001";
+      const activityId = createActivityId();
+
+      const existingGoal = createActivityGoalEntity({
+        type: "persisted",
+        id: goalId as ActivityGoalId,
+        userId,
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        endDate: "2024-01-31",
+        isActive: true,
+        description: null,
+        debtCap: null,
+        dayTargets: null,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+      });
+
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(existingGoal);
+
+      await expect(
+        usecase.updateGoal(userId, goalId, { startDate: "2024-02-01" }),
+      ).rejects.toThrow("endDate must be on or after startDate");
+
+      verify(activityGoalRepo.updateActivityGoal(anything())).never();
     });
   });
 

@@ -1,29 +1,32 @@
 import { z } from "zod";
 
-export const UpsertTaskRequestSchema = z.object({
-  id: z.string().uuid(),
-  activityId: z.string().uuid().nullable(),
-  activityKindId: z.string().uuid().nullable(),
-  quantity: z.number().nullable(),
-  title: z.string().min(1).max(500),
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable(),
-  dueDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable(),
-  doneDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable(),
-  memo: z.string().max(10_000),
-  archivedAt: z.string().datetime().nullable(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  deletedAt: z.string().datetime().nullable(),
-});
+import { addDateRangeIssue, dateStringSchema } from "../../dateSchemas";
+
+export const UpsertTaskRequestSchema = z
+  .object({
+    id: z.string().uuid(),
+    activityId: z.string().uuid().nullable(),
+    activityKindId: z.string().uuid().nullable(),
+    quantity: z.number().nullable(),
+    title: z.string().min(1).max(500),
+    startDate: dateStringSchema.nullable(),
+    dueDate: dateStringSchema.nullable(),
+    doneDate: dateStringSchema.nullable(),
+    memo: z.string().max(10_000),
+    archivedAt: z.string().datetime().nullable(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    deletedAt: z.string().datetime().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    addDateRangeIssue(
+      ctx,
+      value.startDate,
+      value.dueDate,
+      "dueDate",
+      "validation:dueDateBeforeStartDate",
+    );
+  });
 
 export const SyncTasksRequestSchema = z.object({
   tasks: z.array(UpsertTaskRequestSchema).max(100),

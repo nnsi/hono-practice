@@ -334,6 +334,44 @@ describe("calculateGoalBalance", () => {
     expect(result.totalTarget).toBe(60);
   });
 
+  it("freezePeriods: 重複したフリーズ期間は二重に減算しない", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const freezePeriods = [
+      { startDate: "2026-01-02", endDate: "2026-01-05" },
+      { startDate: "2026-01-04", endDate: "2026-01-07" },
+    ];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-10"; // 10日 - 1/2〜1/7の6日 = 4日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(4);
+    expect(result.totalTarget).toBe(40);
+  });
+
+  it("freezePeriods: open-ended と重複する期間も二重に減算しない", () => {
+    const goal = {
+      dailyTargetQuantity: 10,
+      startDate: "2026-01-01",
+      endDate: null,
+    };
+    const freezePeriods = [
+      { startDate: "2026-01-03", endDate: null },
+      { startDate: "2026-01-05", endDate: "2026-01-06" },
+    ];
+    const logs: { date: string; quantity: number | null }[] = [];
+    const today = "2026-01-07"; // 7日 - 1/3〜1/7の5日 = 2日有効
+
+    const result = calculateGoalBalance(goal, logs, today, freezePeriods);
+
+    expect(result.daysActive).toBe(2);
+    expect(result.totalTarget).toBe(20);
+  });
+
   it("freezePeriods + debtCap: 両方が適用される", () => {
     const goal = {
       dailyTargetQuantity: 10,

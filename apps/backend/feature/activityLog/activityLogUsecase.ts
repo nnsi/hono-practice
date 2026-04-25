@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { Tracer } from "@backend/lib/tracer";
 import type { ActivityQueryService } from "@backend/query";
@@ -41,8 +42,11 @@ type CreateActivityLogParams = {
   date: string;
   quantity: number;
   memo?: string;
-  activityId?: string;
-  activityKindId?: string;
+  activityKindId?: string | null;
+};
+
+type CreateActivityLogBatchParams = CreateActivityLogParams & {
+  activityId: string;
 };
 
 export type ActivityLogUsecase = {
@@ -57,17 +61,21 @@ export type ActivityLogUsecase = {
   createActivityLog: (
     userId: UserId,
     activityId: ActivityId,
-    activityKindId: ActivityKindId,
+    activityKindId: ActivityKindId | null,
     params: CreateActivityLogParams,
   ) => Promise<ActivityLog>;
   createActivityLogBatch: (
     userId: UserId,
-    activityLogs: CreateActivityLogParams[],
+    activityLogs: CreateActivityLogBatchParams[],
   ) => Promise<CreateActivityLogBatchResponse>;
   updateActivityLog: (
     userId: UserId,
     activityLogId: ActivityLogId,
-    params: { quantity?: number; memo?: string; activityKindId?: string },
+    params: {
+      quantity?: number;
+      memo?: string;
+      activityKindId?: string | null;
+    },
   ) => Promise<ActivityLog>;
   deleteActivityLog: (
     userId: UserId,
@@ -114,7 +122,7 @@ function createActivityLog(
   return async (
     userId: UserId,
     activityId: ActivityId,
-    activityKindId: ActivityKindId,
+    activityKindId: ActivityKindId | null,
     params: CreateActivityLogParams,
   ) => {
     const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
@@ -122,10 +130,15 @@ function createActivityLog(
     );
     if (!activity) throw new Error("activity not found");
 
-    if (!activity.kinds) activity.kinds = [];
-
+    const activityForLog = { ...activity, kinds: activity.kinds ?? [] };
     const activityKind =
-      activity.kinds.find((kind) => kind.id === activityKindId) || null;
+      activityKindId === null
+        ? null
+        : (activityForLog.kinds.find((kind) => kind.id === activityKindId) ??
+          null);
+    if (activityKindId !== null && activityKind === null) {
+      throw new ResourceNotFoundError("activity kind not found");
+    }
 
     const activityLog = createActivityLogEntity({
       id: params.id ? createActivityLogId(params.id) : createActivityLogId(),
@@ -133,8 +146,8 @@ function createActivityLog(
       date: new Date(params.date),
       quantity: params.quantity,
       memo: params.memo,
-      activity,
-      activityKind: activityKind!,
+      activity: activityForLog,
+      activityKind,
       type: "new",
     });
 

@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@backend/error";
+import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
@@ -12,11 +12,19 @@ import type { ActivityGoalRepository } from "../activitygoal/activityGoalReposit
 import type { CreateGoalRequest, Goal, UpdateGoalRequest } from "./goalTypes";
 import { goalEntityToResponse } from "./goalTypes";
 
+function assertGoalDateRange(startDate: string, endDate: string | null) {
+  if (endDate !== null && endDate < startDate) {
+    throw new AppError("endDate must be on or after startDate", 400);
+  }
+}
+
 export function createGoal(
   activityGoalRepo: ActivityGoalRepository,
   tracer: Tracer,
 ) {
   return async (userId: UserId, req: CreateGoalRequest): Promise<Goal> => {
+    assertGoalDateRange(req.startDate, req.endDate ?? null);
+
     const goal = createActivityGoalEntity({
       type: "new",
       id: createActivityGoalId(),
@@ -60,11 +68,15 @@ export function updateGoal(
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
+    const startDate = req.startDate ?? goal.startDate;
+    const endDate = req.endDate === null ? null : (req.endDate ?? goal.endDate);
+    assertGoalDateRange(startDate, endDate);
+
     const updated = createActivityGoalEntity({
       ...goal,
       dailyTargetQuantity: req.dailyTargetQuantity ?? goal.dailyTargetQuantity,
-      startDate: req.startDate ?? goal.startDate,
-      endDate: req.endDate === null ? null : (req.endDate ?? goal.endDate),
+      startDate,
+      endDate,
       description:
         req.description === null ? null : (req.description ?? goal.description),
       isActive: req.isActive ?? goal.isActive,

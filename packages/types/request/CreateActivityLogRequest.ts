@@ -1,13 +1,10 @@
 import { z } from "zod";
 
+import { dateStringSchema } from "../dateSchemas";
 import { VALIDATION as V } from "../validation";
 
 export const CreateActivityLogRequestSchema = z.object({
-  id: z
-    .string()
-    .max(100)
-    .optional()
-    .describe("クライアント側ID（最大100文字）"),
+  id: z.string().uuid().optional().describe("クライアント側ID"),
   quantity: z.coerce
     .number()
     .min(V.QUANTITY_MIN, "validation:quantityMin0")
@@ -18,11 +15,12 @@ export const CreateActivityLogRequestSchema = z.object({
     .max(V.MEMO_MAX, "validation:memoMax1000")
     .optional()
     .describe("メモ（最大1000文字）"),
-  date: z.string().max(V.DATE_MAX).describe("日付 YYYY-MM-DD"),
-  activityId: z.string().max(100).optional().describe("アクティビティID"),
+  date: dateStringSchema.describe("日付 YYYY-MM-DD"),
+  activityId: z.string().uuid().describe("アクティビティID"),
   activityKindId: z
     .string()
-    .max(100)
+    .uuid()
+    .nullable()
     .optional()
     .describe("アクティビティ種別ID"),
 });

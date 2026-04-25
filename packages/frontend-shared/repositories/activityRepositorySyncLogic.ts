@@ -70,7 +70,11 @@ export async function applyKindUpdates(
 ) {
   const existing = await adapter.getKindsByActivityId(activityId);
   const updatedIds = new Set(
-    updatedKinds.filter((k) => k.id).map((k) => k.id!),
+    updatedKinds
+      .filter((kind): kind is { id: string; name: string; color: string } =>
+        Boolean(kind.id),
+      )
+      .map((kind) => kind.id),
   );
 
   for (const existingKind of existing) {

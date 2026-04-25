@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@backend/error";
+import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import {
   type Task,
@@ -45,6 +45,15 @@ export type TaskUsecase = {
   archiveTask: (userId: UserId, taskId: TaskId) => Promise<Task>;
 };
 
+function assertTaskDateRange(
+  startDate: string | null | undefined,
+  dueDate: string | null | undefined,
+) {
+  if (startDate != null && dueDate != null && dueDate < startDate) {
+    throw new AppError("dueDate must be on or after startDate", 400);
+  }
+}
+
 export function newTaskUsecase(
   repo: TaskRepository,
   tracer: Tracer,
@@ -89,6 +98,8 @@ function getTask(repo: TaskRepository, tracer: Tracer) {
 
 function createTask(repo: TaskRepository, tracer: Tracer) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
+    assertTaskDateRange(params.startDate, params.dueDate);
+
     const task = createTaskEntity({
       type: "new",
       id: createTaskId(),
@@ -126,6 +137,11 @@ function updateTask(repo: TaskRepository, tracer: Tracer) {
       // 実際にはここに到達しないが、型安全性のため
       throw new ResourceNotFoundError("updateTaskUsecase:task not found");
     }
+
+    const startDate = params.startDate ?? task.startDate;
+    const dueDate =
+      params.dueDate === undefined ? task.dueDate : params.dueDate;
+    assertTaskDateRange(startDate, dueDate);
 
     const newTask = createTaskEntity({
       ...task,
