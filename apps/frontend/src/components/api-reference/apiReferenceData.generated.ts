@@ -114,7 +114,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           },
           {
             name: "activityKindId",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "アクティビティ種別ID",
           },
@@ -155,7 +155,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           },
           {
             name: "activityKindId",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "アクティビティ種別ID",
           },
@@ -264,19 +264,19 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           },
           {
             name: "activityId",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "アクティビティID",
           },
           {
             name: "activityKindId",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "アクティビティ種別ID",
           },
           {
             name: "quantity",
-            type: "number",
+            type: "number | null",
             required: false,
             description: "目標数量",
           },
@@ -294,13 +294,13 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           },
           {
             name: "dueDate",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "期限日（nullで解除）",
           },
           {
             name: "doneDate",
-            type: "string",
+            type: "string | null",
             required: false,
             description: "完了日（nullで未完了に戻す）",
           },

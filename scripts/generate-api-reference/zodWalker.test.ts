@@ -30,11 +30,15 @@ describe("schemaToParams", () => {
     });
     const params = schemaToParams(schema);
     expect(
-      params?.map((p) => ({ name: p.name, required: p.required })),
+      params?.map((p) => ({
+        name: p.name,
+        required: p.required,
+        type: p.type,
+      })),
     ).toEqual([
-      { name: "a", required: false },
-      { name: "b", required: false },
-      { name: "c", required: false },
+      { name: "a", required: false, type: "string" },
+      { name: "b", required: false, type: "string | null" },
+      { name: "c", required: false, type: "string" },
     ]);
   });
 
@@ -81,6 +85,18 @@ describe("schemaToParams", () => {
     });
     const params = schemaToParams(schema);
     expect(params?.[0]?.type).toBe("string");
+  });
+
+  it("renders nullable optional fields with null", () => {
+    const schema = z.object({
+      activityKindId: z.string().uuid().nullable().optional(),
+    });
+    const params = schemaToParams(schema);
+    expect(params?.[0]).toMatchObject({
+      name: "activityKindId",
+      type: "string | null",
+      required: false,
+    });
   });
 
   it("unwraps pipe (coerce) and reports inner type", () => {

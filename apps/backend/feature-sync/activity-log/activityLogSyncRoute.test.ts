@@ -169,6 +169,21 @@ describe("POST /users/v2/activity-logs/sync", () => {
     expect(json.skippedIds).toHaveLength(0);
   });
 
+  test("FK チェック - activityKindIdが別activityに属する場合はskip", async () => {
+    const app = createApp();
+    const log = makeLog({
+      activityId: "00000000-0000-4000-8000-000000000002",
+      activityKindId: SEED_ACTIVITY_KIND_ID,
+    });
+
+    const res = await postSync(app, { logs: [log] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.skippedIds).toContain(log.id);
+    expect(json.syncedIds).toHaveLength(0);
+  });
+
   test("バリデーションエラー - 必須フィールド欠損", async () => {
     const app = createApp();
     const res = await postSync(app, {

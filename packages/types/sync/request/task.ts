@@ -19,6 +19,13 @@ export const UpsertTaskRequestSchema = z
     deletedAt: z.string().datetime().nullable(),
   })
   .superRefine((value, ctx) => {
+    if (value.activityKindId !== null && value.activityId === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["activityId"],
+        message: "validation:activityKindIdRequiresActivityId",
+      });
+    }
     addDateRangeIssue(
       ctx,
       value.startDate,

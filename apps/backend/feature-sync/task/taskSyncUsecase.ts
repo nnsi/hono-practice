@@ -80,9 +80,9 @@ function syncTasks(repo: TaskSyncRepository, tracer: Tracer) {
         new Date(task.updatedAt) > maxAllowed ||
         (task.activityId && !ownedActivityIdSet.has(task.activityId)) ||
         (task.activityKindId &&
-          (!kindIdToActivityId.has(task.activityKindId) ||
-            (task.activityId &&
-              kindIdToActivityId.get(task.activityKindId) !== task.activityId)))
+          (!task.activityId ||
+            !kindIdToActivityId.has(task.activityKindId) ||
+            kindIdToActivityId.get(task.activityKindId) !== task.activityId))
       ) {
         skippedIds.push(task.id);
         return false;

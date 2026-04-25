@@ -291,6 +291,22 @@ describe("TaskUsecase", () => {
       verify(repo.createTask(anything())).never();
     });
 
+    it("success / owned activityId is kept", async () => {
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId1),
+      ).thenResolve(makeActivity(activityId1));
+      when(repo.createTask(anything())).thenCall((task) => task);
+
+      const result = await usecase.createTask(userId1, {
+        title: "new task",
+        activityId: activityId1,
+      });
+
+      expect(result.activityId).toBe(activityId1);
+      expect(result.activityKindId).toBeNull();
+      verify(repo.createTask(anything())).once();
+    });
+
     it("failed / activityKindId requires activityId", async () => {
       await expect(
         usecase.createTask(userId1, {
@@ -316,6 +332,23 @@ describe("TaskUsecase", () => {
       ).rejects.toThrow("activityKindId does not belong to activity");
 
       verify(repo.createTask(anything())).never();
+    });
+
+    it("success / activityKindId belongs to activity", async () => {
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId1),
+      ).thenResolve(makeActivity(activityId1, [activityKindId1]));
+      when(repo.createTask(anything())).thenCall((task) => task);
+
+      const result = await usecase.createTask(userId1, {
+        title: "new task",
+        activityId: activityId1,
+        activityKindId: activityKindId1,
+      });
+
+      expect(result.activityId).toBe(activityId1);
+      expect(result.activityKindId).toBe(activityKindId1);
+      verify(repo.createTask(anything())).once();
     });
   });
 
@@ -560,6 +593,36 @@ describe("TaskUsecase", () => {
 
       expect(result.activityId).toBe(activityId2);
       expect(result.activityKindId).toBeNull();
+      verify(repo.updateTask(anything())).once();
+    });
+
+    it("activityKindId can be set when it belongs to current activity", async () => {
+      const existingTask: Task = {
+        id: taskId1,
+        userId: userId1,
+        title: "title",
+        activityId: activityId1,
+        activityKindId: null,
+        doneDate: null,
+        memo: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "persisted",
+      };
+      when(repo.getTaskByUserIdAndTaskId(userId1, taskId1)).thenResolve(
+        existingTask,
+      );
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId1),
+      ).thenResolve(makeActivity(activityId1, [activityKindId1]));
+      when(repo.updateTask(anything())).thenCall((task) => task);
+
+      const result = await usecase.updateTask(userId1, taskId1, {
+        activityKindId: activityKindId1,
+      });
+
+      expect(result.activityId).toBe(activityId1);
+      expect(result.activityKindId).toBe(activityKindId1);
       verify(repo.updateTask(anything())).once();
     });
 

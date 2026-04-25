@@ -11,6 +11,11 @@ import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 type ActivityLogRow = typeof activityLogs.$inferSelect;
 
+export type ActivityKindWithActivityId = {
+  id: string;
+  activityId: string;
+};
+
 export type ActivityLogSyncRepository = {
   getActivityLogsByUserId: (
     userId: UserId,
@@ -20,7 +25,10 @@ export type ActivityLogSyncRepository = {
     userId: UserId,
     activityIds: string[],
   ) => Promise<string[]>;
-  getExistingActivityKindIds: (kindIds: string[]) => Promise<string[]>;
+  getOwnedActivityKindIdsWithActivityId: (
+    userId: UserId,
+    kindIds: string[],
+  ) => Promise<ActivityKindWithActivityId[]>;
   getExistingTaskIds: (userId: UserId, taskIds: string[]) => Promise<string[]>;
   upsertActivityLogs: (
     userId: UserId,
@@ -38,7 +46,8 @@ export function newActivityLogSyncRepository(
   return {
     getActivityLogsByUserId: getActivityLogsByUserId(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
-    getExistingActivityKindIds: getExistingActivityKindIds(db),
+    getOwnedActivityKindIdsWithActivityId:
+      getOwnedActivityKindIdsWithActivityId(db),
     getExistingTaskIds: getExistingTaskIds(db),
     upsertActivityLogs: upsertActivityLogs(db),
     getActivityLogsByIds: getActivityLogsByIds(db),
@@ -74,16 +83,20 @@ function getOwnedActivityIds(db: QueryExecutor) {
   };
 }
 
-function getExistingActivityKindIds(db: QueryExecutor) {
-  return async (kindIds: string[]): Promise<string[]> => {
+function getOwnedActivityKindIdsWithActivityId(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    kindIds: string[],
+  ): Promise<ActivityKindWithActivityId[]> => {
     if (kindIds.length === 0) return [];
 
-    const rows = await db
-      .select({ id: activityKinds.id })
+    return await db
+      .select({ id: activityKinds.id, activityId: activityKinds.activityId })
       .from(activityKinds)
-      .where(inArray(activityKinds.id, kindIds));
-
-    return rows.map((r) => r.id);
+      .innerJoin(activities, eq(activityKinds.activityId, activities.id))
+      .where(
+        and(inArray(activityKinds.id, kindIds), eq(activities.userId, userId)),
+      );
   };
 }
 
