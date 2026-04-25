@@ -50,7 +50,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         queryParams: [
           {
             name: "date",
-            type: "string",
+            type: "union",
             required: false,
             description: "YYYY-MM-DD（日）または YYYY-MM（月）。省略時は今日",
           },
@@ -64,7 +64,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         queryParams: [
           {
             name: "date",
-            type: "string",
+            type: "union",
             required: true,
             description: "YYYY-MM-DD（日）または YYYY-MM（月）",
           },
@@ -86,7 +86,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
             name: "id",
             type: "string",
             required: false,
-            description: "クライアント側ID（最大100文字）",
+            description: "クライアント側ID",
           },
           {
             name: "quantity",
@@ -109,7 +109,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           {
             name: "activityId",
             type: "string",
-            required: false,
+            required: true,
             description: "アクティビティID",
           },
           {
