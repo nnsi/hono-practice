@@ -1,6 +1,10 @@
 import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import {
+  createActivityId,
+  createActivityKindId,
+} from "@packages/domain/activity/activitySchema";
+import {
   type Task,
   type TaskId,
   createTaskEntity,
@@ -8,6 +12,7 @@ import {
 } from "@packages/domain/task/taskSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
+import type { ActivityRepository } from "../activity/activityRepository";
 import type { TaskRepository } from ".";
 
 export type CreateTaskInputParams = {
@@ -56,17 +61,48 @@ function assertTaskDateRange(
 
 export function newTaskUsecase(
   repo: TaskRepository,
+  activityRepo: ActivityRepository,
   tracer: Tracer,
 ): TaskUsecase {
   return {
     getTasks: getTasks(repo, tracer),
     getArchivedTasks: getArchivedTasks(repo, tracer),
     getTask: getTask(repo, tracer),
-    createTask: createTask(repo, tracer),
-    updateTask: updateTask(repo, tracer),
+    createTask: createTask(repo, activityRepo, tracer),
+    updateTask: updateTask(repo, activityRepo, tracer),
     deleteTask: deleteTask(repo, tracer),
     archiveTask: archiveTask(repo, tracer),
   };
+}
+
+async function assertTaskActivityLink(
+  activityRepo: ActivityRepository,
+  tracer: Tracer,
+  userId: UserId,
+  activityId: string | null | undefined,
+  activityKindId: string | null | undefined,
+) {
+  if (activityKindId != null && activityId == null) {
+    throw new AppError("activityKindId requires activityId", 400);
+  }
+  if (activityId == null) return;
+
+  const ownedActivityId = createActivityId(activityId);
+  const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+    activityRepo.getActivityByIdAndUserId(userId, ownedActivityId),
+  );
+  if (!activity) {
+    throw new AppError("activityId does not belong to user", 400);
+  }
+  if (activityKindId == null) return;
+
+  const ownedActivityKindId = createActivityKindId(activityKindId);
+  const hasKind = activity.kinds.some(
+    (kind) => kind.id === ownedActivityKindId,
+  );
+  if (!hasKind) {
+    throw new AppError("activityKindId does not belong to activity", 400);
+  }
 }
 
 function getTasks(repo: TaskRepository, tracer: Tracer) {
@@ -96,16 +132,29 @@ function getTask(repo: TaskRepository, tracer: Tracer) {
   };
 }
 
-function createTask(repo: TaskRepository, tracer: Tracer) {
+function createTask(
+  repo: TaskRepository,
+  activityRepo: ActivityRepository,
+  tracer: Tracer,
+) {
   return async (userId: UserId, params: CreateTaskInputParams) => {
     assertTaskDateRange(params.startDate, params.dueDate);
+    const activityId = params.activityId ?? null;
+    const activityKindId = params.activityKindId ?? null;
+    await assertTaskActivityLink(
+      activityRepo,
+      tracer,
+      userId,
+      activityId,
+      activityKindId,
+    );
 
     const task = createTaskEntity({
       type: "new",
       id: createTaskId(),
       userId: userId,
-      activityId: params.activityId || null,
-      activityKindId: params.activityKindId || null,
+      activityId,
+      activityKindId,
       quantity: params.quantity ?? null,
       title: params.title,
       startDate: params.startDate || null,
@@ -119,7 +168,11 @@ function createTask(repo: TaskRepository, tracer: Tracer) {
   };
 }
 
-function updateTask(repo: TaskRepository, tracer: Tracer) {
+function updateTask(
+  repo: TaskRepository,
+  activityRepo: ActivityRepository,
+  tracer: Tracer,
+) {
   return async (
     userId: UserId,
     taskId: TaskId,
@@ -143,9 +196,32 @@ function updateTask(repo: TaskRepository, tracer: Tracer) {
       params.dueDate === undefined ? task.dueDate : params.dueDate;
     assertTaskDateRange(startDate, dueDate);
 
+    const activityIdChanged = params.activityId !== undefined;
+    const activityId =
+      params.activityId === undefined
+        ? (task.activityId ?? null)
+        : params.activityId;
+    const activityKindId =
+      params.activityKindId !== undefined
+        ? params.activityKindId
+        : activityIdChanged
+          ? null
+          : (task.activityKindId ?? null);
+    if (activityIdChanged || params.activityKindId !== undefined) {
+      await assertTaskActivityLink(
+        activityRepo,
+        tracer,
+        userId,
+        activityId,
+        activityKindId,
+      );
+    }
+
     const newTask = createTaskEntity({
       ...task,
       ...params,
+      activityId,
+      activityKindId,
     });
 
     const updateTask = await tracer.span("db.updateTask", () =>

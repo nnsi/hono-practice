@@ -9,6 +9,7 @@ import {
 } from "@packages/types/request";
 
 import type { AppContext } from "../../context";
+import { newActivityRepository } from "../activity/activityRepository";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
@@ -29,6 +30,7 @@ export function createGoalRoute() {
 
     // Repository instances
     const activityGoalRepo = newActivityGoalRepository(db);
+    const activityRepo = newActivityRepository(db);
     const activityLogRepo = newActivityLogRepository(db);
 
     // Service instances
@@ -39,6 +41,7 @@ export function createGoalRoute() {
     const tracer = c.get("tracer") ?? noopTracer;
     const uc = newGoalUsecase(
       activityGoalRepo,
+      activityRepo,
       activityGoalService,
       activityLogRepo,
       tracer,

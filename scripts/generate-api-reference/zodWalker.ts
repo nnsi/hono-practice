@@ -14,6 +14,7 @@ export type Param = {
 type ZodDef = {
   type: string;
   innerType?: ZodLike;
+  options?: ZodLike[];
   shape?: Record<string, ZodLike>;
   element?: ZodLike;
   in?: ZodLike;
@@ -82,6 +83,11 @@ function typeName(schema: ZodLike): string {
         ? entries
         : Object.values(entries as Record<string, string>);
       return values.map((v) => `"${v}"`).join(" | ");
+    }
+    case "union": {
+      if (!def.options || def.options.length === 0) return "union";
+      const types = [...new Set(def.options.map(typeName))];
+      return types.length === 1 ? types[0] : types.join(" | ");
     }
     default:
       return def.type;

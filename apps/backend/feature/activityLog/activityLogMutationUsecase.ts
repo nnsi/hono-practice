@@ -50,6 +50,9 @@ export function updateActivityLog(
         if (!activityKindParent) {
           throw new ResourceNotFoundError("activity kind not found");
         }
+        if (activityKindParent.id !== activityLog.activity.id) {
+          throw new ResourceNotFoundError("activity kind not found");
+        }
 
         activityKind =
           activityKindParent.kinds.find((ak) => ak?.id === activityKindId) ??

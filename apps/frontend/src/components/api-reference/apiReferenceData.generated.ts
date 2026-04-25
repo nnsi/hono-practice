@@ -50,7 +50,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         queryParams: [
           {
             name: "date",
-            type: "union",
+            type: "string",
             required: false,
             description: "YYYY-MM-DD（日）または YYYY-MM（月）。省略時は今日",
           },
@@ -64,7 +64,7 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         queryParams: [
           {
             name: "date",
-            type: "union",
+            type: "string",
             required: true,
             description: "YYYY-MM-DD（日）または YYYY-MM（月）",
           },

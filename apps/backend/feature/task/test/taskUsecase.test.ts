@@ -1,6 +1,13 @@
 import { ResourceNotFoundError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
 import {
+  type Activity,
+  type ActivityId,
+  type ActivityKindId,
+  createActivityId,
+  createActivityKindId,
+} from "@packages/domain/activity/activitySchema";
+import {
   type Task,
   type TaskId,
   createTaskId,
@@ -9,21 +16,59 @@ import { type UserId, createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import type { ActivityRepository } from "../../activity";
 import { type TaskRepository, newTaskUsecase } from "..";
 
 describe("TaskUsecase", () => {
   let repo: TaskRepository;
+  let activityRepo: ActivityRepository;
   let usecase: ReturnType<typeof newTaskUsecase>;
 
   beforeEach(() => {
     repo = mock<TaskRepository>();
-    usecase = newTaskUsecase(instance(repo), noopTracer);
+    activityRepo = mock<ActivityRepository>();
+    usecase = newTaskUsecase(
+      instance(repo),
+      instance(activityRepo),
+      noopTracer,
+    );
     reset(repo);
+    reset(activityRepo);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");
   const taskId1 = createTaskId("00000000-0000-4000-8000-000000000001");
   const taskId2 = createTaskId("00000000-0000-4000-8000-000000000002");
+  const activityId1 = createActivityId("00000000-0000-4000-8000-000000000003");
+  const activityId2 = createActivityId("00000000-0000-4000-8000-000000000004");
+  const activityKindId1 = createActivityKindId(
+    "00000000-0000-4000-8000-000000000005",
+  );
+
+  function makeActivity(
+    id: ActivityId,
+    kindIds: ActivityKindId[] = [],
+  ): Activity {
+    return {
+      id,
+      userId: userId1,
+      name: "Running",
+      quantityUnit: "km",
+      orderIndex: "1",
+      kinds: kindIds.map((kindId, index) => ({
+        id: kindId,
+        name: `Kind ${index}`,
+        orderIndex: String(index),
+      })),
+      type: "new",
+      showCombinedStats: true,
+      iconType: "emoji",
+      emoji: null,
+      iconUrl: null,
+      iconThumbnailUrl: null,
+      recordingMode: "manual",
+    };
+  }
 
   describe("getTasks", () => {
     type GetTasksTestCase = {
@@ -230,6 +275,48 @@ describe("TaskUsecase", () => {
 
       verify(repo.createTask(anything())).never();
     });
+
+    it("failed / activityId does not belong to user", async () => {
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId1),
+      ).thenResolve(undefined);
+
+      await expect(
+        usecase.createTask(userId1, {
+          title: "new task",
+          activityId: activityId1,
+        }),
+      ).rejects.toThrow("activityId does not belong to user");
+
+      verify(repo.createTask(anything())).never();
+    });
+
+    it("failed / activityKindId requires activityId", async () => {
+      await expect(
+        usecase.createTask(userId1, {
+          title: "new task",
+          activityKindId: activityKindId1,
+        }),
+      ).rejects.toThrow("activityKindId requires activityId");
+
+      verify(repo.createTask(anything())).never();
+    });
+
+    it("failed / activityKindId does not belong to activity", async () => {
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId1),
+      ).thenResolve(makeActivity(activityId1));
+
+      await expect(
+        usecase.createTask(userId1, {
+          title: "new task",
+          activityId: activityId1,
+          activityKindId: activityKindId1,
+        }),
+      ).rejects.toThrow("activityKindId does not belong to activity");
+
+      verify(repo.createTask(anything())).never();
+    });
   });
 
   describe("updateTask", () => {
@@ -417,6 +504,93 @@ describe("TaskUsecase", () => {
       ).rejects.toThrow("dueDate must be on or after startDate");
 
       verify(repo.updateTask(anything())).never();
+    });
+
+    it("activityId null clears existing activityKindId", async () => {
+      const existingTask: Task = {
+        id: taskId1,
+        userId: userId1,
+        title: "title",
+        activityId: activityId1,
+        activityKindId: activityKindId1,
+        doneDate: null,
+        memo: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "persisted",
+      };
+      when(repo.getTaskByUserIdAndTaskId(userId1, taskId1)).thenResolve(
+        existingTask,
+      );
+      when(repo.updateTask(anything())).thenCall((task) => task);
+
+      const result = await usecase.updateTask(userId1, taskId1, {
+        activityId: null,
+      });
+
+      expect(result.activityId).toBeNull();
+      expect(result.activityKindId).toBeNull();
+      verify(repo.updateTask(anything())).once();
+    });
+
+    it("activityId change with omitted activityKindId clears old kind", async () => {
+      const existingTask: Task = {
+        id: taskId1,
+        userId: userId1,
+        title: "title",
+        activityId: activityId1,
+        activityKindId: activityKindId1,
+        doneDate: null,
+        memo: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "persisted",
+      };
+      when(repo.getTaskByUserIdAndTaskId(userId1, taskId1)).thenResolve(
+        existingTask,
+      );
+      when(
+        activityRepo.getActivityByIdAndUserId(userId1, activityId2),
+      ).thenResolve(makeActivity(activityId2));
+      when(repo.updateTask(anything())).thenCall((task) => task);
+
+      const result = await usecase.updateTask(userId1, taskId1, {
+        activityId: activityId2,
+      });
+
+      expect(result.activityId).toBe(activityId2);
+      expect(result.activityKindId).toBeNull();
+      verify(repo.updateTask(anything())).once();
+    });
+
+    it("dueDate undefined keeps existing dueDate and dueDate null clears it", async () => {
+      const existingTask: Task = {
+        id: taskId1,
+        userId: userId1,
+        title: "title",
+        doneDate: null,
+        memo: null,
+        startDate: "2021-01-01",
+        dueDate: "2021-01-31",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "persisted",
+      };
+      when(repo.getTaskByUserIdAndTaskId(userId1, taskId1)).thenResolve(
+        existingTask,
+      );
+      when(repo.updateTask(anything())).thenCall((task) => task);
+
+      const kept = await usecase.updateTask(userId1, taskId1, {
+        title: "updated",
+      });
+      const cleared = await usecase.updateTask(userId1, taskId1, {
+        dueDate: null,
+      });
+
+      expect(kept.dueDate).toBe("2021-01-31");
+      expect(cleared.dueDate).toBeNull();
+      verify(repo.updateTask(anything())).twice();
     });
   });
 

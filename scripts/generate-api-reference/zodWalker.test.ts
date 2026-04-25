@@ -75,6 +75,14 @@ describe("schemaToParams", () => {
     expect(params?.[0]?.type).toBe('"a" | "b" | "c"');
   });
 
+  it("renders a string-only union as string", () => {
+    const schema = z.object({
+      date: z.union([z.iso.date(), z.string().regex(/^\d{4}-\d{2}$/)]),
+    });
+    const params = schemaToParams(schema);
+    expect(params?.[0]?.type).toBe("string");
+  });
+
   it("unwraps pipe (coerce) and reports inner type", () => {
     const schema = z.object({
       quantity: z.coerce.number().min(0),

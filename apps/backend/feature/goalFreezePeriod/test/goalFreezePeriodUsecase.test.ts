@@ -63,4 +63,56 @@ describe("GoalFreezePeriodUsecase", () => {
       repo.updateGoalFreezePeriod(anything(), anything(), anything()),
     ).never();
   });
+
+  it("updateFreezePeriod preserves omitted endDate and clears explicit null endDate", async () => {
+    when(repo.getFreezePeriodByIdAndUserId(freezePeriodId, userId)).thenResolve(
+      {
+        id: freezePeriodId,
+        goalId,
+        userId,
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    );
+    when(repo.updateGoalFreezePeriod(freezePeriodId, userId, anything()))
+      .thenResolve({
+        id: freezePeriodId,
+        goalId,
+        userId,
+        startDate: "2026-01-10",
+        endDate: "2026-01-31",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-02T00:00:00.000Z",
+      })
+      .thenResolve({
+        id: freezePeriodId,
+        goalId,
+        userId,
+        startDate: "2026-01-01",
+        endDate: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-02T00:00:00.000Z",
+      });
+
+    const preserved = await usecase.updateFreezePeriod(
+      userId,
+      goalId,
+      freezePeriodId,
+      { startDate: "2026-01-10" },
+    );
+    const cleared = await usecase.updateFreezePeriod(
+      userId,
+      goalId,
+      freezePeriodId,
+      { endDate: null },
+    );
+
+    expect(preserved.endDate).toBe("2026-01-31");
+    expect(cleared.endDate).toBeNull();
+    verify(
+      repo.updateGoalFreezePeriod(freezePeriodId, userId, anything()),
+    ).twice();
+  });
 });

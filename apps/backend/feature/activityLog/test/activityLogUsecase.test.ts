@@ -562,6 +562,34 @@ describe("ActivityLogUsecase", () => {
 
       verify(repo.updateActivityLog(anything())).never();
     });
+
+    it("別アクティビティ配下のactivityKindIdへの更新では保存しない", async () => {
+      const otherActivityId = createActivityId(
+        "00000000-0000-4000-8000-000000000006",
+      );
+      const otherKindId = createActivityKindId(
+        "00000000-0000-4000-8000-000000000007",
+      );
+      const otherActivity: Activity = {
+        ...mockActivity,
+        id: otherActivityId,
+        kinds: [{ id: otherKindId, name: "Walk", orderIndex: "1" }],
+      };
+      when(
+        repo.getActivityLogByIdAndUserId(userId1, activityLogId1),
+      ).thenResolve(mockActivityLog);
+      when(
+        acRepo.getActivityByUserIdAndActivityKindId(userId1, otherKindId),
+      ).thenResolve(otherActivity);
+
+      await expect(
+        usecase.updateActivityLog(userId1, activityLogId1, {
+          activityKindId: otherKindId,
+        }),
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      verify(repo.updateActivityLog(anything())).never();
+    });
   });
 
   describe("deleteActivityLog", () => {
@@ -867,6 +895,9 @@ describe("ActivityLogUsecase", () => {
             expect(result.summary.failed).toBe(activityLogs.length);
             expect(result.summary.succeeded).toBe(0);
             expect(result.results.every((r) => !r.success)).toBe(true);
+            expect(result.results[0].error).toBe(
+              "Failed to create activity logs",
+            );
             return;
           }
 

@@ -8,9 +8,11 @@ import {
   UpdateGoalRequestSchema,
   createTaskRequestSchema,
   getActivityLogStatsRequestSchema,
+  getActivityLogsRequestSchema,
   updateTaskRequestSchema,
 } from "./request";
 import {
+  UpsertActivityLogRequestSchema,
   UpsertGoalFreezePeriodRequestSchema,
   UpsertGoalRequestSchema,
   UpsertTaskRequestSchema,
@@ -61,6 +63,9 @@ describe("request date schemas", () => {
     ).toBe(true);
     expect(
       getActivityLogStatsRequestSchema.safeParse({ date: "2026" }).success,
+    ).toBe(false);
+    expect(
+      getActivityLogsRequestSchema.safeParse({ date: "2026-02-30" }).success,
     ).toBe(false);
   });
 
@@ -163,6 +168,24 @@ describe("sync request date schemas", () => {
         doneDate: null,
         memo: "",
         archivedAt: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        deletedAt: null,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("sync activity logs reject impossible dates", () => {
+    expect(
+      UpsertActivityLogRequestSchema.safeParse({
+        id: "00000000-0000-4000-8000-000000000001",
+        activityId: "00000000-0000-4000-8000-000000000002",
+        activityKindId: null,
+        quantity: 1,
+        memo: "",
+        date: "2026-02-30",
+        taskId: null,
+        time: null,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         deletedAt: null,

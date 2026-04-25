@@ -10,6 +10,7 @@ import {
 import { getTasksRequestSchema } from "@packages/types/request/GetTasksRequest";
 
 import type { AppContext } from "../../context";
+import { newActivityRepository } from "../activity/activityRepository";
 import { newTaskHandler } from "./taskHandler";
 import { newTaskRepository } from "./taskRepository";
 import { newTaskUsecase } from "./taskUsecase";
@@ -28,7 +29,8 @@ export function createTaskRoute() {
 
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newTaskRepository(db);
-    const uc = newTaskUsecase(repo, tracer);
+    const activityRepo = newActivityRepository(db);
+    const uc = newTaskUsecase(repo, activityRepo, tracer);
     const h = newTaskHandler(uc);
 
     c.set("h", h);

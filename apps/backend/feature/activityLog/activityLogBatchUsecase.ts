@@ -24,6 +24,17 @@ type CreateActivityLogParams = {
   activityKindId?: string | null;
 };
 
+function toBatchErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "Failed to create activity logs";
+  if (
+    error.message.startsWith("Activity not found:") ||
+    error.message.startsWith("Activity kind not found:")
+  ) {
+    return error.message;
+  }
+  return "Failed to create activity logs";
+}
+
 export function createActivityLogBatch(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
@@ -114,7 +125,7 @@ export function createActivityLogBatch(
       const results = activityLogs.map((_, index) => ({
         index,
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: toBatchErrorMessage(error),
       }));
 
       return {
