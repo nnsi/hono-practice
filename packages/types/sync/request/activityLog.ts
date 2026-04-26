@@ -12,7 +12,7 @@ export const UpsertActivityLogRequestSchema = z.object({
   taskId: z.string().uuid().nullish(),
   time: z
     .string()
-    .regex(/^\d{2}:\d{2}(:\d{2})?$/)
+    .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
     .nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
