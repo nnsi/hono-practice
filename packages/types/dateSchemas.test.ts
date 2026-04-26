@@ -87,6 +87,39 @@ describe("request date schemas", () => {
     ).toBe(false);
   });
 
+  it("goal create and update restrict dayTargets to ISO weekday keys", () => {
+    expect(
+      CreateGoalRequestSchema.safeParse({
+        activityId: "00000000-0000-4000-8000-000000000001",
+        dailyTargetQuantity: 10,
+        startDate: "2026-01-01",
+        dayTargets: {
+          "1": 5,
+          "7": 0,
+        },
+      }).success,
+    ).toBe(true);
+
+    expect(
+      CreateGoalRequestSchema.safeParse({
+        activityId: "00000000-0000-4000-8000-000000000001",
+        dailyTargetQuantity: 10,
+        startDate: "2026-01-01",
+        dayTargets: {
+          "8": 5,
+        },
+      }).success,
+    ).toBe(false);
+
+    expect(
+      UpdateGoalRequestSchema.safeParse({
+        dayTargets: {
+          foo: 5,
+        },
+      }).success,
+    ).toBe(false);
+  });
+
   it("update schemas reject an inverted range when both dates are supplied", () => {
     expect(
       UpdateGoalRequestSchema.safeParse({
@@ -191,5 +224,38 @@ describe("sync request date schemas", () => {
         deletedAt: null,
       }).success,
     ).toBe(false);
+  });
+
+  it("sync activity logs validate HH:mm(:ss) time ranges", () => {
+    const baseLog = {
+      id: "00000000-0000-4000-8000-000000000001",
+      activityId: "00000000-0000-4000-8000-000000000002",
+      activityKindId: null,
+      quantity: 1,
+      memo: "",
+      date: "2026-01-01",
+      taskId: null,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      deletedAt: null,
+    };
+
+    for (const time of [null, "00:00", "23:59", "23:59:59"]) {
+      expect(
+        UpsertActivityLogRequestSchema.safeParse({
+          ...baseLog,
+          time,
+        }).success,
+      ).toBe(true);
+    }
+
+    for (const time of ["24:00", "12:60", "12:30:60", "99:99:99"]) {
+      expect(
+        UpsertActivityLogRequestSchema.safeParse({
+          ...baseLog,
+          time,
+        }).success,
+      ).toBe(false);
+    }
   });
 });

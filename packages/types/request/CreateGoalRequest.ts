@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { addEndDateRangeIssue, dateStringSchema } from "../dateSchemas";
+import { dayTargetsRequestSchema } from "../dayTargetsSchema";
 
 export const CreateGoalRequestSchema = z
   .object({
@@ -10,10 +11,7 @@ export const CreateGoalRequestSchema = z
     endDate: dateStringSchema.optional(),
     description: z.string().max(500).optional(),
     debtCap: z.number().nonnegative().nullable().optional(),
-    dayTargets: z
-      .record(z.string(), z.number().nonnegative())
-      .nullable()
-      .optional(),
+    dayTargets: dayTargetsRequestSchema.nullable().optional(),
   })
   .superRefine((value, ctx) => {
     addEndDateRangeIssue(ctx, value.startDate, value.endDate);
