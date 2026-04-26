@@ -20,6 +20,21 @@ test("GET activityLogs / success", async () => {
   expect(res.status).toEqual(200);
 });
 
+test("GET activityLogs / invalid date で 400", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/?date=2026-02-30",
+    { method: "GET" },
+    { DB: testDB, NODE_ENV: "test" },
+  );
+
+  expect(res.status).toEqual(400);
+});
+
 test("GET activityLogs/:id / success", async () => {
   const route = createActivityLogRoute();
   const app = new Hono().use(mockAuthMiddleware).route("/", route);

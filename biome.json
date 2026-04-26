@@ -12,8 +12,10 @@
       "!**/*.gen.ts",
       "!**/*.js",
       "!**/db-data",
+      "!apps/mobile/dist",
       "!**/stats.html",
-      "!.worktrees"
+      "!.worktrees",
+      "!.claude/worktrees"
     ]
   },
   "formatter": {

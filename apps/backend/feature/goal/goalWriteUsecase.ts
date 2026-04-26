@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@backend/error";
+import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import { createActivityId } from "@packages/domain/activity/activitySchema";
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
@@ -8,20 +8,38 @@ import {
 } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
+import type { ActivityRepository } from "../activity/activityRepository";
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { CreateGoalRequest, Goal, UpdateGoalRequest } from "./goalTypes";
 import { goalEntityToResponse } from "./goalTypes";
 
+function assertGoalDateRange(startDate: string, endDate: string | null) {
+  if (endDate !== null && endDate < startDate) {
+    throw new AppError("endDate must be on or after startDate", 400);
+  }
+}
+
 export function createGoal(
   activityGoalRepo: ActivityGoalRepository,
+  activityRepo: ActivityRepository,
   tracer: Tracer,
 ) {
   return async (userId: UserId, req: CreateGoalRequest): Promise<Goal> => {
+    assertGoalDateRange(req.startDate, req.endDate ?? null);
+    const activityId = createActivityId(req.activityId);
+
+    const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
+      activityRepo.getActivityByIdAndUserId(userId, activityId),
+    );
+    if (!activity) {
+      throw new AppError("activityId does not belong to user", 400);
+    }
+
     const goal = createActivityGoalEntity({
       type: "new",
       id: createActivityGoalId(),
       userId,
-      activityId: createActivityId(req.activityId),
+      activityId,
       dailyTargetQuantity: req.dailyTargetQuantity,
       startDate: req.startDate,
       endDate: req.endDate || null,
@@ -60,11 +78,15 @@ export function updateGoal(
     );
     if (!goal) throw new ResourceNotFoundError("Goal not found");
 
+    const startDate = req.startDate ?? goal.startDate;
+    const endDate = req.endDate === null ? null : (req.endDate ?? goal.endDate);
+    assertGoalDateRange(startDate, endDate);
+
     const updated = createActivityGoalEntity({
       ...goal,
       dailyTargetQuantity: req.dailyTargetQuantity ?? goal.dailyTargetQuantity,
-      startDate: req.startDate ?? goal.startDate,
-      endDate: req.endDate === null ? null : (req.endDate ?? goal.endDate),
+      startDate,
+      endDate,
       description:
         req.description === null ? null : (req.description ?? goal.description),
       isActive: req.isActive ?? goal.isActive,

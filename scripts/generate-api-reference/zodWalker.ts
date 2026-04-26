@@ -14,6 +14,7 @@ export type Param = {
 type ZodDef = {
   type: string;
   innerType?: ZodLike;
+  options?: ZodLike[];
   shape?: Record<string, ZodLike>;
   element?: ZodLike;
   in?: ZodLike;
@@ -30,13 +31,25 @@ function getDef(schema: ZodLike): ZodDef {
   return schema._zod.def;
 }
 
-function unwrap(schema: ZodLike): { inner: ZodLike; required: boolean } {
+function unwrap(schema: ZodLike): {
+  inner: ZodLike;
+  required: boolean;
+  nullable: boolean;
+} {
   let current: ZodLike = schema;
   let required = true;
+  let nullable = false;
   while (true) {
     const def = getDef(current);
-    if (def.type === "optional" || def.type === "nullable") {
+    if (def.type === "optional") {
       required = false;
+      if (!def.innerType) break;
+      current = def.innerType;
+      continue;
+    }
+    if (def.type === "nullable") {
+      required = false;
+      nullable = true;
       if (!def.innerType) break;
       current = def.innerType;
       continue;
@@ -55,7 +68,7 @@ function unwrap(schema: ZodLike): { inner: ZodLike; required: boolean } {
     }
     break;
   }
-  return { inner: current, required };
+  return { inner: current, required, nullable };
 }
 
 function typeName(schema: ZodLike): string {
@@ -82,6 +95,11 @@ function typeName(schema: ZodLike): string {
         ? entries
         : Object.values(entries as Record<string, string>);
       return values.map((v) => `"${v}"`).join(" | ");
+    }
+    case "union": {
+      if (!def.options || def.options.length === 0) return "union";
+      const types = [...new Set(def.options.map(typeName))];
+      return types.length === 1 ? types[0] : types.join(" | ");
     }
     default:
       return def.type;
@@ -111,6 +129,12 @@ function collectDescription(schema: ZodLike): string {
   return "";
 }
 
+function appendNullType(type: string, nullable: boolean): string {
+  if (!nullable) return type;
+  const types = type.split(" | ");
+  return types.includes("null") ? type : `${type} | null`;
+}
+
 export function schemaToParams(
   schema: z.ZodTypeAny | undefined,
 ): Param[] | undefined {
@@ -125,10 +149,10 @@ export function schemaToParams(
   }
   return Object.entries(def.shape).map(([name, field]) => {
     const description = collectDescription(field);
-    const { inner: unwrappedInner, required } = unwrap(field);
+    const { inner: unwrappedInner, required, nullable } = unwrap(field);
     return {
       name,
-      type: typeName(unwrappedInner),
+      type: appendNullType(typeName(unwrappedInner), nullable),
       required,
       description,
     };

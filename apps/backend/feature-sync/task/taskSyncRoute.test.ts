@@ -125,6 +125,19 @@ describe("POST /users/v2/tasks/sync", () => {
     expect(res.status).toBe(400);
   });
 
+  test("バリデーションエラー - activityKindIdにactivityIdが必要", async () => {
+    const app = createApp();
+    const res = await postSync(app, {
+      tasks: [
+        makeTask({
+          activityId: null,
+          activityKindId: "00000000-0000-4000-8000-000000000001",
+        }),
+      ],
+    });
+    expect(res.status).toBe(400);
+  });
+
   test("複数タスクの一括同期", async () => {
     const app = createApp();
     const tasks = [

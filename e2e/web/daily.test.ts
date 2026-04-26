@@ -3,10 +3,16 @@ import { describe, expect, it } from "vitest";
 
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
+import { BASE_URL } from "../helpers/config";
 
 async function recordRunningOnActiko(page: Page, quantity: string) {
-  await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
-  await page.click('text="E2Eランニング"');
+  await page.goto(`${BASE_URL}/actiko`);
+  const runningCard = page
+    .locator("button")
+    .filter({ hasText: "E2Eランニング" })
+    .first();
+  await runningCard.waitFor({ state: "visible", timeout: 15000 });
+  await runningCard.click();
   await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
   const modal = page.locator(".modal-backdrop");
@@ -27,23 +33,7 @@ describe("daily", () => {
     await login(page, "e2e@example.com", "password123");
 
     // ホーム（/actiko）でシード済み「E2Eランニング」カードを押下して記録
-    await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
-    await page.click('text="E2Eランニング"');
-
-    // RecordDialog が開く
-    await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
-
-    // モーダル内の数量入力フィールドに記録
-    const modal = page.locator(".modal-backdrop");
-    const quantityInput = modal.locator('input[type="number"]');
-    await quantityInput.fill("7");
-    await modal.locator('button:has-text("記録する")').click();
-
-    // ダイアログが閉じる
-    await page.waitForSelector(".modal-backdrop", {
-      state: "detached",
-      timeout: 15000,
-    });
+    await recordRunningOnActiko(page, "7");
 
     // Daily ページに遷移
     await page.click('a[href="/daily"]');
@@ -178,16 +168,7 @@ describe("daily", () => {
     await login(page, "e2e@example.com", "password123");
 
     // 削除用の記録を先に作成
-    await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
-    await page.click('text="E2Eランニング"');
-    await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
-    const modal = page.locator(".modal-backdrop");
-    await modal.locator('input[type="number"]').fill("99");
-    await modal.locator('button:has-text("記録する")').click();
-    await page.waitForSelector(".modal-backdrop", {
-      state: "detached",
-      timeout: 15000,
-    });
+    await recordRunningOnActiko(page, "99");
 
     // Daily ページに遷移
     await page.click('a[href="/daily"]');

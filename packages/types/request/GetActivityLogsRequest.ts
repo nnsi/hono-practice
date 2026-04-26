@@ -1,8 +1,9 @@
 import { z } from "zod";
 
+import { dateOrMonthStringSchema } from "../dateSchemas";
+
 export const getActivityLogsRequestSchema = z.object({
-  date: z
-    .string()
+  date: dateOrMonthStringSchema
     .optional()
     .describe("YYYY-MM-DD（日）または YYYY-MM（月）。省略時は今日"),
 });
@@ -12,7 +13,9 @@ export type GetActivityLogsRequest = z.infer<
 >;
 
 export const getActivityLogStatsRequestSchema = z.object({
-  date: z.string().describe("YYYY-MM-DD（日）または YYYY-MM（月）"),
+  date: dateOrMonthStringSchema.describe(
+    "YYYY-MM-DD（日）または YYYY-MM（月）",
+  ),
 });
 
 export type GetActivityLogStatsRequest = z.infer<

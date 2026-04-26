@@ -61,10 +61,9 @@ export function createActivityGoalEntity(
 
   const goal = parsedEntity.data;
 
-  // 終了日が設定されている場合、開始日より後でなければならない
-  if (goal.endDate && goal.startDate >= goal.endDate) {
+  if (goal.endDate && goal.endDate < goal.startDate) {
     throw new DomainValidateError(
-      "createActivityGoalEntity: endDate must be after startDate",
+      "createActivityGoalEntity: endDate must be on or after startDate",
     );
   }
 

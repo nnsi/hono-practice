@@ -20,9 +20,20 @@ type CreateActivityLogParams = {
   date: string;
   quantity: number;
   memo?: string;
-  activityId?: string;
-  activityKindId?: string;
+  activityId: string;
+  activityKindId?: string | null;
 };
+
+function toBatchErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "Failed to create activity logs";
+  if (
+    error.message.startsWith("Activity not found:") ||
+    error.message.startsWith("Activity kind not found:")
+  ) {
+    return error.message;
+  }
+  return "Failed to create activity logs";
+}
 
 export function createActivityLogBatch(
   repo: ActivityLogRepository,
@@ -52,26 +63,39 @@ export function createActivityLogBatch(
 
         for (const params of activityLogs) {
           const activityId = createActivityId(params.activityId);
-          const activityKindId = createActivityKindId(params.activityKindId);
+          const activityKindId =
+            params.activityKindId == null
+              ? null
+              : createActivityKindId(params.activityKindId);
 
           const activity = activityMap.get(activityId);
           if (!activity) {
             throw new Error(`Activity not found: ${params.activityId}`);
           }
 
-          if (!activity.kinds) activity.kinds = [];
-
+          const activityForLog = { ...activity, kinds: activity.kinds ?? [] };
           const activityKind =
-            activity.kinds.find((kind) => kind.id === activityKindId) || null;
+            activityKindId === null
+              ? null
+              : (activityForLog.kinds.find(
+                  (kind) => kind.id === activityKindId,
+                ) ?? null);
+          if (activityKindId !== null && activityKind === null) {
+            throw new Error(
+              `Activity kind not found: ${params.activityKindId}`,
+            );
+          }
 
           const activityLog = createActivityLogEntity({
-            id: createActivityLogId(),
+            id: params.id
+              ? createActivityLogId(params.id)
+              : createActivityLogId(),
             userId,
             date: new Date(params.date),
             quantity: params.quantity,
             memo: params.memo,
-            activity,
-            activityKind: activityKind!,
+            activity: activityForLog,
+            activityKind,
             type: "new",
           });
 
@@ -101,7 +125,7 @@ export function createActivityLogBatch(
       const results = activityLogs.map((_, index) => ({
         index,
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: toBatchErrorMessage(error),
       }));
 
       return {

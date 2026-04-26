@@ -53,7 +53,11 @@ function createMockRepo(
   return {
     getActivityLogsByUserId: vi.fn().mockResolvedValue([]),
     getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
-    getExistingActivityKindIds: vi.fn().mockResolvedValue([OWNED_KIND_ID]),
+    getOwnedActivityKindIdsWithActivityId: vi
+      .fn()
+      .mockResolvedValue([
+        { id: OWNED_KIND_ID, activityId: OWNED_ACTIVITY_ID },
+      ]),
     getExistingTaskIds: vi.fn().mockResolvedValue([OWNED_TASK_ID]),
     upsertActivityLogs: vi.fn().mockResolvedValue([]),
     getActivityLogsByIds: vi.fn().mockResolvedValue([]),
@@ -152,7 +156,28 @@ describe("activityLogSyncUsecase", () => {
         activityKindId: "99999999-9999-4999-9999-999999999999",
       });
       const repo = createMockRepo({
-        getExistingActivityKindIds: vi.fn().mockResolvedValue([]),
+        getOwnedActivityKindIdsWithActivityId: vi.fn().mockResolvedValue([]),
+      });
+      const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+
+      const result = await usecase.syncActivityLogs(USER_ID, [req as never]);
+
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertActivityLogs).not.toHaveBeenCalled();
+    });
+
+    test("activityKindIdが別activityに属する → skip", async () => {
+      const otherActivityId = "00000000-0000-4000-8000-000000000099";
+      const req = makeUpsertRequest({
+        activityId: OWNED_ACTIVITY_ID,
+        activityKindId: OWNED_KIND_ID,
+      });
+      const repo = createMockRepo({
+        getOwnedActivityKindIdsWithActivityId: vi
+          .fn()
+          .mockResolvedValue([
+            { id: OWNED_KIND_ID, activityId: otherActivityId },
+          ]),
       });
       const usecase = newActivityLogSyncUsecase(repo, noopTracer);
 
