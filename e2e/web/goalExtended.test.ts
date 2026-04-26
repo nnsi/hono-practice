@@ -111,8 +111,13 @@ describe("goal extended", () => {
     // 目標値テキスト（title="クリックで編集"）をクリック
     await card.locator('span[title="クリックで編集"]').click();
 
-    // 入力フィールドに切り替わる
-    const inlineInput = card.locator('input[type="number"]');
+    // 入力フィールドに切り替わる。編集中は目標値が input value になり、
+    // hasText(/12km/) のカード locator では同じカードを再解決できない。
+    const inlineInput = page
+      .locator(".rounded-2xl")
+      .filter({ hasText: "E2Eランニング" })
+      .locator('input[type="number"]')
+      .first();
     await inlineInput.waitFor({ state: "visible", timeout: 15000 });
     await inlineInput.fill("21");
     await inlineInput.press("Enter");
