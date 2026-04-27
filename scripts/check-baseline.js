@@ -63,13 +63,25 @@ async function main() {
     return output({ checkedAt, masterSha: null, runs: [], overallStatus: "unknown", ngWorkflows: [] });
   }
 
-  // master の最新 workflow runs 取得
+  // master HEAD の SHA を取得（過去コミット上の workflow_dispatch failure を拾わないため、
+  // CI 状態は HEAD コミット上で実際に走ったランだけに絞る）
+  const headCheck = tryGhExec(
+    `gh api repos/${owner}/${repo}/commits/master --jq .sha`
+  );
+  if (!headCheck.ok) {
+    warn(`master HEAD の取得に失敗しました: ${headCheck.error}`);
+    return output({ checkedAt, masterSha: null, runs: [], overallStatus: "unknown", ngWorkflows: [] });
+  }
+  const masterFullSha = headCheck.output.trim();
+  const masterSha = masterFullSha.slice(0, 7);
+
+  // HEAD コミット上の completed workflow runs を取得
   const runsCheck = tryGhExec(
-    `gh api "repos/${owner}/${repo}/actions/runs?branch=master&status=completed&per_page=20"`
+    `gh api "repos/${owner}/${repo}/actions/runs?head_sha=${masterFullSha}&status=completed&per_page=50"`
   );
   if (!runsCheck.ok) {
     warn(`workflow runs の取得に失敗しました: ${runsCheck.error}`);
-    return output({ checkedAt, masterSha: null, runs: [], overallStatus: "unknown", ngWorkflows: [] });
+    return output({ checkedAt, masterSha, runs: [], overallStatus: "unknown", ngWorkflows: [] });
   }
 
   let allRuns;
@@ -77,10 +89,10 @@ async function main() {
     allRuns = JSON.parse(runsCheck.output).workflow_runs ?? [];
   } catch (e) {
     warn(`workflow runs のパースに失敗しました: ${e.message}`);
-    return output({ checkedAt, masterSha: null, runs: [], overallStatus: "unknown", ngWorkflows: [] });
+    return output({ checkedAt, masterSha, runs: [], overallStatus: "unknown", ngWorkflows: [] });
   }
 
-  // workflow ごとに最新1件を集約（createdAt 降順で先頭）
+  // 同一 workflow が複数回 run していた場合は最新（createdAt 降順）を採用
   const byWorkflow = new Map();
   for (const run of allRuns) {
     const name = run.name ?? run.workflow_id?.toString() ?? "unknown";
@@ -104,12 +116,9 @@ async function main() {
     });
   }
 
-  // master の HEAD SHA（最初のランから取得）
-  const masterSha = allRuns[0]?.head_sha?.slice(0, 7) ?? null;
-
-  // overallStatus 判定
+  // overallStatus 判定（success / skipped / neutral は非失敗扱い）
   const ngWorkflows = runs
-    .filter((r) => r.conclusion !== "success" && r.conclusion !== "skipped")
+    .filter((r) => !["success", "skipped", "neutral"].includes(r.conclusion))
     .map((r) => r.workflowName);
 
   const overallStatus =

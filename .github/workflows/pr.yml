@@ -40,9 +40,27 @@ jobs:
             if (!fs.existsSync("baseline-status.json")) return;
 
             const status = JSON.parse(fs.readFileSync("baseline-status.json", "utf8"));
-            if (status.overallStatus !== "ng") return;
-
             const marker = "<!-- baseline-check -->";
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            // OK / unknown のときは既存の NG コメントが残っていれば削除する。
+            if (status.overallStatus !== "ng") {
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                });
+              }
+              return;
+            }
+
             const ngList = status.ngWorkflows.map((w) => `- ${w}`).join("\n");
             const sha = status.masterSha ? ` (master \`${status.masterSha}\`)` : "";
             const body = [
@@ -56,13 +74,6 @@ jobs:
               `確認日時: ${status.checkedAt}`,
             ].join("\n");
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existing = comments.find((c) => c.body.includes(marker));
             if (existing) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
