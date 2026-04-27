@@ -15,7 +15,6 @@ export default defineConfig({
     setupFiles: ["./e2e/setup/perWorkerSetup.ts"],
     hookTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
     testTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
-    retry: 1, // 並列実行時の偶発的なタイミングflakeを吸収する
     include: [
       // E2Eテストのみを対象
       "**/e2e/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

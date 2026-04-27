@@ -65,11 +65,14 @@ describe("reorder", () => {
       timeout: 15000,
     });
 
-    // ホーム画面の順序が保存後に変わったことを確認
+    // ホーム画面の順序が保存後に変わったことを確認（同期反映を待つためポーリング）
     await homeActivityNames
       .first()
       .waitFor({ state: "visible", timeout: 15000 });
-    const firstNameAfter = await homeActivityNames.first().textContent();
-    expect(firstNameAfter).not.toBe(firstNameBefore);
+    await expect
+      .poll(async () => homeActivityNames.first().textContent(), {
+        timeout: 15000,
+      })
+      .not.toBe(firstNameBefore);
   });
 });
