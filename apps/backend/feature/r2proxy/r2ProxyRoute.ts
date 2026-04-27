@@ -5,7 +5,17 @@ import { newHonoWithErrorHandling } from "../../lib/honoWithErrorHandling";
 export const r2ProxyRoute = newHonoWithErrorHandling();
 
 const ALLOWED_KEY_PATTERN = /^(?:uploads\/)?icons\/[a-zA-Z0-9/_\-.]+\.(?:webp|png|jpe?g|gif)$/;
-const INVALID_KEY_PATTERN = /\.\.|\\|%2e|[\u0000-\u001F\u007F]/i;
+const INVALID_KEY_PATTERN = /\.\.|\\|%2e/i;
+
+function hasControlChars(input: string): boolean {
+  for (const char of input) {
+    const code = char.charCodeAt(0);
+    if (code <= 31 || code === 127) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function inferImageContentTypeFromKey(key: string): string | null {
   if (key.endsWith(".webp")) return "image/webp";
@@ -22,7 +32,11 @@ r2ProxyRoute.get("/:key{.+}", async (c) => {
   }
 
   const key = c.req.param("key");
-  if (INVALID_KEY_PATTERN.test(key) || !ALLOWED_KEY_PATTERN.test(key)) {
+  if (
+    hasControlChars(key) ||
+    INVALID_KEY_PATTERN.test(key) ||
+    !ALLOWED_KEY_PATTERN.test(key)
+  ) {
     return c.text("Invalid key", 400);
   }
 
