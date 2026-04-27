@@ -12,9 +12,10 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    globalSetup: ["./e2e/setup/globalSetup.ts"],
+    setupFiles: ["./e2e/setup/perWorkerSetup.ts"],
     hookTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
     testTimeout: 60000, // E2Eテストは時間がかかるため60秒に設定
+    retry: 1, // 並列実行時の偶発的なタイミングflakeを吸収する
     include: [
       // E2Eテストのみを対象
       "**/e2e/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
@@ -30,11 +31,15 @@ export default defineConfig({
       "**/mobile/**",
     ],
     environment: "node",
-    // テストの実行を1つずつ順番に実行（並列実行によるポート競合を防ぐ）
+    // 各 worker が独自の backend/frontend/PGlite を VITEST_POOL_ID ベースの
+    // ポート分離で起動する。isolate: false で worker 内の module cache を共有し、
+    // perWorkerInfra のシングルトンが 1 worker につき 1 回だけ起動するようにする。
     pool: "forks",
     poolOptions: {
       forks: {
-        singleFork: true,
+        isolate: false,
+        minForks: 1,
+        maxForks: Number(process.env.E2E_MAX_FORKS ?? 4),
       },
     },
   },
