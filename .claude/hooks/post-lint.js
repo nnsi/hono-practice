@@ -67,6 +67,38 @@ async function main() {
     if (isTestFile && !content.includes('from "vitest"')) {
       warnings.push('⚠️ vitest import不足: テストファイルでは `import { describe, expect, it } from "vitest"` を明示的に書いてください（backend CLAUDE.md参照）。');
     }
+
+    // 0e. Date string production patterns (3/15 UTC bug 再発防止)
+    // 過去 bug 文書化箇所・regression test は除外
+    const isDateExempt =
+      /[\\/]regression\.property\.test\.ts$/.test(filePath) ||
+      /[\\/]scripts[\\/]/.test(filePath) ||
+      /[\\/]e2e[\\/]/.test(filePath);
+    if (!isDateExempt) {
+      const datePatterns = [
+        {
+          re: /\.toISOString\(\)\s*\.\s*split\s*\(\s*["']T["']/,
+          name: 'toISOString().split("T")',
+        },
+        {
+          re: /\.toISOString\(\)\s*\.\s*slice\s*\(\s*0\s*,\s*10\s*\)/,
+          name: "toISOString().slice(0, 10)",
+        },
+        { re: /\.toLocaleDateString\s*\(/, name: "toLocaleDateString(" },
+        { re: /\.toDateString\s*\(\s*\)/, name: "toDateString()" },
+      ];
+      for (let i = 0; i < lines.length; i++) {
+        const codeBeforeComment = lines[i].split("//")[0];
+        for (const p of datePatterns) {
+          if (p.re.test(codeBeforeComment)) {
+            warnings.push(
+              `⚠️ 日付文字列生成パターン禁止 (line ${i + 1}): \`${p.name}\` は UTC/ロケール依存で過去 bug の原因。\`dayjs(...).format("YYYY-MM-DD")\` を使ってください（3/15 UTC bug 参照）。`,
+            );
+            break;
+          }
+        }
+      }
+    }
   } catch {
     // file read failure is non-fatal
   }
