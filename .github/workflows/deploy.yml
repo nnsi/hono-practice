@@ -221,13 +221,13 @@ jobs:
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env stg
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env stg; fi
           printf '%s' "$ADMIN_ALLOWED_EMAILS" | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --env stg
-          printf '%s' "$CF_WORKERS_TOKEN" | pnpm exec wrangler secret put CF_WORKERS_TOKEN --env stg
-          printf '%s' "$CF_ACCOUNT_ID" | pnpm exec wrangler secret put CF_ACCOUNT_ID --env stg
+          if [ -n "$CF_ANALYTICS_TOKEN" ]; then printf '%s' "$CF_ANALYTICS_TOKEN" | pnpm exec wrangler secret put CF_ANALYTICS_TOKEN --env stg; fi
+          if [ -n "$CF_ANALYTICS_ACCOUNT_ID" ]; then printf '%s' "$CF_ANALYTICS_ACCOUNT_ID" | pnpm exec wrangler secret put CF_ANALYTICS_ACCOUNT_ID --env stg; fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ANALYTICS_TOKEN: ${{ secrets.CF_ANALYTICS_TOKEN_STG }}
+          CF_ANALYTICS_ACCOUNT_ID: ${{ vars.CF_ANALYTICS_ACCOUNT_ID_STG }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
           JWT_SECRET: ${{ secrets.JWT_SECRET_STG }}
           JWT_SECRET_ADMIN: ${{ secrets.JWT_SECRET_ADMIN_STG }}
@@ -266,13 +266,13 @@ jobs:
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env production
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env production; fi
           printf '%s' "$ADMIN_ALLOWED_EMAILS" | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --env production
-          printf '%s' "$CF_WORKERS_TOKEN" | pnpm exec wrangler secret put CF_WORKERS_TOKEN --env production
-          printf '%s' "$CF_ACCOUNT_ID" | pnpm exec wrangler secret put CF_ACCOUNT_ID --env production
+          if [ -n "$CF_ANALYTICS_TOKEN" ]; then printf '%s' "$CF_ANALYTICS_TOKEN" | pnpm exec wrangler secret put CF_ANALYTICS_TOKEN --env production; fi
+          if [ -n "$CF_ANALYTICS_ACCOUNT_ID" ]; then printf '%s' "$CF_ANALYTICS_ACCOUNT_ID" | pnpm exec wrangler secret put CF_ANALYTICS_ACCOUNT_ID --env production; fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ANALYTICS_TOKEN: ${{ secrets.CF_ANALYTICS_TOKEN_PROD }}
+          CF_ANALYTICS_ACCOUNT_ID: ${{ vars.CF_ANALYTICS_ACCOUNT_ID_PROD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET_PROD }}
           JWT_SECRET_ADMIN: ${{ secrets.JWT_SECRET_ADMIN_PROD }}
@@ -338,6 +338,8 @@ jobs:
   mobile-release:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
