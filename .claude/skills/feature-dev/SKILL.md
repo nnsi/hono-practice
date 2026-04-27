@@ -14,6 +14,21 @@ user_invocable: true
 
 - `--auto`: 自動化拡張。レビュー完了後に日記・コミット＆プッシュ・worktree cleanupまで自動実行する
 
+## ベースライン確認（着手前に必ず実施）
+
+実装を始める前に master の CI 状態を確認する。
+
+1. `.claude/worktree-baseline.json`（worktree 配下）または `.github/baseline-status.json` を読む
+2. ファイルが存在しない場合は `node scripts/check-baseline.js` を実行して取得する
+3. `overallStatus` を確認する:
+   - `"ok"`: master が緑。通常通り着手する
+   - `"ng"`: master が赤。**自分の変更を疑う前に** `ngWorkflows` の workflow を確認し、原因切り分けから着手する。master の壊れが先か、自分の変更が原因かを明確にしてからユーザーに報告する
+   - `"unknown"`: gh CLI 未認証等で取得できず。着手は可能だが、テスト失敗時は master 状態も疑うこと
+
+詳細: `.claude/rules/baseline-check.md` 参照
+
+---
+
 ## Phase管理: TaskCreateチェックリスト
 
 **feature-dev開始時に、以下のタスクを全て TaskCreate で登録する。**

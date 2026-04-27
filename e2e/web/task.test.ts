@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
@@ -121,7 +121,9 @@ describe("task", () => {
       state: "detached",
       timeout: 15000,
     });
-    expect(await page.locator('text="削除対象タスク"').isVisible()).toBe(false);
+    await page
+      .locator('text="削除対象タスク"')
+      .waitFor({ state: "detached", timeout: 15000 });
   });
 
   it("タスクをアーカイブできる", async () => {

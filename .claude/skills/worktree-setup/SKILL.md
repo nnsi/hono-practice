@@ -56,3 +56,15 @@ docker compose ps --status running
 - DB サーバーは共有（同一 Docker Postgres）、データベースのみ分離
 - env ファイルはメイン環境からコピー → DB/ポートのみ書き換え
 - `pnpm install` と `pnpm db-migrate` はスクリプト内で自動実行される
+
+## Baseline チェック（オプション）
+
+worktree セットアップ完了後、master の CI 状態を取得して記録する。失敗しても worktree 作成自体は成功とする。
+
+```bash
+node scripts/check-baseline.js --out <worktreeパス>/.claude/worktree-baseline.json
+```
+
+- 出力先: `<worktreeパス>/.claude/worktree-baseline.json`（`.gitignore` 済み）
+- `overallStatus: "ng"` の場合、feature-dev Phase 0 で原因切り分けから着手する
+- 詳細: `.claude/rules/baseline-check.md` 参照

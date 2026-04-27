@@ -11,18 +11,17 @@ import { BACKEND_PORT, FRONTEND_PORT } from "../helpers/config";
 
 const migrationsFolder = "./infra/drizzle/migrations";
 
-let pglite: PGlite;
-let server: ReturnType<typeof serve>;
-let viteServer: ViteDevServer;
+let pglite: PGlite | undefined;
+let server: ReturnType<typeof serve> | undefined;
+let viteServer: ViteDevServer | undefined;
+let startupPromise: Promise<void> | undefined;
 
-export async function setup() {
-  // 1. PGlite + drizzle + migrate + seed
+async function start() {
   pglite = new PGlite();
   const db = drizzle(pglite, { schema });
   await migrate(db, { migrationsFolder });
   await seedDevData(db);
 
-  // 2. Hono backend on port 3457
   const testEnv = {
     APP_URL: `http://localhost:${FRONTEND_PORT}`,
     JWT_SECRET: "e2e-test-secret-that-is-at-least-32-chars-long!!",
@@ -39,24 +38,20 @@ export async function setup() {
   };
 
   server = serve({
-    fetch: (request) => {
-      return app.fetch(request, testEnv);
-    },
+    fetch: (request) => app.fetch(request, testEnv),
     port: BACKEND_PORT,
   });
-
   await new Promise<void>((resolve) => {
-    server.on("listening", resolve);
+    server!.on("listening", resolve);
   });
-  console.log(`E2E backend running on port ${BACKEND_PORT}`);
 
-  // 3. Vite frontend on port 5176 with proxy
   viteServer = await createServer({
     configFile: "./apps/frontend/vite.config.ts",
     root: "./apps/frontend",
     server: {
       port: FRONTEND_PORT,
       host: "127.0.0.1",
+      strictPort: true,
       proxy: {
         "^/auth(?:/|$)": `http://localhost:${BACKEND_PORT}`,
         "^/user(?:/|$)": `http://localhost:${BACKEND_PORT}`,
@@ -68,22 +63,19 @@ export async function setup() {
       },
     },
     define: {
-      // プロキシ経由で同一オリジンにする（"" だと || fallback で 3456 に行く）
       "import.meta.env.VITE_API_URL": JSON.stringify(
         `http://localhost:${FRONTEND_PORT}`,
       ),
     },
   });
   await viteServer.listen();
-  console.log(`E2E frontend running on port ${FRONTEND_PORT}`);
+
+  console.log(
+    `[e2e worker ${process.env.VITEST_POOL_ID ?? "?"}] backend:${BACKEND_PORT} frontend:${FRONTEND_PORT}`,
+  );
 }
 
-export async function teardown() {
-  await viteServer?.close();
-  await new Promise<void>((resolve, reject) => {
-    if (!server) return resolve();
-    server.close((err) => (err ? reject(err) : resolve()));
-  });
-  await pglite?.close();
-  console.log("E2E servers stopped");
+export function ensureWorkerInfra(): Promise<void> {
+  if (!startupPromise) startupPromise = start();
+  return startupPromise;
 }

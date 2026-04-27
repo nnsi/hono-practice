@@ -1,12 +1,17 @@
 name: Infra (Terraform)
 
+# 自動トリガー (pull_request) は一時的に無効化。
+# 必要な secrets (TF_STATE_R2_ACCESS_KEY_ID / TF_STATE_R2_SECRET_ACCESS_KEY
+# / TF_CLOUDFLARE_API_TOKEN / CF_ACCOUNT_ID / KV_RATE_LIMIT_ID_*) が
+# このリポジトリに設定されておらず、毎回 fail するため。
+# secrets を整備したら下記 pull_request ブロックのコメントを外して再有効化する。
 on:
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'terraform/**'
-      - '.github/workflows/infra.yml'
+  # pull_request:
+  #   branches:
+  #     - master
+  #   paths:
+  #     - 'terraform/**'
+  #     - '.github/workflows/infra.yml'
   workflow_dispatch:
     inputs:
       action:
