@@ -42,14 +42,16 @@ describe("r2ProxyRoute", () => {
     it("存在しないキーの場合は404エラーを返す", async () => {
       vi.mocked(mockR2Bucket.get).mockResolvedValue(null);
 
-      const req = new Request("http://localhost/r2/non-existent-key");
+      const req = new Request("http://localhost/r2/uploads/icons/non-existent-key.webp");
       const res = await app.fetch(req, {
         R2_BUCKET: mockR2Bucket,
       });
 
       expect(res.status).toBe(404);
       expect(await res.text()).toBe("Not Found");
-      expect(mockR2Bucket.get).toHaveBeenCalledWith("non-existent-key");
+      expect(mockR2Bucket.get).toHaveBeenCalledWith(
+        "uploads/icons/non-existent-key.webp",
+      );
     });
 
     it("画像が存在する場合は正しいヘッダーと共に画像を返す", async () => {
@@ -72,13 +74,14 @@ describe("r2ProxyRoute", () => {
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("image/webp");
       expect(res.headers.get("Cache-Control")).toBe("public, max-age=3600");
+      expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
       expect(mockR2Bucket.get).toHaveBeenCalledWith("uploads/icons/test.webp");
 
       const responseBuffer = await res.arrayBuffer();
       expect(responseBuffer).toEqual(mockImageData);
     });
 
-    it("コンテンツタイプが指定されていない場合はデフォルトを使用", async () => {
+    it("コンテンツタイプが指定されていない場合はキー拡張子から推定する", async () => {
       const mockImageData = new ArrayBuffer(1024);
       const mockObject = {
         arrayBuffer: vi.fn().mockResolvedValue(mockImageData),
@@ -88,13 +91,13 @@ describe("r2ProxyRoute", () => {
         mockObject as unknown as R2ObjectBody,
       );
 
-      const req = new Request("http://localhost/r2/uploads/icons/test");
+      const req = new Request("http://localhost/r2/uploads/icons/test.png");
       const res = await app.fetch(req, {
         R2_BUCKET: mockR2Bucket,
       });
 
       expect(res.status).toBe(200);
-      expect(res.headers.get("Content-Type")).toBe("application/octet-stream");
+      expect(res.headers.get("Content-Type")).toBe("image/png");
     });
 
     it("ネストされたパスも正しく処理される", async () => {
@@ -117,6 +120,48 @@ describe("r2ProxyRoute", () => {
 
       expect(res.status).toBe(200);
       expect(mockR2Bucket.get).toHaveBeenCalledWith(key);
+    });
+
+    it("不正なキー（パストラバーサル）は400を返す", async () => {
+      const req = new Request("http://localhost/r2/uploads/icons/../../secret.webp");
+      const res = await app.fetch(req, {
+        R2_BUCKET: mockR2Bucket,
+      });
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).toBe("Invalid key");
+      expect(mockR2Bucket.get).not.toHaveBeenCalled();
+    });
+
+    it("不正なキー（許可プレフィックス外）は400を返す", async () => {
+      const req = new Request("http://localhost/r2/private/user-1/icon.webp");
+      const res = await app.fetch(req, {
+        R2_BUCKET: mockR2Bucket,
+      });
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).toBe("Invalid key");
+      expect(mockR2Bucket.get).not.toHaveBeenCalled();
+    });
+
+    it("画像以外のContent-Typeは415を返す", async () => {
+      const mockObject = {
+        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+        httpMetadata: {
+          contentType: "text/plain",
+        },
+      };
+      vi.mocked(mockR2Bucket.get).mockResolvedValue(
+        mockObject as unknown as R2ObjectBody,
+      );
+
+      const req = new Request("http://localhost/r2/uploads/icons/test.webp");
+      const res = await app.fetch(req, {
+        R2_BUCKET: mockR2Bucket,
+      });
+
+      expect(res.status).toBe(415);
+      expect(await res.text()).toBe("Unsupported content type");
     });
   });
 });
