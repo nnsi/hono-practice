@@ -26,10 +26,10 @@
 
 ## Phase 1: 軽量版（master CI 結果の取得）
 
-- [ ] `gh api repos/{owner}/{repo}/actions/runs?branch=master&status=completed` で master の最新 CI 結果を取得するスクリプトを `scripts/check-baseline.js` に新設
-- [ ] PR check ワークフローの先頭で `check-baseline.js` を実行
-- [ ] master CI が赤の場合、PR に「baseline NG: master CI が失敗中」コメントを自動投稿
-- [ ] master CI 結果を `.github/baseline-status.json` に書き出し（後続ジョブから参照可能）
+- [x] `gh api repos/{owner}/{repo}/actions/runs?branch=master&status=completed` で master の最新 CI 結果を取得するスクリプトを `scripts/check-baseline.js` に新設
+- [x] PR check ワークフローの先頭で `check-baseline.js` を実行
+- [x] master CI が赤の場合、PR に「baseline NG: master CI が失敗中」コメントを自動投稿
+- [x] master CI 結果を `.github/baseline-status.json` に書き出し（後続ジョブから参照可能）
 
 ## Phase 2: 影響テスト推定
 
@@ -49,17 +49,17 @@
 
 ## Phase 4: AIエージェント連携
 
-- [ ] `worktree-setup` skill で master の最新 CI 結果を `.claude/worktree-baseline.json` に出力
-- [ ] `feature-dev` skill の冒頭ステップに「`baseline.json` を読んで状態を確認 / NG なら原因切り分けから着手」を追加
+- [x] `worktree-setup` skill で master の最新 CI 結果を `.claude/worktree-baseline.json` に出力
+- [x] `feature-dev` skill の冒頭ステップに「`baseline.json` を読んで状態を確認 / NG なら原因切り分けから着手」を追加
 - [ ] エージェントプロンプトテンプレートに `## ベースライン状態` セクションを必須化
 - [ ] 並列エージェント起動時、各エージェントに baseline ハッシュを渡す（途中で master が変わっても整合性を保つ）
 
 ## Phase 5: ドキュメント整備
 
-- [ ] `.claude/rules/baseline-check.md` を新設（書式: parallel-agents.md と同等）
-- [ ] CLAUDE.md からリンク
+- [x] `.claude/rules/baseline-check.md` を新設（書式: parallel-agents.md と同等）
+- [x] CLAUDE.md からリンク
 - [ ] エージェントが baseline 確認をスキップした場合に diary に記録するルール追加
-- [ ] 過去事例（4/25 notes 破壊）を例として収録
+- [x] 過去事例（4/25 notes 破壊）を例として収録
 
 ---
 

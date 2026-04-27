@@ -11,6 +11,74 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  baseline-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 22
+
+      - name: Check master baseline CI status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-baseline.js --out baseline-status.json
+
+      - name: Comment on PR if baseline is NG
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require("fs");
+            if (!fs.existsSync("baseline-status.json")) return;
+
+            const status = JSON.parse(fs.readFileSync("baseline-status.json", "utf8"));
+            if (status.overallStatus !== "ng") return;
+
+            const marker = "<!-- baseline-check -->";
+            const ngList = status.ngWorkflows.map((w) => `- ${w}`).join("\n");
+            const sha = status.masterSha ? ` (master \`${status.masterSha}\`)` : "";
+            const body = [
+              marker,
+              `## ⚠️ Baseline NG: master CI が失敗中${sha}`,
+              "",
+              "以下の workflow が master で失敗しています。自分の変更を疑う前に master の状態を確認してください。",
+              "",
+              ngList,
+              "",
+              `確認日時: ${status.checkedAt}`,
+            ].join("\n");
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
