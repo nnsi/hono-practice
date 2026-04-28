@@ -41,7 +41,8 @@
       "Bash(pnpm run test-once)",
       "Bash(pnpm run test-once -- --reporter=verbose)",
       "Bash(pnpm run tsc)",
-      "Bash(pnpm run fix)"
+      "Bash(pnpm run fix)",
+      "Bash(npm view *)"
     ],
     "deny": []
   },

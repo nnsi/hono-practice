@@ -57,6 +57,45 @@ export function generateDailyRecords(
   return dailyRecords;
 }
 
+/**
+ * 「quantity > 0 の日が日付的に連続している区間」の最長日数を返す純粋関数。
+ *
+ * - records は `date` 昇順を仮定しない（内部で安定ソートする）
+ * - 同一日付の複数 record は 1 日として扱う（quantity の合算は呼び出し側責務）
+ * - quantity <= 0 の日は streak をリセットする
+ */
+export function calculateMaxConsecutiveDays(
+  records: { date: string; quantity: number }[],
+): number {
+  if (records.length === 0) return 0;
+
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+
+  let maxConsecutive = 0;
+  let currentConsecutive = 0;
+  let lastDate: dayjs.Dayjs | null = null;
+  for (const record of sorted) {
+    if (record.quantity > 0) {
+      const d = dayjs(record.date);
+      if (lastDate === null || d.diff(lastDate, "day") === 1) {
+        currentConsecutive++;
+        maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
+      } else if (d.diff(lastDate, "day") === 0) {
+        // 同一日の重複は streak を伸ばさない
+      } else {
+        currentConsecutive = 1;
+        maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
+      }
+      lastDate = d;
+    } else {
+      currentConsecutive = 0;
+      lastDate = null;
+    }
+  }
+
+  return maxConsecutive;
+}
+
 export function calculateGoalStats(dailyRecords: DailyRecord[]): {
   average: number;
   max: number;
@@ -78,31 +117,12 @@ export function calculateGoalStats(dailyRecords: DailyRecord[]): {
       : 0;
   const achievedDays = dailyRecords.filter((r) => r.achieved).length;
   const activeDays = activeQuantities.length;
-
-  // Max consecutive days
-  let maxConsecutive = 0;
-  let currentConsecutive = 0;
-  let lastDate: dayjs.Dayjs | null = null;
-  for (const record of dailyRecords) {
-    if (record.quantity > 0) {
-      const d = dayjs(record.date);
-      if (lastDate === null || d.diff(lastDate, "day") === 1) {
-        currentConsecutive++;
-        maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
-      } else {
-        currentConsecutive = 1;
-      }
-      lastDate = d;
-    } else {
-      currentConsecutive = 0;
-      lastDate = null;
-    }
-  }
+  const maxConsecutiveDays = calculateMaxConsecutiveDays(dailyRecords);
 
   return {
     average,
     max,
-    maxConsecutiveDays: maxConsecutive,
+    maxConsecutiveDays,
     achievedDays,
     activeDays,
   };

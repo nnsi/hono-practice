@@ -61,3 +61,6 @@ pnpm run ci-check    # 全CIチェック
 
 ## 並列エージェント運用
 → `.claude/rules/parallel-agents.md` 参照
+
+## Baseline チェック（着手前 CI 確認）
+→ `.claude/rules/baseline-check.md` 参照

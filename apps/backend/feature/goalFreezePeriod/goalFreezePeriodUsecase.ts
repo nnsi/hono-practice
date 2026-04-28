@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@backend/error";
+import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -55,6 +55,15 @@ function recordToFreezePeriod(record: GoalFreezePeriodRecord): FreezePeriod {
   };
 }
 
+function assertFreezePeriodDateRange(
+  startDate: string,
+  endDate: string | null,
+) {
+  if (endDate !== null && endDate < startDate) {
+    throw new AppError("endDate must be on or after startDate", 400);
+  }
+}
+
 export function newGoalFreezePeriodUsecase(
   repo: GoalFreezePeriodRepository,
   tracer: Tracer,
@@ -92,6 +101,8 @@ function createFreezePeriod(repo: GoalFreezePeriodRepository, tracer: Tracer) {
     );
     if (!isOwned) throw new ResourceNotFoundError("Goal not found");
 
+    assertFreezePeriodDateRange(params.startDate, params.endDate);
+
     const record = await tracer.span("db.createGoalFreezePeriod", () =>
       repo.createGoalFreezePeriod(
         userId,
@@ -119,6 +130,11 @@ function updateFreezePeriod(repo: GoalFreezePeriodRepository, tracer: Tracer) {
     if (existing.goalId !== goalId) {
       throw new ResourceNotFoundError("Freeze period not found");
     }
+
+    const startDate = params.startDate ?? existing.startDate;
+    const endDate =
+      params.endDate === undefined ? existing.endDate : params.endDate;
+    assertFreezePeriodDateRange(startDate, endDate);
 
     const record = await tracer.span("db.updateGoalFreezePeriod", () =>
       repo.updateGoalFreezePeriod(id, userId, {

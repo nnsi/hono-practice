@@ -25,6 +25,8 @@ export const configSchema = z.object({
   ADMIN_ALLOWED_EMAILS: z.string().optional(),
   CF_WORKERS_TOKEN: z.string().optional(),
   CF_ACCOUNT_ID: z.string().optional(),
+  CF_ANALYTICS_TOKEN: z.string().optional(),
+  CF_ANALYTICS_ACCOUNT_ID: z.string().optional(),
   STORAGE_TYPE: z.enum(["local", "r2"]).default("local"),
   UPLOAD_DIR: z.string().default("public/uploads"),
   // Redis URL（ローカル開発用、オプション）

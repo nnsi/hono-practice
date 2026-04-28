@@ -7,5 +7,9 @@
     "dayjs": "^1.11.13",
     "uuid": "^11.0.3",
     "zod": "^4.0.1"
+  },
+  "devDependencies": {
+    "@fast-check/vitest": "^0.2.4",
+    "fast-check": "^4.7.0"
   }
 }

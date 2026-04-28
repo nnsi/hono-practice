@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import type { AppContext } from "@backend/context";
 import { createUserId } from "@packages/domain/user/userSchema";
 import { describe, expect, it, vi } from "vitest";
 
@@ -18,7 +19,7 @@ function createMockHandler(): CheckoutHandler {
 }
 
 function buildTestApp(handler: CheckoutHandler) {
-  const app = new Hono();
+  const app = new Hono<AppContext>();
 
   app.onError((err: Error & { status?: number }, c) => {
     const status = err.status ?? 500;
@@ -27,13 +28,11 @@ function buildTestApp(handler: CheckoutHandler) {
 
   // Inject userId like authMiddleware would
   app.use("*", async (c, next) => {
-    // biome-ignore lint/suspicious/noExplicitAny: test context
-    (c as any).set("userId", TEST_USER_ID);
+    c.set("userId", TEST_USER_ID);
     await next();
   });
 
-  // biome-ignore lint/suspicious/noExplicitAny: test env bindings differ from production AppContext
-  app.route("/", createCheckoutRoute({ handler }) as Hono<any>);
+  app.route("/", createCheckoutRoute({ handler }));
 
   return app;
 }

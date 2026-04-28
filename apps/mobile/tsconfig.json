@@ -3,7 +3,6 @@
   "compilerOptions": {
     "strict": true,
     "types": ["vitest/globals", "node"],
-    "baseUrl": ".",
     "paths": {
       "@packages/domain/*": ["../../packages/domain/*"],
       "@packages/sync-engine": ["../../packages/sync-engine/index.ts"],

@@ -14,7 +14,8 @@ export const UpdateActivityLogRequestSchema = z.object({
     .describe("メモ（最大1000文字）"),
   activityKindId: z
     .string()
-    .max(100)
+    .uuid()
+    .nullable()
     .optional()
     .describe("アクティビティ種別ID"),
 });

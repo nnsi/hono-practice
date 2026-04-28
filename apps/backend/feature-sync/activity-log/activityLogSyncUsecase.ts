@@ -60,7 +60,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
     );
     const ownedActivityIdSet = new Set(ownedIds);
 
-    // FK existence check for activityKindId and taskId
+    // FK / ownership check for activityKindId and taskId
     const requestedKindIds = [
       ...new Set(logs.map((l) => l.activityKindId).filter(Boolean)),
     ] as string[];
@@ -68,15 +68,17 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
       ...new Set(logs.map((l) => l.taskId).filter(Boolean)),
     ] as string[];
 
-    const [existingKindIds, existingTaskIds] = await Promise.all([
-      tracer.span("db.getExistingActivityKindIds", () =>
-        repo.getExistingActivityKindIds(requestedKindIds),
+    const [ownedKindRows, existingTaskIds] = await Promise.all([
+      tracer.span("db.getOwnedActivityKindIdsWithActivityId", () =>
+        repo.getOwnedActivityKindIdsWithActivityId(userId, requestedKindIds),
       ),
       tracer.span("db.getExistingTaskIds", () =>
         repo.getExistingTaskIds(userId, requestedTaskIds),
       ),
     ]);
-    const existingKindIdSet = new Set(existingKindIds);
+    const kindIdToActivityId = new Map(
+      ownedKindRows.map((r) => [r.id, r.activityId]),
+    );
     const existingTaskIdSet = new Set(existingTaskIds);
 
     const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
@@ -85,7 +87,9 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
       if (
         !ownedActivityIdSet.has(log.activityId) ||
         new Date(log.updatedAt) > maxAllowed ||
-        (log.activityKindId && !existingKindIdSet.has(log.activityKindId)) ||
+        (log.activityKindId &&
+          (!kindIdToActivityId.has(log.activityKindId) ||
+            kindIdToActivityId.get(log.activityKindId) !== log.activityId)) ||
         (log.taskId && !existingTaskIdSet.has(log.taskId))
       ) {
         skippedIds.push(log.id);

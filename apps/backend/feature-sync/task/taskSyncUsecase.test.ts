@@ -319,26 +319,24 @@ describe("taskSyncUsecase", () => {
       expect(repo.upsertTasks).not.toHaveBeenCalled();
     });
 
-    test("activityKindIdあり + activityId null → 所有権のみチェックで通る", async () => {
+    test("activityKindIdあり + activityId null → skip", async () => {
       const req = makeUpsertRequest({
         activityId: null,
         activityKindId: OWNED_KIND_ID,
       });
-      const row = makeTaskRow({ activityKindId: OWNED_KIND_ID });
       const repo = createMockRepo({
         getOwnedActivityKindIdsWithActivityId: vi
           .fn()
           .mockResolvedValue([
             { id: OWNED_KIND_ID, activityId: OWNED_ACTIVITY_ID },
           ]),
-        upsertTasks: vi.fn().mockResolvedValue([row]),
       });
       const usecase = newTaskSyncUsecase(repo, noopTracer);
 
       const result = await usecase.syncTasks(USER_ID, [req as never]);
 
-      expect(result.syncedIds).toContain(req.id);
-      expect(result.skippedIds).toHaveLength(0);
+      expect(result.skippedIds).toContain(req.id);
+      expect(repo.upsertTasks).not.toHaveBeenCalled();
     });
 
     test("activityKindIdが他人のもの + activityId null → skip", async () => {

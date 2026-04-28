@@ -1,6 +1,10 @@
 import { ResourceNotFoundError } from "@backend/error";
 import { noopTracer } from "@backend/lib/tracer";
-import { createActivityId } from "@packages/domain/activity/activitySchema";
+import {
+  type Activity,
+  type ActivityId,
+  createActivityId,
+} from "@packages/domain/activity/activitySchema";
 import {
   type ActivityGoalId,
   type GoalBalance,
@@ -10,6 +14,7 @@ import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import type { ActivityRepository } from "../../activity";
 import type { ActivityGoalRepository } from "../../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../../activitygoal/activityGoalService";
 import type { ActivityLogRepository } from "../../activityLog";
@@ -22,26 +27,51 @@ import { newGoalUsecase } from "../goalUsecase";
 
 describe("GoalUsecase", () => {
   let activityGoalRepo: ActivityGoalRepository;
+  let activityRepo: ActivityRepository;
   let activityGoalService: ActivityGoalService;
   let activityLogRepo: ActivityLogRepository;
   let usecase: ReturnType<typeof newGoalUsecase>;
 
   beforeEach(() => {
     activityGoalRepo = mock<ActivityGoalRepository>();
+    activityRepo = mock<ActivityRepository>();
     activityGoalService = mock<ActivityGoalService>();
     activityLogRepo = mock<ActivityLogRepository>();
 
     reset(activityGoalRepo);
+    reset(activityRepo);
     reset(activityGoalService);
     reset(activityLogRepo);
 
     usecase = newGoalUsecase(
       instance(activityGoalRepo),
+      instance(activityRepo),
       instance(activityGoalService),
       instance(activityLogRepo),
       noopTracer,
     );
   });
+
+  function makeActivity(
+    userId: ReturnType<typeof createUserId>,
+    id: ActivityId,
+  ): Activity {
+    return {
+      id,
+      userId,
+      name: "Running",
+      quantityUnit: "km",
+      orderIndex: "1",
+      kinds: [],
+      type: "new",
+      showCombinedStats: true,
+      iconType: "emoji",
+      emoji: null,
+      iconUrl: null,
+      iconThumbnailUrl: null,
+      recordingMode: "manual",
+    };
+  }
 
   describe("getGoals", () => {
     it("should return goals with balance information", async () => {
@@ -274,6 +304,9 @@ describe("GoalUsecase", () => {
         description: "New goal",
       };
 
+      when(
+        activityRepo.getActivityByIdAndUserId(userId, activityId),
+      ).thenResolve(makeActivity(userId, activityId));
       when(activityGoalRepo.createActivityGoal(anything())).thenResolve(
         createActivityGoalEntity({
           type: "persisted",
@@ -312,6 +345,9 @@ describe("GoalUsecase", () => {
         dayTargets: { "1": 5, "2": 10 },
       };
 
+      when(
+        activityRepo.getActivityByIdAndUserId(userId, activityId),
+      ).thenResolve(makeActivity(userId, activityId));
       when(activityGoalRepo.createActivityGoal(anything())).thenResolve(
         createActivityGoalEntity({
           type: "persisted",
@@ -335,6 +371,41 @@ describe("GoalUsecase", () => {
       expect(result.debtCap).toBe(30);
       expect(result.dayTargets).toEqual({ 1: 5, 2: 10 });
       verify(activityGoalRepo.createActivityGoal(anything())).once();
+    });
+
+    it("should reject a goal whose activity does not belong to the user", async () => {
+      const userId = createUserId();
+      const activityId = createActivityId();
+      const request: CreateGoalRequest = {
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+      };
+
+      when(
+        activityRepo.getActivityByIdAndUserId(userId, activityId),
+      ).thenResolve(undefined);
+
+      await expect(usecase.createGoal(userId, request)).rejects.toThrow(
+        "activityId does not belong to user",
+      );
+      verify(activityGoalRepo.createActivityGoal(anything())).never();
+    });
+
+    it("should reject a goal whose endDate is before startDate", async () => {
+      const userId = createUserId();
+      const activityId = createActivityId();
+      const request: CreateGoalRequest = {
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-02-01",
+        endDate: "2024-01-31",
+      };
+
+      await expect(usecase.createGoal(userId, request)).rejects.toThrow(
+        "endDate must be on or after startDate",
+      );
+      verify(activityGoalRepo.createActivityGoal(anything())).never();
     });
   });
 
@@ -462,6 +533,77 @@ describe("GoalUsecase", () => {
       await expect(usecase.updateGoal(userId, goalId, {})).rejects.toThrow(
         ResourceNotFoundError,
       );
+    });
+
+    it("should reject an update that makes the date range invalid", async () => {
+      const userId = createUserId();
+      const goalId = "00000000-0000-4000-8000-000000000001";
+      const activityId = createActivityId();
+
+      const existingGoal = createActivityGoalEntity({
+        type: "persisted",
+        id: goalId as ActivityGoalId,
+        userId,
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        endDate: "2024-01-31",
+        isActive: true,
+        description: null,
+        debtCap: null,
+        dayTargets: null,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+      });
+
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(existingGoal);
+
+      await expect(
+        usecase.updateGoal(userId, goalId, { startDate: "2024-02-01" }),
+      ).rejects.toThrow("endDate must be on or after startDate");
+
+      verify(activityGoalRepo.updateActivityGoal(anything())).never();
+    });
+
+    it("should preserve omitted endDate and clear explicit null endDate", async () => {
+      const userId = createUserId();
+      const goalId = "00000000-0000-4000-8000-000000000001";
+      const activityId = createActivityId();
+      const existingGoal = createActivityGoalEntity({
+        type: "persisted",
+        id: goalId as ActivityGoalId,
+        userId,
+        activityId,
+        dailyTargetQuantity: 10,
+        startDate: "2024-01-01",
+        endDate: "2024-01-31",
+        isActive: true,
+        description: null,
+        debtCap: null,
+        dayTargets: null,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+      });
+
+      when(
+        activityGoalRepo.getActivityGoalByIdAndUserId(anything(), userId),
+      ).thenResolve(existingGoal);
+      when(activityGoalRepo.updateActivityGoal(anything())).thenCall(
+        (goal) => goal,
+      );
+
+      const preserved = await usecase.updateGoal(userId, goalId, {
+        description: "updated",
+      });
+      const cleared = await usecase.updateGoal(userId, goalId, {
+        endDate: null,
+      });
+
+      expect(preserved.endDate).toBe("2024-01-31");
+      expect(cleared.endDate).toBeUndefined();
+      verify(activityGoalRepo.updateActivityGoal(anything())).twice();
     });
   });
 

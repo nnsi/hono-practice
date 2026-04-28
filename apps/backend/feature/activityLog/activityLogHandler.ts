@@ -71,7 +71,10 @@ function getActivityLog(uc: ActivityLogUsecase) {
 function createActivityLog(uc: ActivityLogUsecase) {
   return async (userId: UserId, params: CreateActivityLogRequest) => {
     const activityId = createActivityId(params.activityId);
-    const activityKindId = createActivityKindId(params.activityKindId);
+    const activityKindId =
+      params.activityKindId == null
+        ? null
+        : createActivityKindId(params.activityKindId);
 
     const log = await uc.createActivityLog(
       userId,

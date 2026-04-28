@@ -1,18 +1,15 @@
 import { z } from "zod";
 
-export const UpdateFreezePeriodRequestSchema = z.object({
-  startDate: z
-    .string()
-    .max(10)
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
-  endDate: z
-    .string()
-    .max(10)
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable()
-    .optional(),
-});
+import { addEndDateRangeIssue, dateStringSchema } from "../dateSchemas";
+
+export const UpdateFreezePeriodRequestSchema = z
+  .object({
+    startDate: dateStringSchema.optional(),
+    endDate: dateStringSchema.nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    addEndDateRangeIssue(ctx, value.startDate, value.endDate);
+  });
 
 export type UpdateFreezePeriodRequest = z.infer<
   typeof UpdateFreezePeriodRequestSchema

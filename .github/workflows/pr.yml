@@ -11,6 +11,85 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  baseline-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 22
+
+      - name: Check master baseline CI status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-baseline.js --out baseline-status.json
+
+      - name: Comment on PR if baseline is NG
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require("fs");
+            if (!fs.existsSync("baseline-status.json")) return;
+
+            const status = JSON.parse(fs.readFileSync("baseline-status.json", "utf8"));
+            const marker = "<!-- baseline-check -->";
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            // OK / unknown のときは既存の NG コメントが残っていれば削除する。
+            if (status.overallStatus !== "ng") {
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                });
+              }
+              return;
+            }
+
+            const ngList = status.ngWorkflows.map((w) => `- ${w}`).join("\n");
+            const sha = status.masterSha ? ` (master \`${status.masterSha}\`)` : "";
+            const body = [
+              marker,
+              `## ⚠️ Baseline NG: master CI が失敗中${sha}`,
+              "",
+              "以下の workflow が master で失敗しています。自分の変更を疑う前に master の状態を確認してください。",
+              "",
+              ngList,
+              "",
+              `確認日時: ${status.checkedAt}`,
+            ].join("\n");
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -48,7 +127,11 @@ jobs:
               - 'apps/**'
               - 'packages/**'
               - 'infra/**'
+              - 'e2e/**'
+              - 'scripts/**'
+              - '.github/workflows/**'
               - 'vitest.config.ts'
+              - 'vitest.e2e.config.ts'
               - 'tsconfig.json'
               - 'biome.json'
               - 'pnpm-lock.yaml'
@@ -173,6 +256,56 @@ jobs:
         env:
           CI: true
           NODE_ENV: test
+
+  test-e2e:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm run test-e2e
+        env:
+          CI: true
+          NODE_ENV: test
+          E2E_MAX_FORKS: 2
 
   build-frontend:
     needs: detect-changes

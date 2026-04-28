@@ -14,7 +14,7 @@ import type { ActivityLogRepository } from "./activityLogRepository";
 type UpdateActivityLogParams = {
   quantity?: number;
   memo?: string;
-  activityKindId?: string;
+  activityKindId?: string | null;
 };
 
 export function updateActivityLog(
@@ -35,21 +35,33 @@ export function updateActivityLog(
       throw new ResourceNotFoundError("activity log not found");
     }
 
-    const activityKindParent = params.activityKindId
-      ? await tracer.span("db.getActivityByUserIdAndActivityKindId", () =>
-          acRepo.getActivityByUserIdAndActivityKindId(
-            userId,
-            createActivityKindId(params.activityKindId!),
-          ),
-        )
-      : { kinds: [activityLog.activityKind] };
-    if (!activityKindParent) {
-      throw new ResourceNotFoundError("activity kind not found");
-    }
+    let activityKind = activityLog.activityKind ?? null;
 
-    const activityKind =
-      activityKindParent.kinds.find((ak) => ak?.id === params.activityKindId) ||
-      null;
+    if (params.activityKindId !== undefined) {
+      if (params.activityKindId === null) {
+        activityKind = null;
+      } else {
+        const activityKindId = createActivityKindId(params.activityKindId);
+        const activityKindParent = await tracer.span(
+          "db.getActivityByUserIdAndActivityKindId",
+          () =>
+            acRepo.getActivityByUserIdAndActivityKindId(userId, activityKindId),
+        );
+        if (!activityKindParent) {
+          throw new ResourceNotFoundError("activity kind not found");
+        }
+        if (activityKindParent.id !== activityLog.activity.id) {
+          throw new ResourceNotFoundError("activity kind not found");
+        }
+
+        activityKind =
+          activityKindParent.kinds.find((ak) => ak?.id === activityKindId) ??
+          null;
+        if (activityKind === null) {
+          throw new ResourceNotFoundError("activity kind not found");
+        }
+      }
+    }
 
     const newActivityLog = createActivityLogEntity({
       ...activityLog,

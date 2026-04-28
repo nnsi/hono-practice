@@ -30,8 +30,8 @@ const customFetch: typeof fetch = async (input, init) => {
 
   if (res.status === 401) {
     setAdminToken(null);
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_user");
+    sessionStorage.removeItem("admin_token");
+    sessionStorage.removeItem("admin_user");
     onUnauthorized?.();
   }
 

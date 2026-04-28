@@ -42,8 +42,8 @@ export function useAdminAuth(): AdminAuthState {
       setUser(null);
     });
 
-    const savedToken = localStorage.getItem("admin_token");
-    const savedUser = localStorage.getItem("admin_user");
+    const savedToken = sessionStorage.getItem("admin_token");
+    const savedUser = sessionStorage.getItem("admin_user");
     if (savedToken && savedUser) {
       try {
         const parsed: unknown = JSON.parse(savedUser);
@@ -52,13 +52,13 @@ export function useAdminAuth(): AdminAuthState {
           setUser(parsed);
         } else {
           setAdminToken(null);
-          localStorage.removeItem("admin_token");
-          localStorage.removeItem("admin_user");
+          sessionStorage.removeItem("admin_token");
+          sessionStorage.removeItem("admin_user");
         }
       } catch {
         setAdminToken(null);
-        localStorage.removeItem("admin_token");
-        localStorage.removeItem("admin_user");
+        sessionStorage.removeItem("admin_token");
+        sessionStorage.removeItem("admin_user");
       }
     }
     setIsLoading(false);
@@ -75,11 +75,11 @@ export function useAdminAuth(): AdminAuthState {
       const res = await response.json();
 
       setAdminToken(res.token);
-      localStorage.setItem("admin_token", res.token);
+      sessionStorage.setItem("admin_token", res.token);
 
       const adminUser = { email: res.email, name: res.name };
       setUser(adminUser);
-      localStorage.setItem("admin_user", JSON.stringify(adminUser));
+      sessionStorage.setItem("admin_user", JSON.stringify(adminUser));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "ログインに失敗しました";
       setError(msg);
@@ -100,11 +100,11 @@ export function useAdminAuth(): AdminAuthState {
       const res = await response.json();
 
       setAdminToken(res.token);
-      localStorage.setItem("admin_token", res.token);
+      sessionStorage.setItem("admin_token", res.token);
 
       const adminUser = { email: res.email, name: res.name };
       setUser(adminUser);
-      localStorage.setItem("admin_user", JSON.stringify(adminUser));
+      sessionStorage.setItem("admin_user", JSON.stringify(adminUser));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "ログインに失敗しました";
       setError(msg);
@@ -117,8 +117,8 @@ export function useAdminAuth(): AdminAuthState {
   const logout = useCallback(() => {
     setAdminToken(null);
     setUser(null);
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_user");
+    sessionStorage.removeItem("admin_token");
+    sessionStorage.removeItem("admin_user");
   }, []);
 
   return {

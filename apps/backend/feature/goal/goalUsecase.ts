@@ -3,6 +3,7 @@ import type { Tracer } from "@backend/lib/tracer";
 import { createActivityGoalId } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
+import type { ActivityRepository } from "../activity/activityRepository";
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
 import { prefetchActivityLogs } from "../activitygoal/activityGoalService";
@@ -20,6 +21,7 @@ export type {
 
 export function newGoalUsecase(
   activityGoalRepo: ActivityGoalRepository,
+  activityRepo: ActivityRepository,
   activityGoalService: ActivityGoalService,
   activityLogRepo: ActivityLogRepository,
   tracer: Tracer,
@@ -32,7 +34,7 @@ export function newGoalUsecase(
       tracer,
     ),
     getGoal: getGoal(activityGoalRepo, activityGoalService, tracer),
-    createGoal: createGoal(activityGoalRepo, tracer),
+    createGoal: createGoal(activityGoalRepo, activityRepo, tracer),
     updateGoal: updateGoal(activityGoalRepo, tracer),
     deleteGoal: deleteGoal(activityGoalRepo, tracer),
   };

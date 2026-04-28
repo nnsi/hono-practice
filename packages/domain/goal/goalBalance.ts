@@ -44,15 +44,37 @@ export function countActiveDays(
   // フリーズ期間がなければ高速パス
   if (freezePeriods.length === 0) return totalDays;
 
-  // フリーズ期間と [start, end] の重なり日数を区間演算で算出
-  let frozenDays = 0;
-  for (const fp of freezePeriods) {
-    const fpStart = fp.startDate > start ? fp.startDate : start;
-    const fpEnd =
-      fp.endDate == null ? end : fp.endDate < end ? fp.endDate : end;
-    if (fpStart <= fpEnd) {
-      frozenDays += dayjs(fpEnd).diff(dayjs(fpStart), "day") + 1;
+  const frozenRanges = freezePeriods
+    .map((fp) => {
+      const rangeStart = fp.startDate > start ? fp.startDate : start;
+      const rangeEnd =
+        fp.endDate == null ? end : fp.endDate < end ? fp.endDate : end;
+      return { start: rangeStart, end: rangeEnd };
+    })
+    .filter((range) => range.start <= range.end)
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  const mergedRanges: Array<{ start: string; end: string }> = [];
+  for (const range of frozenRanges) {
+    const previous = mergedRanges.at(-1);
+    if (!previous) {
+      mergedRanges.push({ ...range });
+      continue;
     }
+
+    const nextActiveDate = dayjs(previous.end)
+      .add(1, "day")
+      .format("YYYY-MM-DD");
+    if (range.start <= nextActiveDate) {
+      previous.end = range.end > previous.end ? range.end : previous.end;
+    } else {
+      mergedRanges.push({ ...range });
+    }
+  }
+
+  let frozenDays = 0;
+  for (const range of mergedRanges) {
+    frozenDays += dayjs(range.end).diff(dayjs(range.start), "day") + 1;
   }
 
   return Math.max(totalDays - frozenDays, 0);
