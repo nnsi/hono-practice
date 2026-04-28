@@ -43,7 +43,7 @@ describe("useAdminAuth", () => {
     mockAuthState.setOnUnauthorized.mockClear();
     mockGooglePost.mockReset();
     mockDevPost.mockReset();
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("stores the token and user after google login succeeds", async () => {
@@ -73,8 +73,8 @@ describe("useAdminAuth", () => {
       name: "Admin",
     });
     expect(result.current.error).toBeNull();
-    expect(localStorage.getItem("admin_token")).toBe("token-1");
-    expect(JSON.parse(localStorage.getItem("admin_user") ?? "null")).toEqual({
+    expect(sessionStorage.getItem("admin_token")).toBe("token-1");
+    expect(JSON.parse(sessionStorage.getItem("admin_user") ?? "null")).toEqual({
       email: "admin@example.com",
       name: "Admin",
     });
@@ -107,7 +107,7 @@ describe("useAdminAuth", () => {
     );
     expect(result.current.isLoggedIn).toBe(false);
     expect(result.current.error).toBe("API error: 401");
-    expect(localStorage.getItem("admin_token")).toBeNull();
-    expect(localStorage.getItem("admin_user")).toBeNull();
+    expect(sessionStorage.getItem("admin_token")).toBeNull();
+    expect(sessionStorage.getItem("admin_user")).toBeNull();
   });
 });
