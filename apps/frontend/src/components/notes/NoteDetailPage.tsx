@@ -1,5 +1,6 @@
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, FileX } from "lucide-react";
+import { useState } from "react";
 
 import { FormButton } from "../common/FormButton";
 import { NoteDetailFab } from "./NoteDetailFab";
@@ -8,6 +9,7 @@ import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
 export function NoteDetailPage() {
+  const [copied, setCopied] = useState(false);
   const {
     isNew,
     isLoading,
@@ -69,10 +71,16 @@ export function NoteDetailPage() {
     );
   }
 
+  const handleCopyPlainText = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="flex min-h-full flex-col bg-white">
       <div className="sticky top-0 z-10 sticky-header">
-        <div className="flex h-12 items-center justify-between px-4 pr-14">
+        <div className="flex h-12 items-center justify-between gap-2 px-4">
           <button
             type="button"
             onClick={handleBack}
@@ -86,13 +94,21 @@ export function NoteDetailPage() {
             {headerTitle}
           </h1>
 
-          <FormButton
-            variant="primary"
-            label={isSubmitting ? t("detail.saving") : t("detail.save")}
-            onClick={handleSave}
-            disabled={!canSave}
-            className="shrink-0 px-3 py-1.5 text-sm"
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <FormButton
+              variant="secondary"
+              label={copied ? t("detail.copied") : t("detail.copyPlainText")}
+              onClick={handleCopyPlainText}
+              className="px-3 py-1.5 text-sm"
+            />
+            <FormButton
+              variant="primary"
+              label={isSubmitting ? t("detail.saving") : t("detail.save")}
+              onClick={handleSave}
+              disabled={!canSave}
+              className="px-3 py-1.5 text-sm"
+            />
+          </div>
         </div>
       </div>
 

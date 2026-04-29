@@ -41,6 +41,8 @@
   "preview.empty": "プレビューする内容がありません",
   "detail.back": "戻る",
   "detail.save": "保存",
+  "detail.copyPlainText": "テキストコピー",
+  "detail.copied": "コピー済み",
   "detail.saving": "保存中...",
   "detail.settings": "設定",
   "detail.newNote": "新しいノート",

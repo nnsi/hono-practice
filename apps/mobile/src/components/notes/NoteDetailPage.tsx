@@ -1,5 +1,6 @@
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft } from "lucide-react-native";
+import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -12,6 +13,7 @@ import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
 export function NoteDetailPage() {
+  const [copied, setCopied] = useState(false);
   const { t } = useTranslation("note");
   const insets = useSafeAreaInsets();
   const {
@@ -57,6 +59,16 @@ export function NoteDetailPage() {
     return <NoteNotFound onBack={handleBack} topInset={insets.top} />;
   }
 
+  const handleCopyPlainText = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      // ignore if clipboard API is unavailable
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <View
       className="flex-1 bg-white dark:bg-gray-900"
@@ -81,7 +93,13 @@ export function NoteDetailPage() {
           {headerTitle}
         </Text>
 
-        <View className="ml-2">
+        <View className="ml-2 flex-row items-center gap-2">
+          <FormButton
+            variant="secondary"
+            label={copied ? t("detail.copied") : t("detail.copyPlainText")}
+            onPress={handleCopyPlainText}
+            className="px-3 py-1.5"
+          />
           <FormButton
             variant="primary"
             label={isSubmitting ? t("detail.saving") : t("detail.save")}
