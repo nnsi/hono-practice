@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "eas": "dotenv -e .env -- eas",
     "e2e:smoke": "maestro test .maestro/smoke.yaml",
     "e2e:smoke:android": "maestro test .maestro/smoke.yaml",
     "e2e:smoke:ios": "maestro test .maestro/smoke.yaml",
@@ -72,6 +73,7 @@
     "@types/react": "~19.2.14",
     "@types/react-dom": "~19.1.11",
     "babel-preset-expo": "^55.0.12",
+    "dotenv-cli": "^11.0.0",
     "tailwindcss": "~3.4.0"
   }
 }
