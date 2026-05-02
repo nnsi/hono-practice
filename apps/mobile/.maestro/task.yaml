@@ -3,105 +3,134 @@ env:
   MAESTRO_APP_ID: com.actiko.app
   LOGIN_ID: e2e@example.com
   PASSWORD: password123
-  RUN_TAG: r2000
 ---
+# Generate a per-run unique RUN_TAG so re-running this flow doesn't collide
+# with tasks left from previous runs (e.g. `notVisible: t-delete-XXX` would
+# otherwise hit a leftover from an earlier run and fail).
+- runScript: scripts/gen-run-tag.js
 - runFlow: flows/login.yaml
 
+# Use testID instead of pixel coords so this works on both iOS and Android.
 - tapOn:
-    point: "360,803"
+    id: tabs.tasks
 - assertVisible:
     id: tasks.page
 
-# Scroll the list up so tasks.add isn't behind the tab bar.
+# Bring tasks.add into view regardless of how long the active list grows
+# across re-runs (each run adds a couple of leftover rows above the FAB).
+- scrollUntilVisible:
+    element:
+      id: tasks.add
+    direction: DOWN
 - swipe:
     start: "50%,30%"
     end: "50%,15%"
 
 - tapOn:
     id: tasks.add
-- assertVisible:
-    id: tasks.create.dialog
+- extendedWaitUntil:
+    visible:
+      id: tasks.create.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-toggle-${RUN_TAG}
+- inputText: t-toggle-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-toggle-${RUN_TAG}
+    visible: t-toggle-${output.RUN_TAG}
     timeout: 10000
 
 # Toggle done
 - tapOn:
-    text: t-toggle-${RUN_TAG}
+    text: t-toggle-${output.RUN_TAG}
 - extendedWaitUntil:
     visible:
       id: "tasks\\.archive\\..*"
     timeout: 10000
 
 # Edit
+- scrollUntilVisible:
+    element:
+      id: tasks.add
+    direction: DOWN
 - swipe:
     start: "50%,30%"
     end: "50%,15%"
 - tapOn:
     id: tasks.add
-- assertVisible:
-    id: tasks.create.dialog
+- extendedWaitUntil:
+    visible:
+      id: tasks.create.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-edit-${RUN_TAG}
+- inputText: t-edit-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-edit-${RUN_TAG}
+    visible: t-edit-${output.RUN_TAG}
     timeout: 10000
 - tapOn:
-    text: "t-edit-${RUN_TAG}, .*"
-- assertVisible:
-    id: tasks.edit.dialog
+    text: "t-edit-${output.RUN_TAG}, .*"
+- extendedWaitUntil:
+    visible:
+      id: tasks.edit.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.edit.titleInput
 - eraseText: 64
-- inputText: t-edit-after-${RUN_TAG}
+- inputText: t-edit-after-${output.RUN_TAG}
 - tapOn:
     id: tasks.edit.dialog
 - tapOn:
     id: tasks.edit.update
 - extendedWaitUntil:
-    visible: t-edit-after-${RUN_TAG}
+    visible: t-edit-after-${output.RUN_TAG}
     timeout: 10000
 
 # Delete
+- scrollUntilVisible:
+    element:
+      id: tasks.add
+    direction: DOWN
 - swipe:
     start: "50%,30%"
     end: "50%,15%"
 - tapOn:
     id: tasks.add
-- assertVisible:
-    id: tasks.create.dialog
+- extendedWaitUntil:
+    visible:
+      id: tasks.create.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-delete-${RUN_TAG}
+- inputText: t-delete-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-delete-${RUN_TAG}
+    visible: t-delete-${output.RUN_TAG}
     timeout: 10000
 - tapOn:
-    text: "t-delete-${RUN_TAG}, .*"
-- assertVisible:
-    id: tasks.edit.dialog
+    text: "t-delete-${output.RUN_TAG}, .*"
+- extendedWaitUntil:
+    visible:
+      id: tasks.edit.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.edit.delete
-- assertVisible:
-    id: tasks.deleteConfirm.dialog
+- extendedWaitUntil:
+    visible:
+      id: tasks.deleteConfirm.dialog
+    timeout: 10000
 - tapOn:
     id: tasks.deleteConfirm.confirm
 - extendedWaitUntil:
-    notVisible: t-delete-${RUN_TAG}
+    notVisible: t-delete-${output.RUN_TAG}
     timeout: 10000

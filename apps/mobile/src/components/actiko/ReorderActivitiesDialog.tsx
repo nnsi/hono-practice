@@ -8,6 +8,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../contexts/ThemeContext";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -54,7 +55,12 @@ export function ReorderActivitiesDialog({
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title={t("reorder")}>
+    <ModalOverlay
+      visible={visible}
+      onClose={onClose}
+      title={t("reorder")}
+      testID={mobileTestIds.actikoReorder.dialog}
+    >
       <View className="gap-1 mb-4">
         {items.map((activity, index) => (
           <View
@@ -111,6 +117,7 @@ export function ReorderActivitiesDialog({
           label={t("cancel")}
           onPress={onClose}
           className="flex-1"
+          testID={mobileTestIds.actikoReorder.cancelButton}
         />
         <FormButton
           variant="primary"
@@ -118,6 +125,7 @@ export function ReorderActivitiesDialog({
           onPress={handleSave}
           disabled={saving}
           className="flex-1"
+          testID={mobileTestIds.actikoReorder.saveButton}
         />
       </View>
     </ModalOverlay>

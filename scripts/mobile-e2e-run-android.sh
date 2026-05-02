@@ -70,5 +70,22 @@ echo "[mobile-e2e-android] (re)installing APK"
 adb -s "$DEVICE_ID" uninstall "$APP_ID" >/dev/null 2>&1 || true
 adb -s "$DEVICE_ID" install -r "$APK_PATH"
 
+# Maestro 2.5.1 sometimes fails to auto-install its Android driver on fresh
+# emulators. If the driver app is missing, extract and push it ourselves so
+# the first `maestro test` doesn't trip on `tcp:7001 closed`.
+if ! adb -s "$DEVICE_ID" shell pm list packages 2>/dev/null | grep -q "dev.mobile.maestro"; then
+  echo "[mobile-e2e-android] Maestro driver not present on device, installing"
+  MAESTRO_LIB="$HOME/.maestro/lib/maestro-client.jar"
+  if [ ! -f "$MAESTRO_LIB" ]; then
+    echo "[mobile-e2e-android] cannot find $MAESTRO_LIB. is Maestro CLI installed?" >&2
+    exit 1
+  fi
+  TMP_MAESTRO="$(mktemp -d)"
+  (cd "$TMP_MAESTRO" && unzip -o "$MAESTRO_LIB" maestro-app.apk maestro-server.apk >/dev/null)
+  adb -s "$DEVICE_ID" install -r "$TMP_MAESTRO/maestro-app.apk"
+  adb -s "$DEVICE_ID" install -r "$TMP_MAESTRO/maestro-server.apk"
+  rm -rf "$TMP_MAESTRO"
+fi
+
 echo "[mobile-e2e-android] running maestro: $FLOW"
 maestro --device "$DEVICE_ID" test "$FLOW"

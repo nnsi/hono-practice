@@ -1,5 +1,11 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Cold-launch the app so each suite starts from a known root state. Without
+# this, a previous suite that ended on e.g. a note-detail screen would leave
+# `tabs.tasks` invisible and the assertion below would fail. We don't pass
+# `clearState` / `clearKeychain` so the persisted refresh token still skips
+# the login form on the second-and-later run.
+- launchApp
 # Skip login if already authenticated (dev-client preserves auth across runs).
 - runFlow:
     when:

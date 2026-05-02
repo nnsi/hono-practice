@@ -48,7 +48,7 @@ EOF
 
 ### 3. iOS Simulator runtime のインストール（iOS ローカルビルド時のみ）
 
-Xcode 26 をインストール後、SDK と一致する iOS runtime のダウンロードが必要（iOS 26.x、約 8.5GB、30〜60 分）:
+Xcode 26 をインストール後、SDK と一致する iOS runtime のダウンロードが必要（iOS 26.x、**約 8.5GB、30〜60 分かかる** ので Wi-Fi が安定した時間帯にやる）:
 
 ```bash
 # Xcode のライセンス同意（初回のみ。インタラクティブ）
@@ -63,7 +63,21 @@ xcrun simctl create "iPhone 16 Pro 26" "iPhone 16 Pro" "com.apple.CoreSimulator.
 
 `xcrun simctl list runtimes` で iOS 26.4 が表示され、`xcrun simctl list devices` で作成した simulator が見えればOK。`pnpm ios --device <UDID>` で指定して起動する。
 
-### 4. Android 環境変数（mise.toml で自動設定）
+### 4. Android emulator (AVD) の作成
+
+Android E2E を回す場合、`Pixel 7 API 35` AVD が必要:
+
+```bash
+# Android Studio の Device Manager GUI から作る、もしくは CLI:
+sdkmanager "system-images;android-35;google_apis;arm64-v8a"
+avdmanager create avd -n Pixel_7_API_35 -k "system-images;android-35;google_apis;arm64-v8a"
+
+# boot 確認
+$ANDROID_HOME/emulator/emulator -avd Pixel_7_API_35 -no-snapshot-save -no-audio &
+$ANDROID_HOME/platform-tools/adb devices   # `emulator-5554 device` が出れば OK
+```
+
+### 5. Android 環境変数（mise.toml で自動設定）
 
 `apps/mobile/mise.toml` に JDK 17 と ANDROID_HOME が定義済み。
 mise が有効なシェルであれば `cd apps/mobile` で自動適用される。
@@ -178,25 +192,44 @@ pnpm eas update --channel preview --message "変更内容の説明"
 2. `adb devices` でデバイス接続を確認
 3. `pnpm android` または EAS ビルドの .apk をインストール
 
-## Claude Code から動作確認する（Maestro / Expo MCP）
+## Claude Code から動作確認する
 
-Claude Code から iOS Simulator / Android emulator を直接操作できる MCP サーバを 2 つ導入する。
+### Maestro CLI（E2E テスト実行・既存 `.maestro/*.yaml` の操作）
 
-### Maestro MCP（E2E テスト実行・既存 `.maestro/*.yaml` の操作）
+ターミナルから直接 `maestro test` を叩く。フロー間で XCUITest driver が再接続して挙動が乱れる経路を踏まないため、E2E は常にこのルートで回す。
 
 ```bash
 # Maestro CLI インストール（PATH に ~/.maestro/bin を追加）
 curl -Ls "https://get.maestro.mobile.dev" | bash
 
-# Claude Code に登録（フルパスで指定する。PATH 解決に失敗するため）
-claude mcp add maestro -s user -- /Users/$USER/.maestro/bin/maestro mcp
+# 実行例
+cd apps/mobile
+maestro test .maestro/smoke.yaml
+maestro test .maestro/task.yaml
 ```
 
-`claude mcp list` で `maestro: ✓ Connected` を確認。
+driver が刺さったときは `pkill -9 -f maestro-driver` でリセットして再実行する。
+
+#### testID を追加したら必ず再ビルド
+
+testID は JS バンドルに埋め込まれるため、`.tsx` で testID を追加・変更した後は **必ず `pnpm mobile:e2e:build` を回して `apps/mobile/build/ios-sim/Actiko.app` を作り直す**。古い artifact のまま `maestro test` を回すと、新しい testID を含む assertion が永遠に通らない（5/2 の `tasks.edit.dialog` 事故）。
+
+判別ポイント:
+- `assertVisible: id: <testID>` は落ちるが `assertVisible: text: <表示中の文字列>` は通る → testID が現在の build に入っていない
+- `stat -f "%Sm" apps/mobile/build/ios-sim/Actiko.app/Actiko` の更新時刻が、testID 追加 commit より古ければ再ビルド必要
+
+ネイティブモジュールの追加・変更ではなく **JS の testID 追加だけ** でも再ビルドが必要なのは、`e2e-local-ios` profile がリリースビルドで JS バンドルを `.app` に焼き込むため（dev-client の HMR は使えない）。
+
+#### flow 設計上の落とし穴（5/2 検証で踏んだもの）
+
+- **各 suite は自己完結にする**: `apps/mobile/.maestro/flows/login.yaml` 冒頭で `launchApp` を呼んでアプリをコールド起動 → root 画面に戻してから assertion を始める。これが無いと、前 suite が note 詳細などで終わった直後に `tabs.tasks` が見えず login.yaml で落ちる。`launchApp` は state を消さない（refresh token は keychain に残る）ので 2 回目以降は login フォームが skip される。
+- **データを生む flow は per-run unique なタグを使う**: `task.yaml` は `apps/mobile/.maestro/scripts/gen-run-tag.js` で `output.RUN_TAG = "r" + Date.now()` を吐き、以降の作成・assertion を `${output.RUN_TAG}` で参照する。ハードコード（`r2000` 等）は `extendedWaitUntil notVisible: <タグ>` が前回残骸にヒットして再実行で死ぬ。
+- **再実行で active リストが伸びる前提で `tasks.add` を取る**: 単一の `swipe` だと leftover タスクが増えたとき FAB がタブバー裏に隠れて落ちるので、`scrollUntilVisible: id: tasks.add` で確実にスクロールしてから tap する。
+- **モーダルが絡む assertion は `extendedWaitUntil` を使う**: iOS 26.4 の RN `Modal` はアニメーションが終わるまで testID が XCUITest hierarchy に出ないことがあり、`assertVisible`（短いポーリング）だと取りこぼす。`extendedWaitUntil: visible: id: ... timeout: 10000` で 10 秒程度の余裕を持たせる。
 
 ### Expo MCP（screenshot / tap / testID で要素検索）
 
-Expo 公式リモート MCP。SDK 54+ 必須（このプロジェクトは SDK 55 でOK）。
+Expo 公式リモート MCP。SDK 54+ 必須（このプロジェクトは SDK 55 でOK）。ad-hoc な画面確認・要素検索のみ用途。
 
 ```bash
 claude mcp add --transport http expo-mcp -s user https://mcp.expo.dev/mcp
@@ -209,8 +242,84 @@ claude mcp add --transport http expo-mcp -s user https://mcp.expo.dev/mcp
 | 用途 | ツール |
 |------|-------|
 | ad-hoc 動作確認（screenshot / tap / 要素検索） | **Expo MCP** |
-| E2E テスト実行・新規 flow 作成 | **Maestro MCP** |
-| 既存 `apps/mobile/.maestro/smoke.yaml` 実行 | **Maestro MCP** |
+| E2E テスト実行・新規 flow 作成 | **Maestro CLI（ターミナル）** |
+| 既存 `apps/mobile/.maestro/*.yaml` 実行 | **Maestro CLI（ターミナル）** |
+
+### 0 から E2E を回すまでの最短手順（Mac / iOS）
+
+事前条件: 上の「初回セットアップ」が一通り済んでいて、`brew install fastlane` 済み、`maestro --version` が 2.5+。
+
+```bash
+# 1) Simulator を boot（既に起動済みならスキップ）
+open -a Simulator    # GUI から Pixel 系・iPhone 16 Pro 26 等を boot
+# CLI で UDID 指定する場合: xcrun simctl boot <UDID>
+
+# 2) e2e 用 iOS sim ビルドを作る（5〜10 分。testID 追加 / API 変更があるたび必須）
+pnpm mobile:e2e:build
+
+# 3) suite を回す。デフォルトは smoke。FLOW で別 suite に切替可
+pnpm mobile:e2e
+FLOW=apps/mobile/.maestro/task.yaml pnpm mobile:e2e
+FLOW=apps/mobile/.maestro/note.yaml pnpm mobile:e2e
+```
+
+`pnpm mobile:e2e` 内部の流れ: backend を `:3536` で起動 → app を uninstall → install → `maestro test <FLOW>` → 終了時に backend kill。app は毎回 install しなおすので keychain がリセットされ、login.yaml がフォーム入力経路を通る。
+
+### 0 から E2E を回すまでの最短手順（Mac / Android）
+
+事前条件: 上の「Android emulator (AVD) の作成」を済ませてあること。
+
+```bash
+# 1) emulator を boot（30 秒〜1 分で BOOT_COMPLETED）
+$ANDROID_HOME/emulator/emulator -avd Pixel_7_API_35 -no-snapshot-save -no-audio &
+$ANDROID_HOME/platform-tools/adb devices   # `emulator-5554 device` を確認
+
+# 2) APK を作る（5〜10 分）
+pnpm mobile:e2e:build:android
+
+# 3) 回す
+pnpm mobile:e2e:android
+FLOW=apps/mobile/.maestro/task.yaml pnpm mobile:e2e:android
+```
+
+### 既知の落とし穴: Android で Maestro driver が auto-install されない
+
+新しい emulator（特に API 35 等の新しめの SDK）に対して `maestro test` 初回実行時、Maestro の Android driver が自動インストールされず以下のエラーで止まることがある:
+
+```
+Not able to reach the gRPC server while processing deviceInfo command
+Caused by: java.io.IOException: Command failed (tcp:7001): closed
+```
+
+このとき `adb shell pm list packages | grep maestro` が空ならインストールされていない。手動で入れる:
+
+```bash
+cd /tmp
+unzip -o $HOME/.maestro/lib/maestro-client.jar maestro-app.apk maestro-server.apk
+$ANDROID_HOME/platform-tools/adb install -r maestro-app.apk
+$ANDROID_HOME/platform-tools/adb install -r maestro-server.apk
+```
+
+その後 `maestro test` を再実行すれば driver がそのまま使われる。emulator を wipe-data した場合は再度同じ手順が必要。
+
+> **なぜ自動で入らないのか**: Maestro 2.5.1 の Android driver auto-install ロジックが特定の SDK / emulator 構成で no-op になることがある（5/2 確認）。issue として残るが workaround は安定して効く。
+
+### 動かないときのチェックリスト
+
+詰まったらまずこの順で確認:
+
+1. **`assertVisible: id: <testID>` だけ落ちる / `text:` は通る**
+   → testID が build artifact に入ってない。`stat -f "%Sm" apps/mobile/build/ios-sim/Actiko.app/Actiko` の更新時刻を testID 追加 commit と比較し、古ければ `pnpm mobile:e2e:build` をやり直す。Android なら `apps/mobile/build/android/actiko-e2e.apk` の時刻と `pnpm mobile:e2e:build:android`。
+2. **login.yaml の `assertVisible: id: tabs.tasks` で落ちる**
+   → 直前の suite が note 詳細などで終わってアプリが root に居ない。`flows/login.yaml` 冒頭の `launchApp` で root に戻すように既に書いてあるが、その行が消えていないか確認。
+3. **`tasks.add` が見つからない / FAB がタブバー裏にいる**
+   → 過去の test run で active リストが伸びている。`scrollUntilVisible: id: tasks.add` を使っているか確認。task.yaml は対応済み。
+4. **`extendedWaitUntil` が timeout する（モーダル系）**
+   → iOS 26.4 + RN `Modal` のアニメーション中は testID が hierarchy に出ないことがある。timeout を 10 秒に伸ばすか、`waitForAnimationToEnd` を挟む。
+5. **driver が刺さってる感じがする / Android で `tcp:7001 closed`**
+   → iOS は `pkill -9 -f maestro-driver` でリセット。Android で tcp:7001 closed エラーは driver app 未インストール → 上記「既知の落とし穴」セクションの手順で `adb install` する。
+6. **dev-client 経由で tap が変なところに行く**
+   → Floating Tools button（dev menu の歯車）が `common.menu` 等の上に乗っている。dev menu から Tools button を OFF。reload で復活するので毎回チェック。安定運用に入ったら build artifact 経由（`pnpm mobile:e2e`）に切り替える。
 
 > Expo MCP は app.config.ts の `extra.eas.projectId` に紐づくので、`apps/mobile/.env` の `EAS_PROJECT_ID` が正しく load されている必要がある。
 

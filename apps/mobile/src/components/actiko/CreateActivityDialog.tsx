@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Switch, Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { EmojiPicker } from "../common/EmojiPicker";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
@@ -58,12 +59,14 @@ export function CreateActivityDialog({
       visible={visible}
       onClose={handleClose}
       title={t("createTitle")}
+      testID={mobileTestIds.actikoCreate.dialog}
       footer={
         <FormButton
           variant="primary"
           label={isSubmitting ? t("creating") : t("create")}
           onPress={handleCreate}
           disabled={isSubmitting || !name.trim()}
+          testID={mobileTestIds.actikoCreate.submitButton}
         />
       }
     >
@@ -93,6 +96,7 @@ export function CreateActivityDialog({
             placeholder={t("namePlaceholder")}
             autoFocus
             accessibilityLabel={t("name")}
+            testID={mobileTestIds.actikoCreate.nameInput}
           />
         </View>
 
@@ -105,6 +109,7 @@ export function CreateActivityDialog({
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
             accessibilityLabel={t("unitLabel")}
+            testID={mobileTestIds.actikoCreate.unitInput}
           />
         </View>
 

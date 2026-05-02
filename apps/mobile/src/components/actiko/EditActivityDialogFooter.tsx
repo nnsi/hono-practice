@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 
 type EditActivityDialogFooterProps = {
@@ -30,6 +31,7 @@ export function EditActivityDialogFooter({
           label={t("delete")}
           onPress={onDeleteRequest}
           className="px-4"
+          testID={mobileTestIds.actikoEdit.deleteRequestButton}
         />
       ) : (
         <FormButton
@@ -38,6 +40,7 @@ export function EditActivityDialogFooter({
           onPress={onDeleteConfirm}
           disabled={isSubmitting}
           className="px-4"
+          testID={mobileTestIds.actikoEdit.deleteConfirmButton}
         />
       )}
       <FormButton
@@ -46,6 +49,7 @@ export function EditActivityDialogFooter({
         onPress={onSave}
         disabled={isSubmitting || !nameTrimmed}
         className="flex-1"
+        testID={mobileTestIds.actikoEdit.saveButton}
       />
     </View>
   );

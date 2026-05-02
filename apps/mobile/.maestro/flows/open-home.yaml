@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - tapOn:
-    point: "43,803"
+    id: tabs.home
 - waitForAnimationToEnd:
     timeout: 3000
 - assertVisible: Previous day

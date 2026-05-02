@@ -15,6 +15,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { useActivities } from "../../hooks/useActivities";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
+import { mobileTestIds } from "../../testing/testIds";
 import { DatePickerField } from "../common/DatePickerField";
 import { ModalOverlay } from "../common/ModalOverlay";
 
@@ -111,7 +112,12 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title="CSVエクスポート">
+    <ModalOverlay
+      visible={visible}
+      onClose={onClose}
+      title="CSVエクスポート"
+      testID={mobileTestIds.csvExport.dialog}
+    >
       <View className="gap-4 pb-4">
         <DatePickerField
           value={startDate}
@@ -150,6 +156,7 @@ export function CSVExportModal({ visible, onClose }: CSVExportModalProps) {
           accessibilityLabel={
             isExporting ? "エクスポート中..." : "CSVをエクスポート"
           }
+          testID={mobileTestIds.csvExport.exportButton}
         >
           <Download size={16} color="#ffffff" />
           <Text className="text-white font-bold text-base ml-2">

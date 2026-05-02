@@ -3,7 +3,7 @@ appId: ${MAESTRO_APP_ID}
 - waitForAnimationToEnd:
     timeout: 5000
 - tapOn:
-    point: "360,803"
+    id: tabs.tasks
 - waitForAnimationToEnd:
     timeout: 3000
 - runFlow:
@@ -12,7 +12,7 @@ appId: ${MAESTRO_APP_ID}
         id: tasks.page
     commands:
       - tapOn:
-          point: "360,803"
+          id: tabs.tasks
       - waitForAnimationToEnd:
           timeout: 3000
 - assertVisible:
