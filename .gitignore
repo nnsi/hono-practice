@@ -23,6 +23,7 @@ nul
 .expo
 apps/mobile/android
 apps/mobile/ios
+apps/mobile/build
 apps/mobile/modules/**/android/build
 apps/mobile/google-service-account.json
 # @bacons/apple-targets prebuild生成物

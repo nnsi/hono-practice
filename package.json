@@ -31,7 +31,12 @@
     "db-seed": "tsx scripts/seed-dev-data.ts",
     "db-clean": "tsx scripts/clean-db.ts",
     "mobile:e2e:android:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mobile-e2e-android-windows.ps1",
-    "mobile:e2e:server": "tsx scripts/mobile-e2e-server.ts",
+    "mobile:e2e:server": "API_PORT=3536 tsx scripts/mobile-e2e-server.ts",
+    "mobile:e2e:metro": "pnpm --filter actiko-mobile run start:e2e",
+    "mobile:e2e:build": "bash scripts/mobile-e2e-build-ios.sh",
+    "mobile:e2e:build:android": "bash scripts/mobile-e2e-build-android.sh",
+    "mobile:e2e": "bash scripts/mobile-e2e-run.sh",
+    "mobile:e2e:android": "bash scripts/mobile-e2e-run-android.sh",
     "gen-be": "node scripts/gen-be.js",
     "generate:api-reference": "tsx scripts/generate-api-reference.ts && biome check apps/frontend/src/components/api-reference/apiReferenceData.generated.ts --write --unsafe",
     "mobile": "pnpm --filter actiko-mobile"

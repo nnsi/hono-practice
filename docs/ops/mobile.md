@@ -13,8 +13,11 @@
 | iOS Simulator runtime | iOS 26.x（Xcode 26 同梱 SDK と一致） | `xcrun simctl list runtimes` |
 | EAS CLI | 18+ | `eas --version` |
 | Maestro CLI | 2.5+ | `maestro --version` |
+| Fastlane | 2.230+ | `fastlane --version` |
 
 > **iOS ローカルビルドの注意**: Expo SDK 55 の `expo-modules-core` が Swift 6.2+ 構文を使うため **Xcode 26 必須**。Xcode 16.x は build エラー（`unknown attribute 'MainActor'` 等）。Xcode 16.x のままなら **EAS Build を使うこと**。Android ローカルビルドは Xcode 不要なので影響なし。
+
+> **Fastlane**: `pnpm mobile:e2e:build`（`eas build --local`）の iOS ビルドに必要。`brew install fastlane` で導入。
 
 ## 初回セットアップ
 

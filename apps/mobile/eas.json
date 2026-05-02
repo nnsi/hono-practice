@@ -48,6 +48,16 @@
         "buildType": "apk"
       }
     },
+    "e2e-local-ios": {
+      "withoutCredentials": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL_IOS": "http://localhost:3536",
+        "EXPO_PUBLIC_E2E_MODE": "1"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "channel": "preview",

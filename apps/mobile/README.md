@@ -59,12 +59,53 @@ npx expo start --web
 ### 前提
 
 - Maestro CLI をインストール済み
-- Android は emulator、iOS は Simulator を起動済み
-- Mac の local smoke は backend を別ターミナルで起動
+- iOS は Simulator を起動済み（Android は emulator）
+- iOS の `pnpm mobile:e2e:build` には **Fastlane** が必要（`brew install fastlane`）
+- E2E は dev サーバー（backend 3456 / Metro 8081）と並行稼働できるようポート分離:
+  - E2E backend: `localhost:3536`（PGlite + seed user）
+  - dev-client から回す場合の E2E Metro: `localhost:8082`（`pnpm mobile:e2e:metro`）
+
+### Mac で iOS smoke（推奨: build 済み artifact + 1 コマンド）
+
+build 済みの `e2e-local-ios` artifact があれば dev launcher / dev menu の介入無しで `launchApp: clearState` がそのまま使えるため、運用がもっとも楽。
 
 ```bash
-pnpm mobile:e2e:server
+pnpm mobile:e2e:build   # 初回 / API 変更時のみ。eas build --local で apps/mobile/build/ios-sim/Actiko.app を生成
+pnpm mobile:e2e         # backend 起動 → install → maestro test smoke.yaml まで一気通貫
 ```
+
+`pnpm mobile:e2e` がやること:
+1. PGlite backend を `localhost:3536` で BG 起動
+2. booted simulator を検出（事前に Simulator.app で起動しておく）
+3. `apps/mobile/build/ios-sim/Actiko.app` を install（uninstall → install で state クリア）
+4. `maestro test apps/mobile/.maestro/smoke.yaml`
+5. 終了時に backend を kill
+
+flow を絞りたい場合は `FLOW=path/to/flow.yaml pnpm mobile:e2e` で上書き可。
+
+### Mac で Android smoke
+
+iOS と同じ pattern で Android emulator 向けの 1 コマンド E2E が回せる。
+
+```bash
+pnpm mobile:e2e:build:android   # 初回 / API 変更時のみ。eas build --local で apps/mobile/build/android/actiko-e2e.apk 生成
+pnpm mobile:e2e:android         # backend 起動 → APK install → maestro test smoke.yaml
+```
+
+事前に emulator を boot しておく:
+
+```bash
+~/Library/Android/sdk/emulator/emulator -avd Pixel_7_API_35 -no-snapshot-save -no-audio &
+```
+
+`pnpm mobile:e2e:android` がやること:
+1. PGlite backend を `localhost:3536` で BG 起動（`10.0.2.2:3536` から emulator が到達）
+2. `adb devices` から booted emulator を検出
+3. `apps/mobile/build/android/actiko-e2e.apk` を install（uninstall → install で state クリア）
+4. `maestro --device <id> test apps/mobile/.maestro/smoke.yaml`
+5. 終了時に backend を kill
+
+flow 切り替えは `FLOW=apps/mobile/.maestro/note.yaml pnpm mobile:e2e:android`。
 
 ### Windows で Android smoke
 
@@ -85,20 +126,28 @@ pnpm mobile:e2e:android:windows -- -ApkPath C:\path\to\actiko-e2e.apk
 
 この runner は local backend 起動、emulator 起動、`adb install`、Maestro 実行までまとめて行う。`maestro` が PATH に無い場合は `-MaestroPath C:\path\to\maestro.bat` を付ける。既に backend を自分で起動している場合だけ `-SkipBackend` を使う。
 
-### Mac で iOS smoke
+### Mac で iOS smoke（dev-client から回す場合）
 
-1. Simulator へアプリを入れる
+flow を作りこみ中で hot reload したいとき向け。`pnpm mobile:e2e` のように `clearState` は使えない（dev launcher へ戻るため）。
+
+1. Simulator へアプリを入れる（初回のみ）
 
 ```bash
 pnpm --filter actiko-mobile ios
-pnpm --filter actiko-mobile start:dev-client
 ```
 
-2. Maestro を実行する
+2. E2E backend / Metro を起動（別ターミナル）
+
+```bash
+pnpm mobile:e2e:server
+pnpm mobile:e2e:metro    # Metro 8082
+```
+
+3. dev launcher で `localhost:8082` を選んで E2E bundle をロードしてから Maestro を実行
 
 ```bash
 cd apps/mobile
-maestro test .maestro/smoke.yaml
+maestro test .maestro/flows/login.yaml   # smoke.yaml は clearState の都合で dev-client では完走しない
 ```
 
 ### EAS Workflows

@@ -80,6 +80,7 @@ export function HamburgerMenu() {
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={t("common:menu")}
+        testID="common.menu"
         style={[
           styles.menuButton,
           {

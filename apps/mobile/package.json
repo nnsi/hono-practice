@@ -6,6 +6,7 @@
     "dev": "expo start",
     "start": "expo start",
     "start:dev-client": "expo start --dev-client",
+    "start:e2e": "EXPO_PUBLIC_E2E_MODE=1 EXPO_PUBLIC_API_URL_IOS=http://localhost:3536 EXPO_PUBLIC_API_URL_ANDROID=http://10.0.2.2:3536 expo start --dev-client --clear --port 8082",
     "web": "expo start --web",
     "android": "expo run:android",
     "ios": "expo run:ios",

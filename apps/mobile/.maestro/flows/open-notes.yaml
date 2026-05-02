@@ -1,6 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- tapOn: Menu
+- tapOn:
+    id: common.menu
 - assertVisible: Notes
 - tapOn: Notes
 - assertVisible:

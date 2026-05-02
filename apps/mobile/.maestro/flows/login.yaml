@@ -8,8 +8,15 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: login.passwordInput
 - inputText: ${PASSWORD}
-- hideKeyboard
+- pressKey: Enter
 - tapOn:
     id: login.submit
+- runFlow:
+    when:
+      visible:
+        text: "今はしない|Not Now"
+    commands:
+      - tapOn:
+          text: "今はしない|Not Now"
 - assertVisible:
     id: tabs.tasks

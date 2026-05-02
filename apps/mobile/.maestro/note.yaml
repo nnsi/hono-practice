@@ -8,6 +8,7 @@ env:
 ---
 - launchApp:
     clearState: true
+    clearKeychain: true
 - runFlow: flows/login.yaml
 - runFlow: flows/open-notes.yaml
 - runFlow: flows/create-note.yaml
