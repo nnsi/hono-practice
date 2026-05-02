@@ -1,9 +1,9 @@
 import "../src/polyfills/crypto";
+import "react-native-gesture-handler";
 
-import { createContext, useContext, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { initI18n, useTranslation } from "@packages/i18n";
-import type { Consents } from "@packages/types/request";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -17,6 +17,7 @@ import { ActivityIndicator, LogBox, Text, View } from "react-native";
 
 LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { DebtFeedbackToast } from "../src/components/common/DebtFeedbackToast";
@@ -45,39 +46,9 @@ initI18n({
 
 const queryClient = new QueryClient();
 
-type AuthContextType = {
-  isLoggedIn: boolean;
-  isLoading: boolean;
-  syncReady: boolean;
-  userId: string | null;
-  login: (loginId: string, password: string) => Promise<void>;
-  googleLogin: (credential: string, consents?: Consents) => Promise<void>;
-  appleLogin: (credential: string, consents?: Consents) => Promise<void>;
-  completeLogin: (userId: string) => Promise<void>;
-  register: (
-    loginId: string,
-    password: string,
-    consents: Consents,
-  ) => Promise<void>;
-  logout: () => Promise<void>;
-};
+export { AuthContext, useAuthContext } from "../src/contexts/AuthContext";
 
-export const AuthContext = createContext<AuthContextType>({
-  isLoggedIn: false,
-  isLoading: true,
-  syncReady: false,
-  userId: null,
-  login: async () => {},
-  googleLogin: async (_credential, _consents) => {},
-  appleLogin: async (_credential, _consents) => {},
-  completeLogin: async () => {},
-  register: async (_loginId, _password, _consents) => {},
-  logout: async () => {},
-});
-
-export function useAuthContext() {
-  return useContext(AuthContext);
-}
+import { AuthContext } from "../src/contexts/AuthContext";
 
 export default function RootLayout() {
   const { t } = useTranslation("common");
@@ -154,44 +125,46 @@ export default function RootLayout() {
         await clearLocalData();
       }}
     >
-      <SafeAreaProvider>
-        <ThemeProvider>
-          {isUpdating ? (
-            <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
-              <ActivityIndicator size="large" color="#3b82f6" />
-              <Text className="text-base text-stone-500 dark:text-stone-400">
-                {t("common.updating")}
-              </Text>
-            </View>
-          ) : auth.isLoading ? (
-            <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
-              <ActivityIndicator size="large" color="#3b82f6" />
-            </View>
-          ) : (
-            <QueryClientProvider client={queryClient}>
-              <AuthContext.Provider value={auth}>
-                <StatusBar style="auto" />
-                <View className="flex-1 bg-stone-100 dark:bg-gray-900">
-                  <Slot />
-                  <DebtFeedbackToast />
-                  <UpdateToast
-                    visible={hasPendingUpdate}
-                    onReload={triggerReload}
-                    onDismiss={dismissPendingUpdate}
-                  />
-                  <OverlayHost />
-                  {tutorial.isOpen && (
-                    <TutorialWizard
-                      complete={tutorial.complete}
-                      skip={tutorial.skip}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            {isUpdating ? (
+              <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 gap-4">
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text className="text-base text-stone-500 dark:text-stone-400">
+                  {t("common.updating")}
+                </Text>
+              </View>
+            ) : auth.isLoading ? (
+              <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
+                <ActivityIndicator size="large" color="#3b82f6" />
+              </View>
+            ) : (
+              <QueryClientProvider client={queryClient}>
+                <AuthContext.Provider value={auth}>
+                  <StatusBar style="auto" />
+                  <View className="flex-1 bg-stone-100 dark:bg-gray-900">
+                    <Slot />
+                    <DebtFeedbackToast />
+                    <UpdateToast
+                      visible={hasPendingUpdate}
+                      onReload={triggerReload}
+                      onDismiss={dismissPendingUpdate}
                     />
-                  )}
-                </View>
-              </AuthContext.Provider>
-            </QueryClientProvider>
-          )}
-        </ThemeProvider>
-      </SafeAreaProvider>
+                    <OverlayHost />
+                    {tutorial.isOpen && (
+                      <TutorialWizard
+                        complete={tutorial.complete}
+                        skip={tutorial.skip}
+                      />
+                    )}
+                  </View>
+                </AuthContext.Provider>
+              </QueryClientProvider>
+            )}
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }

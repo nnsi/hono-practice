@@ -1,6 +1,7 @@
+import { useState } from "react";
+
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, FileX } from "lucide-react";
-import { useState } from "react";
 
 import { FormButton } from "../common/FormButton";
 import { NoteDetailFab } from "./NoteDetailFab";

@@ -10,7 +10,7 @@
 | CocoaPods | 1.16+ | `pod --version` |
 | JDK | 17 (Temurin) | `java -version`（mise.tomlで管理） |
 | Android SDK | 36 | `ls ~/Library/Android/sdk/platforms/` |
-| iOS Simulator runtime | iOS 18.6+ | `xcrun simctl list runtimes` |
+| iOS Simulator runtime | iOS 26.x（Xcode 26 同梱 SDK と一致） | `xcrun simctl list runtimes` |
 | EAS CLI | 18+ | `eas --version` |
 | Maestro CLI | 2.5+ | `maestro --version` |
 
@@ -37,6 +37,7 @@ cat > apps/mobile/.env <<EOF
 BUNDLE_ID=com.actiko.app
 EAS_PROJECT_ID=<ExpoダッシュボードのProject ID>
 EAS_OWNER=<Expoアカウント名>
+APPLE_TEAM_ID=<Apple Developer Team ID（iOS ローカルビルド時のみ必須）>
 EOF
 ```
 
@@ -44,13 +45,20 @@ EOF
 
 ### 3. iOS Simulator runtime のインストール（iOS ローカルビルド時のみ）
 
-Xcode 26 をインストール後、SDK と一致する simulator runtime も必要:
+Xcode 26 をインストール後、SDK と一致する iOS runtime のダウンロードが必要（iOS 26.x、約 8.5GB、30〜60 分）:
 
 ```bash
+# Xcode のライセンス同意（初回のみ。インタラクティブ）
+sudo xcodebuild -license accept
+
+# iOS platform / simulator runtime ダウンロード
 xcodebuild -downloadPlatform iOS
+
+# 完了後、対応バージョンの simulator を作成
+xcrun simctl create "iPhone 16 Pro 26" "iPhone 16 Pro" "com.apple.CoreSimulator.SimRuntime.iOS-26-4"
 ```
 
-`xcrun simctl list runtimes` で iOS の runtime（18.6+）が表示されればOK。
+`xcrun simctl list runtimes` で iOS 26.4 が表示され、`xcrun simctl list devices` で作成した simulator が見えればOK。`pnpm ios --device <UDID>` で指定して起動する。
 
 ### 4. Android 環境変数（mise.toml で自動設定）
 

@@ -2,7 +2,7 @@
   "name": "actiko-backend",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch ./server.node.ts"
+    "dev": "node ../../scripts/check-migrations.js --warn && tsx watch ./server.node.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.3",
