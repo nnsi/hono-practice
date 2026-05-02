@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { syncEngine } from "../../sync/syncEngine";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
 
@@ -41,7 +42,11 @@ export function StatsPage() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-800">
+    <View
+      className="flex-1 bg-white dark:bg-gray-800"
+      collapsable={false}
+      testID={mobileTestIds.stats.screen}
+    >
       {/* Month navigation header */}
       <View
         className="flex-row items-center justify-center gap-3 px-4 h-12 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800"
@@ -54,6 +59,7 @@ export function StatsPage() {
           accessibilityRole="button"
           accessibilityLabel={t("previousMonth")}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          testID={mobileTestIds.statsActions.prevMonth}
         >
           <ChevronLeft size={20} color="#6b7280" />
         </TouchableOpacity>
@@ -67,6 +73,7 @@ export function StatsPage() {
           accessibilityRole="button"
           accessibilityLabel={t("nextMonth")}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          testID={mobileTestIds.statsActions.nextMonth}
         >
           <ChevronRight size={20} color="#6b7280" />
         </TouchableOpacity>

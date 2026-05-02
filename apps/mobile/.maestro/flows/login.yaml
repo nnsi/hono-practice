@@ -1,22 +1,26 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- assertVisible:
-    id: login.screen
-- tapOn:
-    id: login.loginIdInput
-- inputText: ${LOGIN_ID}
-- tapOn:
-    id: login.passwordInput
-- inputText: ${PASSWORD}
-- pressKey: Enter
-- tapOn:
-    id: login.submit
+# Skip login if already authenticated (dev-client preserves auth across runs).
 - runFlow:
     when:
       visible:
-        text: "今はしない|Not Now"
+        id: login.screen
     commands:
       - tapOn:
-          text: "今はしない|Not Now"
+          id: login.loginIdInput
+      - inputText: ${LOGIN_ID}
+      - tapOn:
+          id: login.passwordInput
+      - inputText: ${PASSWORD}
+      - pressKey: Enter
+      - tapOn:
+          id: login.submit
+      - runFlow:
+          when:
+            visible:
+              text: "今はしない|Not Now"
+          commands:
+            - tapOn:
+                text: "今はしない|Not Now"
 - assertVisible:
     id: tabs.tasks

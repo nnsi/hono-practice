@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Open the active goal's edit form, then 2-tap delete (request → confirm).
+- tapOn:
+    id: goals.editButton
+- assertVisible:
+    id: goals.editForm
+- tapOn:
+    id: goals.editForm.deleteRequest
+- assertVisible:
+    id: goals.editForm.deleteConfirm
+- tapOn:
+    id: goals.editForm.deleteConfirm
+- extendedWaitUntil:
+    visible:
+      id: goals.tab.active
+    timeout: 10000
+- assertNotVisible:
+    id: goals.editForm

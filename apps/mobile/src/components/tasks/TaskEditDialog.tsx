@@ -7,6 +7,7 @@ import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { activityRepository } from "../../repositories/activityRepository";
+import { mobileTestIds } from "../../testing/testIds";
 import { DatePickerField } from "../common/DatePickerField";
 import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
@@ -74,6 +75,7 @@ export function TaskEditDialog({
       visible
       onClose={onClose}
       title={t("edit.title")}
+      testID={mobileTestIds.tasks.editDialog}
       footer={
         <TaskEditDialogFooter
           taskId={task.id}
@@ -107,6 +109,7 @@ export function TaskEditDialog({
                 : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
             }
             accessibilityLabel={t("create.label.title")}
+            testID={mobileTestIds.tasks.editTitleInput}
           />
         </View>
 

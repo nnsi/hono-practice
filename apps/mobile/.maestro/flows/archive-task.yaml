@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Mark done by tapping the toggle (a11y label = task title), then tap the
+# archive button in the same row using a positional selector.
+- tapOn:
+    text: ${TASK_TITLE_TO_ARCHIVE}
+- extendedWaitUntil:
+    visible:
+      id: "tasks\\.archive\\..*"
+    timeout: 10000
+- tapOn:
+    id: "tasks\\.archive\\..*"
+    rightOf:
+      text: ${TASK_TITLE_TO_ARCHIVE}
+- extendedWaitUntil:
+    notVisible: ${TASK_TITLE_TO_ARCHIVE}
+    timeout: 10000

@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 
 type EditGoalButtonsProps = {
@@ -35,6 +36,7 @@ export function EditGoalButtons({
           onPress={onDeleteRequest}
           disabled={saving}
           className="px-3"
+          testID={mobileTestIds.goalsEdit.deleteRequestButton}
         />
       ) : (
         <FormButton
@@ -43,6 +45,7 @@ export function EditGoalButtons({
           onPress={onDeleteConfirm}
           disabled={saving}
           className="px-3"
+          testID={mobileTestIds.goalsEdit.deleteConfirmButton}
         />
       )}
 
@@ -53,6 +56,7 @@ export function EditGoalButtons({
           onPress={onDeactivateRequest}
           disabled={saving}
           className="px-4"
+          testID={mobileTestIds.goalsEdit.deactivateRequestButton}
         />
       ) : (
         <FormButton
@@ -61,6 +65,7 @@ export function EditGoalButtons({
           onPress={onDeactivateConfirm}
           disabled={saving}
           className="px-4"
+          testID={mobileTestIds.goalsEdit.deactivateConfirmButton}
         />
       )}
 
@@ -70,6 +75,7 @@ export function EditGoalButtons({
         onPress={onSave}
         disabled={saving}
         className="flex-1"
+        testID={mobileTestIds.goalsEdit.saveButton}
       />
     </View>
   );

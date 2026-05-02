@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Switch, Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { DatePickerField } from "../common/DatePickerField";
 import { FormInput } from "../common/FormInput";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
@@ -61,6 +62,7 @@ export function EditGoalFields({
           keyboardType="numeric"
           selectTextOnFocus
           accessibilityLabel={t("dailyTargetLabel")}
+          testID={mobileTestIds.goalsEdit.targetInput}
         />
       </View>
 

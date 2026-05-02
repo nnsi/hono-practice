@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+# Smoke check: every major screen renders after login
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-home.yaml
+- runFlow: flows/open-daily.yaml
+- runFlow: flows/open-stats.yaml
+- runFlow: flows/open-goals.yaml
+- runFlow: flows/open-tasks.yaml
+- runFlow: flows/open-notes.yaml
+- runFlow: flows/open-settings.yaml

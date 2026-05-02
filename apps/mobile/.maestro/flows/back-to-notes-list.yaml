@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      visible:
+        id: notes.detail.back
+    commands:
+      - tapOn:
+          id: notes.detail.back
+- assertVisible:
+    id: notes.page

@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  GOAL_ACTIVITY_NAME: "E2Eランニング"
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-goals.yaml
+
+# create -> edit -> delete on a single active goal
+- runFlow:
+    env:
+      GOAL_TARGET: "5"
+    file: flows/create-goal.yaml
+- runFlow:
+    env:
+      GOAL_TARGET_UPDATED: "9"
+    file: flows/edit-goal.yaml
+- runFlow: flows/delete-goal.yaml

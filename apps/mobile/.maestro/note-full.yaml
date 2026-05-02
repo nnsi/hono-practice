@@ -1,0 +1,41 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  NOTE_PREVIEW: Morning plan one two after list
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-notes.yaml
+
+# create
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-note-create
+    file: flows/create-note.yaml
+
+# edit (creates a fresh note then renames it)
+- runFlow: flows/back-to-notes-list.yaml
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-note-edit-before
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-note-edit-before
+      NOTE_TITLE_UPDATED: e2e-note-edit-after
+    file: flows/edit-note.yaml
+
+# delete
+- runFlow: flows/back-to-notes-list.yaml
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-note-delete
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-note-delete
+    file: flows/delete-note.yaml

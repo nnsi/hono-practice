@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { DatePickerField } from "../common/DatePickerField";
 import { FormInput } from "../common/FormInput";
@@ -80,6 +81,7 @@ export function CreateGoalForm({
                 accessibilityRole="button"
                 accessibilityLabel={a.name}
                 accessibilityState={{ selected: activityId === a.id }}
+                testID={mobileTestIds.goalsCreate.activityOption(a.id)}
               >
                 <ActivityIcon
                   iconType={a.iconType}
@@ -117,6 +119,7 @@ export function CreateGoalForm({
           keyboardType="numeric"
           selectTextOnFocus
           accessibilityLabel={t("dailyTargetLabel")}
+          testID={mobileTestIds.goalsCreate.targetInput}
         />
       </View>
 

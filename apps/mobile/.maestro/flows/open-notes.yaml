@@ -1,5 +1,10 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Ensure we're on a tabs page (the hamburger menu only renders on the main tab routes).
+- tapOn:
+    point: "43,803"
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn:
     id: common.menu
 - assertVisible: Notes

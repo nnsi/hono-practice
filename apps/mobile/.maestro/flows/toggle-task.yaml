@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Tap the toggle of the freshly created task by its accessibility label (= task title).
+- tapOn:
+    text: ${TASK_TITLE}
+- extendedWaitUntil:
+    visible:
+      id: "tasks\\.archive\\..*"
+    timeout: 10000

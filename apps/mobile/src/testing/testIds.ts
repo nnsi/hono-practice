@@ -24,6 +24,7 @@ export const mobileTestIds = {
     saveButton: "notes.save",
     e2eFillSampleButton: "notes.e2e.fillSample",
     e2ePreviewText: "notes.e2e.preview",
+    backButton: "notes.detail.back",
   },
   tasks: {
     page: "tasks.page",
@@ -36,6 +37,74 @@ export const mobileTestIds = {
     createMemoInput: "tasks.create.memoInput",
     createCancelButton: "tasks.create.cancel",
     createSubmitButton: "tasks.create.submit",
+    editDialog: "tasks.edit.dialog",
+    editTitleInput: "tasks.edit.titleInput",
+    editUpdateButton: "tasks.edit.update",
+    editDeleteButton: "tasks.edit.delete",
+    deleteConfirmDialog: "tasks.deleteConfirm.dialog",
+    deleteConfirmButton: "tasks.deleteConfirm.confirm",
+  },
+  notesDelete: {
+    confirmDialog: "notes.deleteConfirm.dialog",
+    confirmButton: "notes.deleteConfirm.confirm",
+    cardDeleteButton: "notes.card.delete",
+  },
+  actiko: {
+    screen: "actiko.screen",
+  },
+  daily: {
+    screen: "daily.screen",
+    addActivityButton: "daily.addActivity",
+  },
+  stats: {
+    screen: "stats.screen",
+  },
+  goals: {
+    screen: "goals.screen",
+    activeTab: "goals.tab.active",
+    endedTab: "goals.tab.ended",
+    createButton: "goals.create",
+  },
+  settings: {
+    screen: "settings.screen",
+    logoutButton: "settings.logout",
+  },
+  tabCustomization: {
+    row: (key: string) => `settings.tabCustomization.row.${key}`,
+    hideButton: (key: string) => `settings.tabCustomization.hide.${key}`,
+    showButton: (key: string) => `settings.tabCustomization.show.${key}`,
+  },
+  statsActions: {
+    prevMonth: "stats.prevMonth",
+    nextMonth: "stats.nextMonth",
+  },
+  goalsCreate: {
+    dialog: "goals.createDialog.dialog",
+    activityOption: (id: string) => `goals.createDialog.activity.${id}`,
+    targetInput: "goals.createDialog.targetInput",
+    submit: "goals.createDialog.submit",
+  },
+  menu: {
+    button: "common.menu",
+    settingsItem: "common.menu.settings",
+  },
+  goalsEdit: {
+    editButton: "goals.editButton",
+    form: "goals.editForm",
+    targetInput: "goals.editForm.targetInput",
+    saveButton: "goals.editForm.save",
+    deleteRequestButton: "goals.editForm.deleteRequest",
+    deleteConfirmButton: "goals.editForm.deleteConfirm",
+    deactivateRequestButton: "goals.editForm.deactivateRequest",
+    deactivateConfirmButton: "goals.editForm.deactivateConfirm",
+  },
+  actikoCard: {
+    activity: (id: string) => `actiko.activity.${id}`,
+  },
+  recordDialog: {
+    dialog: "recording.dialog",
+    quantityInput: "recording.manual.quantityInput",
+    saveButton: "recording.manual.save",
   },
 } as const;
 

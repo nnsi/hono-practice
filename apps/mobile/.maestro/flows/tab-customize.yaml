@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      id: settings.tabCustomization.hide.tasks
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: settings.tabCustomization.hide.tasks
+- scrollUntilVisible:
+    element:
+      id: settings.tabCustomization.show.tasks
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: settings.tabCustomization.show.tasks
+- assertVisible:
+    id: settings.tabCustomization.hide.tasks

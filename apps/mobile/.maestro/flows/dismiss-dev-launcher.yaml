@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+---
+# When the dev launcher home screen appears, tap the Actiko server entry to load the JS bundle from Metro.
+- runFlow:
+    when:
+      visible: DEVELOPMENT SERVERS
+    commands:
+      - tapOn:
+          text: "Actiko、.*"
+- runFlow:
+    when:
+      visible: Continue
+    commands:
+      - tapOn: Continue
+- runFlow:
+    when:
+      visible:
+        id: xmark
+    commands:
+      - tapOn:
+          id: xmark

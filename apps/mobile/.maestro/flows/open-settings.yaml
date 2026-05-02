@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: common.menu
+- tapOn:
+    id: common.menu.settings
+- assertVisible:
+    id: settings.screen
+- assertVisible: ユーザーID

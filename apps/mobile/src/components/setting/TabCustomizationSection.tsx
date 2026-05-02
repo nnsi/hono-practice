@@ -1,71 +1,16 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
-import type { TabKey } from "@packages/domain/user/tabPreferenceSchema";
 import { useTranslation } from "@packages/i18n";
-import { GripVertical, LayoutGrid } from "lucide-react-native";
-import { PanResponder, Text, View } from "react-native";
+import { LayoutGrid } from "lucide-react-native";
+import { Text, View } from "react-native";
 
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { mobileTestIds } from "../../testing/testIds";
 import { MOBILE_TAB_METADATA } from "../common/tabMetadata";
 import { Section, type ShadowStyle } from "./SettingsParts";
 import { TabCustomizationActionButton } from "./TabCustomizationActionButton";
+import { TabCustomizationDragHandle } from "./TabCustomizationDragHandle";
 import { useTabCustomization } from "./useTabCustomization";
-
-function TabCustomizationDragHandle({
-  index,
-  isFixed,
-  isDragging,
-  tabKey,
-  startDrag,
-  updateDrag,
-  finishDrag,
-}: {
-  index: number;
-  isFixed: boolean;
-  isDragging: boolean;
-  tabKey: TabKey;
-  startDrag: (key: TabKey, index: number, pageY: number) => void;
-  updateDrag: (pageY: number) => void;
-  finishDrag: () => void;
-}) {
-  const { colors } = useThemeContext();
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => !isFixed,
-        onStartShouldSetPanResponderCapture: () => !isFixed,
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          !isFixed && Math.abs(gestureState.dy) > 2,
-        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          !isFixed && Math.abs(gestureState.dy) > 2,
-        onPanResponderGrant: (_, gestureState) => {
-          startDrag(tabKey, index, gestureState.y0);
-        },
-        onPanResponderMove: (_, gestureState) => {
-          updateDrag(gestureState.moveY);
-        },
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: finishDrag,
-        onPanResponderTerminate: finishDrag,
-        onShouldBlockNativeResponder: () => true,
-      }),
-    [finishDrag, index, isFixed, startDrag, tabKey, updateDrag],
-  );
-
-  return (
-    <View
-      {...panResponder.panHandlers}
-      className={`rounded-lg p-2 ${isDragging ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
-      accessibilityRole={isFixed ? undefined : "button"}
-      accessibilityLabel={isFixed ? undefined : "Drag to reorder tab"}
-    >
-      <GripVertical
-        size={16}
-        color={isFixed ? colors.border : colors.textMuted}
-      />
-    </View>
-  );
-}
 
 export function TabCustomizationSection({
   shadow,
@@ -137,6 +82,7 @@ export function TabCustomizationSection({
                   ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
                   : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
               }`}
+              testID={mobileTestIds.tabCustomization.row(key)}
             >
               <TabCustomizationDragHandle
                 index={index}
@@ -160,6 +106,7 @@ export function TabCustomizationSection({
                 <TabCustomizationActionButton
                   label={t("tabHide")}
                   onPress={() => hideTab(key)}
+                  testID={mobileTestIds.tabCustomization.hideButton(key)}
                 />
               )}
             </View>
@@ -173,6 +120,7 @@ export function TabCustomizationSection({
             <View
               key={key}
               className="flex-row items-center gap-3 rounded-xl border border-dashed border-gray-200 px-3 py-3 dark:border-gray-700"
+              testID={mobileTestIds.tabCustomization.row(key)}
             >
               <Icon size={18} color={colors.textMuted} />
               <View className="flex-1">
@@ -186,6 +134,7 @@ export function TabCustomizationSection({
               <TabCustomizationActionButton
                 label={t("tabShow")}
                 onPress={() => showTab(key)}
+                testID={mobileTestIds.tabCustomization.showButton(key)}
               />
             </View>
           );

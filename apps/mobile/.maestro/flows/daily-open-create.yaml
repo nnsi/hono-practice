@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+- assertVisible: アクティビティ
+- tapOn:
+    id: daily.addActivity
+- assertVisible:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.cancel

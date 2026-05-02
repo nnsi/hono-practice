@@ -6,6 +6,7 @@ import { X } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { buildDayTargets } from "./DayTargetsInput";
 import { EditGoalButtons } from "./EditGoalButtons";
@@ -115,7 +116,10 @@ export function EditGoalForm({
   };
 
   return (
-    <View className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 mb-3 p-4">
+    <View
+      className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 mb-3 p-4"
+      testID={mobileTestIds.goalsEdit.form}
+    >
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center gap-2">
           <ActivityIcon

@@ -3,9 +3,11 @@ import { Text, TouchableOpacity } from "react-native";
 export function TabCustomizationActionButton({
   label,
   onPress,
+  testID,
 }: {
   label: string;
   onPress: () => void;
+  testID?: string;
 }) {
   return (
     <TouchableOpacity
@@ -14,6 +16,7 @@ export function TabCustomizationActionButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 dark:border-gray-700 dark:bg-gray-800"
+      testID={testID}
     >
       <Text className="text-xs font-medium text-gray-700 dark:text-gray-200">
         {label}

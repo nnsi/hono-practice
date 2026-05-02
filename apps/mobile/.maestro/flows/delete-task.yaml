@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Open the edit dialog via the task body, then 2-tap delete (request → confirm).
+- tapOn:
+    text: "${TASK_TITLE_TO_DELETE}, .*"
+- assertVisible:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.delete
+- assertVisible:
+    id: tasks.deleteConfirm.dialog
+- tapOn:
+    id: tasks.deleteConfirm.confirm
+- assertNotVisible: ${TASK_TITLE_TO_DELETE}

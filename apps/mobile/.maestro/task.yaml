@@ -1,0 +1,107 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  RUN_TAG: r2000
+---
+- runFlow: flows/login.yaml
+
+- tapOn:
+    point: "360,803"
+- assertVisible:
+    id: tasks.page
+
+# Scroll the list up so tasks.add isn't behind the tab bar.
+- swipe:
+    start: "50%,30%"
+    end: "50%,15%"
+
+- tapOn:
+    id: tasks.add
+- assertVisible:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.titleInput
+- inputText: t-toggle-${RUN_TAG}
+- tapOn:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.submit
+- extendedWaitUntil:
+    visible: t-toggle-${RUN_TAG}
+    timeout: 10000
+
+# Toggle done
+- tapOn:
+    text: t-toggle-${RUN_TAG}
+- extendedWaitUntil:
+    visible:
+      id: "tasks\\.archive\\..*"
+    timeout: 10000
+
+# Edit
+- swipe:
+    start: "50%,30%"
+    end: "50%,15%"
+- tapOn:
+    id: tasks.add
+- assertVisible:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.titleInput
+- inputText: t-edit-${RUN_TAG}
+- tapOn:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.submit
+- extendedWaitUntil:
+    visible: t-edit-${RUN_TAG}
+    timeout: 10000
+- tapOn:
+    text: "t-edit-${RUN_TAG}, .*"
+- assertVisible:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.titleInput
+- eraseText: 64
+- inputText: t-edit-after-${RUN_TAG}
+- tapOn:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.update
+- extendedWaitUntil:
+    visible: t-edit-after-${RUN_TAG}
+    timeout: 10000
+
+# Delete
+- swipe:
+    start: "50%,30%"
+    end: "50%,15%"
+- tapOn:
+    id: tasks.add
+- assertVisible:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.titleInput
+- inputText: t-delete-${RUN_TAG}
+- tapOn:
+    id: tasks.create.dialog
+- tapOn:
+    id: tasks.create.submit
+- extendedWaitUntil:
+    visible: t-delete-${RUN_TAG}
+    timeout: 10000
+- tapOn:
+    text: "t-delete-${RUN_TAG}, .*"
+- assertVisible:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.delete
+- assertVisible:
+    id: tasks.deleteConfirm.dialog
+- tapOn:
+    id: tasks.deleteConfirm.confirm
+- extendedWaitUntil:
+    notVisible: t-delete-${RUN_TAG}
+    timeout: 10000

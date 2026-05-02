@@ -5,9 +5,7 @@ env:
   PASSWORD: password123
   TASK_TITLE: e2e-smoke-task
 ---
-- launchApp:
-    clearState: true
-    clearKeychain: true
+- runFlow: flows/dismiss-dev-launcher.yaml
 - runFlow: flows/login.yaml
 - runFlow: flows/open-tasks.yaml
 - runFlow: flows/create-task.yaml

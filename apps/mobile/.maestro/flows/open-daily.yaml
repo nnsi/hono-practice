@@ -1,0 +1,7 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    point: "125,803"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: アクティビティ

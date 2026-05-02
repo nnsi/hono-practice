@@ -83,6 +83,7 @@ export function NoteDetailPage() {
           hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
           accessibilityRole="button"
           accessibilityLabel={t("detail.back")}
+          testID={mobileTestIds.notes.backButton}
         >
           <ArrowLeft size={22} color="#6b7280" />
         </TouchableOpacity>
