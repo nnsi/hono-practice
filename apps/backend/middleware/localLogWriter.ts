@@ -2,17 +2,31 @@
  * ローカル開発環境用ログライター
  * WAEが使えないローカル環境で、リクエストログ・クライアントエラーをJSONLファイルに書き出す
  * ファイル: tmp/yyyymmdd.log（リポジトリルート直下）
+ *
+ * Cloudflare Workers では `import.meta.url` が undefined になるため、
+ * top-level で fileURLToPath を呼ぶと deploy が落ちる。lazy + try-catch で防ぐ。
  */
 import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-);
+let cachedRepoRoot: string | null | undefined;
+
+function getRepoRoot(): string | null {
+  if (cachedRepoRoot !== undefined) return cachedRepoRoot;
+  try {
+    const url = import.meta?.url;
+    if (typeof url !== "string") {
+      cachedRepoRoot = null;
+      return null;
+    }
+    cachedRepoRoot = join(dirname(fileURLToPath(url)), "..", "..", "..");
+    return cachedRepoRoot;
+  } catch {
+    cachedRepoRoot = null;
+    return null;
+  }
+}
 
 /** JST (Asia/Tokyo) で今日の日付を yyyymmdd 形式で返す */
 const getTodayJST = (): string => {
@@ -25,12 +39,15 @@ const getTodayJST = (): string => {
 };
 
 /**
- * ログエントリをJSONLファイルに追記する
- * ロギング失敗は絶対にサーバーをクラッシュさせない
+ * ログエントリをJSONLファイルに追記する。
+ * Workers などファイルシステム不可な環境では no-op。
+ * ロギング失敗は絶対にサーバーをクラッシュさせない。
  */
 export function appendLocalLog(entry: Record<string, unknown>): void {
   try {
-    const dir = join(REPO_ROOT, "tmp");
+    const repoRoot = getRepoRoot();
+    if (!repoRoot) return;
+    const dir = join(repoRoot, "tmp");
     mkdirSync(dir, { recursive: true });
 
     const filePath = join(dir, `${getTodayJST()}.log`);
