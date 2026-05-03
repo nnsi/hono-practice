@@ -2,12 +2,12 @@ import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
-import { mobileTestIds } from "../../testing/testIds";
 import { EditLogKindSelector } from "./EditLogKindSelector";
 import { useEditLogDialog } from "./useEditLogDialog";
 

@@ -138,7 +138,12 @@ describe("userRoute", () => {
 
   it("POST / 重複した loginId は 409 エラーになる", async () => {
     const route = createUserRoute();
-    const client = testClient(route, {
+    // AppError → 409 マッピングを onError で行うので errorHandling 付きで包む
+    const { newHonoWithErrorHandling } = await import(
+      "@backend/lib/honoWithErrorHandling"
+    );
+    const app = newHonoWithErrorHandling().route("/", route);
+    const client = testClient(app, {
       JWT_SECRET: "test",
       JWT_AUDIENCE: "test-audience",
       NODE_ENV: "test",

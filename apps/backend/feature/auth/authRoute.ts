@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
+import { getCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
@@ -7,9 +7,11 @@ import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
-  createRateLimitMiddleware,
+  applyRateLimit,
   loginRateLimitConfig,
+  tokenRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
+import { isMobileClient } from "@backend/utils/clientDetection";
 import { zValidator } from "@hono/zod-validator";
 import { loginRequestSchema } from "@packages/types/request";
 
@@ -21,7 +23,11 @@ import { newUserUsecase } from "../user/userUsecase";
 import { appleVerify } from "./appleVerify";
 import { newAuthHandler } from "./authHandler";
 import { createAppleAuthRoutes } from "./authRouteApple";
-import { type AuthRouteContext, setRefreshCookie } from "./authRouteContext";
+import {
+  type AuthRouteContext,
+  clearRefreshCookie,
+  setRefreshCookie,
+} from "./authRouteContext";
 import { createGoogleAuthRoutes } from "./authRouteGoogle";
 import type { OAuthVerifierMap } from "./authUsecase";
 import { newAuthUsecase } from "./authUsecase";
@@ -77,23 +83,16 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   });
 
   for (const path of ["/login", "/google", "/apple"]) {
-    app.use(path, async (c, next) => {
-      const kv = c.env.RATE_LIMIT_KV;
-      if (!kv) return next();
-      return createRateLimitMiddleware(
-        kv,
-        loginRateLimitConfig,
-        c.get("tracer"),
-      )(c, next);
-    });
+    app.use(path, applyRateLimit(loginRateLimitConfig));
   }
+  app.use("/token", applyRateLimit(tokenRateLimitConfig));
 
   return app
     .post("/login", zValidator("json", loginRequestSchema), async (c) => {
       const body = c.req.valid("json");
       const { token, refreshToken } = await c.var.h.login(body);
       setRefreshCookie(c, refreshToken);
-      return c.json({ token, refreshToken });
+      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
     })
     .post("/token", async (c) => {
       const authHeader = c.req.header("Authorization");
@@ -101,16 +100,12 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         ? authHeader.substring(7)
         : getCookie(c, "refresh_token");
       if (!refreshTokenValue) {
-        return c.json({ message: "refresh token not found" }, 401);
+        throw new UnauthorizedError("refresh token not found");
       }
-      try {
-        const { token, refreshToken } =
-          await c.var.h.atomicRotateRefreshToken(refreshTokenValue);
-        setRefreshCookie(c, refreshToken);
-        return c.json({ token, refreshToken });
-      } catch (_error) {
-        throw new UnauthorizedError("invalid refresh token");
-      }
+      const { token, refreshToken } =
+        await c.var.h.atomicRotateRefreshToken(refreshTokenValue);
+      setRefreshCookie(c, refreshToken);
+      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
     })
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
@@ -123,15 +118,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         return c.json({ message: "refresh token not found" }, 401);
       }
       const result = await c.var.h.logout(userId, refreshTokenValue);
-      const isDev =
-        c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test";
-      setCookie(c, "refresh_token", "", {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(0),
-        ...(isDev ? {} : { sameSite: "None" }),
-        path: "/",
-      });
+      clearRefreshCookie(c);
       return c.json(result);
     })
     .route("/google", createGoogleAuthRoutes())

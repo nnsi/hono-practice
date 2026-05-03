@@ -2,7 +2,10 @@ import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { StorageService } from "@backend/infra/storage";
 import type { Logger } from "@backend/lib/logger";
 import type { Tracer } from "@backend/lib/tracer";
-import { generateIconKey } from "@backend/utils/imageValidator";
+import {
+  generateIconKey,
+  validateImageBytes,
+} from "@backend/utils/imageValidator";
 import type { ActivityId } from "@packages/domain/activity/activitySchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -62,6 +65,8 @@ export function uploadActivityIcon(
     for (let index = 0; index < binaryString.length; index++) {
       bytes[index] = binaryString.charCodeAt(index);
     }
+
+    await validateImageBytes(bytes, mimeType);
 
     const file = new File([bytes], "icon.webp", { type: mimeType });
     const mainKey = generateIconKey(userId, activityId);

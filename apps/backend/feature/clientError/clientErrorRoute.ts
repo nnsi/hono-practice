@@ -1,10 +1,20 @@
 import { Hono } from "hono";
 
+import { optionalAuthMiddleware } from "@backend/middleware/optionalAuthMiddleware";
+import {
+  applyRateLimit,
+  clientErrorRateLimitConfig,
+} from "@backend/middleware/rateLimitMiddleware";
+import { fireAndForget } from "@backend/utils/fireAndForget";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
 import type { AppContext } from "../../context";
-import { appendLocalLog } from "../../middleware/localLogWriter";
+import {
+  type ClientErrorHandler,
+  newClientErrorHandler,
+} from "./clientErrorHandler";
+import { newClientErrorUsecase } from "./clientErrorUsecase";
 
 const clientErrorSchema = z.object({
   errorType: z.enum([
@@ -16,47 +26,28 @@ const clientErrorSchema = z.object({
   ]),
   message: z.string().min(1).max(1000),
   stack: z.string().max(5000).optional(),
-  userId: z.string().optional(),
-  screen: z.string().optional(),
+  // userId はクライアントから受け取らない（サーバ側で auth context から付与）
+  screen: z.string().max(200).optional(),
   platform: z.enum(["ios", "android", "web"]),
-  appVersion: z.string().optional(),
+  appVersion: z.string().max(50).optional(),
 });
 
-export const clientErrorRoute = new Hono<AppContext>().post(
-  "/",
-  zValidator("json", clientErrorSchema),
-  async (c) => {
+type ClientErrorContext = AppContext & {
+  Variables: { h: ClientErrorHandler };
+};
+
+export const clientErrorRoute = new Hono<ClientErrorContext>()
+  .use("*", optionalAuthMiddleware)
+  .use("*", applyRateLimit(clientErrorRateLimitConfig))
+  .use("*", async (c, next) => {
+    const uc = newClientErrorUsecase(c.env.WAE_CLIENT_ERRORS, c.get("logger"));
+    c.set("h", newClientErrorHandler(uc));
+    return next();
+  })
+  .post("/", zValidator("json", clientErrorSchema), async (c) => {
     const body = c.req.valid("json");
-    const wae = c.env.WAE_CLIENT_ERRORS;
-
-    if (wae) {
-      try {
-        c.executionCtx.waitUntil(
-          Promise.resolve(
-            wae.writeDataPoint({
-              blobs: [
-                body.errorType,
-                body.message,
-                body.stack ?? "",
-                body.userId ?? "",
-                body.screen ?? "",
-                body.platform,
-                body.appVersion ?? "",
-              ],
-              doubles: [1],
-              indexes: [body.errorType],
-            }),
-          ),
-        );
-      } catch {
-        // WAE write failure should not affect response
-      }
-    } else {
-      const logger = c.get("logger");
-      logger?.info("Client error reported", body);
-      appendLocalLog({ type: "client_error", ...body });
-    }
-
+    const userId = c.get("userId");
+    // 失敗してもレスポンスをブロックしない: バックグラウンド実行
+    fireAndForget(c, c.var.h.recordClientError(body, userId), c.get("logger"));
     return c.body(null, 204);
-  },
-);
+  });

@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { Text, View } from "react-native";
 
 import { mobileTestIds } from "../../testing/testIds";
-
 import { ModalOverlay } from "./ModalOverlay";
 
 const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? "";

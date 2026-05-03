@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
 
 import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
@@ -7,9 +6,10 @@ import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import {
-  createRateLimitMiddleware,
+  applyRateLimit,
   registerRateLimitConfig,
 } from "@backend/middleware/rateLimitMiddleware";
+import { isMobileClient } from "@backend/utils/clientDetection";
 import { zValidator } from "@hono/zod-validator";
 import {
   createUserRequestSchema,
@@ -19,6 +19,7 @@ import {
 import type { AppContext } from "../../context";
 import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
+import { setRefreshCookie } from "../auth/authRouteContext";
 import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
@@ -92,45 +93,17 @@ export function createUserRoute() {
     return next();
   });
 
-  // ユーザー登録のレートリミット（KVStoreがある場合のみ有効）
-  app.use("/", async (c, next) => {
-    // GETリクエストはレートリミット対象外
-    if (c.req.method !== "POST") return next();
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) return next();
-    return createRateLimitMiddleware(
-      kv,
-      registerRateLimitConfig,
-      c.get("tracer"),
-    )(c, next);
-  });
+  // ユーザー登録のレートリミット（POST のみ）
+  app.on("POST", "/", applyRateLimit(registerRateLimitConfig));
 
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
-      const { NODE_ENV } = c.env;
-      let token: string;
-      let refreshToken: string;
-      try {
-        const result = await c.var.h.createUser(c.req.valid("json"));
-        token = result.token;
-        refreshToken = result.refreshToken;
-      } catch (e) {
-        if (e instanceof AppError && e.status === 409) {
-          return c.json({ message: e.message }, 409);
-        }
-        throw e;
-      }
-
-      const isDev = NODE_ENV === "development" || NODE_ENV === "test";
-      // Only set refresh token cookie, access token is returned in response body
-      setCookie(c, "refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: !isDev,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        ...(isDev ? {} : { sameSite: "None" }),
-      });
-
-      return c.json({ token, refreshToken });
+      // 409 を含む全エラーは onError ハンドラ経由でレスポンス化される
+      const { token, refreshToken } = await c.var.h.createUser(
+        c.req.valid("json"),
+      );
+      setRefreshCookie(c, refreshToken);
+      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
     })
     .get("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
@@ -138,6 +111,7 @@ export function createUserRoute() {
         const user = await c.var.h.getMe(userId);
         return c.json(user);
       } catch (e) {
+        // 認証は通過しているがユーザーが存在しない（削除済み等）→ 401 に変換
         if (e instanceof AppError && e.status === 404) {
           return c.json({ message: "unauthorized" }, 401);
         }

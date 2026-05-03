@@ -224,11 +224,8 @@ describe("POST /batch", () => {
         token,
       );
 
+      // 6件超は zod schema で弾かれる
       expect(res.status).toBe(400);
-      const body = await res.json();
-      expect(body).toEqual({
-        message: "Too many batch requests (max 5)",
-      });
     });
 
     it("5件のバッチリクエストは許可される", async () => {
