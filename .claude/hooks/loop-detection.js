@@ -60,7 +60,12 @@ async function main() {
   if (count >= ESCALATE_THRESHOLD) {
     const msg = `🚨 ${filePath} を${count}回編集しました。一旦手を止めて、ユーザーに状況を報告してください。`;
     process.stdout.write(
-      JSON.stringify({ hookSpecificOutput: { additionalContext: msg } }),
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "PostToolUse",
+          additionalContext: msg,
+        },
+      }),
     );
   } else if (count >= WARN_THRESHOLD) {
     const msg = [
@@ -70,7 +75,12 @@ async function main() {
       "- テスト失敗ループ → テストの期待値が旧実装を前提にしていないか確認",
     ].join("\n");
     process.stdout.write(
-      JSON.stringify({ hookSpecificOutput: { additionalContext: msg } }),
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "PostToolUse",
+          additionalContext: msg,
+        },
+      }),
     );
   }
 }
