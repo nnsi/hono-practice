@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Stats: 5ヶ月前へ移動してデータなし表示を確認
+# 前提: Stats タブが表示済み (stats.prevMonth が visible)
+- assertVisible:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- assertVisible:
+    text: "データがありません|No data"

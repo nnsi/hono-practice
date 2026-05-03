@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Timer モード記録: タイマータブを選択→start→stop→save
+- assertVisible: E2Eタイマー
+- tapOn: E2Eタイマー
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.timer.tab.timer
+- tapOn:
+    id: recording.timer.start
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: recording.timer.stop
+- tapOn:
+    id: recording.timer.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

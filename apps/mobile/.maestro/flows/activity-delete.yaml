@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+---
+# アクティビティ削除: 編集ダイアログ→削除要求→削除確認
+- assertVisible: E2E-EDITED
+- tapOn:
+    text: "Edit"
+    index: 0
+- assertVisible:
+    id: actiko.edit.dialog
+- tapOn:
+    id: actiko.edit.deleteRequest
+- assertVisible:
+    id: actiko.edit.deleteConfirm
+- tapOn:
+    id: actiko.edit.deleteConfirm
+- extendedWaitUntil:
+    notVisible:
+      id: actiko.edit.dialog
+    timeout: 10000
+- assertNotVisible: E2E-EDITED

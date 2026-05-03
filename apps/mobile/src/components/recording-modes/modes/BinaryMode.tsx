@@ -2,6 +2,7 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { useBinaryMode } from "./useBinaryMode";
 
 const KIND_BG = [
@@ -43,6 +44,7 @@ export function BinaryMode(props: RecordingModeProps) {
               accessibilityRole="button"
               accessibilityLabel={kind.name}
               accessibilityState={{ disabled: vm.isSubmitting }}
+              testID={mobileTestIdsExt.recordingBinary.kindButton(kind.id)}
             >
               <Text className="text-xl font-bold text-white">{kind.name}</Text>
             </TouchableOpacity>

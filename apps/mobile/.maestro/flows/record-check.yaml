@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Check モード記録: mainボタンをタップして自動保存を確認
+- assertVisible: E2Eチェック
+- tapOn: E2Eチェック
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.check.main
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

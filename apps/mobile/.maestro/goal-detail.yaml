@@ -1,0 +1,24 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  GOAL_ACTIVITY_NAME: "E2Eランニング"
+  GOAL_TARGET: "5"
+  GOAL_TARGET_UPDATED: "7"
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-goals.yaml
+- runFlow:
+    env:
+      GOAL_TARGET: "5"
+    file: flows/create-goal.yaml
+# ゴールカードを展開してfreeze/dayTargetsにアクセス
+- tapOn:
+    text: "E2Eランニング 展開する"
+- waitForAnimationToEnd:
+    timeout: 1000
+- runFlow: flows/goal-freeze-today.yaml
+- runFlow: flows/goal-day-targets.yaml
+- runFlow: flows/delete-goal.yaml

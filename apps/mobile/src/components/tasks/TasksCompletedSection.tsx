@@ -58,6 +58,7 @@ export function TasksCompletedSection({
           <TaskGroup
             title={t("page.group.completed")}
             tasks={completed}
+            sectionKey="completed"
             titleColor="text-gray-500 dark:text-gray-400"
             completed
             onToggleDone={handleToggleDone}

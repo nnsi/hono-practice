@@ -3,6 +3,7 @@ import { useTranslation } from "@packages/i18n";
 import { Check } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { useCheckMode } from "./useCheckMode";
 
 export function CheckMode(props: RecordingModeProps) {
@@ -56,6 +57,7 @@ export function CheckMode(props: RecordingModeProps) {
                 selected: vm.selectedKindId === kind.id,
                 disabled: kind.isCheckedToday || vm.isSubmitting,
               }}
+              testID={mobileTestIdsExt.recordingCheck.kindButton(kind.id)}
             >
               <Text
                 className={`text-sm font-medium ${
@@ -86,6 +88,7 @@ export function CheckMode(props: RecordingModeProps) {
           checked: vm.isCheckedToday,
           disabled: !vm.canCheck || vm.isSubmitting,
         }}
+        testID={mobileTestIdsExt.recordingCheck.mainButton}
       >
         <Check size={48} color={iconColor} />
       </TouchableOpacity>

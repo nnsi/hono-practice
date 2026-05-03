@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Check モード + Kind 選択 (kind-G): サブボタン表示確認 → kind タップ → メインボタンで保存
+- assertVisible: E2Eチェック
+- tapOn: E2Eチェック
+- assertVisible:
+    id: recording.dialog
+- assertVisible:
+    id: recording.check.kind.e2e00000-0000-4000-8000-000000000028
+- tapOn:
+    id: recording.check.kind.e2e00000-0000-4000-8000-000000000028
+- tapOn:
+    id: recording.check.main
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

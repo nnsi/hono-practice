@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+---
+# 曜日別目標設定: 編集フォームを開いてdayTargetsToggle→曜日1の値を変更→保存
+- tapOn:
+    id: goals.editButton
+- assertVisible:
+    id: goals.editForm
+- tapOn:
+    id: goal.dayTargetsToggle
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    id: goal.dayTarget.1
+- eraseText: 8
+- inputText: "5"
+- tapOn:
+    id: goals.editForm
+- tapOn:
+    id: goals.editForm.save
+- extendedWaitUntil:
+    visible:
+      id: goals.tab.active
+    timeout: 10000

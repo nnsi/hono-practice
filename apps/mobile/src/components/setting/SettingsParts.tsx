@@ -52,11 +52,13 @@ export function SettingSwitch({
   desc,
   value,
   onChange,
+  testID,
 }: {
   label: string;
   desc: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  testID?: string;
 }) {
   return (
     <View className="flex-row items-center px-4 py-3">
@@ -74,6 +76,7 @@ export function SettingSwitch({
         accessibilityRole="switch"
         accessibilityState={{ checked: value }}
         accessibilityLabel={label}
+        testID={testID}
       />
     </View>
   );

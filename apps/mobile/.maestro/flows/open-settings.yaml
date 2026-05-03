@@ -6,4 +6,4 @@ appId: ${MAESTRO_APP_ID}
     id: common.menu.settings
 - assertVisible:
     id: settings.screen
-- assertVisible: ユーザーID
+- assertVisible: "ユーザーID|User ID"

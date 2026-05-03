@@ -2,6 +2,7 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { TimerManualPanel } from "./TimerManualPanel";
 import { TimerPanel } from "./TimerPanel";
 import { useTimerMode } from "./useTimerMode";
@@ -30,6 +31,7 @@ export function TimerMode(props: RecordingModeProps) {
           accessibilityRole="tab"
           accessibilityLabel={t("manualEntry")}
           accessibilityState={{ selected: vm.effectiveTab === "manual" }}
+          testID={mobileTestIdsExt.recordingTimer.manualTab}
         >
           <Text
             className={`text-sm font-medium ${
@@ -50,6 +52,7 @@ export function TimerMode(props: RecordingModeProps) {
           accessibilityRole="tab"
           accessibilityLabel={t("timer")}
           accessibilityState={{ selected: vm.effectiveTab === "timer" }}
+          testID={mobileTestIdsExt.recordingTimer.timerTab}
         >
           <Text
             className={`text-sm font-medium ${

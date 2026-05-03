@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Manual モード + Kind 選択 (kind-A): 数量3 を入力して保存
+- assertVisible: E2Eランニング
+- tapOn: E2Eランニング
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.kindSelector.e2e00000-0000-4000-8000-000000000022
+- tapOn:
+    id: recording.manual.quantityInput
+- eraseText: 8
+- inputText: "3"
+- tapOn:
+    id: recording.dialog
+- tapOn:
+    id: recording.manual.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

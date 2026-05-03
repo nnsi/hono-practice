@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+# 設定トグル3つをタップ（副作用確認不要、タップ成功のみ検証）
+- assertVisible:
+    id: settings.screen
+- tapOn:
+    id: settings.toggle.showGoalOnStartup
+- tapOn:
+    id: settings.toggle.showInactiveDates
+- tapOn:
+    id: settings.toggle.praiseMode
