@@ -12,7 +12,10 @@ async function recordRunningOnActiko(page: Page, quantity: string) {
     .filter({ hasText: "E2Eランニング" })
     .first();
   await runningCard.waitFor({ state: "visible", timeout: 15000 });
-  await runningCard.click();
+  // 初回サーバー sync の Dexie 書き込みで liveQuery が連発し、click が
+  // "element was detached" で失敗する。force でアクション可能性チェックを
+  // 飛ばし、retry なしで一発で実行する。
+  await runningCard.click({ force: true, timeout: 15000 });
   await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
 
   const modal = page.locator(".modal-backdrop");
