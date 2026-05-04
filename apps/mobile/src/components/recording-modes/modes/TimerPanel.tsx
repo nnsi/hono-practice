@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import type { useTimerMode } from "./useTimerMode";
@@ -31,6 +32,7 @@ export function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex-row items-center gap-2 px-6 py-3 bg-red-50 dark:bg-red-900/200 rounded-xl"
             accessibilityRole="button"
             accessibilityLabel={t("stop")}
+            testID={mobileTestIdsExt.recordingTimer.stopButton}
           >
             <Text className="text-white font-medium">{t("stop")}</Text>
           </TouchableOpacity>
@@ -40,6 +42,7 @@ export function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex-row items-center gap-2 px-6 py-3 bg-gray-900 rounded-xl"
             accessibilityRole="button"
             accessibilityLabel={vm.elapsedTime > 0 ? t("resume") : t("start")}
+            testID={mobileTestIdsExt.recordingTimer.startButton}
           >
             <Text className="text-white font-medium">
               {vm.elapsedTime > 0 ? t("resume") : t("start")}
@@ -52,6 +55,7 @@ export function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             className="flex-row items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl"
             accessibilityRole="button"
             accessibilityLabel={t("reset")}
+            testID={mobileTestIdsExt.recordingTimer.resetButton}
           >
             <Text className="text-gray-600 dark:text-gray-400 font-medium">
               {t("reset")}
@@ -80,6 +84,7 @@ export function TimerPanel({ vm }: { vm: ReturnType<typeof useTimerMode> }) {
             label={t("save")}
             onPress={vm.submitTimer}
             disabled={vm.isSubmitting}
+            testID={mobileTestIdsExt.recordingTimer.saveButton}
           />
         </View>
       )}

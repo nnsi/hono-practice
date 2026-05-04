@@ -1,6 +1,8 @@
 import { useTranslation } from "@packages/i18n";
 import { Switch, Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 import { DatePickerField } from "../common/DatePickerField";
 import { FormInput } from "../common/FormInput";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
@@ -61,6 +63,7 @@ export function EditGoalFields({
           keyboardType="numeric"
           selectTextOnFocus
           accessibilityLabel={t("dailyTargetLabel")}
+          testID={mobileTestIds.goalsEdit.targetInput}
         />
       </View>
 
@@ -107,6 +110,7 @@ export function EditGoalFields({
                 setDebtCapValue(String(Number(target) * 7));
               }
             }}
+            testID={mobileTestIdsExt.goalDebtCap.toggle}
           />
         </View>
         {debtCapEnabled && (
@@ -118,6 +122,7 @@ export function EditGoalFields({
               keyboardType="numeric"
               selectTextOnFocus
               accessibilityLabel={t("debtCapLabel")}
+              testID={mobileTestIdsExt.goalDebtCap.input}
             />
             <Text className="text-xs text-gray-500 dark:text-gray-400">
               {activity?.quantityUnit ?? ""}

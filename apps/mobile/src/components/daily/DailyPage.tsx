@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
+import { mobileTestIds } from "../../testing/testIds";
 import { DateNavHeader } from "../actiko/DateNavHeader";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { DeleteConfirmDialog } from "../tasks/DeleteConfirmDialog";
@@ -78,7 +79,11 @@ export function DailyPage() {
   }, []);
 
   return (
-    <View className="flex-1">
+    <View
+      className="flex-1"
+      collapsable={false}
+      testID={mobileTestIds.daily.screen}
+    >
       <DateNavHeader
         date={date}
         isToday={isToday}
@@ -123,6 +128,7 @@ export function DailyPage() {
               onPress={() => setTaskCreateDialogOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={t("daily.addButton")}
+              testID={mobileTestIds.daily.addActivityButton}
             >
               <Plus size={16} color="#2563eb" />
               <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">

@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Counter モード → 「手動」タブへ切り替えて Manual パネルが表示されることを確認
+- assertVisible: E2Eカウンター
+- tapOn: E2Eカウンター
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.counter.tab.manual
+# CounterMode の ManualPanel では memo input が表示される
+- assertVisible:
+    id: recording.memoInput
+# Modal を閉じる
+- tapOn:
+    text: "Close"
+- extendedWaitUntil:
+    notVisible:
+      id: recording.dialog
+    timeout: 5000

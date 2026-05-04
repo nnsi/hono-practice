@@ -4,13 +4,10 @@ import { sign } from "hono/jwt";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { googleVerify } from "@backend/feature/auth/googleVerify";
+import { getAdminJwtSecret } from "@backend/utils/adminJwt";
 import { isLocalOrigin } from "@backend/utils/isLocalOrigin";
 import { zValidator } from "@hono/zod-validator";
 import { AdminGoogleAuthRequestSchema } from "@packages/types/request";
-
-function getAdminJwtSecret(env: AppContext["Bindings"]): string {
-  return env.JWT_SECRET_ADMIN ?? env.JWT_SECRET;
-}
 
 const ADMIN_TOKEN_EXPIRES_IN_SECONDS = 8 * 60 * 60;
 

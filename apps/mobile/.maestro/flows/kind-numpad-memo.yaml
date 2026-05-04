@@ -1,0 +1,28 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Numpad モード + Kind 選択 (kind-E) + メモ入力
+- assertVisible: E2Eテンキー
+- tapOn: E2Eテンキー
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.kindSelector.e2e00000-0000-4000-8000-000000000026
+- tapOn:
+    id: recording.numpad.key.7
+- tapOn:
+    id: recording.numpad.key.5
+- tapOn:
+    id: recording.memoInput
+- inputText: memo-test
+# キーボードを閉じる: dialog title (activity name) をタップ
+- tapOn: E2Eテンキー
+- scrollUntilVisible:
+    element:
+      id: recording.numpad.save
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: recording.numpad.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

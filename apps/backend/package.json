@@ -2,7 +2,7 @@
   "name": "actiko-backend",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch ./server.node.ts"
+    "dev": "node ../../scripts/check-migrations.js --warn && tsx watch ./server.node.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.3",
@@ -13,7 +13,7 @@
     "bcryptjs": "^3.0.2",
     "dayjs": "^1.11.13",
     "drizzle-orm": "^0.44.2",
-    "hono": "^4.12.3",
+    "hono": "^4.12.4",
     "jose": "^6.0.10",
     "postgres": "^3.4.5",
     "redis": "^5.7.0",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250422.0",
-    "@hono/node-server": "^1.18.2",
+    "@hono/node-server": "^1.19.10",
     "@types/node": "^24.0.3",
     "dotenv": "^16.4.7"
   }

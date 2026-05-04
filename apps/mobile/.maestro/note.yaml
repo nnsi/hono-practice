@@ -6,8 +6,7 @@ env:
   NOTE_TITLE: e2e-note
   NOTE_PREVIEW: Morning plan one two after list
 ---
-- launchApp:
-    clearState: true
+- runFlow: flows/dismiss-dev-launcher.yaml
 - runFlow: flows/login.yaml
 - runFlow: flows/open-notes.yaml
 - runFlow: flows/create-note.yaml

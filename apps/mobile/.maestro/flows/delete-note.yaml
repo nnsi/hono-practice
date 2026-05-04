@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: notes.card.delete
+- assertVisible:
+    id: notes.deleteConfirm.dialog
+- tapOn:
+    id: notes.deleteConfirm.confirm
+- assertNotVisible: "${NOTE_TITLE}.*"

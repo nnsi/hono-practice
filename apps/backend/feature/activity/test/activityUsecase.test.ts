@@ -569,11 +569,20 @@ describe("ActivityUsecase", () => {
       ).thenReject(new Error("db failed"));
       when(storage.delete(anything())).thenResolve();
 
+      // 最小限の有効なPNG magic bytes + IHDRダミー（24バイト）
+      const pngBytes = new Uint8Array(24);
+      pngBytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      // width=16, height=16
+      const view = new DataView(pngBytes.buffer);
+      view.setUint32(16, 16);
+      view.setUint32(20, 16);
+      const pngBase64 = Buffer.from(pngBytes).toString("base64");
+
       await expect(
         usecase.uploadActivityIcon(
           userId1,
           activityId1,
-          Buffer.from("icon").toString("base64"),
+          pngBase64,
           "image/png",
           "https://api.example.com",
         ),

@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: tabs.goals
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible:
+    id: goals.tab.active
+- tapOn:
+    id: goals.tab.ended
+- tapOn:
+    id: goals.tab.active

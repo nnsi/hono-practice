@@ -24,6 +24,7 @@ export const mobileTestIds = {
     saveButton: "notes.save",
     e2eFillSampleButton: "notes.e2e.fillSample",
     e2ePreviewText: "notes.e2e.preview",
+    backButton: "notes.detail.back",
   },
   tasks: {
     page: "tasks.page",
@@ -36,6 +37,139 @@ export const mobileTestIds = {
     createMemoInput: "tasks.create.memoInput",
     createCancelButton: "tasks.create.cancel",
     createSubmitButton: "tasks.create.submit",
+    editDialog: "tasks.edit.dialog",
+    editTitleInput: "tasks.edit.titleInput",
+    editUpdateButton: "tasks.edit.update",
+    editDeleteButton: "tasks.edit.delete",
+    deleteConfirmDialog: "tasks.deleteConfirm.dialog",
+    deleteConfirmButton: "tasks.deleteConfirm.confirm",
+  },
+  notesDelete: {
+    confirmDialog: "notes.deleteConfirm.dialog",
+    confirmButton: "notes.deleteConfirm.confirm",
+    cardDeleteButton: "notes.card.delete",
+  },
+  actiko: {
+    screen: "actiko.screen",
+  },
+  daily: {
+    screen: "daily.screen",
+    addActivityButton: "daily.addActivity",
+  },
+  stats: {
+    screen: "stats.screen",
+  },
+  goals: {
+    screen: "goals.screen",
+    activeTab: "goals.tab.active",
+    endedTab: "goals.tab.ended",
+    createButton: "goals.create",
+  },
+  settings: {
+    screen: "settings.screen",
+    logoutButton: "settings.logout",
+  },
+  tabCustomization: {
+    row: (key: string) => `settings.tabCustomization.row.${key}`,
+    hideButton: (key: string) => `settings.tabCustomization.hide.${key}`,
+    showButton: (key: string) => `settings.tabCustomization.show.${key}`,
+  },
+  statsActions: {
+    prevMonth: "stats.prevMonth",
+    nextMonth: "stats.nextMonth",
+  },
+  goalsCreate: {
+    dialog: "goals.createDialog.dialog",
+    activityOption: (id: string) => `goals.createDialog.activity.${id}`,
+    targetInput: "goals.createDialog.targetInput",
+    submit: "goals.createDialog.submit",
+  },
+  menu: {
+    button: "common.menu",
+    settingsItem: "common.menu.settings",
+  },
+  goalsEdit: {
+    editButton: "goals.editButton",
+    form: "goals.editForm",
+    targetInput: "goals.editForm.targetInput",
+    saveButton: "goals.editForm.save",
+    deleteRequestButton: "goals.editForm.deleteRequest",
+    deleteConfirmButton: "goals.editForm.deleteConfirm",
+    deactivateRequestButton: "goals.editForm.deactivateRequest",
+    deactivateConfirmButton: "goals.editForm.deactivateConfirm",
+  },
+  actikoCard: {
+    activity: (id: string) => `actiko.activity.${id}`,
+  },
+  recordDialog: {
+    dialog: "recording.dialog",
+    quantityInput: "recording.manual.quantityInput",
+    saveButton: "recording.manual.save",
+  },
+  contact: {
+    page: "contact.page",
+    emailInput: "contact.emailInput",
+    categoryOption: (value: string) => `contact.category.${value}`,
+    bodyInput: "contact.bodyInput",
+    submitButton: "contact.submit",
+  },
+  dailyEditLog: {
+    dialog: "daily.editLog.dialog",
+    quantityInput: "daily.editLog.quantityInput",
+    memoInput: "daily.editLog.memoInput",
+    saveButton: "daily.editLog.save",
+    deleteRequestButton: "daily.editLog.deleteRequest",
+    deleteConfirmButton: "daily.editLog.deleteConfirm",
+  },
+  apiKeyCreate: {
+    dialog: "apiKey.create.dialog",
+    nameInput: "apiKey.create.nameInput",
+    submitButton: "apiKey.create.submit",
+    copyButton: "apiKey.create.copy",
+  },
+  csvExport: {
+    dialog: "csv.export.dialog",
+    exportButton: "csv.export.export",
+  },
+  csvImport: {
+    dialog: "csv.import.dialog",
+    activityOption: (id: string) => `csv.import.activity.${id}`,
+    pickFileButton: "csv.import.pickFile",
+    downloadTemplateButton: "csv.import.downloadTemplate",
+    importButton: "csv.import.import",
+    backButton: "csv.import.back",
+  },
+  actikoEdit: {
+    dialog: "actiko.edit.dialog",
+    nameInput: "actiko.edit.nameInput",
+    unitInput: "actiko.edit.unitInput",
+    saveButton: "actiko.edit.save",
+    deleteRequestButton: "actiko.edit.deleteRequest",
+    deleteConfirmButton: "actiko.edit.deleteConfirm",
+  },
+  actikoReorder: {
+    dialog: "actiko.reorder.dialog",
+    saveButton: "actiko.reorder.save",
+    cancelButton: "actiko.reorder.cancel",
+  },
+  actikoCreate: {
+    dialog: "actiko.create.dialog",
+    nameInput: "actiko.create.nameInput",
+    unitInput: "actiko.create.unitInput",
+    submitButton: "actiko.create.submit",
+  },
+  tutorial: {
+    dialog: "tutorial.dialog",
+    primaryButton: "tutorial.primary",
+    skipButton: "tutorial.skip",
+    backButton: "tutorial.back",
+  },
+  legal: {
+    modal: "legal.modal",
+    contactLink: "legal.contactLink",
+  },
+  calendarPopover: {
+    modal: "calendarPopover.modal",
   },
 } as const;
 

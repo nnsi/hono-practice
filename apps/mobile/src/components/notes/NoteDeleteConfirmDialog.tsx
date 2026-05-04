@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 
@@ -20,6 +21,7 @@ export function NoteDeleteConfirmDialog({
       visible
       onClose={onCancel}
       title={t("delete.title")}
+      testID={mobileTestIds.notesDelete.confirmDialog}
       footer={
         <View className="flex-row gap-2">
           <FormButton
@@ -33,6 +35,7 @@ export function NoteDeleteConfirmDialog({
             label={t("delete.confirm")}
             onPress={onConfirm}
             className="flex-1"
+            testID={mobileTestIds.notesDelete.confirmButton}
           />
         </View>
       }

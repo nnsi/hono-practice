@@ -3,6 +3,7 @@ import { useTranslation } from "@packages/i18n";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { mobileTestIds } from "../../testing/testIds";
 import { CreateActivityDialog } from "../actiko/CreateActivityDialog";
 import { FormButton } from "../common/FormButton";
 import { useTutorialWizard } from "./useTutorialWizard";
@@ -43,12 +44,14 @@ export function TutorialWizard({ complete, skip }: TutorialWizardProps) {
         animationType="fade"
         statusBarTranslucent
         accessibilityViewIsModal
+        testID={mobileTestIds.tutorial.dialog}
       >
         <View
           className="flex-1 justify-center items-center p-6"
           style={{ backgroundColor: colors.modalOverlay }}
         >
           <View
+            testID={mobileTestIds.tutorial.dialog}
             className="bg-white dark:bg-gray-800 rounded-2xl w-full p-6 gap-6"
             style={{
               maxWidth: 448,
@@ -97,6 +100,7 @@ export function TutorialWizard({ complete, skip }: TutorialWizardProps) {
                 variant="primary"
                 label={stepData.cta}
                 onPress={handlePrimary}
+                testID={mobileTestIds.tutorial.primaryButton}
               />
               <View className="flex-row justify-between items-center">
                 {showSkip ? (
@@ -105,6 +109,7 @@ export function TutorialWizard({ complete, skip }: TutorialWizardProps) {
                     activeOpacity={0.7}
                     accessibilityRole="button"
                     accessibilityLabel={t("skip")}
+                    testID={mobileTestIds.tutorial.skipButton}
                   >
                     <Text className="text-sm text-gray-400 dark:text-gray-500">
                       {t("skip")}
@@ -121,6 +126,7 @@ export function TutorialWizard({ complete, skip }: TutorialWizardProps) {
                       className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600"
                       accessibilityRole="button"
                       accessibilityLabel={t("back")}
+                      testID={mobileTestIds.tutorial.backButton}
                     >
                       <Text className="text-sm text-gray-600 dark:text-gray-400">
                         {t("back")}

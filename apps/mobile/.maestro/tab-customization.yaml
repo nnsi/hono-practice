@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-settings.yaml
+- runFlow: flows/home-fixed-tab.yaml
+- runFlow: flows/show-hidden-notes-tab.yaml
+- runFlow: flows/tab-customize.yaml

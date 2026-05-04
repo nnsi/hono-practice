@@ -3,6 +3,8 @@ export { buildDayTargets } from "@packages/domain/goal/dayTargets";
 import { useTranslation } from "@packages/i18n";
 import { Switch, Text, TextInput, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
+
 const DAY_KEYS = ["1", "2", "3", "4", "5", "6", "7"] as const;
 
 export function DayTargetsInput({
@@ -46,6 +48,7 @@ export function DayTargetsInput({
             }
           }}
           accessibilityLabel={t("dayTargetsLabel")}
+          testID={mobileTestIdsExt.goalDayTargets.toggle}
         />
       </View>
       {enabled && (
@@ -78,6 +81,7 @@ export function DayTargetsInput({
                   }`}
                   selectTextOnFocus
                   accessibilityLabel={`${DAY_LABELS[i]} ${t("dayTargetsLabel")}`}
+                  testID={mobileTestIdsExt.goalDayTargets.input(k)}
                 />
                 {isRest && (
                   <Text className="text-xs text-gray-400 dark:text-gray-500">

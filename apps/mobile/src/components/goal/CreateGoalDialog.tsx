@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CreateGoalForm } from "./CreateGoalForm";
@@ -67,6 +68,7 @@ export function CreateGoalDialog({
       visible={visible}
       onClose={handleClose}
       title={t("createTitle")}
+      testID={mobileTestIds.goalsCreate.dialog}
       footer={
         <View className="flex-row gap-2">
           <FormButton
@@ -81,6 +83,7 @@ export function CreateGoalDialog({
             onPress={handleSubmit}
             disabled={submitting}
             className="flex-1"
+            testID={mobileTestIds.goalsCreate.submit}
           />
         </View>
       }

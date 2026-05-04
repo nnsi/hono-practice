@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+---
+# アクティビティ新規作成: 「追加|Add」ボタンをタップしてダイアログから作成
+# Maestro Android driver は Unicode inputText 非対応のため ASCII 名で作成
+- tapOn:
+    text: "追加|Add"
+- assertVisible:
+    id: actiko.create.dialog
+- tapOn:
+    id: actiko.create.nameInput
+- inputText: E2E-NEW
+- tapOn:
+    id: actiko.create.unitInput
+- inputText: pcs
+- tapOn:
+    id: actiko.create.dialog
+- tapOn:
+    id: actiko.create.submit
+- extendedWaitUntil:
+    notVisible:
+      id: actiko.create.dialog
+    timeout: 10000
+- assertVisible: E2E-NEW

@@ -1,0 +1,22 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Debt Cap 設定: editForm が開いている前提で debtCap トグル ON → 上限 20 を入力して保存
+# 前提: goals.editForm が表示済み
+- assertVisible:
+    id: goals.editForm
+- tapOn:
+    id: goal.debtCap.toggle
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    id: goal.debtCap.input
+- eraseText: 8
+- inputText: "20"
+- tapOn:
+    id: goals.editForm
+- tapOn:
+    id: goals.editForm.save
+- extendedWaitUntil:
+    visible:
+      id: goals.tab.active
+    timeout: 10000

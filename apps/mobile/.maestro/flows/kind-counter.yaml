@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Counter モード + Kind 選択 (kind-C): step.0 をタップして auto-save
+- assertVisible: E2Eカウンター
+- tapOn: E2Eカウンター
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.kindSelector.e2e00000-0000-4000-8000-000000000024
+- tapOn:
+    id: recording.counter.step.0
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

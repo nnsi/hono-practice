@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Tasks グルーピング: overdue / dueToday / startingToday / inProgress / dueThisWeek セクション表示確認
+# 前提: tasks.page が表示済み
+- assertVisible:
+    id: tasks.page
+- assertVisible:
+    id: tasks.section.overdue
+- assertVisible:
+    id: tasks.section.dueToday
+- assertVisible:
+    id: tasks.section.startingToday
+- assertVisible:
+    id: tasks.section.inProgress
+- assertVisible:
+    id: tasks.section.dueThisWeek

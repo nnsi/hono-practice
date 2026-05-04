@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Open the edit dialog by tapping the task body (matched by title prefix).
+- tapOn:
+    text: "${TASK_TITLE}, .*"
+- assertVisible:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.titleInput
+- eraseText: 64
+- inputText: ${TASK_TITLE_UPDATED}
+- tapOn:
+    id: tasks.edit.dialog
+- tapOn:
+    id: tasks.edit.update
+- extendedWaitUntil:
+    visible: ${TASK_TITLE_UPDATED}
+    timeout: 10000

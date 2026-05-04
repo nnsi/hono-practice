@@ -155,9 +155,8 @@ export function createActivityRoute() {
         const activityId = createActivityId(id);
         const { base64, mimeType } = c.req.valid("json");
 
-        const protocol = c.req.header("x-forwarded-proto") || "http";
-        const host = c.req.header("host") || "localhost";
-        const apiBaseUrl = `${protocol}://${host}`;
+        // Hostヘッダ汚染を防ぐため、必ず env.APP_URL を使う
+        const apiBaseUrl = c.env.APP_URL;
 
         const res = await c.var.h.uploadActivityIcon(
           userId,

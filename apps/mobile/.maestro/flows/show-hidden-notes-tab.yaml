@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      id: settings.tabCustomization.row.notes
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    id: settings.tabCustomization.show.notes

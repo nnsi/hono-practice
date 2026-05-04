@@ -1,6 +1,7 @@
 import { Text } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { LogFormBody } from "../common/LogFormBody";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -39,6 +40,7 @@ export function RecordDialog({
     <ModalOverlay
       visible={visible}
       onClose={onClose}
+      testID={mobileTestIds.recordDialog.dialog}
       title={
         <>
           <ActivityIcon

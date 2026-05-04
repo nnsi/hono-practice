@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { syncEngine } from "../../sync/syncEngine";
+import { mobileTestIds } from "../../testing/testIds";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
 import { EditGoalForm } from "./EditGoalForm";
@@ -69,7 +70,11 @@ export function GoalsPage() {
   }
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-800">
+    <View
+      className="flex-1 bg-white dark:bg-gray-800"
+      collapsable={false}
+      testID={mobileTestIds.goals.screen}
+    >
       <GoalsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <ScrollView
@@ -131,6 +136,7 @@ export function GoalsPage() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="新規目標を追加"
+              testID={mobileTestIds.goals.createButton}
             >
               <Plus size={20} color="#9ca3af" />
               <Text className="text-sm text-gray-500 dark:text-gray-400">

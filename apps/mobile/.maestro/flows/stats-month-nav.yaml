@@ -1,0 +1,8 @@
+appId: ${MAESTRO_APP_ID}
+---
+- assertVisible:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.prevMonth
+- tapOn:
+    id: stats.nextMonth

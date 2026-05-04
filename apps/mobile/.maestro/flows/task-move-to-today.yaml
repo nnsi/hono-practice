@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+# 「今日に移動」操作: task-overdue (期限切れタスク) の moveToToday ボタンをタップ
+# task ID = e2e00000-0000-4000-8000-000000000030 (sanitize 後同じ、ハイフン区切り英数字)
+- assertVisible:
+    id: tasks.section.overdue
+- assertVisible: task-overdue
+- tapOn:
+    id: tasks.moveToToday.e2e00000-0000-4000-8000-000000000030
+- waitForAnimationToEnd:
+    timeout: 1500
+# task-overdue は今日に移動 → dueToday セクションへ
+- assertVisible:
+    id: tasks.section.dueToday
+- assertVisible: task-overdue

@@ -34,6 +34,10 @@ async function main() {
   const projectDir = process.env.CLAUDE_PROJECT_DIR || resolve(__dirname, "../..");
   const biome = join(projectDir, "node_modules", ".bin", "biome");
   const warnings = [];
+  // Hoisted for use both inside the convention-check try block and in the
+  // output-building section below.
+  let testIdNewViolations = false;
+  let testIdWarnings = [];
 
   // 0. Project convention checks (file content inspection)
   try {
@@ -41,6 +45,7 @@ async function main() {
     const content = readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
     const isTestFile = /\.(test|spec)\.(ts|tsx)$/.test(filePath);
+    const isScript = /[\\/]scripts[\\/]/.test(filePath);
     const isFrontend = filePath.replace(/\\/g, "/").includes("/frontend/") ||
       filePath.replace(/\\/g, "/").includes("/mobile/");
 
@@ -50,8 +55,8 @@ async function main() {
       warnings.push(`⚠️ interface禁止: \`export interface ${interfaceMatch[1]}\` → \`export type ${interfaceMatch[1]} = { ... }\` に変更してください。`);
     }
 
-    // 0b. File length > 200 lines (test files excluded)
-    if (!isTestFile && lines.length > 200) {
+    // 0b. File length > 200 lines (test files / scripts excluded)
+    if (!isTestFile && !isScript && lines.length > 200) {
       warnings.push(`⚠️ ${lines.length}行: 1ファイル200行以内を目標にしてください。分割を検討してください。変更前から超えていた場合でも、編集したタイミングで分割すること。`);
     }
 
@@ -98,6 +103,49 @@ async function main() {
           }
         }
       }
+    }
+    // 0f. mobile testID guideline checks (apps/mobile/CLAUDE.md「コンポーネント作成時のガイドライン」)
+    // Returns { warnings: string[], counts: {modal, literal, page} } for content.
+    const filePathNorm = filePath.replace(/\\/g, "/");
+    const isMobileComponent =
+      filePathNorm.includes("/apps/mobile/src/components/") &&
+      /\.tsx$/.test(filePath) &&
+      !isTestFile;
+    if (isMobileComponent) {
+      const current = analyzeTestIdViolations(content, filePath);
+      testIdWarnings = current.warnings;
+
+      // Compare against HEAD to decide block vs advisory.
+      // - File new in HEAD (untracked or freshly added) → all current violations are NEW → block
+      // - File existed in HEAD → block only if any violation count is HIGHER than HEAD
+      // This lets agents touch files with pre-existing violations without getting
+      // blocked, but forces them to fix anything they newly introduce.
+      let headCounts = null;
+      try {
+        const gitRelPath = filePath
+          .replace(`${projectDir}/`, "")
+          .replace(/\\/g, "/");
+        const headContent = execSync(
+          `git show HEAD:"${gitRelPath}"`,
+          { stdio: ["ignore", "pipe", "ignore"], cwd: projectDir },
+        ).toString();
+        headCounts = analyzeTestIdViolations(headContent, filePath).counts;
+      } catch {
+        // file not tracked at HEAD → treat as new file: any violation is "new"
+      }
+
+      const c = current.counts;
+      if (!headCounts) {
+        testIdNewViolations =
+          c.modal + c.literal + c.page > 0;
+      } else {
+        testIdNewViolations =
+          c.modal > headCounts.modal ||
+          c.literal > headCounts.literal ||
+          c.page > headCounts.page;
+      }
+
+      warnings.push(...testIdWarnings);
     }
   } catch {
     // file read failure is non-fatal
@@ -152,8 +200,81 @@ async function main() {
         additionalContext: combined,
       },
     };
+    // BLOCK on newly introduced testID violations. Pre-existing violations stay
+    // advisory (the file was already broken; agent can touch it for unrelated
+    // reasons). New introductions cannot escape — must be fixed before the
+    // tool call completes.
+    if (testIdNewViolations) {
+      output.decision = "block";
+      output.reason =
+        "新たに testID 違反を持ち込んでいます。同じ編集の中で対応してください（pre-existing 分を直す義務はありませんが、追加した分は必ず直す）。詳細:\n" +
+        testIdWarnings.join("\n");
+    }
     process.stdout.write(JSON.stringify(output));
   }
+}
+
+/**
+ * Mobile testID 違反を抽出する。
+ * - modal: Modal/ModalOverlay opening タグで testID prop が無い数
+ * - literal: testID="..." のリテラル直書き数
+ * - page: Page.tsx で testID 参照ゼロなら 1、それ以外 0
+ * テストID prop を自身が受け取って forward する wrapper（共通 ModalOverlay 等）は modal カウントから除外。
+ */
+function analyzeTestIdViolations(content, filePath) {
+  const warnings = [];
+  const counts = { modal: 0, literal: 0, page: 0 };
+
+  // Page check
+  if (
+    /Page\.tsx$/.test(filePath) &&
+    !/\btestID\s*=/.test(content) &&
+    !/mobileTestIds\./.test(content)
+  ) {
+    counts.page = 1;
+    warnings.push(
+      "⚠️ Page コンポーネントに testID が無い: ルート View に `testID={mobileTestIds.<feature>.page}` を振り、`apps/mobile/src/testing/testIds.ts` にエントリを追加してください。",
+    );
+  }
+
+  // Modal/ModalOverlay check (skip wrapper components that forward testID)
+  const declaresTestIdProp =
+    /\btestID\??:\s*string/.test(content) ||
+    /\{\s*[^}]*\btestID\b[^}]*\}\s*[:=]/.test(content);
+  if (!declaresTestIdProp) {
+    const modalOpenRe = /<\s*(ModalOverlay|Modal)\b/g;
+    let modalMatch;
+    while ((modalMatch = modalOpenRe.exec(content)) !== null) {
+      const startIdx = modalMatch.index;
+      const tail = content.slice(startIdx, startIdx + 800);
+      const endRel = tail.search(/(?<![=!])>(?![=>])/);
+      const window = endRel === -1 ? tail : tail.slice(0, endRel + 1);
+      if (!/\btestID\s*=/.test(window)) {
+        counts.modal += 1;
+        const lineNo = content.slice(0, startIdx).split("\n").length;
+        if (counts.modal === 1) {
+          warnings.push(
+            `⚠️ testID不足 (line ${lineNo}): \`<${modalMatch[1]}>\` に testID prop が無い。新規ダイアログは \`testID={mobileTestIds.<feature>.<dialogName>}\` を振ってください。`,
+          );
+        }
+      }
+    }
+  }
+
+  // Literal testID
+  const literalTestIdRe = /\btestID\s*=\s*["'`]([^"'`]+)["'`]/g;
+  let litMatch;
+  while ((litMatch = literalTestIdRe.exec(content)) !== null) {
+    counts.literal += 1;
+    const lineNo = content.slice(0, litMatch.index).split("\n").length;
+    if (counts.literal === 1) {
+      warnings.push(
+        `⚠️ testID リテラル直書き (line ${lineNo}): \`testID="${litMatch[1]}"\` → \`apps/mobile/src/testing/testIds.ts\` に追加して \`mobileTestIds.xxx\` 経由で参照してください。`,
+      );
+    }
+  }
+
+  return { warnings, counts };
 }
 
 /**

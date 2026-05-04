@@ -1,6 +1,8 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
+
 type Tab = "active" | "ended";
 
 export function GoalsTabBar({
@@ -24,6 +26,7 @@ export function GoalsTabBar({
         accessibilityRole="tab"
         accessibilityState={{ selected: activeTab === "active" }}
         accessibilityLabel="アクティブ"
+        testID={mobileTestIds.goals.activeTab}
       >
         <Text
           className={`text-sm font-medium ${
@@ -43,6 +46,7 @@ export function GoalsTabBar({
         accessibilityRole="tab"
         accessibilityState={{ selected: activeTab === "ended" }}
         accessibilityLabel={t("tabEnded")}
+        testID={mobileTestIds.goals.endedTab}
       >
         <Text
           className={`text-sm font-medium ${

@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 
 export function TaskEditDialogFooter({
@@ -26,6 +27,7 @@ export function TaskEditDialogFooter({
         label={t("edit.delete")}
         onPress={() => onDelete(taskId)}
         className="px-4"
+        testID={mobileTestIds.tasks.editDeleteButton}
       />
       <View className="flex-1" />
       <FormButton
@@ -40,6 +42,7 @@ export function TaskEditDialogFooter({
         onPress={onSave}
         disabled={isSubmitting || !title.trim()}
         className="px-4"
+        testID={mobileTestIds.tasks.editUpdateButton}
       />
     </View>
   );

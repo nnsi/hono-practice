@@ -2,6 +2,8 @@ import { useTranslation } from "@packages/i18n";
 import { Pencil, PlusCircle, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
+
 export function GoalCardActions({
   isPast,
   isActive,
@@ -48,6 +50,7 @@ export function GoalCardActions({
           accessibilityRole="button"
           accessibilityLabel="目標を編集"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          testID={mobileTestIds.goalsEdit.editButton}
         >
           <Pencil size={14} color="#9ca3af" />
         </TouchableOpacity>

@@ -2,6 +2,7 @@ import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import { useTranslation } from "@packages/i18n";
 import { Switch, Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { EmojiPicker } from "../common/EmojiPicker";
 import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -76,6 +77,7 @@ export function EditActivityDialog({
       visible={visible}
       onClose={onClose}
       title={t("editTitle")}
+      testID={mobileTestIds.actikoEdit.dialog}
       footer={
         <EditActivityDialogFooter
           isSubmitting={isSubmitting}
@@ -111,6 +113,7 @@ export function EditActivityDialog({
               if (error) setError("");
             }}
             accessibilityLabel={t("name")}
+            testID={mobileTestIds.actikoEdit.nameInput}
           />
         </View>
 
@@ -123,6 +126,7 @@ export function EditActivityDialog({
             onChangeText={setQuantityUnit}
             placeholder={t("unitExamplePlaceholder")}
             accessibilityLabel={t("unitLabel")}
+            testID={mobileTestIds.actikoEdit.unitInput}
           />
         </View>
 

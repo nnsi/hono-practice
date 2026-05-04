@@ -4,6 +4,7 @@ import type { RecordingModeProps } from "@packages/frontend-shared/recording-mod
 import { useTranslation } from "@packages/i18n";
 import { Text, type TextInput, View } from "react-native";
 
+import { mobileTestIds } from "../../../testing/testIds";
 import { FormButton } from "../../common/FormButton";
 import { FormInput } from "../../common/FormInput";
 import { KindSelector } from "../parts/KindSelector";
@@ -47,6 +48,7 @@ export function ManualMode(props: RecordingModeProps) {
             }, 0);
           }}
           accessibilityLabel={t("quantity")}
+          testID={mobileTestIds.recordDialog.quantityInput}
         />
       </View>
 
@@ -56,6 +58,7 @@ export function ManualMode(props: RecordingModeProps) {
         label={vm.isSubmitting ? t("saving") : t("save")}
         onPress={vm.submit}
         disabled={vm.isSubmitting}
+        testID={mobileTestIds.recordDialog.saveButton}
       />
     </View>
   );

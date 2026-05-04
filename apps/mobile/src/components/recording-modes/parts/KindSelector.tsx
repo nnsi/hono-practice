@@ -1,6 +1,8 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
+
 type KindSelectorProps = {
   kinds: { id: string; name: string; color: string | null }[];
   selectedKindId: string | null;
@@ -33,6 +35,7 @@ export function KindSelector({
             accessibilityRole="button"
             accessibilityLabel={kind.name}
             accessibilityState={{ selected: selectedKindId === kind.id }}
+            testID={mobileTestIdsExt.recordingShared.kindOption(kind.id)}
           >
             {kind.color && (
               <View

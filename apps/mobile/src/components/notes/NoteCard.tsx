@@ -5,6 +5,8 @@ import dayjs from "dayjs";
 import { FileText, Loader2, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
+
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export function NoteCard({
@@ -83,6 +85,7 @@ export function NoteCard({
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
           accessibilityLabel={t("edit.deleteNote")}
+          testID={mobileTestIds.notesDelete.cardDeleteButton}
         >
           <Trash2 size={16} color="#9ca3af" />
         </TouchableOpacity>

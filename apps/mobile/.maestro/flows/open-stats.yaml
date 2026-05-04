@@ -1,0 +1,8 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: tabs.stats
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible:
+    id: stats.prevMonth

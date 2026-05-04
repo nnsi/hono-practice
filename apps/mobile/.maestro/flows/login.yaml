@@ -1,15 +1,50 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- assertVisible:
-    id: login.screen
-- tapOn:
-    id: login.loginIdInput
-- inputText: ${LOGIN_ID}
-- tapOn:
-    id: login.passwordInput
-- inputText: ${PASSWORD}
-- hideKeyboard
-- tapOn:
-    id: login.submit
+# Cold-launch the app so each suite starts from a known root state. Without
+# this, a previous suite that ended on e.g. a note-detail screen would leave
+# `tabs.tasks` invisible and the assertion below would fail. We don't pass
+# `clearState` / `clearKeychain` so the persisted refresh token still skips
+# the login form on the second-and-later run.
+- launchApp
+# Skip login if already authenticated (dev-client preserves auth across runs).
+- runFlow:
+    when:
+      visible:
+        id: login.screen
+    commands:
+      - tapOn:
+          id: login.loginIdInput
+      - inputText: ${LOGIN_ID}
+      - tapOn:
+          id: login.passwordInput
+      - inputText: ${PASSWORD}
+      - pressKey: Enter
+      - tapOn:
+          id: login.submit
+      - runFlow:
+          when:
+            visible:
+              text: "今はしない|Not Now"
+          commands:
+            - tapOn:
+                text: "今はしない|Not Now"
+# iOS sim の fresh state（erase 直後の初回 login 等）では Keychain
+# 「パスワードを保存しますか？」dialog が submit から数百ms 遅れて出るため、
+# 上の runFlow が SKIP されることがある。tabs.tasks がまだ見えない場合は
+# animation 終了まで追加で待ち、もう一度 dialog dismiss を試みる。
+- runFlow:
+    when:
+      notVisible:
+        id: tabs.tasks
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - runFlow:
+          when:
+            visible:
+              text: "今はしない|Not Now"
+          commands:
+            - tapOn:
+                text: "今はしない|Not Now"
 - assertVisible:
     id: tabs.tasks

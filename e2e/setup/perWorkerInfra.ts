@@ -48,10 +48,16 @@ async function start() {
   viteServer = await createServer({
     configFile: "./apps/frontend/vite.config.ts",
     root: "./apps/frontend",
+    // E2E中は HMR と file watch を完全停止する。複数 worker 間で chokidar の watcher が
+    // 干渉して HMR 通知が走り、Dexie liveQuery 経由で再レンダーが連発し、
+    // Playwright の click が "element was detached from the DOM, retrying" で
+    // 失敗する事象を防ぐ。
     server: {
       port: FRONTEND_PORT,
       host: "127.0.0.1",
       strictPort: true,
+      hmr: false,
+      watch: null,
       proxy: {
         "^/auth(?:/|$)": `http://localhost:${BACKEND_PORT}`,
         "^/user(?:/|$)": `http://localhost:${BACKEND_PORT}`,

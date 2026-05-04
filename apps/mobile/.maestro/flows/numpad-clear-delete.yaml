@@ -1,0 +1,29 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Numpad モード: 数字 → backspace で1桁削除 → C で全クリア → 再入力 → save
+- assertVisible: E2Eテンキー
+- tapOn: E2Eテンキー
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.numpad.key.1
+- tapOn:
+    id: recording.numpad.key.2
+- tapOn:
+    id: recording.numpad.key.3
+# backspace で1桁削除（"123" → "12"）
+- tapOn:
+    id: recording.numpad.key.backspace
+# clear で全クリア
+- tapOn:
+    id: recording.numpad.key.C
+# 再入力して保存
+- tapOn:
+    id: recording.numpad.key.4
+- tapOn:
+    id: recording.numpad.key.2
+- tapOn:
+    id: recording.numpad.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

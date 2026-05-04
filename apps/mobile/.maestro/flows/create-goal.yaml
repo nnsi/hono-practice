@@ -1,0 +1,26 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  GOAL_ACTIVITY_NAME: "E2Eランニング"
+  GOAL_TARGET: "5"
+---
+# Assumes Goals screen is open and the seed activity GOAL_ACTIVITY_NAME exists for the test user.
+- tapOn:
+    id: goals.create
+- assertVisible:
+    id: goals.createDialog.dialog
+- tapOn: ${GOAL_ACTIVITY_NAME}
+- tapOn:
+    id: goals.createDialog.targetInput
+- eraseText: 8
+- inputText: ${GOAL_TARGET}
+- tapOn:
+    id: goals.createDialog.dialog
+- tapOn:
+    id: goals.createDialog.submit
+- extendedWaitUntil:
+    notVisible:
+      id: goals.createDialog.dialog
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "${GOAL_ACTIVITY_NAME}.*"
+    timeout: 30000

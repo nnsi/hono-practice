@@ -7,7 +7,6 @@ import {
   Animated,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -15,7 +14,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "../../../app/_layout";
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { mobileTestIds } from "../../testing/testIds";
 import { useTabPreference } from "../setting/tabPreferenceStore";
+import { HamburgerMenuItem } from "./HamburgerMenuItem";
 import { MOBILE_TAB_METADATA } from "./tabMetadata";
 
 export function HamburgerMenu() {
@@ -80,6 +81,7 @@ export function HamburgerMenu() {
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={t("common:menu")}
+        testID={mobileTestIds.menu.button}
         style={[
           styles.menuButton,
           {
@@ -112,7 +114,7 @@ export function HamburgerMenu() {
               },
             ]}
           >
-            <MenuItem
+            <HamburgerMenuItem
               icon={<Globe size={16} color={colors.textMuted} />}
               label={i18n.language === "ja" ? "English" : "日本語"}
               onPress={switchLanguage}
@@ -121,7 +123,7 @@ export function HamburgerMenu() {
             {hiddenTabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <MenuItem
+                <HamburgerMenuItem
                   key={tab.key}
                   icon={<Icon size={16} color={colors.textMuted} />}
                   label={tab.label}
@@ -130,16 +132,17 @@ export function HamburgerMenu() {
                 />
               );
             })}
-            <MenuItem
+            <HamburgerMenuItem
               icon={<Settings size={16} color={colors.textMuted} />}
               label={t("settings:heading")}
               onPress={goToSettings}
               textColor={colors.text}
+              testID={mobileTestIds.menu.settingsItem}
             />
             <View
               style={[styles.separator, { backgroundColor: colors.border }]}
             />
-            <MenuItem
+            <HamburgerMenuItem
               icon={<LogOut size={16} color="#ef4444" />}
               label={t("settings:logout")}
               onPress={handleLogout}
@@ -149,31 +152,6 @@ export function HamburgerMenu() {
         </>
       )}
     </>
-  );
-}
-
-function MenuItem({
-  icon,
-  label,
-  onPress,
-  textColor,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onPress: () => void;
-  textColor: string;
-}) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.6}
-      accessibilityRole="menuitem"
-      accessibilityLabel={label}
-      style={styles.menuItem}
-    >
-      {icon}
-      <Text style={[styles.menuItemText, { color: textColor }]}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -201,17 +179,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 8,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 48,
-  },
-  menuItemText: {
-    fontSize: 14,
   },
   separator: {
     height: 1,

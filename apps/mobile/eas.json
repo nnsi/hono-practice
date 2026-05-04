@@ -16,6 +16,14 @@
       "distribution": "internal",
       "channel": "development"
     },
+    "development:simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "simulator": true
+      }
+    },
     "e2e-test": {
       "environment": "preview",
       "withoutCredentials": true,
@@ -38,6 +46,16 @@
       },
       "android": {
         "buildType": "apk"
+      }
+    },
+    "e2e-local-ios": {
+      "withoutCredentials": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL_IOS": "http://localhost:3536",
+        "EXPO_PUBLIC_E2E_MODE": "1"
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "preview": {

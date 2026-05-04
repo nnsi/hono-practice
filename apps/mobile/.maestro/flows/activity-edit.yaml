@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+---
+# アクティビティ編集: 編集ボタン(Pencil)→名前変更→保存
+# EditボタンはaccessibilityLabel="Edit"で識別。ASCII名で操作（Maestro Android Unicode制限）
+- assertVisible: E2E-NEW
+- tapOn:
+    text: "Edit"
+    index: 0
+- assertVisible:
+    id: actiko.edit.dialog
+- tapOn:
+    id: actiko.edit.nameInput
+- eraseText: 20
+- inputText: E2E-EDITED
+- tapOn:
+    id: actiko.edit.dialog
+- tapOn:
+    id: actiko.edit.save
+- extendedWaitUntil:
+    notVisible:
+      id: actiko.edit.dialog
+    timeout: 10000
+- assertVisible: E2E-EDITED

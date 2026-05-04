@@ -1,0 +1,7 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: tabs.daily
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "アクティビティ|Activities"

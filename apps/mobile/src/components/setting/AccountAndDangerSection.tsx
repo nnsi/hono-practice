@@ -6,6 +6,7 @@ import { AlertTriangle, LogOut, User } from "lucide-react-native";
 import { Text, TouchableOpacity } from "react-native";
 
 import { clearLocalData } from "../../sync/initialSync";
+import { mobileTestIds } from "../../testing/testIds";
 import {
   clearRefreshToken,
   clearToken,
@@ -59,6 +60,7 @@ export function AccountAndDangerSection({
             onPress={() => setShowLogoutConfirm(true)}
             accessibilityRole="button"
             accessibilityLabel={t("logout")}
+            testID={mobileTestIds.settings.logoutButton}
           >
             <LogOut size={18} color="#ef4444" />
             <Text className="ml-3 text-base text-red-500 dark:text-red-400">

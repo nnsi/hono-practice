@@ -53,8 +53,7 @@ const SKIP_DIRS = new Set([
   "android",
   ".expo",
   "build",
-  // 開発ツール（seed / log整理 / レポート）は UTC 日付でも実害なし
-  "scripts",
+  // E2E flows は yaml 主体で、補助 ts も UTC 日付影響なし
   "e2e",
 ]);
 
@@ -66,6 +65,10 @@ const SKIP_FILES = [
   /[\\/]regression\.property\.test\.ts$/,
   // ルール文書
   /\.claude[\\/]rules[\\/].*\.md$/,
+  // 開発ツール（log 整理 / レポート）は UTC 日付でも実害なし
+  // ※ scripts/seed/ は実害あり（mobile e2e の seed が JST 早朝に UTC 前日扱いになる）ため guard 対象
+  /scripts[\\/]cc-log-to-md\.js$/,
+  /scripts[\\/]quality-scan\.js$/,
 ];
 
 function walk(dir) {

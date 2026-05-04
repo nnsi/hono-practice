@@ -4,7 +4,8 @@ import { newHonoWithErrorHandling } from "../../lib/honoWithErrorHandling";
 
 export const r2ProxyRoute = newHonoWithErrorHandling();
 
-const ALLOWED_KEY_PATTERN = /^(?:uploads\/)?icons\/[a-zA-Z0-9/_\-.]+\.(?:webp|png|jpe?g|gif)$/;
+const ALLOWED_KEY_PATTERN =
+  /^(?:uploads\/)?icons\/[a-zA-Z0-9/_\-.]+\.(?:webp|png|jpe?g|gif)$/;
 const INVALID_KEY_PATTERN = /\.\.|\\|%2e/i;
 
 function hasControlChars(input: string): boolean {

@@ -89,7 +89,11 @@ describe("note editor markdown input", () => {
         }),
       );
     });
-    await editor.pressSequentially(" after");
+    await editor.pressSequentially(" after", { delay: 30 });
+    await editor.locator("p").filter({ hasText: "after" }).first().waitFor({
+      state: "visible",
+      timeout: 5000,
+    });
 
     const strongExitHtml = await editor.evaluate(
       (element) => element.innerHTML,
@@ -103,7 +107,11 @@ describe("note editor markdown input", () => {
       codeBox!.x + codeBox!.width - 2,
       codeBox!.y + codeBox!.height / 2,
     );
-    await editor.pressSequentially(" next");
+    await editor.pressSequentially(" next", { delay: 30 });
+    await editor.locator("p").filter({ hasText: "next" }).first().waitFor({
+      state: "visible",
+      timeout: 5000,
+    });
 
     const codeExitHtml = await editor.evaluate((element) => element.innerHTML);
     expect(isOutsideInline(codeExitHtml, "code", "next")).toBe(true);
@@ -119,10 +127,19 @@ describe("note editor markdown input", () => {
     await setNoteEditorHtml(editor, "<pre><code>one</code></pre>", "code");
 
     await editor.press("Shift+Enter");
-    await editor.pressSequentially("two");
-    await editor.press("Enter");
-    await editor.press("Enter");
-    await editor.pressSequentially("after");
+    await editor.pressSequentially("two", { delay: 30 });
+    // 連続 Enter の間にも delay を入れる（高速だと「空行 + Enter で抜ける」検出を取りこぼす）
+    await editor.press("Enter", { delay: 50 });
+    await editor.press("Enter", { delay: 50 });
+    // press は keydown 後即 keyup なので state 反映を少し待つ
+    await page.waitForTimeout(100);
+    await editor.pressSequentially("after", { delay: 30 });
+
+    // 最終文字までエディタが受理するのを待つ
+    await editor.locator("p").filter({ hasText: "after" }).first().waitFor({
+      state: "visible",
+      timeout: 5000,
+    });
 
     expect(await editor.locator("pre code").textContent()).toBe("one\ntwo");
     expect(await editor.locator("p").last().textContent()).toContain("after");

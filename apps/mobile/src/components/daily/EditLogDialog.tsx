@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
@@ -61,6 +62,7 @@ export function EditLogDialog({
     <ModalOverlay
       visible
       onClose={onClose}
+      testID={mobileTestIds.dailyEditLog.dialog}
       title={
         <>
           <ActivityIcon
@@ -85,6 +87,7 @@ export function EditLogDialog({
               label={t("log.deleteButton")}
               onPress={() => setShowDeleteConfirm(true)}
               className="px-4"
+              testID={mobileTestIds.dailyEditLog.deleteRequestButton}
             />
           ) : (
             <FormButton
@@ -93,6 +96,7 @@ export function EditLogDialog({
               onPress={handleDelete}
               disabled={isSubmitting}
               className="px-4"
+              testID={mobileTestIds.dailyEditLog.deleteConfirmButton}
             />
           )}
           <FormButton
@@ -101,6 +105,7 @@ export function EditLogDialog({
             onPress={handleSave}
             disabled={isSubmitting}
             className="flex-1"
+            testID={mobileTestIds.dailyEditLog.saveButton}
           />
         </View>
       }
@@ -123,6 +128,7 @@ export function EditLogDialog({
             onChangeText={setQuantity}
             keyboardType="decimal-pad"
             accessibilityLabel={t("log.quantityLabel")}
+            testID={mobileTestIds.dailyEditLog.quantityInput}
             onFocus={() => {
               // Select all on focus is not directly supported in RN TextInput
             }}
@@ -140,6 +146,7 @@ export function EditLogDialog({
             placeholder={t("log.memoPlaceholder")}
             numberOfLines={2}
             accessibilityLabel={t("log.memoLabel")}
+            testID={mobileTestIds.dailyEditLog.memoInput}
           />
         </View>
       </View>

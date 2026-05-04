@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: tabs.home
+- tapOn:
+    id: tabs.daily
+- tapOn:
+    id: tabs.stats
+- tapOn:
+    id: tabs.goals
+- tapOn:
+    id: tabs.tasks
+- assertVisible:
+    id: tasks.page

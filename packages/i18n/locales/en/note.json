@@ -41,6 +41,8 @@
   "preview.empty": "Nothing to preview",
   "detail.back": "Back",
   "detail.save": "Save",
+  "detail.copyPlainText": "Copy text",
+  "detail.copied": "Copied",
   "detail.saving": "Saving...",
   "detail.settings": "Settings",
   "detail.newNote": "New Note",

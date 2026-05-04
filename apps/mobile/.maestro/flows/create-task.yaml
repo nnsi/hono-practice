@@ -9,9 +9,13 @@ appId: ${MAESTRO_APP_ID}
           id: tasks.emptyCreate
 - runFlow:
     when:
-      visible:
-        id: tasks.add
+      notVisible:
+        id: tasks.create.dialog
     commands:
+      # Push the list up so tasks.add isn't behind the tab bar.
+      - swipe:
+          start: "50%,30%"
+          end: "50%,15%"
       - tapOn:
           id: tasks.add
 - assertVisible:

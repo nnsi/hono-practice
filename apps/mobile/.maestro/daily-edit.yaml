@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-daily.yaml
+- runFlow: flows/daily-edit-log.yaml
+- runFlow: flows/daily-delete-log.yaml

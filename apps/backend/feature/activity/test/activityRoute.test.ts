@@ -145,8 +145,8 @@ test("POST activities/:id/icon / file too large", async () => {
     .use(mockAuthMiddleware)
     .route("/", route);
 
-  // Create base64 string larger than reasonable limit
-  const largeBase64 = "A".repeat(1000000); // ~1MB of base64 data
+  // base64 max length は 5MB。それを超えるサイズで弾かれることを検証
+  const largeBase64 = "A".repeat(6 * 1024 * 1024);
   const mimeType = "image/jpeg";
 
   const res = await app.request(
@@ -166,8 +166,7 @@ test("POST activities/:id/icon / file too large", async () => {
     },
   );
 
-  // Since we're not implementing size validation in this version, this should succeed
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(400);
 });
 
 test("POST activities/:id/icon / invalid file type", async () => {
@@ -197,9 +196,8 @@ test("POST activities/:id/icon / invalid file type", async () => {
     },
   );
 
+  // mimeType は zod enum で弾かれる
   expect(res.status).toEqual(400);
-  const resJson = await res.json();
-  expect(resJson.message).toContain("Invalid image type");
 });
 
 test("POST activities/:id/icon / activity not found", async () => {

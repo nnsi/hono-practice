@@ -42,7 +42,9 @@ describe("r2ProxyRoute", () => {
     it("存在しないキーの場合は404エラーを返す", async () => {
       vi.mocked(mockR2Bucket.get).mockResolvedValue(null);
 
-      const req = new Request("http://localhost/r2/uploads/icons/non-existent-key.webp");
+      const req = new Request(
+        "http://localhost/r2/uploads/icons/non-existent-key.webp",
+      );
       const res = await app.fetch(req, {
         R2_BUCKET: mockR2Bucket,
       });
@@ -123,7 +125,9 @@ describe("r2ProxyRoute", () => {
     });
 
     it("不正なキー（パストラバーサル）は400を返す", async () => {
-      const req = new Request("http://localhost/r2/uploads/icons/../../secret.webp");
+      const req = new Request(
+        "http://localhost/r2/uploads/icons/../../secret.webp",
+      );
       const res = await app.fetch(req, {
         R2_BUCKET: mockR2Bucket,
       });

@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
 import { useContactForm } from "./useContactForm";
@@ -40,7 +41,10 @@ export function ContactPage() {
 
   if (isSuccess) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
+      <View
+        testID={mobileTestIds.contact.page}
+        className="flex-1 items-center justify-center px-6"
+      >
         <Text className="text-2xl text-center text-green-600 dark:text-green-400 font-semibold">
           {t("contact.success")}
         </Text>
@@ -50,6 +54,7 @@ export function ContactPage() {
 
   return (
     <ScrollView
+      testID={mobileTestIds.contact.page}
       className="flex-1 bg-gray-50 dark:bg-gray-900"
       keyboardShouldPersistTaps="handled"
     >
@@ -64,6 +69,7 @@ export function ContactPage() {
             {t("contact.email")}
           </Text>
           <FormInput
+            testID={mobileTestIds.contact.emailInput}
             placeholder={t("contact.emailPlaceholder")}
             placeholderTextColor="#9ca3af"
             value={email}
@@ -86,6 +92,7 @@ export function ContactPage() {
               return (
                 <TouchableOpacity
                   key={item.value}
+                  testID={mobileTestIds.contact.categoryOption(item.value)}
                   onPress={() => setCategory(selected ? "" : item.value)}
                   className={
                     selected
@@ -117,6 +124,7 @@ export function ContactPage() {
             {t("contact.body")}
           </Text>
           <FormTextarea
+            testID={mobileTestIds.contact.bodyInput}
             className="min-h-32"
             placeholder={t("contact.bodyPlaceholder")}
             placeholderTextColor="#9ca3af"
@@ -139,6 +147,7 @@ export function ContactPage() {
 
         {/* Submit */}
         <TouchableOpacity
+          testID={mobileTestIds.contact.submitButton}
           className={
             isSubmitting
               ? "bg-blue-300 dark:bg-blue-800 rounded-xl py-4 items-center"

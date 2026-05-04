@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+# フリーズ追加・解除: "今日から"フリーズ→resumeボタン確認→解除
+- assertVisible:
+    id: goal.freeze.today
+- tapOn:
+    id: goal.freeze.today
+- assertVisible:
+    id: goal.freeze.resume
+- tapOn:
+    id: goal.freeze.resume
+- extendedWaitUntil:
+    notVisible:
+      id: goal.freeze.resume
+    timeout: 10000

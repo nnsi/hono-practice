@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 import { useThemeContext } from "../../contexts/ThemeContext";
 import { activityRepository } from "../../repositories/activityRepository";
+import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
 
 type IconBlob = {
@@ -89,6 +90,7 @@ export function ActivityCard({
         activeOpacity={0.95}
         accessibilityRole="button"
         accessibilityLabel={activity.name}
+        testID={mobileTestIds.actikoCard.activity(activity.id)}
       >
         <View className="mb-2">{renderIcon()}</View>
         <Text

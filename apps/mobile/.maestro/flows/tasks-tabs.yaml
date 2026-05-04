@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Tasks Active/Archived タブ切り替え
+- assertVisible:
+    id: tasks.page
+- tapOn:
+    id: tasks.tab.archived
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: tasks.tab.archived
+- tapOn:
+    id: tasks.tab.active
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: tasks.tab.active

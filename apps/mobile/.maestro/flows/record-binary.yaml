@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Binary モード記録: 「勝ち」をテキストでタップして自動保存を確認
+- assertVisible: E2Eバイナリ
+- tapOn: E2Eバイナリ
+- assertVisible:
+    id: recording.dialog
+- tapOn: 勝ち
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

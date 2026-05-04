@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Open the note from the list
+- tapOn: "${NOTE_TITLE}.*"
+- assertVisible:
+    id: notes.detail.page
+# Settings panel is initially collapsed; expand to access title input
+- tapOn:
+    id: notes.settings
+- assertVisible:
+    id: notes.settings.panel
+- tapOn:
+    id: notes.titleInput
+- eraseText: 64
+- inputText: ${NOTE_TITLE_UPDATED}
+- tapOn:
+    id: notes.save
+- extendedWaitUntil:
+    visible: "${NOTE_TITLE_UPDATED}.*"
+    timeout: 10000

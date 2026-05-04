@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+---
+- assertVisible: ${ACTIVITY_NAME}
+- tapOn: ${ACTIVITY_NAME}
+- assertVisible:
+    id: recording.manual.quantityInput
+- tapOn:
+    id: recording.manual.quantityInput
+- eraseText: 8
+- inputText: ${RECORD_QUANTITY}
+- tapOn:
+    id: recording.dialog
+- tapOn:
+    id: recording.manual.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

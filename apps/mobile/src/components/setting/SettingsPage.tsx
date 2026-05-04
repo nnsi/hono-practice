@@ -14,6 +14,8 @@ import {
 
 import { useAuthContext } from "../../../app/_layout";
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { mobileTestIds } from "../../testing/testIds";
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 import { LegalModal } from "../common/LegalModal";
 import { AccountAndDangerSection } from "./AccountAndDangerSection";
 import { DataManagementSection } from "./AccountSection";
@@ -47,7 +49,11 @@ export function SettingsPage() {
     useState(false);
 
   return (
-    <ScrollView className="flex-1" scrollEnabled={!isTabCustomizationDragging}>
+    <ScrollView
+      className="flex-1"
+      scrollEnabled={!isTabCustomizationDragging}
+      testID={mobileTestIds.settings.screen}
+    >
       {/* User info */}
       <View
         className="mx-4 mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
@@ -83,6 +89,7 @@ export function SettingsPage() {
           desc={t("showGoalOnStartupDesc")}
           value={settings.showGoalOnStartup}
           onChange={(v) => updateSetting("showGoalOnStartup", v)}
+          testID={mobileTestIdsExt.settingsToggle.showGoalOnStartup}
         />
         <Divider />
         <SettingSwitch
@@ -90,6 +97,7 @@ export function SettingsPage() {
           desc={t("showInactiveDatesDesc")}
           value={settings.showInactiveDates}
           onChange={(v) => updateSetting("showInactiveDates", v)}
+          testID={mobileTestIdsExt.settingsToggle.showInactiveDates}
         />
         <Divider />
         <SettingSwitch
@@ -97,6 +105,7 @@ export function SettingsPage() {
           desc={t("praiseModeDesc")}
           value={settings.praiseMode}
           onChange={(v) => updateSetting("praiseMode", v)}
+          testID={mobileTestIdsExt.settingsToggle.praiseMode}
         />
         <Divider />
         <ThemeSelector />

@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import { BackHandler, Modal, Pressable, StyleSheet, View } from "react-native";
 
 import { useThemeContext } from "../../contexts/ThemeContext";
+import { mobileTestIds } from "../../testing/testIds";
 import { CalendarCard } from "./CalendarCard";
 
 type CalendarPopoverProps = {
@@ -25,7 +26,10 @@ export function CalendarPopover({
     dayjs(selectedDate).startOf("month"),
   );
 
-  // Follow selectedDate changes
+  // viewMonth is independently mutated by CalendarCard's prev/next month navigation
+  // (via setViewMonth prop), so it must be useState rather than derived.
+  // This effect re-syncs when selectedDate changes from outside (parent updates),
+  // ensuring the popover opens on the month containing the newly selected date.
   useEffect(() => {
     setViewMonth(dayjs(selectedDate).startOf("month"));
   }, [selectedDate]);
@@ -95,6 +99,7 @@ export function CalendarPopover({
       animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent
+      testID={mobileTestIds.calendarPopover.modal}
     >
       <View className="flex-1">
         <Pressable

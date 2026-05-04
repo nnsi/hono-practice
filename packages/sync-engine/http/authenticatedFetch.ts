@@ -74,6 +74,10 @@ export function createAuthenticatedFetch(
     const credentials: RequestCredentials = url.includes("/auth/")
       ? "include"
       : "omit";
+    // /auth/token そのものは refresh ループの起点なので、401 を受けても
+    // 再 refresh しない（同じ cookie で連発 → backend で先に revoke された
+    // 並列リクエストが必ず 401 を取り、authExpiredCallback が誤発火する）。
+    const isAuthRefreshEndpoint = url.includes("/auth/token");
 
     let res = await fetch(input, {
       ...init,
@@ -82,7 +86,7 @@ export function createAuthenticatedFetch(
     });
     trackServerTimeFromResponse(res);
 
-    if (res.status === 401) {
+    if (res.status === 401 && !isAuthRefreshEndpoint) {
       const newToken = await refreshAccessToken();
       if (newToken) {
         headers.set("Authorization", `Bearer ${newToken}`);

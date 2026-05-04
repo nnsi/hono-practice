@@ -4,10 +4,11 @@ import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
 import { Text, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { ModalOverlay } from "./ModalOverlay";
 
-const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || "";
-const ADMINISTRATOR_NAME = process.env.EXPO_PUBLIC_ADMINISTRATOR_NAME || "";
+const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? "";
+const ADMINISTRATOR_NAME = process.env.EXPO_PUBLIC_ADMINISTRATOR_NAME ?? "";
 const CONTACT_PATH = "/contact";
 
 type LegalModalProps = {
@@ -52,6 +53,7 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
           onPress={handleContactPress}
           className="text-blue-500 dark:text-blue-400 underline"
           accessibilityRole="link"
+          testID={mobileTestIds.legal.contactLink}
         >
           {CONTACT_PATH}
         </Text>
@@ -61,7 +63,12 @@ export function LegalModal({ visible, type, onClose }: LegalModalProps) {
   };
 
   return (
-    <ModalOverlay visible={visible} onClose={onClose} title={title}>
+    <ModalOverlay
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      testID={mobileTestIds.legal.modal}
+    >
       <View className="space-y-4">
         {effectiveDate && (
           <Text className="text-xs text-gray-500 dark:text-gray-400 mb-2">

@@ -7,6 +7,7 @@ import type { CreateApiKeyResponse } from "@packages/types/response";
 import { Check, Copy } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -63,6 +64,7 @@ export function CreateApiKeyDialog({
       visible
       onClose={onClose}
       title={title}
+      testID={mobileTestIds.apiKeyCreate.dialog}
       footer={
         createdKey ? (
           <TouchableOpacity
@@ -71,6 +73,7 @@ export function CreateApiKeyDialog({
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={copied ? t("apiKeyCopied") : t("apiKeyCopy")}
+            testID={mobileTestIds.apiKeyCreate.copyButton}
           >
             {copied ? (
               <>
@@ -96,6 +99,7 @@ export function CreateApiKeyDialog({
             disabled={
               isSubmitting || !name.trim() || selectedScopes.length === 0
             }
+            testID={mobileTestIds.apiKeyCreate.submitButton}
           />
         )
       }
@@ -130,6 +134,7 @@ export function CreateApiKeyDialog({
             autoFocus
             maxLength={255}
             accessibilityLabel={t("apiKeyName")}
+            testID={mobileTestIds.apiKeyCreate.nameInput}
           />
           <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {t("apiKeyNameHint")}

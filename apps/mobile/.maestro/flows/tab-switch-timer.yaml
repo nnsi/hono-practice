@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Timer モード → 「手動」タブへ切り替えて Manual パネルが表示されることを確認
+- assertVisible: E2Eタイマー
+- tapOn: E2Eタイマー
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.timer.tab.manual
+# Timer の ManualPanel では memo input が表示される
+- assertVisible:
+    id: recording.memoInput
+# Modal を閉じる
+- tapOn:
+    text: "Close"
+- extendedWaitUntil:
+    notVisible:
+      id: recording.dialog
+    timeout: 5000

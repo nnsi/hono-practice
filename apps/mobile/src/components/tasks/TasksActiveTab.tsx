@@ -77,6 +77,7 @@ export function TasksActiveTab({
         <TaskGroup
           title={t("page.group.overdue")}
           tasks={groupedTasks.overdue}
+          sectionKey="overdue"
           titleColor="text-red-600 dark:text-red-400"
           highlight
           onToggleDone={handleToggleDone}
@@ -91,6 +92,7 @@ export function TasksActiveTab({
         <TaskGroup
           title={t("page.group.dueToday")}
           tasks={groupedTasks.dueToday}
+          sectionKey="dueToday"
           titleColor="text-orange-600"
           onToggleDone={handleToggleDone}
           onEdit={setEditingTask}
@@ -104,6 +106,7 @@ export function TasksActiveTab({
         <TaskGroup
           title={t("page.group.startingToday")}
           tasks={groupedTasks.startingToday}
+          sectionKey="startingToday"
           titleColor="text-blue-600 dark:text-blue-400"
           onToggleDone={handleToggleDone}
           onEdit={setEditingTask}
@@ -117,6 +120,7 @@ export function TasksActiveTab({
         <TaskGroup
           title={t("page.group.inProgress")}
           tasks={groupedTasks.inProgress}
+          sectionKey="inProgress"
           titleColor="text-green-600 dark:text-green-400"
           onToggleDone={handleToggleDone}
           onEdit={setEditingTask}
@@ -130,6 +134,7 @@ export function TasksActiveTab({
         <TaskGroup
           title={t("page.group.dueThisWeek")}
           tasks={groupedTasks.dueThisWeek}
+          sectionKey="dueThisWeek"
           titleColor="text-gray-700 dark:text-gray-300"
           onToggleDone={handleToggleDone}
           onEdit={setEditingTask}

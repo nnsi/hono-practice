@@ -5,6 +5,7 @@ import { Download, FileText, Upload } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 import { useActivities } from "../../hooks/useActivities";
+import { mobileTestIds } from "../../testing/testIds";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { CSVImportStepIndicator } from "./CSVImportStepIndicator";
 import { CSVPreviewSection } from "./CSVPreviewSection";
@@ -84,6 +85,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
       visible={visible}
       onClose={handleClose}
       title={t("importModal")}
+      testID={mobileTestIds.csvImport.dialog}
     >
       <View className="gap-4 pb-4">
         <CSVImportStepIndicator current={step} />
@@ -106,6 +108,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 accessibilityRole="button"
                 accessibilityLabel={a.name}
                 accessibilityState={{ selected: selectedActivityId === a.id }}
+                testID={mobileTestIds.csvImport.activityOption(a.id)}
               >
                 <Text
                   className={`text-sm ${selectedActivityId === a.id ? "text-white font-medium" : "text-gray-700 dark:text-gray-300"}`}
@@ -128,6 +131,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
               accessibilityLabel={
                 isParsing ? t("parsing") : t("selectFileAndParse")
               }
+              testID={mobileTestIds.csvImport.pickFileButton}
             >
               <Upload size={28} color="#9ca3af" />
               <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -148,6 +152,7 @@ export function CSVImportModal({ visible, onClose }: CSVImportModalProps) {
                 onPress={downloadTemplateWeb}
                 accessibilityRole="button"
                 accessibilityLabel={t("downloadTemplate")}
+                testID={mobileTestIds.csvImport.downloadTemplateButton}
               >
                 <Download size={14} color="#6b7280" />
                 <Text className="text-sm text-gray-600 dark:text-gray-400">

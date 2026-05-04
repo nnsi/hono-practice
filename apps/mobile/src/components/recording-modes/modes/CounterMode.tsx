@@ -14,6 +14,7 @@ const tabShadow = {
   elevation: 1,
 };
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -36,6 +37,7 @@ export function CounterMode(props: RecordingModeProps) {
           accessibilityRole="tab"
           accessibilityLabel={t("manualEntry")}
           accessibilityState={{ selected: vm.activeTab === "manual" }}
+          testID={mobileTestIdsExt.recordingCounter.manualTab}
         >
           <Text
             className={`text-sm font-medium ${
@@ -56,6 +58,7 @@ export function CounterMode(props: RecordingModeProps) {
           accessibilityRole="tab"
           accessibilityLabel={t("counter")}
           accessibilityState={{ selected: vm.activeTab === "counter" }}
+          testID={mobileTestIdsExt.recordingCounter.counterTab}
         >
           <Text
             className={`text-sm font-medium ${
@@ -100,7 +103,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
       )}
 
       <View className="flex-row gap-2">
-        {vm.steps.map((step) => (
+        {vm.steps.map((step, idx) => (
           <TouchableOpacity
             key={step}
             onPress={() => vm.recordStep(step)}
@@ -113,6 +116,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
             accessibilityRole="button"
             accessibilityLabel={`Add ${step}`}
             accessibilityState={{ disabled: vm.isSubmitting }}
+            testID={mobileTestIdsExt.recordingCounter.stepButton(idx)}
           >
             <Text className="text-lg font-medium text-white">+{step}</Text>
           </TouchableOpacity>

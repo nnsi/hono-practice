@@ -1,6 +1,19 @@
 appId: ${MAESTRO_APP_ID}
 ---
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn:
     id: tabs.tasks
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    when:
+      notVisible:
+        id: tasks.page
+    commands:
+      - tapOn:
+          id: tabs.tasks
+      - waitForAnimationToEnd:
+          timeout: 3000
 - assertVisible:
     id: tasks.page

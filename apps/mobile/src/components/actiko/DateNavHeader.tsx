@@ -2,6 +2,8 @@ import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
+
 type DateNavHeaderProps = {
   date: string;
   isToday: boolean;
@@ -27,6 +29,7 @@ export function DateNavHeader({
         accessibilityRole="button"
         accessibilityLabel="Previous day"
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        testID={mobileTestIdsExt.dateNav.prev}
       >
         <ChevronLeft size={20} color="#78716c" />
       </TouchableOpacity>
@@ -36,6 +39,7 @@ export function DateNavHeader({
         className="flex-row items-center"
         accessibilityRole="button"
         accessibilityLabel={`Select date: ${dateLabel}`}
+        testID={mobileTestIdsExt.dateNav.label}
       >
         {isToday ? (
           <View className="flex-row items-center gap-1.5 bg-gray-900 rounded-xl px-4 py-1">
@@ -60,6 +64,7 @@ export function DateNavHeader({
         accessibilityRole="button"
         accessibilityLabel="Next day"
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        testID={mobileTestIdsExt.dateNav.next}
       >
         <ChevronRight size={20} color="#78716c" />
       </TouchableOpacity>

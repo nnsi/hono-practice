@@ -1,6 +1,7 @@
 import { useTranslation } from "@packages/i18n";
 import { Text, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { FormTextarea } from "../../common/FormTextarea";
 import { useModalScroll } from "../../common/ModalOverlay";
 
@@ -24,6 +25,7 @@ export function MemoInput({ value, onChangeText }: MemoInputProps) {
         placeholder={t("memoPlaceholder")}
         numberOfLines={2}
         accessibilityLabel={t("memo")}
+        testID={mobileTestIdsExt.recordingShared.memoInput}
       />
     </View>
   );
