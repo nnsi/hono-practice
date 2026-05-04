@@ -1,7 +1,6 @@
 # 実機テストチェックリスト
 
-> 対象: `apps/mobile` (Expo SDK 54, Managed Workflow)
-> ****E2E (Maestro) suite 一覧** — `actiko.yaml` / `actiko-crud.yaml` / `daily.yaml` / `daily-edit.yaml` / `goal.yaml` / `goal-detail.yaml` / `recording-modes.yaml` / `settings.yaml` / `stats.yaml` / `tasks-tabs.yaml` / `task.yaml` / `tab-customization.yaml` / `navigation.yaml` / `screens.yaml` / `smoke.yaml` — iOS sim + Android emulator 両方で pass を確認済み（5/3）。チェック \[x\] のうち E2E 自動化済みの項目はリリース時に再実行すれば検証完了。E2E 未カバーの項目（\[x\] でも手動確認のみ）は別 PR で flow 追加するか、手動チェックで継続。
+> 対象: `apps/mobile` (Expo SDK 54, Managed Workflow) \*\***E2E (Maestro) suite 一覧** — `actiko.yaml` / `actiko-crud.yaml` / `daily.yaml` / `daily-edit.yaml` / `goal.yaml` / `goal-detail.yaml` / `recording-modes.yaml` / `settings.yaml` / `stats.yaml` / `tasks-tabs.yaml` / `task.yaml` / `tab-customization.yaml` / `navigation.yaml` / `screens.yaml` / `smoke.yaml` — iOS sim + Android emulator 両方で pass を確認済み（5/3）。チェック \[x\] のうち E2E 自動化済みの項目はリリース時に再実行すれば検証完了。E2E 未カバーの項目（\[x\] でも手動確認のみ）は別 PR で flow 追加するか、手動チェックで継続。
 
 ---
 
@@ -545,12 +544,12 @@
 
 - [x] 戻るボタン（ジェスチャー）の動作
 
-- [ ] スクロールの慣性動作
+- [x] スクロールの慣性動作
 
 - [x] アプリのバックグラウンド → フォアグラウンド復帰
 
 - [ ] 画面回転時のレイアウト（対応している場合）
 
-- [ ] カード・ボタンのタップ応答性
+- [x] カード・ボタンのタップ応答性
 
 - [ ] アニメーションのスムーズさ（FadeInDown 等）
