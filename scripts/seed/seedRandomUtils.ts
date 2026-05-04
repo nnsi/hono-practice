@@ -15,8 +15,12 @@ export const getRandomFloat = (min: number, max: number, decimals = 2) => {
   return Math.round(value * 10 ** decimals) / 10 ** decimals;
 };
 
+// Local-timezone YYYY-MM-DD. toISOString().split("T") は UTC になり、JST 早朝の seed 実行で前日扱いになるバグの元。
 export const formatDate = (date: Date) => {
-  return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 };
 
 export const formatTime = (date: Date) => {

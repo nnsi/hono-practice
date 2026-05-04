@@ -29,6 +29,9 @@ async function main() {
   const filePath = parsed.tool_input?.file_path || "";
   if (!filePath) return;
 
+  // .ts / .tsx のみ対象
+  if (!/\.(ts|tsx)$/.test(filePath)) return;
+
   const normalized = filePath.replace(/\\/g, "/");
 
   // .claude/ や docs/diary/ 内のファイルはカウントしない

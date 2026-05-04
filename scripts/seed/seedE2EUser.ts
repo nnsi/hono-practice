@@ -12,8 +12,12 @@ import {
 export const E2E_USER_ID = "e2e00000-0000-4000-8000-000000000000";
 export const E2E_ACTIVITY_ID = "e2e00000-0000-4000-8000-000000000001";
 
+// Local-timezone YYYY-MM-DD. toISOString().split("T") は UTC になり、JST 早朝の seed 実行で前日扱いになるバグの元。
 const formatDate = (date: Date) => {
-  return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 };
 
 export async function seedE2EUser(db: DrizzleInstance, hashedPassword: string) {
