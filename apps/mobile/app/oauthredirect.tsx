@@ -3,13 +3,11 @@ import { useEffect, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
-import { getApiUrl, setRefreshToken, setToken } from "../src/utils/apiClient";
+import { useAuthContext } from "../src/contexts/AuthContext";
+import { apiClient, setRefreshToken, setToken } from "../src/utils/apiClient";
 import { apiGetMe } from "../src/utils/authApi";
 import { reportError } from "../src/utils/errorReporter";
 import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
-import { useAuthContext } from "./_layout";
-
-const API_URL = getApiUrl();
 
 export default function OAuthRedirect() {
   const params = useLocalSearchParams<{ code?: string; error?: string }>();
@@ -44,14 +42,12 @@ export default function OAuthRedirect() {
     code: string,
     pending: { codeVerifier: string; redirectUri: string },
   ) {
-    const res = await fetch(`${API_URL}/auth/google/exchange`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const res = await apiClient.auth.google.exchange.$post({
+      json: {
         code,
         code_verifier: pending.codeVerifier,
         redirect_uri: pending.redirectUri,
-      }),
+      },
     });
 
     if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -60,7 +56,9 @@ export default function OAuthRedirect() {
     if (!data.token) throw new Error("No token in response");
 
     setToken(data.token);
-    if (data.refreshToken) await setRefreshToken(data.refreshToken);
+    if ("refreshToken" in data && data.refreshToken) {
+      await setRefreshToken(data.refreshToken);
+    }
     const user = await apiGetMe();
     await completeLogin(user.id);
   }

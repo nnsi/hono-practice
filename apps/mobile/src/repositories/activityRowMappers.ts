@@ -1,4 +1,3 @@
-import type { SyncStatus } from "@packages/domain";
 import type {
   ActivityKindRecord,
   ActivityRecord,
@@ -9,15 +8,9 @@ import {
 } from "@packages/domain/activity/recordingMode";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
 
+import { str, strOrNull, toSyncStatus } from "./sqlRowHelpers";
+
 export type SqlRow = Record<string, unknown>;
-
-export function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-export function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
 
 type IconType = "emoji" | "upload";
 const VALID_ICON_TYPES = new Set<string>(["emoji", "upload"]);
@@ -40,12 +33,6 @@ function isRecordingMode(v: string): v is RecordingMode {
 function toRecordingMode(v: unknown): RecordingMode {
   if (typeof v === "string" && isRecordingMode(v)) return v;
   return "manual";
-}
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed" || v === "rejected")
-    return v;
-  return "synced";
 }
 
 export function mapActivityRow(row: SqlRow): Syncable<ActivityRecord> {

@@ -46,8 +46,6 @@ initI18n({
 
 const queryClient = new QueryClient();
 
-export { AuthContext, useAuthContext } from "../src/contexts/AuthContext";
-
 import { AuthContext } from "../src/contexts/AuthContext";
 
 export default function RootLayout() {

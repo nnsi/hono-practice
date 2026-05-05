@@ -2,7 +2,8 @@ import { getServerNowISOString } from "@packages/sync-engine";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { type SqlRow, str } from "./activityRowMappers";
+import type { SqlRow } from "./activityRowMappers";
+import { str } from "./sqlRowHelpers";
 
 export const activityIconAdapterMethods = {
   async saveActivityIconBlob(

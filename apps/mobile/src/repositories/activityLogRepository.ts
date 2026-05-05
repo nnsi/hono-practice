@@ -1,4 +1,3 @@
-import type { SyncStatus } from "@packages/domain";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import type { ActivityLogRepository } from "@packages/domain/activityLog/activityLogRepository";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
@@ -9,30 +8,18 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
+import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
 type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
 
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
 function numOrNull(v: unknown): number | null {
   if (v == null) return null;
   if (typeof v === "number") return v;
   const n = Number(v);
   return Number.isNaN(n) ? null : n;
-}
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed") return v;
-  return "synced";
 }
 
 export function mapActivityLogRow(row: SqlRow): Syncable<LocalActivityLog> {
@@ -123,7 +110,7 @@ const adapter: ActivityLogDbAdapter = {
       const col = columnMap[key];
       if (!col) continue;
       setClauses.push(`${col} = ?`);
-      values.push(value as string | number | null);
+      values.push(toSqlBindable(value));
     }
 
     if (setClauses.length === 0) return;

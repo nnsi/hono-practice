@@ -46,6 +46,11 @@ env:
 # Toggle done
 - tapOn:
     text: t-toggle-${output.RUN_TAG}
+# 完了済みセクションを展開（5/4 以降、完了タスクは折りたたまれた完了済みセクションに移動する）
+- extendedWaitUntil:
+    visible: "完了済みを表示.*"
+    timeout: 10000
+- tapOn: "完了済みを表示.*"
 - extendedWaitUntil:
     visible:
       id: "tasks\\.archive\\..*"

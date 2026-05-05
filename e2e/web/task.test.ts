@@ -49,6 +49,9 @@ describe("task", () => {
     // 完了ボタン（○アイコン）をクリック
     await taskRow.locator('button[aria-label="完了にする"]').click();
 
+    // 完了済みセクションを展開
+    await page.getByRole("button", { name: /完了済みを表示/ }).click();
+
     // 「未完了に戻す」ボタンが表示される
     await taskRow
       .locator('button[aria-label="未完了に戻す"]')
@@ -148,6 +151,10 @@ describe("task", () => {
       .filter({ hasText: "アーカイブ対象" })
       .first();
     await taskRow.locator('button[aria-label="完了にする"]').click();
+
+    // 完了済みセクションを展開
+    await page.getByRole("button", { name: /完了済みを表示/ }).click();
+
     await taskRow
       .locator('button[aria-label="未完了に戻す"]')
       .waitFor({ state: "visible", timeout: 15000 });

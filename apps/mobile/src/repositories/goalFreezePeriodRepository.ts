@@ -7,23 +7,11 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
+import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed") return v;
-  return "synced";
-}
 
 type FreezePeriodWithSync = GoalFreezePeriodRecord & {
   _syncStatus: SyncStatus;
@@ -42,6 +30,16 @@ export function mapFreezePeriodRow(row: SqlRow): FreezePeriodWithSync {
     _syncStatus: toSyncStatus(row.sync_status),
   };
 }
+
+// --- Column map (camelCase → snake_case) ---
+
+const freezePeriodColumnMap: Record<string, string> = {
+  startDate: "start_date",
+  endDate: "end_date",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+  deletedAt: "deleted_at",
+};
 
 // --- Adapter ---
 
@@ -91,20 +89,13 @@ const adapter: GoalFreezePeriodDbAdapter = {
   },
   async update(id, changes) {
     const db = await getDatabase();
-    const columnMap: Record<string, string> = {
-      startDate: "start_date",
-      endDate: "end_date",
-      updatedAt: "updated_at",
-      _syncStatus: "sync_status",
-      deletedAt: "deleted_at",
-    };
     const sets: string[] = [];
-    const vals: (string | null)[] = [];
+    const vals: (string | number | null)[] = [];
     for (const [key, val] of Object.entries(changes)) {
-      const col = columnMap[key];
+      const col = freezePeriodColumnMap[key];
       if (col) {
         sets.push(`${col} = ?`);
-        vals.push(val as string | null);
+        vals.push(toSqlBindable(val));
       }
     }
     vals.push(id);

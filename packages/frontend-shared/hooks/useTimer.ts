@@ -13,10 +13,10 @@ export type TimerStorageAdapter = {
   persist(key: string, data: TimerPersistData): void;
   /** Remove persisted timer data (fire-and-forget) */
   remove(key: string): void;
-  /** Synchronously check if another timer is running (excluding the given key) */
-  isOtherTimerRunning(excludeKey: string): boolean;
-  /** Optional init called on mount (e.g., to warm a cache) */
-  init?(): void;
+  /** Check if another timer is running (excluding the given key). May be async to await cache init. */
+  isOtherTimerRunning(excludeKey: string): boolean | Promise<boolean>;
+  /** Optional init called on mount. Returns a Promise that resolves when cache is ready. */
+  init?(): Promise<void> | void;
 };
 
 const STORAGE_PREFIX = "timer_";
@@ -55,15 +55,20 @@ export function createUseTimer(deps: UseTimerDeps) {
     // ストレージから復元
     useEffect(() => {
       let cancelled = false;
-      storage.init?.();
-      storage.restore(getTimerStorageKey(activityId)).then((data) => {
-        if (cancelled) return;
-        if (data?.isRunning && data.startTime) {
-          setStartTime(data.startTime);
-          setElapsedTime(Date.now() - data.startTime);
-          setIsRunning(true);
-        }
+      storage.init?.()?.catch(() => {
+        // timer init failure is non-fatal
       });
+      storage
+        .restore(getTimerStorageKey(activityId))
+        .then((data) => {
+          if (cancelled) return;
+          if (data?.isRunning && data.startTime) {
+            setStartTime(data.startTime);
+            setElapsedTime(Date.now() - data.startTime);
+            setIsRunning(true);
+          }
+        })
+        .catch(() => {});
       return () => {
         cancelled = true;
       };
@@ -83,9 +88,9 @@ export function createUseTimer(deps: UseTimerDeps) {
       };
     }, [isRunning, startTime]);
 
-    const start = useCallback(() => {
+    const start = useCallback(async () => {
       const storageKey = getTimerStorageKey(activityId);
-      if (storage.isOtherTimerRunning(storageKey)) return false;
+      if (await storage.isOtherTimerRunning(storageKey)) return false;
 
       const now = Date.now();
       const newStartTime = now - elapsedTime;

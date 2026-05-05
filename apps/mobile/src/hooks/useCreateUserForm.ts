@@ -7,7 +7,7 @@ import {
 import { useTranslation } from "@packages/i18n";
 import type { Consents } from "@packages/types/request";
 
-import { useAuthContext } from "../../app/_layout";
+import { useAuthContext } from "../contexts/AuthContext";
 import { useGoogleSignIn } from "./useGoogleSignIn";
 
 export function useCreateUserForm() {

@@ -386,15 +386,18 @@ describe("performInitialSync", () => {
     expect(mockStorage.setItem).not.toHaveBeenCalled();
   });
 
-  it("does NOT update lastSyncedAt when freeze periods API fails", async () => {
+  it("UPDATES lastSyncedAt even when freeze periods API fails (best-effort)", async () => {
     vi.mocked(freezePeriodsApi).mockRejectedValue(new Error("network"));
 
     await performInitialSync("user-1", mockStorage);
 
-    expect(mockStorage.setItem).not.toHaveBeenCalled();
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "actiko-v2-lastSyncedAt",
+      expect.any(String),
+    );
   });
 
-  it("treats notes fetch failure as partial sync and skips lastSyncedAt", async () => {
+  it("UPDATES lastSyncedAt even when notes fetch fails (best-effort)", async () => {
     vi.mocked(tasksApi).mockResolvedValue(
       okResponse({ tasks: [{ id: "task-1" }] }) as never,
     );
@@ -404,7 +407,10 @@ describe("performInitialSync", () => {
       undefined,
     );
 
-    expect(mockStorage.setItem).not.toHaveBeenCalled();
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "actiko-v2-lastSyncedAt",
+      expect.any(String),
+    );
     expect(taskRepository.upsertTasksFromServer).toHaveBeenCalledWith([
       { id: "task-1" },
     ]);

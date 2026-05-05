@@ -1,6 +1,3 @@
-import type { SyncStatus } from "@packages/domain";
-import { parseDayTargets } from "@packages/domain/goal/dayTargets";
-import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { GoalRepository } from "@packages/domain/goal/goalRepository";
 import {
   type GoalDbAdapter,
@@ -9,62 +6,10 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
+import { toSqlBindable } from "./sqlRowHelpers";
+import { type SqlRow, goalColumnMap, mapGoalRow } from "./goalRowMappers";
 
-// --- Row mapping helpers (snake_case SQL → camelCase TS) ---
-
-type SqlRow = Record<string, unknown>;
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
-function num(v: unknown, defaultValue: number): number {
-  if (typeof v === "number") return v;
-  const n = Number(v);
-  return Number.isNaN(n) ? defaultValue : n;
-}
-
-function numOrNull(v: unknown): number | null {
-  if (v == null) return null;
-  const n = Number(v);
-  return Number.isNaN(n) ? null : n;
-}
-
-// Goals in the local DB do NOT store currentBalance/totalTarget/totalActual
-// (they are computed from logs). We include them as 0 in the mapped type
-// for compatibility with GoalRecord.
-type GoalWithSync = GoalRecord & { _syncStatus: SyncStatus };
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed") return v;
-  return "synced";
-}
-
-export function mapGoalRow(row: SqlRow): GoalWithSync {
-  return {
-    id: str(row.id),
-    userId: str(row.user_id),
-    activityId: str(row.activity_id),
-    dailyTargetQuantity: num(row.daily_target_quantity, 0),
-    startDate: str(row.start_date),
-    endDate: strOrNull(row.end_date),
-    isActive: row.is_active === 1,
-    description: str(row.description),
-    debtCap: numOrNull(row.debt_cap),
-    dayTargets: parseDayTargets(row.day_targets),
-    currentBalance: 0,
-    totalTarget: 0,
-    totalActual: 0,
-    createdAt: str(row.created_at),
-    updatedAt: str(row.updated_at),
-    deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: toSyncStatus(row.sync_status),
-  };
-}
+export { mapGoalRow } from "./goalRowMappers";
 
 // --- Adapter ---
 
@@ -109,32 +54,16 @@ const adapter: GoalDbAdapter = {
   },
   async update(id, changes) {
     const db = await getDatabase();
-    const columnMap: Record<string, string> = {
-      dailyTargetQuantity: "daily_target_quantity",
-      startDate: "start_date",
-      endDate: "end_date",
-      isActive: "is_active",
-      description: "description",
-      debtCap: "debt_cap",
-      dayTargets: "day_targets",
-      updatedAt: "updated_at",
-      _syncStatus: "sync_status",
-      deletedAt: "deleted_at",
-    };
     const sets: string[] = [];
     const vals: (string | number | null)[] = [];
     for (const [key, val] of Object.entries(changes)) {
-      const col = columnMap[key];
+      const col = goalColumnMap[key];
       if (!col) continue;
-      if (key === "isActive") {
-        sets.push(`${col} = ?`);
-        vals.push(val ? 1 : 0);
-      } else if (key === "dayTargets") {
-        sets.push(`${col} = ?`);
+      sets.push(`${col} = ?`);
+      if (key === "dayTargets") {
         vals.push(val ? JSON.stringify(val) : null);
       } else {
-        sets.push(`${col} = ?`);
-        vals.push(val as string | number | null);
+        vals.push(toSqlBindable(val));
       }
     }
     vals.push(id);

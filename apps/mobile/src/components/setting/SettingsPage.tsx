@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { useAuthContext } from "../../../app/_layout";
+import { useAuthContext } from "../../contexts/AuthContext";
 import { useThemeContext } from "../../contexts/ThemeContext";
 import { mobileTestIds } from "../../testing/testIds";
 import { mobileTestIdsExt } from "../../testing/testIdsExt";

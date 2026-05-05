@@ -5,22 +5,8 @@ import {
   isTimeUnit,
 } from "@packages/domain/time/timeUtils";
 
+import type { TimerReturn } from "../recording-modes/types";
 import type { ActivityBase, ReactHooks } from "./types";
-
-/**
- * Timer最小型。共通hookで使うメソッドに加え、
- * 各アプリのコンポーネントが追加プロパティに直接アクセスできるよう
- * Record<string, unknown> で拡張を許可する。
- */
-type TimerReturn = {
-  isRunning: boolean;
-  elapsedTime: number;
-  start: () => void;
-  stop: () => void;
-  reset: () => void;
-  getElapsedSeconds: () => number;
-  getStartDate: () => Date | null;
-} & Record<string, unknown>;
 
 type UseLogFormDeps = {
   react: Pick<ReactHooks, "useState">;
