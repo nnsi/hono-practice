@@ -4,7 +4,6 @@ import { newActivityRepository } from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { toSqlBindable } from "./sqlRowHelpers";
 import {
   activityBulkAdapterMethods,
   reorderActivitiesInDb,
@@ -17,6 +16,7 @@ import {
   mapActivityKindRow,
   mapActivityRow,
 } from "./activityRowMappers";
+import { toSqlBindable } from "./sqlRowHelpers";
 
 const adapter: ActivityDbAdapter = {
   async getUserId() {

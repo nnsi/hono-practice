@@ -2,12 +2,12 @@ import type { ActivityDbAdapter } from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { toSqlBindable } from "./sqlRowHelpers";
 import {
   type SqlRow,
   kindColumnMap,
   mapActivityKindRow,
 } from "./activityRowMappers";
+import { toSqlBindable } from "./sqlRowHelpers";
 
 type KindMethods = Pick<
   ActivityDbAdapter,

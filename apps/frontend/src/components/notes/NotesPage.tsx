@@ -1,14 +1,24 @@
+import { NOTE_SECTION_ORDER } from "@packages/frontend-shared/utils/noteGrouping";
 import { useTranslation } from "@packages/i18n";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
 import { NoteCard } from "./NoteCard";
+import { NotesActivityFilter } from "./NotesActivityFilter";
+import { NotesSearchBar } from "./NotesSearchBar";
 import { useNotesPage } from "./useNotesPage";
 
 export function NotesPage() {
   const {
-    notes,
+    totalCount,
+    groupedNotes,
+    hasActiveFilter,
+    searchText,
+    setSearchText,
+    selectedActivityId,
+    setSelectedActivityId,
+    filterActivities,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,
@@ -16,6 +26,14 @@ export function NotesPage() {
   } = useNotesPage();
   const { t } = useTranslation("note");
   const navigate = useNavigate();
+
+  const isEmptyOverall = totalCount === 0;
+  const filteredCount = NOTE_SECTION_ORDER.reduce(
+    (acc, section) => acc + groupedNotes[section].length,
+    0,
+  );
+  const isEmptyFiltered =
+    !isEmptyOverall && hasActiveFilter && filteredCount === 0;
 
   return (
     <div className="bg-white min-h-full">
@@ -35,8 +53,21 @@ export function NotesPage() {
         </div>
       </div>
 
+      {!isEmptyOverall && (
+        <div className="px-4 pt-3 pb-2 space-y-2">
+          <NotesSearchBar value={searchText} onChange={setSearchText} />
+          {filterActivities.length > 0 && (
+            <NotesActivityFilter
+              activities={filterActivities}
+              selectedActivityId={selectedActivityId}
+              onSelect={setSelectedActivityId}
+            />
+          )}
+        </div>
+      )}
+
       <div className="p-4">
-        {notes.length === 0 && (
+        {isEmptyOverall && (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">{t("page.empty")}</p>
             <button
@@ -51,40 +82,59 @@ export function NotesPage() {
           </div>
         )}
 
-        {notes.length > 0 && (
-          <div className="space-y-3">
-            {notes.map((note) => (
-              <div
-                key={note.id}
-                className={`rounded-xl p-4 shadow-sm ${
-                  note._syncStatus === "pending"
-                    ? "border border-amber-200 bg-amber-50/50"
-                    : "bg-white border border-gray-200"
-                }`}
-              >
-                {deleteConfirmId === note.id ? (
-                  <DeleteConfirmInline
-                    onConfirm={() => handleDelete(note.id)}
-                    onCancel={() => setDeleteConfirmId(null)}
-                  />
-                ) : (
-                  <NoteCard
-                    title={note.title}
-                    content={note.content}
-                    updatedAt={note.updatedAt}
-                    activityName={getActivityName(note.activityId)}
-                    syncStatus={note._syncStatus}
-                    onClick={() =>
-                      navigate({
-                        to: "/notes/$noteId",
-                        params: { noteId: note.id },
-                      })
-                    }
-                    onDelete={() => setDeleteConfirmId(note.id)}
-                  />
-                )}
-              </div>
-            ))}
+        {isEmptyFiltered && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">{t("list.empty.filtered")}</p>
+          </div>
+        )}
+
+        {!isEmptyOverall && !isEmptyFiltered && (
+          <div className="space-y-4">
+            {NOTE_SECTION_ORDER.map((section) => {
+              const items = groupedNotes[section];
+              if (items.length === 0) return null;
+              return (
+                <section key={section} className="space-y-3">
+                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-2 mb-1">
+                    {t(`list.section.${section}`)}
+                  </h2>
+                  <div className="space-y-3">
+                    {items.map((note) => (
+                      <div
+                        key={note.id}
+                        className={`rounded-xl p-4 shadow-sm ${
+                          note._syncStatus === "pending"
+                            ? "border border-amber-200 bg-amber-50/50"
+                            : "bg-white border border-gray-200"
+                        }`}
+                      >
+                        {deleteConfirmId === note.id ? (
+                          <DeleteConfirmInline
+                            onConfirm={() => handleDelete(note.id)}
+                            onCancel={() => setDeleteConfirmId(null)}
+                          />
+                        ) : (
+                          <NoteCard
+                            title={note.title}
+                            content={note.content}
+                            updatedAt={note.updatedAt}
+                            activityName={getActivityName(note.activityId)}
+                            syncStatus={note._syncStatus}
+                            onClick={() =>
+                              navigate({
+                                to: "/notes/$noteId",
+                                params: { noteId: note.id },
+                              })
+                            }
+                            onDelete={() => setDeleteConfirmId(note.id)}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </div>

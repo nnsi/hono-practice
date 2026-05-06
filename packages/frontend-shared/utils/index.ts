@@ -34,6 +34,8 @@ export type {
 export { reportError } from "./errorReporter";
 export { setupGlobalErrorHandler } from "./globalErrorHandler";
 export { generateGoalLines } from "./goalLineGeneration";
+export type { GroupedNotes, NoteSection } from "./noteGrouping";
+export { NOTE_SECTION_ORDER, groupNotesByDate } from "./noteGrouping";
 export type {
   NoteRichTextCommand,
   NoteRichTextEditorMessage,

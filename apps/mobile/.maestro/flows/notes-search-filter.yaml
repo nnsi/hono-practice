@@ -1,0 +1,39 @@
+appId: ${MAESTRO_APP_ID}
+---
+# notes 一覧の検索バー + activityフィルタ + 日付セクション見出しの動作確認。
+# 前提: notes が1件以上ある状態（前段で create-note を実行しているか seed 済み）。
+
+- assertVisible:
+    id: notes.page
+
+# 検索をトグルすると searchInput が出現する
+- assertNotVisible:
+    id: notes.searchInput
+- tapOn:
+    id: notes.searchToggle
+- assertVisible:
+    id: notes.searchInput
+
+# 入力 → searchClear ボタンが出る
+- tapOn:
+    id: notes.searchInput
+- inputText: "${NOTE_TITLE}"
+- assertVisible:
+    id: notes.searchClear
+
+# searchClear を押すと入力がクリアされる
+- tapOn:
+    id: notes.searchClear
+- assertNotVisible:
+    id: notes.searchClear
+
+# searchToggle で閉じる → searchInput が消える
+- tapOn:
+    id: notes.searchToggle
+- assertNotVisible:
+    id: notes.searchInput
+
+# Activity フィルタチップは「activity 紐付き note が1件もない」とき非表示になる仕様。
+# このflowで作成する note は activity 未指定なので filterAll は不可視（実装どおり）。
+- assertNotVisible:
+    id: notes.filterAll

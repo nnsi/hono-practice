@@ -6,8 +6,8 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { toSqlBindable } from "./sqlRowHelpers";
 import { type SqlRow, goalColumnMap, mapGoalRow } from "./goalRowMappers";
+import { toSqlBindable } from "./sqlRowHelpers";
 
 export { mapGoalRow } from "./goalRowMappers";
 

@@ -10,7 +10,7 @@ import {
 import { TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
-import { buildTaskCardTestIds } from "../../testing/testIds";
+import { buildTaskCardTestIds } from "../../testing/cardTestIds";
 import { TaskCardBody } from "./TaskCardBody";
 import { SwipeCompleteAction, SwipeDeleteAction } from "./TaskSwipeActions";
 import type { TaskItem } from "./types";
