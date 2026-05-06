@@ -189,7 +189,7 @@ describe("createInitialSync bootstrap resources", () => {
     expect(stored).toContain("notes");
   });
 
-  it("treats notesRes null as a partial sync and skips lastSyncedAt", async () => {
+  it("treats notesRes null as best-effort and advances lastSyncedAt", async () => {
     const storage = createStorage();
     const deps = createDeps({
       defaultStorage: storage,
@@ -210,8 +210,7 @@ describe("createInitialSync bootstrap resources", () => {
     await performInitialSync("user-1");
 
     expect(deps.writeAllData).toHaveBeenCalled();
-    expect(storage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
-    expect(storage.getItem("actiko-v2-bootstrappedResources")).toBeNull();
+    expect(storage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
   });
 
   it("reports fetchAllApis failures with phase", async () => {

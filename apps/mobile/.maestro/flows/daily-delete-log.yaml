@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Daily ログ削除（2段階）: ログをタップ→削除要求→削除確認
+- tapOn:
+    text: "E2Eランニング.*"
+- assertVisible:
+    id: daily.editLog.dialog
+- tapOn:
+    id: daily.editLog.deleteRequest
+- assertVisible:
+    id: daily.editLog.deleteConfirm
+- tapOn:
+    id: daily.editLog.deleteConfirm
+- extendedWaitUntil:
+    notVisible:
+      id: daily.editLog.dialog
+    timeout: 10000

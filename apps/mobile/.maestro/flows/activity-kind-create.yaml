@@ -1,0 +1,33 @@
+appId: ${MAESTRO_APP_ID}
+---
+# ActivityKind 新規追加: E2Eランニング の Edit ダイアログを開き kind-X を追加して保存
+# 前提: Home (Actiko) 画面が表示済み
+- assertVisible: E2Eランニング
+- tapOn:
+    text: "Edit"
+    index: 0
+- assertVisible:
+    id: actiko.edit.dialog
+# 既存 kinds (kind-A, kind-B) が見えるはず。Add Kind ボタンも下にあるが
+# iOS の Modal 内 scrollUntilVisible は dismiss gesture と認識されることがあるため
+# swipe で控えめにスクロールしてから assertVisible で確認
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 40%"
+- waitForAnimationToEnd:
+    timeout: 500
+- tapOn:
+    id: actiko.editKind.add
+- waitForAnimationToEnd:
+    timeout: 1500
+# 新規 kind の入力欄。autoScroll があるので tapOn で直接 (Maestro の autoscroll に任せる)
+- tapOn:
+    id: actiko.editKind.name.2
+- inputText: kind-X
+# キーボード表示中でも save testID は tap 可能
+- tapOn:
+    id: actiko.edit.save
+- extendedWaitUntil:
+    notVisible:
+      id: actiko.edit.dialog
+    timeout: 10000

@@ -17,7 +17,12 @@ if (existsSync(dir)) {
       "必要に応じて読んでください。日記を書く際にはこれらを参照してください。",
     ].join("\n");
     process.stdout.write(
-      JSON.stringify({ hookSpecificOutput: { additionalContext: msg } }),
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "SessionStart",
+          additionalContext: msg,
+        },
+      }),
     );
   }
 }

@@ -4,4 +4,4 @@ appId: ${MAESTRO_APP_ID}
     id: tabs.daily
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: アクティビティ
+- assertVisible: "アクティビティ|Activities"

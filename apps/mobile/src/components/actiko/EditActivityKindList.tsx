@@ -3,6 +3,7 @@ import { useTranslation } from "@packages/i18n";
 import { Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 import { FormInput } from "../common/FormInput";
 import { useModalScroll } from "../common/ModalOverlay";
 import { KindColorPicker } from "./KindColorPicker";
@@ -41,10 +42,12 @@ export function EditActivityKindList({
             onChangeText={(text) => onUpdateName(index, text)}
             placeholder={t("kindPlaceholder")}
             accessibilityLabel={t("kindPlaceholder")}
+            testID={mobileTestIdsExt.activityKindList.nameInput(index)}
           />
           <KindColorPicker
             color={kind.color}
             onColorChange={(c) => onUpdateColor(index, c)}
+            index={index}
           />
           <TouchableOpacity
             onPress={() => onRemove(index)}
@@ -52,6 +55,7 @@ export function EditActivityKindList({
             accessibilityRole="button"
             accessibilityLabel={`Remove ${kind.name}`}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            testID={mobileTestIdsExt.activityKindList.removeButton(index)}
           >
             <Trash2 size={16} className="text-red-500 dark:text-red-400" />
           </TouchableOpacity>
@@ -64,6 +68,7 @@ export function EditActivityKindList({
         }}
         accessibilityRole="button"
         accessibilityLabel={t("addKind")}
+        testID={mobileTestIdsExt.activityKindList.addButton}
       >
         <Text className="text-sm text-blue-600 dark:text-blue-400 font-medium">
           {t("addKind")}

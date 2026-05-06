@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import { isMobileClient } from "@backend/utils/clientDetection";
 import { zValidator } from "@hono/zod-validator";
 import { appleLoginRequestSchema } from "@packages/types/request";
 
@@ -25,7 +26,9 @@ export function createAppleAuthRoutes() {
         clientIds,
       );
       setRefreshCookie(c, refreshToken);
-      return c.json({ user, token, refreshToken });
+      return c.json(
+        isMobileClient(c) ? { user, token, refreshToken } : { user, token },
+      );
     })
     .post(
       "/link",

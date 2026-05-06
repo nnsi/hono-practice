@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Counter モード記録: step.0 を1回タップ → auto-save でダイアログが閉じる
+- assertVisible: E2Eカウンター
+- tapOn: E2Eカウンター
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.counter.step.0
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

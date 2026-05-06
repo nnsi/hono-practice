@@ -3,14 +3,18 @@ import { useState } from "react";
 import { COLOR_PALETTE } from "@packages/frontend-shared/utils/colorUtils";
 import { TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
+
 type KindColorPickerProps = {
   color: string;
   onColorChange: (color: string) => void;
+  index?: number;
 };
 
 export function KindColorPicker({
   color,
   onColorChange,
+  index = 0,
 }: KindColorPickerProps) {
   const [open, setOpen] = useState(false);
 
@@ -41,6 +45,7 @@ export function KindColorPicker({
                 borderWidth: c.toUpperCase() === color.toUpperCase() ? 3 : 0,
                 borderColor: "#1f2937",
               }}
+              testID={mobileTestIdsExt.activityKindList.colorButton(index, c)}
             />
           ))}
         </View>

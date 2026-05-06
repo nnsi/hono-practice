@@ -33,6 +33,10 @@ type UseTasksPageDeps = {
     syncTasks: () => Promise<unknown>;
     syncActivityLogs: () => Promise<unknown>;
   };
+  useShowCompletedState?: () => [
+    boolean,
+    (value: boolean | ((prev: boolean) => boolean)) => void,
+  ];
 };
 
 export function createUseTasksPage(deps: UseTasksPageDeps) {
@@ -43,12 +47,16 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
     taskRepository,
     activityLogRepository,
     syncEngine,
+    useShowCompletedState,
   } = deps;
+
+  const useShowCompletedStateImpl =
+    useShowCompletedState ?? (() => useState(false));
 
   return function useTasksPage() {
     // state
     const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
-    const [showCompleted, setShowCompleted] = useState(false);
+    const [showCompleted, setShowCompleted] = useShowCompletedStateImpl();
     const [showFuture, setShowFuture] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
@@ -69,7 +77,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
           {
             showCompleted: true,
             showFuture: true,
-            completedInTheirCategories: true,
+            completedInTheirCategories: false,
           },
           today,
         ),
@@ -80,7 +88,7 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
       () =>
         groupTasksByTimelineCore(
           tasks,
-          { showCompleted, showFuture, completedInTheirCategories: true },
+          { showCompleted, showFuture, completedInTheirCategories: false },
           today,
         ),
       [tasks, showCompleted, showFuture, today],

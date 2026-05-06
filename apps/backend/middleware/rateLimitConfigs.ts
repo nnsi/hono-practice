@@ -43,3 +43,24 @@ export const contactRateLimitConfig: RateLimitConfig = {
   limit: 2,
   keyGenerator: ({ ip }) => `contact:${ip}`,
 };
+
+/**
+ * クライアントエラー報告用レートリミット設定
+ * 1分間に30回まで
+ */
+export const clientErrorRateLimitConfig: RateLimitConfig = {
+  windowMs: 60 * 1000,
+  limit: 30,
+  keyGenerator: ({ ip }) => `client-error:${ip}`,
+};
+
+/**
+ * Webhook 受信用レートリミット設定（RevenueCat / Polar）
+ * 正常な再送を弾かないよう寛容な値に設定
+ * IPベース、1分間に300回まで
+ */
+export const webhookRateLimitConfig: RateLimitConfig = {
+  windowMs: 60 * 1000,
+  limit: 300,
+  keyGenerator: ({ ip }) => `webhook:${ip}`,
+};

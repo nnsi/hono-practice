@@ -56,6 +56,7 @@
   "deleteAccount": "アカウントを削除",
   "deleteAccountConfirm": "アカウントを削除すると、ローカルに保存されたデータが全て削除されます。この操作は取り消せません。",
   "deleteAccountButton": "削除する",
+  "deleteAccountError": "アカウント削除に失敗しました。ネットワーク接続を確認してください。",
   "apiKeyManagement": "外部アプリケーションからアクセスするためのAPIキーを管理します",
   "createNewKey": "+ 新規作成",
   "noApiKeys": "APIキーがありません",
@@ -87,6 +88,7 @@
   "upgradeProPlan": "Pro プランにアップグレード",
   "restorePurchases": "購入を復元",
   "logout": "ログアウト",
+  "logoutConfirm": "ログアウトしますか？",
   "dangerousOperations": "危険な操作",
   "contact": "お問い合わせ"
 }

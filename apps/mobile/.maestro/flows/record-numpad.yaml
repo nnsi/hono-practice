@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Numpad モード記録: "50" を入力して保存
+- assertVisible: E2Eテンキー
+- tapOn: E2Eテンキー
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.numpad.key.5
+- tapOn:
+    id: recording.numpad.key.0
+- tapOn:
+    id: recording.numpad.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

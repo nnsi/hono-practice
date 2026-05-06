@@ -8,12 +8,14 @@ export type AppSettings = {
   showGoalOnStartup: boolean;
   showInactiveDates: boolean;
   praiseMode: boolean;
+  showCompletedTasks: boolean;
 };
 
 const defaultSettings: AppSettings = {
   showGoalOnStartup: false,
   showInactiveDates: false,
   praiseMode: false,
+  showCompletedTasks: false,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -47,6 +49,10 @@ function normalizeAppSettings(
       typeof storedSettings.praiseMode === "boolean"
         ? storedSettings.praiseMode
         : defaultSettings.praiseMode,
+    showCompletedTasks:
+      typeof storedSettings.showCompletedTasks === "boolean"
+        ? storedSettings.showCompletedTasks
+        : defaultSettings.showCompletedTasks,
   };
 }
 

@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+---
+# 日付前後移動 + カレンダーポップオーバー表示
+- assertVisible:
+    id: dateNav.prev
+- tapOn:
+    id: dateNav.prev
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    id: dateNav.next
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    id: dateNav.label
+# Calendar popover (Modal の testID は iOS で a11y tree に出ないため内部要素で確認)
+- extendedWaitUntil:
+    visible: Previous month
+    timeout: 5000
+# 左端タップでモーダル外をクリック（CalendarCard は maxWidth=320 で中央配置）
+- tapOn:
+    point: "5%, 50%"
+- extendedWaitUntil:
+    notVisible: Previous month
+    timeout: 5000

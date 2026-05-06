@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { authMiddleware } from "@backend/middleware/authMiddleware";
+import { isMobileClient } from "@backend/utils/clientDetection";
 import { zValidator } from "@hono/zod-validator";
 import { googleLoginRequestSchema } from "@packages/types/request";
 import { z } from "zod";
@@ -29,7 +30,9 @@ export function createGoogleAuthRoutes() {
         clientIds,
       );
       setRefreshCookie(c, refreshToken);
-      return c.json({ user, token, refreshToken });
+      return c.json(
+        isMobileClient(c) ? { user, token, refreshToken } : { user, token },
+      );
     })
     .post(
       "/link",
@@ -86,7 +89,9 @@ export function createGoogleAuthRoutes() {
           clientIds,
         );
         setRefreshCookie(c, refreshToken);
-        return c.json({ user, token, refreshToken });
+        return c.json(
+          isMobileClient(c) ? { user, token, refreshToken } : { user, token },
+        );
       },
     )
     .get("/callback", (c) => {

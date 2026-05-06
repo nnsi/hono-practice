@@ -36,6 +36,7 @@ function makeBindings() {
   return {
     DB: testDB,
     JWT_SECRET,
+    JWT_SECRET_ADMIN: JWT_SECRET,
     JWT_AUDIENCE,
     NODE_ENV: "test",
   };

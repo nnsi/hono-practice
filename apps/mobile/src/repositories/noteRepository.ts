@@ -7,23 +7,11 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
+import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed") return v;
-  return "synced";
-}
 
 type NoteWithSync = NoteRecord & { _syncStatus: SyncStatus };
 
@@ -40,6 +28,17 @@ export function mapNoteRow(row: SqlRow): NoteWithSync {
     _syncStatus: toSyncStatus(row.sync_status),
   };
 }
+
+// --- Column map (camelCase → snake_case) ---
+
+const noteColumnMap: Record<string, string> = {
+  title: "title",
+  content: "content",
+  activityId: "activity_id",
+  deletedAt: "deleted_at",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+};
 
 // --- Adapter ---
 
@@ -89,21 +88,13 @@ const adapter: NoteDbAdapter = {
   },
   async update(id, changes) {
     const db = await getDatabase();
-    const columnMap: Record<string, string> = {
-      title: "title",
-      content: "content",
-      activityId: "activity_id",
-      deletedAt: "deleted_at",
-      updatedAt: "updated_at",
-      _syncStatus: "sync_status",
-    };
     const sets: string[] = [];
     const vals: (string | number | null)[] = [];
     for (const [key, val] of Object.entries(changes)) {
-      const col = columnMap[key];
+      const col = noteColumnMap[key];
       if (col) {
         sets.push(`${col} = ?`);
-        vals.push(val as string | number | null);
+        vals.push(toSqlBindable(val));
       }
     }
     vals.push(id);

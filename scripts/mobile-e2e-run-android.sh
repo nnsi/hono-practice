@@ -44,6 +44,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Reap stale backend left from a prior run that bypassed the trap (SIGKILL,
+# machine sleep, etc.). Otherwise the new backend can't bind :$BACKEND_PORT,
+# the readiness loop succeeds against the zombie, and Maestro silently runs
+# against an outdated seed.
+STALE_PIDS="$(lsof -ti:"$BACKEND_PORT" -sTCP:LISTEN 2>/dev/null || true)"
+if [ -n "$STALE_PIDS" ]; then
+  echo "[mobile-e2e-android] killing stale backend on :$BACKEND_PORT (pid=$STALE_PIDS)"
+  for PID in $STALE_PIDS; do kill "$PID" 2>/dev/null || true; done
+  for _ in $(seq 1 5); do
+    if [ -z "$(lsof -ti:"$BACKEND_PORT" -sTCP:LISTEN 2>/dev/null || true)" ]; then
+      break
+    fi
+    sleep 1
+  done
+  REMAINING="$(lsof -ti:"$BACKEND_PORT" -sTCP:LISTEN 2>/dev/null || true)"
+  if [ -n "$REMAINING" ]; then
+    for PID in $REMAINING; do kill -9 "$PID" 2>/dev/null || true; done
+  fi
+fi
+
 echo "[mobile-e2e-android] starting backend on :$BACKEND_PORT"
 (cd "$ROOT_DIR" && API_PORT="$BACKEND_PORT" pnpm mobile:e2e:server) >"$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!

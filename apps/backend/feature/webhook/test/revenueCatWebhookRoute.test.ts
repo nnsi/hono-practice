@@ -133,7 +133,7 @@ describe("RevenueCat webhook event handling", () => {
       const app = buildRevenueCatTestApp(mockUc);
       const res = await sendRevenueCatWebhook(
         app,
-        makeRevenueCatEvent("BILLING_ISSUE"),
+        makeRevenueCatEvent("PRODUCT_CHANGE"),
       );
 
       expect(res.status).toBe(200);

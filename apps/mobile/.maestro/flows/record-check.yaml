@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Check モード記録: kind を選択してから main ボタンで保存
+# E2Eチェック activity は kind (kind-G/kind-H) を持つため、kind 未選択だと
+# main ボタンが disabled になり save が走らない
+- assertVisible: E2Eチェック
+- tapOn: E2Eチェック
+- assertVisible:
+    id: recording.dialog
+- tapOn:
+    id: recording.check.kind.e2e00000-0000-4000-8000-000000000028
+- tapOn:
+    id: recording.check.main
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

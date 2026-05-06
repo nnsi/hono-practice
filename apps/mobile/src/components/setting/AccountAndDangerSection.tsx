@@ -8,15 +8,12 @@ import { Text, TouchableOpacity } from "react-native";
 import { clearLocalData } from "../../sync/initialSync";
 import { mobileTestIds } from "../../testing/testIds";
 import {
+  apiClient,
   clearRefreshToken,
   clearToken,
-  customFetch,
-  getApiUrl,
 } from "../../utils/apiClient";
 import { InlineConfirm, Section, type ShadowStyle } from "./SettingsParts";
 import { SETTINGS_KEY } from "./useAppSettings";
-
-const API_URL = getApiUrl();
 
 export function AccountAndDangerSection({
   shadow,
@@ -35,7 +32,7 @@ export function AccountAndDangerSection({
     setDeleteError("");
     setIsDeleting(true);
     try {
-      const res = await customFetch(`${API_URL}/user/me`, { method: "DELETE" });
+      const res = await apiClient.user.me.$delete();
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       await clearLocalData();
       clearToken();
@@ -44,9 +41,7 @@ export function AccountAndDangerSection({
       setShowDeleteConfirm(false);
       await logout();
     } catch {
-      setDeleteError(
-        "アカウント削除に失敗しました。ネットワーク接続を確認してください。",
-      );
+      setDeleteError(t("deleteAccountError"));
       setIsDeleting(false);
     }
   };
@@ -69,7 +64,7 @@ export function AccountAndDangerSection({
           </TouchableOpacity>
         ) : (
           <InlineConfirm
-            message="ログアウトしますか？"
+            message={t("logoutConfirm")}
             onConfirm={() => {
               logout();
               setShowLogoutConfirm(false);

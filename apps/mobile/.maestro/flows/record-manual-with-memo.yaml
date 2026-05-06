@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Manual モード + メモ入力: 数量2 + メモ入力して保存
+- assertVisible: E2Eランニング
+- tapOn: E2Eランニング
+- assertVisible:
+    id: recording.manual.quantityInput
+- tapOn:
+    id: recording.manual.quantityInput
+- eraseText: 8
+- inputText: "2"
+- tapOn:
+    id: recording.memoInput
+- inputText: e2e-memo
+- tapOn:
+    id: recording.dialog
+- tapOn:
+    id: recording.manual.save
+- extendedWaitUntil:
+    visible: Previous day
+    timeout: 10000

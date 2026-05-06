@@ -154,6 +154,7 @@ export function TasksPage() {
             {archivedTasks.length > 0 && (
               <TaskGroup
                 title={t("page.group.archived")}
+                sectionKey="archived"
                 tasks={archivedTasks}
                 titleColor="text-gray-500 dark:text-gray-400"
                 archived

@@ -1,41 +1,27 @@
 import type { MiddlewareHandler } from "hono";
+import { createMiddleware } from "hono/factory";
 
+import type { AppContext } from "@backend/context";
 import type { KeyValueStore } from "@backend/infra/kv/kv";
 import type { Tracer } from "@backend/lib/tracer";
+import { fireAndForget } from "@backend/utils/fireAndForget";
+import { getClientIp } from "@backend/utils/getClientIp";
 
 import type { RateLimitConfig } from "./rateLimitConfigs";
 
 export {
+  clientErrorRateLimitConfig,
   contactRateLimitConfig,
   loginRateLimitConfig,
   registerRateLimitConfig,
+  tokenRateLimitConfig,
+  webhookRateLimitConfig,
 } from "./rateLimitConfigs";
 
 export type RateLimitRecord = {
   count: number;
   windowStart: number;
 };
-
-/**
- * KV set を非ブロッキングで実行する。
- * Workers環境ではwaitUntilでバックグラウンド実行し、テスト環境ではawaitせず破棄。
- */
-function fireAndForget(
-  c: { executionCtx?: { waitUntil?: (promise: Promise<unknown>) => void } },
-  promise: Promise<unknown>,
-) {
-  try {
-    const ctx = c.executionCtx;
-    if (ctx?.waitUntil) {
-      ctx.waitUntil(promise);
-      return;
-    }
-  } catch {
-    // テスト環境では executionCtx がthrowする — 無視
-  }
-  // waitUntilがない環境: unhandled rejectionを防ぐ
-  promise.catch(() => {});
-}
 
 /**
  * 固定ウィンドウ方式のレートリミットミドルウェアを作成
@@ -50,10 +36,7 @@ export function createRateLimitMiddleware(
 
   return async (c, next) => {
     const t = tracer;
-    const ip =
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-      c.req.header("x-real-ip") ||
-      "anonymous";
+    const ip = getClientIp(c);
     const path = c.req.path;
 
     const key = `ratelimit:${keyGenerator({ ip, path })}`;
@@ -117,4 +100,28 @@ export function createRateLimitMiddleware(
 
     await next();
   };
+}
+
+/**
+ * 共通ヘルパー: KV があれば rate limit を適用、無ければ環境に応じて fail-close。
+ * production / stg では KV 未設定は設定不備なので 503 を返す（fail-open しない）。
+ * development / test では未設定でもスキップ（ローカル開発の利便性）。
+ */
+export function applyRateLimit(
+  config: RateLimitConfig,
+): MiddlewareHandler<AppContext> {
+  return createMiddleware<AppContext>(async (c, next) => {
+    const kv = c.env.RATE_LIMIT_KV;
+    if (!kv) {
+      const nodeEnv = c.env.NODE_ENV;
+      if (nodeEnv === "production" || nodeEnv === "stg") {
+        return c.json(
+          { message: "rate limit infrastructure unavailable" },
+          503,
+        );
+      }
+      return next();
+    }
+    return createRateLimitMiddleware(kv, config, c.get("tracer"))(c, next);
+  });
 }

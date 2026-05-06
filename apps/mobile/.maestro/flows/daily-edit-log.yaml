@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Daily ログ編集: seedの "E2Eランニング 5km" ログをタップ→数量変更→保存
+- tapOn:
+    text: "E2Eランニング.*"
+- assertVisible:
+    id: daily.editLog.dialog
+- tapOn:
+    id: daily.editLog.quantityInput
+- eraseText: 8
+- inputText: "10"
+- tapOn:
+    id: daily.editLog.dialog
+- tapOn:
+    id: daily.editLog.save
+- extendedWaitUntil:
+    notVisible:
+      id: daily.editLog.dialog
+    timeout: 10000

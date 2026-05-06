@@ -10,6 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 let timerCache: Map<string, TimerPersistData> = new Map();
+let initPromise: Promise<void> | null = null;
 
 async function loadTimerCache() {
   const allKeys = await AsyncStorage.getAllKeys();
@@ -34,6 +35,7 @@ async function loadTimerCache() {
 
 const asyncStorageAdapter: TimerStorageAdapter = {
   async restore(key) {
+    await initPromise;
     const stored = await AsyncStorage.getItem(key);
     if (!stored) return null;
     try {
@@ -51,14 +53,18 @@ const asyncStorageAdapter: TimerStorageAdapter = {
     AsyncStorage.removeItem(key);
     timerCache.delete(key);
   },
-  isOtherTimerRunning(excludeKey) {
+  async isOtherTimerRunning(excludeKey) {
+    await initPromise;
     for (const [key, data] of timerCache) {
       if (key !== excludeKey && data.isRunning) return true;
     }
     return false;
   },
   init() {
-    loadTimerCache();
+    if (!initPromise) {
+      initPromise = loadTimerCache();
+    }
+    return initPromise;
   },
 };
 

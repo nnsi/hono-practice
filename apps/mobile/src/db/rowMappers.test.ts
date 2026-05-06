@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from "vitest";
+
 vi.mock("expo-sqlite", () => ({}));
 vi.mock("./database", () => ({
   getDatabase: vi.fn(),
@@ -13,7 +15,7 @@ import { mapActivityLogRow } from "../repositories/activityLogRepository";
 import {
   mapActivityKindRow,
   mapActivityRow,
-} from "../repositories/activityRepository";
+} from "../repositories/activityRowMappers";
 import { mapGoalRow } from "../repositories/goalRepository";
 import { mapTaskRow } from "../repositories/taskRepository";
 

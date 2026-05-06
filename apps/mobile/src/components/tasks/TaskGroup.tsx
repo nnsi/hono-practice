@@ -1,11 +1,13 @@
 import { Text, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 import { TaskCard } from "./TaskCard";
 import type { TaskItem } from "./types";
 
 export function TaskGroup({
   title,
   tasks,
+  sectionKey,
   titleColor = "text-gray-700 dark:text-gray-300",
   highlight = false,
   completed = false,
@@ -18,6 +20,7 @@ export function TaskGroup({
 }: {
   title: string;
   tasks: TaskItem[];
+  sectionKey: string;
   titleColor?: string;
   highlight?: boolean;
   completed?: boolean;
@@ -31,7 +34,7 @@ export function TaskGroup({
   if (tasks.length === 0) return null;
 
   return (
-    <View>
+    <View testID={mobileTestIdsExt.tasksGroup.section(sectionKey)}>
       <View className="flex-row items-center mb-2">
         <Text className={`text-sm font-semibold ${titleColor}`}>{title} </Text>
         <Text className="text-xs text-gray-400 dark:text-gray-500">

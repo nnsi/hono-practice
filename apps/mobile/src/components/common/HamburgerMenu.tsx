@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useAuthContext } from "../../../app/_layout";
+import { useAuthContext } from "../../contexts/AuthContext";
 import { useThemeContext } from "../../contexts/ThemeContext";
 import { mobileTestIds } from "../../testing/testIds";
 import { useTabPreference } from "../setting/tabPreferenceStore";

@@ -56,6 +56,7 @@
   "deleteAccount": "Delete Account",
   "deleteAccountConfirm": "Deleting your account will remove all locally stored data. This action cannot be undone.",
   "deleteAccountButton": "Delete",
+  "deleteAccountError": "Failed to delete account. Please check your network connection.",
   "apiKeyManagement": "Manage API keys for external application access",
   "createNewKey": "+ Create New",
   "noApiKeys": "No API keys",
@@ -87,6 +88,7 @@
   "upgradeProPlan": "Upgrade to Pro Plan",
   "restorePurchases": "Restore Purchases",
   "logout": "Log Out",
+  "logoutConfirm": "Log out?",
   "dangerousOperations": "Dangerous Operations",
   "contact": "Contact Us"
 }

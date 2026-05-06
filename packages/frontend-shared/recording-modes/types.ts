@@ -28,7 +28,7 @@ export type RecordingModeProps = {
 export type TimerReturn = {
   isRunning: boolean;
   elapsedTime: number;
-  start: () => void;
+  start: () => Promise<boolean> | boolean;
   stop: () => void;
   reset: () => void;
   getElapsedSeconds: () => number;

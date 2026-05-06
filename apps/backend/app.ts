@@ -37,6 +37,11 @@ import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
 import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { loggerMiddleware } from "./middleware/loggerMiddleware";
+import { premiumMiddleware } from "./middleware/premiumMiddleware";
+import {
+  applyRateLimit,
+  webhookRateLimitConfig,
+} from "./middleware/rateLimitMiddleware";
 import { isLocalOrigin } from "./utils/isLocalOrigin";
 
 export const app = newHonoWithErrorHandling();
@@ -77,7 +82,9 @@ app.use("*", async (c, next) => {
   return middleware(c, next);
 });
 
+app.use("/webhooks/*", applyRateLimit(webhookRateLimitConfig));
 app.use("/users/*", authMiddleware);
+app.use("/users/ai/*", premiumMiddleware);
 
 const routes = app
   .get("/", async (c) => {
@@ -114,10 +121,6 @@ const routes = app
     zValidator("json", BatchRequestSchema),
     async (c) => {
       const requests = c.req.valid("json");
-
-      if (requests.length > 5) {
-        throw new AppError("Too many batch requests (max 5)", 400);
-      }
 
       for (const req of requests) {
         // クエリストリングを除いたパスを取得

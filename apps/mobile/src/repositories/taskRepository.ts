@@ -8,25 +8,13 @@ import {
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
+import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
 
 // --- Row mapping helpers (snake_case SQL → camelCase TS) ---
 
 type SqlRow = Record<string, unknown>;
 
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
 type TaskWithSync = TaskRecord & { _syncStatus: SyncStatus };
-
-function toSyncStatus(v: unknown): SyncStatus {
-  if (v === "pending" || v === "synced" || v === "failed") return v;
-  return "synced";
-}
 
 export function mapTaskRow(row: SqlRow): TaskWithSync {
   return {
@@ -47,6 +35,23 @@ export function mapTaskRow(row: SqlRow): TaskWithSync {
     _syncStatus: toSyncStatus(row.sync_status),
   };
 }
+
+// --- Column map (camelCase → snake_case) ---
+
+const taskColumnMap: Record<string, string> = {
+  title: "title",
+  activityId: "activity_id",
+  activityKindId: "activity_kind_id",
+  quantity: "quantity",
+  startDate: "start_date",
+  dueDate: "due_date",
+  doneDate: "done_date",
+  memo: "memo",
+  archivedAt: "archived_at",
+  deletedAt: "deleted_at",
+  updatedAt: "updated_at",
+  _syncStatus: "sync_status",
+};
 
 // --- Adapter ---
 
@@ -92,27 +97,13 @@ const adapter: TaskDbAdapter = {
   },
   async update(id, changes) {
     const db = await getDatabase();
-    const columnMap: Record<string, string> = {
-      title: "title",
-      activityId: "activity_id",
-      activityKindId: "activity_kind_id",
-      quantity: "quantity",
-      startDate: "start_date",
-      dueDate: "due_date",
-      doneDate: "done_date",
-      memo: "memo",
-      archivedAt: "archived_at",
-      deletedAt: "deleted_at",
-      updatedAt: "updated_at",
-      _syncStatus: "sync_status",
-    };
     const sets: string[] = [];
     const vals: (string | number | null)[] = [];
     for (const [key, val] of Object.entries(changes)) {
-      const col = columnMap[key];
+      const col = taskColumnMap[key];
       if (col) {
         sets.push(`${col} = ?`);
-        vals.push(val as string | number | null);
+        vals.push(toSqlBindable(val));
       }
     }
     vals.push(id);

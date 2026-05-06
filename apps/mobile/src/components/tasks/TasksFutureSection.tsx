@@ -59,6 +59,7 @@ export function TasksFutureSection({
             <TaskGroup
               title={t("page.group.notStarted")}
               tasks={notStarted}
+              sectionKey="notStarted"
               titleColor="text-purple-600"
               onToggleDone={handleToggleDone}
               onEdit={setEditingTask}
@@ -71,6 +72,7 @@ export function TasksFutureSection({
             <TaskGroup
               title={t("page.group.future")}
               tasks={future}
+              sectionKey="future"
               titleColor="text-indigo-600"
               onToggleDone={handleToggleDone}
               onEdit={setEditingTask}

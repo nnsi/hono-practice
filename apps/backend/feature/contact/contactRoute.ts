@@ -3,9 +3,10 @@ import { Hono } from "hono";
 import { noopTracer } from "@backend/lib/tracer";
 import { optionalAuthMiddleware } from "@backend/middleware/optionalAuthMiddleware";
 import {
+  applyRateLimit,
   contactRateLimitConfig,
-  createRateLimitMiddleware,
 } from "@backend/middleware/rateLimitMiddleware";
+import { getClientIp } from "@backend/utils/getClientIp";
 import { zValidator } from "@hono/zod-validator";
 import { contactRequestSchema } from "@packages/types/request";
 
@@ -25,15 +26,7 @@ export function createContactRoute() {
 
   app.use("*", optionalAuthMiddleware);
 
-  app.use("*", async (c, next) => {
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) return next();
-    return createRateLimitMiddleware(
-      kv,
-      contactRateLimitConfig,
-      c.get("tracer"),
-    )(c, next);
-  });
+  app.use("*", applyRateLimit(contactRateLimitConfig));
 
   app.use("*", async (c, next) => {
     const db = c.env.DB;
@@ -47,10 +40,7 @@ export function createContactRoute() {
 
   return app.post("/", zValidator("json", contactRequestSchema), async (c) => {
     const userId = c.get("userId");
-    const ip =
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-      c.req.header("x-real-ip") ||
-      "anonymous";
+    const ip = getClientIp(c);
     const params = c.req.valid("json");
 
     await c.var.h.createContact(params, ip, userId);

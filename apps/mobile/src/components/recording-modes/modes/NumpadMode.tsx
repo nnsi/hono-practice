@@ -3,6 +3,7 @@ import { useTranslation } from "@packages/i18n";
 import { ClipboardPaste } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../../testing/testIdsExt";
 import { FormButton } from "../../common/FormButton";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
@@ -97,6 +98,7 @@ export function NumpadMode(props: RecordingModeProps) {
                 onPress={() => vm.pressKey(key)}
                 accessibilityRole="button"
                 accessibilityLabel={keyLabel(key)}
+                testID={mobileTestIdsExt.recordingNumpad.key(key)}
               >
                 <Text className={keyTextStyle(key)}>{keyLabel(key)}</Text>
               </TouchableOpacity>
@@ -111,6 +113,7 @@ export function NumpadMode(props: RecordingModeProps) {
         label={vm.isSubmitting ? t("saving") : t("save")}
         onPress={vm.submit}
         disabled={vm.isSubmitting}
+        testID={mobileTestIdsExt.recordingNumpad.saveButton}
       />
     </View>
   );

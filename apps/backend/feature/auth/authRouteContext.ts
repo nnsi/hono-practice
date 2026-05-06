@@ -10,17 +10,34 @@ export type AuthRouteContext = AppContext & {
   };
 };
 
-/** リフレッシュトークンをhttpOnly cookieにセット */
-export function setRefreshCookie(
-  c: Context<AuthRouteContext>,
+const REFRESH_COOKIE_NAME = "refresh_token";
+const REFRESH_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function refreshCookieOptions(env: AppContext["Bindings"]) {
+  const isDev = env.NODE_ENV === "development" || env.NODE_ENV === "test";
+  return {
+    httpOnly: true as const,
+    secure: true as const,
+    sameSite: (isDev ? "None" : "Lax") as "None" | "Lax",
+    path: "/",
+  };
+}
+
+/** リフレッシュトークンを httpOnly cookie にセット（auth/user 共通） */
+export function setRefreshCookie<E extends AppContext>(
+  c: Context<E>,
   refreshToken: string,
 ) {
-  const isDev = c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test";
-  setCookie(c, "refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    ...(isDev ? { sameSite: "None" } : { sameSite: "Lax" }),
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    path: "/",
+  setCookie(c, REFRESH_COOKIE_NAME, refreshToken, {
+    ...refreshCookieOptions(c.env),
+    expires: new Date(Date.now() + REFRESH_COOKIE_MAX_AGE_MS),
+  });
+}
+
+/** リフレッシュトークン cookie をクリア（auth/user 共通） */
+export function clearRefreshCookie<E extends AppContext>(c: Context<E>) {
+  setCookie(c, REFRESH_COOKIE_NAME, "", {
+    ...refreshCookieOptions(c.env),
+    expires: new Date(0),
   });
 }

@@ -3,7 +3,7 @@ package com.actiko.widget
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 
 object VoiceApiKeyHelper {
     private const val PREF_NAME = "actiko_voice_api"
@@ -13,10 +13,13 @@ object VoiceApiKeyHelper {
     data class VoicePrefs(val apiKey: String?, val backendUrl: String?)
 
     private fun getEncryptedPrefs(context: Context): SharedPreferences {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
         return EncryptedSharedPreferences.create(
-            PREF_NAME,
-            MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
             context,
+            PREF_NAME,
+            masterKey,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
