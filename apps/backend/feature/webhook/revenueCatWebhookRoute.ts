@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { noopLogger } from "@backend/lib/logger";
+import { timingSafeEqual } from "@backend/lib/timingSafeEqual";
 import { noopTracer } from "@backend/lib/tracer";
 import { z } from "zod";
 
@@ -12,6 +14,9 @@ import {
 } from "../subscription/subscriptionCommandUsecase";
 import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
+import { handleRevenueCatEvent } from "./revenueCatEventHandler";
+
+const ANONYMOUS_USER_ID_PREFIX = "$RCAnonymousID:";
 
 type RevenueCatWebhookContext = AppContext & {
   Variables: {
@@ -59,7 +64,10 @@ export function createRevenueCatWebhookRoute(deps?: {
     }
 
     const authHeader = c.req.header("Authorization");
-    if (authHeader !== `Bearer ${authKey}`) {
+    if (
+      !authHeader ||
+      !(await timingSafeEqual(authHeader, `Bearer ${authKey}`))
+    ) {
       throw new AppError("Unauthorized", 401);
     }
 
@@ -67,60 +75,22 @@ export function createRevenueCatWebhookRoute(deps?: {
     if (!parsed.success) {
       throw new AppError("Invalid webhook payload", 400);
     }
-    const body = parsed.data;
-    const event = body.event;
-    const { commandUc } = c.var;
-    const userId = event.app_user_id;
-    const providerId = event.original_transaction_id ?? event.id;
 
-    const expirationDate = event.expiration_at_ms
-      ? new Date(event.expiration_at_ms)
-      : undefined;
+    const event = parsed.data.event;
+    const logger = c.get("logger") ?? noopLogger;
 
-    switch (event.type) {
-      case "INITIAL_PURCHASE":
-      case "RENEWAL": {
-        await commandUc.upsertSubscriptionFromPayment({
-          userId,
-          plan: "premium",
-          status: "active",
-          paymentProvider: "revenuecat",
-          paymentProviderId: providerId,
-          currentPeriodEnd: expirationDate,
-          eventType: event.type,
-          webhookId: event.id,
-        });
-        break;
-      }
-
-      // CANCELLATION = 期間終了時にキャンセル予定。現在の期間中はまだ有効なので plan: "premium" を維持
-      case "CANCELLATION": {
-        await commandUc.upsertSubscriptionFromPayment({
-          userId,
-          plan: "premium",
-          status: "active",
-          paymentProvider: "revenuecat",
-          paymentProviderId: providerId,
-          cancelAtPeriodEnd: true,
-          eventType: event.type,
-          webhookId: event.id,
-        });
-        break;
-      }
-
-      case "EXPIRATION": {
-        await commandUc.upsertSubscriptionFromPayment({
-          userId,
-          plan: "free",
-          status: "expired",
-          paymentProvider: "revenuecat",
-          paymentProviderId: providerId,
-          eventType: event.type,
-          webhookId: event.id,
-        });
-        break;
-      }
+    // M5: Anonymous RC user IDs ($RCAnonymousID:xxxx) arrive before the user
+    // has called Purchases.logIn(). Passing them to createUserId() causes a
+    // DomainValidateError → 400 → infinite RC retry loop. Return 200 early.
+    if (event.app_user_id.startsWith(ANONYMOUS_USER_ID_PREFIX)) {
+      logger.info("revenuecat_anonymous_user_skipped", {
+        eventType: event.type,
+        webhookId: event.id,
+      });
+      return c.json({ ok: true, skipped: "anonymous" }, 200);
     }
+
+    await handleRevenueCatEvent(event, c.var.commandUc, logger);
 
     return c.json({ received: true }, 200);
   });

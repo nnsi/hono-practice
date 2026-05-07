@@ -58,7 +58,6 @@ export const createPrivacyPolicySectionsEn = (
       "Service providers (processors acting on our behalf): The following providers process data on our instructions solely to help us operate the Service:\n\n" +
       "- Cloudflare (server, CDN, and storage infrastructure)\n" +
       "- Neon (database hosting)\n" +
-      "- Polar (web payment processing)\n" +
       "- RevenueCat (mobile subscription management)\n\n" +
       "Mobile platform providers (independent data controllers for payment processing): When you purchase a mobile subscription, the Apple App Store (iOS) or Google Play Store (Android) processes your payment and billing data as an independent data controller under its own terms and privacy policy. We receive from them only the subscription status and transaction identifiers necessary to provision and maintain your subscription.\n\n" +
       "Business transfer: If the Operator is involved in a merger, acquisition, sale of all or substantially all of its assets, corporate restructuring, or similar transaction, your personal data may be transferred to the successor entity as part of that transaction. We will notify you within the Service of any such transfer and of any material change to this Privacy Policy that results from it.\n\n" +

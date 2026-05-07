@@ -4,7 +4,7 @@ import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
-import { useAuthContext } from "../../../app/_layout";
+import { useAuthContext } from "../../contexts/AuthContext";
 import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
 
 WebBrowser.maybeCompleteAuthSession();

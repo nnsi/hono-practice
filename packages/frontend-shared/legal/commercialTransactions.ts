@@ -38,7 +38,6 @@ export const createCommercialTransactionsSections = (
     title: "販売価格",
     content:
       "サービス内の購入画面に表示される金額をご確認ください。価格は税込み表示です。\n\n" +
-      "- Web版: Polar の購入画面に表示される金額\n" +
       "- iOS版: App Store の購入画面に表示される金額\n" +
       "- Android版: Google Play の購入画面に表示される金額",
   },
@@ -50,14 +49,13 @@ export const createCommercialTransactionsSections = (
   {
     title: "支払方法",
     content:
-      "- Web版: クレジットカード（Polar の決済画面に表示される方法。Visa、Mastercard、American Express 等）\n" +
       "- iOS版: App Store（Apple ID）の支払方法に準じます\n" +
       "- Android版: Google Play の支払方法に準じます",
   },
   {
     title: "支払時期",
     content:
-      "初回購入時に即時決済されます。以降、毎月の更新日に自動的に課金されます。App Store / Google Play 経由の場合は各ストアの決済タイミングに従います。",
+      "初回購入時に即時決済され、以降は毎月の更新日に自動的に課金されます。決済タイミングは App Store / Google Play 各ストアのポリシーに従います。",
   },
   {
     title: "サービス提供時期",
@@ -68,7 +66,6 @@ export const createCommercialTransactionsSections = (
     content:
       "本サブスクリプションは月額の自動更新契約です。契約期間は1か月単位で、解約手続きを行わない限り毎月自動的に更新されます。\n\n" +
       "【解約方法】\n" +
-      "- Web版: 本アプリの設定画面 > プラン管理 からいつでも解約できます。\n" +
       "- iOS版: iOS の「設定」 > Apple ID > 「サブスクリプション」 > Actiko から解約してください。\n" +
       "- Android版: Google Play アプリ > メニュー > 「定期購入」 > Actiko から解約してください。\n\n" +
       "次回の課金を避けるには、現在の契約期間の終了日より前に解約手続きを完了してください。解約後も、現在の契約期間の終了日まで引き続きご利用いただけます。",
@@ -79,11 +76,11 @@ export const createCommercialTransactionsSections = (
       "本サービスはデジタルコンテンツの提供であり、お客様のご都合による購入後の返品・返金には応じられません。ただし、サービスの重大な不具合や二重課金等、当方の責めに帰すべき事由がある場合はこの限りではありません。\n\n" +
       "サブスクリプションはいつでも解約でき、解約後は現在の契約期間の終了日まで引き続きご利用いただけます。既に決済済みの月額料金について、契約期間の途中で解約された場合でも、その月分の返金には応じられません。\n\n" +
       "【プラットフォーム別の返金】\n" +
-      "- Web版: 当方の責めに帰すべき事由による返金は " +
-      config.contactEmail +
-      " までお問い合わせください。\n" +
       "- iOS版: App Store のサブスクリプション返金ポリシーに従います（Apple の「問題を報告する」ページからリクエスト）。\n" +
-      "- Android版: Google Play の返金ポリシーに従います。",
+      "- Android版: Google Play の返金ポリシーに従います。\n\n" +
+      "当方の責めに帰すべき事由による返金は " +
+      config.contactEmail +
+      " までお問い合わせください。",
   },
   {
     title: "動作環境",

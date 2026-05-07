@@ -25,6 +25,12 @@ export const mobileTestIds = {
     e2eFillSampleButton: "notes.e2e.fillSample",
     e2ePreviewText: "notes.e2e.preview",
     backButton: "notes.detail.back",
+    searchToggle: "notes.searchToggle",
+    searchInput: "notes.searchInput",
+    searchClear: "notes.searchClear",
+    filterAll: "notes.filterAll",
+    filterActivity: (activityId: string) =>
+      `notes.filterActivity.${activityId}`,
   },
   tasks: {
     page: "tasks.page",
@@ -172,26 +178,3 @@ export const mobileTestIds = {
     modal: "calendarPopover.modal",
   },
 } as const;
-
-function sanitizeTestIdSegment(value: string): string {
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return normalized || "item";
-}
-
-export function buildTaskCardTestIds(taskId: string) {
-  const suffix = sanitizeTestIdSegment(taskId);
-  return {
-    card: `tasks.card.${suffix}`,
-    toggle: `tasks.toggle.${suffix}`,
-    title: `tasks.title.${suffix}`,
-    moveToToday: `tasks.moveToToday.${suffix}`,
-    archive: `tasks.archive.${suffix}`,
-    edit: `tasks.edit.${suffix}`,
-    delete: `tasks.delete.${suffix}`,
-  };
-}

@@ -85,7 +85,7 @@ export async function parseResponses(
     if (raw.freezePeriods && raw.freezePeriods.length > 0) {
       data.freezePeriods = raw.freezePeriods.map(mapApiGoalFreezePeriod);
     }
-  } else if (freezePeriodsRes === null || !freezePeriodsRes?.ok) {
+  } else if (freezePeriodsRes !== null && !freezePeriodsRes?.ok) {
     allSynced = false;
   }
 
@@ -107,7 +107,7 @@ export async function parseResponses(
     if (raw.notes && raw.notes.length > 0) {
       data.notes = raw.notes.map(mapApiNote);
     }
-  } else if (notesRes === null || (notesRes !== undefined && !notesRes?.ok)) {
+  } else if (notesRes !== null && notesRes !== undefined && !notesRes.ok) {
     allSynced = false;
   }
 

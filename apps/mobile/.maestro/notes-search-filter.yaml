@@ -1,0 +1,32 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  NOTE_PREVIEW: Morning plan one two after list
+---
+- runScript: scripts/gen-run-tag.js
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+- runFlow: flows/open-notes.yaml
+
+# 検索対象になる note を作成（per-run unique tag で衝突回避）
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-search-${output.RUN_TAG}
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+
+# 検索で除外される 2 件目 note（タイトル先頭が異なる）
+- runFlow:
+    env:
+      NOTE_TITLE: other-${output.RUN_TAG}
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+
+# 新UIの動作確認: 検索で 2件 → 1件 → 2件 の絞り込み挙動を検証する
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-search-${output.RUN_TAG}
+      OTHER_NOTE_TITLE: other-${output.RUN_TAG}
+    file: flows/notes-search-filter.yaml

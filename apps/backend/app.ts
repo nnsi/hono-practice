@@ -38,6 +38,10 @@ import type { TracerSummary } from "./lib/tracer";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { loggerMiddleware } from "./middleware/loggerMiddleware";
 import { premiumMiddleware } from "./middleware/premiumMiddleware";
+import {
+  applyRateLimit,
+  webhookRateLimitConfig,
+} from "./middleware/rateLimitMiddleware";
 import { isLocalOrigin } from "./utils/isLocalOrigin";
 
 export const app = newHonoWithErrorHandling();
@@ -78,6 +82,7 @@ app.use("*", async (c, next) => {
   return middleware(c, next);
 });
 
+app.use("/webhooks/*", applyRateLimit(webhookRateLimitConfig));
 app.use("/users/*", authMiddleware);
 app.use("/users/ai/*", premiumMiddleware);
 

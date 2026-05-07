@@ -1,4 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+import { useNoteListFilter } from "@packages/frontend-shared/hooks";
 
 import { useActivities } from "../../hooks/useActivities";
 import { useActiveNotes } from "../../hooks/useNotes";
@@ -9,10 +11,31 @@ export function useNotesPage() {
   const { notes } = useActiveNotes();
   const { activities } = useActivities();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const sortedNotes = [...notes].sort((a, b) =>
-    b.updatedAt.localeCompare(a.updatedAt),
+  const sortedNotes = useMemo(
+    () => [...notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [notes],
   );
+
+  const {
+    searchText,
+    setSearchText,
+    selectedActivityId,
+    setSelectedActivityId,
+    filteredNotes,
+    groupedNotes,
+    hasActiveFilter,
+    totalCount,
+  } = useNoteListFilter(sortedNotes);
+
+  const filterActivities = useMemo(() => {
+    const usedActivityIds = new Set<string>();
+    for (const note of sortedNotes) {
+      if (note.activityId) usedActivityIds.add(note.activityId);
+    }
+    return activities.filter((a) => usedActivityIds.has(a.id));
+  }, [activities, sortedNotes]);
 
   const getActivityName = useCallback(
     (activityId: string | null) => {
@@ -28,11 +51,35 @@ export function useNotesPage() {
     syncEngine.syncAll();
   }, []);
 
+  const toggleSearch = useCallback(() => {
+    setIsSearchOpen((prev) => {
+      if (prev) setSearchText("");
+      return !prev;
+    });
+  }, [setSearchText]);
+
+  const clearSearch = useCallback(() => {
+    setSearchText("");
+  }, [setSearchText]);
+
   return {
-    notes: sortedNotes,
+    notesList: sortedNotes,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,
     handleDelete,
+    // filter state
+    searchText,
+    setSearchText,
+    selectedActivityId,
+    setSelectedActivityId,
+    filteredNotes,
+    groupedNotes,
+    hasActiveFilter,
+    totalCount,
+    isSearchOpen,
+    toggleSearch,
+    clearSearch,
+    filterActivities,
   };
 }

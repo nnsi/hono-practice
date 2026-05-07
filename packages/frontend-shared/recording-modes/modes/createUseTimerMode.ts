@@ -27,7 +27,7 @@ export type TimerModeViewModel = {
   elapsedTime: number;
   formattedTime: string;
   isStopped: boolean;
-  start: () => void;
+  start: () => Promise<boolean> | boolean;
   stop: () => void;
   reset: () => void;
   convertedQuantity: number;

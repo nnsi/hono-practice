@@ -9,10 +9,10 @@ import {
   useTabPreference,
   useTabPreferenceSync,
 } from "../../src/components/setting/tabPreferenceStore";
+import { useAuthContext } from "../../src/contexts/AuthContext";
 import { useThemeContext } from "../../src/contexts/ThemeContext";
 import { useNavigationSync } from "../../src/hooks/useNavigationSync";
 import { mobileTestIds } from "../../src/testing/testIds";
-import { useAuthContext } from "../_layout";
 
 const TAB_TEST_IDS: Record<keyof typeof MOBILE_TAB_METADATA, string> = {
   home: mobileTestIds.tabs.home,

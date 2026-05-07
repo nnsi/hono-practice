@@ -395,13 +395,13 @@ describe("initialSync", () => {
       expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
     });
 
-    it("notes取得のrejectはpartial syncとして扱いwatermarkを更新しない", async () => {
+    it("notes取得のrejectはbest-effortとして扱いwatermarkを更新する", async () => {
       const { notesGet } = setupMockApi();
       notesGet.mockRejectedValueOnce(new Error("notes failed"));
 
       await expect(performInitialSync("user-123")).resolves.toBeUndefined();
 
-      expect(localStorage.getItem("actiko-v2-lastSyncedAt")).toBeNull();
+      expect(localStorage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
       expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith([
         { id: "t1", title: "Task 1" },
       ]);

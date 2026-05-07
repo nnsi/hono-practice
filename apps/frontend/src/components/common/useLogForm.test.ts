@@ -18,7 +18,7 @@ vi.mock("../../hooks/useTimer", () => ({
   useTimer: vi.fn(() => ({
     isRunning: false,
     elapsedTime: 0,
-    start: vi.fn(() => true),
+    start: vi.fn(async () => true),
     stop: vi.fn(),
     reset: vi.fn(),
     getElapsedSeconds: vi.fn(() => 0),
@@ -76,7 +76,7 @@ describe("useLogForm", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: false,
       elapsedTime: 0,
-      start: vi.fn(() => true),
+      start: vi.fn(async () => true),
       stop: vi.fn(),
       reset: vi.fn(),
       getElapsedSeconds: vi.fn(() => 0),
@@ -111,7 +111,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 5000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 5),
@@ -130,7 +130,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: false,
         elapsedTime: 0,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 0),
@@ -149,7 +149,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 5000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 5),
@@ -277,7 +277,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 3600000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: mockReset,
         getElapsedSeconds: vi.fn(() => 3600),
@@ -310,7 +310,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 1800000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 1800),
@@ -343,7 +343,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: false,
         elapsedTime: 600000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 600),
@@ -414,7 +414,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 3600000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 3600),
@@ -444,7 +444,7 @@ describe("useLogForm", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         elapsedTime: 3600000,
-        start: vi.fn(() => true),
+        start: vi.fn(async () => true),
         stop: vi.fn(),
         reset: vi.fn(),
         getElapsedSeconds: vi.fn(() => 3600),

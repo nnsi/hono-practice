@@ -4,11 +4,19 @@ import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class VoiceRecordActivity : Activity() {
     companion object {
         private const val TAG = "VoiceRecord"
     }
+
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,32 +32,37 @@ class VoiceRecordActivity : Activity() {
 
         Log.d(TAG, "Received speechText (${speechText.length} chars)")
 
-        Thread {
+        scope.launch {
             try {
-                val result = VoiceRecordApi.recordFromSpeech(
-                    context = this,
-                    speechText = speechText
-                )
+                val result = withContext(Dispatchers.IO) {
+                    VoiceRecordApi.recordFromSpeech(
+                        context = this@VoiceRecordActivity,
+                        speechText = speechText
+                    )
+                }
                 val message = if (result.kindName != null) {
                     "「${result.activityName} / ${result.kindName}」を記録しました"
                 } else {
                     "「${result.activityName}」を記録しました"
                 }
-                runOnUiThread {
-                    showToast(message)
-                    finish()
-                }
+                showToast(message)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to record", e)
-                runOnUiThread {
-                    showToast("記録に失敗しました")
-                    finish()
-                }
+                showToast("記録に失敗しました")
+            } finally {
+                finish()
             }
-        }.start()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
     }
 
     private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        if (!isFinishing) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
     }
 }

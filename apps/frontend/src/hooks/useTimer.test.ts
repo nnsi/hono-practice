@@ -26,12 +26,12 @@ describe("useTimer", () => {
   });
 
   describe("start()", () => {
-    it("sets isRunning=true, saves to localStorage, returns true", () => {
+    it("sets isRunning=true, saves to localStorage, returns true", async () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
       let started: boolean | undefined;
-      act(() => {
-        started = result.current.start();
+      await act(async () => {
+        started = await result.current.start();
       });
 
       expect(started).toBe(true);
@@ -47,11 +47,11 @@ describe("useTimer", () => {
   });
 
   describe("stop()", () => {
-    it("sets isRunning=false and removes from localStorage", () => {
+    it("sets isRunning=false and removes from localStorage", async () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
-      act(() => {
-        result.current.start();
+      await act(async () => {
+        await result.current.start();
       });
       expect(result.current.isRunning).toBe(true);
       expect(localStorage.getItem("timer_act-1")).not.toBeNull();
@@ -66,11 +66,11 @@ describe("useTimer", () => {
   });
 
   describe("reset()", () => {
-    it("resets all state and removes from localStorage", () => {
+    it("resets all state and removes from localStorage", async () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
-      act(() => {
-        result.current.start();
+      await act(async () => {
+        await result.current.start();
       });
 
       // Advance time so elapsedTime > 0
@@ -92,7 +92,7 @@ describe("useTimer", () => {
   });
 
   describe("start() with another timer running", () => {
-    it("returns false and does not start", () => {
+    it("returns false and does not start", async () => {
       // Set up another running timer in localStorage
       localStorage.setItem(
         "timer_other-act",
@@ -106,8 +106,8 @@ describe("useTimer", () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
       let started: boolean | undefined;
-      act(() => {
-        started = result.current.start();
+      await act(async () => {
+        started = await result.current.start();
       });
 
       expect(started).toBe(false);
@@ -165,11 +165,11 @@ describe("useTimer", () => {
   });
 
   describe("getStartDate", () => {
-    it("returns Date object from startTime when timer is started", () => {
+    it("returns Date object from startTime when timer is started", async () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
-      act(() => {
-        result.current.start();
+      await act(async () => {
+        await result.current.start();
       });
 
       const startDate = result.current.getStartDate();
@@ -185,11 +185,11 @@ describe("useTimer", () => {
   });
 
   describe("interval updates elapsedTime", () => {
-    it("updates elapsedTime every 100ms while running", () => {
+    it("updates elapsedTime every 100ms while running", async () => {
       const { result } = renderHook(() => useTimer("act-1"));
 
-      act(() => {
-        result.current.start();
+      await act(async () => {
+        await result.current.start();
       });
 
       const initialElapsed = result.current.elapsedTime;

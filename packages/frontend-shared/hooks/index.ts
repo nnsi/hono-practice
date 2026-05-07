@@ -37,6 +37,8 @@ export { createUseGoalHeatmap } from "./useGoalHeatmap";
 export { createUseGoalsPage } from "./useGoalsPage";
 export { createUseLogForm } from "./useLogForm";
 export { createUseNavigationSync } from "./useNavigationSync";
+export type { UseNoteListFilterResult } from "./useNoteListFilter";
+export { useNoteListFilter } from "./useNoteListFilter";
 export type { UseStatsPageDeps } from "./useStatsPage";
 export { createUseStatsPage } from "./useStatsPage";
 export type { UseSubscriptionOptions } from "./useSubscription";

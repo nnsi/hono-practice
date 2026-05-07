@@ -2,17 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Platform } from "react-native";
 import type {
+  CustomerInfo,
   PurchasesOfferings,
   PurchasesPackage,
 } from "react-native-purchases";
 import Purchases from "react-native-purchases";
 
-import { useAuthContext } from "../../app/_layout";
+import { useAuthContext } from "../contexts/AuthContext";
 import { getDatabase } from "../db/database";
 import { initRevenueCat } from "../lib/revenueCat";
-import { customFetch, getApiUrl } from "../utils/apiClient";
-
-const API_URL = getApiUrl();
+import { apiGetMe } from "../utils/authApi";
 
 type RevenueCatState = {
   offerings: PurchasesOfferings | null;
@@ -25,14 +24,58 @@ type RevenueCatState = {
   refreshOfferings: () => Promise<void>;
 };
 
-async function refreshPlanFromBackend(): Promise<void> {
-  const res = await customFetch(`${API_URL}/users/subscription`);
-  if (!res.ok) return;
-  const data = await res.json();
+/**
+ * Pure function: evaluates whether the entitlement state changed and calls
+ * refreshPlanFromBackend when it did. Returns true if a refresh was triggered.
+ *
+ * Extracted for testability — the useEffect closure delegates to this.
+ */
+export function handleCustomerInfoUpdate(
+  info: CustomerInfo,
+  lastActiveRef: { current: boolean | null },
+): boolean {
+  const isPremiumActive = info.entitlements.active.premium !== undefined;
+  if (lastActiveRef.current === isPremiumActive) return false;
+  const prevActive = lastActiveRef.current;
+  lastActiveRef.current = isPremiumActive;
+  refreshPlanFromBackend().catch(() => {
+    // restore prev so the next identical event can re-trigger a retry
+    lastActiveRef.current = prevActive;
+  });
+  return true;
+}
+
+export async function refreshPlanFromBackend(): Promise<void> {
+  const user = await apiGetMe();
   const db = await getDatabase();
   await db.runAsync("UPDATE auth_state SET plan = ? WHERE id = 'current'", [
-    data.plan ?? "free",
+    user.plan ?? "free",
   ]);
+}
+
+export type PurchaseResult = { ok: boolean; userCancelled: boolean };
+
+export async function executePurchase(
+  pkg: PurchasesPackage,
+): Promise<PurchaseResult> {
+  try {
+    await Purchases.purchasePackage(pkg);
+    await refreshPlanFromBackend();
+    return { ok: true, userCancelled: false };
+  } catch (e: unknown) {
+    const err = e as { userCancelled?: boolean };
+    return { ok: false, userCancelled: err.userCancelled === true };
+  }
+}
+
+export async function executeRestore(): Promise<boolean> {
+  try {
+    await Purchases.restorePurchases();
+    await refreshPlanFromBackend();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function useRevenueCat(): RevenueCatState {
@@ -43,6 +86,7 @@ export function useRevenueCat(): RevenueCatState {
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializedRef = useRef(false);
+  const lastEntitlementActiveRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     if (!userId || Platform.OS === "web" || initializedRef.current) return;
@@ -50,6 +94,15 @@ export function useRevenueCat(): RevenueCatState {
     initRevenueCat(userId).catch(() => {
       // RevenueCat init failure is non-fatal
     });
+
+    const handleCustomerInfo = (info: CustomerInfo) => {
+      handleCustomerInfoUpdate(info, lastEntitlementActiveRef);
+    };
+
+    Purchases.addCustomerInfoUpdateListener(handleCustomerInfo);
+    return () => {
+      Purchases.removeCustomerInfoUpdateListener(handleCustomerInfo);
+    };
   }, [userId]);
 
   const refreshOfferings = useCallback(async () => {
@@ -71,17 +124,11 @@ export function useRevenueCat(): RevenueCatState {
       setIsPurchasing(true);
       setError(null);
       try {
-        await Purchases.purchasePackage(pkg);
-        await refreshPlanFromBackend();
-        return true;
-      } catch (e: unknown) {
-        const err = e as { userCancelled?: boolean };
-        if (err.userCancelled) {
-          // User cancelled — not an error
-          return false;
+        const result = await executePurchase(pkg);
+        if (!result.ok && !result.userCancelled) {
+          setError("購入に失敗しました。もう一度お試しください");
         }
-        setError("購入に失敗しました。もう一度お試しください");
-        return false;
+        return result.ok;
       } finally {
         setIsPurchasing(false);
       }
@@ -93,12 +140,9 @@ export function useRevenueCat(): RevenueCatState {
     setIsRestoring(true);
     setError(null);
     try {
-      await Purchases.restorePurchases();
-      await refreshPlanFromBackend();
-      return true;
-    } catch {
-      setError("購入の復元に失敗しました");
-      return false;
+      const ok = await executeRestore();
+      if (!ok) setError("購入の復元に失敗しました");
+      return ok;
     } finally {
       setIsRestoring(false);
     }

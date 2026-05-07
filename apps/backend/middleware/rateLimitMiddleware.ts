@@ -15,6 +15,7 @@ export {
   loginRateLimitConfig,
   registerRateLimitConfig,
   tokenRateLimitConfig,
+  webhookRateLimitConfig,
 } from "./rateLimitConfigs";
 
 export type RateLimitRecord = {

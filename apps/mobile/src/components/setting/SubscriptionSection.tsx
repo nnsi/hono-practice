@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
@@ -14,69 +12,57 @@ import {
 
 import { usePlan } from "../../hooks/usePlan";
 import { useRevenueCat } from "../../hooks/useRevenueCat";
-import { customFetch, getApiUrl } from "../../utils/apiClient";
+import { useSubscription } from "../../hooks/useSubscription";
 import { Section, type ShadowStyle } from "./SettingsParts";
-
-const API_URL = getApiUrl();
-
-type SubscriptionInfo = {
-  plan: string;
-  status: string;
-  currentPeriodEnd: string | null;
-};
 
 export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
   const { t } = useTranslation("settings");
   const router = useRouter();
   const plan = usePlan();
   const { isRestoring, restorePurchases, error } = useRevenueCat();
-  const [info, setInfo] = useState<SubscriptionInfo | null>(null);
-
-  const fetchInfo = useCallback(async () => {
-    try {
-      const res = await customFetch(`${API_URL}/users/subscription`);
-      if (res.ok) setInfo(await res.json());
-    } catch {
-      // non-fatal
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchInfo();
-  }, [fetchInfo]);
+  const { data: subscription, isLoading } = useSubscription();
 
   const isPremium = plan === "premium";
-  const periodEnd = info?.currentPeriodEnd
-    ? dayjs(info.currentPeriodEnd).format("YYYY/MM/DD")
+  const periodEnd = subscription?.currentPeriodEnd
+    ? dayjs(subscription.currentPeriodEnd).format("YYYY/MM/DD")
     : null;
 
   return (
     <Section icon={Crown} label={t("plan")} shadow={shadow}>
       <View className="px-4 py-3">
-        <View className="flex-row items-center">
-          <View
-            className={`px-2.5 py-1 rounded-full ${
-              isPremium
-                ? "bg-amber-100 dark:bg-amber-900/30"
-                : "bg-gray-100 dark:bg-gray-800"
-            }`}
-          >
-            <Text
-              className={`text-xs font-bold ${
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#6b7280" />
+        ) : (
+          <View className="flex-row items-center">
+            <View
+              className={`px-2.5 py-1 rounded-full ${
                 isPremium
-                  ? "text-amber-700 dark:text-amber-400"
-                  : "text-gray-600 dark:text-gray-400"
+                  ? "bg-amber-100 dark:bg-amber-900/30"
+                  : "bg-gray-100 dark:bg-gray-800"
               }`}
             >
-              {isPremium ? t("planPro") : t("planFree")}
-            </Text>
+              <Text
+                className={`text-xs font-bold ${
+                  isPremium
+                    ? "text-amber-700 dark:text-amber-400"
+                    : "text-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {isPremium ? t("planPro") : t("planFree")}
+              </Text>
+            </View>
+            {subscription?.status === "trial" && (
+              <Text className="ml-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                {t("trialStatus")}
+              </Text>
+            )}
+            {isPremium && periodEnd && (
+              <Text className="ml-3 text-xs text-gray-500 dark:text-gray-400">
+                {t("nextUpdateDate")}: {periodEnd}
+              </Text>
+            )}
           </View>
-          {isPremium && periodEnd && (
-            <Text className="ml-3 text-xs text-gray-500 dark:text-gray-400">
-              {t("nextUpdateDate")}: {periodEnd}
-            </Text>
-          )}
-        </View>
+        )}
       </View>
 
       {!isPremium && (

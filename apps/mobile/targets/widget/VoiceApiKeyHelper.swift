@@ -22,6 +22,7 @@ enum VoiceApiKeyHelper {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: keyData,
+            kSecAttrGeneric as String: keyData,
             kSecAttrAccessGroup as String: AppConfig.appGroupId,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
