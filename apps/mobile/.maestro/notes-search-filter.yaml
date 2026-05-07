@@ -17,8 +17,16 @@ env:
     file: flows/create-note.yaml
 - runFlow: flows/back-to-notes-list.yaml
 
-# 新UIの動作確認
+# 検索で除外される 2 件目 note（タイトル先頭が異なる）
+- runFlow:
+    env:
+      NOTE_TITLE: other-${output.RUN_TAG}
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+
+# 新UIの動作確認: 検索で 2件 → 1件 → 2件 の絞り込み挙動を検証する
 - runFlow:
     env:
       NOTE_TITLE: e2e-search-${output.RUN_TAG}
+      OTHER_NOTE_TITLE: other-${output.RUN_TAG}
     file: flows/notes-search-filter.yaml

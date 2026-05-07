@@ -24,6 +24,7 @@ import { useNotesPage } from "./useNotesPage";
 export function NotesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const {
+    notesList,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,
@@ -53,14 +54,12 @@ export function NotesPage() {
     }
   };
 
+  // Why: groupedNotes はフィルタ後の集合なので、削除確認中にフィルタが変わると
+  // 対象 note が消えてタイトルが空になる。フィルタ前の notesList から探すのが正しい。
   const noteForDeleteConfirm = useMemo(() => {
     if (!deleteConfirmId) return null;
-    for (const section of NOTE_SECTION_ORDER) {
-      const found = groupedNotes[section].find((n) => n.id === deleteConfirmId);
-      if (found) return found;
-    }
-    return null;
-  }, [deleteConfirmId, groupedNotes]);
+    return notesList.find((n) => n.id === deleteConfirmId) ?? null;
+  }, [deleteConfirmId, notesList]);
 
   const showInitialEmpty = totalCount === 0;
   const showFilteredEmpty =

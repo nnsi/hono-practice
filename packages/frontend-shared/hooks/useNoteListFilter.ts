@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { type GroupedNotes, groupNotesByDate } from "../utils/noteGrouping";
 
@@ -29,12 +29,39 @@ export function useNoteListFilter<T extends FilterableNote>(
     null,
   );
 
+  const usedActivityIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const note of notes) {
+      if (note.activityId) ids.add(note.activityId);
+    }
+    return ids;
+  }, [notes]);
+
+  // 選択中の activity が notes から消えたら自動リセット。
+  // Why: フィルタチップは「使われている activity のみ」表示する仕様のため、
+  // stale な selectedActivityId のままだと UI でフィルタ解除する手段がなくなる。
+  useEffect(() => {
+    if (
+      selectedActivityId !== null &&
+      !usedActivityIds.has(selectedActivityId)
+    ) {
+      setSelectedActivityId(null);
+    }
+  }, [selectedActivityId, usedActivityIds]);
+
+  // Why: useEffect の自動リセットは 1 frame 遅れるため、その間に「stale な activity で
+  // 0 件絞り込まれた状態」が一瞬表示される。derived state で stale を無視することで防ぐ。
+  const effectiveActivityId =
+    selectedActivityId !== null && usedActivityIds.has(selectedActivityId)
+      ? selectedActivityId
+      : null;
+
   const filteredNotes = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     return notes.filter((note) => {
       if (
-        selectedActivityId !== null &&
-        note.activityId !== selectedActivityId
+        effectiveActivityId !== null &&
+        note.activityId !== effectiveActivityId
       ) {
         return false;
       }
@@ -44,7 +71,7 @@ export function useNoteListFilter<T extends FilterableNote>(
       }
       return true;
     });
-  }, [notes, searchText, selectedActivityId]);
+  }, [notes, searchText, effectiveActivityId]);
 
   const groupedNotes = useMemo(
     () => groupNotesByDate(filteredNotes),
@@ -52,7 +79,7 @@ export function useNoteListFilter<T extends FilterableNote>(
   );
 
   const hasActiveFilter =
-    searchText.trim().length > 0 || selectedActivityId !== null;
+    searchText.trim().length > 0 || effectiveActivityId !== null;
 
   return {
     searchText,

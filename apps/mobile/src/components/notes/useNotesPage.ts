@@ -63,6 +63,7 @@ export function useNotesPage() {
   }, [setSearchText]);
 
   return {
+    notesList: sortedNotes,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,

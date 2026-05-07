@@ -11,7 +11,9 @@ export function useNotesPage() {
   const notes = useLiveQuery(() =>
     noteRepository
       .getAllActiveNotes()
-      .then((arr) => arr.sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1))),
+      .then((arr) =>
+        arr.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+      ),
   );
   const { activities } = useActivities();
 

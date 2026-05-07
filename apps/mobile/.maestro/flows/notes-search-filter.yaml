@@ -1,10 +1,14 @@
 appId: ${MAESTRO_APP_ID}
 ---
 # notes 一覧の検索バー + activityフィルタ + 日付セクション見出しの動作確認。
-# 前提: notes が1件以上ある状態（前段で create-note を実行しているか seed 済み）。
+# 前提: 親フローで「タイトルに ${NOTE_TITLE} を含む note」と「タイトルに ${OTHER_NOTE_TITLE} を含む note」を作成済み。
 
 - assertVisible:
     id: notes.page
+
+# 両noteが一覧に見えていることを前提確認
+- assertVisible: "${NOTE_TITLE}.*"
+- assertVisible: "${OTHER_NOTE_TITLE}.*"
 
 # 検索をトグルすると searchInput が出現する
 - assertNotVisible:
@@ -14,20 +18,24 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: notes.searchInput
 
-# 入力 → searchClear ボタンが出る
+# 検索: NOTE_TITLE で絞り込み → 一致 note 残る / 非一致 note 消える
 - tapOn:
     id: notes.searchInput
 - inputText: "${NOTE_TITLE}"
 - assertVisible:
     id: notes.searchClear
+- assertVisible: "${NOTE_TITLE}.*"
+- assertNotVisible: "${OTHER_NOTE_TITLE}.*"
 
-# searchClear を押すと入力がクリアされる
+# searchClear で入力リセット → 両方再表示
 - tapOn:
     id: notes.searchClear
 - assertNotVisible:
     id: notes.searchClear
+- assertVisible: "${NOTE_TITLE}.*"
+- assertVisible: "${OTHER_NOTE_TITLE}.*"
 
-# searchToggle で閉じる → searchInput が消える
+# searchToggle で閉じる
 - tapOn:
     id: notes.searchToggle
 - assertNotVisible:

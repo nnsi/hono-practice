@@ -29,7 +29,6 @@ export const mobileTestIds = {
     searchInput: "notes.searchInput",
     searchClear: "notes.searchClear",
     filterAll: "notes.filterAll",
-    filterNoActivity: "notes.filterNoActivity",
     filterActivity: (activityId: string) =>
       `notes.filterActivity.${activityId}`,
   },
