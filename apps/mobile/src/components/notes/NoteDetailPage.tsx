@@ -1,8 +1,15 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { ArrowLeft } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ArrowLeft, Check, Copy } from "lucide-react-native";
+import {
+  Clipboard,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { mobileTestIds } from "../../testing/testIds";
@@ -62,12 +69,16 @@ export function NoteDetailPage() {
 
   const handleCopyPlainText = async () => {
     try {
-      await navigator.clipboard.writeText(content);
+      if (Platform.OS === "web") {
+        await navigator.clipboard.writeText(content);
+      } else {
+        Clipboard.setString(content);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
-      // ignore if clipboard API is unavailable
+      setCopied(false);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -96,12 +107,20 @@ export function NoteDetailPage() {
         </Text>
 
         <View className="ml-2 flex-row items-center gap-2">
-          <FormButton
-            variant="secondary"
-            label={copied ? t("detail.copied") : t("detail.copyPlainText")}
+          <TouchableOpacity
             onPress={handleCopyPlainText}
-            className="px-3 py-1.5"
-          />
+            accessibilityRole="button"
+            accessibilityLabel={
+              copied ? t("detail.copied") : t("detail.copyPlainText")
+            }
+            className="h-10 w-10 items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600"
+          >
+            {copied ? (
+              <Check size={18} color="#059669" />
+            ) : (
+              <Copy size={18} color="#374151" />
+            )}
+          </TouchableOpacity>
           <FormButton
             variant="primary"
             label={isSubmitting ? t("detail.saving") : t("detail.save")}

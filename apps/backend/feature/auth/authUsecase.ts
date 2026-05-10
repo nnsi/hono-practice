@@ -38,12 +38,14 @@ export function newAuthUsecase(
     ),
     refreshToken: atomicRotateRefreshToken(
       refreshTokenRepo,
+      userRepo,
       jwtSecret,
       jwtAudience,
       tracer,
     ),
     atomicRotateRefreshToken: atomicRotateRefreshToken(
       refreshTokenRepo,
+      userRepo,
       jwtSecret,
       jwtAudience,
       tracer,

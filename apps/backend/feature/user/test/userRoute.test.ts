@@ -1,7 +1,13 @@
 import { testClient } from "hono/testing";
 
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
-import { userConsents, users } from "@infra/drizzle/schema";
+import {
+  apiKeys,
+  refreshTokens,
+  userConsents,
+  users,
+} from "@infra/drizzle/schema";
+import { hashApiKey } from "@packages/domain/apiKey/apiKeySchema";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
@@ -279,18 +285,39 @@ describe("userRoute", () => {
   });
 
   describe("DELETE /me", () => {
-    it("正常系：アカウント削除が成功する（204）", async () => {
+    it("正常系：アカウント削除時にユーザー・refresh token・API keyを失効する", async () => {
       const client = createAuthClient();
+      await testDB.insert(apiKeys).values({
+        id: "00000000-0000-4000-8000-000000000011",
+        userId: TEST_USER_ID,
+        key: await hashApiKey("api_delete_target"),
+        name: "delete target",
+        scopes: ["all"],
+        isActive: true,
+      });
 
       const res = await client.me.$delete();
       expect(res.status).toEqual(204);
 
-      // 削除後にユーザーのdeletedAtがセットされていることをDB直接確認
       const [user] = await testDB
         .select()
         .from(users)
         .where(eq(users.loginId, "test-user"));
       expect(user.deletedAt).not.toBeNull();
+
+      const tokens = await testDB
+        .select()
+        .from(refreshTokens)
+        .where(eq(refreshTokens.userId, TEST_USER_ID));
+      expect(tokens.length).toBeGreaterThan(0);
+      expect(tokens.every((token) => token.revokedAt !== null)).toBe(true);
+
+      const [apiKey] = await testDB
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.userId, TEST_USER_ID));
+      expect(apiKey.deletedAt).not.toBeNull();
+      expect(apiKey.isActive).toBe(false);
     });
 
     it("削除済みユーザーは/meで取得できない", async () => {

@@ -12,6 +12,7 @@
       "!**/*.gen.ts",
       "!**/*.js",
       "!**/db-data",
+      "!apps/mobile/android",
       "!apps/mobile/dist",
       "!**/stats.html",
       "!.worktrees",

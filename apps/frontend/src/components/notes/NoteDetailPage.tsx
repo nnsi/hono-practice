@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { ArrowLeft, FileX } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileX } from "lucide-react";
 
 import { FormButton } from "../common/FormButton";
 import { NoteDetailFab } from "./NoteDetailFab";
@@ -81,7 +81,7 @@ export function NoteDetailPage() {
   return (
     <div className="flex min-h-full flex-col bg-white">
       <div className="sticky top-0 z-10 sticky-header">
-        <div className="flex h-12 items-center justify-between gap-2 px-4">
+        <div className="flex h-12 items-center justify-between gap-2 pl-4 pr-14">
           <button
             type="button"
             onClick={handleBack}
@@ -96,12 +96,21 @@ export function NoteDetailPage() {
           </h1>
 
           <div className="flex shrink-0 items-center gap-2">
-            <FormButton
-              variant="secondary"
-              label={copied ? t("detail.copied") : t("detail.copyPlainText")}
+            <button
+              type="button"
               onClick={handleCopyPlainText}
-              className="px-3 py-1.5 text-sm"
-            />
+              aria-label={
+                copied ? t("detail.copied") : t("detail.copyPlainText")
+              }
+              title={copied ? t("detail.copied") : t("detail.copyPlainText")}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              {copied ? (
+                <Check size={16} className="text-emerald-600" />
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
             <FormButton
               variant="primary"
               label={isSubmitting ? t("detail.saving") : t("detail.save")}

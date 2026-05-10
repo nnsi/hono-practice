@@ -62,6 +62,7 @@ export function login(
 
 export function atomicRotateRefreshToken(
   refreshTokenRepo: RefreshTokenRepository,
+  userRepo: UserRepository,
   jwtSecret: string,
   jwtAudience: string,
   tracer: Tracer,
@@ -74,6 +75,10 @@ export function atomicRotateRefreshToken(
     if (!validateRefreshToken(storedToken)) {
       throw new AuthError("invalid refresh token (validation failed)");
     }
+    const user = await tracer.span("db.getUserById", () =>
+      userRepo.getUserById(storedToken.userId),
+    );
+    if (!user) throw new AuthError("invalid refresh token");
 
     const accessToken = await generateAccessToken(
       jwtSecret,

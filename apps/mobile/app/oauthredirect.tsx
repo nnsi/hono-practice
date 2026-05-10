@@ -7,7 +7,11 @@ import { useAuthContext } from "../src/contexts/AuthContext";
 import { apiClient, setRefreshToken, setToken } from "../src/utils/apiClient";
 import { apiGetMe } from "../src/utils/authApi";
 import { reportError } from "../src/utils/errorReporter";
-import { clearOAuthPending, getOAuthPending } from "../src/utils/oauthPending";
+import {
+  type OAuthPending,
+  clearOAuthPending,
+  getOAuthPending,
+} from "../src/utils/oauthPending";
 
 export default function OAuthRedirect() {
   const params = useLocalSearchParams<{ code?: string; error?: string }>();
@@ -38,15 +42,26 @@ export default function OAuthRedirect() {
     });
   }, []);
 
-  async function handleCodeExchange(
-    code: string,
-    pending: { codeVerifier: string; redirectUri: string },
-  ) {
+  async function handleCodeExchange(code: string, pending: OAuthPending) {
+    if (pending.intent === "link") {
+      const res = await apiClient.auth.google.exchange.link.$post({
+        json: {
+          code,
+          code_verifier: pending.codeVerifier,
+          redirect_uri: pending.redirectUri,
+        },
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      router.replace("/(tabs)/settings");
+      return;
+    }
+
     const res = await apiClient.auth.google.exchange.$post({
       json: {
         code,
         code_verifier: pending.codeVerifier,
         redirect_uri: pending.redirectUri,
+        consents: pending.consents,
       },
     });
 
