@@ -5,5 +5,5 @@ export function useActiveNotes() {
   const notes = useLiveQuery("notes", async () => {
     return noteRepository.getAllActiveNotes();
   });
-  return { notes: notes ?? [] };
+  return { notes: notes ?? [], isReady: notes !== undefined };
 }

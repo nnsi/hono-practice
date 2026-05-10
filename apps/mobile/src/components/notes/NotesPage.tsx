@@ -25,6 +25,7 @@ export function NotesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const {
     notesList,
+    isReady,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,
@@ -61,8 +62,9 @@ export function NotesPage() {
     return notesList.find((n) => n.id === deleteConfirmId) ?? null;
   }, [deleteConfirmId, notesList]);
 
-  const showInitialEmpty = totalCount === 0;
+  const showInitialEmpty = isReady && totalCount === 0;
   const showFilteredEmpty =
+    isReady &&
     !showInitialEmpty &&
     NOTE_SECTION_ORDER.every((s) => groupedNotes[s].length === 0);
 
