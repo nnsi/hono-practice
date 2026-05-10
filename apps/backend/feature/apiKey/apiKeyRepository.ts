@@ -47,6 +47,7 @@ export type ApiKeyRepository<T = QueryExecutor> = {
   findApiKeyById: (id: string, userId: string) => Promise<ApiKey | null>;
   updateApiKey: (id: string, data: UpdateApiKeyData) => Promise<ApiKey | null>;
   softDeleteApiKey: (id: string) => Promise<boolean>;
+  softDeleteApiKeysByUserId: (userId: string) => Promise<number>;
   hardDeleteApiKeysByUserId: (userId: string) => Promise<number>;
   withTx: (tx: T) => ApiKeyRepository<T>;
 };
@@ -61,6 +62,7 @@ export function newApiKeyRepository(
     findApiKeyById: findApiKeyById(db),
     updateApiKey: updateApiKey(db),
     softDeleteApiKey: softDeleteApiKey(db),
+    softDeleteApiKeysByUserId: softDeleteApiKeysByUserId(db),
     hardDeleteApiKeysByUserId: hardDeleteApiKeysByUserId(db),
     withTx: (tx) => newApiKeyRepository(tx),
   };
@@ -173,5 +175,17 @@ function softDeleteApiKey(db: QueryExecutor) {
       .returning();
 
     return !!result;
+  };
+}
+
+function softDeleteApiKeysByUserId(db: QueryExecutor) {
+  return async (userId: string): Promise<number> => {
+    const result = await db
+      .update(apiKeys)
+      .set({ deletedAt: new Date(), isActive: false })
+      .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.deletedAt)))
+      .returning();
+
+    return result.length;
   };
 }

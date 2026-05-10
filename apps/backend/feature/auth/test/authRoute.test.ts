@@ -13,7 +13,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import type { RateLimitRecord } from "@backend/middleware/rateLimitMiddleware";
 import { testDB } from "@backend/test.setup";
-import { refreshTokens, users } from "@infra/drizzle/schema";
+import { refreshTokens, userProviders, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { v7 } from "uuid";
@@ -191,6 +191,10 @@ describe("AuthRoute Integration Tests", () => {
 
   afterEach(async () => {
     await testDB.delete(refreshTokens).execute();
+    await testDB
+      .delete(userProviders)
+      .where(eq(userProviders.userId, testUserId))
+      .execute();
     await testDB.delete(users).where(eq(users.id, testUserId)).execute();
   });
 
@@ -352,6 +356,27 @@ describe("AuthRoute Integration Tests", () => {
       expect(newStoredToken?.revokedAt).toBeNull();
     });
 
+    it("異常系：削除済みユーザーのリフレッシュトークンは更新できない", async () => {
+      await testDB
+        .update(users)
+        .set({ deletedAt: new Date() })
+        .where(eq(users.id, testUserId))
+        .execute();
+
+      const client = createTestClient(false);
+      const res = await client.token.$post(
+        {},
+        {
+          headers: {
+            Cookie: `refresh_token=${validPlainRefreshToken}`,
+          },
+        },
+      );
+
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ message: "invalid refresh token" });
+    });
+
     it("異常系：リフレッシュトークンが無効 (not found)", async () => {
       const client = createTestClient(false);
       const res = await client.token.$post(
@@ -451,6 +476,27 @@ describe("AuthRoute Integration Tests", () => {
       expect(body).toEqual({ message: "success" });
       // Only refresh token cookie is cleared
       expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=;/);
+    });
+
+    it("正常系：モバイル向けヘッダーのリフレッシュトークンでログアウト成功", async () => {
+      const client = createTestClient(true);
+      const res = await client.logout.$post(
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${validJwtToken}`,
+            "X-Refresh-Token": validPlainRefreshToken,
+          },
+        },
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ message: "success" });
+
+      const storedToken = await refreshTokenRepo.getRefreshTokenByToken(
+        validPlainRefreshToken,
+      );
+      expect(storedToken).toBeNull();
     });
 
     it("異常系：認証されていない", async () => {
@@ -809,12 +855,41 @@ describe("AuthRoute Integration Tests", () => {
           code: "expired-code",
           code_verifier: "mock-verifier",
           redirect_uri: "https://example.com/callback",
+          consents: { age: true, terms: "2026-05-01", privacy: "2026-05-01" },
         },
       });
 
       expect(res.status).toBe(400);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe("Failed to exchange code");
+    });
+
+    it("正常系：コード交換でGoogleアカウント連携成功", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ id_token: mockGoogleToken }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const client = createTestClient(false);
+      const res = await client.google.exchange.link.$post(
+        {
+          json: {
+            code: "mock-auth-code",
+            code_verifier: "mock-verifier",
+            redirect_uri: "https://example.com/callback",
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${await createJwtToken(testUserId)}`,
+          },
+        },
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ message: "アカウントを紐付けました" });
     });
   });
 });

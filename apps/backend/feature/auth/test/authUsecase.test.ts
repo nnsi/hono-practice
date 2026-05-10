@@ -173,12 +173,22 @@ describe("AuthUsecase", () => {
         id: oldTokenId,
         selector: oldSelector,
       });
+      const user = createUserEntity({
+        id: userId,
+        loginId: "refresh-user",
+        password: "hashed-password1",
+        name: null,
+        type: "persisted",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       when(
         refreshTokenRepo.revokeAndGetRefreshToken(
           `${oldSelector}.${oldPlainToken}`,
         ),
       ).thenResolve(oldToken);
+      when(userRepo.getUserById(userId)).thenResolve(user);
 
       when(refreshTokenRepo.createRefreshToken(anything())).thenCall(
         async (token: RefreshToken) => token,
@@ -196,6 +206,28 @@ describe("AuthUsecase", () => {
           `${oldSelector}.${oldPlainToken}`,
         ),
       ).once();
+      verify(userRepo.getUserById(userId)).once();
+    });
+
+    it("異常系：削除済みユーザーのリフレッシュトークン", async () => {
+      const oldToken = createMockRefreshToken(userId, oldHashedToken, {
+        id: oldTokenId,
+        selector: oldSelector,
+      });
+
+      when(
+        refreshTokenRepo.revokeAndGetRefreshToken(
+          `${oldSelector}.${oldPlainToken}`,
+        ),
+      ).thenResolve(oldToken);
+      when(userRepo.getUserById(userId)).thenResolve(undefined);
+
+      await expect(
+        usecase.refreshToken(`${oldSelector}.${oldPlainToken}`),
+      ).rejects.toThrow(new AuthError("invalid refresh token"));
+
+      verify(userRepo.getUserById(userId)).once();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 
     it("異常系：無効なリフレッシュトークン", async () => {

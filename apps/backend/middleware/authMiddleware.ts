@@ -5,6 +5,7 @@ import { createUserId } from "@packages/domain/user/userSchema";
 
 import type { HonoContext } from "../context";
 import { UnauthorizedError } from "../error";
+import { newUserRepository } from "../feature/user";
 
 export function verifyToken(jwt: string, secret: string) {
   return verify(jwt, secret, "HS256");
@@ -51,8 +52,15 @@ export async function authMiddleware(c: HonoContext, next: Next) {
       throw new UnauthorizedError("unauthorized");
     }
 
+    const parsedUserId = createUserId(userId);
+    const userRepo = newUserRepository(c.env.DB);
+    const user = await userRepo.getUserById(parsedUserId);
+    if (!user) {
+      throw new UnauthorizedError("unauthorized");
+    }
+
     c.set("jwtPayload", payload);
-    c.set("userId", createUserId(userId));
+    c.set("userId", parsedUserId);
   } catch (_e) {
     throw new UnauthorizedError("unauthorized");
   }

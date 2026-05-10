@@ -17,6 +17,7 @@ import {
 } from "@packages/types/request";
 
 import type { AppContext } from "../../context";
+import { newApiKeyRepository } from "../apiKey/apiKeyRepository";
 import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
 import { setRefreshCookie } from "../auth/authRouteContext";
@@ -37,6 +38,8 @@ export function createUserRoute() {
       Variables: {
         h: ReturnType<typeof newUserHandler>;
         authH: ReturnType<typeof newAuthHandler>;
+        apiKeyRepo: ReturnType<typeof newApiKeyRepository>;
+        refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
       };
     }
   >();
@@ -53,6 +56,7 @@ export function createUserRoute() {
       db,
       logger.child({ repository: "refresh-token" }),
     );
+    const apiKeyRepo = newApiKeyRepository(db);
     const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
@@ -89,6 +93,8 @@ export function createUserRoute() {
 
     c.set("h", h);
     c.set("authH", authH);
+    c.set("apiKeyRepo", apiKeyRepo);
+    c.set("refreshTokenRepo", refreshTokenRepo);
 
     return next();
   });
@@ -145,6 +151,8 @@ export function createUserRoute() {
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
       await c.var.h.deleteMe(userId);
+      await c.var.refreshTokenRepo.revokeRefreshTokenAllByUserId(userId);
+      await c.var.apiKeyRepo.softDeleteApiKeysByUserId(userId);
       return c.body(null, 204);
     });
 }

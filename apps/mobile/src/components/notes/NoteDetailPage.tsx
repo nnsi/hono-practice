@@ -2,7 +2,14 @@ import { useState } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, Check, Copy } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Clipboard,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { mobileTestIds } from "../../testing/testIds";
@@ -62,12 +69,16 @@ export function NoteDetailPage() {
 
   const handleCopyPlainText = async () => {
     try {
-      await navigator.clipboard.writeText(content);
+      if (Platform.OS === "web") {
+        await navigator.clipboard.writeText(content);
+      } else {
+        Clipboard.setString(content);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
-      // ignore if clipboard API is unavailable
+      setCopied(false);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (

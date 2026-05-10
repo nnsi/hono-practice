@@ -2,10 +2,12 @@ import { trackServerTimeFromResponse } from "@packages/sync-engine";
 import type { Consents } from "@packages/types/request";
 
 import {
+  apiRefreshToken,
   clearRefreshToken,
   clearToken,
   customFetch,
   getApiUrl,
+  getRefreshToken,
   setRefreshToken,
   setToken,
 } from "./apiClient";
@@ -93,7 +95,16 @@ export async function apiGetMe() {
 
 export async function apiLogout() {
   try {
-    await customFetch(`${API_URL}/auth/logout`, { method: "POST" });
+    try {
+      await apiRefreshToken();
+    } catch {
+      // Continue with the best token currently stored.
+    }
+    const refreshToken = await getRefreshToken();
+    await customFetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      headers: refreshToken ? { "X-Refresh-Token": refreshToken } : undefined,
+    });
   } catch {
     // Ignore logout errors - clear local state regardless
   }

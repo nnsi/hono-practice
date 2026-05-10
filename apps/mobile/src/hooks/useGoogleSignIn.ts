@@ -4,26 +4,34 @@ import type { Consents } from "@packages/types/request";
 import * as Google from "expo-auth-session/providers/google";
 import { Platform } from "react-native";
 
+import { getApiUrl } from "../utils/apiClient";
 import { setOAuthPending } from "../utils/oauthPending";
+
+const API_URL = getApiUrl();
 
 export function useGoogleSignIn({
   onLogin,
   onError,
   consents,
+  intent = "login",
 }: {
   onLogin: (idToken: string, consents?: Consents) => Promise<void>;
   onError: (message: string) => void;
   consents?: Consents;
+  intent?: "login" | "link";
 }) {
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest(
       {
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId:
+          process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ??
+          process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ??
+          "",
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
       },
       Platform.OS === "android"
-        ? { native: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback` }
+        ? { native: `${API_URL}/auth/google/callback` }
         : undefined,
     );
 
@@ -31,10 +39,12 @@ export function useGoogleSignIn({
     if (Platform.OS === "android" && googleRequest?.codeVerifier) {
       setOAuthPending({
         codeVerifier: googleRequest.codeVerifier,
-        redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+        redirectUri: `${API_URL}/auth/google/callback`,
+        intent,
+        consents,
       });
     }
-  }, [googleRequest]);
+  }, [googleRequest, intent, consents]);
 
   useEffect(() => {
     if (googleResponse?.type === "success") {
@@ -47,7 +57,7 @@ export function useGoogleSignIn({
         );
       }
     }
-  }, [googleResponse, onLogin, onError]);
+  }, [googleResponse, onLogin, onError, consents]);
 
   const handleGooglePress = async () => {
     try {

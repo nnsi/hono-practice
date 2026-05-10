@@ -5,10 +5,13 @@ import * as Google from "expo-auth-session/providers/google";
 import { Link } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
+import { getApiUrl } from "../../utils/apiClient";
 import { apiGetMe, apiGoogleLink } from "../../utils/authApi";
 import { setOAuthPending } from "../../utils/oauthPending";
 import { GoogleMark } from "../common/GoogleMark";
 import { Divider, Section, type ShadowStyle } from "./SettingsParts";
+
+const API_URL = getApiUrl();
 
 function useGoogleAccount() {
   const [isGoogleLinked, setIsGoogleLinked] = useState(false);
@@ -24,12 +27,15 @@ function useGoogleAccount() {
     Google.useAuthRequest(
       {
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+        androidClientId:
+          process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ??
+          process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ??
+          "",
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? "",
       },
       Platform.OS === "android"
         ? {
-            native: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+            native: `${API_URL}/auth/google/callback`,
           }
         : undefined,
     );
@@ -38,7 +44,8 @@ function useGoogleAccount() {
     if (Platform.OS === "android" && googleRequest?.codeVerifier) {
       setOAuthPending({
         codeVerifier: googleRequest.codeVerifier,
-        redirectUri: `${process.env.EXPO_PUBLIC_API_URL}/auth/google/callback`,
+        redirectUri: `${API_URL}/auth/google/callback`,
+        intent: "link",
       });
     }
   }, [googleRequest]);

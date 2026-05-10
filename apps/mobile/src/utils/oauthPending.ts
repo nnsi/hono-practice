@@ -1,6 +1,10 @@
-type OAuthPending = {
+import type { Consents } from "@packages/types/request";
+
+export type OAuthPending = {
   codeVerifier: string;
   redirectUri: string;
+  intent: "login" | "link";
+  consents?: Consents;
 };
 
 let pending: OAuthPending | null = null;
