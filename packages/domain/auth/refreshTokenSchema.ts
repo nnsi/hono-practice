@@ -12,6 +12,7 @@ export const refreshTokenSchema = z.object({
   token: z.string(),
   expiresAt: z.date(),
   revokedAt: z.date().nullable(),
+  rotatedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
@@ -40,6 +41,7 @@ export function createRefreshToken(
     createdAt: now,
     updatedAt: now,
     revokedAt: null,
+    rotatedAt: null,
     deletedAt: null,
   });
 

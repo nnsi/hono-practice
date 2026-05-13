@@ -281,6 +281,13 @@
       "when": 1775919600000,
       "tag": "0039_tab_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1778976000000,
+      "tag": "0040_refresh_token_rotated_at",
+      "breakpoints": true
     }
   ]
 }
