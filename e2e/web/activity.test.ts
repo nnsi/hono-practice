@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
