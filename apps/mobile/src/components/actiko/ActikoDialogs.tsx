@@ -50,6 +50,7 @@ export function ActikoDialogs({
         onCreated={onActivityChanged}
       />
       <EditActivityDialog
+        key={editActivity?.id ?? "edit-closed"}
         visible={editActivity !== null}
         onClose={onEditClose}
         activity={editActivity}
