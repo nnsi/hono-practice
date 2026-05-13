@@ -95,11 +95,14 @@ describe("activity", () => {
     await page.click("button.border-red-300");
     await page.click("button.bg-red-600");
 
-    // ダイアログが閉じ、アクティビティが消える
+    // ダイアログが閉じ、アクティビティが消える（Dexie liveQuery の伝播を待つ）
     await page.waitForSelector(".modal-backdrop", {
       state: "detached",
       timeout: 15000,
     });
-    expect(await page.locator('text="削除対象活動"').isVisible()).toBe(false);
+    await page.waitForSelector('text="削除対象活動"', {
+      state: "detached",
+      timeout: 15000,
+    });
   });
 });
