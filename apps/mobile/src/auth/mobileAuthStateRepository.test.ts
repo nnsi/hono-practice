@@ -81,7 +81,7 @@ describe("mobileAuthStateRepository", () => {
     expect(mockDb._row.plan).toBe("free");
   });
 
-  it("clearLastLoginAt は last_login_at を空文字にする", async () => {
+  it("clearLastLoginAt 後の getLastLoginAt は null を返す (空文字を null に正規化)", async () => {
     const mockDb = createMockDb();
     mockGetDatabase.mockResolvedValue(mockDb);
     const repo = createMobileAuthStateRepository();
@@ -89,7 +89,8 @@ describe("mobileAuthStateRepository", () => {
     await repo.setLastLoginAt("2026-05-14T10:00:00Z");
     await repo.clearLastLoginAt();
 
-    expect(mockDb._row.last_login_at).toBe("");
+    // 公開インターフェース経由で検証 (内部表現は実装詳細)
+    expect(await repo.getLastLoginAt()).toBeNull();
   });
 
   it("行が未作成の状態で getCurrentUserId / getLastLoginAt を呼ぶと null を返す", async () => {

@@ -90,4 +90,9 @@ export type AuthController = {
   // 通常 transport を経由しないログイン経路用)
   applyExternalSession(session: AuthSession): Promise<void>;
   logout(): Promise<{ ok: boolean }>;
+  // server cleanup を試みず、local state を強制的にリセットする。delete account
+  // 後など「backend で既に user が削除済み」のため通常 logout が必ず失敗する
+  // ケース用。通常の logout には使わない (Web の httpOnly cookie 残存対策のため
+  // 通常 logout は失敗時に local state を保持する設計)
+  forceLogout(): Promise<void>;
 };

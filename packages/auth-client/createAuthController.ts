@@ -166,11 +166,20 @@ export function createAuthController(
     logout: async () => {
       generation++;
       clearOnlineRetry();
-      await resetAuthState();
-      // ローカル state は必ず clear。サーバー側 clear の成否は呼び出し側で
-      // UI 警告等に使うため返す (Web の httpOnly cookie 残存対策)。
+      // transport.logout は authMiddleware が Bearer 必須なので、有効な
+      // access token (tokenHolder) が残っている状態で先に呼ぶ。
+      // 失敗時は local state を保持して再試行可能にする — Web の httpOnly
+      // cookie が残ったままだと次回起動で自動再ログインしてしまう。
       const result = await transport.logout().catch(() => ({ ok: false }));
+      if (result.ok) {
+        await resetAuthState();
+      }
       return result;
+    },
+    forceLogout: async () => {
+      generation++;
+      clearOnlineRetry();
+      await resetAuthState();
     },
   };
 }

@@ -6,11 +6,3 @@ export const tokenHolder = {
     accessToken = token;
   },
 };
-
-export function setToken(token: string) {
-  tokenHolder.setToken(token);
-}
-
-export function clearToken() {
-  tokenHolder.setToken(null);
-}

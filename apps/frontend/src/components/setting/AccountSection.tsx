@@ -24,9 +24,10 @@ export function AccountSection() {
     } catch {
       // オフライン時もローカル削除は続行
     }
-    // db.delete() より先に authController.logout を呼んで lastLoginAt を
-    // 正規ルートでクリアする (db.delete 後は Dexie の write が失敗する)
-    await authController.logout();
+    // backend で user 削除済みのため通常 logout は server 401 で失敗するのが想定。
+    // forceLogout で state を強制リセットしてから db.delete を実行する
+    // (db.delete 後は Dexie の write が失敗するため lastLoginAt clear が先)
+    await authController.forceLogout();
     await db.delete();
     clearAppSettings();
     window.location.href = "/";
