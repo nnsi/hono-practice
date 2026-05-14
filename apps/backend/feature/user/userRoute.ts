@@ -38,8 +38,6 @@ export function createUserRoute() {
       Variables: {
         h: ReturnType<typeof newUserHandler>;
         authH: ReturnType<typeof newAuthHandler>;
-        apiKeyRepo: ReturnType<typeof newApiKeyRepository>;
-        refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
       };
     }
   >();
@@ -86,6 +84,7 @@ export function createUserRoute() {
       txRunner,
       subscriptionUc,
       tracer,
+      { refreshTokenRepo, apiKeyRepo },
       passwordVerifier,
     );
     const authH = newAuthHandler(authUc, uc.getUserById);
@@ -93,8 +92,6 @@ export function createUserRoute() {
 
     c.set("h", h);
     c.set("authH", authH);
-    c.set("apiKeyRepo", apiKeyRepo);
-    c.set("refreshTokenRepo", refreshTokenRepo);
 
     return next();
   });
@@ -152,11 +149,9 @@ export function createUserRoute() {
     )
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
+      // usecase に refresh token revoke + API key soft delete を集約。route 層は
+      // HTTP concern (cookie clear / status) のみ担当する
       await c.var.h.deleteMe(userId);
-      await c.var.refreshTokenRepo.revokeRefreshTokenAllByUserId(userId);
-      await c.var.apiKeyRepo.softDeleteApiKeysByUserId(userId);
-      // 失効済み refresh_token cookie をブラウザから消す。再利用は backend で revoke
-      // 済みなので不可能だが、識別子残存を避けるため明示的に Set-Cookie expire を返す
       clearRefreshCookie(c);
       return c.body(null, 204);
     });

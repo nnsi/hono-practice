@@ -5,7 +5,7 @@ import {
 import NetInfo from "@react-native-community/netinfo";
 
 import { getApiUrl } from "../api/apiClient";
-import { customFetch, setRefreshAccessToken } from "../api/customFetch";
+import { setRefreshAccessToken } from "../api/customFetch";
 import { tokenHolder } from "../api/tokenHolder";
 import {
   clearStoredTabPreference,
@@ -18,7 +18,7 @@ import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 
 const transport = createMobileAuthTransport(
-  { apiUrl: getApiUrl(), authenticatedFetch: customFetch },
+  { apiUrl: getApiUrl() },
   tokenHolder,
 );
 

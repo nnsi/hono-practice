@@ -36,17 +36,12 @@ function createTokenHolder() {
   };
 }
 
-// 既存テストは vi.stubGlobal("fetch", ...) で global fetch を mock する前提なので、
-// authenticatedFetch も global fetch にデリゲートする実装をデフォルトにする。
-// logout のテストだけは authenticatedFetch を直接 mock したいので opts で override
+// すべての HTTP は vi.stubGlobal("fetch", ...) で global fetch を mock する
 function makeTransport(opts?: {
   tokenHolder?: ReturnType<typeof createTokenHolder>;
-  authenticatedFetch?: typeof fetch;
 }) {
-  const authenticatedFetch =
-    opts?.authenticatedFetch ?? ((input, init) => fetch(input, init));
   return createMobileAuthTransport(
-    { apiUrl, authenticatedFetch },
+    { apiUrl },
     opts?.tokenHolder ?? createTokenHolder(),
   );
 }
@@ -257,31 +252,32 @@ describe("mobileAuthTransport", () => {
   });
 
   describe("logout", () => {
-    it("authenticatedFetch 経由で /auth/logout を呼び成功時 SecureStore をクリア + X-Refresh-Token を付与", async () => {
+    it("200 -> { ok: true } + SecureStore をクリア + Bearer / X-Refresh-Token を送信", async () => {
       mockGetItem.mockResolvedValue("rt-logout");
-      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
-      const transport = makeTransport({ authenticatedFetch: authFetchMock });
+      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const tokenHolder = createTokenHolder();
+      tokenHolder.setToken("jwt-access");
+      const transport = makeTransport({ tokenHolder });
 
       const result = await transport.logout();
 
       expect(result).toEqual({ ok: true });
       expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
-      // X-Refresh-Token は authenticatedFetch が付与しないので transport 側で明示的に乗せる
-      expect(authFetchMock).toHaveBeenCalledWith(
-        `${apiUrl}/auth/logout`,
-        expect.objectContaining({
-          method: "POST",
-          headers: { "X-Refresh-Token": "rt-logout" },
-        }),
-      );
+
+      const [, init] = fetchMock.mock.calls[0];
+      const headers = (init as RequestInit).headers as Record<string, string>;
+      expect(headers["X-Refresh-Token"]).toBe("rt-logout");
+      expect(headers.Authorization).toBe("Bearer jwt-access");
     });
 
     it("500 -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
-      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(500));
-      const transport = makeTransport({ authenticatedFetch: authFetchMock });
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
 
-      const result = await transport.logout();
+      const result = await makeTransport().logout();
+
       expect(result).toEqual({ ok: false });
       // 失敗時に SecureStore を消すと X-Refresh-Token を再送できず
       // logout 再試行が通らなくなるため、ここでは clear しない
@@ -290,12 +286,77 @@ describe("mobileAuthTransport", () => {
 
     it("network error -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
-      const authFetchMock = vi.fn().mockRejectedValue(new TypeError("network"));
-      const transport = makeTransport({ authenticatedFetch: authFetchMock });
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockRejectedValue(new TypeError("network")),
+      );
 
-      const result = await transport.logout();
+      const result = await makeTransport().logout();
+
       expect(result).toEqual({ ok: false });
       expect(mockDeleteItem).not.toHaveBeenCalled();
+    });
+
+    it("401 -> refreshSession で refresh token を rotate → 新 X-Refresh-Token で retry して成功", async () => {
+      // initial: rt-old. /auth/token rotation 後: rt-new。logout retry では rt-new を使う
+      mockGetItem
+        .mockResolvedValueOnce("rt-old") // postLogout #1
+        .mockResolvedValueOnce("rt-old") // refreshSession (getStoredRefreshToken)
+        .mockResolvedValueOnce("rt-new"); // postLogout #2 (retry)
+      const fetchMock = vi
+        .fn()
+        // 1: /auth/logout (initial) → 401 (expired access token)
+        .mockResolvedValueOnce(emptyResponse(401))
+        // 2: /auth/token (refresh) → 200 + 新 access token + rotated refresh token
+        .mockResolvedValueOnce(
+          jsonResponse({
+            token: "new-jwt",
+            refreshToken: "rt-new",
+            user: validSessionBody().user,
+          }),
+        )
+        // 3: /auth/logout (retry) → 200
+        .mockResolvedValueOnce(emptyResponse(200));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const tokenHolder = createTokenHolder();
+      tokenHolder.setToken("expired-jwt");
+      const transport = makeTransport({ tokenHolder });
+
+      const result = await transport.logout();
+
+      expect(result).toEqual({ ok: true });
+      // SecureStore: rt-new に書き換え → cleanup の deleteItem
+      expect(mockSetItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, "rt-new");
+      expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+
+      // retry リクエストでは Bearer = new-jwt, X-Refresh-Token = rt-new
+      const [, retryInit] = fetchMock.mock.calls[2];
+      const retryHeaders = (retryInit as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(retryHeaders.Authorization).toBe("Bearer new-jwt");
+      expect(retryHeaders["X-Refresh-Token"]).toBe("rt-new");
+      // tokenHolder も新値に
+      expect(tokenHolder.getToken()).toBe("new-jwt");
+    });
+
+    it("401 -> refresh が expired を返したら retry せず { ok: false }", async () => {
+      mockGetItem.mockResolvedValue("rt");
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout
+        .mockResolvedValueOnce(emptyResponse(401)); // /auth/token → expired
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await makeTransport().logout();
+
+      expect(result).toEqual({ ok: false });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      // refreshSession の expired branch が SecureStore を 1 回 clear する。
+      // logout 側からの追加 delete はない (serverOk=false なので)
+      expect(mockDeleteItem).toHaveBeenCalledTimes(1);
     });
   });
 
