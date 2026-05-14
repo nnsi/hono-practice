@@ -68,6 +68,7 @@ type TransportStub = AuthTransport & {
   logoutCalls: number;
   accessToken: string | null;
   persistCalls: number;
+  clearPersistedCalls: number;
 };
 
 function makeTransport(opts?: {
@@ -79,6 +80,7 @@ function makeTransport(opts?: {
   let logoutCalls = 0;
   let accessToken: string | null = null;
   let persistCalls = 0;
+  let clearPersistedCalls = 0;
   const session = opts?.loginSession ?? makeSession();
   const t: TransportStub = {
     refreshResults,
@@ -93,6 +95,9 @@ function makeTransport(opts?: {
     },
     get persistCalls() {
       return persistCalls;
+    },
+    get clearPersistedCalls() {
+      return clearPersistedCalls;
     },
     login: async () => {
       loginCalls++;
@@ -116,6 +121,9 @@ function makeTransport(opts?: {
     persistSession: async (s) => {
       persistCalls++;
       accessToken = s.token;
+    },
+    clearPersistedSession: async () => {
+      clearPersistedCalls++;
     },
   } as TransportStub;
   return t;
@@ -396,6 +404,33 @@ describe("createAuthController", () => {
     });
     // delete account 用途: backend で user 削除済みなので server cleanup は試みない
     expect(transport.logoutCalls).toBe(0);
+    expect(transport.accessToken).toBe(null);
+    // 永続層 (Mobile の SecureStore など) も明示的にクリアする
+    expect(transport.clearPersistedCalls).toBe(1);
+  });
+
+  it("forceLogout は clearPersistedSession が throw しても local state を必ずリセットする", async () => {
+    const transport = makeTransport({
+      refreshResults: [{ kind: "ok", session: makeSession("u1") }],
+    });
+    transport.clearPersistedSession = async () => {
+      throw new Error("SecureStore failed");
+    };
+    const repo = makeRepo();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: repo,
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+    expect(controller.getState().isLoggedIn).toBe(true);
+
+    // throw を握りつぶし local state は確実にリセットされる
+    await controller.forceLogout();
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: false,
+      userId: null,
+    });
     expect(transport.accessToken).toBe(null);
   });
 

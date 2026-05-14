@@ -173,9 +173,14 @@ export function createMobileAuthTransport(
         });
         serverOk = res.ok;
       } catch {
-        // ネットワーク失敗。local cleanup は続行 (SecureStore を消すので実害は限定的)
+        // network error / timeout など。SecureStore を消さず再試行可能にする
       }
-      await clearStoredRefreshToken();
+      // server 成功時のみ SecureStore を clear する。失敗時に消すと
+      // X-Refresh-Token を再送できず logout 再試行が永久に通らなくなる
+      // (controller 側も { ok: false } 時は local state を保持する)
+      if (serverOk) {
+        await clearStoredRefreshToken();
+      }
       return { ok: serverOk };
     },
     setAccessToken(token) {
@@ -186,6 +191,9 @@ export function createMobileAuthTransport(
       // setAccessToken の専任。
       if (session.refreshToken)
         await setStoredRefreshToken(session.refreshToken);
+    },
+    async clearPersistedSession() {
+      await clearStoredRefreshToken();
     },
   };
 }

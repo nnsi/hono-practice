@@ -292,7 +292,7 @@ describe("mobileAuthTransport", () => {
       expect(headers.Authorization).toBe("Bearer jwt-access");
     });
 
-    it("500 -> { ok: false } だが SecureStore は cleanup される", async () => {
+    it("500 -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
 
@@ -303,10 +303,12 @@ describe("mobileAuthTransport", () => {
 
       const result = await transport.logout();
       expect(result).toEqual({ ok: false });
-      expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+      // 失敗時に SecureStore を消すと X-Refresh-Token を再送できず
+      // logout 再試行が通らなくなるため、ここでは clear しない
+      expect(mockDeleteItem).not.toHaveBeenCalled();
     });
 
-    it("network error -> { ok: false } だが SecureStore は cleanup される", async () => {
+    it("network error -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
       vi.stubGlobal(
         "fetch",
@@ -320,7 +322,7 @@ describe("mobileAuthTransport", () => {
 
       const result = await transport.logout();
       expect(result).toEqual({ ok: false });
-      expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+      expect(mockDeleteItem).not.toHaveBeenCalled();
     });
   });
 
@@ -384,6 +386,17 @@ describe("mobileAuthTransport", () => {
       });
 
       expect(mockSetItem).not.toHaveBeenCalled();
+    });
+
+    it("clearPersistedSession は SecureStore の refresh token を削除する", async () => {
+      const transport = createMobileAuthTransport(
+        { apiUrl },
+        createTokenHolder(),
+      );
+
+      await transport.clearPersistedSession();
+
+      expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
     });
   });
 });

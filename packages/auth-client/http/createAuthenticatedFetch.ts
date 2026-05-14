@@ -7,13 +7,10 @@ export type AccessTokenSource = {
 export type AuthenticatedFetchOptions = {
   tokenSource: AccessTokenSource;
   // /auth/token を叩いて新しい access token を取得する。
-  // - 成功: 新 access token を返す。**この値は呼び出し側で別途
-  //   tokenSource.setToken に反映する必要がある** が、現状の Web/Mobile
-  //   wiring (apps/{frontend,mobile}/src/auth/authController.ts の
-  //   setRefreshAccessToken に渡している実装) は反映を行っておらず、
-  //   401 retry 直後の本リクエストは新 token で送られるが、後続リクエストは
-  //   古い tokenSource を読む既知の制約がある。controller.applySession 経由で
-  //   tokenSource を更新する flow への差し替えは別 PR で対応する。
+  // - 成功: 新 access token を返す。呼び出し側 (Web/Mobile の authController で
+  //   setRefreshAccessToken に渡している実装) は内部で transport.setAccessToken
+  //   も呼んで tokenSource を更新する。これにより 401 retry 直後の本リクエストだけ
+  //   でなく、後続リクエストも新 token で送られる
   // - セッション復元不能 / ネットワーク等の一時障害: null を返す
   //   (RefreshResult kind の解釈は controller 側、ここでは success/failure の二値のみ)
   refreshAccessToken(): Promise<string | null>;

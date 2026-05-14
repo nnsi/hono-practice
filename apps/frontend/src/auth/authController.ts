@@ -17,7 +17,11 @@ const transport = createWebAuthTransport({ apiUrl: getApiUrl() }, tokenHolder);
 
 setRefreshAccessToken(async () => {
   const result = await transport.refreshSession();
-  return result.kind === "ok" ? result.session.token : null;
+  if (result.kind !== "ok") return null;
+  // 401 retry 経由でも新 access token を tokenHolder に反映する。これを忘れると
+  // retry 直後の1リクエストだけ新 token で送られ、後続は古い tokenHolder を読む
+  transport.setAccessToken(result.session.token);
+  return result.session.token;
 });
 
 export const authController = createAuthController({

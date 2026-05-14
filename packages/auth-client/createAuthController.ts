@@ -179,6 +179,10 @@ export function createAuthController(
     forceLogout: async () => {
       generation++;
       clearOnlineRetry();
+      // delete account 後など server cleanup が通らないケースで呼ばれるので、
+      // 永続層 (Mobile の SecureStore など) も明示的にクリアする。backend は
+      // 既に revoke 済みなので残しても再利用はできないが、識別子残存を避ける
+      await transport.clearPersistedSession().catch(() => {});
       await resetAuthState();
     },
   };

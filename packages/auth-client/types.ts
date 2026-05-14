@@ -30,6 +30,11 @@ export type AuthTransport = {
   // が Set-Cookie 済みなので no-op / Mobile: SecureStore に refresh token を書く) に
   // 反映する。controller.applyExternalSession から呼ばれる。
   persistSession(session: AuthSession): Promise<void>;
+  // 永続化レイヤーの credential を削除する (Web: cookie は backend で expire 済み
+  // のため no-op / Mobile: SecureStore の refresh token 削除)。delete account 後の
+  // forceLogout 等、server cleanup を介さない経路でも persistence を確実に消すため
+  // controller.forceLogout から呼ばれる。
+  clearPersistedSession(): Promise<void>;
 };
 
 // AuthController が永続化に書き込むチュートリアル状態 (null は未設定)

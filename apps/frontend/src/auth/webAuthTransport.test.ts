@@ -253,5 +253,16 @@ describe("webAuthTransport", () => {
       // persistSession は tokenHolder を更新しない (二重設定回避)
       expect(tokenHolder.getToken()).toBeNull();
     });
+
+    it("clearPersistedSession は no-op (Web は httpOnly cookie のため JS から削除不能)", async () => {
+      const tokenHolder = createTokenHolder();
+      tokenHolder.setToken("kept-jwt");
+      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+
+      await transport.clearPersistedSession();
+
+      // 副作用がないことを確認 (tokenHolder への影響なし)
+      expect(tokenHolder.getToken()).toBe("kept-jwt");
+    });
   });
 });

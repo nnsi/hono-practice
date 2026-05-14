@@ -108,5 +108,9 @@ export function createWebAuthTransport(
       // Web は backend が Set-Cookie で refresh_token を反映するため永続層への書き込みは不要。
       // access token のメモリ反映は setAccessToken の専任。
     },
+    async clearPersistedSession() {
+      // Web の refresh_token は httpOnly cookie なので JS から削除不能。delete
+      // account 経路では backend で revoke + expire 済みのため no-op で問題ない
+    },
   };
 }

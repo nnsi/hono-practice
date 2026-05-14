@@ -21,7 +21,13 @@ const transport = createMobileAuthTransport(
 
 setRefreshAccessToken(async () => {
   const result = await transport.refreshSession();
-  return result.kind === "ok" ? result.session.token : null;
+  if (result.kind !== "ok") return null;
+  // 401 retry 経由でも新 access token を tokenHolder に反映する。これを忘れると
+  // retry 直後の1リクエストだけ新 token で送られ、後続は古い tokenHolder を読む。
+  // Mobile では refreshSession 内の persistSession が refresh token のみ書くので
+  // access token のメモリ反映はここでも明示する必要がある
+  transport.setAccessToken(result.session.token);
+  return result.session.token;
 });
 
 export const authController = createAuthController({
