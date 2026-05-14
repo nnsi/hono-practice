@@ -8,8 +8,8 @@ import { noteRepository } from "../../repositories/noteRepository";
 import { syncEngine } from "../../sync/syncEngine";
 
 export function useNotesPage() {
-  const { notes } = useActiveNotes();
-  const { activities } = useActivities();
+  const { notes, isReady: isNotesReady } = useActiveNotes();
+  const { activities, isReady: isActivitiesReady } = useActivities();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -64,6 +64,7 @@ export function useNotesPage() {
 
   return {
     notesList: sortedNotes,
+    isReady: isNotesReady && isActivitiesReady,
     deleteConfirmId,
     setDeleteConfirmId,
     getActivityName,

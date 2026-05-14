@@ -29,14 +29,20 @@ export function useEditActivityDialog(
   onClose: () => void,
 ) {
   const { kinds: existingKinds } = useActivityKinds(activity?.id);
-  const [name, setName] = useState("");
-  const [emoji, setEmoji] = useState("");
-  const [quantityUnit, setQuantityUnit] = useState("");
-  const [showCombinedStats, setShowCombinedStats] = useState(false);
+  const [name, setName] = useState(() => activity?.name ?? "");
+  const [emoji, setEmoji] = useState(() => activity?.emoji ?? "");
+  const [quantityUnit, setQuantityUnit] = useState(
+    () => activity?.quantityUnit ?? "",
+  );
+  const [showCombinedStats, setShowCombinedStats] = useState(
+    () => activity?.showCombinedStats ?? false,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recordingMode, setRecordingMode] = useState<RecordingMode>("manual");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>(
+    () => activity?.recordingMode ?? "manual",
+  );
   const [recordingModeConfig, setRecordingModeConfig] = useState<string | null>(
-    null,
+    () => activity?.recordingModeConfig ?? null,
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState("");
@@ -50,19 +56,6 @@ export function useEditActivityDialog(
     updateKindName,
     updateKindColor,
   } = useActivityKindEntries();
-
-  useEffect(() => {
-    if (activity) {
-      setName(activity.name);
-      setEmoji(activity.emoji);
-      setQuantityUnit(activity.quantityUnit);
-      setShowCombinedStats(activity.showCombinedStats);
-      setRecordingMode(activity.recordingMode ?? "manual");
-      setRecordingModeConfig(activity.recordingModeConfig ?? null);
-      setShowDeleteConfirm(false);
-      setError("");
-    }
-  }, [activity]);
 
   useEffect(() => {
     if (existingKinds.length > 0) {

@@ -344,16 +344,25 @@ describe("AuthRoute Integration Tests", () => {
       // Auth cookie is no longer set, only refresh token cookie
       expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
 
+      // 旧 token は getRefreshTokenByToken からは「無効化済み」として隠される
+      // (rotatedAt フィルタ)。DB 直アクセスで rotatedAt が刻まれていることを確認する
       const oldStoredToken = await refreshTokenRepo.getRefreshTokenByToken(
         validPlainRefreshToken,
       );
       expect(oldStoredToken).toBeNull();
+      const [oldSelectorPart] = validPlainRefreshToken.split(".");
+      const [oldRowDirect] = await testDB
+        .select()
+        .from(refreshTokens)
+        .where(eq(refreshTokens.selector, oldSelectorPart));
+      expect(oldRowDirect.rotatedAt).not.toBeNull();
 
       const newStoredToken =
         await refreshTokenRepo.getRefreshTokenByToken(newRefreshToken);
       expect(newStoredToken).not.toBeNull();
       expect(newStoredToken?.userId).toBe(testUserId);
       expect(newStoredToken?.revokedAt).toBeNull();
+      expect(newStoredToken?.rotatedAt).toBeNull();
     });
 
     it("異常系：削除済みユーザーのリフレッシュトークンは更新できない", async () => {
@@ -723,32 +732,155 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     describe("Refresh Token Security", () => {
-      it("異常系：リフレッシュトークンの再利用", async () => {
+      it("正常系：grace 窓内のリフレッシュトークン再提示は新トークンを発行する (lost-response 救済)", async () => {
         const client = createTestClient(false);
 
         const firstRes = await client.token.$post(
           {},
-          {
-            headers: {
-              Cookie: `refresh_token=${validPlainRefreshToken}`,
-            },
-          },
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
         );
         expect(firstRes.status).toBe(200);
+        const firstBody = (await firstRes.json()) as {
+          token: string;
+          refreshToken: string;
+        };
 
+        // 同じ旧トークンを再提示（クライアントが応答を取りこぼした想定）
         const secondRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(secondRes.status).toBe(200);
+        const secondBody = (await secondRes.json()) as {
+          token: string;
+          refreshToken: string;
+        };
+
+        // 各 rotation は別の新 refresh token を返す
+        expect(secondBody.refreshToken).not.toBe(firstBody.refreshToken);
+
+        // grace 救済は 1 回まで: 3回目の再提示は revoked で 401
+        const thirdRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(thirdRes.status).toBe(401);
+      });
+
+      it("異常系：rotation 済みトークンによる logout は拒否される", async () => {
+        const client = createTestClient(false);
+
+        // まず1回 rotation して旧トークンに rotatedAt を立てる
+        const rotateRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(rotateRes.status).toBe(200);
+
+        // 旧 token で logout を呼んでも引けないので 401
+        const authedClient = createTestClient(true);
+        const logoutRes = await authedClient.logout.$post(
           {},
           {
             headers: {
+              Authorization: `Bearer ${validJwtToken}`,
               Cookie: `refresh_token=${validPlainRefreshToken}`,
             },
           },
         );
+        expect(logoutRes.status).toBe(401);
+        expect(await logoutRes.json()).toEqual({
+          message: "invalid refresh token",
+        });
+      });
 
+      it("異常系：grace 窓を過ぎたリフレッシュトークンの再利用は拒否される", async () => {
+        const client = createTestClient(false);
+
+        const firstRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(firstRes.status).toBe(200);
+
+        // rotatedAt を grace 外に巻き戻して再提示
+        const [oldSelector] = validPlainRefreshToken.split(".");
+        await testDB
+          .update(refreshTokens)
+          .set({ rotatedAt: new Date(Date.now() - 60_000) })
+          .where(eq(refreshTokens.selector, oldSelector))
+          .execute();
+
+        const secondRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
         expect(secondRes.status).toBe(401);
         expect(await secondRes.json()).toEqual({
           message: "invalid refresh token",
         });
+      });
+
+      it("異常系：ハッシュ不一致では正規トークンが破壊されない (順序バグ regression)", async () => {
+        const client = createTestClient(false);
+        const [validSelector] = validPlainRefreshToken.split(".");
+
+        // selector は合っているが plainToken がデタラメ
+        const tampered = `${validSelector}.deadbeef-dead-beef-dead-beefdeadbeef`;
+        const tamperedRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${tampered}` } },
+        );
+        expect(tamperedRes.status).toBe(401);
+
+        // 正規トークンはまだ生きているはず
+        const validRes = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(validRes.status).toBe(200);
+      });
+
+      it("並列リクエスト下でも旧 token あたり最大 2 件しか rotation できない (CAS race)", async () => {
+        const client = createTestClient(false);
+        const cookie = `refresh_token=${validPlainRefreshToken}`;
+        const results = await Promise.all(
+          Array.from({ length: 5 }, () =>
+            client.token.$post({}, { headers: { Cookie: cookie } }),
+          ),
+        );
+        const okCount = results.filter((r) => r.status === 200).length;
+        // 初回 rotation (1件) + grace 救済 (最大1件) = 最大2件
+        expect(okCount).toBeLessThanOrEqual(2);
+        expect(okCount).toBeGreaterThanOrEqual(1);
+
+        // 旧 row は最終的に revoke されている (DB レベル確認)
+        const [oldSelectorPart] = validPlainRefreshToken.split(".");
+        const [oldRow] = await testDB
+          .select()
+          .from(refreshTokens)
+          .where(eq(refreshTokens.selector, oldSelectorPart));
+        if (okCount === 2) {
+          expect(oldRow.revokedAt).not.toBeNull();
+        }
+        expect(oldRow.rotatedAt).not.toBeNull();
+      });
+
+      it("異常系：明示的に revoke されたトークンは grace 対象外 (logout 後の replay 不可)", async () => {
+        const [validSelector] = validPlainRefreshToken.split(".");
+        // logout 相当: revokedAt を立てる
+        await testDB
+          .update(refreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(eq(refreshTokens.selector, validSelector))
+          .execute();
+
+        const client = createTestClient(false);
+        const res = await client.token.$post(
+          {},
+          { headers: { Cookie: `refresh_token=${validPlainRefreshToken}` } },
+        );
+        expect(res.status).toBe(401);
       });
     });
   });

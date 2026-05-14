@@ -8,6 +8,7 @@ export {
   TUTORIAL_STEPS,
   createUseTutorial,
 } from "./createUseTutorial";
+export { getVisibleKindsForCharts } from "./getVisibleKindsForCharts";
 export type {
   ActivityBase,
   ActivityKindBase,

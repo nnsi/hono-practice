@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { getVisibleKindsForCharts } from "@packages/frontend-shared/hooks/getVisibleKindsForCharts";
 import type {
   ActivityStat,
   ChartData,
@@ -84,6 +85,8 @@ export function ActivityStatCard({
   const isSingleUnnamedKind =
     stat.kinds.length === 1 && stat.kinds[0].name === t("defaultKind");
 
+  const hasVisibleChart = getVisibleKindsForCharts(stat).length > 0;
+
   return (
     <View className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800">
       {/* Activity header */}
@@ -140,16 +143,18 @@ export function ActivityStatCard({
       )}
 
       {/* Chart */}
-      <View className="p-4">
-        <ActivityChartSection
-          stat={stat}
-          chartData={chartData}
-          allDates={allDates}
-          kindColors={kindColors}
-          isSingleUnnamedKind={isSingleUnnamedKind}
-          goalLines={goalLines}
-        />
-      </View>
+      {hasVisibleChart && (
+        <View className="p-4">
+          <ActivityChartSection
+            stat={stat}
+            chartData={chartData}
+            allDates={allDates}
+            kindColors={kindColors}
+            isSingleUnnamedKind={isSingleUnnamedKind}
+            goalLines={goalLines}
+          />
+        </View>
+      )}
 
       {/* Summary */}
       <SummarySection summary={summary} quantityUnit={stat.quantityUnit} />

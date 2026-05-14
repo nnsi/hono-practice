@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { RecordingMode } from "@packages/domain/activity/recordingMode";
 import {
@@ -51,6 +51,18 @@ export function RecordingModeSelector({
     stepsFromConfig(recordingModeConfig).join(", "),
   );
   const savedCounterConfigRef = useRef<string | null>(recordingModeConfig);
+  const lastEmittedConfigRef = useRef<string | null>(recordingModeConfig);
+
+  useEffect(() => {
+    if (recordingModeConfig === lastEmittedConfigRef.current) return;
+    lastEmittedConfigRef.current = recordingModeConfig;
+    setStepsText(stepsFromConfig(recordingModeConfig).join(", "));
+  }, [recordingModeConfig]);
+
+  const emitConfig = (config: string | null) => {
+    lastEmittedConfigRef.current = config;
+    onRecordingModeConfigChange(config);
+  };
 
   const handleModeChange = (mode: RecordingMode) => {
     if (recordingMode === "counter") {
@@ -58,12 +70,12 @@ export function RecordingModeSelector({
     }
     onRecordingModeChange(mode);
     if (mode === "counter" && savedCounterConfigRef.current) {
-      onRecordingModeConfigChange(savedCounterConfigRef.current);
+      emitConfig(savedCounterConfigRef.current);
       setStepsText(stepsFromConfig(savedCounterConfigRef.current).join(", "));
     } else {
       const config = defaultRecordingModeConfig(mode);
       const serialized = serializeRecordingModeConfig(config);
-      onRecordingModeConfigChange(serialized);
+      emitConfig(serialized);
       if (mode === "counter") {
         setStepsText(stepsFromConfig(serialized).join(", "));
       }
@@ -77,7 +89,7 @@ export function RecordingModeSelector({
       .map((s) => Number(s.trim()))
       .filter((n) => !Number.isNaN(n) && n > 0);
     if (parsed.length === 0) return;
-    onRecordingModeConfigChange(
+    emitConfig(
       serializeRecordingModeConfig({ mode: "counter", steps: parsed }),
     );
   };
@@ -126,7 +138,7 @@ export function RecordingModeSelector({
             value={stepsText}
             onChangeText={handleStepsTextChange}
             placeholder="1, 10, 100"
-            keyboardType="numeric"
+            keyboardType="numbers-and-punctuation"
           />
         </View>
       )}

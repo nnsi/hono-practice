@@ -3,8 +3,9 @@ import { sign } from "hono/jwt";
 import type { UserId } from "@packages/domain/user/userSchema";
 import { v7 } from "uuid";
 
-// アクセストークンの有効期限を15分に設定
-const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
+// アクセストークンの有効期限を60分に設定
+// (refresh token rotation の頻度を下げ、grace race の発生機会を減らす)
+const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 60 * 60;
 // リフレッシュトークンの有効期限を30日に設定 (ミリ秒)
 const REFRESH_TOKEN_EXPIRES_IN_MS = 30 * 24 * 60 * 60 * 1000;
 
