@@ -24,9 +24,7 @@ export function createWebAuthTransport(
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
 
   const parseSession = async (res: Response): Promise<AuthSession> => {
-    const session = authResponseSchema.parse(await res.json());
-    tokenHolder.setToken(session.token);
-    return session;
+    return authResponseSchema.parse(await res.json());
   };
 
   const postAuth = (
@@ -83,14 +81,20 @@ export function createWebAuthTransport(
       return { kind: "transient", reason: `status ${res.status}` };
     },
     async logout() {
-      await postAuth("/auth/logout", undefined).catch(() => {});
+      try {
+        const res = await postAuth("/auth/logout", undefined);
+        // 200 系のみ成功扱い。失敗時は httpOnly cookie が残るため UI 警告対象
+        return { ok: res.ok };
+      } catch {
+        return { ok: false };
+      }
     },
     setAccessToken(token) {
       tokenHolder.setToken(token);
     },
-    async persistSession(session) {
-      // Web は backend が Set-Cookie で refresh_token を反映するため、token のみ反映
-      tokenHolder.setToken(session.token);
+    async persistSession() {
+      // Web は backend が Set-Cookie で refresh_token を反映するため永続層への書き込みは不要。
+      // access token のメモリ反映は setAccessToken の専任。
     },
   };
 }

@@ -21,7 +21,7 @@ vi.mock("@packages/frontend-shared/hooks/useSubscription", () => ({
   createUseSubscription: mocks.createUseSubscription,
 }));
 
-vi.mock("../utils/apiClient", () => ({
+vi.mock("../api/apiClient", () => ({
   apiClient: {
     users: {
       "api-keys": {

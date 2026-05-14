@@ -5,13 +5,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AlertTriangle, LogOut, User } from "lucide-react-native";
 import { Text, TouchableOpacity } from "react-native";
 
+import { apiClient } from "../../api/apiClient";
+import { clearToken } from "../../api/tokenHolder";
+import { clearStoredRefreshToken as clearRefreshToken } from "../../auth/mobileAuthTransport";
 import { clearLocalData } from "../../sync/initialSync";
 import { mobileTestIds } from "../../testing/testIds";
-import {
-  apiClient,
-  clearRefreshToken,
-  clearToken,
-} from "../../utils/apiClient";
 import { InlineConfirm, Section, type ShadowStyle } from "./SettingsParts";
 import { SETTINGS_KEY } from "./useAppSettings";
 

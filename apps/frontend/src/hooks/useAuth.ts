@@ -1,10 +1,7 @@
-import { useEffect } from "react";
-
 import { useAuthBootstrap, useAuthController } from "@packages/auth-client";
 import type { Consents } from "@packages/types/request";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { authController, setQueryClientReset } from "../auth/authController";
+import { authController } from "../auth/authController";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -19,17 +16,11 @@ type AuthState = {
     password: string,
     consents: Consents,
   ) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => Promise<{ ok: boolean }>;
 };
 
 export function useAuth(): AuthState {
-  const queryClient = useQueryClient();
   const state = useAuthController(authController);
-
-  useEffect(() => {
-    setQueryClientReset(() => queryClient.clear());
-    return () => setQueryClientReset(() => {});
-  }, [queryClient]);
 
   useAuthBootstrap(authController);
 

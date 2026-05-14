@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { useRouter } from "expo-router";
 
-import { customFetch, getApiUrl } from "../../utils/apiClient";
+import { getApiUrl } from "../../api/apiClient";
+import { customFetch } from "../../api/customFetch";
 
 type Category = "bug_report" | "account_deletion" | "other" | "";
 

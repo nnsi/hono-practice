@@ -72,9 +72,11 @@ export function createMobileAuthTransport(
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
 
+  // login/register/oauth レスポンスから session を取り出す内部 helper。
+  // access token のメモリ反映は controller.applySession 内の transport.setAccessToken
+  // の専任なのでここでは呼ばない。refresh token のみ永続層に書き込む。
   const persistSession = async (res: Response): Promise<AuthSession> => {
     const session = authResponseSchema.parse(await res.json());
-    tokenHolder.setToken(session.token);
     if (session.refreshToken) await setStoredRefreshToken(session.refreshToken);
     return session;
   };
@@ -159,8 +161,9 @@ export function createMobileAuthTransport(
     async logout() {
       const refreshToken = await getStoredRefreshToken();
       const token = tokenHolder.getToken();
+      let serverOk = false;
       try {
-        await fetchWithTimeout(`${apiUrl}/auth/logout`, {
+        const res = await fetchWithTimeout(`${apiUrl}/auth/logout`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -168,16 +171,19 @@ export function createMobileAuthTransport(
             ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
           },
         });
+        serverOk = res.ok;
       } catch {
-        // ignore - local cleanup follows
+        // ネットワーク失敗。local cleanup は続行 (SecureStore を消すので実害は限定的)
       }
       await clearStoredRefreshToken();
+      return { ok: serverOk };
     },
     setAccessToken(token) {
       tokenHolder.setToken(token);
     },
     async persistSession(session) {
-      tokenHolder.setToken(session.token);
+      // 永続層 (SecureStore) への書き込みのみ。access token のメモリ反映は
+      // setAccessToken の専任。
       if (session.refreshToken)
         await setStoredRefreshToken(session.refreshToken);
     },

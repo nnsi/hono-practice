@@ -21,7 +21,10 @@ export type AuthTransport = {
   googleLogin(credential: string, consents?: Consents): Promise<AuthSession>;
   appleLogin(credential: string, consents?: Consents): Promise<AuthSession>;
   refreshSession(): Promise<RefreshResult>;
-  logout(): Promise<void>;
+  // logout の戻り値はサーバー側の clear (cookie expire / refresh token revoke) が
+  // 成功したかどうか。Web は失敗すると httpOnly cookie が残るので UI 警告対象。
+  // Mobile は SecureStore を local cleanup するので実害は限定的。
+  logout(): Promise<{ ok: boolean }>;
   setAccessToken(token: string | null): void;
   // 外部経路で取得した session を transport の永続化レイヤー (Web: cookie は backend
   // が Set-Cookie 済みなので no-op / Mobile: SecureStore に refresh token を書く) に
@@ -86,5 +89,5 @@ export type AuthController = {
   // 外部で取得した session を controller に流し込む (OAuth code exchange 等の
   // 通常 transport を経由しないログイン経路用)
   applyExternalSession(session: AuthSession): Promise<void>;
-  logout(): Promise<void>;
+  logout(): Promise<{ ok: boolean }>;
 };

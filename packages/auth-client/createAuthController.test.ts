@@ -108,6 +108,7 @@ function makeTransport(opts?: {
     },
     logout: async () => {
       logoutCalls++;
+      return { ok: true };
     },
     setAccessToken: (token) => {
       accessToken = token;

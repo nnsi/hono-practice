@@ -10,8 +10,10 @@ vi.mock("../db/schema", () => ({
   db: { activities: { get: vi.fn() } },
 }));
 vi.mock("@packages/sync-engine/mappers/apiMappers");
-vi.mock("../utils/apiClient", () => ({
+vi.mock("../api/apiClient", () => ({
   apiClient: mockApiClientObj,
+}));
+vi.mock("../api/customFetch", () => ({
   customFetch: mockCustomFetchFn,
 }));
 

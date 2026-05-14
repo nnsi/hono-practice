@@ -41,7 +41,7 @@ vi.mock("../repositories/noteRepository", () => ({
   },
 }));
 
-vi.mock("../utils/apiClient", () => ({
+vi.mock("../api/apiClient", () => ({
   apiClient: {
     users: {
       v2: {
@@ -84,13 +84,13 @@ vi.mock("../db/dbEvents", () => ({
 
 import { resetServerTimeForTests } from "@packages/sync-engine";
 
+import { apiClient } from "../api/apiClient";
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
-import { apiClient } from "../utils/apiClient";
 import { clearLocalData, performInitialSync } from "./initialSync";
 
 function createMockDb() {

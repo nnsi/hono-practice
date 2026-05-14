@@ -1,6 +1,6 @@
 import { createUseSubscription } from "@packages/frontend-shared/hooks/useSubscription";
 
-import { apiClient } from "../utils/apiClient";
+import { apiClient } from "../api/apiClient";
 
 export function useSubscription() {
   return createUseSubscription({

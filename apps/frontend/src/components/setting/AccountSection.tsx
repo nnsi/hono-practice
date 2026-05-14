@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { AlertTriangle, Check, UserCircle } from "lucide-react";
 
+import { apiClient } from "../../api/apiClient";
+import { clearToken } from "../../api/tokenHolder";
 import { db } from "../../db/schema";
-import { apiClient, clearToken } from "../../utils/apiClient";
 import { FormButton } from "../common/FormButton";
 import { AppleSignInButton } from "../root/AppleSignInButton";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";

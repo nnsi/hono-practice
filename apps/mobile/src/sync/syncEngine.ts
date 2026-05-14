@@ -9,12 +9,12 @@ import {
 } from "@packages/sync-engine";
 import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
 
+import { apiClient } from "../api/apiClient";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
-import { apiClient } from "../utils/apiClient";
 import { reportError } from "../utils/errorReporter";
 import { rnNetworkAdapter } from "./rnPlatformAdapters";
 import {

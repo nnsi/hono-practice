@@ -5,7 +5,7 @@ import * as Google from "expo-auth-session/providers/google";
 import { Link } from "lucide-react-native";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
-import { getApiUrl } from "../../utils/apiClient";
+import { getApiUrl } from "../../api/apiClient";
 import { apiGetMe, apiGoogleLink } from "../../utils/authApi";
 import { setOAuthPending } from "../../utils/oauthPending";
 import { GoogleMark } from "../common/GoogleMark";

@@ -167,8 +167,10 @@ export function createAuthController(
       generation++;
       clearOnlineRetry();
       await resetAuthState();
-      // backend への通知は fire-and-forget
-      transport.logout().catch(() => {});
+      // ローカル state は必ず clear。サーバー側 clear の成否は呼び出し側で
+      // UI 警告等に使うため返す (Web の httpOnly cookie 残存対策)。
+      const result = await transport.logout().catch(() => ({ ok: false }));
+      return result;
     },
   };
 }

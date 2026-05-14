@@ -17,7 +17,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 
-import { apiClient } from "../../utils/apiClient";
+import { apiClient } from "../../api/apiClient";
 import { SETTINGS_KEY } from "./useAppSettings";
 
 const listeners = new Set<() => void>();

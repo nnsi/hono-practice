@@ -15,7 +15,7 @@ export type AuthContextType = {
     password: string,
     consents: Consents,
   ) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => Promise<{ ok: boolean }>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -27,7 +27,7 @@ export const AuthContext = createContext<AuthContextType>({
   googleLogin: async (_credential, _consents) => {},
   appleLogin: async (_credential, _consents) => {},
   register: async (_loginId, _password, _consents) => {},
-  logout: async () => {},
+  logout: async () => ({ ok: true }),
 });
 
 export function useAuthContext() {
