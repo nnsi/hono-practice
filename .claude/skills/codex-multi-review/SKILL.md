@@ -6,7 +6,7 @@ user_invocable: true
 
 # Codex マルチレビュー
 
-Codexプラグイン（`codex-companion.mjs task`）を使い、4つの専門レビュアーを並列起動する。Claudeのコンテキストを消費しないため `/multi-review` より軽量。**修正は行わない。**
+Codex CLI (`codex exec`) を使い、4つの専門レビュアーを並列起動する。Claudeのコンテキストを消費しないため `/multi-review` より軽量。**修正は行わない。**
 
 ## レビュアー構成
 
@@ -42,18 +42,19 @@ Codexプラグイン（`codex-companion.mjs task`）を使い、4つの専門レ
 
 4-5個のBashツール呼び出しを**1つのメッセージで並列実行**する。**レビュアーを省略しない。全員起動が必須。**
 
-各プロンプトを `/tmp/prompt-{role}.txt` に書き出し、`--prompt-file` で渡す。
+各プロンプトを `/tmp/prompt-{role}.txt` に書き出し、stdin で渡す。
 
 ```bash
 # 各レビュアーを並列起動（run_in_background: true）
-node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs" task --prompt-file /tmp/prompt-security.txt
+cat /tmp/prompt-security.txt | codex exec --sandbox read-only --skip-git-repo-check -
 ```
 
 注意:
-- **プロンプトは必ず `--prompt-file` で渡す**（diffを含むと60KB超になり、シェルの引数長制限 `Argument list too long` で失敗する）
-- `--write` は付けない（読み取り専用）
-- `--background` は付けない（Claude Code側の `run_in_background: true` で並列化する）
-- Bashの `timeout` は `300000`（5分）
+- **プロンプトは必ず stdin (`cat <file> | codex exec ... -`) で渡す**（diffを含むと60KB超になり、シェルの引数長制限 `Argument list too long` で失敗する）
+- `--sandbox read-only` で書き込みを禁止する（読み取り専用レビュー）
+- `--skip-git-repo-check` を付けないと worktree 等で起動拒否される場合がある
+- 並列化は Claude Code 側の `run_in_background: true` に任せる
+- Bashの `timeout` は `600000`（10分。本物のレビューでは思考時間がかかる）
 
 ### Step 3: 結果収集
 

@@ -15,7 +15,7 @@ Claude subagent (Logic+Security) と Codex (Architecture+Testability) の2体に
 | # | エンジン | 専門領域 |
 |---|---------|----------|
 | A | Claude subagent (`reviewer-logic`, Opus) | ロジック・バグ + セキュリティ |
-| B | Codex (`codex-companion.mjs`) | 設計・アーキテクチャ + テスタビリティ |
+| B | Codex (`codex exec` 直叩き) | 設計・アーキテクチャ + テスタビリティ |
 
 ## 手順
 
@@ -55,16 +55,17 @@ Agentツールで起動:
 1. `prompts/codex-review.md` の `プロンプトテンプレート` セクション内テキストを Read
 2. `{{TARGET_FILES}}` を実際のファイル一覧で置換
 3. `/tmp/prompt-cross-review.txt` に Write
-4. Bash で起動（`run_in_background: true`, `timeout: 300000`）:
+4. Bash で起動（`run_in_background: true`, `timeout: 600000`）:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs" task --prompt-file /tmp/prompt-cross-review.txt
+cat /tmp/prompt-cross-review.txt | codex exec --sandbox read-only --skip-git-repo-check -
 ```
 
 注意:
-- プロンプトは必ず `--prompt-file` で渡す（diff含むとシェル引数長制限で失敗する）
-- `--write` は付けない（読み取り専用）
-- `--background` は付けない（Claude Code側の `run_in_background: true` で並列化する）
+- プロンプトは必ず stdin (`cat <file> | codex exec ... -`) で渡す（diff含むとシェル引数長制限で失敗する）
+- `--sandbox read-only` で書き込みを禁止する（読み取り専用レビュー）
+- `--skip-git-repo-check` を付けないと worktree 等で起動拒否される場合がある
+- 並列化は Claude Code 側の `run_in_background: true` に任せる
 
 ### Step 3: スコアベース集約
 
