@@ -77,6 +77,9 @@ app.use("*", async (c, next) => {
   const middleware = cors({
     origin,
     credentials: true,
+    // X-Refresh-Token は mobile (Origin なし) 専用想定だが、明示せず CORS デフォルト
+    // (リクエストヘッダの echo) に任せるとブラウザからも送信可能になるため、明示する
+    allowHeaders: ["Authorization", "Content-Type", "X-Refresh-Token"],
   });
 
   return middleware(c, next);

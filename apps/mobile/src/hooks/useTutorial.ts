@@ -6,11 +6,11 @@ import {
   createUseTutorial,
 } from "@packages/frontend-shared/hooks";
 
-import { useLiveQuery } from "../db/useLiveQuery";
 import {
   getTutorialStatus,
   setTutorialStatus,
-} from "../repositories/authStateRepository";
+} from "../auth/mobileAuthStateRepository";
+import { useLiveQuery } from "../db/useLiveQuery";
 
 function useAuthStateTutorialStatus(): TutorialStatus {
   const status = useLiveQuery("auth_state", async () => {

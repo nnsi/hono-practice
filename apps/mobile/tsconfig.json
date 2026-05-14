@@ -17,6 +17,8 @@
       "@packages/utils/*": ["../../packages/utils/*"],
       "@packages/i18n": ["../../packages/i18n/index.ts"],
       "@packages/i18n/*": ["../../packages/i18n/*"],
+      "@packages/auth-client": ["../../packages/auth-client/index.ts"],
+      "@packages/auth-client/*": ["../../packages/auth-client/*"],
       "@/*": ["./src/*"],
       "@backend/*": ["../../apps/backend/*"],
       "@infra/*": ["../../infra/*"]

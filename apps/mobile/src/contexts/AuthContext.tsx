@@ -10,7 +10,6 @@ export type AuthContextType = {
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string, consents?: Consents) => Promise<void>;
   appleLogin: (credential: string, consents?: Consents) => Promise<void>;
-  completeLogin: (userId: string) => Promise<void>;
   register: (
     loginId: string,
     password: string,
@@ -27,7 +26,6 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   googleLogin: async (_credential, _consents) => {},
   appleLogin: async (_credential, _consents) => {},
-  completeLogin: async () => {},
   register: async (_loginId, _password, _consents) => {},
   logout: async () => {},
 });

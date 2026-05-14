@@ -1,27 +1,12 @@
-import { useCallback, useRef, useState } from "react";
+import { useEffect } from "react";
 
+import { useAuthBootstrap, useAuthController } from "@packages/auth-client";
 import type { Consents } from "@packages/types/request";
-import type { GetUserResponse } from "@packages/types/response";
+import { AppState } from "react-native";
 
-import {
-  clearStoredTabPreference,
-  flushPendingTabPreference,
-  reconcileTabPreferenceFromServer,
-} from "../components/setting/tabPreferenceStore";
-import { getDatabase } from "../db/database";
-import { setTutorialStatus } from "../repositories/authStateRepository";
-import { clearLocalData, performInitialSync } from "../sync/initialSync";
-import { clearToken } from "../utils/apiClient";
-import {
-  apiAppleLogin,
-  apiGetMe,
-  apiGoogleLogin,
-  apiLogin,
-  apiLogout,
-  apiRegister,
-} from "../utils/authApi";
-import { reportError } from "../utils/errorReporter";
-import { useAuthInit } from "./useAuthInit";
+import { authController } from "../auth/authController";
+import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
+import { apiGetMe } from "../utils/authApi";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -31,7 +16,6 @@ type AuthState = {
   login: (loginId: string, password: string) => Promise<void>;
   googleLogin: (credential: string, consents?: Consents) => Promise<void>;
   appleLogin: (credential: string, consents?: Consents) => Promise<void>;
-  completeLogin: (userId: string) => Promise<void>;
   register: (
     loginId: string,
     password: string,
@@ -41,127 +25,33 @@ type AuthState = {
 };
 
 export function useAuth(): AuthState {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [syncReady, setSyncReady] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const onlineRetryRef = useRef<(() => void) | null>(null);
-  const authGenRef = useRef(0);
+  const state = useAuthController(authController);
 
-  useAuthInit({
-    setUserId,
-    setIsLoggedIn,
-    setIsLoading,
-    setSyncReady,
-    authGenRef,
-    onlineRetryRef,
-  });
+  useAuthBootstrap(authController);
 
-  const loginWithUserCheck = useCallback(async (newUserId: string) => {
-    const db = await getDatabase();
-    const authState = await db.getFirstAsync<{ user_id: string }>(
-      "SELECT user_id FROM auth_state WHERE id = 'current'",
-    );
-    if (authState && authState.user_id !== newUserId) await clearLocalData();
-    setUserId(newUserId);
-    setIsLoggedIn(true);
-    try {
-      await performInitialSync(newUserId);
-    } catch (err) {
-      reportError({
-        errorType: "unhandled_error",
-        message: `Login sync failed: ${err instanceof Error ? err.message : String(err)}`,
-        stack: err instanceof Error ? err.stack : undefined,
-      });
-    }
-    setSyncReady(true);
-  }, []);
-
-  const persistPlan = useCallback(async (plan: string) => {
-    const db = await getDatabase();
-    await db.runAsync("UPDATE auth_state SET plan = ? WHERE id = 'current'", [
-      plan ?? "free",
-    ]);
-  }, []);
-
-  const finalizeLogin = useCallback(
-    async (user: GetUserResponse) => {
-      await reconcileTabPreferenceFromServer(user.tabPreference);
-      await flushPendingTabPreference();
-      await loginWithUserCheck(user.id);
-      await persistPlan(user.plan);
-    },
-    [loginWithUserCheck, persistPlan],
-  );
-
-  const login = useCallback(
-    async (loginId: string, password: string) => {
-      await apiLogin(loginId, password);
-      await finalizeLogin(await apiGetMe());
-    },
-    [finalizeLogin],
-  );
-
-  const googleLogin = useCallback(
-    async (credential: string, consents?: Consents) => {
-      await apiGoogleLogin(credential, consents);
-      await finalizeLogin(await apiGetMe());
-    },
-    [finalizeLogin],
-  );
-
-  const appleLogin = useCallback(
-    async (credential: string, consents?: Consents) => {
-      await apiAppleLogin(credential, consents);
-      await finalizeLogin(await apiGetMe());
-    },
-    [finalizeLogin],
-  );
-
-  const register = useCallback(
-    async (loginId: string, password: string, consents: Consents) => {
-      await apiRegister(loginId, password, consents);
-      await finalizeLogin(await apiGetMe());
-      await setTutorialStatus("pending");
-    },
-    [finalizeLogin],
-  );
-
-  const logout = useCallback(async () => {
-    authGenRef.current++;
-    if (onlineRetryRef.current) {
-      onlineRetryRef.current();
-      onlineRetryRef.current = null;
-    }
-    apiLogout().catch((err: unknown) => {
-      reportError({
-        errorType: "network_error",
-        message: err instanceof Error ? err.message : "Logout failed",
-        stack: err instanceof Error ? err.stack : undefined,
-      });
+  // フォアグラウンド復帰時に plan / voice key を同期
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next !== "active" || !state.isLoggedIn) return;
+      apiGetMe()
+        .then((user) => {
+          if (user.plan === "premium") {
+            return provisionVoiceApiKey();
+          }
+        })
+        .catch(() => {
+          // offline ならスキップ
+        });
     });
-    clearToken();
-    await clearStoredTabPreference();
-    setIsLoggedIn(false);
-    setSyncReady(false);
-    setUserId(null);
-    // user_idは保持しlast_login_atのみ無効化（loginWithUserCheckでユーザー切替を検知するため）
-    const db = await getDatabase();
-    await db.runAsync(
-      "UPDATE auth_state SET last_login_at = '' WHERE id = 'current'",
-    );
-  }, []);
+    return () => sub.remove();
+  }, [state.isLoggedIn]);
 
   return {
-    isLoggedIn,
-    isLoading,
-    syncReady,
-    userId,
-    login,
-    googleLogin,
-    appleLogin,
-    completeLogin: loginWithUserCheck,
-    register,
-    logout,
+    ...state,
+    login: authController.login,
+    googleLogin: authController.googleLogin,
+    appleLogin: authController.appleLogin,
+    register: authController.register,
+    logout: authController.logout,
   };
 }

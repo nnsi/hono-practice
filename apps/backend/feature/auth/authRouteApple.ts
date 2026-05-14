@@ -21,7 +21,7 @@ export function createAppleAuthRoutes() {
     .post("/", zValidator("json", appleLoginRequestSchema), async (c) => {
       const body = c.req.valid("json");
       const clientIds = collectAppleClientIds(c.env);
-      const { user, token, refreshToken } = await c.var.h.appleLoginWithUser(
+      const { user, token, refreshToken } = await c.var.h.appleLogin(
         body,
         clientIds,
       );

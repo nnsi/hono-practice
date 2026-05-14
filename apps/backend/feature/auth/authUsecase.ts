@@ -2,7 +2,7 @@ import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
 
 import type { UserConsentRepository, UserRepository } from "../user";
-import { atomicRotateRefreshToken, login, logout } from "./authLoginUsecase";
+import { login, logout, rotateRefreshToken } from "./authLoginUsecase";
 import { linkProvider, loginWithProvider } from "./authProviderUsecase";
 import type { AuthUsecase, OAuthVerifierMap } from "./authUsecaseTypes";
 import type { PasswordVerifier } from "./passwordVerifier";
@@ -36,14 +36,7 @@ export function newAuthUsecase(
       jwtAudience,
       tracer,
     ),
-    refreshToken: atomicRotateRefreshToken(
-      refreshTokenRepo,
-      userRepo,
-      jwtSecret,
-      jwtAudience,
-      tracer,
-    ),
-    atomicRotateRefreshToken: atomicRotateRefreshToken(
+    rotateRefreshToken: rotateRefreshToken(
       refreshTokenRepo,
       userRepo,
       jwtSecret,

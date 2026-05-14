@@ -10,6 +10,7 @@
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
+    "@packages/auth-client": "workspace:*",
     "@packages/frontend-shared": "workspace:*",
     "@packages/i18n": "workspace:*",
     "@packages/platform": "workspace:*",

@@ -19,7 +19,9 @@ import { eq } from "drizzle-orm";
 import { v7 } from "uuid";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { newUserRepository } from "../../user";
+import { newSubscriptionRepository } from "../../subscription/subscriptionRepository";
+import { newSubscriptionQueryUsecase } from "../../subscription/subscriptionUsecase";
+import { newUserRepository, newUserUsecase } from "../../user";
 import { createAuthRoute, newAuthHandler } from "..";
 import type { OAuthVerifierMap } from "../authUsecase";
 import { newAuthUsecase } from "../authUsecase";
@@ -127,7 +129,20 @@ describe("AuthRoute Integration Tests", () => {
           oauthVerifiers,
           noopTracer,
         );
-        const h = newAuthHandler(uc);
+        const subscriptionRepo = newSubscriptionRepository(testDB);
+        const subscriptionUc = newSubscriptionQueryUsecase(
+          subscriptionRepo,
+          noopTracer,
+        );
+        const userUc = newUserUsecase(
+          userRepo,
+          userProviderRepo,
+          userConsentRepo,
+          txRunner,
+          subscriptionUc,
+          noopTracer,
+        );
+        const h = newAuthHandler(uc, userUc.getUserById);
 
         c.set("h", h);
 
@@ -212,9 +227,13 @@ describe("AuthRoute Integration Tests", () => {
       const body = (await res.json()) as {
         token: string;
         refreshToken: string;
+        user: { id: string; plan: string };
       };
       expect(body.token).toEqual(expect.any(String));
       expect(body.refreshToken).toEqual(expect.any(String));
+      expect(body.user).toBeDefined();
+      expect(body.user.id).toBe(testUserId);
+      expect(body.user.plan).toBe("free");
       // Auth cookie is no longer set, only refresh token cookie
       expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
 
@@ -337,10 +356,13 @@ describe("AuthRoute Integration Tests", () => {
       const body = (await res.json()) as {
         token: string;
         refreshToken: string;
+        user: { id: string; plan: string };
       };
       const newRefreshToken = body.refreshToken;
       expect(newRefreshToken).toEqual(expect.any(String));
       expect(newRefreshToken).not.toBe(validPlainRefreshToken);
+      expect(body.user).toBeDefined();
+      expect(body.user.id).toBe(testUserId);
       // Auth cookie is no longer set, only refresh token cookie
       expect(res.headers.get("Set-Cookie")).toMatch(/refresh_token=/);
 
@@ -427,6 +449,37 @@ describe("AuthRoute Integration Tests", () => {
         {
           headers: {
             Cookie: `refresh_token=${revokedSelector}.${revokedPlainToken}`,
+          },
+        },
+      );
+
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ message: "invalid refresh token" });
+    });
+
+    it("異常系：リフレッシュトークンが期限切れ (expired)", async () => {
+      const expiredSelector = "22222222-2222-2222-2222-222222222222";
+      const expiredPlainToken = "expired-token-plain";
+      const expiredHashedToken = await hashWithSHA256(expiredPlainToken);
+
+      await testDB.insert(refreshTokens).values({
+        id: v7(),
+        userId: testUserId,
+        selector: expiredSelector,
+        token: expiredHashedToken,
+        expiresAt: new Date(Date.now() - 1000 * 60), // 1分前に既に期限切れ
+        revokedAt: null,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60),
+        updatedAt: new Date(Date.now() - 1000 * 60 * 60),
+        deletedAt: null,
+      });
+
+      const client = createTestClient(false);
+      const res = await client.token.$post(
+        {},
+        {
+          headers: {
+            Cookie: `refresh_token=${expiredSelector}.${expiredPlainToken}`,
           },
         },
       );
