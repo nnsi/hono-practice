@@ -186,6 +186,38 @@ describe("webAuthTransport", () => {
 
       expect(await transport.logout()).toEqual({ ok: false });
     });
+
+    it("tokenHolder の access token を Bearer header に乗せる (authMiddleware が要求するため)", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
+      vi.stubGlobal("fetch", fetchMock);
+      const tokenHolder = createTokenHolder();
+      tokenHolder.setToken("jwt-token");
+      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+
+      await transport.logout();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${apiUrl}/auth/logout`,
+        expect.objectContaining({
+          method: "POST",
+          credentials: "include",
+          headers: expect.objectContaining({
+            Authorization: "Bearer jwt-token",
+          }),
+        }),
+      );
+    });
+
+    it("token が無いときは Authorization header を付けない (forceLogout 経路想定)", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
+      vi.stubGlobal("fetch", fetchMock);
+      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+
+      await transport.logout();
+
+      const callInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+      expect(callInit.headers).not.toHaveProperty("Authorization");
+    });
   });
 
   describe("setAccessToken / persistSession", () => {

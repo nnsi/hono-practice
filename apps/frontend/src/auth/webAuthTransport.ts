@@ -81,8 +81,20 @@ export function createWebAuthTransport(
       return { kind: "transient", reason: `status ${res.status}` };
     },
     async logout() {
+      // /auth/logout は authMiddleware が Bearer 必須なので、現在の access
+      // token を明示的に付ける。tokenHolder が空 (例: 復元失敗) のときは
+      // どうせ 401 になるが、その場合は controller 側で forceLogout 経由
+      // に切り替える前提
+      const token = tokenHolder.getToken();
       try {
-        const res = await postAuth("/auth/logout", undefined);
+        const res = await fetch(`${apiUrl}/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+        });
         // 200 系のみ成功扱い。失敗時は httpOnly cookie が残るため UI 警告対象
         return { ok: res.ok };
       } catch {
