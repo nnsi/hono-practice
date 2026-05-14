@@ -12,6 +12,21 @@ import { tmpdir } from "node:os";
 const WARN_THRESHOLD = 5;
 const ESCALATE_THRESHOLD = 8;
 const MAX_AGE_MS = 12 * 60 * 60 * 1000;
+// review-cycle 中はファイルへの反復編集が「修正 → 再レビュー」の正常運用なので
+// ループ警告を抑制する。最後の reviewer 起動から N 分以内ならスキップ。
+const REVIEW_ACTIVE_WINDOW_MS = 30 * 60 * 1000;
+
+function isReviewCycleActive() {
+  const marker = join(tmpdir(), `claude-review-active-${process.ppid}`);
+  if (!existsSync(marker)) return false;
+  try {
+    const ts = Number.parseInt(readFileSync(marker, "utf-8"), 10);
+    if (!Number.isFinite(ts)) return false;
+    return Date.now() - ts < REVIEW_ACTIVE_WINDOW_MS;
+  } catch {
+    return false;
+  }
+}
 
 async function main() {
   let input = "";
@@ -59,6 +74,9 @@ async function main() {
   const count = state.edits[normalized];
 
   writeFileSync(stateFile, JSON.stringify(state), "utf-8");
+
+  // review-cycle 中は反復編集が想定運用なので警告しない
+  if (isReviewCycleActive()) return;
 
   if (count >= ESCALATE_THRESHOLD) {
     const msg = `🚨 ${filePath} を${count}回編集しました。一旦手を止めて、ユーザーに状況を報告してください。`;

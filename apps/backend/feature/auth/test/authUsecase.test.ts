@@ -38,6 +38,7 @@ const createMockRefreshToken = (
   expiresAt:
     options.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   revokedAt: options.revokedAt ?? null,
+  rotatedAt: options.rotatedAt ?? null,
   createdAt: options.createdAt ?? new Date(),
   updatedAt: options.updatedAt ?? new Date(),
   deletedAt: options.deletedAt ?? null,
