@@ -4,7 +4,6 @@ import { createInitialSync } from "@packages/sync-engine";
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
-import { setUserIdAndLastLogin } from "../repositories/authStateRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
@@ -45,9 +44,8 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       DELETE FROM activity_icon_delete_queue;
     `);
   },
-  updateAuthState: async (userId) => {
-    await setUserIdAndLastLogin(userId, new Date().toISOString());
-  },
+  // authController が applySession で user_id / last_login_at を立てるので no-op
+  updateAuthState: async () => {},
   isLocalDataEmpty: async () => {
     const db = await getDatabase();
     const [logRow, goalRow, taskRow, freezePeriodRow, noteRow] =

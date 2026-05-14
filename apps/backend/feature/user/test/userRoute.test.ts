@@ -17,13 +17,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function expectAuthResponse(
-  body: unknown,
-): asserts body is { token: string; refreshToken: string } {
+function expectAuthResponse(body: unknown): asserts body is {
+  token: string;
+  refreshToken: string;
+  user: { id: string; plan: string };
+} {
   if (
     !isRecord(body) ||
     typeof body.token !== "string" ||
-    typeof body.refreshToken !== "string"
+    typeof body.refreshToken !== "string" ||
+    !isRecord(body.user) ||
+    typeof body.user.id !== "string" ||
+    typeof body.user.plan !== "string"
   ) {
     throw new Error("auth response is invalid");
   }
@@ -80,6 +85,8 @@ describe("userRoute", () => {
     expectAuthResponse(body);
     expect(body.token).toBeDefined();
     expect(body.refreshToken).toBeDefined();
+    expect(body.user.id).toEqual(expect.any(String));
+    expect(body.user.plan).toBe("free");
   });
 
   it("POST / signup 時に user_consent に3行記録される", async () => {

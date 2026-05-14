@@ -22,6 +22,7 @@
     "@bacons/apple-targets": "^4.0.6",
     "@expo/metro-runtime": "~55.0.6",
     "@expo/plist": "^0.5.2",
+    "@packages/auth-client": "workspace:*",
     "@packages/domain": "workspace:*",
     "@packages/i18n": "workspace:*",
     "@packages/platform": "workspace:*",

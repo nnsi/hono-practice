@@ -29,6 +29,8 @@
       "@packages/types/*": ["../../packages/types/*"],
       "@packages/frontend-shared": ["../../packages/frontend-shared/index.ts"],
       "@packages/frontend-shared/*": ["../../packages/frontend-shared/*"],
+      "@packages/auth-client": ["../../packages/auth-client/index.ts"],
+      "@packages/auth-client/*": ["../../packages/auth-client/*"],
       "@backend/*": ["../../apps/backend/*"],
       "@infra/*": ["../../infra/*"]
     }

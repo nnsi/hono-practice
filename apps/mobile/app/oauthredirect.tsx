@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 
+import { authResponseSchema } from "@packages/types/response";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
-import { useAuthContext } from "../src/contexts/AuthContext";
-import { apiClient, setRefreshToken, setToken } from "../src/utils/apiClient";
-import { apiGetMe } from "../src/utils/authApi";
+import { authController } from "../src/auth/authController";
+import { apiClient } from "../src/utils/apiClient";
 import { reportError } from "../src/utils/errorReporter";
 import {
   type OAuthPending,
@@ -15,7 +15,6 @@ import {
 
 export default function OAuthRedirect() {
   const params = useLocalSearchParams<{ code?: string; error?: string }>();
-  const { completeLogin } = useAuthContext();
   const router = useRouter();
   const processed = useRef(false);
 
@@ -67,15 +66,8 @@ export default function OAuthRedirect() {
 
     if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-    const data = await res.json();
-    if (!data.token) throw new Error("No token in response");
-
-    setToken(data.token);
-    if ("refreshToken" in data && data.refreshToken) {
-      await setRefreshToken(data.refreshToken);
-    }
-    const user = await apiGetMe();
-    await completeLogin(user.id);
+    const session = authResponseSchema.parse(await res.json());
+    await authController.applyExternalSession(session);
   }
 
   return (

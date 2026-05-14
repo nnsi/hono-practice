@@ -59,7 +59,7 @@ export function createGoogleAuthRoutes() {
     .post("/", zValidator("json", googleLoginRequestSchema), async (c) => {
       const body = c.req.valid("json");
       const clientIds = collectGoogleClientIds(c.env);
-      const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
+      const { user, token, refreshToken } = await c.var.h.googleLogin(
         body,
         clientIds,
       );
@@ -101,7 +101,7 @@ export function createGoogleAuthRoutes() {
         }
 
         const clientIds = collectGoogleClientIds(c.env);
-        const { user, token, refreshToken } = await c.var.h.googleLoginWithUser(
+        const { user, token, refreshToken } = await c.var.h.googleLogin(
           { credential: idToken, consents },
           clientIds,
         );

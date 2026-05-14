@@ -87,11 +87,5 @@ async function consumeGraceIfFresh(
     )
     .returning();
   if (!revoked) return null;
-  // 戻り値は呼び出し元の validateRefreshToken を通すため、revokedAt を null に戻した
-  // エンティティを返す (DB 上は revoke 済みのまま)
-  return parseRefreshTokenOrThrow(
-    { ...revoked, revokedAt: null },
-    logger,
-    "rotate-grace",
-  );
+  return parseRefreshTokenOrThrow(revoked, logger, "rotate-grace");
 }

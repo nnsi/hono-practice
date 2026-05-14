@@ -74,7 +74,6 @@ export function createUserRoute() {
       { google: googleVerify, apple: appleVerify },
       tracer,
     );
-    const authH = newAuthHandler(authUc);
     const subscriptionRepo = newSubscriptionRepository(db);
     const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
@@ -89,6 +88,7 @@ export function createUserRoute() {
       tracer,
       passwordVerifier,
     );
+    const authH = newAuthHandler(authUc, uc.getUserById);
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);
@@ -105,11 +105,13 @@ export function createUserRoute() {
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
       // 409 を含む全エラーは onError ハンドラ経由でレスポンス化される
-      const { token, refreshToken } = await c.var.h.createUser(
+      const { token, refreshToken, user } = await c.var.h.createUser(
         c.req.valid("json"),
       );
       setRefreshCookie(c, refreshToken);
-      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
+      return c.json(
+        isMobileClient(c) ? { token, refreshToken, user } : { token, user },
+      );
     })
     .get("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
