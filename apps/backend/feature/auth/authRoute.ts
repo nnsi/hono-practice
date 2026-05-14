@@ -114,7 +114,8 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
       let refreshTokenValue = getCookie(c, "refresh_token");
-      if (!refreshTokenValue) {
+      // X-Refresh-Token は mobile 専用 fallback。ブラウザ環境では cookie のみ受け付ける
+      if (!refreshTokenValue && isMobileClient(c)) {
         const authHeader = c.req.header("X-Refresh-Token");
         if (authHeader) refreshTokenValue = authHeader;
       }

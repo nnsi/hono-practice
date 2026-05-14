@@ -77,9 +77,10 @@ app.use("*", async (c, next) => {
   const middleware = cors({
     origin,
     credentials: true,
-    // X-Refresh-Token は mobile (Origin なし) 専用想定だが、明示せず CORS デフォルト
-    // (リクエストヘッダの echo) に任せるとブラウザからも送信可能になるため、明示する
-    allowHeaders: ["Authorization", "Content-Type", "X-Refresh-Token"],
+    // X-Refresh-Token は mobile (Origin なし、CORS 非適用) 専用ヘッダ。
+    // CORS allowHeaders からは外し、ブラウザの preflight で弾く。
+    // route 側でも isMobileClient(c) チェックで二重防御する。
+    allowHeaders: ["Authorization", "Content-Type"],
   });
 
   return middleware(c, next);
