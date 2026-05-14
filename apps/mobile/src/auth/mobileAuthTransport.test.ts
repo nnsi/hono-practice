@@ -342,7 +342,7 @@ describe("mobileAuthTransport", () => {
       expect(tokenHolder.getToken()).toBe("new-jwt");
     });
 
-    it("401 -> refresh が expired を返したら retry せず { ok: false }", async () => {
+    it("401 -> refresh も expired -> backend に session 無いので { ok: true } 扱い (state stuck 回避)", async () => {
       mockGetItem.mockResolvedValue("rt");
       const fetchMock = vi
         .fn()
@@ -352,11 +352,29 @@ describe("mobileAuthTransport", () => {
 
       const result = await makeTransport().logout();
 
+      // expired = backend 側に session が無い = ログアウト達成済みと等価。
+      // { ok: false } で返すと controller が local state を保持し、SecureStore は
+      // refreshSession が消した後なので再試行不能になる
+      expect(result).toEqual({ ok: true });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      // SecureStore: refreshSession の expired 分岐 + logout の serverOk=true 後の cleanup
+      expect(mockDeleteItem).toHaveBeenCalledTimes(2);
+    });
+
+    it("401 -> refresh が transient (5xx) -> retry せず { ok: false } (再試行可)", async () => {
+      mockGetItem.mockResolvedValue("rt");
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout
+        .mockResolvedValueOnce(emptyResponse(503)); // /auth/token → transient
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await makeTransport().logout();
+
+      // 5xx は backend の一時障害扱い。SecureStore も refresh token も保持
       expect(result).toEqual({ ok: false });
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      // refreshSession の expired branch が SecureStore を 1 回 clear する。
-      // logout 側からの追加 delete はない (serverOk=false なので)
-      expect(mockDeleteItem).toHaveBeenCalledTimes(1);
+      expect(mockDeleteItem).not.toHaveBeenCalled();
     });
   });
 

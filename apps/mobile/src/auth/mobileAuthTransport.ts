@@ -159,9 +159,18 @@ export function createMobileAuthTransport(
           if (refreshResult.kind === "ok") {
             tokenHolder.setToken(refreshResult.session.token);
             res = await postLogout();
+            serverOk = res.ok;
+          } else if (refreshResult.kind === "expired") {
+            // refresh も拒否された = backend 側にもう session が無い (= 既にログアウト
+            // 達成済みと等価)。SecureStore は refreshSession の expired 分岐が既に
+            // 消しているので、ここで ok 扱いにして controller の resetAuthState を
+            // 呼ばせる (放置すると local state 残存 + SecureStore 空で再試行不能になる)
+            serverOk = true;
           }
+          // transient (5xx 等) は serverOk=false のまま → 再試行可
+        } else {
+          serverOk = res.ok;
         }
-        serverOk = res.ok;
       } catch {
         // network error / timeout など。SecureStore を消さず再試行可能にする
       }
