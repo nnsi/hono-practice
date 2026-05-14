@@ -6,8 +6,6 @@ import { AlertTriangle, LogOut, User } from "lucide-react-native";
 import { Text, TouchableOpacity } from "react-native";
 
 import { apiClient } from "../../api/apiClient";
-import { clearToken } from "../../api/tokenHolder";
-import { clearStoredRefreshToken as clearRefreshToken } from "../../auth/mobileAuthTransport";
 import { clearLocalData } from "../../sync/initialSync";
 import { mobileTestIds } from "../../testing/testIds";
 import { InlineConfirm, Section, type ShadowStyle } from "./SettingsParts";
@@ -33,10 +31,11 @@ export function AccountAndDangerSection({
       const res = await apiClient.user.me.$delete();
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       await clearLocalData();
-      clearToken();
-      await clearRefreshToken();
       await AsyncStorage.removeItem(SETTINGS_KEY);
       setShowDeleteConfirm(false);
+      // authController.logout が transport.logout (refresh token revoke) と
+      // setAccessToken(null) / onAuthStateReset を担う。logout prop は
+      // authController.logout が渡される前提。
       await logout();
     } catch {
       setDeleteError(t("deleteAccountError"));

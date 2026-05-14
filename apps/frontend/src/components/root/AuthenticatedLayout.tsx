@@ -11,9 +11,14 @@ import {
 } from "../setting/tabPreferenceStore";
 import { WEB_TAB_METADATA } from "./tabMetadata";
 
-export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
+export function AuthenticatedLayout({
+  onLogout,
+}: {
+  onLogout: () => Promise<{ ok: boolean }>;
+}) {
   const { t, i18n } = useTranslation(["common", "settings"]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutWarning, setLogoutWarning] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -91,15 +96,27 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
             <div className="border-t border-gray-100 my-1" />
             <button
               type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                onLogout();
+              onClick={async () => {
+                setLogoutWarning(false);
+                const result = await onLogout();
+                if (result.ok) {
+                  setMenuOpen(false);
+                } else {
+                  // サーバー clear に失敗。httpOnly cookie が残ったままだと次回起動で
+                  // 自動再ログインしてしまうため、メニューは閉じず再試行を促す
+                  setLogoutWarning(true);
+                }
               }}
               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full text-left transition-colors"
             >
               <LogOut size={16} />
               {t("settings:logout")}
             </button>
+            {logoutWarning && (
+              <p className="px-4 py-2 text-xs text-red-600 bg-red-50 border-t border-red-100">
+                {t("settings:logoutFailedRetry")}
+              </p>
+            )}
           </div>
         )}
       </div>

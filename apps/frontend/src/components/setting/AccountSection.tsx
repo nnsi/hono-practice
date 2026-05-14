@@ -4,7 +4,7 @@ import { useTranslation } from "@packages/i18n";
 import { AlertTriangle, Check, UserCircle } from "lucide-react";
 
 import { apiClient } from "../../api/apiClient";
-import { clearToken } from "../../api/tokenHolder";
+import { authController } from "../../auth/authController";
 import { db } from "../../db/schema";
 import { FormButton } from "../common/FormButton";
 import { AppleSignInButton } from "../root/AppleSignInButton";
@@ -24,8 +24,10 @@ export function AccountSection() {
     } catch {
       // オフライン時もローカル削除は続行
     }
+    // db.delete() より先に authController.logout を呼んで lastLoginAt を
+    // 正規ルートでクリアする (db.delete 後は Dexie の write が失敗する)
+    await authController.logout();
     await db.delete();
-    clearToken();
     clearAppSettings();
     window.location.href = "/";
   };

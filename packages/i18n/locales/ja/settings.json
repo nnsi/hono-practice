@@ -89,6 +89,7 @@
   "restorePurchases": "購入を復元",
   "logout": "ログアウト",
   "logoutConfirm": "ログアウトしますか？",
+  "logoutFailedRetry": "ログアウトに失敗しました。ネットワークを確認して再試行してください。",
   "dangerousOperations": "危険な操作",
   "contact": "お問い合わせ"
 }
