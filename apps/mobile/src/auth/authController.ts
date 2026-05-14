@@ -1,8 +1,11 @@
-import { createAuthController } from "@packages/auth-client";
+import {
+  createAuthController,
+  createRefreshAccessTokenCallback,
+} from "@packages/auth-client";
 import NetInfo from "@react-native-community/netinfo";
 
 import { getApiUrl } from "../api/apiClient";
-import { setRefreshAccessToken } from "../api/customFetch";
+import { customFetch, setRefreshAccessToken } from "../api/customFetch";
 import { tokenHolder } from "../api/tokenHolder";
 import {
   clearStoredTabPreference,
@@ -15,20 +18,11 @@ import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 
 const transport = createMobileAuthTransport(
-  { apiUrl: getApiUrl() },
+  { apiUrl: getApiUrl(), authenticatedFetch: customFetch },
   tokenHolder,
 );
 
-setRefreshAccessToken(async () => {
-  const result = await transport.refreshSession();
-  if (result.kind !== "ok") return null;
-  // 401 retry 経由でも新 access token を tokenHolder に反映する。これを忘れると
-  // retry 直後の1リクエストだけ新 token で送られ、後続は古い tokenHolder を読む。
-  // Mobile では refreshSession 内の persistSession が refresh token のみ書くので
-  // access token のメモリ反映はここでも明示する必要がある
-  transport.setAccessToken(result.session.token);
-  return result.session.token;
-});
+setRefreshAccessToken(createRefreshAccessTokenCallback(transport));
 
 export const authController = createAuthController({
   transport,

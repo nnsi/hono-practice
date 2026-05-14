@@ -11,6 +11,24 @@ import { createWebAuthTransport } from "./webAuthTransport";
 
 const apiUrl = "http://localhost:3456";
 
+// 既存テストは vi.stubGlobal("fetch", ...) で global fetch を mock する前提なので、
+// authenticatedFetch も global fetch にデリゲートする実装をデフォルトにする。
+// logout のテストだけは authenticatedFetch を直接 mock したいので opts で override
+function makeTransport(opts?: {
+  tokenHolder?: {
+    getToken: () => string | null;
+    setToken: (t: string | null) => void;
+  };
+  authenticatedFetch?: typeof fetch;
+}) {
+  const authenticatedFetch =
+    opts?.authenticatedFetch ?? ((input, init) => fetch(input, init));
+  return createWebAuthTransport(
+    { apiUrl, authenticatedFetch },
+    opts?.tokenHolder ?? createTokenHolder(),
+  );
+}
+
 function createTokenHolder() {
   let token: string | null = null;
   return {
@@ -64,7 +82,7 @@ describe("webAuthTransport", () => {
         .mockResolvedValue(jsonResponse(validSessionBody("new-jwt")));
       vi.stubGlobal("fetch", fetchMock);
 
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -82,7 +100,7 @@ describe("webAuthTransport", () => {
 
     it("401 -> { kind: 'expired' }", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
       expect(result.kind).toBe("expired");
@@ -90,7 +108,7 @@ describe("webAuthTransport", () => {
 
     it("403 -> { kind: 'expired' }", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(403)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
       expect(result.kind).toBe("expired");
@@ -98,7 +116,7 @@ describe("webAuthTransport", () => {
 
     it("500 -> { kind: 'transient' }", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
       expect(result.kind).toBe("transient");
@@ -109,7 +127,7 @@ describe("webAuthTransport", () => {
         "fetch",
         vi.fn().mockRejectedValue(new TypeError("network")),
       );
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       await expect(transport.refreshSession()).rejects.toThrow();
     });
@@ -122,7 +140,7 @@ describe("webAuthTransport", () => {
         vi.fn().mockResolvedValue(jsonResponse(validSessionBody("login-jwt"))),
       );
       const tokenHolder = createTokenHolder();
-      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       const session = await transport.login("u@example.com", "pw");
 
@@ -133,7 +151,7 @@ describe("webAuthTransport", () => {
 
     it("401 -> invalidCredentials エラーを throw", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       await expect(transport.login("u", "wrong")).rejects.toThrow(
         "common:api.invalidCredentials",
@@ -142,7 +160,7 @@ describe("webAuthTransport", () => {
 
     it("500 -> serverError", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       await expect(transport.login("u", "p")).rejects.toThrow(
         "common:api.serverError",
@@ -154,7 +172,7 @@ describe("webAuthTransport", () => {
         "fetch",
         vi.fn().mockRejectedValue(new TypeError("network")),
       );
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       await expect(transport.login("u", "p")).rejects.toThrow(
         "common:api.networkError",
@@ -165,14 +183,14 @@ describe("webAuthTransport", () => {
   describe("logout", () => {
     it("200 -> { ok: true }", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(200)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       expect(await transport.logout()).toEqual({ ok: true });
     });
 
     it("500 -> { ok: false } (cookie 残存の警告対象)", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       expect(await transport.logout()).toEqual({ ok: false });
     });
@@ -182,48 +200,38 @@ describe("webAuthTransport", () => {
         "fetch",
         vi.fn().mockRejectedValue(new TypeError("network")),
       );
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+      const transport = makeTransport();
 
       expect(await transport.logout()).toEqual({ ok: false });
     });
 
-    it("tokenHolder の access token を Bearer header に乗せる (authMiddleware が要求するため)", async () => {
-      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
-      vi.stubGlobal("fetch", fetchMock);
-      const tokenHolder = createTokenHolder();
-      tokenHolder.setToken("jwt-token");
-      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+    it("authenticatedFetch 経由で /auth/logout を呼ぶ (Bearer 自動付与 + 401 retry を担う)", async () => {
+      // logout は authenticatedFetch を直接使うので、global fetch ではなく
+      // authenticatedFetch mock 自体に対する呼び出しを検証する
+      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
+      const transport = makeTransport({ authenticatedFetch: authFetchMock });
 
-      await transport.logout();
+      const result = await transport.logout();
 
-      expect(fetchMock).toHaveBeenCalledWith(
+      expect(result).toEqual({ ok: true });
+      expect(authFetchMock).toHaveBeenCalledWith(
         `${apiUrl}/auth/logout`,
-        expect.objectContaining({
-          method: "POST",
-          credentials: "include",
-          headers: expect.objectContaining({
-            Authorization: "Bearer jwt-token",
-          }),
-        }),
+        expect.objectContaining({ method: "POST" }),
       );
     });
 
-    it("token が無いときは Authorization header を付けない (forceLogout 経路想定)", async () => {
-      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
-      vi.stubGlobal("fetch", fetchMock);
-      const transport = createWebAuthTransport({ apiUrl }, createTokenHolder());
+    it("authenticatedFetch が 401 を返すと { ok: false } (内部で refresh retry も尽きた場合)", async () => {
+      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(401));
+      const transport = makeTransport({ authenticatedFetch: authFetchMock });
 
-      await transport.logout();
-
-      const callInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-      expect(callInit.headers).not.toHaveProperty("Authorization");
+      expect(await transport.logout()).toEqual({ ok: false });
     });
   });
 
   describe("setAccessToken / persistSession", () => {
     it("setAccessToken は tokenHolder を更新する", () => {
       const tokenHolder = createTokenHolder();
-      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       transport.setAccessToken("set-jwt");
       expect(tokenHolder.getToken()).toBe("set-jwt");
@@ -234,7 +242,7 @@ describe("webAuthTransport", () => {
 
     it("persistSession は no-op (Web は cookie 自動反映、メモリ反映は setAccessToken が担う)", async () => {
       const tokenHolder = createTokenHolder();
-      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       await transport.persistSession({
         token: "ignored",
@@ -257,7 +265,7 @@ describe("webAuthTransport", () => {
     it("clearPersistedSession は no-op (Web は httpOnly cookie のため JS から削除不能)", async () => {
       const tokenHolder = createTokenHolder();
       tokenHolder.setToken("kept-jwt");
-      const transport = createWebAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       await transport.clearPersistedSession();
 

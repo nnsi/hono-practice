@@ -36,6 +36,21 @@ function createTokenHolder() {
   };
 }
 
+// 既存テストは vi.stubGlobal("fetch", ...) で global fetch を mock する前提なので、
+// authenticatedFetch も global fetch にデリゲートする実装をデフォルトにする。
+// logout のテストだけは authenticatedFetch を直接 mock したいので opts で override
+function makeTransport(opts?: {
+  tokenHolder?: ReturnType<typeof createTokenHolder>;
+  authenticatedFetch?: typeof fetch;
+}) {
+  const authenticatedFetch =
+    opts?.authenticatedFetch ?? ((input, init) => fetch(input, init));
+  return createMobileAuthTransport(
+    { apiUrl, authenticatedFetch },
+    opts?.tokenHolder ?? createTokenHolder(),
+  );
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -82,10 +97,7 @@ describe("mobileAuthTransport", () => {
       vi.stubGlobal("fetch", fetchMock);
       mockGetItem.mockResolvedValue(null);
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -107,10 +119,7 @@ describe("mobileAuthTransport", () => {
         ),
       );
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -128,10 +137,7 @@ describe("mobileAuthTransport", () => {
       mockGetItem.mockResolvedValue("expired-refresh");
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -143,10 +149,7 @@ describe("mobileAuthTransport", () => {
       mockGetItem.mockResolvedValue("rt");
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(403)));
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -158,10 +161,7 @@ describe("mobileAuthTransport", () => {
       mockGetItem.mockResolvedValue("rt");
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -176,10 +176,7 @@ describe("mobileAuthTransport", () => {
         vi.fn().mockRejectedValue(new TypeError("network")),
       );
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       const result = await transport.refreshSession();
 
@@ -193,10 +190,7 @@ describe("mobileAuthTransport", () => {
         .mockResolvedValue(jsonResponse(validSessionBody()));
       vi.stubGlobal("fetch", fetchMock);
 
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
       await transport.refreshSession();
 
       const [url, init] = fetchMock.mock.calls[0];
@@ -220,7 +214,7 @@ describe("mobileAuthTransport", () => {
       );
 
       const tokenHolder = createTokenHolder();
-      const transport = createMobileAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       const session = await transport.login("u", "pw");
 
@@ -233,10 +227,7 @@ describe("mobileAuthTransport", () => {
 
     it("401 -> invalidCredentials", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       await expect(transport.login("u", "wrong")).rejects.toThrow(
         "common:api.invalidCredentials",
@@ -245,10 +236,7 @@ describe("mobileAuthTransport", () => {
 
     it("500 -> serverError", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       await expect(transport.login("u", "p")).rejects.toThrow(
         "common:api.serverError",
@@ -260,10 +248,7 @@ describe("mobileAuthTransport", () => {
         "fetch",
         vi.fn().mockRejectedValue(new TypeError("network")),
       );
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       await expect(transport.login("u", "p")).rejects.toThrow(
         "common:api.networkError",
@@ -272,34 +257,29 @@ describe("mobileAuthTransport", () => {
   });
 
   describe("logout", () => {
-    it("200 -> { ok: true } + SecureStore をクリア + X-Refresh-Token ヘッダ送信", async () => {
+    it("authenticatedFetch 経由で /auth/logout を呼び成功時 SecureStore をクリア + X-Refresh-Token を付与", async () => {
       mockGetItem.mockResolvedValue("rt-logout");
-      const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
-      vi.stubGlobal("fetch", fetchMock);
-
-      const tokenHolder = createTokenHolder();
-      tokenHolder.setToken("jwt-access");
-      const transport = createMobileAuthTransport({ apiUrl }, tokenHolder);
+      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
+      const transport = makeTransport({ authenticatedFetch: authFetchMock });
 
       const result = await transport.logout();
 
       expect(result).toEqual({ ok: true });
       expect(mockDeleteItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
-
-      const [, init] = fetchMock.mock.calls[0];
-      const headers = (init as RequestInit).headers as Record<string, string>;
-      expect(headers["X-Refresh-Token"]).toBe("rt-logout");
-      expect(headers.Authorization).toBe("Bearer jwt-access");
+      // X-Refresh-Token は authenticatedFetch が付与しないので transport 側で明示的に乗せる
+      expect(authFetchMock).toHaveBeenCalledWith(
+        `${apiUrl}/auth/logout`,
+        expect.objectContaining({
+          method: "POST",
+          headers: { "X-Refresh-Token": "rt-logout" },
+        }),
+      );
     });
 
     it("500 -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
-
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(500));
+      const transport = makeTransport({ authenticatedFetch: authFetchMock });
 
       const result = await transport.logout();
       expect(result).toEqual({ ok: false });
@@ -310,15 +290,8 @@ describe("mobileAuthTransport", () => {
 
     it("network error -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
       mockGetItem.mockResolvedValue("rt");
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockRejectedValue(new TypeError("network")),
-      );
-
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const authFetchMock = vi.fn().mockRejectedValue(new TypeError("network"));
+      const transport = makeTransport({ authenticatedFetch: authFetchMock });
 
       const result = await transport.logout();
       expect(result).toEqual({ ok: false });
@@ -329,7 +302,7 @@ describe("mobileAuthTransport", () => {
   describe("setAccessToken / persistSession", () => {
     it("setAccessToken は tokenHolder を更新する", () => {
       const tokenHolder = createTokenHolder();
-      const transport = createMobileAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       transport.setAccessToken("set-jwt");
       expect(tokenHolder.getToken()).toBe("set-jwt");
@@ -340,7 +313,7 @@ describe("mobileAuthTransport", () => {
 
     it("persistSession は refresh token のみを SecureStore に保存し、tokenHolder は更新しない", async () => {
       const tokenHolder = createTokenHolder();
-      const transport = createMobileAuthTransport({ apiUrl }, tokenHolder);
+      const transport = makeTransport({ tokenHolder });
 
       await transport.persistSession({
         token: "ignored-jwt",
@@ -366,10 +339,7 @@ describe("mobileAuthTransport", () => {
     });
 
     it("persistSession は refreshToken が無ければ SecureStore に書かない", async () => {
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       await transport.persistSession({
         token: "jwt",
@@ -389,10 +359,7 @@ describe("mobileAuthTransport", () => {
     });
 
     it("clearPersistedSession は SecureStore の refresh token を削除する", async () => {
-      const transport = createMobileAuthTransport(
-        { apiUrl },
-        createTokenHolder(),
-      );
+      const transport = makeTransport();
 
       await transport.clearPersistedSession();
 

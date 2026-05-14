@@ -20,7 +20,7 @@ import type { AppContext } from "../../context";
 import { newApiKeyRepository } from "../apiKey/apiKeyRepository";
 import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
-import { setRefreshCookie } from "../auth/authRouteContext";
+import { clearRefreshCookie, setRefreshCookie } from "../auth/authRouteContext";
 import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
@@ -155,6 +155,9 @@ export function createUserRoute() {
       await c.var.h.deleteMe(userId);
       await c.var.refreshTokenRepo.revokeRefreshTokenAllByUserId(userId);
       await c.var.apiKeyRepo.softDeleteApiKeysByUserId(userId);
+      // 失効済み refresh_token cookie をブラウザから消す。再利用は backend で revoke
+      // 済みなので不可能だが、識別子残存を避けるため明示的に Set-Cookie expire を返す
+      clearRefreshCookie(c);
       return c.body(null, 204);
     });
 }

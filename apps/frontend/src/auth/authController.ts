@@ -1,7 +1,10 @@
-import { createAuthController } from "@packages/auth-client";
+import {
+  createAuthController,
+  createRefreshAccessTokenCallback,
+} from "@packages/auth-client";
 
 import { getApiUrl } from "../api/apiClient";
-import { setRefreshAccessToken } from "../api/customFetch";
+import { customFetch, setRefreshAccessToken } from "../api/customFetch";
 import { tokenHolder } from "../api/tokenHolder";
 import {
   clearStoredTabPreference,
@@ -13,16 +16,12 @@ import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { createWebAuthStateRepository } from "./webAuthStateRepository";
 import { createWebAuthTransport } from "./webAuthTransport";
 
-const transport = createWebAuthTransport({ apiUrl: getApiUrl() }, tokenHolder);
+const transport = createWebAuthTransport(
+  { apiUrl: getApiUrl(), authenticatedFetch: customFetch },
+  tokenHolder,
+);
 
-setRefreshAccessToken(async () => {
-  const result = await transport.refreshSession();
-  if (result.kind !== "ok") return null;
-  // 401 retry 経由でも新 access token を tokenHolder に反映する。これを忘れると
-  // retry 直後の1リクエストだけ新 token で送られ、後続は古い tokenHolder を読む
-  transport.setAccessToken(result.session.token);
-  return result.session.token;
-});
+setRefreshAccessToken(createRefreshAccessTokenCallback(transport));
 
 export const authController = createAuthController({
   transport,

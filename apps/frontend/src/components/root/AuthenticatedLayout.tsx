@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { useLogoutAction } from "@packages/auth-client";
 import { useTranslation } from "@packages/i18n";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Globe, LogOut, Menu, Settings } from "lucide-react";
@@ -18,7 +19,10 @@ export function AuthenticatedLayout({
 }) {
   const { t, i18n } = useTranslation(["common", "settings"]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [logoutWarning, setLogoutWarning] = useState(false);
+  const { warning: logoutWarning, trigger: triggerLogout } = useLogoutAction(
+    onLogout,
+    () => setMenuOpen(false),
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -96,16 +100,8 @@ export function AuthenticatedLayout({
             <div className="border-t border-gray-100 my-1" />
             <button
               type="button"
-              onClick={async () => {
-                setLogoutWarning(false);
-                const result = await onLogout();
-                if (result.ok) {
-                  setMenuOpen(false);
-                } else {
-                  // サーバー clear に失敗。httpOnly cookie が残ったままだと次回起動で
-                  // 自動再ログインしてしまうため、メニューは閉じず再試行を促す
-                  setLogoutWarning(true);
-                }
+              onClick={() => {
+                void triggerLogout();
               }}
               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full text-left transition-colors"
             >

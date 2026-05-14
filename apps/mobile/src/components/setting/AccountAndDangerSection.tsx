@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useLogoutAction } from "@packages/auth-client";
 import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AlertTriangle, LogOut, User } from "lucide-react-native";
@@ -24,7 +25,12 @@ export function AccountAndDangerSection({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [logoutWarning, setLogoutWarning] = useState("");
+  const {
+    warning: logoutWarningFlag,
+    trigger: triggerLogout,
+    dismissWarning,
+  } = useLogoutAction(logout, () => setShowLogoutConfirm(false));
+  const logoutWarning = logoutWarningFlag ? t("logoutFailedRetry") : "";
 
   const handleDeleteAccount = async () => {
     setDeleteError("");
@@ -63,21 +69,12 @@ export function AccountAndDangerSection({
         ) : (
           <InlineConfirm
             message={t("logoutConfirm")}
-            onConfirm={async () => {
-              setLogoutWarning("");
-              const result = await logout();
-              if (result.ok) {
-                setShowLogoutConfirm(false);
-              } else {
-                // server 側 refresh token revoke 失敗。Web と同様にメニューは
-                // 閉じず再試行可能にする (httpOnly cookie 経路はないが
-                // 共有デバイス対称性のため警告を出す)
-                setLogoutWarning(t("logoutFailedRetry"));
-              }
+            onConfirm={() => {
+              void triggerLogout();
             }}
             onCancel={() => {
               setShowLogoutConfirm(false);
-              setLogoutWarning("");
+              dismissWarning();
             }}
             confirmLabel={t("logout")}
             error={logoutWarning || undefined}

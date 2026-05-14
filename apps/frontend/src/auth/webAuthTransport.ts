@@ -10,6 +10,10 @@ import { authResponseSchema } from "@packages/types/response";
 
 type TransportOptions = {
   apiUrl: string;
+  // 401 retry + Bearer 自動付与つき fetch (createAuthenticatedFetch 経由)。
+  // logout は authMiddleware が Bearer 必須なので、access token 期限切れ時に
+  // 自動 refresh + retry されないと「永久に 401 で詰む」状態になる
+  authenticatedFetch: typeof fetch;
 };
 
 type TokenHolder = {
@@ -22,6 +26,7 @@ export function createWebAuthTransport(
   tokenHolder: TokenHolder,
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
+  const authenticatedFetch = options.authenticatedFetch;
 
   const parseSession = async (res: Response): Promise<AuthSession> => {
     return authResponseSchema.parse(await res.json());
@@ -81,19 +86,12 @@ export function createWebAuthTransport(
       return { kind: "transient", reason: `status ${res.status}` };
     },
     async logout() {
-      // /auth/logout は authMiddleware が Bearer 必須なので、現在の access
-      // token を明示的に付ける。tokenHolder が空 (例: 復元失敗) のときは
-      // どうせ 401 になるが、その場合は controller 側で forceLogout 経由
-      // に切り替える前提
-      const token = tokenHolder.getToken();
+      // /auth/logout は authMiddleware が Bearer 必須。authenticatedFetch は
+      // Bearer 自動付与 + 401 retry (refresh → 新 token で再送) を担う。
+      // これがないと access token 期限切れ後の logout が永久に 401 で詰まる
       try {
-        const res = await fetch(`${apiUrl}/auth/logout`, {
+        const res = await authenticatedFetch(`${apiUrl}/auth/logout`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
         });
         // 200 系のみ成功扱い。失敗時は httpOnly cookie が残るため UI 警告対象
         return { ok: res.ok };

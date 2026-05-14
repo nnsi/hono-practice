@@ -7,34 +7,20 @@ import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
 import type { Consents } from "@packages/types/request";
 import { authResponseSchema } from "@packages/types/response";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
 
-const REFRESH_TOKEN_KEY = "actiko-refresh-token";
+import {
+  clearStoredRefreshToken,
+  getStoredRefreshToken,
+  setStoredRefreshToken,
+} from "./refreshTokenStorage";
+
+export {
+  clearStoredRefreshToken,
+  getStoredRefreshToken,
+  setStoredRefreshToken,
+} from "./refreshTokenStorage";
+
 const REQUEST_TIMEOUT_MS = 15_000;
-
-const isWeb = Platform.OS === "web";
-
-export async function getStoredRefreshToken(): Promise<string | null> {
-  if (isWeb) return localStorage.getItem(REFRESH_TOKEN_KEY);
-  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-}
-
-export async function setStoredRefreshToken(token: string): Promise<void> {
-  if (isWeb) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    return;
-  }
-  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
-}
-
-export async function clearStoredRefreshToken(): Promise<void> {
-  if (isWeb) {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    return;
-  }
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-}
 
 function fetchWithTimeout(
   input: RequestInfo | URL,
@@ -53,6 +39,10 @@ function fetchWithTimeout(
 
 type TransportOptions = {
   apiUrl: string;
+  // 401 retry + Bearer 自動付与つき fetch (createAuthenticatedFetch 経由)。
+  // logout は authMiddleware が Bearer 必須なので、access token 期限切れ時に
+  // 自動 refresh + retry されないと「永久に 401 で詰む」状態になる
+  authenticatedFetch: typeof fetch;
 };
 
 type TokenHolder = {
@@ -71,6 +61,7 @@ export function createMobileAuthTransport(
   tokenHolder: TokenHolder,
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
+  const authenticatedFetch = options.authenticatedFetch;
 
   // login/register/oauth レスポンスから session を取り出す内部 helper。
   // access token のメモリ反映は controller.applySession 内の transport.setAccessToken
@@ -159,17 +150,15 @@ export function createMobileAuthTransport(
       return { kind: "transient", reason: `status ${res.status}` };
     },
     async logout() {
+      // /auth/logout は authMiddleware が Bearer 必須。authenticatedFetch は
+      // Bearer 自動付与 + 401 retry (refresh → 新 token で再送) を担う。
+      // X-Refresh-Token は authenticatedFetch が付与しないため明示的に乗せる
       const refreshToken = await getStoredRefreshToken();
-      const token = tokenHolder.getToken();
       let serverOk = false;
       try {
-        const res = await fetchWithTimeout(`${apiUrl}/auth/logout`, {
+        const res = await authenticatedFetch(`${apiUrl}/auth/logout`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
-          },
+          headers: refreshToken ? { "X-Refresh-Token": refreshToken } : {},
         });
         serverOk = res.ok;
       } catch {
