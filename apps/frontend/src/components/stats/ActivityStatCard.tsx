@@ -1,3 +1,4 @@
+import { getVisibleKindsForCharts } from "@packages/frontend-shared/hooks/getVisibleKindsForCharts";
 import type {
   ActivityStat,
   GoalLine,
@@ -27,6 +28,7 @@ export function ActivityStatCard({
 }) {
   const { t, kindColors, chartData, summary, isSingleUnnamedKind } =
     useActivityStatCard(stat, allDates);
+  const visibleKinds = getVisibleKindsForCharts(stat);
 
   return (
     <div className="border rounded-xl overflow-hidden bg-gray-50">
@@ -68,73 +70,75 @@ export function ActivityStatCard({
       )}
 
       {/* Chart */}
-      <div className="p-4">
-        {stat.showCombinedStats ? (
-          <ActivityChart
-            data={chartData}
-            dataKeys={stat.kinds.map((k) => ({
-              name: k.name,
-              color: kindColors[k.name],
-            }))}
-            stackId="a"
-            showLegend={!isSingleUnnamedKind}
-            goalLines={goalLines}
-          />
-        ) : stat.kinds.length === 1 ? (
-          <ActivityChart
-            data={chartData}
-            dataKeys={[
-              {
-                name: stat.kinds[0].name,
-                color: kindColors[stat.kinds[0].name] || DEFAULT_BAR_COLOR,
-              },
-            ]}
-            showLegend={false}
-            goalLines={goalLines}
-          />
-        ) : (
-          <div className="space-y-4">
-            {stat.kinds.map((kind) => {
-              const kindData = allDates.map((date) => {
-                const matchingLogs = kind.logs.filter(
-                  (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
+      {visibleKinds.length > 0 && (
+        <div className="p-4">
+          {stat.showCombinedStats ? (
+            <ActivityChart
+              data={chartData}
+              dataKeys={visibleKinds.map((k) => ({
+                name: k.name,
+                color: kindColors[k.name],
+              }))}
+              stackId="a"
+              showLegend={!isSingleUnnamedKind}
+              goalLines={goalLines}
+            />
+          ) : visibleKinds.length === 1 ? (
+            <ActivityChart
+              data={chartData}
+              dataKeys={[
+                {
+                  name: visibleKinds[0].name,
+                  color: kindColors[visibleKinds[0].name] || DEFAULT_BAR_COLOR,
+                },
+              ]}
+              showLegend={false}
+              goalLines={goalLines}
+            />
+          ) : (
+            <div className="space-y-4">
+              {visibleKinds.map((kind) => {
+                const kindData = allDates.map((date) => {
+                  const matchingLogs = kind.logs.filter(
+                    (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
+                  );
+                  return {
+                    date: `${dayjs(date).date()}${t("dateLabel")}`,
+                    values: {
+                      [kind.name]: roundQuantity(
+                        matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
+                      ),
+                    },
+                  };
+                });
+                return (
+                  <div key={kind.id || kind.name}>
+                    <h4 className="font-semibold text-sm mb-1 px-1">
+                      {kind.name}
+                      <span className="text-gray-400 font-normal ml-1">
+                        ({t("kindTotalLabel")}{" "}
+                        {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
+                      </span>
+                    </h4>
+                    <ActivityChart
+                      data={kindData}
+                      dataKeys={[
+                        {
+                          name: kind.name,
+                          color: kindColors[kind.name] || DEFAULT_BAR_COLOR,
+                        },
+                      ]}
+                      height={220}
+                      showLegend={false}
+                      goalLines={goalLines}
+                    />
+                  </div>
                 );
-                return {
-                  date: `${dayjs(date).date()}${t("dateLabel")}`,
-                  values: {
-                    [kind.name]: roundQuantity(
-                      matchingLogs.reduce((sum, l) => sum + l.quantity, 0),
-                    ),
-                  },
-                };
-              });
-              return (
-                <div key={kind.id || kind.name}>
-                  <h4 className="font-semibold text-sm mb-1 px-1">
-                    {kind.name}
-                    <span className="text-gray-400 font-normal ml-1">
-                      ({t("kindTotalLabel")}{" "}
-                      {formatQuantityWithUnit(kind.total, stat.quantityUnit)})
-                    </span>
-                  </h4>
-                  <ActivityChart
-                    data={kindData}
-                    dataKeys={[
-                      {
-                        name: kind.name,
-                        color: kindColors[kind.name] || DEFAULT_BAR_COLOR,
-                      },
-                    ]}
-                    height={220}
-                    showLegend={false}
-                    goalLines={goalLines}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary */}
       <SummarySection summary={summary} quantityUnit={stat.quantityUnit} />

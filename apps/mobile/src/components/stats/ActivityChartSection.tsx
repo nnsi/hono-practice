@@ -1,3 +1,4 @@
+import { getVisibleKindsForCharts } from "@packages/frontend-shared/hooks/getVisibleKindsForCharts";
 import type {
   ActivityStat,
   ChartData,
@@ -32,11 +33,15 @@ export function ActivityChartSection({
   goalLines,
 }: ActivityChartSectionProps) {
   const { t } = useTranslation("stats");
+  const visibleKinds = getVisibleKindsForCharts(stat);
+
+  if (visibleKinds.length === 0) return null;
+
   if (stat.showCombinedStats) {
     return (
       <ActivityChart
         data={chartData}
-        dataKeys={stat.kinds.map((k) => ({
+        dataKeys={visibleKinds.map((k) => ({
           name: k.name,
           color: kindColors[k.name],
         }))}
@@ -47,14 +52,14 @@ export function ActivityChartSection({
     );
   }
 
-  if (stat.kinds.length === 1) {
+  if (visibleKinds.length === 1) {
     return (
       <ActivityChart
         data={chartData}
         dataKeys={[
           {
-            name: stat.kinds[0].name,
-            color: kindColors[stat.kinds[0].name] || DEFAULT_BAR_COLOR,
+            name: visibleKinds[0].name,
+            color: kindColors[visibleKinds[0].name] || DEFAULT_BAR_COLOR,
           },
         ]}
         showLegend={false}
@@ -65,7 +70,7 @@ export function ActivityChartSection({
 
   return (
     <View className="gap-4">
-      {stat.kinds.map((kind) => {
+      {visibleKinds.map((kind) => {
         const kindData = allDates.map((date) => {
           const matchingLogs = kind.logs.filter(
             (l) => dayjs(l.date).format("YYYY-MM-DD") === date,
