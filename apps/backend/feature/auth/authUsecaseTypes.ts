@@ -17,14 +17,12 @@ export type LoginInput = {
 export type AuthOutput = {
   accessToken: string;
   refreshToken: string;
-  userId?: string;
+  userId: UserId;
 };
 
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;
-  refreshToken(token: string): Promise<AuthOutput>;
-  /** UPDATE RETURNING でアトミックにrevoke+取得+新トークン発行（TOCTOU防止） */
-  atomicRotateRefreshToken(combinedToken: string): Promise<AuthOutput>;
+  rotateRefreshToken(combinedToken: string): Promise<AuthOutput>;
   logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,

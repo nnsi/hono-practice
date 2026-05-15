@@ -17,13 +17,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function expectAuthResponse(
-  body: unknown,
-): asserts body is { token: string; refreshToken: string } {
+function expectAuthResponse(body: unknown): asserts body is {
+  token: string;
+  refreshToken: string;
+  user: { id: string; plan: string };
+} {
   if (
     !isRecord(body) ||
     typeof body.token !== "string" ||
-    typeof body.refreshToken !== "string"
+    typeof body.refreshToken !== "string" ||
+    !isRecord(body.user) ||
+    typeof body.user.id !== "string" ||
+    typeof body.user.plan !== "string"
   ) {
     throw new Error("auth response is invalid");
   }
@@ -80,6 +85,8 @@ describe("userRoute", () => {
     expectAuthResponse(body);
     expect(body.token).toBeDefined();
     expect(body.refreshToken).toBeDefined();
+    expect(body.user.id).toEqual(expect.any(String));
+    expect(body.user.plan).toBe("free");
   });
 
   it("POST / signup 時に user_consent に3行記録される", async () => {
@@ -318,6 +325,21 @@ describe("userRoute", () => {
         .where(eq(apiKeys.userId, TEST_USER_ID));
       expect(apiKey.deletedAt).not.toBeNull();
       expect(apiKey.isActive).toBe(false);
+    });
+
+    it("正常系：アカウント削除時に refresh_token cookie を expire させる Set-Cookie を返す", async () => {
+      const client = createAuthClient();
+
+      const res = await client.me.$delete();
+      expect(res.status).toEqual(204);
+
+      // backend で revoke 済みでも、ブラウザに失効済み cookie 識別子が残らないよう
+      // Set-Cookie で expire させる (Codex Round 2 #2 指摘)
+      const setCookie = res.headers.get("Set-Cookie");
+      expect(setCookie).toBeTruthy();
+      expect(setCookie).toContain("refresh_token=");
+      // Expires=Thu, 01 Jan 1970... (Date(0)) で即時失効
+      expect(setCookie).toMatch(/Expires=[A-Za-z]+, 01 Jan 1970/);
     });
 
     it("削除済みユーザーは/meで取得できない", async () => {

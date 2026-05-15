@@ -13,6 +13,8 @@ import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import type { ApiKeyRepository } from "../../apiKey/apiKeyRepository";
+import type { RefreshTokenRepository } from "../../auth/refreshTokenRepository";
 import type { UserProviderRepository } from "../../auth/userProviderRepository";
 import type { SubscriptionQueryUsecase } from "../../subscription/subscriptionUsecase";
 import {
@@ -27,6 +29,8 @@ describe("UserUsecase", () => {
   let userConsentRepo: UserConsentRepository;
   let txRunner: TransactionRunner;
   let subscriptionUc: SubscriptionQueryUsecase;
+  let refreshTokenRepo: RefreshTokenRepository;
+  let apiKeyRepo: ApiKeyRepository;
   let usecase: ReturnType<typeof newUserUsecase>;
 
   const userId = createUserId("00000000-0000-4000-8000-000000000000");
@@ -56,6 +60,8 @@ describe("UserUsecase", () => {
     providerRepo = mock<UserProviderRepository>();
     userConsentRepo = mock<UserConsentRepository>();
     subscriptionUc = mock<SubscriptionQueryUsecase>();
+    refreshTokenRepo = mock<RefreshTokenRepository>();
+    apiKeyRepo = mock<ApiKeyRepository>();
     txRunner = {
       async run(repositories, operation) {
         const merged = Object.assign({}, ...repositories);
@@ -69,11 +75,17 @@ describe("UserUsecase", () => {
       txRunner,
       instance(subscriptionUc),
       noopTracer,
+      {
+        refreshTokenRepo: instance(refreshTokenRepo),
+        apiKeyRepo: instance(apiKeyRepo),
+      },
     );
     reset(repo);
     reset(providerRepo);
     reset(userConsentRepo);
     reset(subscriptionUc);
+    reset(refreshTokenRepo);
+    reset(apiKeyRepo);
   });
 
   describe("getUserById", () => {
@@ -187,12 +199,18 @@ describe("UserUsecase", () => {
   });
 
   describe("deleteUser", () => {
-    it("正常系：ユーザー削除が成功する", async () => {
+    it("正常系：ユーザー削除 + refresh token 全 revoke + API key soft delete が呼ばれる", async () => {
       when(repo.deleteUser(userId)).thenResolve();
+      when(
+        refreshTokenRepo.revokeRefreshTokenAllByUserId(userId),
+      ).thenResolve();
+      when(apiKeyRepo.softDeleteApiKeysByUserId(userId)).thenResolve();
 
       await usecase.deleteUser(userId);
 
       verify(repo.deleteUser(userId)).once();
+      verify(refreshTokenRepo.revokeRefreshTokenAllByUserId(userId)).once();
+      verify(apiKeyRepo.softDeleteApiKeysByUserId(userId)).once();
     });
 
     it("異常系：リポジトリがエラーをスローする", async () => {

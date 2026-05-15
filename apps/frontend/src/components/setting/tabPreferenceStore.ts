@@ -15,7 +15,7 @@ import {
   shouldRetryTabPreferenceFlush,
 } from "@packages/domain/user/tabPreferenceSync";
 
-import { apiClient } from "../../utils/apiClient";
+import { apiClient } from "../../api/apiClient";
 import { SETTINGS_KEY } from "./useAppSettings";
 
 const listeners = new Set<() => void>();

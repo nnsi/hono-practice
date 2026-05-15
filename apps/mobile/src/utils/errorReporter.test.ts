@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { reportError } from "./errorReporter";
 
 // Mock react-native
@@ -6,7 +8,7 @@ vi.mock("react-native", () => ({
 }));
 
 // Mock apiClient
-vi.mock("./apiClient", () => ({
+vi.mock("../api/apiClient", () => ({
   getApiUrl: vi.fn(() => "http://localhost:3456"),
 }));
 

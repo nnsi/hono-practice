@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { apiClient } from "../../utils/apiClient";
+import { apiClient } from "../../api/apiClient";
 
 type LinkMessage = { type: "success" | "error"; text: string } | null;
 

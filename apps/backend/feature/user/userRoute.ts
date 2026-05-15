@@ -20,7 +20,7 @@ import type { AppContext } from "../../context";
 import { newApiKeyRepository } from "../apiKey/apiKeyRepository";
 import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
-import { setRefreshCookie } from "../auth/authRouteContext";
+import { clearRefreshCookie, setRefreshCookie } from "../auth/authRouteContext";
 import { newAuthUsecase } from "../auth/authUsecase";
 import { googleVerify } from "../auth/googleVerify";
 import { newRefreshTokenRepository } from "../auth/refreshTokenRepository";
@@ -38,8 +38,6 @@ export function createUserRoute() {
       Variables: {
         h: ReturnType<typeof newUserHandler>;
         authH: ReturnType<typeof newAuthHandler>;
-        apiKeyRepo: ReturnType<typeof newApiKeyRepository>;
-        refreshTokenRepo: ReturnType<typeof newRefreshTokenRepository>;
       };
     }
   >();
@@ -74,7 +72,6 @@ export function createUserRoute() {
       { google: googleVerify, apple: appleVerify },
       tracer,
     );
-    const authH = newAuthHandler(authUc);
     const subscriptionRepo = newSubscriptionRepository(db);
     const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
@@ -87,14 +84,14 @@ export function createUserRoute() {
       txRunner,
       subscriptionUc,
       tracer,
+      { refreshTokenRepo, apiKeyRepo },
       passwordVerifier,
     );
+    const authH = newAuthHandler(authUc, uc.getUserById);
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);
     c.set("authH", authH);
-    c.set("apiKeyRepo", apiKeyRepo);
-    c.set("refreshTokenRepo", refreshTokenRepo);
 
     return next();
   });
@@ -105,11 +102,13 @@ export function createUserRoute() {
   return app
     .post("/", zValidator("json", createUserRequestSchema), async (c) => {
       // 409 を含む全エラーは onError ハンドラ経由でレスポンス化される
-      const { token, refreshToken } = await c.var.h.createUser(
+      const { token, refreshToken, user } = await c.var.h.createUser(
         c.req.valid("json"),
       );
       setRefreshCookie(c, refreshToken);
-      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
+      return c.json(
+        isMobileClient(c) ? { token, refreshToken, user } : { token, user },
+      );
     })
     .get("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
@@ -150,9 +149,10 @@ export function createUserRoute() {
     )
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
+      // usecase に refresh token revoke + API key soft delete を集約。route 層は
+      // HTTP concern (cookie clear / status) のみ担当する
       await c.var.h.deleteMe(userId);
-      await c.var.refreshTokenRepo.revokeRefreshTokenAllByUserId(userId);
-      await c.var.apiKeyRepo.softDeleteApiKeysByUserId(userId);
+      clearRefreshCookie(c);
       return c.body(null, 204);
     });
 }

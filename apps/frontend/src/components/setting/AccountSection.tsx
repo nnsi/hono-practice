@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { AlertTriangle, Check, UserCircle } from "lucide-react";
 
+import { apiClient } from "../../api/apiClient";
+import { authController } from "../../auth/authController";
 import { db } from "../../db/schema";
-import { apiClient, clearToken } from "../../utils/apiClient";
 import { FormButton } from "../common/FormButton";
 import { AppleSignInButton } from "../root/AppleSignInButton";
 import { GoogleSignInButton } from "../root/GoogleSignInButton";
@@ -16,15 +17,26 @@ export function AccountSection() {
   const apple = useAppleAccount();
   const { t } = useTranslation("settings");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = async () => {
+    setDeleteError("");
+    setIsDeleting(true);
+    // Web の forceLogout は httpOnly cookie を消せない (no-op) ので、サーバー側
+    // 削除が失敗するとブラウザに refresh_token cookie が残り次回起動で自動再ログイン
+    // される。Mobile と同じく res.ok を確認し、サーバー削除成功時のみ local
+    // purge / forceLogout に進む
     try {
-      await apiClient.user.me.$delete();
+      const res = await apiClient.user.me.$delete();
+      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
     } catch {
-      // オフライン時もローカル削除は続行
+      setDeleteError(t("deleteAccountError"));
+      setIsDeleting(false);
+      return;
     }
+    await authController.forceLogout();
     await db.delete();
-    clearToken();
     clearAppSettings();
     window.location.href = "/";
   };
@@ -138,18 +150,26 @@ export function AccountSection() {
               <p className="text-sm text-red-700 font-medium">
                 {t("deleteAccountConfirm")}
               </p>
+              {deleteError && (
+                <p className="text-xs text-red-600">{deleteError}</p>
+              )}
               <div className="flex gap-2">
                 <FormButton
                   variant="dangerConfirm"
                   label={t("deleteAccountButton")}
                   onClick={handleDeleteAccount}
                   className="px-4"
+                  disabled={isDeleting}
                 />
                 <FormButton
                   variant="secondary"
                   label={t("cancel")}
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteError("");
+                  }}
                   className="px-4"
+                  disabled={isDeleting}
                 />
               </div>
             </div>

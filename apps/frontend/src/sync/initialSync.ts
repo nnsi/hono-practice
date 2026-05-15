@@ -1,6 +1,8 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { createInitialSync } from "@packages/sync-engine";
 
+import { apiClient } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";
@@ -8,7 +10,6 @@ import { goalRepository } from "../db/goalRepository";
 import { noteRepository } from "../db/noteRepository";
 import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
-import { apiClient, customFetch } from "../utils/apiClient";
 import { reportError } from "../utils/errorReporter";
 import { webStorageAdapter } from "./webPlatformAdapters";
 

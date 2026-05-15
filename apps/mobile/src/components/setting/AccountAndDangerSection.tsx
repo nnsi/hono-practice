@@ -1,17 +1,15 @@
 import { useState } from "react";
 
+import { useLogoutAction } from "@packages/auth-client";
 import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AlertTriangle, LogOut, User } from "lucide-react-native";
 import { Text, TouchableOpacity } from "react-native";
 
+import { apiClient } from "../../api/apiClient";
+import { authController } from "../../auth/authController";
 import { clearLocalData } from "../../sync/initialSync";
 import { mobileTestIds } from "../../testing/testIds";
-import {
-  apiClient,
-  clearRefreshToken,
-  clearToken,
-} from "../../utils/apiClient";
 import { InlineConfirm, Section, type ShadowStyle } from "./SettingsParts";
 import { SETTINGS_KEY } from "./useAppSettings";
 
@@ -20,13 +18,19 @@ export function AccountAndDangerSection({
   logout,
 }: {
   shadow: ShadowStyle;
-  logout: () => void;
+  logout: () => Promise<{ ok: boolean }>;
 }) {
   const { t } = useTranslation("settings");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    warning: logoutWarningFlag,
+    trigger: triggerLogout,
+    dismissWarning,
+  } = useLogoutAction(logout, () => setShowLogoutConfirm(false));
+  const logoutWarning = logoutWarningFlag ? t("logoutFailedRetry") : "";
 
   const handleDeleteAccount = async () => {
     setDeleteError("");
@@ -35,11 +39,11 @@ export function AccountAndDangerSection({
       const res = await apiClient.user.me.$delete();
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       await clearLocalData();
-      clearToken();
-      await clearRefreshToken();
       await AsyncStorage.removeItem(SETTINGS_KEY);
       setShowDeleteConfirm(false);
-      await logout();
+      // backend で user 削除済みのため通常 logout は server 401 で失敗するのが
+      // 想定。forceLogout で local state を強制リセットしてログイン画面に戻す
+      await authController.forceLogout();
     } catch {
       setDeleteError(t("deleteAccountError"));
       setIsDeleting(false);
@@ -66,11 +70,15 @@ export function AccountAndDangerSection({
           <InlineConfirm
             message={t("logoutConfirm")}
             onConfirm={() => {
-              logout();
-              setShowLogoutConfirm(false);
+              void triggerLogout();
             }}
-            onCancel={() => setShowLogoutConfirm(false)}
+            onCancel={() => {
+              setShowLogoutConfirm(false);
+              dismissWarning();
+            }}
             confirmLabel={t("logout")}
+            error={logoutWarning || undefined}
+            confirmTestID={mobileTestIds.settings.logoutConfirmButton}
           />
         )}
       </Section>

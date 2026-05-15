@@ -1,8 +1,9 @@
 import type { Mock } from "vitest";
 
+import { apiClient } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 import { getDatabase } from "../db/database";
 import { activityRepository } from "../repositories/activityRepository";
-import { apiClient, customFetch } from "../utils/apiClient";
 import {
   syncActivities,
   syncActivityIconDeletions,
@@ -28,7 +29,7 @@ vi.mock("../repositories/activityRepository", () => ({
   },
 }));
 
-vi.mock("../utils/apiClient", () => {
+vi.mock("../api/apiClient", () => {
   const mockPost = vi.fn();
   return {
     apiClient: {
@@ -40,10 +41,12 @@ vi.mock("../utils/apiClient", () => {
         },
       },
     },
-    customFetch: vi.fn(),
     getApiUrl: vi.fn(() => "http://localhost:3456"),
   };
 });
+vi.mock("../api/customFetch", () => ({
+  customFetch: vi.fn(),
+}));
 
 vi.mock("../db/database", () => ({
   getDatabase: vi.fn(),

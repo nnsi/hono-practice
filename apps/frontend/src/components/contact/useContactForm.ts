@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { useNavigate } from "@tanstack/react-router";
 
-import { apiClient } from "../../utils/apiClient";
+import { apiClient } from "../../api/apiClient";
 
 type Category = "bug_report" | "account_deletion" | "other" | "";
 

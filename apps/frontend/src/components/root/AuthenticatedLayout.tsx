@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { useLogoutAction } from "@packages/auth-client";
 import { useTranslation } from "@packages/i18n";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Globe, LogOut, Menu, Settings } from "lucide-react";
@@ -11,9 +12,17 @@ import {
 } from "../setting/tabPreferenceStore";
 import { WEB_TAB_METADATA } from "./tabMetadata";
 
-export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
+export function AuthenticatedLayout({
+  onLogout,
+}: {
+  onLogout: () => Promise<{ ok: boolean }>;
+}) {
   const { t, i18n } = useTranslation(["common", "settings"]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { warning: logoutWarning, trigger: triggerLogout } = useLogoutAction(
+    onLogout,
+    () => setMenuOpen(false),
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -92,14 +101,18 @@ export function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
             <button
               type="button"
               onClick={() => {
-                setMenuOpen(false);
-                onLogout();
+                void triggerLogout();
               }}
               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full text-left transition-colors"
             >
               <LogOut size={16} />
               {t("settings:logout")}
             </button>
+            {logoutWarning && (
+              <p className="px-4 py-2 text-xs text-red-600 bg-red-50 border-t border-red-100">
+                {t("settings:logoutFailedRetry")}
+              </p>
+            )}
           </div>
         )}
       </div>

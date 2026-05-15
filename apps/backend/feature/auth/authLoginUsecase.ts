@@ -1,10 +1,7 @@
 import { AuthError } from "@backend/error";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Tracer } from "@backend/lib/tracer";
-import {
-  createRefreshToken,
-  validateRefreshToken,
-} from "@packages/domain/auth/refreshTokenSchema";
+import { createRefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { UserRepository } from "../user";
@@ -56,11 +53,15 @@ export function login(
     );
     const combinedRefreshToken = `${selector}.${plainRefreshToken}`;
 
-    return { accessToken, refreshToken: combinedRefreshToken };
+    return {
+      accessToken,
+      refreshToken: combinedRefreshToken,
+      userId: user.id,
+    };
   };
 }
 
-export function atomicRotateRefreshToken(
+export function rotateRefreshToken(
   refreshTokenRepo: RefreshTokenRepository,
   userRepo: UserRepository,
   jwtSecret: string,
@@ -72,9 +73,6 @@ export function atomicRotateRefreshToken(
       refreshTokenRepo.revokeAndGetRefreshToken(combinedToken),
     );
     if (!storedToken) throw new AuthError("invalid refresh token");
-    if (!validateRefreshToken(storedToken)) {
-      throw new AuthError("invalid refresh token (validation failed)");
-    }
     const user = await tracer.span("db.getUserById", () =>
       userRepo.getUserById(storedToken.userId),
     );
@@ -100,6 +98,7 @@ export function atomicRotateRefreshToken(
     return {
       accessToken,
       refreshToken: `${selector}.${plainRefreshToken}`,
+      userId: storedToken.userId,
     };
   };
 }

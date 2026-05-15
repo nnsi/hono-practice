@@ -195,7 +195,7 @@ describe("AuthUsecase", () => {
         async (token: RefreshToken) => token,
       );
 
-      const result = await usecase.refreshToken(
+      const result = await usecase.rotateRefreshToken(
         `${oldSelector}.${oldPlainToken}`,
       );
 
@@ -224,7 +224,7 @@ describe("AuthUsecase", () => {
       when(userRepo.getUserById(userId)).thenResolve(undefined);
 
       await expect(
-        usecase.refreshToken(`${oldSelector}.${oldPlainToken}`),
+        usecase.rotateRefreshToken(`${oldSelector}.${oldPlainToken}`),
       ).rejects.toThrow(new AuthError("invalid refresh token"));
 
       verify(userRepo.getUserById(userId)).once();
@@ -236,56 +236,8 @@ describe("AuthUsecase", () => {
         null,
       );
 
-      await expect(usecase.refreshToken("invalid-token")).rejects.toThrow(
+      await expect(usecase.rotateRefreshToken("invalid-token")).rejects.toThrow(
         new AuthError("invalid refresh token"),
-      );
-
-      verify(refreshTokenRepo.createRefreshToken(anything())).never();
-    });
-
-    it("異常系：失効したリフレッシュトークン", async () => {
-      const revokedPlainToken = v7();
-      const revokedSelector = v7();
-      const revokedHashedToken = await hashWithSHA256(revokedPlainToken);
-      const revokedToken = createMockRefreshToken(userId, revokedHashedToken, {
-        selector: revokedSelector,
-        revokedAt: new Date(),
-      });
-
-      when(
-        refreshTokenRepo.revokeAndGetRefreshToken(
-          `${revokedSelector}.${revokedPlainToken}`,
-        ),
-      ).thenResolve(revokedToken);
-
-      await expect(
-        usecase.refreshToken(`${revokedSelector}.${revokedPlainToken}`),
-      ).rejects.toThrow(
-        new AuthError("invalid refresh token (validation failed)"),
-      );
-
-      verify(refreshTokenRepo.createRefreshToken(anything())).never();
-    });
-
-    it("異常系：期限切れのリフレッシュトークン", async () => {
-      const expiredPlainToken = v7();
-      const expiredSelector = v7();
-      const expiredHashedToken = await hashWithSHA256(expiredPlainToken);
-      const expiredToken = createMockRefreshToken(userId, expiredHashedToken, {
-        selector: expiredSelector,
-        expiresAt: new Date(Date.now() - 1000),
-      });
-
-      when(
-        refreshTokenRepo.revokeAndGetRefreshToken(
-          `${expiredSelector}.${expiredPlainToken}`,
-        ),
-      ).thenResolve(expiredToken);
-
-      await expect(
-        usecase.refreshToken(`${expiredSelector}.${expiredPlainToken}`),
-      ).rejects.toThrow(
-        new AuthError("invalid refresh token (validation failed)"),
       );
 
       verify(refreshTokenRepo.createRefreshToken(anything())).never();

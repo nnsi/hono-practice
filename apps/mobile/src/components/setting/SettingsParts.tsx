@@ -89,6 +89,7 @@ export function InlineConfirm({
   confirmLabel,
   error,
   disabled = false,
+  confirmTestID,
 }: {
   message: string;
   onConfirm: () => void;
@@ -96,6 +97,7 @@ export function InlineConfirm({
   confirmLabel?: string;
   error?: string;
   disabled?: boolean;
+  confirmTestID?: string;
 }) {
   const { t } = useTranslation("settings");
   const label = confirmLabel ?? t("deleteAccountButton");
@@ -114,6 +116,7 @@ export function InlineConfirm({
           className={`px-4 py-2 bg-red-600 rounded-lg ${disabled ? "opacity-50" : ""}`}
           onPress={onConfirm}
           disabled={disabled}
+          testID={confirmTestID}
         >
           <Text className="text-sm text-white font-medium">
             {disabled ? "処理中..." : label}

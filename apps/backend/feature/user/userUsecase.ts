@@ -18,6 +18,11 @@ import { MultiHashPasswordVerifier } from "../auth/passwordVerifier";
 import type { UserProviderRepository } from "../auth/userProviderRepository";
 import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import type { UserConsentRepository } from "./userConsentRepository";
+import {
+  type UserDeleteUsecaseDeps,
+  newDeleteUserUsecase,
+} from "./userDeleteUsecase";
+import { type UserListResult, newListUsersUsecase } from "./userListUsecase";
 import type { UserRepository } from "./userRepository";
 import {
   getTabPreference,
@@ -44,16 +49,6 @@ export type UserWithProviders = User & {
   tabPreference: TabPreference;
 };
 
-type UserListResult = {
-  items: {
-    id: string;
-    loginId: string;
-    name: string | null;
-    createdAt: Date;
-  }[];
-  total: number;
-};
-
 export type UserUsecase = {
   createUser: (params: CreateUserInputParams) => Promise<void>;
   getUserById: (userId: UserId) => Promise<UserWithProviders>;
@@ -66,6 +61,8 @@ export type UserUsecase = {
   listUsers: (limit: number, offset: number) => Promise<UserListResult>;
 };
 
+export type { UserDeleteUsecaseDeps as UserUsecaseDeps } from "./userDeleteUsecase";
+
 export function newUserUsecase(
   repo: UserRepository,
   userProviderRepo: UserProviderRepository,
@@ -73,6 +70,9 @@ export function newUserUsecase(
   txRunner: TransactionRunner,
   subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
+  // deleteUser のみ refreshTokenRepo / apiKeyRepo を要求する。authRoute や admin
+  // 経路は deleteUser を呼ばないので undefined で OK (未設定で deleteUser を呼ぶと throw)
+  deps?: UserDeleteUsecaseDeps,
   passwordVerifier = new MultiHashPasswordVerifier(),
 ): UserUsecase {
   return {
@@ -86,8 +86,14 @@ export function newUserUsecase(
     getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
     getTabPreference: getTabPreference(repo, tracer),
     updateTabPreference: updateTabPreference(repo, tracer),
-    deleteUser: deleteUser(repo, tracer),
-    listUsers: listUsers(repo, tracer),
+    deleteUser: deps
+      ? newDeleteUserUsecase(repo, deps, tracer)
+      : async () => {
+          throw new Error(
+            "deleteUser requires deps (refreshTokenRepo, apiKeyRepo)",
+          );
+        },
+    listUsers: newListUsersUsecase(repo, tracer),
   };
 }
 
@@ -182,17 +188,5 @@ function getUserById(
       plan: subscription.plan,
       tabPreference: tabPreference ?? createDefaultTabPreference(),
     };
-  };
-}
-
-function deleteUser(repo: UserRepository, tracer: Tracer) {
-  return async (userId: UserId): Promise<void> => {
-    await tracer.span("db.deleteUser", () => repo.deleteUser(userId));
-  };
-}
-
-function listUsers(repo: UserRepository, tracer: Tracer) {
-  return async (limit: number, offset: number): Promise<UserListResult> => {
-    return tracer.span("db.listUsers", () => repo.listUsers(limit, offset));
   };
 }

@@ -5,7 +5,7 @@ import {
 } from "@packages/frontend-shared/hooks/useApiKeys";
 import type { CreateApiKeyRequest } from "@packages/types/request";
 
-import { apiClient } from "../utils/apiClient";
+import { apiClient } from "../api/apiClient";
 
 async function fetchApiKeys() {
   const res = await apiClient.users["api-keys"].$get();

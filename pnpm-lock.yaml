@@ -213,6 +213,9 @@ importers:
       '@emoji-mart/react':
         specifier: ^1.1.1
         version: 1.1.1(emoji-mart@5.6.0)(react@19.2.0)
+      '@packages/auth-client':
+        specifier: workspace:*
+        version: link:../../packages/auth-client
       '@packages/frontend-shared':
         specifier: workspace:*
         version: link:../../packages/frontend-shared
@@ -310,6 +313,9 @@ importers:
       '@expo/plist':
         specifier: ^0.5.2
         version: 0.5.2
+      '@packages/auth-client':
+        specifier: workspace:*
+        version: link:../../packages/auth-client
       '@packages/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -476,6 +482,12 @@ importers:
       wrangler:
         specifier: ^4.26.1
         version: 4.67.0(@cloudflare/workers-types@4.20260228.0)
+
+  packages/auth-client:
+    dependencies:
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
 
   packages/domain:
     dependencies:

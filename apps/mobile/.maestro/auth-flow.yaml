@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+# 1. login: 通常ログイン
+- runFlow: flows/login.yaml
+# 2. refresh: cold launch で auto-restore できることを検証
+- runFlow: flows/cold-launch-refresh.yaml
+# 3. logout: settings から logout → login screen に戻ることを検証
+- runFlow: flows/logout.yaml
+# 4. logout 後の cold launch では login screen のまま (refresh token revoke 済み)
+- launchApp
+- assertVisible:
+    id: login.screen
+- assertNotVisible:
+    id: tabs.tasks

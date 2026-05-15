@@ -1,0 +1,9 @@
+{
+  "name": "@packages/auth-client",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "react": "^19.2.0"
+  }
+}

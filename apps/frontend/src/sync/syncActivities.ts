@@ -5,9 +5,10 @@ import {
   createSyncActivityIcons,
 } from "@packages/sync-engine";
 
+import { apiClient } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 import { activityRepository } from "../db/activityRepository";
 import { db } from "../db/schema";
-import { apiClient, customFetch } from "../utils/apiClient";
 import { reportError } from "../utils/errorReporter";
 
 const API_URL = (

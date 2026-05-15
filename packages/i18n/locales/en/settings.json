@@ -89,6 +89,7 @@
   "restorePurchases": "Restore Purchases",
   "logout": "Log Out",
   "logoutConfirm": "Log out?",
+  "logoutFailedRetry": "Logout failed. Please check your network and try again.",
   "dangerousOperations": "Dangerous Operations",
   "contact": "Contact Us"
 }

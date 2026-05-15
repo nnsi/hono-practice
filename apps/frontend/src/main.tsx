@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 
 import { setupGlobalErrorHandler } from "@packages/frontend-shared";
 import { initI18n } from "@packages/i18n";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
@@ -12,12 +12,12 @@ import "dayjs/locale/en";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import { ErrorBoundary } from "./components/root";
+import { queryClient } from "./queryClient";
 import { routeTree } from "./routeTree.gen";
 import { reportError, webReportErrorOptions } from "./utils/errorReporter";
 import "./main.css";
 
 const router = createRouter({ routeTree });
-const queryClient = new QueryClient();
 
 setupGlobalErrorHandler((report) => reportError(report));
 

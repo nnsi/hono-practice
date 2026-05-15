@@ -4,7 +4,7 @@ import {
 } from "@packages/frontend-shared";
 import { Platform } from "react-native";
 
-import { getApiUrl } from "./apiClient";
+import { getApiUrl } from "../api/apiClient";
 
 const API_URL = getApiUrl();
 

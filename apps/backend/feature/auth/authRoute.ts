@@ -90,9 +90,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
   return app
     .post("/login", zValidator("json", loginRequestSchema), async (c) => {
       const body = c.req.valid("json");
-      const { token, refreshToken } = await c.var.h.login(body);
+      const { token, refreshToken, user } = await c.var.h.login(body);
       setRefreshCookie(c, refreshToken);
-      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
+      return c.json(
+        isMobileClient(c) ? { token, refreshToken, user } : { token, user },
+      );
     })
     .post("/token", async (c) => {
       const authHeader = c.req.header("Authorization");
@@ -102,15 +104,18 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       if (!refreshTokenValue) {
         throw new UnauthorizedError("refresh token not found");
       }
-      const { token, refreshToken } =
-        await c.var.h.atomicRotateRefreshToken(refreshTokenValue);
+      const { token, refreshToken, user } =
+        await c.var.h.rotateRefreshToken(refreshTokenValue);
       setRefreshCookie(c, refreshToken);
-      return c.json(isMobileClient(c) ? { token, refreshToken } : { token });
+      return c.json(
+        isMobileClient(c) ? { token, refreshToken, user } : { token, user },
+      );
     })
     .post("/logout", authMiddleware, async (c) => {
       const userId = c.get("userId");
       let refreshTokenValue = getCookie(c, "refresh_token");
-      if (!refreshTokenValue) {
+      // X-Refresh-Token は mobile 専用 fallback。ブラウザ環境では cookie のみ受け付ける
+      if (!refreshTokenValue && isMobileClient(c)) {
         const authHeader = c.req.header("X-Refresh-Token");
         if (authHeader) refreshTokenValue = authHeader;
       }

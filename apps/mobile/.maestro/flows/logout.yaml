@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+---
+# settings 経由で logout する。logout 確定後は backend で refresh token を revoke、
+# SecureStore も clearPersistedSession で消えるため login screen に戻る
+- runFlow: open-settings.yaml
+# SettingsPage は ScrollView で AccountAndDangerSection が最下段。scroll で可視化
+- scrollUntilVisible:
+    element:
+      id: settings.logout
+    direction: DOWN
+- tapOn:
+    id: settings.logout
+- assertVisible:
+    id: settings.logoutConfirm
+- tapOn:
+    id: settings.logoutConfirm
+- assertVisible:
+    id: login.screen
