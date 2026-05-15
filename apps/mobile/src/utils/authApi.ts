@@ -3,7 +3,8 @@ import {
   GetUserResponseSchema,
 } from "@packages/types/response";
 
-import { customFetch, getApiUrl } from "./apiClient";
+import { getApiUrl } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 
 const API_URL = getApiUrl();
 

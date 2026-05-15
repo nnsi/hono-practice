@@ -7,49 +7,19 @@ import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
 import type { Consents } from "@packages/types/request";
 import { authResponseSchema } from "@packages/types/response";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
 
-const REFRESH_TOKEN_KEY = "actiko-refresh-token";
-const REQUEST_TIMEOUT_MS = 15_000;
+import { fetchWithTimeout } from "./fetchWithTimeout";
+import {
+  clearStoredRefreshToken,
+  getStoredRefreshToken,
+  setStoredRefreshToken,
+} from "./refreshTokenStorage";
 
-const isWeb = Platform.OS === "web";
-
-export async function getStoredRefreshToken(): Promise<string | null> {
-  if (isWeb) return localStorage.getItem(REFRESH_TOKEN_KEY);
-  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-}
-
-export async function setStoredRefreshToken(token: string): Promise<void> {
-  if (isWeb) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    return;
-  }
-  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
-}
-
-export async function clearStoredRefreshToken(): Promise<void> {
-  if (isWeb) {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    return;
-  }
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-}
-
-function fetchWithTimeout(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Promise<Response> {
-  const controller = new AbortController();
-  const existingSignal = init?.signal;
-  if (existingSignal) {
-    existingSignal.addEventListener("abort", () => controller.abort());
-  }
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  return fetch(input, { ...init, signal: controller.signal }).finally(() =>
-    clearTimeout(timeoutId),
-  );
-}
+export {
+  clearStoredRefreshToken,
+  getStoredRefreshToken,
+  setStoredRefreshToken,
+} from "./refreshTokenStorage";
 
 type TransportOptions = {
   apiUrl: string;
@@ -72,9 +42,11 @@ export function createMobileAuthTransport(
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
 
+  // login/register/oauth レスポンスから session を取り出す内部 helper。
+  // access token のメモリ反映は controller.applySession 内の transport.setAccessToken
+  // の専任なのでここでは呼ばない。refresh token のみ永続層に書き込む。
   const persistSession = async (res: Response): Promise<AuthSession> => {
     const session = authResponseSchema.parse(await res.json());
-    tokenHolder.setToken(session.token);
     if (session.refreshToken) await setStoredRefreshToken(session.refreshToken);
     return session;
   };
@@ -105,6 +77,46 @@ export function createMobileAuthTransport(
     return persistSession(res);
   };
 
+  const refreshSession = async (): Promise<RefreshResult> => {
+    const rt = await getStoredRefreshToken();
+    if (!rt) return { kind: "expired" };
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(`${apiUrl}/auth/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${rt}`,
+        },
+      });
+      trackServerTimeFromResponse(res);
+    } catch {
+      return { kind: "transient", reason: "network" };
+    }
+    if (res.ok) return { kind: "ok", session: await persistSession(res) };
+    if (res.status < 500) {
+      await clearStoredRefreshToken();
+      return { kind: "expired" };
+    }
+    return { kind: "transient", reason: `status ${res.status}` };
+  };
+
+  // /auth/logout を access + refresh token 付きで送る。retry でも token を
+  // 再取得するため引数化 (refresh token は rotation で更新されるため
+  // SecureStore から再度読み直す必要がある)
+  const postLogout = async (): Promise<Response> => {
+    const accessToken = tokenHolder.getToken();
+    const refreshToken = await getStoredRefreshToken();
+    return fetchWithTimeout(`${apiUrl}/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
+      },
+    });
+  };
+
   return {
     login: (loginId, password) =>
       postAuthAndParse(
@@ -133,53 +145,54 @@ export function createMobileAuthTransport(
         { credential, consents },
         { generic: i18next.t("common:auth.appleLoginError") },
       ),
-    async refreshSession(): Promise<RefreshResult> {
-      const rt = await getStoredRefreshToken();
-      if (!rt) return { kind: "expired" };
-      let res: Response;
-      try {
-        res = await fetchWithTimeout(`${apiUrl}/auth/token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${rt}`,
-          },
-        });
-        trackServerTimeFromResponse(res);
-      } catch {
-        return { kind: "transient", reason: "network" };
-      }
-      if (res.ok) return { kind: "ok", session: await persistSession(res) };
-      if (res.status < 500) {
-        await clearStoredRefreshToken();
-        return { kind: "expired" };
-      }
-      return { kind: "transient", reason: `status ${res.status}` };
-    },
+    refreshSession,
     async logout() {
-      const refreshToken = await getStoredRefreshToken();
-      const token = tokenHolder.getToken();
+      // /auth/logout は authMiddleware が Bearer 必須なため、現在の access token を
+      // 付与する。401 retry は自前実装: refreshSession が refresh token を rotate
+      // するので SecureStore を読み直して新 X-Refresh-Token を送る (createAuthenticatedFetch
+      // 経由だと Authorization のみ更新されて X-Refresh-Token は古い値で再送される)
+      let serverOk = false;
       try {
-        await fetchWithTimeout(`${apiUrl}/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
-          },
-        });
+        let res = await postLogout();
+        if (res.status === 401) {
+          const refreshResult = await refreshSession();
+          if (refreshResult.kind === "ok") {
+            tokenHolder.setToken(refreshResult.session.token);
+            res = await postLogout();
+            serverOk = res.ok;
+          } else if (refreshResult.kind === "expired") {
+            // refresh も拒否された = backend 側にもう session が無い (= 既にログアウト
+            // 達成済みと等価)。SecureStore は refreshSession の expired 分岐が既に
+            // 消しているので、ここで ok 扱いにして controller の resetAuthState を
+            // 呼ばせる (放置すると local state 残存 + SecureStore 空で再試行不能になる)
+            serverOk = true;
+          }
+          // transient (5xx 等) は serverOk=false のまま → 再試行可
+        } else {
+          serverOk = res.ok;
+        }
       } catch {
-        // ignore - local cleanup follows
+        // network error / timeout など。SecureStore を消さず再試行可能にする
       }
-      await clearStoredRefreshToken();
+      // server 成功時のみ SecureStore を clear する。失敗時に消すと
+      // X-Refresh-Token を再送できず logout 再試行が永久に通らなくなる
+      // (controller 側も { ok: false } 時は local state を保持する)
+      if (serverOk) {
+        await clearStoredRefreshToken();
+      }
+      return { ok: serverOk };
     },
     setAccessToken(token) {
       tokenHolder.setToken(token);
     },
     async persistSession(session) {
-      tokenHolder.setToken(session.token);
+      // 永続層 (SecureStore) への書き込みのみ。access token のメモリ反映は
+      // setAccessToken の専任。
       if (session.refreshToken)
         await setStoredRefreshToken(session.refreshToken);
+    },
+    async clearPersistedSession() {
+      await clearStoredRefreshToken();
     },
   };
 }

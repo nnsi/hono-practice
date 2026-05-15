@@ -561,6 +561,33 @@ describe("AuthRoute Integration Tests", () => {
       expect(storedToken).toBeNull();
     });
 
+    it("異常系：Web クライアント (Origin 付き) は X-Refresh-Token を受け付けない", async () => {
+      // isMobileClient(c) は Origin ヘッダの有無で判定する。Origin があれば
+      // Web 扱いとなり X-Refresh-Token fallback が無効化され、cookie がない場合は
+      // 401 になることを確認する (X-Refresh-Token を mobile 限定にする防御)
+      const client = createTestClient(true);
+      const res = await client.logout.$post(
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${validJwtToken}`,
+            "X-Refresh-Token": validPlainRefreshToken,
+            Origin: "https://actiko.app",
+          },
+        },
+      );
+
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as { message: string };
+      expect(body).toEqual({ message: "refresh token not found" });
+
+      // refresh token は revoke されていないこと
+      const storedToken = await refreshTokenRepo.getRefreshTokenByToken(
+        validPlainRefreshToken,
+      );
+      expect(storedToken).not.toBeNull();
+    });
+
     it("異常系：認証されていない", async () => {
       const client = createTestClient(true);
       const res = await client.logout.$post({

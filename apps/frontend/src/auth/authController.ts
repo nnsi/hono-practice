@@ -1,53 +1,27 @@
-import { hc } from "hono/client";
-
-// biome-ignore lint/style/noRestrictedImports: Hono adapter boundary intentionally depends on AppType.
-import type { AppType } from "@backend/app";
 import {
   createAuthController,
-  createAuthenticatedFetch,
+  createRefreshAccessTokenCallback,
 } from "@packages/auth-client";
 
+import { getApiUrl } from "../api/apiClient";
+import { customFetch, setRefreshAccessToken } from "../api/customFetch";
+import { tokenHolder } from "../api/tokenHolder";
 import {
   clearStoredTabPreference,
   flushPendingTabPreference,
   reconcileTabPreferenceFromServer,
 } from "../components/setting/tabPreferenceStore";
+import { queryClient } from "../queryClient";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { createWebAuthStateRepository } from "./webAuthStateRepository";
 import { createWebAuthTransport } from "./webAuthTransport";
 
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:3456"
-).replace(/\/+$/, "");
+const transport = createWebAuthTransport(
+  { apiUrl: getApiUrl(), authenticatedFetch: customFetch },
+  tokenHolder,
+);
 
-let accessToken: string | null = null;
-const tokenHolder = {
-  getToken: () => accessToken,
-  setToken: (token: string | null) => {
-    accessToken = token;
-  },
-};
-
-let queryClientResetRef: (() => void) | null = null;
-
-const transport = createWebAuthTransport({ apiUrl: API_URL }, tokenHolder);
-
-const { fetch: customFetch } = createAuthenticatedFetch({
-  tokenSource: tokenHolder,
-  refreshAccessToken: async () => {
-    const result = await transport.refreshSession();
-    return result.kind === "ok" ? result.session.token : null;
-  },
-  includeCredentialsForAuthEndpoints: true,
-});
-
-export { customFetch };
-export const apiClient = hc<AppType>(API_URL, { fetch: customFetch });
-export const getApiUrl = () => API_URL;
-
-export function setQueryClientReset(reset: () => void) {
-  queryClientResetRef = reset;
-}
+setRefreshAccessToken(createRefreshAccessTokenCallback(transport));
 
 export const authController = createAuthController({
   transport,
@@ -67,18 +41,9 @@ export const authController = createAuthController({
   onUserSynced: async (user) => {
     reconcileTabPreferenceFromServer(user.tabPreference);
     void flushPendingTabPreference();
-    // plan は applySession 内で setPlan 経由で書かれるので二重更新しない
   },
   onAuthStateReset: () => {
     clearStoredTabPreference();
-    queryClientResetRef?.();
+    queryClient.clear();
   },
 });
-
-export function setToken(token: string) {
-  tokenHolder.setToken(token);
-}
-
-export function clearToken() {
-  tokenHolder.setToken(null);
-}

@@ -7,9 +7,12 @@ export type AccessTokenSource = {
 export type AuthenticatedFetchOptions = {
   tokenSource: AccessTokenSource;
   // /auth/token を叩いて新しい access token を取得する。
-  // - 成功: 新 access token を返す (副作用として token の保存はこの関数内で行う)
-  // - セッション復元不能: null を返す (副作用として onAuthExpired を呼ぶ)
-  // - ネットワーク等の一時障害: null を返す (onAuthExpired は呼ばない)
+  // - 成功: 新 access token を返す。呼び出し側 (Web/Mobile の authController で
+  //   setRefreshAccessToken に渡している実装) は内部で transport.setAccessToken
+  //   も呼んで tokenSource を更新する。これにより 401 retry 直後の本リクエストだけ
+  //   でなく、後続リクエストも新 token で送られる
+  // - セッション復元不能 / ネットワーク等の一時障害: null を返す
+  //   (RefreshResult kind の解釈は controller 側、ここでは success/failure の二値のみ)
   refreshAccessToken(): Promise<string | null>;
   // /auth/* リクエスト時にデフォルトで credentials: include を付けるか (Web のみ true)
   includeCredentialsForAuthEndpoints?: boolean;

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 
 import { useMutation } from "@tanstack/react-query";
 
-import { apiClient } from "../../utils/apiClient";
+import { apiClient } from "../../api/apiClient";
 
 export function useUpgrade() {
   const [isModalOpen, setIsModalOpen] = useState(false);

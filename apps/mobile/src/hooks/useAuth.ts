@@ -21,7 +21,7 @@ type AuthState = {
     password: string,
     consents: Consents,
   ) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => Promise<{ ok: boolean }>;
 };
 
 export function useAuth(): AuthState {

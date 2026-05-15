@@ -68,6 +68,7 @@ type TransportStub = AuthTransport & {
   logoutCalls: number;
   accessToken: string | null;
   persistCalls: number;
+  clearPersistedCalls: number;
 };
 
 function makeTransport(opts?: {
@@ -79,6 +80,7 @@ function makeTransport(opts?: {
   let logoutCalls = 0;
   let accessToken: string | null = null;
   let persistCalls = 0;
+  let clearPersistedCalls = 0;
   const session = opts?.loginSession ?? makeSession();
   const t: TransportStub = {
     refreshResults,
@@ -94,6 +96,9 @@ function makeTransport(opts?: {
     get persistCalls() {
       return persistCalls;
     },
+    get clearPersistedCalls() {
+      return clearPersistedCalls;
+    },
     login: async () => {
       loginCalls++;
       return session;
@@ -108,6 +113,7 @@ function makeTransport(opts?: {
     },
     logout: async () => {
       logoutCalls++;
+      return { ok: true };
     },
     setAccessToken: (token) => {
       accessToken = token;
@@ -115,6 +121,9 @@ function makeTransport(opts?: {
     persistSession: async (s) => {
       persistCalls++;
       accessToken = s.token;
+    },
+    clearPersistedSession: async () => {
+      clearPersistedCalls++;
     },
   } as TransportStub;
   return t;
@@ -337,7 +346,43 @@ describe("createAuthController", () => {
     });
   });
 
-  it("logout clears state and calls transport.logout fire-and-forget", async () => {
+  it("logout success: transport.logout を先に呼んでから state をリセットする", async () => {
+    const transport = makeTransport({
+      refreshResults: [{ kind: "ok", session: makeSession("u1") }],
+    });
+    // transport.logout 実行時の access token を記録する (resetAuthState 前の有効値)
+    let tokenAtLogout: string | null = "uninitialized";
+    const originalLogout = transport.logout;
+    transport.logout = async () => {
+      tokenAtLogout = transport.accessToken;
+      return originalLogout();
+    };
+    const repo = makeRepo();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: repo,
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+    expect(controller.getState().isLoggedIn).toBe(true);
+    expect(transport.accessToken).not.toBeNull();
+
+    const result = await controller.logout();
+    expect(result).toEqual({ ok: true });
+
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: false,
+      userId: null,
+      syncReady: false,
+    });
+    expect(transport.logoutCalls).toBe(1);
+    // 重要: transport.logout 呼び出し時点で access token がまだ有効だったこと
+    // (authMiddleware が Bearer 必須なので resetAuthState 後だと 401 になる)
+    expect(tokenAtLogout).not.toBeNull();
+    expect(transport.accessToken).toBe(null);
+  });
+
+  it("forceLogout は transport.logout を呼ばず local state を強制リセットする", async () => {
     const transport = makeTransport({
       refreshResults: [{ kind: "ok", session: makeSession("u1") }],
     });
@@ -350,17 +395,72 @@ describe("createAuthController", () => {
     await controller.reconcile();
     expect(controller.getState().isLoggedIn).toBe(true);
 
-    await controller.logout();
+    await controller.forceLogout();
 
     expect(controller.getState()).toMatchObject({
       isLoggedIn: false,
       userId: null,
       syncReady: false,
     });
-    // logout は内部で fire-and-forget なので 1 マイクロタスク待って transport を確認
-    await Promise.resolve();
-    expect(transport.logoutCalls).toBe(1);
+    // delete account 用途: backend で user 削除済みなので server cleanup は試みない
+    expect(transport.logoutCalls).toBe(0);
     expect(transport.accessToken).toBe(null);
+    // 永続層 (Mobile の SecureStore など) も明示的にクリアする
+    expect(transport.clearPersistedCalls).toBe(1);
+  });
+
+  it("forceLogout は clearPersistedSession が throw しても local state を必ずリセットする", async () => {
+    const transport = makeTransport({
+      refreshResults: [{ kind: "ok", session: makeSession("u1") }],
+    });
+    transport.clearPersistedSession = async () => {
+      throw new Error("SecureStore failed");
+    };
+    const repo = makeRepo();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: repo,
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+    expect(controller.getState().isLoggedIn).toBe(true);
+
+    // throw を握りつぶし local state は確実にリセットされる
+    await controller.forceLogout();
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: false,
+      userId: null,
+    });
+    expect(transport.accessToken).toBe(null);
+  });
+
+  it("logout failure: { ok: false } を返し local state は保持する (httpOnly cookie 残存対策)", async () => {
+    const transport = makeTransport({
+      refreshResults: [{ kind: "ok", session: makeSession("u1") }],
+    });
+    transport.logout = async () => ({ ok: false });
+    const repo = makeRepo();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: repo,
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+    const userIdBefore = controller.getState().userId;
+    const tokenBefore = transport.accessToken;
+    expect(userIdBefore).not.toBeNull();
+    expect(tokenBefore).not.toBeNull();
+
+    const result = await controller.logout();
+    expect(result).toEqual({ ok: false });
+
+    // local state は維持 (UI 側で warning を出して再試行できるよう)
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: true,
+      userId: userIdBefore,
+      syncReady: true,
+    });
+    expect(transport.accessToken).toBe(tokenBefore);
   });
 
   it("logout during reconcile prevents stale syncReady from being written", async () => {

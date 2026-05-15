@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 
-import { customFetch, getApiUrl } from "../utils/apiClient";
+import { getApiUrl } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 import { hasVoiceApiKey, saveVoiceCredentials } from "./voiceApiKeyBridge";
 
 const API_URL = getApiUrl();

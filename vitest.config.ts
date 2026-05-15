@@ -55,6 +55,8 @@ export default defineConfig({
       ["**/packages/frontend-shared/adapters/**", "jsdom"],
       // frontend-shared/hooksのテストもDOM環境が必要
       ["**/packages/frontend-shared/hooks/**", "jsdom"],
+      // auth-client/react の hook テストも DOM 環境が必要
+      ["**/packages/auth-client/react/**", "jsdom"],
       // admin frontendのテストはjsdom環境が必要
       ["**/apps/admin-frontend/**", "jsdom"],
       // frontendのテストはjsdom環境が必要（React hooks, DOM API）

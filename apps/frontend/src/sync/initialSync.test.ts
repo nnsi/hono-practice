@@ -37,8 +37,10 @@ const { mockCustomFetch } = vi.hoisted(() => ({
     json: () => Promise.resolve({ freezePeriods: [] }),
   }),
 }));
-vi.mock("../utils/apiClient", () => ({
+vi.mock("../api/apiClient", () => ({
   apiClient: mockApiClientObj,
+}));
+vi.mock("../api/customFetch", () => ({
   customFetch: mockCustomFetch,
 }));
 

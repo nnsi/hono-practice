@@ -4,7 +4,7 @@ import type { Consents } from "@packages/types/request";
 import * as Google from "expo-auth-session/providers/google";
 import { Platform } from "react-native";
 
-import { getApiUrl } from "../utils/apiClient";
+import { getApiUrl } from "../api/apiClient";
 import { setOAuthPending } from "../utils/oauthPending";
 
 const API_URL = getApiUrl();

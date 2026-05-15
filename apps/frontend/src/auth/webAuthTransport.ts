@@ -10,6 +10,10 @@ import { authResponseSchema } from "@packages/types/response";
 
 type TransportOptions = {
   apiUrl: string;
+  // 401 retry + Bearer 自動付与つき fetch (createAuthenticatedFetch 経由)。
+  // logout は authMiddleware が Bearer 必須なので、access token 期限切れ時に
+  // 自動 refresh + retry されないと「永久に 401 で詰む」状態になる
+  authenticatedFetch: typeof fetch;
 };
 
 type TokenHolder = {
@@ -22,11 +26,10 @@ export function createWebAuthTransport(
   tokenHolder: TokenHolder,
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
+  const authenticatedFetch = options.authenticatedFetch;
 
   const parseSession = async (res: Response): Promise<AuthSession> => {
-    const session = authResponseSchema.parse(await res.json());
-    tokenHolder.setToken(session.token);
-    return session;
+    return authResponseSchema.parse(await res.json());
   };
 
   const postAuth = (
@@ -83,14 +86,29 @@ export function createWebAuthTransport(
       return { kind: "transient", reason: `status ${res.status}` };
     },
     async logout() {
-      await postAuth("/auth/logout", undefined).catch(() => {});
+      // /auth/logout は authMiddleware が Bearer 必須。authenticatedFetch は
+      // Bearer 自動付与 + 401 retry (refresh → 新 token で再送) を担う。
+      // これがないと access token 期限切れ後の logout が永久に 401 で詰まる
+      try {
+        const res = await authenticatedFetch(`${apiUrl}/auth/logout`, {
+          method: "POST",
+        });
+        // 200 系のみ成功扱い。失敗時は httpOnly cookie が残るため UI 警告対象
+        return { ok: res.ok };
+      } catch {
+        return { ok: false };
+      }
     },
     setAccessToken(token) {
       tokenHolder.setToken(token);
     },
-    async persistSession(session) {
-      // Web は backend が Set-Cookie で refresh_token を反映するため、token のみ反映
-      tokenHolder.setToken(session.token);
+    async persistSession() {
+      // Web は backend が Set-Cookie で refresh_token を反映するため永続層への書き込みは不要。
+      // access token のメモリ反映は setAccessToken の専任。
+    },
+    async clearPersistedSession() {
+      // Web の refresh_token は httpOnly cookie なので JS から削除不能。delete
+      // account 経路では backend で revoke + expire 済みのため no-op で問題ない
     },
   };
 }

@@ -9,12 +9,13 @@ import {
 } from "@packages/sync-engine";
 import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
 
+import { apiClient } from "../api/apiClient";
+import { customFetch } from "../api/customFetch";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";
 import { goalRepository } from "../db/goalRepository";
 import { noteRepository } from "../db/noteRepository";
 import { taskRepository } from "../db/taskRepository";
-import { apiClient, customFetch } from "../utils/apiClient";
 import {
   syncActivities,
   syncActivityIconDeletions,

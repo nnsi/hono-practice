@@ -1,6 +1,7 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { createInitialSync } from "@packages/sync-engine";
 
+import { apiClient } from "../api/apiClient";
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { activityRepository } from "../repositories/activityRepository";
@@ -8,7 +9,6 @@ import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepo
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
-import { apiClient } from "../utils/apiClient";
 import { reportError } from "../utils/errorReporter";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 

@@ -4,8 +4,8 @@ import { authResponseSchema } from "@packages/types/response";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
+import { apiClient } from "../src/api/apiClient";
 import { authController } from "../src/auth/authController";
-import { apiClient } from "../src/utils/apiClient";
 import { reportError } from "../src/utils/errorReporter";
 import {
   type OAuthPending,

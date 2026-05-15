@@ -166,9 +166,24 @@ export function createAuthController(
     logout: async () => {
       generation++;
       clearOnlineRetry();
+      // transport.logout は authMiddleware が Bearer 必須なので、有効な
+      // access token (tokenHolder) が残っている状態で先に呼ぶ。
+      // 失敗時は local state を保持して再試行可能にする — Web の httpOnly
+      // cookie が残ったままだと次回起動で自動再ログインしてしまう。
+      const result = await transport.logout().catch(() => ({ ok: false }));
+      if (result.ok) {
+        await resetAuthState();
+      }
+      return result;
+    },
+    forceLogout: async () => {
+      generation++;
+      clearOnlineRetry();
+      // delete account 後など server cleanup が通らないケースで呼ばれるので、
+      // 永続層 (Mobile の SecureStore など) も明示的にクリアする。backend は
+      // 既に revoke 済みなので残しても再利用はできないが、識別子残存を避ける
+      await transport.clearPersistedSession().catch(() => {});
       await resetAuthState();
-      // backend への通知は fire-and-forget
-      transport.logout().catch(() => {});
     },
   };
 }
