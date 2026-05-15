@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+# cold launch で session が refresh されて自動ログインされることを検証する。
+# login 済みの状態で呼ぶ前提。SecureStore に refresh token が永続化されているので
+# launchApp の clearState=false (デフォルト) なら access token 切れでも refresh で
+# 復元できる。launchApp は内部で stop+start するためアプリプロセスが入れ替わる
+- launchApp
+- assertVisible:
+    id: tabs.tasks
+- assertNotVisible:
+    id: login.screen

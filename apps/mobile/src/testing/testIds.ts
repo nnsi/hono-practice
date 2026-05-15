@@ -74,6 +74,7 @@ export const mobileTestIds = {
   settings: {
     screen: "settings.screen",
     logoutButton: "settings.logout",
+    logoutConfirmButton: "settings.logoutConfirm",
   },
   tabCustomization: {
     row: (key: string) => `settings.tabCustomization.row.${key}`,

@@ -78,6 +78,7 @@ export function AccountAndDangerSection({
             }}
             confirmLabel={t("logout")}
             error={logoutWarning || undefined}
+            confirmTestID={mobileTestIds.settings.logoutConfirmButton}
           />
         )}
       </Section>

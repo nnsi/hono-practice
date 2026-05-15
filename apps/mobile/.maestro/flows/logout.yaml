@@ -1,0 +1,13 @@
+appId: ${MAESTRO_APP_ID}
+---
+# settings 経由で logout する。logout 確定後は backend で refresh token を revoke、
+# SecureStore も clearPersistedSession で消えるため login screen に戻る
+- runFlow: flows/open-settings.yaml
+- tapOn:
+    id: settings.logout
+- assertVisible:
+    id: settings.logoutConfirm
+- tapOn:
+    id: settings.logoutConfirm
+- assertVisible:
+    id: login.screen
