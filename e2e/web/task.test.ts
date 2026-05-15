@@ -146,21 +146,36 @@ describe("task", () => {
     await page.waitForSelector('text="アーカイブ対象"', { timeout: 15000 });
 
     // まず完了にする（アーカイブは完了タスクのみ可能）
-    const taskRow = page
+    const activeRow = page
       .locator(".rounded-2xl")
       .filter({ hasText: "アーカイブ対象" })
       .first();
-    await taskRow.locator('button[aria-label="完了にする"]').click();
+    await activeRow.locator('button[aria-label="完了にする"]').click();
 
-    // 完了済みセクションを展開
+    // showCompleted=false の間、完了したタスクは groupedTasks から外れて DOM
+    // から消える。これを待つことで Dexie write + re-render の完了を確実にする
+    await page
+      .locator(".rounded-2xl")
+      .filter({ hasText: "アーカイブ対象" })
+      .waitFor({ state: "detached", timeout: 15000 });
+
+    // 完了済みセクションを展開（completedCount=1 で表示されるトグルボタン）
+    await page
+      .getByRole("button", { name: /完了済みを表示/ })
+      .waitFor({ state: "visible", timeout: 15000 });
     await page.getByRole("button", { name: /完了済みを表示/ }).click();
 
-    await taskRow
-      .locator('button[aria-label="未完了に戻す"]')
+    // 展開後、完了済みセクション内に再描画されたカードを取り直す
+    const completedRow = page
+      .locator(".rounded-2xl")
+      .filter({ hasText: "アーカイブ対象" })
+      .first();
+    await completedRow
+      .locator('button[title="アーカイブ"]')
       .waitFor({ state: "visible", timeout: 15000 });
 
     // アーカイブボタンをクリック
-    await taskRow.locator('button[title="アーカイブ"]').click();
+    await completedRow.locator('button[title="アーカイブ"]').click();
 
     // タスクがアクティブ一覧から消える
     await page.waitForSelector('text="アーカイブ対象"', {
