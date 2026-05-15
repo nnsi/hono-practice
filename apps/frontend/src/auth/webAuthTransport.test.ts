@@ -60,6 +60,14 @@ describe("webAuthTransport", () => {
       expect(result.kind).toBe("expired");
     });
 
+    it("403 -> { kind: 'expired' } (session 復元不能)", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(403)));
+      const transport = makeTransport();
+
+      const result = await transport.refreshSession();
+      expect(result.kind).toBe("expired");
+    });
+
     it("500 -> { kind: 'transient' } (一時障害)", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
       const transport = makeTransport();
