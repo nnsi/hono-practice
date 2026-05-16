@@ -6,6 +6,7 @@ import { FileText, Loader2, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { mobileTestIds } from "../../testing/testIds";
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -52,7 +53,11 @@ export function NoteCard({
           >
             {title}
           </Text>
-          {isPending && <Loader2 size={14} color="#f97316" />}
+          {isPending && (
+            <View testID={mobileTestIdsExt.noteCard.pending}>
+              <Loader2 size={14} color="#f97316" />
+            </View>
+          )}
         </View>
 
         {preview.length > 0 && (

@@ -1,0 +1,42 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+
+# Phase 1: reset the seeded user back to free plan. seedE2EUser gives them
+# premium for API-key UI coverage; we need free for the upgrade entry point.
+- runScript: scripts/set-plan-free.js
+- runFlow: flows/refresh-plan.yaml
+
+# Phase 2: tap the upgrade link. The link is a TouchableOpacity that XCUITest
+# flattens away, so we anchor on the localized text instead.
+- assertVisible: "Pro プランにアップグレード|Upgrade to Pro Plan"
+- tapOn: "Pro プランにアップグレード|Upgrade to Pro Plan"
+
+# Phase 3: verify the upgrade screen renders with the major UI elements
+- assertVisible:
+    id: upgrade.page
+- assertVisible: "Actiko Pro"
+- assertVisible:
+    id: upgrade.purchase
+- assertVisible:
+    id: upgrade.restore
+
+# Phase 4: dismiss upgrade screen. UpgradeScreen reads `from` query param and
+# router.replace()s back to it explicitly — Slot-based root layout makes
+# plain router.back() unreliable across (tabs) segments.
+- tapOn:
+    id: upgrade.back
+- assertVisible:
+    id: settings.screen
+
+# Phase 5: flip backend to premium and confirm the gate flips with it. The
+# "Pro プランにアップグレード|Upgrade to Pro Plan" link disappears in the premium branch of
+# SubscriptionSection and the "現在 Pro プランをご利用中" badge text appears.
+- runScript: scripts/set-plan-premium.js
+- runFlow: flows/refresh-plan.yaml
+- assertNotVisible: "Pro プランにアップグレード|Upgrade to Pro Plan"

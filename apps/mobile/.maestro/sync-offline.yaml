@@ -1,0 +1,31 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+  NOTE_PREVIEW: Morning plan one two after list
+---
+- runScript: scripts/gen-run-tag.js
+- runFlow: flows/dismiss-dev-launcher.yaml
+- runFlow: flows/login.yaml
+
+# Phase 1: open Settings and flip the forced-offline switch ON.
+- runFlow: flows/open-settings.yaml
+- runFlow: flows/toggle-offline.yaml
+
+# Phase 2: while offline, create a note. The Notes UI writes to local SQLite
+# regardless of the network state, so the create flow itself should succeed.
+- runFlow: flows/open-notes.yaml
+- runFlow:
+    env:
+      NOTE_TITLE: e2e-offline-note-${output.RUN_TAG}
+    file: flows/create-note.yaml
+- runFlow: flows/back-to-notes-list.yaml
+- assertVisible: "e2e-offline-note-${output.RUN_TAG}.*"
+
+# Phase 3: flip the toggle back OFF and confirm Notes list still renders the
+# new note (sync may or may not have completed by now, both are acceptable).
+- runFlow: flows/open-settings.yaml
+- runFlow: flows/toggle-offline.yaml
+- runFlow: flows/open-notes.yaml
+- assertVisible: "e2e-offline-note-${output.RUN_TAG}.*"

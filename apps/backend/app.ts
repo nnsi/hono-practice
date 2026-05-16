@@ -20,6 +20,7 @@ import {
 import { adminRoute } from "./feature/admin";
 import { adminAuthRoute } from "./feature/admin/adminAuthRoute";
 import { clientErrorRoute } from "./feature/clientError/clientErrorRoute";
+import { devRoute } from "./feature/dev/devRoute";
 import { goalRoute } from "./feature/goal/goalRoute";
 import { goalFreezePeriodRoute } from "./feature/goalFreezePeriod/goalFreezePeriodRoute";
 import { r2ProxyRoute } from "./feature/r2proxy/r2ProxyRoute";
@@ -119,6 +120,7 @@ const routes = app
   .route("/admin/auth", adminAuthRoute)
   .route("/admin", adminRoute)
   .route("/client-errors", clientErrorRoute)
+  .route("/dev", devRoute)
   .post(
     "/batch",
     authMiddleware,

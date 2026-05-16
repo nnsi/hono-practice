@@ -10,6 +10,7 @@ import Purchases from "react-native-purchases";
 
 import { useAuthContext } from "../contexts/AuthContext";
 import { getDatabase } from "../db/database";
+import { dbEvents } from "../db/dbEvents";
 import { initRevenueCat } from "../lib/revenueCat";
 import { apiGetMe } from "../utils/authApi";
 
@@ -51,6 +52,9 @@ export async function refreshPlanFromBackend(): Promise<void> {
   await db.runAsync("UPDATE auth_state SET plan = ? WHERE id = 'current'", [
     user.plan ?? "free",
   ]);
+  // usePlan は dbEvents("auth_state") を購読しているので、SubscriptionSection /
+  // UpgradeScreen が同一画面に留まったままでも再レンダリングされる。
+  dbEvents.emit("auth_state");
 }
 
 export type PurchaseResult = { ok: boolean; userCancelled: boolean };

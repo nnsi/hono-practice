@@ -110,6 +110,53 @@ describe("createSyncEngine", () => {
       expect(fns.syncActivityIconDeletions).toHaveBeenCalledTimes(1);
     });
 
+    it("is a no-op when the network adapter reports offline", async () => {
+      const fns = createMockFns();
+      const engine = createSyncEngine(fns, createMockNetwork(false));
+      await engine.syncAll();
+
+      expect(fns.syncActivityIconDeletions).not.toHaveBeenCalled();
+      expect(fns.syncActivities).not.toHaveBeenCalled();
+      expect(fns.syncNotes).not.toHaveBeenCalled();
+      expect(fns.syncTasks).not.toHaveBeenCalled();
+    });
+
+    it("individual sync methods are no-ops when offline", async () => {
+      const fns = createMockFns();
+      const engine = createSyncEngine(fns, createMockNetwork(false));
+
+      await engine.syncNotes();
+      await engine.syncTasks();
+      await engine.syncActivities();
+      await engine.syncActivityLogs();
+      await engine.syncActivityIcons();
+      await engine.syncActivityIconDeletions();
+      await engine.syncGoals();
+      await engine.syncGoalFreezePeriods();
+
+      expect(fns.syncNotes).not.toHaveBeenCalled();
+      expect(fns.syncTasks).not.toHaveBeenCalled();
+      expect(fns.syncActivities).not.toHaveBeenCalled();
+      expect(fns.syncActivityLogs).not.toHaveBeenCalled();
+      expect(fns.syncActivityIcons).not.toHaveBeenCalled();
+      expect(fns.syncActivityIconDeletions).not.toHaveBeenCalled();
+      expect(fns.syncGoals).not.toHaveBeenCalled();
+      expect(fns.syncGoalFreezePeriods).not.toHaveBeenCalled();
+    });
+
+    it("individual sync methods delegate to the underlying fn when online", async () => {
+      const fns = createMockFns();
+      const engine = createSyncEngine(fns, createMockNetwork(true));
+
+      await engine.syncNotes();
+      await engine.syncTasks();
+      await engine.syncActivities();
+
+      expect(fns.syncNotes).toHaveBeenCalledTimes(1);
+      expect(fns.syncTasks).toHaveBeenCalledTimes(1);
+      expect(fns.syncActivities).toHaveBeenCalledTimes(1);
+    });
+
     it("calls onSyncError for each failed step", async () => {
       const fns = createMockFns();
       const onError = vi.fn();

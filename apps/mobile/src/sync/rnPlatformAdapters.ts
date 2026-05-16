@@ -5,19 +5,47 @@ import NetInfo from "@react-native-community/netinfo";
 import { reportError } from "../utils/errorReporter";
 
 let cachedOnline = true;
+let forcedOffline = false;
+const onlineListeners = new Set<() => void>();
+
+function effectiveOnline(): boolean {
+  return !forcedOffline && cachedOnline;
+}
+
+function fireOnlineIfTransitioned(prev: boolean) {
+  if (!prev && effectiveOnline()) {
+    for (const cb of onlineListeners) cb();
+  }
+}
+
 NetInfo.addEventListener((state) => {
+  const prev = effectiveOnline();
   cachedOnline = !!state.isConnected;
+  fireOnlineIfTransitioned(prev);
 });
 
 export const rnNetworkAdapter: NetworkAdapter = {
-  isOnline: () => cachedOnline,
+  isOnline: () => effectiveOnline(),
   onOnline: (callback) => {
-    const unsub = NetInfo.addEventListener((state) => {
-      if (state.isConnected) callback();
-    });
-    return unsub;
+    onlineListeners.add(callback);
+    return () => {
+      onlineListeners.delete(callback);
+    };
   },
 };
+
+// 強制オフライン制御 (E2E / dev 向け)。
+// EXPO_PUBLIC_E2E_MODE / __DEV__ で gating した UI から呼ばれる。本番ビルドでは
+// この関数を呼ぶ経路がそもそも生成されないので、製品挙動には影響しない。
+export function setForcedOffline(value: boolean): void {
+  const prev = effectiveOnline();
+  forcedOffline = value;
+  fireOnlineIfTransitioned(prev);
+}
+
+export function isForcedOffline(): boolean {
+  return forcedOffline;
+}
 
 // Note: AsyncStorage is async, but the StorageAdapter interface expects sync.
 // We use a sync cache backed by AsyncStorage for the sync engine.

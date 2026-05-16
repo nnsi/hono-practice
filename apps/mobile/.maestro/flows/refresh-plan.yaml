@@ -1,0 +1,56 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Refresh the locally-cached plan and end on the Settings screen with a fresh
+# SubscriptionSection. Caller may invoke this from any tab — we navigate to
+# Settings first, tap the dev refresh button, then bounce off Settings so the
+# section remounts and re-reads auth_state.plan from SQLite. (A long-mounted
+# usePlan listener does not always pick up the dbEvents.emit on iOS.)
+- runFlow:
+    when:
+      notVisible:
+        id: settings.screen
+    commands:
+      - tapOn:
+          id: tabs.home
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          id: common.menu
+      - tapOn:
+          id: common.menu.settings
+- assertVisible:
+    id: settings.screen
+# Scroll the dev section into view and tap "プラン情報を再取得".
+- swipe:
+    start: "50%,80%"
+    end: "50%,20%"
+- swipe:
+    start: "50%,80%"
+    end: "50%,20%"
+- tapOn:
+    id: settings.dev.refreshPlan
+- waitForAnimationToEnd:
+    timeout: 1500
+# Bounce to a different tab and back so SubscriptionSection remounts.
+- tapOn:
+    id: tabs.home
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: common.menu
+- tapOn:
+    id: common.menu.settings
+- assertVisible:
+    id: settings.screen
+# Scroll back to top so the SubscriptionSection is visible. ScrollView state
+# is preserved across tab switches, so re-opened Settings might still be at
+# the dev-tools row at the bottom.
+- swipe:
+    start: "50%,20%"
+    end: "50%,80%"
+- swipe:
+    start: "50%,20%"
+    end: "50%,80%"
+- swipe:
+    start: "50%,20%"
+    end: "50%,80%"

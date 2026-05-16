@@ -13,6 +13,7 @@ import {
 import { usePlan } from "../../hooks/usePlan";
 import { useRevenueCat } from "../../hooks/useRevenueCat";
 import { useSubscription } from "../../hooks/useSubscription";
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
 import { Section, type ShadowStyle } from "./SettingsParts";
 
 export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
@@ -40,6 +41,7 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
                   ? "bg-amber-100 dark:bg-amber-900/30"
                   : "bg-gray-100 dark:bg-gray-800"
               }`}
+              testID={mobileTestIdsExt.subscriptionSection.badge}
             >
               <Text
                 className={`text-xs font-bold ${
@@ -70,9 +72,15 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
           <View className="border-t border-gray-100 dark:border-gray-800 mx-4" />
           <TouchableOpacity
             className="flex-row items-center px-4 py-3"
-            onPress={() => router.push("/upgrade")}
+            onPress={() =>
+              router.push({
+                pathname: "/upgrade",
+                params: { from: "/(tabs)/settings" },
+              })
+            }
             accessibilityRole="button"
             accessibilityLabel={t("upgradeProPlan")}
+            testID={mobileTestIdsExt.subscriptionSection.upgradeLink}
           >
             <Crown size={18} color="#f59e0b" />
             <Text className="ml-3 text-base text-amber-600 dark:text-amber-400 font-medium">

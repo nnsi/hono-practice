@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   runAsync: vi.fn(),
   getDatabase: vi.fn(),
 
+  // ../db/dbEvents
+  dbEventsEmit: vi.fn(),
+
   // ../contexts/AuthContext
   useAuthContext: vi.fn(),
 }));
@@ -47,6 +50,13 @@ vi.mock("../db/database", () => ({
   getDatabase: mocks.getDatabase,
 }));
 
+vi.mock("../db/dbEvents", () => ({
+  dbEvents: {
+    emit: mocks.dbEventsEmit,
+    subscribe: vi.fn(() => () => {}),
+  },
+}));
+
 vi.mock("../contexts/AuthContext", () => ({
   useAuthContext: mocks.useAuthContext,
 }));
@@ -54,12 +64,7 @@ vi.mock("../contexts/AuthContext", () => ({
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
-import {
-  executePurchase,
-  executeRestore,
-  handleCustomerInfoUpdate,
-  refreshPlanFromBackend,
-} from "./useRevenueCat";
+import { executePurchase, executeRestore } from "./useRevenueCat";
 
 function makeDb() {
   const db = { runAsync: mocks.runAsync };
@@ -67,35 +72,8 @@ function makeDb() {
   return db;
 }
 
-// ---------------------------------------------------------------------------
-// Tests: refreshPlanFromBackend
-// ---------------------------------------------------------------------------
-
-describe("refreshPlanFromBackend", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    makeDb();
-  });
-
-  it("writes apiGetMe.plan to auth_state.plan", async () => {
-    mocks.apiGetMe.mockResolvedValue({ plan: "premium" });
-    await refreshPlanFromBackend();
-    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-    expect(mocks.runAsync).toHaveBeenCalledWith(
-      "UPDATE auth_state SET plan = ? WHERE id = 'current'",
-      ["premium"],
-    );
-  });
-
-  it("falls back to 'free' when apiGetMe returns no plan", async () => {
-    mocks.apiGetMe.mockResolvedValue({});
-    await refreshPlanFromBackend();
-    expect(mocks.runAsync).toHaveBeenCalledWith(
-      "UPDATE auth_state SET plan = ? WHERE id = 'current'",
-      ["free"],
-    );
-  });
-});
+// refreshPlanFromBackend の単体テストは useRevenueCat.refreshPlan.test.ts に
+// 分割している（200 行制限に収めるため）。
 
 // ---------------------------------------------------------------------------
 // Tests: executePurchase
@@ -172,87 +150,7 @@ describe("executeRestore", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Tests: CustomerInfo handler logic (unit test of handler logic)
-// ---------------------------------------------------------------------------
-
-describe("CustomerInfo handler — plan refresh deduplication", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    makeDb();
-  });
-
-  function makeInfo(hasPremium: boolean) {
-    return {
-      entitlements: {
-        active: hasPremium ? { premium: {} } : {},
-      },
-    } as never;
-  }
-
-  it("calls refreshPlanFromBackend when entitlement changes from absent to active", async () => {
-    mocks.apiGetMe.mockResolvedValue({ plan: "premium" });
-    const lastActiveRef = { current: null as boolean | null };
-
-    const triggered = handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    expect(triggered).toBe(true);
-
-    await vi.waitFor(() => {
-      expect(mocks.runAsync).toHaveBeenCalledWith(
-        "UPDATE auth_state SET plan = ? WHERE id = 'current'",
-        ["premium"],
-      );
-    });
-    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-  });
-
-  it("skips duplicate calls when entitlement state does not change", async () => {
-    mocks.apiGetMe.mockResolvedValue({ plan: "premium" });
-    const lastActiveRef = { current: null as boolean | null };
-
-    // First call — should fire
-    handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    await vi.waitFor(() => {
-      expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-    });
-    // Second call with same state — should be deduplicated
-    const triggered = handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-
-    expect(triggered).toBe(false);
-    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-  });
-
-  it("fires again when entitlement transitions from active to inactive", async () => {
-    mocks.apiGetMe.mockResolvedValue({ plan: "free" });
-    const lastActiveRef = { current: null as boolean | null };
-
-    handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    await vi.waitFor(() => {
-      expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-    });
-    handleCustomerInfoUpdate(makeInfo(false), lastActiveRef);
-    await vi.waitFor(() => {
-      expect(mocks.apiGetMe).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  it("rolls back lastActiveRef on refresh failure to allow retry", async () => {
-    mocks.apiGetMe.mockRejectedValueOnce(new Error("network"));
-    const lastActiveRef = { current: null as boolean | null };
-
-    handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    // Wait for the rollback (which fires after apiGetMe rejects in the catch handler)
-    await vi.waitFor(() => {
-      expect(lastActiveRef.current).toBeNull();
-    });
-    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
-
-    // Same event should re-trigger refresh since ref was rolled back
-    mocks.apiGetMe.mockResolvedValueOnce({ plan: "premium" });
-    const triggered = handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    expect(triggered).toBe(true);
-    await vi.waitFor(() => {
-      expect(mocks.apiGetMe).toHaveBeenCalledTimes(2);
-    });
-  });
-});
+// handleCustomerInfoUpdate と refreshPlanFromBackend のテストは
+// 200 行制限のため別ファイルに切り出している:
+// - useRevenueCat.customerInfo.test.ts
+// - useRevenueCat.refreshPlan.test.ts
