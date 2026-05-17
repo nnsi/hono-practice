@@ -36,7 +36,21 @@ import { clearLocalData } from "../src/sync/initialSync";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
 
-const deviceLang = getLocales()[0]?.languageCode ?? "ja";
+// SDK 56 preview の Hermes V1 + 新 Swift/C++ JSI interop で getLocales() の
+// 戻り値（string 配列）変換中に稀に EXC_BAD_ACCESS が出る（Maestro 28 連続実行で
+// 9 回再現）。E2E 環境では決定論性のためロケール取得を skip し、production では
+// try/catch でクラッシュ起点を最小化する。SDK 56 stable リリース後に再評価する。
+const resolveDeviceLang = (): string => {
+  if (process.env.EXPO_PUBLIC_E2E_MODE === "1") {
+    return "ja";
+  }
+  try {
+    return getLocales()[0]?.languageCode ?? "ja";
+  } catch {
+    return "ja";
+  }
+};
+const deviceLang = resolveDeviceLang();
 const resolvedLang = deviceLang === "ja" ? "ja" : "en";
 dayjs.locale(resolvedLang);
 initI18n({

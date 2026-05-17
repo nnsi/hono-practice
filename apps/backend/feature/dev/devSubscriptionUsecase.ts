@@ -1,8 +1,8 @@
 import { AppError } from "@backend/error";
 import {
+  type SubscriptionPlan,
   createSubscriptionId,
   newSubscription,
-  type SubscriptionPlan,
 } from "@packages/domain/subscription/subscriptionSchema";
 
 import type { SubscriptionRepository } from "../subscription/subscriptionRepository";
