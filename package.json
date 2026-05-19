@@ -54,12 +54,11 @@
       "hono": "4.12.4",
       "jiti": "2.6.1",
       "miniflare>sharp": "-",
-      "react": "19.2.3",
-      "react-dom": "19.2.3"
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
     },
     "patchedDependencies": {
-      "react-native-css-interop@0.2.2": "patches/react-native-css-interop@0.2.2.patch",
-      "@bacons/apple-targets@4.0.6": "patches/@bacons__apple-targets@4.0.6.patch"
+      "react-native-css-interop@0.2.2": "patches/react-native-css-interop@0.2.2.patch"
     }
   },
   "type": "module",
