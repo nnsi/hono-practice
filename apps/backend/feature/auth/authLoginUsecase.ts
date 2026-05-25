@@ -57,6 +57,7 @@ export function login(
       accessToken,
       refreshToken: combinedRefreshToken,
       userId: user.id,
+      user,
     };
   };
 }
@@ -99,6 +100,7 @@ export function rotateRefreshToken(
       accessToken,
       refreshToken: `${selector}.${plainRefreshToken}`,
       userId: storedToken.userId,
+      user,
     };
   };
 }

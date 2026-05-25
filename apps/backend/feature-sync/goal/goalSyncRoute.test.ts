@@ -1,7 +1,7 @@
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
-import { activityGoals } from "@infra/drizzle/schema";
+import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import { describe, expect, test } from "vitest";
 
 import { goalSyncRoute } from "./goalSyncRoute";
@@ -295,6 +295,57 @@ describe("GET /users/v2/goals", () => {
 
     const json = await res.json();
     expect(json.goals.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("複数ゴールのtotalActualを1クエリで集計（N+1解消）", async () => {
+    // 異なる endDate を持つ複数ゴール + activity_log を用意して、SUM が
+    // LEAST(today, endDate) で正しく分かれて返ることを確認する。
+    const app = createApp();
+    const goalA = "10000000-0000-4000-8000-000000000080";
+    const goalB = "10000000-0000-4000-8000-000000000081";
+
+    await postSync(app, {
+      goals: [
+        // goalA: 2026-03-01 〜 2026-03-05（過去で終了 → endDateで打ち切り）
+        makeGoal({
+          id: goalA,
+          startDate: "2026-03-01",
+          endDate: "2026-03-05",
+          dailyTargetQuantity: 10,
+        }),
+        // goalB: 2026-03-01 〜 endDate=null（無期限 → today まで）
+        makeGoal({
+          id: goalB,
+          startDate: "2026-03-01",
+          endDate: null,
+          dailyTargetQuantity: 10,
+        }),
+      ],
+    });
+
+    // 同一activityに10本のログを別日付で配置: 3/01〜3/10
+    const logsToInsert = Array.from({ length: 10 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-${String(i + 100).padStart(12, "0")}`,
+      userId: TEST_USER_ID,
+      activityId: SEED_ACTIVITY_ID,
+      activityKindId: null,
+      date: `2026-03-${String(i + 1).padStart(2, "0")}`,
+      quantity: 5,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    await testDB.insert(activityLogs).values(logsToInsert);
+
+    // clientDate = 2026-03-10
+    const res = await getGoals(app, "clientDate=2026-03-10");
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    const a = json.goals.find((g: { id: string }) => g.id === goalA);
+    const b = json.goals.find((g: { id: string }) => g.id === goalB);
+    // goalA: 3/1〜3/5 (5日 × 5 = 25)
+    expect(a.totalActual).toBe(25);
+    // goalB: 3/1〜3/10 (10日 × 5 = 50)
+    expect(b.totalActual).toBe(50);
   });
 
   test("clientDate パラメータを渡しても正常に取得できる", async () => {

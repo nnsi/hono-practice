@@ -6,7 +6,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type { ApiKeyScope } from "@packages/domain/apiKey/apiKeySchema";
 import type { Subscription } from "@packages/domain/subscription/subscriptionSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
+import type { User, UserId } from "@packages/domain/user/userSchema";
 
 import type { Config } from "../config";
 import type { KeyValueStore } from "../infra/kv/kv";
@@ -25,7 +25,9 @@ export type AppContext = {
   Variables: {
     jwtPayload: JwtPayload;
     userId: UserId;
-    user?: { id: string };
+    // authMiddleware が JWT 検証時に取得した User を再利用するためのキャッシュ。
+    // /user/me などで重複 SELECT を避けるため。
+    user?: User;
     subscription?: Subscription;
     apiKeyScopes?: ApiKeyScope[];
     logger: Logger;

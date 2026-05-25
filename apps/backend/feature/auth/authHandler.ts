@@ -1,5 +1,5 @@
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
+import type { User, UserId } from "@packages/domain/user/userSchema";
 import type { LoginRequest } from "@packages/types/request";
 import {
   type AuthResponse,
@@ -8,9 +8,10 @@ import {
 
 import { AppError } from "../../error";
 import type { UserWithProviders } from "../user/userUsecase";
-import type { AuthUsecase, OAuthConsents } from "./authUsecase";
+import type { AuthOutput, AuthUsecase, OAuthConsents } from "./authUsecase";
 
 type GetUserById = (userId: UserId) => Promise<UserWithProviders>;
+type EnrichUser = (user: User) => Promise<UserWithProviders>;
 
 type OAuthCredential = { credential: string; consents?: OAuthConsents };
 
@@ -53,21 +54,42 @@ function buildSession(
   return { ...parsed.data, refreshToken: result.refreshToken };
 }
 
-function login(uc: AuthUsecase, getUserById: GetUserById) {
+// usecase が user を返している場合は enrichUser で 3 並列クエリのみ、
+// 返していない場合（provider login の新規ユーザー作成パス等）は getUserById で 4 並列。
+async function resolveUser(
+  result: AuthOutput,
+  getUserById: GetUserById,
+  enrichUser: EnrichUser,
+): Promise<UserWithProviders> {
+  if (result.user) {
+    return enrichUser(result.user);
+  }
+  return getUserById(result.userId);
+}
+
+function login(
+  uc: AuthUsecase,
+  getUserById: GetUserById,
+  enrichUser: EnrichUser,
+) {
   return async (params: LoginRequest): Promise<AuthSession> => {
     const result = await uc.login({
       loginId: params.login_id,
       password: params.password,
     });
-    const user = await getUserById(result.userId);
+    const user = await resolveUser(result, getUserById, enrichUser);
     return buildSession(result, user);
   };
 }
 
-function rotateRefreshToken(uc: AuthUsecase, getUserById: GetUserById) {
+function rotateRefreshToken(
+  uc: AuthUsecase,
+  getUserById: GetUserById,
+  enrichUser: EnrichUser,
+) {
   return async (combinedToken: string): Promise<AuthSession> => {
     const result = await uc.rotateRefreshToken(combinedToken);
-    const user = await getUserById(result.userId);
+    const user = await resolveUser(result, getUserById, enrichUser);
     return buildSession(result, user);
   };
 }
@@ -76,6 +98,7 @@ function providerLogin(
   uc: AuthUsecase,
   provider: Provider,
   getUserById: GetUserById,
+  enrichUser: EnrichUser,
 ) {
   return async (
     params: OAuthCredential,
@@ -87,7 +110,7 @@ function providerLogin(
       clientId,
       params.consents,
     );
-    const user = await getUserById(result.userId);
+    const user = await resolveUser(result, getUserById, enrichUser);
     return buildSession(result, user);
   };
 }
@@ -106,16 +129,17 @@ function linkProvider(uc: AuthUsecase) {
 export function newAuthHandler(
   uc: AuthUsecase,
   getUserById: GetUserById,
+  enrichUser: EnrichUser,
 ): AuthHandler {
   return {
-    login: login(uc, getUserById),
-    rotateRefreshToken: rotateRefreshToken(uc, getUserById),
+    login: login(uc, getUserById, enrichUser),
+    rotateRefreshToken: rotateRefreshToken(uc, getUserById, enrichUser),
     logout: async (userId, refreshToken) => {
       await uc.logout(userId, refreshToken);
       return { message: "success" };
     },
-    googleLogin: providerLogin(uc, "google", getUserById),
-    appleLogin: providerLogin(uc, "apple", getUserById),
+    googleLogin: providerLogin(uc, "google", getUserById, enrichUser),
+    appleLogin: providerLogin(uc, "apple", getUserById, enrichUser),
     linkProvider: linkProvider(uc),
   };
 }

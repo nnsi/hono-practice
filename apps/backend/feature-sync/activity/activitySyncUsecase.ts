@@ -45,13 +45,16 @@ export function newActivitySyncUsecase(
 
 function getActivities(repo: ActivitySyncRepository, tracer: Tracer) {
   return async (userId: UserId) => {
-    const activityRows = await tracer.span("db.getActivitiesByUserId", () =>
-      repo.getActivitiesByUserId(userId),
-    );
-    const activityIds = activityRows.map((a) => a.id);
-    const kindRows = await tracer.span("db.getActivityKindsByActivityIds", () =>
-      repo.getActivityKindsByActivityIds(activityIds),
-    );
+    // activities と kinds は INNER JOIN で userId フィルタできるため並列実行可能。
+    // 旧実装は activities → kinds の直列で Hyperdrive 往復が 1回分余計だった。
+    const [activityRows, kindRows] = await Promise.all([
+      tracer.span("db.getActivitiesByUserId", () =>
+        repo.getActivitiesByUserId(userId),
+      ),
+      tracer.span("db.getActivityKindsByUserId", () =>
+        repo.getActivityKindsByUserId(userId),
+      ),
+    ]);
     return { activities: activityRows, activityKinds: kindRows };
   };
 }

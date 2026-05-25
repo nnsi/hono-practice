@@ -76,13 +76,20 @@ function getGoals(
     );
 
     const activeGoalIds = goals.filter((g) => !g.deletedAt).map((g) => g.id);
+    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
 
-    const allFreezePeriods =
+    const [allFreezePeriods, actualQuantities] = await Promise.all([
       activeGoalIds.length > 0
-        ? await tracer.span("db.getFreezePeriodsByGoalIds", () =>
+        ? tracer.span("db.getFreezePeriodsByGoalIds", () =>
             freezeRepo.getFreezePeriodsByGoalIds(userId, activeGoalIds),
           )
-        : [];
+        : Promise.resolve<FreezePeriodRow[]>([]),
+      activeGoalIds.length > 0
+        ? tracer.span("db.getGoalActualQuantitiesByGoalIds", () =>
+            repo.getGoalActualQuantitiesByGoalIds(userId, activeGoalIds, today),
+          )
+        : Promise.resolve(new Map<string, number>()),
+    ]);
 
     const freezeByGoalId = new Map<string, FreezePeriodRow[]>();
     for (const fp of allFreezePeriods) {
@@ -91,58 +98,41 @@ function getGoals(
       freezeByGoalId.set(fp.goalId, existing);
     }
 
-    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
-
-    const goalsWithStats = await Promise.all(
-      goals.map(async (goal) => {
-        if (goal.deletedAt) {
-          return {
-            ...goal,
-            dayTargets: parseDayTargets(goal.dayTargets),
-            currentBalance: 0,
-            totalTarget: 0,
-            totalActual: 0,
-          };
-        }
-
-        const effectiveEnd =
-          goal.endDate && today > goal.endDate ? goal.endDate : today;
-
-        const totalActual = await tracer.span("db.getGoalActualQuantity", () =>
-          repo.getGoalActualQuantity(
-            userId,
-            goal.activityId,
-            goal.startDate,
-            effectiveEnd,
-          ),
-        );
-
-        const freezePeriods = toFreezePeriods(
-          freezeByGoalId.get(goal.id) ?? [],
-        );
-
-        const result = calculateGoalBalance(
-          {
-            dailyTargetQuantity: Number(goal.dailyTargetQuantity),
-            startDate: goal.startDate,
-            endDate: goal.endDate,
-            debtCap: goal.debtCap != null ? Number(goal.debtCap) : null,
-            dayTargets: parseDayTargets(goal.dayTargets),
-          },
-          [{ date: goal.startDate, quantity: totalActual }],
-          today,
-          freezePeriods,
-        );
-
+    const goalsWithStats = goals.map((goal) => {
+      if (goal.deletedAt) {
         return {
           ...goal,
           dayTargets: parseDayTargets(goal.dayTargets),
-          currentBalance: result.currentBalance,
-          totalTarget: result.totalTarget,
-          totalActual: result.totalActual,
+          currentBalance: 0,
+          totalTarget: 0,
+          totalActual: 0,
         };
-      }),
-    );
+      }
+
+      const totalActual = actualQuantities.get(goal.id) ?? 0;
+      const freezePeriods = toFreezePeriods(freezeByGoalId.get(goal.id) ?? []);
+
+      const result = calculateGoalBalance(
+        {
+          dailyTargetQuantity: Number(goal.dailyTargetQuantity),
+          startDate: goal.startDate,
+          endDate: goal.endDate,
+          debtCap: goal.debtCap != null ? Number(goal.debtCap) : null,
+          dayTargets: parseDayTargets(goal.dayTargets),
+        },
+        [{ date: goal.startDate, quantity: totalActual }],
+        today,
+        freezePeriods,
+      );
+
+      return {
+        ...goal,
+        dayTargets: parseDayTargets(goal.dayTargets),
+        currentBalance: result.currentBalance,
+        totalTarget: result.totalTarget,
+        totalActual: result.totalActual,
+      };
+    });
 
     return { goals: goalsWithStats };
   };

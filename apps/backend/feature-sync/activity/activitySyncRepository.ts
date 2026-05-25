@@ -15,6 +15,7 @@ import {
 import {
   getActivityKindsByActivityIds,
   getActivityKindsByIds,
+  getActivityKindsByUserId,
   upsertActivityKinds,
 } from "./activitySyncKindRepository";
 
@@ -26,6 +27,7 @@ export type ActivitySyncRepository = {
   getActivityKindsByActivityIds: (
     activityIds: string[],
   ) => Promise<ActivityKindRow[]>;
+  getActivityKindsByUserId: (userId: UserId) => Promise<ActivityKindRow[]>;
   getOwnedActivityIds: (
     userId: UserId,
     activityIds: string[],
@@ -51,6 +53,7 @@ export function newActivitySyncRepository(
   return {
     getActivitiesByUserId: getActivitiesByUserId(db),
     getActivityKindsByActivityIds: getActivityKindsByActivityIds(db),
+    getActivityKindsByUserId: getActivityKindsByUserId(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
     upsertActivities: upsertActivities(db),
     getActivitiesByIds: getActivitiesByIds(db),

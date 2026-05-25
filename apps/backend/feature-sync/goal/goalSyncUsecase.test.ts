@@ -50,7 +50,9 @@ function createMockRepo(
 ): GoalSyncRepository {
   return {
     getGoalsByUserId: vi.fn().mockResolvedValue([]),
-    getGoalActualQuantity: vi.fn().mockResolvedValue(0),
+    getGoalActualQuantitiesByGoalIds: vi
+      .fn()
+      .mockResolvedValue(new Map<string, number>()),
     getOwnedActivityIds: vi.fn().mockResolvedValue([OWNED_ACTIVITY_ID]),
     upsertGoals: vi.fn().mockResolvedValue([]),
     getGoalsByIds: vi.fn().mockResolvedValue([]),
@@ -90,7 +92,9 @@ describe("goalSyncUsecase", () => {
       });
       const repo = createMockRepo({
         getGoalsByUserId: vi.fn().mockResolvedValue([row]),
-        getGoalActualQuantity: vi.fn().mockResolvedValue(50),
+        getGoalActualQuantitiesByGoalIds: vi
+          .fn()
+          .mockResolvedValue(new Map([[row.id, 50]])),
       });
       const usecase = newGoalSyncUsecase(
         repo,
@@ -123,7 +127,8 @@ describe("goalSyncUsecase", () => {
       expect(result.goals[0].currentBalance).toBe(0);
       expect(result.goals[0].totalTarget).toBe(0);
       expect(result.goals[0].totalActual).toBe(0);
-      expect(repo.getGoalActualQuantity).not.toHaveBeenCalled();
+      // deleted goals are excluded from activeGoalIds, so batch call gets empty array
+      expect(repo.getGoalActualQuantitiesByGoalIds).not.toHaveBeenCalled();
     });
 
     test("sinceパラメータをrepoに渡す", async () => {
@@ -142,7 +147,7 @@ describe("goalSyncUsecase", () => {
       );
     });
 
-    test("endDateが過去 → effectiveEndはendDate", async () => {
+    test("endDateが過去でもtotalTargetはendDateまでで計算される", async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
@@ -153,7 +158,9 @@ describe("goalSyncUsecase", () => {
         });
         const repo = createMockRepo({
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
-          getGoalActualQuantity: vi.fn().mockResolvedValue(5),
+          getGoalActualQuantitiesByGoalIds: vi
+            .fn()
+            .mockResolvedValue(new Map([[row.id, 5]])),
         });
         const usecase = newGoalSyncUsecase(
           repo,
@@ -167,18 +174,18 @@ describe("goalSyncUsecase", () => {
         expect(result.goals[0].totalTarget).toBe(10);
         expect(result.goals[0].totalActual).toBe(5);
         expect(result.goals[0].currentBalance).toBe(-5);
-        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+        // SQL側のLEASTでendDate clampするので、todayが渡されればOK
+        expect(repo.getGoalActualQuantitiesByGoalIds).toHaveBeenCalledWith(
           USER_ID,
-          OWNED_ACTIVITY_ID,
-          "2026-02-28",
-          "2026-02-28",
+          [row.id],
+          "2026-03-01",
         );
       } finally {
         vi.useRealTimers();
       }
     });
 
-    test("endDate=null（無期限）→ endDateはtoday", async () => {
+    test("endDate=null（無期限）でもtodayまでで集計される", async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-01T12:00:00.000Z"));
       try {
@@ -189,7 +196,9 @@ describe("goalSyncUsecase", () => {
         });
         const repo = createMockRepo({
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
-          getGoalActualQuantity: vi.fn().mockResolvedValue(10),
+          getGoalActualQuantitiesByGoalIds: vi
+            .fn()
+            .mockResolvedValue(new Map([[row.id, 10]])),
         });
         const usecase = newGoalSyncUsecase(
           repo,
@@ -203,18 +212,17 @@ describe("goalSyncUsecase", () => {
         expect(result.goals[0].totalTarget).toBe(10);
         expect(result.goals[0].totalActual).toBe(10);
         expect(result.goals[0].currentBalance).toBe(0);
-        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+        expect(repo.getGoalActualQuantitiesByGoalIds).toHaveBeenCalledWith(
           USER_ID,
-          OWNED_ACTIVITY_ID,
-          "2026-03-01",
+          [row.id],
           "2026-03-01",
         );
       } finally {
         vi.useRealTimers();
       }
     });
+
     test("clientDateを渡すとサーバー時刻ではなくclientDateで計算される", async () => {
-      // サーバー時刻を2026-03-10に固定（clientDateと異なる値にする）
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-03-10T12:00:00.000Z"));
       try {
@@ -225,7 +233,9 @@ describe("goalSyncUsecase", () => {
         });
         const repo = createMockRepo({
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
-          getGoalActualQuantity: vi.fn().mockResolvedValue(50),
+          getGoalActualQuantitiesByGoalIds: vi
+            .fn()
+            .mockResolvedValue(new Map([[row.id, 50]])),
         });
         const usecase = newGoalSyncUsecase(
           repo,
@@ -233,18 +243,16 @@ describe("goalSyncUsecase", () => {
           noopTracer,
         );
 
-        // clientDate="2026-03-05" を渡す（サーバー時刻の3/10ではなく3/5で計算されるべき）
         const result = await usecase.getGoals(USER_ID, undefined, "2026-03-05");
 
         // 5日間(3/1-3/5) × 10 = 50, actual=50 → balance=0
         expect(result.goals[0].totalTarget).toBe(50);
         expect(result.goals[0].totalActual).toBe(50);
         expect(result.goals[0].currentBalance).toBe(0);
-        // effectiveEnd は clientDate の "2026-03-05" であること
-        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+        // today は clientDate の "2026-03-05" であること
+        expect(repo.getGoalActualQuantitiesByGoalIds).toHaveBeenCalledWith(
           USER_ID,
-          OWNED_ACTIVITY_ID,
-          "2026-03-01",
+          [row.id],
           "2026-03-05",
         );
       } finally {
@@ -263,7 +271,9 @@ describe("goalSyncUsecase", () => {
         });
         const repo = createMockRepo({
           getGoalsByUserId: vi.fn().mockResolvedValue([row]),
-          getGoalActualQuantity: vi.fn().mockResolvedValue(100),
+          getGoalActualQuantitiesByGoalIds: vi
+            .fn()
+            .mockResolvedValue(new Map([[row.id, 100]])),
         });
         const usecase = newGoalSyncUsecase(
           repo,
@@ -271,15 +281,13 @@ describe("goalSyncUsecase", () => {
           noopTracer,
         );
 
-        // clientDateなし → サーバーのUTC日付 "2026-03-10" で計算
         const result = await usecase.getGoals(USER_ID);
 
         // 10日間(3/1-3/10) × 10 = 100
         expect(result.goals[0].totalTarget).toBe(100);
-        expect(repo.getGoalActualQuantity).toHaveBeenCalledWith(
+        expect(repo.getGoalActualQuantitiesByGoalIds).toHaveBeenCalledWith(
           USER_ID,
-          OWNED_ACTIVITY_ID,
-          "2026-03-01",
+          [row.id],
           "2026-03-10",
         );
       } finally {

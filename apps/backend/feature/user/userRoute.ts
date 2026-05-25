@@ -87,7 +87,7 @@ export function createUserRoute() {
       { refreshTokenRepo, apiKeyRepo },
       passwordVerifier,
     );
-    const authH = newAuthHandler(authUc, uc.getUserById);
+    const authH = newAuthHandler(authUc, uc.getUserById, uc.enrichUser);
     const h = newUserHandler(uc, authH);
 
     c.set("h", h);
@@ -112,8 +112,9 @@ export function createUserRoute() {
     })
     .get("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
+      const cachedUser = c.get("user");
       try {
-        const user = await c.var.h.getMe(userId);
+        const user = await c.var.h.getMe(userId, cachedUser);
         return c.json(user);
       } catch (e) {
         // 認証は通過しているがユーザーが存在しない（削除済み等）→ 401 に変換

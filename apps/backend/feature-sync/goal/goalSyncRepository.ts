@@ -8,12 +8,11 @@ type GoalRow = typeof activityGoals.$inferSelect;
 
 export type GoalSyncRepository = {
   getGoalsByUserId: (userId: UserId, since?: string) => Promise<GoalRow[]>;
-  getGoalActualQuantity: (
+  getGoalActualQuantitiesByGoalIds: (
     userId: UserId,
-    activityId: string,
-    startDate: string,
-    endDate: string,
-  ) => Promise<number>;
+    goalIds: string[],
+    today: string,
+  ) => Promise<Map<string, number>>;
   getOwnedActivityIds: (
     userId: UserId,
     activityIds: string[],
@@ -28,7 +27,7 @@ export type GoalSyncRepository = {
 export function newGoalSyncRepository(db: QueryExecutor): GoalSyncRepository {
   return {
     getGoalsByUserId: getGoalsByUserId(db),
-    getGoalActualQuantity: getGoalActualQuantity(db),
+    getGoalActualQuantitiesByGoalIds: getGoalActualQuantitiesByGoalIds(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
     upsertGoals: upsertGoals(db),
     getGoalsByIds: getGoalsByIds(db),
@@ -49,29 +48,43 @@ function getGoalsByUserId(db: QueryExecutor) {
   };
 }
 
-function getGoalActualQuantity(db: QueryExecutor) {
+function getGoalActualQuantitiesByGoalIds(db: QueryExecutor) {
   return async (
     userId: UserId,
-    activityId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<number> => {
-    const result = await db
+    goalIds: string[],
+    today: string,
+  ): Promise<Map<string, number>> => {
+    if (goalIds.length === 0) return new Map();
+
+    const rows = await db
       .select({
-        total: sql<number>`COALESCE(SUM(${activityLogs.quantity}), 0)`,
+        goalId: activityGoals.id,
+        total: sql<string>`COALESCE(SUM(${activityLogs.quantity}), 0)`,
       })
-      .from(activityLogs)
-      .where(
+      .from(activityGoals)
+      .leftJoin(
+        activityLogs,
         and(
-          eq(activityLogs.userId, userId),
-          eq(activityLogs.activityId, activityId),
-          sql`${activityLogs.date} >= ${startDate}`,
-          sql`${activityLogs.date} <= ${endDate}`,
+          eq(activityLogs.userId, activityGoals.userId),
+          eq(activityLogs.activityId, activityGoals.activityId),
+          sql`${activityLogs.date} >= ${activityGoals.startDate}`,
+          sql`${activityLogs.date} <= LEAST(${today}::date, ${activityGoals.endDate})`,
           isNull(activityLogs.deletedAt),
         ),
-      );
+      )
+      .where(
+        and(
+          eq(activityGoals.userId, userId),
+          inArray(activityGoals.id, goalIds),
+        ),
+      )
+      .groupBy(activityGoals.id);
 
-    return Number(result[0]?.total ?? 0);
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      map.set(r.goalId, Number(r.total));
+    }
+    return map;
   };
 }
 

@@ -142,7 +142,7 @@ describe("AuthRoute Integration Tests", () => {
           subscriptionUc,
           noopTracer,
         );
-        const h = newAuthHandler(uc, userUc.getUserById);
+        const h = newAuthHandler(uc, userUc.getUserById, userUc.enrichUser);
 
         c.set("h", h);
 

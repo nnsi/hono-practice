@@ -1,5 +1,5 @@
 import type { Provider } from "@packages/domain/auth/userProviderSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
+import type { User, UserId } from "@packages/domain/user/userSchema";
 
 import type { OAuthVerify } from "./oauthVerify";
 
@@ -14,10 +14,13 @@ export type LoginInput = {
   password: string;
 };
 
+// user は既に取得済みのケース（login / rotateRefreshToken）でセットされる。
+// loginWithProvider は user 取得をスキップしているため undefined。
 export type AuthOutput = {
   accessToken: string;
   refreshToken: string;
   userId: UserId;
+  user?: User;
 };
 
 export type AuthUsecase = {
