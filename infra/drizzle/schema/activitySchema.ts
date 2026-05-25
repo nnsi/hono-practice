@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -10,66 +10,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { tasks } from "./taskSchema";
 import { customTypeNumeric, iconTypeEnum, users } from "./userSchema";
-
-// Task テーブル
-export const tasks = pgTable(
-  "task",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-    activityId: uuid("activity_id").references(() => activities.id),
-    activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
-    quantity: customTypeNumeric("quantity"),
-    title: text("title").notNull(),
-    doneDate: date("done_date"),
-    memo: text("memo").default(""),
-    startDate: date("start_date"),
-    dueDate: date("due_date"),
-    archivedAt: timestamp("archived_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  },
-  (t) => [
-    index("task_user_id_idx").on(t.userId),
-    index("task_created_at_idx").on(t.createdAt),
-  ],
-);
-
-// Note テーブル
-export const notes = pgTable(
-  "note",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-    activityId: uuid("activity_id").references(() => activities.id),
-    title: text("title").notNull(),
-    content: text("content").notNull().default(""),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  },
-  (t) => [
-    index("note_user_id_idx").on(t.userId),
-    index("note_activity_id_idx").on(t.activityId),
-    index("note_created_at_idx").on(t.createdAt),
-  ],
-);
 
 // Activity テーブル
 export const activities = pgTable(
@@ -103,6 +45,10 @@ export const activities = pgTable(
   (t) => [
     index("activity_user_id_idx").on(t.userId),
     index("activity_created_at_idx").on(t.createdAt),
+    // GET /users/v2/activities: WHERE user_id = ? AND deleted_at IS NULL ORDER BY order_index
+    index("activity_user_id_order_index_active_idx")
+      .on(t.userId, t.orderIndex)
+      .where(sql`deleted_at IS NULL`),
   ],
 );
 
@@ -121,7 +67,7 @@ export const activityKinds = pgTable(
       .notNull()
       .references(() => activities.id),
     name: text("name").notNull(),
-    color: text("color"), // 色設定（hex形式: #RRGGBB）
+    color: text("color"),
     orderIndex: text("order_index").default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -175,6 +121,8 @@ export const activityLogs = pgTable(
     index("activity_log_date_idx").on(t.date),
     index("activity_log_user_id_date_idx").on(t.userId, t.date),
     index("activity_log_task_id_idx").on(t.taskId),
+    // sync pull: WHERE user_id = ? AND updated_at > ?
+    index("activity_log_user_id_updated_at_idx").on(t.userId, t.updatedAt),
   ],
 );
 

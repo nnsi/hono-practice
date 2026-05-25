@@ -288,6 +288,13 @@
       "when": 1778976000000,
       "tag": "0040_refresh_token_rotated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1779733137505,
+      "tag": "0041_sync_pull_indexes",
+      "breakpoints": true
     }
   ]
 }
