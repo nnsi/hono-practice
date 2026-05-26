@@ -2,7 +2,18 @@ import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityGoals, activityLogs } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
-import { and, eq, gt, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 type GoalRow = typeof activityGoals.$inferSelect;
 
@@ -67,8 +78,14 @@ function getGoalActualQuantitiesByGoalIds(db: QueryExecutor) {
         and(
           eq(activityLogs.userId, activityGoals.userId),
           eq(activityLogs.activityId, activityGoals.activityId),
-          sql`${activityLogs.date} >= ${activityGoals.startDate}`,
-          sql`${activityLogs.date} <= LEAST(${today}::date, ${activityGoals.endDate})`,
+          gte(activityLogs.date, activityGoals.startDate),
+          lte(activityLogs.date, today),
+          // endDate=NULL は無期限 (today までで打ち切り済み)。endDate がある場合のみ追加で
+          // clamp する。これは `date <= LEAST(today, endDate)` と等価。
+          or(
+            isNull(activityGoals.endDate),
+            lte(activityLogs.date, activityGoals.endDate),
+          ),
           isNull(activityLogs.deletedAt),
         ),
       )
