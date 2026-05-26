@@ -86,7 +86,6 @@ function createMockRepo(
 ): ActivitySyncRepository {
   return {
     getActivitiesByUserId: vi.fn().mockResolvedValue([]),
-    getActivityKindsByActivityIds: vi.fn().mockResolvedValue([]),
     getActivityKindsByUserId: vi.fn().mockResolvedValue([]),
     getOwnedActivityIds: vi.fn().mockResolvedValue([]),
     upsertActivities: vi.fn().mockResolvedValue([]),

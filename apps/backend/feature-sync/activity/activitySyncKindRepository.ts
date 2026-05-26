@@ -6,21 +6,6 @@ import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
 type ActivityKindRow = typeof activityKinds.$inferSelect;
 
-export function getActivityKindsByActivityIds(db: QueryExecutor) {
-  return async (activityIds: string[]): Promise<ActivityKindRow[]> => {
-    if (activityIds.length === 0) return [];
-    return await db
-      .select()
-      .from(activityKinds)
-      .where(
-        and(
-          inArray(activityKinds.activityId, activityIds),
-          isNull(activityKinds.deletedAt),
-        ),
-      );
-  };
-}
-
 // userId 経由で kinds を取得する。GET /users/v2/activities で activities の SELECT 完了を
 // 待たずに並列実行するため。INNER JOIN で deletedAt = NULL の activity に属する kinds のみ返す。
 export function getActivityKindsByUserId(db: QueryExecutor) {

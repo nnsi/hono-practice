@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 import { SyncGoalsRequestSchema } from "@packages/types";
+import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
@@ -9,6 +10,12 @@ import { newGoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFre
 import { newGoalSyncHandler } from "./goalSyncHandler";
 import { newGoalSyncRepository } from "./goalSyncRepository";
 import { newGoalSyncUsecase } from "./goalSyncUsecase";
+
+const sinceSchema = z.string().datetime().optional();
+const clientDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
+  .optional();
 
 export function createGoalSyncRoute() {
   const app = new Hono<
@@ -36,9 +43,29 @@ export function createGoalSyncRoute() {
   return app
     .get("/goals", async (c) => {
       const userId = c.get("userId");
-      const since = c.req.query("since");
-      const clientDate = c.req.query("clientDate");
-      const res = await c.var.h.getGoals(userId, since, clientDate);
+      const sinceParsed = sinceSchema.safeParse(
+        c.req.query("since") || undefined,
+      );
+      if (!sinceParsed.success) {
+        return c.json(
+          { message: "Invalid 'since' parameter. Expected ISO 8601 datetime." },
+          400,
+        );
+      }
+      const clientDateParsed = clientDateSchema.safeParse(
+        c.req.query("clientDate") || undefined,
+      );
+      if (!clientDateParsed.success) {
+        return c.json(
+          { message: "Invalid 'clientDate' parameter. Expected YYYY-MM-DD." },
+          400,
+        );
+      }
+      const res = await c.var.h.getGoals(
+        userId,
+        sinceParsed.data,
+        clientDateParsed.data,
+      );
       return c.json(res);
     })
     .post(

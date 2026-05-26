@@ -21,6 +21,7 @@ function makeGoalRow(overrides: Record<string, unknown> = {}) {
     isActive: true,
     description: "",
     debtCap: null,
+    dayTargets: null,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
@@ -109,6 +110,38 @@ describe("goalSyncUsecase", () => {
       expect(result.goals[0]).toHaveProperty("totalActual");
       expect(result.goals[0]).toHaveProperty("currentBalance");
       expect(result.goals[0].totalActual).toBe(50);
+    });
+
+    test("複数 active ゴール → batch クエリ 1回で全 ID を渡す (N+1 退行ガード)", async () => {
+      const rows = [
+        makeGoalRow({ id: "10000000-0000-4000-8000-000000000a01" }),
+        makeGoalRow({ id: "10000000-0000-4000-8000-000000000a02" }),
+        makeGoalRow({ id: "10000000-0000-4000-8000-000000000a03" }),
+      ];
+      const batchMock = vi.fn().mockResolvedValue(
+        new Map([
+          [rows[0].id, 1],
+          [rows[1].id, 2],
+          [rows[2].id, 3],
+        ]),
+      );
+      const repo = createMockRepo({
+        getGoalsByUserId: vi.fn().mockResolvedValue(rows),
+        getGoalActualQuantitiesByGoalIds: batchMock,
+      });
+      const usecase = newGoalSyncUsecase(
+        repo,
+        createMockFreezeRepo(),
+        noopTracer,
+      );
+
+      await usecase.getGoals(USER_ID, undefined, "2026-03-10");
+
+      // 1ゴールずつ呼ぶ退行を防ぐため、batch が exactly 1 回かつ 3 ID を含むことを固定
+      expect(batchMock).toHaveBeenCalledTimes(1);
+      const [callUserId, callGoalIds] = batchMock.mock.calls[0];
+      expect(callUserId).toBe(USER_ID);
+      expect(callGoalIds).toEqual(rows.map((r) => r.id));
     });
 
     test("deletedAtあり → stats=0で返す", async () => {
