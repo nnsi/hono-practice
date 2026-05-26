@@ -125,6 +125,36 @@ describe("activitySyncUsecase", () => {
       expect(result.activityKinds).toHaveLength(0);
       expect(repo.getActivityKindsByUserId).toHaveBeenCalledWith(USER_ID);
     });
+
+    test("親activityがレスポンスにない孤児kindは除外される (race condition guard)", async () => {
+      // 並列 SELECT のタイミング差で、activities には含まれないが kinds には含まれる
+      // 状態を mock で再現。usecase が activity id set でフィルタすることを検証する。
+      const aliveActivity = makeActivityRow({
+        id: "10000000-0000-4000-8000-000000000001",
+      });
+      const validKind = makeKindRow({
+        id: "10000000-0000-4000-8000-100000000001",
+        activityId: aliveActivity.id,
+      });
+      const orphanKind = makeKindRow({
+        id: "10000000-0000-4000-8000-100000000099",
+        // 親activityはactivityRowsに含まれない（削除直後のレース）
+        activityId: "99999999-9999-4999-9999-999999999999",
+      });
+      const repo = createMockRepo({
+        getActivitiesByUserId: vi.fn().mockResolvedValue([aliveActivity]),
+        getActivityKindsByUserId: vi
+          .fn()
+          .mockResolvedValue([validKind, orphanKind]),
+      });
+      const usecase = newActivitySyncUsecase(repo, noopTracer);
+
+      const result = await usecase.getActivities(USER_ID);
+
+      expect(result.activities).toHaveLength(1);
+      expect(result.activityKinds).toHaveLength(1);
+      expect(result.activityKinds[0].id).toBe(validKind.id);
+    });
   });
 
   describe("syncActivities - activities", () => {

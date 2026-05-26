@@ -7,20 +7,15 @@ import type {
 
 import type { Tracer } from "../../lib/tracer";
 import type { ActivitySyncRepository } from "./activitySyncRepository";
+import {
+  type SyncActivitiesResult,
+  syncActivities,
+} from "./activitySyncWriteUsecase";
 
 type ActivityRow = typeof activities.$inferSelect;
 type ActivityKindRow = typeof activityKinds.$inferSelect;
 
-type SyncResult<T> = {
-  syncedIds: string[];
-  serverWins: T[];
-  skippedIds: string[];
-};
-
-type SyncActivitiesResult = {
-  activities: SyncResult<ActivityRow>;
-  activityKinds: SyncResult<ActivityKindRow>;
-};
+export type { SyncActivitiesResult } from "./activitySyncWriteUsecase";
 
 export type ActivitySyncUsecase = {
   getActivities: (
@@ -55,144 +50,12 @@ function getActivities(repo: ActivitySyncRepository, tracer: Tracer) {
         repo.getActivityKindsByUserId(userId),
       ),
     ]);
-    return { activities: activityRows, activityKinds: kindRows };
+    // 並列実行の statement snapshot 差で「親 activity が削除された直後の
+    // 孤児 kind」を返す可能性があるため、activity id set でフィルタする。
+    const activityIdSet = new Set(activityRows.map((a) => a.id));
+    const filteredKinds = kindRows.filter((k) =>
+      activityIdSet.has(k.activityId),
+    );
+    return { activities: activityRows, activityKinds: filteredKinds };
   };
-}
-
-function syncActivities(repo: ActivitySyncRepository, tracer: Tracer) {
-  return async (
-    userId: UserId,
-    activityList: UpsertActivityRequest[],
-    kindList: UpsertActivityKindRequest[],
-  ): Promise<SyncActivitiesResult> => {
-    const maxAllowed = new Date(Date.now() + 5 * 60 * 1000);
-
-    // --- Activities sync ---
-    const actResult = await syncActivityEntities(
-      repo,
-      userId,
-      activityList,
-      maxAllowed,
-      tracer,
-    );
-
-    // --- ActivityKinds sync ---
-    const kindResult = await syncActivityKindEntities(
-      repo,
-      userId,
-      kindList,
-      maxAllowed,
-      tracer,
-    );
-
-    return {
-      activities: actResult,
-      activityKinds: kindResult,
-    };
-  };
-}
-
-async function syncActivityEntities(
-  repo: ActivitySyncRepository,
-  userId: UserId,
-  activityList: UpsertActivityRequest[],
-  maxAllowed: Date,
-  tracer: Tracer,
-): Promise<SyncResult<ActivityRow>> {
-  const skippedIds: string[] = [];
-
-  const validActivities = activityList.filter((activity) => {
-    if (new Date(activity.updatedAt) > maxAllowed) {
-      skippedIds.push(activity.id);
-      return false;
-    }
-    return true;
-  });
-
-  if (validActivities.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds };
-  }
-
-  const upserted = await tracer.span("db.upsertActivities", () =>
-    repo.upsertActivities(userId, validActivities),
-  );
-
-  const syncedIdSet = new Set(upserted.map((r) => r.id));
-  const syncedIds = [...syncedIdSet];
-
-  const missedIds = validActivities
-    .map((a) => a.id)
-    .filter((id) => !syncedIdSet.has(id));
-
-  let serverWins: ActivityRow[] = [];
-  if (missedIds.length > 0) {
-    serverWins = await tracer.span("db.getActivitiesByIds", () =>
-      repo.getActivitiesByIds(userId, missedIds),
-    );
-    const serverWinIdSet = new Set(serverWins.map((s) => s.id));
-    for (const id of missedIds) {
-      if (!serverWinIdSet.has(id)) {
-        skippedIds.push(id);
-      }
-    }
-  }
-
-  return { syncedIds, serverWins, skippedIds };
-}
-
-async function syncActivityKindEntities(
-  repo: ActivitySyncRepository,
-  userId: UserId,
-  kindList: UpsertActivityKindRequest[],
-  maxAllowed: Date,
-  tracer: Tracer,
-): Promise<SyncResult<ActivityKindRow>> {
-  const requestedActivityIds = [...new Set(kindList.map((k) => k.activityId))];
-  const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
-    repo.getOwnedActivityIds(userId, requestedActivityIds),
-  );
-  const ownedActivityIdSet = new Set(ownedIds);
-
-  const skippedIds: string[] = [];
-
-  const validKinds = kindList.filter((kind) => {
-    if (
-      !ownedActivityIdSet.has(kind.activityId) ||
-      new Date(kind.updatedAt) > maxAllowed
-    ) {
-      skippedIds.push(kind.id);
-      return false;
-    }
-    return true;
-  });
-
-  if (validKinds.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds };
-  }
-
-  const upserted = await tracer.span("db.upsertActivityKinds", () =>
-    repo.upsertActivityKinds(validKinds, ownedIds),
-  );
-
-  const syncedIdSet = new Set(upserted.map((r) => r.id));
-  const syncedIds = [...syncedIdSet];
-
-  const missedIds = validKinds
-    .map((k) => k.id)
-    .filter((id) => !syncedIdSet.has(id));
-
-  let serverWins: ActivityKindRow[] = [];
-  if (missedIds.length > 0) {
-    serverWins = await tracer.span("db.getActivityKindsByIds", () =>
-      repo.getActivityKindsByIds(missedIds, ownedIds),
-    );
-    const serverWinIdSet = new Set(serverWins.map((s) => s.id));
-    for (const id of missedIds) {
-      if (!serverWinIdSet.has(id)) {
-        skippedIds.push(id);
-      }
-    }
-  }
-
-  return { syncedIds, serverWins, skippedIds };
 }
