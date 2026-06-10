@@ -1,27 +1,8 @@
-import type { Page } from "playwright";
 import { describe, expect, it } from "vitest";
 
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
-
-async function openNotes(page: Page) {
-  await page.click('button[aria-label="Menu"]');
-  await page.click('a:has-text("Notes")');
-  await page.waitForURL("**/notes", { timeout: 15000 });
-}
-
-async function openNewNote(page: Page) {
-  await openNotes(page);
-  await page.click('button[aria-label="ノートを作成"]');
-  await page.waitForURL("**/notes/new", { timeout: 15000 });
-  await page
-    .locator('input[placeholder="ノートのタイトル"]')
-    .waitFor({ state: "visible", timeout: 15000 });
-}
-
-async function saveNote(page: Page) {
-  await page.click('button:has-text("保存")');
-}
+import { backFromNote, openNewNote, waitForNoteSaved } from "../helpers/note";
 
 describe("notes", () => {
   const { getPage } = setupBrowser();
@@ -35,14 +16,12 @@ describe("notes", () => {
 
     await page.fill('input[placeholder="ノートのタイトル"]', title);
 
-    await saveNote(page);
-
-    // 一覧に戻り、タイトルが表示される
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    // 自動保存: 戻る操作で flush されて一覧に反映される
+    await backFromNote(page);
     await page.waitForSelector(`text="${title}"`, { timeout: 15000 });
   });
 
-  it("既存ノートのタイトルを編集できる", async () => {
+  it("既存ノートのタイトルをインラインで編集できる", async () => {
     const page = getPage();
     const originalTitle = "E2Eノート編集前";
     const updatedTitle = "E2Eノート編集後";
@@ -50,11 +29,10 @@ describe("notes", () => {
     await login(page, "e2e@example.com", "password123");
     await openNewNote(page);
     await page.fill('input[placeholder="ノートのタイトル"]', originalTitle);
-    await saveNote(page);
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    await backFromNote(page);
     await page.waitForSelector(`text="${originalTitle}"`, { timeout: 15000 });
 
-    // 一覧でノートを開く
+    // 一覧でノートを開く（タイトル入力は常時インライン表示）
     await page
       .locator("button")
       .filter({ hasText: originalTitle })
@@ -62,30 +40,23 @@ describe("notes", () => {
       .click();
     await page.waitForURL("**/notes/*", { timeout: 15000 });
 
-    // 設定パネルを開く（初期状態は折り畳み）
-    await page.click('button[aria-label="設定"]');
     const titleInput = page.locator('input[placeholder="ノートのタイトル"]');
     await titleInput.waitFor({ state: "visible", timeout: 15000 });
-
     await titleInput.fill(updatedTitle);
-    await saveNote(page);
 
-    // 保存後、一覧に戻って新タイトルが表示される
-    await page.click('button:has-text("戻る")');
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    await backFromNote(page);
     await page.waitForSelector(`text="${updatedTitle}"`, { timeout: 15000 });
   });
 
-  it("編集中に戻ろうとすると破棄ダイアログで中断できる", async () => {
+  it("編集内容は明示的な保存なしで自動保存される", async () => {
     const page = getPage();
-    const originalTitle = "E2Eノート中断";
-    const draftTitle = "E2Eノート未保存";
+    const originalTitle = "E2Eノート自動保存前";
+    const updatedTitle = "E2Eノート自動保存後";
 
     await login(page, "e2e@example.com", "password123");
     await openNewNote(page);
     await page.fill('input[placeholder="ノートのタイトル"]', originalTitle);
-    await saveNote(page);
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    await backFromNote(page);
     await page.waitForSelector(`text="${originalTitle}"`, { timeout: 15000 });
 
     await page
@@ -95,21 +66,16 @@ describe("notes", () => {
       .click();
     await page.waitForURL("**/notes/*", { timeout: 15000 });
 
-    // 設定パネルを開いてタイトル変更（未保存）
-    await page.click('button[aria-label="設定"]');
     const titleInput = page.locator('input[placeholder="ノートのタイトル"]');
     await titleInput.waitFor({ state: "visible", timeout: 15000 });
-    await titleInput.fill(draftTitle);
+    await titleInput.fill(updatedTitle);
 
-    // 戻るをクリックすると破棄バーが出現
-    await page.click('button:has-text("戻る")');
-    await page.waitForSelector('text="変更を破棄しますか？"', {
-      timeout: 15000,
-    });
-
-    // 「編集を続ける」で破棄バーが閉じ、未保存値は残っている
-    await page.click('button:has-text("編集を続ける")');
-    expect(await titleInput.inputValue()).toBe(draftTitle);
+    // 「保存済み」インジケータが出るまで待ち、リロードしても変更が残っている
+    await waitForNoteSaved(page);
+    await page.reload();
+    const reloadedInput = page.locator('input[placeholder="ノートのタイトル"]');
+    await reloadedInput.waitFor({ state: "visible", timeout: 15000 });
+    expect(await reloadedInput.inputValue()).toBe(updatedTitle);
   });
 
   it("ノートを一覧から削除できる", async () => {
@@ -119,8 +85,7 @@ describe("notes", () => {
     await login(page, "e2e@example.com", "password123");
     await openNewNote(page);
     await page.fill('input[placeholder="ノートのタイトル"]', title);
-    await saveNote(page);
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    await backFromNote(page);
     await page.waitForSelector(`text="${title}"`, { timeout: 15000 });
 
     const noteButton = page

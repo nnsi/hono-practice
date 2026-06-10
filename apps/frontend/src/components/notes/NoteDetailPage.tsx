@@ -3,40 +3,26 @@ import { useState } from "react";
 import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, Check, Copy, FileX } from "lucide-react";
 
-import { FormButton } from "../common/FormButton";
-import { NoteDetailFab } from "./NoteDetailFab";
+import { NoteActivityChips } from "./NoteActivityChips";
 import { NoteRichTextEditor } from "./NoteRichTextEditor";
-import { NoteSettingsPanel } from "./NoteSettingsPanel";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
 export function NoteDetailPage() {
   const [copied, setCopied] = useState(false);
   const {
-    isNew,
     isLoading,
     notFound,
-    settingsOpen,
     title,
     setTitle,
     content,
     setContent,
     activityId,
     setActivityId,
-    isSubmitting,
-    canSave,
-    showDiscardConfirm,
+    saveState,
     activities,
-    toggleSettings,
-    handleSave,
     handleBack,
-    confirmDiscard,
-    cancelDiscard,
   } = useNoteDetailPage();
   const { t } = useTranslation("note");
-
-  const headerTitle = isNew
-    ? t("detail.newNote")
-    : title || t("detail.untitled");
 
   if (isLoading) {
     return (
@@ -53,7 +39,7 @@ export function NoteDetailPage() {
           <div className="flex h-12 items-center px-4">
             <button
               type="button"
-              onClick={handleBack}
+              onClick={() => void handleBack()}
               className="flex items-center gap-1 text-gray-600 transition-colors hover:text-gray-900"
             >
               <ArrowLeft size={18} />
@@ -84,18 +70,21 @@ export function NoteDetailPage() {
         <div className="flex h-12 items-center justify-between gap-2 pl-4 pr-14">
           <button
             type="button"
-            onClick={handleBack}
+            onClick={() => void handleBack()}
             className="flex items-center gap-1 text-gray-600 transition-colors hover:text-gray-900"
           >
             <ArrowLeft size={18} />
             <span className="text-sm">{t("detail.back")}</span>
           </button>
 
-          <h1 className="mx-4 flex-1 truncate text-center text-base font-semibold text-gray-900">
-            {headerTitle}
-          </h1>
-
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-3">
+            {saveState !== "idle" && (
+              <span className="text-xs text-gray-400">
+                {saveState === "saving"
+                  ? t("detail.saving")
+                  : t("detail.saved")}
+              </span>
+            )}
             <button
               type="button"
               onClick={handleCopyPlainText}
@@ -111,50 +100,29 @@ export function NoteDetailPage() {
                 <Copy size={16} />
               )}
             </button>
-            <FormButton
-              variant="primary"
-              label={isSubmitting ? t("detail.saving") : t("detail.save")}
-              onClick={handleSave}
-              disabled={!canSave}
-              className="px-3 py-1.5 text-sm"
-            />
           </div>
         </div>
       </div>
 
-      {showDiscardConfirm && (
-        <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-medium text-amber-800">
-            {t("detail.discardTitle")}
-          </p>
-          <div className="flex gap-2">
-            <FormButton
-              variant="secondary"
-              label={t("detail.keepEditing")}
-              onClick={cancelDiscard}
-              className="px-3 text-xs"
-            />
-            <FormButton
-              variant="dangerConfirm"
-              label={t("detail.discard")}
-              onClick={confirmDiscard}
-              className="px-3 text-xs"
-            />
-          </div>
-        </div>
-      )}
-
-      <NoteSettingsPanel
-        title={title}
-        setTitle={setTitle}
-        activityId={activityId}
-        setActivityId={setActivityId}
-        activities={activities}
-        isOpen={settingsOpen}
-      />
-
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl p-4 pb-24">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t("create.placeholder.title")}
+            aria-label={t("create.label.title")}
+            className="w-full bg-transparent text-xl font-semibold text-gray-900 outline-none placeholder:text-gray-400"
+          />
+
+          <div className="mt-2 mb-4">
+            <NoteActivityChips
+              activityId={activityId}
+              onChangeActivityId={setActivityId}
+              activities={activities}
+            />
+          </div>
+
           <NoteRichTextEditor
             value={content}
             onChange={setContent}
@@ -162,8 +130,6 @@ export function NoteDetailPage() {
           />
         </div>
       </div>
-
-      <NoteDetailFab onSettingsToggle={toggleSettings} />
     </div>
   );
 }
