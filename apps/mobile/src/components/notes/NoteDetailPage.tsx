@@ -1,10 +1,9 @@
 import { useState } from "react";
 
+import { markdownToNotePreviewText } from "@packages/frontend-shared/utils/noteRichText";
 import { useTranslation } from "@packages/i18n";
-import { ArrowLeft, Check, Copy } from "lucide-react-native";
 import {
-  Clipboard,
-  Platform,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -13,42 +12,37 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { mobileTestIds } from "../../testing/testIds";
-import { FormButton } from "../common/FormButton";
-import { NoteDetailFab } from "./NoteDetailFab";
-import { NoteDiscardConfirmInline, NoteNotFound } from "./NoteDetailStates";
-import { NoteRichTextEditor } from "./NoteRichTextEditor";
-import { NoteSettingsPanel } from "./NoteSettingsPanel";
+import { IMESafeTextInput } from "../common/IMESafeTextInput";
+import { NoteActivityChips } from "./NoteActivityChips";
+import { NoteBodyEditor } from "./NoteBodyEditor";
+import { NoteDetailHeader } from "./NoteDetailHeader";
+import { NoteNotFound } from "./NoteDetailStates";
+import { NoteMarkdownView } from "./NoteMarkdownView";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
+const E2E_SAMPLE_MARKDOWN = "# Morning plan\n\n- one\n- two\n\nafter list";
+
 export function NoteDetailPage() {
-  const [copied, setCopied] = useState(false);
+  const [editorEpoch, setEditorEpoch] = useState(0);
   const { t } = useTranslation("note");
   const insets = useSafeAreaInsets();
+  const isE2EMode = process.env.EXPO_PUBLIC_E2E_MODE === "1";
   const {
     isNew,
     isLoading,
     notFound,
-    settingsOpen,
     title,
     setTitle,
     content,
     setContent,
     activityId,
     setActivityId,
-    isSubmitting,
-    canSave,
-    showDiscardConfirm,
+    mode,
+    saveState,
     activities,
-    toggleSettings,
-    handleSave,
+    startEditing,
     handleBack,
-    confirmDiscard,
-    cancelDiscard,
   } = useNoteDetailPage();
-
-  const headerTitle = isNew
-    ? t("detail.newNote")
-    : title.trim() || t("detail.untitled");
 
   if (isLoading) {
     return (
@@ -64,21 +58,14 @@ export function NoteDetailPage() {
   }
 
   if (notFound) {
-    return <NoteNotFound onBack={handleBack} topInset={insets.top} />;
+    return (
+      <NoteNotFound onBack={() => void handleBack()} topInset={insets.top} />
+    );
   }
 
-  const handleCopyPlainText = async () => {
-    try {
-      if (Platform.OS === "web") {
-        await navigator.clipboard.writeText(content);
-      } else {
-        Clipboard.setString(content);
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+  const fillSampleContent = () => {
+    setContent(E2E_SAMPLE_MARKDOWN);
+    setEditorEpoch((prev) => prev + 1);
   };
 
   return (
@@ -87,90 +74,86 @@ export function NoteDetailPage() {
       style={{ paddingTop: insets.top }}
       testID={mobileTestIds.notes.detailPage}
     >
-      <View className="flex-row items-center border-b border-gray-100 px-2 h-12 dark:border-gray-800">
-        <TouchableOpacity
-          onPress={handleBack}
-          className="mr-1 p-2"
-          hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
-          accessibilityRole="button"
-          accessibilityLabel={t("detail.back")}
-          testID={mobileTestIds.notes.backButton}
-        >
-          <ArrowLeft size={22} color="#6b7280" />
-        </TouchableOpacity>
-
-        <Text
-          className="flex-1 text-base font-semibold text-gray-900 dark:text-gray-100"
-          numberOfLines={1}
-        >
-          {headerTitle}
-        </Text>
-
-        <View className="ml-2 flex-row items-center gap-2">
-          <TouchableOpacity
-            onPress={handleCopyPlainText}
-            accessibilityRole="button"
-            accessibilityLabel={
-              copied ? t("detail.copied") : t("detail.copyPlainText")
-            }
-            className="h-10 w-10 items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600"
-          >
-            {copied ? (
-              <Check size={18} color="#059669" />
-            ) : (
-              <Copy size={18} color="#374151" />
-            )}
-          </TouchableOpacity>
-          <FormButton
-            variant="primary"
-            label={isSubmitting ? t("detail.saving") : t("detail.save")}
-            onPress={handleSave}
-            disabled={!canSave}
-            className="px-4 py-1.5"
-            testID={mobileTestIds.notes.saveButton}
-          />
-        </View>
-      </View>
-
-      {showDiscardConfirm && (
-        <NoteDiscardConfirmInline
-          onConfirm={confirmDiscard}
-          onCancel={cancelDiscard}
-        />
-      )}
-
-      <NoteSettingsPanel
-        title={title}
-        onChangeTitle={setTitle}
-        activityId={activityId}
-        onChangeActivityId={setActivityId}
-        activities={activities}
-        isOpen={settingsOpen}
+      <NoteDetailHeader
+        content={content}
+        saveState={saveState}
+        onBack={() => void handleBack()}
       />
 
       <ScrollView
         className="flex-1"
         automaticallyAdjustKeyboardInsets
         keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingTop: 16,
+          paddingTop: 8,
           paddingBottom: 96 + insets.bottom,
         }}
       >
-        <View>
-          <NoteRichTextEditor
-            value={content}
-            onChange={setContent}
-            placeholder={t("create.placeholder.contentMobile")}
+        <IMESafeTextInput
+          value={title}
+          onChangeText={setTitle}
+          placeholder={t("create.placeholder.title")}
+          placeholderTextColor="#9ca3af"
+          className="text-xl font-semibold"
+          style={{ fontSize: 20 }}
+          accessibilityLabel={t("create.label.title")}
+          testID={mobileTestIds.notes.titleInput}
+        />
+
+        <View className="mb-3">
+          <NoteActivityChips
+            activityId={activityId}
+            onChangeActivityId={setActivityId}
+            activities={activities}
           />
         </View>
-      </ScrollView>
 
-      <NoteDetailFab
-        onSettingsToggle={toggleSettings}
-        bottomInset={insets.bottom}
-      />
+        {mode === "edit" ? (
+          <NoteBodyEditor
+            key={editorEpoch}
+            value={content}
+            onChangeText={setContent}
+            placeholder={t("create.placeholder.contentMobile")}
+            autoFocus={isNew}
+          />
+        ) : (
+          <Pressable
+            onPress={startEditing}
+            accessibilityRole="button"
+            accessibilityLabel={t("detail.tapToEdit")}
+            testID={mobileTestIds.notes.markdownView}
+          >
+            <NoteMarkdownView
+              markdown={content}
+              emptyLabel={t("detail.tapToEdit")}
+            />
+          </Pressable>
+        )}
+
+        {isE2EMode && (
+          <View className="mt-6 gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+            <TouchableOpacity
+              onPress={fillSampleContent}
+              className="rounded-lg bg-sky-600 px-3 py-2"
+              accessibilityRole="button"
+              accessibilityLabel="Fill sample note content"
+              testID={mobileTestIds.notes.e2eFillSampleButton}
+            >
+              <Text className="text-center text-sm font-medium text-white">
+                Fill sample note content
+              </Text>
+            </TouchableOpacity>
+            <Text
+              className="text-xs text-gray-500 dark:text-gray-400"
+              testID={mobileTestIds.notes.e2ePreviewText}
+            >
+              {markdownToNotePreviewText(content)}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }

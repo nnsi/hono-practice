@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 import {
+  backFromNote,
   getNoteEditor,
   openNewNote,
   pasteMarkdownIntoNoteEditor,
-  saveNote,
 } from "../helpers/note";
 
 describe("note markdown persistence", () => {
@@ -43,15 +43,9 @@ describe("note markdown persistence", () => {
     );
 
     await editor.locator("table").waitFor({ state: "visible", timeout: 15000 });
-    await page
-      .locator('button:has-text("保存")')
-      .waitFor({ state: "visible", timeout: 15000 });
-    await expect
-      .poll(() => page.locator('button:has-text("保存")').isEnabled())
-      .toBe(true);
 
-    await saveNote(page);
-    await page.waitForURL("**/notes", { timeout: 15000 });
+    // 自動保存: 戻る操作で flush されて一覧に反映される
+    await backFromNote(page);
     await page.waitForSelector(`text="${title}"`, { timeout: 15000 });
     await page
       .locator("button")
