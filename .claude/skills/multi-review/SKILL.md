@@ -1,6 +1,6 @@
 ---
 name: multi-review
-description: 最大5サブエージェントを並列起動し、スコアベースで集約したレビューレポートを出力する。修正は行わない。
+description: 最大6サブエージェントを並列起動し、スコアベースで集約したレビューレポートを出力する。修正は行わない。
 user_invocable: true
 ---
 
@@ -12,7 +12,7 @@ Codex版は `/codex-multi-review` を使う。
 
 ## レビュアー構成
 
-### 常時起動（4レビュアー）
+### 常時起動（5レビュアー）
 
 | # | 名前 | モデル | 専門領域 |
 |---|------|--------|----------|
@@ -20,6 +20,7 @@ Codex版は `/codex-multi-review` を使う。
 | B | reviewer-logic | Sonnet | ロジック・バグ |
 | C | reviewer-architecture | Opus | 設計・アーキテクチャ |
 | D | reviewer-testability | Sonnet | テスタビリティ・テスト網羅性 |
+| F | reviewer-epistemics | Opus | 主張監査（報告文・コミットメッセージが対象。diffではない） |
 
 ### 条件付き起動（ネイティブコード含む場合のみ +1）
 
@@ -40,7 +41,7 @@ Codex版は `/codex-multi-review` を使う。
 
 ### Step 2: 全レビュアー並列起動
 
-全レビュアーを**同時に**起動する（ネイティブコードなしなら4、ありなら5）。**レビュアーを省略しない。全員起動が必須。**
+全レビュアーを**同時に**起動する（ネイティブコードなしなら5、ありなら6）。**レビュアーを省略しない。全員起動が必須。**
 
 `.claude/agents/` にエージェント定義済み。Agentツールで起動する:
 
@@ -50,12 +51,30 @@ Codex版は `/codex-multi-review` を使う。
 ```
 
 起動パラメータ:
-- **name**: `reviewer-security` / `reviewer-logic` / `reviewer-architecture` / `reviewer-testability` （+ `reviewer-native`）
-- **model**: エージェント定義側で指定済み（A,B,D,E=sonnet / C=opus）
+- **name**: `reviewer-security` / `reviewer-logic` / `reviewer-architecture` / `reviewer-testability` / `reviewer-epistemics` （+ `reviewer-native`）
+- **model**: エージェント定義側で指定済み（A,B,D,E=sonnet / C,F=opus）
 
 全Agentツール呼び出しを**1つのメッセージで並列実行**すること。
 
 **E (reviewer-native) にはSwift/Kotlinファイルのみ渡す。**
+
+**F (reviewer-epistemics) にはファイル一覧ではなく「主張の材料」を渡す**:
+
+```
+以下の報告文に含まれる主張を監査してください。
+
+## セッション中のコミットメッセージ
+<`git log --format="%h %B" <base>..HEAD` の出力>
+
+## PR本文（あれば）
+<PR body>
+
+## 完了報告ドラフト
+<これからユーザーに送る予定の報告・結論の要約。
+「検証済み」「既存の問題」「影響なし」等の判断を含めて省略せずに書く>
+```
+
+完了報告ドラフトをまだ書いていない段階で起動する場合は、現時点での結論・判断（何を検証済みとし、何を既存問題と判断し、何を影響なしと見なしているか）を箇条書きで渡す。**Fに渡す材料を整形する時に主張を弱める・ぼかすことを禁止する**（監査対象の改変になる）。
 
 ### Step 3: スコアベース集約
 
@@ -71,9 +90,11 @@ Codex版は `/codex-multi-review` を使う。
 #### 集約手順
 
 1. **全レビュアーの結果が揃うまで集約しない**（1つでも欠けたらリトライ）
-2. 同一箇所・同一問題の指摘をグループ化（ファイル:行番号 + 指摘内容で判定）
+2. 同一箇所・同一問題の指摘をグループ化（ファイル:行番号 + 指摘内容で判定。Fの指摘はファイル:行番号を持たないので主張単位でグループ化）
 3. 上記ルールで修正対象を決定
 4. Critical → Warning → Infoの優先順でソート
+
+Fの指摘の「修正」はコード修正ではなく、(a) 反証実験を実行して主張を観測に格上げする、(b) 報告文から主張を撤回する、(c) 「未検証の推測」とラベルを付ける、のいずれか。**(c)を選びがちな場合は注意**: 荷重主張（それが偽なら結論が崩れる）には原則(a)で応える。
 
 #### 出力形式
 
@@ -98,6 +119,7 @@ Codex版は `/codex-multi-review` を使う。
 - C (Architecture): LGTM / NOT LGTM
 - D (Testability): LGTM / NOT LGTM
 - E (Native): LGTM / NOT LGTM ※ネイティブコード含む場合のみ
+- F (Epistemics): LGTM / NOT LGTM
 ```
 
 ## レビュー結果の判断
