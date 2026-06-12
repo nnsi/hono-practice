@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 type ApiErrorDetail = {
   timestamp: string;
   method: string;
@@ -38,12 +40,7 @@ export function ApiErrorDetailList({
 }
 
 function ApiErrorRow({ detail }: { detail: ApiErrorDetail }) {
-  const time = new Date(detail.timestamp).toLocaleString("ja-JP", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const time = dayjs(detail.timestamp).format("M月D日 HH:mm");
 
   const statusColor =
     detail.status >= 500

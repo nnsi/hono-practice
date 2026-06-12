@@ -186,7 +186,7 @@
 
 ## 優先度順 改善ロードマップ
 
-> 2026-06-12: P1〜P5 すべて実装済み（チェックボックスの注記は実装時の判断・差異）。中長期項目は未着手（方針決めが必要）。
+> 2026-06-12: P1〜P5 すべて実装済み（チェックボックスの注記は実装時の判断・差異）。同日、中長期4項目と sync 欠損の不審点もユーザー方針決定の上で対応済み（下記参照）。
 
 ### P1: Web/Mobile の sync 組み立て（initialSync / syncEngine）を共通化する
 `DELTA_SYNC_RESOURCES` 等の定数と fetchAllApis の組み立て共通部を `packages/sync-engine` に移し、各プラットフォームは HTTP クライアントと DB アダプタの差分だけを渡す。**新エンティティ追加コスト（15ファイル前後）と Web/Mobile 乖離リスクの両方に効く、費用対効果最大の一手。** 同時に `syncGoalFreezePeriods` の `customFetch` を Hono typed client に揃える。
@@ -221,8 +221,11 @@ POST 作成を 201、DELETE を 204 に統一し、sync route の `since` バリ
 - [x] backend の `convertImageUrlsToBase64` の重複排除（`lib/convertActivityIconUrls.ts` に集約）
 - [x] scaffold（generate-feature.js）の `app.ts` / schema index 自動登録（冪等チェック・フォールバック付き。schema export は generate-domain.js 側に実装）
 
-### 中長期で判断が必要な項目（今すぐ対応不要、方針決めのみ）
-- **tsgo dev 版の扱い**: TS7 stable 待ちなら ADR に採用理由と移行計画を記録する
-- **`Activity` 型エイリアスの整理**: `ActivityRecord as Activity` をやめ、明示的な名前に移行する（影響範囲が広いため機械的リネームの計画を立ててから）
-- **admin-frontend の frontend-shared 利用**: 完全独立を維持するか、ユーティリティ層だけ共有するかの方針決定
-- **Widget → RN の変更通知**: App Group / ContentProvider 経由の変更検知を入れるか、現状の「フォアグラウンド復帰時 sync」で許容するかの判断
+### 中長期項目（2026-06-12 方針決定・対応済み）
+- [x] **tsgo dev 版の扱い**: 継続を決定し、採用理由と出口条件（TS7 stable で移行）を `docs/adr/20260612_tsgo_typecheck.md` に記録
+- [x] **`Activity` 型エイリアスの整理**: `packages/domain/index.ts` の `ActivityRecord as Activity` / `ActivityKindRecord as ActivityKind` エイリアスは実利用ゼロと判明したため削除（リネーム作業は不要だった）
+- [x] **admin-frontend の frontend-shared 利用**: 「純粋ユーティリティのみ共有」と決定。ただし調査の結果 frontend-shared に admin の日付フォーマットと同等の関数が存在せず、現時点で共有対象なし（無理な共通化はせず、調査中に見つかった `toLocaleString` 規約違反2件のみ dayjs に修正）
+- [x] **Widget → RN の変更通知**: 現状の「フォアグラウンド復帰時 sync」を仕様として許容し、再評価条件（Live Activity 等）を `docs/adr/20260612_widget_db_write_visibility.md` に TODO として記録
+
+### 追加修正（2026-06-12）: initialSync の best-effort リソースの欠損経路
+notes / goalFreezePeriods の fetch が null フォールバックした場合、従来は失敗リソースも bootstrapped 登録され watermark が進むため、欠損が永久化する経路があった。**「失敗リソースは bootstrapped から除外（既登録なら剥がす）→ 次回フル pull で自動回復」に修正**（`createInitialSync.ts`。watermark は進めるため健全なリソースの delta 同期は維持）。regression テストを `createInitialSync.test.ts` / `createV2InitialSync.test.ts` に追加。

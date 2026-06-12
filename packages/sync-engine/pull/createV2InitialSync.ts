@@ -127,8 +127,10 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
           .getGoalFreezePeriods(freezePeriodsQuery)
           .catch(() => null),
         deps.api.getTasks(tasksQuery),
-        // Notes are best-effort during bootstrap. Treat network failures as a
-        // partial sync so other resources can still hydrate and watermark stays put.
+        // Notes are best-effort during bootstrap: a failed fetch falls back to
+        // null so other resources still hydrate and the watermark advances,
+        // while the failed resource is dropped from bootstrappedResources and
+        // re-pulled in full on the next sync (see createInitialSync).
         deps.api
           .getNotes(notesQuery)
           .catch(() => null),

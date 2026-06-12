@@ -162,9 +162,10 @@ describe("createV2InitialSync", () => {
     expect(order).toEqual(["tx-start", "write", "tx-end"]);
   });
 
-  // Existing platform behavior (blessed by the Web initialSync tests):
-  // a rejected freeze-period / notes fetch falls back to null, other
-  // resources still hydrate, and the watermark still advances.
+  // A rejected freeze-period / notes fetch falls back to null: other
+  // resources still hydrate and the watermark advances, but the failed
+  // resource is excluded from bootstrappedResources so the next sync
+  // does a full pull for it (no permanent data gap).
   it("treats freeze period fetch rejection as best-effort", async () => {
     const api = createMockApi();
     api.getGoalFreezePeriods.mockRejectedValue(new Error("rollout"));
@@ -178,6 +179,9 @@ describe("createV2InitialSync", () => {
       deps.repos.goalFreezePeriod.upsertFreezePeriodsFromServer,
     ).not.toHaveBeenCalled();
     expect(deps.defaultStorage.getItem(LAST_SYNCED_KEY)).not.toBeNull();
+    expect(
+      JSON.parse(deps.defaultStorage.getItem(BOOTSTRAPPED_KEY) ?? "[]"),
+    ).not.toContain("freezePeriods");
   });
 
   it("treats notes fetch rejection as best-effort", async () => {
@@ -189,6 +193,9 @@ describe("createV2InitialSync", () => {
     await expect(performInitialSync("user-1")).resolves.toBeUndefined();
     expect(deps.repos.note.upsertNotesFromServer).not.toHaveBeenCalled();
     expect(deps.defaultStorage.getItem(LAST_SYNCED_KEY)).not.toBeNull();
+    expect(
+      JSON.parse(deps.defaultStorage.getItem(BOOTSTRAPPED_KEY) ?? "[]"),
+    ).not.toContain("notes");
   });
 
   it("advances the watermark and bootstraps all resources on full success", async () => {
