@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 ## 🚫 最重要制限事項
-- **開発サーバーは起動しない**（ユーザー側で起動済み。ポートは `apps/backend/.env` の `API_PORT` と `apps/frontend/.env` の `VITE_PORT` を参照）。**ただし worktree 環境ではポートが分離されているため、自分で起動してよい**
-- **ブラウザ動作確認はClaude in Chrome MCPを使用する**
+- **開発サーバーは起動しない**（ユーザー側で起動済み。ポートは `apps/backend/.env` の `API_PORT` と `apps/frontend/.env` の `VITE_PORT` を参照）。**ただし worktree 環境とリモート実行環境（Claude Code on the web）ではサーバーが起動していないため、自分で起動する**
+- **ブラウザ動作確認はplaywright-cliを使用する**（手順は `/browser-check`、コマンドは `/playwright-cli` 参照。2026-06-12にChrome MCPから統一）
 - **デプロイは勝手にやらない**（`wrangler deploy`, `eas-cli update` 等の本番反映コマンドは必ずユーザーの明示的な承認を得てから実行する）
 - **EAS Buildは慎重に扱う**（ビルドはリモートサーバーで実行され、時間とコストがかかる。CLIの出力が途中で止まって見えても、`eas-cli build:list` でEAS側の状態を確認してから判断する。二重投入しない）
 
