@@ -117,7 +117,7 @@ function deleteTask(uc: TaskUsecase) {
   return async (userId: UserId, taskId: TaskId) => {
     await uc.deleteTask(userId, taskId);
 
-    return { message: "success" };
+    return { success: true };
   };
 }
 

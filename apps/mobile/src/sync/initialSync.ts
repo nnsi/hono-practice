@@ -1,5 +1,5 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
-import { createInitialSync } from "@packages/sync-engine";
+import { createV2InitialSync } from "@packages/sync-engine";
 
 import { apiClient } from "../api/apiClient";
 import { getDatabase } from "../db/database";
@@ -12,24 +12,26 @@ import { taskRepository } from "../repositories/taskRepository";
 import { reportError } from "../utils/errorReporter";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
-const DELTA_SYNC_RESOURCES = [
-  "logs",
-  "goals",
-  "freezePeriods",
-  "tasks",
-  "notes",
-] as const;
-
-// Keep this list frozen. Future sync resources should be added only to
-// DELTA_SYNC_RESOURCES so older clients full-pull the new resource once.
-const LEGACY_BOOTSTRAPPED_RESOURCES = [
-  "logs",
-  "goals",
-  "freezePeriods",
-  "tasks",
-] as const;
-
-const { clearLocalData, performInitialSync } = createInitialSync({
+const { clearLocalData, performInitialSync } = createV2InitialSync({
+  api: {
+    getActivities: () => apiClient.users.v2.activities.$get(),
+    getActivityLogs: (query) =>
+      apiClient.users.v2["activity-logs"].$get({ query }),
+    getGoals: (query) => apiClient.users.v2.goals.$get({ query }),
+    getGoalFreezePeriods: (query) =>
+      apiClient.users.v2["goal-freeze-periods"].$get({ query }),
+    getTasks: (query) => apiClient.users.v2.tasks.$get({ query }),
+    getNotes: (query) => apiClient.users.v2.notes.$get({ query }),
+  },
+  repos: {
+    activity: activityRepository,
+    activityLog: activityLogRepository,
+    goal: goalRepository,
+    goalFreezePeriod: goalFreezePeriodRepository,
+    task: taskRepository,
+    note: noteRepository,
+  },
+  getClientDate: getToday,
   clearAllTables: async () => {
     const db = await getDatabase();
     await db.execAsync(`
@@ -74,83 +76,9 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       (noteRow?.count ?? 0) === 0
     );
   },
-  fetchAllApis: async (sinceByResource) => {
-    const logsQuery = sinceByResource.logs
-      ? { since: sinceByResource.logs }
-      : {};
-    const goalsQuery = sinceByResource.goals
-      ? { since: sinceByResource.goals, clientDate: getToday() }
-      : { clientDate: getToday() };
-    const freezePeriodsQuery = sinceByResource.freezePeriods
-      ? { since: sinceByResource.freezePeriods }
-      : {};
-    const tasksQuery = sinceByResource.tasks
-      ? { since: sinceByResource.tasks }
-      : {};
-    const notesQuery = sinceByResource.notes
-      ? { since: sinceByResource.notes }
-      : {};
-    const [
-      activitiesRes,
-      logsRes,
-      goalsRes,
-      freezePeriodsRes,
-      tasksRes,
-      notesRes,
-    ] = await Promise.all([
-      apiClient.users.v2.activities.$get(),
-      apiClient.users.v2["activity-logs"].$get({ query: logsQuery }),
-      apiClient.users.v2.goals.$get({ query: goalsQuery }),
-      // Older backend deployments may still lack this endpoint during staged rollout.
-      // Keep the same backward-compatibility fallback on both Web and Mobile.
-      apiClient.users.v2["goal-freeze-periods"]
-        .$get({ query: freezePeriodsQuery })
-        .catch(() => null),
-      apiClient.users.v2.tasks.$get({ query: tasksQuery }),
-      // Notes are best-effort during bootstrap. Treat network failures as a
-      // partial sync so other resources can still hydrate and watermark stays put.
-      apiClient.users.v2.notes
-        .$get({ query: notesQuery })
-        .catch(() => null),
-    ]);
-    return {
-      activitiesRes,
-      logsRes,
-      goalsRes,
-      freezePeriodsRes,
-      tasksRes,
-      notesRes,
-    };
-  },
-  writeAllData: async (data) => {
-    // Mobile repositories manage sqlite transactions internally, so
-    // adding an outer withTransactionAsync here would nest BEGIN/COMMIT.
-    if (data.activities.length > 0) {
-      await activityRepository.upsertActivities(data.activities);
-    }
-    if (data.activityKinds.length > 0) {
-      await activityRepository.upsertActivityKinds(data.activityKinds);
-    }
-    if (data.logs.length > 0) {
-      await activityLogRepository.upsertActivityLogsFromServer(data.logs);
-    }
-    if (data.goals.length > 0) {
-      await goalRepository.upsertGoalsFromServer(data.goals);
-    }
-    if (data.freezePeriods.length > 0) {
-      await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
-        data.freezePeriods,
-      );
-    }
-    if (data.tasks.length > 0) {
-      await taskRepository.upsertTasksFromServer(data.tasks);
-    }
-    if (data.notes.length > 0) {
-      await noteRepository.upsertNotesFromServer(data.notes);
-    }
-  },
-  deltaResources: DELTA_SYNC_RESOURCES,
-  legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
+  // Mobile repositories manage sqlite transactions internally, so no
+  // runWriteTransaction here (an outer withTransactionAsync would nest
+  // BEGIN/COMMIT).
   defaultStorage: rnStorageAdapter,
   onError: (error, phase) => {
     reportError({

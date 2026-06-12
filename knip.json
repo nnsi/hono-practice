@@ -24,7 +24,13 @@
         "vitest.e2e.config.ts"
       ],
       "project": ["scripts/**/*.{js,ts}", "infra/**/*.ts"],
-      "ignoreDependencies": ["@expo/plist", "lefthook", "sharp"]
+      "ignoreDependencies": [
+        "@expo/plist",
+        "lefthook",
+        "sharp",
+        "dotenv",
+        "@vitest/coverage-v8"
+      ]
     },
     "apps/backend": {
       "entry": [
@@ -79,7 +85,12 @@
         "android/**",
         "ios/**"
       ],
-      "ignoreDependencies": ["babel-preset-expo", "@expo/plist", "uuid"],
+      "ignoreDependencies": [
+        "babel-preset-expo",
+        "@expo/plist",
+        "uuid",
+        "expo-system-ui"
+      ],
       "metro": false
     },
     "apps/tail-worker": {
@@ -114,5 +125,6 @@
       "entry": ["index.ts", "**/*.test.ts"],
       "project": ["**/*.ts"]
     }
-  }
+  },
+  "ignoreBinaries": ["eas", "maestro", "powershell"]
 }

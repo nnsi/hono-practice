@@ -59,7 +59,7 @@ test("POST activities / success", async () => {
     },
   });
 
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(201);
 });
 
 test("PUT activities/:id / success", async () => {

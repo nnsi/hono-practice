@@ -65,7 +65,7 @@ export function createTaskRoute() {
 
       const res = await c.var.h.createTask(id, params);
 
-      return c.json(res);
+      return c.json(res, 201);
     })
     .put("/:id", zValidator("json", updateTaskRequestSchema), async (c) => {
       const userId = c.get("userId");

@@ -78,6 +78,12 @@ describe("GET /users/v2/notes", () => {
     expect(json.notes).toHaveLength(0);
   });
 
+  test("不正な since (ISO datetime 以外) は 400 を返す", async () => {
+    const app = createApp();
+    const res = await getNotes(app, "since=2026/03/29");
+    expect(res.status).toBe(400);
+  });
+
   test("since以降の変更のみ返す", async () => {
     const app = createApp();
 

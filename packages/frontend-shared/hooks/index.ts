@@ -1,3 +1,9 @@
+export { createTabPreferenceStore } from "./createTabPreferenceStore";
+export type {
+  CreateTabPreferenceStoreDeps,
+  TabPreferenceFlushTransport,
+  TabPreferenceStorage,
+} from "./createTabPreferenceStore.types";
 export type {
   TutorialAdapter,
   TutorialStatus,

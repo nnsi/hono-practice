@@ -186,25 +186,40 @@
 
 ## 優先度順 改善ロードマップ
 
+> 2026-06-12: P1〜P5 すべて実装済み（チェックボックスの注記は実装時の判断・差異）。中長期項目は未着手（方針決めが必要）。
+
 ### P1: Web/Mobile の sync 組み立て（initialSync / syncEngine）を共通化する
 `DELTA_SYNC_RESOURCES` 等の定数と fetchAllApis の組み立て共通部を `packages/sync-engine` に移し、各プラットフォームは HTTP クライアントと DB アダプタの差分だけを渡す。**新エンティティ追加コスト（15ファイル前後）と Web/Mobile 乖離リスクの両方に効く、費用対効果最大の一手。** 同時に `syncGoalFreezePeriods` の `customFetch` を Hono typed client に揃える。
 
+- [x] initialSync の組み立て共通部を `packages/sync-engine` に集約（`createV2InitialSync`。Web 176行→100行、Mobile 164行→97行。リソース定数・fetch組み立て・writeAllData は共有化され、プラットフォームはエンドポイントとDB配管のみ注入）
+- [x] syncEngine の組み立て共通部を集約（`createV2SyncFunctions`。あわせて Web 側に欠けていた push エラーレポーターを Mobile と対称に追加）
+- [x] `syncGoalFreezePeriods` を Hono typed client に移行（pull/push とも `customFetch` + 文字列 URL を廃止）
+
 ### P2: 基盤の整合性修正（小粒・低リスク・即効）
-- `workspace:*` 宣言を backend / frontend / types / sync-engine に追加
-- zod を `pnpm.overrides` で統一
-- `.claude/rules/frontend-offline-first.md` の `types-v2` 記述を修正
-- 未使用依存（react-markdown / rehype-sanitize / hono / fast-check）を削除し、knip を CI に追加
+- [x] `workspace:*` 宣言を backend / frontend / types / sync-engine に追加
+- [x] zod のバージョン統一（全 package.json の宣言を `^4.3.6` に統一。`pnpm.overrides` への追加は `@tanstack/router-plugin` が zod 3.x API に依存しており transitive dep を壊すため見送り）
+- [x] `.claude/rules/frontend-offline-first.md` の `types-v2` 記述を修正
+- [x] 未使用依存（react-markdown / rehype-sanitize / hono / fast-check）を削除
+- [x] knip を CI に追加（ゲートは高シグナルな `files,dependencies,unlisted,binaries` に限定。unused exports は判断を要する既存項目が残るため対象外。domain サブディレクトリの未使用バレル index.ts 10本も削除済み）
 
 ### P3: API 契約の統一（クライアント型生成に影響するため早めに）
-POST 作成を 201、DELETE を 204 に統一し、sync route の `since` バリデーションを `safeParse` + 400 で揃える。破壊的変更になるためクライアント側（apiMappers / sync-engine のレスポンス処理）と同一 PR で対応する。
+POST 作成を 201、DELETE を 204 に統一し、sync route の `since` バリデーションを `safeParse` + 400 で揃える。破壊的変更になるためクライアント側（apiMappers / sync-engine のレスポンス処理）と同一 PR で対応する。外部公開の `/api/v1` 契約は変更しない。
+
+- [x] POST 作成を 201 に統一（activity / activityLog / note / task / apiKey / aiActivityLog。**注**: `/api/v1` は内部 route を再マウントしているため 201 を継承する。2xx 判定のクライアントには影響なし）
+- [x] DELETE レスポンスを `{ success: true }` に統一（204 ではなくこちらを採用。クライアントが `.json()` でパース済みのため 204 だと破壊的になる）
+- [x] sync route の `since` バリデーションを `safeParse` + 400 で統一（共通 `parseSince` ヘルパーを `feature-sync/shared/` に新設）
 
 ### P4: ネイティブウィジェットのスキーマ結合の明示化
 `migrationSql.ts` にウィジェットが参照するカラムの注記を入れ、スキーマ変更時に Swift/Kotlin 影響を検出するチェックスクリプト（`scripts/check-*-rules.js` と同系統）を追加する。ウィジェット本体のテスト整備は長期課題として、まず「無音で壊れる」経路を塞ぐ。
 
+- [x] `migrationSql.ts` にウィジェット参照カラムの注記を追加（V1–V6 を `migrationSqlV1.ts` に分離し、先頭に参照テーブル・カラムの全リストと対象ネイティブファイルを明記）
+- [x] スキーマ整合チェックスクリプト `scripts/check-widget-schema.js` を追加し `guard:widget-schema` として ci-check に組み込み（`--self-test` 付き）
+
 ### P5: 重複ロジックの集約
-- `tabPreferenceStore.ts` を `StorageAdapter` DI で frontend-shared に統合（その際 `StorageAdapter` の非同期化 or `AsyncStorageAdapter` 分離も検討）
-- backend の `filterLogsByActivity` / `convertImageUrlsToBase64` の重複排除
-- scaffold（generate-feature.js）の `app.ts` / schema index 自動登録
+- [x] `tabPreferenceStore.ts` を storage DI で frontend-shared に統合（`createTabPreferenceStore`。Web 190行→70行、Mobile 199行→41行。公開 API・ストレージキーは不変、`packages/platform` は未変更）
+- [x] backend の `filterLogsByActivity` の重複排除（`activitygoal/filterLogsByActivity.ts` に集約）
+- [x] backend の `convertImageUrlsToBase64` の重複排除（`lib/convertActivityIconUrls.ts` に集約）
+- [x] scaffold（generate-feature.js）の `app.ts` / schema index 自動登録（冪等チェック・フォールバック付き。schema export は generate-domain.js 側に実装）
 
 ### 中長期で判断が必要な項目（今すぐ対応不要、方針決めのみ）
 - **tsgo dev 版の扱い**: TS7 stable 待ちなら ADR に採用理由と移行計画を記録する

@@ -4,6 +4,7 @@
   "main": "index.ts",
   "types": "index.ts",
   "dependencies": {
-    "zod": "^4.0.1"
+    "@packages/domain": "workspace:*",
+    "zod": "^4.3.6"
   }
 }

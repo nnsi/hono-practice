@@ -66,7 +66,7 @@ export function createAIActivityLogRoute(
         c.req.valid("json"),
       );
 
-      return c.json(res);
+      return c.json(res, 201);
     },
   );
 }

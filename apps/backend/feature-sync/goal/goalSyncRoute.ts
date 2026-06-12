@@ -7,11 +7,11 @@ import { z } from "zod";
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
 import { newGoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
+import { parseSince } from "../shared/sinceSchema";
 import { newGoalSyncHandler } from "./goalSyncHandler";
 import { newGoalSyncRepository } from "./goalSyncRepository";
 import { newGoalSyncUsecase } from "./goalSyncUsecase";
 
-const sinceSchema = z.string().datetime().optional();
 const clientDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
@@ -43,14 +43,9 @@ export function createGoalSyncRoute() {
   return app
     .get("/goals", async (c) => {
       const userId = c.get("userId");
-      const sinceParsed = sinceSchema.safeParse(
-        c.req.query("since") || undefined,
-      );
-      if (!sinceParsed.success) {
-        return c.json(
-          { message: "Invalid 'since' parameter. Expected ISO 8601 datetime." },
-          400,
-        );
+      const sinceResult = parseSince(c);
+      if (!sinceResult.success) {
+        return sinceResult.response;
       }
       const clientDateParsed = clientDateSchema.safeParse(
         c.req.query("clientDate") || undefined,
@@ -63,7 +58,7 @@ export function createGoalSyncRoute() {
       }
       const res = await c.var.h.getGoals(
         userId,
-        sinceParsed.data,
+        sinceResult.since,
         clientDateParsed.data,
       );
       return c.json(res);

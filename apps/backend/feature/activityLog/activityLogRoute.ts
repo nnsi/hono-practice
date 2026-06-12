@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
-import { convertLocalUploadUrlToDataUrl } from "@backend/infra/storage/localUploadDataUrl";
+import { convertActivityIconUrls } from "@backend/lib/convertActivityIconUrls";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { newActivityQueryService } from "@backend/query";
@@ -20,7 +20,7 @@ import { newActivityLogHandler } from "./activityLogHandler";
 import { newActivityLogRepository } from "./activityLogRepository";
 import { newActivityLogUsecase } from "./activityLogUsecase";
 
-// ローカル環境で画像URLをBase64に変換する関数
+// ローカル環境で activityLog 内の activity アイコンURLを Base64 に変換する関数
 async function convertActivityIconUrlsToBase64(
   log: GetActivityLogResponse,
   env: AppContext["Bindings"],
@@ -28,24 +28,7 @@ async function convertActivityIconUrlsToBase64(
 ): Promise<GetActivityLogResponse> {
   return {
     ...log,
-    activity: {
-      ...log.activity,
-      iconUrl: await convertLocalUploadUrlToDataUrl(log.activity.iconUrl, {
-        isDevelopment: env.NODE_ENV === "development",
-        uploadDir: env.UPLOAD_DIR,
-        logger,
-        warnMessage: "Failed to convert activity log icon URL to base64",
-      }),
-      iconThumbnailUrl: await convertLocalUploadUrlToDataUrl(
-        log.activity.iconThumbnailUrl,
-        {
-          isDevelopment: env.NODE_ENV === "development",
-          uploadDir: env.UPLOAD_DIR,
-          logger,
-          warnMessage: "Failed to convert activity log icon URL to base64",
-        },
-      ),
-    },
+    activity: await convertActivityIconUrls(log.activity, env, logger),
   };
 }
 
@@ -124,7 +107,7 @@ export function createActivityLogRoute() {
           c.req.valid("json"),
         );
 
-        return c.json(res);
+        return c.json(res, 201);
       },
     )
     .post(

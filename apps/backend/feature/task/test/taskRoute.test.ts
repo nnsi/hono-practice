@@ -54,7 +54,7 @@ test("POST task / success", async () => {
     },
   });
 
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(201);
 });
 
 test("PUT tasks/:id / success", async () => {
@@ -161,7 +161,7 @@ test("POST task / 上限ギリギリ(20文字タイトル)は成功", async () =
     },
   });
 
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(201);
 });
 
 test("GET tasks/archived / success", async () => {

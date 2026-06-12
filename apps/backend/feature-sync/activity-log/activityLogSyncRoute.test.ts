@@ -285,6 +285,12 @@ describe("GET /users/v2/activity-logs", () => {
     expect(json.logs).toHaveLength(0);
   });
 
+  test("不正な since (ISO datetime 以外) は 400 を返す", async () => {
+    const app = createApp();
+    const res = await getActivityLogs(app, "since=2026/03/29");
+    expect(res.status).toBe(400);
+  });
+
   test("since パラメータ - 過去の日時で全件返る", async () => {
     const app = createApp();
 

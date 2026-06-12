@@ -52,7 +52,7 @@ export function createApiKeyRoute() {
         scopes: params.scopes,
       });
 
-      return c.json(res);
+      return c.json(res, 201);
     })
     .delete("/:id", async (c) => {
       const userId = c.get("userId");

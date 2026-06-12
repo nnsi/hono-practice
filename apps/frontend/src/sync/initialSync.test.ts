@@ -31,17 +31,8 @@ vi.mock("../db/schema", () => ({
   },
 }));
 vi.mock("@packages/sync-engine/mappers/apiMappers");
-const { mockCustomFetch } = vi.hoisted(() => ({
-  mockCustomFetch: vi.fn().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({ freezePeriods: [] }),
-  }),
-}));
 vi.mock("../api/apiClient", () => ({
   apiClient: mockApiClientObj,
-}));
-vi.mock("../api/customFetch", () => ({
-  customFetch: mockCustomFetch,
 }));
 
 import {
@@ -173,18 +164,30 @@ describe("initialSync", () => {
         ok: true,
         json: () => Promise.resolve({ notes: [] }),
       });
+      const freezePeriodsGet = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ freezePeriods: [] }),
+      });
 
       mockApiClientObj.users = {
         v2: {
           activities: { $get: activitiesGet },
           "activity-logs": { $get: logsGet },
           goals: { $get: goalsGet },
+          "goal-freeze-periods": { $get: freezePeriodsGet },
           tasks: { $get: tasksGet },
           notes: { $get: notesGet },
         },
       };
 
-      return { activitiesGet, logsGet, goalsGet, tasksGet, notesGet };
+      return {
+        activitiesGet,
+        logsGet,
+        goalsGet,
+        freezePeriodsGet,
+        tasksGet,
+        notesGet,
+      };
     }
 
     it("updates authState with userId", async () => {
@@ -374,6 +377,12 @@ describe("initialSync", () => {
               json: () => Promise.resolve({ goals: [] }),
             }),
           },
+          "goal-freeze-periods": {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: () => Promise.resolve({ freezePeriods: [] }),
+            }),
+          },
           tasks: {
             $get: vi.fn().mockResolvedValue({
               ok: true,
@@ -428,6 +437,9 @@ describe("initialSync", () => {
             $get: vi.fn().mockResolvedValue(okRes({ logs: [] })),
           },
           goals: { $get: vi.fn().mockResolvedValue(okRes({ goals: [] })) },
+          "goal-freeze-periods": {
+            $get: vi.fn().mockResolvedValue(okRes({ freezePeriods: [] })),
+          },
           tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
           notes: { $get: vi.fn().mockResolvedValue(okRes({ notes: [] })) },
         },
@@ -460,6 +472,9 @@ describe("initialSync", () => {
           },
           goals: {
             $get: vi.fn().mockResolvedValue(okRes({ goals: userBGoals })),
+          },
+          "goal-freeze-periods": {
+            $get: vi.fn().mockResolvedValue(okRes({ freezePeriods: [] })),
           },
           tasks: { $get: vi.fn().mockResolvedValue(okRes({ tasks: [] })) },
           notes: { $get: vi.fn().mockResolvedValue(okRes({ notes: [] })) },

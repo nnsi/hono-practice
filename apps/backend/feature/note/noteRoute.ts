@@ -62,7 +62,7 @@ export function createNoteRoute() {
 
       const res = await c.var.h.createNote(userId, params);
 
-      return c.json(res);
+      return c.json(res, 201);
     })
     .put("/:id", zValidator("json", updateNoteRequestSchema), async (c) => {
       const userId = c.get("userId");
