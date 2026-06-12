@@ -117,7 +117,7 @@ function deleteActivityLog(uc: ActivityLogUsecase) {
 
     await uc.deleteActivityLog(userId, activityLogId);
 
-    return { message: "success" };
+    return { success: true };
   };
 }
 

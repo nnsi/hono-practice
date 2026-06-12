@@ -42,10 +42,11 @@ async function call(
   return app.fetch(req(path, method, body), { DB: testDB });
 }
 
-// scope middleware が通った後は downstream で 200/400/404/500 を返す（body 不正や未存在 ID、
+// scope middleware が通った後は downstream で 200/201/400/404/500 を返す（body 不正や未存在 ID、
 // handler が DB に触れない等の理由で）。403 だけでは「403 以外なら pass」の弱いアサーションになるので
 // allow-list で明示する。500 は downstream で DB 不存在等で起こり得るが scope 通過は確認できる。
-const SCOPE_ALLOWED = new Set([200, 400, 404, 500]);
+// 201 は内部 route を再マウントしているため POST 作成の統一（200→201）を継承した結果。
+const SCOPE_ALLOWED = new Set([200, 201, 400, 404, 500]);
 
 function expectScopeAllowed(status: number) {
   expect(

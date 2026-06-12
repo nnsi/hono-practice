@@ -9,6 +9,7 @@ import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityLogRepository, ActivityLogSummary } from "../activityLog";
 import { adjustDailyTarget, getInactiveDates } from "./activityGoalAuxService";
+import { filterLogsByActivity } from "./filterLogsByActivity";
 
 export type ActivityGoalService = {
   calculateCurrentBalance(
@@ -77,15 +78,6 @@ export async function prefetchActivityLogs(
     minStart,
     maxEnd,
   );
-}
-
-function filterLogsByActivity(
-  logs: ActivityLogSummary[],
-  activityId: ActivityGoal["activityId"],
-): { date: string; quantity: number | null }[] {
-  return logs
-    .filter((l) => l.activityId === activityId)
-    .map((l) => ({ date: l.date, quantity: l.quantity }));
 }
 
 function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {

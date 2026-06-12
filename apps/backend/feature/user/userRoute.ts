@@ -154,7 +154,7 @@ export function createUserRoute() {
       // HTTP concern (cookie clear / status) のみ担当する
       await c.var.h.deleteMe(userId);
       clearRefreshCookie(c);
-      return c.body(null, 204);
+      return c.json({ success: true });
     });
 }
 

@@ -1,10 +1,7 @@
 // Record types
-// Backwards compat aliases
 export type {
   ActivityKindRecord,
-  ActivityKindRecord as ActivityKind,
   ActivityRecord,
-  ActivityRecord as Activity,
 } from "./activity/activityRecord";
 // Repository types
 export type {

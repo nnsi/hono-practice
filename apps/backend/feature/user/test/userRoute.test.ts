@@ -339,7 +339,7 @@ describe("userRoute", () => {
       });
 
       const res = await client.me.$delete();
-      expect(res.status).toEqual(204);
+      expect(res.status).toEqual(200);
 
       const [user] = await testDB
         .select()
@@ -366,7 +366,7 @@ describe("userRoute", () => {
       const client = createAuthClient();
 
       const res = await client.me.$delete();
-      expect(res.status).toEqual(204);
+      expect(res.status).toEqual(200);
 
       // backend で revoke 済みでも、ブラウザに失効済み cookie 識別子が残らないよう
       // Set-Cookie で expire させる (Codex Round 2 #2 指摘)

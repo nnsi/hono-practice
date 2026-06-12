@@ -1,8 +1,7 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
-import { createInitialSync } from "@packages/sync-engine";
+import { createV2InitialSync } from "@packages/sync-engine";
 
 import { apiClient } from "../api/apiClient";
-import { customFetch } from "../api/customFetch";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
 import { goalFreezePeriodRepository } from "../db/goalFreezePeriodRepository";
@@ -13,28 +12,26 @@ import { taskRepository } from "../db/taskRepository";
 import { reportError } from "../utils/errorReporter";
 import { webStorageAdapter } from "./webPlatformAdapters";
 
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:3456"
-).replace(/\/+$/, "");
-
-const DELTA_SYNC_RESOURCES = [
-  "logs",
-  "goals",
-  "freezePeriods",
-  "tasks",
-  "notes",
-] as const;
-
-// Keep this list frozen. Future sync resources should be added only to
-// DELTA_SYNC_RESOURCES so older clients full-pull the new resource once.
-const LEGACY_BOOTSTRAPPED_RESOURCES = [
-  "logs",
-  "goals",
-  "freezePeriods",
-  "tasks",
-] as const;
-
-const { clearLocalData, performInitialSync } = createInitialSync({
+const { clearLocalData, performInitialSync } = createV2InitialSync({
+  api: {
+    getActivities: () => apiClient.users.v2.activities.$get(),
+    getActivityLogs: (query) =>
+      apiClient.users.v2["activity-logs"].$get({ query }),
+    getGoals: (query) => apiClient.users.v2.goals.$get({ query }),
+    getGoalFreezePeriods: (query) =>
+      apiClient.users.v2["goal-freeze-periods"].$get({ query }),
+    getTasks: (query) => apiClient.users.v2.tasks.$get({ query }),
+    getNotes: (query) => apiClient.users.v2.notes.$get({ query }),
+  },
+  repos: {
+    activity: activityRepository,
+    activityLog: activityLogRepository,
+    goal: goalRepository,
+    goalFreezePeriod: goalFreezePeriodRepository,
+    task: taskRepository,
+    note: noteRepository,
+  },
+  getClientDate: getToday,
   clearAllTables: async () => {
     await db.activityLogs.clear();
     await db.activities.clear();
@@ -73,57 +70,9 @@ const { clearLocalData, performInitialSync } = createInitialSync({
       noteCount === 0
     );
   },
-  fetchAllApis: async (sinceByResource) => {
-    const logsQuery = sinceByResource.logs
-      ? { since: sinceByResource.logs }
-      : {};
-    const goalsQuery = sinceByResource.goals
-      ? { since: sinceByResource.goals, clientDate: getToday() }
-      : { clientDate: getToday() };
-    const tasksQuery = sinceByResource.tasks
-      ? { since: sinceByResource.tasks }
-      : {};
-    const notesQuery = sinceByResource.notes
-      ? { since: sinceByResource.notes }
-      : {};
-    const freezePeriodsUrl = sinceByResource.freezePeriods
-      ? `${API_URL}/users/v2/goal-freeze-periods?since=${encodeURIComponent(
-          sinceByResource.freezePeriods,
-        )}`
-      : `${API_URL}/users/v2/goal-freeze-periods`;
-    const [
-      activitiesRes,
-      logsRes,
-      goalsRes,
-      freezePeriodsRes,
-      tasksRes,
-      notesRes,
-    ] = await Promise.all([
-      apiClient.users.v2.activities.$get(),
-      apiClient.users.v2["activity-logs"].$get({ query: logsQuery }),
-      apiClient.users.v2.goals.$get({ query: goalsQuery }),
-      // Older backend deployments may still lack this endpoint during staged rollout.
-      // Keep the same backward-compatibility fallback on both Web and Mobile.
-      customFetch(freezePeriodsUrl).catch(() => null),
-      apiClient.users.v2.tasks.$get({ query: tasksQuery }),
-      // Notes are best-effort during bootstrap. Treat network failures as a
-      // partial sync so other resources can still hydrate and watermark stays put.
-      apiClient.users.v2.notes
-        .$get({ query: notesQuery })
-        .catch(() => null),
-    ]);
-    return {
-      activitiesRes,
-      logsRes,
-      goalsRes,
-      freezePeriodsRes,
-      tasksRes,
-      notesRes,
-    };
-  },
-  writeAllData: async (data) => {
-    // Dexie can commit the multi-store pull as one unit on Web.
-    await db.transaction(
+  // Dexie can commit the multi-store pull as one unit on Web.
+  runWriteTransaction: (write) =>
+    db.transaction(
       "rw",
       [
         db.activities,
@@ -134,35 +83,8 @@ const { clearLocalData, performInitialSync } = createInitialSync({
         db.tasks,
         db.notes,
       ],
-      async () => {
-        if (data.activities.length > 0) {
-          await activityRepository.upsertActivities(data.activities);
-        }
-        if (data.activityKinds.length > 0) {
-          await activityRepository.upsertActivityKinds(data.activityKinds);
-        }
-        if (data.logs.length > 0) {
-          await activityLogRepository.upsertActivityLogsFromServer(data.logs);
-        }
-        if (data.goals.length > 0) {
-          await goalRepository.upsertGoalsFromServer(data.goals);
-        }
-        if (data.freezePeriods.length > 0) {
-          await goalFreezePeriodRepository.upsertFreezePeriodsFromServer(
-            data.freezePeriods,
-          );
-        }
-        if (data.tasks.length > 0) {
-          await taskRepository.upsertTasksFromServer(data.tasks);
-        }
-        if (data.notes.length > 0) {
-          await noteRepository.upsertNotesFromServer(data.notes);
-        }
-      },
-    );
-  },
-  deltaResources: DELTA_SYNC_RESOURCES,
-  legacyBootstrappedResources: LEGACY_BOOTSTRAPPED_RESOURCES,
+      write,
+    ),
   defaultStorage: webStorageAdapter,
   onError: (error, phase) => {
     reportError({

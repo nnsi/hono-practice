@@ -5,15 +5,7 @@ import { getInactiveDates as getInactiveDatesShared } from "@packages/domain/goa
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityLogRepository, ActivityLogSummary } from "../activityLog";
-
-function filterLogsByActivity(
-  logs: ActivityLogSummary[],
-  activityId: ActivityGoal["activityId"],
-): { date: string; quantity: number | null }[] {
-  return logs
-    .filter((l) => l.activityId === activityId)
-    .map((l) => ({ date: l.date, quantity: l.quantity }));
-}
+import { filterLogsByActivity } from "./filterLogsByActivity";
 
 export function adjustDailyTarget() {
   return async (

@@ -41,7 +41,7 @@ test("POST /api-keys - should create a new API key", async () => {
     },
   });
 
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(201);
   const resJson = await res.json();
   expect(resJson).toHaveProperty("apiKey");
   expect(resJson.apiKey).toHaveProperty("id");
@@ -98,7 +98,7 @@ test("POST /api-keys - should create API key with specific scopes", async () => 
     },
   });
 
-  expect(res.status).toEqual(200);
+  expect(res.status).toEqual(201);
   const resJson = await res.json();
   expect(resJson.apiKey.scopes).toEqual(["activity-logs:read", "tasks:read"]);
 });

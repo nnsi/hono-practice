@@ -39,7 +39,7 @@ describe("noteRoute", () => {
         content: "Test Content",
       },
     });
-    expect(res.status).toEqual(200);
+    expect(res.status).toEqual(201);
 
     const body = await res.json();
     expect(body.id).toBeDefined();
@@ -67,7 +67,7 @@ describe("noteRoute", () => {
         activityId: activity.id,
       },
     });
-    expect(res.status).toEqual(200);
+    expect(res.status).toEqual(201);
 
     const body = await res.json();
     expect(body.activityId).toEqual(activity.id);

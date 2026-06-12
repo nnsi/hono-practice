@@ -9,7 +9,8 @@
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
     "guard:backend": "node scripts/check-backend-rules.js",
     "guard:dates": "node scripts/check-date-rules.js",
-    "ci-check": "pnpm run guard:backend && pnpm run guard:dates && vitest run --reporter=dot && biome lint && pnpm run tsc",
+    "guard:widget-schema": "node scripts/check-widget-schema.js",
+    "ci-check": "pnpm run guard:backend && pnpm run guard:dates && pnpm run guard:widget-schema && vitest run --reporter=dot && biome lint && pnpm run tsc",
     "tsc": "tsgo --noEmit && pnpm --filter actiko-admin-frontend typecheck && pnpm --filter actiko-mobile typecheck",
     "lint": "biome lint",
     "fix": "biome check . --write --unsafe",
@@ -39,7 +40,8 @@
     "mobile:e2e:android": "bash scripts/mobile-e2e-run-android.sh",
     "gen-be": "node scripts/gen-be.js",
     "generate:api-reference": "tsx scripts/generate-api-reference.ts && biome check apps/frontend/src/components/api-reference/apiReferenceData.generated.ts --write --unsafe",
-    "mobile": "pnpm --filter actiko-mobile"
+    "mobile": "pnpm --filter actiko-mobile",
+    "knip": "knip --include files,dependencies,unlisted,binaries"
   },
   "packageManager": "pnpm@10.27.0",
   "pnpm": {
@@ -86,7 +88,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9",
     "wrangler": "^4.26.1",
-    "zod": "^4.0.1"
+    "zod": "^4.3.6"
   },
   "dependencies": {
     "@expo/plist": "^0.5.2"
