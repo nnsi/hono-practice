@@ -16,17 +16,17 @@ Codex版は `/codex-multi-review` を使う。
 
 | # | 名前 | モデル | 専門領域 |
 |---|------|--------|----------|
-| A | reviewer-security | Sonnet | セキュリティ |
-| B | reviewer-logic | Sonnet | ロジック・バグ |
+| A | reviewer-security | Opus | セキュリティ |
+| B | reviewer-logic | Opus | ロジック・バグ |
 | C | reviewer-architecture | Opus | 設計・アーキテクチャ |
-| D | reviewer-testability | Sonnet | テスタビリティ・テスト網羅性 |
+| D | reviewer-testability | Opus | テスタビリティ・テスト網羅性 |
 | F | reviewer-epistemics | Opus | 主張監査（報告文・コミットメッセージが対象。diffではない） |
 
 ### 条件付き起動（ネイティブコード含む場合のみ +1）
 
 | # | 名前 | モデル | 専門領域 |
 |---|------|--------|----------|
-| E | reviewer-native | Sonnet | Swift/Kotlin（ウィジェット、共有DB、iOS/Android対称性） |
+| E | reviewer-native | Opus | Swift/Kotlin（ウィジェット、共有DB、iOS/Android対称性） |
 
 **起動条件**: レビュー対象に `.swift` または `.kt` ファイルが含まれる場合。
 
@@ -52,7 +52,7 @@ Codex版は `/codex-multi-review` を使う。
 
 起動パラメータ:
 - **name**: `reviewer-security` / `reviewer-logic` / `reviewer-architecture` / `reviewer-testability` / `reviewer-epistemics` （+ `reviewer-native`）
-- **model**: エージェント定義側で指定済み（A,B,D,E=sonnet / C,F=opus）
+- **model**: エージェント定義側で指定済み（全レビュアー opus に統一。2026-06-12 Fable移行棚卸しで決定）
 
 全Agentツール呼び出しを**1つのメッセージで並列実行**すること。
 

@@ -33,7 +33,7 @@ Claude subagent (Logic+Security) と Codex (Architecture+Testability) の2体に
 
 Agentツールで起動:
 - `subagent_type`: `reviewer-logic`
-- `model`: `opus`
+- `model`: 指定しない（エージェント定義側の opus を使う）
 - `mode`: `auto`
 
 プロンプト:
