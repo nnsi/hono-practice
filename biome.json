@@ -16,7 +16,9 @@
       "!apps/mobile/dist",
       "!**/stats.html",
       "!.worktrees",
-      "!.claude/worktrees"
+      "!.claude/worktrees",
+      "!.design-sync",
+      "!apps/frontend/.ds-provider.tsx"
     ]
   },
   "formatter": {
