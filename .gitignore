@@ -55,3 +55,11 @@ terraform/.env.secrets
 terraform/.env
 terraform/*.tfbackend
 terraform/tfplan
+
+# design-sync (staged scripts, build output, machine state)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+apps/frontend/.ds-compiled.css
