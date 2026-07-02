@@ -50,6 +50,8 @@ const config: ExpoConfig = {
     "expo-updates",
     "expo-apple-authentication",
     "expo-image-picker",
+    "expo-localization",
+    "expo-sharing",
     "./plugins/with-android-cleartext.js",
     "./modules/timer-widget/app.plugin.js",
     "@bacons/apple-targets",
