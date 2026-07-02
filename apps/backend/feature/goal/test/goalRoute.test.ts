@@ -3,6 +3,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { expect, test } from "vitest";
 
 import { createGoalRoute } from "../goalRoute";
@@ -78,7 +79,7 @@ test("POST goals / with debtCap and dayTargets", async () => {
   });
 
   expect(res.status).toEqual(201);
-  const body = await res.json();
+  const body = await okJson(res);
   expect(body.debtCap).toBe(30);
   expect(body.dayTargets).toEqual({ "1": 5, "2": 10 });
 });

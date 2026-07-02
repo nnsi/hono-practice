@@ -165,6 +165,7 @@ export function CSVImportPreview({
               const status = getRowStatus(log);
               return (
                 <PreviewRow
+                  // biome-ignore lint/suspicious/noArrayIndexKey: CSVプレビュー行は安定IDを持たず、内容込みの複合キーで代用
                   key={`${log.date}-${log.activityName}-${log.quantity}-${idx}`}
                   log={log}
                   index={originalIndex}

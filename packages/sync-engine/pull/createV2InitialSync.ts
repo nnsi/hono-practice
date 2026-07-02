@@ -123,17 +123,13 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
         deps.api.getGoals(goalsQuery),
         // Older backend deployments may still lack this endpoint during staged
         // rollout. Network failures fall back to null on both Web and Mobile.
-        deps.api
-          .getGoalFreezePeriods(freezePeriodsQuery)
-          .catch(() => null),
+        deps.api.getGoalFreezePeriods(freezePeriodsQuery).catch(() => null),
         deps.api.getTasks(tasksQuery),
         // Notes are best-effort during bootstrap: a failed fetch falls back to
         // null so other resources still hydrate and the watermark advances,
         // while the failed resource is dropped from bootstrappedResources and
         // re-pulled in full on the next sync (see createInitialSync).
-        deps.api
-          .getNotes(notesQuery)
-          .catch(() => null),
+        deps.api.getNotes(notesQuery).catch(() => null),
       ]);
       return {
         activitiesRes,

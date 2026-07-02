@@ -13,6 +13,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
 import type { RateLimitRecord } from "@backend/middleware/rateLimitMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { refreshTokens, userProviders, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -283,7 +284,7 @@ describe("AuthRoute Integration Tests", () => {
         "message" in body.error
       ) {
         // Zod 4 serializes errors as JSON string in message field
-        const errorMessage = (body.error as Record<string, unknown>).message;
+        const errorMessage: unknown = body.error.message;
         if (typeof errorMessage !== "string") {
           expect.fail("Expected error message to be a string");
         }
@@ -982,7 +983,7 @@ describe("AuthRoute Integration Tests", () => {
         console.error("Google auth error:", errorBody);
       }
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = await okJson(res);
       expect(body.user).toEqual(expect.any(Object));
       expect(body.token).toEqual(expect.any(String));
       // Auth cookie is no longer set, only refresh token cookie

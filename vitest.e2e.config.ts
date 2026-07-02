@@ -4,7 +4,6 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  // @ts-expect-error vite-tsconfig-paths plugin type not fully compatible with vite 5
   plugins: [viteTsConfigPaths()],
   esbuild: {
     target: "esnext",
@@ -34,13 +33,8 @@ export default defineConfig({
     // ポート分離で起動する。isolate: false で worker 内の module cache を共有し、
     // perWorkerInfra のシングルトンが 1 worker につき 1 回だけ起動するようにする。
     pool: "forks",
-    poolOptions: {
-      forks: {
-        isolate: false,
-        minForks: 1,
-        maxForks: Number(process.env.E2E_MAX_FORKS ?? 4),
-      },
-    },
+    isolate: false,
+    maxWorkers: Number(process.env.E2E_MAX_FORKS ?? 4),
   },
   resolve: {
     alias: {

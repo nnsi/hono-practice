@@ -9,6 +9,6 @@
     "@packages/types": "workspace:*"
   },
   "devDependencies": {
-    "@fast-check/vitest": "^0.2.4"
+    "@fast-check/vitest": "^0.4.1"
   }
 }

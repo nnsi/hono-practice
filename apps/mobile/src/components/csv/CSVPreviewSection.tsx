@@ -74,6 +74,7 @@ export function CSVPreviewSection({
           const hasError = errors.length > 0;
           return (
             <View
+              // biome-ignore lint/suspicious/noArrayIndexKey: CSVプレビュー行は安定IDを持たず、内容込みの複合キーで代用
               key={`${i}-${row.date}-${row.quantity}`}
               className={`py-1 border-b border-gray-200 dark:border-gray-700 ${hasError ? "bg-red-50 dark:bg-red-900/20" : ""}`}
             >

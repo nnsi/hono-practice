@@ -36,6 +36,7 @@ export function createUseApiKeys(
 ): UseQueryResult<GetApiKeysResponse> {
   const { fetchApiKeys, enabled } = options;
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   return useQuery<GetApiKeysResponse>({
     queryKey: ["apiKeys"],
     enabled,
@@ -60,8 +61,10 @@ export function createUseCreateApiKey(
   options: ApiKeyMutationOptions,
 ): UseMutationResult<CreateApiKeyResponse, Error, CreateApiKeyRequest> {
   const { createApiKey } = options;
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   const queryClient = useQueryClient();
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   return useMutation<CreateApiKeyResponse, Error, CreateApiKeyRequest>({
     mutationFn: async (data: CreateApiKeyRequest) => {
       const validated = CreateApiKeyRequestSchema.parse(data);
@@ -80,8 +83,10 @@ export function createUseDeleteApiKey(
   options: DeleteApiKeyMutationOptions,
 ): UseMutationResult<unknown, Error, string> {
   const { deleteApiKey } = options;
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   const queryClient = useQueryClient();
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   return useMutation<unknown, Error, string>({
     mutationFn: deleteApiKey,
     onSuccess: () => {

@@ -96,6 +96,7 @@ export function SummaryTable({
             {weeks.map((week, weekIndex) =>
               week.days.map((day, dayIndex) => (
                 <View
+                  // biome-ignore lint/suspicious/noArrayIndexKey: 週index+日付の複合キー。日付はperiod内で一意
                   key={`${weekIndex}-${day.date}`}
                   className="flex-row border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800"
                 >

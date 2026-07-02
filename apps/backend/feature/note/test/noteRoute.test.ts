@@ -3,6 +3,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { activities, notes } from "@infra/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -27,7 +28,7 @@ describe("noteRoute", () => {
     const res = await client.index.$get({ query: {} });
     expect(res.status).toEqual(200);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body).toEqual([]);
   });
 
@@ -41,7 +42,7 @@ describe("noteRoute", () => {
     });
     expect(res.status).toEqual(201);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.id).toBeDefined();
     expect(body.title).toEqual("Test Note");
     expect(body.content).toEqual("Test Content");
@@ -69,7 +70,7 @@ describe("noteRoute", () => {
     });
     expect(res.status).toEqual(201);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.activityId).toEqual(activity.id);
   });
 
@@ -90,7 +91,7 @@ describe("noteRoute", () => {
     const createRes = await client.index.$post({
       json: { title: "Original", content: "Body" },
     });
-    const created = await createRes.json();
+    const created = await okJson(createRes);
 
     const res = await client[":id"].$put({
       param: { id: created.id },
@@ -106,14 +107,14 @@ describe("noteRoute", () => {
     const createRes = await client.index.$post({
       json: { title: "Fetch Me", content: "Body" },
     });
-    const created = await createRes.json();
+    const created = await okJson(createRes);
 
     const res = await client[":id"].$get({
       param: { id: created.id },
     });
     expect(res.status).toEqual(200);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.id).toEqual(created.id);
     expect(body.title).toEqual("Fetch Me");
     expect(body.content).toEqual("Body");
@@ -131,7 +132,7 @@ describe("noteRoute", () => {
     const res = await client.index.$get({ query: {} });
     expect(res.status).toEqual(200);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.length).toEqual(2);
   });
 
@@ -157,7 +158,7 @@ describe("noteRoute", () => {
     });
     expect(res.status).toEqual(200);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.length).toEqual(1);
     expect(body[0].title).toEqual("With Activity");
   });
@@ -167,7 +168,7 @@ describe("noteRoute", () => {
     const createRes = await client.index.$post({
       json: { title: "Original", content: "Old" },
     });
-    const created = await createRes.json();
+    const created = await okJson(createRes);
 
     const res = await client[":id"].$put({
       param: { id: created.id },
@@ -175,7 +176,7 @@ describe("noteRoute", () => {
     });
     expect(res.status).toEqual(200);
 
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.title).toEqual("Updated");
     expect(body.content).toEqual("New");
   });
@@ -185,7 +186,7 @@ describe("noteRoute", () => {
     const createRes = await client.index.$post({
       json: { title: "To Delete", content: "" },
     });
-    const created = await createRes.json();
+    const created = await okJson(createRes);
 
     const deleteRes = await client[":id"].$delete({
       param: { id: created.id },
@@ -193,7 +194,7 @@ describe("noteRoute", () => {
     expect(deleteRes.status).toEqual(200);
 
     const listRes = await client.index.$get({ query: {} });
-    const list = await listRes.json();
+    const list = await okJson(listRes);
     expect(list.length).toEqual(0);
   });
 
@@ -202,7 +203,7 @@ describe("noteRoute", () => {
     const createRes = await client.index.$post({
       json: { title: "Gone", content: "" },
     });
-    const created = await createRes.json();
+    const created = await okJson(createRes);
 
     await client[":id"].$delete({
       param: { id: created.id },

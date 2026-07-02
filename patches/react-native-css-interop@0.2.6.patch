@@ -1,8 +1,8 @@
 diff --git a/dist/runtime/native/appearance-observables.js b/dist/runtime/native/appearance-observables.js
-index b8603202ea3e43e3a35e940a5bbbc25b50a25869..efc93b3d96b3baf01d753fc35ec5c42d00ba24b8 100644
+index 2d93872ccd1f0b9628db8ff2bcc74b65d7bb645d..7f03c528da0fdd238b44c18a88c0ea2d68e41f57 100644
 --- a/dist/runtime/native/appearance-observables.js
 +++ b/dist/runtime/native/appearance-observables.js
-@@ -15,9 +15,7 @@ exports.colorScheme = {
+@@ -20,9 +20,7 @@ exports.colorScheme = {
          else {
              appearance.setColorScheme(value);
          }
@@ -14,26 +14,10 @@ index b8603202ea3e43e3a35e940a5bbbc25b50a25869..efc93b3d96b3baf01d753fc35ec5c42d
      get(effect) {
          return colorSchemeObservable.get(effect) ?? exports.systemColorScheme.get(effect);
 diff --git a/src/runtime/native/appearance-observables.ts b/src/runtime/native/appearance-observables.ts
-index c235c2da28266a7dbde1458973c46db664f544f1..32f0e7395258cbb23d68ad3d7d79261ca7546ad7 100644
+index 9f0c6feadbbc4c46455994d8ce3a97e15aeb3388..f628779a6a2a81427a04f89b86cb2f52a77db52b 100644
 --- a/src/runtime/native/appearance-observables.ts
 +++ b/src/runtime/native/appearance-observables.ts
-@@ -2,12 +2,12 @@ import {
-   AccessibilityInfo,
-   Appearance,
-   AppState,
--  NativeEventSubscription,
-+  type NativeEventSubscription,
- } from "react-native";
- 
- import { INTERNAL_RESET } from "../../shared";
--import { ColorSchemeVariableValue, RuntimeValueDescriptor } from "../../types";
--import { Effect, observable, ObservableOptions } from "../observable";
-+import type { ColorSchemeVariableValue, RuntimeValueDescriptor } from "../../types";
-+import { type Effect, observable, type ObservableOptions } from "../observable";
- 
- /**
-  * Color scheme
-@@ -27,10 +27,10 @@ export const colorScheme = {
+@@ -32,10 +32,10 @@ export const colorScheme = {
        appearance.setColorScheme(value);
      }
  

@@ -51,7 +51,7 @@ r2ProxyRoute.get("/:key{.+}", async (c) => {
 
   const contentType =
     object.httpMetadata?.contentType ?? inferImageContentTypeFromKey(key);
-  if (!contentType || !contentType.startsWith("image/")) {
+  if (!contentType?.startsWith("image/")) {
     return c.text("Unsupported content type", 415);
   }
 

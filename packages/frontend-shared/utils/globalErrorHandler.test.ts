@@ -58,11 +58,13 @@ describe("shouldIgnoreError", () => {
 
 describe("setupGlobalErrorHandler", () => {
   let listeners: Record<string, EventListener>;
-  let onError: ReturnType<typeof vi.fn>;
+  let onError: ReturnType<
+    typeof vi.fn<Parameters<typeof setupGlobalErrorHandler>[0]>
+  >;
 
   beforeEach(() => {
     listeners = {};
-    onError = vi.fn();
+    onError = vi.fn<Parameters<typeof setupGlobalErrorHandler>[0]>();
 
     vi.stubGlobal("window", {
       addEventListener: (type: string, handler: EventListener) => {

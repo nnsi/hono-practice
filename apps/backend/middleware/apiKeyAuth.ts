@@ -14,7 +14,7 @@ export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
   // Get token from Authorization header
   const authHeader = c.req.header("Authorization");
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     throw new UnauthorizedError("unauthorized");
   }
 
