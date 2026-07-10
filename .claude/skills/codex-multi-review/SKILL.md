@@ -46,15 +46,12 @@ Codex CLI (`codex exec`) を使い、4つの専門レビュアーを並列起動
 
 ```bash
 # 各レビュアーを並列起動（run_in_background: true）
-cat /tmp/prompt-security.txt | codex exec --sandbox read-only --skip-git-repo-check -
+cat /tmp/prompt-security.txt | codex exec --sandbox read-only --skip-git-repo-check -c model_reasoning_effort="xhigh" -
 ```
 
 注意:
-- **プロンプトは必ず stdin (`cat <file> | codex exec ... -`) で渡す**（diffを含むと60KB超になり、シェルの引数長制限 `Argument list too long` で失敗する）
-- `--sandbox read-only` で書き込みを禁止する（読み取り専用レビュー）
-- `--skip-git-repo-check` を付けないと worktree 等で起動拒否される場合がある
-- 並列化は Claude Code 側の `run_in_background: true` に任せる
-- Bashの `timeout` は `600000`（10分。本物のレビューでは思考時間がかかる）
+- プロンプトは stdin (`cat <file> | codex exec ... -`) で渡す（引数長制限回避）。stdin 供給なので `< /dev/null` は付けない
+- `run_in_background: true` / `timeout: 600000`
 
 ### Step 3: 結果収集
 

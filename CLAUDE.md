@@ -30,6 +30,27 @@ pnpm run fix         # フォーマット
 pnpm run ci-check    # 全CIチェック
 ```
 
+## 作業の委譲（トークン節約: Codex 優先）
+
+Fable/Claude のトークン使用量を抑えるため、**手を動かす作業はデフォルトで Codex CLI に委譲する**。メイン（判断席）は判断に専念する。
+
+**⚠ サブエージェントとして起動された場合はこの節を無視し、自分で直接実行すること（Codex・サブエージェントへの再委譲も禁止）。**
+
+- **メインが自分でやる**: 設計判断・方針決定、ユーザーとの議論への回答、レビュー指摘の最終採否、完了判定、検証（`test-once` → `tsc` → `fix` は必ず自分で回す）、および grep 1発程度の軽い探索
+- **Codex に委譲する**: 実装・修正、テスト作成、型エラー潰し、定型リファクタ、規模の大きい探索・集計、docs 定型更新
+
+```bash
+codex exec --sandbox workspace-write -o /tmp/codex-last.md \
+  -c model_reasoning_effort="xhigh" "<自己完結の指示>" < /dev/null
+```
+
+- **`< /dev/null` を必ず付ける**: `codex exec` は起動時に stdin を読み、EOF にならないと「Reading additional input from stdin...」で無出力ハングすることがある。空にして即 EOF させると回避できる。**例外: `cat prompt.txt | codex exec ... -` でプロンプトを stdin 供給する場合（レビュースキル等）は `< /dev/null` を付けない**（stdin を上書きしてしまう）
+- **effort は常に明示**（config 既定に依存しない）: 難課題・レビュー=`xhigh` / 通常実装=`medium` / 機械的作業=`low`
+- **Codex は会話コンテキストを持たない**。指示は自己完結で: 対象パスの絶対パス・踏襲すべき既存パターンのパス・検収条件・DB/enum の定数値（`plan="premium"` 等）・参照可否を明記する。読むだけなら `--sandbox read-only`。Codex サンドボックスはネットワーク遮断なので Neon 実 DB は叩けない（テストは PGlite でローカル完結する）
+- 続きの指示は `codex exec resume --last`。長時間タスクは `run_in_background: true`
+- **委譲の規律**: 委譲前に反証可能な検収条件（`pnpm run test-once` / `tsc` / 出力 diff 一致等）を決めて渡し、成果物はメインが必ずレビューする。**Codex・エージェントの「全パス」報告は信用しない**（型エラー残存の実績あり）
+- **Codex 不調時は Agent ツールで代替**する（`haiku`=機械的作業 / `sonnet`=通常実装 / `opus`=難課題・レビュー。worktree 運用・並列競合防止は `.claude/rules/parallel-agents.md` 参照）。fork はメインのモデルを継承し model 指定が効かないため不可
+
 ## 開発規約
 
 ### TypeScript

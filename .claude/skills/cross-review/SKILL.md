@@ -60,16 +60,13 @@ Agentツールで起動:
 ```bash
 PROMPT_FILE=/tmp/prompt-cross-review-$(date +%s).txt
 # ... PROMPT_FILE に書き出した後 ...
-cat "$PROMPT_FILE" | codex exec --sandbox read-only --skip-git-repo-check -
+cat "$PROMPT_FILE" | codex exec --sandbox read-only --skip-git-repo-check -c model_reasoning_effort="xhigh" -
 ```
 
 注意:
-- プロンプトは必ず stdin (`cat <file> | codex exec ... -`) で渡す（diff含むとシェル引数長制限で失敗する）
-- **固定ファイル名 (`/tmp/prompt-cross-review.txt` 等) は禁止**。前セッション / 前 Round のファイルが残っていた場合に Codex が古い prompt を読み込んで全く違うレビュー結果を返す（5/16 教訓: refresh token rotation の Round 2 prompt が残っていて devRoute レビューに混入）
-- Write が "File has not been read yet" 等で stop された場合はファイルの中身を必ず `head -5` や `grep` で検証する。Bash heredoc (`cat > /tmp/file <<'EOF' ... EOF`) で書く方が確実
-- `--sandbox read-only` で書き込みを禁止する（読み取り専用レビュー）
-- `--skip-git-repo-check` を付けないと worktree 等で起動拒否される場合がある
-- 並列化は Claude Code 側の `run_in_background: true` に任せる
+- プロンプトは stdin (`cat <file> | codex exec ... -`) で渡す（引数長制限回避）。stdin 供給なので `< /dev/null` は付けない
+- **プロンプトファイル名は毎回ユニークに**（`...-$(date +%s).txt`）。固定名だと前 Round の prompt が残って混入する（5/16 教訓）
+- `run_in_background: true` / `timeout: 600000`
 
 ### Step 3: スコアベース集約
 
