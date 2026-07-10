@@ -3,6 +3,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { expect, test } from "vitest";
 
 import { createApiKeyRoute } from "../apiKeyRoute";
@@ -20,7 +21,7 @@ test("GET /api-keys - should return list of API keys", async () => {
   const res = await client.index.$get();
 
   expect(res.status).toEqual(200);
-  const resJson = await res.json();
+  const resJson = await okJson(res);
   expect(resJson).toHaveProperty("apiKeys");
   expect(Array.isArray(resJson.apiKeys)).toBe(true);
 });
@@ -42,7 +43,7 @@ test("POST /api-keys - should create a new API key", async () => {
   });
 
   expect(res.status).toEqual(201);
-  const resJson = await res.json();
+  const resJson = await okJson(res);
   expect(resJson).toHaveProperty("apiKey");
   expect(resJson.apiKey).toHaveProperty("id");
   expect(resJson.apiKey).toHaveProperty("key");
@@ -66,7 +67,7 @@ test("DELETE /api-keys/:id - should delete an API key", async () => {
       name: "API Key to Delete",
     },
   });
-  const { apiKey } = await createRes.json();
+  const { apiKey } = await okJson(createRes);
 
   // Then delete it
   const res = await client[":id"].$delete({
@@ -76,7 +77,7 @@ test("DELETE /api-keys/:id - should delete an API key", async () => {
   });
 
   expect(res.status).toEqual(200);
-  const resJson = await res.json();
+  const resJson = await okJson(res);
   expect(resJson).toHaveProperty("success");
   expect(resJson.success).toBe(true);
 });
@@ -99,7 +100,7 @@ test("POST /api-keys - should create API key with specific scopes", async () => 
   });
 
   expect(res.status).toEqual(201);
-  const resJson = await res.json();
+  const resJson = await okJson(res);
   expect(resJson.apiKey.scopes).toEqual(["activity-logs:read", "tasks:read"]);
 });
 

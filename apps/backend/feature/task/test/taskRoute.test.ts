@@ -4,6 +4,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { expect, test } from "vitest";
 
 import { createTaskRoute } from "..";
@@ -33,7 +34,7 @@ test("GET tasks/:id / success", async () => {
     },
   });
 
-  const resJson = await res.json();
+  const resJson = await okJson(res);
 
   expect(res.status).toEqual(200);
   expect(resJson.title).toEqual("test");
@@ -75,7 +76,7 @@ test("PUT tasks/:id / success", async () => {
     },
   });
 
-  const resJson = await res.json();
+  const resJson = await okJson(res);
 
   expect(res.status).toEqual(200);
   expect(resJson.title).toEqual("update");
@@ -174,7 +175,7 @@ test("GET tasks/archived / success", async () => {
   const res = await client.archived.$get();
   expect(res.status).toEqual(200);
 
-  const resJson = await res.json();
+  const resJson = await okJson(res);
   expect(Array.isArray(resJson)).toBe(true);
 });
 
@@ -193,7 +194,7 @@ test("POST tasks/:id/archive / success", async () => {
     },
   });
 
-  const createdTask = await createRes.json();
+  const createdTask = await okJson(createRes);
   const taskId = createdTask.id;
 
   // タスクを完了状態にする
@@ -213,12 +214,12 @@ test("POST tasks/:id/archive / success", async () => {
 
   expect(archiveRes.status).toEqual(200);
 
-  const archivedTask = await archiveRes.json();
+  const archivedTask = await okJson(archiveRes);
   expect(archivedTask.archivedAt).not.toBeNull();
 
   // アーカイブ済みタスク一覧で確認
   const archivedListRes = await client.archived.$get();
-  const archivedList = await archivedListRes.json();
+  const archivedList = await okJson(archivedListRes);
 
   const found = archivedList.find(
     (task: (typeof archivedList)[number]) => task.id === taskId,

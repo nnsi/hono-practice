@@ -4,6 +4,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { expect, test } from "vitest";
 
 import { newAIActivityLogGatewayMock } from "../aiActivityLogGatewayMock";
@@ -24,7 +25,7 @@ test("POST /from-speech / Activity名にマッチしてログを作成できる"
 
   expect(res.status).toEqual(201);
 
-  const body = await res.json();
+  const body = await okJson(res);
   expect(body.activityLog.activity.name).toEqual("test");
   expect(body.activityLog.quantity).toEqual(30);
   expect(body.activityLog.memo).toEqual("30分testした");
@@ -42,7 +43,7 @@ test("POST /from-speech / 数値なしの場合quantity=1になる", async () =>
 
   expect(res.status).toEqual(201);
 
-  const body = await res.json();
+  const body = await okJson(res);
   expect(body.activityLog.quantity).toEqual(1);
 });
 
@@ -56,7 +57,7 @@ test("POST /from-speech / マッチしない場合は最初のActivityにフォ�
 
   expect(res.status).toEqual(201);
 
-  const body = await res.json();
+  const body = await okJson(res);
   expect(body.activityLog.activity.id).toBeDefined();
   expect(body.activityLog.quantity).toEqual(1);
 });
@@ -105,7 +106,7 @@ test("POST /from-speech / カスタムGatewayを注入できる", async () => {
 
   expect(res.status).toEqual(201);
 
-  const body = await res.json();
+  const body = await okJson(res);
   expect(body.activityLog.quantity).toEqual(42);
   expect(body.activityLog.memo).toEqual("カスタム");
 });

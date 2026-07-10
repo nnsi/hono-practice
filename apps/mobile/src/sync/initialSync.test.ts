@@ -82,6 +82,7 @@ vi.mock("../db/dbEvents", () => ({
   },
 }));
 
+import type { StorageAdapter } from "@packages/platform";
 import { resetServerTimeForTests } from "@packages/sync-engine";
 
 import { apiClient } from "../api/apiClient";
@@ -169,9 +170,9 @@ describe("clearLocalData", () => {
 describe("performInitialSync", () => {
   let mockDb: ReturnType<typeof createMockDb>;
   let mockStorage: {
-    getItem: ReturnType<typeof vi.fn>;
-    setItem: ReturnType<typeof vi.fn>;
-    removeItem: ReturnType<typeof vi.fn>;
+    getItem: ReturnType<typeof vi.fn<StorageAdapter["getItem"]>>;
+    setItem: ReturnType<typeof vi.fn<StorageAdapter["setItem"]>>;
+    removeItem: ReturnType<typeof vi.fn<StorageAdapter["removeItem"]>>;
   };
 
   const activitiesApi = apiClient.users.v2.activities.$get;
@@ -186,9 +187,9 @@ describe("performInitialSync", () => {
     vi.mocked(getDatabase).mockResolvedValue(mockDb as never);
 
     mockStorage = {
-      getItem: vi.fn().mockReturnValue(null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
+      getItem: vi.fn<StorageAdapter["getItem"]>().mockReturnValue(null),
+      setItem: vi.fn<StorageAdapter["setItem"]>(),
+      removeItem: vi.fn<StorageAdapter["removeItem"]>(),
     };
 
     vi.mocked(activitiesApi).mockResolvedValue(

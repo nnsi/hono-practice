@@ -3,6 +3,7 @@ import { testClient } from "hono/testing";
 
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import * as schema from "@infra/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -135,7 +136,7 @@ describe("DELETE /admin/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await okJson(res);
     expect(body.deletedUserId).toBe(DELETE_USER_ID);
     expect(body.deletionCounts.user).toBe(1);
     expect(body.deletionCounts.activities).toBe(1);

@@ -4,7 +4,7 @@
   "main": "index.ts",
   "types": "index.ts",
   "dependencies": {
-    "i18next": "^25.10.10",
-    "react-i18next": "^16.6.6"
+    "i18next": "^26.3.4",
+    "react-i18next": "^17.0.8"
   }
 }

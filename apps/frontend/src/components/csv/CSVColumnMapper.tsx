@@ -222,6 +222,7 @@ export function CSVColumnMapper({
               <tbody>
                 {sampleRows.map((row, i) => (
                   <tr
+                    // biome-ignore lint/suspicious/noArrayIndexKey: CSVプレビュー行は安定IDを持たず、内容込みの複合キーで代用
                     key={`sample-${i}-${Object.values(row).join("-")}`}
                     className="border-b last:border-0"
                   >
