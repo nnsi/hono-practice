@@ -1,6 +1,6 @@
 # Actiko モバイルアプリ ストアリリース チェックリスト
 
-> 対象: `apps/mobile` (Expo SDK 54, Managed Workflow)
+> 対象: `apps/mobile` (Expo SDK 57, Managed Workflow)
 > Bundle ID: `$BUNDLE_ID` (iOS / Android 共通、`.env` で設定)
 
 ---

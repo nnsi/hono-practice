@@ -75,9 +75,10 @@ approved Mobile binary. Store rollout uses the same iOS/Android release-candidat
 
 ## Local verification evidence
 
-The implementation commit SHA is recorded here after the code commit is created.
-External build IDs, deploy run URLs, and credential checks remain in the external
-release checklist.
+The release-candidate implementation commit is
+`4d04cf72ad91b9d95077bff7a520b781f9adb824`. The final `pnpm run ci-check` below ran
+against that exact commit. External build IDs, deploy run URLs, and credential checks
+remain in the external release checklist.
 
 - `pnpm run ci-check`: 229 test files / 2,375 tests, Biome, and all TypeScript projects
   passed. DB-backed PGlite suites run in a dedicated serial project to avoid CI resource

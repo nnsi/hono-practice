@@ -13,6 +13,19 @@
 - `builds.plan.percentUsed >= 100`、usage不明、追加課金警告ありの場合は承認なしに続行しない
 - 外部作業の証跡は値ではなく、設定名・build ID・run URL・確認日時だけを記録する
 
+## コード側引き渡し（2026-07-13）
+
+- release candidate commit: `4d04cf72ad91b9d95077bff7a520b781f9adb824`
+- migration: `0042_fixed_gertrude_yorkes.sql`
+- Mobile version / runtimeVersion: `1.1.0`
+- CI: 229 test files / 2,375 tests、Biome、全TypeScript projectが成功
+- E2E: 20 files / 69 testsが成功
+- local build: Web / Admin production build、Mobile Web / iOS / Android production exportが成功
+- native: Swift Widget execution test、Android Kotlin compile、Widget unit test、release AAR assemblyが成功
+- browser: offline同期、別browser反映、Free plan UI、Admin session restore/logoutを確認
+- review: Security / Logic / Architecture / Testability / Nativeが全員LGTM
+- `EAS Build`、deploy、実課金、外部secret確認、実機、store操作は未実行。以下の外部項目は担当者が証跡を確認してからチェックする
+
 ## P0-E01: GitHub / EAS / Cloudflare環境設定
 
 - [ ] GitHub Actionsで`EXPO_TOKEN`を参照できることを確認する
