@@ -1,24 +1,16 @@
-# Mobile build-tooling dependency audit — 2026-07-13
+# Mobileビルドツールの依存関係監査 — 2026-07-13
 
-## Decision
+## 決定事項
 
-The five high-severity findings from `pnpm audit --prod` are fixed with a scoped
-override from the legacy `@expo/plist@0.0.18` dependency to
-`@xmldom/xmldom@0.8.13`. The override is limited to the `@bacons/xcode` build-tooling
-path and is verified by Expo config introspection, Expo Doctor, and bundle checks.
+`pnpm audit --prod`で検出された深刻度highの5件は、旧`@expo/plist@0.0.18`依存から`@xmldom/xmldom@0.8.13`への限定的なoverrideによって解消した。overrideは`@bacons/xcode`のビルドツール経路だけに限定し、Expo設定の読み取り、Expo Doctor、バンドル検査で検証した。
 
-Two moderate findings remain accepted for this release candidate:
+次の深刻度moderateの2件は、このリリース候補ではリスクを許容する。
 
-- `uuid@8.3.2` under `@bacons/apple-targets -> @bacons/xcode`
-- `uuid@7.0.3` under `expo -> @expo/config-plugins -> xcode`
+- `@bacons/apple-targets -> @bacons/xcode`配下の`uuid@8.3.2`
+- `expo -> @expo/config-plugins -> xcode`配下の`uuid@7.0.3`
 
-The advisory concerns caller-provided output buffers in UUID v3/v5/v6. These packages
-are build-time Xcode project generators; Actiko does not pass untrusted buffers or call
-the affected UUID variants at runtime. Forcing a major `uuid` version outside each
-upstream package's declared range carries a greater native-build regression risk.
+脆弱性情報の対象は、UUID v3/v5/v6で呼び出し側が渡す出力バッファである。これらのパッケージはビルド時にXcodeプロジェクトを生成するツールであり、Actikoが信頼できないバッファを渡したり、実行時に影響を受けるUUIDの種類を呼び出したりすることはない。各上流パッケージが宣言するバージョン範囲を外れて`uuid`のメジャーバージョンを強制する方が、ネイティブビルドを壊すリスクが高い。
 
-## Revisit trigger
+## 再検討する条件
 
-Replace the risk acceptance when Expo / `@bacons/apple-targets` publishes a compatible
-dependency chain using a patched UUID version. The dependency audit remains a release
-CI gate, so a severity increase or a new runtime path fails the recorded expectation.
+Expoまたは`@bacons/apple-targets`が、修正済みUUIDバージョンを使用する互換性のある依存関係を公開した時点で、リスク許容を解除して更新する。依存関係監査は引き続きリリースCIの必須検査とするため、深刻度の上昇や新しい実行時経路が検出された場合は、記録済みの期待値と一致せずCIが失敗する。

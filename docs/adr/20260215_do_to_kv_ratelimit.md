@@ -2,7 +2,7 @@
 
 ## ステータス
 
-廃止 — [20260713 Atomic rate limits and AI quotas](./20260713_atomic_rate_limits.md) により置換
+廃止 — [20260713 原子的なレート制限とAIクォータ](./20260713_atomic_rate_limits.md) により置換
 
 ## コンテキスト
 

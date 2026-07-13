@@ -1,19 +1,13 @@
-# Access token logout policy
+# アクセストークンのログアウトポリシー
 
-## Decision
+## 決定事項
 
-Logout revokes the presented refresh token immediately. Access tokens remain
-stateless JWTs and therefore cannot be revoked individually; their TTL is
-limited to 15 minutes. Clients must discard the access token after logout.
+ログアウト時は、提示されたリフレッシュトークンを即座に失効させる。アクセストークンはステートレスなJWTのままとするため、個別には失効できない。その代わり、有効期間を15分に制限する。クライアントはログアウト後にアクセストークンを破棄しなければならない。
 
-## Security boundary
+## セキュリティ境界
 
-- A stolen refresh token stops working after logout/revocation.
-- A previously issued access token can remain valid for at most 15 minutes.
-- Password reset, account deletion, and incident-wide invalidation can still
-  rotate `JWT_SECRET`, at the cost of signing every user out.
+- 盗まれたリフレッシュトークンは、ログアウトまたは失効処理の後には利用できない。
+- 発行済みのアクセストークンは、最長15分間有効であり続ける可能性がある。
+- パスワードリセット、アカウント削除、インシデント発生時の全体無効化では、全ユーザーがログアウトする代わりに`JWT_SECRET`をローテーションできる。
 
-Server-side access-token denylisting was rejected for this release because it
-would add a strongly-consistent lookup to every authenticated request. The
-short TTL plus refresh-token rotation bounds the residual risk without making
-authentication depend on another online store.
+サーバー側のアクセストークン拒否リストは、認証済みリクエストのたびに強整合性を持つ検索が必要になるため、今回のリリースでは採用しない。短い有効期間とリフレッシュトークンのローテーションを組み合わせることで、認証を別のオンラインストアへ依存させずに残存リスクを制限する。

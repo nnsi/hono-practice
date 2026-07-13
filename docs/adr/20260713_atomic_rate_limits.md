@@ -1,53 +1,26 @@
-# Atomic rate limits and AI quotas
+# 原子的なレート制限とAIクォータ
 
-## Status
+## ステータス
 
-Accepted. Supersedes
-[`20260215_do_to_kv_ratelimit.md`](./20260215_do_to_kv_ratelimit.md).
+採用。[`20260215_do_to_kv_ratelimit.md`](./20260215_do_to_kv_ratelimit.md)を置き換える。
 
-## Context
+## コンテキスト
 
-The previous KV decision optimized the measured 500–1,000 ms Durable Object
-cold-start cost and accepted eventually consistent counters for a small personal
-application. That trade-off stopped being valid when the same boundary began
-protecting paid AI usage, per-key quotas, and concurrent OpenRouter calls. A
-read-then-write `KeyValueStore` cannot promise that a concurrent burst consumes
-one slot exactly once.
+以前のKV採用判断では、計測されたDurable Objectの500〜1,000msのコールドスタートコストを最適化し、小規模な個人向けアプリケーションで結果整合性のカウンターを許容していた。同じ境界が有料AI利用量、APIキー単位のクォータ、OpenRouterへの同時リクエストを保護するようになったため、このトレードオフは成立しなくなった。読み取り後に書き込む`KeyValueStore`では、同時に発生したリクエストが1つのスロットを厳密に一度だけ消費することを保証できない。
 
-## Decision
+## 決定事項
 
-Cloudflare KV was removed from the request rate-limit path because separate
-reads and writes admit concurrent bursts. Cloudflare deployments now use a
-Durable Object per subject, where counter decisions run in a storage
-transaction. The Node runtime uses one Redis Lua script for the same atomic
-decision. Production and staging fail closed when the store is missing or
-unavailable.
+読み取りと書き込みが分離していると同時リクエストのバーストを許してしまうため、Cloudflare KVをリクエストのレート制限経路から外す。Cloudflareへのデプロイでは対象ごとにDurable Objectを使用し、ストレージトランザクション内でカウンターを判定する。Node実行環境では、同じ原子的判定を1本のRedis Luaスクリプトで実行する。本番環境とstaging環境では、ストアが未設定または利用不能な場合にfail-closeする。
 
-Application-owned ports define atomic counter consumption and owned concurrency
-leases. Infrastructure adapters implement those contracts with Durable Object
-transactions, Redis Lua scripts, or an in-memory test implementation. Lease
-release requires the ID returned by acquisition so an expired request cannot
-release a newer owner's slot.
+アプリケーション層が所有するポートで、原子的なカウンター消費と所有者付き同時実行リースを定義する。インフラのアダプターは、Durable Objectのトランザクション、Redis Luaスクリプト、またはテスト用のインメモリ実装によってこの契約を満たす。期限切れのリクエストが新しい所有者のスロットを解放できないように、リースの解放には取得時に返されたIDを必須とする。
 
-Each atomic counter batch carries an explicit `partitionKey`. All adapters
-identify a counter by the same `(partitionKey, rule.key)` pair; Durable Objects
-route by that partition, while Redis uses it as a cluster hash tag. Rule order
-or later consumption of a subset therefore cannot split one logical counter
-between adapter-specific namespaces.
+原子的に処理する各カウンター群は、明示的な`partitionKey`を持つ。すべてのアダプターは同じ`(partitionKey, rule.key)`の組でカウンターを識別する。Durable Objectはパーティション単位でルーティングし、Redisはパーティションをクラスターハッシュタグとして使用する。これにより、ルールの順序変更や一部のルールだけの後続消費があっても、1つの論理カウンターがアダプター固有の名前空間へ分裂しない。
 
-The same infrastructure enforces AI user/API-key minute, day, and rolling
-30-day quotas, plus a two-request user concurrency lease. Durable Object
-migration `v3` creates `RateLimitDurableObject`; the `RATE_LIMITER` binding is
-declared once in each deployed environment.
+同じ基盤で、AIのユーザー単位およびAPIキー単位の分・日・直近30日クォータと、ユーザー単位で最大2リクエストの同時実行リースを強制する。Durable Objectマイグレーション`v3`で`RateLimitDurableObject`を作成し、デプロイ対象の各環境で`RATE_LIMITER`バインディングを一度だけ宣言する。
 
-## Consequences
+## 結果
 
-- Strict quota correctness is preferred over the lower latency of eventually
-  consistent KV counters.
-- Durable Object cold starts may reintroduce the previously measured latency.
-  WAE latency and denial metrics must be monitored after deployment.
-- The old KV namespace is no longer bound to the Worker. Terraform state and
-  resource decommissioning remain a separately approved external operation so
-  this code change cannot destroy infrastructure.
-- A future general-purpose cache may define its own application port and
-  consistency contract; it must not reuse the atomic quota port accidentally.
+- 結果整合性を持つKVカウンターの低レイテンシより、厳密なクォータの正確性を優先する。
+- Durable Objectのコールドスタートにより、以前計測したレイテンシが再発する可能性がある。デプロイ後はWAEでレイテンシと拒否件数を監視しなければならない。
+- Workerから旧KV名前空間のバインディングを外す。Terraform stateと実リソースの廃止は、別途承認が必要な外部作業として残し、このコード変更によってインフラが破壊されないようにする。
+- 将来、汎用キャッシュを追加する場合は、その用途専用のアプリケーション層のポートと整合性契約を定義できる。原子的なクォータ用ポートを誤って流用してはならない。
