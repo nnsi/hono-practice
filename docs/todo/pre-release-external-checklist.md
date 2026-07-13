@@ -15,10 +15,10 @@
 
 ## コード側引き渡し（2026-07-13）
 
-- release candidate commit: `b5558b117214fbfee0e9a35c788240fa8984c4f4`
+- release candidate commit: `dc09c6a85150596b267feb0e9a451bac78b8c3d8`
 - migration: `0042_fixed_gertrude_yorkes.sql`
 - Mobile version / runtimeVersion: `1.1.0`
-- CI: 233 test files / 2,396 tests、実Redis統合、Biome、全TypeScript projectが成功
+- CI: 233 test files / 2,402 tests、実Miniflare KV、実Redis統合、Biome、全TypeScript projectが成功
 - E2E: 20 files / 69 testsが成功
 - local build: Web / Admin production build、Mobile Web / iOS / Android production exportが成功
 - native: Swift Widget execution test、全Widget target sourceのiOS 17 simulator type-check、Android Kotlin compile、Widget unit test、release AAR assemblyが成功

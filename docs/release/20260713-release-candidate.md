@@ -59,13 +59,15 @@
 
 ## ローカル検証の証跡
 
-リリース候補の実装コミットは`b5558b117214fbfee0e9a35c788240fa8984c4f4`。以下の最終`pnpm run ci-check`は、このコミットに対して実行した。外部ビルドID、デプロイ実行URL、認証情報の確認は外部リリースチェックリストに残す。
+リリース候補の実装コミットは`dc09c6a85150596b267feb0e9a451bac78b8c3d8`。以下の最終`pnpm run ci-check`は、このコミットのコード差分に対して実行した。外部ビルドID、デプロイ実行URL、認証情報の確認は外部リリースチェックリストに残す。
 
-- `pnpm run ci-check`: 233テストファイル / 2,396テスト、Biome、全TypeScriptプロジェクトが成功。実Redis統合テスト群も有効にして実行した。DB-backed PGliteテスト群は、CIのリソース競合を避けるため専用の直列実行プロジェクトで処理する。
+- `pnpm run ci-check`: 233テストファイル / 2,402テスト、Biome、全TypeScriptプロジェクトが成功。実Redis統合テスト群も有効にして実行した。DB-backed PGliteテスト群は、CIのリソース競合を避けるため専用の直列実行プロジェクトで処理する。
 - `pnpm run test-e2e`: ワーカーごとのPGliteインスタンスを使用し、20ファイル / 69テストが成功。
+- Workers KV検証: unit 12件とMiniflare実KV統合1件が成功。結果整合性による並列超過、同一キー毎秒1書き込み制限による`put`失敗と追加許可、`waitUntil`への遅延書き込み、構造化エラー観測、旧single-record移行を確認した。
+- Backend composition root検証: 実Redis Lua統合2件とWrangler staging dry-run bundleが成功。ブラウザから別IPで2回確認し、login失敗5回の残数が4から0へ減り、6回目がHTTP 429、`Retry-After: 900`になった。ログ上でもレート制限処理が`kvMs`へ記録された。
 - 本番ビルド: WebとAdmin Webが成功。Webの最大chunkはentry 284.38kB、vendor 428.97kB。Adminのentryは283.43kB。
 - 機密情報ではないダミー環境変数を使用したMobile本番exportがWebで成功。アーキテクチャ修正後にiOSとAndroidも再生成し、それぞれ4,681 / 4,769モジュール、両ネイティブプラットフォームのHermesバンドルは10MB。
 - ネイティブ検証: Swift Widget実行テストと、全Widgetターゲットのソースに対するiOS 17 simulator型検査が成功。AndroidアプリのKotlinコンパイル、Widget単体テスト、WidgetリリースAARの組み立ても成功。React Native、Swift、Kotlin間でWidgetスキーマv12を確認した。
 - `expo-doctor@1.20.0`: 20/20項目が成功。`pnpm install --frozen-lockfile`も成功。`pnpm audit --prod --audit-level=high`はhigh 0件で、許容したビルドツール由来のmoderate 2件は`docs/security/mobile-build-tooling-audit-20260713.md`に記録した。
 - Browser Check 2: オフラインで作成したNoteが再接続後にHTTP 200で同期され、別ブラウザへ表示され、正常に削除できた。無料プランのアップグレードUI、AdminのHttpOnly/SameSite=Laxセッション復元、サーバー側ログアウト、認証後にコンソールエラーがないことを確認した。最終的なAdmin/公開Webのログイン処理もRedisを有効にしたBackendの構成ルート（composition root）に対して成功し、コンソールに出たのは初回匿名アクセス時の想定どおりの401だけだった。
-- レビューサイクル: アーキテクチャ修正後の再レビューを経て、セキュリティ、ロジック、アーキテクチャ、テスト容易性、ネイティブの各レビュアーが全員LGTMとした。
+- レビューサイクル: KV復帰後にLogic/SecurityとArchitecture/Testabilityのクロスレビューを繰り返し、KV書き込み制限、background error観測、APM span、lease残骸、再試行時刻契約を修正した。最終差分は両レビュアーがLGTMとした。
