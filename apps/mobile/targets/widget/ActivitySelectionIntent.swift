@@ -1,4 +1,5 @@
 import AppIntents
+import Foundation
 import WidgetKit
 
 /// Entity representing an Activity for the widget configuration picker.
@@ -45,10 +46,17 @@ struct SelectActivityIntent: WidgetConfigurationIntent {
     @Parameter(title: "Activity")
     var activity: ActivityEntity?
 
-    func perform() async throws -> some IntentResult {
-        if let activity = activity {
-            TimerState().saveConfig(activityId: activity.id)
-        }
-        return .result()
+    /// WidgetKit does not expose an integer appWidgetId. Persist a UUID in the
+    /// configuration itself so two Widgets selecting the same Activity do not
+    /// share timer state.
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String?
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Track \(\.$activity)")
+    }
+
+    init() {
+        timerInstanceId = UUID().uuidString
     }
 }

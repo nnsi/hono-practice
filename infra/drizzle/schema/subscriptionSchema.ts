@@ -18,8 +18,7 @@ export const userSubscriptions = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => users.id)
-      .unique(),
+      .references(() => users.id),
     plan: text("plan", {
       enum: ["free", "premium"],
     })
@@ -43,6 +42,12 @@ export const userSubscriptions = pgTable(
     priceAmount: customTypeNumeric("price_amount"), // 将来の価格変更履歴用
     priceCurrency: text("price_currency").default("JPY"),
     metadata: text("metadata"), // JSON形式での追加情報
+    // Provider event occurrence time + stable ID form a total order. These
+    // columns are updated in the same conditional upsert as the entitlement.
+    lastEventOccurredAt: timestamp("last_event_occurred_at", {
+      withTimezone: true,
+    }),
+    lastEventSequence: text("last_event_sequence"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -52,6 +57,10 @@ export const userSubscriptions = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [
+    uniqueIndex("user_subscription_provider_identity_uniq").on(
+      t.paymentProvider,
+      t.paymentProviderId,
+    ),
     index("user_subscription_user_id_idx").on(t.userId),
     index("user_subscription_status_idx").on(t.status),
     index("user_subscription_plan_idx").on(t.plan),

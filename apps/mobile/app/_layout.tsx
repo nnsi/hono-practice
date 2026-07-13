@@ -1,7 +1,7 @@
 import "../src/polyfills/crypto";
 import "react-native-gesture-handler";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { initI18n, useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,7 +32,13 @@ import { useSyncEngine } from "../src/hooks/useSyncEngine";
 import { clearThemePreference } from "../src/hooks/useTheme";
 import { useTutorial } from "../src/hooks/useTutorial";
 import { initRevenueCat } from "../src/lib/revenueCat";
+import { startWidgetTimelineSubscription } from "../src/lib/widgetTimelineSubscription";
+import {
+  classifyStartupRoute,
+  readShowGoalPreference,
+} from "../src/navigation/startupRoute";
 import { clearLocalData } from "../src/sync/initialSync";
+import { loadStorageCache } from "../src/sync/rnPlatformAdapters";
 import { setupGlobalErrorHandler } from "../src/utils/globalErrorHandler";
 import "../global.css";
 
@@ -51,16 +57,29 @@ import { AuthContext } from "../src/contexts/AuthContext";
 export default function RootLayout() {
   const { t } = useTranslation("common");
   const auth = useAuth();
+  const [storageCacheReady, setStorageCacheReady] = useState(false);
   const router = useRouter();
   const segments = useSegments();
   const { isUpdating, hasPendingUpdate, triggerReload, dismissPendingUpdate } =
     useOtaUpdate();
 
-  useSyncEngine(auth.syncReady);
+  useSyncEngine(auth.syncReady && storageCacheReady);
   const tutorial = useTutorial();
 
   useEffect(() => {
     setupGlobalErrorHandler();
+  }, []);
+
+  useEffect(() => startWidgetTimelineSubscription(), []);
+
+  useEffect(() => {
+    let active = true;
+    loadStorageCache().finally(() => {
+      if (active) setStorageCacheReady(true);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -83,36 +102,28 @@ export default function RootLayout() {
       router.replace("/(auth)/login");
       startupRedirectDone.current = false;
     } else if (auth.isLoggedIn && inAuthGroup) {
-      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
-        let showGoal = false;
-        if (raw) {
-          try {
-            const settings = JSON.parse(raw);
-            showGoal = settings.showGoalOnStartup === true;
-          } catch {
-            // ignore parse error
-          }
-        }
-        router.replace(showGoal ? "/(tabs)/goals" : "/(tabs)");
-        startupRedirectDone.current = true;
-      });
+      AsyncStorage.getItem("actiko-v2-settings")
+        .then(readShowGoalPreference)
+        .then((showGoal) => {
+          router.replace(showGoal ? "/(tabs)/goals" : "/(tabs)");
+          startupRedirectDone.current = true;
+        });
     } else if (
       auth.isLoggedIn &&
       !inAuthGroup &&
       !startupRedirectDone.current
     ) {
+      const startupRouteKind = classifyStartupRoute(segments);
+      if (startupRouteKind === "unresolved") return;
+
       startupRedirectDone.current = true;
-      AsyncStorage.getItem("actiko-v2-settings").then((raw) => {
-        if (!raw) return;
-        try {
-          const settings = JSON.parse(raw);
-          if (settings.showGoalOnStartup === true) {
-            router.replace("/(tabs)/goals");
-          }
-        } catch {
-          // ignore parse error
-        }
-      });
+      if (startupRouteKind === "explicit") return;
+
+      AsyncStorage.getItem("actiko-v2-settings")
+        .then(readShowGoalPreference)
+        .then((showGoal) => {
+          if (showGoal) router.replace("/(tabs)/goals");
+        });
     }
   }, [auth.isLoggedIn, auth.isLoading, segments]);
 
@@ -133,7 +144,7 @@ export default function RootLayout() {
                   {t("common.updating")}
                 </Text>
               </View>
-            ) : auth.isLoading ? (
+            ) : auth.isLoading || !storageCacheReady ? (
               <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
                 <ActivityIndicator size="large" color="#3b82f6" />
               </View>

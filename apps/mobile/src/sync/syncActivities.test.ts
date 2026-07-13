@@ -151,14 +151,12 @@ describe("syncActivities", () => {
     await syncActivities();
 
     expect(activityRepository.markActivitiesSynced).toHaveBeenCalledWith([
-      "a1",
-      "a2",
+      { id: "a1", updatedAt: "2026-01-01T00:00:00Z" },
+      { id: "a2", updatedAt: "2026-01-02T00:00:00Z" },
     ]);
-    expect(activityRepository.markActivitiesFailed).toHaveBeenCalledWith([
-      "a3",
-    ]);
+    expect(activityRepository.markActivitiesFailed).toHaveBeenCalledWith([]);
     expect(activityRepository.markActivityKindsSynced).toHaveBeenCalledWith([
-      "k1",
+      { id: "k1", updatedAt: "2026-01-01T00:00:00Z" },
     ]);
     expect(activityRepository.markActivityKindsFailed).toHaveBeenCalledWith([]);
   });
@@ -190,12 +188,71 @@ describe("syncActivities", () => {
 
     mockPost.mockResolvedValue({ ok: false, status: 500 });
 
-    await expect(syncActivities()).rejects.toThrow("syncActivities failed");
+    await expect(syncActivities()).rejects.toThrow("sync request failed");
 
     expect(activityRepository.markActivitiesSynced).not.toHaveBeenCalled();
     expect(activityRepository.markActivitiesFailed).not.toHaveBeenCalled();
     expect(activityRepository.markActivityKindsSynced).not.toHaveBeenCalled();
     expect(activityRepository.markActivityKindsFailed).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    401, 403,
+  ])("keeps local records retryable after %s", async (status) => {
+    (activityRepository.getPendingSyncActivities as Mock).mockResolvedValue([
+      {
+        id: "a1",
+        updatedAt: "2026-01-01T00:00:00Z",
+        _syncStatus: "pending",
+      },
+    ]);
+    (activityRepository.getPendingSyncActivityKinds as Mock).mockResolvedValue(
+      [],
+    );
+    mockPost.mockResolvedValue({ ok: false, status });
+
+    await expect(syncActivities()).rejects.toThrow(`failed: ${status}`);
+    expect(activityRepository.markActivitiesRejected).not.toHaveBeenCalled();
+    expect(activityRepository.markActivitiesSynced).not.toHaveBeenCalled();
+  });
+
+  it("resumes sync after a failed refresh and later reauthentication", async () => {
+    (activityRepository.getPendingSyncActivities as Mock).mockResolvedValue([
+      {
+        id: "a1",
+        updatedAt: "2026-01-01T00:00:00Z",
+        _syncStatus: "pending",
+      },
+    ]);
+    (activityRepository.getPendingSyncActivityKinds as Mock).mockResolvedValue(
+      [],
+    );
+    mockPost
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          activities: {
+            syncedIds: ["a1"],
+            skippedIds: [],
+            serverWins: [],
+            failures: [],
+          },
+          activityKinds: {
+            syncedIds: [],
+            skippedIds: [],
+            serverWins: [],
+            failures: [],
+          },
+        }),
+      });
+
+    await expect(syncActivities()).rejects.toThrow("failed: 401");
+    await expect(syncActivities()).resolves.toBeUndefined();
+    expect(activityRepository.markActivitiesSynced).toHaveBeenCalledWith([
+      { id: "a1", updatedAt: "2026-01-01T00:00:00Z" },
+    ]);
   });
 
   it("marks items as rejected on 4xx and does not throw", async () => {
@@ -238,10 +295,10 @@ describe("syncActivities", () => {
     await syncActivities(); // should not throw
 
     expect(activityRepository.markActivitiesRejected).toHaveBeenCalledWith([
-      "a1",
+      { id: "a1", updatedAt: "2026-01-01T00:00:00Z" },
     ]);
     expect(activityRepository.markActivityKindsRejected).toHaveBeenCalledWith([
-      "k1",
+      { id: "k1", updatedAt: "2026-01-01T00:00:00Z" },
     ]);
     // syncedIds/skippedIds are empty → called with [] (no-op)
     expect(activityRepository.markActivitiesSynced).toHaveBeenCalledWith([]);

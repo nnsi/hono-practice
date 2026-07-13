@@ -7,7 +7,7 @@
 
 ## 1. EAS (Expo Application Services) セットアップ
 
-- [x] `eas-cli` をグローバルインストール: `npm install -g eas-cli`
+- [x] `eas-cli@20.5.1`をroot devDependencyへ固定し、`pnpm exec eas`で実行
 - [x] Expo アカウントでログイン: `eas login`
 - [x] プロジェクトを Expo に紐付け: `eas init` （`apps/mobile/` 内で実行）
 - [x] `eas.json` を作成（下記テンプレート参照）
@@ -368,10 +368,10 @@ Google Play Console の段階的テスト配布。ストア掲載前でも配布
 
 ## 10. リリース後
 
-- [ ] OTA アップデート設定: `eas update` のワークフロー構築
-- [ ] Sentry 等のクラッシュレポート導入（任意）
-- [ ] バージョン管理ルールの策定（semver）
-- [ ] CI/CD パイプライン構築（GitHub Actions + EAS Build）
+- [x] OTAアップデートworkflowを構築し、release SHA・native差分guardを追加
+- [x] crash/error reportingは既存の`client_error`・Tail Worker・WAE構成へ統一
+- [x] version/runtime/tagのsemver運用をrelease candidate文書へ記録
+- [x] GitHub ActionsへCI、EAS bundle/build/OTA gate、post-deploy smokeを定義
   - ADR: [workflow_dispatch による手動デプロイ](/docs/adr/20260316_mobile_cicd_workflow_dispatch.md)
 
 ---

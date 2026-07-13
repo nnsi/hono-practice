@@ -122,41 +122,53 @@ export function newActivityRepository(
     async getPendingSyncActivityKinds() {
       return adapter.getPendingSyncActivityKinds();
     },
-    async markActivitiesSynced(ids) {
+    async getRejectedSyncActivities() {
+      return adapter.getRejectedSyncActivities();
+    },
+    async getRejectedSyncActivityKinds() {
+      return adapter.getRejectedSyncActivityKinds();
+    },
+    async markActivitiesSynced(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivitiesSynced",
-        ids,
+        revisions,
       });
     },
-    async markActivityKindsSynced(ids) {
+    async markActivityKindsSynced(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivityKindsSynced",
-        ids,
+        revisions,
       });
     },
-    async markActivitiesFailed(ids) {
+    async markActivitiesFailed(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivitiesFailed",
-        ids,
+        revisions,
       });
     },
-    async markActivityKindsFailed(ids) {
+    async markActivityKindsFailed(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivityKindsFailed",
-        ids,
+        revisions,
       });
     },
-    async markActivitiesRejected(ids) {
+    async markActivitiesRejected(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivitiesRejected",
-        ids,
+        revisions,
       });
     },
-    async markActivityKindsRejected(ids) {
+    async markActivityKindsRejected(revisions) {
       await applySyncMarkHelpers(adapter, {
         type: "markActivityKindsRejected",
-        ids,
+        revisions,
       });
+    },
+    async retryRejectedActivities(ids) {
+      await adapter.retryRejectedActivities(ids);
+    },
+    async retryRejectedActivityKinds(ids) {
+      await adapter.retryRejectedActivityKinds(ids);
     },
 
     // === Icon management (platform-specific passthrough) ===

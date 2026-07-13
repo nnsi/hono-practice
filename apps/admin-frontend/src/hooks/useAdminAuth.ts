@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  adminClient,
-  getAdminToken,
-  setAdminToken,
-  setOnUnauthorized,
-} from "../utils/apiClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { adminClient, setOnUnauthorized } from "../utils/apiClient";
 
 type AdminUser = {
   email: string;
@@ -18,7 +15,7 @@ type AdminAuthState = {
   user: AdminUser | null;
   googleLogin: (credential: string) => Promise<void>;
   devLogin: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   error: string | null;
 };
 
@@ -32,66 +29,63 @@ function isAdminUser(v: unknown): v is AdminUser {
   );
 }
 
+const ADMIN_SESSION_QUERY_KEY: readonly ["admin", "session"] = [
+  "admin",
+  "session",
+];
+
+async function fetchAdminSession(): Promise<AdminUser | null> {
+  const response = await adminClient.admin.auth.session.$get();
+  if (!response.ok) return null;
+  const value: unknown = await response.json();
+  return isAdminUser(value) ? value : null;
+}
+
 export function useAdminAuth(): AdminAuthState {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<AdminUser | null>(null);
+  const queryClient = useQueryClient();
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sessionQuery = useQuery({
+    queryKey: ADMIN_SESSION_QUERY_KEY,
+    queryFn: fetchAdminSession,
+    retry: false,
+  });
+  const user = sessionQuery.data ?? null;
 
   useEffect(() => {
     setOnUnauthorized(() => {
-      setUser(null);
+      queryClient.setQueryData(ADMIN_SESSION_QUERY_KEY, null);
     });
+    return () => setOnUnauthorized(null);
+  }, [queryClient]);
 
-    const savedToken = sessionStorage.getItem("admin_token");
-    const savedUser = sessionStorage.getItem("admin_user");
-    if (savedToken && savedUser) {
+  const googleLogin = useCallback(
+    async (credential: string) => {
+      setError(null);
+      setIsActionLoading(true);
       try {
-        const parsed: unknown = JSON.parse(savedUser);
-        if (isAdminUser(parsed)) {
-          setAdminToken(savedToken);
-          setUser(parsed);
-        } else {
-          setAdminToken(null);
-          sessionStorage.removeItem("admin_token");
-          sessionStorage.removeItem("admin_user");
-        }
-      } catch {
-        setAdminToken(null);
-        sessionStorage.removeItem("admin_token");
-        sessionStorage.removeItem("admin_user");
+        const response = await adminClient.admin.auth.google.$post({
+          json: { credential },
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const res = await response.json();
+
+        const adminUser = { email: res.email, name: res.name };
+        queryClient.setQueryData(ADMIN_SESSION_QUERY_KEY, adminUser);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "ログインに失敗しました";
+        setError(msg);
+        throw e;
+      } finally {
+        setIsActionLoading(false);
       }
-    }
-    setIsLoading(false);
-  }, []);
-
-  const googleLogin = useCallback(async (credential: string) => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      const response = await adminClient.admin.auth.google.$post({
-        json: { credential },
-      });
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      const res = await response.json();
-
-      setAdminToken(res.token);
-      sessionStorage.setItem("admin_token", res.token);
-
-      const adminUser = { email: res.email, name: res.name };
-      setUser(adminUser);
-      sessionStorage.setItem("admin_user", JSON.stringify(adminUser));
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "ログインに失敗しました";
-      setError(msg);
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [queryClient],
+  );
 
   const devLogin = useCallback(async () => {
     setError(null);
-    setIsLoading(true);
+    setIsActionLoading(true);
     try {
       const response = await adminClient.admin.auth["dev-login"].$post({
         json: {},
@@ -99,31 +93,28 @@ export function useAdminAuth(): AdminAuthState {
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const res = await response.json();
 
-      setAdminToken(res.token);
-      sessionStorage.setItem("admin_token", res.token);
-
       const adminUser = { email: res.email, name: res.name };
-      setUser(adminUser);
-      sessionStorage.setItem("admin_user", JSON.stringify(adminUser));
+      queryClient.setQueryData(ADMIN_SESSION_QUERY_KEY, adminUser);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "ログインに失敗しました";
       setError(msg);
       throw e;
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
-  const logout = useCallback(() => {
-    setAdminToken(null);
-    setUser(null);
-    sessionStorage.removeItem("admin_token");
-    sessionStorage.removeItem("admin_user");
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      await adminClient.admin.auth.logout.$post({ json: {} });
+    } finally {
+      queryClient.setQueryData(ADMIN_SESSION_QUERY_KEY, null);
+    }
+  }, [queryClient]);
 
   return {
-    isLoading,
-    isLoggedIn: !!user && !!getAdminToken(),
+    isLoading: sessionQuery.isPending || isActionLoading,
+    isLoggedIn: !!user,
     user,
     googleLogin,
     devLogin,

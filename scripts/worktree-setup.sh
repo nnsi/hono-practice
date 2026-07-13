@@ -23,6 +23,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+sed_in_place() {
+  if sed --version >/dev/null 2>&1; then
+    sed -i "$@"
+  else
+    sed -i '' "$@"
+  fi
+}
+
 # --- args ---
 NAME="${1:?Usage: worktree-setup.sh <name> [port-offset] [--seed]}"
 OFFSET="${2:-}"
@@ -93,10 +101,10 @@ MAIN_BE_TEMPLATE="$REPO_ROOT/apps/backend/.env.example"
 WT_BE_ENV="$WT_DIR/apps/backend/.env"
 if [ -f "$MAIN_BE_TEMPLATE" ]; then
   cp "$MAIN_BE_TEMPLATE" "$WT_BE_ENV"
-  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5435/$DB_NAME|" "$WT_BE_ENV"
-  sed -i "s|^API_PORT=.*|API_PORT=$API_PORT|" "$WT_BE_ENV"
-  sed -i "s|^APP_URL=.*|APP_URL=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
-  sed -i "s|^APP_URL_V2=.*|APP_URL_V2=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
+  sed_in_place "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5435/$DB_NAME|" "$WT_BE_ENV"
+  sed_in_place "s|^API_PORT=.*|API_PORT=$API_PORT|" "$WT_BE_ENV"
+  sed_in_place "s|^APP_URL=.*|APP_URL=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
+  sed_in_place "s|^APP_URL_V2=.*|APP_URL_V2=http://localhost:$VITE_PORT|" "$WT_BE_ENV"
   echo "  apps/backend/.env → OK"
 else
   echo "  WARNING: $MAIN_BE_TEMPLATE not found. Create it manually in the worktree."
@@ -107,12 +115,12 @@ MAIN_FE_ENV="$REPO_ROOT/apps/frontend/.env"
 WT_FE_ENV="$WT_DIR/apps/frontend/.env"
 if [ -f "$MAIN_FE_ENV" ]; then
   cp "$MAIN_FE_ENV" "$WT_FE_ENV"
-  sed -i "s|^VITE_API_URL=.*|VITE_API_URL=http://localhost:$API_PORT|" "$WT_FE_ENV"
+  sed_in_place "s|^VITE_API_URL=.*|VITE_API_URL=http://localhost:$API_PORT|" "$WT_FE_ENV"
   # VITE_PORT for vite.config.ts (reads from env)
   if ! grep -q "^VITE_PORT=" "$WT_FE_ENV" 2>/dev/null; then
     echo "VITE_PORT=$VITE_PORT" >> "$WT_FE_ENV"
   else
-    sed -i "s|^VITE_PORT=.*|VITE_PORT=$VITE_PORT|" "$WT_FE_ENV"
+    sed_in_place "s|^VITE_PORT=.*|VITE_PORT=$VITE_PORT|" "$WT_FE_ENV"
   fi
   echo "  apps/frontend/.env → OK"
 else
@@ -143,7 +151,7 @@ if [ -d "$WT_MOBILE_DIR" ]; then
   fi
 
   if grep -q "^EXPO_PUBLIC_API_URL=" "$WT_MOBILE_ENV" 2>/dev/null; then
-    sed -i "s|^EXPO_PUBLIC_API_URL=.*|EXPO_PUBLIC_API_URL=http://localhost:$API_PORT|" "$WT_MOBILE_ENV"
+    sed_in_place "s|^EXPO_PUBLIC_API_URL=.*|EXPO_PUBLIC_API_URL=http://localhost:$API_PORT|" "$WT_MOBILE_ENV"
   else
     echo "EXPO_PUBLIC_API_URL=http://localhost:$API_PORT" >> "$WT_MOBILE_ENV"
   fi

@@ -1,4 +1,4 @@
-import type { Syncable } from "../sync/syncableRecord";
+import type { SyncRevision, Syncable } from "../sync/syncableRecord";
 import type { ActivityKindRecord, ActivityRecord } from "./activityRecord";
 import type { RecordingMode } from "./recordingMode";
 
@@ -60,12 +60,16 @@ export type ActivityRepository = {
   // Sync helpers
   getPendingSyncActivities(): Promise<Syncable<ActivityRecord>[]>;
   getPendingSyncActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
-  markActivitiesSynced(ids: string[]): Promise<void>;
-  markActivityKindsSynced(ids: string[]): Promise<void>;
-  markActivitiesFailed(ids: string[]): Promise<void>;
-  markActivityKindsFailed(ids: string[]): Promise<void>;
-  markActivitiesRejected(ids: string[]): Promise<void>;
-  markActivityKindsRejected(ids: string[]): Promise<void>;
+  getRejectedSyncActivities(): Promise<Syncable<ActivityRecord>[]>;
+  getRejectedSyncActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
+  markActivitiesSynced(revisions: SyncRevision[]): Promise<void>;
+  markActivityKindsSynced(revisions: SyncRevision[]): Promise<void>;
+  markActivitiesFailed(revisions: SyncRevision[]): Promise<void>;
+  markActivityKindsFailed(revisions: SyncRevision[]): Promise<void>;
+  markActivitiesRejected(revisions: SyncRevision[]): Promise<void>;
+  markActivityKindsRejected(revisions: SyncRevision[]): Promise<void>;
+  retryRejectedActivities(ids: string[]): Promise<void>;
+  retryRejectedActivityKinds(ids: string[]): Promise<void>;
   // Icon management
   saveActivityIconBlob(
     activityId: string,

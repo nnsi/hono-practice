@@ -33,6 +33,14 @@ on:
         description: "Optional OTA message"
         required: false
         type: string
+      mobile_release_sha:
+        description: "Approved commit SHA; must equal the checked out commit"
+        required: true
+        type: string
+      mobile_native_base_sha:
+        description: "Native build SHA used as OTA compatibility base (required for OTA)"
+        required: false
+        type: string
 
 jobs:
   publish:
@@ -44,35 +52,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
-
-      - name: Get changed files (backend)
-        id: changed_backend
-        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
         with:
-          files: |
-            apps/backend/**
-            wrangler.toml
+          fetch-depth: 0
 
-      - name: Get changed files (frontend)
-        id: changed_frontend
-        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
-        with:
-          files: |
-            apps/frontend/**
-
-      - name: Get changed files (admin-frontend)
-        id: changed_admin_frontend
-        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
-        with:
-          files: |
-            apps/admin-frontend/**
-
-      - name: Get changed files (db migrations)
-        id: changed_db_migrations
-        uses: tj-actions/changed-files@716b1e13042866565e00e85fd4ec490e186c4a2f # v41
-        with:
-          files: |
-            infra/drizzle/**
+      - name: Detect release artifact impact
+        id: impact
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > /tmp/release-changed-files
+          else
+            git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > /tmp/release-changed-files
+          fi
+          node scripts/release-impact.js --files /tmp/release-changed-files --github-output "$GITHUB_OUTPUT"
 
       - name: Use Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
@@ -97,15 +91,44 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Preflight required staging variable names
+        if: github.ref_name == 'master'
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_STG }}
+          R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
+          VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
+        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID R2_BUCKET_NAME VITE_API_URL
+
+      - name: Preflight required production variable names
+        if: github.ref_name == 'release'
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_PROD }}
+          R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
+          VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
+        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID R2_BUCKET_NAME VITE_API_URL
+
       - name: test
         run: pnpm run ci-check
         env:
           CI: true
           NODE_ENV: test
 
+      - name: Web E2E release gate
+        if: github.ref_name == 'release'
+        run: pnpm run test-e2e
+        env:
+          CI: true
+          NODE_ENV: test
+
       # --- frontend ---
       - name: Build frontend (stg)
-        if: github.ref_name == 'master' && steps.changed_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.frontend == 'true'
         run: pnpm run build-client-stg
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
@@ -116,7 +139,7 @@ jobs:
           VITE_ENABLE_WEB_SUBSCRIPTION: ${{ vars.VITE_ENABLE_WEB_SUBSCRIPTION_STG }}
 
       - name: Build frontend (release)
-        if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.frontend == 'true'
         run: pnpm run build-client
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
@@ -128,14 +151,14 @@ jobs:
 
       # --- admin-frontend ---
       - name: Build admin-frontend (stg)
-        if: github.ref_name == 'master' && steps.changed_admin_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.admin == 'true'
         run: pnpm run build-admin-stg
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
 
       - name: Build admin-frontend (release)
-        if: github.ref_name == 'release' && steps.changed_admin_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.admin == 'true'
         run: pnpm run build-admin
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
@@ -143,20 +166,20 @@ jobs:
 
       # --- DB migrations ---
       - name: Migrate Neon DB (stg)
-        if: github.ref_name == 'master' && steps.changed_db_migrations.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.migrations == 'true'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
 
       - name: Migrate Neon DB (prod)
-        if: github.ref_name == 'release' && steps.changed_db_migrations.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.migrations == 'true'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
       # --- backend secrets & deploy ---
       - name: Configure Hyperdrive and R2 for staging
-        if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
         run: |
           cat << EOF >> wrangler.toml
 
@@ -179,7 +202,7 @@ jobs:
           KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
 
       - name: Configure Hyperdrive and R2 for production
-        if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
         run: |
           cat << EOF >> wrangler.toml
 
@@ -202,7 +225,7 @@ jobs:
           KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)
-        if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env stg
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env stg
@@ -219,6 +242,7 @@ jobs:
           if [ -n "$APPLE_KEY_ID" ]; then printf '%s' "$APPLE_KEY_ID" | pnpm exec wrangler secret put APPLE_KEY_ID --env stg; fi
           if [ -n "$APPLE_PRIVATE_KEY" ]; then printf '%s' "$APPLE_PRIVATE_KEY" | pnpm exec wrangler secret put APPLE_PRIVATE_KEY --env stg; fi
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env stg
+          printf '%s' "$ADMIN_APP_URL" | pnpm exec wrangler secret put ADMIN_APP_URL --env stg
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env stg; fi
           printf '%s' "$ADMIN_ALLOWED_EMAILS" | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --env stg
           if [ -n "$CF_ANALYTICS_TOKEN" ]; then printf '%s' "$CF_ANALYTICS_TOKEN" | pnpm exec wrangler secret put CF_ANALYTICS_TOKEN --env stg; fi
@@ -244,10 +268,11 @@ jobs:
           APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
           APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
           APP_URL_V2: ${{ vars.APP_URL_V2_STG }}
+          ADMIN_APP_URL: ${{ secrets.ADMIN_APP_URL_STG }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Set DATABASE_URL secret in Cloudflare (prod)
-        if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env production
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env production
@@ -264,6 +289,7 @@ jobs:
           if [ -n "$APPLE_KEY_ID" ]; then printf '%s' "$APPLE_KEY_ID" | pnpm exec wrangler secret put APPLE_KEY_ID --env production; fi
           if [ -n "$APPLE_PRIVATE_KEY" ]; then printf '%s' "$APPLE_PRIVATE_KEY" | pnpm exec wrangler secret put APPLE_PRIVATE_KEY --env production; fi
           printf '%s' "$APP_URL_V2" | pnpm exec wrangler secret put APP_URL_V2 --env production
+          printf '%s' "$ADMIN_APP_URL" | pnpm exec wrangler secret put ADMIN_APP_URL --env production
           if [ -n "$OPENROUTER_API_KEY" ]; then printf '%s' "$OPENROUTER_API_KEY" | pnpm exec wrangler secret put OPENROUTER_API_KEY --env production; fi
           printf '%s' "$ADMIN_ALLOWED_EMAILS" | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --env production
           if [ -n "$CF_ANALYTICS_TOKEN" ]; then printf '%s' "$CF_ANALYTICS_TOKEN" | pnpm exec wrangler secret put CF_ANALYTICS_TOKEN --env production; fi
@@ -289,17 +315,18 @@ jobs:
           APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
           APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
           APP_URL_V2: ${{ vars.APP_URL_V2_PROD }}
+          ADMIN_APP_URL: ${{ secrets.ADMIN_APP_URL_PROD }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Deploy to Cloudflare Workers (stg)
-        if: github.ref_name == 'master' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
         run: pnpm run deploy:stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (release)
-        if: github.ref_name == 'release' && steps.changed_backend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
         run: pnpm run deploy:prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -307,14 +334,14 @@ jobs:
 
       # --- frontend (Cloudflare Workers Static Assets) ---
       - name: Deploy frontend (stg)
-        if: github.ref_name == 'master' && steps.changed_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.frontend == 'true'
         run: pnpm run deploy:fe-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy frontend (release)
-        if: github.ref_name == 'release' && steps.changed_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.frontend == 'true'
         run: pnpm run deploy:fe-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -322,30 +349,78 @@ jobs:
 
       # --- admin-frontend (Cloudflare Workers Static Assets) ---
       - name: Deploy admin-frontend (stg)
-        if: github.ref_name == 'master' && steps.changed_admin_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'master' && steps.impact.outputs.admin == 'true'
         run: pnpm run deploy:admin-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy admin-frontend (release)
-        if: github.ref_name == 'release' && steps.changed_admin_frontend.outputs.any_changed == 'true'
+        if: github.ref_name == 'release' && steps.impact.outputs.admin == 'true'
         run: pnpm run deploy:admin-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
+      # --- Tail Worker ---
+      - name: Build Tail Worker artifact
+        if: steps.impact.outputs.tail == 'true'
+        run: pnpm --filter actiko-tail-worker exec wrangler deploy --dry-run --outdir ../../dist-tail-worker
+
+      - name: Deploy Tail Worker (stg)
+        if: github.ref_name == 'master' && steps.impact.outputs.tail == 'true'
+        run: pnpm run deploy:tail-stg
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Deploy Tail Worker (release)
+        if: github.ref_name == 'release' && steps.impact.outputs.tail == 'true'
+        run: pnpm run deploy:tail-prod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Post-deploy smoke (stg)
+        if: github.ref_name == 'master' && (steps.impact.outputs.backend == 'true' || steps.impact.outputs.frontend == 'true' || steps.impact.outputs.admin == 'true' || steps.impact.outputs.tail == 'true')
+        run: node scripts/post-deploy-smoke.js "api=${{ vars.VITE_API_URL_STG }}/" "web=${{ vars.APP_URL_V2_STG }}/"
+
+      - name: Post-deploy smoke (production)
+        if: github.ref_name == 'release' && (steps.impact.outputs.backend == 'true' || steps.impact.outputs.frontend == 'true' || steps.impact.outputs.admin == 'true' || steps.impact.outputs.tail == 'true')
+        run: node scripts/post-deploy-smoke.js "api=${{ vars.VITE_API_URL_PROD }}/" "web=${{ vars.APP_URL_V2_PROD }}/"
+
   mobile-release:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.mobile_environment == 'prod' && 'production' || 'staging' }}
     permissions:
       contents: read
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      BUNDLE_ID: ${{ github.event.inputs.mobile_environment == 'stg' && vars.MOBILE_BUNDLE_ID_STG || vars.MOBILE_BUNDLE_ID_PROD }}
+      EAS_BUILD_PROFILE: ${{ github.event.inputs.mobile_environment == 'stg' && 'preview' || 'production' }}
+      EAS_CHANNEL: ${{ github.event.inputs.mobile_environment == 'stg' && 'preview' || 'production' }}
+      EAS_OWNER: ${{ vars.EAS_OWNER }}
+      EAS_PROFILE: ${{ github.event.inputs.mobile_environment == 'stg' && 'preview' || 'production' }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_PUBLIC_API_URL: ${{ github.event.inputs.mobile_environment == 'stg' && vars.VITE_API_URL_STG || vars.VITE_API_URL_PROD }}
+      EXPO_PUBLIC_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ github.event.inputs.mobile_environment == 'stg' && secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG || secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_ANDROID }}
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID_IOS }}
+      EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID }}
+      EXPO_PUBLIC_REVENUECAT_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS }}
+      EXPO_PUBLIC_WEB_URL: ${{ github.event.inputs.mobile_environment == 'stg' && vars.APP_URL_V2_STG || vars.APP_URL_V2_PROD }}
+      MOBILE_MESSAGE: ${{ github.event.inputs.mobile_message }}
+      MOBILE_PLATFORM: ${{ github.event.inputs.mobile_platform }}
     defaults:
       run:
         working-directory: apps/mobile
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
@@ -371,45 +446,69 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: .
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      - name: Validate approved release commit and branch
+        shell: bash
         working-directory: .
+        env:
+          APPROVED_SHA: ${{ github.event.inputs.mobile_release_sha }}
+          MOBILE_ENVIRONMENT: ${{ github.event.inputs.mobile_environment }}
+        run: |
+          if [ "$GITHUB_SHA" != "$APPROVED_SHA" ]; then
+            echo "Approved SHA does not match the checked out commit"
+            exit 1
+          fi
+          if [ "$MOBILE_ENVIRONMENT" = "prod" ] && [ "$GITHUB_REF" != "refs/heads/release" ]; then
+            echo "Production mobile operations are restricted to the release branch"
+            exit 1
+          fi
 
-      - name: Resolve mobile environment
+      - name: Run repository CI gate
+        run: pnpm run ci-check
+        working-directory: .
+        env:
+          CI: true
+          NODE_ENV: test
+
+      - name: Preflight required mobile variable names
+        working-directory: .
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: node scripts/check-required-env.js EAS_PROJECT_ID EAS_OWNER BUNDLE_ID EXPO_TOKEN EXPO_PUBLIC_API_URL EXPO_PUBLIC_CONTACT_EMAIL EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID EXPO_PUBLIC_REVENUECAT_API_KEY_IOS EXPO_PUBLIC_WEB_URL
+
+      - name: Generate iOS and Android release bundles
         shell: bash
         run: |
-          echo "EAS_PROJECT_ID=${{ vars.EAS_PROJECT_ID }}" >> "$GITHUB_ENV"
-          echo "EAS_OWNER=${{ vars.EAS_OWNER }}" >> "$GITHUB_ENV"
-          echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_CONTACT_EMAIL=${{ vars.VITE_CONTACT_EMAIL }}" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID_ANDROID }}" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=${{ secrets.GOOGLE_OAUTH_CLIENT_ID_IOS }}" >> "$GITHUB_ENV"
-          if [ "${{ github.event.inputs.mobile_environment }}" = "stg" ]; then
-            echo "EAS_PROFILE=preview" >> "$GITHUB_ENV"
-            echo "EAS_CHANNEL=preview" >> "$GITHUB_ENV"
-            echo "BUNDLE_ID=${{ vars.MOBILE_BUNDLE_ID_STG }}" >> "$GITHUB_ENV"
-            echo "EXPO_PUBLIC_API_URL=${{ vars.VITE_API_URL_STG }}" >> "$GITHUB_ENV"
-            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}" >> "$GITHUB_ENV"
-          else
-            echo "EAS_PROFILE=production" >> "$GITHUB_ENV"
-            echo "EAS_CHANNEL=production" >> "$GITHUB_ENV"
-            echo "BUNDLE_ID=${{ vars.MOBILE_BUNDLE_ID_PROD }}" >> "$GITHUB_ENV"
-            echo "EXPO_PUBLIC_API_URL=${{ vars.VITE_API_URL_PROD }}" >> "$GITHUB_ENV"
-            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}" >> "$GITHUB_ENV"
+          rm -rf dist-release-bundles
+          pnpm exec expo export --platform ios --output-dir dist-release-bundles/ios --clear
+          pnpm exec expo export --platform android --output-dir dist-release-bundles/android --clear
+
+      - name: Validate OTA native compatibility
+        if: github.event.inputs.mobile_operation == 'ota'
+        shell: bash
+        working-directory: .
+        env:
+          NATIVE_BASE_SHA: ${{ github.event.inputs.mobile_native_base_sha }}
+        run: |
+          if [ -z "$NATIVE_BASE_SHA" ]; then
+            echo "mobile_native_base_sha is required for OTA"
+            exit 1
           fi
+          git cat-file -e "$NATIVE_BASE_SHA^{commit}"
+          git diff --name-only "$NATIVE_BASE_SHA" "$GITHUB_SHA" > /tmp/mobile-ota-changed-files
+          node scripts/release-impact.js --files /tmp/mobile-ota-changed-files --assert-ota-safe
 
       - name: Validate OTA platform
         if: github.event.inputs.mobile_operation == 'ota'
         shell: bash
         run: |
-          if [ "${{ github.event.inputs.mobile_platform }}" = "all" ]; then
+          if [ "$MOBILE_PLATFORM" = "all" ]; then
             echo "OTA requires ios or android. Use separate dispatches per platform."
             exit 1
           fi
 
       - name: Run EAS build
         if: github.event.inputs.mobile_operation == 'build'
-        run: eas build --platform ${{ github.event.inputs.mobile_platform }} --profile $EAS_PROFILE --non-interactive
+        run: pnpm exec eas build --platform "$MOBILE_PLATFORM" --profile "$EAS_PROFILE" --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -417,10 +516,10 @@ jobs:
         if: github.event.inputs.mobile_operation == 'ota'
         shell: bash
         run: |
-          MESSAGE="${{ github.event.inputs.mobile_message }}"
+          MESSAGE="$MOBILE_MESSAGE"
           if [ -z "$MESSAGE" ]; then
             MESSAGE="GitHub Actions OTA release"
           fi
-          eas update --channel "$EAS_CHANNEL" --platform ${{ github.event.inputs.mobile_platform }} --message "$MESSAGE" --non-interactive --clear-cache
+          pnpm exec eas update --channel "$EAS_CHANNEL" --platform "$MOBILE_PLATFORM" --message "$MESSAGE" --non-interactive --clear-cache
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

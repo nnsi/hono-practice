@@ -220,5 +220,31 @@ describe("AIActivityLogUsecase", () => {
         usecase.createActivityLogFromSpeech(userId1, "何かした", "2026-03-16"),
       ).rejects.toThrow(AppError);
     });
+
+    it("Gateway失敗時はActivityLogを保存しない", async () => {
+      const failingGateway: AIActivityLogGateway = {
+        parseActivityLog: async () => {
+          throw new Error("OpenRouter unavailable");
+        },
+      };
+      when(activityRepo.getActivitiesByUserId(userId1)).thenResolve([
+        mockActivity,
+      ]);
+      usecase = newAIActivityLogUsecase(
+        failingGateway,
+        instance(activityRepo),
+        instance(activityLogRepo),
+        noopTracer,
+      );
+
+      await expect(
+        usecase.createActivityLogFromSpeech(
+          userId1,
+          "ランニングした",
+          "2026-03-16",
+        ),
+      ).rejects.toThrow("OpenRouter unavailable");
+      verify(activityLogRepo.createActivityLog(anything())).never();
+    });
   });
 });

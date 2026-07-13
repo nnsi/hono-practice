@@ -2,7 +2,7 @@ type Env = {
   LOGS: AnalyticsEngineDataset;
 };
 
-type LogEntry = {
+export type LogEntry = {
   level?: string;
   msg?: string;
   requestId?: string;
@@ -19,16 +19,68 @@ type LogEntry = {
   spanCount?: number;
 };
 
-const parseLogMessage = (message: string): LogEntry | null => {
-  try {
-    return JSON.parse(message) as LogEntry;
-  } catch {
-    return null;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOptionalString(
+  entry: Record<string, unknown>,
+  field: string,
+): boolean {
+  return entry[field] === undefined || typeof entry[field] === "string";
+}
+
+function hasOptionalNumber(
+  entry: Record<string, unknown>,
+  field: string,
+): boolean {
+  return (
+    entry[field] === undefined ||
+    (typeof entry[field] === "number" && Number.isFinite(entry[field]))
+  );
+}
+
+function isLogEntry(value: unknown): value is LogEntry {
+  if (!isRecord(value)) return false;
+  return (
+    hasOptionalString(value, "level") &&
+    hasOptionalString(value, "msg") &&
+    hasOptionalString(value, "requestId") &&
+    hasOptionalString(value, "method") &&
+    hasOptionalString(value, "path") &&
+    hasOptionalString(value, "feature") &&
+    hasOptionalString(value, "error") &&
+    hasOptionalNumber(value, "status") &&
+    hasOptionalNumber(value, "duration") &&
+    hasOptionalNumber(value, "dbMs") &&
+    hasOptionalNumber(value, "r2Ms") &&
+    hasOptionalNumber(value, "kvMs") &&
+    hasOptionalNumber(value, "extMs") &&
+    hasOptionalNumber(value, "spanCount")
+  );
+}
+
+function parseJson(message: string): Promise<unknown> {
+  return Promise.resolve(message).then((serialized): unknown =>
+    JSON.parse(serialized),
+  );
+}
+
+export const parseLogMessage = (message: string): Promise<LogEntry | null> =>
+  parseJson(message).then(
+    (parsed) => (isLogEntry(parsed) ? parsed : null),
+    () => null,
+  );
+
+function serializeTraceMessage(message: unknown): string {
+  if (Array.isArray(message) && message.length === 1) {
+    return String(message[0]);
   }
-};
+  return JSON.stringify(message) ?? "";
+}
 
 /** WAEに書き込む対象のログかどうかを判定 */
-const shouldWrite = (entry: LogEntry): boolean =>
+export const shouldWrite = (entry: LogEntry): boolean =>
   entry.level === "error" ||
   (entry.msg === "Response sent" && entry.status !== 404);
 
@@ -36,11 +88,7 @@ export default {
   async tail(events: TraceItem[], env: Env): Promise<void> {
     for (const event of events) {
       for (const log of event.logs) {
-        const entry = parseLogMessage(
-          log.message.length === 1
-            ? String(log.message[0])
-            : JSON.stringify(log.message),
-        );
+        const entry = await parseLogMessage(serializeTraceMessage(log.message));
         if (!entry) continue;
         if (!shouldWrite(entry)) continue;
 

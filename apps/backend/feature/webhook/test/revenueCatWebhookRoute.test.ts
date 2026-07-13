@@ -27,6 +27,8 @@ describe("RevenueCat webhook event handling", () => {
           paymentProviderId: "txn-xyz-999",
           eventType: "INITIAL_PURCHASE",
           webhookId: "evt-abc-123",
+          eventOccurredAt: new Date(1700000000000),
+          eventSequence: "evt-abc-123",
         }),
       );
     });

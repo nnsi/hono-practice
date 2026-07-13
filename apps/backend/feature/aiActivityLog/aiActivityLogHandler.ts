@@ -6,6 +6,8 @@ import { CreateAIActivityLogResponseSchema } from "@packages/types/response";
 
 import type { AIActivityLogUsecase } from "./aiActivityLogUsecase";
 
+export type AIActivityLogHandler = ReturnType<typeof newAIActivityLogHandler>;
+
 export function newAIActivityLogHandler(uc: AIActivityLogUsecase) {
   return {
     createActivityLogFromSpeech: createActivityLogFromSpeech(uc),

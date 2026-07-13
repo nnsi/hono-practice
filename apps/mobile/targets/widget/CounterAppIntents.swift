@@ -24,7 +24,15 @@ struct IncrementCounterIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        await SimpleLogHelper.saveLog(activityId: activityId, kindId: kindId, quantity: Double(step))
+        let dbHelper = WidgetDbHelper()
+        guard let activity = dbHelper.getActivityById(activityId),
+              WidgetDbHelper.parseCounterSteps(activity.recordingModeConfig).contains(step)
+        else { return .result() }
+        _ = await SimpleLogHelper.saveLog(
+            activityId: activityId,
+            kindId: kindId,
+            quantity: Double(step)
+        )
         WidgetCenter.shared.reloadTimelines(ofKind: "CounterWidget")
         return .result()
     }

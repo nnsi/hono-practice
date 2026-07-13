@@ -127,7 +127,9 @@ describe("executeRestore", () => {
   });
 
   it("returns true and refreshes plan after successful restore", async () => {
-    mocks.restorePurchases.mockResolvedValue({});
+    mocks.restorePurchases.mockResolvedValue({
+      entitlements: { active: { premium: {} } },
+    });
     mocks.apiGetMe.mockResolvedValue({ plan: "premium" });
 
     const result = await executeRestore();

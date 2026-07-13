@@ -26,8 +26,24 @@ const nodeInclude = [
   `**/packages/**/${TEST_FILE_EXT}`,
   // mobileのテスト
   `**/apps/mobile/**/${TEST_FILE_EXT}`,
+  // Tail Workerのログparse/writeテスト
+  `**/apps/tail-worker/**/${TEST_FILE_EXT}`,
   // scriptsのテスト (generator 等)
   "**/scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
+  // Drizzle schema/migration guard tests
+  `**/infra/drizzle/test/**/${TEST_FILE_EXT}`,
+];
+
+// PGlite compiles WebAssembly and runs every migration when a DB-backed suite
+// starts. Running several of these suites at once can exhaust CI resources and
+// make otherwise healthy beforeAll hooks hit their timeout. Keep the DB suites
+// in a dedicated serial project while the remaining Node tests stay parallel.
+const databaseInclude = [
+  `**/apps/backend/**/*Route*.test.ts`,
+  `**/apps/backend/**/*Repository.integration.test.ts`,
+  `**/apps/backend/**/adminSessionRepository.test.ts`,
+  `**/apps/backend/**/apiKeyAuth.test.ts`,
+  `**/apps/backend/**/scopeIntegration.test.ts`,
 ];
 
 const sharedExclude = [
@@ -67,7 +83,18 @@ export default defineConfig({
           name: "node",
           environment: "node",
           include: nodeInclude,
-          exclude: [...sharedExclude, ...jsdomInclude],
+          exclude: [...sharedExclude, ...jsdomInclude, ...databaseInclude],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "database",
+          environment: "node",
+          include: databaseInclude,
+          exclude: sharedExclude,
+          fileParallelism: false,
+          maxWorkers: 1,
         },
       },
       {

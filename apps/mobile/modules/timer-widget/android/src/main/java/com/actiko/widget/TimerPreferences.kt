@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.UUID
 
 class TimerPreferences(context: Context) {
     private val prefs = context.getSharedPreferences("actiko_timer_widget", Context.MODE_PRIVATE)
@@ -34,6 +35,16 @@ class TimerPreferences(context: Context) {
     fun getActivityId(widgetId: Int): String? = prefs.getString(key(widgetId, "activityId"), null)
 
     fun getRecordingMode(widgetId: Int): String? = prefs.getString(key(widgetId, "recordingMode"), null)
+
+    fun getOrCreateActionToken(widgetId: Int): String {
+        val tokenKey = key(widgetId, "actionToken")
+        prefs.getString(tokenKey, null)?.let { return it }
+        val token = UUID.randomUUID().toString()
+        prefs.edit().putString(tokenKey, token).apply()
+        return token
+    }
+
+    fun getActionToken(widgetId: Int): String? = prefs.getString(key(widgetId, "actionToken"), null)
 
     fun startTimer(widgetId: Int) {
         val editor = prefs.edit()
@@ -81,7 +92,7 @@ class TimerPreferences(context: Context) {
 
     fun removeWidget(widgetId: Int) {
         val editor = prefs.edit()
-        listOf("activityId", "recordingMode", "kindId", "isRunning", "startTimeMillis", "accumulatedMillis", "startDateIso")
+        listOf("activityId", "recordingMode", "kindId", "actionToken", "isRunning", "startTimeMillis", "accumulatedMillis", "startDateIso")
             .forEach { editor.remove(key(widgetId, it)) }
         val ids = getAllWidgetIds().toMutableSet()
         ids.remove(widgetId)

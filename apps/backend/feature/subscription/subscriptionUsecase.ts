@@ -13,6 +13,7 @@ export type SubscriptionQueryUsecase = {
   getSubscriptionByUserId: (userId: UserId) => Promise<Subscription>;
   getSubscriptionByUserIdOrDefault: (userId: UserId) => Promise<Subscription>;
   getSubscriptionByPaymentProviderId: (
+    paymentProvider: string,
     providerId: string,
   ) => Promise<Subscription | undefined>;
   canUserAccessApiKey: (userId: UserId) => Promise<boolean>;
@@ -28,9 +29,15 @@ export function newSubscriptionQueryUsecase(
       subscriptionRepo,
       tracer,
     ),
-    getSubscriptionByPaymentProviderId: (providerId: string) =>
+    getSubscriptionByPaymentProviderId: (
+      paymentProvider: string,
+      providerId: string,
+    ) =>
       tracer.span("db.findSubscriptionByPaymentProviderId", () =>
-        subscriptionRepo.findSubscriptionByPaymentProviderId(providerId),
+        subscriptionRepo.findSubscriptionByPaymentProviderId(
+          paymentProvider,
+          providerId,
+        ),
       ),
     canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo, tracer),
   };

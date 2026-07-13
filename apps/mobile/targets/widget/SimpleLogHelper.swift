@@ -5,15 +5,20 @@ import Foundation
 enum SimpleLogHelper {
     static func saveLog(
         activityId: String, kindId: String?, quantity: Double
-    ) async {
+    ) async -> Result<Void, WidgetDbError> {
         // Plan check: block log creation if widget is not allowed
-        guard await WidgetPlanHelper.isWidgetAllowed() else { return }
+        guard await WidgetPlanHelper.isWidgetAllowed() else {
+            return .failure(.noMatchingRow)
+        }
         let dbHelper = WidgetDbHelper()
+        if let kindId, !dbHelper.isKindOwnedByActivity(activityId, kindId: kindId) {
+            return .failure(.noMatchingRow)
+        }
         let utcFormatter = ISO8601DateFormatter()
         utcFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let now = utcFormatter.string(from: Date())
         let today = WidgetDbHelper.todayDateString()
-        dbHelper.insertActivityLog(
+        return dbHelper.insertActivityLog(
             id: UuidV7.generate(), activityId: activityId,
             activityKindId: kindId, quantity: quantity, memo: "",
             date: today, syncStatus: "pending", createdAt: now, updatedAt: now

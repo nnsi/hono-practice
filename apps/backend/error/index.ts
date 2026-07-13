@@ -1,3 +1,4 @@
+export * from "./aiQuotaError";
 export * from "./appError";
 export * from "./authError";
 export * from "./conflictError";

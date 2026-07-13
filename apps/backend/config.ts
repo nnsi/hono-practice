@@ -24,6 +24,7 @@ export const configSchema = z
   .object({
     APP_URL: z.string(),
     APP_URL_V2: z.string().optional(),
+    ADMIN_APP_URL: z.string().url().optional(),
     // この API（リソース）向けに発行されたトークンだけを受け付けるための識別子
     // 例: "actiko-backend"
     JWT_AUDIENCE: z.string().min(1).default("actiko-backend"),
@@ -55,6 +56,17 @@ export const configSchema = z
     // AI連携（OpenRouter）
     OPENROUTER_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default("google/gemini-2.5-flash-lite"),
+    AI_USER_QUOTA_PER_MINUTE: z.coerce.number().int().positive().default(6),
+    AI_USER_QUOTA_PER_DAY: z.coerce.number().int().positive().default(100),
+    AI_USER_QUOTA_PER_MONTH: z.coerce.number().int().positive().default(2000),
+    AI_API_KEY_QUOTA_PER_MINUTE: z.coerce.number().int().positive().default(3),
+    AI_API_KEY_QUOTA_PER_DAY: z.coerce.number().int().positive().default(50),
+    AI_API_KEY_QUOTA_PER_MONTH: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(1000),
+    AI_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
     // Webhook認証
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),

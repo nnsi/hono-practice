@@ -96,13 +96,19 @@ describe("syncActivities", () => {
 
     it("marks synced, marks failed, and upserts serverWins", async () => {
       const pendingActivities = [
-        { id: "a1", name: "Run", _syncStatus: "pending" as const },
+        {
+          id: "a1",
+          name: "Run",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending" as const,
+        },
       ];
       const pendingKinds = [
         {
           id: "k1",
           activityId: "a1",
           name: "Sprint",
+          updatedAt: "2026-01-01T00:00:00.000Z",
           _syncStatus: "pending" as const,
         },
       ];
@@ -143,20 +149,16 @@ describe("syncActivities", () => {
       await syncActivities();
 
       expect(mockActivityRepo.markActivitiesSynced).toHaveBeenCalledWith([
-        "a1",
+        { id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" },
       ]);
-      expect(mockActivityRepo.markActivitiesFailed).toHaveBeenCalledWith([
-        "a3",
-      ]);
+      expect(mockActivityRepo.markActivitiesFailed).toHaveBeenCalledWith([]);
       expect(mockActivityRepo.upsertActivities).toHaveBeenCalledWith([
         serverWinActivity,
       ]);
       expect(mockActivityRepo.markActivityKindsSynced).toHaveBeenCalledWith([
-        "k1",
+        { id: "k1", updatedAt: "2026-01-01T00:00:00.000Z" },
       ]);
-      expect(mockActivityRepo.markActivityKindsFailed).toHaveBeenCalledWith([
-        "k3",
-      ]);
+      expect(mockActivityRepo.markActivityKindsFailed).toHaveBeenCalledWith([]);
       expect(mockActivityRepo.upsertActivityKinds).toHaveBeenCalledWith([
         serverWinKind,
       ]);
@@ -164,7 +166,11 @@ describe("syncActivities", () => {
 
     it("throws when API returns 5xx", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
-        { id: "a1", _syncStatus: "pending" },
+        {
+          id: "a1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
       ] as unknown as DexieActivity[]);
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
 
@@ -176,21 +182,85 @@ describe("syncActivities", () => {
         v2: { activities: { sync: { $post: mockPost } } },
       };
 
-      await expect(syncActivities()).rejects.toThrow("syncActivities failed");
+      await expect(syncActivities()).rejects.toThrow("sync request failed");
 
       expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
       expect(mockActivityRepo.markActivitiesFailed).not.toHaveBeenCalled();
     });
 
+    it.each([
+      401, 403,
+    ])("keeps local records retryable after %s", async (status) => {
+      mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
+        { id: "a1", _syncStatus: "pending" },
+      ] as unknown as DexieActivity[]);
+      mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
+      const mockPost = vi.fn().mockResolvedValue({ ok: false, status });
+      mockApiClientObj.users = {
+        v2: { activities: { sync: { $post: mockPost } } },
+      };
+
+      await expect(syncActivities()).rejects.toThrow(`failed: ${status}`);
+      expect(mockActivityRepo.markActivitiesRejected).not.toHaveBeenCalled();
+      expect(mockActivityRepo.markActivitiesSynced).not.toHaveBeenCalled();
+    });
+
+    it("resumes sync after a failed refresh and later reauthentication", async () => {
+      mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
+        {
+          id: "a1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+      ] as unknown as DexieActivity[]);
+      mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([]);
+      const mockPost = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 401 })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            activities: {
+              syncedIds: ["a1"],
+              skippedIds: [],
+              serverWins: [],
+              failures: [],
+            },
+            activityKinds: {
+              syncedIds: [],
+              skippedIds: [],
+              serverWins: [],
+              failures: [],
+            },
+          }),
+        });
+      mockApiClientObj.users = {
+        v2: { activities: { sync: { $post: mockPost } } },
+      };
+
+      await expect(syncActivities()).rejects.toThrow("failed: 401");
+      await expect(syncActivities()).resolves.toBeUndefined();
+      expect(mockActivityRepo.markActivitiesSynced).toHaveBeenCalledWith([
+        { id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
+    });
+
     it("marks items as rejected on 4xx and does not throw", async () => {
       mockActivityRepo.getPendingSyncActivities.mockResolvedValue([
-        { id: "a1", name: "Run", _syncStatus: "pending" },
+        {
+          id: "a1",
+          name: "Run",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
       ] as unknown as DexieActivity[]);
       mockActivityRepo.getPendingSyncActivityKinds.mockResolvedValue([
         {
           id: "k1",
           activityId: "a1",
           name: "",
+          updatedAt: "2026-01-01T00:00:00.000Z",
           _syncStatus: "pending",
         },
       ] as unknown as DexieActivityKind[]);
@@ -206,10 +276,10 @@ describe("syncActivities", () => {
       await syncActivities(); // should not throw
 
       expect(mockActivityRepo.markActivitiesRejected).toHaveBeenCalledWith([
-        "a1",
+        { id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" },
       ]);
       expect(mockActivityRepo.markActivityKindsRejected).toHaveBeenCalledWith([
-        "k1",
+        { id: "k1", updatedAt: "2026-01-01T00:00:00.000Z" },
       ]);
       // syncedIds/skippedIds are empty → called with [] (no-op)
       expect(mockActivityRepo.markActivitiesSynced).toHaveBeenCalledWith([]);

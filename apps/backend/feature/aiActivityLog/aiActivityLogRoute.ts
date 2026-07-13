@@ -13,7 +13,9 @@ import { newActivityLogRepository } from "../activityLog";
 import type { AIActivityLogGateway } from "./aiActivityLogGateway";
 import { newAIActivityLogGateway } from "./aiActivityLogGatewayImpl";
 import { newAIActivityLogHandler } from "./aiActivityLogHandler";
+import { newAIActivityLogUsageHandler } from "./aiActivityLogUsageHandler";
 import { newAIActivityLogUsecase } from "./aiActivityLogUsecase";
+import { reserveAIUsage } from "./aiUsageGuard";
 
 type GatewayFactory = (env: Config) => AIActivityLogGateway;
 
@@ -50,7 +52,14 @@ export function createAIActivityLogRoute(
       activityLogRepo,
       tracer,
     );
-    const h = newAIActivityLogHandler(uc);
+    const handler = newAIActivityLogHandler(uc);
+    const h = newAIActivityLogUsageHandler(handler, {
+      reserve: () => reserveAIUsage(c),
+      logger: c.get("logger"),
+      userId: c.get("userId"),
+      apiKeyId: c.get("apiKeyId") ?? null,
+      model: c.env.AI_MODEL,
+    });
 
     c.set("h", h);
 
@@ -61,11 +70,11 @@ export function createAIActivityLogRoute(
     "/from-speech",
     zValidator("json", CreateAIActivityLogRequestSchema),
     async (c) => {
+      const params = c.req.valid("json");
       const res = await c.var.h.createActivityLogFromSpeech(
         c.get("userId"),
-        c.req.valid("json"),
+        params,
       );
-
       return c.json(res, 201);
     },
   );

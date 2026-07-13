@@ -28,6 +28,8 @@ describe("Polar webhook event handling", () => {
           paymentProviderId: "polar_sub_001",
           eventType: "subscription.created",
           webhookId: "msg_test1",
+          eventOccurredAt: new Date("2026-03-02T00:00:00Z"),
+          eventSequence: "msg_test1",
         }),
       );
     });
@@ -46,6 +48,7 @@ describe("Polar webhook event handling", () => {
 
       expect(res.status).toBe(200);
       expect(queryUc.getSubscriptionByPaymentProviderId).toHaveBeenCalledWith(
+        "polar",
         "polar_sub_001",
       );
       expect(commandUc.upsertSubscriptionFromPayment).not.toHaveBeenCalled();

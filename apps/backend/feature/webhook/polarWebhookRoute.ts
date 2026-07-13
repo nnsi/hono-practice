@@ -92,11 +92,22 @@ export function createPolarWebhookRoute(deps?: {
     const payload = parsed.data;
     const { queryUc, commandUc } = c.var;
     const sub = payload.data;
+    const eventOccurredAt = new Date(sub.modified_at);
+    const ordering = { eventOccurredAt, eventSequence: webhookId };
+    const period = {
+      currentPeriodStart: new Date(sub.current_period_start),
+      currentPeriodEnd: new Date(sub.current_period_end),
+      trialStart: sub.trial_start ? new Date(sub.trial_start) : undefined,
+      trialEnd: sub.trial_end ? new Date(sub.trial_end) : undefined,
+    };
 
     async function resolveUserId(): Promise<string | undefined> {
       const userId = sub.metadata.userId;
       if (userId) return userId;
-      const existing = await queryUc.getSubscriptionByPaymentProviderId(sub.id);
+      const existing = await queryUc.getSubscriptionByPaymentProviderId(
+        "polar",
+        sub.id,
+      );
       return existing?.userId;
     }
 
@@ -104,16 +115,17 @@ export function createPolarWebhookRoute(deps?: {
       case "subscription.created": {
         const userId = await resolveUserId();
         if (!userId) break;
+        const status = POLAR_STATUS_MAP[sub.status] ?? "expired";
         await commandUc.upsertSubscriptionFromPayment({
           userId,
-          plan: "premium",
-          status: "active",
+          plan: resolvePlan(status),
+          status,
           paymentProvider: "polar",
           paymentProviderId: sub.id,
           eventType: "subscription.created",
           webhookId,
-          currentPeriodStart: new Date(sub.current_period_start),
-          currentPeriodEnd: new Date(sub.current_period_end),
+          ...period,
+          ...ordering,
         });
         break;
       }
@@ -132,8 +144,8 @@ export function createPolarWebhookRoute(deps?: {
           eventType: payload.type,
           webhookId,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
-          currentPeriodStart: new Date(sub.current_period_start),
-          currentPeriodEnd: new Date(sub.current_period_end),
+          ...period,
+          ...ordering,
         });
         break;
       }
@@ -150,8 +162,8 @@ export function createPolarWebhookRoute(deps?: {
           eventType: "subscription.canceled",
           webhookId,
           cancelAtPeriodEnd: true,
-          currentPeriodStart: new Date(sub.current_period_start),
-          currentPeriodEnd: new Date(sub.current_period_end),
+          ...period,
+          ...ordering,
         });
         break;
       }
@@ -167,6 +179,8 @@ export function createPolarWebhookRoute(deps?: {
           paymentProviderId: sub.id,
           eventType: "subscription.revoked",
           webhookId,
+          ...period,
+          ...ordering,
         });
         break;
       }

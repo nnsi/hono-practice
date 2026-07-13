@@ -152,6 +152,45 @@ describe("AuthUsecase", () => {
       verify(passwordVerifier.compare("wrong-password", user.password!)).once();
       verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
+
+    it("OAuth専用アカウントも存在しないアカウントと同じエラーになる", async () => {
+      const oauthOnly = createUserEntity({ ...user, password: null });
+      when(userRepo.getUserByLoginId(oauthOnly.loginId)).thenResolve(oauthOnly);
+
+      await expect(
+        usecase.login({ loginId: oauthOnly.loginId, password: "password" }),
+      ).rejects.toThrow(new AuthError("invalid credentials"));
+      verify(passwordVerifier.compare(anything(), anything())).never();
+    });
+
+    it("旧SHA-256 hashでのlogin成功時にbcrypt hashへ移行する", async () => {
+      const legacyHash = "a1".repeat(32);
+      const legacyUser = createUserEntity({ ...user, password: legacyHash });
+      when(userRepo.getUserByLoginId(legacyUser.loginId)).thenResolve(
+        legacyUser,
+      );
+      when(passwordVerifier.compare("plain-password", legacyHash)).thenResolve(
+        true,
+      );
+      when(passwordVerifier.needsRehash!(legacyHash)).thenReturn(true);
+      when(passwordVerifier.hash("plain-password")).thenResolve("$2b$new");
+      when(
+        userRepo.updatePasswordHash(legacyUser.id, legacyHash, "$2b$new"),
+      ).thenResolve(true);
+      when(refreshTokenRepo.createRefreshToken(anything())).thenCall(
+        async (token: RefreshToken) => token,
+      );
+
+      await expect(
+        usecase.login({
+          loginId: legacyUser.loginId,
+          password: "plain-password",
+        }),
+      ).resolves.toMatchObject({ userId: legacyUser.id });
+      verify(
+        userRepo.updatePasswordHash(legacyUser.id, legacyHash, "$2b$new"),
+      ).once();
+    });
   });
 
   describe("refreshToken", () => {

@@ -8,6 +8,11 @@ const mocks = vi.hoisted(() => ({
   netInfoAddEventListener: vi.fn<
     (listener: (state: { isConnected: boolean }) => void) => () => void
   >(() => () => {}),
+  getAllKeys: vi.fn().mockResolvedValue([]),
+  multiGet: vi.fn().mockResolvedValue([]),
+  setItem: vi.fn().mockResolvedValue(undefined),
+  removeItem: vi.fn().mockResolvedValue(undefined),
+  reportError: vi.fn(),
 }));
 
 vi.mock("@react-native-community/netinfo", () => ({
@@ -15,15 +20,15 @@ vi.mock("@react-native-community/netinfo", () => ({
 }));
 
 vi.mock("../utils/errorReporter", () => ({
-  reportError: vi.fn(),
+  reportError: mocks.reportError,
 }));
 
 vi.mock("@react-native-async-storage/async-storage", () => ({
   default: {
-    getAllKeys: vi.fn(),
-    multiGet: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
+    getAllKeys: mocks.getAllKeys,
+    multiGet: mocks.multiGet,
+    setItem: mocks.setItem,
+    removeItem: mocks.removeItem,
   },
 }));
 
@@ -41,6 +46,62 @@ async function loadFresh() {
 describe("rnPlatformAdapters forced offline", () => {
   beforeEach(() => {
     vi.resetModules();
+    mocks.getAllKeys.mockReset().mockResolvedValue([]);
+    mocks.multiGet.mockReset().mockResolvedValue([]);
+    mocks.reportError.mockReset();
+  });
+
+  it("起動時にwatermarkとbootstrapped resourcesを復元する", async () => {
+    mocks.getAllKeys.mockResolvedValue([
+      "actiko-v2-lastSyncedAt",
+      "actiko-v2-bootstrappedResources",
+      "unrelated-key",
+    ]);
+    mocks.multiGet.mockResolvedValue([
+      ["actiko-v2-lastSyncedAt", "2026-07-13T00:00:00.000Z"],
+      ["actiko-v2-bootstrappedResources", '["logs","tasks"]'],
+    ]);
+    const { loadStorageCache, rnStorageAdapter, isStorageCacheLoaded } =
+      await loadFresh();
+
+    await loadStorageCache();
+
+    expect(mocks.multiGet).toHaveBeenCalledWith([
+      "actiko-v2-lastSyncedAt",
+      "actiko-v2-bootstrappedResources",
+    ]);
+    expect(rnStorageAdapter.getItem("actiko-v2-lastSyncedAt")).toBe(
+      "2026-07-13T00:00:00.000Z",
+    );
+    expect(rnStorageAdapter.getItem("actiko-v2-bootstrappedResources")).toBe(
+      '["logs","tasks"]',
+    );
+    expect(isStorageCacheLoaded()).toBe(true);
+  });
+
+  it("storageの読込失敗を報告して空cacheで起動を継続する", async () => {
+    const storageError = new Error("storage unavailable");
+    mocks.getAllKeys.mockRejectedValue(storageError);
+    const { loadStorageCache, isStorageCacheLoaded } = await loadFresh();
+
+    await expect(loadStorageCache()).resolves.toBeUndefined();
+
+    expect(mocks.reportError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errorType: "storage_error",
+        message: "storage unavailable",
+      }),
+    );
+    expect(isStorageCacheLoaded()).toBe(true);
+  });
+
+  it("並行した初期化でAsyncStorageを一度だけ読み込む", async () => {
+    const { loadStorageCache } = await loadFresh();
+
+    await Promise.all([loadStorageCache(), loadStorageCache()]);
+
+    expect(mocks.getAllKeys).toHaveBeenCalledOnce();
+    expect(mocks.multiGet).toHaveBeenCalledOnce();
   });
 
   it("初期状態は online (forcedOffline=false, NetInfo cachedOnline=true)", async () => {

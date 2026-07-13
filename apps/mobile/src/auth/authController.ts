@@ -13,7 +13,9 @@ import {
   reconcileTabPreferenceFromServer,
 } from "../components/setting/tabPreferenceStore";
 import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
+import { clearVoiceCredentials } from "../lib/voiceApiKeyBridge";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
+import { loadStorageCache } from "../sync/rnPlatformAdapters";
 import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 
@@ -36,19 +38,22 @@ export const authController = createAuthController({
     },
   },
   onUserSwitch: async () => {
+    await clearVoiceCredentials();
     await clearLocalData();
   },
   performInitialSync: async (userId) => {
+    await loadStorageCache();
     await performInitialSync(userId);
   },
   onUserSynced: async (user) => {
     await reconcileTabPreferenceFromServer(user.tabPreference);
     void flushPendingTabPreference();
     if (user.plan === "premium") {
-      provisionVoiceApiKey().catch(() => {});
+      provisionVoiceApiKey(user.id).catch(() => {});
     }
   },
   onAuthStateReset: () => {
+    void clearVoiceCredentials();
     void clearStoredTabPreference();
   },
 });

@@ -29,12 +29,20 @@ export type UpsertSubscriptionFromPaymentParams = {
   cancelAtPeriodEnd?: boolean;
   priceAmount?: number;
   priceCurrency?: string;
+  trialStart?: Date;
+  trialEnd?: Date;
+  /** Provider occurrence time, never the time this worker received it. */
+  eventOccurredAt: Date;
+  /** Stable provider event ID used to break equal-timestamp ties. */
+  eventSequence: string;
 };
+
+export type SubscriptionEventResult = "applied" | "ignored";
 
 export type SubscriptionCommandUsecase = {
   upsertSubscriptionFromPayment: (
     params: UpsertSubscriptionFromPaymentParams,
-  ) => Promise<void>;
+  ) => Promise<SubscriptionEventResult>;
 };
 
 export function newSubscriptionCommandUsecase(
@@ -59,78 +67,78 @@ function upsertSubscriptionFromPayment(
   historyRepo: SubscriptionHistoryRepository,
   tracer: Tracer,
 ) {
-  return async (params: UpsertSubscriptionFromPaymentParams): Promise<void> => {
-    // Idempotency: skip if this webhook was already processed
-    if (params.webhookId) {
-      const alreadyProcessed = await tracer.span("db.existsByWebhookId", () =>
-        historyRepo.existsByWebhookId(params.webhookId as string),
-      );
-      if (alreadyProcessed) return;
-    }
-
+  return async (
+    params: UpsertSubscriptionFromPaymentParams,
+  ): Promise<SubscriptionEventResult> => {
     const userId = createUserId(params.userId);
 
-    await txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
-      const existing = await tracer.span("db.findSubscriptionByUserId", () =>
-        txRepos.findSubscriptionByUserId(userId),
+    return txRunner.run([subscriptionRepo, historyRepo], async (txRepos) => {
+      const existing = await tracer.span(
+        "db.findSubscriptionByPaymentProviderId",
+        () =>
+          txRepos.findSubscriptionByPaymentProviderId(
+            params.paymentProvider,
+            params.paymentProviderId,
+          ),
       );
+      if (existing && existing.userId !== userId) return "ignored";
 
       const now = new Date();
-      let subscriptionId: SubscriptionId;
+      const currentPeriodEnd =
+        params.currentPeriodEnd ?? existing?.currentPeriodEnd ?? null;
+      const trialEnd = params.trialEnd ?? existing?.trialEnd ?? null;
 
-      if (existing) {
-        const updated = newSubscription({
-          ...existing,
-          plan: params.plan,
-          status: params.status,
-          paymentProvider: params.paymentProvider,
-          paymentProviderId: params.paymentProviderId,
-          currentPeriodStart:
-            params.currentPeriodStart ?? existing.currentPeriodStart,
-          currentPeriodEnd:
-            params.currentPeriodEnd ?? existing.currentPeriodEnd,
-          cancelAtPeriodEnd:
-            params.cancelAtPeriodEnd ?? existing.cancelAtPeriodEnd,
-          priceAmount: params.priceAmount ?? existing.priceAmount,
-          priceCurrency: params.priceCurrency ?? existing.priceCurrency,
-          updatedAt: now,
-        });
-        await tracer.span("db.updateSubscription", () =>
-          txRepos.updateSubscription(updated),
-        );
-        subscriptionId = existing.id;
-      } else {
-        const sub = newSubscription({
+      // Never grant entitlement from an incomplete or already elapsed provider
+      // period. A later renewal can recover from expired through the transition
+      // graph, but a delayed active snapshot cannot re-enable premium access.
+      const periodIsValid =
+        params.status === "trial"
+          ? trialEnd !== null && trialEnd > now
+          : params.status !== "active" ||
+            (currentPeriodEnd !== null && currentPeriodEnd > now);
+      const status = periodIsValid ? params.status : "expired";
+      const plan = periodIsValid ? params.plan : "free";
+
+      const candidate = newSubscription({
+        ...(existing ?? {
           id: createSubscriptionId(),
           userId,
-          plan: params.plan,
-          status: params.status,
-          paymentProvider: params.paymentProvider,
-          paymentProviderId: params.paymentProviderId,
-          currentPeriodStart: params.currentPeriodStart ?? null,
-          currentPeriodEnd: params.currentPeriodEnd ?? null,
-          cancelAtPeriodEnd: params.cancelAtPeriodEnd ?? false,
           cancelledAt: null,
-          trialStart: null,
-          trialEnd: null,
-          priceAmount: params.priceAmount ?? null,
-          priceCurrency: params.priceCurrency ?? "JPY",
           metadata: null,
           createdAt: now,
-          updatedAt: now,
-        });
-        await tracer.span("db.createSubscription", () =>
-          txRepos.createSubscription(sub),
-        );
-        subscriptionId = sub.id;
-      }
+        }),
+        plan,
+        status,
+        paymentProvider: params.paymentProvider,
+        paymentProviderId: params.paymentProviderId,
+        currentPeriodStart:
+          params.currentPeriodStart ?? existing?.currentPeriodStart ?? null,
+        currentPeriodEnd,
+        cancelAtPeriodEnd:
+          params.cancelAtPeriodEnd ?? existing?.cancelAtPeriodEnd ?? false,
+        trialStart: params.trialStart ?? existing?.trialStart ?? null,
+        trialEnd,
+        priceAmount: params.priceAmount ?? existing?.priceAmount ?? null,
+        priceCurrency: params.priceCurrency ?? existing?.priceCurrency ?? "JPY",
+        lastEventOccurredAt: params.eventOccurredAt,
+        lastEventSequence: params.eventSequence,
+        updatedAt: now,
+      });
+
+      const applied = await tracer.span(
+        "db.applyOrderedSubscriptionEvent",
+        () => txRepos.applyOrderedSubscriptionEvent(candidate),
+      );
+      if (!applied) return "ignored";
+
+      const subscriptionId: SubscriptionId = applied.id;
 
       const history = newSubscriptionHistory({
         id: createSubscriptionHistoryId(),
         subscriptionId,
         eventType: params.eventType,
-        plan: params.plan,
-        status: params.status,
+        plan,
+        status,
         source: params.paymentProvider ?? "unknown",
         webhookId: params.webhookId ?? null,
         createdAt: now,
@@ -138,6 +146,7 @@ function upsertSubscriptionFromPayment(
       await tracer.span("db.insertSubscriptionHistory", () =>
         txRepos.insertSubscriptionHistory(history),
       );
+      return "applied";
     });
   };
 }

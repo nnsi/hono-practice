@@ -32,7 +32,7 @@ async function start() {
     STORAGE_TYPE: "local" as const,
     UPLOAD_DIR: "public/uploads",
     DB: db,
-    RATE_LIMIT_KV: undefined,
+    RATE_LIMIT_STORE: undefined,
     STRIPE_WEBHOOK_SECRET: "whsec_e2e_test_secret",
     REVENUECAT_WEBHOOK_AUTH_KEY: "rc_e2e_test_key",
   };
@@ -71,6 +71,10 @@ async function start() {
     define: {
       "import.meta.env.VITE_API_URL": JSON.stringify(
         `http://localhost:${FRONTEND_PORT}`,
+      ),
+      // Exercise the production-only subscription UI in the normal E2E suite.
+      "import.meta.env.VITE_ENABLE_WEB_SUBSCRIPTION": JSON.stringify(
+        process.env.VITE_ENABLE_WEB_SUBSCRIPTION ?? "true",
       ),
     },
   });

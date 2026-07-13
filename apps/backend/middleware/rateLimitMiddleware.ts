@@ -2,9 +2,8 @@ import type { MiddlewareHandler } from "hono";
 import { createMiddleware } from "hono/factory";
 
 import type { AppContext } from "@backend/context";
-import type { KeyValueStore } from "@backend/infra/kv/kv";
+import type { RateLimitStore } from "@backend/infra/rateLimit";
 import type { Tracer } from "@backend/lib/tracer";
-import { fireAndForget } from "@backend/utils/fireAndForget";
 import { getClientIp } from "@backend/utils/getClientIp";
 
 import type { RateLimitConfig } from "./rateLimitConfigs";
@@ -18,22 +17,15 @@ export {
   webhookRateLimitConfig,
 } from "./rateLimitConfigs";
 
-export type RateLimitRecord = {
-  count: number;
-  windowStart: number;
-};
-
 /**
  * 固定ウィンドウ方式のレートリミットミドルウェアを作成
  */
 export function createRateLimitMiddleware(
-  store: KeyValueStore<RateLimitRecord>,
+  store: RateLimitStore,
   config: RateLimitConfig,
   tracer?: Tracer,
 ): MiddlewareHandler {
   const { windowMs, limit, keyGenerator } = config;
-  const windowSeconds = Math.ceil(windowMs / 1000);
-
   return async (c, next) => {
     const t = tracer;
     const ip = getClientIp(c);
@@ -42,61 +34,26 @@ export function createRateLimitMiddleware(
     const key = `ratelimit:${keyGenerator({ ip, path })}`;
     const now = Date.now();
 
-    const record = t
-      ? await t.span("kv.getRateLimit", () => store.get(key))
-      : await store.get(key);
+    const decision = t
+      ? await t.span("kv.consumeRateLimit", () =>
+          store.consume([{ key, limit, windowMs }], now),
+        )
+      : await store.consume([{ key, limit, windowMs }], now);
+    const state = decision.states[0];
 
-    if (!record || now - record.windowStart >= windowMs) {
-      // 新しいウィンドウを開始 — set は非ブロッキングで実行
-      const windowStart = now;
-      const setPromise = store.set(
-        key,
-        { count: 1, windowStart },
-        windowSeconds,
-      );
-      fireAndForget(c, setPromise);
-
-      c.header("X-RateLimit-Limit", String(limit));
-      c.header("X-RateLimit-Remaining", String(limit - 1));
-      c.header(
-        "X-RateLimit-Reset",
-        String(Math.ceil((windowStart + windowMs) / 1000)),
-      );
-
-      await next();
-      return;
-    }
-
-    if (record.count >= limit) {
+    if (!decision.allowed) {
       // レート制限超過
-      const retryAfter = Math.ceil(
-        (record.windowStart + windowMs - now) / 1000,
-      );
+      const retryAfter = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
       c.header("Retry-After", String(retryAfter));
       c.header("X-RateLimit-Limit", String(limit));
       c.header("X-RateLimit-Remaining", "0");
-      c.header(
-        "X-RateLimit-Reset",
-        String(Math.ceil((record.windowStart + windowMs) / 1000)),
-      );
+      c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
       return c.json({ message: "too many requests" }, 429);
     }
 
-    // カウントを増やす — set は非ブロッキングで実行
-    const remaining = limit - record.count - 1;
-    const setPromise = store.set(
-      key,
-      { count: record.count + 1, windowStart: record.windowStart },
-      windowSeconds,
-    );
-    fireAndForget(c, setPromise);
-
     c.header("X-RateLimit-Limit", String(limit));
-    c.header("X-RateLimit-Remaining", String(remaining));
-    c.header(
-      "X-RateLimit-Reset",
-      String(Math.ceil((record.windowStart + windowMs) / 1000)),
-    );
+    c.header("X-RateLimit-Remaining", String(state.remaining));
+    c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
 
     await next();
   };
@@ -111,8 +68,8 @@ export function applyRateLimit(
   config: RateLimitConfig,
 ): MiddlewareHandler<AppContext> {
   return createMiddleware<AppContext>(async (c, next) => {
-    const kv = c.env.RATE_LIMIT_KV;
-    if (!kv) {
+    const store = c.env.RATE_LIMIT_STORE;
+    if (!store) {
       const nodeEnv = c.env.NODE_ENV;
       if (nodeEnv === "production" || nodeEnv === "stg") {
         return c.json(
@@ -122,6 +79,20 @@ export function applyRateLimit(
       }
       return next();
     }
-    return createRateLimitMiddleware(kv, config, c.get("tracer"))(c, next);
+    return Promise.resolve(
+      createRateLimitMiddleware(store, config, c.get("tracer"))(c, next),
+    ).catch((error: unknown) => {
+      c.get("logger")?.error("Rate limit store unavailable", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (c.env.NODE_ENV === "production" || c.env.NODE_ENV === "stg") {
+        c.res = c.json(
+          { message: "rate limit infrastructure unavailable" },
+          503,
+        );
+        return;
+      }
+      return next();
+    });
   });
 }

@@ -1,6 +1,9 @@
 import { AppError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
-import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
+import type {
+  Subscription,
+  SubscriptionPlan,
+} from "@packages/domain/subscription/subscriptionSchema";
 import {
   type TabPreference,
   createDefaultTabPreference,
@@ -21,7 +24,7 @@ export type UserWithProviders = User & {
 function buildUserWithProviders(
   user: User,
   userProviders: { provider: string; email?: string | null }[],
-  subscription: { plan: SubscriptionPlan },
+  subscription: Subscription,
   tabPreference: TabPreference | undefined,
 ): UserWithProviders {
   const providers = userProviders.map((p) => p.provider);
@@ -36,7 +39,7 @@ function buildUserWithProviders(
     providers,
     providerEmails:
       Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
-    plan: subscription.plan,
+    plan: subscription.getEffectivePlan(),
     tabPreference: tabPreference ?? createDefaultTabPreference(),
   };
 }

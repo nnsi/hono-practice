@@ -2,6 +2,8 @@
   "name": "actiko-tail-worker",
   "private": true,
   "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsgo --noEmit",
     "deploy:stg": "wrangler deploy --env stg",
     "deploy:prod": "wrangler deploy --env production"
   },

@@ -24,16 +24,23 @@ export function login(
       userRepo.getUserByLoginId(loginId),
     );
     if (!user) throw new AuthError("invalid credentials");
-    if (!user.password)
-      throw new AuthError(
-        "invalid credentials - password cannot be null for standard login",
-      );
+    if (!user.password) throw new AuthError("invalid credentials");
 
     const isValidPassword = await passwordVerifier.compare(
       password,
       user.password,
     );
     if (!isValidPassword) throw new AuthError("invalid credentials");
+
+    // Opportunistically migrate legacy SHA-256 hashes after a successful
+    // login. The compare-and-swap repository update is safe under concurrent
+    // logins and never rewrites an already-upgraded bcrypt hash.
+    if (passwordVerifier.needsRehash?.(user.password)) {
+      const upgradedHash = await passwordVerifier.hash(password);
+      await tracer.span("db.updatePasswordHash", () =>
+        userRepo.updatePasswordHash(user.id, user.password!, upgradedHash),
+      );
+    }
 
     const accessToken = await generateAccessToken(
       jwtSecret,

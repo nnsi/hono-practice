@@ -2,6 +2,7 @@ import type {
   ActivityKindRecord,
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
+import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
 
 import type { ActivityDbAdapter } from "./activityDbAdapter";
 import { filterSafeUpserts } from "./syncHelpers";
@@ -9,27 +10,27 @@ import { filterSafeUpserts } from "./syncHelpers";
 export async function applySyncMarkHelpers(
   adapter: ActivityDbAdapter,
   op:
-    | { type: "markActivitiesSynced"; ids: string[] }
-    | { type: "markActivityKindsSynced"; ids: string[] }
-    | { type: "markActivitiesFailed"; ids: string[] }
-    | { type: "markActivityKindsFailed"; ids: string[] }
-    | { type: "markActivitiesRejected"; ids: string[] }
-    | { type: "markActivityKindsRejected"; ids: string[] },
+    | { type: "markActivitiesSynced"; revisions: SyncRevision[] }
+    | { type: "markActivityKindsSynced"; revisions: SyncRevision[] }
+    | { type: "markActivitiesFailed"; revisions: SyncRevision[] }
+    | { type: "markActivityKindsFailed"; revisions: SyncRevision[] }
+    | { type: "markActivitiesRejected"; revisions: SyncRevision[] }
+    | { type: "markActivityKindsRejected"; revisions: SyncRevision[] },
 ) {
-  if (op.ids.length === 0) return;
+  if (op.revisions.length === 0) return;
   switch (op.type) {
     case "markActivitiesSynced":
-      return adapter.updateActivitiesSyncStatus(op.ids, "synced");
+      return adapter.updateActivitiesSyncStatus(op.revisions, "synced");
     case "markActivityKindsSynced":
-      return adapter.updateKindsSyncStatus(op.ids, "synced");
+      return adapter.updateKindsSyncStatus(op.revisions, "synced");
     case "markActivitiesFailed":
-      return adapter.updateActivitiesSyncStatus(op.ids, "failed");
+      return adapter.updateActivitiesSyncStatus(op.revisions, "failed");
     case "markActivityKindsFailed":
-      return adapter.updateKindsSyncStatus(op.ids, "failed");
+      return adapter.updateKindsSyncStatus(op.revisions, "failed");
     case "markActivitiesRejected":
-      return adapter.updateActivitiesSyncStatus(op.ids, "rejected");
+      return adapter.updateActivitiesSyncStatus(op.revisions, "rejected");
     case "markActivityKindsRejected":
-      return adapter.updateKindsSyncStatus(op.ids, "rejected");
+      return adapter.updateKindsSyncStatus(op.revisions, "rejected");
   }
 }
 

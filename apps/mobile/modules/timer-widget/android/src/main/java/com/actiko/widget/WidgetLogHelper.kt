@@ -23,12 +23,16 @@ class WidgetLogHelper(private val context: Context) {
         }
     }
 
-    fun hasActivityLogForToday(activityId: String, today: String): Boolean {
-        val db = dbHelper.openDatabase() ?: return false
-        return try {
+    fun hasActivityLogForToday(
+        activityId: String,
+        activityKindId: String?,
+        today: String,
+    ): Result<Boolean> = runCatching {
+        val db = dbHelper.openDatabase() ?: error("Widget database is unavailable")
+        try {
             val cursor = db.rawQuery(
-                "SELECT COUNT(*) FROM activity_logs WHERE activity_id = ? AND date = ? AND deleted_at IS NULL",
-                arrayOf(activityId, today),
+                "SELECT COUNT(*) FROM activity_logs WHERE activity_id = ? AND ((? IS NULL AND activity_kind_id IS NULL) OR activity_kind_id = ?) AND date = ? AND deleted_at IS NULL",
+                arrayOf(activityId, activityKindId, activityKindId, today),
             )
             cursor.use { it.moveToFirst() && it.getInt(0) > 0 }
         } finally {
@@ -36,17 +40,29 @@ class WidgetLogHelper(private val context: Context) {
         }
     }
 
-    fun softDeleteTodayLog(activityId: String, today: String) {
-        val db = dbHelper.openDatabase() ?: return
+    fun softDeleteTodayLog(
+        activityId: String,
+        activityKindId: String?,
+        today: String,
+    ): Result<Unit> = runCatching {
+        val db = dbHelper.openDatabase() ?: error("Widget database is unavailable")
         try {
             val utcFmt = SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US,
             ).apply { timeZone = TimeZone.getTimeZone("UTC") }
             val now = utcFmt.format(Date())
-            db.execSQL(
-                "UPDATE activity_logs SET deleted_at = ?, sync_status = 'pending', updated_at = ? WHERE id = (SELECT id FROM activity_logs WHERE activity_id = ? AND date = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1)",
-                arrayOf(now, now, activityId, today),
+            val values = ContentValues().apply {
+                put("deleted_at", now)
+                put("sync_status", "pending")
+                put("updated_at", now)
+            }
+            val updated = db.update(
+                "activity_logs",
+                values,
+                "id = (SELECT id FROM activity_logs WHERE activity_id = ? AND ((? IS NULL AND activity_kind_id IS NULL) OR activity_kind_id = ?) AND date = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1)",
+                arrayOf(activityId, activityKindId, activityKindId, today),
             )
+            check(updated == 1) { "Expected one widget log to be deleted, updated=$updated" }
         } finally {
             db.close()
         }
@@ -58,8 +74,8 @@ class WidgetLogHelper(private val context: Context) {
         quantity: Double,
         memo: String,
         date: String,
-    ) {
-        val db = dbHelper.openDatabase() ?: return
+    ): Result<Unit> = runCatching {
+        val db = dbHelper.openDatabase() ?: error("Widget database is unavailable")
         try {
             val utcFmt = SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US,
@@ -79,7 +95,8 @@ class WidgetLogHelper(private val context: Context) {
                 put("created_at", now)
                 put("updated_at", now)
             }
-            db.insert("activity_logs", null, values)
+            val rowId = db.insertOrThrow("activity_logs", null, values)
+            check(rowId != -1L) { "Widget activity log insert returned -1" }
         } finally {
             db.close()
         }

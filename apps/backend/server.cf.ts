@@ -2,8 +2,8 @@ import type { ExecutionContext } from "hono";
 
 import type {
   AnalyticsEngineDataset,
+  DurableObjectNamespace,
   Hyperdrive,
-  KVNamespace,
 } from "@cloudflare/workers-types";
 import * as schema from "@infra/drizzle/schema";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -11,14 +11,19 @@ import postgres from "postgres";
 
 import { app } from "./app";
 import { type Config, configSchema } from "./config";
-import { newCfKvStore } from "./infra/kv/cfKv";
+import {
+  RateLimitDurableObject,
+  newDurableObjectRateLimitStore,
+} from "./infra/rateLimit";
+
+export { RateLimitDurableObject };
 
 let sql: ReturnType<typeof postgres> | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
 
 type Env = Config & {
   HYPERDRIVE: Hyperdrive;
-  RATE_LIMIT_KV_NS?: KVNamespace;
+  RATE_LIMITER?: DurableObjectNamespace;
   WAE_LOGS?: AnalyticsEngineDataset;
   WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;
 };
@@ -36,11 +41,8 @@ export default {
     });
     db = drizzle(sql, { schema });
 
-    // レートリミット用KVStore（KV namespaceが設定されている場合のみ有効）
-    const rateLimitKv = env.RATE_LIMIT_KV_NS
-      ? newCfKvStore<{ count: number; windowStart: number }>(
-          env.RATE_LIMIT_KV_NS,
-        )
+    const rateLimitStore = env.RATE_LIMITER
+      ? newDurableObjectRateLimitStore(env.RATE_LIMITER)
       : undefined;
 
     return app.fetch(
@@ -49,7 +51,7 @@ export default {
         ...env,
         ...config,
         DB: db,
-        RATE_LIMIT_KV: rateLimitKv,
+        RATE_LIMIT_STORE: rateLimitStore,
         WAE_LOGS: env.WAE_LOGS,
         WAE_CLIENT_ERRORS: env.WAE_CLIENT_ERRORS,
       },

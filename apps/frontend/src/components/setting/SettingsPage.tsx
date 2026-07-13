@@ -6,6 +6,7 @@ import { Info, Settings } from "lucide-react";
 
 import { useWebSubscriptionEnabled } from "../../hooks/useWebSubscriptionEnabled";
 import { LegalModal } from "../common/LegalModal";
+import { useCheckoutReconciliation } from "../subscription/useCheckoutReconciliation";
 import { AccountSection } from "./AccountSection";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { DataManagementSection } from "./DataManagementSection";
@@ -18,6 +19,7 @@ export function SettingsPage() {
   const { settings, updateSetting } = useAppSettings();
   const { t } = useTranslation("settings");
   const webSubscriptionEnabled = useWebSubscriptionEnabled();
+  const checkoutStatus = useCheckoutReconciliation();
   const [legalModal, setLegalModal] = useState<
     "privacy" | "terms" | "tokushoho" | null
   >(null);
@@ -32,6 +34,22 @@ export function SettingsPage() {
       </header>
 
       <div className="p-4 space-y-6">
+        {checkoutStatus === "polling" && (
+          <p
+            role="status"
+            className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700"
+          >
+            {t("checkoutReconciling")}
+          </p>
+        )}
+        {checkoutStatus === "timeout" && (
+          <p
+            role="alert"
+            className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800"
+          >
+            {t("checkoutReconcileTimeout")}
+          </p>
+        )}
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
             {t("appSettings")}

@@ -9,7 +9,7 @@ import type { Subscription } from "@packages/domain/subscription/subscriptionSch
 import type { User, UserId } from "@packages/domain/user/userSchema";
 
 import type { Config } from "../config";
-import type { KeyValueStore } from "../infra/kv/kv";
+import type { RateLimitStore } from "../infra/rateLimit";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
 import type { Logger } from "../lib/logger";
 import type { Tracer } from "../lib/tracer";
@@ -30,6 +30,7 @@ export type AppContext = {
     user?: User;
     subscription?: Subscription;
     apiKeyScopes?: ApiKeyScope[];
+    apiKeyId?: string;
     logger: Logger;
     tracer: Tracer;
     adminEmail?: string;
@@ -37,8 +38,8 @@ export type AppContext = {
   Bindings: Config & {
     DB: QueryExecutor;
     R2_BUCKET?: R2Bucket;
-    // レートリミット用KVStore（オプション、未設定時はレートリミット無効）
-    RATE_LIMIT_KV?: KeyValueStore<{ count: number; windowStart: number }>;
+    // Atomic store backed by Durable Objects (CF) or Redis (Node).
+    RATE_LIMIT_STORE?: RateLimitStore;
     // Analytics Engine（オプション、ローカル開発時はundefined）
     WAE_LOGS?: AnalyticsEngineDataset;
     WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;

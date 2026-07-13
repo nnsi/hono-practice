@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { ApiReferencePage } from "../components/api-reference/ApiReferencePage";
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/api-reference")({
-  component: () => <ApiReferencePage />,
+  component: lazyRouteComponent(
+    () => import("../components/api-reference/ApiReferencePage"),
+    "ApiReferencePage",
+  ),
 });

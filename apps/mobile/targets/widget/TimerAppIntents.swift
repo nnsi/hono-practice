@@ -6,12 +6,22 @@ struct StartTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Start Timer"
     static var description: IntentDescription = "Start the activity timer"
 
+    @Parameter(title: "Activity ID")
+    var activityId: String
+
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String
+
+    init() {}
+
+    init(activityId: String, timerInstanceId: String) {
+        self.activityId = activityId
+        self.timerInstanceId = timerInstanceId
+    }
+
     func perform() async throws -> some IntentResult {
         let state = TimerState()
-        guard let activityId = state.getConfiguredActivityId() else {
-            return .result()
-        }
-        state.startTimer(activityId: activityId)
+        state.startTimer(timerInstanceId: timerInstanceId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
         return .result()
     }
@@ -22,12 +32,22 @@ struct PauseTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Pause Timer"
     static var description: IntentDescription = "Pause the activity timer"
 
+    @Parameter(title: "Activity ID")
+    var activityId: String
+
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String
+
+    init() {}
+
+    init(activityId: String, timerInstanceId: String) {
+        self.activityId = activityId
+        self.timerInstanceId = timerInstanceId
+    }
+
     func perform() async throws -> some IntentResult {
         let state = TimerState()
-        guard let activityId = state.getConfiguredActivityId() else {
-            return .result()
-        }
-        state.stopTimer(activityId: activityId)
+        state.stopTimer(timerInstanceId: timerInstanceId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
         return .result()
     }
@@ -38,21 +58,36 @@ struct StopTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Stop Timer"
     static var description: IntentDescription = "Stop the activity timer and save"
 
+    @Parameter(title: "Activity ID")
+    var activityId: String
+
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String
+
+    init() {}
+
+    init(activityId: String, timerInstanceId: String) {
+        self.activityId = activityId
+        self.timerInstanceId = timerInstanceId
+    }
+
     func perform() async throws -> some IntentResult {
         let state = TimerState()
-        guard let activityId = state.getConfiguredActivityId() else {
-            return .result()
-        }
-        if state.isRunning(activityId: activityId) {
-            state.stopTimer(activityId: activityId)
+        if state.isRunning(timerInstanceId: timerInstanceId) {
+            state.stopTimer(timerInstanceId: timerInstanceId)
         }
         let dbHelper = WidgetDbHelper()
         let kinds = dbHelper.getActivityKinds(activityId)
         if kinds.isEmpty {
-            SaveLogHelper.saveLog(activityId: activityId, kindId: nil)
-            state.resetTimer(activityId: activityId)
+            TimerSavePolicy.performOnSuccess(SaveLogHelper.saveLog(
+                activityId: activityId,
+                timerInstanceId: timerInstanceId,
+                kindId: nil
+            )) {
+                state.resetTimer(timerInstanceId: timerInstanceId)
+            }
         } else {
-            state.setPendingKindSelection(activityId: activityId)
+            state.setPendingKindSelection(timerInstanceId: timerInstanceId)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
         return .result()
@@ -68,20 +103,30 @@ struct SaveWithKindIntent: AppIntent {
     @Parameter(title: "Kind ID")
     var kindId: String
 
+    @Parameter(title: "Activity ID")
+    var activityId: String
+
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String
+
     init() {}
 
-    init(kindId: String) {
+    init(activityId: String, timerInstanceId: String, kindId: String) {
+        self.activityId = activityId
+        self.timerInstanceId = timerInstanceId
         self.kindId = kindId
     }
 
     func perform() async throws -> some IntentResult {
         let state = TimerState()
-        guard let activityId = state.getConfiguredActivityId() else {
-            return .result()
+        TimerSavePolicy.performOnSuccess(SaveLogHelper.saveLog(
+            activityId: activityId,
+            timerInstanceId: timerInstanceId,
+            kindId: kindId
+        )) {
+            state.clearPendingKindSelection(timerInstanceId: timerInstanceId)
+            state.resetTimer(timerInstanceId: timerInstanceId)
         }
-        SaveLogHelper.saveLog(activityId: activityId, kindId: kindId)
-        state.clearPendingKindSelection(activityId: activityId)
-        state.resetTimer(activityId: activityId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
         return .result()
     }
@@ -92,13 +137,23 @@ struct ResetTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Reset Timer"
     static var description: IntentDescription = "Reset the activity timer"
 
+    @Parameter(title: "Activity ID")
+    var activityId: String
+
+    @Parameter(title: "Timer Instance ID")
+    var timerInstanceId: String
+
+    init() {}
+
+    init(activityId: String, timerInstanceId: String) {
+        self.activityId = activityId
+        self.timerInstanceId = timerInstanceId
+    }
+
     func perform() async throws -> some IntentResult {
         let state = TimerState()
-        guard let activityId = state.getConfiguredActivityId() else {
-            return .result()
-        }
-        state.clearPendingKindSelection(activityId: activityId)
-        state.resetTimer(activityId: activityId)
+        state.clearPendingKindSelection(timerInstanceId: timerInstanceId)
+        state.resetTimer(timerInstanceId: timerInstanceId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
         return .result()
     }

@@ -1,4 +1,5 @@
 import type { ActivityRepository } from "@packages/domain/activity/activityRepository";
+import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
 import {
   type ActivityDbAdapter,
   newActivityRepository,
@@ -9,7 +10,9 @@ import { generateOrder } from "@packages/utils/lexicalOrder";
 import { activityIconAdapter } from "./activityIconAdapter";
 import { db } from "./schema";
 
-const adapter: ActivityDbAdapter = {
+const PENDING_SYNC_STATUS: SyncStatus = "pending";
+
+export const activityDbAdapter: ActivityDbAdapter = {
   // Auth
   async getUserId() {
     const authState = await db.authState.get("current");
@@ -50,14 +53,11 @@ const adapter: ActivityDbAdapter = {
       updatedAt: timestamp,
       _syncStatus: "pending",
     });
-    await db.activityKinds
-      .where("activityId")
-      .equals(id)
-      .modify({
-        deletedAt: timestamp,
-        updatedAt: timestamp,
-        _syncStatus: "pending" as const,
-      });
+    await db.activityKinds.where("activityId").equals(id).modify({
+      deletedAt: timestamp,
+      updatedAt: timestamp,
+      _syncStatus: PENDING_SYNC_STATUS,
+    });
   },
 
   // ActivityKind CRUD
@@ -94,7 +94,7 @@ const adapter: ActivityDbAdapter = {
         await db.activities.update(id, {
           orderIndex,
           updatedAt: now,
-          _syncStatus: "pending" as const,
+          _syncStatus: PENDING_SYNC_STATUS,
         });
         prev = orderIndex;
       }
@@ -114,14 +114,53 @@ const adapter: ActivityDbAdapter = {
       .anyOf(["pending", "failed"])
       .toArray();
   },
-  async updateActivitiesSyncStatus(ids, status) {
-    await db.activities.where("id").anyOf(ids).modify({ _syncStatus: status });
+  async getRejectedSyncActivities() {
+    return db.activities.where("_syncStatus").equals("rejected").toArray();
   },
-  async updateKindsSyncStatus(ids, status) {
+  async getRejectedSyncActivityKinds() {
+    return db.activityKinds.where("_syncStatus").equals("rejected").toArray();
+  },
+  async updateActivitiesSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    const expectedById = new Map(
+      revisions.map((revision) => [revision.id, revision.updatedAt]),
+    );
+    await db.activities
+      .where("id")
+      .anyOf(revisions.map((revision) => revision.id))
+      .modify((record) => {
+        if (expectedById.get(record.id) === record.updatedAt) {
+          record._syncStatus = status;
+        }
+      });
+  },
+  async updateKindsSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    const expectedById = new Map(
+      revisions.map((revision) => [revision.id, revision.updatedAt]),
+    );
+    await db.activityKinds
+      .where("id")
+      .anyOf(revisions.map((revision) => revision.id))
+      .modify((record) => {
+        if (expectedById.get(record.id) === record.updatedAt) {
+          record._syncStatus = status;
+        }
+      });
+  },
+  async retryRejectedActivities(ids) {
+    await db.activities
+      .where("id")
+      .anyOf(ids)
+      .filter((record) => record._syncStatus === "rejected")
+      .modify({ _syncStatus: PENDING_SYNC_STATUS });
+  },
+  async retryRejectedActivityKinds(ids) {
     await db.activityKinds
       .where("id")
       .anyOf(ids)
-      .modify({ _syncStatus: status });
+      .filter((record) => record._syncStatus === "rejected")
+      .modify({ _syncStatus: PENDING_SYNC_STATUS });
   },
   async getActivitiesByIds(ids) {
     return db.activities.where("id").anyOf(ids).toArray();
@@ -141,5 +180,5 @@ const adapter: ActivityDbAdapter = {
 };
 
 export const activityRepository = newActivityRepository(
-  adapter,
+  activityDbAdapter,
 ) satisfies ActivityRepository;

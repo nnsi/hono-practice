@@ -12,10 +12,18 @@ new_sqlite_classes = ["KeyValueDO"]
 tag = "v2"
 deleted_classes = ["KeyValueDO"]
 
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["RateLimitDurableObject"]
+
 # stg環境
 [env.stg.vars]
 NODE_ENV = "stg"
 STORAGE_TYPE = "r2"
+
+[[env.stg.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimitDurableObject"
 
 [[env.stg.analytics_engine_datasets]]
 binding = "WAE_LOGS"
@@ -29,6 +37,10 @@ dataset = "actiko_client_errors"
 [env.production.vars]
 NODE_ENV = "production"
 STORAGE_TYPE = "r2"
+
+[[env.production.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimitDurableObject"
 
 [[env.production.analytics_engine_datasets]]
 binding = "WAE_LOGS"

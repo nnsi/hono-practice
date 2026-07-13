@@ -111,16 +111,44 @@ function createInMemoryAdapter() {
     async getPendingSyncActivityKinds() {
       return [...kinds.values()].filter((k) => k._syncStatus === "pending");
     },
-    async updateActivitiesSyncStatus(ids, status) {
-      for (const id of ids) {
-        const a = activities.get(id);
-        if (a) activities.set(id, { ...a, _syncStatus: status });
+    async getRejectedSyncActivities() {
+      return [...activities.values()].filter(
+        (a) => a._syncStatus === "rejected",
+      );
+    },
+    async getRejectedSyncActivityKinds() {
+      return [...kinds.values()].filter((k) => k._syncStatus === "rejected");
+    },
+    async updateActivitiesSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const activity = activities.get(revision.id);
+        if (activity?.updatedAt === revision.updatedAt) {
+          activities.set(revision.id, { ...activity, _syncStatus: status });
+        }
       }
     },
-    async updateKindsSyncStatus(ids, status) {
+    async updateKindsSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const kind = kinds.get(revision.id);
+        if (kind?.updatedAt === revision.updatedAt) {
+          kinds.set(revision.id, { ...kind, _syncStatus: status });
+        }
+      }
+    },
+    async retryRejectedActivities(ids) {
       for (const id of ids) {
-        const k = kinds.get(id);
-        if (k) kinds.set(id, { ...k, _syncStatus: status });
+        const activity = activities.get(id);
+        if (activity?._syncStatus === "rejected") {
+          activities.set(id, { ...activity, _syncStatus: "pending" });
+        }
+      }
+    },
+    async retryRejectedActivityKinds(ids) {
+      for (const id of ids) {
+        const kind = kinds.get(id);
+        if (kind?._syncStatus === "rejected") {
+          kinds.set(id, { ...kind, _syncStatus: "pending" });
+        }
       }
     },
     async getActivitiesByIds(ids) {
@@ -568,7 +596,9 @@ describe("activityRepositoryLogic", () => {
 
       expect(mem.activities.get(created.id)!._syncStatus).toBe("pending");
 
-      await repo.markActivitiesSynced([created.id]);
+      await repo.markActivitiesSynced([
+        { id: created.id, updatedAt: created.updatedAt },
+      ]);
 
       expect(mem.activities.get(created.id)!._syncStatus).toBe("synced");
     });
@@ -576,6 +606,27 @@ describe("activityRepositoryLogic", () => {
     it("空配列の場合は何もしない", async () => {
       await repo.markActivitiesSynced([]);
       // エラーが起きないことを確認
+    });
+
+    it("送信後に再編集されたActivityをsyncedで上書きしない", async () => {
+      const created = await repo.createActivity({
+        name: "Before send",
+        quantityUnit: "km",
+        emoji: "\u{1F3C3}",
+        showCombinedStats: false,
+      });
+      const sentRevision = { id: created.id, updatedAt: created.updatedAt };
+
+      await repo.updateActivity(created.id, { name: "Edited while sending" });
+      await repo.markActivitiesSynced([sentRevision]);
+
+      expect(mem.activities.get(created.id)).toMatchObject({
+        name: "Edited while sending",
+        _syncStatus: "pending",
+      });
+      expect(mem.activities.get(created.id)!.updatedAt).not.toBe(
+        sentRevision.updatedAt,
+      );
     });
   });
 
@@ -592,7 +643,9 @@ describe("activityRepositoryLogic", () => {
       const kindId = [...mem.kinds.keys()][0];
       expect(mem.kinds.get(kindId)!._syncStatus).toBe("pending");
 
-      await repo.markActivityKindsSynced([kindId]);
+      await repo.markActivityKindsSynced([
+        { id: kindId, updatedAt: mem.kinds.get(kindId)!.updatedAt },
+      ]);
 
       expect(mem.kinds.get(kindId)!._syncStatus).toBe("synced");
     });
@@ -611,7 +664,9 @@ describe("activityRepositoryLogic", () => {
         showCombinedStats: false,
       });
 
-      await repo.markActivitiesFailed([created.id]);
+      await repo.markActivitiesFailed([
+        { id: created.id, updatedAt: created.updatedAt },
+      ]);
 
       expect(mem.activities.get(created.id)!._syncStatus).toBe("failed");
     });
@@ -632,7 +687,9 @@ describe("activityRepositoryLogic", () => {
       });
 
       const kindId = [...mem.kinds.keys()][0];
-      await repo.markActivityKindsFailed([kindId]);
+      await repo.markActivityKindsFailed([
+        { id: kindId, updatedAt: mem.kinds.get(kindId)!.updatedAt },
+      ]);
 
       expect(mem.kinds.get(kindId)!._syncStatus).toBe("failed");
     });
