@@ -15,14 +15,14 @@
 
 ## コード側引き渡し（2026-07-13）
 
-- release candidate commit: `4d04cf72ad91b9d95077bff7a520b781f9adb824`
+- release candidate commit: `b5558b117214fbfee0e9a35c788240fa8984c4f4`
 - migration: `0042_fixed_gertrude_yorkes.sql`
 - Mobile version / runtimeVersion: `1.1.0`
-- CI: 229 test files / 2,375 tests、Biome、全TypeScript projectが成功
+- CI: 233 test files / 2,396 tests、実Redis統合、Biome、全TypeScript projectが成功
 - E2E: 20 files / 69 testsが成功
 - local build: Web / Admin production build、Mobile Web / iOS / Android production exportが成功
-- native: Swift Widget execution test、Android Kotlin compile、Widget unit test、release AAR assemblyが成功
-- browser: offline同期、別browser反映、Free plan UI、Admin session restore/logoutを確認
+- native: Swift Widget execution test、全Widget target sourceのiOS 17 simulator type-check、Android Kotlin compile、Widget unit test、release AAR assemblyが成功
+- browser: offline同期、別browser反映、Free plan UI、Admin session restore/logout、Redis有効化backendでのAdmin/public login flowを確認
 - review: Security / Logic / Architecture / Testability / Nativeが全員LGTM
 - `EAS Build`、deploy、実課金、外部secret確認、実機、store操作は未実行。以下の外部項目は担当者が証跡を確認してからチェックする
 
@@ -46,7 +46,7 @@
 - [ ] Cloudflare productionに`REVENUECAT_WEBHOOK_AUTH_KEY`が存在することを確認する
 - [ ] Cloudflare productionに`OPENROUTER_API_KEY`が存在することを確認する
 - [ ] Cloudflare productionに`JWT_SECRET_ADMIN`が存在することを確認する
-- [ ] Cloudflare productionのR2/KV/Hyperdrive/Analytics Engine bindingを確認する
+- [ ] Cloudflare productionのR2/Hyperdrive/Analytics Engine/RateLimit Durable Object (`RATE_LIMITER`) bindingを確認する
 - [ ] production CORS originを実ドメインと照合する
 - [ ] secret名のpreflight結果だけをrelease証跡へ記録する
 
@@ -185,7 +185,7 @@
 - [ ] OpenRouter利用量・費用アラートを設定する
 - [ ] RevenueCat Webhook失敗アラートを設定する
 - [ ] Polar Webhook失敗アラートを設定する
-- [ ] DB connection、R2、KV、Hyperdriveの監視を確認する
+- [ ] DB connection、R2、Hyperdrive、RateLimit Durable Objectの監視を確認する
 - [ ] 公開直後の監視担当と連絡経路を確定する
 - [ ] rollback/公開停止の判断担当を確定する
 

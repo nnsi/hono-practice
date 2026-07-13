@@ -197,7 +197,7 @@
 ## P1-C12: release candidateのrepository内準備
 
 - [x] `master`と`release`の差分・分岐履歴を整理する
-- [x] releaseへ取り込むcommitを`4d04cf72ad91b9d95077bff7a520b781f9adb824`に確定する
+- [x] releaseへ取り込むcommitを`b5558b117214fbfee0e9a35c788240fa8984c4f4`に確定する
 - [x] 対象migration一覧をrepositoryへ記録する
 - [x] Mobile version / runtimeVersionを`1.1.0`へ更新し、EAS管理のbuild numberは外部確認へ分離する
 - [x] release noteを現在の実装へ更新する
@@ -205,7 +205,7 @@
 - [x] DB migrationがexpand-compatibleであることを確認する
 - [x] API/Web/Mobileの互換性matrixを記録する
 - [x] release candidate tag命名規則を確定する
-- [x] コード側チェック完了commit SHA `4d04cf72ad91b9d95077bff7a520b781f9adb824`を記録する
+- [x] コード側チェック完了commit SHA `b5558b117214fbfee0e9a35c788240fa8984c4f4`を記録する
 
 ## コード側最終確認
 

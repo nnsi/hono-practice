@@ -76,28 +76,31 @@ approved Mobile binary. Store rollout uses the same iOS/Android release-candidat
 ## Local verification evidence
 
 The release-candidate implementation commit is
-`4d04cf72ad91b9d95077bff7a520b781f9adb824`. The final `pnpm run ci-check` below ran
+`b5558b117214fbfee0e9a35c788240fa8984c4f4`. The final `pnpm run ci-check` below ran
 against that exact commit. External build IDs, deploy run URLs, and credential checks
 remain in the external release checklist.
 
-- `pnpm run ci-check`: 229 test files / 2,375 tests, Biome, and all TypeScript projects
-  passed. DB-backed PGlite suites run in a dedicated serial project to avoid CI resource
-  contention.
+- `pnpm run ci-check`: 233 test files / 2,396 tests, Biome, and all TypeScript projects
+  passed with the real Redis integration suite enabled. DB-backed PGlite suites run in a
+  dedicated serial project to avoid CI resource contention.
 - `pnpm run test-e2e`: 20 files / 69 tests passed with per-worker PGlite instances.
-- Production builds: Web and Admin Web passed. The largest Web chunks were the 285.18
+- Production builds: Web and Admin Web passed. The largest Web chunks were the 284.38
   kB entry and 428.97 kB vendor chunks; Admin's entry was 283.43 kB.
-- Mobile production export with dummy non-secret environment values passed for Web,
-  iOS, and Android: 4,262 / 4,669 / 4,767 modules respectively, with 10 MB Hermes
-  bundles for both native platforms.
-- Native verification: Swift Widget execution tests passed; Android app Kotlin compile,
-  Widget unit tests, and Widget release AAR assembly passed. Widget schema v12 was
-  checked across React Native, Swift, and Kotlin.
+- Mobile production export with dummy non-secret environment values passed for Web.
+  iOS and Android were regenerated after the architecture fixes: 4,681 / 4,769 modules,
+  with 10 MB Hermes bundles for both native platforms.
+- Native verification: Swift Widget execution tests and iOS 17 simulator type-checks for
+  every Widget target source passed; Android app Kotlin compile, Widget unit tests, and
+  Widget release AAR assembly passed. Widget schema v12 was checked across React Native,
+  Swift, and Kotlin.
 - `expo-doctor@1.20.0`: 20/20 checks passed. `pnpm install --frozen-lockfile` passed.
   `pnpm audit --prod --audit-level=high` reported high 0 and the two accepted moderate
   build-tool findings recorded in `docs/security/mobile-build-tooling-audit-20260713.md`.
 - Browser Check 2: offline Note creation synced with HTTP 200 after reconnection,
   appeared in an independent browser, and was deleted cleanly. Free-plan upgrade UI,
   Admin HttpOnly/SameSite=Lax session restore, server-side logout, and authenticated
-  zero-console-error contexts were verified.
+  zero-console-error contexts were verified. The final Admin and public login flows also
+  passed against the Redis-enabled backend composition root; only the expected initial
+  anonymous 401 responses appeared in the console.
 - Review Cycle: Security, Logic, Architecture, Testability, and Native reviewers all
-  returned LGTM after three rounds.
+  returned LGTM after the architecture follow-up rounds.
