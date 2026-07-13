@@ -18,36 +18,43 @@ describe("memory rate limit store", () => {
     ).resolves.toMatchObject({ allowed: true });
   });
 
-  it("returns unique lease IDs and only releases the owning lease", async () => {
+  it("does not update any rule when one rule is already full", async () => {
     const store = newMemoryRateLimitStore();
-    const first = await store.acquireConcurrency("user", 2, 1_000, 100);
-    const second = await store.acquireConcurrency("user", 2, 1_000, 100);
-    expect(first.allowed).toBe(true);
-    expect(second.allowed).toBe(true);
-    if (!first.allowed || !second.allowed) {
-      throw new Error("expected leases to be acquired");
-    }
-    expect(first.leaseId).not.toBe(second.leaseId);
+    const rules = [
+      { key: "broad", limit: 5, windowMs: 1_000 },
+      { key: "tight", limit: 1, windowMs: 1_000 },
+    ];
 
-    await store.releaseConcurrency("user", "not-the-owner");
-    await expect(
-      store.acquireConcurrency("user", 2, 1_000, 200),
-    ).resolves.toEqual({ allowed: false, current: 2 });
+    await store.consume({ partitionKey: "user", rules }, 100);
+    const denied = await store.consume({ partitionKey: "user", rules }, 200);
+    const broadOnly = await store.consume(
+      { partitionKey: "user", rules: [rules[0]] },
+      200,
+    );
 
-    await store.releaseConcurrency("user", first.leaseId);
-    await expect(
-      store.acquireConcurrency("user", 2, 1_000, 200),
-    ).resolves.toMatchObject({ allowed: true, current: 2 });
+    expect(denied).toMatchObject({
+      allowed: false,
+      states: [
+        { key: "broad", count: 1 },
+        { key: "tight", count: 1 },
+      ],
+    });
+    expect(broadOnly).toMatchObject({
+      allowed: true,
+      states: [{ key: "broad", count: 2 }],
+    });
   });
 
-  it("expires each lease independently", async () => {
+  it("waits for every exceeded rule to reset before retrying", async () => {
     const store = newMemoryRateLimitStore();
-    const first = await store.acquireConcurrency("user", 2, 100, 100);
-    const second = await store.acquireConcurrency("user", 2, 100, 150);
-    expect(first.allowed && second.allowed).toBe(true);
+    const rules = [
+      { key: "short", limit: 1, windowMs: 1_000 },
+      { key: "long", limit: 1, windowMs: 10_000 },
+    ];
 
+    await store.consume({ partitionKey: "retry", rules }, 100);
     await expect(
-      store.acquireConcurrency("user", 2, 100, 200),
-    ).resolves.toMatchObject({ allowed: true, current: 2 });
+      store.consume({ partitionKey: "retry", rules }, 200),
+    ).resolves.toMatchObject({ allowed: false, retryAfterMs: 9_900 });
   });
 });

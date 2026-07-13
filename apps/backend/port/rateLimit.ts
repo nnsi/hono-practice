@@ -1,51 +1,34 @@
-export type AtomicCounterRule = {
+export type RateLimitRule = {
   key: string;
   limit: number;
   windowMs: number;
 };
 
-export type AtomicCounterState = {
+export type RateLimitState = {
   key: string;
   count: number;
   remaining: number;
   resetAt: number;
 };
 
-export type AtomicCounterDecision = {
+export type RateLimitDecision = {
   allowed: boolean;
-  states: AtomicCounterState[];
+  states: RateLimitState[];
+  /** Wait until every rule that blocked this decision has reset. */
   retryAfterMs: number;
 };
 
 /**
- * A set of counters that must be consumed atomically within one stable scope.
- * Adapters must isolate equal rule keys that belong to different partitions.
+ * A set of counters evaluated from one adapter snapshot.
+ * Adapters must isolate equal rule keys that belong to different partitions and
+ * update every rule together when the decision is allowed. Persistence
+ * consistency is adapter-specific, so callers must treat this as a soft limit.
  */
-export type AtomicCounterBatch = {
+export type RateLimitBatch = {
   partitionKey: string;
-  rules: AtomicCounterRule[];
+  rules: RateLimitRule[];
 };
 
-export type AtomicCounterPort = {
-  consume(
-    batch: AtomicCounterBatch,
-    now?: number,
-  ): Promise<AtomicCounterDecision>;
+export type RateLimitCounterPort = {
+  consume(batch: RateLimitBatch, now?: number): Promise<RateLimitDecision>;
 };
-
-export type ConcurrencyLeaseDecision =
-  | { allowed: true; current: number; leaseId: string }
-  | { allowed: false; current: number };
-
-export type ConcurrencyLeasePort = {
-  acquireConcurrency(
-    key: string,
-    limit: number,
-    ttlMs: number,
-    now?: number,
-  ): Promise<ConcurrencyLeaseDecision>;
-  releaseConcurrency(key: string, leaseId: string): Promise<void>;
-};
-
-/** Composition-root binding implemented by Redis, Durable Objects, or memory. */
-export type RateLimitPorts = AtomicCounterPort & ConcurrencyLeasePort;

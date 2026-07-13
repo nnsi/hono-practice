@@ -23,7 +23,7 @@ describe.runIf(Boolean(redisUrl))("Redis rate limit integration", () => {
     const tightRule = { key: "tight", limit: 1, windowMs: 60_000 };
     const redisKeys = [broadRule, tightRule].map(
       (rule) =>
-        `atomic-rate:{${encodeURIComponent(partitionKey)}}:${encodeURIComponent(rule.key)}`,
+        `rate-limit:{${encodeURIComponent(partitionKey)}}:${encodeURIComponent(rule.key)}`,
     );
 
     try {
@@ -52,14 +52,12 @@ describe.runIf(Boolean(redisUrl))("Redis rate limit integration", () => {
     }
   });
 
-  it("executes Lua atomically and preserves lease ownership", async () => {
+  it("uses Redis atomicity to enforce the limit during a parallel burst", async () => {
     const suffix = crypto.randomUUID();
     const partitionKey = `integration:${suffix}`;
     const ruleKey = "minute";
-    const concurrencyKey = `integration:${suffix}`;
     const redisKeys = [
-      `atomic-rate:{${encodeURIComponent(partitionKey)}}:${encodeURIComponent(ruleKey)}`,
-      `atomic-concurrency:${concurrencyKey}`,
+      `rate-limit:{${encodeURIComponent(partitionKey)}}:${encodeURIComponent(ruleKey)}`,
     ];
 
     try {
@@ -72,45 +70,6 @@ describe.runIf(Boolean(redisUrl))("Redis rate limit integration", () => {
       );
       expect(decisions.filter((decision) => decision.allowed)).toHaveLength(3);
       expect(decisions.filter((decision) => !decision.allowed)).toHaveLength(9);
-
-      const now = Date.now();
-      const stale = await store.acquireConcurrency(
-        concurrencyKey,
-        1,
-        1_000,
-        now,
-      );
-      expect(stale.allowed).toBe(true);
-      if (!stale.allowed) throw new Error("expected the first lease");
-
-      const current = await store.acquireConcurrency(
-        concurrencyKey,
-        1,
-        1_000,
-        now + 1_001,
-      );
-      expect(current.allowed).toBe(true);
-      if (!current.allowed) throw new Error("expected the replacement lease");
-
-      await store.releaseConcurrency(concurrencyKey, stale.leaseId);
-      await expect(
-        store.acquireConcurrency(concurrencyKey, 1, 1_000, now + 1_002),
-      ).resolves.toEqual({ allowed: false, current: 1 });
-
-      await store.releaseConcurrency(concurrencyKey, current.leaseId);
-      const afterOwnerRelease = await store.acquireConcurrency(
-        concurrencyKey,
-        1,
-        1_000,
-        now + 1_002,
-      );
-      expect(afterOwnerRelease.allowed).toBe(true);
-      if (afterOwnerRelease.allowed) {
-        await store.releaseConcurrency(
-          concurrencyKey,
-          afterOwnerRelease.leaseId,
-        );
-      }
     } finally {
       await client.del(redisKeys);
     }

@@ -4,10 +4,7 @@ import { AppError } from "./appError";
 
 export type AIQuotaErrorBody = {
   error: {
-    code:
-      | "AI_QUOTA_EXCEEDED"
-      | "AI_CONCURRENCY_EXCEEDED"
-      | "AI_QUOTA_UNAVAILABLE";
+    code: "AI_QUOTA_EXCEEDED" | "AI_QUOTA_UNAVAILABLE";
     message: string;
     retryAfterSeconds?: number;
   };

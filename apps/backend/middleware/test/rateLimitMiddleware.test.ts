@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 
 import { newMemoryRateLimitStore } from "@backend/infra/rateLimit";
-import type { AtomicCounterPort } from "@backend/port/rateLimit";
+import { createTracer } from "@backend/lib/tracer";
+import type { RateLimitCounterPort } from "@backend/port/rateLimit";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -19,7 +20,7 @@ import {
 const createMockStore = newMemoryRateLimitStore;
 
 describe("rateLimitMiddleware", () => {
-  const createTestApp = (store: AtomicCounterPort) => {
+  const createTestApp = (store: RateLimitCounterPort) => {
     const app = new Hono();
 
     const rateLimitMiddleware = createRateLimitMiddleware(store, {
@@ -45,6 +46,40 @@ describe("rateLimitMiddleware", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("X-RateLimit-Limit")).toBe("3");
     expect(res.headers.get("X-RateLimit-Remaining")).toBe("2");
+  });
+
+  it("KV read時間をtracerのkvMsへ記録する", async () => {
+    const tracer = createTracer();
+    const store: RateLimitCounterPort = {
+      async consume() {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return {
+          allowed: true,
+          states: [
+            { key: "request", count: 1, remaining: 2, resetAt: Date.now() },
+          ],
+          retryAfterMs: 0,
+        };
+      },
+    };
+    const app = new Hono();
+    app.use(
+      "*",
+      createRateLimitMiddleware(
+        store,
+        {
+          windowMs: 60_000,
+          limit: 3,
+          keyGenerator: ({ ip }) => `trace:${ip}`,
+        },
+        tracer,
+      ),
+    );
+    app.get("/", (c) => c.json({ message: "ok" }));
+
+    await expect(app.request("/")).resolves.toMatchObject({ status: 200 });
+    expect(tracer.getSummary()).toMatchObject({ kvMs: expect.any(Number) });
+    expect(tracer.getSummary().kvMs).toBeGreaterThan(0);
   });
 
   it("連続リクエストでカウントが増える", async () => {
@@ -213,7 +248,7 @@ describe("rateLimitMiddleware", () => {
     ["refresh token", tokenRateLimitConfig],
     ["contact", contactRateLimitConfig],
     ["webhook", webhookRateLimitConfig],
-  ] as const)("%s parallel burst never admits more than its limit", async (_name, config) => {
+  ] as const)("memory adapter keeps %s parallel burst within its limit", async (_name, config) => {
     const store = newMemoryRateLimitStore();
     const app = new Hono();
     app.use("*", createRateLimitMiddleware(store, config));
@@ -287,7 +322,7 @@ describe("applyRateLimit", () => {
   });
 
   it("store error fails closed in production", async () => {
-    const failingStore: AtomicCounterPort = {
+    const failingStore: RateLimitCounterPort = {
       consume: vi.fn().mockRejectedValue(new Error("store offline")),
     };
     const request = buildApp({
@@ -302,7 +337,7 @@ describe("applyRateLimit", () => {
   });
 
   it("store error fails open in development", async () => {
-    const failingStore: AtomicCounterPort = {
+    const failingStore: RateLimitCounterPort = {
       consume: vi.fn().mockRejectedValue(new Error("store offline")),
     };
     const request = buildApp({

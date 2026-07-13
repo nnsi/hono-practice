@@ -66,7 +66,6 @@ export const configSchema = z
       .int()
       .positive()
       .default(1000),
-    AI_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
     // Webhook認証
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),

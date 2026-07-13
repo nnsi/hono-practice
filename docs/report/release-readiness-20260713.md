@@ -100,17 +100,23 @@ Tail Workerにもrelease deploy jobがない。
 
 ## 4. Backend API分析
 
-### A-01: 従量AI APIにquota・同時実行制限がない
+### A-01: 従量AI APIにquota・同時実行制限がない（soft quotaで解消）
 
 - [`aiActivityLogRoute.ts`](../../apps/backend/feature/aiActivityLog/aiActivityLogRoute.ts#L60)
 
 `premiumMiddleware`は契約資格を確認するだけで、ユーザー別回数制限、月次quota、同時実行数制限がない。有効なpremiumアカウントまたはvoice scopeのAPI keyから、契約収入を超えるOpenRouter費用を発生させられる。
 
-### A-02: rate limitが並列リクエストに対してatomicではない
+2026-07-14までにユーザー/API key別の分・日・月quotaと構造化usage記録を追加した。KVでは厳密に保証できず、DOでは通常経路の遅延が費用便益に見合わないため、同時実行数制限は不採用とした。金銭上のhard capはprovider側の予算上限と利用量アラートで管理する。
+
+### A-02: rate limitが並列リクエストに対してatomicではない（残存リスクを受容）
 
 - [`rateLimitMiddleware.ts`](../../apps/backend/middleware/rateLimitMiddleware.ts#L45)
 
 Cloudflare KVに対して`get → ローカル加算 → fire-and-forget set`を行う。並列リクエストが同じcountを読めるため、login、register、token、Webhook等の制限を超えて処理され得る。
+
+2026-07-14の再評価では、個人向けアプリの低額なAPI呼び出しと多層防御用rate limitに対し、既知の500〜1,000msのDOコールドスタートを通常経路へ再導入するのは比例しないと判断した。Workers KVの制限はsoft limitとし、並列burstによる超過を残存リスクとして受容する。ストア未設定・読み取り不能時のproduction/stg fail-closeは維持し、AI利用額のhard capはprovider側の予算上限と利用量アラートで管理する。
+
+Workers KVには同一キー毎秒1回の書き込み上限もある。短時間の連続要求では非同期`put`が失敗し、カウンターが保存済みsnapshotから進まないことで追加の過剰許可が発生し得る。書き込み失敗を構造化エラーとしてWAEへ記録し、この劣化を明示的な残存リスクとして受容する。
 
 ### A-03: 課金Webhookの新旧判定がない
 
@@ -244,8 +250,8 @@ EAS production/preview環境に以下が登録されていない。
 以下をすべて満たすまでNo-Goを維持する。
 
 1. Web/Mobile同期の401・4xx・混在chunk処理を修正し、回帰テストを追加する
-2. OpenRouterにユーザー別quota、同時実行制限、観測・アラートを導入する
-3. rate limitを並列要求に耐える強整合な方式へ変更する
+2. OpenRouterにユーザー/API key別soft quotaと観測を導入し、provider側で予算上限・利用量アラートを設定する
+3. Workers KVのsoft limitと並列burstの残存リスクをADRへ記録し、provider側の予算上限・利用量アラートを外部チェック項目へ引き渡す
 4. 課金Webhookにイベント順序・期間・許可状態遷移の検証を追加する
 5. 共有package、migration、lockfileを含むdeploy変更検知へ修正する
 6. Android/iOS Widgetの初回設定、複数配置、Kind判定、DB失敗処理を修正する

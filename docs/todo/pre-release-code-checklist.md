@@ -33,24 +33,25 @@
 
 - [x] OpenRouter呼び出しへユーザー単位の分・日・月quotaを追加する
 - [x] API key単位のquotaを追加する
-- [x] AI APIへ同時実行数制限を追加する
+- [x] AI APIの同時実行数制限は、低い超過費用に対してKVで保証できずDOでは遅延が大きいため不採用とし、ADRへ記録する
 - [x] speechTextのサイズ・頻度上限を再確認する
 - [x] quota超過時に429と安定したエラー形式を返す
 - [x] 利用量、失敗率、model、推定token数を構造化記録する
 - [x] AI quotaの正常系テストを追加する
 - [x] quota境界値テストを追加する
-- [x] 並列実行で上限を超えないテストを追加する
+- [x] Memory/Redisで並列境界テストを追加し、Workers KVでは厳密な並列上限を保証しないことをADRへ記録する
 - [x] API key経由と一般認証経由の両方をテストする
 - [x] OpenRouter失敗時に記録データを壊さないことをテストする
 
 ## P0-C03: rate limit・認証
 
-- [x] Cloudflare KVのread-modify-write方式を強整合なrate limitへ置き換える
-- [x] loginの並列超過テストを追加する
-- [x] registerの並列超過テストを追加する
-- [x] refresh tokenの並列超過テストを追加する
-- [x] contactの並列超過テストを追加する
-- [x] webhookの並列超過テストを追加する
+- [x] Cloudflare Workers KVの結果整合性をsoft limitとして受容し、application-owned portとKV/Redisアダプターへ分離する
+- [x] Workers KVの同一キー毎秒1書き込み制限による過剰許可をADRへ記録し、非同期書き込み失敗の観測と回帰テストを追加する
+- [x] loginの境界値・キー分離テストを追加する
+- [x] registerの境界値・キー分離テストを追加する
+- [x] refresh tokenの境界値・キー分離テストを追加する
+- [x] contactの境界値・キー分離テストを追加する
+- [x] webhookの境界値・キー分離テストを追加する
 - [x] rate limit store利用不能時のproduction fail-closeをテストする
 - [x] OAuth専用アカウントと存在しないアカウントのloginエラーを統一する
 - [x] stgの500 responseからstack traceを除外する

@@ -25,13 +25,13 @@ const RESULT = {
   },
 };
 
-function options(release: () => Promise<void>) {
+function options() {
   const info = vi.fn();
   const error = vi.fn();
   return {
     logger: { ...noopLogger, info, error },
     options: {
-      reserve: vi.fn().mockResolvedValue({ release }),
+      consumeQuota: vi.fn().mockResolvedValue(undefined),
       logger: { ...noopLogger, info, error },
       userId: USER_ID,
       apiKeyId: null,
@@ -42,10 +42,9 @@ function options(release: () => Promise<void>) {
 }
 
 describe("AI activity log usage handler", () => {
-  it("releases once and preserves a handler failure", async () => {
+  it("consumes quota once and preserves a handler failure", async () => {
     const handlerError = new Error("gateway failed");
-    const release = vi.fn().mockResolvedValue(undefined);
-    const setup = options(release);
+    const setup = options();
     const handler = {
       createActivityLogFromSpeech: vi.fn().mockRejectedValue(handlerError),
     };
@@ -55,16 +54,15 @@ describe("AI activity log usage handler", () => {
       decorated.createActivityLogFromSpeech(USER_ID, PARAMS),
     ).rejects.toBe(handlerError);
 
-    expect(release).toHaveBeenCalledOnce();
+    expect(setup.options.consumeQuota).toHaveBeenCalledOnce();
     expect(setup.logger.error).toHaveBeenCalledWith(
       "AI usage",
       expect.objectContaining({ outcome: "failure", durationMs: 45 }),
     );
   });
 
-  it("does not turn a successful operation into 500 when release fails", async () => {
-    const release = vi.fn().mockRejectedValue(new Error("store failed"));
-    const setup = options(release);
+  it("logs successful usage and preserves the handler result", async () => {
+    const setup = options();
     const handler = {
       createActivityLogFromSpeech: vi.fn().mockResolvedValue(RESULT),
     };
@@ -74,10 +72,10 @@ describe("AI activity log usage handler", () => {
       decorated.createActivityLogFromSpeech(USER_ID, PARAMS),
     ).resolves.toEqual(RESULT);
 
-    expect(release).toHaveBeenCalledOnce();
-    expect(setup.logger.error).toHaveBeenCalledWith(
-      "AI concurrency release failed",
-      expect.objectContaining({ error: "store failed" }),
+    expect(setup.options.consumeQuota).toHaveBeenCalledOnce();
+    expect(setup.logger.info).toHaveBeenCalledWith(
+      "AI usage",
+      expect.objectContaining({ outcome: "success", durationMs: 45 }),
     );
   });
 });

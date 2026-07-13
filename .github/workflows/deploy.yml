@@ -98,9 +98,10 @@ jobs:
           CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_STG }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
-        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID R2_BUCKET_NAME VITE_API_URL
+        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID KV_RATE_LIMIT_ID R2_BUCKET_NAME VITE_API_URL
 
       - name: Preflight required production variable names
         if: github.ref_name == 'release'
@@ -109,9 +110,10 @@ jobs:
           CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_PROD }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
-        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID R2_BUCKET_NAME VITE_API_URL
+        run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID KV_RATE_LIMIT_ID R2_BUCKET_NAME VITE_API_URL
 
       - name: test
         run: pnpm run ci-check
@@ -178,7 +180,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
       # --- backend secrets & deploy ---
-      - name: Configure Hyperdrive and R2 for staging
+      - name: Configure Hyperdrive, R2, and KV for staging
         if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
         run: |
           cat << EOF >> wrangler.toml
@@ -191,12 +193,17 @@ jobs:
           [[env.stg.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${R2_BUCKET_NAME}"
+
+          [[env.stg.kv_namespaces]]
+          binding = "RATE_LIMIT_KV_NS"
+          id = "${KV_RATE_LIMIT_ID}"
           EOF
         env:
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_STG }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
 
-      - name: Configure Hyperdrive and R2 for production
+      - name: Configure Hyperdrive, R2, and KV for production
         if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
         run: |
           cat << EOF >> wrangler.toml
@@ -209,9 +216,14 @@ jobs:
           [[env.production.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${R2_BUCKET_NAME}"
+
+          [[env.production.kv_namespaces]]
+          binding = "RATE_LIMIT_KV_NS"
+          id = "${KV_RATE_LIMIT_ID}"
           EOF
         env:
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_PROD }}
+          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)

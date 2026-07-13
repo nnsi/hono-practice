@@ -12,7 +12,7 @@ import type { Config } from "../config";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
 import type { Logger } from "../lib/logger";
 import type { Tracer } from "../lib/tracer";
-import type { RateLimitPorts } from "../port/rateLimit";
+import type { RateLimitCounterPort } from "../port/rateLimit";
 
 export type JwtPayload = {
   userId: string;
@@ -38,8 +38,8 @@ export type AppContext = {
   Bindings: Config & {
     DB: QueryExecutor;
     R2_BUCKET?: R2Bucket;
-    // Atomic store backed by Durable Objects (CF) or Redis (Node).
-    RATE_LIMIT_STORE?: RateLimitPorts;
+    // Workers KV (Cloudflare) / Redis (Node) によるソフトレート制限ストア。
+    RATE_LIMIT_STORE?: RateLimitCounterPort;
     // Analytics Engine（オプション、ローカル開発時はundefined）
     WAE_LOGS?: AnalyticsEngineDataset;
     WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;

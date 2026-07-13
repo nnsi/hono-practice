@@ -64,8 +64,9 @@ describe("backend dependency guard", () => {
   it("allows an application usecase to depend on the application-owned port", () => {
     const result = runGuard({
       "apps/backend/feature/example/exampleUsecase.ts":
-        'import type { RateLimitPorts } from "@backend/port/rateLimit";\n',
-      "apps/backend/port/rateLimit.ts": "export type RateLimitPorts = {};\n",
+        'import type { RateLimitCounterPort } from "@backend/port/rateLimit";\n',
+      "apps/backend/port/rateLimit.ts":
+        "export type RateLimitCounterPort = {};\n",
     });
 
     expect(result).toEqual({ exitCode: 0, output: "" });

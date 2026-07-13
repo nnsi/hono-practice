@@ -46,7 +46,7 @@
 - [ ] Cloudflare productionに`REVENUECAT_WEBHOOK_AUTH_KEY`が存在することを確認する
 - [ ] Cloudflare productionに`OPENROUTER_API_KEY`が存在することを確認する
 - [ ] Cloudflare productionに`JWT_SECRET_ADMIN`が存在することを確認する
-- [ ] Cloudflare productionのR2/Hyperdrive/Analytics Engine/RateLimit Durable Object (`RATE_LIMITER`) bindingを確認する
+- [ ] Cloudflare productionのR2/Hyperdrive/Analytics Engine/Workers KV (`RATE_LIMIT_KV_NS`) bindingと`KV_RATE_LIMIT_ID_PROD`を確認する
 - [ ] production CORS originを実ドメインと照合する
 - [ ] secret名のpreflight結果だけをrelease証跡へ記録する
 
@@ -185,7 +185,7 @@
 - [ ] OpenRouter利用量・費用アラートを設定する
 - [ ] RevenueCat Webhook失敗アラートを設定する
 - [ ] Polar Webhook失敗アラートを設定する
-- [ ] DB connection、R2、Hyperdrive、RateLimit Durable Objectの監視を確認する
+- [ ] DB connection、R2、Hyperdrive、Workers KVのエラー・レイテンシ監視を確認する
 - [ ] 公開直後の監視担当と連絡経路を確定する
 - [ ] rollback/公開停止の判断担当を確定する
 

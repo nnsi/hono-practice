@@ -18,8 +18,8 @@ v2リリース日: 2026-02-25
 ## 2026-07 公開リリース候補のhardening
 
 - sync pushをHTTP statusとレコード単位failureで分類し、rejectedの修復・再送とMobile bootstrap復元を追加
-- OpenRouterにユーザー/API key別quota、同時実行lease、構造化usage記録を追加
-- rate limitを強整合storeへ移行し、production/stg fail-closeと並列超過を検証
+- OpenRouterにユーザー/API key別soft quotaと構造化usage記録を追加し、費用のhard capはprovider予算・アラートへ分離
+- rate limitとAI quotaをapplication-owned portへ分離し、CloudflareではWorkers KVのsoft limit、NodeではRedisを使用。production/stgのstore不在時はfail-close
 - 課金Webhookにprovider event時刻、原子的な新旧判定、許可状態遷移、effective entitlementを追加
 - Admin認証を失効可能なサーバーセッションへ移行し、CSP・anti-framing・Permissions-Policyを追加
 - Native WidgetのIntent境界、Keychain/App Group、複数Timer、Kind判定、SQLite失敗伝播を修正

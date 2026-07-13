@@ -81,6 +81,7 @@
     "jsdom": "^29.1.1",
     "knip": "^6.23.0",
     "lefthook": "^2.1.9",
+    "miniflare": "4.20260630.0",
     "playwright": "^1.61.1",
     "postgres": "^3.4.9",
     "sharp": "^0.35.3",

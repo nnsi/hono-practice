@@ -1,3 +1,3 @@
-export * from "./durableObjectRateLimitStore";
+export * from "./cloudflareKvRateLimitStore";
 export * from "./memoryRateLimitStore";
 export * from "./redisRateLimitStore";

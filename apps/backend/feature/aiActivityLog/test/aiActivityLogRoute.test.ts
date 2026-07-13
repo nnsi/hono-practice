@@ -4,7 +4,7 @@ import { testClient } from "hono/testing";
 import type { AppContext } from "@backend/context";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
-import type { RateLimitPorts } from "@backend/port/rateLimit";
+import type { RateLimitCounterPort } from "@backend/port/rateLimit";
 import { testDB } from "@backend/test.setup";
 import { okJson } from "@backend/test-utils/okJson";
 import { expect, test, vi } from "vitest";
@@ -120,16 +120,8 @@ test("POST /from-speech / envと認証identityをquota reservationへ配線す�
     states: [],
     retryAfterMs: 0,
   });
-  const acquireConcurrency = vi.fn().mockResolvedValue({
-    allowed: true,
-    current: 1,
-    leaseId: "lease-from-store",
-  });
-  const releaseConcurrency = vi.fn().mockResolvedValue(undefined);
-  const store: RateLimitPorts = {
+  const store: RateLimitCounterPort = {
     consume,
-    acquireConcurrency,
-    releaseConcurrency,
   };
   const route = createAIActivityLogRoute(() => newAIActivityLogGatewayMock());
   const app = new Hono<AppContext>()
@@ -150,7 +142,6 @@ test("POST /from-speech / envと認証identityをquota reservationへ配線す�
     AI_API_KEY_QUOTA_PER_MINUTE: 44,
     AI_API_KEY_QUOTA_PER_DAY: 55,
     AI_API_KEY_QUOTA_PER_MONTH: 66,
-    AI_MAX_CONCURRENCY: 7,
   });
 
   const res = await client["from-speech"].$post({
@@ -158,11 +149,6 @@ test("POST /from-speech / envと認証identityをquota reservationへ配線す�
   });
 
   expect(res.status).toBe(201);
-  expect(acquireConcurrency).toHaveBeenCalledWith(
-    "ai:concurrency:user:00000000-0000-4000-8000-000000000000",
-    7,
-    300_000,
-  );
   expect(consume).toHaveBeenCalledWith({
     partitionKey: "ai:quota:user:00000000-0000-4000-8000-000000000000",
     rules: [
@@ -198,8 +184,4 @@ test("POST /from-speech / envと認証identityをquota reservationへ配線す�
       },
     ],
   });
-  expect(releaseConcurrency).toHaveBeenCalledWith(
-    "ai:concurrency:user:00000000-0000-4000-8000-000000000000",
-    "lease-from-store",
-  );
 });

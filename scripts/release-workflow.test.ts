@@ -45,8 +45,22 @@ describe("release workflow guards", () => {
     );
     expect(mobileBundleStep).toContain("test -d dist-release-bundles/ios");
     expect(mobileBundleStep).toContain("test -d dist-release-bundles/android");
-    expect(workflow).not.toContain("RATE_LIMIT_KV_NS");
-    expect(workflow).not.toContain("KV_RATE_LIMIT_ID");
+  });
+
+  it("preflights and binds the rate-limit KV namespace for both environments", () => {
+    expect(workflow).toContain(
+      `KV_RATE_LIMIT_ID: ${githubExpression("secrets.KV_RATE_LIMIT_ID_STG")}`,
+    );
+    expect(workflow).toContain(
+      `KV_RATE_LIMIT_ID: ${githubExpression("secrets.KV_RATE_LIMIT_ID_PROD")}`,
+    );
+    expect(
+      workflow.match(/check-required-env\.js[^\n]*\bKV_RATE_LIMIT_ID\b/g),
+    ).toHaveLength(2);
+    expect(workflow.match(/binding = "RATE_LIMIT_KV_NS"/g)).toHaveLength(2);
+    expect(
+      workflow.match(/\[\[env\.(?:stg|production)\.kv_namespaces\]\]/g),
+    ).toHaveLength(2);
   });
 
   it("runs the lockfile-pinned EAS CLI without a global install", () => {

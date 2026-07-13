@@ -13,7 +13,7 @@ function clientWithResults(...results: unknown[]) {
 }
 
 describe("Redis rate limit store", () => {
-  it("invokes the atomic multi-rule script and maps its return values", async () => {
+  it("invokes the Redis multi-rule script and maps its return values", async () => {
     const { client, evalMock } = clientWithResults([0, 1, 100, 1, 100]);
     const store = newRedisRateLimitStore(client);
 
@@ -39,50 +39,10 @@ describe("Redis rate limit store", () => {
     expect(evalMock).toHaveBeenCalledWith(
       expect.stringContaining("if exceeded == 0 then"),
       {
-        keys: [
-          "atomic-rate:{user%3A123}:minute",
-          "atomic-rate:{user%3A123}:day",
-        ],
+        keys: ["rate-limit:{user%3A123}:minute", "rate-limit:{user%3A123}:day"],
         arguments: ["2", "1000", "100", "10", "10000", "100"],
       },
     );
-  });
-
-  it("invokes concurrency acquire and release scripts", async () => {
-    const { client, evalMock } = clientWithResults([1, 1, "lease-1"], 1);
-    const store = newRedisRateLimitStore(client);
-
-    const decision = await store.acquireConcurrency("user-1", 2, 5_000, 100);
-    expect(decision).toEqual({
-      allowed: true,
-      current: 1,
-      leaseId: "lease-1",
-    });
-    if (!decision.allowed) throw new Error("expected an acquired lease");
-    await store.releaseConcurrency("user-1", decision.leaseId);
-
-    expect(evalMock).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining("ZREMRANGEBYSCORE"),
-      {
-        keys: ["atomic-concurrency:user-1"],
-        arguments: ["100", "5000", expect.any(String), "2"],
-      },
-    );
-    expect(evalMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining("redis.call('ZREM'"),
-      { keys: ["atomic-concurrency:user-1"], arguments: ["lease-1"] },
-    );
-  });
-
-  it("maps a denied concurrency decision without inventing a lease", async () => {
-    const { client } = clientWithResults([0, 2, ""]);
-    const store = newRedisRateLimitStore(client);
-
-    await expect(
-      store.acquireConcurrency("user-1", 2, 5_000, 100),
-    ).resolves.toEqual({ allowed: false, current: 2 });
   });
 
   it("propagates Redis failures and rejects malformed returns", async () => {
@@ -97,9 +57,30 @@ describe("Redis rate limit store", () => {
       }),
     ).rejects.toThrow("redis unavailable");
 
-    evalMock.mockResolvedValueOnce(["invalid", 1, ""]);
-    await expect(store.acquireConcurrency("user-1", 1, 1_000)).rejects.toThrow(
-      "Invalid Redis rate limit response",
-    );
+    evalMock.mockResolvedValueOnce(["invalid", 1, 100]);
+    await expect(
+      store.consume({
+        partitionKey: "user:123",
+        rules: [{ key: "minute", limit: 1, windowMs: 1_000 }],
+      }),
+    ).rejects.toThrow("Invalid Redis rate limit response");
+  });
+
+  it("waits for every exceeded rule to reset before retrying", async () => {
+    const { client } = clientWithResults([1, 1, 100, 1, 100]);
+    const store = newRedisRateLimitStore(client);
+
+    await expect(
+      store.consume(
+        {
+          partitionKey: "user:retry",
+          rules: [
+            { key: "short", limit: 1, windowMs: 1_000 },
+            { key: "long", limit: 1, windowMs: 10_000 },
+          ],
+        },
+        200,
+      ),
+    ).resolves.toMatchObject({ allowed: false, retryAfterMs: 9_900 });
   });
 });

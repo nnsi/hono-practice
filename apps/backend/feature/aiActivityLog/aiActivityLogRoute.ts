@@ -15,7 +15,7 @@ import { newAIActivityLogGateway } from "./aiActivityLogGatewayImpl";
 import { newAIActivityLogHandler } from "./aiActivityLogHandler";
 import { newAIActivityLogUsageHandler } from "./aiActivityLogUsageHandler";
 import { newAIActivityLogUsecase } from "./aiActivityLogUsecase";
-import { reserveAIUsage } from "./aiUsageGuard";
+import { consumeAIUsageQuota } from "./aiUsageGuard";
 
 type GatewayFactory = (env: Config) => AIActivityLogGateway;
 
@@ -55,10 +55,9 @@ export function createAIActivityLogRoute(
     const handler = newAIActivityLogHandler(uc);
     const rateLimitStore = c.env.RATE_LIMIT_STORE;
     const h = newAIActivityLogUsageHandler(handler, {
-      reserve: () =>
-        reserveAIUsage({
+      consumeQuota: () =>
+        consumeAIUsageQuota({
           counterStore: rateLimitStore,
-          concurrencyStore: rateLimitStore,
           config: {
             nodeEnv: c.env.NODE_ENV,
             userQuotaPerMinute: c.env.AI_USER_QUOTA_PER_MINUTE,
@@ -67,7 +66,6 @@ export function createAIActivityLogRoute(
             apiKeyQuotaPerMinute: c.env.AI_API_KEY_QUOTA_PER_MINUTE,
             apiKeyQuotaPerDay: c.env.AI_API_KEY_QUOTA_PER_DAY,
             apiKeyQuotaPerMonth: c.env.AI_API_KEY_QUOTA_PER_MONTH,
-            maxConcurrency: c.env.AI_MAX_CONCURRENCY,
           },
           identity: {
             userId: c.get("userId"),

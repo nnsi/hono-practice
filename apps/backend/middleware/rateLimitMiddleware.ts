@@ -4,8 +4,8 @@ import { createMiddleware } from "hono/factory";
 import type { AppContext } from "@backend/context";
 import type { Tracer } from "@backend/lib/tracer";
 import type {
-  AtomicCounterDecision,
-  AtomicCounterPort,
+  RateLimitCounterPort,
+  RateLimitDecision,
 } from "@backend/port/rateLimit";
 import { getClientIp } from "@backend/utils/getClientIp";
 
@@ -21,11 +21,11 @@ export {
 } from "./rateLimitConfigs";
 
 type StoreResult =
-  | { ok: true; decision: AtomicCounterDecision }
+  | { ok: true; decision: RateLimitDecision }
   | { ok: false; error: unknown };
 
 function consume(
-  store: AtomicCounterPort,
+  store: RateLimitCounterPort,
   config: RateLimitConfig,
   ip: string,
   path: string,
@@ -43,7 +43,7 @@ function consume(
       Date.now(),
     );
   const request = tracer
-    ? tracer.span("rate-limit.consume", operation)
+    ? tracer.span("kv.rate-limit.consume", operation)
     : operation();
   return request.then(
     (decision): StoreResult => ({ ok: true, decision }),
@@ -55,7 +55,7 @@ async function continueWithDecision(
   c: Parameters<MiddlewareHandler>[0],
   next: Parameters<MiddlewareHandler>[1],
   config: RateLimitConfig,
-  decision: AtomicCounterDecision,
+  decision: RateLimitDecision,
 ) {
   const state = decision.states[0];
   if (!decision.allowed) {
@@ -74,7 +74,7 @@ async function continueWithDecision(
 }
 
 export function createRateLimitMiddleware(
-  store: AtomicCounterPort,
+  store: RateLimitCounterPort,
   config: RateLimitConfig,
   tracer?: Tracer,
 ): MiddlewareHandler {
