@@ -191,15 +191,10 @@ jobs:
           [[env.stg.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${R2_BUCKET_NAME}"
-
-          [[env.stg.kv_namespaces]]
-          binding = "RATE_LIMIT_KV_NS"
-          id = "${KV_RATE_LIMIT_ID}"
           EOF
         env:
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_STG }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
-          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_STG }}
 
       - name: Configure Hyperdrive and R2 for production
         if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
@@ -214,15 +209,10 @@ jobs:
           [[env.production.r2_buckets]]
           binding = "R2_BUCKET"
           bucket_name = "${R2_BUCKET_NAME}"
-
-          [[env.production.kv_namespaces]]
-          binding = "RATE_LIMIT_KV_NS"
-          id = "${KV_RATE_LIMIT_ID}"
           EOF
         env:
           HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID_PROD }}
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
-          KV_RATE_LIMIT_ID: ${{ secrets.KV_RATE_LIMIT_ID_PROD }}
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)
         if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
@@ -477,10 +467,13 @@ jobs:
 
       - name: Generate iOS and Android release bundles
         shell: bash
+        working-directory: .
         run: |
           rm -rf dist-release-bundles
-          pnpm exec expo export --platform ios --output-dir dist-release-bundles/ios --clear
-          pnpm exec expo export --platform android --output-dir dist-release-bundles/android --clear
+          pnpm --filter actiko-mobile run export:release:ios
+          pnpm --filter actiko-mobile run export:release:android
+          test -d dist-release-bundles/ios
+          test -d dist-release-bundles/android
 
       - name: Validate OTA native compatibility
         if: github.event.inputs.mobile_operation == 'ota'

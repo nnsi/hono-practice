@@ -5,10 +5,7 @@ export const CounterSchema = z.object({
   windowStart: z.number(),
 });
 
-export const ConcurrencyCounterSchema = z.object({
-  count: z.number(),
-  expiresAt: z.number(),
-});
+export const ConcurrencyLeasesSchema = z.record(z.string(), z.number());
 
 const RateLimitRuleSchema = z.object({
   key: z.string(),
@@ -19,6 +16,7 @@ const RateLimitRuleSchema = z.object({
 export const DurableRequestSchema = z.discriminatedUnion("operation", [
   z.object({
     operation: z.literal("consume"),
+    partitionKey: z.string().min(1),
     rules: z.array(RateLimitRuleSchema),
     now: z.number(),
   }),
@@ -28,8 +26,13 @@ export const DurableRequestSchema = z.discriminatedUnion("operation", [
     limit: z.number(),
     ttlMs: z.number(),
     now: z.number(),
+    leaseId: z.string(),
   }),
-  z.object({ operation: z.literal("release"), key: z.string() }),
+  z.object({
+    operation: z.literal("release"),
+    key: z.string(),
+    leaseId: z.string(),
+  }),
 ]);
 
 export type DurableRequest = z.infer<typeof DurableRequestSchema>;
@@ -47,9 +50,13 @@ export const RateLimitDecisionSchema = z.object({
   retryAfterMs: z.number(),
 });
 
-export const ConcurrencyDecisionSchema = z.object({
-  allowed: z.boolean(),
-  current: z.number(),
-});
+export const ConcurrencyDecisionSchema = z.discriminatedUnion("allowed", [
+  z.object({
+    allowed: z.literal(true),
+    current: z.number(),
+    leaseId: z.string(),
+  }),
+  z.object({ allowed: z.literal(false), current: z.number() }),
+]);
 
 export const ReleaseDecisionSchema = z.object({ released: z.literal(true) });

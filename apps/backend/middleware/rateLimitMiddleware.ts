@@ -2,8 +2,11 @@ import type { MiddlewareHandler } from "hono";
 import { createMiddleware } from "hono/factory";
 
 import type { AppContext } from "@backend/context";
-import type { RateLimitStore } from "@backend/infra/rateLimit";
 import type { Tracer } from "@backend/lib/tracer";
+import type {
+  AtomicCounterDecision,
+  AtomicCounterPort,
+} from "@backend/port/rateLimit";
 import { getClientIp } from "@backend/utils/getClientIp";
 
 import type { RateLimitConfig } from "./rateLimitConfigs";
@@ -17,61 +20,84 @@ export {
   webhookRateLimitConfig,
 } from "./rateLimitConfigs";
 
-/**
- * 固定ウィンドウ方式のレートリミットミドルウェアを作成
- */
+type StoreResult =
+  | { ok: true; decision: AtomicCounterDecision }
+  | { ok: false; error: unknown };
+
+function consume(
+  store: AtomicCounterPort,
+  config: RateLimitConfig,
+  ip: string,
+  path: string,
+  tracer?: Tracer,
+): Promise<StoreResult> {
+  const key = `ratelimit:${config.keyGenerator({ ip, path })}`;
+  const operation = () =>
+    store.consume(
+      {
+        partitionKey: key,
+        rules: [
+          { key: "request", limit: config.limit, windowMs: config.windowMs },
+        ],
+      },
+      Date.now(),
+    );
+  const request = tracer
+    ? tracer.span("rate-limit.consume", operation)
+    : operation();
+  return request.then(
+    (decision): StoreResult => ({ ok: true, decision }),
+    (error): StoreResult => ({ ok: false, error }),
+  );
+}
+
+async function continueWithDecision(
+  c: Parameters<MiddlewareHandler>[0],
+  next: Parameters<MiddlewareHandler>[1],
+  config: RateLimitConfig,
+  decision: AtomicCounterDecision,
+) {
+  const state = decision.states[0];
+  if (!decision.allowed) {
+    const retryAfter = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
+    c.header("Retry-After", String(retryAfter));
+    c.header("X-RateLimit-Limit", String(config.limit));
+    c.header("X-RateLimit-Remaining", "0");
+    c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
+    return c.json({ message: "too many requests" }, 429);
+  }
+
+  c.header("X-RateLimit-Limit", String(config.limit));
+  c.header("X-RateLimit-Remaining", String(state.remaining));
+  c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
+  await next();
+}
+
 export function createRateLimitMiddleware(
-  store: RateLimitStore,
+  store: AtomicCounterPort,
   config: RateLimitConfig,
   tracer?: Tracer,
 ): MiddlewareHandler {
-  const { windowMs, limit, keyGenerator } = config;
   return async (c, next) => {
-    const t = tracer;
-    const ip = getClientIp(c);
-    const path = c.req.path;
-
-    const key = `ratelimit:${keyGenerator({ ip, path })}`;
-    const now = Date.now();
-
-    const decision = t
-      ? await t.span("kv.consumeRateLimit", () =>
-          store.consume([{ key, limit, windowMs }], now),
-        )
-      : await store.consume([{ key, limit, windowMs }], now);
-    const state = decision.states[0];
-
-    if (!decision.allowed) {
-      // レート制限超過
-      const retryAfter = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
-      c.header("Retry-After", String(retryAfter));
-      c.header("X-RateLimit-Limit", String(limit));
-      c.header("X-RateLimit-Remaining", "0");
-      c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
-      return c.json({ message: "too many requests" }, 429);
-    }
-
-    c.header("X-RateLimit-Limit", String(limit));
-    c.header("X-RateLimit-Remaining", String(state.remaining));
-    c.header("X-RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
-
-    await next();
+    const result = await consume(
+      store,
+      config,
+      getClientIp(c),
+      c.req.path,
+      tracer,
+    );
+    if (!result.ok) throw result.error;
+    return continueWithDecision(c, next, config, result.decision);
   };
 }
 
-/**
- * 共通ヘルパー: KV があれば rate limit を適用、無ければ環境に応じて fail-close。
- * production / stg では KV 未設定は設定不備なので 503 を返す（fail-open しない）。
- * development / test では未設定でもスキップ（ローカル開発の利便性）。
- */
 export function applyRateLimit(
   config: RateLimitConfig,
 ): MiddlewareHandler<AppContext> {
   return createMiddleware<AppContext>(async (c, next) => {
     const store = c.env.RATE_LIMIT_STORE;
     if (!store) {
-      const nodeEnv = c.env.NODE_ENV;
-      if (nodeEnv === "production" || nodeEnv === "stg") {
+      if (c.env.NODE_ENV === "production" || c.env.NODE_ENV === "stg") {
         return c.json(
           { message: "rate limit infrastructure unavailable" },
           503,
@@ -79,20 +105,29 @@ export function applyRateLimit(
       }
       return next();
     }
-    return Promise.resolve(
-      createRateLimitMiddleware(store, config, c.get("tracer"))(c, next),
-    ).catch((error: unknown) => {
+
+    const result = await consume(
+      store,
+      config,
+      getClientIp(c),
+      c.req.path,
+      c.get("tracer"),
+    );
+    if (!result.ok) {
       c.get("logger")?.error("Rate limit store unavailable", {
-        error: error instanceof Error ? error.message : String(error),
+        error:
+          result.error instanceof Error
+            ? result.error.message
+            : String(result.error),
       });
       if (c.env.NODE_ENV === "production" || c.env.NODE_ENV === "stg") {
-        c.res = c.json(
+        return c.json(
           { message: "rate limit infrastructure unavailable" },
           503,
         );
-        return;
       }
       return next();
-    });
+    }
+    return continueWithDecision(c, next, config, result.decision);
   });
 }

@@ -9,10 +9,10 @@ import type { Subscription } from "@packages/domain/subscription/subscriptionSch
 import type { User, UserId } from "@packages/domain/user/userSchema";
 
 import type { Config } from "../config";
-import type { RateLimitStore } from "../infra/rateLimit";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
 import type { Logger } from "../lib/logger";
 import type { Tracer } from "../lib/tracer";
+import type { RateLimitPorts } from "../port/rateLimit";
 
 export type JwtPayload = {
   userId: string;
@@ -39,7 +39,7 @@ export type AppContext = {
     DB: QueryExecutor;
     R2_BUCKET?: R2Bucket;
     // Atomic store backed by Durable Objects (CF) or Redis (Node).
-    RATE_LIMIT_STORE?: RateLimitStore;
+    RATE_LIMIT_STORE?: RateLimitPorts;
     // Analytics Engine（オプション、ローカル開発時はundefined）
     WAE_LOGS?: AnalyticsEngineDataset;
     WAE_CLIENT_ERRORS?: AnalyticsEngineDataset;

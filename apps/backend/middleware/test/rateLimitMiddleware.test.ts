@@ -1,9 +1,7 @@
 import { Hono } from "hono";
 
-import {
-  type RateLimitStore,
-  newMemoryRateLimitStore,
-} from "@backend/infra/rateLimit";
+import { newMemoryRateLimitStore } from "@backend/infra/rateLimit";
+import type { AtomicCounterPort } from "@backend/port/rateLimit";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -21,7 +19,7 @@ import {
 const createMockStore = newMemoryRateLimitStore;
 
 describe("rateLimitMiddleware", () => {
-  const createTestApp = (store: RateLimitStore) => {
+  const createTestApp = (store: AtomicCounterPort) => {
     const app = new Hono();
 
     const rateLimitMiddleware = createRateLimitMiddleware(store, {
@@ -125,13 +123,10 @@ describe("rateLimitMiddleware", () => {
     // 古いウィンドウのデータを直接設定
     const oldWindowStart = Date.now() - 120 * 1000; // 2分前
     await store.consume(
-      [
-        {
-          key: "ratelimit:test:192.168.1.20",
-          limit: 3,
-          windowMs: 60_000,
-        },
-      ],
+      {
+        partitionKey: "ratelimit:test:192.168.1.20",
+        rules: [{ key: "request", limit: 3, windowMs: 60_000 }],
+      },
       oldWindowStart,
     );
 
@@ -292,10 +287,8 @@ describe("applyRateLimit", () => {
   });
 
   it("store error fails closed in production", async () => {
-    const failingStore: RateLimitStore = {
+    const failingStore: AtomicCounterPort = {
       consume: vi.fn().mockRejectedValue(new Error("store offline")),
-      acquireConcurrency: vi.fn(),
-      releaseConcurrency: vi.fn(),
     };
     const request = buildApp({
       NODE_ENV: "production",
@@ -306,5 +299,36 @@ describe("applyRateLimit", () => {
     expect(await res.json()).toEqual({
       message: "rate limit infrastructure unavailable",
     });
+  });
+
+  it("store error fails open in development", async () => {
+    const failingStore: AtomicCounterPort = {
+      consume: vi.fn().mockRejectedValue(new Error("store offline")),
+    };
+    const request = buildApp({
+      NODE_ENV: "development",
+      RATE_LIMIT_STORE: failingStore,
+    });
+    await expect(request()).resolves.toMatchObject({ status: 200 });
+  });
+
+  it("does not convert a downstream exception into a store failure", async () => {
+    const app = new Hono();
+    app.use("*", applyRateLimit(config));
+    app.get("/", () => {
+      throw new Error("downstream failed");
+    });
+    app.onError((error, c) => c.json({ message: error.message }, 500));
+
+    const res = await app.request(
+      "/",
+      {},
+      {
+        NODE_ENV: "production",
+        RATE_LIMIT_STORE: newMemoryRateLimitStore(),
+      },
+    );
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ message: "downstream failed" });
   });
 });

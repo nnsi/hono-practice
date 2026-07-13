@@ -1,3 +1,4 @@
+import type { AtomicCounterDecision } from "@backend/port/rateLimit";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,7 +6,6 @@ import {
   type RateLimitDurableObjectState,
   type RateLimitTransaction,
 } from "./durableObjectRateLimitStore";
-import type { RateLimitDecision } from "./rateLimitStore";
 
 class TransactionalStorage {
   private values = new Map<string, unknown>();
@@ -67,18 +67,21 @@ describe("RateLimitDurableObject", () => {
       { key: "user:day", limit: 2, windowMs: 10_000 },
     ];
 
-    const first = await post<RateLimitDecision>(durableObject, {
+    const first = await post<AtomicCounterDecision>(durableObject, {
       operation: "consume",
+      partitionKey: "user:1",
       rules,
       now: 100,
     });
-    const denied = await post<RateLimitDecision>(durableObject, {
+    const denied = await post<AtomicCounterDecision>(durableObject, {
       operation: "consume",
+      partitionKey: "user:1",
       rules,
       now: 200,
     });
-    const dayOnly = await post<RateLimitDecision>(durableObject, {
+    const dayOnly = await post<AtomicCounterDecision>(durableObject, {
       operation: "consume",
+      partitionKey: "user:1",
       rules: [rules[1]],
       now: 200,
     });
@@ -96,14 +99,21 @@ describe("RateLimitDurableObject", () => {
     const durableObject = object();
     const rules = [{ key: "user:minute", limit: 1, windowMs: 1_000 }];
 
-    await post(durableObject, { operation: "consume", rules, now: 100 });
-    const denied = await post<RateLimitDecision>(durableObject, {
+    await post(durableObject, {
       operation: "consume",
+      partitionKey: "user:1",
+      rules,
+      now: 100,
+    });
+    const denied = await post<AtomicCounterDecision>(durableObject, {
+      operation: "consume",
+      partitionKey: "user:1",
       rules,
       now: 1_099,
     });
-    const reset = await post<RateLimitDecision>(durableObject, {
+    const reset = await post<AtomicCounterDecision>(durableObject, {
       operation: "consume",
+      partitionKey: "user:1",
       rules,
       now: 1_100,
     });
@@ -115,30 +125,80 @@ describe("RateLimitDurableObject", () => {
     });
   });
 
-  it("enforces concurrency TTL and release atomically", async () => {
+  it("isolates equal rule keys in different explicit partitions", async () => {
     const durableObject = object();
-    const acquire = (now: number) =>
-      post<{ allowed: boolean; current: number }>(durableObject, {
-        operation: "acquire",
-        key: "user-1",
-        limit: 1,
-        ttlMs: 1_000,
-        now,
-      });
+    const rules = [{ key: "minute", limit: 1, windowMs: 1_000 }];
 
-    await expect(acquire(100)).resolves.toEqual({ allowed: true, current: 1 });
-    await expect(acquire(200)).resolves.toEqual({
+    await post(durableObject, {
+      operation: "consume",
+      partitionKey: "user:a",
+      rules,
+      now: 100,
+    });
+    const denied = await post<AtomicCounterDecision>(durableObject, {
+      operation: "consume",
+      partitionKey: "user:a",
+      rules,
+      now: 101,
+    });
+    const otherPartition = await post<AtomicCounterDecision>(durableObject, {
+      operation: "consume",
+      partitionKey: "user:b",
+      rules,
+      now: 101,
+    });
+
+    expect(denied.allowed).toBe(false);
+    expect(otherPartition.allowed).toBe(true);
+  });
+
+  it("enforces per-lease TTL and only releases the owning lease", async () => {
+    const durableObject = object();
+    const acquire = (now: number, leaseId: string) =>
+      post<{ allowed: boolean; current: number; leaseId?: string }>(
+        durableObject,
+        {
+          operation: "acquire",
+          key: "user-1",
+          limit: 1,
+          ttlMs: 1_000,
+          now,
+          leaseId,
+        },
+      );
+
+    await expect(acquire(100, "lease-a")).resolves.toEqual({
+      allowed: true,
+      current: 1,
+      leaseId: "lease-a",
+    });
+    await expect(acquire(200, "lease-b")).resolves.toEqual({
       allowed: false,
       current: 1,
     });
-    await expect(acquire(1_100)).resolves.toEqual({
+    await expect(acquire(1_100, "lease-b")).resolves.toEqual({
       allowed: true,
+      current: 1,
+      leaseId: "lease-b",
+    });
+    await post(durableObject, {
+      operation: "release",
+      key: "user-1",
+      leaseId: "not-the-owner",
+    });
+    await expect(acquire(1_101, "lease-c")).resolves.toEqual({
+      allowed: false,
       current: 1,
     });
-    await post(durableObject, { operation: "release", key: "user-1" });
-    await expect(acquire(1_101)).resolves.toEqual({
+    await post(durableObject, {
+      operation: "release",
+      key: "user-1",
+      leaseId: "lease-b",
+    });
+    await expect(acquire(1_102, "lease-c")).resolves.toEqual({
       allowed: true,
       current: 1,
+      leaseId: "lease-c",
     });
   });
 });

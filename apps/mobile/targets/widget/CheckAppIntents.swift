@@ -22,6 +22,11 @@ struct ToggleCheckIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        let isPlanAllowed = await WidgetPlanHelper.isWidgetAllowed()
+        guard isPlanAllowed else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "CheckWidget")
+            return .result()
+        }
         let dbHelper = WidgetDbHelper()
         guard dbHelper.getActivityById(activityId) != nil else { return .result() }
         if let kindId, !dbHelper.isKindOwnedByActivity(activityId, kindId: kindId) {
@@ -35,7 +40,10 @@ struct ToggleCheckIntent: AppIntent {
             _ = dbHelper.softDeleteTodayLog(activityId, kindId: kindId)
         } else {
             _ = await SimpleLogHelper.saveLog(
-                activityId: activityId, kindId: kindId, quantity: 1
+                activityId: activityId,
+                kindId: kindId,
+                quantity: 1,
+                isPlanAllowed: isPlanAllowed
             )
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "CheckWidget")

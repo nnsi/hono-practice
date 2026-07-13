@@ -8,6 +8,7 @@ import { assertAdminOrigin } from "./adminAccessPolicy";
 import {
   type AdminAuthDependencies,
   resolveAdminAuthHandler,
+  resolveAdminOriginConfig,
 } from "./adminAuthDi";
 import type { AdminAuthHandler } from "./adminAuthHandler";
 import {
@@ -26,7 +27,7 @@ export function createAdminAuthRoute(deps: AdminAuthDependencies = {}) {
   >();
 
   app.use("*", async (c, next) => {
-    assertAdminOrigin(c.req.header("Origin"), c.env);
+    assertAdminOrigin(c.req.header("Origin"), resolveAdminOriginConfig(c.env));
     c.set("adminAuthHandler", resolveAdminAuthHandler(c.env, deps));
     return next();
   });

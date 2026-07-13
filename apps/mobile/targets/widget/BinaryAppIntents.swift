@@ -20,8 +20,16 @@ struct RecordBinaryIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        let isPlanAllowed = await WidgetPlanHelper.isWidgetAllowed()
+        guard isPlanAllowed else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "BinaryWidget")
+            return .result()
+        }
         _ = await SimpleLogHelper.saveLog(
-            activityId: activityId, kindId: kindId, quantity: 1
+            activityId: activityId,
+            kindId: kindId,
+            quantity: 1,
+            isPlanAllowed: isPlanAllowed
         )
         WidgetCenter.shared.reloadTimelines(ofKind: "BinaryWidget")
         return .result()

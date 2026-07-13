@@ -2,7 +2,7 @@
 
 ## ステータス
 
-決定
+廃止 — [20260713 Atomic rate limits and AI quotas](./20260713_atomic_rate_limits.md) により置換
 
 ## コンテキスト
 
@@ -29,5 +29,7 @@
 
 ## 備考
 
+- 2026-07-13の再評価で、認証・AI quota・同時実行制御では結果整合性によるburst許容を受け入れられないと判断した
+- 旧KV namespaceのTerraform stateと実resourceの撤去は外部インフラ作業として分離し、application bindingから先に除外した
 - DBのコールドスタート（Neon scale-to-zero）は今回のスコープ外。将来的にD1/Turso移行やNeon有料プランで対応する可能性あり
 - WAEデータの94%がボットの404リクエストだったため、Tail Workerに404フィルタも追加済み

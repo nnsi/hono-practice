@@ -1,9 +1,9 @@
 import type {
-  ConcurrencyDecision,
-  RateLimitDecision,
-  RateLimitState,
-  RateLimitStore,
-} from "./rateLimitStore";
+  AtomicCounterDecision,
+  AtomicCounterState,
+  ConcurrencyLeaseDecision,
+  RateLimitPorts,
+} from "@backend/port/rateLimit";
 
 export type RedisEvalClient = {
   eval(
@@ -11,6 +11,16 @@ export type RedisEvalClient = {
     options: { keys: string[]; arguments: string[] },
   ): Promise<unknown>;
 };
+
+function redisSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function counterKey(partitionKey: string, ruleKey: string): string {
+  // The hash tag keeps every rule in one partition on the same Redis Cluster
+  // slot, which is required for the atomic multi-key Lua script.
+  return `atomic-rate:{${redisSegment(partitionKey)}}:${redisSegment(ruleKey)}`;
+}
 
 function toNumberArray(value: unknown, minimumLength: number): number[] {
   if (!Array.isArray(value) || value.length < minimumLength) {
@@ -62,83 +72,101 @@ return output
 `;
 
 const ACQUIRE_SCRIPT = `
-local raw = redis.call('GET', KEYS[1])
-local count = raw and tonumber(raw) or 0
-local limit = tonumber(ARGV[1])
-if count >= limit then return {0, count} end
-count = count + 1
-redis.call('SET', KEYS[1], tostring(count), 'PX', tonumber(ARGV[2]))
-return {1, count}
+local now = tonumber(ARGV[1])
+local expiresAt = now + tonumber(ARGV[2])
+local leaseId = ARGV[3]
+local limit = tonumber(ARGV[4])
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
+local current = redis.call('ZCARD', KEYS[1])
+if current >= limit then return {0, current, ''} end
+if redis.call('ZSCORE', KEYS[1], leaseId) then return {-1, current, ''} end
+redis.call('ZADD', KEYS[1], expiresAt, leaseId)
+local latest = redis.call('ZRANGE', KEYS[1], -1, -1, 'WITHSCORES')
+redis.call('PEXPIREAT', KEYS[1], latest[2])
+return {1, current + 1, leaseId}
 `;
 
 const RELEASE_SCRIPT = `
-local raw = redis.call('GET', KEYS[1])
-if not raw then return 0 end
-local count = tonumber(raw)
-if count <= 1 then redis.call('DEL', KEYS[1]) return 0 end
-redis.call('DECR', KEYS[1])
-return count - 1
+local removed = redis.call('ZREM', KEYS[1], ARGV[1])
+local current = redis.call('ZCARD', KEYS[1])
+if current == 0 then
+  redis.call('DEL', KEYS[1])
+else
+  local latest = redis.call('ZRANGE', KEYS[1], -1, -1, 'WITHSCORES')
+  redis.call('PEXPIREAT', KEYS[1], latest[2])
+end
+return removed
 `;
+
+function parseLeaseDecision(value: unknown): ConcurrencyLeaseDecision {
+  if (!Array.isArray(value) || value.length < 3) {
+    throw new Error("Invalid Redis rate limit response");
+  }
+  const allowed = Number(value[0]);
+  const current = Number(value[1]);
+  if (!Number.isFinite(current) || (allowed !== 0 && allowed !== 1)) {
+    throw new Error("Invalid Redis rate limit response");
+  }
+  if (allowed === 0) return { allowed: false, current };
+  const leaseId = value[2];
+  if (typeof leaseId !== "string" || leaseId.length === 0) {
+    throw new Error("Invalid Redis rate limit response");
+  }
+  return { allowed: true, current, leaseId };
+}
 
 export function newRedisRateLimitStore(
   client: RedisEvalClient,
-): RateLimitStore {
+): RateLimitPorts {
   return {
-    async consume(rules, now = Date.now()) {
+    async consume({ partitionKey, rules }, now = Date.now()) {
       if (rules.length === 0) {
         return { allowed: true, states: [], retryAfterMs: 0 };
       }
-      const keys = rules.map((rule) => `atomic-rate:${rule.key}`);
-      const args = rules.flatMap((rule) => [
-        String(rule.limit),
-        String(rule.windowMs),
-        String(now),
-      ]);
       const raw = toNumberArray(
-        await client.eval(CONSUME_SCRIPT, { keys, arguments: args }),
+        await client.eval(CONSUME_SCRIPT, {
+          keys: rules.map((rule) => counterKey(partitionKey, rule.key)),
+          arguments: rules.flatMap((rule) => [
+            String(rule.limit),
+            String(rule.windowMs),
+            String(now),
+          ]),
+        }),
         1 + rules.length * 2,
       );
-      const exceededIndex = Number(raw[0]);
-      const allowed = exceededIndex === 0;
-      const states: RateLimitState[] = rules.map((rule, index) => {
-        const count = Number(raw[1 + index * 2]);
-        const windowStart = Number(raw[2 + index * 2]);
+      const exceededIndex = raw[0];
+      const states: AtomicCounterState[] = rules.map((rule, index) => {
+        const count = raw[1 + index * 2];
         return {
           key: rule.key,
           count,
           remaining: Math.max(0, rule.limit - count),
-          resetAt: windowStart + rule.windowMs,
+          resetAt: raw[2 + index * 2] + rule.windowMs,
         };
       });
-      const exceededState =
+      const exceeded =
         exceededIndex > 0 ? states[exceededIndex - 1] : undefined;
       return {
-        allowed,
+        allowed: exceededIndex === 0,
         states,
-        retryAfterMs: exceededState
-          ? Math.max(0, exceededState.resetAt - now)
-          : 0,
-      } satisfies RateLimitDecision;
+        retryAfterMs: exceeded ? Math.max(0, exceeded.resetAt - now) : 0,
+      } satisfies AtomicCounterDecision;
     },
 
-    async acquireConcurrency(key, limit, ttlMs) {
-      const raw = toNumberArray(
+    async acquireConcurrency(key, limit, ttlMs, now = Date.now()) {
+      const leaseId = crypto.randomUUID();
+      return parseLeaseDecision(
         await client.eval(ACQUIRE_SCRIPT, {
           keys: [`atomic-concurrency:${key}`],
-          arguments: [String(limit), String(ttlMs)],
+          arguments: [String(now), String(ttlMs), leaseId, String(limit)],
         }),
-        2,
       );
-      return {
-        allowed: Number(raw[0]) === 1,
-        current: Number(raw[1]),
-      } satisfies ConcurrencyDecision;
     },
 
-    async releaseConcurrency(key) {
+    async releaseConcurrency(key, leaseId) {
       await client.eval(RELEASE_SCRIPT, {
         keys: [`atomic-concurrency:${key}`],
-        arguments: [],
+        arguments: [leaseId],
       });
     },
   };

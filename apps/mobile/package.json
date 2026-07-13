@@ -14,6 +14,8 @@
     "e2e:smoke": "maestro test .maestro/smoke.yaml",
     "e2e:smoke:android": "maestro test .maestro/smoke.yaml",
     "e2e:smoke:ios": "maestro test .maestro/smoke.yaml",
+    "export:release:ios": "expo export --platform ios --output-dir ../../dist-release-bundles/ios --clear",
+    "export:release:android": "expo export --platform android --output-dir ../../dist-release-bundles/android --clear",
     "typecheck": "tsgo --noEmit",
     "lint": "biome lint ./src",
     "test-once": "pnpm --dir ../.. exec vitest run --config vitest.config.ts apps/mobile"
@@ -28,6 +30,7 @@
     "@packages/platform": "workspace:*",
     "@packages/sync-engine": "workspace:*",
     "@packages/types": "workspace:*",
+    "@packages/utils": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "~12.0.1",
     "@tanstack/react-query": "^5.101.2",

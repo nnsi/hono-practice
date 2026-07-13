@@ -7,7 +7,7 @@
     "test": "vitest --disable-console-intercept",
     "test-once": "vitest run",
     "test-e2e": "vitest run --config vitest.e2e.config.ts",
-    "test:widget-swift": "scripts/test-widget-swift.sh",
+    "test:widget-swift": "bash scripts/test-widget-swift.sh",
     "guard:backend": "node scripts/check-backend-rules.js",
     "guard:dates": "node scripts/check-date-rules.js",
     "guard:widget-schema": "node scripts/check-widget-schema.js",

@@ -1,4 +1,4 @@
-import type { DurableObjectNamespace } from "@cloudflare/workers-types";
+import type { RateLimitPorts } from "@backend/port/rateLimit";
 
 import {
   ConcurrencyDecisionSchema,
@@ -6,16 +6,30 @@ import {
   RateLimitDecisionSchema,
   ReleaseDecisionSchema,
 } from "./durableObjectRateLimitSchemas";
-import type { RateLimitStore } from "./rateLimitStore";
 
-function objectName(key: string): string {
-  // All windows for one subject must land on the same strongly-consistent
-  // object. Callers put the subject in the first rule/key.
-  return `rate-limit:${key}`;
+export type RateLimitDurableObjectNamespace = {
+  getByName(name: string): {
+    fetch(
+      input: string,
+      init: {
+        method: string;
+        headers: Record<string, string>;
+        body: string;
+      },
+    ): Promise<{
+      ok: boolean;
+      status: number;
+      json(): Promise<unknown>;
+    }>;
+  };
+};
+
+function objectName(partitionKey: string): string {
+  return `rate-limit:${partitionKey}`;
 }
 
 function callDurableObject(
-  namespace: DurableObjectNamespace,
+  namespace: RateLimitDurableObjectNamespace,
   routingKey: string,
   body: DurableRequest,
 ): Promise<unknown> {
@@ -35,10 +49,10 @@ function callDurableObject(
 }
 
 export function newDurableObjectRateLimitStore(
-  namespace: DurableObjectNamespace,
-): RateLimitStore {
+  namespace: RateLimitDurableObjectNamespace,
+): RateLimitPorts {
   return {
-    consume(rules, now = Date.now()) {
+    consume({ partitionKey, rules }, now = Date.now()) {
       if (rules.length === 0) {
         return Promise.resolve({
           allowed: true,
@@ -46,25 +60,29 @@ export function newDurableObjectRateLimitStore(
           retryAfterMs: 0,
         });
       }
-      return callDurableObject(namespace, rules[0].key, {
+      return callDurableObject(namespace, partitionKey, {
         operation: "consume",
+        partitionKey,
         rules,
         now,
       }).then((value) => RateLimitDecisionSchema.parse(value));
     },
     acquireConcurrency(key, limit, ttlMs, now = Date.now()) {
+      const leaseId = crypto.randomUUID();
       return callDurableObject(namespace, key, {
         operation: "acquire",
         key,
         limit,
         ttlMs,
         now,
+        leaseId,
       }).then((value) => ConcurrencyDecisionSchema.parse(value));
     },
-    releaseConcurrency(key) {
+    releaseConcurrency(key, leaseId) {
       return callDurableObject(namespace, key, {
         operation: "release",
         key,
+        leaseId,
       }).then((value) => {
         ReleaseDecisionSchema.parse(value);
       });

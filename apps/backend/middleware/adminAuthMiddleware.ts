@@ -9,6 +9,7 @@ import { assertAdminOrigin } from "../feature/admin/adminAccessPolicy";
 import {
   type AdminAuthDependencies,
   resolveAdminAuthHandler,
+  resolveAdminOriginConfig,
 } from "../feature/admin/adminAuthDi";
 import { getAdminSessionToken } from "../feature/admin/adminSessionCookie";
 import { getAdminJwtSecret } from "../utils/adminJwt";
@@ -37,7 +38,10 @@ export function createAdminAuthMiddleware(
   return createMiddleware<AppContext>(async (c, next) => {
     const sessionToken = getAdminSessionToken(c);
     if (sessionToken) {
-      assertAdminOrigin(c.req.header("Origin"), c.env);
+      assertAdminOrigin(
+        c.req.header("Origin"),
+        resolveAdminOriginConfig(c.env),
+      );
       const session = await resolveAdminAuthHandler(
         c.env,
         dependencies,

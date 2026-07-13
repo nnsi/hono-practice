@@ -1,6 +1,22 @@
-import type { AppContext } from "@backend/context";
 import { AppError } from "@backend/error";
 import { isLocalOrigin } from "@backend/utils/isLocalOrigin";
+
+export type AdminRuntimeEnvironment =
+  | "development"
+  | "test"
+  | "stg"
+  | "production";
+
+export type AdminAuthConfig = {
+  environment: AdminRuntimeEnvironment;
+  googleOAuthClientId: string;
+  allowedEmails: readonly string[];
+};
+
+export type AdminOriginConfig = {
+  environment: AdminRuntimeEnvironment;
+  adminAppUrl?: string;
+};
 
 export function parseAllowedAdminEmails(value: string | undefined): string[] {
   return (value ?? "")
@@ -11,28 +27,28 @@ export function parseAllowedAdminEmails(value: string | undefined): string[] {
 
 export function isAdminEmailAllowed(
   email: string,
-  env: AppContext["Bindings"],
+  config: Pick<AdminAuthConfig, "environment" | "allowedEmails">,
 ): boolean {
-  if (env.NODE_ENV === "development" && email === "dev@localhost") return true;
-  return parseAllowedAdminEmails(env.ADMIN_ALLOWED_EMAILS).includes(
-    email.toLowerCase(),
-  );
+  if (config.environment === "development" && email === "dev@localhost") {
+    return true;
+  }
+  return config.allowedEmails.includes(email.toLowerCase());
 }
 
 export function assertAdminOrigin(
   origin: string | undefined,
-  env: AppContext["Bindings"],
+  config: AdminOriginConfig,
 ): void {
   if (!origin) return;
   if (
-    (env.NODE_ENV === "development" || env.NODE_ENV === "test") &&
+    (config.environment === "development" || config.environment === "test") &&
     isLocalOrigin(origin)
   ) {
     return;
   }
-  const allowed = [env.ADMIN_APP_URL, env.APP_URL, env.APP_URL_V2]
-    .filter((value): value is string => Boolean(value))
-    .map((value) => new URL(value).origin);
+  const allowed = config.adminAppUrl
+    ? [new URL(config.adminAppUrl).origin]
+    : [];
   if (!URL.canParse(origin)) {
     throw new AppError("Origin not allowed", 403);
   }

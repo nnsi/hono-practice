@@ -1,9 +1,13 @@
+import type {
+  AtomicCounterDecision,
+  AtomicCounterState,
+} from "@backend/port/rateLimit";
+
 import {
-  ConcurrencyCounterSchema,
+  ConcurrencyLeasesSchema,
   CounterSchema,
   DurableRequestSchema,
 } from "./durableObjectRateLimitSchemas";
-import type { RateLimitDecision, RateLimitState } from "./rateLimitStore";
 
 export type RateLimitTransaction = {
   get(key: string): Promise<unknown>;
@@ -19,6 +23,10 @@ export type RateLimitDurableObjectState = {
   };
 };
 
+function counterStorageKey(partitionKey: string, ruleKey: string): string {
+  return `counter:${JSON.stringify([partitionKey, ruleKey])}`;
+}
+
 export class RateLimitDurableObject {
   constructor(private readonly state: RateLimitDurableObjectState) {}
 
@@ -30,7 +38,7 @@ export class RateLimitDurableObject {
       const decision = await this.state.storage.transaction(async (tx) => {
         const records = await Promise.all(
           body.rules.map(async (rule) => {
-            const storageKey = `counter:${rule.key}`;
+            const storageKey = counterStorageKey(body.partitionKey, rule.key);
             const current = CounterSchema.optional().parse(
               await tx.get(storageKey),
             );
@@ -55,7 +63,7 @@ export class RateLimitDurableObject {
             ),
           );
         }
-        const states: RateLimitState[] = records.map(({ rule, record }) => {
+        const states: AtomicCounterState[] = records.map(({ rule, record }) => {
           const count = record.count + (allowed ? 1 : 0);
           return {
             key: rule.key,
@@ -73,7 +81,7 @@ export class RateLimitDurableObject {
                 exceeded.record.windowStart + exceeded.rule.windowMs - body.now,
               )
             : 0,
-        } satisfies RateLimitDecision;
+        } satisfies AtomicCounterDecision;
       });
       return Response.json(decision);
     }
@@ -81,33 +89,42 @@ export class RateLimitDurableObject {
     if (body.operation === "acquire") {
       const decision = await this.state.storage.transaction(async (tx) => {
         const storageKey = `concurrency:${body.key}`;
-        const existing = ConcurrencyCounterSchema.optional().parse(
+        const existing = ConcurrencyLeasesSchema.optional().parse(
           await tx.get(storageKey),
         );
-        const current =
-          !existing || existing.expiresAt <= body.now
-            ? { count: 0, expiresAt: body.now + body.ttlMs }
-            : existing;
-        if (current.count >= body.limit) {
-          return { allowed: false, current: current.count };
+        const active = Object.fromEntries(
+          Object.entries(existing ?? {}).filter(
+            ([, expiresAt]) => expiresAt > body.now,
+          ),
+        );
+        const current = Object.keys(active).length;
+        if (current >= body.limit) {
+          await tx.put(storageKey, active);
+          return { allowed: false, current };
         }
-        const next = {
-          count: current.count + 1,
-          expiresAt: body.now + body.ttlMs,
+        if (active[body.leaseId])
+          throw new Error("Duplicate concurrency lease");
+        active[body.leaseId] = body.now + body.ttlMs;
+        await tx.put(storageKey, active);
+        return {
+          allowed: true,
+          current: current + 1,
+          leaseId: body.leaseId,
         };
-        await tx.put(storageKey, next);
-        return { allowed: true, current: next.count };
       });
       return Response.json(decision);
     }
 
     await this.state.storage.transaction(async (tx) => {
       const storageKey = `concurrency:${body.key}`;
-      const current = ConcurrencyCounterSchema.optional().parse(
+      const current = ConcurrencyLeasesSchema.optional().parse(
         await tx.get(storageKey),
       );
-      if (!current || current.count <= 1) await tx.delete(storageKey);
-      else await tx.put(storageKey, { ...current, count: current.count - 1 });
+      if (!current || !(body.leaseId in current)) return;
+      const next = { ...current };
+      delete next[body.leaseId];
+      if (Object.keys(next).length === 0) await tx.delete(storageKey);
+      else await tx.put(storageKey, next);
     });
     return Response.json({ released: true });
   }

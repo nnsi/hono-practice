@@ -3,8 +3,9 @@ import { getCookie, setCookie } from "hono/cookie";
 
 import type { AppContext } from "@backend/context";
 
+import { ADMIN_SESSION_TTL_MS } from "./adminSessionPolicy";
+
 export const ADMIN_SESSION_COOKIE = "admin_session";
-export const ADMIN_SESSION_TTL_MS = 60 * 60 * 1000;
 
 type CookieOptions = NonNullable<Parameters<typeof setCookie>[3]>;
 
@@ -32,6 +33,7 @@ export function setAdminSessionCookie<E extends AppContext>(
   setCookie(c, ADMIN_SESSION_COOKIE, token, {
     ...cookieOptions(c.env),
     expires: expiresAt,
+    maxAge: ADMIN_SESSION_TTL_MS / 1000,
   });
 }
 

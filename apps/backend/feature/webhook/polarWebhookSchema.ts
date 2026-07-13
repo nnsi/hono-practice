@@ -15,6 +15,8 @@ export const polarSubscriptionSchema = z.object({
   product: z.object({ id: z.string(), name: z.string() }),
 });
 
+export type PolarSubscription = z.infer<typeof polarSubscriptionSchema>;
+
 export const POLAR_SUBSCRIPTION_EVENTS = [
   "subscription.created",
   "subscription.updated",

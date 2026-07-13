@@ -20,6 +20,10 @@ struct StartTimerIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        guard await WidgetPlanHelper.isWidgetAllowed() else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+            return .result()
+        }
         let state = TimerState()
         state.startTimer(timerInstanceId: timerInstanceId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
@@ -46,6 +50,10 @@ struct PauseTimerIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        guard await WidgetPlanHelper.isWidgetAllowed() else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+            return .result()
+        }
         let state = TimerState()
         state.stopTimer(timerInstanceId: timerInstanceId)
         WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
@@ -72,6 +80,12 @@ struct StopTimerIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        let isPlanAllowed = await WidgetPlanHelper.isWidgetAllowed()
+        guard isPlanAllowed else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+            return .result()
+        }
+
         let state = TimerState()
         if state.isRunning(timerInstanceId: timerInstanceId) {
             state.stopTimer(timerInstanceId: timerInstanceId)
@@ -82,7 +96,8 @@ struct StopTimerIntent: AppIntent {
             TimerSavePolicy.performOnSuccess(SaveLogHelper.saveLog(
                 activityId: activityId,
                 timerInstanceId: timerInstanceId,
-                kindId: nil
+                kindId: nil,
+                isPlanAllowed: isPlanAllowed
             )) {
                 state.resetTimer(timerInstanceId: timerInstanceId)
             }
@@ -118,11 +133,18 @@ struct SaveWithKindIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        let isPlanAllowed = await WidgetPlanHelper.isWidgetAllowed()
+        guard isPlanAllowed else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+            return .result()
+        }
+
         let state = TimerState()
         TimerSavePolicy.performOnSuccess(SaveLogHelper.saveLog(
             activityId: activityId,
             timerInstanceId: timerInstanceId,
-            kindId: kindId
+            kindId: kindId,
+            isPlanAllowed: isPlanAllowed
         )) {
             state.clearPendingKindSelection(timerInstanceId: timerInstanceId)
             state.resetTimer(timerInstanceId: timerInstanceId)
@@ -151,6 +173,10 @@ struct ResetTimerIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        guard await WidgetPlanHelper.isWidgetAllowed() else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "TimerWidget")
+            return .result()
+        }
         let state = TimerState()
         state.clearPendingKindSelection(timerInstanceId: timerInstanceId)
         state.resetTimer(timerInstanceId: timerInstanceId)

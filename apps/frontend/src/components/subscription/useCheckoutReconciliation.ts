@@ -1,10 +1,7 @@
 import { useState } from "react";
 
 import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
-import {
-  type PollSleep,
-  pollWithExponentialBackoff,
-} from "@packages/sync-engine";
+import { type PollSleep, pollWithExponentialBackoff } from "@packages/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {

@@ -53,8 +53,28 @@ export function createAIActivityLogRoute(
       tracer,
     );
     const handler = newAIActivityLogHandler(uc);
+    const rateLimitStore = c.env.RATE_LIMIT_STORE;
     const h = newAIActivityLogUsageHandler(handler, {
-      reserve: () => reserveAIUsage(c),
+      reserve: () =>
+        reserveAIUsage({
+          counterStore: rateLimitStore,
+          concurrencyStore: rateLimitStore,
+          config: {
+            nodeEnv: c.env.NODE_ENV,
+            userQuotaPerMinute: c.env.AI_USER_QUOTA_PER_MINUTE,
+            userQuotaPerDay: c.env.AI_USER_QUOTA_PER_DAY,
+            userQuotaPerMonth: c.env.AI_USER_QUOTA_PER_MONTH,
+            apiKeyQuotaPerMinute: c.env.AI_API_KEY_QUOTA_PER_MINUTE,
+            apiKeyQuotaPerDay: c.env.AI_API_KEY_QUOTA_PER_DAY,
+            apiKeyQuotaPerMonth: c.env.AI_API_KEY_QUOTA_PER_MONTH,
+            maxConcurrency: c.env.AI_MAX_CONCURRENCY,
+          },
+          identity: {
+            userId: c.get("userId"),
+            apiKeyId: c.get("apiKeyId"),
+          },
+          logger: c.get("logger"),
+        }),
       logger: c.get("logger"),
       userId: c.get("userId"),
       apiKeyId: c.get("apiKeyId") ?? null,

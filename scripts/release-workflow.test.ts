@@ -4,6 +4,9 @@ import { describe, expect, it } from "vitest";
 
 const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
 const githubExpression = (value: string) => `$${`{{ ${value} }}`}`;
+const mobileBundleStep = workflow.match(
+  / {6}- name: Generate iOS and Android release bundles[\s\S]*?(?=\n {6}- name:)/,
+)?.[0];
 
 describe("release workflow guards", () => {
   it("uses the tested artifact impact classifier", () => {
@@ -32,8 +35,18 @@ describe("release workflow guards", () => {
 
   it("runs repository checks and both platform bundle exports before mobile release", () => {
     expect(workflow).toContain("Run repository CI gate");
-    expect(workflow).toContain("expo export --platform ios");
-    expect(workflow).toContain("expo export --platform android");
+    expect(mobileBundleStep).toContain("working-directory: .");
+    expect(mobileBundleStep).toContain("rm -rf dist-release-bundles");
+    expect(mobileBundleStep).toContain(
+      "pnpm --filter actiko-mobile run export:release:ios",
+    );
+    expect(mobileBundleStep).toContain(
+      "pnpm --filter actiko-mobile run export:release:android",
+    );
+    expect(mobileBundleStep).toContain("test -d dist-release-bundles/ios");
+    expect(mobileBundleStep).toContain("test -d dist-release-bundles/android");
+    expect(workflow).not.toContain("RATE_LIMIT_KV_NS");
+    expect(workflow).not.toContain("KV_RATE_LIMIT_ID");
   });
 
   it("runs the lockfile-pinned EAS CLI without a global install", () => {

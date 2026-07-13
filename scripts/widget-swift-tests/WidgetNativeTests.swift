@@ -50,6 +50,43 @@ private func testTimerInstancesAreIndependent() {
     require(state.getElapsedMillis(timerInstanceId: "widget-b") == 3_000, "widget-b survives reset")
 }
 
+private func testWidgetPlanPolicy() {
+    require(
+        WidgetPlanPolicy.isWidgetAllowed(plan: "premium", activeWidgetCount: nil),
+        "premium plan must remain allowed when WidgetCenter enumeration fails"
+    )
+    require(
+        WidgetPlanPolicy.isWidgetAllowed(plan: "free", activeWidgetCount: 0),
+        "free plan without an active widget must be allowed"
+    )
+    require(
+        WidgetPlanPolicy.isWidgetAllowed(plan: "free", activeWidgetCount: 1),
+        "free plan with one active widget must be allowed"
+    )
+    require(
+        !WidgetPlanPolicy.isWidgetAllowed(plan: "free", activeWidgetCount: 2),
+        "free plan with more than one active widget must be denied"
+    )
+    require(
+        !WidgetPlanPolicy.isWidgetAllowed(plan: "free", activeWidgetCount: nil),
+        "free plan must fail closed when WidgetCenter enumeration fails"
+    )
+}
+
+private func testSimpleLogPlanGate() async {
+    let denied = await SimpleLogHelper.saveLog(
+        activityId: "activity-a",
+        kindId: nil,
+        quantity: 1,
+        isPlanAllowed: false
+    )
+    if case .failure(.planNotAllowed) = denied {
+        // Expected: the policy gate returns before opening the widget database.
+    } else {
+        fatalError("free-plan simple log must be rejected before database access")
+    }
+}
+
 private func makeConstraintFailureDatabase() -> String {
     let path = FileManager.default.temporaryDirectory
         .appendingPathComponent("actiko-widget-\(UUID().uuidString).sqlite")
@@ -111,6 +148,7 @@ private func testKindOwnershipAndWriteFailurePreserveTimer() {
         activityId: "activity-a",
         timerInstanceId: "widget-a",
         kindId: "kind-a",
+        isPlanAllowed: true,
         state: state,
         dbHelper: dbHelper,
         now: currentDate,
@@ -130,22 +168,41 @@ private func testKindOwnershipAndWriteFailurePreserveTimer() {
         activityId: "activity-a",
         timerInstanceId: "widget-a",
         kindId: "kind-b",
+        isPlanAllowed: true,
         state: state,
         dbHelper: dbHelper,
         now: currentDate,
         logId: "log-b"
     )
-    if case .failure(.noMatchingRow) = foreignKindResult {
+    if case .failure(.database(.noMatchingRow)) = foreignKindResult {
         // Expected: the kind belongs to another Activity.
     } else {
         fatalError("foreign kind must be rejected")
+    }
+
+    let deniedByPlan = SaveLogHelper.saveLog(
+        activityId: "activity-a",
+        timerInstanceId: "widget-a",
+        kindId: nil,
+        isPlanAllowed: false,
+        state: state,
+        dbHelper: WidgetDbHelper(databasePath: "/missing/actiko.db"),
+        now: currentDate,
+        logId: "log-c"
+    )
+    if case .failure(.planNotAllowed) = deniedByPlan {
+        // Expected: the runtime gate runs before any database access or write.
+    } else {
+        fatalError("free-plan timer save must be rejected before database access")
     }
 }
 
 @main
 private struct WidgetNativeTests {
-    static func main() {
+    static func main() async {
         testTimerInstancesAreIndependent()
+        testWidgetPlanPolicy()
+        await testSimpleLogPlanGate()
         testKindOwnershipAndWriteFailurePreserveTimer()
         print("Widget Swift native tests: PASS")
     }

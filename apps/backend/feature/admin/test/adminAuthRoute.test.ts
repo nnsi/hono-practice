@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { OAuthVerify } from "../../auth/oauthVerify";
 import { createAdminAuthRoute } from "../adminAuthRoute";
-import { ADMIN_SESSION_TTL_MS } from "../adminSessionCookie";
+import { ADMIN_SESSION_TTL_MS } from "../adminSessionPolicy";
 import type { AdminSessionRepository } from "../adminSessionRepository";
 
 function createRepository(): AdminSessionRepository {
@@ -176,6 +176,32 @@ describe("admin HttpOnly sessions", () => {
       {
         NODE_ENV: "production",
         ADMIN_APP_URL: "https://admin.example.com",
+        ADMIN_ALLOWED_EMAILS: "admin@example.com",
+      },
+    );
+
+    expect(response.status).toBe(403);
+    expect(verifyGoogle).not.toHaveBeenCalled();
+  });
+
+  it("rejects the general web origin for production admin authentication", async () => {
+    const repository = createRepository();
+    const verifyGoogle = vi.fn();
+    const response = await buildApp(repository, verifyGoogle).request(
+      "/google",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://app.example.com",
+        },
+        body: JSON.stringify({ credential: "credential" }),
+      },
+      {
+        NODE_ENV: "production",
+        ADMIN_APP_URL: "https://admin.example.com",
+        APP_URL: "https://app.example.com",
+        APP_URL_V2: "https://next.example.com",
         ADMIN_ALLOWED_EMAILS: "admin@example.com",
       },
     );

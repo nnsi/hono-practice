@@ -1,7 +1,9 @@
-import type { Config } from "@backend/config";
-import type { HonoContext } from "@backend/context";
 import { AIQuotaError } from "@backend/error";
-import type { RateLimitRule } from "@backend/infra/rateLimit";
+import type {
+  AtomicCounterPort,
+  AtomicCounterRule,
+  ConcurrencyLeasePort,
+} from "@backend/port/rateLimit";
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -9,9 +11,31 @@ const MONTH = 30 * DAY;
 const CONCURRENCY_LEASE_MS = 5 * MINUTE;
 
 type Reservation = { release(): Promise<void> };
+type ErrorLogger = {
+  error(message: string, bindings?: Record<string, unknown>): void;
+};
 
-function isProductionLike(env: Config): boolean {
-  return env.NODE_ENV === "production" || env.NODE_ENV === "stg";
+export type AIUsageConfig = {
+  nodeEnv: string;
+  userQuotaPerMinute: number;
+  userQuotaPerDay: number;
+  userQuotaPerMonth: number;
+  apiKeyQuotaPerMinute: number;
+  apiKeyQuotaPerDay: number;
+  apiKeyQuotaPerMonth: number;
+  maxConcurrency: number;
+};
+
+export type AIUsageDependencies = {
+  counterStore?: AtomicCounterPort;
+  concurrencyStore?: ConcurrencyLeasePort;
+  config: AIUsageConfig;
+  identity: { userId: string; apiKeyId?: string };
+  logger?: ErrorLogger;
+};
+
+function isProductionLike(nodeEnv: string): boolean {
+  return nodeEnv === "production" || nodeEnv === "stg";
 }
 
 function newReservation(release: () => Promise<void>): Reservation {
@@ -28,12 +52,12 @@ function newReservation(release: () => Promise<void>): Reservation {
 function releasePreservingError(
   reservation: Reservation,
   error: unknown,
-  c: Pick<HonoContext, "get">,
+  logger: ErrorLogger | undefined,
 ): Promise<never> {
   return reservation.release().then(
     () => Promise.reject(error),
     (releaseError) => {
-      c.get("logger")?.error("AI concurrency release failed", {
+      logger?.error("AI concurrency release failed", {
         error:
           releaseError instanceof Error
             ? releaseError.message
@@ -46,13 +70,13 @@ function releasePreservingError(
 
 function mapStoreFailure(
   error: unknown,
-  c: Pick<HonoContext, "env" | "get">,
+  dependencies: AIUsageDependencies,
 ): Reservation {
   if (error instanceof AIQuotaError) throw error;
-  c.get("logger")?.error("AI quota store unavailable", {
+  dependencies.logger?.error("AI quota store unavailable", {
     error: error instanceof Error ? error.message : String(error),
   });
-  if (isProductionLike(c.env)) {
+  if (isProductionLike(dependencies.config.nodeEnv)) {
     throw new AIQuotaError(
       {
         error: {
@@ -66,43 +90,40 @@ function mapStoreFailure(
   return { release: () => Promise.resolve() };
 }
 
-function quotaRules(
-  env: Config,
-  userId: string,
-  apiKeyId: string | undefined,
-): RateLimitRule[] {
-  const rules: RateLimitRule[] = [
+function quotaRules(dependencies: AIUsageDependencies): AtomicCounterRule[] {
+  const { config, identity } = dependencies;
+  const rules: AtomicCounterRule[] = [
     {
-      key: `ai:user:${userId}:minute`,
-      limit: env.AI_USER_QUOTA_PER_MINUTE,
+      key: `ai:user:${identity.userId}:minute`,
+      limit: config.userQuotaPerMinute,
       windowMs: MINUTE,
     },
     {
-      key: `ai:user:${userId}:day`,
-      limit: env.AI_USER_QUOTA_PER_DAY,
+      key: `ai:user:${identity.userId}:day`,
+      limit: config.userQuotaPerDay,
       windowMs: DAY,
     },
     {
-      key: `ai:user:${userId}:month`,
-      limit: env.AI_USER_QUOTA_PER_MONTH,
+      key: `ai:user:${identity.userId}:month`,
+      limit: config.userQuotaPerMonth,
       windowMs: MONTH,
     },
   ];
-  if (apiKeyId) {
+  if (identity.apiKeyId) {
     rules.push(
       {
-        key: `ai:api-key:${apiKeyId}:minute`,
-        limit: env.AI_API_KEY_QUOTA_PER_MINUTE,
+        key: `ai:api-key:${identity.apiKeyId}:minute`,
+        limit: config.apiKeyQuotaPerMinute,
         windowMs: MINUTE,
       },
       {
-        key: `ai:api-key:${apiKeyId}:day`,
-        limit: env.AI_API_KEY_QUOTA_PER_DAY,
+        key: `ai:api-key:${identity.apiKeyId}:day`,
+        limit: config.apiKeyQuotaPerDay,
         windowMs: DAY,
       },
       {
-        key: `ai:api-key:${apiKeyId}:month`,
-        limit: env.AI_API_KEY_QUOTA_PER_MONTH,
+        key: `ai:api-key:${identity.apiKeyId}:month`,
+        limit: config.apiKeyQuotaPerMonth,
         windowMs: MONTH,
       },
     );
@@ -110,31 +131,29 @@ function quotaRules(
   return rules;
 }
 
+function unavailable(dependencies: AIUsageDependencies): Reservation {
+  return mapStoreFailure(
+    new Error("quota ports are not configured"),
+    dependencies,
+  );
+}
+
 export async function reserveAIUsage(
-  c: Pick<HonoContext, "env" | "get">,
+  dependencies: AIUsageDependencies,
 ): Promise<Reservation> {
-  const store = c.env.RATE_LIMIT_STORE;
-  if (!store) {
-    if (isProductionLike(c.env)) {
-      throw new AIQuotaError(
-        {
-          error: {
-            code: "AI_QUOTA_UNAVAILABLE",
-            message: "AI quota service unavailable",
-          },
-        },
-        503,
-      );
-    }
-    return { release: () => Promise.resolve() };
+  const { counterStore, concurrencyStore, config, identity, logger } =
+    dependencies;
+  if (!counterStore || !concurrencyStore) {
+    return isProductionLike(config.nodeEnv)
+      ? unavailable(dependencies)
+      : { release: () => Promise.resolve() };
   }
 
-  const userId = c.get("userId");
-  const concurrencyKey = `ai:concurrency:user:${userId}`;
-  return store
+  const concurrencyKey = `ai:concurrency:user:${identity.userId}`;
+  return concurrencyStore
     .acquireConcurrency(
       concurrencyKey,
-      c.env.AI_MAX_CONCURRENCY,
+      config.maxConcurrency,
       CONCURRENCY_LEASE_MS,
     )
     .then((concurrency) => {
@@ -149,14 +168,21 @@ export async function reserveAIUsage(
           429,
         );
       }
-
       const reservation = newReservation(() =>
-        store.releaseConcurrency(concurrencyKey),
+        concurrencyStore.releaseConcurrency(
+          concurrencyKey,
+          concurrency.leaseId,
+        ),
       );
-      return store.consume(quotaRules(c.env, userId, c.get("apiKeyId"))).then(
-        (decision) => {
-          if (!decision.allowed) {
-            const quotaError = new AIQuotaError(
+      return counterStore
+        .consume({
+          partitionKey: `ai:quota:user:${identity.userId}`,
+          rules: quotaRules(dependencies),
+        })
+        .then(
+          (decision) => {
+            if (decision.allowed) return reservation;
+            const error = new AIQuotaError(
               {
                 error: {
                   code: "AI_QUOTA_EXCEEDED",
@@ -169,12 +195,10 @@ export async function reserveAIUsage(
               },
               429,
             );
-            return releasePreservingError(reservation, quotaError, c);
-          }
-          return reservation;
-        },
-        (error) => releasePreservingError(reservation, error, c),
-      );
+            return releasePreservingError(reservation, error, logger);
+          },
+          (error) => releasePreservingError(reservation, error, logger),
+        );
     })
-    .catch((error) => mapStoreFailure(error, c));
+    .catch((error) => mapStoreFailure(error, dependencies));
 }

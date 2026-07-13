@@ -1,34 +1,41 @@
+import type { AuthStateRepository } from "@packages/auth-client";
 import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
-import {
-  type PollSleep,
-  pollWithExponentialBackoff,
-} from "@packages/sync-engine";
+import { type PollSleep, pollWithExponentialBackoff } from "@packages/utils";
 
-import { getDatabase } from "../db/database";
-import { dbEvents } from "../db/dbEvents";
 import { reloadWidgetTimelines } from "../lib/widgetTimeline";
 import { apiGetMe } from "../utils/authApi";
+import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 
-type ReconcileOptions = {
+type PlanPersistence = Pick<AuthStateRepository, "setPlan">;
+
+type PlanPersistenceOptions = {
+  authStateRepository?: PlanPersistence;
+  notifyWidgetTimelines?: () => void;
+};
+
+type ReconcileOptions = PlanPersistenceOptions & {
   maxAttempts?: number;
   initialDelayMs?: number;
   sleep?: PollSleep;
 };
 
-export async function persistPlan(plan: SubscriptionPlan): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync("UPDATE auth_state SET plan = ? WHERE id = 'current'", [
-    plan,
-  ]);
-  dbEvents.emit("auth_state");
-  reloadWidgetTimelines();
+export async function persistPlan(
+  plan: SubscriptionPlan,
+  options: PlanPersistenceOptions = {},
+): Promise<void> {
+  const repository =
+    options.authStateRepository ?? createMobileAuthStateRepository();
+  await repository.setPlan(plan);
+  (options.notifyWidgetTimelines ?? reloadWidgetTimelines)();
 }
 
 /** Fetches and persists the backend's effective entitlement. */
-export async function refreshPlanFromBackend(): Promise<SubscriptionPlan> {
+export async function refreshPlanFromBackend(
+  options: PlanPersistenceOptions = {},
+): Promise<SubscriptionPlan> {
   const user = await apiGetMe();
   const plan: SubscriptionPlan = user.plan ?? "free";
-  await persistPlan(plan);
+  await persistPlan(plan, options);
   return plan;
 }
 
@@ -42,7 +49,7 @@ export async function reconcilePlanFromBackend(
   options: ReconcileOptions = {},
 ): Promise<boolean> {
   const result = await pollWithExponentialBackoff({
-    operation: refreshPlanFromBackend,
+    operation: () => refreshPlanFromBackend(options),
     accept: (plan) => plan === expectedPlan,
     maxAttempts: options.maxAttempts,
     initialDelayMs: options.initialDelayMs,

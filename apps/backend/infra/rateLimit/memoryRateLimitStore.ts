@@ -1,26 +1,36 @@
 import type {
-  ConcurrencyDecision,
-  RateLimitDecision,
-  RateLimitState,
-  RateLimitStore,
-} from "./rateLimitStore";
+  AtomicCounterDecision,
+  AtomicCounterState,
+  ConcurrencyLeaseDecision,
+  RateLimitPorts,
+} from "@backend/port/rateLimit";
 
 type Counter = { count: number; windowStart: number };
-type ConcurrencyCounter = { count: number; expiresAt: number };
+type LeaseMap = Map<string, number>;
+
+function counterKey(partitionKey: string, ruleKey: string): string {
+  return JSON.stringify([partitionKey, ruleKey]);
+}
+
+function newLeaseId(): string {
+  return crypto.randomUUID();
+}
 
 /** In-process implementation for tests and single-process local development. */
-export function newMemoryRateLimitStore(): RateLimitStore & {
+export function newMemoryRateLimitStore(): RateLimitPorts & {
   clear(): void;
-  getCount(key: string): number;
+  getCount(partitionKey: string, ruleKey?: string): number;
 } {
   const counters = new Map<string, Counter>();
-  const concurrency = new Map<string, ConcurrencyCounter>();
+  const leases = new Map<string, LeaseMap>();
 
   return {
-    async consume(rules, requestedNow = Date.now()) {
+    async consume({ partitionKey, rules }, requestedNow = Date.now()) {
       const records = rules.map((rule) => {
-        const current = counters.get(rule.key);
+        const storageKey = counterKey(partitionKey, rule.key);
+        const current = counters.get(storageKey);
         return {
+          storageKey,
           rule,
           record:
             !current || requestedNow - current.windowStart >= rule.windowMs
@@ -28,21 +38,19 @@ export function newMemoryRateLimitStore(): RateLimitStore & {
               : current,
         };
       });
-
       const exceeded = records.find(
         ({ rule, record }) => record.count >= rule.limit,
       );
       const allowed = !exceeded;
       if (allowed) {
-        for (const { rule, record } of records) {
-          counters.set(rule.key, {
+        for (const { storageKey, record } of records) {
+          counters.set(storageKey, {
             count: record.count + 1,
             windowStart: record.windowStart,
           });
         }
       }
-
-      const states: RateLimitState[] = records.map(({ rule, record }) => {
+      const states: AtomicCounterState[] = records.map(({ rule, record }) => {
         const count = record.count + (allowed ? 1 : 0);
         return {
           key: rule.key,
@@ -62,42 +70,44 @@ export function newMemoryRateLimitStore(): RateLimitStore & {
                 requestedNow,
             )
           : 0,
-      } satisfies RateLimitDecision;
+      } satisfies AtomicCounterDecision;
     },
 
     async acquireConcurrency(key, limit, ttlMs, requestedNow = Date.now()) {
-      const existing = concurrency.get(key);
-      const current =
-        !existing || existing.expiresAt <= requestedNow
-          ? { count: 0, expiresAt: requestedNow + ttlMs }
-          : existing;
-      if (current.count >= limit) {
-        return { allowed: false, current: current.count };
+      const active = leases.get(key) ?? new Map<string, number>();
+      for (const [leaseId, expiresAt] of active) {
+        if (expiresAt <= requestedNow) active.delete(leaseId);
       }
-      const next = {
-        count: current.count + 1,
-        expiresAt: requestedNow + ttlMs,
-      };
-      concurrency.set(key, next);
+      if (active.size >= limit) {
+        leases.set(key, active);
+        return {
+          allowed: false,
+          current: active.size,
+        } satisfies ConcurrencyLeaseDecision;
+      }
+      const leaseId = newLeaseId();
+      active.set(leaseId, requestedNow + ttlMs);
+      leases.set(key, active);
       return {
         allowed: true,
-        current: next.count,
-      } satisfies ConcurrencyDecision;
+        current: active.size,
+        leaseId,
+      } satisfies ConcurrencyLeaseDecision;
     },
 
-    async releaseConcurrency(key) {
-      const current = concurrency.get(key);
-      if (!current) return;
-      if (current.count <= 1) concurrency.delete(key);
-      else concurrency.set(key, { ...current, count: current.count - 1 });
+    async releaseConcurrency(key, leaseId) {
+      const active = leases.get(key);
+      if (!active) return;
+      active.delete(leaseId);
+      if (active.size === 0) leases.delete(key);
     },
 
     clear() {
       counters.clear();
-      concurrency.clear();
+      leases.clear();
     },
-    getCount(key) {
-      return counters.get(key)?.count ?? 0;
+    getCount(partitionKey, ruleKey = "request") {
+      return counters.get(counterKey(partitionKey, ruleKey))?.count ?? 0;
     },
   };
 }

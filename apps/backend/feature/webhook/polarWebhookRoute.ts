@@ -11,8 +11,8 @@ import { newSubscriptionHistoryRepository } from "../subscription/subscriptionHi
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import type { SubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
+import { handlePolarSubscriptionEvent } from "./polarEventHandler";
 import { verifyPolarSignature } from "./polarSignature";
-import { POLAR_STATUS_MAP, resolvePlan } from "./polarSubscriptionMapping";
 import {
   isPolarSubscriptionEvent,
   polarWebhookPayloadSchema,
@@ -89,102 +89,16 @@ export function createPolarWebhookRoute(deps?: {
     if (!parsed.success) {
       throw new AppError("Invalid webhook payload", 400);
     }
-    const payload = parsed.data;
     const { queryUc, commandUc } = c.var;
-    const sub = payload.data;
-    const eventOccurredAt = new Date(sub.modified_at);
-    const ordering = { eventOccurredAt, eventSequence: webhookId };
-    const period = {
-      currentPeriodStart: new Date(sub.current_period_start),
-      currentPeriodEnd: new Date(sub.current_period_end),
-      trialStart: sub.trial_start ? new Date(sub.trial_start) : undefined,
-      trialEnd: sub.trial_end ? new Date(sub.trial_end) : undefined,
-    };
-
-    async function resolveUserId(): Promise<string | undefined> {
-      const userId = sub.metadata.userId;
-      if (userId) return userId;
-      const existing = await queryUc.getSubscriptionByPaymentProviderId(
-        "polar",
-        sub.id,
-      );
-      return existing?.userId;
-    }
-
-    switch (payload.type) {
-      case "subscription.created": {
-        const userId = await resolveUserId();
-        if (!userId) break;
-        const status = POLAR_STATUS_MAP[sub.status] ?? "expired";
-        await commandUc.upsertSubscriptionFromPayment({
-          userId,
-          plan: resolvePlan(status),
-          status,
-          paymentProvider: "polar",
-          paymentProviderId: sub.id,
-          eventType: "subscription.created",
-          webhookId,
-          ...period,
-          ...ordering,
-        });
-        break;
-      }
-
-      case "subscription.updated":
-      case "subscription.active": {
-        const resolvedUserId = await resolveUserId();
-        if (!resolvedUserId) break;
-        const status = POLAR_STATUS_MAP[sub.status] ?? "expired";
-        await commandUc.upsertSubscriptionFromPayment({
-          userId: resolvedUserId,
-          plan: resolvePlan(status),
-          status,
-          paymentProvider: "polar",
-          paymentProviderId: sub.id,
-          eventType: payload.type,
-          webhookId,
-          cancelAtPeriodEnd: sub.cancel_at_period_end,
-          ...period,
-          ...ordering,
-        });
-        break;
-      }
-
-      case "subscription.canceled": {
-        const resolvedUserId = await resolveUserId();
-        if (!resolvedUserId) break;
-        await commandUc.upsertSubscriptionFromPayment({
-          userId: resolvedUserId,
-          plan: "premium",
-          status: "active",
-          paymentProvider: "polar",
-          paymentProviderId: sub.id,
-          eventType: "subscription.canceled",
-          webhookId,
-          cancelAtPeriodEnd: true,
-          ...period,
-          ...ordering,
-        });
-        break;
-      }
-
-      case "subscription.revoked": {
-        const resolvedUserId = await resolveUserId();
-        if (!resolvedUserId) break;
-        await commandUc.upsertSubscriptionFromPayment({
-          userId: resolvedUserId,
-          plan: "free",
-          status: "cancelled",
-          paymentProvider: "polar",
-          paymentProviderId: sub.id,
-          eventType: "subscription.revoked",
-          webhookId,
-          ...period,
-          ...ordering,
-        });
-        break;
-      }
-    }
+    await handlePolarSubscriptionEvent(
+      {
+        type: rawPayload.type,
+        data: parsed.data.data,
+        webhookId,
+      },
+      queryUc,
+      commandUc,
+    );
 
     return c.json({ received: true }, 200);
   });

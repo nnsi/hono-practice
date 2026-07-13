@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { sign } from "hono/jwt";
 
 import type { AppContext } from "@backend/context";
-import { ADMIN_SESSION_TTL_MS } from "@backend/feature/admin/adminSessionCookie";
+import { ADMIN_SESSION_TTL_MS } from "@backend/feature/admin/adminSessionPolicy";
 import type { AdminSessionRepository } from "@backend/feature/admin/adminSessionRepository";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { describe, expect, it, vi } from "vitest";
@@ -202,5 +202,32 @@ describe("adminAuthMiddleware", () => {
     expect(repository.revokeAdminSessionByToken).toHaveBeenCalledWith(
       "opaque-session-token",
     );
+  });
+
+  it("rejects a production cookie session request from the general web origin", async () => {
+    const repository = createSessionRepository();
+    const app = newHonoWithErrorHandling();
+    app.use("*", createAdminAuthMiddleware({ sessionRepository: repository }));
+    app.get("/secured", (c) => c.json({ ok: true }));
+
+    const response = await app.request(
+      "/secured",
+      {
+        headers: {
+          Cookie: "admin_session=opaque-session-token",
+          Origin: "https://app.example.com",
+        },
+      },
+      {
+        NODE_ENV: "production",
+        ADMIN_APP_URL: "https://admin.example.com",
+        APP_URL: "https://app.example.com",
+        APP_URL_V2: "https://next.example.com",
+        ADMIN_ALLOWED_EMAILS: "admin@example.com",
+      },
+    );
+
+    expect(response.status).toBe(403);
+    expect(repository.findActiveAdminSessionByToken).not.toHaveBeenCalled();
   });
 });

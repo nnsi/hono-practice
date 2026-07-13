@@ -9,6 +9,7 @@ dist-backend
 dist-frontend
 dist-frontend-v2
 dist-admin-frontend
+dist-release-bundles/
 .husky
 stats.html
 /public

@@ -7,17 +7,19 @@ enum SaveLogHelper {
         activityId: String,
         timerInstanceId: String,
         kindId: String?,
+        isPlanAllowed: Bool,
         state: TimerState = TimerState(),
         dbHelper: WidgetDbHelper = WidgetDbHelper(),
         now: Date = Date(),
         logId: String = UuidV7.generate()
-    ) -> Result<Void, WidgetDbError> {
+    ) -> Result<Void, WidgetSaveError> {
+        guard isPlanAllowed else { return .failure(.planNotAllowed) }
         let elapsedSeconds = state.getElapsedMillis(timerInstanceId: timerInstanceId) / 1000
         guard let activity = dbHelper.getActivityById(activityId) else {
-            return .failure(.noMatchingRow)
+            return .failure(.database(.noMatchingRow))
         }
         if let kindId, !dbHelper.isKindOwnedByActivity(activityId, kindId: kindId) {
-            return .failure(.noMatchingRow)
+            return .failure(.database(.noMatchingRow))
         }
         let unitType = TimeConversion.getTimeUnitType(activity.quantityUnit)
         let quantity = TimeConversion.convertSecondsToUnit(elapsedSeconds, unitType)
@@ -40,6 +42,6 @@ enum SaveLogHelper {
             id: logId, activityId: activityId,
             activityKindId: kindId, quantity: quantity, memo: memo,
             date: today, syncStatus: "pending", createdAt: nowIso, updatedAt: nowIso
-        )
+        ).mapError(WidgetSaveError.database)
     }
 }
