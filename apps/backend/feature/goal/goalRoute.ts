@@ -12,6 +12,7 @@ import type { AppContext } from "../../context";
 import { newActivityRepository } from "../activity/activityRepository";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
+import { newGoalFreezePeriodRepository } from "../activitygoal/goalFreezePeriodRepository";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
 import { newGoalHandler } from "./goalHandler";
 import { newGoalUsecase } from "./goalUsecase";
@@ -32,9 +33,13 @@ export function createGoalRoute() {
     const activityGoalRepo = newActivityGoalRepository(db);
     const activityRepo = newActivityRepository(db);
     const activityLogRepo = newActivityLogRepository(db);
+    const freezePeriodRepo = newGoalFreezePeriodRepository(db);
 
     // Service instances
-    const activityGoalService = newActivityGoalService(activityLogRepo);
+    const activityGoalService = newActivityGoalService(
+      activityLogRepo,
+      freezePeriodRepo,
+    );
     const goalQueryService = newGoalQueryService(db);
 
     // Usecase and Handler

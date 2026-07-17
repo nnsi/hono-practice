@@ -43,6 +43,11 @@ describe("GoalUsecase", () => {
     reset(activityGoalService);
     reset(activityLogRepo);
 
+    // getGoals prefetches freeze periods; default to none unless a test overrides.
+    when(
+      activityGoalService.prefetchFreezePeriods(anything(), anything()),
+    ).thenResolve(new Map());
+
     usecase = newGoalUsecase(
       instance(activityGoalRepo),
       instance(activityRepo),
@@ -118,6 +123,7 @@ describe("GoalUsecase", () => {
           goal,
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(balance);
       when(
@@ -189,6 +195,7 @@ describe("GoalUsecase", () => {
       when(
         activityGoalService.calculateCurrentBalance(
           userId,
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -270,6 +277,7 @@ describe("GoalUsecase", () => {
       when(
         activityGoalService.calculateCurrentBalance(
           userId,
+          anything(),
           anything(),
           anything(),
           anything(),

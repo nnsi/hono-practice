@@ -5,8 +5,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from "../activity/activityRepository";
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
+import { prefetchActivityLogs } from "../activitygoal/activityGoalPrefetch";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
-import { prefetchActivityLogs } from "../activitygoal/activityGoalService";
 import type { ActivityLogRepository } from "../activityLog";
 import type { Goal, GoalFilters } from "./goalTypes";
 import { goalEntityToResponse } from "./goalTypes";
@@ -55,10 +55,15 @@ function getGoals(
       activityGoalRepo.getActivityGoalsByUserId(userId),
     );
 
-    // activity-logsを1回だけ一括取得（N+1解消）
-    const allLogs = await tracer.span("db.prefetchActivityLogs", () =>
-      prefetchActivityLogs(activityLogRepo, userId, goals, clientDate),
-    );
+    // activity-logs と freeze periods を1回ずつ一括取得（N+1解消）
+    const [allLogs, freezeByGoalId] = await Promise.all([
+      tracer.span("db.prefetchActivityLogs", () =>
+        prefetchActivityLogs(activityLogRepo, userId, goals, clientDate),
+      ),
+      tracer.span("db.prefetchFreezePeriods", () =>
+        activityGoalService.prefetchFreezePeriods(userId, goals),
+      ),
+    ]);
 
     // 並行で計算処理（DBアクセスなし、prefetchedLogsを使用）
     const goalsWithBalance = await Promise.all(
@@ -70,6 +75,7 @@ function getGoals(
               goal,
               clientDate,
               allLogs,
+              freezeByGoalId.get(goal.id) ?? [],
             ),
           ),
           tracer.span("getInactiveDates", () =>
