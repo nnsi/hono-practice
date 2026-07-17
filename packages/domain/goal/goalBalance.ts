@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 
+import { calendarDayDiff } from "../time/dateDiff";
 import type { DayTargets } from "./dayTargets";
 import { getDailyTargetForDate } from "./dayTargets";
 
@@ -39,7 +40,7 @@ export function countActiveDays(
   const e = dayjs(end);
   if (s.isAfter(e)) return 0;
 
-  const totalDays = e.diff(s, "day") + 1;
+  const totalDays = calendarDayDiff(start, end) + 1;
 
   // フリーズ期間がなければ高速パス
   if (freezePeriods.length === 0) return totalDays;
@@ -74,7 +75,7 @@ export function countActiveDays(
 
   let frozenDays = 0;
   for (const range of mergedRanges) {
-    frozenDays += dayjs(range.end).diff(dayjs(range.start), "day") + 1;
+    frozenDays += calendarDayDiff(range.start, range.end) + 1;
   }
 
   return Math.max(totalDays - frozenDays, 0);
