@@ -10,7 +10,7 @@ import {
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
 
-import dayjs from "../../lib/dayjs";
+import { getServerTodayInJst } from "../../lib/dayjs";
 import type { Tracer } from "../../lib/tracer";
 import type { GoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
 import type { GoalSyncRepository } from "./goalSyncRepository";
@@ -76,7 +76,7 @@ function getGoals(
     );
 
     const activeGoalIds = goals.filter((g) => !g.deletedAt).map((g) => g.id);
-    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
+    const today = clientDate ?? getServerTodayInJst();
 
     const [allFreezePeriods, actualQuantities] = await Promise.all([
       activeGoalIds.length > 0

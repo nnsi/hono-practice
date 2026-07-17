@@ -127,8 +127,9 @@ describe("AuthUsecase", () => {
           password: "password123",
         }),
       ).rejects.toThrow(new AuthError("invalid credentials"));
-      // Verify password verifier was not called
-      verify(passwordVerifier.compare(anything(), anything())).never();
+      // タイミングサイドチャネル対策: ユーザー不在でもダミーハッシュに対して
+      // compare を1回実行する（存在時と同じエラー・応答時間にするため）。
+      verify(passwordVerifier.compare(anything(), anything())).once();
       verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 

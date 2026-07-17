@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import dayjs from "@backend/lib/dayjs";
+import { getServerTodayInJst } from "@backend/lib/dayjs";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import {
   calculateGoalStats,
@@ -49,7 +49,7 @@ function getGoalStats(db: QueryExecutor) {
     }
 
     const activityGoal = goal[0];
-    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
+    const today = clientDate ?? getServerTodayInJst();
     const startDate = activityGoal.startDate;
     const endDate = activityGoal.endDate || today;
     const actualEndDate = endDate < today ? endDate : today;
