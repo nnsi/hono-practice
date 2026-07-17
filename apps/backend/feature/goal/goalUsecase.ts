@@ -4,8 +4,8 @@ import { createActivityGoalId } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from "../activity/activityRepository";
-import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { prefetchActivityLogs } from "../activitygoal/activityGoalPrefetch";
+import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
 import type { ActivityLogRepository } from "../activityLog";
 import type { Goal, GoalFilters } from "./goalTypes";
