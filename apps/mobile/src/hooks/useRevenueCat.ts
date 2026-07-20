@@ -99,6 +99,9 @@ export function useRevenueCat(): RevenueCatState {
     Purchases.addCustomerInfoUpdateListener(handleCustomerInfo);
     return () => {
       Purchases.removeCustomerInfoUpdateListener(handleCustomerInfo);
+      // userId が変わって effect が再実行される際に initRevenueCat / リスナー登録が
+      // 再度走るよう、次回 mount 判定用の ref をリセットする（BUG-9）。
+      initializedRef.current = false;
     };
   }, [userId]);
 

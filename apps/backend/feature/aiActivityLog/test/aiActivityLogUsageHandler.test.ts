@@ -5,7 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import { newAIActivityLogUsageHandler } from "../aiActivityLogUsageHandler";
 
 const USER_ID = createUserId("00000000-0000-4000-8000-000000000000");
-const PARAMS = { speechText: "30分ランニングした" };
+const PARAMS = {
+  speechText: "30分ランニングした",
+  clientDate: "2026-07-13",
+};
 const RESULT = {
   activityLog: {
     id: "00000000-0000-4000-8000-000000000001",

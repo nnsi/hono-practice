@@ -73,6 +73,22 @@ private func testWidgetPlanPolicy() {
     )
 }
 
+private func testVoiceRecordRequestContract() {
+    let data = try! VoiceRecordApi.requestBodyData(
+        speechText: "30分走った",
+        clientDate: "2026-07-20"
+    )
+    let decoded = try! JSONSerialization.jsonObject(with: data)
+    guard let fields = decoded as? [String: String] else {
+        fatalError("voice request body must be a string dictionary")
+    }
+    require(fields["speechText"] == "30分走った", "voice speechText field")
+    require(fields["clientDate"] == "2026-07-20", "voice clientDate field")
+    require(VoiceRecordApi.isSuccessfulStatus(200), "voice 200 response")
+    require(VoiceRecordApi.isSuccessfulStatus(201), "voice 201 response")
+    require(!VoiceRecordApi.isSuccessfulStatus(400), "voice 400 response")
+}
+
 private func testSimpleLogPlanGate() async {
     let denied = await SimpleLogHelper.saveLog(
         activityId: "activity-a",
@@ -202,6 +218,7 @@ private struct WidgetNativeTests {
     static func main() async {
         testTimerInstancesAreIndependent()
         testWidgetPlanPolicy()
+        testVoiceRecordRequestContract()
         await testSimpleLogPlanGate()
         testKindOwnershipAndWriteFailurePreserveTimer()
         print("Widget Swift native tests: PASS")

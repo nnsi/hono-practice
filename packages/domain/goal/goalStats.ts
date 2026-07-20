@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
+import { calendarDayDiff } from "../time/dateDiff";
 import type { DayTargets } from "./dayTargets";
 import { getDailyTargetForDate } from "./dayTargets";
 
@@ -73,20 +74,19 @@ export function calculateMaxConsecutiveDays(
 
   let maxConsecutive = 0;
   let currentConsecutive = 0;
-  let lastDate: dayjs.Dayjs | null = null;
+  let lastDate: string | null = null;
   for (const record of sorted) {
     if (record.quantity > 0) {
-      const d = dayjs(record.date);
-      if (lastDate === null || d.diff(lastDate, "day") === 1) {
+      if (lastDate === null || calendarDayDiff(lastDate, record.date) === 1) {
         currentConsecutive++;
         maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
-      } else if (d.diff(lastDate, "day") === 0) {
+      } else if (calendarDayDiff(lastDate, record.date) === 0) {
         // 同一日の重複は streak を伸ばさない
       } else {
         currentConsecutive = 1;
         maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
       }
-      lastDate = d;
+      lastDate = record.date;
     } else {
       currentConsecutive = 0;
       lastDate = null;

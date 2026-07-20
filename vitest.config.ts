@@ -7,6 +7,8 @@ const TEST_FILE_EXT = "*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}";
 
 // DOM環境（jsdom）が必要なテストの範囲
 const jsdomInclude = [
+  // mobile useLiveQuery hookのrace/unmountテストはDOM rendererが必要
+  `**/apps/mobile/src/db/useLiveQuery.test.tsx`,
   // frontend-shared/adaptersのテストもDOM環境が必要
   `**/packages/frontend-shared/adapters/**/${TEST_FILE_EXT}`,
   // frontend-shared/hooksのテストもDOM環境が必要
@@ -57,6 +59,8 @@ const sharedExclude = [
   "**/db-data/**",
   "**/dist-frontend/**",
   "**/e2e/**",
+  // TZ 固定が必須のテストは専用 project (tz-havana / tz-tokyo) でのみ実行する
+  "**/packages/domain/test/_tz/**",
 ];
 
 export default defineConfig({
@@ -104,6 +108,31 @@ export default defineConfig({
           environment: "jsdom",
           include: jsdomInclude,
           exclude: sharedExclude,
+        },
+      },
+      // DST/JST 依存の regression テストは実タイムゾーンを固定して実行する。
+      // pool: "forks" で独立プロセスにすることで env.TZ が他 project (threads)
+      // に漏れないようにする（UTC ランナーでは旧実装バグが再現しないため必須）。
+      {
+        extends: true,
+        test: {
+          name: "tz-havana",
+          environment: "node",
+          pool: "forks",
+          env: { TZ: "America/Havana" },
+          include: ["**/packages/domain/test/_tz/dstMidnight*.tz.test.ts"],
+          exclude: ["**/node_modules/**"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "tz-tokyo",
+          environment: "node",
+          pool: "forks",
+          env: { TZ: "Asia/Tokyo" },
+          include: ["**/packages/domain/test/_tz/jstMidnight*.tz.test.ts"],
+          exclude: ["**/node_modules/**"],
         },
       },
     ],

@@ -1,4 +1,3 @@
-import dayjs from "@backend/lib/dayjs";
 import { formatDateString } from "@backend/utils/dateUtils";
 import type { ActivityGoal } from "@packages/domain/goal/goalSchema";
 import { getInactiveDates as getInactiveDatesShared } from "@packages/domain/goal/goalStats";
@@ -37,10 +36,10 @@ export function getInactiveDates(activityLogRepo: ActivityLogRepository) {
   return async (
     userId: UserId,
     goal: ActivityGoal,
-    prefetchedLogs?: ActivityLogSummary[],
-    clientDate?: string,
+    prefetchedLogs: ActivityLogSummary[] | undefined,
+    clientDate: string,
   ): Promise<string[]> => {
-    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
+    const today = clientDate;
     const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
 
     const allLogs = prefetchedLogs

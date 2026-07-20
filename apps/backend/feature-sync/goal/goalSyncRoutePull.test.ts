@@ -137,6 +137,16 @@ describe("GET /users/v2/goals", () => {
     expect(res.status).toBe(400);
   });
 
+  test("clientDate 未指定は 400 を返す", async () => {
+    const app = createApp();
+    const res = await app.request(
+      "/users/v2/goals",
+      { method: "GET" },
+      { DB: testDB },
+    );
+    expect(res.status).toBe(400);
+  });
+
   test("不正な since (ISO datetime 以外) は 400 を返す", async () => {
     const app = createApp();
     const res = await getGoals(app, "since=2026/03/29");

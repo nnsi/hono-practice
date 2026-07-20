@@ -22,7 +22,7 @@ test("POST /from-speech / Activity名にマッチしてログを作成できる"
   const client = testClient(app, { DB: testDB });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "30分testした" },
+    json: { speechText: "30分testした", clientDate: "2026-03-16" },
   });
 
   expect(res.status).toEqual(201);
@@ -40,7 +40,7 @@ test("POST /from-speech / 数値なしの場合quantity=1になる", async () =>
   const client = testClient(app, { DB: testDB });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "testした" },
+    json: { speechText: "testした", clientDate: "2026-03-16" },
   });
 
   expect(res.status).toEqual(201);
@@ -54,7 +54,7 @@ test("POST /from-speech / マッチしない場合は最初のActivityにフォ�
   const client = testClient(app, { DB: testDB });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "泳いだ" },
+    json: { speechText: "泳いだ", clientDate: "2026-03-16" },
   });
 
   expect(res.status).toEqual(201);
@@ -74,7 +74,24 @@ test("POST /from-speech / speechTextが空の場合は400", async () => {
   const client = testClient(app, { DB: testDB });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "" },
+    json: { speechText: "", clientDate: "2026-03-16" },
+  });
+
+  expect(res.status).toEqual(400);
+});
+
+test("POST /from-speech / clientDate未指定の場合は400", async () => {
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route(
+      "/",
+      createAIActivityLogRoute(() => newAIActivityLogGatewayMock()),
+    );
+  const client = testClient(app, { DB: testDB });
+
+  const res = await client["from-speech"].$post({
+    // @ts-expect-error clientDate は必須。未指定は 400 になることを検証する
+    json: { speechText: "testした" },
   });
 
   expect(res.status).toEqual(400);
@@ -103,7 +120,7 @@ test("POST /from-speech / カスタムGatewayを注入できる", async () => {
   const client = testClient(app, { DB: testDB });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "何でもいい" },
+    json: { speechText: "何でもいい", clientDate: "2026-03-16" },
   });
 
   expect(res.status).toEqual(201);
@@ -145,7 +162,7 @@ test("POST /from-speech / envと認証identityをquota reservationへ配線す�
   });
 
   const res = await client["from-speech"].$post({
-    json: { speechText: "testした" },
+    json: { speechText: "testした", clientDate: "2026-03-16" },
   });
 
   expect(res.status).toBe(201);

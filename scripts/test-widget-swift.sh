@@ -20,6 +20,7 @@ xcrun swiftc \
   "$WIDGET_DIR/WidgetConfigParser.swift" \
   "$WIDGET_DIR/SaveLogHelper.swift" \
   "$WIDGET_DIR/SimpleLogHelper.swift" \
+  "$WIDGET_DIR/VoiceRecordApi.swift" \
   "$ROOT_DIR/scripts/widget-swift-tests/WidgetNativeTests.swift" \
   -o "$TEST_BIN"
 

@@ -43,6 +43,11 @@ describe("GoalUsecase", () => {
     reset(activityGoalService);
     reset(activityLogRepo);
 
+    // getGoals prefetches freeze periods; default to none unless a test overrides.
+    when(
+      activityGoalService.prefetchFreezePeriods(anything(), anything()),
+    ).thenResolve(new Map());
+
     usecase = newGoalUsecase(
       instance(activityGoalRepo),
       instance(activityRepo),
@@ -118,6 +123,7 @@ describe("GoalUsecase", () => {
           goal,
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(balance);
       when(
@@ -129,7 +135,7 @@ describe("GoalUsecase", () => {
         ),
       ).thenResolve([]);
 
-      const result = await usecase.getGoals(userId);
+      const result = await usecase.getGoals(userId, undefined, "2024-01-01");
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -192,6 +198,7 @@ describe("GoalUsecase", () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(balance);
       when(
@@ -203,7 +210,7 @@ describe("GoalUsecase", () => {
         ),
       ).thenResolve([]);
 
-      const result = await usecase.getGoals(userId);
+      const result = await usecase.getGoals(userId, undefined, "2024-01-01");
 
       expect(result).toHaveLength(1);
       expect(result[0].debtCap).toBe(50);
@@ -273,6 +280,7 @@ describe("GoalUsecase", () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(balance);
       when(
@@ -285,7 +293,7 @@ describe("GoalUsecase", () => {
       ).thenResolve([]);
 
       const filters: GoalFilters = { activityId: activityId1 };
-      const result = await usecase.getGoals(userId, filters);
+      const result = await usecase.getGoals(userId, filters, "2024-01-01");
 
       expect(result).toHaveLength(1);
       expect(result[0].activityId).toBe(activityId1);

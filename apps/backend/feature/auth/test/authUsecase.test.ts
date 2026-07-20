@@ -127,8 +127,9 @@ describe("AuthUsecase", () => {
           password: "password123",
         }),
       ).rejects.toThrow(new AuthError("invalid credentials"));
-      // Verify password verifier was not called
-      verify(passwordVerifier.compare(anything(), anything())).never();
+      // タイミングサイドチャネル対策: ユーザー不在でもダミーハッシュに対して
+      // compare を1回実行する（存在時と同じエラー・応答時間にするため）。
+      verify(passwordVerifier.compare(anything(), anything())).once();
       verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
 
@@ -160,7 +161,9 @@ describe("AuthUsecase", () => {
       await expect(
         usecase.login({ loginId: oauthOnly.loginId, password: "password" }),
       ).rejects.toThrow(new AuthError("invalid credentials"));
-      verify(passwordVerifier.compare(anything(), anything())).never();
+      // OAuth専用アカウントもダミーハッシュで照合し、ユーザー不在時と
+      // 同じエラー・処理経路にそろえる。
+      verify(passwordVerifier.compare(anything(), anything())).once();
     });
 
     it("旧SHA-256 hashでのlogin成功時にbcrypt hashへ移行する", async () => {
@@ -190,6 +193,28 @@ describe("AuthUsecase", () => {
       verify(
         userRepo.updatePasswordHash(legacyUser.id, legacyHash, "$2b$new"),
       ).once();
+    });
+
+    it("旧SHA-256 hashの誤入力でもdummy bcrypt照合を実行する", async () => {
+      const legacyHash = "a1".repeat(32);
+      const legacyUser = createUserEntity({ ...user, password: legacyHash });
+      when(userRepo.getUserByLoginId(legacyUser.loginId)).thenResolve(
+        legacyUser,
+      );
+      when(passwordVerifier.needsRehash!(legacyHash)).thenReturn(true);
+      when(passwordVerifier.compare("wrong-password", legacyHash)).thenResolve(
+        false,
+      );
+
+      await expect(
+        usecase.login({
+          loginId: legacyUser.loginId,
+          password: "wrong-password",
+        }),
+      ).rejects.toThrow(new AuthError("invalid credentials"));
+
+      verify(passwordVerifier.compare("wrong-password", anything())).twice();
+      verify(refreshTokenRepo.createRefreshToken(anything())).never();
     });
   });
 

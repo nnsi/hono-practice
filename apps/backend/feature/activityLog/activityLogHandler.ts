@@ -1,5 +1,4 @@
 import { AppError } from "@backend/error";
-import dayjs from "@backend/lib/dayjs";
 import { getEndOfMonth } from "@backend/utils/dateUtils";
 import {
   createActivityId,
@@ -33,8 +32,8 @@ export function newActivityLogHandler(uc: ActivityLogUsecase) {
 }
 
 function getActivityLogs(uc: ActivityLogUsecase) {
-  return async (userId: UserId, query: { date?: string }) => {
-    const date = query.date || dayjs().format("YYYY-MM-DD");
+  return async (userId: UserId, query: { date: string }) => {
+    const date = query.date;
 
     const isMonth = date.split("-").length === 2;
     const from = isMonth ? `${date}-01` : date;

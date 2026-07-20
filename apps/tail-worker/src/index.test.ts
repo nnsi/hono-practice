@@ -111,4 +111,40 @@ describe("Tail Worker", () => {
       indexes: ["error"],
     });
   });
+
+  it("writes uncaught exceptions alongside structured logs", async () => {
+    const writeDataPoint = vi.fn();
+    const events: TraceItem[] = [
+      {
+        event: null,
+        eventTimestamp: null,
+        logs: [
+          {
+            timestamp: 0,
+            level: "log",
+            message: [JSON.stringify({ level: "error", msg: "logged" })],
+          },
+        ],
+        exceptions: [
+          { timestamp: 1, name: "TypeError", message: "uncaught boom" },
+        ],
+        diagnosticsChannelEvents: [],
+        scriptName: "backend",
+        outcome: "exception",
+        executionModel: "stateless",
+        truncated: false,
+        cpuTime: 1,
+        wallTime: 2,
+      },
+    ];
+
+    await worker.tail(events, { LOGS: { writeDataPoint } });
+
+    expect(writeDataPoint).toHaveBeenCalledTimes(2);
+    expect(writeDataPoint).toHaveBeenLastCalledWith({
+      blobs: ["error", "TypeError", "", "", "", "", "uncaught boom"],
+      doubles: [0, 0, 0, 0, 0, 0, 0],
+      indexes: ["error"],
+    });
+  });
 });

@@ -10,7 +10,6 @@ import {
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
 
-import dayjs from "../../lib/dayjs";
 import type { Tracer } from "../../lib/tracer";
 import type { GoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
 import type { GoalSyncRepository } from "./goalSyncRepository";
@@ -33,8 +32,8 @@ export type SyncGoalsResult = {
 export type GoalSyncUsecase = {
   getGoals: (
     userId: UserId,
-    since?: string,
-    clientDate?: string,
+    since: string | undefined,
+    clientDate: string,
   ) => Promise<{ goals: GoalWithStats[] }>;
   syncGoals: (
     userId: UserId,
@@ -68,15 +67,15 @@ function getGoals(
 ) {
   return async (
     userId: UserId,
-    since?: string,
-    clientDate?: string,
+    since: string | undefined,
+    clientDate: string,
   ): Promise<{ goals: GoalWithStats[] }> => {
     const goals = await tracer.span("db.getGoalsByUserId", () =>
       repo.getGoalsByUserId(userId, since),
     );
 
     const activeGoalIds = goals.filter((g) => !g.deletedAt).map((g) => g.id);
-    const today = clientDate ?? dayjs().format("YYYY-MM-DD");
+    const today = clientDate;
 
     const [allFreezePeriods, actualQuantities] = await Promise.all([
       activeGoalIds.length > 0

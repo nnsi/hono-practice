@@ -51,6 +51,7 @@ export function createUseEditLogDialog(deps: UseEditLogDialogDeps) {
     const handleSave = async () => {
       const parsed = quantity !== "" ? Number(quantity) : null;
       if (parsed !== null && !Number.isFinite(parsed)) return;
+      if (parsed !== null && (parsed < 0 || parsed > 999999)) return;
       setIsSubmitting(true);
       await activityLogRepository.updateActivityLog(log.id, {
         quantity: parsed,
