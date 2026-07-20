@@ -32,12 +32,12 @@ vi.mock("../../db/noteRepository", () => ({
   },
 }));
 
+import type { Syncable } from "@packages/domain";
+import type { NoteRecord } from "@packages/domain/note/noteRecord";
+
 // Import after mocks
 import { noteRepository } from "../../db/noteRepository";
 import { useNoteDetailPage } from "./useNoteDetailPage";
-
-import type { Syncable } from "@packages/domain";
-import type { NoteRecord } from "@packages/domain/note/noteRecord";
 
 function makeNote(id: string): Syncable<NoteRecord> {
   return {
