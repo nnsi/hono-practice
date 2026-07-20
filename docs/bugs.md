@@ -11,8 +11,9 @@
 
 - [x] **BUG-1 [medium]** `packages/domain/csv/csvParser.ts:174-180` — `validateDate` が `new Date("YYYY-MM-DD")`（UTC深夜として解釈）を `new Date()`（ローカル現在時刻）と比較しており、JST 00:00〜09:00 の間「今日」の日付を含むCSVインポートが「未来の日付は指定できません」で誤って拒否される。
   - 修正: 日付単位（day granularity）の比較に変更する。regression property test を追加。
-- [x] **BUG-2 [medium]** `packages/domain/goal/goalBalance.ts:42,77` / `packages/domain/goal/goalStats.ts` — 日数計算に `dayjs(...).diff(..., "day")`（経過ミリ秒÷86400000の切り捨て）を使用しており、DSTのあるタイムゾーン（米国等）のユーザーで spring-forward を跨ぐ期間の日数が1日過少になる。`totalTarget` が過少になり残高が実際より良く表示される。連続日判定（`diff === 1`）も同様に崩れる。
-  - 修正: カレンダー日ベース（TZ非依存）の日数差計算に統一する。property test を追加。
+- [x] **BUG-2 [medium]** `packages/domain/goal/goalBalance.ts:42,77` / `packages/domain/goal/goalStats.ts` — 日数計算に `dayjs(...).diff(..., "day")` を使用しており、DST遷移のあるタイムゾーンで日数・連続日判定が崩れる。
+  - 修正: カレンダー日ベース（TZ非依存）の `calendarDayDiff` に統一。property test + 実TZ固定のregressionテスト（`test/_tz/`、旧実装でFAILすることを実証済み）を追加。
+  - 訂正（2026-07-18 multi-review後の検証で判明）: 当初の説明「経過ミリ秒÷86400000の切り捨てでspring-forward跨ぎが1日過少（米国等）」は不正確。dayjs 1.11.21のdiffはutcOffset差を補正するため、02:00遷移の標準的DST圏（America/New_York等）では旧実装でも正しい値を返す。**実際に壊れるのは深夜0:00にDST遷移するTZ**（America/Havana、America/Sao_Paulo、Asia/Beirut等。存在しない00:00が01:00に丸められ隣接日のdiffが0になる）。修正（UTC深夜正規化）はこのクラスを正しく解消しており有効。
 
 ### backend
 

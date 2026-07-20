@@ -137,22 +137,23 @@ describe("4/21 authState / endDate boundary regression", () => {
 });
 
 /**
- * 7/17 DST 非安全な日数計算 regression:
- *   `dayjs(a).diff(b, "day")` は経過ミリ秒 ÷ 86,400,000 の切り捨てのため、
- *   DST を跨ぐ期間（例: America/New_York の spring-forward）で 1 日過少になる。
- *   例: 2026-03-01〜2026-03-31 は暦日 31 日だが 719h/24=29 + 1 = 30 になっていた。
- *   → calendarDayDiff(UTC 深夜正規化)で暦日差を常に整数で返すことで解消。
+ * 7/17 calendarDayDiff の TZ 非依存性（BUG-2 の値検証部分）。
  *
- * ここでは spring-forward を含む具体的な月区間で「暦日差 = 実日数」を固定する。
+ * 注意: これらは TZ 非依存な sanity check であり、旧実装 (`dayjs.diff(...,"day")`)
+ * を落とすガードでは「ない」。dayjs 1.11 は endpoint の utcOffset 差 (zoneDelta) を
+ * 補正するため、標準的な 02:00 遷移の TZ（America/New_York 等）では旧実装でも
+ * 暦日差は正しく、UTC ランナーでも当然通る。
+ * → 旧実装を実際に落とす回帰ガードは `test/_tz/dstMidnightDiff.tz.test.ts`
+ *   （local midnight で DST 遷移する America/Havana 固定）にある。
+ *
+ * ここでは月跨ぎ・うるう年・fall-back 月で calendarDayDiff の値を固定するに留める。
  */
-describe("7/17 DST-unsafe day diff regression: 暦日差は経過ミリ秒に依存しない", () => {
+describe("7/17 calendarDayDiff sanity: 暦日差は経過ミリ秒に依存しない", () => {
   // ["start", "end", 期待する暦日差]
   const cases: Array<[string, string, number]> = [
-    // America/New_York spring-forward は 2026-03-08。3月全体を跨ぐ
     ["2026-03-01", "2026-03-31", 30],
-    // spring-forward 当日を跨ぐ最小区間
     ["2026-03-07", "2026-03-09", 2],
-    // fall-back（2026-11-01）を跨ぐ区間
+    // fall-back（2026-11-01）を含む月
     ["2026-11-01", "2026-11-30", 29],
     // うるう年 2 月
     ["2024-02-01", "2024-03-01", 29],
@@ -160,34 +161,36 @@ describe("7/17 DST-unsafe day diff regression: 暦日差は経過ミリ秒に依
 
   test.each(
     cases,
-  )("calendarDayDiff(%s, %s) === %i（DST/月末非依存）", (start, end, expected) => {
+  )("calendarDayDiff(%s, %s) === %i（月末/うるう年非依存）", (start, end, expected) => {
     expect(calendarDayDiff(start, end)).toBe(expected);
   });
 
-  test("countActiveDays は DST 月でも暦日通り（3月は 31 日）", () => {
+  test("countActiveDays は暦日通り（3月は 31 日）", () => {
     expect(countActiveDays("2026-03-01", "2026-03-31", [])).toBe(31);
   });
 
-  test("calculateMaxConsecutiveDays は spring-forward 日でも連続を保つ", () => {
+  test("calculateMaxConsecutiveDays は連続 3 日を 3 と数える", () => {
     const records = [
       { date: "2026-03-07", quantity: 1 },
-      { date: "2026-03-08", quantity: 1 }, // spring-forward day
+      { date: "2026-03-08", quantity: 1 },
       { date: "2026-03-09", quantity: 1 },
     ];
-    // diff ベースの旧実装は 3/8 で diff===0 になり streak が伸びずに崩れていた
     expect(calculateMaxConsecutiveDays(records)).toBe(3);
   });
 });
 
 /**
- * 7/17 validateDate UTC/local 混同 regression (BUG-1):
- *   `new Date("YYYY-MM-DD")` は UTC 深夜、比較相手 `new Date()` はローカル現在時刻。
- *   JST 00:00〜09:00 の間「今日」の日付が未来扱いで誤拒否されていた。
- *   → dayjs の day granularity 比較で解消。
+ * 7/17 validateDate 境界の決定論性（BUG-1 の TZ 非依存部分）。
  *
- * 実時刻に依存しないよう「今日」を dayjs() から算出し、境界の決定論性を固定する。
+ * 注意: 旧実装 (`new Date("YYYY-MM-DD") > new Date()`) は「実行環境の local 日付が
+ * UTC 日付より進んでいる」瞬間にのみ誤拒否する（JST 00:00〜09:00 等）。UTC ランナー
+ * では旧実装でもこの describe は通ってしまうため、これは回帰ガードでは「ない」。
+ * → 旧実装を実際に落とすガードは `test/_tz/jstMidnightValidateDate.tz.test.ts`
+ *   （Asia/Tokyo 固定 + JST 00:30 に fake time）にある。
+ *
+ * ここでは「今日は受理 / 明日は拒否」という day granularity 境界を固定するに留める。
  */
-describe("7/17 validateDate UTC/local mixup regression (BUG-1)", () => {
+describe("7/17 validateDate boundary determinism (BUG-1)", () => {
   test.prop([fc.integer({ min: 0, max: 3650 })])(
     "今日以前（0〜10年前）の日付は常に受理される",
     (daysAgo) => {
