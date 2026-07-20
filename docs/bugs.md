@@ -54,11 +54,12 @@
 - `packages/utils/lexicalOrder.ts:72` の括弧位置非対称 — `fromCharCode` の切り捨てにより結果は同一で実害なし。
 - `packages/frontend-shared/hooks/useActivityKindEntries.ts` のid採番クロージャ — 同一tick内連続実行の理論的余地のみで実運用で到達せず。
 - Web/Mobileのauth transport非対称（過去バグの再発チェック） — mobile logoutのローテーション後トークン再読込・Bearer付与とも一貫しており問題なし。
-- backend security全域（認証・認可・インジェクション・Webhook署名・トークンローテーション・CORS/Cookie・R2 proxy）— critical/high/medium該当なし（LGTM）。
+- backend security全域（認証・認可・インジェクション・Webhook署名・トークンローテーション・CORS/Cookie・R2 proxy）— **レビューエージェント2体（監査時 + multi-review時）の判定として** critical/high/medium該当なし。親による独立した全域再検証は行っていない（個別指摘の裏取りのみ実施）。
 
 ## 修正状況
 
 **全12件対応完了**（2026-07-17）。内訳:
 - 11件をコード修正（BUG-1〜5, 7〜12）。時刻ロジック（BUG-1/2）はproperty test、backend（BUG-3/5/6）はPGlite統合テスト、frontend（BUG-7/8）はフックテストを追加。BUG-8は修正前実装でテストが失敗することを確認済み。
 - BUG-6は調査の結果、既存のマイグレーション0035 + `onConflictDoNothing` で修正済みと判明。再発防止テストのみ追加。
-- 検証: `pnpm run test-once` / `pnpm run tsc` / `pnpm run fix` 全パス（結果は最終コミットのメッセージ参照）。
+- 検証: `pnpm run test-once` / `pnpm run tsc` / `pnpm run fix` 全パス。
+  - 訂正（2026-07-18 multi-review): 上記「tsc全パス」の初回報告は誤りだった。検証コマンドを `pnpm run tsc | tail` とパイプしていたため終了コードがtailのもので上書きされ、本PR追加の2テストファイルの型エラー9件を見逃していた（epistemicsレビュアーが検出）。テストの型エラーを修正し、パイプなしのexit code確認で再検証済み。

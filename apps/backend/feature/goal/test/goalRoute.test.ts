@@ -104,14 +104,12 @@ test("GET goals/:id / success", async () => {
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/", route);
-  const client = testClient(app, {
-    DB: testDB,
-  });
 
-  const res = await client[":id"].$get({
-    param: { id: "00000000-0000-4000-8000-000000000001" },
-    query: { clientDate: "2024-01-10" },
-  });
+  const res = await app.request(
+    "/00000000-0000-4000-8000-000000000001?clientDate=2024-01-10",
+    { method: "GET" },
+    { DB: testDB },
+  );
 
   // Goal not found in test DB
   expect(res.status).toEqual(404);
@@ -165,15 +163,19 @@ test("GET goals/:id / currentBalance reflects freeze periods", async () => {
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/", route);
-  const client = testClient(app, { DB: testDB });
 
-  const res = await client[":id"].$get({
-    param: { id: goalId },
-    query: { clientDate: "2024-01-10" },
-  });
+  const res = await app.request(
+    `/${goalId}?clientDate=2024-01-10`,
+    { method: "GET" },
+    { DB: testDB },
+  );
 
   expect(res.status).toEqual(200);
-  const body = await okJson(res);
+  const body: {
+    totalTarget: number;
+    totalActual: number;
+    currentBalance: number;
+  } = await res.json();
   // 5 active days * target 10 = 50 (without the fix it would be 100).
   expect(body.totalTarget).toBe(50);
   expect(body.totalActual).toBe(0);
@@ -204,12 +206,17 @@ test("GET goals / list reflects freeze periods in currentBalance", async () => {
   const app = newHonoWithErrorHandling()
     .use(mockAuthMiddleware)
     .route("/", route);
-  const client = testClient(app, { DB: testDB });
 
-  const res = await client.index.$get({ query: { clientDate: "2024-01-10" } });
+  const res = await app.request(
+    "/?clientDate=2024-01-10",
+    { method: "GET" },
+    { DB: testDB },
+  );
 
   expect(res.status).toEqual(200);
-  const body = await okJson(res);
+  const body: {
+    goals: Array<{ id: string; totalTarget: number; currentBalance: number }>;
+  } = await res.json();
   const goal = body.goals.find((g) => g.id === goalId);
   expect(goal?.totalTarget).toBe(50);
   expect(goal?.currentBalance).toBe(-50);

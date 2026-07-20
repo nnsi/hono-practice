@@ -36,6 +36,23 @@ vi.mock("../../db/noteRepository", () => ({
 import { noteRepository } from "../../db/noteRepository";
 import { useNoteDetailPage } from "./useNoteDetailPage";
 
+import type { Syncable } from "@packages/domain";
+import type { NoteRecord } from "@packages/domain/note/noteRecord";
+
+function makeNote(id: string): Syncable<NoteRecord> {
+  return {
+    id,
+    userId: "user-1",
+    activityId: null,
+    title: "",
+    content: "",
+    createdAt: "2026-07-17T00:00:00.000Z",
+    updatedAt: "2026-07-17T00:00:00.000Z",
+    deletedAt: null,
+    _syncStatus: "pending",
+  };
+}
+
 /** visibilitychange ハンドラが hidden 判定できるよう visibilityState を上書きする */
 function setHidden() {
   Object.defineProperty(document, "visibilityState", {
@@ -58,8 +75,8 @@ describe("useNoteDetailPage の flush 直列化 (BUG-8)", () => {
   });
 
   it("新規ノートで flush が多重発火しても createNote は1回だけ呼ばれる", async () => {
-    let resolveCreate!: (v: { id: string }) => void;
-    const createPromise = new Promise<{ id: string }>((resolve) => {
+    let resolveCreate!: (v: Syncable<NoteRecord>) => void;
+    const createPromise = new Promise<Syncable<NoteRecord>>((resolve) => {
       resolveCreate = resolve;
     });
     vi.mocked(noteRepository.createNote).mockReturnValue(createPromise);
@@ -96,7 +113,7 @@ describe("useNoteDetailPage の flush 直列化 (BUG-8)", () => {
     });
 
     await act(async () => {
-      resolveCreate({ id: "note-1" });
+      resolveCreate(makeNote("note-1"));
       // createNote 解決後のチェーン継続（2回目の flush = doFlush 実行）を
       // マイクロタスクキューが進むまで待つ
       await Promise.resolve();
@@ -118,7 +135,7 @@ describe("useNoteDetailPage の flush 直列化 (BUG-8)", () => {
   });
 
   it("flush 完了前に戻る操作をしても createNote は1回だけ呼ばれ、最終入力が保存される", async () => {
-    vi.mocked(noteRepository.createNote).mockResolvedValue({ id: "note-2" });
+    vi.mocked(noteRepository.createNote).mockResolvedValue(makeNote("note-2"));
     vi.mocked(noteRepository.updateNote).mockResolvedValue(undefined);
 
     const { result, unmount } = renderHook(() => useNoteDetailPage());

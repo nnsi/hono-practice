@@ -41,11 +41,11 @@ export function login(
       passwordHash,
     );
 
+    // エラーメッセージは全経路で同一文字列に統一する。パスワード未設定（OAuth専用）
+    // アカウントだけ固有メッセージを返すと、レスポンス文言からアカウントの存在・種別を
+    // 列挙できてしまう（タイミング対策と同じ目的の文言側の対策）。
     if (!user) throw new AuthError("invalid credentials");
-    if (!user.password)
-      throw new AuthError(
-        "invalid credentials - password cannot be null for standard login",
-      );
+    if (!user.password) throw new AuthError("invalid credentials");
     if (!isValidPassword) throw new AuthError("invalid credentials");
 
     const accessToken = await generateAccessToken(
