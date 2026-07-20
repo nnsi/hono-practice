@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { parseClientDate } from "@backend/lib/clientDate";
 import { noopTracer } from "@backend/lib/tracer";
 import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
@@ -65,32 +66,53 @@ export function createGoalRoute() {
         const userId = c.get("userId");
         const activityId = c.req.query("activityId");
         const isActive = c.req.query("isActive");
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
         const filters = {
           ...(activityId && { activityId }),
           ...(isActive && { isActive: isActive === "true" }),
         };
 
-        const res = await c.var.h.getGoals(userId, filters, clientDate);
+        const res = await c.var.h.getGoals(
+          userId,
+          filters,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 個別目標取得
       .get("/:id", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
-        const res = await c.var.h.getGoal(userId, id, clientDate);
+        const res = await c.var.h.getGoal(
+          userId,
+          id,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 目標統計情報取得
       .get("/:id/stats", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
-        const res = await c.var.h.getGoalStats(userId, id, clientDate);
+        const res = await c.var.h.getGoalStats(
+          userId,
+          id,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 目標作成

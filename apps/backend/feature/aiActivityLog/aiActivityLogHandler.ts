@@ -1,5 +1,4 @@
 import { AppError } from "@backend/error";
-import { getServerTodayInJst } from "@backend/lib/dayjs";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { CreateAIActivityLogRequest } from "@packages/types/request";
 import { CreateAIActivityLogResponseSchema } from "@packages/types/response";
@@ -14,12 +13,10 @@ export function newAIActivityLogHandler(uc: AIActivityLogUsecase) {
 
 function createActivityLogFromSpeech(uc: AIActivityLogUsecase) {
   return async (userId: UserId, params: CreateAIActivityLogRequest) => {
-    const today = getServerTodayInJst();
-
     const result = await uc.createActivityLogFromSpeech(
       userId,
       params.speechText,
-      today,
+      params.clientDate,
     );
 
     const parsed = CreateAIActivityLogResponseSchema.safeParse(result);

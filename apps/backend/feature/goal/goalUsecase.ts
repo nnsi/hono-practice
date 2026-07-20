@@ -48,8 +48,8 @@ function getGoals(
 ) {
   return async (
     userId: UserId,
-    filters?: GoalFilters,
-    clientDate?: string,
+    filters: GoalFilters | undefined,
+    clientDate: string,
   ): Promise<Goal[]> => {
     const goals = await tracer.span("db.getActivityGoalsByUserId", () =>
       activityGoalRepo.getActivityGoalsByUserId(userId),
@@ -119,7 +119,7 @@ function getGoal(
   return async (
     userId: UserId,
     goalId: string,
-    clientDate?: string,
+    clientDate: string,
   ): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(

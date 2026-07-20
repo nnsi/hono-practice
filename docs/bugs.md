@@ -19,7 +19,7 @@
 - [x] **BUG-3 [low]** `apps/backend/feature/auth/authLoginUsecase.ts:26-36` — ユーザー不在時に即throwし、存在時のみbcrypt比較を実行するため、応答時間差でloginIdの存在有無が判別できる（ユーザー列挙のタイミングサイドチャネル）。
   - 修正: ユーザー不在時もダミーハッシュに対してcompareを実行して時間差を消す。
 - [x] **BUG-4 [low]** `apps/backend/query/goalQueryService.ts:52` / `apps/backend/feature/activitygoal/activityGoalService.ts:66,87` — `clientDate` 未指定時のフォールバック `dayjs().format("YYYY-MM-DD")` がUTC基準（`lib/dayjs.ts` はdayjs.utc）のため、JST 00:00〜09:00 にclientDate無しで呼ばれると「今日」が1日前にずれ、当日分のログが集計から漏れる。
-  - 修正: フォールバックをJST基準の日付導出に変更する。
+  - 修正: 当初はJST基準フォールバックで暫定対応したが、ユーザー判断により**clientDateをAPI契約上必須化**（未指定は400）してサーバーが「今日」を推測する経路を根絶した。対象: goal sync `/users/v2/goals`、REST `/users/goals*`、`GET /users/activity-logs`（`date`）、`POST .../from-speech`（body `clientDate`）。Web/Mobileのアプリ内経路は元からclientDateを送信済み。ネイティブウィジェット（Swift/Kotlin）はソース修正済みだが**ネイティブ再ビルド配信までは旧バイナリのボイス記録が400になる**（要EAS Build）。clientDateを送らない旧アプリバイナリ・外部APIキー連携も同様に400化する。
 - [x] **BUG-5 [low]** `apps/backend/feature/goal/goalUsecase.ts:66-83` / `apps/backend/feature/activitygoal/activityGoalService.ts:99` — REST `/goals` の `currentBalance` 計算が freezePeriods を渡しておらず、sync経路（`goalSyncUsecase.ts` はfreezeを渡す）と値が食い違う。凍結期間を持つゴールでREST側の残高が誤る。
   - 修正: REST経路でもfreeze periodsを取得して `calculateGoalBalance` に渡す。
 - [x] **BUG-6 [low]** `apps/backend/feature/subscription/subscriptionCommandUsecase.ts:64-73` — Webhookの冪等性チェック（`existsByWebhookId`）がトランザクション外で行われるため、同一webhookIdの同時配信で `subscription_histories` に重複行が入り得る（サブスク状態自体はupsertで冪等）。

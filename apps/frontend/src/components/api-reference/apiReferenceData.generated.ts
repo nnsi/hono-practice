@@ -51,8 +51,9 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
           {
             name: "date",
             type: "string",
-            required: false,
-            description: "YYYY-MM-DD（日）または YYYY-MM（月）。省略時は今日",
+            required: true,
+            description:
+              "YYYY-MM-DD（日）または YYYY-MM（月）。必須（サーバー側で今日を推測しない）",
           },
         ],
       },
@@ -338,6 +339,13 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
             type: "string",
             required: true,
             description: "音声入力テキスト（1〜1000文字）",
+          },
+          {
+            name: "clientDate",
+            type: "string",
+            required: true,
+            description:
+              "クライアントの今日（YYYY-MM-DD）。AIが相対日付を解決するために使用。必須",
           },
         ],
       },

@@ -1,4 +1,3 @@
-import { getServerTodayInJst } from "@backend/lib/dayjs";
 import { generateDateRange } from "@backend/utils/dateUtils";
 import {
   type FreezePeriod,
@@ -20,7 +19,7 @@ export type ActivityGoalService = {
   calculateCurrentBalance(
     userId: UserId,
     goal: ActivityGoal,
-    calculateDate?: string,
+    calculateDate: string,
     prefetchedLogs?: ActivityLogSummary[],
     prefetchedFreezePeriods?: FreezePeriod[],
   ): Promise<GoalBalance>;
@@ -46,8 +45,8 @@ export type ActivityGoalService = {
   getInactiveDates(
     userId: UserId,
     goal: ActivityGoal,
-    prefetchedLogs?: ActivityLogSummary[],
-    clientDate?: string,
+    prefetchedLogs: ActivityLogSummary[] | undefined,
+    clientDate: string,
   ): Promise<string[]>;
 };
 
@@ -74,7 +73,7 @@ function calculateCurrentBalance(
   return async (
     userId: UserId,
     goal: ActivityGoal,
-    calculateDate: string = getServerTodayInJst(),
+    calculateDate: string,
     prefetchedLogs?: ActivityLogSummary[],
     prefetchedFreezePeriods?: FreezePeriod[],
   ): Promise<GoalBalance> => {

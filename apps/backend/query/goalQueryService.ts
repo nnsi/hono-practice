@@ -1,6 +1,5 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { getServerTodayInJst } from "@backend/lib/dayjs";
 import { activityGoals, activityLogs } from "@infra/drizzle/schema";
 import {
   calculateGoalStats,
@@ -13,7 +12,7 @@ export type GoalQueryService = {
   getGoalStats: (
     userId: string,
     goalId: string,
-    clientDate?: string,
+    clientDate: string,
   ) => Promise<GoalStatsResponse>;
   withTx: (tx: QueryExecutor) => GoalQueryService;
 };
@@ -29,7 +28,7 @@ function getGoalStats(db: QueryExecutor) {
   return async (
     userId: string,
     goalId: string,
-    clientDate?: string,
+    clientDate: string,
   ): Promise<GoalStatsResponse> => {
     // まず目標の詳細を取得
     const goal = await db
@@ -49,7 +48,7 @@ function getGoalStats(db: QueryExecutor) {
     }
 
     const activityGoal = goal[0];
-    const today = clientDate ?? getServerTodayInJst();
+    const today = clientDate;
     const startDate = activityGoal.startDate;
     const endDate = activityGoal.endDate || today;
     const actualEndDate = endDate < today ? endDate : today;

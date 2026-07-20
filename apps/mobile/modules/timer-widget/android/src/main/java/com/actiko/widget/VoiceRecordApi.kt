@@ -5,6 +5,9 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object VoiceRecordApi {
     data class RecordResult(val activityName: String, val kindName: String?)
@@ -28,7 +31,13 @@ object VoiceRecordApi {
             connection.connectTimeout = 15_000
             connection.readTimeout = 15_000
 
-            val body = JSONObject().put("speechText", speechText).toString()
+            // Send the device's local date as clientDate so the server resolves
+            // relative dates against the user's date, never its own.
+            val clientDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val body = JSONObject()
+                .put("speechText", speechText)
+                .put("clientDate", clientDate)
+                .toString()
             connection.outputStream.use { it.write(body.toByteArray()) }
 
             if (connection.responseCode != 200) {

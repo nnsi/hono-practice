@@ -1,4 +1,3 @@
-import { getServerTodayInJst } from "@backend/lib/dayjs";
 import type { FreezePeriod } from "@packages/domain/goal/goalBalance";
 import type { ActivityGoal } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
@@ -22,11 +21,11 @@ export async function prefetchActivityLogs(
   activityLogRepo: ActivityLogRepository,
   userId: UserId,
   goals: ActivityGoal[],
-  clientDate?: string,
+  clientDate: string,
 ): Promise<ActivityLogSummary[]> {
   if (goals.length === 0) return [];
 
-  const today = clientDate ?? getServerTodayInJst();
+  const today = clientDate;
 
   let minStart = goals[0].startDate;
   let maxEnd = today;

@@ -18,9 +18,20 @@ test("GET goals / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.index.$get();
+  const res = await client.index.$get({ query: { clientDate: "2024-01-10" } });
 
   expect(res.status).toEqual(200);
+});
+
+test("GET goals / clientDate未指定で 400", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request("/", { method: "GET" }, { DB: testDB });
+
+  expect(res.status).toEqual(400);
 });
 
 test("GET goals / with activity filter", async () => {
@@ -33,7 +44,10 @@ test("GET goals / with activity filter", async () => {
   });
 
   const res = await client.index.$get({
-    query: { activityId: "00000000-0000-4000-8000-000000000001" },
+    query: {
+      activityId: "00000000-0000-4000-8000-000000000001",
+      clientDate: "2024-01-10",
+    },
   });
 
   expect(res.status).toEqual(200);
@@ -96,6 +110,7 @@ test("GET goals/:id / success", async () => {
 
   const res = await client[":id"].$get({
     param: { id: "00000000-0000-4000-8000-000000000001" },
+    query: { clientDate: "2024-01-10" },
   });
 
   // Goal not found in test DB

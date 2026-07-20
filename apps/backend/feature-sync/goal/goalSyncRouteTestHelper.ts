@@ -47,8 +47,12 @@ export async function postSync(
 }
 
 export async function getGoals(app: ReturnType<typeof createApp>, query = "") {
+  // clientDate は必須なので、明示指定がないテストにはデフォルトを補う。
+  const merged = query.includes("clientDate=")
+    ? query
+    : [query, "clientDate=2026-01-01"].filter(Boolean).join("&");
   return app.request(
-    `/users/v2/goals${query ? `?${query}` : ""}`,
+    `/users/v2/goals${merged ? `?${merged}` : ""}`,
     { method: "GET" },
     { DB: testDB },
   );

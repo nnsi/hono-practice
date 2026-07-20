@@ -43,7 +43,10 @@ enum VoiceRecordApi {
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        let body = SpeechRequestBody(speechText: speechText)
+        let body = SpeechRequestBody(
+            speechText: speechText,
+            clientDate: Self.todayString()
+        )
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response): (Data, URLResponse)
@@ -66,12 +69,22 @@ enum VoiceRecordApi {
             kindName: decoded.interpretation.detectedKindName
         )
     }
+
+    /// Local calendar date as YYYY-MM-DD. Sent as `clientDate` so the server
+    /// resolves relative dates against the user's device date, never its own.
+    private static func todayString() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
 }
 
 // MARK: - Request / Response models
 
 private struct SpeechRequestBody: Encodable {
     let speechText: String
+    let clientDate: String
 }
 
 struct VoiceRecordResponse: Decodable {
