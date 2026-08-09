@@ -105,6 +105,16 @@ describe("mobileAuthTransport.refreshSession", () => {
     expect(mockDeleteItem).not.toHaveBeenCalled();
   });
 
+  it("429 -> { kind: 'transient' } + refresh token を保持する", async () => {
+    mockGetItem.mockResolvedValue("rt");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(429)));
+
+    const result = await makeTransport().refreshSession();
+
+    expect(result.kind).toBe("transient");
+    expect(mockDeleteItem).not.toHaveBeenCalled();
+  });
+
   it("network error -> { kind: 'transient' }", async () => {
     mockGetItem.mockResolvedValue("rt");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network")));

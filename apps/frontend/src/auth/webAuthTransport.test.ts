@@ -75,6 +75,15 @@ describe("webAuthTransport", () => {
       const result = await transport.refreshSession();
       expect(result.kind).toBe("transient");
     });
+
+    it("429 -> { kind: 'transient' } (rate limit はセッション失効ではない)", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(429)));
+      const transport = makeTransport();
+
+      const result = await transport.refreshSession();
+
+      expect(result.kind).toBe("transient");
+    });
   });
 
   describe("login", () => {
@@ -87,6 +96,30 @@ describe("webAuthTransport", () => {
 
       const session = await transport.login("user", "pw");
       expect(session.token).toBe("login-jwt");
+    });
+
+    it("進行中 refresh の完了後に login を送り、古い cookie 応答の後に新規 session を確立する", async () => {
+      let resolveRefresh!: (response: Response) => void;
+      const refreshResponse = new Promise<Response>((resolve) => {
+        resolveRefresh = resolve;
+      });
+      const fetchMock = vi.fn((url: string) => {
+        if (url.endsWith("/auth/token")) return refreshResponse;
+        return Promise.resolve(jsonResponse(validSessionBody("login-jwt")));
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const transport = makeTransport();
+
+      const refresh = transport.refreshSession();
+      const login = transport.login("user", "pw");
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      resolveRefresh(jsonResponse(validSessionBody("refreshed-jwt")));
+      await Promise.all([refresh, login]);
+
+      expect(fetchMock.mock.calls[0]?.[0]).toBe(`${apiUrl}/auth/token`);
+      expect(fetchMock.mock.calls[1]?.[0]).toBe(`${apiUrl}/auth/login`);
     });
 
     it("401 -> invalidCredentials エラー", async () => {

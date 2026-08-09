@@ -4,7 +4,7 @@ import {
 } from "@packages/auth-client";
 
 import { getApiUrl } from "../api/apiClient";
-import { customFetch, setRefreshAccessToken } from "../api/customFetch";
+import { setRefreshAccessToken } from "../api/customFetch";
 import { tokenHolder } from "../api/tokenHolder";
 import {
   clearStoredTabPreference,
@@ -16,12 +16,7 @@ import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { createWebAuthStateRepository } from "./webAuthStateRepository";
 import { createWebAuthTransport } from "./webAuthTransport";
 
-const transport = createWebAuthTransport(
-  { apiUrl: getApiUrl(), authenticatedFetch: customFetch },
-  tokenHolder,
-);
-
-setRefreshAccessToken(createRefreshAccessTokenCallback(transport));
+const transport = createWebAuthTransport({ apiUrl: getApiUrl() }, tokenHolder);
 
 export const authController = createAuthController({
   transport,
@@ -47,3 +42,10 @@ export const authController = createAuthController({
     queryClient.clear();
   },
 });
+
+setRefreshAccessToken(
+  createRefreshAccessTokenCallback(transport, {
+    getSessionVersion: () => authController.getSessionVersion(),
+    onExpired: () => authController.forceLogout(),
+  }),
+);

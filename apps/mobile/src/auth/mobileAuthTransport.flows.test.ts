@@ -66,6 +66,50 @@ describe("mobileAuthTransport.login", () => {
     expect(mockSetItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, "rt");
   });
 
+  it("進行中 refresh の永続化後に login を送り、新しい refresh token を最後に保存する", async () => {
+    mockGetItem.mockResolvedValue("rt-old");
+    let resolveRefresh!: (response: Response) => void;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/token")) return refreshResponse;
+      return Promise.resolve(
+        jsonResponse(
+          validSessionBody({ token: "jwt-login", refreshToken: "rt-login" }),
+        ),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = makeTransport();
+
+    const refresh = transport.refreshSession();
+    const login = transport.login("u", "pw");
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveRefresh(
+      jsonResponse(
+        validSessionBody({
+          token: "jwt-refreshed",
+          refreshToken: "rt-refreshed",
+        }),
+      ),
+    );
+    await Promise.all([refresh, login]);
+
+    expect(mockSetItem).toHaveBeenNthCalledWith(
+      1,
+      REFRESH_TOKEN_KEY,
+      "rt-refreshed",
+    );
+    expect(mockSetItem).toHaveBeenNthCalledWith(
+      2,
+      REFRESH_TOKEN_KEY,
+      "rt-login",
+    );
+  });
+
   it("401 -> invalidCredentials", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
 
