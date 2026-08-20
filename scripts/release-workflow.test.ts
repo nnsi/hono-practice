@@ -3,58 +3,72 @@ import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
-const githubExpression = (value: string) => `$${`{{ ${value} }}`}`;
-const mobileBundleStep = workflow.match(
-  / {6}- name: Generate iOS and Android release bundles[\s\S]*?(?=\n {6}- name:)/,
+const publishJob = workflow.match(
+  / {2}publish:[\s\S]*?(?=\n {2}mobile-release:)/,
 )?.[0];
+const mobileJob = workflow.match(/ {2}mobile-release:[\s\S]*/)?.[0];
+const githubExpression = (value: string) => `$${`{{ ${value} }}`}`;
+
+const step = (name: string) =>
+  publishJob
+    ?.split(`      - name: ${name}\n`)[1]
+    ?.split("\n      - name:")[0];
 
 describe("release workflow guards", () => {
-  it("uses the tested artifact impact classifier", () => {
-    expect(workflow).toContain("node scripts/release-impact.js");
-    expect(workflow).toContain("steps.impact.outputs.backend");
-    expect(workflow).toContain("steps.impact.outputs.frontend");
-    expect(workflow).toContain("steps.impact.outputs.admin");
-    expect(workflow).toContain("steps.impact.outputs.tail");
-    expect(workflow).not.toContain("steps.changed_backend.outputs.any_changed");
+  it("deploys every staging and production artifact without path-diff state", () => {
+    expect(publishJob).not.toContain("Detect release artifact impact");
+    expect(publishJob).not.toContain("steps.impact.outputs");
+    expect(publishJob).not.toContain("release-impact.js");
+
+    for (const name of [
+      "Build frontend (stg)",
+      "Build admin-frontend (stg)",
+      "Migrate Neon DB (stg)",
+      "Configure Hyperdrive, R2, and KV for staging",
+      "Set DATABASE_URL secret in Cloudflare (stg)",
+      "Deploy to Cloudflare Workers (stg)",
+      "Deploy frontend (stg)",
+      "Deploy admin-frontend (stg)",
+      "Deploy Tail Worker (stg)",
+      "Post-deploy smoke (stg)",
+    ]) {
+      expect(step(name)).toContain("if: github.ref_name == 'master'");
+      expect(step(name)).not.toContain("&&");
+    }
+
+    for (const name of [
+      "Build frontend (release)",
+      "Build admin-frontend (release)",
+      "Migrate Neon DB (prod)",
+      "Configure Hyperdrive, R2, and KV for production",
+      "Set DATABASE_URL secret in Cloudflare (prod)",
+      "Deploy to Cloudflare Workers (release)",
+      "Deploy frontend (release)",
+      "Deploy admin-frontend (release)",
+      "Deploy Tail Worker (release)",
+      "Post-deploy smoke (production)",
+    ]) {
+      expect(step(name)).toContain("if: github.ref_name == 'release'");
+      expect(step(name)).not.toContain("&&");
+    }
   });
 
-  it("gates release deployment with CI, Web E2E, Tail build, and smoke checks", () => {
-    expect(workflow).toContain("pnpm run ci-check");
-    expect(workflow).toContain("pnpm run test-e2e");
-    expect(workflow).toContain("Build Tail Worker artifact");
-    expect(workflow).toContain("Deploy Tail Worker (release)");
-    expect(workflow).toContain("Post-deploy smoke (production)");
+  it("does not repeat pull-request quality gates in the deploy workflow", () => {
+    expect(publishJob).not.toContain("pnpm run ci-check");
+    expect(publishJob).not.toContain("pnpm run test-e2e");
+    expect(publishJob).not.toContain("playwright install");
+    expect(publishJob).not.toContain("Build Tail Worker artifact");
   });
 
-  it("installs the lockfile-matched Chromium before the release E2E gate", () => {
-    const installBrowser = workflow.indexOf(
-      "pnpm exec playwright install --with-deps chromium",
-    );
-    const runE2E = workflow.indexOf("pnpm run test-e2e");
-
-    expect(installBrowser).toBeGreaterThan(-1);
-    expect(installBrowser).toBeLessThan(runE2E);
-  });
-
-  it("requires an approved SHA and rejects native changes for OTA", () => {
+  it("keeps only release-specific Mobile safety checks", () => {
     expect(workflow).toContain("mobile_release_sha:");
-    expect(workflow).toContain('GITHUB_REF" != "refs/heads/release');
+    expect(mobileJob).toContain('GITHUB_REF" != "refs/heads/release');
     expect(workflow).toContain("mobile_native_base_sha");
-    expect(workflow).toContain("--assert-ota-safe");
-  });
-
-  it("runs repository checks and both platform bundle exports before mobile release", () => {
-    expect(workflow).toContain("Run repository CI gate");
-    expect(mobileBundleStep).toContain("working-directory: .");
-    expect(mobileBundleStep).toContain("rm -rf dist-release-bundles");
-    expect(mobileBundleStep).toContain(
-      "pnpm --filter actiko-mobile run export:release:ios",
+    expect(mobileJob).toContain("scripts/mobile-ota-safety.js");
+    expect(mobileJob).not.toContain("Run repository CI gate");
+    expect(mobileJob).not.toContain(
+      "Generate iOS and Android release bundles",
     );
-    expect(mobileBundleStep).toContain(
-      "pnpm --filter actiko-mobile run export:release:android",
-    );
-    expect(mobileBundleStep).toContain("test -d dist-release-bundles/ios");
-    expect(mobileBundleStep).toContain("test -d dist-release-bundles/android");
   });
 
   it("preflights and binds the rate-limit KV namespace for both environments", () => {
