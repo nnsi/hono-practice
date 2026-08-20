@@ -270,6 +270,104 @@ describe("createAuthController", () => {
     expect(controller.getState().isLoggedIn).toBe(true);
   });
 
+  it("initial sync failure keeps the authenticated state and retries until syncReady", async () => {
+    const transport = makeTransport({
+      refreshResults: [
+        { kind: "ok", session: makeSession("u1") },
+        { kind: "ok", session: makeSession("u1") },
+      ],
+    });
+    const initialSync = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("sync unavailable"))
+      .mockResolvedValueOnce(undefined);
+    const handlerRef: { current: (() => void) | null } = { current: null };
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: initialSync,
+      online: {
+        registerOnlineRetry(handler) {
+          handlerRef.current = handler;
+          return () => {
+            handlerRef.current = null;
+          };
+        },
+      },
+    });
+
+    await expect(controller.reconcile()).resolves.toBe(false);
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: true,
+      userId: "u1",
+      syncReady: false,
+    });
+    expect(handlerRef.current).not.toBeNull();
+
+    handlerRef.current?.();
+    await vi.waitFor(() => {
+      expect(initialSync).toHaveBeenCalledTimes(2);
+      expect(controller.getState().syncReady).toBe(true);
+    });
+  });
+
+  it("ignores an adapter's synchronous connectivity snapshot to avoid a refresh storm", async () => {
+    const transport = makeTransport({
+      refreshResults: [
+        { kind: "transient", reason: "status 503" },
+        { kind: "ok", session: makeSession("u1") },
+      ],
+    });
+    const refreshSpy = vi.spyOn(transport, "refreshSession");
+    const cleanup = vi.fn();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+      online: {
+        registerOnlineRetry(handler) {
+          handler();
+          return cleanup;
+        },
+      },
+    });
+
+    await controller.reconcile();
+    await Promise.resolve();
+
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    await controller.forceLogout();
+    expect(cleanup).toHaveBeenCalledOnce();
+  });
+
+  it("retries a transient refresh on a timer even without an online event", async () => {
+    vi.useFakeTimers();
+    try {
+      const transport = makeTransport({
+        refreshResults: [
+          { kind: "transient", reason: "status 503" },
+          { kind: "ok", session: makeSession("u1") },
+        ],
+      });
+      const refreshSpy = vi.spyOn(transport, "refreshSession");
+      const controller = createAuthController({
+        transport,
+        authStateRepo: makeRepo(),
+        performInitialSync: async () => {},
+      });
+
+      await controller.reconcile();
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(refreshSpy).toHaveBeenCalledTimes(2);
+      expect(controller.getState().syncReady).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("login triggers onUserSwitch when previous userId differs", async () => {
     const transport = makeTransport({
       loginSession: makeSession("new-user"),
@@ -305,6 +403,35 @@ describe("createAuthController", () => {
     await controller.login("id", "pw");
 
     expect(onUserSwitch).not.toHaveBeenCalled();
+  });
+
+  it("login 開始時に session version を更新し、logout 後の遅延 login 応答を破棄する", async () => {
+    let resolveLogin!: (session: AuthSession) => void;
+    const loginSession = new Promise<AuthSession>((resolve) => {
+      resolveLogin = resolve;
+    });
+    const transport = makeTransport();
+    transport.login = () => loginSession;
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+    });
+
+    const initialVersion = controller.getSessionVersion();
+    const pendingLogin = controller.login("id", "pw");
+    expect(controller.getSessionVersion()).toBe(initialVersion + 1);
+
+    await controller.forceLogout();
+    resolveLogin(makeSession("late-user"));
+    await pendingLogin;
+
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: false,
+      userId: null,
+      syncReady: false,
+    });
+    expect(transport.accessToken).toBeNull();
   });
 
   it("register sets tutorial_status=pending", async () => {
@@ -495,6 +622,66 @@ describe("createAuthController", () => {
     });
     // logout 後の accessToken も null のまま (stale reconcile が書き戻していない)
     expect(transport.accessToken).toBe(null);
+  });
+
+  it("遅延 logout 完了後も、後から成立した login session をリセットしない", async () => {
+    let resolveLogout!: (result: { ok: boolean }) => void;
+    const logoutResult = new Promise<{ ok: boolean }>((resolve) => {
+      resolveLogout = resolve;
+    });
+    const transport = makeTransport({
+      loginSession: makeSession("new-user"),
+      refreshResults: [{ kind: "ok", session: makeSession("old-user") }],
+    });
+    transport.logout = () => logoutResult;
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+
+    const pendingLogout = controller.logout();
+    await controller.login("new", "pw");
+    resolveLogout({ ok: true });
+    await pendingLogout;
+
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: true,
+      userId: "new-user",
+      syncReady: true,
+    });
+    expect(transport.accessToken).toBe("tok-new-user");
+  });
+
+  it("遅延 forceLogout cleanup 後も、後から成立した login session をリセットしない", async () => {
+    let resolveCleanup!: () => void;
+    const cleanup = new Promise<void>((resolve) => {
+      resolveCleanup = resolve;
+    });
+    const transport = makeTransport({
+      loginSession: makeSession("new-user"),
+      refreshResults: [{ kind: "ok", session: makeSession("old-user") }],
+    });
+    transport.clearPersistedSession = () => cleanup;
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+    });
+    await controller.reconcile();
+
+    const pendingForceLogout = controller.forceLogout();
+    await controller.login("new", "pw");
+    resolveCleanup();
+    await pendingForceLogout;
+
+    expect(controller.getState()).toMatchObject({
+      isLoggedIn: true,
+      userId: "new-user",
+      syncReady: true,
+    });
+    expect(transport.accessToken).toBe("tok-new-user");
   });
 
   it("subscribe / unsubscribe correctly notifies listeners", async () => {

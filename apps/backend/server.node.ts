@@ -6,7 +6,7 @@ import { createClient } from "redis";
 
 import { app } from "./app";
 import { configSchema } from "./config";
-import { newRedisStore } from "./infra/kv/redis";
+import { newRedisRateLimitStore } from "./infra/rateLimit";
 import { createLogger } from "./lib/logger";
 
 dotenv.config();
@@ -35,9 +35,7 @@ if (config.NODE_ENV === "development") {
 }
 
 // Redis接続（オプション）
-let rateLimitKv:
-  | ReturnType<typeof newRedisStore<{ count: number; windowStart: number }>>
-  | undefined;
+let rateLimitStore: ReturnType<typeof newRedisRateLimitStore> | undefined;
 
 async function initRedis() {
   if (!config.REDIS_URL) {
@@ -57,9 +55,7 @@ async function initRedis() {
       globalThis.redisGlobal = redisClient;
     }
 
-    rateLimitKv = newRedisStore<{ count: number; windowStart: number }>(
-      redisClient,
-    );
+    rateLimitStore = newRedisRateLimitStore(redisClient);
     logger.info("Redis connected for rate limiting");
   } catch (error) {
     logger.error("Failed to connect to Redis", {
@@ -82,7 +78,7 @@ async function main() {
       return app.fetch(request, {
         ...config,
         DB: drizzleInstance,
-        RATE_LIMIT_KV: rateLimitKv,
+        RATE_LIMIT_STORE: rateLimitStore,
       });
     },
     port,

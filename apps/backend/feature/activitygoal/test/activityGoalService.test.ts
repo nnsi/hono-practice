@@ -9,15 +9,25 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import type { ActivityLogRepository } from "../../activityLog";
 import { newActivityGoalService } from "../activityGoalService";
+import type { GoalFreezePeriodRepository } from "../goalFreezePeriodRepository";
 
 describe("ActivityGoalService", () => {
   let activityLogRepo: ActivityLogRepository;
+  let freezePeriodRepo: GoalFreezePeriodRepository;
   let service: ReturnType<typeof newActivityGoalService>;
 
   beforeEach(() => {
     activityLogRepo = mock<ActivityLogRepository>();
-    service = newActivityGoalService(instance(activityLogRepo));
+    freezePeriodRepo = mock<GoalFreezePeriodRepository>();
+    service = newActivityGoalService(
+      instance(activityLogRepo),
+      instance(freezePeriodRepo),
+    );
     reset(activityLogRepo);
+    reset(freezePeriodRepo);
+    when(
+      freezePeriodRepo.getFreezePeriodsByGoalIds(anything(), anything()),
+    ).thenResolve([]);
   });
 
   const userId1 = createUserId("00000000-0000-4000-8000-000000000000");

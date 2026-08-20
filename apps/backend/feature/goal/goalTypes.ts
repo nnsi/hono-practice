@@ -49,10 +49,10 @@ export type GoalFilters = {
 export type GoalUsecase = {
   getGoals(
     userId: UserId,
-    filters?: GoalFilters,
-    clientDate?: string,
+    filters: GoalFilters | undefined,
+    clientDate: string,
   ): Promise<Goal[]>;
-  getGoal(userId: UserId, goalId: string, clientDate?: string): Promise<Goal>;
+  getGoal(userId: UserId, goalId: string, clientDate: string): Promise<Goal>;
   createGoal(userId: UserId, req: CreateGoalRequest): Promise<Goal>;
   updateGoal(
     userId: UserId,

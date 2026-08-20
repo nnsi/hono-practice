@@ -14,8 +14,13 @@ struct TimerWidgetView: View {
                 activityLabel
                 timerDisplay
                     .overlay(alignment: .trailing) {
-                        if entry.hasPendingKindSelect {
-                            Button(intent: ResetTimerIntent()) {
+                        if entry.hasPendingKindSelect,
+                           let activityId = entry.activityId,
+                           let timerInstanceId = entry.timerInstanceId {
+                            Button(intent: ResetTimerIntent(
+                                activityId: activityId,
+                                timerInstanceId: timerInstanceId
+                            )) {
                                 Image(systemName: "xmark")
                                     .font(.caption2)
                                     .foregroundColor(.white)
@@ -59,40 +64,66 @@ struct TimerWidgetView: View {
 
     @ViewBuilder
     private var controlButtons: some View {
-        if entry.hasPendingKindSelect, let activityId = entry.activityId {
-            pendingKindButtons(activityId: activityId)
-        } else if entry.isRunning {
+        if let activityId = entry.activityId,
+           let timerInstanceId = entry.timerInstanceId,
+           entry.hasPendingKindSelect {
+            pendingKindButtons(activityId: activityId, timerInstanceId: timerInstanceId)
+        } else if let activityId = entry.activityId,
+                  let timerInstanceId = entry.timerInstanceId,
+                  entry.isRunning {
             HStack(spacing: 8) {
-                Button(intent: PauseTimerIntent()) {
+                Button(intent: PauseTimerIntent(
+                    activityId: activityId,
+                    timerInstanceId: timerInstanceId
+                )) {
                     buttonLabel("一時停止", systemImage: "pause.fill", bg: Color.orange.opacity(0.8))
                 }
-                Button(intent: StopTimerIntent()) {
+                Button(intent: StopTimerIntent(
+                    activityId: activityId,
+                    timerInstanceId: timerInstanceId
+                )) {
                     buttonLabel("記録する", systemImage: "checkmark", bg: Color.red.opacity(0.8))
                 }
             }
-        } else if entry.elapsedMs > 0 {
+        } else if let activityId = entry.activityId,
+                  let timerInstanceId = entry.timerInstanceId,
+                  entry.elapsedMs > 0 {
             HStack(spacing: 8) {
-                Button(intent: StartTimerIntent()) {
+                Button(intent: StartTimerIntent(
+                    activityId: activityId,
+                    timerInstanceId: timerInstanceId
+                )) {
                     buttonLabel("再開", systemImage: "play.fill", bg: Color(hex: "#4CAF50"))
                 }
-                Button(intent: StopTimerIntent()) {
+                Button(intent: StopTimerIntent(
+                    activityId: activityId,
+                    timerInstanceId: timerInstanceId
+                )) {
                     buttonLabel("記録する", systemImage: "checkmark", bg: Color.red.opacity(0.8))
                 }
             }
-        } else {
-            Button(intent: StartTimerIntent()) {
+        } else if let activityId = entry.activityId,
+                  let timerInstanceId = entry.timerInstanceId {
+            Button(intent: StartTimerIntent(
+                activityId: activityId,
+                timerInstanceId: timerInstanceId
+            )) {
                 buttonLabel("スタート", systemImage: "play.fill", bg: Color(hex: "#4CAF50"))
             }
         }
     }
 
     @ViewBuilder
-    private func pendingKindButtons(activityId: String) -> some View {
+    private func pendingKindButtons(activityId: String, timerInstanceId: String) -> some View {
         if entry.kinds.count <= maxInlineKinds {
             // Inline kind buttons
             HStack(spacing: 6) {
                 ForEach(entry.kinds, id: \.id) { kind in
-                    Button(intent: SaveWithKindIntent(kindId: kind.id)) {
+                    Button(intent: SaveWithKindIntent(
+                        activityId: activityId,
+                        timerInstanceId: timerInstanceId,
+                        kindId: kind.id
+                    )) {
                         Text(kind.name)
                             .font(.caption2)
                             .foregroundColor(.white)
@@ -105,7 +136,9 @@ struct TimerWidgetView: View {
             }
         } else {
             // Too many kinds: deep link to app
-            Link(destination: URL(string: "actiko://widget/kind-select?activityId=\(activityId)") ?? URL(string: "actiko://")!) {
+            Link(destination: URL(
+                string: "actiko://widget/kind-select?activityId=\(activityId)&timerInstanceId=\(timerInstanceId)"
+            ) ?? URL(string: "actiko://")!) {
                 buttonLabel("種類を選択", systemImage: "tag", bg: Color(hex: "#4CAF50"))
             }
         }

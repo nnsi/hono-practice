@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { parseClientDate } from "@backend/lib/clientDate";
 import { noopTracer } from "@backend/lib/tracer";
 import { newGoalQueryService } from "@backend/query/goalQueryService";
 import { zValidator } from "@hono/zod-validator";
@@ -12,6 +13,7 @@ import type { AppContext } from "../../context";
 import { newActivityRepository } from "../activity/activityRepository";
 import { newActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import { newActivityGoalService } from "../activitygoal/activityGoalService";
+import { newGoalFreezePeriodRepository } from "../activitygoal/goalFreezePeriodRepository";
 import { newActivityLogRepository } from "../activityLog/activityLogRepository";
 import { newGoalHandler } from "./goalHandler";
 import { newGoalUsecase } from "./goalUsecase";
@@ -32,9 +34,13 @@ export function createGoalRoute() {
     const activityGoalRepo = newActivityGoalRepository(db);
     const activityRepo = newActivityRepository(db);
     const activityLogRepo = newActivityLogRepository(db);
+    const freezePeriodRepo = newGoalFreezePeriodRepository(db);
 
     // Service instances
-    const activityGoalService = newActivityGoalService(activityLogRepo);
+    const activityGoalService = newActivityGoalService(
+      activityLogRepo,
+      freezePeriodRepo,
+    );
     const goalQueryService = newGoalQueryService(db);
 
     // Usecase and Handler
@@ -60,32 +66,53 @@ export function createGoalRoute() {
         const userId = c.get("userId");
         const activityId = c.req.query("activityId");
         const isActive = c.req.query("isActive");
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
         const filters = {
           ...(activityId && { activityId }),
           ...(isActive && { isActive: isActive === "true" }),
         };
 
-        const res = await c.var.h.getGoals(userId, filters, clientDate);
+        const res = await c.var.h.getGoals(
+          userId,
+          filters,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 個別目標取得
       .get("/:id", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
-        const res = await c.var.h.getGoal(userId, id, clientDate);
+        const res = await c.var.h.getGoal(
+          userId,
+          id,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 目標統計情報取得
       .get("/:id/stats", async (c) => {
         const userId = c.get("userId");
         const { id } = c.req.param();
-        const clientDate = c.req.query("clientDate");
+        const clientDateResult = parseClientDate(c);
+        if (!clientDateResult.success) {
+          return clientDateResult.response;
+        }
 
-        const res = await c.var.h.getGoalStats(userId, id, clientDate);
+        const res = await c.var.h.getGoalStats(
+          userId,
+          id,
+          clientDateResult.clientDate,
+        );
         return c.json(res);
       })
       // 目標作成

@@ -2,8 +2,13 @@ import { fc, test } from "@fast-check/vitest";
 import dayjs from "dayjs";
 import { describe, expect } from "vitest";
 
-import { calculateGoalBalance } from "../../goal/goalBalance";
-import { generateDailyRecords } from "../../goal/goalStats";
+import { validateDate } from "../../csv/csvParser";
+import { calculateGoalBalance, countActiveDays } from "../../goal/goalBalance";
+import {
+  calculateMaxConsecutiveDays,
+  generateDailyRecords,
+} from "../../goal/goalStats";
+import { calendarDayDiff } from "../../time/dateDiff";
 import { isoDateArb } from "./arbitraries";
 
 /**
@@ -129,4 +134,83 @@ describe("4/21 authState / endDate boundary regression", () => {
       expect(records[records.length - 1].date).toBe(today);
     },
   );
+});
+
+/**
+ * 7/17 calendarDayDiff の TZ 非依存性（BUG-2 の値検証部分）。
+ *
+ * 注意: これらは TZ 非依存な sanity check であり、旧実装 (`dayjs.diff(...,"day")`)
+ * を落とすガードでは「ない」。dayjs 1.11 は endpoint の utcOffset 差 (zoneDelta) を
+ * 補正するため、標準的な 02:00 遷移の TZ（America/New_York 等）では旧実装でも
+ * 暦日差は正しく、UTC ランナーでも当然通る。
+ * → 旧実装を実際に落とす回帰ガードは `test/_tz/dstMidnightDiff.tz.test.ts`
+ *   （local midnight で DST 遷移する America/Havana 固定）にある。
+ *
+ * ここでは月跨ぎ・うるう年・fall-back 月で calendarDayDiff の値を固定するに留める。
+ */
+describe("7/17 calendarDayDiff sanity: 暦日差は経過ミリ秒に依存しない", () => {
+  // ["start", "end", 期待する暦日差]
+  const cases: Array<[string, string, number]> = [
+    ["2026-03-01", "2026-03-31", 30],
+    ["2026-03-07", "2026-03-09", 2],
+    // fall-back（2026-11-01）を含む月
+    ["2026-11-01", "2026-11-30", 29],
+    // うるう年 2 月
+    ["2024-02-01", "2024-03-01", 29],
+  ];
+
+  test.each(
+    cases,
+  )("calendarDayDiff(%s, %s) === %i（月末/うるう年非依存）", (start, end, expected) => {
+    expect(calendarDayDiff(start, end)).toBe(expected);
+  });
+
+  test("countActiveDays は暦日通り（3月は 31 日）", () => {
+    expect(countActiveDays("2026-03-01", "2026-03-31", [])).toBe(31);
+  });
+
+  test("calculateMaxConsecutiveDays は連続 3 日を 3 と数える", () => {
+    const records = [
+      { date: "2026-03-07", quantity: 1 },
+      { date: "2026-03-08", quantity: 1 },
+      { date: "2026-03-09", quantity: 1 },
+    ];
+    expect(calculateMaxConsecutiveDays(records)).toBe(3);
+  });
+});
+
+/**
+ * 7/17 validateDate 境界の決定論性（BUG-1 の TZ 非依存部分）。
+ *
+ * 注意: 旧実装 (`new Date("YYYY-MM-DD") > new Date()`) は「実行環境の local 日付が
+ * UTC 日付より進んでいる」瞬間にのみ誤拒否する（JST 00:00〜09:00 等）。UTC ランナー
+ * では旧実装でもこの describe は通ってしまうため、これは回帰ガードでは「ない」。
+ * → 旧実装を実際に落とすガードは `test/_tz/jstMidnightValidateDate.tz.test.ts`
+ *   （Asia/Tokyo 固定 + JST 00:30 に fake time）にある。
+ *
+ * ここでは「今日は受理 / 明日は拒否」という day granularity 境界を固定するに留める。
+ */
+describe("7/17 validateDate boundary determinism (BUG-1)", () => {
+  test.prop([fc.integer({ min: 0, max: 3650 })])(
+    "今日以前（0〜10年前）の日付は常に受理される",
+    (daysAgo) => {
+      const date = dayjs().subtract(daysAgo, "day").format("YYYY-MM-DD");
+      expect(validateDate(date)).toBeNull();
+    },
+  );
+
+  test.prop([fc.integer({ min: 1, max: 3650 })])(
+    "明日以降（1〜10年後）の日付は常に拒否される",
+    (daysAhead) => {
+      const date = dayjs().add(daysAhead, "day").format("YYYY-MM-DD");
+      expect(validateDate(date)).toBe("未来の日付は指定できません");
+    },
+  );
+
+  test("境界: 今日は受理、翌日は拒否（day granularity で決定論的）", () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
+    expect(validateDate(today)).toBeNull();
+    expect(validateDate(tomorrow)).toBe("未来の日付は指定できません");
+  });
 });

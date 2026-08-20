@@ -13,7 +13,9 @@ import { newActivityLogRepository } from "../activityLog";
 import type { AIActivityLogGateway } from "./aiActivityLogGateway";
 import { newAIActivityLogGateway } from "./aiActivityLogGatewayImpl";
 import { newAIActivityLogHandler } from "./aiActivityLogHandler";
+import { newAIActivityLogUsageHandler } from "./aiActivityLogUsageHandler";
 import { newAIActivityLogUsecase } from "./aiActivityLogUsecase";
+import { consumeAIUsageQuota } from "./aiUsageGuard";
 
 type GatewayFactory = (env: Config) => AIActivityLogGateway;
 
@@ -50,7 +52,32 @@ export function createAIActivityLogRoute(
       activityLogRepo,
       tracer,
     );
-    const h = newAIActivityLogHandler(uc);
+    const handler = newAIActivityLogHandler(uc);
+    const rateLimitStore = c.env.RATE_LIMIT_STORE;
+    const h = newAIActivityLogUsageHandler(handler, {
+      consumeQuota: () =>
+        consumeAIUsageQuota({
+          counterStore: rateLimitStore,
+          config: {
+            nodeEnv: c.env.NODE_ENV,
+            userQuotaPerMinute: c.env.AI_USER_QUOTA_PER_MINUTE,
+            userQuotaPerDay: c.env.AI_USER_QUOTA_PER_DAY,
+            userQuotaPerMonth: c.env.AI_USER_QUOTA_PER_MONTH,
+            apiKeyQuotaPerMinute: c.env.AI_API_KEY_QUOTA_PER_MINUTE,
+            apiKeyQuotaPerDay: c.env.AI_API_KEY_QUOTA_PER_DAY,
+            apiKeyQuotaPerMonth: c.env.AI_API_KEY_QUOTA_PER_MONTH,
+          },
+          identity: {
+            userId: c.get("userId"),
+            apiKeyId: c.get("apiKeyId"),
+          },
+          logger: c.get("logger"),
+        }),
+      logger: c.get("logger"),
+      userId: c.get("userId"),
+      apiKeyId: c.get("apiKeyId") ?? null,
+      model: c.env.AI_MODEL,
+    });
 
     c.set("h", h);
 
@@ -61,11 +88,11 @@ export function createAIActivityLogRoute(
     "/from-speech",
     zValidator("json", CreateAIActivityLogRequestSchema),
     async (c) => {
+      const params = c.req.valid("json");
       const res = await c.var.h.createActivityLogFromSpeech(
         c.get("userId"),
-        c.req.valid("json"),
+        params,
       );
-
       return c.json(res, 201);
     },
   );

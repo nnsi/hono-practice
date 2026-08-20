@@ -28,7 +28,7 @@ function getSubscription(subscriptionUsecase: SubscriptionQueryUsecase) {
       await subscriptionUsecase.getSubscriptionByUserIdOrDefault(userId);
 
     const response = {
-      plan: subscription.plan,
+      plan: subscription.getEffectivePlan(),
       status: subscription.status,
       canUseApiKey: subscription.canUseApiKey(),
       trialEnd: subscription.trialEnd?.toISOString() || null,

@@ -7,6 +7,7 @@ import type {
   ActivityIconDeleteQueueItem,
 } from "@packages/domain/activity/activityRepository";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
@@ -42,8 +43,18 @@ export type ActivityDbAdapter = {
   // Sync
   getPendingSyncActivities(): Promise<Syncable<ActivityRecord>[]>;
   getPendingSyncActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
-  updateActivitiesSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
-  updateKindsSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  getRejectedSyncActivities(): Promise<Syncable<ActivityRecord>[]>;
+  getRejectedSyncActivityKinds(): Promise<Syncable<ActivityKindRecord>[]>;
+  updateActivitiesSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
+  updateKindsSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
+  retryRejectedActivities(ids: string[]): Promise<void>;
+  retryRejectedActivityKinds(ids: string[]): Promise<void>;
   getActivitiesByIds(ids: string[]): Promise<Syncable<ActivityRecord>[]>;
   getKindsByIds(ids: string[]): Promise<Syncable<ActivityKindRecord>[]>;
   bulkUpsertActivities(activities: Syncable<ActivityRecord>[]): Promise<void>;

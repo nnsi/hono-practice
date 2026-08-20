@@ -91,6 +91,7 @@ describe("Polar webhook POLAR_STATUS_MAP coverage", () => {
       expect.objectContaining({
         status: "trial",
         plan: "premium",
+        trialEnd: new Date("2026-03-15T00:00:00Z"),
         eventType: "subscription.active",
       }),
     );
@@ -130,6 +131,7 @@ describe("Polar webhook POLAR_STATUS_MAP coverage", () => {
 
     expect(res.status).toBe(200);
     expect(queryUc.getSubscriptionByPaymentProviderId).toHaveBeenCalledWith(
+      "polar",
       "polar_sub_001",
     );
     expect(commandUc.upsertSubscriptionFromPayment).toHaveBeenCalledWith(

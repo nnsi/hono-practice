@@ -63,6 +63,7 @@ app.use("*", async (c, next) => {
   // 開発環境でのモバイルアプリからのアクセスを許可
   const allowedOrigins = [c.env.APP_URL];
   if (c.env.APP_URL_V2) allowedOrigins.push(c.env.APP_URL_V2);
+  if (c.env.ADMIN_APP_URL) allowedOrigins.push(c.env.ADMIN_APP_URL);
 
   if (c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test") {
     // localhost / プライベートIPはポート番号によらず許可

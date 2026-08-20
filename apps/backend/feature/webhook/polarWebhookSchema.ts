@@ -5,11 +5,17 @@ export const polarSubscriptionSchema = z.object({
   status: z.string(),
   current_period_start: z.string(),
   current_period_end: z.string(),
+  trial_start: z.string().datetime().nullable().optional(),
+  trial_end: z.string().datetime().nullable().optional(),
+  created_at: z.string().datetime(),
+  modified_at: z.string().datetime(),
   cancel_at_period_end: z.boolean(),
   user: z.object({ id: z.string(), email: z.string() }),
   metadata: z.object({ userId: z.string().optional() }),
   product: z.object({ id: z.string(), name: z.string() }),
 });
+
+export type PolarSubscription = z.infer<typeof polarSubscriptionSchema>;
 
 export const POLAR_SUBSCRIPTION_EVENTS = [
   "subscription.created",

@@ -136,6 +136,22 @@ const adapter: ActivityDbAdapter = {
     return rows.map(mapActivityKindRow);
   },
 
+  async getRejectedSyncActivities() {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activities WHERE sync_status = 'rejected'",
+    );
+    return rows.map(mapActivityRow);
+  },
+
+  async getRejectedSyncActivityKinds() {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SqlRow>(
+      "SELECT * FROM activity_kinds WHERE sync_status = 'rejected'",
+    );
+    return rows.map(mapActivityKindRow);
+  },
+
   ...activityKindAdapterMethods,
   ...activityBulkAdapterMethods,
   ...activityIconAdapterMethods,

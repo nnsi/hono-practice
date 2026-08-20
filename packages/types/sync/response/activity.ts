@@ -36,6 +36,16 @@ const SyncResultSchema = <T extends z.ZodType>(itemSchema: T) =>
     syncedIds: z.array(z.string()),
     serverWins: z.array(itemSchema),
     skippedIds: z.array(z.string()),
+    failures: z
+      .array(
+        z.object({
+          id: z.string(),
+          code: z.string(),
+          message: z.string(),
+          retryable: z.boolean(),
+        }),
+      )
+      .default([]),
   });
 
 export const GetActivitiesV2ResponseSchema = z.object({

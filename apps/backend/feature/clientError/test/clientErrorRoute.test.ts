@@ -1,6 +1,6 @@
 import { sign } from "hono/jwt";
 
-import type { KeyValueStore } from "@backend/infra/kv/kv";
+import { newMemoryRateLimitStore } from "@backend/infra/rateLimit";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { describe, expect, it, vi } from "vitest";
 
@@ -10,23 +10,6 @@ import { clientErrorRoute } from "../clientErrorRoute";
 const TEST_JWT_SECRET = "test-jwt-secret-must-be-at-least-32-characters";
 const TEST_JWT_AUDIENCE = "test-aud";
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000099";
-
-type RateRecord = { count: number; windowStart: number };
-function makeStore(): KeyValueStore<RateRecord> & {
-  data: Map<string, RateRecord>;
-} {
-  const data = new Map<string, RateRecord>();
-  return {
-    data,
-    get: vi.fn(async (k) => data.get(k)),
-    set: vi.fn(async (k, v) => {
-      data.set(k, v);
-    }),
-    delete: vi.fn(async (k) => {
-      data.delete(k);
-    }),
-  };
-}
 
 function createIsolatedApp() {
   return newHonoWithErrorHandling().route("/client-errors", clientErrorRoute);
@@ -199,7 +182,7 @@ describe("POST /client-errors", () => {
           JWT_SECRET: TEST_JWT_SECRET,
           JWT_AUDIENCE: TEST_JWT_AUDIENCE,
           WAE_CLIENT_ERRORS: wae,
-          RATE_LIMIT_KV: makeStore(),
+          RATE_LIMIT_STORE: newMemoryRateLimitStore(),
         },
       );
       expect(res.status).toBe(204);
@@ -238,7 +221,7 @@ describe("POST /client-errors", () => {
           JWT_SECRET: TEST_JWT_SECRET,
           JWT_AUDIENCE: TEST_JWT_AUDIENCE,
           WAE_CLIENT_ERRORS: wae,
-          RATE_LIMIT_KV: makeStore(),
+          RATE_LIMIT_STORE: newMemoryRateLimitStore(),
         },
       );
       expect(res.status).toBe(204);
@@ -255,7 +238,7 @@ describe("POST /client-errors", () => {
         JWT_SECRET: TEST_JWT_SECRET,
         JWT_AUDIENCE: TEST_JWT_AUDIENCE,
         WAE_CLIENT_ERRORS: wae,
-        RATE_LIMIT_KV: makeStore(),
+        RATE_LIMIT_STORE: newMemoryRateLimitStore(),
       };
       let last: Response | null = null;
       for (let i = 0; i < 31; i++) {

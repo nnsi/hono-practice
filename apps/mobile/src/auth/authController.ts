@@ -13,7 +13,9 @@ import {
   reconcileTabPreferenceFromServer,
 } from "../components/setting/tabPreferenceStore";
 import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
+import { clearVoiceCredentials } from "../lib/voiceApiKeyBridge";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
+import { loadStorageCache } from "../sync/rnPlatformAdapters";
 import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 
@@ -22,33 +24,49 @@ const transport = createMobileAuthTransport(
   tokenHolder,
 );
 
-setRefreshAccessToken(createRefreshAccessTokenCallback(transport));
-
 export const authController = createAuthController({
   transport,
   authStateRepo: createMobileAuthStateRepository(),
   online: {
     registerOnlineRetry(handler) {
+      let previousConnected: boolean | null = null;
       const unsub = NetInfo.addEventListener((info) => {
-        if (info.isConnected) handler();
+        const connected = info.isConnected === true;
+        if (previousConnected === null) {
+          previousConnected = connected;
+          return;
+        }
+        const recovered = !previousConnected && connected;
+        previousConnected = connected;
+        if (recovered) handler();
       });
       return unsub;
     },
   },
   onUserSwitch: async () => {
+    await clearVoiceCredentials();
     await clearLocalData();
   },
   performInitialSync: async (userId) => {
+    await loadStorageCache();
     await performInitialSync(userId);
   },
   onUserSynced: async (user) => {
     await reconcileTabPreferenceFromServer(user.tabPreference);
     void flushPendingTabPreference();
     if (user.plan === "premium") {
-      provisionVoiceApiKey().catch(() => {});
+      provisionVoiceApiKey(user.id).catch(() => {});
     }
   },
   onAuthStateReset: () => {
+    void clearVoiceCredentials();
     void clearStoredTabPreference();
   },
 });
+
+setRefreshAccessToken(
+  createRefreshAccessTokenCallback(transport, {
+    getSessionVersion: () => authController.getSessionVersion(),
+    onExpired: () => authController.forceLogout(),
+  }),
+);

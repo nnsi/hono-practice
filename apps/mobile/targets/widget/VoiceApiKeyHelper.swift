@@ -1,13 +1,36 @@
 import Foundation
 import Security
 
+protocol KeychainReading {
+    func copyMatching(_ query: CFDictionary, result: UnsafeMutablePointer<AnyObject?>) -> OSStatus
+}
+
+struct SecurityKeychainReader: KeychainReading {
+    func copyMatching(_ query: CFDictionary, result: UnsafeMutablePointer<AnyObject?>) -> OSStatus {
+        SecItemCopyMatching(query, result)
+    }
+}
+
+enum VoiceApiKeyQueryFactory {
+    static func makeQuery() -> [String: Any] {
+        let keyData = Data("actiko-voice-api-key".utf8)
+        return [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "app:no-auth",
+            kSecAttrAccount as String: keyData,
+            kSecAttrGeneric as String: keyData,
+            // The widget target has exactly one Keychain group: the explicit
+            // widget-shared group. Omitting kSecAttrAccessGroup selects it and
+            // avoids confusing the App Group ID with a Keychain group.
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+    }
+}
+
 /// Manages voice API key storage in App Group Keychain and backend URL in UserDefaults.
 /// Keychain queries match expo-secure-store's format so both sides can read the same item.
 enum VoiceApiKeyHelper {
-    /// expo-secure-store default service name with `:no-auth` suffix.
-    private static let keychainService = "app:no-auth"
-    /// The key string used in expo-secure-store's setItemAsync call.
-    private static let keychainKey = "actiko-voice-api-key"
     private static let backendUrlKey = "voice_backend_url"
 
     private static var defaults: UserDefaults? {
@@ -16,19 +39,10 @@ enum VoiceApiKeyHelper {
 
     // MARK: - API Key (Keychain) — read-only from widget side
 
-    static func getApiKey() -> String? {
-        let keyData = Data(keychainKey.utf8)
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keyData,
-            kSecAttrGeneric as String: keyData,
-            kSecAttrAccessGroup as String: AppConfig.appGroupId,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+    static func getApiKey(reader: KeychainReading = SecurityKeychainReader()) -> String? {
+        let query = VoiceApiKeyQueryFactory.makeQuery()
         var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        let status = reader.copyMatching(query as CFDictionary, result: &result)
         guard status == errSecSuccess, let data = result as? Data else {
             return nil
         }

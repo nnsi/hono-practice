@@ -32,7 +32,10 @@ function getWidgetStorage() {
 }
 
 export default function WidgetKindSelectPage() {
-  const { activityId } = useLocalSearchParams<{ activityId: string }>();
+  const { activityId, timerInstanceId } = useLocalSearchParams<{
+    activityId: string;
+    timerInstanceId: string;
+  }>();
   const router = useRouter();
   const { kinds } = useActivityKinds(activityId);
   const [selectedKindId, setSelectedKindId] = useState<string | null>(null);
@@ -47,10 +50,10 @@ export default function WidgetKindSelectPage() {
   }, [activityId]);
 
   const handleSave = async () => {
-    if (!activityId || !selectedKindId) return;
+    if (!activityId || !timerInstanceId || !selectedKindId) return;
 
     const storage = getWidgetStorage();
-    const key = (field: string) => `timer_${activityId}_${field}`;
+    const key = (field: string) => `timer_${timerInstanceId}_${field}`;
 
     // Read timer state from widget's UserDefaults
     const accumulatedMs = Number(storage?.get(key("accumulatedMillis")) ?? 0);
@@ -94,10 +97,10 @@ export default function WidgetKindSelectPage() {
     router.replace("/(tabs)/daily");
   };
 
-  if (!activityId) {
+  if (!activityId || !timerInstanceId) {
     return (
       <SafeAreaView className="flex-1 bg-white dark:bg-gray-800 justify-center items-center">
-        <Text>Activity ID が指定されていません</Text>
+        <Text>Widget の識別情報が指定されていません</Text>
       </SafeAreaView>
     );
   }

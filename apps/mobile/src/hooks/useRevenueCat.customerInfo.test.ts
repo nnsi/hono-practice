@@ -101,20 +101,20 @@ describe("CustomerInfo handler — plan refresh deduplication", () => {
   });
 
   it("rolls back lastActiveRef on refresh failure to allow retry", async () => {
-    mocks.apiGetMe.mockRejectedValueOnce(new Error("network"));
+    vi.useFakeTimers();
+    mocks.apiGetMe.mockRejectedValue(new Error("network"));
     const lastActiveRef = { current: null as boolean | null };
 
     handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
-    await vi.waitFor(() => {
-      expect(lastActiveRef.current).toBeNull();
-    });
-    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
+    await vi.runAllTimersAsync();
+    expect(lastActiveRef.current).toBeNull();
+    expect(mocks.apiGetMe).toHaveBeenCalledTimes(6);
 
-    mocks.apiGetMe.mockResolvedValueOnce({ plan: "premium" });
+    mocks.apiGetMe.mockReset().mockResolvedValueOnce({ plan: "premium" });
     const triggered = handleCustomerInfoUpdate(makeInfo(true), lastActiveRef);
     expect(triggered).toBe(true);
-    await vi.waitFor(() => {
-      expect(mocks.apiGetMe).toHaveBeenCalledTimes(2);
-    });
+    await vi.runAllTimersAsync();
+    expect(mocks.apiGetMe).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });

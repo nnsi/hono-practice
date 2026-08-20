@@ -55,6 +55,10 @@ export function useNoteDetailPage() {
   const latestRef = useRef({ title, content, activityId });
   latestRef.current = { title, content, activityId };
   const leavingRef = useRef(false);
+  // flush の直列化用チェーン。debounce / visibilitychange / unmount / 戻る操作から
+  // 多重発火しても、常に直前の flush 完了後に実行されるようにする（重複作成防止）。
+  // 「in-flight中はスキップ」方式は最後の入力を取りこぼす可能性があるため使わない。
+  const flushChainRef = useRef<Promise<void>>(Promise.resolve());
   const untitledLabel = t("detail.untitled");
 
   useEffect(() => {
@@ -74,7 +78,7 @@ export function useNoteDetailPage() {
 
   const isLoading = !notFound && !initialized;
 
-  const flush = useCallback(async () => {
+  const doFlush = useCallback(async () => {
     const { title, content, activityId } = latestRef.current;
     const persisted = persistedRef.current;
     const trimmedTitle = title.trim();
@@ -128,6 +132,16 @@ export function useNoteDetailPage() {
     setSaveState("saved");
     syncEngine.syncNotes();
   }, [untitledLabel]);
+
+  // flush 呼び出しを直列化するラッパー。常に直前の flush（成功/失敗問わず）完了後に
+  // doFlush を実行することで、createNote の多重発火（重複作成）を防ぐ。
+  // doFlush は呼び出し時点の latestRef.current を読むため、直列化しても最後の入力は
+  // 必ず永続化される（スキップではなくキューイング）。
+  const flush = useCallback(() => {
+    const run = flushChainRef.current.then(() => doFlush());
+    flushChainRef.current = run.catch(() => {});
+    return run;
+  }, [doFlush]);
 
   // 入力が止まったら自動保存（初期ロード時は persisted と一致するため no-op）
   useEffect(() => {

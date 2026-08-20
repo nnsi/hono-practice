@@ -15,6 +15,12 @@ export type SyncResult<T> = {
   syncedIds: string[];
   serverWins: T[];
   skippedIds: string[];
+  failures: {
+    id: string;
+    code: string;
+    message: string;
+    retryable: boolean;
+  }[];
 };
 
 export type SyncActivitiesResult = {
@@ -71,7 +77,7 @@ async function syncActivityEntities(
   });
 
   if (validActivities.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds };
+    return { syncedIds: [], serverWins: [], skippedIds, failures: [] };
   }
 
   const upserted = await tracer.span("db.upsertActivities", () =>
@@ -98,7 +104,7 @@ async function syncActivityEntities(
     }
   }
 
-  return { syncedIds, serverWins, skippedIds };
+  return { syncedIds, serverWins, skippedIds, failures: [] };
 }
 
 async function syncActivityKindEntities(
@@ -128,7 +134,7 @@ async function syncActivityKindEntities(
   });
 
   if (validKinds.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds };
+    return { syncedIds: [], serverWins: [], skippedIds, failures: [] };
   }
 
   const upserted = await tracer.span("db.upsertActivityKinds", () =>
@@ -155,5 +161,5 @@ async function syncActivityKindEntities(
     }
   }
 
-  return { syncedIds, serverWins, skippedIds };
+  return { syncedIds, serverWins, skippedIds, failures: [] };
 }

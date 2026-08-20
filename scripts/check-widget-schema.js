@@ -16,8 +16,12 @@
  *
  * Target native files (derived from migrationSqlV1.ts warning block):
  *   - apps/mobile/targets/widget/WidgetDbHelper.swift
+ *   - apps/mobile/targets/widget/WidgetActivityQueries.swift
+ *   - apps/mobile/targets/widget/WidgetActivityLogWriter.swift
  *   - apps/mobile/targets/widget/WidgetDbQueries.swift
  *   - apps/mobile/modules/timer-widget/android/.../WidgetDbHelper.kt
+ *   - apps/mobile/modules/timer-widget/android/.../WidgetDbActivityQueries.kt
+ *   - apps/mobile/modules/timer-widget/android/.../WidgetDbLogWriter.kt
  *   - apps/mobile/modules/timer-widget/android/.../WidgetLogHelper.kt
  *
  * Usage:
@@ -37,8 +41,12 @@ const ROOT = process.cwd();
 // ---------------------------------------------------------------------------
 const NATIVE_FILES = [
   "apps/mobile/targets/widget/WidgetDbHelper.swift",
+  "apps/mobile/targets/widget/WidgetActivityQueries.swift",
+  "apps/mobile/targets/widget/WidgetActivityLogWriter.swift",
   "apps/mobile/targets/widget/WidgetDbQueries.swift",
   "apps/mobile/modules/timer-widget/android/src/main/java/com/actiko/widget/WidgetDbHelper.kt",
+  "apps/mobile/modules/timer-widget/android/src/main/java/com/actiko/widget/WidgetDbActivityQueries.kt",
+  "apps/mobile/modules/timer-widget/android/src/main/java/com/actiko/widget/WidgetDbLogWriter.kt",
   "apps/mobile/modules/timer-widget/android/src/main/java/com/actiko/widget/WidgetLogHelper.kt",
 ];
 
@@ -47,6 +55,45 @@ const MIGRATION_FILES = [
   "apps/mobile/src/db/migrationSqlV1.ts",
   "apps/mobile/src/db/migrationSql.ts",
 ];
+
+const SCHEMA_VERSION_SOURCES = [
+  {
+    path: "apps/mobile/src/db/migrations.ts",
+    pattern: /export\s+const\s+SCHEMA_VERSION\s*=\s*(\d+)/,
+    platform: "React Native",
+  },
+  {
+    path: "apps/mobile/targets/widget/WidgetDbHelper.swift",
+    pattern: /static\s+let\s+supportedSchemaVersion\s*=\s*(\d+)/,
+    platform: "iOS Widget",
+  },
+  {
+    path: "apps/mobile/modules/timer-widget/android/src/main\/java\/com\/actiko\/widget\/WidgetDbHelper.kt",
+    pattern: /const\s+val\s+SUPPORTED_SCHEMA_VERSION\s*=\s*(\d+)/,
+    platform: "Android Widget",
+  },
+];
+
+function readSchemaVersions() {
+  return SCHEMA_VERSION_SOURCES.map(({ path, pattern, platform }) => {
+    const content = readFileSync(join(ROOT, path), "utf8");
+    const match = pattern.exec(content);
+    if (!match) {
+      throw new Error(`${platform} schema version constant not found in ${path}`);
+    }
+    return { platform, path, version: Number(match[1]) };
+  });
+}
+
+function validateSchemaVersions(versions) {
+  const expected = versions[0]?.version;
+  return versions
+    .filter(({ version }) => version !== expected)
+    .map(
+      ({ platform, path, version }) =>
+        `  ${platform} (${path}) declares ${version}; expected ${expected}`,
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Schema extraction — parse CREATE TABLE / ALTER TABLE from migration TS files
@@ -179,8 +226,8 @@ function extractSqlFromNativeFile(absPath) {
     });
   }
 
-  // 4. db.insert("table_name", ...) — Kotlin
-  const insertRe = /db\.insert\s*\(\s*"(\w+)"/g;
+  // 4. db.insert/insertOrThrow("table_name", ...) — Kotlin
+  const insertRe = /db\.insert(?:OrThrow)?\s*\(\s*"(\w+)"/g;
   while ((m = insertRe.exec(content)) !== null) {
     const lineNo = content.slice(0, m.index).split("\n").length;
     sqlFragments.push({
@@ -448,6 +495,16 @@ function runSelfTest(schema) {
     process.exit(1);
   }
 
+  const versionErrors = validateSchemaVersions([
+    { platform: "React Native", path: "fake/migrations.ts", version: 12 },
+    { platform: "iOS Widget", path: "fake/Widget.swift", version: 11 },
+    { platform: "Android Widget", path: "fake/Widget.kt", version: 12 },
+  ]);
+  if (versionErrors.length !== 1 || !versionErrors[0].includes("iOS Widget")) {
+    console.error("Self-test FAILED: schema version mismatch was not detected");
+    process.exit(1);
+  }
+
   // Also confirm real refs pass with zero errors
   const allRealRefs = [];
   for (const relPath of NATIVE_FILES) {
@@ -474,6 +531,20 @@ function runSelfTest(schema) {
 const selfTest = process.argv.includes("--self-test");
 
 const schema = extractSchema(MIGRATION_FILES);
+
+let schemaVersions;
+try {
+  schemaVersions = readSchemaVersions();
+} catch (error) {
+  console.error(`check-widget-schema: ${error.message}`);
+  process.exit(1);
+}
+const schemaVersionErrors = validateSchemaVersions(schemaVersions);
+if (schemaVersionErrors.length > 0) {
+  console.error("Widget schema version mismatch detected:\n");
+  for (const error of schemaVersionErrors) console.error(error);
+  process.exit(1);
+}
 
 if (selfTest) {
   runSelfTest(schema);
@@ -512,4 +583,6 @@ if (allErrors.length > 0) {
   process.exit(1);
 }
 
-console.log("check-widget-schema: OK — all widget SQL references are present in the migration schema");
+console.log(
+  `check-widget-schema: OK — schema v${schemaVersions[0].version} and all widget SQL references are aligned`,
+);

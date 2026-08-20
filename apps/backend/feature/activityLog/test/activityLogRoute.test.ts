@@ -15,9 +15,24 @@ test("GET activityLogs / success", async () => {
     DB: testDB,
   });
 
-  const res = await client.index.$get({ query: {} });
+  const res = await client.index.$get({ query: { date: "2021-01-01" } });
 
   expect(res.status).toEqual(200);
+});
+
+test("GET activityLogs / date未指定で 400", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/",
+    { method: "GET" },
+    { DB: testDB, NODE_ENV: "test" },
+  );
+
+  expect(res.status).toEqual(400);
 });
 
 test("GET activityLogs / invalid date で 400", async () => {

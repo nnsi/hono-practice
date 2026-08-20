@@ -4,7 +4,10 @@ import { compare, hash } from "bcryptjs";
 export type PasswordVerifier = {
   compare(password: string, hash: string): Promise<boolean>;
   hash(password: string): Promise<string>;
+  needsRehash?(hash: string): boolean;
 };
+
+const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/i;
 
 export class SHA256PasswordVerifier implements PasswordVerifier {
   async compare(password: string, hash: string): Promise<boolean> {
@@ -56,5 +59,9 @@ export class MultiHashPasswordVerifier implements PasswordVerifier {
   async hash(password: string): Promise<string> {
     // 新規パスワードはbcryptで保存（SHA256は後方互換性のため比較時のみ使用）
     return this.verifiers[1].hash(password);
+  }
+
+  needsRehash(hash: string): boolean {
+    return SHA256_HEX_PATTERN.test(hash);
   }
 }

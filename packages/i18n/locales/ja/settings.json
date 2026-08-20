@@ -35,6 +35,8 @@
   "trialStatus": "トライアル中",
   "nextUpdateDate": "次回更新日",
   "upgradeText": "ProにアップグレードするとAPIキー管理や音声記録など全機能が使えるようになります。",
+  "checkoutReconciling": "決済結果を確認しています…",
+  "checkoutReconcileTimeout": "決済結果の反映に時間がかかっています。しばらくしてから再読み込みしてください。",
   "upgradeButton": "Pro にアップグレード",
   "dataManagement": "データ管理",
   "importCSV": "CSVから活動記録をインポート",

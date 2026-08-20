@@ -9,20 +9,21 @@ enum WidgetPlanHelper {
     /// Pro plan: always allowed.
     static func isWidgetAllowed() async -> Bool {
         let plan = WidgetDbHelper().getPlan()
-        if plan == "premium" { return true }
         let count = await getActiveWidgetCount()
-        return count <= 1
+        return WidgetPlanPolicy.isWidgetAllowed(plan: plan, activeWidgetCount: count)
     }
 
     /// Get the actual number of active widget instances from WidgetCenter.
-    private static func getActiveWidgetCount() async -> Int {
+    /// A nil count means WidgetCenter could not enumerate configurations. The
+    /// policy treats that state as denied for free plans instead of guessing 0.
+    private static func getActiveWidgetCount() async -> Int? {
         await withCheckedContinuation { continuation in
             WidgetCenter.shared.getCurrentConfigurations { result in
                 switch result {
                 case .success(let configs):
                     continuation.resume(returning: configs.count)
                 case .failure:
-                    continuation.resume(returning: 0)
+                    continuation.resume(returning: nil)
                 }
             }
         }

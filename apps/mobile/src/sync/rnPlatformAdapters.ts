@@ -51,20 +51,26 @@ export function isForcedOffline(): boolean {
 // We use a sync cache backed by AsyncStorage for the sync engine.
 const cache = new Map<string, string>();
 let cacheLoaded = false;
+let cacheLoadPromise: Promise<void> | null = null;
 
 export async function loadStorageCache() {
-  try {
-    const keys = await AsyncStorage.getAllKeys();
-    const items = await AsyncStorage.multiGet(
-      keys.filter((k) => k.startsWith("actiko-")),
-    );
-    for (const [key, value] of items) {
-      if (value !== null) cache.set(key, value);
-    }
-  } catch (err: unknown) {
-    handleStorageError(err);
+  if (cacheLoaded) return;
+  if (!cacheLoadPromise) {
+    cacheLoadPromise = AsyncStorage.getAllKeys()
+      .then((keys) =>
+        AsyncStorage.multiGet(keys.filter((key) => key.startsWith("actiko-"))),
+      )
+      .then((items) => {
+        for (const [key, value] of items) {
+          if (value !== null) cache.set(key, value);
+        }
+      })
+      .catch(handleStorageError)
+      .then(() => {
+        cacheLoaded = true;
+      });
   }
-  cacheLoaded = true;
+  await cacheLoadPromise;
 }
 
 export function isStorageCacheLoaded(): boolean {

@@ -34,6 +34,7 @@ export function setupBrowser() {
   });
 
   return {
+    getBrowser: () => browser,
     getPage: () => page,
     getContext: () => context,
   };

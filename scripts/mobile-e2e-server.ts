@@ -114,7 +114,7 @@ async function main() {
     STORAGE_TYPE: "local" as const,
     UPLOAD_DIR: "public/uploads",
     DB: db,
-    RATE_LIMIT_KV: undefined,
+    RATE_LIMIT_STORE: undefined,
     REDIS_URL: undefined,
     OPENROUTER_API_KEY:
       process.env.OPENROUTER_API_KEY ?? backendEnv.OPENROUTER_API_KEY,

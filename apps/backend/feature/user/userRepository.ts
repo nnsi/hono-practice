@@ -18,6 +18,11 @@ export type UserRepository<T = QueryExecutor> = {
   createUser: (user: User) => Promise<User>;
   getUserById: (userId: UserId) => Promise<User | undefined>;
   getUserByLoginId: (loginId: string) => Promise<User | undefined>;
+  updatePasswordHash: (
+    userId: UserId,
+    expectedHash: string,
+    newHash: string,
+  ) => Promise<boolean>;
   deleteUser: (userId: UserId) => Promise<void>;
   listUsers: (
     limit: number,
@@ -47,12 +52,34 @@ export function newUserRepository(
     createUser: createUser(db),
     getUserById: getUserById(db),
     getUserByLoginId: getUserByLoginId(db),
+    updatePasswordHash: updatePasswordHash(db),
     deleteUser: deleteUser(db),
     listUsers: listUsers(db),
     hardDeleteUserById: hardDeleteUserById(db),
     getTabPreference: getTabPreference(db),
     saveTabPreference: saveTabPreference(db),
     withTx: (tx) => newUserRepository(tx),
+  };
+}
+
+function updatePasswordHash(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    expectedHash: string,
+    newHash: string,
+  ): Promise<boolean> => {
+    const [updated] = await db
+      .update(users)
+      .set({ password: newHash })
+      .where(
+        and(
+          eq(users.id, userId),
+          eq(users.password, expectedHash),
+          isNull(users.deletedAt),
+        ),
+      )
+      .returning();
+    return Boolean(updated);
   };
 }
 

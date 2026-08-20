@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 // --- Types ---
 
 export type CSVParseResult = {
@@ -173,9 +175,12 @@ export function parseCSVText(text: string): CSVParseResult {
 
 export function validateDate(dateStr: string): string | null {
   if (!dateStr) return "日付は必須です";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "日付の形式が不正です";
-  if (d > new Date()) return "未来の日付は指定できません";
+  const d = dayjs(dateStr);
+  if (!d.isValid()) return "日付の形式が不正です";
+  // 暦日単位で比較する。new Date("YYYY-MM-DD") は UTC 深夜として解釈される一方、
+  // new Date() はローカル現在時刻のため、JST 00:00〜09:00 に「今日」が未来扱いで
+  // 誤拒否されていた。dayjs の day granularity 比較でこのズレを解消する。
+  if (d.isAfter(dayjs(), "day")) return "未来の日付は指定できません";
   return null;
 }
 

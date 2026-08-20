@@ -239,7 +239,7 @@ export async function seedE2EUser(db: DrizzleInstance, hashedPassword: string) {
     userId: E2E_USER_ID,
     plan: "premium",
     status: "active",
-    paymentProvider: "stripe",
+    paymentProvider: "revenuecat",
     paymentProviderId: "sub_e2e_test",
     currentPeriodStart: new Date(),
     currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

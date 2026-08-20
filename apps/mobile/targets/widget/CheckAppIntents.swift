@@ -22,13 +22,28 @@ struct ToggleCheckIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        let isPlanAllowed = await WidgetPlanHelper.isWidgetAllowed()
+        guard isPlanAllowed else {
+            WidgetCenter.shared.reloadTimelines(ofKind: "CheckWidget")
+            return .result()
+        }
         let dbHelper = WidgetDbHelper()
-        let isDone = dbHelper.hasActivityLogForToday(activityId)
+        guard dbHelper.getActivityById(activityId) != nil else { return .result() }
+        if let kindId, !dbHelper.isKindOwnedByActivity(activityId, kindId: kindId) {
+            return .result()
+        }
+        guard case let .success(isDone) = dbHelper.hasActivityLogForToday(
+            activityId,
+            kindId: kindId
+        ) else { return .result() }
         if isDone {
-            dbHelper.softDeleteTodayLog(activityId)
+            _ = dbHelper.softDeleteTodayLog(activityId, kindId: kindId)
         } else {
-            await SimpleLogHelper.saveLog(
-                activityId: activityId, kindId: kindId, quantity: 1
+            _ = await SimpleLogHelper.saveLog(
+                activityId: activityId,
+                kindId: kindId,
+                quantity: 1,
+                isPlanAllowed: isPlanAllowed
             )
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "CheckWidget")

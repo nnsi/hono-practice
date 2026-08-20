@@ -35,7 +35,7 @@ describe("SubscriptionQueryUsecase", () => {
     paymentProvider: "stripe",
     paymentProviderId: "sub_123",
     currentPeriodStart: new Date("2024-01-01"),
-    currentPeriodEnd: new Date("2024-02-01"),
+    currentPeriodEnd: new Date("2099-02-01"),
     cancelAtPeriodEnd: false,
     cancelledAt: null,
     trialStart: null,

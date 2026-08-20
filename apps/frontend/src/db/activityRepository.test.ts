@@ -73,6 +73,7 @@ import type {
 } from "@packages/domain/activity/activityRecord";
 
 import { activityIconAdapter } from "./activityIconAdapter";
+import { activityDbAdapter } from "./activityRepository";
 import { db } from "./schema";
 
 const uuidState = { counter: 0 };
@@ -174,17 +175,44 @@ const adapter: ActivityDbAdapter = {
       .anyOf(["pending", "failed"])
       .toArray();
   },
-  async updateActivitiesSyncStatus(ids, status) {
+  async getRejectedSyncActivities() {
+    return mockDb.activities.where("_syncStatus").equals("rejected").toArray();
+  },
+  async getRejectedSyncActivityKinds() {
+    return mockDb.activityKinds
+      .where("_syncStatus")
+      .equals("rejected")
+      .toArray();
+  },
+  async updateActivitiesSyncStatus(revisions, status) {
+    await mockDb.activities
+      .where("id")
+      .anyOf(revisions.map((revision) => revision.id))
+      .modify({ _syncStatus: status });
+  },
+  async updateKindsSyncStatus(revisions, status) {
+    await mockDb.activityKinds
+      .where("id")
+      .anyOf(revisions.map((revision) => revision.id))
+      .modify({ _syncStatus: status });
+  },
+  async retryRejectedActivities(ids) {
     await mockDb.activities
       .where("id")
       .anyOf(ids)
-      .modify({ _syncStatus: status });
+      .filter(
+        (record: { _syncStatus: string }) => record._syncStatus === "rejected",
+      )
+      .modify({ _syncStatus: "pending" });
   },
-  async updateKindsSyncStatus(ids, status) {
+  async retryRejectedActivityKinds(ids) {
     await mockDb.activityKinds
       .where("id")
       .anyOf(ids)
-      .modify({ _syncStatus: status });
+      .filter(
+        (record: { _syncStatus: string }) => record._syncStatus === "rejected",
+      )
+      .modify({ _syncStatus: "pending" });
   },
   async getActivitiesByIds(ids) {
     return mockDb.activities.where("id").anyOf(ids).toArray();
@@ -568,7 +596,10 @@ describe("activityRepository", () => {
       const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
       mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityRepository.markActivitiesSynced(["a1", "a2"]);
+      await activityRepository.markActivitiesSynced([
+        { id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "a2", updatedAt: "2026-01-02T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.activities.where).toHaveBeenCalledWith("id");
       expect(mockAnyOf).toHaveBeenCalledWith(["a1", "a2"]);
@@ -579,6 +610,27 @@ describe("activityRepository", () => {
       await activityRepository.markActivitiesSynced([]);
       expect(mockDb.activities.where).not.toHaveBeenCalled();
     });
+
+    it("Dexie更新時に送信revisionより新しいpending編集を保持する", async () => {
+      const record = {
+        id: "a1",
+        updatedAt: "2026-01-01T00:00:01.000Z",
+        _syncStatus: "pending",
+      };
+      const modify = vi.fn(async (callback: (value: typeof record) => void) => {
+        callback(record);
+      });
+      const anyOf = vi.fn().mockReturnValue({ modify });
+      mockDb.activities.where.mockReturnValue({ anyOf });
+
+      await activityDbAdapter.updateActivitiesSyncStatus(
+        [{ id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" }],
+        "synced",
+      );
+
+      expect(anyOf).toHaveBeenCalledWith(["a1"]);
+      expect(record._syncStatus).toBe("pending");
+    });
   });
 
   describe("markActivityKindsSynced", () => {
@@ -587,7 +639,9 @@ describe("activityRepository", () => {
       const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
       mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityRepository.markActivityKindsSynced(["k1"]);
+      await activityRepository.markActivityKindsSynced([
+        { id: "k1", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.activityKinds.where).toHaveBeenCalledWith("id");
       expect(mockAnyOf).toHaveBeenCalledWith(["k1"]);
@@ -606,7 +660,9 @@ describe("activityRepository", () => {
       const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
       mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityRepository.markActivitiesFailed(["a1"]);
+      await activityRepository.markActivitiesFailed([
+        { id: "a1", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "failed" });
     });
@@ -623,7 +679,9 @@ describe("activityRepository", () => {
       const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
       mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityRepository.markActivityKindsFailed(["k1"]);
+      await activityRepository.markActivityKindsFailed([
+        { id: "k1", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "failed" });
     });

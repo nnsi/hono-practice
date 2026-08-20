@@ -183,7 +183,7 @@ describe("api/v1 scope integration (V1_SCOPE_MAPPING 経由)", () => {
         ["voice"],
         "/ai/activity-logs/from-speech",
         "POST",
-        { speechText: "test" },
+        { speechText: "test", clientDate: "2026-04-12" },
       );
       expectScopeAllowed(res.status);
     });
@@ -193,7 +193,7 @@ describe("api/v1 scope integration (V1_SCOPE_MAPPING 経由)", () => {
         ["activity-logs:write"],
         "/ai/activity-logs/from-speech",
         "POST",
-        { speechText: "test" },
+        { speechText: "test", clientDate: "2026-04-12" },
       );
       expect(res.status).toBe(403);
     });
@@ -216,6 +216,7 @@ describe("api/v1 scope integration (V1_SCOPE_MAPPING 経由)", () => {
     it("POST /ai/activity-logs/from-speech を許可", async () => {
       const res = await call(["all"], "/ai/activity-logs/from-speech", "POST", {
         speechText: "test",
+        clientDate: "2026-04-12",
       });
       expectScopeAllowed(res.status);
     });
@@ -226,7 +227,11 @@ describe("api/v1 scope integration (V1_SCOPE_MAPPING 経由)", () => {
       const paths: Array<[string, string, unknown?]> = [
         ["/activity-logs?date=2026-04-12", "GET"],
         ["/tasks", "GET"],
-        ["/ai/activity-logs/from-speech", "POST", { speechText: "test" }],
+        [
+          "/ai/activity-logs/from-speech",
+          "POST",
+          { speechText: "test", clientDate: "2026-04-12" },
+        ],
       ];
       for (const [path, method, body] of paths) {
         const res = await call([], path, method, body);

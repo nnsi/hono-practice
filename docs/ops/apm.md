@@ -22,7 +22,7 @@ Tail Worker がメインAPIのログを非同期で受信し、重要なログ�
 | double2 | duration | 総リクエスト時間 (ms) |
 | double3 | dbMs | PostgreSQL合計時間 (ms) |
 | double4 | r2Ms | R2合計時間 (ms) |
-| double5 | kvMs | KV (Durable Object) 合計時間 (ms) |
+| double5 | kvMs | `kv.*`スパン（Workers KV等）の合計時間 (ms) |
 | double6 | extMs | 外部API合計時間 (ms) |
 | double7 | spanCount | スパン数 |
 | index1 | level | ログレベル (フィルタ用) |

@@ -4,9 +4,9 @@ import { createActivityGoalId } from "@packages/domain/goal/goalSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from "../activity/activityRepository";
+import { prefetchActivityLogs } from "../activitygoal/activityGoalPrefetch";
 import type { ActivityGoalRepository } from "../activitygoal/activityGoalRepository";
 import type { ActivityGoalService } from "../activitygoal/activityGoalService";
-import { prefetchActivityLogs } from "../activitygoal/activityGoalService";
 import type { ActivityLogRepository } from "../activityLog";
 import type { Goal, GoalFilters } from "./goalTypes";
 import { goalEntityToResponse } from "./goalTypes";
@@ -48,17 +48,22 @@ function getGoals(
 ) {
   return async (
     userId: UserId,
-    filters?: GoalFilters,
-    clientDate?: string,
+    filters: GoalFilters | undefined,
+    clientDate: string,
   ): Promise<Goal[]> => {
     const goals = await tracer.span("db.getActivityGoalsByUserId", () =>
       activityGoalRepo.getActivityGoalsByUserId(userId),
     );
 
-    // activity-logsを1回だけ一括取得（N+1解消）
-    const allLogs = await tracer.span("db.prefetchActivityLogs", () =>
-      prefetchActivityLogs(activityLogRepo, userId, goals, clientDate),
-    );
+    // activity-logs と freeze periods を1回ずつ一括取得（N+1解消）
+    const [allLogs, freezeByGoalId] = await Promise.all([
+      tracer.span("db.prefetchActivityLogs", () =>
+        prefetchActivityLogs(activityLogRepo, userId, goals, clientDate),
+      ),
+      tracer.span("db.prefetchFreezePeriods", () =>
+        activityGoalService.prefetchFreezePeriods(userId, goals),
+      ),
+    ]);
 
     // 並行で計算処理（DBアクセスなし、prefetchedLogsを使用）
     const goalsWithBalance = await Promise.all(
@@ -70,6 +75,7 @@ function getGoals(
               goal,
               clientDate,
               allLogs,
+              freezeByGoalId.get(goal.id) ?? [],
             ),
           ),
           tracer.span("getInactiveDates", () =>
@@ -113,7 +119,7 @@ function getGoal(
   return async (
     userId: UserId,
     goalId: string,
-    clientDate?: string,
+    clientDate: string,
   ): Promise<Goal> => {
     const goal = await tracer.span("db.getActivityGoalByIdAndUserId", () =>
       activityGoalRepo.getActivityGoalByIdAndUserId(

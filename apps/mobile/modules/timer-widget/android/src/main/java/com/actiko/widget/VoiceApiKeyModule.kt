@@ -13,11 +13,23 @@ class VoiceApiKeyModule : Module() {
             VoiceApiKeyHelper.getPrefs(context).apiKey != null
         }
 
-        Function("saveVoiceCredentials") { apiKey: String, backendUrl: String ->
+        Function("getVoiceCredentialOwner") {
+            val context = appContext.reactContext
+                ?: return@Function null
+            VoiceApiKeyHelper.getPrefs(context).ownerUserId
+        }
+
+        Function("saveVoiceCredentials") { apiKey: String, backendUrl: String, ownerUserId: String ->
             val context = appContext.reactContext
                 ?: throw IllegalStateException("React context is not available")
-            VoiceApiKeyHelper.saveApiKey(context, apiKey)
-            VoiceApiKeyHelper.saveBackendUrl(context, backendUrl)
+            VoiceApiKeyHelper.saveCredentials(context, apiKey, backendUrl, ownerUserId)
+        }
+
+        Function("clearVoiceCredentials") {
+            val context = appContext.reactContext
+                ?: return@Function null
+            VoiceApiKeyHelper.clear(context)
+            null
         }
     }
 }

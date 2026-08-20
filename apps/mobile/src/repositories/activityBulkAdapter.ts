@@ -3,6 +3,7 @@ import type {
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
@@ -17,24 +18,55 @@ import {
 } from "./activityRowMappers";
 
 export const activityBulkAdapterMethods = {
-  async updateActivitiesSyncStatus(ids: string[], status: SyncStatus) {
+  async updateActivitiesSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ) {
+    if (revisions.length === 0) return;
+    const db = await getDatabase();
+    await db.withTransactionAsync(async () => {
+      for (const revision of revisions) {
+        await db.runAsync(
+          "UPDATE activities SET sync_status = ? WHERE id = ? AND updated_at = ?",
+          [status, revision.id, revision.updatedAt],
+        );
+      }
+    });
+    dbEvents.emit("activities");
+  },
+
+  async updateKindsSyncStatus(revisions: SyncRevision[], status: SyncStatus) {
+    if (revisions.length === 0) return;
+    const db = await getDatabase();
+    await db.withTransactionAsync(async () => {
+      for (const revision of revisions) {
+        await db.runAsync(
+          "UPDATE activity_kinds SET sync_status = ? WHERE id = ? AND updated_at = ?",
+          [status, revision.id, revision.updatedAt],
+        );
+      }
+    });
+    dbEvents.emit("activity_kinds");
+  },
+
+  async retryRejectedActivities(ids: string[]) {
     if (ids.length === 0) return;
     const db = await getDatabase();
     const ph = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE activities SET sync_status = ? WHERE id IN (${ph})`,
-      [status, ...ids],
+      `UPDATE activities SET sync_status = 'pending' WHERE sync_status = 'rejected' AND id IN (${ph})`,
+      ids,
     );
     dbEvents.emit("activities");
   },
 
-  async updateKindsSyncStatus(ids: string[], status: SyncStatus) {
+  async retryRejectedActivityKinds(ids: string[]) {
     if (ids.length === 0) return;
     const db = await getDatabase();
     const ph = ids.map(() => "?").join(",");
     await db.runAsync(
-      `UPDATE activity_kinds SET sync_status = ? WHERE id IN (${ph})`,
-      [status, ...ids],
+      `UPDATE activity_kinds SET sync_status = 'pending' WHERE sync_status = 'rejected' AND id IN (${ph})`,
+      ids,
     );
     dbEvents.emit("activity_kinds");
   },

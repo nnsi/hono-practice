@@ -166,7 +166,11 @@ struct CheckTimelineProvider: AppIntentTimelineProvider {
                 isDoneToday: false, isProLocked: false
             )
         }
-        let done = dbHelper.hasActivityLogForToday(entity.id)
+        let done: Bool
+        switch dbHelper.hasActivityLogForToday(entity.id, kindId: kindId) {
+        case .success(let value): done = value
+        case .failure: done = false
+        }
         return CheckEntry(
             date: Date(), activityName: activity.name,
             activityEmoji: activity.emoji, activityId: entity.id,

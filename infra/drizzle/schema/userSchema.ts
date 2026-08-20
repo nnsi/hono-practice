@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -72,24 +73,33 @@ export const users = pgTable(
 );
 
 // UserProvider テーブル
-export const userProviders = pgTable("user_provider", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  email: text("email"),
-  providerRefreshToken: text("provider_refresh_token"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-});
+export const userProviders = pgTable(
+  "user_provider",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    email: text("email"),
+    providerRefreshToken: text("provider_refresh_token"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("user_provider_identity_unique")
+      .on(t.provider, t.providerAccountId)
+      .where(sql`${t.deletedAt} IS NULL`),
+    index("user_provider_user_id_idx").on(t.userId),
+  ],
+);
 
 // RefreshToken テーブル
 export const refreshTokens = pgTable(
