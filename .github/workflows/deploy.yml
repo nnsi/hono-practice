@@ -121,6 +121,10 @@ jobs:
           CI: true
           NODE_ENV: test
 
+      - name: Install Chromium for Web E2E release gate
+        if: github.ref_name == 'release'
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Web E2E release gate
         if: github.ref_name == 'release'
         run: pnpm run test-e2e
