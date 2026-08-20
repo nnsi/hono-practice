@@ -26,6 +26,16 @@ describe("release workflow guards", () => {
     expect(workflow).toContain("Post-deploy smoke (production)");
   });
 
+  it("installs the lockfile-matched Chromium before the release E2E gate", () => {
+    const installBrowser = workflow.indexOf(
+      "pnpm exec playwright install --with-deps chromium",
+    );
+    const runE2E = workflow.indexOf("pnpm run test-e2e");
+
+    expect(installBrowser).toBeGreaterThan(-1);
+    expect(installBrowser).toBeLessThan(runE2E);
+  });
+
   it("requires an approved SHA and rejects native changes for OTA", () => {
     expect(workflow).toContain("mobile_release_sha:");
     expect(workflow).toContain('GITHUB_REF" != "refs/heads/release');
