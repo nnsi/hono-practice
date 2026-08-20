@@ -11,6 +11,7 @@ struct TimerEntry: TimelineEntry {
     let timerStartDate: Date?
     let hasPendingKindSelect: Bool
     let activityId: String?
+    let timerInstanceId: String?
     let kinds: [KindInfo]
     let isProLocked: Bool
 
@@ -29,7 +30,8 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
         TimerEntry(
             date: Date(), activityName: "Activity", activityEmoji: "⏱",
             isRunning: false, elapsedMs: 0, timerStartDate: nil,
-            hasPendingKindSelect: false, activityId: nil, kinds: [],
+            hasPendingKindSelect: false, activityId: nil,
+            timerInstanceId: nil, kinds: [],
             isProLocked: false
         )
     }
@@ -40,27 +42,33 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: SelectActivityIntent, in context: Context) async -> Timeline<TimerEntry> {
         let entry = await buildEntry(for: configuration)
-        return Timeline(entries: [entry], policy: .never)
+        let nextMidnight = Calendar.current.startOfDay(
+            for: Calendar.current.date(byAdding: .day, value: 1, to: Date())!
+        )
+        return Timeline(entries: [entry], policy: .after(nextMidnight))
     }
 
     private func buildEntry(for configuration: SelectActivityIntent) async -> TimerEntry {
-        if let entity = configuration.activity {
-            TimerState().saveConfig(activityId: entity.id)
-        }
         let state = TimerState()
-        guard let activityId = configuration.activity?.id ?? state.getConfiguredActivityId() else {
+        guard let activityId = configuration.activity?.id else {
             return TimerEntry(
                 date: Date(), activityName: "タップして設定", activityEmoji: "",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,
-                hasPendingKindSelect: false, activityId: nil, kinds: [],
+                hasPendingKindSelect: false, activityId: nil,
+                timerInstanceId: nil, kinds: [],
                 isProLocked: false
             )
         }
+        // Existing pre-release Widget configurations may not have this field.
+        // The fallback keeps them functional; all newly added Widgets persist a
+        // UUID and therefore remain fully independent.
+        let timerInstanceId = configuration.timerInstanceId ?? "legacy-\(activityId)"
         if !(await WidgetPlanHelper.isWidgetAllowed()) {
             return TimerEntry(
                 date: Date(), activityName: "Timer", activityEmoji: "⏱",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,
-                hasPendingKindSelect: false, activityId: activityId, kinds: [],
+                hasPendingKindSelect: false, activityId: activityId,
+                timerInstanceId: timerInstanceId, kinds: [],
                 isProLocked: true
             )
         }
@@ -69,16 +77,17 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
             return TimerEntry(
                 date: Date(), activityName: "削除された活動", activityEmoji: "",
                 isRunning: false, elapsedMs: 0, timerStartDate: nil,
-                hasPendingKindSelect: false, activityId: activityId, kinds: [],
+                hasPendingKindSelect: false, activityId: activityId,
+                timerInstanceId: timerInstanceId, kinds: [],
                 isProLocked: false
             )
         }
-        let isRunning = state.isRunning(activityId: activityId)
-        let elapsedMs = state.getElapsedMillis(activityId: activityId)
+        let isRunning = state.isRunning(timerInstanceId: timerInstanceId)
+        let elapsedMs = state.getElapsedMillis(timerInstanceId: timerInstanceId)
         let timerStartDate = isRunning
             ? Date().addingTimeInterval(-Double(elapsedMs) / 1000.0)
             : nil
-        let pending = state.hasPendingKindSelection(activityId: activityId)
+        let pending = state.hasPendingKindSelection(timerInstanceId: timerInstanceId)
         let kinds: [TimerEntry.KindInfo] = pending
             ? dbHelper.getActivityKinds(activityId).map {
                 TimerEntry.KindInfo(id: $0.id, name: $0.name, color: $0.color)
@@ -88,7 +97,8 @@ struct TimerTimelineProvider: AppIntentTimelineProvider {
             date: Date(), activityName: activity.name,
             activityEmoji: activity.emoji, isRunning: isRunning,
             elapsedMs: elapsedMs, timerStartDate: timerStartDate,
-            hasPendingKindSelect: pending, activityId: activityId, kinds: kinds,
+            hasPendingKindSelect: pending, activityId: activityId,
+            timerInstanceId: timerInstanceId, kinds: kinds,
             isProLocked: false
         )
     }

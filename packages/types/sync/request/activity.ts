@@ -35,6 +35,16 @@ export const SyncActivitiesRequestSchema = z.object({
   activityKinds: z.array(UpsertActivityKindRequestSchema).max(500),
 });
 
+/**
+ * Outer envelope validation is intentionally separate from record validation.
+ * The route accepts unknown records and reports per-record failures instead of
+ * rejecting a whole chunk because one record is malformed.
+ */
+export const SyncActivitiesEnvelopeSchema = z.object({
+  activities: z.array(z.unknown()).max(100),
+  activityKinds: z.array(z.unknown()).max(500),
+});
+
 export type UpsertActivityRequest = z.infer<typeof UpsertActivityRequestSchema>;
 export type UpsertActivityKindRequest = z.infer<
   typeof UpsertActivityKindRequestSchema

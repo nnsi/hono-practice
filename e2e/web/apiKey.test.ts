@@ -77,7 +77,8 @@ describe("apiKey", () => {
       }),
     });
 
-    expect(res.status).toBe(200);
+    // POST 作成の 201 統一を /api/v1 も継承している（内部 route の再マウント）
+    expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.title).toBe("APIキーE2Eテストタスク");
     expect(body.id).toBeTruthy();

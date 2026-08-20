@@ -32,7 +32,7 @@ async function start() {
     STORAGE_TYPE: "local" as const,
     UPLOAD_DIR: "public/uploads",
     DB: db,
-    RATE_LIMIT_KV: undefined,
+    RATE_LIMIT_STORE: undefined,
     STRIPE_WEBHOOK_SECRET: "whsec_e2e_test_secret",
     REVENUECAT_WEBHOOK_AUTH_KEY: "rc_e2e_test_key",
   };
@@ -48,6 +48,10 @@ async function start() {
   viteServer = await createServer({
     configFile: "./apps/frontend/vite.config.ts",
     root: "./apps/frontend",
+    // Each Vitest worker starts its own Vite server. Sharing Vite's default
+    // node_modules/.vite cache lets dependency optimization races rename the
+    // same temporary directory, so isolate the cache by the worker's port.
+    cacheDir: `node_modules/.vite-e2e-${FRONTEND_PORT}`,
     // E2E中は HMR と file watch を完全停止する。複数 worker 間で chokidar の watcher が
     // 干渉して HMR 通知が走り、Dexie liveQuery 経由で再レンダーが連発し、
     // Playwright の click が "element was detached from the DOM, retrying" で
@@ -71,6 +75,10 @@ async function start() {
     define: {
       "import.meta.env.VITE_API_URL": JSON.stringify(
         `http://localhost:${FRONTEND_PORT}`,
+      ),
+      // Exercise the production-only subscription UI in the normal E2E suite.
+      "import.meta.env.VITE_ENABLE_WEB_SUBSCRIPTION": JSON.stringify(
+        process.env.VITE_ENABLE_WEB_SUBSCRIPTION ?? "true",
       ),
     },
   });

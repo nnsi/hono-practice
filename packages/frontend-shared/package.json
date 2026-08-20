@@ -4,10 +4,9 @@
   "main": "index.ts",
   "types": "index.ts",
   "dependencies": {
-    "@tanstack/react-query": "^5.90.21",
-    "dayjs": "^1.11.13",
-    "hono": "^4.12.4",
-    "react": "^19.2.0",
+    "@tanstack/react-query": "^5.101.2",
+    "dayjs": "^1.11.21",
+    "react": "19.2.7",
     "rehype-parse": "^9.0.1",
     "rehype-remark": "^10.0.1",
     "rehype-sanitize": "^6.0.0",
@@ -17,9 +16,6 @@
     "remark-rehype": "^11.1.2",
     "remark-stringify": "^11.0.0",
     "unified": "^11.0.5",
-    "uuid": "^11.1.0"
-  },
-  "devDependencies": {
-    "@types/uuid": "^10.0.0"
+    "uuid": "^14.0.1"
   }
 }

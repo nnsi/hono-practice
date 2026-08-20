@@ -40,8 +40,7 @@ export type ActivityKind = z.infer<typeof ActivityKindSchema>;
 export const ActivityKindsSchema = z.array(ActivityKindSchema);
 
 // IconType
-export const iconTypeSchema = z.enum(["emoji", "upload", "generate"]);
-export type IconType = z.infer<typeof iconTypeSchema>;
+const iconTypeSchema = z.enum(["emoji", "upload", "generate"]);
 
 // Activity
 const BaseActivitySchema = z.object({

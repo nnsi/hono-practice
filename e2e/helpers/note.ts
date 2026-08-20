@@ -70,6 +70,12 @@ export async function pasteMarkdownIntoNoteEditor(
   }, markdown);
 }
 
-export async function saveNote(page: Page) {
-  await page.click('button:has-text("保存")');
+// 自動保存UI: 「戻る」が未保存分を flush してから一覧へ遷移する
+export async function backFromNote(page: Page) {
+  await page.click('button:has-text("戻る")');
+  await page.waitForURL("**/notes", { timeout: 15000 });
+}
+
+export async function waitForNoteSaved(page: Page) {
+  await page.waitForSelector('text="保存済み"', { timeout: 15000 });
 }

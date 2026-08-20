@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { DomainValidateError } from "@packages/domain/errors";
 
 import type { AppContext } from "../context";
-import { AppError, AuthError, UnauthorizedError } from "../error";
+import { AIQuotaError, AppError, AuthError, UnauthorizedError } from "../error";
 
 export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();
@@ -25,6 +25,10 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
       // loggerMiddleware適用前のエラーはフォールバック
     }
 
+    if (err instanceof AIQuotaError) {
+      return c.json(err.body, err.status);
+    }
+
     if (err instanceof AppError) {
       return c.json({ message: err.message }, err.status);
     }
@@ -44,7 +48,10 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
     return c.json(
       {
         message: "internal server error",
-        stack: c.env.NODE_ENV !== "production" ? err.stack : undefined,
+        stack:
+          c.env.NODE_ENV === "development" || c.env.NODE_ENV === "test"
+            ? err.stack
+            : undefined,
       },
       500,
     );

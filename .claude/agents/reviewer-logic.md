@@ -3,7 +3,7 @@ name: reviewer-logic
 description: ロジックとバグ検出を専門とするコードレビュアー。条件分岐漏れ、状態管理バグ、非同期処理の問題、データ整合性、エッジケースを検査する。
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: sonnet
+model: opus
 color: orange
 ---
 

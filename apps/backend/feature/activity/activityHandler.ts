@@ -85,7 +85,7 @@ function deleteActivity(uc: ActivityUsecase) {
   return async (userId: UserId, activityId: ActivityId) => {
     await uc.deleteActivity(userId, activityId);
 
-    return { message: "success" };
+    return { success: true };
   };
 }
 

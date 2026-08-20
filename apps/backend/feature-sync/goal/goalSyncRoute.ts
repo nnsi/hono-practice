@@ -4,8 +4,10 @@ import { zValidator } from "@hono/zod-validator";
 import { SyncGoalsRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
+import { parseClientDate } from "../../lib/clientDate";
 import { noopTracer } from "../../lib/tracer";
 import { newGoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
+import { parseSince } from "../shared/sinceSchema";
 import { newGoalSyncHandler } from "./goalSyncHandler";
 import { newGoalSyncRepository } from "./goalSyncRepository";
 import { newGoalSyncUsecase } from "./goalSyncUsecase";
@@ -36,9 +38,19 @@ export function createGoalSyncRoute() {
   return app
     .get("/goals", async (c) => {
       const userId = c.get("userId");
-      const since = c.req.query("since");
-      const clientDate = c.req.query("clientDate");
-      const res = await c.var.h.getGoals(userId, since, clientDate);
+      const sinceResult = parseSince(c);
+      if (!sinceResult.success) {
+        return sinceResult.response;
+      }
+      const clientDateResult = parseClientDate(c);
+      if (!clientDateResult.success) {
+        return clientDateResult.response;
+      }
+      const res = await c.var.h.getGoals(
+        userId,
+        sinceResult.since,
+        clientDateResult.clientDate,
+      );
       return c.json(res);
     })
     .post(

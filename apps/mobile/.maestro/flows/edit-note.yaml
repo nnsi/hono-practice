@@ -4,17 +4,14 @@ appId: ${MAESTRO_APP_ID}
 - tapOn: "${NOTE_TITLE}.*"
 - assertVisible:
     id: notes.detail.page
-# Settings panel is initially collapsed; expand to access title input
-- tapOn:
-    id: notes.settings
-- assertVisible:
-    id: notes.settings.panel
+# Title is editable inline (no settings panel)
 - tapOn:
     id: notes.titleInput
 - eraseText: 64
 - inputText: ${NOTE_TITLE_UPDATED}
+# Auto-save flushes on back navigation
 - tapOn:
-    id: notes.save
+    id: notes.detail.back
 - extendedWaitUntil:
     visible: "${NOTE_TITLE_UPDATED}.*"
     timeout: 10000

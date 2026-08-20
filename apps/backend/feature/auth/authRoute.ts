@@ -78,7 +78,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       subscriptionUc,
       tracer,
     );
-    c.set("h", newAuthHandler(uc, userUc.getUserById));
+    c.set("h", newAuthHandler(uc, userUc.getUserById, userUc.enrichUser));
     return next();
   });
 

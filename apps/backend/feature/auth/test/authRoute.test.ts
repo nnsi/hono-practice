@@ -5,14 +5,14 @@ import { AuthError } from "@backend/error";
 import { newRefreshTokenRepository } from "@backend/feature/auth/refreshTokenRepository";
 import { newUserProviderRepository } from "@backend/feature/auth/userProviderRepository";
 import { newUserConsentRepository } from "@backend/feature/user/userConsentRepository";
-import type { KeyValueStore } from "@backend/infra/kv/kv";
+import { newMemoryRateLimitStore } from "@backend/infra/rateLimit";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
-import type { RateLimitRecord } from "@backend/middleware/rateLimitMiddleware";
 import { testDB } from "@backend/test.setup";
+import { okJson } from "@backend/test-utils/okJson";
 import { refreshTokens, userProviders, users } from "@infra/drizzle/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -76,19 +76,6 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
   },
 };
 
-function createMockKvStore(): KeyValueStore<RateLimitRecord> {
-  const data = new Map<string, RateLimitRecord>();
-  return {
-    get: async (key: string) => data.get(key),
-    set: async (key: string, value: RateLimitRecord) => {
-      data.set(key, value);
-    },
-    delete: async (key: string) => {
-      data.delete(key);
-    },
-  };
-}
-
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
   const JWT_AUDIENCE = "test-audience";
@@ -142,7 +129,7 @@ describe("AuthRoute Integration Tests", () => {
           subscriptionUc,
           noopTracer,
         );
-        const h = newAuthHandler(uc, userUc.getUserById);
+        const h = newAuthHandler(uc, userUc.getUserById, userUc.enrichUser);
 
         c.set("h", h);
 
@@ -242,6 +229,15 @@ describe("AuthRoute Integration Tests", () => {
       );
       expect(storedToken).not.toBeNull();
       expect(storedToken?.userId).toBe(testUserId);
+
+      const [upgradedUser] = await testDB
+        .select({ password: users.password })
+        .from(users)
+        .where(eq(users.id, testUserId));
+      expect(upgradedUser.password).toMatch(/^\$2[aby]?\$/);
+      expect(await bcrypt.compare(testPassword, upgradedUser.password!)).toBe(
+        true,
+      );
     });
 
     it("異常系：認証エラー (wrong password)", async () => {
@@ -283,7 +279,7 @@ describe("AuthRoute Integration Tests", () => {
         "message" in body.error
       ) {
         // Zod 4 serializes errors as JSON string in message field
-        const errorMessage = (body.error as Record<string, unknown>).message;
+        const errorMessage: unknown = body.error.message;
         if (typeof errorMessage !== "string") {
           expect.fail("Expected error message to be a string");
         }
@@ -751,14 +747,14 @@ describe("AuthRoute Integration Tests", () => {
 
     describe("Brute Force Protection", () => {
       it("異常系：連続した認証失敗でレート制限される", async () => {
-        const rateLimitKv = createMockKvStore();
+        const rateLimitStore = newMemoryRateLimitStore();
         const app = createTestApp();
         const client = testClient(app, {
           DB: testDB,
           JWT_SECRET,
           JWT_AUDIENCE,
           NODE_ENV: "test",
-          RATE_LIMIT_KV: rateLimitKv,
+          RATE_LIMIT_STORE: rateLimitStore,
         });
 
         // loginRateLimitConfig: 15分間に5回まで
@@ -982,7 +978,7 @@ describe("AuthRoute Integration Tests", () => {
         console.error("Google auth error:", errorBody);
       }
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = await okJson(res);
       expect(body.user).toEqual(expect.any(Object));
       expect(body.token).toEqual(expect.any(String));
       // Auth cookie is no longer set, only refresh token cookie

@@ -48,5 +48,19 @@ export default defineConfig({
     outDir: "../../dist-frontend-v2",
     emptyOutDir: true,
     sourcemap: false,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "vendor",
+              test: /node_modules[\\/]/,
+              maxSize: 350_000,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
 });

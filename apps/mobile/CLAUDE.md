@@ -44,10 +44,15 @@ testID は JS バンドルに焼き込まれるので、`.tsx` で testID を追
 - **testID を `.tsx` に追加・変更したら必ず `pnpm mobile:e2e:build` で iOS sim artifact / `pnpm mobile:e2e:build:android` で APK を作り直す**（リリースビルドに JS バンドルが焼き込まれるため、古い artifact のままでは新 testID が見つからず assertion が落ち続ける。5/2 の `tasks.edit.dialog` 事故）
 - **dev-client で Maestro を回すときは "Tools button"（floating gear）を OFF にする**。`common.menu`（hamburger 右上）の上に dev menu の floating button が乗って tap が奪われる。ただし dev menu の toggle は reload で復活するので、できれば `pnpm mobile:e2e` の build artifact 経由を使う
 - **Maestro flow を新規・編集したら最低限 task / smoke / 該当 suite を 2 回連続実行して冪等性を確認する**。`flows/scripts/gen-run-tag.js` のような per-run unique tag を入れ忘れると 1 回目だけ通るゾンビが量産される
+- **EAS local build と Maestro 実行は並列禁止**。EAS build (`pnpm mobile:e2e:build` / `:build:android`) が CPU を占有し、XCUITest や Android emulator が応答せず ANR / splash hang を引き起こす。原則直列で回す（5/14, 5/16 教訓: Android emulator が "System UI isn't responding" でフリーズし emulator kill + 再起動が必要になった）
 - 詳細は `apps/mobile/README.md` の Maestro E2E セクション、および `docs/ops/mobile.md` を参照
 
 ## ネイティブ実装
 - **ネイティブAPI（WidgetKit, App Intents, AlarmManager等）を使う前に公式ドキュメントで制約を確認する**。EAS Buildは1回20-30分かかるため、コンパイルエラーでの失敗コストが大きい（Siri phrasesのString制約知らず→ビルド1回無駄、AlarmManager vs Chronometer→ビルド3回無駄の教訓）
+
+## React Navigation の Context 依存 hook
+- **`@react-navigation/*` の `useBottomTabBarHeight` / `useNavigationState` 等の context 必須 hook は、CustomTabBar / カスタム navigator で context が貼られていないと throw する**。型は通って unit test も通るが実行時に Hook が例外を投げ、ErrorBoundary もすり抜けて app crash する（5/16 教訓: `tabBar={(props) => <CustomTabBar {...props} />}` の構成で `useBottomTabBarHeight` が `BottomTabBarHeightCallbackContext` を更新しないため throw、iOS sync-offline E2E で app launch 直後にクラッシュ）
+- 使う前に「その Context.Provider が現在の navigator (custom tab bar 含む) で正しく動作するか」を確認する。不明なら `useSafeAreaInsets` + 固定値計算でフォールバック
 
 ## テーマ（ダークモード）
 - nativewind の `setColorScheme()` は内部的に `Appearance.setColorScheme()` を呼ぶだけで、`colorSchemeObservable` を本番では更新しない。**pnpm patch (`react-native-css-interop`) で本番でも observable を同期更新するよう修正済み**（→ `docs/adr/20260402_nativewind_color_scheme_patch.md`）

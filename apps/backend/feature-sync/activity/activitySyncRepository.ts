@@ -13,8 +13,8 @@ import {
   upsertActivities,
 } from "./activitySyncActivityRepository";
 import {
-  getActivityKindsByActivityIds,
   getActivityKindsByIds,
+  getActivityKindsByUserId,
   upsertActivityKinds,
 } from "./activitySyncKindRepository";
 
@@ -23,9 +23,7 @@ type ActivityKindRow = typeof activityKinds.$inferSelect;
 
 export type ActivitySyncRepository = {
   getActivitiesByUserId: (userId: UserId) => Promise<ActivityRow[]>;
-  getActivityKindsByActivityIds: (
-    activityIds: string[],
-  ) => Promise<ActivityKindRow[]>;
+  getActivityKindsByUserId: (userId: UserId) => Promise<ActivityKindRow[]>;
   getOwnedActivityIds: (
     userId: UserId,
     activityIds: string[],
@@ -50,7 +48,7 @@ export function newActivitySyncRepository(
 ): ActivitySyncRepository {
   return {
     getActivitiesByUserId: getActivitiesByUserId(db),
-    getActivityKindsByActivityIds: getActivityKindsByActivityIds(db),
+    getActivityKindsByUserId: getActivityKindsByUserId(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
     upsertActivities: upsertActivities(db),
     getActivitiesByIds: getActivitiesByIds(db),

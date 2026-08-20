@@ -12,7 +12,12 @@ export function setupBrowser() {
   let page: Page;
 
   beforeAll(async () => {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({
+      headless: true,
+      // playwrightのバージョンとプリインストール済みブラウザのrevisionが
+      // ズレている環境（リモート実行環境等）向けの逃げ道
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+    });
   });
 
   afterAll(async () => {
@@ -29,6 +34,7 @@ export function setupBrowser() {
   });
 
   return {
+    getBrowser: () => browser,
     getPage: () => page,
     getContext: () => context,
   };

@@ -1,0 +1,34 @@
+diff --git a/dist/runtime/native/appearance-observables.js b/dist/runtime/native/appearance-observables.js
+index 2d93872ccd1f0b9628db8ff2bcc74b65d7bb645d..7f03c528da0fdd238b44c18a88c0ea2d68e41f57 100644
+--- a/dist/runtime/native/appearance-observables.js
++++ b/dist/runtime/native/appearance-observables.js
+@@ -20,9 +20,7 @@ exports.colorScheme = {
+         else {
+             appearance.setColorScheme(value);
+         }
+-        if (process.env.NODE_ENV === "test") {
+-            colorSchemeObservable.set(value === "system" ? "light" : value);
+-        }
++        colorSchemeObservable.set(value === "system" ? undefined : value);
+     },
+     get(effect) {
+         return colorSchemeObservable.get(effect) ?? exports.systemColorScheme.get(effect);
+diff --git a/src/runtime/native/appearance-observables.ts b/src/runtime/native/appearance-observables.ts
+index 9f0c6feadbbc4c46455994d8ce3a97e15aeb3388..f628779a6a2a81427a04f89b86cb2f52a77db52b 100644
+--- a/src/runtime/native/appearance-observables.ts
++++ b/src/runtime/native/appearance-observables.ts
+@@ -32,10 +32,10 @@ export const colorScheme = {
+       appearance.setColorScheme(value);
+     }
+ 
+-    // Appearance.addChangeListener is not fired in a test environment
+-    if (process.env.NODE_ENV === "test") {
+-      colorSchemeObservable.set(value === "system" ? "light" : value);
+-    }
++    // Always update the observable directly so that the color scheme
++    // is applied synchronously. The Appearance change listener may not
++    // fire reliably (e.g. after expo-updates reloadAsync).
++    colorSchemeObservable.set(value === "system" ? undefined : value);
+   },
+   get(effect?: Effect) {
+     return colorSchemeObservable.get(effect) ?? systemColorScheme.get(effect);

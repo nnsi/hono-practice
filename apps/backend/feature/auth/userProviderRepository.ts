@@ -1,3 +1,4 @@
+import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { userProviders } from "@infra/drizzle/schema";
 import {
@@ -29,6 +30,13 @@ function toUserProvider(row: UserProviderRow): UserProvider {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });
+}
+
+function hasPostgresErrorCode(error: unknown, code: string): boolean {
+  if (!error || typeof error !== "object") return false;
+  if ("code" in error && error.code === code) return true;
+  if (!("cause" in error) || error.cause === error) return false;
+  return hasPostgresErrorCode(error.cause, code);
 }
 
 export type UserProviderRepository<T = QueryExecutor> = {
@@ -99,12 +107,17 @@ function createUserProvider(db: QueryExecutor) {
       updatedAt: new Date(),
     };
 
-    const [result] = await db
+    return db
       .insert(userProviders)
       .values(valuesToInsert)
-      .returning();
-
-    return toUserProvider(result);
+      .returning()
+      .then(([result]) => toUserProvider(result))
+      .catch((error) => {
+        if (hasPostgresErrorCode(error, "23505")) {
+          throw new ConflictError("OAuth identity is already linked");
+        }
+        throw error;
+      });
   };
 }
 

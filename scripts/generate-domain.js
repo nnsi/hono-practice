@@ -93,12 +93,68 @@ function generateDomainIndex() {
   fs.writeFileSync(path.join(domainPath, "index.ts"), content);
 }
 
+/**
+ * Auto-adds the drizzle schema export to infra/drizzle/schema/index.ts.
+ * The drizzle schema file itself must be created manually (it contains DB
+ * table definitions that differ from the domain schema).  This function only
+ * pre-wires the export line so that once the schema file exists it will be
+ * picked up automatically.
+ *
+ * Returns true if the export was inserted (or already present), false on failure.
+ */
+function registerDrizzleSchemaExport() {
+  // Resolve relative to this script: repo-root/infra/drizzle/schema/index.ts
+  const schemaIndexPath = path.join(
+    __dirname,
+    "../infra/drizzle/schema/index.ts",
+  );
+
+  if (!fs.existsSync(schemaIndexPath)) {
+    console.log(
+      "⚠️  Could not find infra/drizzle/schema/index.ts - please add export manually",
+    );
+    return false;
+  }
+
+  const exportLine = `export * from "./${entityName}Schema";`;
+  const currentContent = fs.readFileSync(schemaIndexPath, "utf-8");
+
+  // Idempotency check
+  if (currentContent.includes(exportLine)) {
+    console.log(
+      `ℹ️  ${exportLine} already present in schema/index.ts - skipping`,
+    );
+    return true;
+  }
+
+  // Insert alphabetically among existing export lines
+  const lines = currentContent.split("\n").filter((l) => l.trim() !== "");
+  const exportLines = lines.filter((l) => l.startsWith("export * from"));
+  const otherLines = lines.filter((l) => !l.startsWith("export * from"));
+
+  exportLines.push(exportLine);
+  exportLines.sort();
+
+  const newContent =
+    [...otherLines, ...exportLines].join("\n").trim() + "\n";
+  fs.writeFileSync(schemaIndexPath, newContent);
+
+  console.log(`✅ Added export to infra/drizzle/schema/index.ts: ${exportLine}`);
+  console.log(
+    `   Note: Create infra/drizzle/schema/${entityName}Schema.ts with the table definition.`,
+  );
+  return true;
+}
+
 // Main execution
 function generateDomain() {
   createDirectories();
 
   generateDomainSchema();
   generateDomainIndex();
+
+  // Pre-wire drizzle schema export
+  const schemaExportAdded = registerDrizzleSchemaExport();
 
   console.log(`✅ Successfully generated domain model for ${entityName}!`);
   console.log(`
@@ -108,7 +164,11 @@ Domain files created:
 
 Next steps:
 1. Customize the fields in ${entityName}Schema.ts as needed
-2. Add validation rules specific to your domain
+2. Add validation rules specific to your domain${schemaExportAdded ? `
+3. [AUTO-DONE] Export pre-wired in infra/drizzle/schema/index.ts
+   Create infra/drizzle/schema/${entityName}Schema.ts with the DB table definition` : `
+3. Create infra/drizzle/schema/${entityName}Schema.ts and add export to infra/drizzle/schema/index.ts`}
+4. Run migrations: pnpm run db-generate && pnpm run db-migrate
 `);
 }
 

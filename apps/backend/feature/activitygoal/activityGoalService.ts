@@ -1,6 +1,8 @@
-import dayjs from "@backend/lib/dayjs";
 import { generateDateRange } from "@backend/utils/dateUtils";
-import { calculateGoalBalance } from "@packages/domain/goal/goalBalance";
+import {
+  type FreezePeriod,
+  calculateGoalBalance,
+} from "@packages/domain/goal/goalBalance";
 import type {
   ActivityGoal,
   GoalBalance,
@@ -9,14 +11,23 @@ import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityLogRepository, ActivityLogSummary } from "../activityLog";
 import { adjustDailyTarget, getInactiveDates } from "./activityGoalAuxService";
+import { prefetchFreezePeriods, toFreezePeriods } from "./activityGoalPrefetch";
+import { filterLogsByActivity } from "./filterLogsByActivity";
+import type { GoalFreezePeriodRepository } from "./goalFreezePeriodRepository";
 
 export type ActivityGoalService = {
   calculateCurrentBalance(
     userId: UserId,
     goal: ActivityGoal,
-    calculateDate?: string,
+    calculateDate: string,
     prefetchedLogs?: ActivityLogSummary[],
+    prefetchedFreezePeriods?: FreezePeriod[],
   ): Promise<GoalBalance>;
+
+  prefetchFreezePeriods(
+    userId: UserId,
+    goals: ActivityGoal[],
+  ): Promise<Map<string, FreezePeriod[]>>;
 
   getBalanceHistory(
     userId: UserId,
@@ -34,66 +45,37 @@ export type ActivityGoalService = {
   getInactiveDates(
     userId: UserId,
     goal: ActivityGoal,
-    prefetchedLogs?: ActivityLogSummary[],
-    clientDate?: string,
+    prefetchedLogs: ActivityLogSummary[] | undefined,
+    clientDate: string,
   ): Promise<string[]>;
 };
 
 export function newActivityGoalService(
   activityLogRepo: ActivityLogRepository,
+  freezePeriodRepo: GoalFreezePeriodRepository,
 ): ActivityGoalService {
   return {
-    calculateCurrentBalance: calculateCurrentBalance(activityLogRepo),
-    getBalanceHistory: getBalanceHistory(activityLogRepo),
+    calculateCurrentBalance: calculateCurrentBalance(
+      activityLogRepo,
+      freezePeriodRepo,
+    ),
+    prefetchFreezePeriods: prefetchFreezePeriods(freezePeriodRepo),
+    getBalanceHistory: getBalanceHistory(activityLogRepo, freezePeriodRepo),
     adjustDailyTarget: adjustDailyTarget(),
     getInactiveDates: getInactiveDates(activityLogRepo),
   };
 }
 
-/**
- * 指定ユーザーの全ゴールに必要なactivity-logsを一括取得する。
- * 各ゴールのstartDate〜todayの最大範囲をカバーする1回のクエリで取得。
- */
-export async function prefetchActivityLogs(
+function calculateCurrentBalance(
   activityLogRepo: ActivityLogRepository,
-  userId: UserId,
-  goals: ActivityGoal[],
-  clientDate?: string,
-): Promise<ActivityLogSummary[]> {
-  if (goals.length === 0) return [];
-
-  const today = clientDate ?? dayjs().format("YYYY-MM-DD");
-
-  let minStart = goals[0].startDate;
-  let maxEnd = today;
-  for (const goal of goals) {
-    if (goal.startDate < minStart) minStart = goal.startDate;
-    const endDate = goal.endDate && goal.endDate < today ? goal.endDate : today;
-    if (endDate > maxEnd) maxEnd = endDate;
-  }
-
-  return activityLogRepo.getActivityLogSummariesByUserIdAndDate(
-    userId,
-    minStart,
-    maxEnd,
-  );
-}
-
-function filterLogsByActivity(
-  logs: ActivityLogSummary[],
-  activityId: ActivityGoal["activityId"],
-): { date: string; quantity: number | null }[] {
-  return logs
-    .filter((l) => l.activityId === activityId)
-    .map((l) => ({ date: l.date, quantity: l.quantity }));
-}
-
-function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
+  freezePeriodRepo: GoalFreezePeriodRepository,
+) {
   return async (
     userId: UserId,
     goal: ActivityGoal,
-    calculateDate: string = dayjs().format("YYYY-MM-DD"),
+    calculateDate: string,
     prefetchedLogs?: ActivityLogSummary[],
+    prefetchedFreezePeriods?: FreezePeriod[],
   ): Promise<GoalBalance> => {
     const logs = prefetchedLogs
       ? filterLogsByActivity(prefetchedLogs, goal.activityId)
@@ -104,7 +86,13 @@ function calculateCurrentBalance(activityLogRepo: ActivityLogRepository) {
           calculateDate,
         );
 
-    return calculateGoalBalance(goal, logs, calculateDate);
+    const freezePeriods =
+      prefetchedFreezePeriods ??
+      toFreezePeriods(
+        await freezePeriodRepo.getFreezePeriodsByGoalIds(userId, [goal.id]),
+      );
+
+    return calculateGoalBalance(goal, logs, calculateDate, freezePeriods);
   };
 }
 
@@ -126,7 +114,10 @@ async function getActivityLogsForGoal(
   return filterLogsByActivity(logs, goal.activityId);
 }
 
-function getBalanceHistory(activityLogRepo: ActivityLogRepository) {
+function getBalanceHistory(
+  activityLogRepo: ActivityLogRepository,
+  freezePeriodRepo: GoalFreezePeriodRepository,
+) {
   return async (
     userId: UserId,
     goal: ActivityGoal,
@@ -134,13 +125,15 @@ function getBalanceHistory(activityLogRepo: ActivityLogRepository) {
     toDate: string,
   ): Promise<GoalBalance[]> => {
     const balances: GoalBalance[] = [];
+    const freezePeriods = toFreezePeriods(
+      await freezePeriodRepo.getFreezePeriodsByGoalIds(userId, [goal.id]),
+    );
 
     for (const dateStr of generateDateRange(fromDate, toDate)) {
-      const balance = await calculateCurrentBalance(activityLogRepo)(
-        userId,
-        goal,
-        dateStr,
-      );
+      const balance = await calculateCurrentBalance(
+        activityLogRepo,
+        freezePeriodRepo,
+      )(userId, goal, dateStr, undefined, freezePeriods);
       balances.push(balance);
     }
 

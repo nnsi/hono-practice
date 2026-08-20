@@ -13,6 +13,25 @@ const DISALLOWED_PATTERNS = [
   },
 ];
 
+const DISALLOWED_DEPENDENCIES = [
+  {
+    appliesTo:
+      /^apps\/backend\/(?:context|feature|feature-sync|middleware|port)\//,
+    regex:
+      /from\s+["'](?:@backend\/infra\/rateLimit|(?:\.\.\/)+infra\/rateLimit)(?:\/|["'])/,
+    message:
+      "Inner layers must depend on the application-owned rate-limit port, not its infrastructure adapters.",
+  },
+  {
+    appliesTo:
+      /^apps\/backend\/(?:feature|feature-sync)\/.*(?:Usecase|Service|Guard|Policy|Handler)\.ts$/,
+    regex:
+      /from\s+["'](?:@backend\/context(?:\/[^"']*)?|(?:\.\.\/)+context(?:\/[^"']*)?)["']/,
+    message:
+      "Application services must receive narrow dependencies instead of importing the Hono AppContext.",
+  },
+];
+
 function walk(dir) {
   const entries = readdirSync(dir);
   const files = [];
@@ -46,6 +65,17 @@ for (const filePath of walk(BACKEND_DIR)) {
         line: index + 1,
         pattern: pattern.name,
         message: pattern.message,
+      });
+    }
+    for (const dependency of DISALLOWED_DEPENDENCIES) {
+      if (!dependency.appliesTo.test(relPath) || !dependency.regex.test(line)) {
+        continue;
+      }
+      violations.push({
+        file: relPath,
+        line: index + 1,
+        pattern: "dependency direction",
+        message: dependency.message,
       });
     }
   });

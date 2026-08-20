@@ -179,6 +179,9 @@ jobs:
           git diff --exit-code apps/frontend/src/components/api-reference/apiReferenceData.generated.ts \
             || (echo "::error::apiReferenceData.generated.ts is out of date. Run 'pnpm run generate:api-reference' locally." && exit 1)
 
+      - name: Knip (unused files / dependencies)
+        run: pnpm run knip
+
   typecheck:
     needs: detect-changes
     if: needs.detect-changes.outputs.code == 'true'
@@ -217,6 +220,16 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
@@ -249,6 +262,7 @@ jobs:
         env:
           CI: true
           NODE_ENV: test
+          REDIS_INTEGRATION_URL: redis://localhost:6379
 
       - name: Run mobile tests
         if: needs.detect-changes.outputs.mobile == 'true'
@@ -256,6 +270,17 @@ jobs:
         env:
           CI: true
           NODE_ENV: test
+
+  test-widget-swift:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mobile == 'true'
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Test Widget Swift execution and compile all sources
+        run: bash scripts/test-widget-swift.sh
 
   test-e2e:
     needs: detect-changes

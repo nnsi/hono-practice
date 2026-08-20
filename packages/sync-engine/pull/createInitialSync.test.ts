@@ -211,6 +211,50 @@ describe("createInitialSync bootstrap resources", () => {
 
     expect(deps.writeAllData).toHaveBeenCalled();
     expect(storage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
+    // null だったリソースは bootstrapped に登録されず、次回フル pull になる
+    const stored = JSON.parse(
+      storage.getItem("actiko-v2-bootstrappedResources") ?? "[]",
+    );
+    expect(stored).not.toContain("notes");
+    expect(stored).toContain("logs");
+    expect(stored).toContain("freezePeriods");
+  });
+
+  it("removes a previously bootstrapped resource when its fetch falls back to null", async () => {
+    // 過去に notes を sync 済みでも、今回 null（fetch 失敗）なら bootstrapped から
+    // 剥がす。watermark は進むため、剥がさないと旧 watermark〜新 watermark 間の
+    // notes が永久に欠損する（次回フル pull で回復させる）。
+    const storage = createStorage({
+      "actiko-v2-lastSyncedAt": "2026-03-01T00:00:00.000Z",
+      "actiko-v2-bootstrappedResources": JSON.stringify([
+        "logs",
+        "goals",
+        "freezePeriods",
+        "tasks",
+        "notes",
+      ]),
+    });
+    const deps = createDeps({
+      defaultStorage: storage,
+      fetchAllApis: vi.fn().mockResolvedValue({
+        activitiesRes: okResponse({ activities: [], activityKinds: [] }),
+        logsRes: okResponse({ logs: [] }),
+        goalsRes: okResponse({ goals: [] }),
+        freezePeriodsRes: okResponse({ freezePeriods: [] }),
+        tasksRes: okResponse({ tasks: [] }),
+        notesRes: null,
+      }),
+    });
+    const { performInitialSync } = createInitialSync(deps);
+
+    await performInitialSync("user-1");
+
+    expect(storage.getItem("actiko-v2-lastSyncedAt")).not.toBeNull();
+    const stored = JSON.parse(
+      storage.getItem("actiko-v2-bootstrappedResources") ?? "[]",
+    );
+    expect(stored).not.toContain("notes");
+    expect(stored).toContain("logs");
   });
 
   it("reports fetchAllApis failures with phase", async () => {

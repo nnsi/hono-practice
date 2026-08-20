@@ -5,8 +5,8 @@ import type { Consents } from "@packages/types/request";
 import { AppState } from "react-native";
 
 import { authController } from "../auth/authController";
+import { refreshPlanFromBackend } from "../auth/planReconciliation";
 import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
-import { apiGetMe } from "../utils/authApi";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -24,6 +24,13 @@ type AuthState = {
   logout: () => Promise<{ ok: boolean }>;
 };
 
+export async function refreshForegroundEntitlement(
+  userId: string,
+): Promise<void> {
+  const plan = await refreshPlanFromBackend();
+  if (plan === "premium") await provisionVoiceApiKey(userId);
+}
+
 export function useAuth(): AuthState {
   const state = useAuthController(authController);
 
@@ -32,19 +39,13 @@ export function useAuth(): AuthState {
   // フォアグラウンド復帰時に plan / voice key を同期
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {
-      if (next !== "active" || !state.isLoggedIn) return;
-      apiGetMe()
-        .then((user) => {
-          if (user.plan === "premium") {
-            return provisionVoiceApiKey();
-          }
-        })
-        .catch(() => {
-          // offline ならスキップ
-        });
+      if (next !== "active" || !state.isLoggedIn || !state.userId) return;
+      refreshForegroundEntitlement(state.userId).catch(() => {
+        // offline ならスキップ
+      });
     });
     return () => sub.remove();
-  }, [state.isLoggedIn]);
+  }, [state.isLoggedIn, state.userId]);
 
   return {
     ...state,

@@ -1,22 +1,36 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { activityKinds } from "@infra/drizzle/schema";
+import { activities, activityKinds } from "@infra/drizzle/schema";
+import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityKindRequest } from "@packages/types";
-import { and, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
 type ActivityKindRow = typeof activityKinds.$inferSelect;
 
-export function getActivityKindsByActivityIds(db: QueryExecutor) {
-  return async (activityIds: string[]): Promise<ActivityKindRow[]> => {
-    if (activityIds.length === 0) return [];
-    return await db
-      .select()
+// userId 経由で kinds を取得する。GET /users/v2/activities で activities の SELECT 完了を
+// 待たずに並列実行するため。INNER JOIN で deletedAt = NULL の activity に属する kinds のみ返す。
+export function getActivityKindsByUserId(db: QueryExecutor) {
+  return async (userId: UserId): Promise<ActivityKindRow[]> => {
+    const rows = await db
+      .select({
+        id: activityKinds.id,
+        activityId: activityKinds.activityId,
+        name: activityKinds.name,
+        color: activityKinds.color,
+        orderIndex: activityKinds.orderIndex,
+        createdAt: activityKinds.createdAt,
+        updatedAt: activityKinds.updatedAt,
+        deletedAt: activityKinds.deletedAt,
+      })
       .from(activityKinds)
+      .innerJoin(activities, eq(activityKinds.activityId, activities.id))
       .where(
         and(
-          inArray(activityKinds.activityId, activityIds),
+          eq(activities.userId, userId),
+          isNull(activities.deletedAt),
           isNull(activityKinds.deletedAt),
         ),
       );
+    return rows;
   };
 }
 

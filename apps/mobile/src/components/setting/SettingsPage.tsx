@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useThemeContext } from "../../contexts/ThemeContext";
@@ -20,6 +21,7 @@ import { LegalModal } from "../common/LegalModal";
 import { AccountAndDangerSection } from "./AccountAndDangerSection";
 import { DataManagementSection } from "./AccountSection";
 import { AppleLinkSection } from "./AppleLinkSection";
+import { DEV_TOOLS_ENABLED, DevToolsSection } from "./DevToolsSection";
 import { GoogleLinkSection } from "./GoogleLinkSection";
 import { Divider, Section, SettingSwitch } from "./SettingsParts";
 import { SubscriptionSection } from "./SubscriptionSection";
@@ -29,11 +31,19 @@ import { useAppSettings } from "./useAppSettings";
 
 WebBrowser.maybeCompleteAuthSession();
 
+// CustomTabBar の高さは React Navigation の useBottomTabBarHeight が
+// CustomTabBar 経由だと context を更新しないため使えない（呼ぶと throw する）。
+// CustomTabBar の構造（paddingTop:8 + 子高さ~50 + paddingBottom:10 + insets.bottom）
+// に合わせた固定値を bottom inset と足し込む。
+const CUSTOM_TAB_BAR_CONTENT_HEIGHT = 68;
+
 export function SettingsPage() {
   const { t } = useTranslation("settings");
   const { userId, logout } = useAuthContext();
   const { settings, updateSetting } = useAppSettings();
   const { colors } = useThemeContext();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = CUSTOM_TAB_BAR_CONTENT_HEIGHT + insets.bottom;
   const router = useRouter();
   const shadow = {
     shadowColor: colors.shadowColor,
@@ -53,6 +63,7 @@ export function SettingsPage() {
       className="flex-1"
       scrollEnabled={!isTabCustomizationDragging}
       testID={mobileTestIds.settings.screen}
+      contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
     >
       {/* User info */}
       <View
@@ -118,6 +129,8 @@ export function SettingsPage() {
 
       <DataManagementSection shadow={shadow} />
       <AccountAndDangerSection shadow={shadow} logout={logout} />
+
+      {DEV_TOOLS_ENABLED && <DevToolsSection shadow={shadow} />}
 
       {/* App version */}
       <View className="items-center mt-8 mb-8 gap-2">

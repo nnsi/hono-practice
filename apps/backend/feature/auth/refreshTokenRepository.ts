@@ -9,8 +9,6 @@ import { eq, lte } from "drizzle-orm";
 import { parseCombinedToken, parseRefreshTokenOrThrow } from "./refreshTokenIO";
 import { newRevokeAndGetRefreshToken } from "./refreshTokenRotation";
 
-export { REFRESH_TOKEN_ROTATION_GRACE_MS } from "./refreshTokenRotation";
-
 export type RefreshTokenRepository<T = QueryExecutor> = {
   createRefreshToken(token: RefreshToken): Promise<RefreshToken>;
   getRefreshTokenByToken(token: string): Promise<RefreshToken | null>;

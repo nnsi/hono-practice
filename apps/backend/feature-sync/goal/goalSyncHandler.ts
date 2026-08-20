@@ -16,7 +16,11 @@ export function newGoalSyncHandler(uc: GoalSyncUsecase) {
 }
 
 function getGoals(uc: GoalSyncUsecase) {
-  return async (userId: UserId, since?: string, clientDate?: string) => {
+  return async (
+    userId: UserId,
+    since: string | undefined,
+    clientDate: string,
+  ) => {
     const result = await uc.getGoals(userId, since, clientDate);
     const parsed = GetGoalsV2ResponseSchema.safeParse(result);
     if (!parsed.success) {

@@ -33,7 +33,7 @@ Claude subagent (Logic+Security) と Codex (Architecture+Testability) の2体に
 
 Agentツールで起動:
 - `subagent_type`: `reviewer-logic`
-- `model`: `opus`
+- `model`: 指定しない（エージェント定義側の opus を使う）
 - `mode`: `auto`
 
 プロンプト:
@@ -54,18 +54,19 @@ Agentツールで起動:
 
 1. `prompts/codex-review.md` の `プロンプトテンプレート` セクション内テキストを Read
 2. `{{TARGET_FILES}}` を実際のファイル一覧で置換
-3. `/tmp/prompt-cross-review.txt` に Write
+3. **タイムスタンプを含むユニークなファイル名で書き出す**（`/tmp/prompt-cross-review-${Date.now()}.txt` 等）。同じ Round / 同じセッションで使い回さない
 4. Bash で起動（`run_in_background: true`, `timeout: 600000`）:
 
 ```bash
-cat /tmp/prompt-cross-review.txt | codex exec --sandbox read-only --skip-git-repo-check -
+PROMPT_FILE=/tmp/prompt-cross-review-$(date +%s).txt
+# ... PROMPT_FILE に書き出した後 ...
+cat "$PROMPT_FILE" | codex exec --sandbox read-only --skip-git-repo-check -c model_reasoning_effort="xhigh" -
 ```
 
 注意:
-- プロンプトは必ず stdin (`cat <file> | codex exec ... -`) で渡す（diff含むとシェル引数長制限で失敗する）
-- `--sandbox read-only` で書き込みを禁止する（読み取り専用レビュー）
-- `--skip-git-repo-check` を付けないと worktree 等で起動拒否される場合がある
-- 並列化は Claude Code 側の `run_in_background: true` に任せる
+- プロンプトは stdin (`cat <file> | codex exec ... -`) で渡す（引数長制限回避）。stdin 供給なので `< /dev/null` は付けない
+- **プロンプトファイル名は毎回ユニークに**（`...-$(date +%s).txt`）。固定名だと前 Round の prompt が残って混入する（5/16 教訓）
+- `run_in_background: true` / `timeout: 600000`
 
 ### Step 3: スコアベース集約
 

@@ -5,6 +5,7 @@ import { SyncTasksRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
+import { parseSince } from "../shared/sinceSchema";
 import { newTaskSyncHandler } from "./taskSyncHandler";
 import { newTaskSyncRepository } from "./taskSyncRepository";
 import { newTaskSyncUsecase } from "./taskSyncUsecase";
@@ -34,8 +35,11 @@ export function createTaskSyncRoute() {
   return app
     .get("/tasks", async (c) => {
       const userId = c.get("userId");
-      const since = c.req.query("since");
-      const res = await c.var.h.getTasks(userId, since);
+      const sinceResult = parseSince(c);
+      if (!sinceResult.success) {
+        return sinceResult.response;
+      }
+      const res = await c.var.h.getTasks(userId, sinceResult.since);
       return c.json(res);
     })
     .post(

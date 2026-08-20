@@ -19,6 +19,7 @@ import * as SecureStore from "expo-secure-store";
 
 import {
   REFRESH_TOKEN_KEY,
+  apiUrl,
   createTokenHolder,
   emptyResponse,
   jsonResponse,
@@ -81,6 +82,166 @@ describe("mobileAuthTransport.logout", () => {
 
     expect(result).toEqual({ ok: false });
     expect(mockDeleteItem).not.toHaveBeenCalled();
+  });
+
+  it("進行中の通常 refresh を待ってから logout し、遅延応答で credential を復活させない", async () => {
+    let storedRefreshToken: string | null = "rt-old";
+    mockGetItem.mockImplementation(async () => storedRefreshToken);
+    mockSetItem.mockImplementation(async (_key: string, value: string) => {
+      storedRefreshToken = value;
+    });
+    mockDeleteItem.mockImplementation(async () => {
+      storedRefreshToken = null;
+    });
+
+    let resolveRefresh!: (response: Response) => void;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/token")) return refreshResponse;
+      return Promise.resolve(emptyResponse(200));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const tokenHolder = createTokenHolder();
+    tokenHolder.setToken("jwt-old");
+    const transport = makeTransport({ tokenHolder });
+
+    const apiRefresh = (async () => {
+      const result = await transport.refreshSession();
+      if (result.kind === "ok") {
+        transport.setAccessToken(result.session.token);
+      }
+    })();
+    const controllerLogout = (async () => {
+      const result = await transport.logout();
+      if (result.ok) transport.setAccessToken(null);
+      return result;
+    })();
+
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    resolveRefresh(
+      jsonResponse(
+        validSessionBody({
+          token: "jwt-late",
+          refreshToken: "rt-late",
+        }),
+      ),
+    );
+
+    const [, logoutResult] = await Promise.all([apiRefresh, controllerLogout]);
+
+    expect(logoutResult).toEqual({ ok: true });
+    expect(storedRefreshToken).toBeNull();
+    expect(tokenHolder.getToken()).toBeNull();
+  });
+
+  it("進行中 login の永続化後に logout し、遅延 login credential を残さない", async () => {
+    let storedRefreshToken: string | null = "rt-old";
+    mockGetItem.mockImplementation(async () => storedRefreshToken);
+    mockSetItem.mockImplementation(async (_key: string, value: string) => {
+      storedRefreshToken = value;
+    });
+    mockDeleteItem.mockImplementation(async () => {
+      storedRefreshToken = null;
+    });
+    let resolveLogin!: (response: Response) => void;
+    const loginResponse = new Promise<Response>((resolve) => {
+      resolveLogin = resolve;
+    });
+    let logoutCalls = 0;
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/login")) return loginResponse;
+      if (url.endsWith("/auth/token")) {
+        return Promise.resolve(
+          jsonResponse(
+            validSessionBody({
+              token: "jwt-refreshed",
+              refreshToken: "rt-refreshed",
+            }),
+          ),
+        );
+      }
+      logoutCalls++;
+      return Promise.resolve(emptyResponse(logoutCalls === 1 ? 401 : 200));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = makeTransport();
+
+    const login = transport.login("u", "pw");
+    const logout = transport.logout();
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveLogin(
+      jsonResponse(
+        validSessionBody({ token: "jwt-login", refreshToken: "rt-login" }),
+      ),
+    );
+    await Promise.all([login, logout]);
+
+    expect(storedRefreshToken).toBeNull();
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      `${apiUrl}/auth/login`,
+      `${apiUrl}/auth/logout`,
+      `${apiUrl}/auth/token`,
+      `${apiUrl}/auth/logout`,
+    ]);
+  });
+
+  it("logout 成功を待つ新規 refresh は token endpoint を呼ばず expired になる", async () => {
+    let storedRefreshToken: string | null = "rt";
+    mockGetItem.mockImplementation(async () => storedRefreshToken);
+    mockDeleteItem.mockImplementation(async () => {
+      storedRefreshToken = null;
+    });
+    let resolveLogout!: (response: Response) => void;
+    const logoutResponse = new Promise<Response>((resolve) => {
+      resolveLogout = resolve;
+    });
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/logout")) return logoutResponse;
+      return Promise.resolve(jsonResponse(validSessionBody()));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = makeTransport();
+
+    const logout = transport.logout();
+    const refresh = transport.refreshSession();
+    resolveLogout(emptyResponse(200));
+
+    await expect(logout).resolves.toEqual({ ok: true });
+    await expect(refresh).resolves.toEqual({ kind: "expired" });
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).endsWith("/auth/token")),
+    ).toBe(false);
+  });
+
+  it("logout 失敗を待つ新規 refresh は保持した token で回復を再開する", async () => {
+    mockGetItem.mockResolvedValue("rt");
+    let resolveLogout!: (response: Response) => void;
+    const logoutResponse = new Promise<Response>((resolve) => {
+      resolveLogout = resolve;
+    });
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/logout")) return logoutResponse;
+      return Promise.resolve(
+        jsonResponse(
+          validSessionBody({ token: "jwt-new", refreshToken: "rt-new" }),
+        ),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = makeTransport();
+
+    const logout = transport.logout();
+    const refresh = transport.refreshSession();
+    resolveLogout(emptyResponse(503));
+
+    await expect(logout).resolves.toEqual({ ok: false });
+    await expect(refresh).resolves.toMatchObject({ kind: "ok" });
+    expect(mockSetItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, "rt-new");
   });
 
   it("401 -> refreshSession で refresh token を rotate → 新 X-Refresh-Token で retry して成功", async () => {

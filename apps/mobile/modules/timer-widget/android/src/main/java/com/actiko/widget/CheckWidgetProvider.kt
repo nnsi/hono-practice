@@ -53,8 +53,6 @@ class CheckWidgetProvider : AppWidgetProvider() {
                 return
             }
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val done = WidgetLogHelper(ctx).hasActivityLogForToday(activityId, today)
-
             // Show activity name with optional kind name
             val kindId = prefs.getKindId(widgetId)
             val kindName = if (kindId != null) {
@@ -65,6 +63,9 @@ class CheckWidgetProvider : AppWidgetProvider() {
             } else {
                 "${activity.emoji} ${activity.name}"
             }
+            val done = WidgetLogHelper(ctx)
+                .hasActivityLogForToday(activityId, kindId, today)
+                .getOrDefault(false)
             views.setTextViewText(resId(ctx, "check_activity_name"), label)
 
             views.setTextViewText(resId(ctx, "check_btn_toggle"), if (done) "\u2611" else "\u2610")
@@ -87,6 +88,10 @@ class CheckWidgetProvider : AppWidgetProvider() {
             val intent = Intent(ctx, CheckWidgetProvider::class.java).apply {
                 this.action = action
                 putExtra(EXTRA_WIDGET_ID, widgetId)
+                putExtra(
+                    WidgetSecurity.EXTRA_ACTION_TOKEN,
+                    TimerPreferences(ctx).getOrCreateActionToken(widgetId),
+                )
             }
             return PendingIntent.getBroadcast(ctx, widgetId * 10, intent, PI_FLAGS)
         }
@@ -100,24 +105,32 @@ class CheckWidgetProvider : AppWidgetProvider() {
         super.onReceive(ctx, intent)
         if (intent.action != ACTION_TOGGLE) return
         val wId = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        if (wId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+        if (!WidgetSecurity.isAuthorizedAction(ctx, intent, wId, CheckWidgetProvider::class.java)) return
         if (!WidgetPlanHelper.isWidgetAllowed(ctx, wId)) return
 
         val prefs = TimerPreferences(ctx)
         val activityId = prefs.getActivityId(wId) ?: return
         val kindId = prefs.getKindId(wId)
+        if (kindId != null && !WidgetDbHelper(ctx).isKindOwnedByActivity(activityId, kindId)) return
         val logHelper = WidgetLogHelper(ctx)
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val done = logHelper.hasActivityLogForToday(activityId, today)
-        if (done) {
-            logHelper.softDeleteTodayLog(activityId, today)
+        val done = logHelper.hasActivityLogForToday(activityId, kindId, today).getOrElse {
+            Log.e("CheckWidget", "Failed to read check state", it)
+            return
+        }
+        val writeResult = if (done) {
+            logHelper.softDeleteTodayLog(activityId, kindId, today)
         } else {
             logHelper.insertLog(
                 activityId = activityId, activityKindId = kindId,
                 quantity = 1.0, memo = "", date = today,
             )
         }
-        updateWidget(ctx, AppWidgetManager.getInstance(ctx), wId)
+        writeResult.onSuccess {
+            updateWidget(ctx, AppWidgetManager.getInstance(ctx), wId)
+        }.onFailure {
+            Log.e("CheckWidget", "Failed to toggle check log", it)
+        }
     }
 
     override fun onDeleted(ctx: Context, ids: IntArray) {

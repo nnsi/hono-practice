@@ -24,18 +24,29 @@ export function createSyncEngine(
   let retryCount = 0;
   const BASE_DELAY_MS = 1000;
 
+  // 個別 sync 関数（syncEngine.syncNotes() 等の直接呼び出し）でも offline
+  // gate を効かせるためのラッパー。fetch は即時 fail で安全だが、
+  // _syncStatus が "failed" に飛んで pending インジケータが消える挙動を
+  // 防ぐため、ネットワーク前段で no-op にする。
+  const gate = (fn: () => Promise<void>) => async () => {
+    if (!defaultNetwork.isOnline()) return;
+    await fn();
+  };
+
   const engine = {
-    syncActivityLogs: fns.syncActivityLogs,
-    syncActivities: fns.syncActivities,
-    syncActivityIconDeletions: fns.syncActivityIconDeletions,
-    syncActivityIcons: fns.syncActivityIcons,
-    syncGoals: fns.syncGoals,
-    syncGoalFreezePeriods: fns.syncGoalFreezePeriods,
-    syncNotes: fns.syncNotes,
-    syncTasks: fns.syncTasks,
+    syncActivityLogs: gate(fns.syncActivityLogs),
+    syncActivities: gate(fns.syncActivities),
+    syncActivityIconDeletions: gate(fns.syncActivityIconDeletions),
+    syncActivityIcons: gate(fns.syncActivityIcons),
+    syncGoals: gate(fns.syncGoals),
+    syncGoalFreezePeriods: gate(fns.syncGoalFreezePeriods),
+    syncNotes: gate(fns.syncNotes),
+    syncTasks: gate(fns.syncTasks),
     mutex,
 
     async syncAll(): Promise<void> {
+      if (!defaultNetwork.isOnline()) return;
+
       await mutex.run(async () => {
         let succeeded = 0;
         let total = 0;

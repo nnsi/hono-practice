@@ -2,8 +2,6 @@ import { useTranslation } from "@packages/i18n";
 import { ArrowLeft, FileX } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
-import { FormButton } from "../common/FormButton";
-
 export function NoteNotFound({
   onBack,
   topInset,
@@ -37,38 +35,6 @@ export function NoteNotFound({
         <Text className="text-gray-500 dark:text-gray-400 text-sm text-center">
           {t("detail.notFoundDescription")}
         </Text>
-      </View>
-    </View>
-  );
-}
-
-export function NoteDiscardConfirmInline({
-  onConfirm,
-  onCancel,
-}: {
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation("note");
-
-  return (
-    <View className="px-4 py-3 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-700 flex-row items-center justify-between">
-      <Text className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-        {t("detail.discardTitle")}
-      </Text>
-      <View className="flex-row gap-2">
-        <FormButton
-          variant="secondary"
-          label={t("detail.keepEditing")}
-          onPress={onCancel}
-          className="px-3 py-1"
-        />
-        <FormButton
-          variant="dangerConfirm"
-          label={t("detail.discard")}
-          onPress={onConfirm}
-          className="px-3 py-1"
-        />
       </View>
     </View>
   );

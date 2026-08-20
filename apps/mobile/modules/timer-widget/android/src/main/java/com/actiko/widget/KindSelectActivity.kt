@@ -84,8 +84,9 @@ class KindSelectActivity : Activity() {
     }
 
     private fun saveLog(kindId: String?) {
-        TimerWidgetProvider.saveLogDirect(this, appWidgetId, activityId, kindId)
-        TimerPreferences(this).resetTimer(appWidgetId)
+        TimerWidgetProvider.saveLogDirect(this, appWidgetId, activityId, kindId).onSuccess {
+            TimerPreferences(this).resetTimer(appWidgetId)
+        }
         TimerWidgetProvider.requestUpdate(this, appWidgetId)
     }
 }

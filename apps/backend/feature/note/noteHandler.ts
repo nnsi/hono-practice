@@ -96,6 +96,6 @@ function deleteNote(uc: NoteUsecase) {
   return async (userId: UserId, noteId: NoteId) => {
     await uc.deleteNote(userId, noteId);
 
-    return { message: "success" };
+    return { success: true };
   };
 }

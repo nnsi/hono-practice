@@ -85,6 +85,10 @@ class BinaryWidgetProvider : AppWidgetProvider() {
                 action = ACTION_KIND
                 putExtra(EXTRA_WIDGET_ID, widgetId)
                 putExtra(EXTRA_KIND_ID, kindId)
+                putExtra(
+                    WidgetSecurity.EXTRA_ACTION_TOKEN,
+                    TimerPreferences(ctx).getOrCreateActionToken(widgetId),
+                )
             }
             return PendingIntent.getBroadcast(ctx, widgetId * 10 + idx, intent, PI_FLAGS)
         }
@@ -98,18 +102,23 @@ class BinaryWidgetProvider : AppWidgetProvider() {
         super.onReceive(ctx, intent)
         if (intent.action != ACTION_KIND) return
         val wId = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        if (wId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+        if (!WidgetSecurity.isAuthorizedAction(ctx, intent, wId, BinaryWidgetProvider::class.java)) return
         if (!WidgetPlanHelper.isWidgetAllowed(ctx, wId)) return
         val kindId = intent.getStringExtra(EXTRA_KIND_ID) ?: return
 
         val prefs = TimerPreferences(ctx)
         val activityId = prefs.getActivityId(wId) ?: return
+        val dbHelper = WidgetDbHelper(ctx)
+        if (!dbHelper.isKindOwnedByActivity(activityId, kindId)) return
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         WidgetLogHelper(ctx).insertLog(
             activityId = activityId, activityKindId = kindId,
             quantity = 1.0, memo = "", date = today,
-        )
-        updateWidget(ctx, AppWidgetManager.getInstance(ctx), wId)
+        ).onSuccess {
+            updateWidget(ctx, AppWidgetManager.getInstance(ctx), wId)
+        }.onFailure {
+            Log.e("BinaryWidget", "Failed to save binary log", it)
+        }
     }
 
     override fun onDeleted(ctx: Context, ids: IntArray) {

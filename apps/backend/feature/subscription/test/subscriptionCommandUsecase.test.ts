@@ -7,7 +7,7 @@ import {
 } from "@packages/domain/subscription/subscriptionSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
-import { beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { SubscriptionRepository } from "..";
 import { newSubscriptionCommandUsecase } from "../subscriptionCommandUsecase";
@@ -38,7 +38,7 @@ describe("SubscriptionCommandUsecase", () => {
     paymentProvider: "stripe",
     paymentProviderId: "sub_123",
     currentPeriodStart: new Date("2024-01-01"),
-    currentPeriodEnd: new Date("2024-02-01"),
+    currentPeriodEnd: new Date("2030-02-01"),
     cancelAtPeriodEnd: false,
     cancelledAt: null,
     trialStart: null,
@@ -65,10 +65,12 @@ describe("SubscriptionCommandUsecase", () => {
 
   describe("upsertSubscriptionFromPayment", () => {
     it("should update existing subscription and record history", async () => {
-      when(repo.findSubscriptionByUserId(userId1)).thenResolve(
+      when(
+        repo.findSubscriptionByPaymentProviderId("polar", "sub_456"),
+      ).thenResolve(mockSubscription);
+      when(repo.applyOrderedSubscriptionEvent(anything())).thenResolve(
         mockSubscription,
       );
-      when(repo.updateSubscription(anything())).thenResolve(mockSubscription);
       when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
         undefined,
       );
@@ -80,16 +82,25 @@ describe("SubscriptionCommandUsecase", () => {
         paymentProvider: "polar",
         paymentProviderId: "sub_456",
         eventType: "subscription.updated",
+        currentPeriodEnd: new Date("2030-03-01"),
+        eventOccurredAt: new Date("2026-07-01"),
+        eventSequence: "evt-2",
       });
 
-      verify(repo.findSubscriptionByUserId(userId1)).once();
-      verify(repo.updateSubscription(anything())).once();
+      verify(
+        repo.findSubscriptionByPaymentProviderId("polar", "sub_456"),
+      ).once();
+      verify(repo.applyOrderedSubscriptionEvent(anything())).once();
       verify(historyRepo.insertSubscriptionHistory(anything())).once();
     });
 
     it("should create new subscription and record history when none exists", async () => {
-      when(repo.findSubscriptionByUserId(userId1)).thenResolve(undefined);
-      when(repo.createSubscription(anything())).thenResolve(mockSubscription);
+      when(
+        repo.findSubscriptionByPaymentProviderId("polar", "sub_789"),
+      ).thenResolve(undefined);
+      when(repo.applyOrderedSubscriptionEvent(anything())).thenResolve(
+        mockSubscription,
+      );
       when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
         undefined,
       );
@@ -101,11 +112,74 @@ describe("SubscriptionCommandUsecase", () => {
         paymentProvider: "polar",
         paymentProviderId: "sub_789",
         eventType: "subscription.created",
+        currentPeriodEnd: new Date("2030-03-01"),
+        eventOccurredAt: new Date("2026-07-01"),
+        eventSequence: "evt-1",
       });
 
-      verify(repo.findSubscriptionByUserId(userId1)).once();
-      verify(repo.createSubscription(anything())).once();
+      verify(
+        repo.findSubscriptionByPaymentProviderId("polar", "sub_789"),
+      ).once();
+      verify(repo.applyOrderedSubscriptionEvent(anything())).once();
       verify(historyRepo.insertSubscriptionHistory(anything())).once();
+    });
+
+    it("does not record history when the atomic repository rejects a stale event", async () => {
+      when(
+        repo.findSubscriptionByPaymentProviderId("revenuecat", "sub_123"),
+      ).thenResolve(mockSubscription);
+      when(repo.applyOrderedSubscriptionEvent(anything())).thenResolve(
+        undefined,
+      );
+
+      const result = await usecase.upsertSubscriptionFromPayment({
+        userId: userId1,
+        plan: "free",
+        status: "expired",
+        paymentProvider: "revenuecat",
+        paymentProviderId: "sub_123",
+        eventType: "EXPIRATION",
+        webhookId: "evt-old",
+        eventOccurredAt: new Date("2026-06-01"),
+        eventSequence: "evt-old",
+      });
+
+      expect(result).toBe("ignored");
+      verify(historyRepo.insertSubscriptionHistory(anything())).never();
+    });
+
+    it("downgrades an active event with an elapsed period instead of granting entitlement", async () => {
+      let appliedSubscription: Subscription | undefined;
+      when(
+        repo.findSubscriptionByPaymentProviderId("polar", "sub_elapsed"),
+      ).thenResolve(undefined);
+      when(repo.applyOrderedSubscriptionEvent(anything())).thenCall(
+        async (subscription: Subscription) => {
+          appliedSubscription = subscription;
+          return subscription;
+        },
+      );
+      when(historyRepo.insertSubscriptionHistory(anything())).thenResolve(
+        undefined,
+      );
+
+      const result = await usecase.upsertSubscriptionFromPayment({
+        userId: userId1,
+        plan: "premium",
+        status: "active",
+        paymentProvider: "polar",
+        paymentProviderId: "sub_elapsed",
+        eventType: "subscription.active",
+        currentPeriodEnd: new Date("2020-01-01"),
+        eventOccurredAt: new Date("2020-01-01"),
+        eventSequence: "evt-elapsed",
+      });
+
+      expect(result).toBe("applied");
+      expect(appliedSubscription).toMatchObject({
+        plan: "free",
+        status: "expired",
+      });
     });
   });
 });

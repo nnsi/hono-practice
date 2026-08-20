@@ -23,7 +23,7 @@ export async function authMiddleware(c: HonoContext, next: Next) {
   // Get token from Authorization header
   const authHeader = c.req.header("Authorization");
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     throw new UnauthorizedError("unauthorized");
   }
 
@@ -61,6 +61,7 @@ export async function authMiddleware(c: HonoContext, next: Next) {
 
     c.set("jwtPayload", payload);
     c.set("userId", parsedUserId);
+    c.set("user", user);
   } catch (_e) {
     throw new UnauthorizedError("unauthorized");
   }

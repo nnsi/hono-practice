@@ -5,6 +5,7 @@ import { SyncActivityLogsRequestSchema } from "@packages/types";
 
 import type { AppContext } from "../../context";
 import { noopTracer } from "../../lib/tracer";
+import { parseSince } from "../shared/sinceSchema";
 import { newActivityLogSyncHandler } from "./activityLogSyncHandler";
 import { newActivityLogSyncRepository } from "./activityLogSyncRepository";
 import { newActivityLogSyncUsecase } from "./activityLogSyncUsecase";
@@ -34,8 +35,11 @@ export function createActivityLogSyncRoute() {
   return app
     .get("/activity-logs", async (c) => {
       const userId = c.get("userId");
-      const since = c.req.query("since");
-      const res = await c.var.h.getActivityLogs(userId, since);
+      const sinceResult = parseSince(c);
+      if (!sinceResult.success) {
+        return sinceResult.response;
+      }
+      const res = await c.var.h.getActivityLogs(userId, sinceResult.since);
       return c.json(res);
     })
     .post(

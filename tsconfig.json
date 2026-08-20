@@ -41,6 +41,8 @@
     "apps/tail-worker",
     "apps/mobile",
     "apps/admin-frontend",
-    "scripts"
+    "scripts",
+    ".design-sync",
+    "apps/frontend/.ds-provider.tsx"
   ]
 }

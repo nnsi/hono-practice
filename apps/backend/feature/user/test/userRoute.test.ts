@@ -1,3 +1,4 @@
+import { sign } from "hono/jwt";
 import { testClient } from "hono/testing";
 
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
@@ -198,6 +199,40 @@ describe("userRoute", () => {
       ]);
     });
 
+    // authMiddleware が JWT 検証経路で c.set("user", user) し、handler の
+    // c.get("user") が cachedUser として enrichUser に流れるかを end-to-end で検証。
+    // __authenticatedUserId バイパスでは middleware 経路が走らないので捕捉できない。
+    it("GET /me が JWT 経由 (authMiddleware の user キャッシュ経路) で正常応答する", async () => {
+      const jwt = await sign(
+        {
+          userId: TEST_USER_ID,
+          aud: "test-audience",
+          exp: Math.floor(Date.now() / 1000) + 60 * 60,
+        },
+        "test",
+      );
+      const route = createUserRoute();
+      const res = await route.request(
+        "/me",
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${jwt}` },
+        },
+        {
+          DB: testDB,
+          JWT_SECRET: "test",
+          JWT_AUDIENCE: "test-audience",
+        },
+      );
+
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expect(body).toMatchObject({ id: TEST_USER_ID });
+      // tabPreference が含まれていれば enrichUser ('providers/subscription/tabPreference'
+      // 並列取得) が呼ばれていることが確認できる。
+      expect("tabPreference" in body).toBe(true);
+    });
+
     it("GET /tab-preference で現在の設定を取得する", async () => {
       const client = createAuthClient();
 
@@ -304,7 +339,7 @@ describe("userRoute", () => {
       });
 
       const res = await client.me.$delete();
-      expect(res.status).toEqual(204);
+      expect(res.status).toEqual(200);
 
       const [user] = await testDB
         .select()
@@ -331,7 +366,7 @@ describe("userRoute", () => {
       const client = createAuthClient();
 
       const res = await client.me.$delete();
-      expect(res.status).toEqual(204);
+      expect(res.status).toEqual(200);
 
       // backend で revoke 済みでも、ブラウザに失効済み cookie 識別子が残らないよう
       // Set-Cookie で expire させる (Codex Round 2 #2 指摘)

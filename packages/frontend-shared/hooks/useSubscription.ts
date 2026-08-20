@@ -13,6 +13,7 @@ export function createUseSubscription(
 ): UseQueryResult<SubscriptionResponse> {
   const { fetchSubscription } = options;
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: createUseXxxファクトリはアプリ側のカスタムフック本体から直接呼ばれる（プロジェクト規約）
   return useQuery<SubscriptionResponse>({
     queryKey: ["subscription"],
     queryFn: fetchSubscription,

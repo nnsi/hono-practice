@@ -2,7 +2,12 @@ import { Platform } from "react-native";
 
 import { getApiUrl } from "../api/apiClient";
 import { customFetch } from "../api/customFetch";
-import { hasVoiceApiKey, saveVoiceCredentials } from "./voiceApiKeyBridge";
+import {
+  clearVoiceCredentials,
+  getVoiceCredentialOwner,
+  hasVoiceApiKey,
+  saveVoiceCredentials,
+} from "./voiceApiKeyBridge";
 
 const API_URL = getApiUrl();
 
@@ -11,11 +16,15 @@ const API_URL = getApiUrl();
  * 既にキーが保存済みの場合はスキップ。
  * iOS: Keychain (App Group), Android: EncryptedSharedPreferences
  */
-export async function provisionVoiceApiKey(): Promise<void> {
+export async function provisionVoiceApiKey(userId: string): Promise<void> {
   if (Platform.OS === "web") return;
 
-  const existing = await hasVoiceApiKey();
-  if (existing) return;
+  const [existing, ownerUserId] = await Promise.all([
+    hasVoiceApiKey(),
+    getVoiceCredentialOwner(),
+  ]);
+  if (existing && ownerUserId === userId) return;
+  await clearVoiceCredentials();
 
   const res = await customFetch(`${API_URL}/users/api-keys`, {
     method: "POST",
@@ -27,5 +36,5 @@ export async function provisionVoiceApiKey(): Promise<void> {
   const rawKey: string | undefined = data.apiKey?.key;
   if (!rawKey) return;
 
-  await saveVoiceCredentials(rawKey, API_URL);
+  await saveVoiceCredentials(rawKey, API_URL, userId);
 }

@@ -1066,6 +1066,122 @@ function updateFeatureExports() {
   }
 }
 
+/**
+ * Auto-registers the new route in apps/backend/app.ts:
+ * 1. Adds `new${EntityName}Route` to the `import { ... } from "./feature"` block
+ * 2. Adds `.route("/users/${entityName}s", new${EntityName}Route)` after the last
+ *    `/users/<something>` (non-v2) route in the routes chain
+ *
+ * Returns true if both insertions succeeded, false if fallback is needed.
+ */
+function registerRouteInAppTs() {
+  const appTsPath = path.join(backendPath, "app.ts");
+  if (!fs.existsSync(appTsPath)) {
+    console.log("⚠️  Could not find app.ts - please register route manually");
+    return false;
+  }
+
+  let content = fs.readFileSync(appTsPath, "utf-8");
+  const routeName = `new${EntityName}Route`;
+  const routePath = `/users/${entityName}s`;
+
+  // --- Idempotency check ---
+  if (content.includes(routeName)) {
+    console.log(`ℹ️  ${routeName} already registered in app.ts - skipping`);
+    return true;
+  }
+
+  let importInserted = false;
+  let routeInserted = false;
+
+  // --- 1. Insert into the `import { ... } from "./feature"` block ---
+  // Match the multi-line destructured import from "./feature"
+  // e.g.:  import {\n  foo,\n  bar,\n} from "./feature";
+  const featureImportRegex = /import\s*\{([^}]+)\}\s*from\s*["']\.\/feature["'];/s;
+  const featureImportMatch = content.match(featureImportRegex);
+
+  if (featureImportMatch) {
+    const originalBlock = featureImportMatch[0];
+    const innerPart = featureImportMatch[1];
+
+    // Extract existing named imports and sort alphabetically
+    const existingNames = innerPart
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!existingNames.includes(routeName)) {
+      const allNames = [...existingNames, routeName].sort((a, b) =>
+        a.localeCompare(b),
+      );
+      const newInner = allNames.map((n) => `  ${n}`).join(",\n");
+      const newBlock = `import {\n${newInner},\n} from "./feature";`;
+      content = content.replace(originalBlock, newBlock);
+      importInserted = true;
+    } else {
+      importInserted = true; // already present
+    }
+  } else {
+    // No multi-line destructured import from "./feature" found
+    // Try single-line or fallback: add a new import line before the feature-sync imports
+    const featureSyncImportLine = /import\s*\{[^}]+\}\s*from\s*["']\.\/feature-sync["'];/;
+    const syncMatch = content.match(featureSyncImportLine);
+    if (syncMatch) {
+      const insertBefore = syncMatch[0];
+      const newImportLine = `import { ${routeName} } from "./feature";\n`;
+      content = content.replace(insertBefore, newImportLine + insertBefore);
+      importInserted = true;
+    } else {
+      console.log(
+        `⚠️  Could not locate import block for ./feature in app.ts - import must be added manually`,
+      );
+    }
+  }
+
+  // --- 2. Insert .route() call after last /users/<x> (non-v2) route ---
+  // Find the last occurrence of `.route("/users/` that does NOT contain `/users/v2`
+  // We scan line by line to find the last matching line, then insert after it.
+  const lines = content.split("\n");
+  let lastUserRouteLineIdx = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Match lines like:   .route("/users/tasks", taskRoute)
+    // but NOT:            .route("/users/v2", ...)
+    if (
+      line.includes('.route("/users/') &&
+      !line.includes('.route("/users/v2"') &&
+      !line.includes('.route("/users/ai/')
+    ) {
+      lastUserRouteLineIdx = i;
+    }
+  }
+
+  if (lastUserRouteLineIdx !== -1) {
+    const newRouteLine = `  .route("${routePath}", ${routeName})`;
+    lines.splice(lastUserRouteLineIdx + 1, 0, newRouteLine);
+    content = lines.join("\n");
+    routeInserted = true;
+  } else {
+    console.log(
+      `⚠️  Could not locate insertion point for .route() in app.ts - route must be added manually`,
+    );
+  }
+
+  if (importInserted || routeInserted) {
+    fs.writeFileSync(appTsPath, content);
+  }
+
+  if (importInserted && routeInserted) {
+    console.log(`✅ Auto-registered ${routeName} in app.ts`);
+    console.log(`   - Import added to "./feature" block`);
+    console.log(`   - .route("${routePath}", ${routeName}) inserted`);
+    return true;
+  }
+
+  return false;
+}
+
 // Main execution
 function generateFeature() {
   createDirectories();
@@ -1084,6 +1200,9 @@ function generateFeature() {
   // Update feature exports
   updateFeatureExports();
 
+  // Auto-register route in app.ts
+  const appTsRegistered = registerRouteInAppTs();
+
   console.log(`✅ Successfully generated feature for ${entityName}!`);
   console.log(`
 Feature files created:
@@ -1097,9 +1216,11 @@ Feature files created:
 
 Next steps:
 1. Add the ${entityName} domain entities in packages/domain/${entityName}/
-2. Add the ${entityName} table to infra/drizzle/schema.ts
-3. Add DTOs to packages/types (request and response schemas)
-4. Add the route to app.ts: app.route('/users/${entityName}s', new${EntityName}Route)
+   Run: node scripts/generate-domain.js ${entityName}
+2. Add the ${entityName} table to infra/drizzle/schema/ and export from infra/drizzle/schema/index.ts
+3. Add DTOs to packages/types (request and response schemas)${appTsRegistered ? `
+4. [AUTO-DONE] Route registered in app.ts as .route('/users/${entityName}s', new${EntityName}Route)` : `
+4. Add the route to app.ts: app.route('/users/${entityName}s', new${EntityName}Route)`}
 5. Run migrations: pnpm run db-generate && pnpm run db-migrate
 6. Update the repository with actual field mappings
 `);

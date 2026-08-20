@@ -2,13 +2,15 @@ import type { StorageAdapter } from "@packages/platform";
 
 import { getSafeSyncWatermarkISOString } from "../core/serverTime";
 import { getSyncGeneration, invalidateSync } from "../core/syncState";
+import {
+  BOOTSTRAPPED_RESOURCES_KEY,
+  type DeltaSyncResource,
+  LAST_SYNCED_KEY,
+  readBootstrappedResources,
+  writeBootstrappedResources,
+} from "./bootstrappedResources";
 import type { ParsedSyncData } from "./parseResponses";
 import { type ApiResponse, parseResponses } from "./parseResponses";
-
-const LAST_SYNCED_KEY = "actiko-v2-lastSyncedAt";
-const BOOTSTRAPPED_RESOURCES_KEY = "actiko-v2-bootstrappedResources";
-
-type DeltaSyncResource = "logs" | "goals" | "freezePeriods" | "tasks" | "notes";
 
 type SinceByResource = Partial<Record<DeltaSyncResource, string>>;
 
@@ -35,37 +37,6 @@ type InitialSyncDeps = {
     phase: "fetchAllApis" | "parseResponses" | "writeAllData",
   ) => void;
 };
-
-function readBootstrappedResources(
-  storage: StorageAdapter,
-  fallback: readonly DeltaSyncResource[],
-): Set<DeltaSyncResource> {
-  const raw = storage.getItem(BOOTSTRAPPED_RESOURCES_KEY);
-  if (!raw) return new Set(fallback);
-
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set(fallback);
-    return new Set(
-      parsed.filter(
-        (resource): resource is DeltaSyncResource =>
-          typeof resource === "string",
-      ),
-    );
-  } catch {
-    return new Set(fallback);
-  }
-}
-
-function writeBootstrappedResources(
-  storage: StorageAdapter,
-  resources: Iterable<DeltaSyncResource>,
-): void {
-  storage.setItem(
-    BOOTSTRAPPED_RESOURCES_KEY,
-    JSON.stringify([...new Set(resources)]),
-  );
-}
 
 export function createInitialSync(deps: InitialSyncDeps) {
   let isPulling = false;
@@ -192,10 +163,20 @@ export function createInitialSync(deps: InitialSyncDeps) {
           notesRes,
         ]),
       );
-      writeBootstrappedResources(storage, [
-        ...bootstrappedResources,
-        ...deps.deltaResources,
-      ]);
+      // A null response means the fetch was swallowed by a best-effort
+      // fallback (.catch(() => null)). The resource did not sync this round,
+      // so it must not be marked bootstrapped — and if it was bootstrapped
+      // before, it is removed so the next sync does a full pull. Otherwise the
+      // advanced watermark would permanently hide the missed window.
+      const failedResources = new Set<DeltaSyncResource>();
+      if (freezePeriodsRes == null) failedResources.add("freezePeriods");
+      if (notesRes == null) failedResources.add("notes");
+      writeBootstrappedResources(
+        storage,
+        [...bootstrappedResources, ...deps.deltaResources].filter(
+          (resource) => !failedResources.has(resource),
+        ),
+      );
     }
   }
 

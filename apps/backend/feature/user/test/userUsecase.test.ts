@@ -124,6 +124,7 @@ describe("UserUsecase", () => {
       const premiumSub = newSubscription({
         ...freeSubscription,
         plan: "premium",
+        currentPeriodEnd: new Date("2099-01-01"),
       });
       when(repo.getUserById(userId)).thenResolve({
         type: "persisted",
@@ -145,6 +146,34 @@ describe("UserUsecase", () => {
       const result = await usecase.getUserById(userId);
 
       expect(result.plan).toBe("premium");
+    });
+
+    it("期限切れactive subscriptionはeffective freeとして返る", async () => {
+      const elapsedPremiumSub = newSubscription({
+        ...freeSubscription,
+        plan: "premium",
+        currentPeriodEnd: new Date("2020-01-01"),
+      });
+      when(repo.getUserById(userId)).thenResolve({
+        type: "persisted",
+        id: userId,
+        name: "test",
+        loginId: "test",
+        password: "hashed",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      when(providerRepo.getUserProvidersByUserId(userId)).thenResolve([]);
+      when(repo.getTabPreference(userId)).thenResolve(
+        createDefaultTabPreference(),
+      );
+      when(subscriptionUc.getSubscriptionByUserIdOrDefault(userId)).thenResolve(
+        elapsedPremiumSub,
+      );
+
+      const result = await usecase.getUserById(userId);
+
+      expect(result.plan).toBe("free");
     });
 
     it("ユーザーが存在しない場合 404 エラー", async () => {

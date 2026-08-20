@@ -5,6 +5,13 @@ import type { Logger } from "@backend/lib/logger";
 
 import type { AppContext } from "../context";
 import { AppError, UnauthorizedError } from "../error";
+import { assertAdminOrigin } from "../feature/admin/adminAccessPolicy";
+import {
+  type AdminAuthDependencies,
+  resolveAdminAuthHandler,
+  resolveAdminOriginConfig,
+} from "../feature/admin/adminAuthDi";
+import { getAdminSessionToken } from "../feature/admin/adminSessionCookie";
 import { getAdminJwtSecret } from "../utils/adminJwt";
 
 async function verifyAdminJwt(
@@ -25,8 +32,31 @@ async function verifyAdminJwt(
   return payload as Record<string, unknown>;
 }
 
-export const adminAuthMiddleware = createMiddleware<AppContext>(
-  async (c, next) => {
+export function createAdminAuthMiddleware(
+  dependencies: AdminAuthDependencies = {},
+) {
+  return createMiddleware<AppContext>(async (c, next) => {
+    const sessionToken = getAdminSessionToken(c);
+    if (sessionToken) {
+      assertAdminOrigin(
+        c.req.header("Origin"),
+        resolveAdminOriginConfig(c.env),
+      );
+      const session = await resolveAdminAuthHandler(
+        c.env,
+        dependencies,
+      ).getSession(sessionToken);
+      c.set("adminEmail", session.email);
+      await next();
+      return;
+    }
+
+    // Transitional test-only path for existing route integration fixtures.
+    // Deployed environments accept only revocable DB-backed sessions.
+    if (c.env.NODE_ENV !== "test") {
+      throw new UnauthorizedError("unauthorized");
+    }
+
     const authHeader = c.req.header("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       throw new UnauthorizedError("unauthorized");
@@ -54,5 +84,7 @@ export const adminAuthMiddleware = createMiddleware<AppContext>(
     c.set("adminEmail", payload.email);
 
     await next();
-  },
-);
+  });
+}
+
+export const adminAuthMiddleware = createAdminAuthMiddleware();

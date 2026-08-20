@@ -16,13 +16,18 @@ export function useLiveQuery<T>(
 
   useEffect(() => {
     let cancelled = false;
+    // 連続発火で複数の query() が in-flight になった場合に、遅れて resolve した
+    // 古い実行が新しい実行の結果を上書きしないようにするための単調増加トークン（BUG-10）。
+    let latestSeq = 0;
     const run = () => {
+      const seq = ++latestSeq;
       queryRef
         .current()
         .then((result) => {
-          if (!cancelled) setData(result);
+          if (!cancelled && seq === latestSeq) setData(result);
         })
         .catch((err: unknown) => {
+          if (cancelled || seq !== latestSeq) return;
           const message = err instanceof Error ? err.message : String(err);
           const stack = err instanceof Error ? err.stack : undefined;
           reportError({ errorType: "db_query_error", message, stack });

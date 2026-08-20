@@ -1,11 +1,7 @@
-import { AppError, ConflictError } from "@backend/error";
+import { ConflictError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
 import type { Tracer } from "@backend/lib/tracer";
-import type { SubscriptionPlan } from "@packages/domain/subscription/subscriptionSchema";
-import {
-  type TabPreference,
-  createDefaultTabPreference,
-} from "@packages/domain/user/tabPreferenceSchema";
+import type { TabPreference } from "@packages/domain/user/tabPreferenceSchema";
 import { createUserConsent } from "@packages/domain/user/userConsentSchema";
 import {
   type User,
@@ -23,6 +19,11 @@ import {
   newDeleteUserUsecase,
 } from "./userDeleteUsecase";
 import { type UserListResult, newListUsersUsecase } from "./userListUsecase";
+import {
+  type UserWithProviders,
+  enrichUser,
+  getUserById,
+} from "./userLookupUsecase";
 import type { UserRepository } from "./userRepository";
 import {
   getTabPreference,
@@ -42,16 +43,12 @@ export type CreateUserInputParams = {
   consents: ConsentsInput;
 };
 
-export type UserWithProviders = User & {
-  providers: string[];
-  providerEmails?: Record<string, string>;
-  plan: SubscriptionPlan;
-  tabPreference: TabPreference;
-};
+export type { UserWithProviders } from "./userLookupUsecase";
 
 export type UserUsecase = {
   createUser: (params: CreateUserInputParams) => Promise<void>;
   getUserById: (userId: UserId) => Promise<UserWithProviders>;
+  enrichUser: (user: User) => Promise<UserWithProviders>;
   getTabPreference: (userId: UserId) => Promise<TabPreference>;
   updateTabPreference: (
     userId: UserId,
@@ -84,6 +81,7 @@ export function newUserUsecase(
       tracer,
     ),
     getUserById: getUserById(repo, userProviderRepo, subscriptionUc, tracer),
+    enrichUser: enrichUser(repo, userProviderRepo, subscriptionUc, tracer),
     getTabPreference: getTabPreference(repo, tracer),
     updateTabPreference: updateTabPreference(repo, tracer),
     deleteUser: deps
@@ -149,44 +147,5 @@ function createUser(
         ]);
       }),
     );
-  };
-}
-
-function getUserById(
-  repo: UserRepository,
-  userProviderRepo: UserProviderRepository,
-  subscriptionUc: SubscriptionQueryUsecase,
-  tracer: Tracer,
-) {
-  return async (userId: UserId): Promise<UserWithProviders> => {
-    const [user, userProviders, subscription, tabPreference] =
-      await Promise.all([
-        tracer.span("db.getUserById", () => repo.getUserById(userId)),
-        tracer.span("db.getUserProvidersByUserId", () =>
-          userProviderRepo.getUserProvidersByUserId(userId),
-        ),
-        subscriptionUc.getSubscriptionByUserIdOrDefault(userId),
-        tracer.span("db.getTabPreference", () => repo.getTabPreference(userId)),
-      ]);
-    if (!user) {
-      throw new AppError("user not found", 404);
-    }
-
-    const providers = userProviders.map((p) => p.provider);
-    const providerEmails: Record<string, string> = {};
-    for (const userProvider of userProviders) {
-      if (userProvider.email) {
-        providerEmails[userProvider.provider] = userProvider.email;
-      }
-    }
-
-    return {
-      ...user,
-      providers,
-      providerEmails:
-        Object.keys(providerEmails).length > 0 ? providerEmails : undefined,
-      plan: subscription.plan,
-      tabPreference: tabPreference ?? createDefaultTabPreference(),
-    };
   };
 }

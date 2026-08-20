@@ -64,4 +64,24 @@ export const mobileTestIdsExt = {
     colorButton: (i: number, color: string) =>
       `actiko.editKind.color.${i}.${color}`,
   },
+  upgrade: {
+    page: "upgrade.page",
+    backButton: "upgrade.back",
+    purchaseButton: "upgrade.purchase",
+    restoreButton: "upgrade.restore",
+    statusBar: "upgrade.statusBar",
+    premiumBadge: "upgrade.premiumBadge",
+  },
+  subscriptionSection: {
+    badge: "settings.subscription.badge",
+    upgradeLink: "settings.subscription.upgradeLink",
+  },
+  devTools: {
+    section: "settings.dev.section",
+    forcedOfflineToggle: "settings.dev.forcedOffline",
+    refreshPlanButton: "settings.dev.refreshPlan",
+  },
+  noteCard: {
+    pending: "notes.card.pending",
+  },
 } as const;

@@ -196,13 +196,44 @@ describe("POST /users/v2/activities/sync", () => {
     expect(json.activityKinds.serverWins[0].id).toBe(SEED_KIND_ID_1);
   });
 
-  test("バリデーションエラー - 不正なペイロード", async () => {
+  test("不正レコードだけをvalidation failureとして返す", async () => {
     const app = createApp();
     const res = await postSync(app, {
       activities: [{ id: "not-a-uuid" }],
       activityKinds: [],
     });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.activities.failures).toEqual([
+      expect.objectContaining({
+        id: "not-a-uuid",
+        code: "VALIDATION_ERROR",
+        retryable: false,
+      }),
+    ]);
+  });
+
+  test("1件の不正Activityが正常なActivity/Kindを巻き込まない", async () => {
+    const app = createApp();
+    const validActivity = makeActivity({
+      id: "10000000-0000-4000-8000-000000000222",
+    });
+    const validKind = makeKind({
+      id: "10000000-0000-4000-8000-000000000223",
+      activityId: validActivity.id,
+    });
+    const res = await postSync(app, {
+      activities: [{ id: "broken", name: "" }, validActivity],
+      activityKinds: [validKind],
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.activities.failures).toEqual([
+      expect.objectContaining({ id: "broken", code: "VALIDATION_ERROR" }),
+    ]);
+    expect(json.activities.syncedIds).toContain(validActivity.id);
+    expect(json.activityKinds.syncedIds).toContain(validKind.id);
   });
 
   test("バリデーションエラー - activityKindsキー欠損", async () => {

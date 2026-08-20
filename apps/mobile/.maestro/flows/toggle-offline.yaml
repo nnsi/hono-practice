@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Flip the DEV TOOLS forced-offline switch. The dev section sits at the bottom
+# of Settings under the tab bar; swipe content up first so the toggle is in
+# the upper portion of the screen and outside the tab-bar hit area.
+- swipe:
+    start: "50%,80%"
+    end: "50%,20%"
+- swipe:
+    start: "50%,80%"
+    end: "50%,20%"
+- tapOn:
+    id: settings.dev.forcedOffline
+- waitForAnimationToEnd:
+    timeout: 1500

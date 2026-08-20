@@ -1,6 +1,8 @@
 import { Check, ChevronLeft, Crown, X } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { mobileTestIdsExt } from "../../testing/testIdsExt";
+
 const FEATURES: { label: string; free: boolean; pro: boolean }[] = [
   { label: "活動の記録・管理", free: true, pro: true },
   { label: "目標設定・トラッキング", free: true, pro: true },
@@ -28,6 +30,7 @@ export function UpgradeHeader({ onBack }: { onBack: () => void }) {
         className="mr-3 p-1"
         accessibilityRole="button"
         accessibilityLabel="戻る"
+        testID={mobileTestIdsExt.upgrade.backButton}
       >
         <ChevronLeft size={24} color="#374151" />
       </TouchableOpacity>
@@ -110,6 +113,7 @@ export function StatusBar({
           ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
           : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
       }`}
+      testID={mobileTestIdsExt.upgrade.statusBar}
     >
       <Text
         className={`text-sm text-center ${

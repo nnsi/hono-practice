@@ -1,5 +1,5 @@
 import type { TabPreference } from "@packages/domain/user/tabPreferenceSchema";
-import type { UserId } from "@packages/domain/user/userSchema";
+import type { User, UserId } from "@packages/domain/user/userSchema";
 import type { CreateUserRequest } from "@packages/types/request";
 import {
   type GetUserResponse,
@@ -34,8 +34,15 @@ function createUser(uc: UserUsecase, authH: AuthHandler) {
 }
 
 function getMe(uc: UserUsecase) {
-  return async (userId: UserId): Promise<GetUserResponse> => {
-    const user = await uc.getUserById(userId);
+  // authMiddleware が既に User を取得しているのでそれを再利用する。
+  // 取得済みでない場合（テスト等）は getUserById にフォールバック。
+  return async (
+    userId: UserId,
+    cachedUser?: User,
+  ): Promise<GetUserResponse> => {
+    const user = cachedUser
+      ? await uc.enrichUser(cachedUser)
+      : await uc.getUserById(userId);
     const parsedUser = GetUserResponseSchema.safeParse(user);
     if (!parsedUser.success) {
       throw new AppError("failed to parse user", 500);

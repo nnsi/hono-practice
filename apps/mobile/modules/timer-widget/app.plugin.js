@@ -8,8 +8,16 @@ function withTimerWidgetIosEntitlements(config) {
   return withEntitlementsPlist(config, (modConfig) => {
     const bundleId = modConfig.ios?.bundleIdentifier;
     if (bundleId) {
+      const sharedKeychainGroup = `$(AppIdentifierPrefix)${bundleId}.widget-shared`;
       modConfig.modResults["com.apple.security.application-groups"] = [
         `group.${bundleId}`,
+      ];
+      // Keep the main app's default group first so unrelated SecureStore data
+      // is not exposed to the extension. Voice credentials explicitly use the
+      // second, widget-shared group.
+      modConfig.modResults["keychain-access-groups"] = [
+        `$(AppIdentifierPrefix)${bundleId}`,
+        sharedKeychainGroup,
       ];
     }
     return modConfig;
@@ -97,44 +105,13 @@ function addTimerWidgetToManifest(config) {
       },
     });
 
-    // VoiceRecordActivity (invisible, receives intent from Google Assistant App Actions)
-    // BROWSABLE category removed to prevent browser/external app access
+    // Voice App Actions are intentionally disabled. An exported activity could
+    // otherwise invoke an authenticated API using attacker-controlled text.
     mainApp.activity.push({
       $: {
         "android:name": "com.actiko.widget.VoiceRecordActivity",
-        "android:exported": "true",
+        "android:exported": "false",
         "android:theme": "@android:style/Theme.NoDisplay",
-      },
-      "intent-filter": [
-        {
-          action: [
-            {
-              $: { "android:name": "android.intent.action.VIEW" },
-            },
-          ],
-          category: [
-            {
-              $: { "android:name": "android.intent.category.DEFAULT" },
-            },
-          ],
-          data: [
-            {
-              $: {
-                "android:scheme": "actiko",
-                "android:host": "voice-record",
-              },
-            },
-          ],
-        },
-      ],
-    });
-
-    // Google Assistant App Actions metadata
-    if (!mainApp["meta-data"]) mainApp["meta-data"] = [];
-    mainApp["meta-data"].push({
-      $: {
-        "android:name": "com.google.android.actions",
-        "android:resource": "@xml/actions",
       },
     });
 

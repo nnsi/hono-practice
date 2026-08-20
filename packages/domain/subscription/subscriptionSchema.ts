@@ -20,12 +20,38 @@ export function createSubscriptionId(id?: string): SubscriptionId {
 }
 
 export type SubscriptionPlan = "free" | "premium";
-export type SubscriptionStatus =
-  | "trial"
-  | "active"
-  | "paused"
-  | "cancelled"
-  | "expired";
+export const subscriptionStatusSchema = z.enum([
+  "trial",
+  "active",
+  "paused",
+  "cancelled",
+  "expired",
+]);
+export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
+export const SUBSCRIPTION_STATUSES: readonly SubscriptionStatus[] =
+  subscriptionStatusSchema.options;
+
+/**
+ * Payment providers may recover a subscription after a billing failure or
+ * expiry, but an active entitlement must never jump back into a trial.
+ * Keeping the graph here makes webhook policy explicit and shared.
+ */
+export const ALLOWED_SUBSCRIPTION_TRANSITIONS: Readonly<
+  Record<SubscriptionStatus, ReadonlySet<SubscriptionStatus>>
+> = {
+  trial: new Set(["trial", "active", "paused", "cancelled", "expired"]),
+  active: new Set(["active", "paused", "cancelled", "expired"]),
+  paused: new Set(["active", "paused", "cancelled", "expired"]),
+  cancelled: new Set(["active", "cancelled", "expired"]),
+  expired: new Set(["trial", "active", "expired"]),
+};
+
+export function isAllowedSubscriptionTransition(
+  from: SubscriptionStatus,
+  to: SubscriptionStatus,
+): boolean {
+  return ALLOWED_SUBSCRIPTION_TRANSITIONS[from].has(to);
+}
 
 type SubscriptionData = {
   id: SubscriptionId;
@@ -43,6 +69,8 @@ type SubscriptionData = {
   priceAmount: number | null;
   priceCurrency: string;
   metadata: Record<string, unknown> | null;
+  lastEventOccurredAt: Date | null;
+  lastEventSequence: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -51,23 +79,39 @@ export type Subscription = SubscriptionData & {
   isActive: () => boolean;
   isPremium: () => boolean;
   isInTrial: () => boolean;
+  getEffectivePlan: () => SubscriptionPlan;
   canUseApiKey: () => boolean;
 };
 
 // 純粋関数版
 export function isSubscriptionActive(
-  sub: Pick<SubscriptionData, "status" | "trialEnd">,
+  sub: Pick<SubscriptionData, "status"> &
+    Partial<Pick<SubscriptionData, "currentPeriodEnd" | "trialEnd">>,
   now: Date = new Date(),
 ): boolean {
-  if (sub.status === "active") return true;
+  if (sub.status === "active") {
+    return sub.currentPeriodEnd != null && now < sub.currentPeriodEnd;
+  }
   if (sub.status === "trial" && sub.trialEnd) return now < sub.trialEnd;
   return false;
 }
 
 export function isSubscriptionPremium(
-  sub: Pick<SubscriptionData, "plan">,
+  sub: Pick<SubscriptionData, "plan" | "status"> &
+    Partial<Pick<SubscriptionData, "currentPeriodEnd" | "trialEnd">>,
+  now: Date = new Date(),
 ): boolean {
-  return sub.plan === "premium";
+  return getEffectiveSubscriptionPlan(sub, now) === "premium";
+}
+
+export function getEffectiveSubscriptionPlan(
+  sub: Pick<SubscriptionData, "plan" | "status"> &
+    Partial<Pick<SubscriptionData, "currentPeriodEnd" | "trialEnd">>,
+  now: Date = new Date(),
+): SubscriptionPlan {
+  return sub.plan === "premium" && isSubscriptionActive(sub, now)
+    ? "premium"
+    : "free";
 }
 
 export function isSubscriptionInTrial(
@@ -77,18 +121,29 @@ export function isSubscriptionInTrial(
   return sub.status === "trial" && sub.trialEnd !== null && now < sub.trialEnd;
 }
 
-export const newSubscription = (params: SubscriptionData): Subscription => {
+type SubscriptionInput = Omit<
+  SubscriptionData,
+  "lastEventOccurredAt" | "lastEventSequence"
+> &
+  Partial<Pick<SubscriptionData, "lastEventOccurredAt" | "lastEventSequence">>;
+
+export const newSubscription = (params: SubscriptionInput): Subscription => {
   const isActive = (): boolean => isSubscriptionActive(params);
   const isPremium = (): boolean => isSubscriptionPremium(params);
   const isInTrial = (): boolean => isSubscriptionInTrial(params);
+  const getEffectivePlan = (): SubscriptionPlan =>
+    getEffectiveSubscriptionPlan(params);
   const canUseApiKey = (): boolean =>
-    isActive() && canUseApiKeyEntitlement(params.plan);
+    canUseApiKeyEntitlement(getEffectivePlan());
 
   return {
     ...params,
+    lastEventOccurredAt: params.lastEventOccurredAt ?? null,
+    lastEventSequence: params.lastEventSequence ?? null,
     isActive,
     isPremium,
     isInTrial,
+    getEffectivePlan,
     canUseApiKey,
   };
 };

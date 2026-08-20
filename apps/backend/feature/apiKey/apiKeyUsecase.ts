@@ -90,7 +90,7 @@ function validateApiKey(
     const apiKey = await tracer.span("db.findApiKeyByKey", () =>
       repo.findApiKeyByKey(key),
     );
-    if (!apiKey || !apiKey.isActive) return null;
+    if (!apiKey?.isActive) return null;
 
     // 最終使用日時を更新（fire-and-forget: リクエスト完了後に実行されるためtracer計測対象外）
     repo.updateApiKey(apiKey.id, { lastUsedAt: new Date() }).catch((error) => {

@@ -53,14 +53,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
   ): Promise<SyncActivityLogsResult> => {
     const skippedIds: string[] = [];
 
-    // activityId ownership check
     const requestedActivityIds = [...new Set(logs.map((l) => l.activityId))];
-    const ownedIds = await tracer.span("db.getOwnedActivityIds", () =>
-      repo.getOwnedActivityIds(userId, requestedActivityIds),
-    );
-    const ownedActivityIdSet = new Set(ownedIds);
-
-    // FK / ownership check for activityKindId and taskId
     const requestedKindIds = [
       ...new Set(logs.map((l) => l.activityKindId).filter(Boolean)),
     ] as string[];
@@ -68,7 +61,12 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
       ...new Set(logs.map((l) => l.taskId).filter(Boolean)),
     ] as string[];
 
-    const [ownedKindRows, existingTaskIds] = await Promise.all([
+    // 3つの所有権 / FKチェックは互いに独立なので並列化する。直列だと Hyperdrive 往復が
+    // 1回分余計にかかる（3/29 計測で ~50ms 削減）。
+    const [ownedIds, ownedKindRows, existingTaskIds] = await Promise.all([
+      tracer.span("db.getOwnedActivityIds", () =>
+        repo.getOwnedActivityIds(userId, requestedActivityIds),
+      ),
       tracer.span("db.getOwnedActivityKindIdsWithActivityId", () =>
         repo.getOwnedActivityKindIdsWithActivityId(userId, requestedKindIds),
       ),
@@ -76,6 +74,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
         repo.getExistingTaskIds(userId, requestedTaskIds),
       ),
     ]);
+    const ownedActivityIdSet = new Set(ownedIds);
     const kindIdToActivityId = new Map(
       ownedKindRows.map((r) => [r.id, r.activityId]),
     );

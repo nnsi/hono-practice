@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 type ClientErrorDetail = {
   timestamp: string;
   errorType: string;
@@ -37,12 +39,7 @@ export function ClientErrorDetailList({
 }
 
 function ErrorRow({ detail }: { detail: ClientErrorDetail }) {
-  const time = new Date(detail.timestamp).toLocaleString("ja-JP", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const time = dayjs(detail.timestamp).format("M月D日 HH:mm");
 
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">

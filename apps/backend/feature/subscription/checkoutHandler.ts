@@ -1,9 +1,11 @@
 import { AppError } from "@backend/error";
 import type { UserId } from "@packages/domain/user/userSchema";
+import { z } from "zod";
 
 type CheckoutDeps = {
   polarAccessToken: string;
   polarPriceId: string;
+  fetch?: typeof fetch;
 };
 
 type CheckoutParams = {
@@ -25,9 +27,14 @@ export function newCheckoutHandler(deps: CheckoutDeps): CheckoutHandler {
   };
 }
 
+const polarCheckoutResponseSchema = z.object({
+  url: z.string().url(),
+});
+
 function createCheckout(deps: CheckoutDeps) {
   return async (params: CheckoutParams): Promise<CheckoutResult> => {
-    const res = await fetch("https://api.polar.sh/v1/checkouts/custom", {
+    const request = deps.fetch ?? fetch;
+    const res = await request("https://api.polar.sh/v1/checkouts/custom", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +55,11 @@ function createCheckout(deps: CheckoutDeps) {
       );
     }
 
-    const data = (await res.json()) as { url: string };
+    const parsed = polarCheckoutResponseSchema.safeParse(await res.json());
+    if (!parsed.success) {
+      throw new AppError("Polar checkout returned an invalid response", 502);
+    }
+    const data = parsed.data;
     return { checkoutUrl: data.url };
   };
 }

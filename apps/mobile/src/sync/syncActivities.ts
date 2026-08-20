@@ -1,8 +1,8 @@
-import type { SyncResult } from "@packages/sync-engine";
 import {
   createSyncActivities,
   createSyncActivityIconDeletions,
   createSyncActivityIcons,
+  postActivityChunkWithIsolation,
 } from "@packages/sync-engine";
 
 import { apiClient, getApiUrl } from "../api/apiClient";
@@ -18,45 +18,36 @@ export const syncActivities = createSyncActivities({
   getPendingSyncActivityKinds: () =>
     activityRepository.getPendingSyncActivityKinds(),
   postChunk: async (activities, activityKinds) => {
-    const res = await apiClient.users.v2.activities.sync.$post({
-      json: {
-        activities,
-        activityKinds,
-      },
+    return postActivityChunkWithIsolation({
+      activities,
+      activityKinds,
+      post: (nextActivities, nextKinds) =>
+        apiClient.users.v2.activities.sync.$post({
+          json: {
+            activities: nextActivities,
+            activityKinds: nextKinds,
+          },
+        }),
     });
-    if (!res.ok) {
-      if (res.status >= 400 && res.status < 500) {
-        // バリデーションエラー等 → リトライしても治らないので "rejected" にして除外
-        reportError({
-          errorType: "network_error",
-          message: `syncActivities rejected (${res.status})`,
-        });
-        const aIds = activities.map((a) => (a as { id: string }).id);
-        const kIds = activityKinds.map((k) => (k as { id: string }).id);
-        if (aIds.length > 0)
-          await activityRepository.markActivitiesRejected(aIds);
-        if (kIds.length > 0)
-          await activityRepository.markActivityKindsRejected(kIds);
-        return {
-          activities: { syncedIds: [], skippedIds: [], serverWins: [] },
-          activityKinds: { syncedIds: [], skippedIds: [], serverWins: [] },
-        };
-      }
-      throw new Error(`syncActivities failed: ${res.status}`);
-    }
-    return (await res.json()) as {
-      activities: SyncResult;
-      activityKinds: SyncResult;
-    };
   },
   markActivitiesSynced: (ids) => activityRepository.markActivitiesSynced(ids),
   markActivitiesFailed: (ids) => activityRepository.markActivitiesFailed(ids),
+  markActivitiesRejected: (ids) =>
+    activityRepository.markActivitiesRejected(ids),
   upsertActivities: (wins) => activityRepository.upsertActivities(wins),
   markActivityKindsSynced: (ids) =>
     activityRepository.markActivityKindsSynced(ids),
   markActivityKindsFailed: (ids) =>
     activityRepository.markActivityKindsFailed(ids),
+  markActivityKindsRejected: (ids) =>
+    activityRepository.markActivityKindsRejected(ids),
   upsertActivityKinds: (wins) => activityRepository.upsertActivityKinds(wins),
+  reportSyncIssues: ({ failedCount, rejectedCount, failures }) => {
+    reportError({
+      errorType: "network_error",
+      message: `syncActivities issues: failed=${failedCount}, rejected=${rejectedCount}, reasons=${failures.map((f) => `${f.id}:${f.code}`).join(",")}`,
+    });
+  },
 });
 
 export const syncActivityIconDeletions = createSyncActivityIconDeletions({

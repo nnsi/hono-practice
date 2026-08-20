@@ -3,9 +3,9 @@ import { z } from "zod";
 import { dateOrMonthStringSchema } from "../dateSchemas";
 
 export const getActivityLogsRequestSchema = z.object({
-  date: dateOrMonthStringSchema
-    .optional()
-    .describe("YYYY-MM-DD（日）または YYYY-MM（月）。省略時は今日"),
+  date: dateOrMonthStringSchema.describe(
+    "YYYY-MM-DD（日）または YYYY-MM（月）。必須（サーバー側で今日を推測しない）",
+  ),
 });
 
 export type GetActivityLogsRequest = z.infer<

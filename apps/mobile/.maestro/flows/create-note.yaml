@@ -15,15 +15,16 @@ appId: ${MAESTRO_APP_ID}
       - tapOn:
           id: notes.add
 - assertVisible:
-    id: notes.settings.panel
+    id: notes.detail.page
 - tapOn:
     id: notes.titleInput
 - inputText: ${NOTE_TITLE}
 - pressKey: Enter
 - tapOn:
     id: notes.e2e.fillSample
+# 自動保存: 戻る操作で未保存分が flush されてから一覧に戻る
 - tapOn:
-    id: notes.save
+    id: notes.detail.back
 - extendedWaitUntil:
     visible: "${NOTE_TITLE}.*"
     timeout: 10000
@@ -33,6 +34,9 @@ appId: ${MAESTRO_APP_ID}
 - tapOn: "${NOTE_TITLE}.*"
 - assertVisible:
     id: notes.detail.page
+# 既存ノートは整形表示（markdownView）で開く
+- assertVisible:
+    id: notes.markdownView
 - assertVisible:
     id: notes.e2e.preview
 - assertVisible: ".*${NOTE_PREVIEW}.*"

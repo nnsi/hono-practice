@@ -1,36 +1,26 @@
 import { Hono } from "hono";
 
-import type { KeyValueStore } from "@backend/infra/kv/kv";
+import { newMemoryRateLimitStore } from "@backend/infra/rateLimit";
+import { createTracer } from "@backend/lib/tracer";
+import type { RateLimitCounterPort } from "@backend/port/rateLimit";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  contactRateLimitConfig,
+  loginRateLimitConfig,
+  registerRateLimitConfig,
+  tokenRateLimitConfig,
+  webhookRateLimitConfig,
+} from "../rateLimitConfigs";
 import {
   applyRateLimit,
   createRateLimitMiddleware,
 } from "../rateLimitMiddleware";
 
-type RateLimitRecord = {
-  count: number;
-  windowStart: number;
-};
-
-function createMockStore(): KeyValueStore<RateLimitRecord> & {
-  data: Map<string, RateLimitRecord>;
-} {
-  const data = new Map<string, RateLimitRecord>();
-  return {
-    data,
-    get: vi.fn(async (key: string) => data.get(key)),
-    set: vi.fn(async (key: string, value: RateLimitRecord) => {
-      data.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      data.delete(key);
-    }),
-  };
-}
+const createMockStore = newMemoryRateLimitStore;
 
 describe("rateLimitMiddleware", () => {
-  const createTestApp = (store: KeyValueStore<RateLimitRecord>) => {
+  const createTestApp = (store: RateLimitCounterPort) => {
     const app = new Hono();
 
     const rateLimitMiddleware = createRateLimitMiddleware(store, {
@@ -56,6 +46,40 @@ describe("rateLimitMiddleware", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("X-RateLimit-Limit")).toBe("3");
     expect(res.headers.get("X-RateLimit-Remaining")).toBe("2");
+  });
+
+  it("KV read時間をtracerのkvMsへ記録する", async () => {
+    const tracer = createTracer();
+    const store: RateLimitCounterPort = {
+      async consume() {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return {
+          allowed: true,
+          states: [
+            { key: "request", count: 1, remaining: 2, resetAt: Date.now() },
+          ],
+          retryAfterMs: 0,
+        };
+      },
+    };
+    const app = new Hono();
+    app.use(
+      "*",
+      createRateLimitMiddleware(
+        store,
+        {
+          windowMs: 60_000,
+          limit: 3,
+          keyGenerator: ({ ip }) => `trace:${ip}`,
+        },
+        tracer,
+      ),
+    );
+    app.get("/", (c) => c.json({ message: "ok" }));
+
+    await expect(app.request("/")).resolves.toMatchObject({ status: 200 });
+    expect(tracer.getSummary()).toMatchObject({ kvMs: expect.any(Number) });
+    expect(tracer.getSummary().kvMs).toBeGreaterThan(0);
   });
 
   it("連続リクエストでカウントが増える", async () => {
@@ -133,10 +157,13 @@ describe("rateLimitMiddleware", () => {
 
     // 古いウィンドウのデータを直接設定
     const oldWindowStart = Date.now() - 120 * 1000; // 2分前
-    store.data.set("ratelimit:test:192.168.1.20", {
-      count: 3,
-      windowStart: oldWindowStart,
-    });
+    await store.consume(
+      {
+        partitionKey: "ratelimit:test:192.168.1.20",
+        rules: [{ key: "request", limit: 3, windowMs: 60_000 }],
+      },
+      oldWindowStart,
+    );
 
     // 古いウィンドウなのでリセットされて成功
     const res = await app.request("/", {
@@ -156,7 +183,7 @@ describe("rateLimitMiddleware", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(store.data.has("ratelimit:test:10.0.0.1")).toBe(true);
+    expect(store.getCount("ratelimit:test:10.0.0.1")).toBe(1);
   });
 
   it("IPヘッダーがない場合はanonymousとして処理", async () => {
@@ -166,7 +193,7 @@ describe("rateLimitMiddleware", () => {
     const res = await app.request("/");
 
     expect(res.status).toBe(200);
-    expect(store.data.has("ratelimit:test:anonymous")).toBe(true);
+    expect(store.getCount("ratelimit:test:anonymous")).toBe(1);
   });
 
   it("cf-connecting-ip が x-forwarded-for より優先される", async () => {
@@ -182,9 +209,9 @@ describe("rateLimitMiddleware", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(store.data.has("ratelimit:test:203.0.113.1")).toBe(true);
-    expect(store.data.has("ratelimit:test:1.2.3.4")).toBe(false);
-    expect(store.data.has("ratelimit:test:5.6.7.8")).toBe(false);
+    expect(store.getCount("ratelimit:test:203.0.113.1")).toBe(1);
+    expect(store.getCount("ratelimit:test:1.2.3.4")).toBe(0);
+    expect(store.getCount("ratelimit:test:5.6.7.8")).toBe(0);
   });
 
   it("x-forwarded-for が複数IPの場合は先頭IPを使う", async () => {
@@ -196,8 +223,8 @@ describe("rateLimitMiddleware", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(store.data.has("ratelimit:test:192.168.1.1")).toBe(true);
-    expect(store.data.has("ratelimit:test:10.0.0.1")).toBe(false);
+    expect(store.getCount("ratelimit:test:192.168.1.1")).toBe(1);
+    expect(store.getCount("ratelimit:test:10.0.0.1")).toBe(0);
   });
 
   it("cf-connecting-ip 不在時は x-real-ip > x-forwarded-for の順", async () => {
@@ -212,7 +239,35 @@ describe("rateLimitMiddleware", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(store.data.has("ratelimit:test:5.6.7.8")).toBe(true);
+    expect(store.getCount("ratelimit:test:5.6.7.8")).toBe(1);
+  });
+
+  it.each([
+    ["login", loginRateLimitConfig],
+    ["register", registerRateLimitConfig],
+    ["refresh token", tokenRateLimitConfig],
+    ["contact", contactRateLimitConfig],
+    ["webhook", webhookRateLimitConfig],
+  ] as const)("memory adapter keeps %s parallel burst within its limit", async (_name, config) => {
+    const store = newMemoryRateLimitStore();
+    const app = new Hono();
+    app.use("*", createRateLimitMiddleware(store, config));
+    app.get("/", (c) => c.json({ ok: true }));
+
+    const responses = await Promise.all(
+      Array.from({ length: config.limit + 5 }, () =>
+        app.request("/", {
+          headers: { "cf-connecting-ip": "203.0.113.99" },
+        }),
+      ),
+    );
+
+    expect(
+      responses.filter((response) => response.status === 200),
+    ).toHaveLength(config.limit);
+    expect(
+      responses.filter((response) => response.status === 429),
+    ).toHaveLength(5);
   });
 });
 
@@ -230,39 +285,85 @@ describe("applyRateLimit", () => {
     return (path = "/") => app.request(path, {}, env);
   }
 
-  it("RATE_LIMIT_KV 未設定 + production は 503", async () => {
+  it("RATE_LIMIT_STORE 未設定 + production は 503", async () => {
     const request = buildApp({ NODE_ENV: "production" });
     const res = await request();
     expect(res.status).toBe(503);
   });
 
-  it("RATE_LIMIT_KV 未設定 + stg は 503", async () => {
+  it("RATE_LIMIT_STORE 未設定 + stg は 503", async () => {
     const request = buildApp({ NODE_ENV: "stg" });
     const res = await request();
     expect(res.status).toBe(503);
   });
 
-  it("RATE_LIMIT_KV 未設定 + development は通過", async () => {
+  it("RATE_LIMIT_STORE 未設定 + development は通過", async () => {
     const request = buildApp({ NODE_ENV: "development" });
     const res = await request();
     expect(res.status).toBe(200);
   });
 
-  it("RATE_LIMIT_KV 未設定 + test は通過", async () => {
+  it("RATE_LIMIT_STORE 未設定 + test は通過", async () => {
     const request = buildApp({ NODE_ENV: "test" });
     const res = await request();
     expect(res.status).toBe(200);
   });
 
-  it("RATE_LIMIT_KV 設定済みなら通常の rate limit ロジックに委譲", async () => {
+  it("RATE_LIMIT_STORE 設定済みなら通常の rate limit ロジックに委譲", async () => {
     const store = createMockStore();
     const request = buildApp({
       NODE_ENV: "production",
-      RATE_LIMIT_KV: store,
+      RATE_LIMIT_STORE: store,
     });
 
     const res = await request();
     expect(res.status).toBe(200);
     expect(res.headers.get("X-RateLimit-Limit")).toBe("3");
+  });
+
+  it("store error fails closed in production", async () => {
+    const failingStore: RateLimitCounterPort = {
+      consume: vi.fn().mockRejectedValue(new Error("store offline")),
+    };
+    const request = buildApp({
+      NODE_ENV: "production",
+      RATE_LIMIT_STORE: failingStore,
+    });
+    const res = await request();
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({
+      message: "rate limit infrastructure unavailable",
+    });
+  });
+
+  it("store error fails open in development", async () => {
+    const failingStore: RateLimitCounterPort = {
+      consume: vi.fn().mockRejectedValue(new Error("store offline")),
+    };
+    const request = buildApp({
+      NODE_ENV: "development",
+      RATE_LIMIT_STORE: failingStore,
+    });
+    await expect(request()).resolves.toMatchObject({ status: 200 });
+  });
+
+  it("does not convert a downstream exception into a store failure", async () => {
+    const app = new Hono();
+    app.use("*", applyRateLimit(config));
+    app.get("/", () => {
+      throw new Error("downstream failed");
+    });
+    app.onError((error, c) => c.json({ message: error.message }, 500));
+
+    const res = await app.request(
+      "/",
+      {},
+      {
+        NODE_ENV: "production",
+        RATE_LIMIT_STORE: newMemoryRateLimitStore(),
+      },
+    );
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ message: "downstream failed" });
   });
 });

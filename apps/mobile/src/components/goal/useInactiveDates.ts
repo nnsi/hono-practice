@@ -37,8 +37,10 @@ export function useInactiveDates(goal: GoalForInactiveDates, today: string) {
     }, []),
   );
 
-  const monthStart = useMemo(() => getStartOfMonth(), []);
-  const monthEnd = useMemo(() => getEndOfMonth(), []);
+  // today から導出する（空 deps だとマウント時の月に固定され、月を跨いで
+  // マウントされ続けた場合に古い月の範囲でクエリし続けてしまう。BUG-11）。
+  const monthStart = useMemo(() => getStartOfMonth(today), [today]);
+  const monthEnd = useMemo(() => getEndOfMonth(today), [today]);
   const effectiveStart = useMemo(
     () => (goal.startDate > monthStart ? goal.startDate : monthStart),
     [goal.startDate, monthStart],

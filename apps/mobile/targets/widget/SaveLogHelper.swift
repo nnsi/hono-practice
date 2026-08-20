@@ -3,30 +3,45 @@ import Foundation
 /// Shared logic for saving an activity log from the widget.
 /// Extracted from StopTimerIntent so SaveWithKindIntent can reuse it.
 enum SaveLogHelper {
-    static func saveLog(activityId: String, kindId: String?) {
-        let state = TimerState()
-        let elapsedSeconds = state.getElapsedMillis(activityId: activityId) / 1000
-        let dbHelper = WidgetDbHelper()
-        guard let activity = dbHelper.getActivityById(activityId) else { return }
+    static func saveLog(
+        activityId: String,
+        timerInstanceId: String,
+        kindId: String?,
+        isPlanAllowed: Bool,
+        state: TimerState = TimerState(),
+        dbHelper: WidgetDbHelper = WidgetDbHelper(),
+        now: Date = Date(),
+        logId: String = UuidV7.generate()
+    ) -> Result<Void, WidgetSaveError> {
+        guard isPlanAllowed else { return .failure(.planNotAllowed) }
+        let elapsedSeconds = state.getElapsedMillis(timerInstanceId: timerInstanceId) / 1000
+        guard let activity = dbHelper.getActivityById(activityId) else {
+            return .failure(.database(.noMatchingRow))
+        }
+        if let kindId, !dbHelper.isKindOwnedByActivity(activityId, kindId: kindId) {
+            return .failure(.database(.noMatchingRow))
+        }
         let unitType = TimeConversion.getTimeUnitType(activity.quantityUnit)
         let quantity = TimeConversion.convertSecondsToUnit(elapsedSeconds, unitType)
         let memo: String = {
-            guard let isoStr = state.getStartDateIso(activityId: activityId) else { return "" }
+            guard let isoStr = state.getStartDateIso(timerInstanceId: timerInstanceId) else {
+                return ""
+            }
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             guard let startDate = formatter.date(from: isoStr) else { return "" }
-            return TimeConversion.generateTimeMemo(startTime: startDate, endTime: Date())
+            return TimeConversion.generateTimeMemo(startTime: startDate, endTime: now)
         }()
         let utcFormatter = ISO8601DateFormatter()
         utcFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let now = utcFormatter.string(from: Date())
+        let nowIso = utcFormatter.string(from: now)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
-        let today = dateFormatter.string(from: Date())
-        dbHelper.insertActivityLog(
-            id: UuidV7.generate(), activityId: activityId,
+        let today = dateFormatter.string(from: now)
+        return dbHelper.insertActivityLog(
+            id: logId, activityId: activityId,
             activityKindId: kindId, quantity: quantity, memo: memo,
-            date: today, syncStatus: "pending", createdAt: now, updatedAt: now
-        )
+            date: today, syncStatus: "pending", createdAt: nowIso, updatedAt: nowIso
+        ).mapError(WidgetSaveError.database)
     }
 }

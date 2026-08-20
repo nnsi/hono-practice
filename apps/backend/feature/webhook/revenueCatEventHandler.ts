@@ -8,6 +8,7 @@ type RevenueCatEvent = {
   id: string;
   original_transaction_id?: string;
   expiration_at_ms?: number;
+  event_timestamp_ms: number;
 };
 
 export async function handleRevenueCatEvent(
@@ -20,6 +21,10 @@ export async function handleRevenueCatEvent(
   const expirationDate = event.expiration_at_ms
     ? new Date(event.expiration_at_ms)
     : undefined;
+  const ordering = {
+    eventOccurredAt: new Date(event.event_timestamp_ms),
+    eventSequence: event.id,
+  };
 
   switch (event.type) {
     case "INITIAL_PURCHASE":
@@ -33,6 +38,7 @@ export async function handleRevenueCatEvent(
         currentPeriodEnd: expirationDate,
         eventType: event.type,
         webhookId: event.id,
+        ...ordering,
       });
       break;
     }
@@ -46,8 +52,10 @@ export async function handleRevenueCatEvent(
         paymentProvider: "revenuecat",
         paymentProviderId: providerId,
         cancelAtPeriodEnd: true,
+        currentPeriodEnd: expirationDate,
         eventType: event.type,
         webhookId: event.id,
+        ...ordering,
       });
       break;
     }
@@ -61,6 +69,7 @@ export async function handleRevenueCatEvent(
         paymentProviderId: providerId,
         eventType: event.type,
         webhookId: event.id,
+        ...ordering,
       });
       break;
     }
@@ -75,6 +84,7 @@ export async function handleRevenueCatEvent(
         paymentProviderId: providerId,
         eventType: event.type,
         webhookId: event.id,
+        ...ordering,
       });
       break;
     }
@@ -88,8 +98,10 @@ export async function handleRevenueCatEvent(
         paymentProvider: "revenuecat",
         paymentProviderId: providerId,
         cancelAtPeriodEnd: false,
+        currentPeriodEnd: expirationDate,
         eventType: event.type,
         webhookId: event.id,
+        ...ordering,
       });
       break;
     }

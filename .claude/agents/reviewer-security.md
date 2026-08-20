@@ -3,7 +3,7 @@ name: reviewer-security
 description: セキュリティ専門のコードレビュアー。入力バリデーション、認証/認可、インジェクション、データ漏洩、Cloudflare Workers固有のセキュリティを検査する。
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: sonnet
+model: opus
 color: red
 ---
 

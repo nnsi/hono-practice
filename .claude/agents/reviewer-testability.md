@@ -3,7 +3,7 @@ name: reviewer-testability
 description: テスタビリティとテストケースの網羅性を専門とするコードレビュアー。テストカバレッジ、テスト品質、Hono固有のテスト注意点を検査する。
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: sonnet
+model: opus
 color: cyan
 ---
 

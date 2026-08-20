@@ -43,6 +43,8 @@ export const activityGoals = pgTable(
   (t) => [
     index("activity_goal_user_id_idx").on(t.userId),
     index("activity_goal_activity_id_idx").on(t.activityId),
+    // sync pull: WHERE user_id = ? AND updated_at > ?
+    index("activity_goal_user_id_updated_at_idx").on(t.userId, t.updatedAt),
   ],
 );
 
@@ -83,5 +85,10 @@ export const activityGoalFreezePeriods = pgTable(
   (t) => [
     index("activity_goal_freeze_period_goal_id_idx").on(t.goalId),
     index("activity_goal_freeze_period_user_id_idx").on(t.userId),
+    // sync pull: WHERE user_id = ? AND updated_at > ?
+    index("activity_goal_freeze_period_user_id_updated_at_idx").on(
+      t.userId,
+      t.updatedAt,
+    ),
   ],
 );

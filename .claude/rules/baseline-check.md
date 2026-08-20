@@ -29,6 +29,10 @@ node scripts/check-baseline.js --out .claude/worktree-baseline.json
 | `"ng"` | master の一部 CI が失敗 | `ngWorkflows` を確認し、原因切り分けから着手する |
 | `"unknown"` | gh CLI 未認証等で取得不能 | 着手は可能。テスト失敗時は master 状態も疑うこと |
 
+## リモート実行環境（Claude Code on the web）での代替手順
+
+リモート実行環境には gh CLI が無いため、baseline は常に `"unknown"` になる（2026-07-17のバグ監査セッションで確認）。この場合は代わりに、着手前にローカルで `pnpm run test-once` と `pnpm run tsc` の全パスを確認してベースラインとする。unknown のまま着手してテストが失敗した場合は、この着手前ローカル実行の結果と突き合わせて切り分ける。
+
 ## NG 時の対処
 
 1. `ngWorkflows` に列挙された workflow 名を確認する

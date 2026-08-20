@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -16,7 +16,10 @@
       "!apps/mobile/dist",
       "!**/stats.html",
       "!.worktrees",
-      "!.claude/worktrees"
+      "!.claude/worktrees",
+      "!.design-sync",
+      "!docs/icon-prototypes",
+      "!apps/frontend/.ds-provider.tsx"
     ]
   },
   "formatter": {
@@ -68,7 +71,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "noNonNullAssertion": "off",
         "useSelfClosingElements": "off"

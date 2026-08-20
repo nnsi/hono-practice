@@ -102,6 +102,7 @@ export function EditLogDialog({
               onFocus={(e) => e.target.select()}
               className="text-lg"
               min="0"
+              max="999999"
               step="any"
             />
           </div>

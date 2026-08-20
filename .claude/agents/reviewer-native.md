@@ -3,7 +3,7 @@ name: reviewer-native
 description: Swift/Kotlinネイティブコード専門のレビュアー。ウィジェット（WidgetKit/Android Widget）、App Intents、共有DB、iOS/Androidの実装差分を検査する。レビュー対象にネイティブコードが含まれる場合のみ起動。
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: sonnet
+model: opus
 color: green
 ---
 

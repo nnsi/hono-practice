@@ -2,18 +2,28 @@ import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityGoals, activityLogs } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
-import { and, eq, gt, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 type GoalRow = typeof activityGoals.$inferSelect;
 
 export type GoalSyncRepository = {
   getGoalsByUserId: (userId: UserId, since?: string) => Promise<GoalRow[]>;
-  getGoalActualQuantity: (
+  getGoalActualQuantitiesByGoalIds: (
     userId: UserId,
-    activityId: string,
-    startDate: string,
-    endDate: string,
-  ) => Promise<number>;
+    goalIds: string[],
+    today: string,
+  ) => Promise<Map<string, number>>;
   getOwnedActivityIds: (
     userId: UserId,
     activityIds: string[],
@@ -28,7 +38,7 @@ export type GoalSyncRepository = {
 export function newGoalSyncRepository(db: QueryExecutor): GoalSyncRepository {
   return {
     getGoalsByUserId: getGoalsByUserId(db),
-    getGoalActualQuantity: getGoalActualQuantity(db),
+    getGoalActualQuantitiesByGoalIds: getGoalActualQuantitiesByGoalIds(db),
     getOwnedActivityIds: getOwnedActivityIds(db),
     upsertGoals: upsertGoals(db),
     getGoalsByIds: getGoalsByIds(db),
@@ -49,29 +59,49 @@ function getGoalsByUserId(db: QueryExecutor) {
   };
 }
 
-function getGoalActualQuantity(db: QueryExecutor) {
+function getGoalActualQuantitiesByGoalIds(db: QueryExecutor) {
   return async (
     userId: UserId,
-    activityId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<number> => {
-    const result = await db
+    goalIds: string[],
+    today: string,
+  ): Promise<Map<string, number>> => {
+    if (goalIds.length === 0) return new Map();
+
+    const rows = await db
       .select({
-        total: sql<number>`COALESCE(SUM(${activityLogs.quantity}), 0)`,
+        goalId: activityGoals.id,
+        total: sql<string>`COALESCE(SUM(${activityLogs.quantity}), 0)`,
       })
-      .from(activityLogs)
-      .where(
+      .from(activityGoals)
+      .leftJoin(
+        activityLogs,
         and(
-          eq(activityLogs.userId, userId),
-          eq(activityLogs.activityId, activityId),
-          sql`${activityLogs.date} >= ${startDate}`,
-          sql`${activityLogs.date} <= ${endDate}`,
+          eq(activityLogs.userId, activityGoals.userId),
+          eq(activityLogs.activityId, activityGoals.activityId),
+          gte(activityLogs.date, activityGoals.startDate),
+          lte(activityLogs.date, today),
+          // endDate=NULL は無期限 (today までで打ち切り済み)。endDate がある場合のみ追加で
+          // clamp する。これは `date <= LEAST(today, endDate)` と等価。
+          or(
+            isNull(activityGoals.endDate),
+            lte(activityLogs.date, activityGoals.endDate),
+          ),
           isNull(activityLogs.deletedAt),
         ),
-      );
+      )
+      .where(
+        and(
+          eq(activityGoals.userId, userId),
+          inArray(activityGoals.id, goalIds),
+        ),
+      )
+      .groupBy(activityGoals.id);
 
-    return Number(result[0]?.total ?? 0);
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      map.set(r.goalId, Number(r.total));
+    }
+    return map;
   };
 }
 

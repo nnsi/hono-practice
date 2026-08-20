@@ -9,8 +9,11 @@ vi.mock("@packages/sync-engine", () => ({
 
 import {
   apiUrl,
+  createTokenHolder,
   emptyResponse,
+  jsonResponse,
   makeTransport,
+  validSessionBody,
 } from "./_webAuthTransportTestHelpers";
 
 beforeEach(() => {
@@ -43,25 +46,77 @@ describe("webAuthTransport.logout", () => {
     expect(await transport.logout()).toEqual({ ok: false });
   });
 
-  it("authenticatedFetch 経由で /auth/logout を呼ぶ (Bearer 自動付与 + 401 retry を担う)", async () => {
-    // logout は authenticatedFetch を直接使うので、global fetch ではなく
-    // authenticatedFetch mock 自体に対する呼び出しを検証する
-    const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
-    const transport = makeTransport({ authenticatedFetch: authFetchMock });
+  it("401 後の refresh が expired なら server session 無効として { ok: true }", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(emptyResponse(401))
+      .mockResolvedValueOnce(emptyResponse(401));
+    vi.stubGlobal("fetch", fetchMock);
 
-    const result = await transport.logout();
-
-    expect(result).toEqual({ ok: true });
-    expect(authFetchMock).toHaveBeenCalledWith(
-      `${apiUrl}/auth/logout`,
-      expect.objectContaining({ method: "POST" }),
-    );
+    expect(await makeTransport().logout()).toEqual({ ok: true });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${apiUrl}/auth/logout`);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${apiUrl}/auth/token`);
   });
 
-  it("authenticatedFetch が 401 を返すと { ok: false } (内部で refresh retry も尽きた場合)", async () => {
-    const authFetchMock = vi.fn().mockResolvedValue(emptyResponse(401));
-    const transport = makeTransport({ authenticatedFetch: authFetchMock });
+  it("401 後の refresh が transient なら credential を保持して { ok: false }", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(emptyResponse(401))
+        .mockResolvedValueOnce(emptyResponse(503)),
+    );
 
-    expect(await transport.logout()).toEqual({ ok: false });
+    expect(await makeTransport().logout()).toEqual({ ok: false });
+  });
+
+  it("401 後の refresh 成功時は新しい Bearer で logout を再送する", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(emptyResponse(401))
+      .mockResolvedValueOnce(jsonResponse(validSessionBody("jwt-new")))
+      .mockResolvedValueOnce(emptyResponse(200));
+    vi.stubGlobal("fetch", fetchMock);
+    const tokenHolder = createTokenHolder();
+    tokenHolder.setToken("jwt-old");
+    const transport = makeTransport({ tokenHolder });
+
+    expect(await transport.logout()).toEqual({ ok: true });
+
+    const retryHeaders = new Headers(fetchMock.mock.calls[2]?.[1]?.headers);
+    expect(retryHeaders.get("Authorization")).toBe("Bearer jwt-new");
+  });
+
+  it("進行中 login の cookie 応答後に logout を実行して新 session を残さない", async () => {
+    let resolveLogin!: (response: Response) => void;
+    const loginResponse = new Promise<Response>((resolve) => {
+      resolveLogin = resolve;
+    });
+    let logoutCalls = 0;
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/auth/login")) return loginResponse;
+      if (url.endsWith("/auth/token")) {
+        return Promise.resolve(jsonResponse(validSessionBody("jwt-new")));
+      }
+      logoutCalls++;
+      return Promise.resolve(emptyResponse(logoutCalls === 1 ? 401 : 200));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = makeTransport();
+
+    const login = transport.login("user", "pw");
+    const logout = transport.logout();
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveLogin(jsonResponse(validSessionBody("jwt-login")));
+    await Promise.all([login, logout]);
+
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      `${apiUrl}/auth/login`,
+      `${apiUrl}/auth/logout`,
+      `${apiUrl}/auth/token`,
+      `${apiUrl}/auth/logout`,
+    ]);
   });
 });

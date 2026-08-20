@@ -15,7 +15,7 @@ import {
   MIGRATION_V9,
 } from "./migrationSql";
 
-const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 12;
 
 export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(

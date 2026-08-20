@@ -11,10 +11,12 @@ import postgres from "postgres";
 
 import { app } from "./app";
 import { type Config, configSchema } from "./config";
-import { newCfKvStore } from "./infra/kv/cfKv";
+import { newCloudflareKvRateLimitStore } from "./infra/rateLimit";
+import { createLogger } from "./lib/logger";
 
 let sql: ReturnType<typeof postgres> | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
+const logger = createLogger({ bindings: { runtime: "backend-cloudflare" } });
 
 type Env = Config & {
   HYPERDRIVE: Hyperdrive;
@@ -36,11 +38,14 @@ export default {
     });
     db = drizzle(sql, { schema });
 
-    // レートリミット用KVStore（KV namespaceが設定されている場合のみ有効）
-    const rateLimitKv = env.RATE_LIMIT_KV_NS
-      ? newCfKvStore<{ count: number; windowStart: number }>(
-          env.RATE_LIMIT_KV_NS,
-        )
+    const rateLimitStore = env.RATE_LIMIT_KV_NS
+      ? newCloudflareKvRateLimitStore(env.RATE_LIMIT_KV_NS, ctx, {
+          onBackgroundError(error) {
+            logger.error("Rate limit KV background write failed", {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          },
+        })
       : undefined;
 
     return app.fetch(
@@ -49,7 +54,7 @@ export default {
         ...env,
         ...config,
         DB: db,
-        RATE_LIMIT_KV: rateLimitKv,
+        RATE_LIMIT_STORE: rateLimitStore,
         WAE_LOGS: env.WAE_LOGS,
         WAE_CLIENT_ERRORS: env.WAE_CLIENT_ERRORS,
       },

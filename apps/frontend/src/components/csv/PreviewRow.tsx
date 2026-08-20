@@ -147,6 +147,7 @@ export function PreviewRow({
         {log.errors.length > 0 && (
           <div className="text-xs text-red-600">
             {log.errors.map((err, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: エラー行は安定IDを持たず、内容込みの複合キーで代用
               <div key={`err-${i}-${err.message}`}>{err.message}</div>
             ))}
           </div>

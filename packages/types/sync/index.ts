@@ -1,4 +1,5 @@
 export {
+  SyncActivitiesEnvelopeSchema,
   type SyncActivitiesRequest,
   SyncActivitiesRequestSchema,
   type UpsertActivityKindRequest,

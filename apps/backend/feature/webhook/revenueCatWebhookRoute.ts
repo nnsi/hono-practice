@@ -30,6 +30,7 @@ const revenueCatEventSchema = z.object({
     app_user_id: z.string(),
     product_id: z.string().optional(),
     expiration_at_ms: z.number().optional(),
+    event_timestamp_ms: z.number().int().nonnegative(),
     original_transaction_id: z.string().optional(),
     id: z.string(),
   }),

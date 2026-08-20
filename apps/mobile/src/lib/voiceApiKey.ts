@@ -1,22 +1,25 @@
+import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const VOICE_API_KEY_STORE_KEY = "actiko-voice-api-key";
+const VOICE_API_KEY_OWNER_STORE_KEY = "actiko-voice-api-key-owner";
 const VOICE_BACKEND_URL_KEY = "voice_backend_url";
 
 /**
- * Save voice API key to shared Keychain (accessible by widget extension).
- * Uses expo-secure-store with accessGroup for App Group sharing.
+ * Save voice API key to the dedicated Keychain access group shared with the
+ * widget extension. The Keychain group is deliberately distinct from the App
+ * Group used for SQLite/UserDefaults.
  */
 export async function saveVoiceApiKey(apiKey: string): Promise<void> {
   if (Platform.OS !== "ios") {
     // Android uses EncryptedSharedPreferences written from native code
     return;
   }
-  const groupId = getAppGroupId();
-  if (!groupId) return;
+  const accessGroup = getKeychainAccessGroup();
+  if (!accessGroup) return;
   await SecureStore.setItemAsync(VOICE_API_KEY_STORE_KEY, apiKey, {
-    accessGroup: groupId,
+    accessGroup,
     keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
   });
 }
@@ -26,10 +29,10 @@ export async function saveVoiceApiKey(apiKey: string): Promise<void> {
  */
 export async function getVoiceApiKey(): Promise<string | null> {
   if (Platform.OS !== "ios") return null;
-  const groupId = getAppGroupId();
-  if (!groupId) return null;
+  const accessGroup = getKeychainAccessGroup();
+  if (!accessGroup) return null;
   return SecureStore.getItemAsync(VOICE_API_KEY_STORE_KEY, {
-    accessGroup: groupId,
+    accessGroup,
     keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
   });
 }
@@ -39,11 +42,45 @@ export async function getVoiceApiKey(): Promise<string | null> {
  */
 export async function deleteVoiceApiKey(): Promise<void> {
   if (Platform.OS !== "ios") return;
-  const groupId = getAppGroupId();
-  if (!groupId) return;
+  const accessGroup = getKeychainAccessGroup();
+  if (!accessGroup) return;
   await SecureStore.deleteItemAsync(VOICE_API_KEY_STORE_KEY, {
-    accessGroup: groupId,
+    accessGroup,
   });
+}
+
+export async function saveVoiceCredentialOwner(userId: string): Promise<void> {
+  if (Platform.OS !== "ios") return;
+  const accessGroup = getKeychainAccessGroup();
+  if (!accessGroup) return;
+  await SecureStore.setItemAsync(VOICE_API_KEY_OWNER_STORE_KEY, userId, {
+    accessGroup,
+    keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+  });
+}
+
+export async function getVoiceCredentialOwner(): Promise<string | null> {
+  if (Platform.OS !== "ios") return null;
+  const accessGroup = getKeychainAccessGroup();
+  if (!accessGroup) return null;
+  return SecureStore.getItemAsync(VOICE_API_KEY_OWNER_STORE_KEY, {
+    accessGroup,
+    keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+  });
+}
+
+export async function clearVoiceCredentials(): Promise<void> {
+  if (Platform.OS !== "ios") return;
+  const accessGroup = getKeychainAccessGroup();
+  if (accessGroup) {
+    await Promise.all([
+      SecureStore.deleteItemAsync(VOICE_API_KEY_STORE_KEY, { accessGroup }),
+      SecureStore.deleteItemAsync(VOICE_API_KEY_OWNER_STORE_KEY, {
+        accessGroup,
+      }),
+    ]);
+  }
+  getExtensionStorage()?.remove(VOICE_BACKEND_URL_KEY);
 }
 
 /**
@@ -82,6 +119,11 @@ function getAppGroupId(): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function getKeychainAccessGroup(): string | undefined {
+  const value = Constants.expoConfig?.extra?.sharedKeychainAccessGroup;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 function getExtensionStorage() {

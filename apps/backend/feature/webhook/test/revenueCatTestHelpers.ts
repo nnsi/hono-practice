@@ -38,6 +38,7 @@ export function makeRevenueCatEvent(
       id: "evt-abc-123",
       original_transaction_id: "txn-xyz-999",
       expiration_at_ms: 1800000000000,
+      event_timestamp_ms: 1700000000000,
       ...overrides,
     },
   };

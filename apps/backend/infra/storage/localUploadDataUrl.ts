@@ -32,7 +32,7 @@ export async function convertLocalUploadUrlToDataUrl(
 
   const normalizedUploadDir = normalizeUploadDir(options.uploadDir);
   const uploadMarker = `/${normalizedUploadDir}/`;
-  if (!url || !url.includes(uploadMarker)) {
+  if (!url?.includes(uploadMarker)) {
     return url;
   }
 

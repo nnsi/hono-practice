@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isLocalOrigin } from "./isLocalOrigin";
+import { isLocalHost, isLocalOrigin } from "./isLocalOrigin";
 
 describe("isLocalOrigin", () => {
   describe("許可されるorigin", () => {
@@ -40,6 +40,39 @@ describe("isLocalOrigin", () => {
       "",
     ])("%s → false", (origin) => {
       expect(isLocalOrigin(origin)).toBe(false);
+    });
+  });
+});
+
+describe("isLocalHost", () => {
+  describe("許可される host", () => {
+    it.each([
+      "localhost",
+      "localhost:3000",
+      "127.0.0.1",
+      "127.0.0.1:8787",
+      "192.168.1.1",
+      "192.168.1.10:8787",
+      "10.0.0.1",
+      "172.16.0.1",
+      "172.31.255.255:9999",
+    ])("%s → true", (host) => {
+      expect(isLocalHost(host)).toBe(true);
+    });
+  });
+
+  describe("拒否される host", () => {
+    it.each([
+      "localhost.evil.com",
+      "evil.localhost",
+      "192.168.1.1.evil.com",
+      "192.168.1",
+      "172.15.0.1",
+      "172.32.0.1",
+      "example.com",
+      "",
+    ])("%s → false", (host) => {
+      expect(isLocalHost(host)).toBe(false);
     });
   });
 });

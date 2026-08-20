@@ -26,5 +26,5 @@ globs:
 
 ## 共有パッケージ
 - `packages/frontend-shared/hooks`: createUseApiKeys, createUseSubscription等のファクトリ
-- `packages/types-v2`: APIリクエスト/レスポンス型定義
+- `packages/types`: APIリクエスト/レスポンス型定義（旧 types-v2 を統合済み）
 - Viteパス解決: `tsconfigPaths({ root: "../.." })` でmonorepoルート指定

@@ -10,6 +10,7 @@ import type { RefreshTokenRepository } from "./refreshTokenRepository";
 import type { UserProviderRepository } from "./userProviderRepository";
 
 export type {
+  AuthOutput,
   AuthUsecase,
   OAuthConsents,
   OAuthVerifierMap,

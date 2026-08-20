@@ -2,7 +2,7 @@ import { Hono } from "hono";
 
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle";
 import { createStorageService } from "@backend/infra/storage";
-import { convertLocalUploadUrlToDataUrl } from "@backend/infra/storage/localUploadDataUrl";
+import { convertActivityIconUrls } from "@backend/lib/convertActivityIconUrls";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { zValidator } from "@hono/zod-validator";
@@ -13,38 +13,11 @@ import {
   UpdateActivityOrderRequestSchema,
   UpdateActivityRequestSchema,
 } from "@packages/types/request";
-import type { GetActivityResponse } from "@packages/types/response";
 
 import type { AppContext } from "../../context";
 import { newActivityHandler } from "./activityHandler";
 import { newActivityRepository } from "./activityRepository";
 import { newActivityUsecase } from "./activityUsecase";
-
-// ローカル環境で画像URLをBase64に変換する関数
-async function convertImageUrlsToBase64(
-  activity: GetActivityResponse,
-  env: AppContext["Bindings"],
-  logger = noopLogger,
-): Promise<GetActivityResponse> {
-  return {
-    ...activity,
-    iconUrl: await convertLocalUploadUrlToDataUrl(activity.iconUrl, {
-      isDevelopment: env.NODE_ENV === "development",
-      uploadDir: env.UPLOAD_DIR,
-      logger,
-      warnMessage: "Failed to convert activity icon URL to base64",
-    }),
-    iconThumbnailUrl: await convertLocalUploadUrlToDataUrl(
-      activity.iconThumbnailUrl,
-      {
-        isDevelopment: env.NODE_ENV === "development",
-        uploadDir: env.UPLOAD_DIR,
-        logger,
-        warnMessage: "Failed to convert activity icon URL to base64",
-      },
-    ),
-  };
-}
 
 export function createActivityRoute() {
   const app = new Hono<
@@ -80,7 +53,7 @@ export function createActivityRoute() {
       // ローカル環境では画像URLをBase64に変換
       const convertedActivities = await Promise.all(
         activities.map((activity) =>
-          convertImageUrlsToBase64(activity, c.env, logger),
+          convertActivityIconUrls(activity, c.env, logger),
         ),
       );
 
@@ -95,7 +68,7 @@ export function createActivityRoute() {
       const logger = c.get("logger") ?? noopLogger;
 
       // ローカル環境では画像URLをBase64に変換
-      const convertedActivity = await convertImageUrlsToBase64(
+      const convertedActivity = await convertActivityIconUrls(
         activity,
         c.env,
         logger,
@@ -108,7 +81,7 @@ export function createActivityRoute() {
       const params = c.req.valid("json");
 
       const res = await c.var.h.createActivity(userId, params);
-      return c.json(res);
+      return c.json(res, 201);
     })
     .put("/:id", zValidator("json", UpdateActivityRequestSchema), async (c) => {
       const userId = c.get("userId");

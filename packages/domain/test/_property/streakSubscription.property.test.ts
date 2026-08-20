@@ -161,7 +161,12 @@ describe("subscription gracePeriod boundary property", () => {
   ])(
     "non-trial の status のうち active のみが isSubscriptionActive=true",
     (now, status) => {
-      const sub = { status: status as "active", trialEnd: null };
+      const sub = {
+        status: status as "active",
+        trialEnd: null,
+        currentPeriodEnd:
+          status === "active" ? new Date(now.getTime() + 1) : null,
+      };
       expect(isSubscriptionActive(sub, now)).toBe(status === "active");
       expect(isSubscriptionInTrial(sub, now)).toBe(false);
     },

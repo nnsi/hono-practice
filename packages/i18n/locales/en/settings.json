@@ -35,6 +35,8 @@
   "trialStatus": "Trial",
   "nextUpdateDate": "Next Update",
   "upgradeText": "Upgrade to Pro to unlock all features including API key management and voice recording.",
+  "checkoutReconciling": "Confirming your payment…",
+  "checkoutReconcileTimeout": "Your payment is taking longer to appear. Reload this page in a moment.",
   "upgradeButton": "Upgrade to Pro",
   "dataManagement": "Data Management",
   "importCSV": "Import Activity Records from CSV",
