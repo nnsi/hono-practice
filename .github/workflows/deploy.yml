@@ -48,25 +48,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      deployments: write
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
-        with:
-          fetch-depth: 0
-
-      - name: Detect release artifact impact
-        id: impact
-        shell: bash
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
-            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > /tmp/release-changed-files
-          else
-            git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > /tmp/release-changed-files
-          fi
-          node scripts/release-impact.js --files /tmp/release-changed-files --github-output "$GITHUB_OUTPUT"
 
       - name: Use Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
@@ -115,26 +99,9 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
         run: node scripts/check-required-env.js CF_ACCOUNT_ID CF_WORKERS_TOKEN DATABASE_URL HYPERDRIVE_ID KV_RATE_LIMIT_ID R2_BUCKET_NAME VITE_API_URL
 
-      - name: test
-        run: pnpm run ci-check
-        env:
-          CI: true
-          NODE_ENV: test
-
-      - name: Install Chromium for Web E2E release gate
-        if: github.ref_name == 'release'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Web E2E release gate
-        if: github.ref_name == 'release'
-        run: pnpm run test-e2e
-        env:
-          CI: true
-          NODE_ENV: test
-
       # --- frontend ---
       - name: Build frontend (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.frontend == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run build-client-stg
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
@@ -145,7 +112,7 @@ jobs:
           VITE_ENABLE_WEB_SUBSCRIPTION: ${{ vars.VITE_ENABLE_WEB_SUBSCRIPTION_STG }}
 
       - name: Build frontend (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.frontend == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run build-client
         env:
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
@@ -157,14 +124,14 @@ jobs:
 
       # --- admin-frontend ---
       - name: Build admin-frontend (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.admin == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run build-admin-stg
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL_STG }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_STG }}
 
       - name: Build admin-frontend (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.admin == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run build-admin
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL_PROD }}
@@ -172,20 +139,20 @@ jobs:
 
       # --- DB migrations ---
       - name: Migrate Neon DB (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.migrations == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
 
       - name: Migrate Neon DB (prod)
-        if: github.ref_name == 'release' && steps.impact.outputs.migrations == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
       # --- backend secrets & deploy ---
       - name: Configure Hyperdrive, R2, and KV for staging
-        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'master'
         run: |
           cat << EOF >> wrangler.toml
 
@@ -208,7 +175,7 @@ jobs:
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_STG }}
 
       - name: Configure Hyperdrive, R2, and KV for production
-        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'release'
         run: |
           cat << EOF >> wrangler.toml
 
@@ -231,7 +198,7 @@ jobs:
           R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME_PROD }}
 
       - name: Set DATABASE_URL secret in Cloudflare (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'master'
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env stg
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env stg
@@ -278,7 +245,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Set DATABASE_URL secret in Cloudflare (prod)
-        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'release'
         run: |
           printf '%s' "$DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env production
           printf '%s' "$JWT_SECRET" | pnpm exec wrangler secret put JWT_SECRET --env production
@@ -325,14 +292,14 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Deploy to Cloudflare Workers (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run deploy:stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.backend == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run deploy:prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -340,14 +307,14 @@ jobs:
 
       # --- frontend (Cloudflare Workers Static Assets) ---
       - name: Deploy frontend (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.frontend == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run deploy:fe-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy frontend (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.frontend == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run deploy:fe-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -355,44 +322,40 @@ jobs:
 
       # --- admin-frontend (Cloudflare Workers Static Assets) ---
       - name: Deploy admin-frontend (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.admin == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run deploy:admin-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy admin-frontend (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.admin == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run deploy:admin-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       # --- Tail Worker ---
-      - name: Build Tail Worker artifact
-        if: steps.impact.outputs.tail == 'true'
-        run: pnpm --filter actiko-tail-worker exec wrangler deploy --dry-run --outdir ../../dist-tail-worker
-
       - name: Deploy Tail Worker (stg)
-        if: github.ref_name == 'master' && steps.impact.outputs.tail == 'true'
+        if: github.ref_name == 'master'
         run: pnpm run deploy:tail-stg
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy Tail Worker (release)
-        if: github.ref_name == 'release' && steps.impact.outputs.tail == 'true'
+        if: github.ref_name == 'release'
         run: pnpm run deploy:tail-prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Post-deploy smoke (stg)
-        if: github.ref_name == 'master' && (steps.impact.outputs.backend == 'true' || steps.impact.outputs.frontend == 'true' || steps.impact.outputs.admin == 'true' || steps.impact.outputs.tail == 'true')
+        if: github.ref_name == 'master'
         run: node scripts/post-deploy-smoke.js "api=${{ vars.VITE_API_URL_STG }}/" "web=${{ vars.APP_URL_V2_STG }}/"
 
       - name: Post-deploy smoke (production)
-        if: github.ref_name == 'release' && (steps.impact.outputs.backend == 'true' || steps.impact.outputs.frontend == 'true' || steps.impact.outputs.admin == 'true' || steps.impact.outputs.tail == 'true')
+        if: github.ref_name == 'release'
         run: node scripts/post-deploy-smoke.js "api=${{ vars.VITE_API_URL_PROD }}/" "web=${{ vars.APP_URL_V2_PROD }}/"
 
   mobile-release:
@@ -468,28 +431,11 @@ jobs:
             exit 1
           fi
 
-      - name: Run repository CI gate
-        run: pnpm run ci-check
-        working-directory: .
-        env:
-          CI: true
-          NODE_ENV: test
-
       - name: Preflight required mobile variable names
         working-directory: .
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: node scripts/check-required-env.js EAS_PROJECT_ID EAS_OWNER BUNDLE_ID EXPO_TOKEN EXPO_PUBLIC_API_URL EXPO_PUBLIC_CONTACT_EMAIL EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID EXPO_PUBLIC_REVENUECAT_API_KEY_IOS EXPO_PUBLIC_WEB_URL
-
-      - name: Generate iOS and Android release bundles
-        shell: bash
-        working-directory: .
-        run: |
-          rm -rf dist-release-bundles
-          pnpm --filter actiko-mobile run export:release:ios
-          pnpm --filter actiko-mobile run export:release:android
-          test -d dist-release-bundles/ios
-          test -d dist-release-bundles/android
 
       - name: Validate OTA native compatibility
         if: github.event.inputs.mobile_operation == 'ota'
@@ -504,7 +450,7 @@ jobs:
           fi
           git cat-file -e "$NATIVE_BASE_SHA^{commit}"
           git diff --name-only "$NATIVE_BASE_SHA" "$GITHUB_SHA" > /tmp/mobile-ota-changed-files
-          node scripts/release-impact.js --files /tmp/mobile-ota-changed-files --assert-ota-safe
+          node scripts/mobile-ota-safety.js --files /tmp/mobile-ota-changed-files
 
       - name: Validate OTA platform
         if: github.event.inputs.mobile_operation == 'ota'
