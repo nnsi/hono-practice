@@ -51,7 +51,8 @@ export type AuthStateRepository = {
 };
 
 export type OnlineRetryAdapter = {
-  // online イベント等の "ネットワーク復帰" を待つ。コールバック呼び出し後の cleanup を返す
+  // online イベント等の "ネットワーク復帰" を待つ。現在状態の初回 snapshot ではなく、
+  // offline -> online の遷移時に handler を呼び、cleanup を返す。
   registerOnlineRetry(handler: () => void): () => void;
 };
 
@@ -78,6 +79,7 @@ export type AuthControllerOptions = {
 
 export type AuthController = {
   getState(): AuthControllerState;
+  getSessionVersion(): number;
   subscribe(listener: () => void): () => void;
   // local の last_login_at で UI を即出す
   hydrate(): Promise<void>;

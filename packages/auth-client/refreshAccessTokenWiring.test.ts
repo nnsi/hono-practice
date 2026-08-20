@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createRefreshAccessTokenCallback } from "./refreshAccessTokenWiring";
 import type { AuthSession, AuthTransport } from "./types";
@@ -65,6 +65,24 @@ describe("createRefreshAccessTokenCallback", () => {
     expect(transport.setAccessTokenCalls).toEqual([]);
   });
 
+  it("refresh kind: expired 時: onExpired の完了を待ってから null を返す", async () => {
+    const transport = makeTransport({
+      refresh: async () => ({ kind: "expired" }),
+    });
+    const calls: string[] = [];
+    const onExpired = vi.fn(async () => {
+      await Promise.resolve();
+      calls.push("expired");
+    });
+    const callback = createRefreshAccessTokenCallback(transport, { onExpired });
+
+    const result = await callback();
+
+    expect(result).toBeNull();
+    expect(onExpired).toHaveBeenCalledOnce();
+    expect(calls).toEqual(["expired"]);
+  });
+
   it("refresh kind: transient 時: setAccessToken を呼ばず null を返す", async () => {
     const transport = makeTransport({
       refresh: async () => ({ kind: "transient", reason: "status 500" }),
@@ -72,6 +90,65 @@ describe("createRefreshAccessTokenCallback", () => {
     const callback = createRefreshAccessTokenCallback(transport);
 
     expect(await callback()).toBeNull();
+    expect(transport.setAccessTokenCalls).toEqual([]);
+  });
+
+  it("refresh kind: transient 時: onExpired を呼ばない", async () => {
+    const transport = makeTransport({
+      refresh: async () => ({ kind: "transient", reason: "status 429" }),
+    });
+    const onExpired = vi.fn();
+    const callback = createRefreshAccessTokenCallback(transport, { onExpired });
+
+    expect(await callback()).toBeNull();
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+
+  it("refresh 待機中に session version が変わったら古い expired を通知しない", async () => {
+    let resolveRefresh!: (
+      result: Awaited<ReturnType<AuthTransport["refreshSession"]>>,
+    ) => void;
+    const refresh = new Promise<
+      Awaited<ReturnType<AuthTransport["refreshSession"]>>
+    >((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const transport = makeTransport({ refresh: () => refresh });
+    const onExpired = vi.fn();
+    let sessionVersion = 1;
+    const callback = createRefreshAccessTokenCallback(transport, {
+      getSessionVersion: () => sessionVersion,
+      onExpired,
+    });
+
+    const pending = callback();
+    sessionVersion++;
+    resolveRefresh({ kind: "expired" });
+
+    await expect(pending).resolves.toBeNull();
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+
+  it("refresh 待機中に session version が変わったら古い token を反映しない", async () => {
+    let resolveRefresh!: (
+      result: Awaited<ReturnType<AuthTransport["refreshSession"]>>,
+    ) => void;
+    const refresh = new Promise<
+      Awaited<ReturnType<AuthTransport["refreshSession"]>>
+    >((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const transport = makeTransport({ refresh: () => refresh });
+    let sessionVersion = 1;
+    const callback = createRefreshAccessTokenCallback(transport, {
+      getSessionVersion: () => sessionVersion,
+    });
+
+    const pending = callback();
+    sessionVersion++;
+    resolveRefresh({ kind: "ok", session: makeSession("stale-jwt") });
+
+    await expect(pending).resolves.toBeNull();
     expect(transport.setAccessTokenCalls).toEqual([]);
   });
 

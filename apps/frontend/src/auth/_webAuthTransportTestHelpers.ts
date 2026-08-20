@@ -13,17 +13,11 @@ export function createTokenHolder() {
   };
 }
 
-// vi.stubGlobal("fetch", ...) で global fetch を mock する前提で
-// authenticatedFetch も global fetch へデリゲート。logout のテストだけ
-// authenticatedFetch を直接 mock したいので opts で override 可能
 export function makeTransport(opts?: {
   tokenHolder?: ReturnType<typeof createTokenHolder>;
-  authenticatedFetch?: typeof fetch;
 }) {
-  const authenticatedFetch =
-    opts?.authenticatedFetch ?? ((input, init) => fetch(input, init));
   return createWebAuthTransport(
-    { apiUrl, authenticatedFetch },
+    { apiUrl },
     opts?.tokenHolder ?? createTokenHolder(),
   );
 }

@@ -1,3 +1,4 @@
+import { newAuthRetryScheduler } from "./authRetryScheduler";
 import type {
   AuthController,
   AuthControllerOptions,
@@ -27,10 +28,8 @@ export function createAuthController(
 
   let state: AuthControllerState = initialState;
   const listeners = new Set<() => void>();
-  // セッション世代カウンタ。login / logout / handleAuthExpired / 各 reconcile で
-  // increment し、走行中の非同期処理が古い世代の結果で state を上書きしないよう守る
   let generation = 0;
-  let onlineCleanup: (() => void) | null = null;
+  const retryScheduler = newAuthRetryScheduler(online);
 
   const emit = () => {
     for (const l of listeners) l();
@@ -38,13 +37,6 @@ export function createAuthController(
   const setState = (patch: Partial<AuthControllerState>) => {
     state = { ...state, ...patch };
     emit();
-  };
-
-  const clearOnlineRetry = () => {
-    if (onlineCleanup) {
-      onlineCleanup();
-      onlineCleanup = null;
-    }
   };
 
   const applySession = async (
@@ -67,23 +59,34 @@ export function createAuthController(
     await onUserSynced?.(session.user);
     if (gen !== generation) return false;
     setState({ userId: session.user.id, isLoggedIn: true });
-    await performInitialSync(session.user.id);
+    try {
+      await performInitialSync(session.user.id);
+    } catch {
+      // 認証自体は成立しているため logged-in state は保持する。ただし保護用の
+      // initial pull が成功するまでは syncReady を上げず、一時障害として再試行する。
+      registerOnlineRetry(gen);
+      return false;
+    }
     if (gen !== generation) return false;
+    retryScheduler.reset();
     setState({ syncReady: true });
     return true;
   };
 
-  const resetAuthState = async () => {
+  const resetAuthState = async (gen: number): Promise<boolean> => {
     transport.setAccessToken(null);
     await authStateRepo.clearLastLoginAt();
+    if (gen !== generation) return false;
     await onAuthStateReset?.();
+    if (gen !== generation) return false;
     setState({ isLoggedIn: false, syncReady: false, userId: null });
+    return true;
   };
 
-  const finalizeLogin = async (session: AuthSession): Promise<void> => {
+  const beginSessionChange = () => {
     const gen = ++generation;
-    clearOnlineRetry();
-    await applySession(session, gen);
+    retryScheduler.reset();
+    return gen;
   };
 
   const hydrate = async () => {
@@ -100,6 +103,7 @@ export function createAuthController(
 
   const reconcile = async (): Promise<boolean> => {
     const gen = ++generation;
+    retryScheduler.clear();
     let result: Awaited<ReturnType<typeof transport.refreshSession>>;
     try {
       result = await transport.refreshSession();
@@ -111,7 +115,8 @@ export function createAuthController(
     if (gen !== generation) return false;
 
     if (result.kind === "expired") {
-      await resetAuthState();
+      retryScheduler.reset();
+      await resetAuthState(gen);
       return false;
     }
     if (result.kind === "transient") {
@@ -122,18 +127,16 @@ export function createAuthController(
   };
 
   const registerOnlineRetry = (gen: number) => {
-    if (!online || gen !== generation) return;
-    clearOnlineRetry();
-    onlineCleanup = online.registerOnlineRetry(() => {
-      // adapter 側の登録解除 (NetInfo.removeEventListener / window.removeEventListener)
-      // を明示的に呼ばないと、reconcile が成功してもリスナーが生き続けてしまう
-      clearOnlineRetry();
+    if (gen !== generation) return;
+    retryScheduler.schedule(() => {
+      if (gen !== generation) return;
       void reconcile();
     });
   };
 
   return {
     getState: () => state,
+    getSessionVersion: () => generation,
     subscribe: (listener) => {
       listeners.add(listener);
       return () => {
@@ -143,47 +146,54 @@ export function createAuthController(
     hydrate,
     reconcile,
     login: async (loginId, password) => {
+      const gen = beginSessionChange();
       const session = await transport.login(loginId, password);
-      await finalizeLogin(session);
+      if (gen !== generation) return;
+      await applySession(session, gen);
     },
     register: async (loginId, password, consents) => {
+      const gen = beginSessionChange();
       const session = await transport.register(loginId, password, consents);
-      await finalizeLogin(session);
-      await authStateRepo.setTutorialStatus("pending");
+      if (gen !== generation) return;
+      await applySession(session, gen);
+      if (gen === generation) {
+        await authStateRepo.setTutorialStatus("pending");
+      }
     },
     googleLogin: async (credential, consents) => {
+      const gen = beginSessionChange();
       const session = await transport.googleLogin(credential, consents);
-      await finalizeLogin(session);
+      if (gen !== generation) return;
+      await applySession(session, gen);
     },
     appleLogin: async (credential, consents) => {
+      const gen = beginSessionChange();
       const session = await transport.appleLogin(credential, consents);
-      await finalizeLogin(session);
+      if (gen !== generation) return;
+      await applySession(session, gen);
     },
     applyExternalSession: async (session) => {
+      const gen = beginSessionChange();
       await transport.persistSession(session);
-      await finalizeLogin(session);
+      if (gen !== generation) return;
+      await applySession(session, gen);
     },
     logout: async () => {
-      generation++;
-      clearOnlineRetry();
-      // transport.logout は authMiddleware が Bearer 必須なので、有効な
-      // access token (tokenHolder) が残っている状態で先に呼ぶ。
-      // 失敗時は local state を保持して再試行可能にする — Web の httpOnly
-      // cookie が残ったままだと次回起動で自動再ログインしてしまう。
+      const gen = ++generation;
+      retryScheduler.reset();
+      // backend logout は Bearer 必須なので、local reset より先に呼ぶ。
       const result = await transport.logout().catch(() => ({ ok: false }));
-      if (result.ok) {
-        await resetAuthState();
+      if (result.ok && gen === generation) {
+        await resetAuthState(gen);
       }
       return result;
     },
     forceLogout: async () => {
-      generation++;
-      clearOnlineRetry();
-      // delete account 後など server cleanup が通らないケースで呼ばれるので、
-      // 永続層 (Mobile の SecureStore など) も明示的にクリアする。backend は
-      // 既に revoke 済みなので残しても再利用はできないが、識別子残存を避ける
+      const gen = ++generation;
+      retryScheduler.reset();
+      // server cleanup を介さない経路でも永続 credential を削除する。
       await transport.clearPersistedSession().catch(() => {});
-      await resetAuthState();
+      if (gen === generation) await resetAuthState(gen);
     },
   };
 }
