@@ -48,19 +48,7 @@ export default defineConfig({
     outDir: "../../dist-frontend-v2",
     emptyOutDir: true,
     sourcemap: false,
-    rolldownOptions: {
-      output: {
-        codeSplitting: {
-          groups: [
-            {
-              name: "vendor",
-              test: /node_modules[\\/]/,
-              maxSize: 350_000,
-              priority: 10,
-            },
-          ],
-        },
-      },
-    },
+    // Keep Vite's default splitting. Forced vendor groups can create Rolldown
+    // evaluation cycles that crash before React mounts (rolldown#10228).
   },
 });
