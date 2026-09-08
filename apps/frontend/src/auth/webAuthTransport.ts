@@ -4,8 +4,8 @@ import type {
   RefreshResult,
 } from "@packages/auth-client";
 import {
-  classifyRefreshFailure,
   newAuthOperationCoordinator,
+  requestRefreshSession,
 } from "@packages/auth-client";
 import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
@@ -47,10 +47,21 @@ export function createWebAuthTransport(
   };
 
   const runRefreshSession = async (): Promise<RefreshResult> => {
-    const res = await postAuth("/auth/token", undefined);
-    trackServerTimeFromResponse(res);
-    if (res.ok) return { kind: "ok", session: await parseSession(res) };
-    return classifyRefreshFailure(res.status);
+    const refresh = () =>
+      requestRefreshSession((signal) =>
+        fetch(`${apiUrl}/auth/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          signal,
+        }),
+      );
+    // タブごとに異なる coordinator を補完し、更新後の Cookie で次を送る。
+    // ロックは body の受信と直後の再試行が完了するまで保持する。
+    if (typeof navigator !== "undefined" && navigator.locks) {
+      return navigator.locks.request(`actiko:refresh:${apiUrl}`, refresh);
+    }
+    return refresh();
   };
 
   const postLogout = (): Promise<Response> => {

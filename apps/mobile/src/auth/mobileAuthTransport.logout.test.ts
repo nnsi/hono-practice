@@ -300,18 +300,19 @@ describe("mobileAuthTransport.logout", () => {
     expect(mockDeleteItem).toHaveBeenCalledTimes(2);
   });
 
-  it("401 -> refresh が transient (5xx) -> retry せず { ok: false } (再試行可)", async () => {
+  it("401 -> refresh の再送も transient (5xx) -> logout は再送せず { ok: false }", async () => {
     mockGetItem.mockResolvedValue("rt");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout
+      .mockResolvedValueOnce(emptyResponse(503)) // /auth/token retry 前
       .mockResolvedValueOnce(emptyResponse(503)); // /auth/token → transient
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await makeTransport().logout();
 
     expect(result).toEqual({ ok: false });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(mockDeleteItem).not.toHaveBeenCalled();
   });
 });

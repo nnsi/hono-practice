@@ -2,7 +2,6 @@ import {
   createAuthController,
   createRefreshAccessTokenCallback,
 } from "@packages/auth-client";
-import NetInfo from "@react-native-community/netinfo";
 
 import { getApiUrl } from "../api/apiClient";
 import { setRefreshAccessToken } from "../api/customFetch";
@@ -18,6 +17,7 @@ import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
 import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
+import { mobileOnlineRetryAdapter } from "./mobileOnlineRetryAdapter";
 
 const transport = createMobileAuthTransport(
   { apiUrl: getApiUrl() },
@@ -27,22 +27,7 @@ const transport = createMobileAuthTransport(
 export const authController = createAuthController({
   transport,
   authStateRepo: createMobileAuthStateRepository(),
-  online: {
-    registerOnlineRetry(handler) {
-      let previousConnected: boolean | null = null;
-      const unsub = NetInfo.addEventListener((info) => {
-        const connected = info.isConnected === true;
-        if (previousConnected === null) {
-          previousConnected = connected;
-          return;
-        }
-        const recovered = !previousConnected && connected;
-        previousConnected = connected;
-        if (recovered) handler();
-      });
-      return unsub;
-    },
-  },
+  online: mobileOnlineRetryAdapter,
   onUserSwitch: async () => {
     await clearVoiceCredentials();
     await clearLocalData();
@@ -69,4 +54,5 @@ setRefreshAccessToken(
     getSessionVersion: () => authController.getSessionVersion(),
     onExpired: () => authController.forceLogout(),
   }),
+  () => authController.getSessionIdentityVersion(),
 );

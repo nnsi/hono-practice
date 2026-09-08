@@ -2,6 +2,7 @@ import { createDefaultTabPreference } from "@packages/domain/user/tabPreferenceS
 import { describe, expect, it, vi } from "vitest";
 
 import { createAuthController } from "./createAuthController";
+import { createAuthenticatedFetch } from "./http/createAuthenticatedFetch";
 import type {
   AuthSession,
   AuthStateRepository,
@@ -130,6 +131,67 @@ function makeTransport(opts?: {
 }
 
 describe("createAuthController", () => {
+  it.each([
+    ["u1", 200, 2],
+    ["different-user", 401, 1],
+  ])("reconcile to %s handles a late API 401 within the session boundary", async (userId, status, requestCount) => {
+    const transport = makeTransport({
+      refreshResults: [{ kind: "ok", session: makeSession(userId) }],
+    });
+    transport.setAccessToken("old-access");
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo({ userId: "u1", lastLoginAt: "x" }),
+      performInitialSync: async () => {},
+    });
+    const refresh = vi.fn();
+    const { fetch: apiFetch } = createAuthenticatedFetch({
+      tokenSource: { getToken: () => transport.accessToken },
+      refreshAccessToken: refresh,
+      getSessionVersion: () => controller.getSessionIdentityVersion(),
+    });
+    let finish!: (res: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(new Response("ok"));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const pending = apiFetch("http://localhost/users/activities", {
+        method: "PUT",
+      });
+      expect(await controller.reconcile()).toBe(true);
+      finish(new Response(null, { status: 401 }));
+      expect((await pending).status).toBe(status);
+      expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+      expect(refresh).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("changes the HTTP session boundary as soon as login or logout starts", async () => {
+    const transport = makeTransport();
+    const controller = createAuthController({
+      transport,
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+    });
+    const initial = controller.getSessionIdentityVersion();
+    const login = controller.login("id", "pw");
+    expect(controller.getSessionIdentityVersion()).toBe(initial + 1);
+    await login;
+    const beforeLogout = controller.getSessionIdentityVersion();
+    const logout = controller.logout();
+    expect(controller.getSessionIdentityVersion()).toBe(beforeLogout + 1);
+    await logout;
+  });
+
   it("hydrate restores logged-in state when both userId and lastLoginAt exist", async () => {
     const transport = makeTransport();
     const repo = makeRepo({

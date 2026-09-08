@@ -1,4 +1,5 @@
 import { AuthError } from "@backend/error";
+import type { TransactionRunner } from "@backend/infra/rdb/db";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Tracer } from "@backend/lib/tracer";
 import { createRefreshToken } from "@packages/domain/auth/refreshTokenSchema";
@@ -95,43 +96,48 @@ export function login(
 export function rotateRefreshToken(
   refreshTokenRepo: RefreshTokenRepository,
   userRepo: UserRepository,
+  txRunner: TransactionRunner,
   jwtSecret: string,
   jwtAudience: string,
   tracer: Tracer,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
-    const storedToken = await tracer.span("db.revokeAndGetRefreshToken", () =>
-      refreshTokenRepo.revokeAndGetRefreshToken(combinedToken),
-    );
-    if (!storedToken) throw new AuthError("invalid refresh token");
-    const user = await tracer.span("db.getUserById", () =>
-      userRepo.getUserById(storedToken.userId),
-    );
-    if (!user) throw new AuthError("invalid refresh token");
+    // 新 token の保存まで成功した場合だけ旧 token を消費する。
+    // DB の一時障害では初回 rotation / grace のどちらも再試行可能に保つ。
+    return txRunner.run([refreshTokenRepo, userRepo], async (tx) => {
+      const storedToken = await tracer.span("db.revokeAndGetRefreshToken", () =>
+        tx.revokeAndGetRefreshToken(combinedToken),
+      );
+      if (!storedToken) throw new AuthError("invalid refresh token");
+      const user = await tracer.span("db.getUserById", () =>
+        tx.getUserById(storedToken.userId),
+      );
+      if (!user) throw new AuthError("invalid refresh token");
 
-    const accessToken = await generateAccessToken(
-      jwtSecret,
-      jwtAudience,
-      storedToken.userId,
-    );
-    const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-    const refreshTokenEntity = createRefreshToken({
-      userId: storedToken.userId,
-      selector,
-      token: await hashWithSHA256(plainRefreshToken),
-      expiresAt,
+      const accessToken = await generateAccessToken(
+        jwtSecret,
+        jwtAudience,
+        storedToken.userId,
+      );
+      const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
+      const refreshTokenEntity = createRefreshToken({
+        userId: storedToken.userId,
+        selector,
+        token: await hashWithSHA256(plainRefreshToken),
+        expiresAt,
+      });
+
+      await tracer.span("db.createRefreshToken", () =>
+        tx.createRefreshToken(refreshTokenEntity),
+      );
+
+      return {
+        accessToken,
+        refreshToken: `${selector}.${plainRefreshToken}`,
+        userId: storedToken.userId,
+        user,
+      };
     });
-
-    await tracer.span("db.createRefreshToken", () =>
-      refreshTokenRepo.createRefreshToken(refreshTokenEntity),
-    );
-
-    return {
-      accessToken,
-      refreshToken: `${selector}.${plainRefreshToken}`,
-      userId: storedToken.userId,
-      user,
-    };
   };
 }
 

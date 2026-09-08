@@ -1,4 +1,4 @@
-import { sign } from "hono/jwt";
+import { decode, sign } from "hono/jwt";
 import { testClient } from "hono/testing";
 
 import { AuthError } from "@backend/error";
@@ -75,6 +75,29 @@ const mockGoogleVerifiers: OAuthVerifierMap = {
     throw new AuthError("Not configured in test");
   },
 };
+
+function expectNinetyDayRefreshExpiry(
+  response: Response,
+  expiresAt: Date | undefined,
+  requestStartedAt: number,
+) {
+  const lifetimeMs = 90 * 24 * 60 * 60 * 1000;
+  const requestEndedAt = Date.now();
+  expect(expiresAt?.getTime()).toBeGreaterThanOrEqual(
+    requestStartedAt + lifetimeMs,
+  );
+  expect(expiresAt?.getTime()).toBeLessThanOrEqual(requestEndedAt + lifetimeMs);
+
+  const cookieExpiry = response.headers
+    .get("Set-Cookie")
+    ?.match(/expires=([^;]+)/i)?.[1];
+  const cookieExpiresAt = new Date(cookieExpiry ?? "").getTime();
+  // HTTP cookie の Expires は秒精度。
+  expect(cookieExpiresAt).toBeGreaterThanOrEqual(
+    Math.floor((requestStartedAt + lifetimeMs) / 1000) * 1000,
+  );
+  expect(cookieExpiresAt).toBeLessThanOrEqual(requestEndedAt + lifetimeMs);
+}
 
 describe("AuthRoute Integration Tests", () => {
   const JWT_SECRET = "test-secret-integration";
@@ -203,6 +226,7 @@ describe("AuthRoute Integration Tests", () => {
   describe("POST /login", () => {
     it("正常系：ログイン成功", async () => {
       const client = createTestClient();
+      const requestStartedAt = Date.now();
       const res = await client.login.$post({
         json: {
           login_id: testLoginId,
@@ -229,6 +253,13 @@ describe("AuthRoute Integration Tests", () => {
       );
       expect(storedToken).not.toBeNull();
       expect(storedToken?.userId).toBe(testUserId);
+      expectNinetyDayRefreshExpiry(
+        res,
+        storedToken?.expiresAt,
+        requestStartedAt,
+      );
+      const { payload } = decode(body.token);
+      expect(payload.exp).toBe((payload.iat ?? 0) + 15 * 60);
 
       const [upgradedUser] = await testDB
         .select({ password: users.password })
@@ -338,7 +369,14 @@ describe("AuthRoute Integration Tests", () => {
     });
 
     it("正常系：トークンの更新成功", async () => {
+      // 期限が近いセッションも、refresh 成功時点から90日に延長する。
+      const [oldSelector] = validPlainRefreshToken.split(".");
+      await testDB
+        .update(refreshTokens)
+        .set({ expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+        .where(eq(refreshTokens.selector, oldSelector));
       const client = createTestClient(false);
+      const requestStartedAt = Date.now();
       const res = await client.token.$post(
         {},
         {
@@ -381,6 +419,11 @@ describe("AuthRoute Integration Tests", () => {
       expect(newStoredToken?.userId).toBe(testUserId);
       expect(newStoredToken?.revokedAt).toBeNull();
       expect(newStoredToken?.rotatedAt).toBeNull();
+      expectNinetyDayRefreshExpiry(
+        res,
+        newStoredToken?.expiresAt,
+        requestStartedAt,
+      );
     });
 
     it("異常系：削除済みユーザーのリフレッシュトークンは更新できない", async () => {

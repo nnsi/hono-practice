@@ -3,6 +3,7 @@ import { setCookie } from "hono/cookie";
 
 import type { AppContext } from "../../context";
 import type { newAuthHandler } from "./authHandler";
+import { REFRESH_TOKEN_EXPIRES_IN_MS } from "./authTokenUtils";
 
 export type AuthRouteContext = AppContext & {
   Variables: {
@@ -11,7 +12,6 @@ export type AuthRouteContext = AppContext & {
 };
 
 const REFRESH_COOKIE_NAME = "refresh_token";
-const REFRESH_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function refreshCookieOptions(env: AppContext["Bindings"]) {
   const isDev = env.NODE_ENV === "development" || env.NODE_ENV === "test";
@@ -30,7 +30,7 @@ export function setRefreshCookie<E extends AppContext>(
 ) {
   setCookie(c, REFRESH_COOKIE_NAME, refreshToken, {
     ...refreshCookieOptions(c.env),
-    expires: new Date(Date.now() + REFRESH_COOKIE_MAX_AGE_MS),
+    expires: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
   });
 }
 

@@ -4,8 +4,8 @@ import type {
   RefreshResult,
 } from "@packages/auth-client";
 import {
-  classifyRefreshFailure,
   newAuthOperationCoordinator,
+  requestRefreshSession,
 } from "@packages/auth-client";
 import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
@@ -47,10 +47,34 @@ export function createMobileAuthTransport(
   const coordinator = newAuthOperationCoordinator<RefreshResult>(() =>
     runRefreshSession(),
   );
+  // 認証操作の直列化は coordinator に任せ、保存できなかった最新 token だけ保持する。
+  let pendingRefreshToken: string | null | undefined;
+
+  const readRefreshToken = async (): Promise<string | null> =>
+    pendingRefreshToken !== undefined
+      ? pendingRefreshToken
+      : getStoredRefreshToken();
+
+  const persistRefreshToken = async (token: string): Promise<void> => {
+    pendingRefreshToken = token;
+    try {
+      await setStoredRefreshToken(token);
+    } catch {
+      // サーバーで再 rotation せず、受信済みの同じ token の保存だけを再試行する。
+      await setStoredRefreshToken(token);
+    }
+    pendingRefreshToken = undefined;
+  };
+
+  const clearRefreshToken = async (): Promise<void> => {
+    pendingRefreshToken = null;
+    await clearStoredRefreshToken();
+    pendingRefreshToken = undefined;
+  };
 
   const persistSession = async (res: Response): Promise<AuthSession> => {
     const session = authResponseSchema.parse(await res.json());
-    if (session.refreshToken) await setStoredRefreshToken(session.refreshToken);
+    if (session.refreshToken) await persistRefreshToken(session.refreshToken);
     return session;
   };
 
@@ -81,32 +105,35 @@ export function createMobileAuthTransport(
   };
 
   const runRefreshSession = async (): Promise<RefreshResult> => {
-    const rt = await getStoredRefreshToken();
-    if (!rt) return { kind: "expired" };
-    let res: Response;
     try {
-      res = await fetchWithTimeout(`${apiUrl}/auth/token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${rt}`,
-        },
-      });
-      trackServerTimeFromResponse(res);
+      const rt = await readRefreshToken();
+      if (!rt) return { kind: "expired" };
+      const result = await requestRefreshSession((signal) =>
+        fetch(`${apiUrl}/auth/token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${rt}`,
+          },
+          signal,
+        }),
+      );
+      if (result.kind === "ok") {
+        if (!result.session.refreshToken)
+          return { kind: "transient", reason: "missing refresh token" };
+        await persistRefreshToken(result.session.refreshToken);
+      } else if (result.kind === "expired") {
+        await clearRefreshToken();
+      }
+      return result;
     } catch {
-      return { kind: "transient", reason: "network" };
+      return { kind: "transient", reason: "storage" };
     }
-    if (res.ok) return { kind: "ok", session: await persistSession(res) };
-    const failure = classifyRefreshFailure(res.status);
-    if (failure.kind === "expired") {
-      await clearStoredRefreshToken();
-    }
-    return failure;
   };
 
   const postLogout = async (): Promise<Response> => {
     const accessToken = tokenHolder.getToken();
-    const refreshToken = await getStoredRefreshToken();
+    const refreshToken = await readRefreshToken();
     return fetchWithTimeout(`${apiUrl}/auth/logout`, {
       method: "POST",
       headers: {
@@ -139,7 +166,7 @@ export function createMobileAuthTransport(
       // credential を保持し、logout を再試行可能にする。
     }
     if (serverOk) {
-      await clearStoredRefreshToken();
+      await clearRefreshToken();
     }
     return { ok: serverOk };
   };
@@ -188,12 +215,12 @@ export function createMobileAuthTransport(
     async persistSession(session) {
       await coordinator.runSessionOperation(async () => {
         if (session.refreshToken)
-          await setStoredRefreshToken(session.refreshToken);
+          await persistRefreshToken(session.refreshToken);
       });
     },
     async clearPersistedSession() {
       await coordinator.runSessionOperation(async () => {
-        await clearStoredRefreshToken();
+        await clearRefreshToken();
       });
     },
   };
