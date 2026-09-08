@@ -1,5 +1,7 @@
 // mobileAuthTransport.*.test.ts 共通ヘルパー (pure 関数のみ)
 // vi.mock("expo-secure-store") / vi.mock("react-native") は各 test file の先頭で行う
+import type { AuthSession } from "@packages/auth-client";
+
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 
 export const apiUrl = "http://localhost:3456";
@@ -39,7 +41,7 @@ export function emptyResponse(status: number): Response {
 export function validSessionBody(opts?: {
   token?: string;
   refreshToken?: string;
-}) {
+}): AuthSession {
   return {
     token: opts?.token ?? "jwt-token",
     refreshToken: opts?.refreshToken,

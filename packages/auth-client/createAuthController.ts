@@ -29,6 +29,8 @@ export function createAuthController(
   let state: AuthControllerState = initialState;
   const listeners = new Set<() => void>();
   let generation = 0;
+  // 作業の generation と分け、同じユーザーの reconcile では変えない。
+  let sessionIdentityVersion = 0;
   const retryScheduler = newAuthRetryScheduler(online);
 
   const emit = () => {
@@ -45,6 +47,9 @@ export function createAuthController(
   ): Promise<boolean> => {
     const previousUserId = await authStateRepo.getCurrentUserId();
     if (gen !== generation) return false;
+    if (previousUserId && previousUserId !== session.user.id) {
+      sessionIdentityVersion++;
+    }
     transport.setAccessToken(session.token);
     if (previousUserId && previousUserId !== session.user.id) {
       await onUserSwitch?.();
@@ -74,6 +79,7 @@ export function createAuthController(
   };
 
   const resetAuthState = async (gen: number): Promise<boolean> => {
+    sessionIdentityVersion++;
     transport.setAccessToken(null);
     await authStateRepo.clearLastLoginAt();
     if (gen !== generation) return false;
@@ -84,6 +90,7 @@ export function createAuthController(
   };
 
   const beginSessionChange = () => {
+    sessionIdentityVersion++;
     const gen = ++generation;
     retryScheduler.reset();
     return gen;
@@ -137,6 +144,7 @@ export function createAuthController(
   return {
     getState: () => state,
     getSessionVersion: () => generation,
+    getSessionIdentityVersion: () => sessionIdentityVersion,
     subscribe: (listener) => {
       listeners.add(listener);
       return () => {
@@ -179,6 +187,7 @@ export function createAuthController(
       await applySession(session, gen);
     },
     logout: async () => {
+      sessionIdentityVersion++;
       const gen = ++generation;
       retryScheduler.reset();
       // backend logout は Bearer 必須なので、local reset より先に呼ぶ。
@@ -189,6 +198,7 @@ export function createAuthController(
       return result;
     },
     forceLogout: async () => {
+      sessionIdentityVersion++;
       const gen = ++generation;
       retryScheduler.reset();
       // server cleanup を介さない経路でも永続 credential を削除する。

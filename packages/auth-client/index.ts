@@ -14,6 +14,7 @@ export {
   type RefreshAccessTokenCallbackOptions,
   createRefreshAccessTokenCallback,
 } from "./refreshAccessTokenWiring";
+export { requestRefreshSession } from "./refreshSession";
 export type {
   AuthController,
   AuthControllerOptions,

@@ -48,4 +48,5 @@ setRefreshAccessToken(
     getSessionVersion: () => authController.getSessionVersion(),
     onExpired: () => authController.forceLogout(),
   }),
+  () => authController.getSessionIdentityVersion(),
 );

@@ -6,14 +6,20 @@ import { tokenHolder } from "./tokenHolder";
 // setRefreshAccessToken で配線する。module 評価時は no-op だが、
 // 実際の API 呼び出しが発生する頃には必ず配線済み。
 let refreshAccessTokenImpl: () => Promise<string | null> = async () => null;
+let getSessionVersionImpl = () => 0;
 
-export function setRefreshAccessToken(fn: () => Promise<string | null>): void {
+export function setRefreshAccessToken(
+  fn: () => Promise<string | null>,
+  getSessionVersion: () => number,
+): void {
   refreshAccessTokenImpl = fn;
+  getSessionVersionImpl = getSessionVersion;
 }
 
 const { fetch } = createAuthenticatedFetch({
   tokenSource: tokenHolder,
   refreshAccessToken: () => refreshAccessTokenImpl(),
+  getSessionVersion: () => getSessionVersionImpl(),
   requestTimeoutMs: 15_000,
 });
 

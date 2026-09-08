@@ -80,6 +80,8 @@ export type AuthControllerOptions = {
 export type AuthController = {
   getState(): AuthControllerState;
   getSessionVersion(): number;
+  // HTTP 再送用。通常の同一ユーザーの reconcile では変わらない。
+  getSessionIdentityVersion(): number;
   subscribe(listener: () => void): () => void;
   // local の last_login_at で UI を即出す
   hydrate(): Promise<void>;

@@ -40,6 +40,7 @@ export function newAuthUsecase(
     rotateRefreshToken: rotateRefreshToken(
       refreshTokenRepo,
       userRepo,
+      txRunner,
       jwtSecret,
       jwtAudience,
       tracer,

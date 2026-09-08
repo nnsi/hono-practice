@@ -6,8 +6,9 @@ import { v7 } from "uuid";
 // Access tokens cannot be individually revoked. Keep the residual risk after
 // logout bounded while refresh tokens remain explicitly revocable.
 export const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
-// リフレッシュトークンの有効期限を30日に設定 (ミリ秒)
-const REFRESH_TOKEN_EXPIRES_IN_MS = 30 * 24 * 60 * 60 * 1000;
+// refresh 成功ごとに、最後の利用から90日までセッションを延長する。
+// cookie と DB の期限がずれないよう、両方で同じ値を使う。
+export const REFRESH_TOKEN_EXPIRES_IN_MS = 90 * 24 * 60 * 60 * 1000;
 
 export function generateAccessToken(
   jwtSecret: string,
