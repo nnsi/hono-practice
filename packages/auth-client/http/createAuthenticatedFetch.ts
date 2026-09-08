@@ -14,6 +14,8 @@ export type AuthenticatedFetchOptions = {
   // - セッション復元不能 / ネットワーク等の一時障害: null を返す
   //   (RefreshResult kind の解釈は controller 側、ここでは success/failure の二値のみ)
   refreshAccessToken(): Promise<string | null>;
+  // login / logout をまたいだ古いリクエストを別の session で再送しない。
+  getSessionVersion?(): number;
   // /auth/* リクエスト時にデフォルトで credentials: include を付けるか (Web のみ true)
   includeCredentialsForAuthEndpoints?: boolean;
   // request 単位の timeout (Mobile 用)
@@ -30,6 +32,7 @@ export function createAuthenticatedFetch(
   const {
     tokenSource,
     refreshAccessToken,
+    getSessionVersion,
     includeCredentialsForAuthEndpoints = false,
     requestTimeoutMs,
   } = options;
@@ -64,6 +67,7 @@ export function createAuthenticatedFetch(
   };
 
   const authenticatedFetch: typeof fetch = async (input, init) => {
+    const sessionVersion = getSessionVersion?.();
     const token = tokenSource.getToken();
     const headers = new Headers(init?.headers);
     if (!headers.has("Content-Type")) {
@@ -108,8 +112,15 @@ export function createAuthenticatedFetch(
     trackServerTimeFromResponse(res);
 
     if (res.status === 401 && !isAuthRefreshEndpoint) {
-      const newToken = await sharedRefresh();
-      if (newToken) {
+      if (sessionVersion !== getSessionVersion?.()) return res;
+      // 別リクエストの refresh 完了後に届いた 401 は、既に更新された token
+      // で再送する。遅延した 401 ごとの余分な rotation / 429 を避ける。
+      const currentToken = tokenSource.getToken();
+      const newToken =
+        currentToken && currentToken !== token
+          ? currentToken
+          : await sharedRefresh();
+      if (newToken && sessionVersion === getSessionVersion?.()) {
         headers.set("Authorization", `Bearer ${newToken}`);
         res = await baseFetch(input, {
           ...finalInit,

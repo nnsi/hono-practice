@@ -234,4 +234,82 @@ describe("createAuthenticatedFetch", () => {
     expect(r2.status).toBe(200);
     expect(refreshCount).toBe(1);
   });
+
+  it("a late 401 reuses the token already refreshed by another request", async () => {
+    const holder = makeTokenHolder("expired");
+    const refresh = vi.fn(async () => {
+      holder.setToken("refreshed");
+      return "refreshed";
+    });
+    const { fetch: f } = createAuthenticatedFetch({
+      tokenSource: holder,
+      refreshAccessToken: refresh,
+      getSessionVersion: () => 1,
+    });
+    let finishLate!: (res: Response) => void;
+    mockFetch
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            finishLate = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(new Response("first ok"))
+      .mockResolvedValueOnce(new Response("late ok"));
+    const first = f("http://localhost/users/me");
+    const late = f("http://localhost/users/activities");
+    expect((await first).status).toBe(200);
+    finishLate(new Response(null, { status: 401 }));
+    expect((await late).status).toBe(200);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[3][1].headers.get("Authorization")).toBe(
+      "Bearer refreshed",
+    );
+  });
+
+  it("does not retry a late 401 with a different login session", async () => {
+    const holder = makeTokenHolder("old-user-token");
+    let version = 1;
+    const refresh = vi.fn();
+    const { fetch: f } = createAuthenticatedFetch({
+      tokenSource: holder,
+      refreshAccessToken: refresh,
+      getSessionVersion: () => version,
+    });
+    let finish!: (res: Response) => void;
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const pending = f("http://localhost/users/activities", { method: "POST" });
+    version++;
+    holder.setToken("new-user-token");
+    finish(new Response(null, { status: 401 }));
+    expect((await pending).status).toBe(401);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry after a session changes while refresh is pending", async () => {
+    let version = 1;
+    let finish!: (token: string) => void;
+    const { fetch: f } = createAuthenticatedFetch({
+      tokenSource: makeTokenHolder("old-user-token"),
+      refreshAccessToken: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      getSessionVersion: () => version,
+    });
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 401 }));
+    const pending = f("http://localhost/users/activities", { method: "POST" });
+    await vi.waitFor(() => expect(finish).toBeDefined());
+    version++;
+    finish("new-user-token");
+    expect((await pending).status).toBe(401);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
 });
