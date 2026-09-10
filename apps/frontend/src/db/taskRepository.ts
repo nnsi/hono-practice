@@ -1,5 +1,5 @@
-import type { TaskRepository } from "@packages/domain/task/taskRepository";
 import {
+  type ScheduledTaskRepository,
   type TaskDbAdapter,
   newTaskRepository,
 } from "@packages/frontend-shared/repositories";
@@ -20,6 +20,18 @@ const adapter: TaskDbAdapter = {
   async getAll(filter) {
     return db.tasks.filter(filter).toArray();
   },
+  async getByScheduledDate(date, scheduleIds) {
+    if (scheduleIds !== undefined) {
+      if (scheduleIds.length === 0) return [];
+      return db.tasks
+        .where("[scheduleId+scheduledDate]")
+        .anyOf(scheduleIds.map((id) => [id, date]))
+        .toArray();
+    }
+    return db.tasks
+      .filter((task) => task.scheduledDate === date && task.scheduleId != null)
+      .toArray();
+  },
   async update(id, changes) {
     await db.tasks.update(id, changes);
   },
@@ -36,4 +48,4 @@ const adapter: TaskDbAdapter = {
 
 export const taskRepository = newTaskRepository(
   adapter,
-) satisfies TaskRepository;
+) satisfies ScheduledTaskRepository;

@@ -11,6 +11,7 @@ type SyncFunctions = {
   syncGoalFreezePeriods: () => Promise<void>;
   syncNotes: () => Promise<void>;
   syncTasks: () => Promise<void>;
+  syncTaskSchedules: () => Promise<void>;
 };
 
 export type SyncErrorHandler = (error: unknown, phase: string) => void;
@@ -42,6 +43,7 @@ export function createSyncEngine(
     syncGoalFreezePeriods: gate(fns.syncGoalFreezePeriods),
     syncNotes: gate(fns.syncNotes),
     syncTasks: gate(fns.syncTasks),
+    syncTaskSchedules: gate(fns.syncTaskSchedules),
     mutex,
 
     async syncAll(): Promise<void> {
@@ -87,6 +89,9 @@ export function createSyncEngine(
 
         // 4. Goals
         const goalsOk = await tryStep("syncGoals", fns.syncGoals);
+
+        // Task schedules precede tasks because tasks reference scheduleId.
+        await tryStep("syncTaskSchedules", fns.syncTaskSchedules);
 
         // 5. Tasks (before activity logs — logs can reference taskId)
         await tryStep("syncTasks", fns.syncTasks);

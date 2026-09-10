@@ -1,6 +1,7 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { createV2InitialSync } from "@packages/sync-engine";
 
+import { getTaskSchedules } from "../api";
 import { apiClient } from "../api/apiClient";
 import { getDatabase } from "../db/database";
 import { activityLogRepository } from "../repositories/activityLogRepository";
@@ -9,11 +10,13 @@ import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepo
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
+import { taskScheduleRepository } from "../repositories/taskScheduleRepository";
 import { reportError } from "../utils/errorReporter";
 import { rnStorageAdapter } from "./rnPlatformAdapters";
 
 const { clearLocalData, performInitialSync } = createV2InitialSync({
   api: {
+    getTaskSchedules,
     getActivities: () => apiClient.users.v2.activities.$get(),
     getActivityLogs: (query) =>
       apiClient.users.v2["activity-logs"].$get({ query }),
@@ -29,6 +32,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
     goal: goalRepository,
     goalFreezePeriod: goalFreezePeriodRepository,
     task: taskRepository,
+    taskSchedule: taskScheduleRepository,
     note: noteRepository,
   },
   getClientDate: getToday,
@@ -41,6 +45,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
       DELETE FROM goals;
       DELETE FROM goal_freeze_periods;
       DELETE FROM tasks;
+      DELETE FROM task_schedules;
       DELETE FROM note;
       DELETE FROM activity_icon_blobs;
       DELETE FROM activity_icon_delete_queue;
@@ -50,7 +55,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
   updateAuthState: async () => {},
   isLocalDataEmpty: async () => {
     const db = await getDatabase();
-    const [logRow, goalRow, taskRow, freezePeriodRow, noteRow] =
+    const [logRow, goalRow, taskRow, freezePeriodRow, noteRow, scheduleRow] =
       await Promise.all([
         db.getFirstAsync<{ count: number }>(
           "SELECT COUNT(*) as count FROM activity_logs",
@@ -67,13 +72,17 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
         db.getFirstAsync<{ count: number }>(
           "SELECT COUNT(*) as count FROM note",
         ),
+        db.getFirstAsync<{ count: number }>(
+          "SELECT COUNT(*) as count FROM task_schedules",
+        ),
       ]);
     return (
       (logRow?.count ?? 0) === 0 &&
       (goalRow?.count ?? 0) === 0 &&
       (taskRow?.count ?? 0) === 0 &&
       (freezePeriodRow?.count ?? 0) === 0 &&
-      (noteRow?.count ?? 0) === 0
+      (noteRow?.count ?? 0) === 0 &&
+      (scheduleRow?.count ?? 0) === 0
     );
   },
   // Mobile repositories manage sqlite transactions internally, so no

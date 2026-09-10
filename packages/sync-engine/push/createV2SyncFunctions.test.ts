@@ -13,6 +13,7 @@ function createMockApi() {
   return {
     postActivityLogs: vi.fn().mockResolvedValue(okSyncResult()),
     postGoals: vi.fn().mockResolvedValue(okSyncResult()),
+    postTaskSchedules: vi.fn().mockResolvedValue(okSyncResult()),
     postTasks: vi.fn().mockResolvedValue(okSyncResult()),
     postNotes: vi.fn().mockResolvedValue(okSyncResult()),
     postGoalFreezePeriods: vi.fn().mockResolvedValue(okSyncResult()),
@@ -32,6 +33,12 @@ function createMockRepos() {
       markGoalsSynced: vi.fn().mockResolvedValue(undefined),
       markGoalsFailed: vi.fn().mockResolvedValue(undefined),
       upsertGoalsFromServer: vi.fn().mockResolvedValue(undefined),
+    },
+    taskSchedule: {
+      getPendingSyncTaskSchedules: vi.fn().mockResolvedValue([]),
+      markTaskSchedulesSynced: vi.fn().mockResolvedValue(undefined),
+      markTaskSchedulesFailed: vi.fn().mockResolvedValue(undefined),
+      upsertTaskSchedulesFromServer: vi.fn().mockResolvedValue(undefined),
     },
     task: {
       getPendingSyncTasks: vi.fn().mockResolvedValue([]),
@@ -78,7 +85,7 @@ describe("createV2SyncFunctions", () => {
     vi.clearAllMocks();
   });
 
-  it("returns the five standard entity sync functions", () => {
+  it("returns the six standard entity sync functions", () => {
     const fns = createV2SyncFunctions({
       api: createMockApi(),
       repos: createMockRepos(),
@@ -88,6 +95,7 @@ describe("createV2SyncFunctions", () => {
       "syncGoalFreezePeriods",
       "syncGoals",
       "syncNotes",
+      "syncTaskSchedules",
       "syncTasks",
     ]);
   });

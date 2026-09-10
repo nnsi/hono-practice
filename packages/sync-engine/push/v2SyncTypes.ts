@@ -1,4 +1,5 @@
 import type { UpsertGoalRequest } from "@packages/types/sync/request/goal";
+import type { UpsertTaskScheduleRequest } from "@packages/types/sync/request/taskSchedule";
 
 import type {
   mapApiActivityLog,
@@ -6,7 +7,9 @@ import type {
   mapApiGoalFreezePeriod,
   mapApiNote,
   mapApiTask,
+  mapApiTaskSchedule,
 } from "../mappers/apiMappers";
+import type { TaskSchedulePending } from "./createSyncTaskSchedules";
 
 export type Pending = { _syncStatus: string };
 
@@ -44,6 +47,9 @@ export type V2SyncApi<
   postNotes: (json: {
     notes: Omit<TNote, "_syncStatus">[];
   }) => Promise<V2ApiResponse>;
+  postTaskSchedules: (json: {
+    taskSchedules: UpsertTaskScheduleRequest[];
+  }) => Promise<V2ApiResponse>;
   postGoalFreezePeriods: (json: {
     freezePeriods: Omit<TFreeze, "_syncStatus">[];
   }) => Promise<V2ApiResponse>;
@@ -55,6 +61,7 @@ export type V2SyncRepos<
   TTask extends Pending,
   TNote extends Pending,
   TFreeze extends Pending,
+  TSchedule extends TaskSchedulePending,
 > = {
   activityLog: {
     getPendingSyncActivityLogs: () => Promise<TLog[]>;
@@ -86,6 +93,15 @@ export type V2SyncRepos<
     markNotesFailed: (ids: string[]) => Promise<void>;
     upsertNotesFromServer: (
       wins: ReturnType<typeof mapApiNote>[],
+    ) => Promise<void>;
+  };
+  taskSchedule: {
+    getPendingSyncTaskSchedules: () => Promise<TSchedule[]>;
+    markTaskSchedulesSynced: (ids: string[]) => Promise<void>;
+    markTaskSchedulesFailed: (ids: string[]) => Promise<void>;
+    upsertTaskSchedulesFromServer: (
+      wins: ReturnType<typeof mapApiTaskSchedule>[],
+      sentSnapshots?: readonly { id: string; updatedAt: string }[],
     ) => Promise<void>;
   };
   goalFreezePeriod: {

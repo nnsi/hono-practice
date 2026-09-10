@@ -181,6 +181,7 @@ describe("split task view components", () => {
           onDeleteFromEdit={vi.fn()}
           deleteConfirmId={null}
           deleteTaskTitle=""
+          deleteIsSkipToday={false}
           onConfirmDelete={vi.fn()}
           onCancelDelete={vi.fn()}
         />
@@ -189,6 +190,8 @@ describe("split task view components", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "page.tab.archived" }));
     expect(onChange).toHaveBeenCalledWith("archived");
+    fireEvent.click(screen.getByRole("button", { name: "page.tab.schedules" }));
+    expect(onChange).toHaveBeenCalledWith("schedules");
 
     rerender(
       <>
@@ -203,6 +206,7 @@ describe("split task view components", () => {
           onDeleteFromEdit={vi.fn()}
           deleteConfirmId="delete-1"
           deleteTaskTitle="Delete target"
+          deleteIsSkipToday={false}
           onConfirmDelete={vi.fn()}
           onCancelDelete={vi.fn()}
         />

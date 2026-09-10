@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import { VALIDATION as V } from "@packages/types/validation";
 import { X } from "lucide-react";
 
 import { DatePickerField } from "../common/DatePickerField";
@@ -7,6 +8,7 @@ import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { TaskActivityFields } from "./TaskActivityFields";
+import { TaskRecurrenceFields } from "./TaskRecurrenceFields";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
 export function TaskCreateDialog({
@@ -34,6 +36,15 @@ export function TaskCreateDialog({
     setDueDate,
     memo,
     setMemo,
+    recurrenceType,
+    setRecurrenceType,
+    intervalDays,
+    setIntervalDays,
+    weekdays,
+    toggleWeekday,
+    recurrenceError,
+    isRecurring,
+    canSubmit,
     isSubmitting,
     handleSubmit,
   } = useTaskCreateDialog(onSuccess, defaultDate);
@@ -62,6 +73,7 @@ export function TaskCreateDialog({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={V.TASK_TITLE_MAX}
               placeholder={t("create.placeholder.title")}
             />
           </div>
@@ -75,7 +87,17 @@ export function TaskCreateDialog({
             setQuantity={setQuantity}
           />
 
-          {/* 日付 */}
+          <TaskRecurrenceFields
+            recurrenceType={recurrenceType}
+            setRecurrenceType={setRecurrenceType}
+            intervalDays={intervalDays}
+            setIntervalDays={setIntervalDays}
+            weekdays={weekdays}
+            toggleWeekday={toggleWeekday}
+            error={recurrenceError}
+          />
+
+          {/* 日付（繰り返しありのときは期限欄を終了日として使う） */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -85,7 +107,9 @@ export function TaskCreateDialog({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("create.label.dueDate")}
+                {t(
+                  isRecurring ? "create.label.endDate" : "create.label.dueDate",
+                )}
               </label>
               <DatePickerField
                 value={dueDate}
@@ -105,6 +129,7 @@ export function TaskCreateDialog({
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               placeholder={t("create.placeholder.memo")}
+              maxLength={V.MEMO_MAX}
               rows={3}
             />
           </div>
@@ -121,7 +146,7 @@ export function TaskCreateDialog({
               type="submit"
               variant="primary"
               label={isSubmitting ? t("create.submitting") : t("create.submit")}
-              disabled={isSubmitting || !title.trim()}
+              disabled={!canSubmit}
               className="flex-1"
             />
           </div>

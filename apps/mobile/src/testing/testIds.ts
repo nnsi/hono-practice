@@ -39,6 +39,7 @@ export const mobileTestIds = {
     page: "tasks.page",
     activeTab: "tasks.tab.active",
     archivedTab: "tasks.tab.archived",
+    schedulesTab: "tasks.tab.schedules",
     emptyCreateButton: "tasks.emptyCreate",
     addButton: "tasks.add",
     createDialog: "tasks.create.dialog",
@@ -46,12 +47,25 @@ export const mobileTestIds = {
     createMemoInput: "tasks.create.memoInput",
     createCancelButton: "tasks.create.cancel",
     createSubmitButton: "tasks.create.submit",
+    createRecurrenceOption: (choice: "none" | "interval" | "weekdays") =>
+      `tasks.create.recurrence.${choice}`,
+    createIntervalDaysInput: "tasks.create.recurrence.intervalDays",
+    createWeekdayToggle: (day: number) =>
+      `tasks.create.recurrence.weekday.${day}`,
     editDialog: "tasks.edit.dialog",
     editTitleInput: "tasks.edit.titleInput",
     editUpdateButton: "tasks.edit.update",
     editDeleteButton: "tasks.edit.delete",
     deleteConfirmDialog: "tasks.deleteConfirm.dialog",
     deleteConfirmButton: "tasks.deleteConfirm.confirm",
+    scheduleRow: (scheduleId: string) => `tasks.schedule.row.${scheduleId}`,
+    scheduleToggleActive: (scheduleId: string) =>
+      `tasks.schedule.toggleActive.${scheduleId}`,
+    scheduleDelete: (scheduleId: string) =>
+      `tasks.schedule.delete.${scheduleId}`,
+    scheduleEditDialog: "tasks.schedule.edit.dialog",
+    scheduleEditTitleInput: "tasks.schedule.edit.titleInput",
+    scheduleEditSaveButton: "tasks.schedule.edit.save",
   },
   notesDelete: {
     confirmDialog: "notes.deleteConfirm.dialog",

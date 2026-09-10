@@ -113,6 +113,10 @@ export type DailyTask = {
   startDate: string | null;
   dueDate: string | null;
   _syncStatus?: SyncStatus;
+  /** 由来スケジュール id。仮想タスクと、実体化済みの実 Task 行の両方が持つ（リピートアイコン表示用） */
+  scheduleId?: string | null;
+  /** スケジュール由来の仮想タスク（Task 行はまだ無い）。完了時に実体化される */
+  isVirtual?: boolean;
 };
 
 /**

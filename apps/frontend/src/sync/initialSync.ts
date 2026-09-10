@@ -1,6 +1,7 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { createV2InitialSync } from "@packages/sync-engine";
 
+import { getTaskSchedules } from "../api";
 import { apiClient } from "../api/apiClient";
 import { activityLogRepository } from "../db/activityLogRepository";
 import { activityRepository } from "../db/activityRepository";
@@ -9,11 +10,13 @@ import { goalRepository } from "../db/goalRepository";
 import { noteRepository } from "../db/noteRepository";
 import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
+import { taskScheduleRepository } from "../db/taskScheduleRepository";
 import { reportError } from "../utils/errorReporter";
 import { webStorageAdapter } from "./webPlatformAdapters";
 
 const { clearLocalData, performInitialSync } = createV2InitialSync({
   api: {
+    getTaskSchedules,
     getActivities: () => apiClient.users.v2.activities.$get(),
     getActivityLogs: (query) =>
       apiClient.users.v2["activity-logs"].$get({ query }),
@@ -29,6 +32,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
     goal: goalRepository,
     goalFreezePeriod: goalFreezePeriodRepository,
     task: taskRepository,
+    taskSchedule: taskScheduleRepository,
     note: noteRepository,
   },
   getClientDate: getToday,
@@ -39,6 +43,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
     await db.goals.clear();
     await db.goalFreezePeriods.clear();
     await db.tasks.clear();
+    await db.taskSchedules.clear();
     await db.notes.clear();
     await db.activityIconBlobs.clear();
     await db.activityIconDeleteQueue.clear();
@@ -54,20 +59,28 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
     });
   },
   isLocalDataEmpty: async () => {
-    const [logCount, goalCount, freezePeriodCount, taskCount, noteCount] =
-      await Promise.all([
-        db.activityLogs.count(),
-        db.goals.count(),
-        db.goalFreezePeriods.count(),
-        db.tasks.count(),
-        db.notes.count(),
-      ]);
+    const [
+      logCount,
+      goalCount,
+      freezePeriodCount,
+      taskCount,
+      noteCount,
+      scheduleCount,
+    ] = await Promise.all([
+      db.activityLogs.count(),
+      db.goals.count(),
+      db.goalFreezePeriods.count(),
+      db.tasks.count(),
+      db.notes.count(),
+      db.taskSchedules.count(),
+    ]);
     return (
       logCount === 0 &&
       goalCount === 0 &&
       freezePeriodCount === 0 &&
       taskCount === 0 &&
-      noteCount === 0
+      noteCount === 0 &&
+      scheduleCount === 0
     );
   },
   // Dexie can commit the multi-store pull as one unit on Web.
@@ -81,6 +94,7 @@ const { clearLocalData, performInitialSync } = createV2InitialSync({
         db.goals,
         db.goalFreezePeriods,
         db.tasks,
+        db.taskSchedules,
         db.notes,
       ],
       write,

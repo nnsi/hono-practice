@@ -1,88 +1,24 @@
-import type { StorageAdapter } from "@packages/platform";
-
+import type { DeltaSyncResource } from "./bootstrappedResources";
 import { createInitialSync } from "./createInitialSync";
-import type { ApiResponse, ParsedSyncData } from "./parseResponses";
+import type { V2InitialSyncDeps } from "./v2InitialSyncTypes";
 
-const DELTA_SYNC_RESOURCES = [
+const DELTA_SYNC_RESOURCES: readonly DeltaSyncResource[] = [
   "logs",
   "goals",
   "freezePeriods",
   "tasks",
   "notes",
-] as const;
+  "taskSchedules",
+];
 
 // Keep this list frozen. Future sync resources should be added only to
 // DELTA_SYNC_RESOURCES so older clients full-pull the new resource once.
-const LEGACY_BOOTSTRAPPED_RESOURCES = [
+const LEGACY_BOOTSTRAPPED_RESOURCES: readonly DeltaSyncResource[] = [
   "logs",
   "goals",
   "freezePeriods",
   "tasks",
-] as const;
-
-type SinceQuery = { since?: string };
-
-/**
- * Per-resource pull endpoints. Each platform wires these to its own Hono
- * typed client (`apiClient.users.v2.<resource>.$get`), so a backend path or
- * query change surfaces as a compile error at the wiring site.
- */
-type V2PullApi = {
-  getActivities: () => Promise<ApiResponse>;
-  getActivityLogs: (query: SinceQuery) => Promise<ApiResponse>;
-  getGoals: (
-    query: SinceQuery & { clientDate: string },
-  ) => Promise<ApiResponse>;
-  getGoalFreezePeriods: (query: SinceQuery) => Promise<ApiResponse>;
-  getTasks: (query: SinceQuery) => Promise<ApiResponse>;
-  getNotes: (query: SinceQuery) => Promise<ApiResponse>;
-};
-
-type V2PullRepos = {
-  activity: {
-    upsertActivities: (a: ParsedSyncData["activities"]) => Promise<void>;
-    upsertActivityKinds: (k: ParsedSyncData["activityKinds"]) => Promise<void>;
-  };
-  activityLog: {
-    upsertActivityLogsFromServer: (l: ParsedSyncData["logs"]) => Promise<void>;
-  };
-  goal: {
-    upsertGoalsFromServer: (g: ParsedSyncData["goals"]) => Promise<void>;
-  };
-  goalFreezePeriod: {
-    upsertFreezePeriodsFromServer: (
-      f: ParsedSyncData["freezePeriods"],
-    ) => Promise<void>;
-  };
-  task: {
-    upsertTasksFromServer: (t: ParsedSyncData["tasks"]) => Promise<void>;
-  };
-  note: {
-    upsertNotesFromServer: (n: ParsedSyncData["notes"]) => Promise<void>;
-  };
-};
-
-type V2InitialSyncDeps = {
-  api: V2PullApi;
-  repos: V2PullRepos;
-  /** Returns today's date string for the goals query (e.g. getToday()). */
-  getClientDate: () => string;
-  clearAllTables: () => Promise<void>;
-  updateAuthState: (userId: string) => Promise<void>;
-  isLocalDataEmpty: () => Promise<boolean>;
-  /**
-   * Optional wrapper committing the multi-store pull atomically.
-   * Web passes a Dexie rw-transaction wrapper; Mobile omits it because its
-   * repositories manage sqlite transactions internally (an outer
-   * withTransactionAsync would nest BEGIN/COMMIT).
-   */
-  runWriteTransaction?: (write: () => Promise<void>) => Promise<void>;
-  defaultStorage: StorageAdapter;
-  onError?: (
-    error: unknown,
-    phase: "fetchAllApis" | "parseResponses" | "writeAllData",
-  ) => void;
-};
+];
 
 /**
  * Standard v2 initial sync shared by Web and Mobile. Owns the sync resource
@@ -104,6 +40,9 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
       const freezePeriodsQuery = sinceByResource.freezePeriods
         ? { since: sinceByResource.freezePeriods }
         : {};
+      const taskSchedulesQuery = sinceByResource.taskSchedules
+        ? { since: sinceByResource.taskSchedules }
+        : {};
       const tasksQuery = sinceByResource.tasks
         ? { since: sinceByResource.tasks }
         : {};
@@ -115,6 +54,7 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
         logsRes,
         goalsRes,
         freezePeriodsRes,
+        taskSchedulesRes,
         tasksRes,
         notesRes,
       ] = await Promise.all([
@@ -124,6 +64,7 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
         // Older backend deployments may still lack this endpoint during staged
         // rollout. Network failures fall back to null on both Web and Mobile.
         deps.api.getGoalFreezePeriods(freezePeriodsQuery).catch(() => null),
+        deps.api.getTaskSchedules(taskSchedulesQuery).catch(() => null),
         deps.api.getTasks(tasksQuery),
         // Notes are best-effort during bootstrap: a failed fetch falls back to
         // null so other resources still hydrate and the watermark advances,
@@ -136,6 +77,7 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
         logsRes,
         goalsRes,
         freezePeriodsRes,
+        taskSchedulesRes,
         tasksRes,
         notesRes,
       };
@@ -157,6 +99,11 @@ export function createV2InitialSync(deps: V2InitialSyncDeps) {
         if (data.freezePeriods.length > 0) {
           await deps.repos.goalFreezePeriod.upsertFreezePeriodsFromServer(
             data.freezePeriods,
+          );
+        }
+        if (data.taskSchedules.length > 0) {
+          await deps.repos.taskSchedule.upsertTaskSchedulesFromServer(
+            data.taskSchedules,
           );
         }
         if (data.tasks.length > 0) {

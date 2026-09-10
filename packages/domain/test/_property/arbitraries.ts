@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import fc from "fast-check";
 
+import type { TaskScheduleRecord } from "../../taskSchedule/taskScheduleRecord";
+
 export const isoDateArb = fc
   .date({
     min: new Date("2020-01-01T00:00:00Z"),
@@ -61,3 +63,49 @@ export const logEntryArb = (start: string, end: string) =>
       .map((d) => dayjs(start).add(d, "day").format("YYYY-MM-DD")),
     quantity: fc.option(fc.integer({ min: 0, max: 100 }), { nil: null }),
   });
+
+export const scheduleDateArb = fc.oneof(isoDateArb, monthBoundaryDateArb);
+
+export const taskScheduleArb: fc.Arbitrary<TaskScheduleRecord> = fc
+  .tuple(
+    fc.record({
+      id: fc.uuid(),
+      userId: fc.uuid(),
+      activityId: fc.option(fc.uuid(), { nil: null }),
+      activityKindId: fc.option(fc.uuid(), { nil: null }),
+      quantity: fc.option(fc.integer({ min: 0, max: 999999 }), { nil: null }),
+      title: fc.string({ minLength: 1, maxLength: 20 }),
+      memo: fc.option(fc.string({ maxLength: 100 }), { nil: null }),
+      startDate: scheduleDateArb,
+      isActive: fc.boolean(),
+      createdAt: isoDateArb.map((date) => `${date}T00:00:00.000Z`),
+      updatedAt: isoDateArb.map((date) => `${date}T12:00:00.000Z`),
+      deletedAt: fc.option(fc.constant("2026-09-10T00:00:00.000Z"), {
+        nil: null,
+      }),
+    }),
+    fc.oneof(
+      fc.record({
+        recurrenceType: fc.constant<"interval">("interval"),
+        intervalDays: fc.integer({ min: 1, max: 60 }),
+        weekdays: fc.constant(null),
+      }),
+      fc.record({
+        recurrenceType: fc.constant<"weekdays">("weekdays"),
+        intervalDays: fc.constant(null),
+        weekdays: fc.uniqueArray(fc.integer({ min: 1, max: 7 }), {
+          minLength: 1,
+          maxLength: 7,
+        }),
+      }),
+    ),
+    fc.option(fc.integer({ min: 0, max: 800 }), { nil: null }),
+  )
+  .map(([fields, recurrence, span]) => ({
+    ...fields,
+    ...recurrence,
+    endDate:
+      span === null
+        ? null
+        : dayjs(fields.startDate).add(span, "day").format("YYYY-MM-DD"),
+  }));

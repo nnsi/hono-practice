@@ -1,5 +1,6 @@
+import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { CalendarDays, FileText } from "lucide-react-native";
+import { CalendarDays, FileText, Repeat } from "lucide-react-native";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 type LinkedActivity = {
@@ -24,6 +25,7 @@ type TaskCardBodyProps = {
   memo?: string | null;
   quantity: number | null;
   activityId?: string | null;
+  scheduleId?: string | null;
   linkedActivity: LinkedActivity | null;
   linkedKind: LinkedKind | null;
   iconBlobMap: Map<string, IconBlob>;
@@ -40,11 +42,13 @@ export function TaskCardBody({
   memo,
   quantity,
   activityId,
+  scheduleId,
   linkedActivity,
   linkedKind,
   iconBlobMap,
   onEdit,
 }: TaskCardBodyProps) {
+  const { t } = useTranslation("task");
   const iconBlob = activityId ? iconBlobMap.get(activityId) : undefined;
 
   return (
@@ -53,16 +57,25 @@ export function TaskCardBody({
       onPress={onEdit}
       testID={testID}
     >
-      <Text
-        className={`text-sm font-medium ${
-          completed || doneDate
-            ? "line-through text-gray-500 dark:text-gray-400"
-            : "text-gray-900 dark:text-gray-100"
-        }`}
-        numberOfLines={1}
-      >
-        {title}
-      </Text>
+      <View className="flex-row items-center gap-1">
+        <Text
+          className={`text-sm font-medium flex-shrink ${
+            completed || doneDate
+              ? "line-through text-gray-500 dark:text-gray-400"
+              : "text-gray-900 dark:text-gray-100"
+          }`}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+        {scheduleId != null && (
+          <Repeat
+            size={14}
+            color="#3b82f6"
+            accessibilityLabel={t("card.repeat")}
+          />
+        )}
+      </View>
 
       {linkedActivity && (
         <View className="flex-row items-center gap-1 mt-0.5">

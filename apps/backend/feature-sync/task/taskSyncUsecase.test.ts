@@ -53,6 +53,7 @@ function createMockRepo(
   overrides: Partial<TaskSyncRepository> = {},
 ): TaskSyncRepository {
   return {
+    getOwnedTaskScheduleIds: vi.fn().mockResolvedValue([]),
     getTasksByUserId: vi.fn().mockResolvedValue([]),
     upsertTasks: vi.fn().mockResolvedValue([]),
     getTasksByIds: vi.fn().mockResolvedValue([]),

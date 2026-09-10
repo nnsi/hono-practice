@@ -14,7 +14,18 @@ import { v7 as uuidv7 } from "uuid";
 
 import { filterSafeUpserts } from "./syncHelpers";
 
+export type ScheduledTaskRepository = TaskRepository & {
+  getTasksByScheduledDate(
+    date: string,
+    scheduleIds?: string[],
+  ): Promise<Syncable<TaskRecord>[]>;
+};
+
 export type TaskDbAdapter = {
+  getByScheduledDate?(
+    date: string,
+    scheduleIds?: string[],
+  ): Promise<Syncable<TaskRecord>[]>;
   getUserId(): Promise<string>;
   insert(task: Syncable<TaskRecord>): Promise<void>;
   getAll(
@@ -29,14 +40,16 @@ export type TaskDbAdapter = {
 export function newTaskRepository(
   adapter: TaskDbAdapter,
   generateId: () => string = uuidv7,
-): TaskRepository {
+): ScheduledTaskRepository {
   return {
     async createTask(input: CreateTaskInput) {
       const now = getServerNowISOString();
       const userId = await adapter.getUserId();
       const task: Syncable<TaskRecord> = {
-        id: generateId(),
+        id: input.id ?? generateId(),
         userId,
+        scheduleId: input.scheduleId ?? null,
+        scheduledDate: input.scheduledDate ?? null,
         activityId: input.activityId ?? null,
         activityKindId: input.activityKindId ?? null,
         quantity: input.quantity ?? null,
@@ -65,6 +78,18 @@ export function newTaskRepository(
 
     async getTasksByDate(date: string) {
       return adapter.getAll((t) => isTaskVisibleOnDate(t, date));
+    },
+
+    async getTasksByScheduledDate(date: string, scheduleIds?: string[]) {
+      if (scheduleIds?.length === 0) return [];
+      if (adapter.getByScheduledDate)
+        return adapter.getByScheduledDate(date, scheduleIds);
+      return adapter.getAll(
+        (task) =>
+          task.scheduledDate === date &&
+          task.scheduleId != null &&
+          (scheduleIds === undefined || scheduleIds.includes(task.scheduleId)),
+      );
     },
 
     async updateTask(id: string, changes: UpdateTaskInput) {
@@ -116,7 +141,9 @@ export function newTaskRepository(
       const safe = filterSafeUpserts(tasks, localRecords);
       if (safe.length === 0) return;
       await adapter.bulkUpsertSynced(
-        safe.map((t) => ({ ...t, _syncStatus: "synced" as const })),
+        safe.map(
+          (t): Syncable<TaskRecord> => ({ ...t, _syncStatus: "synced" }),
+        ),
       );
     },
   };

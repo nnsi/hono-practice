@@ -1,6 +1,7 @@
 import type { StorageAdapter } from "@packages/platform";
 
 import { getSafeSyncWatermarkISOString } from "../core/serverTime";
+import { clearSyncData, withSyncDataWrite } from "../core/syncDataWrites";
 import { getSyncGeneration, invalidateSync } from "../core/syncState";
 import {
   BOOTSTRAPPED_RESOURCES_KEY,
@@ -21,6 +22,7 @@ type FetchAllApis = (sinceByResource: SinceByResource) => Promise<{
   freezePeriodsRes: ApiResponse | null;
   tasksRes: ApiResponse;
   notesRes?: ApiResponse | null;
+  taskSchedulesRes?: ApiResponse | null;
 }>;
 
 type InitialSyncDeps = {
@@ -45,7 +47,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
     storage: StorageAdapter = deps.defaultStorage,
   ): Promise<void> {
     invalidateSync();
-    await deps.clearAllTables();
+    await clearSyncData(deps.clearAllTables);
     storage.removeItem(LAST_SYNCED_KEY);
     storage.removeItem(BOOTSTRAPPED_RESOURCES_KEY);
   }
@@ -109,6 +111,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
       freezePeriodsRes,
       tasksRes,
       notesRes,
+      taskSchedulesRes,
     } = responses;
 
     if (gen !== getSyncGeneration()) return;
@@ -122,6 +125,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
         freezePeriodsRes,
         tasksRes,
         notesRes,
+        taskSchedulesRes,
       );
     } catch (err) {
       deps.onError?.(err, "parseResponses");
@@ -138,11 +142,12 @@ export function createInitialSync(deps: InitialSyncDeps) {
       parsed.data.goals.length > 0 ||
       parsed.data.freezePeriods.length > 0 ||
       parsed.data.notes.length > 0 ||
+      parsed.data.taskSchedules.length > 0 ||
       parsed.data.tasks.length > 0;
 
     if (hasData) {
       try {
-        await deps.writeAllData(parsed.data);
+        await withSyncDataWrite(gen, () => deps.writeAllData(parsed.data));
       } catch (err) {
         deps.onError?.(err, "writeAllData");
         throw err;
@@ -161,6 +166,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
           freezePeriodsRes,
           tasksRes,
           notesRes,
+          taskSchedulesRes,
         ]),
       );
       // A null response means the fetch was swallowed by a best-effort
@@ -171,6 +177,7 @@ export function createInitialSync(deps: InitialSyncDeps) {
       const failedResources = new Set<DeltaSyncResource>();
       if (freezePeriodsRes == null) failedResources.add("freezePeriods");
       if (notesRes == null) failedResources.add("notes");
+      if (taskSchedulesRes == null) failedResources.add("taskSchedules");
       writeBootstrappedResources(
         storage,
         [...bootstrappedResources, ...deps.deltaResources].filter(

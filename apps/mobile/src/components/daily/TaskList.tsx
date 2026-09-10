@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import { Repeat } from "lucide-react-native";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
@@ -18,6 +19,9 @@ export type Task = {
   memo: string;
   startDate: string | null;
   dueDate: string | null;
+  scheduleId?: string | null;
+  /** スケジュール由来の仮想タスク（行はまだ無い）。削除は「今日はやらない」の意味になる */
+  isVirtual?: boolean;
   _syncStatus?: "synced" | "pending" | "failed" | "rejected";
 };
 
@@ -51,6 +55,7 @@ export function TaskList({
   iconBlobMap?: Map<string, IconBlob>;
 }) {
   const { t } = useTranslation("activity");
+  const { t: tTask } = useTranslation("task");
 
   if (isLoading) {
     return (
@@ -149,6 +154,13 @@ export function TaskList({
                   >
                     {task.title}
                   </Text>
+                  {task.scheduleId != null && (
+                    <Repeat
+                      size={14}
+                      color="#3b82f6"
+                      accessibilityLabel={tTask("card.repeat")}
+                    />
+                  )}
                   {isPending && (
                     <ActivityIndicator size="small" color="#f97316" />
                   )}

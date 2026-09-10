@@ -5,6 +5,8 @@ import { VALIDATION as V } from "../validation";
 
 export const createTaskRequestSchema = z
   .object({
+    scheduleId: z.string().uuid().nullish(),
+    scheduledDate: z.iso.date().nullish(),
     title: z
       .string()
       .min(1, "validation:titleRequired")

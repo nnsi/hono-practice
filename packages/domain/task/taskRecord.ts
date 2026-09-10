@@ -4,6 +4,8 @@ export type TaskRecord = {
   activityId: string | null;
   activityKindId: string | null;
   quantity: number | null;
+  scheduleId?: string | null;
+  scheduledDate?: string | null;
   title: string;
   startDate: string | null;
   dueDate: string | null;

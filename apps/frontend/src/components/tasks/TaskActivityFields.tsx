@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import { VALIDATION as V } from "@packages/types/validation";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import { db } from "../../db/schema";
@@ -129,6 +130,8 @@ export function TaskActivityFields({
           <FormInput
             type="number"
             step="any"
+            min={V.QUANTITY_MIN}
+            max={V.QUANTITY_MAX}
             value={quantity ?? ""}
             onChange={(e) =>
               setQuantity(e.target.value !== "" ? Number(e.target.value) : null)

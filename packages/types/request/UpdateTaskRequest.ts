@@ -4,6 +4,8 @@ import { addDateRangeIssue, dateStringSchema } from "../dateSchemas";
 
 export const updateTaskRequestSchema = z
   .object({
+    scheduleId: z.string().uuid().nullish(),
+    scheduledDate: z.iso.date().nullish(),
     title: z
       .string()
       .min(1, "validation:titleRequired")

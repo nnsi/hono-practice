@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
+import type { ErrorReport } from "@packages/frontend-shared";
 import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react-native";
 import {
@@ -15,16 +16,21 @@ import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { mobileTestIds } from "../../testing/testIds";
+import { reportError } from "../../utils/errorReporter";
 import { DateNavHeader } from "../actiko/DateNavHeader";
 import { CalendarPopover } from "../common/CalendarPopover";
-import { DeleteConfirmDialog } from "../tasks/DeleteConfirmDialog";
-import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
-import { TaskEditDialog } from "../tasks/TaskEditDialog";
 import { CreateLogDialog } from "./CreateLogDialog";
 import { DailyLogSection } from "./DailyLogSection";
+import { DailyTaskDialogs } from "./DailyTaskDialogs";
 import { EditLogDialog } from "./EditLogDialog";
 import { type Task, TaskList } from "./TaskList";
 import { useDailyPage } from "./useDailyPage";
+
+const toDeleteErrorReport = (error: unknown): ErrorReport => ({
+  errorType: "db_query_error",
+  message: `Daily task delete failed: ${error instanceof Error ? error.message : String(error)}`,
+  stack: error instanceof Error ? error.stack : undefined,
+});
 
 export function DailyPage() {
   const { t } = useTranslation("activity");
@@ -38,7 +44,6 @@ export function DailyPage() {
     kindsMap,
     activitiesMap,
     tasks,
-    rawTasks,
     editingLog,
     setEditingLog,
     createDialogOpen,
@@ -48,6 +53,8 @@ export function DailyPage() {
     calendarOpen,
     setCalendarOpen,
     handleToggleTask,
+    materializeIfVirtual,
+    findEditableTask,
   } = useDailyPage();
 
   const iconBlobMap = useIconBlobMap();
@@ -57,17 +64,28 @@ export function DailyPage() {
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const editingFullTask = useMemo(
-    () =>
-      editingTaskId ? rawTasks?.find((t) => t.id === editingTaskId) : null,
-    [editingTaskId, rawTasks],
-  );
+  // 仮想タスクは isVirtual 付きのまま渡し、実体化は編集ダイアログの保存時に行う
+  const editingFullTask = editingTaskId
+    ? findEditableTask(editingTaskId)
+    : null;
 
-  const handleDeleteTask = useCallback(async (id: string) => {
-    await taskRepository.softDeleteTask(id);
-    syncEngine.syncTasks();
-    setDeletingTask(null);
-  }, []);
+  const handleEditTask = (task: Task) => setEditingTaskId(task.id);
+
+  const handleDeleteTask = useCallback(
+    async (task: Task) => {
+      try {
+        // 仮想タスクは行が無いので、先に実 Task 行を作ってから soft delete する（「今日はやらない」）
+        await materializeIfVirtual(task);
+        await taskRepository.softDeleteTask(task.id);
+        syncEngine.syncTasks();
+      } catch (error) {
+        reportError(toDeleteErrorReport(error));
+      } finally {
+        setDeletingTask(null);
+      }
+    },
+    [materializeIfVirtual],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -140,7 +158,7 @@ export function DailyPage() {
             tasks={tasks}
             isLoading={false}
             onToggle={handleToggleTask}
-            onEdit={(task) => setEditingTaskId(task.id)}
+            onEdit={handleEditTask}
             onDelete={setDeletingTask}
             activitiesMap={activitiesMap}
             iconBlobMap={iconBlobMap}
@@ -162,34 +180,21 @@ export function DailyPage() {
         date={date}
       />
 
-      {taskCreateDialogOpen && (
-        <TaskCreateDialog
-          defaultDate={date}
-          onClose={() => setTaskCreateDialogOpen(false)}
-          onSuccess={() => setTaskCreateDialogOpen(false)}
-        />
-      )}
-
-      {editingFullTask && (
-        <TaskEditDialog
-          task={editingFullTask}
-          onClose={() => setEditingTaskId(null)}
-          onSuccess={() => setEditingTaskId(null)}
-          onDelete={(id) => {
-            setEditingTaskId(null);
-            const task = tasks.find((t) => t.id === id);
-            if (task) setDeletingTask(task);
-          }}
-        />
-      )}
-
-      {deletingTask && (
-        <DeleteConfirmDialog
-          taskTitle={deletingTask.title}
-          onConfirm={() => handleDeleteTask(deletingTask.id)}
-          onCancel={() => setDeletingTask(null)}
-        />
-      )}
+      <DailyTaskDialogs
+        date={date}
+        createOpen={taskCreateDialogOpen}
+        onCloseCreate={() => setTaskCreateDialogOpen(false)}
+        editingTask={editingFullTask}
+        onCloseEdit={() => setEditingTaskId(null)}
+        onDeleteFromEdit={(id) => {
+          setEditingTaskId(null);
+          const task = tasks.find((t) => t.id === id);
+          if (task) setDeletingTask(task);
+        }}
+        deletingTask={deletingTask}
+        onConfirmDelete={handleDeleteTask}
+        onCancelDelete={() => setDeletingTask(null)}
+      />
     </View>
   );
 }

@@ -8,6 +8,10 @@ import { createUseDailyPage } from "@packages/frontend-shared/hooks/useDailyPage
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivitiesIncludingDeleted } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
+import {
+  useActiveTaskSchedules,
+  useTasksOnScheduledDate,
+} from "../../hooks/useTasks";
 import { activityLogRepository } from "../../repositories/activityLogRepository";
 import { activityRepository } from "../../repositories/activityRepository";
 import { taskRepository } from "../../repositories/taskRepository";
@@ -36,6 +40,8 @@ export const useDailyPage = createUseDailyPage<
       () => activityRepository.getAllActivityKindsIncludingDeleted(),
       [],
     ),
+  useActiveTaskSchedules,
+  useTasksOnScheduledDate,
   taskRepository,
   activityLogRepository,
   syncEngine,

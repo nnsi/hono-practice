@@ -53,18 +53,26 @@ function syncTasks(repo: TaskSyncRepository, tracer: Tracer) {
 
     // activityId ownership check
     const requestedActivityIds = [
-      ...new Set(taskList.map((t) => t.activityId).filter(Boolean)),
-    ] as string[];
+      ...new Set(
+        taskList
+          .map((t) => t.activityId)
+          .filter((id): id is string => id !== null),
+      ),
+    ];
     const requestedKindIds = [
-      ...new Set(taskList.map((t) => t.activityKindId).filter(Boolean)),
-    ] as string[];
+      ...new Set(
+        taskList
+          .map((t) => t.activityKindId)
+          .filter((id): id is string => id !== null),
+      ),
+    ];
 
     const [ownedActivityIds, ownedKindRows] = await Promise.all([
       requestedActivityIds.length > 0
         ? tracer.span("db.getOwnedActivityIds", () =>
             repo.getOwnedActivityIds(userId, requestedActivityIds),
           )
-        : Promise.resolve([] as string[]),
+        : Promise.resolve([]),
       tracer.span("db.getOwnedActivityKindIdsWithActivityId", () =>
         repo.getOwnedActivityKindIdsWithActivityId(userId, requestedKindIds),
       ),
@@ -75,9 +83,20 @@ function syncTasks(repo: TaskSyncRepository, tracer: Tracer) {
       ownedKindRows.map((r) => [r.id, r.activityId]),
     );
 
+    const scheduleIds = taskList.flatMap((task) =>
+      task.scheduleId ? [task.scheduleId] : [],
+    );
+    const ownedScheduleIds = new Set(
+      scheduleIds.length === 0
+        ? []
+        : await tracer.span("db.getOwnedTaskScheduleIds", () =>
+            repo.getOwnedTaskScheduleIds(userId, scheduleIds),
+          ),
+    );
     const validTasks = taskList.filter((task) => {
       if (
         new Date(task.updatedAt) > maxAllowed ||
+        (task.scheduleId && !ownedScheduleIds.has(task.scheduleId)) ||
         (task.activityId && !ownedActivityIdSet.has(task.activityId)) ||
         (task.activityKindId &&
           (!task.activityId ||

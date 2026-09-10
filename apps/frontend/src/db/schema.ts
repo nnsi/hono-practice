@@ -9,7 +9,10 @@ import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
 import type { TutorialStatus } from "@packages/frontend-shared/hooks";
+import type { TaskScheduleRecord } from "@packages/sync-engine";
 import Dexie, { type Table } from "dexie";
+
+import { registerPreviousVersions } from "./schemaVersions";
 
 export type { SyncStatus } from "@packages/domain";
 
@@ -46,6 +49,7 @@ class ActikoDatabase extends Dexie {
   activityKinds!: Table<DexieActivityKind, string>;
   goals!: Table<DexieGoal, string>;
   goalFreezePeriods!: Table<DexieGoalFreezePeriod, string>;
+  taskSchedules!: Table<Syncable<TaskScheduleRecord>, string>;
   tasks!: Table<DexieTask, string>;
   notes!: Table<DexieNote, string>;
   activityIconBlobs!: Table<DexieActivityIconBlob, string>;
@@ -54,138 +58,10 @@ class ActikoDatabase extends Dexie {
 
   constructor() {
     super("actiko");
-    this.version(1).stores({
-      activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
-      activities: "id, orderIndex",
-      activityKinds: "id, activityId",
-      authState: "id",
-    });
-    this.version(2)
-      .stores({
-        activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
-        activities: "id, orderIndex, _syncStatus",
-        activityKinds: "id, activityId, _syncStatus",
-        goals: "id, activityId, _syncStatus",
-        tasks: "id, _syncStatus, startDate, dueDate",
-        authState: "id",
-      })
-      .upgrade((tx) => {
-        return Promise.all([
-          tx
-            .table("activities")
-            .toCollection()
-            .modify((a) => {
-              if (!a._syncStatus) a._syncStatus = "synced";
-            }),
-          tx
-            .table("activityKinds")
-            .toCollection()
-            .modify((k) => {
-              if (!k._syncStatus) k._syncStatus = "synced";
-            }),
-        ]);
-      });
-    this.version(3).stores({
-      activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
-      activities: "id, orderIndex, _syncStatus",
-      activityKinds: "id, activityId, _syncStatus",
-      goals: "id, activityId, _syncStatus",
-      tasks: "id, _syncStatus, startDate, dueDate",
-      activityIconBlobs: "activityId",
-      activityIconDeleteQueue: "activityId",
-      authState: "id",
-    });
-    this.version(4)
-      .stores({
-        activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
-        activities: "id, orderIndex, _syncStatus",
-        activityKinds: "id, activityId, _syncStatus",
-        goals: "id, activityId, _syncStatus",
-        tasks: "id, _syncStatus, startDate, dueDate",
-        activityIconBlobs: "activityId",
-        activityIconDeleteQueue: "activityId",
-        authState: "id",
-      })
-      .upgrade((tx) => {
-        return tx
-          .table("activities")
-          .toCollection()
-          .modify((a) => {
-            if (!a.recordingMode) {
-              const timeUnits = [
-                "時",
-                "分",
-                "秒",
-                "hour",
-                "min",
-                "sec",
-                "時間",
-              ];
-              const unit = (a.quantityUnit || "").toLowerCase();
-              const isTime = timeUnits.some((u: string) => unit.includes(u));
-              a.recordingMode = isTime ? "timer" : "manual";
-              a.recordingModeConfig = null;
-            }
-          });
-      });
-    this.version(5).stores({
-      activityLogs: "id, activityId, date, _syncStatus, [date+activityId]",
-      activities: "id, orderIndex, _syncStatus",
-      activityKinds: "id, activityId, _syncStatus",
-      goals: "id, activityId, _syncStatus",
-      goalFreezePeriods: "id, goalId, _syncStatus",
-      tasks: "id, _syncStatus, startDate, dueDate",
-      activityIconBlobs: "activityId",
-      activityIconDeleteQueue: "activityId",
-      authState: "id",
-    });
-    this.version(6).stores({
-      activityLogs:
-        "id, activityId, date, _syncStatus, [date+activityId], taskId",
-      activities: "id, orderIndex, _syncStatus",
-      activityKinds: "id, activityId, _syncStatus",
-      goals: "id, activityId, _syncStatus",
-      goalFreezePeriods: "id, goalId, _syncStatus",
-      tasks: "id, _syncStatus, startDate, dueDate",
-      activityIconBlobs: "activityId",
-      activityIconDeleteQueue: "activityId",
-      authState: "id",
-    });
-    this.version(7)
-      .stores({
-        activityLogs:
-          "id, activityId, date, _syncStatus, [date+activityId], taskId",
-        activities: "id, orderIndex, _syncStatus",
-        activityKinds: "id, activityId, _syncStatus",
-        goals: "id, activityId, _syncStatus",
-        goalFreezePeriods: "id, goalId, _syncStatus",
-        tasks: "id, _syncStatus, startDate, dueDate",
-        activityIconBlobs: "activityId",
-        activityIconDeleteQueue: "activityId",
-        authState: "id",
-      })
-      .upgrade((tx) => {
-        return tx
-          .table("activities")
-          .toCollection()
-          .modify((a) => {
-            if (a.showCombinedStats === undefined) {
-              a.showCombinedStats = true;
-            }
-          });
-      });
-    this.version(8).stores({
-      activityLogs:
-        "id, activityId, date, _syncStatus, [date+activityId], taskId",
-      activities: "id, orderIndex, _syncStatus",
-      activityKinds: "id, activityId, _syncStatus",
-      goals: "id, activityId, _syncStatus",
-      goalFreezePeriods: "id, goalId, _syncStatus",
-      tasks: "id, _syncStatus, startDate, dueDate",
-      notes: "id, _syncStatus, activityId, updatedAt",
-      activityIconBlobs: "activityId",
-      activityIconDeleteQueue: "activityId",
-      authState: "id",
+    registerPreviousVersions(this);
+    this.version(9).stores({
+      taskSchedules: "id, _syncStatus, activityId, updatedAt",
+      tasks: "id, _syncStatus, startDate, dueDate, [scheduleId+scheduledDate]",
     });
   }
 }
