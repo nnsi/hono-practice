@@ -1,3 +1,6 @@
+import { isVirtualScheduledTask } from "@packages/frontend-shared/hooks/materializeScheduledTask";
+
+import { TaskSchedulesSection } from "./TaskSchedulesSection";
 import { TasksActiveSection } from "./TasksActiveSection";
 import { TasksArchivedSection } from "./TasksArchivedSection";
 import { TasksDialogs } from "./TasksDialogs";
@@ -32,9 +35,12 @@ export function TasksPage() {
     handleEditSuccess,
   } = useTasksPage();
 
-  const deleteTaskTitle =
-    [...tasks, ...archivedTasks].find((task) => task.id === deleteConfirmId)
-      ?.title ?? "";
+  const deleteTarget = [...tasks, ...archivedTasks].find(
+    (task) => task.id === deleteConfirmId,
+  );
+  const deleteTaskTitle = deleteTarget?.title ?? "";
+  const deleteIsSkipToday =
+    deleteTarget !== undefined && isVirtualScheduledTask(deleteTarget);
 
   return (
     <div className="bg-white min-h-full">
@@ -70,6 +76,8 @@ export function TasksPage() {
             onMoveToToday={handleMoveToToday}
           />
         )}
+
+        {activeTab === "schedules" && <TaskSchedulesSection />}
       </div>
 
       <TasksDialogs
@@ -85,6 +93,7 @@ export function TasksPage() {
         }}
         deleteConfirmId={deleteConfirmId}
         deleteTaskTitle={deleteTaskTitle}
+        deleteIsSkipToday={deleteIsSkipToday}
         onConfirmDelete={handleDelete}
         onCancelDelete={() => setDeleteConfirmId(null)}
       />

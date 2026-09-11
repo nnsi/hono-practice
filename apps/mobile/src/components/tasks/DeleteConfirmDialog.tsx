@@ -5,22 +5,40 @@ import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 import { ModalOverlay } from "../common/ModalOverlay";
 
+/**
+ * task: 通常の Task 削除 / skipToday: 仮想タスク（行が無い）を「今日はやらない」 /
+ * schedule: 繰り返し設定そのものの削除（完了済みの記録は残る）
+ */
+export type DeleteConfirmVariant = "task" | "skipToday" | "schedule";
+
+const PREFIX: Record<
+  DeleteConfirmVariant,
+  "delete" | "delete.skipToday" | "delete.schedule"
+> = {
+  task: "delete",
+  skipToday: "delete.skipToday",
+  schedule: "delete.schedule",
+};
+
 export function DeleteConfirmDialog({
   taskTitle,
+  variant = "task",
   onConfirm,
   onCancel,
 }: {
   taskTitle: string;
+  variant?: DeleteConfirmVariant;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation("task");
+  const prefix = PREFIX[variant];
 
   return (
     <ModalOverlay
       visible
       onClose={onCancel}
-      title={t("delete.title")}
+      title={t(`${prefix}.title`)}
       testID={mobileTestIds.tasks.deleteConfirmDialog}
       footer={
         <View className="flex-row gap-2">
@@ -32,7 +50,7 @@ export function DeleteConfirmDialog({
           />
           <FormButton
             variant="dangerConfirm"
-            label={t("delete.confirm")}
+            label={t(`${prefix}.confirm`)}
             onPress={onConfirm}
             className="flex-1"
             testID={mobileTestIds.tasks.deleteConfirmButton}
@@ -41,8 +59,7 @@ export function DeleteConfirmDialog({
       }
     >
       <Text className="text-sm text-gray-500 dark:text-gray-400">
-        この操作は取り消せません。タスク「{taskTitle}
-        」を完全に削除します。
+        {t(`${prefix}.description`, { taskTitle })}
       </Text>
     </ModalOverlay>
   );

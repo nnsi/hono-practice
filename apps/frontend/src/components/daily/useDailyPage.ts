@@ -9,7 +9,11 @@ import { db } from "../../db/schema";
 import { taskRepository } from "../../db/taskRepository";
 import { useActivitiesIncludingDeleted } from "../../hooks/useActivities";
 import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
-import { useTasksByDate } from "../../hooks/useTasks";
+import {
+  useActiveTaskSchedules,
+  useTasksByDate,
+  useTasksOnScheduledDate,
+} from "../../hooks/useTasks";
 import { syncEngine } from "../../sync/syncEngine";
 
 export const useDailyPage = createUseDailyPage<
@@ -24,6 +28,8 @@ export const useDailyPage = createUseDailyPage<
     return tasks;
   },
   useAllKinds: () => useLiveQuery(() => db.activityKinds.toArray(), []),
+  useActiveTaskSchedules,
+  useTasksOnScheduledDate,
   taskRepository,
   activityLogRepository,
   syncEngine,

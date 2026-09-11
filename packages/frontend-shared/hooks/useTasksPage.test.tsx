@@ -38,7 +38,11 @@ describe("useTasksPage handleToggleDone", () => {
     react: { useState, useMemo },
     useActiveTasks: () => ({ tasks: activeTasks }),
     useArchivedTasks: () => ({ tasks: [] }),
+    useActiveTaskSchedules: () => ({ schedules: [] }),
+    useTasksOnScheduledDate: () => ({ tasks: [] }),
     taskRepository: {
+      createTask: vi.fn().mockResolvedValue(undefined),
+      getTasksByScheduledDate: vi.fn().mockResolvedValue([]),
       updateTask: mockUpdateTask,
       softDeleteTask: mockSoftDeleteTask,
       archiveTask: mockArchiveTask,

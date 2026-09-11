@@ -4,6 +4,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { getOwnedTaskScheduleIds } from "../../feature/task/taskScheduleLinkRepository";
+
 type TaskRow = typeof tasks.$inferSelect;
 
 export type ActivityKindWithActivityId = {
@@ -12,6 +14,7 @@ export type ActivityKindWithActivityId = {
 };
 
 export type TaskSyncRepository = {
+  getOwnedTaskScheduleIds: (userId: UserId, ids: string[]) => Promise<string[]>;
   getTasksByUserId: (userId: UserId, since?: string) => Promise<TaskRow[]>;
   upsertTasks: (
     userId: UserId,
@@ -30,6 +33,7 @@ export type TaskSyncRepository = {
 
 export function newTaskSyncRepository(db: QueryExecutor): TaskSyncRepository {
   return {
+    getOwnedTaskScheduleIds: getOwnedTaskScheduleIds(db),
     getTasksByUserId: getTasksByUserId(db),
     upsertTasks: upsertTasks(db),
     getTasksByIds: getTasksByIds(db),
@@ -68,6 +72,8 @@ function upsertTasks(db: QueryExecutor) {
           activityKindId: task.activityKindId,
           quantity: task.quantity,
           title: task.title,
+          scheduleId: task.scheduleId ?? null,
+          scheduledDate: task.scheduledDate ?? null,
           startDate: task.startDate,
           dueDate: task.dueDate,
           doneDate: task.doneDate,
@@ -82,6 +88,8 @@ function upsertTasks(db: QueryExecutor) {
         target: tasks.id,
         set: {
           title: sql`excluded.title`,
+          scheduleId: sql`excluded.schedule_id`,
+          scheduledDate: sql`excluded.scheduled_date`,
           activityId: sql`excluded.activity_id`,
           activityKindId: sql`excluded.activity_kind_id`,
           quantity: sql`excluded.quantity`,

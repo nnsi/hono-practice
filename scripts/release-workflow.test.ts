@@ -10,9 +10,7 @@ const mobileJob = workflow.match(/ {2}mobile-release:[\s\S]*/)?.[0];
 const githubExpression = (value: string) => `$${`{{ ${value} }}`}`;
 
 const step = (name: string) =>
-  publishJob
-    ?.split(`      - name: ${name}\n`)[1]
-    ?.split("\n      - name:")[0];
+  publishJob?.split(`      - name: ${name}\n`)[1]?.split("\n      - name:")[0];
 
 describe("release workflow guards", () => {
   it("deploys every staging and production artifact without path-diff state", () => {
@@ -66,9 +64,7 @@ describe("release workflow guards", () => {
     expect(workflow).toContain("mobile_native_base_sha");
     expect(mobileJob).toContain("scripts/mobile-ota-safety.js");
     expect(mobileJob).not.toContain("Run repository CI gate");
-    expect(mobileJob).not.toContain(
-      "Generate iOS and Android release bundles",
-    );
+    expect(mobileJob).not.toContain("Generate iOS and Android release bundles");
   });
 
   it("preflights and binds the rate-limit KV namespace for both environments", () => {

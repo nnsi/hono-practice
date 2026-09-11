@@ -1,4 +1,5 @@
 import { useTranslation } from "@packages/i18n";
+import { VALIDATION as V } from "@packages/types/validation";
 import { X } from "lucide-react";
 
 import { DatePickerField } from "../common/DatePickerField";
@@ -70,6 +71,7 @@ export function TaskEditDialog({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={V.TASK_TITLE_MAX}
               placeholder={t("edit.placeholder.title")}
               disabled={isArchived}
             />

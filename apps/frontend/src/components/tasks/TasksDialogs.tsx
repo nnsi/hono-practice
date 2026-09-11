@@ -13,6 +13,7 @@ type Props = {
   onDeleteFromEdit: (id: string) => void;
   deleteConfirmId: string | null;
   deleteTaskTitle: string;
+  deleteIsSkipToday: boolean;
   onConfirmDelete: (id: string) => void;
   onCancelDelete: () => void;
 };
@@ -27,6 +28,7 @@ export function TasksDialogs({
   onDeleteFromEdit,
   deleteConfirmId,
   deleteTaskTitle,
+  deleteIsSkipToday,
   onConfirmDelete,
   onCancelDelete,
 }: Props) {
@@ -48,6 +50,7 @@ export function TasksDialogs({
       {deleteConfirmId && (
         <DeleteConfirmDialog
           taskTitle={deleteTaskTitle}
+          variant={deleteIsSkipToday ? "skipToday" : "task"}
           onConfirm={() => onConfirmDelete(deleteConfirmId)}
           onCancel={onCancelDelete}
         />

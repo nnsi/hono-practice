@@ -22,7 +22,13 @@ describe("useDailyPage handleToggleTask", () => {
     useActivityLogsByDate: () => ({ logs: [] }),
     useTasksByDate: () => [],
     useAllKinds: () => [],
-    taskRepository: { updateTask: mockUpdateTask },
+    useActiveTaskSchedules: () => ({ schedules: [] }),
+    useTasksOnScheduledDate: () => ({ tasks: [] }),
+    taskRepository: {
+      createTask: vi.fn().mockResolvedValue(undefined),
+      getTasksByScheduledDate: vi.fn().mockResolvedValue([]),
+      updateTask: mockUpdateTask,
+    },
     activityLogRepository: {
       createActivityLog: mockCreateActivityLog,
       softDeleteActivityLogByTaskId: mockSoftDeleteByTaskId,

@@ -2,6 +2,10 @@ import type { Syncable } from "../sync/syncableRecord";
 import type { TaskRecord } from "./taskRecord";
 
 export type CreateTaskInput = {
+  /** Deterministic id for scheduled-task materialization. Generated when omitted. */
+  id?: string;
+  scheduleId?: string | null;
+  scheduledDate?: string | null;
   title: string;
   activityId?: string | null;
   activityKindId?: string | null;
@@ -14,6 +18,8 @@ export type CreateTaskInput = {
 export type UpdateTaskInput = Partial<
   Pick<
     TaskRecord,
+    | "scheduleId"
+    | "scheduledDate"
     | "title"
     | "activityId"
     | "activityKindId"

@@ -1,5 +1,6 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
+import { VALIDATION as V } from "@packages/types/validation";
 import { Text, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
@@ -14,6 +15,8 @@ import { FormTextarea } from "../common/FormTextarea";
 import { ModalOverlay } from "../common/ModalOverlay";
 import { OptionalDatePickerField } from "../common/OptionalDatePickerField";
 import { TaskActivityPicker } from "./TaskActivityPicker";
+import { TaskQuantityField } from "./TaskQuantityField";
+import { TaskRecurrenceFields } from "./TaskRecurrenceFields";
 import { useTaskCreateDialog } from "./useTaskCreateDialog";
 
 export function TaskCreateDialog({
@@ -41,6 +44,15 @@ export function TaskCreateDialog({
     setDueDate,
     memo,
     setMemo,
+    recurrenceType,
+    setRecurrenceType,
+    intervalDays,
+    setIntervalDays,
+    weekdays,
+    toggleWeekday,
+    recurrenceError,
+    isRecurring,
+    canSubmit,
     isSubmitting,
     handleCreate,
   } = useTaskCreateDialog(onSuccess, defaultDate);
@@ -86,7 +98,7 @@ export function TaskCreateDialog({
             variant="primary"
             label={isSubmitting ? t("create.submitting") : t("create.submit")}
             onPress={handleCreate}
-            disabled={isSubmitting || !title.trim()}
+            disabled={!canSubmit}
             className="flex-1"
             testID={mobileTestIds.tasks.createSubmitButton}
           />
@@ -102,6 +114,7 @@ export function TaskCreateDialog({
           <FormInput
             value={title}
             onChangeText={setTitle}
+            maxLength={V.TASK_TITLE_MAX}
             placeholder={t("create.placeholder.title")}
             autoFocus
             accessibilityLabel={t("create.label.title")}
@@ -120,27 +133,24 @@ export function TaskCreateDialog({
         />
 
         {activityId && (
-          <View>
-            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              数量（任意）
-              {selectedActivity?.quantityUnit
-                ? `（${selectedActivity.quantityUnit}）`
-                : ""}
-            </Text>
-            <FormInput
-              value={quantity !== null ? String(quantity) : ""}
-              onChangeText={(v) => {
-                const parsed = parseFloat(v);
-                setQuantity(
-                  v === "" ? null : Number.isNaN(parsed) ? null : parsed,
-                );
-              }}
-              placeholder={t("create.placeholder.quantityMobile")}
-              keyboardType="decimal-pad"
-            />
-          </View>
+          <TaskQuantityField
+            quantity={quantity}
+            setQuantity={setQuantity}
+            quantityUnit={selectedActivity?.quantityUnit}
+          />
         )}
 
+        <TaskRecurrenceFields
+          recurrenceType={recurrenceType}
+          setRecurrenceType={setRecurrenceType}
+          intervalDays={intervalDays}
+          setIntervalDays={setIntervalDays}
+          weekdays={weekdays}
+          toggleWeekday={toggleWeekday}
+          error={recurrenceError}
+        />
+
+        {/* 繰り返しありのときは期限欄を終了日として使う */}
         <View className="flex-row gap-3">
           <View className="flex-1">
             <DatePickerField
@@ -153,7 +163,9 @@ export function TaskCreateDialog({
             <OptionalDatePickerField
               value={dueDate}
               onChange={setDueDate}
-              label={t("create.label.dueDate")}
+              label={t(
+                isRecurring ? "create.label.endDate" : "create.label.dueDate",
+              )}
             />
           </View>
         </View>
@@ -166,6 +178,7 @@ export function TaskCreateDialog({
             value={memo}
             onChangeText={setMemo}
             placeholder={t("create.placeholder.memo")}
+            maxLength={V.MEMO_MAX}
             numberOfLines={3}
             style={{ textAlignVertical: "top" }}
             accessibilityLabel={t("create.label.memo")}

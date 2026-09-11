@@ -29,6 +29,10 @@ vi.mock("../repositories/goalFreezePeriodRepository", () => ({
   },
 }));
 
+vi.mock("../repositories/taskScheduleRepository", () => ({
+  taskScheduleRepository: { upsertTaskSchedulesFromServer: vi.fn() },
+}));
+
 vi.mock("../repositories/taskRepository", () => ({
   taskRepository: {
     upsertTasksFromServer: vi.fn().mockResolvedValue(undefined),
@@ -50,6 +54,7 @@ vi.mock("../api/apiClient", () => ({
         goals: { $get: vi.fn() },
         "goal-freeze-periods": { $get: vi.fn() },
         tasks: { $get: vi.fn() },
+        "task-schedules": { $get: vi.fn() },
         notes: { $get: vi.fn() },
       },
     },
@@ -72,6 +77,7 @@ vi.mock("@packages/sync-engine/mappers/apiMappers", () => ({
   mapApiGoal: vi.fn((x: unknown) => x),
   mapApiGoalFreezePeriod: vi.fn((x: unknown) => x),
   mapApiTask: vi.fn((x: unknown) => x),
+  mapApiTaskSchedule: vi.fn((x: unknown) => x),
   mapApiNote: vi.fn((x: unknown) => x),
 }));
 
@@ -92,6 +98,7 @@ import { activityRepository } from "../repositories/activityRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { taskRepository } from "../repositories/taskRepository";
+import { taskScheduleRepository } from "../repositories/taskScheduleRepository";
 import { clearLocalData, performInitialSync } from "./initialSync";
 
 function createMockDb() {
@@ -144,6 +151,7 @@ describe("clearLocalData", () => {
     expect(sql).toContain("DELETE FROM goals");
     expect(sql).toContain("DELETE FROM goal_freeze_periods");
     expect(sql).toContain("DELETE FROM tasks");
+    expect(sql).toContain("DELETE FROM task_schedules");
     expect(sql).toContain("DELETE FROM activity_icon_blobs");
     expect(sql).toContain("DELETE FROM activity_icon_delete_queue");
     expect(sql).not.toContain("auth_state");
@@ -180,6 +188,7 @@ describe("performInitialSync", () => {
   const goalsApi = apiClient.users.v2.goals.$get;
   const freezePeriodsApi = apiClient.users.v2["goal-freeze-periods"].$get;
   const tasksApi = apiClient.users.v2.tasks.$get;
+  const taskSchedulesApi = apiClient.users.v2["task-schedules"].$get;
   const notesApi = apiClient.users.v2.notes.$get;
 
   beforeEach(() => {
@@ -201,6 +210,9 @@ describe("performInitialSync", () => {
       okResponse({ freezePeriods: [] }) as never,
     );
     vi.mocked(tasksApi).mockResolvedValue(okResponse({ tasks: [] }) as never);
+    vi.mocked(taskSchedulesApi).mockResolvedValue(
+      okResponse({ taskSchedules: [] }) as never,
+    );
     vi.mocked(notesApi).mockResolvedValue(okResponse({ notes: [] }) as never);
   });
 
@@ -272,6 +284,10 @@ describe("performInitialSync", () => {
       okResponse({ tasks: [{ id: "t1" }] }) as never,
     );
 
+    vi.mocked(taskSchedulesApi).mockResolvedValue(
+      okResponse({ taskSchedules: [{ id: "s1" }] }) as never,
+    );
+
     await performInitialSync("user-1", mockStorage);
 
     expect(activityRepository.upsertActivities).toHaveBeenCalledWith([
@@ -289,6 +305,9 @@ describe("performInitialSync", () => {
     expect(taskRepository.upsertTasksFromServer).toHaveBeenCalledWith([
       { id: "t1" },
     ]);
+    expect(
+      taskScheduleRepository.upsertTaskSchedulesFromServer,
+    ).toHaveBeenCalledWith([{ id: "s1" }]);
   });
 
   it("upserts freeze periods from successful API response", async () => {

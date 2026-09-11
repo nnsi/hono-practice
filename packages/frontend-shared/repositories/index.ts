@@ -11,5 +11,15 @@ export type { GoalDbAdapter } from "./goalRepositoryLogic";
 export { newGoalRepository } from "./goalRepositoryLogic";
 export type { NoteDbAdapter } from "./noteRepositoryLogic";
 export { newNoteRepository } from "./noteRepositoryLogic";
-export type { TaskDbAdapter } from "./taskRepositoryLogic";
+export type {
+  ScheduledTaskRepository,
+  TaskDbAdapter,
+} from "./taskRepositoryLogic";
 export { newTaskRepository } from "./taskRepositoryLogic";
+export type {
+  CreateTaskScheduleInput,
+  TaskScheduleDbAdapter,
+  TaskScheduleRepository,
+  UpdateTaskScheduleInput,
+} from "./taskScheduleRepositoryLogic";
+export { newTaskScheduleRepository } from "./taskScheduleRepositoryLogic";

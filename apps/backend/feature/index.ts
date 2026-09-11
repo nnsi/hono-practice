@@ -9,4 +9,5 @@ export * from "./goal";
 export * from "./note";
 export * from "./subscription";
 export * from "./task";
+export * from "./taskSchedule";
 export * from "./user";

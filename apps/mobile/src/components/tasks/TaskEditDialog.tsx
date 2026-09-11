@@ -1,5 +1,6 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
+import { VALIDATION as V } from "@packages/types/validation";
 import dayjs from "dayjs";
 import { Text, View } from "react-native";
 
@@ -64,6 +65,9 @@ export function TaskEditDialog({
   const selectedActivity = activityId
     ? activities.find((a) => a.id === activityId)
     : null;
+  const inputClass = isArchived
+    ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+    : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800";
   const handleSetActivityId = (id: string | null) => {
     setActivityId(id);
     setActivityKindId(null);
@@ -101,13 +105,10 @@ export function TaskEditDialog({
           <FormInput
             value={title}
             onChangeText={setTitle}
+            maxLength={V.TASK_TITLE_MAX}
             placeholder={t("edit.placeholder.title")}
             editable={!isArchived}
-            className={
-              isArchived
-                ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-            }
+            className={inputClass}
             accessibilityLabel={t("create.label.title")}
             testID={mobileTestIds.tasks.editTitleInput}
           />
@@ -143,11 +144,7 @@ export function TaskEditDialog({
               placeholder={t("create.placeholder.quantityMobile")}
               keyboardType="decimal-pad"
               editable={!isArchived}
-              className={
-                isArchived
-                  ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  : "text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-              }
+              className={inputClass}
             />
           </View>
         )}

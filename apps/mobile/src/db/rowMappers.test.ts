@@ -17,7 +17,7 @@ import {
   mapActivityRow,
 } from "../repositories/activityRowMappers";
 import { mapGoalRow } from "../repositories/goalRepository";
-import { mapTaskRow } from "../repositories/taskRepository";
+import { mapTaskRow } from "../repositories/taskRowMapper";
 
 // ---------------------------------------------------------------------------
 // mapActivityRow
@@ -397,6 +397,8 @@ describe("mapTaskRow", () => {
       archivedAt: "2025-03-06T00:00:00Z",
       createdAt: "2025-03-01T00:00:00Z",
       updatedAt: "2025-03-04T00:00:00Z",
+      scheduleId: null,
+      scheduledDate: null,
       deletedAt: null,
       _syncStatus: "failed",
     });
