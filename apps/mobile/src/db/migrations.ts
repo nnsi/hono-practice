@@ -5,6 +5,7 @@ import {
   MIGRATION_V10,
   MIGRATION_V11,
   MIGRATION_V12,
+  MIGRATION_V13,
   MIGRATION_V2,
   MIGRATION_V3,
   MIGRATION_V4,
@@ -15,9 +16,11 @@ import {
   MIGRATION_V9,
 } from "./migrationSql";
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
-export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
+export async function migrateDb(
+  db: Pick<SQLite.SQLiteDatabase, "getFirstAsync" | "execAsync">,
+): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version;",
   );
@@ -59,7 +62,15 @@ export async function migrateDb(db: SQLite.SQLiteDatabase): Promise<void> {
   if (currentVersion < 12) {
     await db.execAsync(MIGRATION_V12);
   }
-  if (currentVersion < SCHEMA_VERSION) {
-    await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+  if (currentVersion < 13) {
+    await db.execAsync("BEGIN");
+    try {
+      await db.execAsync(MIGRATION_V13);
+      await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+      await db.execAsync("COMMIT");
+    } catch (error) {
+      await db.execAsync("ROLLBACK");
+      throw error;
+    }
   }
 }

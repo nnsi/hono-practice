@@ -107,6 +107,7 @@ export function TaskCard({
           memo={task.memo}
           quantity={task.quantity}
           activityId={task.activityId}
+          scheduleId={task.scheduleId}
           linkedActivity={linkedActivity}
           linkedKind={linkedKind}
           iconBlobMap={iconBlobMap}

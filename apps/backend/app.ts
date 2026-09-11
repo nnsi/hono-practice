@@ -13,6 +13,7 @@ import {
   contactRoute,
   newActivityLogRoute,
   newActivityRoute,
+  newTaskScheduleRoute,
   noteRoute,
   taskRoute,
   userRoute,
@@ -32,6 +33,7 @@ import {
   goalFreezePeriodSyncRoute,
   goalSyncRoute,
   noteSyncRoute,
+  taskScheduleSyncRoute,
   taskSyncRoute,
 } from "./feature-sync";
 import { newHonoWithErrorHandling } from "./lib/honoWithErrorHandling";
@@ -109,11 +111,13 @@ const routes = app
   .route("/users/goals", goalFreezePeriodRoute)
   .route("/users/api-keys", apiKeyRoute)
   .route("/users/subscription", subscriptionRoute)
+  .route("/users/task-schedules", newTaskScheduleRoute)
   .route("/users/v2", activityLogSyncRoute)
   .route("/users/v2", activitySyncRoute)
   .route("/users/v2", goalSyncRoute)
   .route("/users/v2", goalFreezePeriodSyncRoute)
   .route("/users/v2", taskSyncRoute)
+  .route("/users/v2", taskScheduleSyncRoute)
   .route("/users/v2", noteSyncRoute)
   .route("/api/v1", createApiV1Route())
   .route("/r2", r2ProxyRoute)

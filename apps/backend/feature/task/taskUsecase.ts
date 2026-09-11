@@ -1,10 +1,6 @@
 import { AppError, ResourceNotFoundError } from "@backend/error";
 import type { Tracer } from "@backend/lib/tracer";
 import {
-  createActivityId,
-  createActivityKindId,
-} from "@packages/domain/activity/activitySchema";
-import {
   type Task,
   type TaskId,
   createTaskEntity,
@@ -14,8 +10,19 @@ import type { UserId } from "@packages/domain/user/userSchema";
 
 import type { ActivityRepository } from "../activity/activityRepository";
 import type { TaskRepository } from ".";
+import { assertTaskActivityLink } from "./taskActivityLink";
+import {
+  archiveTask,
+  deleteTask,
+  getArchivedTasks,
+  getTask,
+  getTasks,
+} from "./taskReadUsecase";
+import { assertTaskScheduleLink } from "./taskScheduleLink";
 
 export type CreateTaskInputParams = {
+  scheduleId?: string | null;
+  scheduledDate?: string | null;
   title: string;
   activityId?: string;
   activityKindId?: string;
@@ -26,6 +33,8 @@ export type CreateTaskInputParams = {
 };
 
 export type UpdateTaskInputParams = {
+  scheduleId?: string | null;
+  scheduledDate?: string | null;
   title?: string;
   activityId?: string | null;
   activityKindId?: string | null;
@@ -75,63 +84,6 @@ export function newTaskUsecase(
   };
 }
 
-async function assertTaskActivityLink(
-  activityRepo: ActivityRepository,
-  tracer: Tracer,
-  userId: UserId,
-  activityId: string | null | undefined,
-  activityKindId: string | null | undefined,
-) {
-  if (activityKindId != null && activityId == null) {
-    throw new AppError("activityKindId requires activityId", 400);
-  }
-  if (activityId == null) return;
-
-  const ownedActivityId = createActivityId(activityId);
-  const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
-    activityRepo.getActivityByIdAndUserId(userId, ownedActivityId),
-  );
-  if (!activity) {
-    throw new AppError("activityId does not belong to user", 400);
-  }
-  if (activityKindId == null) return;
-
-  const ownedActivityKindId = createActivityKindId(activityKindId);
-  const hasKind = activity.kinds.some(
-    (kind) => kind.id === ownedActivityKindId,
-  );
-  if (!hasKind) {
-    throw new AppError("activityKindId does not belong to activity", 400);
-  }
-}
-
-function getTasks(repo: TaskRepository, tracer: Tracer) {
-  return async (userId: UserId, date?: string) => {
-    return await tracer.span("db.getTasksByUserId", () =>
-      repo.getTasksByUserId(userId, date),
-    );
-  };
-}
-
-function getArchivedTasks(repo: TaskRepository, tracer: Tracer) {
-  return async (userId: UserId) => {
-    return await tracer.span("db.getArchivedTasksByUserId", () =>
-      repo.getArchivedTasksByUserId(userId),
-    );
-  };
-}
-
-function getTask(repo: TaskRepository, tracer: Tracer) {
-  return async (userId: UserId, taskId: TaskId) => {
-    const task = await tracer.span("db.getTaskByUserIdAndTaskId", () =>
-      repo.getTaskByUserIdAndTaskId(userId, taskId),
-    );
-    if (!task) throw new ResourceNotFoundError("task not found");
-
-    return task;
-  };
-}
-
 function createTask(
   repo: TaskRepository,
   activityRepo: ActivityRepository,
@@ -149,12 +101,15 @@ function createTask(
       activityKindId,
     );
 
+    await assertTaskScheduleLink(repo, tracer, userId, params.scheduleId);
     const task = createTaskEntity({
       type: "new",
       id: createTaskId(),
       userId: userId,
       activityId,
       activityKindId,
+      scheduleId: params.scheduleId ?? null,
+      scheduledDate: params.scheduledDate ?? null,
       quantity: params.quantity ?? null,
       title: params.title,
       startDate: params.startDate || null,
@@ -217,6 +172,7 @@ function updateTask(
       );
     }
 
+    await assertTaskScheduleLink(repo, tracer, userId, params.scheduleId);
     const newTask = createTaskEntity({
       ...task,
       ...params,
@@ -231,29 +187,5 @@ function updateTask(
       throw new ResourceNotFoundError("updateTaskUsecasetask not found");
 
     return updateTask;
-  };
-}
-
-function deleteTask(repo: TaskRepository, tracer: Tracer) {
-  return async (userId: UserId, taskId: TaskId) => {
-    const task = await tracer.span("db.getTaskByUserIdAndTaskId", () =>
-      repo.getTaskByUserIdAndTaskId(userId, taskId),
-    );
-    if (!task) throw new ResourceNotFoundError("task not found");
-
-    await tracer.span("db.deleteTask", () => repo.deleteTask(task));
-
-    return;
-  };
-}
-
-function archiveTask(repo: TaskRepository, tracer: Tracer) {
-  return async (userId: UserId, taskId: TaskId) => {
-    const archivedTask = await tracer.span("db.archiveTask", () =>
-      repo.archiveTask(userId, taskId),
-    );
-    if (!archivedTask) throw new ResourceNotFoundError("task not found");
-
-    return archivedTask;
   };
 }

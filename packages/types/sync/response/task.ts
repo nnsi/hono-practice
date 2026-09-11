@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const TaskRowSchema = z.object({
+  scheduleId: z.string().uuid().nullish(),
+  scheduledDate: z.iso.date().nullish(),
   id: z.string(),
   userId: z.string(),
   activityId: z.string().nullable(),

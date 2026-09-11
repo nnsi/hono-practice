@@ -2,48 +2,21 @@ import { groupTasksByTimeline as groupTasksByTimelineCore } from "@packages/doma
 import type { TaskItem } from "@packages/domain/task/types";
 
 import { getToday } from "../utils/dateUtils";
+import {
+  isVirtualScheduledTask,
+  materializeScheduledTask,
+} from "./materializeScheduledTask";
 import { toggleTaskWithActivityLog } from "./taskToggleWithActivityLog";
-import type { ReactHooks } from "./types";
-
-type UseTasksPageDeps = {
-  react: Pick<ReactHooks, "useState" | "useMemo">;
-  useActiveTasks: () => { tasks: TaskItem[] };
-  useArchivedTasks: () => { tasks: TaskItem[] };
-  taskRepository: {
-    updateTask: (
-      id: string,
-      data: { doneDate: string | null } | { startDate: string },
-    ) => Promise<unknown>;
-    softDeleteTask: (id: string) => Promise<unknown>;
-    archiveTask: (id: string) => Promise<unknown>;
-  };
-  activityLogRepository: {
-    createActivityLog: (input: {
-      activityId: string;
-      activityKindId: string | null;
-      quantity: number | null;
-      memo: string;
-      date: string;
-      time: string | null;
-      taskId: string | null;
-    }) => Promise<unknown>;
-    softDeleteActivityLogByTaskId: (taskId: string) => Promise<void>;
-  };
-  syncEngine: {
-    syncTasks: () => Promise<unknown>;
-    syncActivityLogs: () => Promise<unknown>;
-  };
-  useShowCompletedState?: () => [
-    boolean,
-    (value: boolean | ((prev: boolean) => boolean)) => void,
-  ];
-};
+import type { TasksTab, UseTasksPageDeps } from "./useTasksPage.types";
+import { createUseTodayScheduledTasks } from "./useTodayScheduledTasks";
 
 export function createUseTasksPage(deps: UseTasksPageDeps) {
   const {
     react: { useState, useMemo },
     useActiveTasks,
     useArchivedTasks,
+    useActiveTaskSchedules,
+    useTasksOnScheduledDate,
     taskRepository,
     activityLogRepository,
     syncEngine,
@@ -52,99 +25,114 @@ export function createUseTasksPage(deps: UseTasksPageDeps) {
 
   const useShowCompletedStateImpl =
     useShowCompletedState ?? (() => useState(false));
+  const useTodayScheduledTasks = createUseTodayScheduledTasks({
+    react: { useMemo },
+    useActiveTaskSchedules,
+    useTasksOnScheduledDate,
+  });
 
   return function useTasksPage() {
     // state
-    const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+    const [activeTab, setActiveTab] = useState<TasksTab>("active");
     const [showCompleted, setShowCompleted] = useShowCompletedStateImpl();
     const [showFuture, setShowFuture] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+    const [editingTask, setEditingTaskState] = useState<TaskItem | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // data
+    const today = getToday();
     const { tasks: activeTasks } = useActiveTasks();
     const { tasks: archivedTasks } = useArchivedTasks();
+    const virtualTasks = useTodayScheduledTasks(today);
 
-    // computed
-    const tasks: TaskItem[] = activeTasks;
-    const today = getToday();
+    // computed: 実 Task ∪ 今日の仮想タスク
+    const tasks: TaskItem[] = useMemo(
+      () => [...activeTasks, ...virtualTasks],
+      [activeTasks, virtualTasks],
+    );
 
     const allGrouped = useMemo(
       () =>
         groupTasksByTimelineCore(
           tasks,
-          {
-            showCompleted: true,
-            showFuture: true,
-            completedInTheirCategories: false,
-          },
+          { showCompleted: true, showFuture: true },
           today,
         ),
       [tasks, today],
     );
-
     const groupedTasks = useMemo(
       () =>
-        groupTasksByTimelineCore(
-          tasks,
-          { showCompleted, showFuture, completedInTheirCategories: false },
-          today,
-        ),
+        groupTasksByTimelineCore(tasks, { showCompleted, showFuture }, today),
       [tasks, showCompleted, showFuture, today],
     );
 
     const completedCount = allGrouped.completed.length;
     const futureCount = allGrouped.notStarted.length + allGrouped.future.length;
-    const pendingToggleTaskIds = useMemo(() => new Set<string>(), []);
+    // 完了・削除・編集・archive で共有。仮想タスクの二重実体化も防ぐ
+    const pendingTaskIds = useMemo(() => new Set<string>(), []);
 
     const hasAnyTasks =
       tasks.length > 0 || Object.values(groupedTasks).some((g) => g.length > 0);
 
-    // handlers
-    const handleToggleDone = async (task: TaskItem) => {
-      if (pendingToggleTaskIds.has(task.id)) {
-        return;
-      }
-      pendingToggleTaskIds.add(task.id);
+    /** 同一 task への連打を抑止しつつ、仮想タスクなら先に実体化して処理に渡す */
+    const withMaterialized = async (
+      task: TaskItem,
+      run: (real: TaskItem) => Promise<void>,
+    ) => {
+      if (pendingTaskIds.has(task.id)) return;
+      pendingTaskIds.add(task.id);
       try {
-        await toggleTaskWithActivityLog(
-          {
-            taskRepository,
-            activityLogRepository,
-            syncEngine,
-          },
-          task,
-          getToday(),
-        );
+        // 実 Task は余計な await を挟まず同期的に run に渡す（連打抑止の挙動を変えない）
+        const real = isVirtualScheduledTask(task)
+          ? await materializeScheduledTask(taskRepository, task)
+          : task;
+        await run(real);
       } finally {
-        pendingToggleTaskIds.delete(task.id);
+        pendingTaskIds.delete(task.id);
       }
     };
+
+    // handlers
+    const handleToggleDone = (task: TaskItem) =>
+      withMaterialized(task, (real) =>
+        toggleTaskWithActivityLog(
+          { taskRepository, activityLogRepository, syncEngine },
+          real,
+          getToday(),
+        ),
+      );
 
     const handleDelete = async (id: string) => {
-      await taskRepository.softDeleteTask(id);
-      setDeleteConfirmId(null);
-      void syncEngine.syncTasks().catch(() => {});
+      const task = tasks.find((t) => t.id === id);
+      const run = async () => {
+        await taskRepository.softDeleteTask(id);
+        setDeleteConfirmId(null);
+        void syncEngine.syncTasks().catch(() => {});
+      };
+      // 一覧に無い id（編集ダイアログ経由等）は従来通りそのまま削除する
+      if (task) await withMaterialized(task, run);
+      else await run();
     };
 
-    const handleArchive = async (task: TaskItem) => {
-      await taskRepository.archiveTask(task.id);
-      void syncEngine.syncTasks().catch(() => {});
-    };
+    const handleArchive = (task: TaskItem) =>
+      withMaterialized(task, async (real) => {
+        await taskRepository.archiveTask(real.id);
+        void syncEngine.syncTasks().catch(() => {});
+      });
 
-    const handleMoveToToday = async (task: TaskItem) => {
-      await taskRepository.updateTask(task.id, { startDate: getToday() });
-      void syncEngine.syncTasks().catch(() => {});
-    };
+    const handleMoveToToday = (task: TaskItem) =>
+      withMaterialized(task, async (real) => {
+        await taskRepository.updateTask(real.id, { startDate: getToday() });
+        void syncEngine.syncTasks().catch(() => {});
+      });
 
-    const handleCreateSuccess = () => {
-      setCreateDialogOpen(false);
-    };
+    // 編集ダイアログは仮想タスクをそのまま受け取り、保存時に実体化する（useTaskEditDialog 側）。
+    // 見るだけで行が永続化しないようにするため、起動時には実体化しない
+    const setEditingTask = setEditingTaskState;
 
-    const handleEditSuccess = () => {
-      setEditingTask(null);
-    };
+    const handleCreateSuccess = () => setCreateDialogOpen(false);
+    const handleEditSuccess = () => setEditingTaskState(null);
 
     return {
       activeTab,

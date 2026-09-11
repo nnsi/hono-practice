@@ -13,6 +13,7 @@ function createMockFns() {
     syncGoals: vi.fn().mockResolvedValue(undefined),
     syncGoalFreezePeriods: vi.fn().mockResolvedValue(undefined),
     syncNotes: vi.fn().mockResolvedValue(undefined),
+    syncTaskSchedules: vi.fn().mockResolvedValue(undefined),
     syncTasks: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -54,6 +55,9 @@ describe("createSyncEngine", () => {
       fns.syncGoals.mockImplementation(async () => {
         callOrder.push("goals");
       });
+      fns.syncTaskSchedules.mockImplementation(async () => {
+        callOrder.push("taskSchedules");
+      });
       fns.syncTasks.mockImplementation(async () => {
         callOrder.push("tasks");
       });
@@ -74,6 +78,13 @@ describe("createSyncEngine", () => {
 
       expect(iconDelIdx).toBeLessThan(activitiesIdx);
       expect(activitiesIdx).toBeLessThan(activityIconsIdx);
+
+      expect(callOrder.indexOf("activities")).toBeLessThan(
+        callOrder.indexOf("taskSchedules"),
+      );
+      expect(callOrder.indexOf("taskSchedules")).toBeLessThan(
+        callOrder.indexOf("tasks"),
+      );
 
       // tasks must come before activityLogs (FK dependency)
       expect(callOrder.indexOf("tasks")).toBeLessThan(
@@ -119,6 +130,7 @@ describe("createSyncEngine", () => {
       expect(fns.syncActivities).not.toHaveBeenCalled();
       expect(fns.syncNotes).not.toHaveBeenCalled();
       expect(fns.syncTasks).not.toHaveBeenCalled();
+      expect(fns.syncTaskSchedules).not.toHaveBeenCalled();
     });
 
     it("individual sync methods are no-ops when offline", async () => {
@@ -127,6 +139,7 @@ describe("createSyncEngine", () => {
 
       await engine.syncNotes();
       await engine.syncTasks();
+      await engine.syncTaskSchedules();
       await engine.syncActivities();
       await engine.syncActivityLogs();
       await engine.syncActivityIcons();
@@ -136,6 +149,7 @@ describe("createSyncEngine", () => {
 
       expect(fns.syncNotes).not.toHaveBeenCalled();
       expect(fns.syncTasks).not.toHaveBeenCalled();
+      expect(fns.syncTaskSchedules).not.toHaveBeenCalled();
       expect(fns.syncActivities).not.toHaveBeenCalled();
       expect(fns.syncActivityLogs).not.toHaveBeenCalled();
       expect(fns.syncActivityIcons).not.toHaveBeenCalled();
@@ -150,6 +164,7 @@ describe("createSyncEngine", () => {
 
       await engine.syncNotes();
       await engine.syncTasks();
+      await engine.syncTaskSchedules();
       await engine.syncActivities();
 
       expect(fns.syncNotes).toHaveBeenCalledTimes(1);
@@ -248,6 +263,7 @@ describe("createSyncEngine", () => {
       fns.syncGoals.mockRejectedValue(err);
       fns.syncNotes.mockRejectedValue(err);
       fns.syncTasks.mockRejectedValue(err);
+      fns.syncTaskSchedules.mockRejectedValue(err);
       fns.syncGoalFreezePeriods.mockRejectedValue(err);
 
       const engine = createSyncEngine(fns, createMockNetwork());

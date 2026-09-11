@@ -40,6 +40,9 @@ function createMockApi() {
     getGoalFreezePeriods: vi
       .fn()
       .mockResolvedValue(okResponse({ freezePeriods: [] })),
+    getTaskSchedules: vi
+      .fn()
+      .mockResolvedValue(okResponse({ taskSchedules: [] })),
     getTasks: vi.fn().mockResolvedValue(okResponse({ tasks: [] })),
     getNotes: vi.fn().mockResolvedValue(okResponse({ notes: [] })),
   };
@@ -57,6 +60,9 @@ function createMockRepos() {
     goal: { upsertGoalsFromServer: vi.fn().mockResolvedValue(undefined) },
     goalFreezePeriod: {
       upsertFreezePeriodsFromServer: vi.fn().mockResolvedValue(undefined),
+    },
+    taskSchedule: {
+      upsertTaskSchedulesFromServer: vi.fn().mockResolvedValue(undefined),
     },
     task: { upsertTasksFromServer: vi.fn().mockResolvedValue(undefined) },
     note: { upsertNotesFromServer: vi.fn().mockResolvedValue(undefined) },
@@ -207,7 +213,14 @@ describe("createV2InitialSync", () => {
     expect(deps.defaultStorage.getItem(LAST_SYNCED_KEY)).not.toBeNull();
     expect(
       JSON.parse(deps.defaultStorage.getItem(BOOTSTRAPPED_KEY) ?? "[]").sort(),
-    ).toEqual(["freezePeriods", "goals", "logs", "notes", "tasks"]);
+    ).toEqual([
+      "freezePeriods",
+      "goals",
+      "logs",
+      "notes",
+      "taskSchedules",
+      "tasks",
+    ]);
   });
 
   it("clearLocalData clears tables and sync watermarks", async () => {

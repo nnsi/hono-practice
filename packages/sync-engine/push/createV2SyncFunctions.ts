@@ -1,10 +1,16 @@
 import { UpsertGoalRequestSchema } from "@packages/types/sync/request/goal";
+import { UpsertTaskScheduleRequestSchema } from "@packages/types/sync/request/taskSchedule";
 
+import { parseSyncResult } from "../core/parseSyncResult";
 import type { SyncResult } from "../core/syncResult";
 import { createSyncActivityLogs } from "./createSyncActivityLogs";
 import { createSyncGoalFreezePeriods } from "./createSyncGoalFreezePeriods";
 import { createSyncGoals } from "./createSyncGoals";
 import { createSyncNotes } from "./createSyncNotes";
+import {
+  type TaskSchedulePending,
+  createSyncTaskSchedules,
+} from "./createSyncTaskSchedules";
 import { createSyncTasks } from "./createSyncTasks";
 import type {
   GoalPending,
@@ -19,7 +25,7 @@ async function toSyncResult(
   label: string,
 ): Promise<SyncResult> {
   if (!res.ok) throw new Error(`${label} failed: ${res.status}`);
-  return (await res.json()) as SyncResult;
+  return parseSyncResult(await res.json());
 }
 
 /**
@@ -37,9 +43,10 @@ export function createV2SyncFunctions<
   TTask extends Pending,
   TNote extends Pending,
   TFreeze extends Pending,
+  TSchedule extends TaskSchedulePending,
 >(deps: {
   api: V2SyncApi<TLog, TTask, TNote, TFreeze>;
-  repos: V2SyncRepos<TLog, TGoal, TTask, TNote, TFreeze>;
+  repos: V2SyncRepos<TLog, TGoal, TTask, TNote, TFreeze, TSchedule>;
 }) {
   const { api, repos } = deps;
 
@@ -104,11 +111,30 @@ export function createV2SyncFunctions<
       repos.goalFreezePeriod.upsertFreezePeriodsFromServer(wins),
   });
 
+  const syncTaskSchedules = createSyncTaskSchedules<TSchedule>({
+    getPendingSyncTaskSchedules: () =>
+      repos.taskSchedule.getPendingSyncTaskSchedules(),
+    postChunk: async (chunk) =>
+      toSyncResult(
+        await api.postTaskSchedules({
+          taskSchedules: UpsertTaskScheduleRequestSchema.array().parse(chunk),
+        }),
+        "syncTaskSchedules",
+      ),
+    markTaskSchedulesSynced: (ids) =>
+      repos.taskSchedule.markTaskSchedulesSynced(ids),
+    markTaskSchedulesFailed: (ids) =>
+      repos.taskSchedule.markTaskSchedulesFailed(ids),
+    upsertTaskSchedulesFromServer: (wins, sentSnapshots) =>
+      repos.taskSchedule.upsertTaskSchedulesFromServer(wins, sentSnapshots),
+  });
+
   return {
     syncActivityLogs,
     syncGoals,
     syncTasks,
     syncNotes,
     syncGoalFreezePeriods,
+    syncTaskSchedules,
   };
 }

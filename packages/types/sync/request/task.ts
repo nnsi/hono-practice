@@ -4,6 +4,8 @@ import { addDateRangeIssue, dateStringSchema } from "../../dateSchemas";
 
 export const UpsertTaskRequestSchema = z
   .object({
+    scheduleId: z.string().uuid().nullish(),
+    scheduledDate: z.iso.date().nullish(),
     id: z.string().uuid(),
     activityId: z.string().uuid().nullable(),
     activityKindId: z.string().uuid().nullable(),

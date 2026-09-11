@@ -37,6 +37,7 @@ export {
   type UpsertTaskRequest,
   UpsertTaskRequestSchema,
 } from "./request/task";
+export * from "./request/taskSchedule";
 export {
   type GetActivitiesV2Response,
   GetActivitiesV2ResponseSchema,
@@ -73,3 +74,4 @@ export {
   type SyncTasksResponse,
   SyncTasksV2ResponseSchema,
 } from "./response/task";
+export * from "./response/taskSchedule";

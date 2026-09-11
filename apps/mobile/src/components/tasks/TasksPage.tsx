@@ -1,13 +1,8 @@
 import { useState } from "react";
 
+import { isVirtualScheduledTask } from "@packages/frontend-shared/hooks/materializeScheduledTask";
 import { useTranslation } from "@packages/i18n";
-import {
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { syncEngine } from "../../sync/syncEngine";
@@ -16,7 +11,9 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
 import { TaskGroup } from "./TaskGroup";
+import { TaskSchedulesTab } from "./TaskSchedulesTab";
 import { TasksActiveTab } from "./TasksActiveTab";
+import { TasksTabs } from "./TasksTabs";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
@@ -50,6 +47,9 @@ export function TasksPage() {
   } = useTasksPage();
 
   const insets = useSafeAreaInsets();
+  const deleteTarget = deleteConfirmId
+    ? [...tasks, ...archivedTasks].find((t) => t.id === deleteConfirmId)
+    : undefined;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -65,52 +65,7 @@ export function TasksPage() {
       className="flex-1 bg-white dark:bg-gray-800"
       testID={mobileTestIds.tasks.page}
     >
-      {/* Tabs */}
-      <View
-        className="flex-row items-center px-1 h-12 border-b border-gray-100 dark:border-gray-800"
-        style={{ paddingRight: 48 }}
-      >
-        <TouchableOpacity
-          onPress={() => setActiveTab("active")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "active" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-          accessibilityRole="tab"
-          accessibilityLabel={t("page.tab.active")}
-          accessibilityState={{ selected: activeTab === "active" }}
-          testID={mobileTestIds.tasks.activeTab}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "active"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            {t("page.tab.active")}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setActiveTab("archived")}
-          className={`flex-1 py-2.5 items-center rounded-xl mx-0.5 ${
-            activeTab === "archived" ? "bg-gray-100 dark:bg-gray-800" : ""
-          }`}
-          accessibilityRole="tab"
-          accessibilityLabel={t("page.tab.archived")}
-          accessibilityState={{ selected: activeTab === "archived" }}
-          testID={mobileTestIds.tasks.archivedTab}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              activeTab === "archived"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-400 dark:text-gray-500"
-            }`}
-          >
-            {t("page.tab.archived")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TasksTabs activeTab={activeTab} onChange={setActiveTab} />
 
       {/* Content */}
       <ScrollView
@@ -167,6 +122,8 @@ export function TasksPage() {
             )}
           </View>
         )}
+
+        {activeTab === "schedules" && <TaskSchedulesTab />}
       </ScrollView>
 
       {createDialogOpen && (
@@ -190,9 +147,11 @@ export function TasksPage() {
 
       {deleteConfirmId && (
         <DeleteConfirmDialog
-          taskTitle={
-            [...tasks, ...archivedTasks].find((t) => t.id === deleteConfirmId)
-              ?.title || ""
+          taskTitle={deleteTarget?.title || ""}
+          variant={
+            deleteTarget !== undefined && isVirtualScheduledTask(deleteTarget)
+              ? "skipToday"
+              : "task"
           }
           onConfirm={() => handleDelete(deleteConfirmId)}
           onCancel={() => setDeleteConfirmId(null)}

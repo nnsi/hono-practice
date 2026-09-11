@@ -49,3 +49,31 @@ CREATE INDEX IF NOT EXISTS idx_note_updated_at ON note(updated_at);
 export const MIGRATION_V12 = `
 ALTER TABLE auth_state ADD COLUMN tutorial_status TEXT;
 `;
+
+export const MIGRATION_V13 = `
+CREATE TABLE IF NOT EXISTS task_schedules (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  activity_id TEXT,
+  activity_kind_id TEXT,
+  quantity REAL,
+  title TEXT NOT NULL,
+  memo TEXT,
+  start_date TEXT NOT NULL,
+  end_date TEXT,
+  recurrence_type TEXT NOT NULL,
+  interval_days INTEGER,
+  weekdays TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  sync_status TEXT NOT NULL DEFAULT 'synced'
+);
+CREATE INDEX IF NOT EXISTS idx_task_schedules_sync_status ON task_schedules(sync_status);
+CREATE INDEX IF NOT EXISTS idx_task_schedules_activity_id ON task_schedules(activity_id);
+CREATE INDEX IF NOT EXISTS idx_task_schedules_updated_at ON task_schedules(updated_at);
+ALTER TABLE tasks ADD COLUMN schedule_id TEXT;
+ALTER TABLE tasks ADD COLUMN scheduled_date TEXT;
+CREATE INDEX IF NOT EXISTS idx_tasks_schedule_id_scheduled_date ON tasks(schedule_id, scheduled_date);
+`;

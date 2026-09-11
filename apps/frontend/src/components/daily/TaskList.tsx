@@ -1,6 +1,6 @@
 import type { DailyTask } from "@packages/frontend-shared/hooks/types";
 import { useTranslation } from "@packages/i18n";
-import { CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Repeat } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
 import { getActivityIcon } from "../goal/activityHelpers";
@@ -17,6 +17,7 @@ export function TaskList({
   activitiesMap?: Map<string, DexieActivity>;
 }) {
   const { t } = useTranslation("activity");
+  const { t: tTask } = useTranslation("task");
   if (isLoading) {
     return (
       <div className="text-center text-gray-400 py-8">
@@ -57,12 +58,24 @@ export function TaskList({
               <div className="shrink-0">{getActivityIcon(activity)}</div>
             )}
             <div className="flex-1 min-w-0">
-              <div
-                className={`text-base font-medium ${
-                  task.doneDate ? "line-through text-gray-400" : "text-gray-800"
-                }`}
-              >
-                {task.title}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className={`text-base font-medium truncate ${
+                    task.doneDate
+                      ? "line-through text-gray-400"
+                      : "text-gray-800"
+                  }`}
+                >
+                  {task.title}
+                </span>
+                {task.scheduleId != null && (
+                  <Repeat
+                    size={14}
+                    className="text-blue-500 shrink-0"
+                    aria-label={tTask("card.repeat")}
+                    role="img"
+                  />
+                )}
               </div>
               {task.memo && (
                 <div className="text-xs text-gray-400 mt-0.5 truncate">

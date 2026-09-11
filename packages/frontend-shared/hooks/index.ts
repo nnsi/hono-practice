@@ -15,6 +15,20 @@ export {
   createUseTutorial,
 } from "./createUseTutorial";
 export { getVisibleKindsForCharts } from "./getVisibleKindsForCharts";
+export {
+  isVirtualScheduledTask,
+  materializeScheduledTask,
+} from "./materializeScheduledTask";
+export type {
+  IsoWeekday,
+  RecurrenceSummaryLabels,
+  ScheduleDateRange,
+} from "./taskScheduleSummary";
+export {
+  formatRecurrenceSummary,
+  formatScheduleDateRange,
+  sortTaskSchedules,
+} from "./taskScheduleSummary";
 export type {
   ActivityBase,
   ActivityKindBase,
@@ -53,7 +67,14 @@ export { createUseSubscription } from "./useSubscription";
 export { createUseSyncEngine } from "./useSyncEngine";
 export { createUseTaskCreateDialog } from "./useTaskCreateDialog";
 export { createUseTaskEditDialog } from "./useTaskEditDialog";
+export {
+  buildTaskScheduleChanges,
+  createUseTaskScheduleEditDialog,
+} from "./useTaskScheduleEditDialog";
+export type { UseTaskSchedulesTabDeps } from "./useTaskSchedulesTab";
+export { createUseTaskSchedulesTab } from "./useTaskSchedulesTab";
 export { createUseTasksPage } from "./useTasksPage";
+export type { TasksTab, UseTasksPageDeps } from "./useTasksPage.types";
 export type {
   TimerPersistData,
   TimerStorageAdapter,
@@ -63,3 +84,4 @@ export {
   createUseTimer,
   getTimerStorageKey,
 } from "./useTimer";
+export { createUseTodayScheduledTasks } from "./useTodayScheduledTasks";

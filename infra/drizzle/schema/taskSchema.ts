@@ -8,6 +8,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { activities, activityKinds } from "./activitySchema";
+import { taskSchedules } from "./taskScheduleSchema";
 import { customTypeNumeric, users } from "./userSchema";
 
 // Task テーブル
@@ -20,6 +21,8 @@ export const tasks = pgTable(
       .references(() => users.id),
     activityId: uuid("activity_id").references(() => activities.id),
     activityKindId: uuid("activity_kind_id").references(() => activityKinds.id),
+    scheduleId: uuid("schedule_id").references(() => taskSchedules.id),
+    scheduledDate: date("scheduled_date"),
     quantity: customTypeNumeric("quantity"),
     title: text("title").notNull(),
     doneDate: date("done_date"),
@@ -37,6 +40,10 @@ export const tasks = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
+    index("task_schedule_id_scheduled_date_idx").on(
+      t.scheduleId,
+      t.scheduledDate,
+    ),
     index("task_user_id_idx").on(t.userId),
     index("task_created_at_idx").on(t.createdAt),
     // sync pull: WHERE user_id = ? AND updated_at > ?

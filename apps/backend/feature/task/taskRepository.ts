@@ -8,6 +8,7 @@ import {
   getTaskByUserIdAndTaskId,
   getTasksByUserId,
 } from "./taskQueryRepository";
+import { getOwnedTaskScheduleIds } from "./taskScheduleLinkRepository";
 import {
   archiveTask,
   createTask,
@@ -23,6 +24,7 @@ export type TaskRepository<T = QueryExecutor> = {
     userId: UserId,
     taskId: TaskId,
   ) => Promise<Task | undefined>;
+  getOwnedTaskScheduleIds: (userId: UserId, ids: string[]) => Promise<string[]>;
   createTask: (task: Task) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task | undefined>;
   deleteTask: (task: Task) => Promise<void>;
@@ -43,6 +45,7 @@ export function newTaskRepository(
     getTasksByUserId: getTasksByUserId(db),
     getArchivedTasksByUserId: getArchivedTasksByUserId(db),
     getTaskByUserIdAndTaskId: getTaskByUserIdAndTaskId(db),
+    getOwnedTaskScheduleIds: getOwnedTaskScheduleIds(db),
     createTask: createTask(db),
     updateTask: updateTask(db),
     deleteTask: deleteTask(db),

@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { tasks } from "@infra/drizzle/schema";
+import { taskSchedules, tasks } from "@infra/drizzle/schema";
 import { DomainValidateError } from "@packages/domain/errors";
 import {
   type Task,
@@ -31,6 +31,8 @@ export function updateTask(db: QueryExecutor) {
       .update(tasks)
       .set({
         title: task.title,
+        scheduleId: task.scheduleId ?? null,
+        scheduledDate: task.scheduledDate ?? null,
         activityId: task.activityId ?? null,
         activityKindId: task.activityKindId ?? null,
         quantity: task.quantity ?? null,
@@ -107,6 +109,8 @@ export function hardDeleteTasksByUserId(db: QueryExecutor) {
       .delete(tasks)
       .where(eq(tasks.userId, userId))
       .returning();
+    // Account deletion: remove schedules after tasks and before activities.
+    await db.delete(taskSchedules).where(eq(taskSchedules.userId, userId));
     return result.length;
   };
 }

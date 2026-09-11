@@ -9,6 +9,7 @@ vi.mock("../db/activityLogRepository");
 vi.mock("../db/goalRepository");
 vi.mock("../db/goalFreezePeriodRepository");
 vi.mock("../db/taskRepository");
+vi.mock("../db/taskScheduleRepository");
 vi.mock("../db/noteRepository");
 vi.mock("../db/schema", () => ({
   db: {
@@ -18,6 +19,7 @@ vi.mock("../db/schema", () => ({
     goals: { clear: vi.fn() },
     goalFreezePeriods: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     tasks: { clear: vi.fn() },
+    taskSchedules: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     notes: { clear: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     activityIconBlobs: { clear: vi.fn() },
     activityIconDeleteQueue: { clear: vi.fn() },
@@ -42,6 +44,7 @@ import {
   mapApiGoal,
   mapApiGoalFreezePeriod,
   mapApiTask,
+  mapApiTaskSchedule,
 } from "@packages/sync-engine/mappers/apiMappers";
 
 import { activityLogRepository } from "../db/activityLogRepository";
@@ -49,6 +52,7 @@ import { activityRepository } from "../db/activityRepository";
 import { goalRepository } from "../db/goalRepository";
 import { db } from "../db/schema";
 import { taskRepository } from "../db/taskRepository";
+import { taskScheduleRepository } from "../db/taskScheduleRepository";
 import { clearLocalData, performInitialSync } from "./initialSync";
 
 const mockDb = vi.mocked(db) as unknown as Record<
@@ -59,6 +63,7 @@ const mockActivityRepo = vi.mocked(activityRepository);
 const mockLogRepo = vi.mocked(activityLogRepository);
 const mockGoalRepo = vi.mocked(goalRepository);
 const mockTaskRepo = vi.mocked(taskRepository);
+const mockTaskScheduleRepo = vi.mocked(taskScheduleRepository);
 
 describe("initialSync", () => {
   beforeEach(() => {
@@ -82,6 +87,9 @@ describe("initialSync", () => {
     vi.mocked(mapApiTask).mockImplementation(
       (t) => t as unknown as ReturnType<typeof mapApiTask>,
     );
+    vi.mocked(mapApiTaskSchedule).mockImplementation(
+      (t) => t as unknown as ReturnType<typeof mapApiTaskSchedule>,
+    );
   });
 
   describe("clearLocalData", () => {
@@ -96,6 +104,7 @@ describe("initialSync", () => {
       expect(mockDb.goals.clear).toHaveBeenCalled();
       expect(mockDb.goalFreezePeriods.clear).toHaveBeenCalled();
       expect(mockDb.tasks.clear).toHaveBeenCalled();
+      expect(mockDb.taskSchedules.clear).toHaveBeenCalled();
       expect(mockDb.activityIconBlobs.clear).toHaveBeenCalled();
       expect(mockDb.activityIconDeleteQueue.clear).toHaveBeenCalled();
       // authState is NOT cleared — managed by useAuth (logout/performInitialSync)
@@ -171,6 +180,14 @@ describe("initialSync", () => {
 
       mockApiClientObj.users = {
         v2: {
+          "task-schedules": {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: async () => ({
+                taskSchedules: [{ id: "s1", title: "Weekly run" }],
+              }),
+            }),
+          },
           activities: { $get: activitiesGet },
           "activity-logs": { $get: logsGet },
           goals: { $get: goalsGet },
@@ -272,6 +289,9 @@ describe("initialSync", () => {
       expect(mockTaskRepo.upsertTasksFromServer).toHaveBeenCalledWith([
         { id: "t1", title: "Task 1" },
       ]);
+      expect(
+        mockTaskScheduleRepo.upsertTaskSchedulesFromServer,
+      ).toHaveBeenCalledWith([{ id: "s1", title: "Weekly run" }]);
     });
 
     it("stores lastSyncedAt on full success", async () => {
@@ -362,6 +382,12 @@ describe("initialSync", () => {
     it("Promise.all内のAPI呼び出しがrejectした場合、エラーが伝播する", async () => {
       mockApiClientObj.users = {
         v2: {
+          "task-schedules": {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: async () => ({ taskSchedules: [] }),
+            }),
+          },
           activities: {
             $get: vi.fn().mockRejectedValue(new Error("Network error")),
           },
@@ -425,6 +451,12 @@ describe("initialSync", () => {
       });
       mockApiClientObj.users = {
         v2: {
+          "task-schedules": {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: async () => ({ taskSchedules: [] }),
+            }),
+          },
           activities: {
             $get: vi.fn().mockResolvedValue(
               okRes({
@@ -459,6 +491,12 @@ describe("initialSync", () => {
       const userBGoals = [{ id: "g-userB", activityId: "a-userB" }];
       mockApiClientObj.users = {
         v2: {
+          "task-schedules": {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              json: async () => ({ taskSchedules: [] }),
+            }),
+          },
           activities: {
             $get: vi.fn().mockResolvedValue(
               okRes({

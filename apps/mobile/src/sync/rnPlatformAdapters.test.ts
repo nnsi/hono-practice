@@ -59,7 +59,7 @@ describe("rnPlatformAdapters forced offline", () => {
     ]);
     mocks.multiGet.mockResolvedValue([
       ["actiko-v2-lastSyncedAt", "2026-07-13T00:00:00.000Z"],
-      ["actiko-v2-bootstrappedResources", '["logs","tasks"]'],
+      ["actiko-v2-bootstrappedResources", '["logs","tasks","taskSchedules"]'],
     ]);
     const { loadStorageCache, rnStorageAdapter, isStorageCacheLoaded } =
       await loadFresh();
@@ -74,7 +74,7 @@ describe("rnPlatformAdapters forced offline", () => {
       "2026-07-13T00:00:00.000Z",
     );
     expect(rnStorageAdapter.getItem("actiko-v2-bootstrappedResources")).toBe(
-      '["logs","tasks"]',
+      '["logs","tasks","taskSchedules"]',
     );
     expect(isStorageCacheLoaded()).toBe(true);
   });

@@ -7,6 +7,7 @@ export type DeltaSyncResource =
   | "logs"
   | "goals"
   | "freezePeriods"
+  | "taskSchedules"
   | "tasks"
   | "notes";
 

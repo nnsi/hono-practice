@@ -1,57 +1,15 @@
-import type { SyncStatus } from "@packages/domain/sync/syncableRecord";
-import type { TaskRecord } from "@packages/domain/task/taskRecord";
-import type { TaskRepository } from "@packages/domain/task/taskRepository";
 import {
+  type ScheduledTaskRepository,
   type TaskDbAdapter,
   newTaskRepository,
 } from "@packages/frontend-shared/repositories";
 
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
-import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
-
-// --- Row mapping helpers (snake_case SQL → camelCase TS) ---
+import { toSqlBindable } from "./sqlRowHelpers";
+import { mapTaskRow, taskColumnMap } from "./taskRowMapper";
 
 type SqlRow = Record<string, unknown>;
-
-type TaskWithSync = TaskRecord & { _syncStatus: SyncStatus };
-
-export function mapTaskRow(row: SqlRow): TaskWithSync {
-  return {
-    id: str(row.id),
-    userId: str(row.user_id),
-    activityId: strOrNull(row.activity_id),
-    activityKindId: strOrNull(row.activity_kind_id),
-    quantity: row.quantity != null ? Number(row.quantity) : null,
-    title: str(row.title),
-    startDate: strOrNull(row.start_date),
-    dueDate: strOrNull(row.due_date),
-    doneDate: strOrNull(row.done_date),
-    memo: str(row.memo),
-    archivedAt: strOrNull(row.archived_at),
-    createdAt: str(row.created_at),
-    updatedAt: str(row.updated_at),
-    deletedAt: strOrNull(row.deleted_at),
-    _syncStatus: toSyncStatus(row.sync_status),
-  };
-}
-
-// --- Column map (camelCase → snake_case) ---
-
-const taskColumnMap: Record<string, string> = {
-  title: "title",
-  activityId: "activity_id",
-  activityKindId: "activity_kind_id",
-  quantity: "quantity",
-  startDate: "start_date",
-  dueDate: "due_date",
-  doneDate: "done_date",
-  memo: "memo",
-  archivedAt: "archived_at",
-  deletedAt: "deleted_at",
-  updatedAt: "updated_at",
-  _syncStatus: "sync_status",
-};
 
 // --- Adapter ---
 
@@ -68,8 +26,8 @@ const adapter: TaskDbAdapter = {
   async insert(task) {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, schedule_id, scheduled_date, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         task.id,
         task.userId,
@@ -77,6 +35,8 @@ const adapter: TaskDbAdapter = {
         task.activityId,
         task.activityKindId,
         task.quantity,
+        task.scheduleId ?? null,
+        task.scheduledDate ?? null,
         task.startDate,
         task.dueDate,
         task.doneDate,
@@ -94,6 +54,18 @@ const adapter: TaskDbAdapter = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<SqlRow>("SELECT * FROM tasks");
     return rows.map(mapTaskRow).filter(filter);
+  },
+  async getByScheduledDate(date, scheduleIds) {
+    if (scheduleIds?.length === 0) return [];
+    const db = await getDatabase();
+    const restriction = scheduleIds
+      ? `schedule_id IN (${scheduleIds.map(() => "?").join(",")})`
+      : "schedule_id IS NOT NULL";
+    const rows = await db.getAllAsync<SqlRow>(
+      `SELECT * FROM tasks WHERE scheduled_date = ? AND ${restriction}`,
+      [date, ...(scheduleIds ?? [])],
+    );
+    return rows.map(mapTaskRow);
   },
   async update(id, changes) {
     const db = await getDatabase();
@@ -134,8 +106,8 @@ const adapter: TaskDbAdapter = {
       await db.execAsync("BEGIN");
       for (const t of tasks) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR REPLACE INTO tasks (id, user_id, title, activity_id, activity_kind_id, quantity, schedule_id, scheduled_date, start_date, due_date, done_date, memo, archived_at, sync_status, deleted_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             t.id,
             t.userId,
@@ -143,6 +115,8 @@ const adapter: TaskDbAdapter = {
             t.activityId,
             t.activityKindId,
             t.quantity,
+            t.scheduleId ?? null,
+            t.scheduledDate ?? null,
             t.startDate,
             t.dueDate,
             t.doneDate,
@@ -166,4 +140,4 @@ const adapter: TaskDbAdapter = {
 
 export const taskRepository = newTaskRepository(
   adapter,
-) satisfies TaskRepository;
+) satisfies ScheduledTaskRepository;

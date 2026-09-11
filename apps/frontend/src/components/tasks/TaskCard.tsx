@@ -5,19 +5,17 @@ import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  Archive,
-  CalendarCheck,
   CalendarDays,
   CheckCircle2,
   Circle,
   FileText,
-  Pencil,
-  Trash2,
+  Repeat,
 } from "lucide-react";
 
 import { type DexieActivityKind, db } from "../../db/schema";
 import { useActivities } from "../../hooks/useActivities";
 import { renderActivityIcon } from "../goal/activityHelpers";
+import { TaskCardActions } from "./TaskCardActions";
 import type { TaskItem } from "./types";
 
 export function TaskCard({
@@ -62,7 +60,8 @@ export function TaskCard({
 
   const today = getToday();
   const showMoveToToday =
-    !archived && !task.doneDate && task.startDate !== today && onMoveToToday;
+    !archived && !task.doneDate && task.startDate !== today && !!onMoveToToday;
+  const isScheduled = task.scheduleId != null;
   return (
     <div
       className={`
@@ -93,14 +92,24 @@ export function TaskCard({
 
       {/* タスク本体 */}
       <div className="flex-1 min-w-0 cursor-pointer" onClick={onEdit}>
-        <div
-          className={`text-sm font-medium truncate ${
-            completed || task.doneDate
-              ? "line-through text-gray-500"
-              : "text-gray-900"
-          }`}
-        >
-          {task.title}
+        <div className="flex items-center gap-1 min-w-0">
+          <span
+            className={`text-sm font-medium truncate ${
+              completed || task.doneDate
+                ? "line-through text-gray-500"
+                : "text-gray-900"
+            }`}
+          >
+            {task.title}
+          </span>
+          {isScheduled && (
+            <Repeat
+              size={14}
+              className="text-blue-500 flex-shrink-0"
+              aria-label={t("card.repeat")}
+              role="img"
+            />
+          )}
         </div>
         {linkedActivity && (
           <span className="text-xs text-gray-500 inline-flex items-center gap-1">
@@ -140,59 +149,14 @@ export function TaskCard({
         )}
       </div>
 
-      {/* アクションボタン */}
-      <div className="flex items-center gap-0.5 flex-shrink-0">
-        {/* 今日に移動ボタン */}
-        {showMoveToToday && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMoveToToday();
-            }}
-            className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-            title={t("card.moveToToday")}
-          >
-            <CalendarCheck size={16} />
-          </button>
-        )}
-        {/* 完了済みタスクのアーカイブボタン */}
-        {task.doneDate && !archived && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onArchive();
-            }}
-            className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-            title={t("card.archive")}
-          >
-            <Archive size={16} />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          title={t("card.edit")}
-        >
-          <Pencil size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          title={t("card.delete")}
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+      <TaskCardActions
+        showMoveToToday={showMoveToToday}
+        showArchive={!!task.doneDate && !archived}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onArchive={onArchive}
+        onMoveToToday={onMoveToToday}
+      />
     </div>
   );
 }

@@ -3,11 +3,13 @@ import { useState } from "react";
 import { createUseTaskCreateDialog } from "@packages/frontend-shared/hooks/useTaskCreateDialog";
 
 import { taskRepository } from "../../db/taskRepository";
+import { taskScheduleRepository } from "../../db/taskScheduleRepository";
 import { syncEngine } from "../../sync/syncEngine";
 
 const useTaskCreateDialogBase = createUseTaskCreateDialog({
   react: { useState },
   taskRepository,
+  taskScheduleRepository,
   syncEngine,
 });
 

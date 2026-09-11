@@ -1,11 +1,13 @@
 import { createSyncEngine, createV2SyncFunctions } from "@packages/sync-engine";
 
+import { postTaskSchedules } from "../api";
 import { apiClient } from "../api/apiClient";
 import { activityLogRepository } from "../repositories/activityLogRepository";
 import { goalFreezePeriodRepository } from "../repositories/goalFreezePeriodRepository";
 import { goalRepository } from "../repositories/goalRepository";
 import { noteRepository } from "../repositories/noteRepository";
 import { taskRepository } from "../repositories/taskRepository";
+import { taskScheduleRepository } from "../repositories/taskScheduleRepository";
 import { reportError } from "../utils/errorReporter";
 import { rnNetworkAdapter } from "./rnPlatformAdapters";
 import {
@@ -16,6 +18,7 @@ import {
 
 const entitySyncs = createV2SyncFunctions({
   api: {
+    postTaskSchedules,
     postActivityLogs: (json) =>
       apiClient.users.v2["activity-logs"].sync.$post({ json }),
     postGoals: (json) => apiClient.users.v2.goals.sync.$post({ json }),
@@ -28,6 +31,7 @@ const entitySyncs = createV2SyncFunctions({
     activityLog: activityLogRepository,
     goal: goalRepository,
     task: taskRepository,
+    taskSchedule: taskScheduleRepository,
     note: noteRepository,
     goalFreezePeriod: goalFreezePeriodRepository,
   },

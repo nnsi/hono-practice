@@ -7,5 +7,6 @@ export { createSyncActivityLogs } from "./createSyncActivityLogs";
 export { createSyncGoalFreezePeriods } from "./createSyncGoalFreezePeriods";
 export { createSyncGoals } from "./createSyncGoals";
 export { createSyncNotes } from "./createSyncNotes";
+export { createSyncTaskSchedules } from "./createSyncTaskSchedules";
 export { createSyncTasks } from "./createSyncTasks";
 export { createV2SyncFunctions } from "./createV2SyncFunctions";

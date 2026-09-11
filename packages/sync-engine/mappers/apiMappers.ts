@@ -2,76 +2,26 @@ import type {
   ActivityKindRecord,
   ActivityRecord,
 } from "@packages/domain/activity/activityRecord";
-import {
-  RECORDING_MODES,
-  type RecordingMode,
-} from "@packages/domain/activity/recordingMode";
 import type { ActivityLogRecord } from "@packages/domain/activityLog/activityLogRecord";
 import { parseDayTargets } from "@packages/domain/goal/dayTargets";
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type { GoalRecord } from "@packages/domain/goal/goalRecord";
 import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type { TaskRecord } from "@packages/domain/task/taskRecord";
+import { taskScheduleRecurrenceSchema } from "@packages/domain/taskSchedule";
 
-// Loose record type for API responses — mappers use `??` to handle both null and undefined
-type ApiRecord = Record<string, unknown> & { id: string };
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
-function toISOString(v: unknown): string {
-  return typeof v === "string" ? v : new Date().toISOString();
-}
-
-function toBool(v: unknown, defaultValue: boolean): boolean {
-  if (typeof v === "boolean") return v;
-  return defaultValue;
-}
-
-function toNum(v: unknown, defaultValue: number): number {
-  if (typeof v === "number") return v;
-  const n = Number(v);
-  return Number.isNaN(n) ? defaultValue : n;
-}
-
-function toNumOrNull(v: unknown): number | null {
-  if (v == null) return null;
-  if (typeof v === "number") return v;
-  const n = Number(v);
-  return Number.isNaN(n) ? null : n;
-}
-
-const VALID_ICON_TYPES = new Set(["emoji", "upload", "generate"]);
-type IconType = "emoji" | "upload" | "generate";
-
-function isIconType(value: string): value is IconType {
-  return VALID_ICON_TYPES.has(value);
-}
-
-function toIconType(value: unknown): IconType {
-  if (typeof value === "string" && isIconType(value)) {
-    return value;
-  }
-  return "emoji";
-}
-
-const VALID_RECORDING_MODES: ReadonlySet<string> = new Set(RECORDING_MODES);
-
-function isRecordingMode(value: string): value is RecordingMode {
-  return VALID_RECORDING_MODES.has(value);
-}
-
-function toRecordingMode(value: unknown): RecordingMode {
-  if (typeof value === "string" && isRecordingMode(value)) {
-    return value;
-  }
-  return "manual";
-}
+import type { TaskScheduleRecord } from "../types/taskSchedule";
+import {
+  type ApiRecord,
+  str,
+  strOrNull,
+  toBool,
+  toISOString,
+  toIconType,
+  toNum,
+  toNumOrNull,
+  toRecordingMode,
+} from "./apiMapperHelpers";
 
 // parseDayTargets imported from domain layer handles JSON parsing + key validation
 
@@ -183,6 +133,8 @@ export function mapApiTask(t: ApiRecord): TaskRecord {
     doneDate: strOrNull(t.doneDate ?? t.done_date),
     memo: str(t.memo),
     archivedAt: strOrNull(t.archivedAt ?? t.archived_at),
+    scheduleId: strOrNull(t.scheduleId ?? t.schedule_id),
+    scheduledDate: strOrNull(t.scheduledDate ?? t.scheduled_date),
     createdAt: toISOString(t.createdAt ?? t.created_at),
     updatedAt: toISOString(t.updatedAt ?? t.updated_at),
     deletedAt: strOrNull(t.deletedAt ?? t.deleted_at),
@@ -199,5 +151,29 @@ export function mapApiNote(n: ApiRecord): NoteRecord {
     createdAt: toISOString(n.createdAt ?? n.created_at),
     updatedAt: toISOString(n.updatedAt ?? n.updated_at),
     deletedAt: strOrNull(n.deletedAt ?? n.deleted_at),
+  };
+}
+
+export function mapApiTaskSchedule(s: ApiRecord): TaskScheduleRecord {
+  const recurrence = taskScheduleRecurrenceSchema.parse({
+    recurrenceType: s.recurrenceType ?? s.recurrence_type,
+    intervalDays: toNumOrNull(s.intervalDays ?? s.interval_days),
+    weekdays: s.weekdays ?? null,
+  });
+  return {
+    ...recurrence,
+    id: s.id,
+    userId: str(s.userId ?? s.user_id),
+    activityId: strOrNull(s.activityId ?? s.activity_id),
+    activityKindId: strOrNull(s.activityKindId ?? s.activity_kind_id),
+    quantity: toNumOrNull(s.quantity),
+    title: str(s.title),
+    memo: strOrNull(s.memo),
+    startDate: str(s.startDate ?? s.start_date),
+    endDate: strOrNull(s.endDate ?? s.end_date),
+    isActive: toBool(s.isActive ?? s.is_active, true),
+    createdAt: toISOString(s.createdAt ?? s.created_at),
+    updatedAt: toISOString(s.updatedAt ?? s.updated_at),
+    deletedAt: strOrNull(s.deletedAt ?? s.deleted_at),
   };
 }
