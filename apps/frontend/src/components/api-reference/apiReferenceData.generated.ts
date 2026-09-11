@@ -208,6 +208,18 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         scope: "tasks:write",
         requestBody: [
           {
+            name: "scheduleId",
+            type: "string | null",
+            required: false,
+            description: "",
+          },
+          {
+            name: "scheduledDate",
+            type: "string | null",
+            required: false,
+            description: "",
+          },
+          {
             name: "title",
             type: "string",
             required: true,
@@ -257,6 +269,18 @@ export const ENDPOINT_GROUPS: EndpointGroup[] = [
         description: "タスクを更新する。",
         scope: "tasks:write",
         requestBody: [
+          {
+            name: "scheduleId",
+            type: "string | null",
+            required: false,
+            description: "",
+          },
+          {
+            name: "scheduledDate",
+            type: "string | null",
+            required: false,
+            description: "",
+          },
           {
             name: "title",
             type: "string",
