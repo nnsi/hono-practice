@@ -1,7 +1,8 @@
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import { VALIDATION as V } from "@packages/types/validation";
-import { Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
 import { useActivities } from "../../hooks/useActivities";
@@ -29,6 +30,7 @@ export function TaskCreateDialog({
   defaultDate?: string;
 }) {
   const { t } = useTranslation("task");
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const {
     title,
     setTitle,
@@ -122,69 +124,86 @@ export function TaskCreateDialog({
           />
         </View>
 
-        <TaskActivityPicker
-          activities={activities}
-          iconBlobMap={iconBlobMap}
-          activityId={activityId}
-          onActivityIdChange={handleSetActivityId}
-          kinds={kinds ?? []}
-          activityKindId={activityKindId}
-          onActivityKindIdChange={setActivityKindId}
-        />
-
-        {activityId && (
-          <TaskQuantityField
-            quantity={quantity}
-            setQuantity={setQuantity}
-            quantityUnit={selectedActivity?.quantityUnit}
-          />
-        )}
-
-        <TaskRecurrenceFields
-          recurrenceType={recurrenceType}
-          setRecurrenceType={setRecurrenceType}
-          intervalDays={intervalDays}
-          setIntervalDays={setIntervalDays}
-          weekdays={weekdays}
-          toggleWeekday={toggleWeekday}
-          error={recurrenceError}
-        />
-
-        {/* 繰り返しありのときは期限欄を終了日として使う */}
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <DatePickerField
-              value={startDate || getToday()}
-              onChange={setStartDate}
-              label={t("create.label.startDate")}
-            />
-          </View>
-          <View className="flex-1">
-            <OptionalDatePickerField
-              value={dueDate}
-              onChange={setDueDate}
-              label={t(
-                isRecurring ? "create.label.endDate" : "create.label.dueDate",
-              )}
-            />
-          </View>
-        </View>
-
-        <View>
-          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {t("create.label.memo")}
+        <Pressable
+          onPress={() => setDetailsOpen((open) => !open)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: detailsOpen }}
+          testID={mobileTestIds.tasks.createDetailsButton}
+          className="py-2"
+        >
+          <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            {t("create.details")} {detailsOpen ? "▴" : "▾"}
           </Text>
-          <FormTextarea
-            value={memo}
-            onChangeText={setMemo}
-            placeholder={t("create.placeholder.memo")}
-            maxLength={V.MEMO_MAX}
-            numberOfLines={3}
-            style={{ textAlignVertical: "top" }}
-            accessibilityLabel={t("create.label.memo")}
-            testID={mobileTestIds.tasks.createMemoInput}
-          />
-        </View>
+        </Pressable>
+        {detailsOpen && (
+          <View className="gap-4">
+            <TaskActivityPicker
+              activities={activities}
+              iconBlobMap={iconBlobMap}
+              activityId={activityId}
+              onActivityIdChange={handleSetActivityId}
+              kinds={kinds ?? []}
+              activityKindId={activityKindId}
+              onActivityKindIdChange={setActivityKindId}
+            />
+
+            {activityId && (
+              <TaskQuantityField
+                quantity={quantity}
+                setQuantity={setQuantity}
+                quantityUnit={selectedActivity?.quantityUnit}
+              />
+            )}
+
+            <TaskRecurrenceFields
+              recurrenceType={recurrenceType}
+              setRecurrenceType={setRecurrenceType}
+              intervalDays={intervalDays}
+              setIntervalDays={setIntervalDays}
+              weekdays={weekdays}
+              toggleWeekday={toggleWeekday}
+              error={recurrenceError}
+            />
+
+            {/* 繰り返しありのときは期限欄を終了日として使う */}
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <DatePickerField
+                  value={startDate || getToday()}
+                  onChange={setStartDate}
+                  label={t("create.label.startDate")}
+                />
+              </View>
+              <View className="flex-1">
+                <OptionalDatePickerField
+                  value={dueDate}
+                  onChange={setDueDate}
+                  label={t(
+                    isRecurring
+                      ? "create.label.endDate"
+                      : "create.label.dueDate",
+                  )}
+                />
+              </View>
+            </View>
+
+            <View>
+              <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t("create.label.memo")}
+              </Text>
+              <FormTextarea
+                value={memo}
+                onChangeText={setMemo}
+                placeholder={t("create.placeholder.memo")}
+                maxLength={V.MEMO_MAX}
+                numberOfLines={3}
+                style={{ textAlignVertical: "top" }}
+                accessibilityLabel={t("create.label.memo")}
+                testID={mobileTestIds.tasks.createMemoInput}
+              />
+            </View>
+          </View>
+        )}
       </View>
     </ModalOverlay>
   );

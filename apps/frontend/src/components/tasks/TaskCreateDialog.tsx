@@ -51,7 +51,7 @@ export function TaskCreateDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-5">
+      <div className="bg-white w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl shadow-modal p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">{t("create.title")}</h2>
           <button
@@ -70,6 +70,7 @@ export function TaskCreateDialog({
               {t("create.label.title")} <span className="text-red-500">*</span>
             </label>
             <FormInput
+              aria-label={t("create.label.title")}
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -78,61 +79,68 @@ export function TaskCreateDialog({
             />
           </div>
 
-          <TaskActivityFields
-            activityId={activityId}
-            setActivityId={setActivityId}
-            activityKindId={activityKindId}
-            setActivityKindId={setActivityKindId}
-            quantity={quantity}
-            setQuantity={setQuantity}
-          />
+          <details className="space-y-4">
+            <summary className="cursor-pointer text-sm font-medium text-blue-600">
+              {t("create.details")}
+            </summary>
+            <TaskActivityFields
+              activityId={activityId}
+              setActivityId={setActivityId}
+              activityKindId={activityKindId}
+              setActivityKindId={setActivityKindId}
+              quantity={quantity}
+              setQuantity={setQuantity}
+            />
 
-          <TaskRecurrenceFields
-            recurrenceType={recurrenceType}
-            setRecurrenceType={setRecurrenceType}
-            intervalDays={intervalDays}
-            setIntervalDays={setIntervalDays}
-            weekdays={weekdays}
-            toggleWeekday={toggleWeekday}
-            error={recurrenceError}
-          />
+            <TaskRecurrenceFields
+              recurrenceType={recurrenceType}
+              setRecurrenceType={setRecurrenceType}
+              intervalDays={intervalDays}
+              setIntervalDays={setIntervalDays}
+              weekdays={weekdays}
+              toggleWeekday={toggleWeekday}
+              error={recurrenceError}
+            />
 
-          {/* 日付（繰り返しありのときは期限欄を終了日として使う） */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("create.label.startDate")}
-              </label>
-              <DatePickerField value={startDate} onChange={setStartDate} />
+            {/* 日付（繰り返しありのときは期限欄を終了日として使う） */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t("create.label.startDate")}
+                </label>
+                <DatePickerField value={startDate} onChange={setStartDate} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t(
+                    isRecurring
+                      ? "create.label.endDate"
+                      : "create.label.dueDate",
+                  )}
+                </label>
+                <DatePickerField
+                  value={dueDate}
+                  onChange={setDueDate}
+                  placeholder={t("create.placeholder.dueDate")}
+                  allowClear
+                />
+              </div>
             </div>
+
+            {/* メモ */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t(
-                  isRecurring ? "create.label.endDate" : "create.label.dueDate",
-                )}
+                {t("create.label.memo")}
               </label>
-              <DatePickerField
-                value={dueDate}
-                onChange={setDueDate}
-                placeholder={t("create.placeholder.dueDate")}
-                allowClear
+              <FormTextarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                placeholder={t("create.placeholder.memo")}
+                maxLength={V.MEMO_MAX}
+                rows={3}
               />
             </div>
-          </div>
-
-          {/* メモ */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t("create.label.memo")}
-            </label>
-            <FormTextarea
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              placeholder={t("create.placeholder.memo")}
-              maxLength={V.MEMO_MAX}
-              rows={3}
-            />
-          </div>
+          </details>
 
           {/* ボタン */}
           <div className="flex gap-2 pt-2">

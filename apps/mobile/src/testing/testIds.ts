@@ -43,6 +43,7 @@ export const mobileTestIds = {
     emptyCreateButton: "tasks.emptyCreate",
     addButton: "tasks.add",
     createDialog: "tasks.create.dialog",
+    createDetailsButton: "tasks.create.details",
     createTitleInput: "tasks.create.titleInput",
     createMemoInput: "tasks.create.memoInput",
     createCancelButton: "tasks.create.cancel",
