@@ -128,7 +128,7 @@ describe("refresh diagnostics preserve credential decisions", () => {
     });
   });
 
-  it("reports CAS race loss without allowing extra grace consumption", async () => {
+  it("reports concurrent rejection without allowing extra grace consumption", async () => {
     const attempts = Array.from({ length: 5 }, () => {
       const collector = createCollector();
       const repository = newRefreshTokenRepository(
@@ -145,9 +145,16 @@ describe("refresh diagnostics preserve credential decisions", () => {
       attempts.map((attempt) => attempt.result),
     );
     expect(results.filter(Boolean)).toHaveLength(2);
+    const reasons = attempts.map(
+      ({ collector }) => collector.snapshot().reason,
+    );
+    expect(reasons.filter((reason) => reason === "rotated")).toHaveLength(1);
+    expect(reasons.filter((reason) => reason === "grace_used")).toHaveLength(1);
     expect(
-      attempts.map(({ collector }) => collector.snapshot().reason),
-    ).toContain("race_lost");
+      reasons.filter(
+        (reason) => reason === "race_lost" || reason === "revoked",
+      ),
+    ).toHaveLength(3);
   });
 
   it("marks persistence failure unconfirmed and leaves the old credential usable", async () => {

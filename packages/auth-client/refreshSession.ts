@@ -6,8 +6,9 @@ import { emitAuthDiagnostic } from "./authDiagnosticObserver";
 import { classifyRefreshFailure } from "./classifyRefreshFailure";
 import type { RefreshResult } from "./types";
 
-// サーバーが rotation 済みでも応答を受信できないことがある。
-// 15 秒で body の受信まで打ち切り、30 秒の grace 内に一度だけ再提示する。
+// body の受信も含めてタイムアウトし、一時障害は一度だけ再試行する。
+// suspend 中はタイマーが遅れるため、復旧の保証は transport が永続化した
+// operation nonce とサーバーの同一結果再取得に任せる。
 const REFRESH_TIMEOUT_MS = 15_000;
 
 export async function requestRefreshSession(

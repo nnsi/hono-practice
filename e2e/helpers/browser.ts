@@ -3,20 +3,24 @@ import {
   type BrowserContext,
   type Page,
   chromium,
+  firefox,
 } from "playwright";
 import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 
-export function setupBrowser() {
+export function setupBrowser(engine: "chromium" | "firefox" = "chromium") {
   let browser: Browser;
   let context: BrowserContext;
   let page: Page;
 
   beforeAll(async () => {
-    browser = await chromium.launch({
+    browser = await (engine === "firefox" ? firefox : chromium).launch({
       headless: true,
       // playwrightのバージョンとプリインストール済みブラウザのrevisionが
       // ズレている環境（リモート実行環境等）向けの逃げ道
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+      executablePath:
+        (engine === "firefox"
+          ? process.env.PLAYWRIGHT_FIREFOX_EXECUTABLE
+          : process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) || undefined,
     });
   });
 

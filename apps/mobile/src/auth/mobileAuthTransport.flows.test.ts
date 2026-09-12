@@ -6,6 +6,9 @@ vi.mock("@packages/i18n", () => ({
 vi.mock("@packages/sync-engine", () => ({
   trackServerTimeFromResponse: vi.fn(),
 }));
+vi.mock("expo-crypto", () => ({
+  randomUUID: () => globalThis.crypto.randomUUID(),
+}));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
@@ -23,18 +26,17 @@ import {
   emptyResponse,
   jsonResponse,
   makeTransport,
+  mockRefreshTokenStorage,
   validSessionBody,
 } from "./_mobileAuthTransportTestHelpers";
 
-const mockGetItem = SecureStore.getItemAsync as ReturnType<typeof vi.fn>;
 const mockSetItem = SecureStore.setItemAsync as ReturnType<typeof vi.fn>;
 const mockDeleteItem = SecureStore.deleteItemAsync as ReturnType<typeof vi.fn>;
+let store: ReturnType<typeof mockRefreshTokenStorage>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetItem.mockResolvedValue(null);
-  mockSetItem.mockResolvedValue(undefined);
-  mockDeleteItem.mockResolvedValue(undefined);
+  store = mockRefreshTokenStorage();
 });
 
 afterEach(() => {
@@ -67,7 +69,7 @@ describe("mobileAuthTransport.login", () => {
   });
 
   it("進行中 refresh の永続化後に login を送り、新しい refresh token を最後に保存する", async () => {
-    mockGetItem.mockResolvedValue("rt-old");
+    store.data.set(REFRESH_TOKEN_KEY, "rt-old");
     let resolveRefresh!: (response: Response) => void;
     const refreshResponse = new Promise<Response>((resolve) => {
       resolveRefresh = resolve;
@@ -85,8 +87,7 @@ describe("mobileAuthTransport.login", () => {
 
     const refresh = transport.refreshSession();
     const login = transport.login("u", "pw");
-    for (let i = 0; i < 5; i++) await Promise.resolve();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
     resolveRefresh(
       jsonResponse(
@@ -98,16 +99,12 @@ describe("mobileAuthTransport.login", () => {
     );
     await Promise.all([refresh, login]);
 
-    expect(mockSetItem).toHaveBeenNthCalledWith(
-      1,
-      REFRESH_TOKEN_KEY,
-      "rt-refreshed",
-    );
-    expect(mockSetItem).toHaveBeenNthCalledWith(
-      2,
-      REFRESH_TOKEN_KEY,
-      "rt-login",
-    );
+    expect(
+      mockSetItem.mock.calls
+        .filter(([key]) => key === REFRESH_TOKEN_KEY)
+        .map(([, token]) => token),
+    ).toEqual(["rt-old", "rt-refreshed", "rt-login"]);
+    expect(store.token).toBe("rt-login");
   });
 
   it("401 -> invalidCredentials", async () => {

@@ -13,7 +13,10 @@ import {
   validSessionBody,
 } from "./_webAuthTransportTestHelpers";
 
-beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] }));
+beforeEach(() => {
+  localStorage.clear();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+});
 afterEach(() => {
   vi.clearAllTimers();
   vi.useRealTimers();

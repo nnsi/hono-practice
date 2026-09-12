@@ -137,7 +137,10 @@ describe("refresh token rotation transaction", () => {
 
     await expect(
       createRotate(repository, failingUserRepo)(combinedToken),
-    ).rejects.toThrow("temporary user lookup failure");
+    ).rejects.toMatchObject({
+      status: 503,
+      message: "refresh temporarily unavailable",
+    });
     expect(await getOriginalRow()).toMatchObject({
       rotatedAt: null,
       revokedAt: null,

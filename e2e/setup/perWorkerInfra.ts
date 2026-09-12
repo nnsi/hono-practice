@@ -8,6 +8,7 @@ import { type ViteDevServer, createServer } from "vite";
 
 import { seedDevData } from "../../scripts/seedDevData";
 import { BACKEND_PORT, FRONTEND_PORT } from "../helpers/config";
+import { gateAuthResponse } from "./authResponseGate";
 
 const migrationsFolder = "./infra/drizzle/migrations";
 
@@ -38,7 +39,8 @@ async function start() {
   };
 
   server = serve({
-    fetch: (request) => app.fetch(request, testEnv),
+    fetch: async (request) =>
+      gateAuthResponse(request, await app.fetch(request, testEnv)),
     port: BACKEND_PORT,
   });
   await new Promise<void>((resolve) => {

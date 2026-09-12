@@ -10,6 +10,9 @@ vi.mock("@packages/i18n", () => ({
 vi.mock("@packages/sync-engine", () => ({
   trackServerTimeFromResponse: vi.fn(),
 }));
+vi.mock("expo-crypto", () => ({
+  randomUUID: () => globalThis.crypto.randomUUID(),
+}));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
@@ -20,10 +23,13 @@ vi.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 import * as SecureStore from "expo-secure-store";
 
 import {
+  REFRESH_SESSION_KEY,
   apiUrl,
   createTokenHolder,
   emptyResponse,
+  failCredentialWrites,
   jsonResponse,
+  mockRefreshTokenStorage,
   validSessionBody,
 } from "./_mobileAuthTransportTestHelpers";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
@@ -33,6 +39,7 @@ const setItem = vi.mocked(SecureStore.setItemAsync);
 const deleteItem = vi.mocked(SecureStore.deleteItemAsync);
 const secret = "private-credential-never-log";
 let entries: AuthDiagnosticEntry[];
+let store: ReturnType<typeof mockRefreshTokenStorage>;
 
 function makeTransport() {
   return createMobileAuthTransport(
@@ -44,9 +51,7 @@ function makeTransport() {
 beforeEach(() => {
   vi.resetAllMocks();
   entries = [];
-  getItem.mockResolvedValue(secret);
-  setItem.mockResolvedValue();
-  deleteItem.mockResolvedValue();
+  store = mockRefreshTokenStorage(secret);
 });
 
 afterEach(() => {
@@ -54,6 +59,11 @@ afterEach(() => {
     expect(authDiagnosticEntrySchema.safeParse(entry).success).toBe(true);
   }
   expect(JSON.stringify(entries)).not.toContain(secret);
+  for (const [key, value] of setItem.mock.calls) {
+    if (key !== REFRESH_SESSION_KEY) continue;
+    const operationId = JSON.parse(value).pendingOperationId;
+    if (operationId) expect(JSON.stringify(entries)).not.toContain(operationId);
+  }
   vi.unstubAllGlobals();
 });
 
@@ -100,7 +110,7 @@ describe("mobile auth diagnostics", () => {
   });
 
   it("保存一度失敗と同じ token の再保存成功を記録する", async () => {
-    setItem.mockRejectedValueOnce(new Error(secret));
+    failCredentialWrites(store, secret, 1);
     vi.stubGlobal(
       "fetch",
       vi
@@ -114,6 +124,13 @@ describe("mobile auth diagnostics", () => {
 
     expect((await makeTransport().refreshSession()).kind).toBe("ok");
     expect(entries.filter((entry) => entry.event === "storage_write")).toEqual([
+      {
+        event: "storage_write",
+        reason: "ok",
+        source: "storage",
+        tokenSource: "secure_store",
+        attempt: 1,
+      },
       {
         event: "storage_write",
         reason: "storage_write_retry",
@@ -132,9 +149,7 @@ describe("mobile auth diagnostics", () => {
   });
 
   it("連続保存失敗後はメモリ token の読み出しを記録し、回復動作を維持する", async () => {
-    setItem
-      .mockRejectedValueOnce(new Error(secret))
-      .mockRejectedValueOnce(new Error(secret));
+    failCredentialWrites(store, secret);
     vi.stubGlobal(
       "fetch",
       vi
@@ -160,12 +175,12 @@ describe("mobile auth diagnostics", () => {
       source: "storage",
       tokenSource: "memory",
     });
-    expect(getItem).toHaveBeenCalledTimes(1);
+    expect(getItem).toHaveBeenCalledTimes(2);
   });
 
   it("clear 失敗を記録し、呼び出し元へ元の例外をそのまま返す", async () => {
     const error = new Error(secret);
-    deleteItem.mockRejectedValue(error);
+    setItem.mockRejectedValue(error);
 
     await expect(makeTransport().clearPersistedSession()).rejects.toBe(error);
     expect(entries).toEqual([
@@ -212,7 +227,10 @@ describe("mobile auth diagnostics", () => {
       reason: "missing_rotated_token",
       source: "refresh",
     });
-    expect(setItem).not.toHaveBeenCalled();
+    expect(store.token).toBe(secret);
+    expect(
+      JSON.parse(store.data.get(REFRESH_SESSION_KEY)!).pendingOperationId,
+    ).toEqual(expect.any(String));
   });
 
   it("observer が投げても refresh 結果と保存は変わらない", async () => {
@@ -235,7 +253,10 @@ describe("mobile auth diagnostics", () => {
     );
 
     expect((await transport.refreshSession()).kind).toBe("ok");
-    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(store.token).toBe(secret);
+    expect(
+      JSON.parse(store.data.get(REFRESH_SESSION_KEY)!).pendingOperationId,
+    ).toBeNull();
   });
 
   it("refresh に診断 ID と platform を付与し、認証 header は変更しない", async () => {
@@ -259,6 +280,10 @@ describe("mobile auth diagnostics", () => {
     expect(headers.get("X-Auth-Diagnostic-Id")).toBe(flowId);
     expect(headers.get("X-Client-Platform")).toBe("ios");
     expect(headers.get("Authorization")).toBe(`Bearer ${secret}`);
+    expect(headers.get("X-Refresh-Operation")).not.toBe(flowId);
+    expect(headers.get("X-Refresh-Operation")).toBe(
+      JSON.parse(store.data.get(REFRESH_SESSION_KEY)!).pendingOperationId,
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

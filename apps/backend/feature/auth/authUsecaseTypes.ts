@@ -19,13 +19,17 @@ export type LoginInput = {
 export type AuthOutput = {
   accessToken: string;
   refreshToken: string;
+  refreshTokenExpiresAt?: Date;
   userId: UserId;
   user?: User;
 };
 
 export type AuthUsecase = {
   login(input: LoginInput): Promise<AuthOutput>;
-  rotateRefreshToken(combinedToken: string): Promise<AuthOutput>;
+  rotateRefreshToken(
+    combinedToken: string,
+    operationId?: string,
+  ): Promise<AuthOutput>;
   logout(userId: UserId, refreshToken: string): Promise<void>;
   loginWithProvider(
     provider: Provider,

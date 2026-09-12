@@ -48,7 +48,7 @@ export function newAuthUsecase(
       tracer,
       observer,
     ),
-    logout: logout(refreshTokenRepo, tracer),
+    logout: logout(refreshTokenRepo, tracer, txRunner),
     loginWithProvider: loginWithProvider(
       userRepo,
       refreshTokenRepo,
