@@ -11,15 +11,21 @@ import {
 import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
 import type { AuthDiagnosticObserver } from "@packages/types/authDiagnostics";
+import {
+  REFRESH_OPERATION_HEADER,
+  refreshOperationIdSchema,
+} from "@packages/types/authRefresh";
 import type { Consents } from "@packages/types/request";
 import { authResponseSchema } from "@packages/types/response";
+import { randomUUID } from "expo-crypto";
 import { Platform } from "react-native";
 
 import { fetchWithTimeout } from "./fetchWithTimeout";
 import {
+  type StoredRefreshSession,
   clearStoredRefreshToken,
-  getStoredRefreshToken,
-  setStoredRefreshToken,
+  getStoredRefreshSession,
+  setStoredRefreshSession,
 } from "./refreshTokenStorage";
 
 export {
@@ -55,28 +61,30 @@ export function createMobileAuthTransport(
   const coordinator = newAuthOperationCoordinator<RefreshResult>(() =>
     runRefreshSession(),
   );
-  // 認証操作の直列化は coordinator に任せ、保存できなかった最新 token だけ保持する。
-  let pendingRefreshToken: string | null | undefined;
+  // The coordinator serializes auth operations. Memory only supplements the
+  // durable operation record; a received session is saved again before rotating.
+  let pendingCredential: StoredRefreshSession | undefined;
+  let pendingRefreshSession: AuthSession | null = null;
 
-  const readRefreshToken = async (): Promise<string | null> => {
-    if (pendingRefreshToken !== undefined) {
+  const readRefreshCredential = async (): Promise<StoredRefreshSession> => {
+    if (pendingCredential !== undefined) {
       emitAuthDiagnostic(onDiagnostic, {
         event: "storage_read",
-        reason: pendingRefreshToken ? "ok" : "missing_refresh_token",
+        reason: pendingCredential.refreshToken ? "ok" : "missing_refresh_token",
         source: "storage",
         tokenSource: "memory",
       });
-      return pendingRefreshToken;
+      return pendingCredential;
     }
     try {
-      const token = await getStoredRefreshToken();
+      const credential = await getStoredRefreshSession();
       emitAuthDiagnostic(onDiagnostic, {
         event: "storage_read",
-        reason: token ? "ok" : "missing_refresh_token",
+        reason: credential.refreshToken ? "ok" : "missing_refresh_token",
         source: "storage",
         tokenSource: storageSource,
       });
-      return token;
+      return credential;
     } catch (error) {
       emitAuthDiagnostic(onDiagnostic, {
         event: "storage_read",
@@ -88,11 +96,13 @@ export function createMobileAuthTransport(
     }
   };
 
-  const persistRefreshToken = async (token: string): Promise<void> => {
-    pendingRefreshToken = token;
+  const persistCredential = async (
+    credential: StoredRefreshSession,
+  ): Promise<void> => {
+    pendingCredential = credential;
     let attempt: 1 | 2 = 1;
     try {
-      await setStoredRefreshToken(token);
+      await setStoredRefreshSession(credential);
     } catch {
       emitAuthDiagnostic(onDiagnostic, {
         event: "storage_write",
@@ -101,10 +111,10 @@ export function createMobileAuthTransport(
         tokenSource: storageSource,
         attempt,
       });
-      // サーバーで再 rotation せず、受信済みの同じ token の保存だけを再試行する。
+      // Retry this exact credential without initiating another rotation.
       attempt = 2;
       try {
-        await setStoredRefreshToken(token);
+        await setStoredRefreshSession(credential);
       } catch (error) {
         emitAuthDiagnostic(onDiagnostic, {
           event: "storage_write",
@@ -116,7 +126,7 @@ export function createMobileAuthTransport(
         throw error;
       }
     }
-    pendingRefreshToken = undefined;
+    pendingCredential = undefined;
     emitAuthDiagnostic(onDiagnostic, {
       event: "storage_write",
       reason: "ok",
@@ -126,8 +136,20 @@ export function createMobileAuthTransport(
     });
   };
 
+  const persistRefreshToken = (token: string): Promise<void> =>
+    persistCredential({
+      version: 2,
+      refreshToken: token,
+      pendingOperationId: null,
+    });
+
   const clearRefreshToken = async (): Promise<void> => {
-    pendingRefreshToken = null;
+    pendingRefreshSession = null;
+    pendingCredential = {
+      version: 2,
+      refreshToken: null,
+      pendingOperationId: null,
+    };
     try {
       await clearStoredRefreshToken();
     } catch (error) {
@@ -139,7 +161,7 @@ export function createMobileAuthTransport(
       });
       throw error;
     }
-    pendingRefreshToken = undefined;
+    pendingCredential = undefined;
     emitAuthDiagnostic(onDiagnostic, {
       event: "storage_clear",
       reason: "ok",
@@ -150,7 +172,10 @@ export function createMobileAuthTransport(
 
   const persistSession = async (res: Response): Promise<AuthSession> => {
     const session = authResponseSchema.parse(await res.json());
-    if (session.refreshToken) await persistRefreshToken(session.refreshToken);
+    if (session.refreshToken) {
+      pendingRefreshSession = null;
+      await persistRefreshToken(session.refreshToken);
+    }
     return session;
   };
 
@@ -182,7 +207,14 @@ export function createMobileAuthTransport(
 
   const runRefreshSession = async (): Promise<RefreshResult> => {
     try {
-      const rt = await readRefreshToken();
+      const credential = await readRefreshCredential();
+      if (pendingRefreshSession) {
+        const session = pendingRefreshSession;
+        await persistRefreshToken(session.refreshToken!);
+        pendingRefreshSession = null;
+        return { kind: "ok", session };
+      }
+      const rt = credential.refreshToken;
       if (!rt) {
         emitAuthDiagnostic(onDiagnostic, {
           event: "refresh_result",
@@ -192,6 +224,16 @@ export function createMobileAuthTransport(
         });
         return { kind: "expired" };
       }
+      const operationId =
+        credential.pendingOperationId ??
+        refreshOperationIdSchema.parse(randomUUID());
+      // Persist the secret proof before HTTP. The same pair survives retries,
+      // suspended JS timers, and process recreation after a committed rotation.
+      await persistCredential({
+        version: 2,
+        refreshToken: rt,
+        pendingOperationId: operationId,
+      });
       const result = await requestRefreshSession(
         (signal) =>
           fetch(`${apiUrl}/auth/token`, {
@@ -200,6 +242,7 @@ export function createMobileAuthTransport(
               ...options.diagnosticHeaders,
               "Content-Type": "application/json",
               Authorization: `Bearer ${rt}`,
+              [REFRESH_OPERATION_HEADER]: operationId,
             },
             signal,
           }),
@@ -214,7 +257,9 @@ export function createMobileAuthTransport(
           });
           return { kind: "transient", reason: "missing refresh token" };
         }
+        pendingRefreshSession = result.session;
         await persistRefreshToken(result.session.refreshToken);
+        pendingRefreshSession = null;
       } else if (result.kind === "expired") {
         await clearRefreshToken();
       }
@@ -226,7 +271,7 @@ export function createMobileAuthTransport(
 
   const postLogout = async (): Promise<Response> => {
     const accessToken = tokenHolder.getToken();
-    const refreshToken = await readRefreshToken();
+    const refreshToken = (await readRefreshCredential()).refreshToken;
     return fetchWithTimeout(`${apiUrl}/auth/logout`, {
       method: "POST",
       headers: {
@@ -307,8 +352,10 @@ export function createMobileAuthTransport(
     },
     async persistSession(session) {
       await coordinator.runSessionOperation(async () => {
-        if (session.refreshToken)
+        if (session.refreshToken) {
+          pendingRefreshSession = null;
           await persistRefreshToken(session.refreshToken);
+        }
       });
     },
     async clearPersistedSession() {

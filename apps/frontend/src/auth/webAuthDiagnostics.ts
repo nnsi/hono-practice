@@ -5,7 +5,7 @@ import { getApiUrl } from "../api/apiClient";
 export const webAuthDiagnostics = createAuthDiagnosticReporter({
   apiUrl: getApiUrl(),
   platform: "web",
-  appVersion: "auth-diagnostics-20260912.1",
+  appVersion: "auth-recovery-20260912.1",
   storage: {
     getItem: async (key) => localStorage.getItem(key),
     setItem: async (key, value) => localStorage.setItem(key, value),

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 
-import { UnauthorizedError } from "@backend/error";
+import { AppError, UnauthorizedError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { recordAuthDiagnostic } from "@backend/lib/authDiagnostics";
 import { noopLogger } from "@backend/lib/logger";
@@ -14,6 +14,10 @@ import {
 } from "@backend/middleware/rateLimitMiddleware";
 import { isMobileClient } from "@backend/utils/clientDetection";
 import { zValidator } from "@hono/zod-validator";
+import {
+  REFRESH_OPERATION_HEADER,
+  refreshOperationIdSchema,
+} from "@packages/types/authRefresh";
 import { loginRequestSchema } from "@packages/types/request";
 
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
@@ -104,6 +108,14 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       );
     })
     .post("/token", async (c) => {
+      const operationHeader = c.req.header(REFRESH_OPERATION_HEADER);
+      const operation = refreshOperationIdSchema
+        .optional()
+        .safeParse(operationHeader);
+      if (!operation.success) {
+        // Do not expose Zod input/errors: this header is a secret recovery proof.
+        throw new AppError("invalid refresh operation", 400);
+      }
       const authHeader = c.req.header("Authorization");
       const refreshTokenValue = authHeader?.startsWith("Bearer ")
         ? authHeader.substring(7)
@@ -121,9 +133,9 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
         });
         throw new UnauthorizedError("refresh token not found");
       }
-      const { token, refreshToken, user } =
-        await c.var.h.rotateRefreshToken(refreshTokenValue);
-      setRefreshCookie(c, refreshToken);
+      const { token, refreshToken, refreshTokenExpiresAt, user } =
+        await c.var.h.rotateRefreshToken(refreshTokenValue, operation.data);
+      setRefreshCookie(c, refreshToken, refreshTokenExpiresAt);
       return c.json(
         isMobileClient(c) ? { token, refreshToken, user } : { token, user },
       );

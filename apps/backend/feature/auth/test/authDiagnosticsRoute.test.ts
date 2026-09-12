@@ -4,6 +4,7 @@ import { appendLocalLog } from "@backend/middleware/localLogWriter";
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { createRefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import { createUserId } from "@packages/domain/user/userSchema";
+import { REFRESH_OPERATION_HEADER } from "@packages/types/authRefresh";
 import { v7 } from "uuid";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +15,7 @@ vi.mock("@backend/middleware/localLogWriter", () => ({
 }));
 
 const flowId = "10000000-0000-4000-8000-000000000001";
+const operationNonce = "b587b95a-f5b1-48c3-aa99-e7aa733306c8";
 const executionCtx = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
@@ -42,6 +44,7 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
           Origin: "https://actiko.app",
           "X-Auth-Diagnostic-Id": flowId,
           "X-Client-Platform": "ios",
+          [REFRESH_OPERATION_HEADER]: operationNonce,
         },
       },
       { ...env(), WAE_LOGS: wae },
@@ -69,6 +72,10 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
       rotationCommitted: false,
     });
     expect(JSON.stringify(point)).not.toContain("credential-canary");
+    expect(JSON.stringify(point)).not.toContain(operationNonce);
+    expect(JSON.stringify(point)).not.toContain(
+      await hashWithSHA256(`actiko/refresh-operation/id/v1\n${operationNonce}`),
+    );
   });
 
   it("captures successful cookie rotation after commit and enrichment", async () => {
@@ -91,6 +98,7 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
         headers: {
           Cookie: `refresh_token=${selector}.${plain}`,
           Origin: "https://actiko.app",
+          [REFRESH_OPERATION_HEADER]: operationNonce,
         },
       },
       { ...env(), WAE_LOGS: wae },
@@ -110,6 +118,31 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
     });
     expect(JSON.stringify(point)).not.toContain(selector);
     expect(JSON.stringify(point)).not.toContain(plain);
+    const retry = await app.request(
+      "/auth/token",
+      {
+        method: "POST",
+        headers: {
+          Cookie: `refresh_token=${selector}.${plain}`,
+          Origin: "https://actiko.app",
+          [REFRESH_OPERATION_HEADER]: operationNonce,
+        },
+      },
+      { ...env(), WAE_LOGS: wae },
+      executionCtx,
+    );
+    expect(retry.status).toBe(200);
+    const retryPoint = wae.writeDataPoint.mock.calls[1][0];
+    expect(JSON.parse(retryPoint.blobs[8])).toMatchObject({
+      reason: "operation_replayed",
+      stage: "response",
+      rotationCommitted: true,
+    });
+    const allLogs = JSON.stringify(wae.writeDataPoint.mock.calls);
+    expect(allLogs).not.toContain(operationNonce);
+    expect(allLogs).not.toContain(
+      await hashWithSHA256(`actiko/refresh-operation/id/v1\n${operationNonce}`),
+    );
   });
 
   it("drops untrusted platform/flow headers and also records local response summaries", async () => {
@@ -144,7 +177,7 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
     );
   });
 
-  it("permits diagnostic CORS headers and does not classify OPTIONS as a refresh", async () => {
+  it("permits diagnostic and recovery CORS headers without exposing mobile credentials", async () => {
     const wae = { writeDataPoint: vi.fn() };
     const res = await app.request(
       "/auth/token",
@@ -154,7 +187,7 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
           Origin: "https://actiko.app",
           "Access-Control-Request-Method": "POST",
           "Access-Control-Request-Headers":
-            "x-auth-diagnostic-id,x-client-platform",
+            "x-auth-diagnostic-id,x-client-platform,x-refresh-operation",
         },
       },
       { ...env(), WAE_LOGS: wae },
@@ -166,6 +199,7 @@ describe("refresh diagnostics at the HTTP/logging boundary", () => {
       ?.toLowerCase();
     expect(allowed).toContain("x-auth-diagnostic-id");
     expect(allowed).toContain("x-client-platform");
+    expect(allowed).toContain(REFRESH_OPERATION_HEADER.toLowerCase());
     expect(allowed).not.toContain("x-refresh-token");
     expect(wae.writeDataPoint.mock.calls[0][0].blobs[8]).toBeUndefined();
   });

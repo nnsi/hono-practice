@@ -66,9 +66,13 @@ describe("post-commit refresh diagnostics", () => {
     const { handler, diagnostics } = fixture(async () => {
       throw error;
     });
-    await expect(handler.rotateRefreshToken("refresh-canary")).rejects.toBe(
-      error,
-    );
+    const result = handler.rotateRefreshToken("refresh-canary");
+    await expect(result).rejects.toMatchObject({
+      status: 503,
+      message: "refresh temporarily unavailable",
+    });
+    await expect(result).rejects.not.toBe(error);
+    await expect(result).rejects.not.toHaveProperty("cause");
     expect(diagnostics.snapshot()).toMatchObject({
       reason: "enrichment_failed",
       stage: "enrich_user",
@@ -82,9 +86,12 @@ describe("post-commit refresh diagnostics", () => {
       ...enriched,
       name: undefined,
     }));
-    await expect(handler.rotateRefreshToken("refresh-canary")).rejects.toThrow(
-      "failed to parse auth response",
-    );
+    await expect(
+      handler.rotateRefreshToken("refresh-canary"),
+    ).rejects.toMatchObject({
+      status: 503,
+      message: "refresh temporarily unavailable",
+    });
     expect(diagnostics.snapshot()).toMatchObject({
       reason: "response_invalid",
       stage: "response",
