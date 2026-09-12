@@ -4,6 +4,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 import { mobileTestIds } from "../../testing/testIds";
 import { TaskGroup } from "./TaskGroup";
+import { TaskQuickAdd } from "./TaskQuickAdd";
 import { TasksCompletedSection } from "./TasksCompletedSection";
 import { TasksFutureSection } from "./TasksFutureSection";
 import type { TaskItem } from "./types";
@@ -56,6 +57,7 @@ export function TasksActiveTab({
 
   return (
     <View className="gap-6">
+      <TaskQuickAdd />
       {!hasAnyTasks && (
         <View className="items-center py-12">
           <Text className="text-gray-500 dark:text-gray-400 mb-4">

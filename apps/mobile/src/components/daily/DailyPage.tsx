@@ -19,6 +19,7 @@ import { mobileTestIds } from "../../testing/testIds";
 import { reportError } from "../../utils/errorReporter";
 import { DateNavHeader } from "../actiko/DateNavHeader";
 import { CalendarPopover } from "../common/CalendarPopover";
+import { TaskQuickAdd } from "../tasks/TaskQuickAdd";
 import { CreateLogDialog } from "./CreateLogDialog";
 import { DailyLogSection } from "./DailyLogSection";
 import { DailyTaskDialogs } from "./DailyTaskDialogs";
@@ -118,6 +119,7 @@ export function DailyPage() {
       />
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 + insets.bottom }}
         refreshControl={
@@ -154,6 +156,7 @@ export function DailyPage() {
               </Text>
             </TouchableOpacity>
           </View>
+          <TaskQuickAdd key={date} defaultDate={date} />
           <TaskList
             tasks={tasks}
             isLoading={false}

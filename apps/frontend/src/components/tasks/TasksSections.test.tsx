@@ -14,6 +14,10 @@ vi.mock("@packages/i18n", () => ({
   }),
 }));
 
+vi.mock("./TaskQuickAdd", () => ({
+  TaskQuickAdd: () => <div>task-quick-add</div>,
+}));
+
 vi.mock("./TaskGroup", () => ({
   TaskGroup: ({
     title,
