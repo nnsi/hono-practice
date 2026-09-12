@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
+import { DatePickerField } from "../common/DatePickerField";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
@@ -44,6 +45,8 @@ export function EditLogDialog({
   const iconBlobMap = useIconBlobMap();
 
   const {
+    date,
+    setDate,
     quantity,
     setQuantity,
     memo,
@@ -111,6 +114,13 @@ export function EditLogDialog({
       }
     >
       <View className="gap-4">
+        <DatePickerField
+          value={date}
+          onChange={setDate}
+          label={t("log.dateLabel")}
+          testID={mobileTestIds.dailyEditLog.dateInput}
+        />
+
         <EditLogKindSelector
           kinds={kinds}
           selectedKindId={selectedKindId}

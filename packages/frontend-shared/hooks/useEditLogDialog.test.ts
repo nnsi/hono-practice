@@ -55,6 +55,7 @@ describe("createUseEditLogDialog", () => {
       });
 
       expect(updateActivityLog).toHaveBeenCalledWith("log-1", {
+        date: "2025-06-01",
         quantity: 999999,
         memo: "memo",
         activityKindId: null,
@@ -112,6 +113,7 @@ describe("createUseEditLogDialog", () => {
       });
 
       expect(updateActivityLog).toHaveBeenCalledWith("log-1", {
+        date: "2025-06-01",
         quantity: 0,
         memo: "memo",
         activityKindId: null,
@@ -132,6 +134,7 @@ describe("createUseEditLogDialog", () => {
       });
 
       expect(updateActivityLog).toHaveBeenCalledWith("log-1", {
+        date: "2025-06-01",
         quantity: null,
         memo: "memo",
         activityKindId: null,
@@ -153,6 +156,61 @@ describe("createUseEditLogDialog", () => {
 
       expect(updateActivityLog).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("完了日の編集", () => {
+    it.each([
+      "2025-05-31",
+      "2026-01-01",
+      "2024-02-29",
+    ])("%s に変更して保存・同期する", async (date) => {
+      const { useEditLogDialog, updateActivityLog, syncActivityLogs } = setup();
+      const onClose = vi.fn();
+      const log = makeLog();
+      const { result } = renderHook(() => useEditLogDialog(log, onClose));
+      expect(result.current.date).toBe(log.date);
+      act(() => result.current.setDate(date));
+      await act(() => result.current.handleSave());
+      expect(updateActivityLog).toHaveBeenCalledWith(log.id, {
+        date,
+        quantity: log.quantity,
+        memo: log.memo,
+        activityKindId: log.activityKindId,
+      });
+      expect(syncActivityLogs).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      "",
+      "2025-02-29",
+      "2025-04-31",
+      "2025-13-01",
+      "2025-6-1",
+    ])("不正な日付 %s は保存・同期しない", async (date) => {
+      const { useEditLogDialog, updateActivityLog, syncActivityLogs } = setup();
+      const onClose = vi.fn();
+      const log = makeLog();
+      const { result } = renderHook(() => useEditLogDialog(log, onClose));
+      act(() => result.current.setDate(date));
+      await act(() => result.current.handleSave());
+      expect(updateActivityLog).not.toHaveBeenCalled();
+      expect(syncActivityLogs).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(result.current.isSubmitting).toBe(false);
+    });
+
+    it("対象ログが変わったら完了日も初期化する", () => {
+      const { useEditLogDialog } = setup();
+      const onClose = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ log }) => useEditLogDialog(log, onClose),
+        { initialProps: { log: makeLog() } },
+      );
+      act(() => result.current.setDate("2025-05-31"));
+      rerender({ log: makeLog({ id: "log-2", date: "2025-07-01" }) });
+      expect(result.current.date).toBe("2025-07-01");
     });
   });
 
