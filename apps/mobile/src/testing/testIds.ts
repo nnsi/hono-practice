@@ -35,6 +35,10 @@ export const mobileTestIds = {
     filterActivity: (activityId: string) =>
       `notes.filterActivity.${activityId}`,
   },
+  taskQuickAdd: {
+    titleInput: "taskQuickAdd.titleInput",
+    submitButton: "taskQuickAdd.submit",
+  },
   tasks: {
     page: "tasks.page",
     activeTab: "tasks.tab.active",

@@ -51,7 +51,7 @@ export function TaskCreateDialog({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-modal p-5">
+      <div className="bg-white w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl shadow-modal p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">{t("create.title")}</h2>
           <button
@@ -70,6 +70,7 @@ export function TaskCreateDialog({
               {t("create.label.title")} <span className="text-red-500">*</span>
             </label>
             <FormInput
+              aria-label={t("create.label.title")}
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

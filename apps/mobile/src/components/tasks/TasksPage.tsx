@@ -69,6 +69,7 @@ export function TasksPage() {
 
       {/* Content */}
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         className="flex-1"
         contentContainerStyle={{
           padding: 16,

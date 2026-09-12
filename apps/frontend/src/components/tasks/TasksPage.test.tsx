@@ -17,6 +17,10 @@ vi.mock("./useTasksPage", () => ({
   useTasksPage: () => mockUseTasksPage(),
 }));
 
+vi.mock("./TaskQuickAdd", () => ({
+  TaskQuickAdd: () => <div>task-quick-add</div>,
+}));
+
 vi.mock("./TaskGroup", () => ({
   TaskGroup: ({ title, tasks }: { title: string; tasks: TaskItem[] }) => (
     <div>{`${title}:${tasks.length}`}</div>
