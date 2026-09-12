@@ -1,9 +1,12 @@
 import type {
-  ClientErrorPayload,
+  AuthDiagnosticPayload,
   ClientErrorUsecase,
+  StandardClientErrorPayload,
 } from "./clientErrorUsecase";
 
-export type ClientErrorRequestBody = Omit<ClientErrorPayload, "userId">;
+export type ClientErrorRequestBody =
+  | Omit<StandardClientErrorPayload, "userId">
+  | Omit<AuthDiagnosticPayload, "userId">;
 
 export type ClientErrorHandler = {
   recordClientError(

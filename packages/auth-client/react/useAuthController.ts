@@ -18,7 +18,7 @@ export function useAuthBootstrap(controller: AuthController): void {
     const run = async () => {
       await controller.hydrate();
       if (cancelled) return;
-      await controller.reconcile();
+      await controller.reconcile("bootstrap");
     };
     void run();
     return () => {

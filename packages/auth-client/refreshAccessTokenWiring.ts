@@ -1,8 +1,12 @@
+import type { AuthDiagnosticObserver } from "@packages/types/authDiagnostics";
+
+import { emitAuthDiagnostic } from "./authDiagnosticObserver";
 import type { AuthTransport } from "./types";
 
 export type RefreshAccessTokenCallbackOptions = {
   getSessionVersion?: () => number;
   onExpired?: () => void | Promise<void>;
+  onDiagnostic?: AuthDiagnosticObserver;
 };
 
 // createAuthenticatedFetch の refreshAccessToken に渡す callback を生成する。
@@ -14,15 +18,29 @@ export function createRefreshAccessTokenCallback(
   options: RefreshAccessTokenCallbackOptions = {},
 ): () => Promise<string | null> {
   return async () => {
+    emitAuthDiagnostic(options.onDiagnostic, {
+      event: "refresh_callback",
+      source: "api_401",
+    });
     const sessionVersion = options.getSessionVersion?.();
     const result = await transport.refreshSession();
     if (
       sessionVersion !== undefined &&
       sessionVersion !== options.getSessionVersion?.()
     ) {
+      emitAuthDiagnostic(options.onDiagnostic, {
+        event: "refresh_callback",
+        source: "api_401",
+        reason: "stale_result",
+      });
       return null;
     }
     if (result.kind === "expired") {
+      emitAuthDiagnostic(options.onDiagnostic, {
+        event: "refresh_callback",
+        source: "api_401",
+        reason: "refresh_expired",
+      });
       await options.onExpired?.();
       return null;
     }

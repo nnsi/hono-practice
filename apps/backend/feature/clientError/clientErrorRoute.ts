@@ -7,6 +7,7 @@ import {
 } from "@backend/middleware/rateLimitMiddleware";
 import { fireAndForget } from "@backend/utils/fireAndForget";
 import { zValidator } from "@hono/zod-validator";
+import { authDiagnosticReportSchema } from "@packages/types/authDiagnostics";
 import { z } from "zod";
 
 import type { AppContext } from "../../context";
@@ -16,7 +17,7 @@ import {
 } from "./clientErrorHandler";
 import { newClientErrorUsecase } from "./clientErrorUsecase";
 
-const clientErrorSchema = z.object({
+const standardClientErrorSchema = z.object({
   errorType: z.enum([
     "component_error",
     "unhandled_error",
@@ -32,6 +33,20 @@ const clientErrorSchema = z.object({
   appVersion: z.string().max(50).optional(),
 });
 
+const clientErrorSchema = z.discriminatedUnion("errorType", [
+  standardClientErrorSchema,
+  z.object({
+    errorType: z.literal("auth_diagnostic"),
+    message: z.literal("Auth session diagnostic"),
+    platform: z.enum(["ios", "android", "web"]),
+    appVersion: z
+      .string()
+      .regex(/^[\w.+-]{1,50}$/)
+      .optional(),
+    diagnostic: authDiagnosticReportSchema,
+  }),
+]);
+
 type ClientErrorContext = AppContext & {
   Variables: { h: ClientErrorHandler };
 };
@@ -40,7 +55,11 @@ export const clientErrorRoute = new Hono<ClientErrorContext>()
   .use("*", optionalAuthMiddleware)
   .use("*", applyRateLimit(clientErrorRateLimitConfig))
   .use("*", async (c, next) => {
-    const uc = newClientErrorUsecase(c.env.WAE_CLIENT_ERRORS, c.get("logger"));
+    const uc = newClientErrorUsecase(
+      c.env.WAE_CLIENT_ERRORS,
+      c.get("logger"),
+      c.env.NODE_ENV,
+    );
     c.set("h", newClientErrorHandler(uc));
     return next();
   })

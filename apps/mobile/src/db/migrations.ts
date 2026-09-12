@@ -18,6 +18,16 @@ import {
 
 export const SCHEMA_VERSION = 13;
 
+// V13 only adds task_schedules, nullable tasks columns and their indexes.
+// The widget's V12 activities/kinds/logs/auth_state contract is unchanged.
+// Raise this minimum when a migration breaks that contract; verify additive
+// migrations with widgetSchemaCompatibility.test.ts before retaining it.
+export const MINIMUM_WIDGET_SCHEMA_VERSION = 12;
+
+// Keep this an independent literal: every new DB version requires a widget
+// compatibility review and the real migration/SQL tests before advancing it.
+export const WIDGET_SCHEMA_COMPATIBILITY_REVIEWED_VERSION = 13;
+
 export async function migrateDb(
   db: Pick<SQLite.SQLiteDatabase, "getFirstAsync" | "execAsync">,
 ): Promise<void> {

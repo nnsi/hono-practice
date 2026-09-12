@@ -1,4 +1,5 @@
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import type { AuthDiagnosticObserver } from "@backend/lib/authDiagnostics";
 import type { Tracer } from "@backend/lib/tracer";
 
 import type { UserConsentRepository, UserRepository } from "../user";
@@ -27,6 +28,7 @@ export function newAuthUsecase(
   jwtAudience: string,
   oauthVerifiers: OAuthVerifierMap,
   tracer: Tracer,
+  observer?: AuthDiagnosticObserver,
 ): AuthUsecase {
   return {
     login: login(
@@ -44,6 +46,7 @@ export function newAuthUsecase(
       jwtSecret,
       jwtAudience,
       tracer,
+      observer,
     ),
     logout: logout(refreshTokenRepo, tracer),
     loginWithProvider: loginWithProvider(

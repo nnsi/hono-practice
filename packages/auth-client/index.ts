@@ -1,3 +1,10 @@
+export type {
+  AuthDiagnosticEntry,
+  AuthDiagnosticObserver,
+} from "@packages/types/authDiagnostics";
+
+export { emitAuthDiagnostic } from "./authDiagnosticObserver";
+export { createAuthDiagnosticReporter } from "./authDiagnosticReporter";
 export { newAuthOperationCoordinator } from "./authOperationCoordinator";
 export { classifyRefreshFailure } from "./classifyRefreshFailure";
 export { createAuthController } from "./createAuthController";

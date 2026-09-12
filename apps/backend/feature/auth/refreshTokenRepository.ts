@@ -1,4 +1,5 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import type { AuthDiagnosticObserver } from "@backend/lib/authDiagnostics";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import { type Logger, noopLogger } from "@backend/lib/logger";
 import { refreshTokens } from "@infra/drizzle/schema";
@@ -23,16 +24,17 @@ export type RefreshTokenRepository<T = QueryExecutor> = {
 export function newRefreshTokenRepository(
   db: QueryExecutor,
   logger: Logger = noopLogger,
+  observer?: AuthDiagnosticObserver,
 ): RefreshTokenRepository<QueryExecutor> {
   return {
     createRefreshToken: createRefreshToken(db, logger),
     getRefreshTokenByToken: getRefreshTokenByToken(db, logger),
     revokeRefreshToken: revokeRefreshToken(db),
-    revokeAndGetRefreshToken: newRevokeAndGetRefreshToken(db, logger),
+    revokeAndGetRefreshToken: newRevokeAndGetRefreshToken(db, logger, observer),
     revokeRefreshTokenAllByUserId: revokeRefreshTokenAllByUserId(db),
     deleteRefreshTokensPastExpiry: deleteRefreshTokensPastExpiry(db),
     hardDeleteRefreshTokensByUserId: hardDeleteRefreshTokensByUserId(db),
-    withTx: (tx) => newRefreshTokenRepository(tx, logger),
+    withTx: (tx) => newRefreshTokenRepository(tx, logger, observer),
   };
 }
 

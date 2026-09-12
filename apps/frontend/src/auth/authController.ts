@@ -13,13 +13,25 @@ import {
 } from "../components/setting/tabPreferenceStore";
 import { queryClient } from "../queryClient";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
+import { webAuthDiagnostics } from "./webAuthDiagnostics";
 import { createWebAuthStateRepository } from "./webAuthStateRepository";
 import { createWebAuthTransport } from "./webAuthTransport";
 
-const transport = createWebAuthTransport({ apiUrl: getApiUrl() }, tokenHolder);
+const transport = createWebAuthTransport(
+  {
+    apiUrl: getApiUrl(),
+    onDiagnostic: webAuthDiagnostics.observe,
+    diagnosticHeaders: {
+      "X-Auth-Diagnostic-Id": webAuthDiagnostics.flowId,
+      "X-Client-Platform": "web",
+    },
+  },
+  tokenHolder,
+);
 
 export const authController = createAuthController({
   transport,
+  onDiagnostic: webAuthDiagnostics.observe,
   authStateRepo: createWebAuthStateRepository(),
   online: {
     registerOnlineRetry(handler) {
@@ -46,7 +58,8 @@ export const authController = createAuthController({
 setRefreshAccessToken(
   createRefreshAccessTokenCallback(transport, {
     getSessionVersion: () => authController.getSessionVersion(),
-    onExpired: () => authController.forceLogout(),
+    onExpired: () => authController.forceLogout("refresh_expired"),
+    onDiagnostic: webAuthDiagnostics.observe,
   }),
   () => authController.getSessionIdentityVersion(),
 );
