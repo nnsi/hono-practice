@@ -1,28 +1,16 @@
 ---
 name: write-diary
-description: /docs/diary/に日記を書く。
+description: 依頼された日の作業・判断・反省を、担当エージェントの視点で日記に記録する。
 ---
 
-# 日記を書く
+# 日記
 
-セッション中の開発内容、反省点、学びを記録する。
-
-## 手順
-
-1. 現在の日付を取得する
+保存先の指定を優先する。指定がなければ Codex は `docs/diary-codex/`、Claude は `docs/diary/`。保存先の AGENTS.md を読み、JST の `YYYYMMDD.md` を作成・追記する。
 
 ```bash
-node .Codex/skills/write-diary/get-date.js
+node .agents/skills/write-diary/get-date.js
 ```
 
-出力例: `2025-01-13 14:30 JST`
+現在の会話と、欠けた経緯を補う当該セッションの `docs/diary-cc-logs/` だけを参照する。無関係なログを全読みしない。作業・判断理由・異論・反省を事実に基づいて書き、ユーザーになりきらない。
 
-2. `docs/diary-cc-logs/` にファイルがあるか確認する
-   - ある場合: autocompact が走った証拠。これらのファイルを全て読み、圧縮前の会話内容 + 現在の会話コンテキストの両方を使って日記を書く
-   - ない場合: 現在の会話コンテキストのみで日記を書く
-
-3. `/docs/diary/YYYYMMDD.md` を作成または追記する
-
-4. `/docs/diary/AGENTS.md` のガイドラインに従って記述する
-
-5. 日記の作成が完了したら `docs/diary-cc-logs/` 内のファイルを削除する（次回のログと混在しないようにクリーンアップ）
+既存本文は残す。本文を完了報告に転載せず、保存先を伝える。ログ削除や別 checkout への書き込みを自動的な後処理にしない。

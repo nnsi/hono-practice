@@ -23,6 +23,7 @@ export function NoteRichTextEditor({
   const { t } = useTranslation("note");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const syncedMarkdownRef = useRef("__uninitialized__");
+  const pendingMarkdownRef = useRef<string[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [height, setHeight] = useState(360);
 
@@ -89,8 +90,9 @@ export function NoteRichTextEditor({
       }
 
       const nextMarkdown = noteEditorHtmlToMarkdown(message.html);
-      syncedMarkdownRef.current = nextMarkdown;
-      if (nextMarkdown !== value) {
+      if (nextMarkdown !== syncedMarkdownRef.current) {
+        syncedMarkdownRef.current = nextMarkdown;
+        pendingMarkdownRef.current.push(nextMarkdown);
         onChange(nextMarkdown);
       }
     };
@@ -99,11 +101,19 @@ export function NoteRichTextEditor({
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [onChange, value]);
+  }, [onChange]);
 
   useEffect(() => {
     if (!isReady) return;
+    // React can commit an older onChange value after the iframe has sent more
+    // input. Acknowledge that echo without replacing the newer editor DOM.
+    const pendingIndex = pendingMarkdownRef.current.lastIndexOf(value);
+    if (pendingIndex >= 0) {
+      pendingMarkdownRef.current.splice(0, pendingIndex + 1);
+      return;
+    }
     if (value === syncedMarkdownRef.current) return;
+    pendingMarkdownRef.current = [];
 
     const serializedMessage = JSON.stringify({
       type: "set-html",

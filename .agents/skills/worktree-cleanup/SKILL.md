@@ -1,40 +1,14 @@
 ---
 name: worktree-cleanup
-description: Git worktreeと専用DBを削除する。並行開発環境の片付け。
-user_invocable: true
+description: 不要な Git worktree・専用ローカル DB・関連ブランチを削除する。
 ---
 
 # Worktree Cleanup
 
-不要になった Git worktree を削除し、専用データベースとブランチもクリーンアップする。
+`git worktree list --porcelain` と対象の `git status --short`、未マージ commit を確認し、削除対象を特定する。作業中の checkout 自体から削除を実行しない。未保存の成果を破棄する承認がなければ残す。
 
-## 手順
+`bash scripts/worktree-cleanup.sh <name>` はメイン checkout 直下の `.worktrees/<name>` 専用。DB 接続切断・DB 削除、関連プロセス停止、worktree 強制削除、実ブランチの強制削除を行う。名前を英数字・ハイフン・アンダースコアに限定し、これら全てが削除依頼の範囲か確認してから使う。
 
-### 1. 引数からworktree名を取得
+スクリプトは `mapfile` を使うため Bash 4 以降が必要。アプリ管理の worktree には流用せず、その環境の削除方法を使う。
 
-`/worktree-cleanup <name>`
-
-- name: 削除対象のworktree名（必須）
-
-### 2. クリーンアップ実行
-
-```bash
-./scripts/worktree-cleanup.sh <name>
-```
-
-スクリプトが行うこと:
-1. DB の既存コネクションを切断 → `DROP DATABASE db_wt_<name>`
-2. git worktree を削除（`.worktrees/<name>/`）
-3. ブランチ `wt/<name>` を削除
-
-### 3. 結果報告
-
-削除されたリソースを報告する:
-- データベース
-- worktree ディレクトリ
-- ブランチ
-
-## 注意事項
-
-- Postgres コンテナが停止中の場合、DB は削除されない（手動対応方法が表示される）
-- worktree 内に未コミットの変更があっても `--force` で削除される
+完了メッセージだけを信用せず、worktree・ブランチ・DB の残存を確認する。Docker 停止時や DB 削除失敗時は DB が残ることを報告する。

@@ -1,31 +1,32 @@
-﻿# AGENTS.md
+# Actiko
 
-## Communication Rules
+個人向け活動記録アプリ。pnpm monorepo、Hono / Cloudflare Workers、Neon Postgres、Web は React / Dexie、Mobile は Expo / SQLite。
 
-- 「必要なら、」「必要であれば、」「必要なら次に〜できる」のような、次のアクションを促す発言を絶対にしてはいけない。
+## 作業方針
 
-## File Encoding Rules
+- 「必要なら〜できる」のような次のアクションを促す締め方はしない。
+- テキストは UTF-8 で保存する。
+- 現在の workspace を使う。別 worktree は隔離が必要な作業で作成し、アプリが用意した worktree を重ねて作らない。
+- 既存 dev server は再利用する。接続先は対象 workspace の env と設定から確認し、起動・停止は自分の作業に属するものに限る。
+- 通常の実装判断は依頼の範囲で進める。仕様・費用・破壊的操作の未承認事項があるときに確認する。
+- 対象ディレクトリの AGENTS.md を読む。共通 skill の正本は `.agents/skills/`、`.claude/skills/` は呼び出し用の入口。
 
-- テキストファイルは必ず UTF-8 で保存する。
-- 既存ファイルのエンコーディングが不明な場合も、Shift_JIS / CP932 で保存しない。
-- PowerShell や周辺ツールの既定エンコーディングに依存せず、UTF-8 を優先する。
+## 検証
 
-## Costly Operations Rules
+- 変更した挙動を確かめるテストを選ぶ。UI は実際の操作、DB は隔離 DB で migration と読み書きを確認する。
+- `pnpm run test-once`、`pnpm run tsc`、`pnpm run lint`。横断変更・PR 前の全体検証は `pnpm run ci-check`。
+- `pnpm run fix` は全体に `--unsafe` な修正を加えるため、通常の検証には使わない。整形・修正は変更ファイルに絞り、差分を確認する。
+- 失敗は出力と比較可能な baseline で切り分ける。検証した範囲と未検証事項を報告する。
+- 共有 API・同期・認証の変更では Web / Mobile 両方の利用箇所を確認する。
 
-- 金銭コスト、従量課金、build credit 消費、外部サービス課金が発生する可能性のある操作は、実行前に必ずユーザーの明示確認を取る。
-- ユーザーが機能実装、検証、配布、リリース、E2E 実行を依頼していても、その依頼だけを根拠に課金境界を越えてはいけない。
-- 特に `EAS Build`、`EAS Submit`、有料 API 実行、クラウド deploy、外部 SaaS の従量課金操作は、直前に「課金の可能性」と「何を実行するか」を明示して確認を取る。
-- `EAS Build` の前には必ず `eas account:usage <account-name> --json` で current cycle の usage を確認し、その結果を踏まえて承認を取る。
-- `eas account:usage` で `builds.plan.percentUsed >= 100` の場合は、追加課金状態として扱う。
-- `eas account:usage` が失敗した場合や usage が不明な場合も、安全側に倒して追加課金リスクありとして扱う。
-- build credit を使い切っている、または従量課金へ移行している警告を検出した場合は、そこで停止し、ユーザー確認なしに続行してはいけない。
-- usage 確認は必須だが十分条件ではない。billing estimate に遅延がありうる前提で、usage が 100% 未満でも課金リスク説明を省略してはいけない。
-- 課金の有無が不明な場合も、安全側に倒して確認を取る。
+## 課金を伴う操作
 
-## Mobile Native Change Rules
+- EAS Build / Submit、有料 API、クラウド deploy、従量課金 SaaS などは、直前に操作内容と課金の可能性を示して明示承認を得る。実装・検証・配布の依頼だけを課金承認とは扱わない。課金不明も確認対象。
+- EAS Build 前は `eas account:usage <account-name> --json` で current cycle を確認し、結果を承認依頼に含める。`builds.plan.percentUsed >= 100` は追加課金状態、取得失敗・不明は追加課金リスクありと扱う。100% 未満でも集計遅延による課金リスクを説明する。
+- credit 超過・従量課金移行の警告を検出したら停止し、承認なしに続行・再投入しない。
 
-- `apps/mobile/package.json`、`apps/mobile/app.config.ts`、`apps/mobile/eas.json`、`apps/mobile/ios/**`、`apps/mobile/android/**`、config plugin 設定、または新規モバイル依存の導入は、まず `native 変更の可能性あり` として扱う。
-- モバイル機能の実装では、依存導入や設計確定の前に、その変更が `OTA で配信可能か`、`iOS / Android の再 build が必要か` を明示的に判定する。
-- 上記の判定で native 変更の可能性がある場合は、実装着手前に `導入する依存`, `導入理由`, `OTA 可否`, `再 build 必要有無`, `想定コストや運用影響` をユーザーへ明示し、承認を取る。
-- ユーザーが `build したくない`, `OTA で済ませたい`, `課金を避けたい` という制約を示している場合、その制約に反する依存や方式を独断で採用してはいけない。
-- `react-native-*`、`expo-*`、config plugin 付き package、native module を含みうる package は、JS-only と確認できるまで native 変更候補として扱う。
+## Mobile の native 変更
+
+- 依存導入・設計確定前に OTA 可否と iOS / Android の再 build 要否を判定する。
+- `apps/mobile/package.json`、`app.config.ts`、`eas.json`、`ios/`、`android/`、config plugin、新規モバイル依存は native 変更候補。`react-native-*` / `expo-*` などは JS-only と確認できるまで候補扱い。
+- native 変更の可能性があれば、実装前に依存名・理由・OTA 可否・再 build 要否・費用と運用影響を示して承認を得る。build 回避・OTA 限定・課金回避の制約を守る。
