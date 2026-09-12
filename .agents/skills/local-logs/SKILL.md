@@ -1,54 +1,15 @@
 ---
 name: local-logs
-description: ローカル開発環境のAPIログ・クライアントエラーログを検索・分析する。
-user_invocable: true
+description: ローカル開発の JSONL ログから API・client error の原因を調べる。
 ---
 
-# ローカルログ検索・分析
+# ローカルログ
 
-## ログファイルの場所
-
-プロジェクトルート直下の `tmp/yyyymmdd.log`（JSONL形式）。
-ローカルdev serverがリクエストを受けると自動的に書き出される。
-
-## よく使うgrepパターン
+対象 workspace の `tmp/YYYYMMDD.log`（JST 日次、JSONL）を読む。ログがなければ起動先・日付・リクエスト有無を確認する。
 
 ```bash
-# 今日の日付を取得
-DATE=$(date +%Y%m%d)
-
-# エラー検索
-grep '"level":"error"' tmp/${DATE}.log
-
-# 特定エンドポイント
-grep '"/users/activities"' tmp/${DATE}.log
-
-# 遅いリクエスト（500ms以上）
-grep -E '"duration":[5-9][0-9]{2,}|"duration":[0-9]{4,}' tmp/${DATE}.log
-
-# クライアントエラー
-grep '"type":"client_error"' tmp/${DATE}.log
-
-# 直近N件を整形表示
-tail -20 tmp/${DATE}.log | python3 -m json.tool
-
-# requestIdで絞り込み
-grep '"requestId":"abc12345"' tmp/${DATE}.log
+rg '"level":"error"|"type":"client_error"' tmp/<YYYYMMDD>.log
+rg '"requestId":"<id>"' tmp/<YYYYMMDD>.log
 ```
 
-## エントリの種類
-
-- `"type":"request"` — 通常のHTTPリクエストログ（loggerMiddlewareが書き出す）
-- `"type":"client_error"` — フロントエンド/モバイルから報告されたクライアントエラー
-
-## ファイルが見つからない場合
-
-- dev serverが起動していない
-- まだリクエストが来ていない
-- WAEが利用可能な環境（stg/production）ではファイルは作成されない
-
-## 注意事項
-
-- ファイルは日次でローテーション（JSTベース）
-- `tmp/` は `.gitignore` に含まれている
-- 本番環境のログは WAE（Analytics Engine）で確認する → `/wae-apm` スキルを使う
+HTTP path、requestId、duration と前後のエラーを照合する。数値の遅延集計は JSON として各行を parse し、複数行を単一 JSON として扱わない。認証情報・個人データを報告に露出させない。stg / production は [wae-apm](../wae-apm/SKILL.md)。
