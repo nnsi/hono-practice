@@ -1,5 +1,8 @@
 {
-  "create.details": "Set details (optional)",
+  "quickAdd.label": "Add a task",
+  "quickAdd.placeholder": "Type a title to add a task",
+  "quickAdd.submit": "Add",
+  "quickAdd.error": "Could not save the task. Please try again.",
   "delete.title": "Delete this task?",
   "delete.description": "This action cannot be undone. Task \"{{taskTitle}}\" will be permanently deleted.",
   "delete.cancel": "Cancel",

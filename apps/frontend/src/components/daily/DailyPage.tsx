@@ -6,6 +6,7 @@ import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { CalendarPopover } from "../common/CalendarPopover";
 import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
+import { TaskQuickAdd } from "../tasks/TaskQuickAdd";
 import { CreateLogDialog } from "./CreateLogDialog";
 import { EditLogDialog } from "./EditLogDialog";
 import { LogCard } from "./LogCard";
@@ -140,6 +141,7 @@ export function DailyPage() {
               {t("daily.addButton")}
             </button>
           </div>
+          <TaskQuickAdd key={date} defaultDate={date} />
           <TaskList
             tasks={tasks}
             isLoading={false}

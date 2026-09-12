@@ -79,68 +79,61 @@ export function TaskCreateDialog({
             />
           </div>
 
-          <details className="space-y-4">
-            <summary className="cursor-pointer text-sm font-medium text-blue-600">
-              {t("create.details")}
-            </summary>
-            <TaskActivityFields
-              activityId={activityId}
-              setActivityId={setActivityId}
-              activityKindId={activityKindId}
-              setActivityKindId={setActivityKindId}
-              quantity={quantity}
-              setQuantity={setQuantity}
-            />
+          <TaskActivityFields
+            activityId={activityId}
+            setActivityId={setActivityId}
+            activityKindId={activityKindId}
+            setActivityKindId={setActivityKindId}
+            quantity={quantity}
+            setQuantity={setQuantity}
+          />
 
-            <TaskRecurrenceFields
-              recurrenceType={recurrenceType}
-              setRecurrenceType={setRecurrenceType}
-              intervalDays={intervalDays}
-              setIntervalDays={setIntervalDays}
-              weekdays={weekdays}
-              toggleWeekday={toggleWeekday}
-              error={recurrenceError}
-            />
+          <TaskRecurrenceFields
+            recurrenceType={recurrenceType}
+            setRecurrenceType={setRecurrenceType}
+            intervalDays={intervalDays}
+            setIntervalDays={setIntervalDays}
+            weekdays={weekdays}
+            toggleWeekday={toggleWeekday}
+            error={recurrenceError}
+          />
 
-            {/* 日付（繰り返しありのときは期限欄を終了日として使う） */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("create.label.startDate")}
-                </label>
-                <DatePickerField value={startDate} onChange={setStartDate} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t(
-                    isRecurring
-                      ? "create.label.endDate"
-                      : "create.label.dueDate",
-                  )}
-                </label>
-                <DatePickerField
-                  value={dueDate}
-                  onChange={setDueDate}
-                  placeholder={t("create.placeholder.dueDate")}
-                  allowClear
-                />
-              </div>
-            </div>
-
-            {/* メモ */}
+          {/* 日付（繰り返しありのときは期限欄を終了日として使う） */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("create.label.memo")}
+                {t("create.label.startDate")}
               </label>
-              <FormTextarea
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder={t("create.placeholder.memo")}
-                maxLength={V.MEMO_MAX}
-                rows={3}
+              <DatePickerField value={startDate} onChange={setStartDate} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t(
+                  isRecurring ? "create.label.endDate" : "create.label.dueDate",
+                )}
+              </label>
+              <DatePickerField
+                value={dueDate}
+                onChange={setDueDate}
+                placeholder={t("create.placeholder.dueDate")}
+                allowClear
               />
             </div>
-          </details>
+          </div>
+
+          {/* メモ */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t("create.label.memo")}
+            </label>
+            <FormTextarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder={t("create.placeholder.memo")}
+              maxLength={V.MEMO_MAX}
+              rows={3}
+            />
+          </div>
 
           {/* ボタン */}
           <div className="flex gap-2 pt-2">

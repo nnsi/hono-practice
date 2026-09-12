@@ -2,6 +2,7 @@ import { useTranslation } from "@packages/i18n";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 
 import { TaskGroup } from "./TaskGroup";
+import { TaskQuickAdd } from "./TaskQuickAdd";
 import type { TaskGroupHandlers } from "./TasksPageViewTypes";
 import type { GroupedTasks } from "./types";
 
@@ -78,6 +79,7 @@ export function TasksActiveSection({
 
   return (
     <div className="space-y-6">
+      <TaskQuickAdd />
       {!hasAnyTasks && (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">{t("page.empty")}</p>

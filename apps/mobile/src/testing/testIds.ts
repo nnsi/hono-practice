@@ -35,6 +35,10 @@ export const mobileTestIds = {
     filterActivity: (activityId: string) =>
       `notes.filterActivity.${activityId}`,
   },
+  taskQuickAdd: {
+    titleInput: "taskQuickAdd.titleInput",
+    submitButton: "taskQuickAdd.submit",
+  },
   tasks: {
     page: "tasks.page",
     activeTab: "tasks.tab.active",
@@ -43,7 +47,6 @@ export const mobileTestIds = {
     emptyCreateButton: "tasks.emptyCreate",
     addButton: "tasks.add",
     createDialog: "tasks.create.dialog",
-    createDetailsButton: "tasks.create.details",
     createTitleInput: "tasks.create.titleInput",
     createMemoInput: "tasks.create.memoInput",
     createCancelButton: "tasks.create.cancel",

@@ -1,5 +1,8 @@
 {
-  "create.details": "詳細を設定（任意）",
+  "quickAdd.label": "タスクを追加",
+  "quickAdd.placeholder": "タイトルを入力して追加",
+  "quickAdd.submit": "追加",
+  "quickAdd.error": "保存できませんでした。もう一度お試しください。",
   "delete.title": "タスクを削除しますか？",
   "delete.description": "この操作は取り消せません。タスク「{{taskTitle}}」を完全に削除します。",
   "delete.cancel": "キャンセル",

@@ -19,7 +19,6 @@ describe("task extended", () => {
       'input[placeholder="タスクのタイトルを入力"]',
       "メモ付タスク",
     );
-    await page.getByText("詳細を設定（任意）", { exact: true }).click();
     await page.fill(
       'textarea[placeholder="タスクに関するメモを入力"]',
       "これはメモです",
