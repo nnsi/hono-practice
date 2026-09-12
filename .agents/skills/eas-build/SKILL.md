@@ -1,6 +1,6 @@
 ---
 name: eas-build
-description: 承認された EAS native build を準備・実行し、結果を確認する。
+description: EAS native build の準備・実行・結果確認に使う。課金承認は実行前に得る。
 ---
 
 # EAS Build

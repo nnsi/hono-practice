@@ -3,6 +3,7 @@ import { useTranslation } from "@packages/i18n";
 import { X } from "lucide-react";
 
 import type { DexieActivity } from "../../db/schema";
+import { DatePickerField } from "../common/DatePickerField";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
 import { FormTextarea } from "../common/FormTextarea";
@@ -21,6 +22,8 @@ export function EditLogDialog({
 }) {
   const { t } = useTranslation("activity");
   const {
+    date,
+    setDate,
     quantity,
     setQuantity,
     memo,
@@ -53,6 +56,18 @@ export function EditLogDialog({
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
+          <div>
+            <p className="block text-sm font-medium text-gray-600 mb-1">
+              {t("log.dateLabel")}
+            </p>
+            <DatePickerField
+              value={date}
+              onChange={setDate}
+              label={t("log.dateLabel")}
+              disabled={isSubmitting}
+            />
+          </div>
+
           {/* 種類選択 */}
           {kinds.length > 0 && (
             <div className="space-y-2">

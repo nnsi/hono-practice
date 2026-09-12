@@ -35,15 +35,6 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Agent|Task|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/review-marker.js"
-          }
-        ]
-      },
-      {
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
@@ -59,16 +50,6 @@
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/diary-unsaid-check.js",
             "statusMessage": "日記の「言わなかった」チェック中..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/loop-detection.js",
-            "statusMessage": "ループ検出チェック中..."
           }
         ]
       }

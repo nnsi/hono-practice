@@ -11,12 +11,14 @@ type DatePickerFieldProps = {
   value: string; // YYYY-MM-DD
   onChange: (date: string) => void;
   label?: string;
+  testID?: string;
 };
 
 export function DatePickerField({
   value,
   onChange,
   label,
+  testID,
 }: DatePickerFieldProps) {
   const { colors } = useThemeContext();
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -29,6 +31,7 @@ export function DatePickerField({
         </Text>
       ) : null}
       <Pressable
+        testID={testID}
         className="flex-row items-center border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2"
         onPress={() => setCalendarOpen(true)}
         accessibilityRole="button"
