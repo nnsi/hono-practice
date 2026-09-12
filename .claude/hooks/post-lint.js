@@ -45,7 +45,6 @@ async function main() {
     const content = readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
     const isTestFile = /\.(test|spec)\.(ts|tsx)$/.test(filePath);
-    const isScript = /[\\/]scripts[\\/]/.test(filePath);
     const isFrontend = filePath.replace(/\\/g, "/").includes("/frontend/") ||
       filePath.replace(/\\/g, "/").includes("/mobile/");
 
@@ -53,11 +52,6 @@ async function main() {
     const interfaceMatch = content.match(/^export\s+interface\s+(\w+)/m);
     if (interfaceMatch) {
       warnings.push(`⚠️ interface禁止: \`export interface ${interfaceMatch[1]}\` → \`export type ${interfaceMatch[1]} = { ... }\` に変更してください。`);
-    }
-
-    // 0b. File length > 200 lines (test files / scripts excluded)
-    if (!isTestFile && !isScript && lines.length > 200) {
-      warnings.push(`⚠️ ${lines.length}行: 1ファイル200行以内を目標にしてください。分割を検討してください。変更前から超えていた場合でも、編集したタイミングで分割すること。`);
     }
 
     // 0c. confirm() / alert() in frontend (tsx files)

@@ -1,6 +1,6 @@
 ---
 name: playwright-cli
-description: playwright-cli でブラウザ操作・スクリーンショット・通信調査を行う。
+description: ブラウザ操作に playwright-cli を選んだときのコマンドとセッション管理。
 ---
 
 # Playwright CLI
