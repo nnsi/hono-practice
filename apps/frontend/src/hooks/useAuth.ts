@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+
 import { useAuthBootstrap, useAuthController } from "@packages/auth-client";
 import type { Consents } from "@packages/types/request";
 
 import { authController } from "../auth/authController";
+import { registerWebAuthDiagnosticFlush } from "../auth/webAuthDiagnostics";
 
 type AuthState = {
   isLoggedIn: boolean;
@@ -23,6 +26,7 @@ export function useAuth(): AuthState {
   const state = useAuthController(authController);
 
   useAuthBootstrap(authController);
+  useEffect(registerWebAuthDiagnosticFlush, []);
 
   return {
     ...state,

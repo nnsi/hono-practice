@@ -20,6 +20,9 @@ vi.mock("../auth/authController", () => ({
     logout: vi.fn(),
   },
 }));
+vi.mock("../auth/mobileAuthDiagnostics", () => ({
+  startMobileAuthDiagnosticFlush: vi.fn(),
+}));
 vi.mock("@packages/auth-client", () => ({
   useAuthBootstrap: vi.fn(),
   useAuthController: vi.fn(),

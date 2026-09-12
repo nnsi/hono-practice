@@ -10,6 +10,7 @@ import type { User, UserId } from "@packages/domain/user/userSchema";
 
 import type { Config } from "../config";
 import type { QueryExecutor } from "../infra/rdb/drizzle";
+import type { AuthDiagnosticCollector } from "../lib/authDiagnostics";
 import type { Logger } from "../lib/logger";
 import type { Tracer } from "../lib/tracer";
 import type { RateLimitCounterPort } from "../port/rateLimit";
@@ -34,6 +35,7 @@ export type AppContext = {
     logger: Logger;
     tracer: Tracer;
     adminEmail?: string;
+    authDiagnostics?: AuthDiagnosticCollector;
   };
   Bindings: Config & {
     DB: QueryExecutor;

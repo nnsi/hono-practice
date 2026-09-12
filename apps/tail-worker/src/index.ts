@@ -1,3 +1,5 @@
+import { authServerDiagnosticSchema } from "../../../packages/types/authDiagnostics";
+
 type Env = {
   LOGS: AnalyticsEngineDataset;
 };
@@ -17,6 +19,7 @@ export type LogEntry = {
   kvMs?: number;
   extMs?: number;
   spanCount?: number;
+  authDiagnostic?: unknown;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -86,29 +89,36 @@ export const shouldWrite = (entry: LogEntry): boolean =>
 
 /** LogEntryをWAEのデータポイント形状（blobs/doubles/indexes）に変換して書き込む */
 const writeLogEntry = (env: Env, entry: LogEntry): void => {
-  env.LOGS.writeDataPoint({
-    blobs: [
-      entry.level ?? "info", // blob1: ログレベル
-      entry.msg ?? "", // blob2: メッセージ
-      entry.requestId ?? "", // blob3: リクエストID
-      entry.method ?? "", // blob4: HTTPメソッド
-      entry.path ?? "", // blob5: パス
-      entry.feature ?? "", // blob6: feature名
-      entry.error ?? "", // blob7: エラー内容
-    ],
-    doubles: [
-      entry.status ?? 0, // double1: HTTPステータス
-      entry.duration ?? 0, // double2: 総リクエスト時間 (ms)
-      entry.dbMs ?? 0, // double3: DB合計時間 (ms)
-      entry.r2Ms ?? 0, // double4: R2合計時間 (ms)
-      entry.kvMs ?? 0, // double5: KV合計時間 (ms)
-      entry.extMs ?? 0, // double6: 外部API合計時間 (ms)
-      entry.spanCount ?? 0, // double7: スパン数
-    ],
-    indexes: [
-      entry.level ?? "info", // index1: ログレベル (フィルタ用)
-    ],
-  });
+  // Runtime allowlist also protects the sink from unexpected structured logs.
+  const diagnostic = authServerDiagnosticSchema.safeParse(entry.authDiagnostic);
+  try {
+    env.LOGS.writeDataPoint({
+      blobs: [
+        entry.level ?? "info", // blob1: ログレベル
+        entry.msg ?? "", // blob2: メッセージ
+        entry.requestId ?? "", // blob3: リクエストID
+        entry.method ?? "", // blob4: HTTPメソッド
+        entry.path ?? "", // blob5: パス
+        entry.feature ?? "", // blob6: feature名
+        entry.error ?? "", // blob7: エラー内容
+        ...(diagnostic.success ? ["", JSON.stringify(diagnostic.data)] : []), // blob8 reserved, blob9 auth diagnostic
+      ],
+      doubles: [
+        entry.status ?? 0, // double1: HTTPステータス
+        entry.duration ?? 0, // double2: 総リクエスト時間 (ms)
+        entry.dbMs ?? 0, // double3: DB合計時間 (ms)
+        entry.r2Ms ?? 0, // double4: R2合計時間 (ms)
+        entry.kvMs ?? 0, // double5: KV合計時間 (ms)
+        entry.extMs ?? 0, // double6: 外部API合計時間 (ms)
+        entry.spanCount ?? 0, // double7: スパン数
+      ],
+      indexes: [
+        entry.level ?? "info", // index1: ログレベル (フィルタ用)
+      ],
+    });
+  } catch {
+    // One rejected data point must not discard the rest of the tail batch.
+  }
 };
 
 /**

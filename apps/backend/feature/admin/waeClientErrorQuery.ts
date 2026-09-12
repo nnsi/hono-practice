@@ -13,6 +13,7 @@ SELECT
   count() as cnt
 FROM actiko_client_errors
 WHERE timestamp > NOW() - INTERVAL '24' HOUR
+  AND blob1 <> 'auth_diagnostic'
 GROUP BY blob6
 ORDER BY cnt DESC
 `.trim();
@@ -32,6 +33,7 @@ SELECT
   blob6 as platform
 FROM actiko_client_errors
 WHERE timestamp > NOW() - INTERVAL '24' HOUR
+  AND blob1 <> 'auth_diagnostic'
   AND blob6 = '${platform}'
 ORDER BY timestamp DESC
 LIMIT 50

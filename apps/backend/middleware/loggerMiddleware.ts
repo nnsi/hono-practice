@@ -1,6 +1,10 @@
 import type { MiddlewareHandler } from "hono";
 
 import type { AppContext } from "../context";
+import {
+  createAuthDiagnosticCollector,
+  recordAuthDiagnostic,
+} from "../lib/authDiagnostics";
 import { createLogger } from "../lib/logger";
 import { createTracer } from "../lib/tracer";
 import {
@@ -20,9 +24,20 @@ import {
  */
 export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
   return async (c, next) => {
-    const requestId = crypto.randomUUID().slice(0, 8);
+    const requestId = crypto.randomUUID();
     const method = c.req.method;
     const path = c.req.path;
+    c.header("X-Request-ID", requestId);
+    const diagnostics =
+      method === "POST" && path === "/auth/token"
+        ? createAuthDiagnosticCollector({
+            environment: c.env.NODE_ENV,
+            platform: c.req.header("X-Client-Platform"),
+            flowId: c.req.header("X-Auth-Diagnostic-Id"),
+            hasOrigin: Boolean(c.req.header("Origin")),
+          })
+        : undefined;
+    if (diagnostics) c.set("authDiagnostics", diagnostics);
 
     const logger = createLogger({
       bindings: { requestId, method, path },
@@ -51,12 +66,14 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
           ...(error.cause ? { cause: String(error.cause) } : {}),
           duration,
           ...summary,
+          ...(diagnostics ? { authDiagnostic: diagnostics.snapshot() } : {}),
         });
       } else {
         logger.error("Unhandled error", {
           error: errorMsg,
           duration,
           ...summary,
+          ...(diagnostics ? { authDiagnostic: diagnostics.snapshot() } : {}),
         });
       }
 
@@ -75,6 +92,8 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
 
     const duration = Date.now() - start;
     const status = c.res.status;
+    if (status === 429)
+      recordAuthDiagnostic(diagnostics?.observe, { reason: "rate_limited" });
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
     const summary = tracer.getSummary();
 
@@ -96,6 +115,7 @@ export const loggerMiddleware = (): MiddlewareHandler<AppContext> => {
       duration,
       ...(errorMsg ? { validationError: errorMsg } : {}),
       ...summary,
+      ...(diagnostics ? { authDiagnostic: diagnostics.snapshot() } : {}),
     });
 
     // WAEにメトリクスを書き込み（404・ボットスキャンはノイズなので除外）
