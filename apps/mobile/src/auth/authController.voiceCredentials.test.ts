@@ -52,6 +52,13 @@ vi.mock("./mobileAuthStateRepository", () => ({
 vi.mock("./mobileAuthTransport", () => ({
   createMobileAuthTransport: vi.fn(() => ({})),
 }));
+vi.mock("./mobileAuthDiagnostics", () => ({
+  mobileAuthDiagnostics: { observe: vi.fn() },
+  mobileAuthDiagnosticHeaders: {
+    "X-Auth-Diagnostic-Id": "f8e28e2b-f9e6-4b0b-9c37-503a3f2b0028",
+    "X-Client-Platform": "ios",
+  },
+}));
 
 await import("./authController");
 

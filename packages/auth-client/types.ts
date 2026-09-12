@@ -1,3 +1,4 @@
+import type { AuthDiagnosticObserver } from "@packages/types/authDiagnostics";
 import type { Consents } from "@packages/types/request";
 import type { AuthResponse, GetUserResponse } from "@packages/types/response";
 
@@ -64,6 +65,7 @@ export type AuthControllerState = {
 };
 
 export type AuthControllerOptions = {
+  onDiagnostic?: AuthDiagnosticObserver;
   transport: AuthTransport;
   authStateRepo: AuthStateRepository;
   online?: OnlineRetryAdapter;
@@ -86,7 +88,7 @@ export type AuthController = {
   // local の last_login_at で UI を即出す
   hydrate(): Promise<void>;
   // サーバー refresh → user 反映 → initialSync
-  reconcile(): Promise<boolean>;
+  reconcile(source?: "bootstrap" | "reconcile"): Promise<boolean>;
   login(loginId: string, password: string): Promise<void>;
   register(
     loginId: string,
@@ -103,5 +105,7 @@ export type AuthController = {
   // 後など「backend で既に user が削除済み」のため通常 logout が必ず失敗する
   // ケース用。通常の logout には使わない (Web の httpOnly cookie 残存対策のため
   // 通常 logout は失敗時に local state を保持する設計)
-  forceLogout(): Promise<void>;
+  forceLogout(
+    reason?: "refresh_expired" | "account_deleted" | "forced_logout",
+  ): Promise<void>;
 };

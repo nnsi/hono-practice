@@ -15,18 +15,27 @@ import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
 import { clearVoiceCredentials } from "../lib/voiceApiKeyBridge";
 import { clearLocalData, performInitialSync } from "../sync/initialSync";
 import { loadStorageCache } from "../sync/rnPlatformAdapters";
+import {
+  mobileAuthDiagnosticHeaders,
+  mobileAuthDiagnostics,
+} from "./mobileAuthDiagnostics";
 import { createMobileAuthStateRepository } from "./mobileAuthStateRepository";
 import { createMobileAuthTransport } from "./mobileAuthTransport";
 import { mobileOnlineRetryAdapter } from "./mobileOnlineRetryAdapter";
 
 const transport = createMobileAuthTransport(
-  { apiUrl: getApiUrl() },
+  {
+    apiUrl: getApiUrl(),
+    onDiagnostic: mobileAuthDiagnostics.observe,
+    diagnosticHeaders: mobileAuthDiagnosticHeaders,
+  },
   tokenHolder,
 );
 
 export const authController = createAuthController({
   transport,
   authStateRepo: createMobileAuthStateRepository(),
+  onDiagnostic: mobileAuthDiagnostics.observe,
   online: mobileOnlineRetryAdapter,
   onUserSwitch: async () => {
     await clearVoiceCredentials();
@@ -52,7 +61,8 @@ export const authController = createAuthController({
 setRefreshAccessToken(
   createRefreshAccessTokenCallback(transport, {
     getSessionVersion: () => authController.getSessionVersion(),
-    onExpired: () => authController.forceLogout(),
+    onExpired: () => authController.forceLogout("refresh_expired"),
+    onDiagnostic: mobileAuthDiagnostics.observe,
   }),
   () => authController.getSessionIdentityVersion(),
 );

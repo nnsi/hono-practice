@@ -84,7 +84,13 @@ app.use("*", async (c, next) => {
     // X-Refresh-Token は mobile (Origin なし、CORS 非適用) 専用ヘッダ。
     // CORS allowHeaders からは外し、ブラウザの preflight で弾く。
     // route 側でも isMobileClient(c) チェックで二重防御する。
-    allowHeaders: ["Authorization", "Content-Type"],
+    allowHeaders: [
+      "Authorization",
+      "Content-Type",
+      "X-Auth-Diagnostic-Id",
+      "X-Client-Platform",
+    ],
+    exposeHeaders: ["X-Request-ID"],
   });
 
   return middleware(c, next);

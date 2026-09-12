@@ -1,4 +1,5 @@
 import { createDefaultTabPreference } from "@packages/domain/user/tabPreferenceSchema";
+import type { AuthDiagnosticEntry } from "@packages/types/authDiagnostics";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAuthController } from "./createAuthController";
@@ -27,6 +28,75 @@ function makeSession(
     },
   };
 }
+
+describe("auth diagnostic reset reasons", () => {
+  it.each([
+    "bootstrap",
+    "reconcile",
+  ] as const)("%s expiration records prior local login without identity values", async (source) => {
+    const onDiagnostic = vi.fn();
+    const controller = createAuthController({
+      transport: makeTransport({ refreshResults: [{ kind: "expired" }] }),
+      authStateRepo: makeRepo({
+        userId: "private-user",
+        lastLoginAt: "2026-09-01T00:00:00Z",
+      }),
+      performInitialSync: async () => {},
+      onDiagnostic,
+    });
+    await controller.hydrate();
+    await controller.reconcile(source);
+    expect(onDiagnostic).toHaveBeenLastCalledWith({
+      event: "session_cleared",
+      reason: "refresh_expired",
+      source,
+      wasLoggedIn: true,
+    });
+    expect(JSON.stringify(onDiagnostic.mock.calls)).not.toContain(
+      "private-user",
+    );
+    expect(controller.getState().isLoggedIn).toBe(false);
+  });
+
+  it.each([
+    "refresh_expired",
+    "account_deleted",
+    "forced_logout",
+  ] as const)("distinguishes forceLogout %s", async (reason) => {
+    const events: AuthDiagnosticEntry[] = [];
+    const controller = createAuthController({
+      transport: makeTransport(),
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+      onDiagnostic: (event) => events.push(event),
+    });
+    await controller.login("private-login", "secret-password");
+    await controller.forceLogout(reason);
+    expect(events.at(-1)).toMatchObject({
+      event: "session_cleared",
+      reason,
+      wasLoggedIn: true,
+    });
+    expect(JSON.stringify(events)).not.toContain("secret-password");
+  });
+
+  it("keeps successful login/logout behavior when the observer throws", async () => {
+    const controller = createAuthController({
+      transport: makeTransport(),
+      authStateRepo: makeRepo(),
+      performInitialSync: async () => {},
+      onDiagnostic: () => {
+        throw new Error("telemetry down");
+      },
+    });
+    await expect(
+      controller.login("login", "password"),
+    ).resolves.toBeUndefined();
+    expect(controller.getState().isLoggedIn).toBe(true);
+    await expect(controller.logout()).resolves.toEqual({ ok: true });
+    expect(controller.getState().isLoggedIn).toBe(false);
+  });
+});
 
 function makeRepo(
   initial?: Partial<{

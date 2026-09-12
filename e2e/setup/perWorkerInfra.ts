@@ -69,6 +69,7 @@ async function start() {
         "^/api(?:/|$)": `http://localhost:${BACKEND_PORT}`,
         "^/batch$": `http://localhost:${BACKEND_PORT}`,
         "^/contact(?:/|$)": `http://localhost:${BACKEND_PORT}`,
+        "^/client-errors(?:/|$)": `http://localhost:${BACKEND_PORT}`,
         "^/webhooks(?:/|$)": `http://localhost:${BACKEND_PORT}`,
       },
     },

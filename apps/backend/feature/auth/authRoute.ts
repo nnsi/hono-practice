@@ -3,6 +3,7 @@ import { getCookie } from "hono/cookie";
 
 import { UnauthorizedError } from "@backend/error";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { recordAuthDiagnostic } from "@backend/lib/authDiagnostics";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
@@ -44,9 +45,11 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const { JWT_SECRET, JWT_AUDIENCE } = c.env;
     const repo = newUserRepository(db);
     const logger = c.get("logger") ?? noopLogger;
+    const observer = c.get("authDiagnostics")?.observe;
     const refreshTokenRepo = newRefreshTokenRepository(
       db,
       logger.child({ repository: "refresh-token" }),
+      observer,
     );
     const passwordVerifier = new MultiHashPasswordVerifier();
     const userProviderRepo = newUserProviderRepository(db);
@@ -64,6 +67,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       JWT_AUDIENCE,
       oauthVerifiers,
       tracer,
+      observer,
     );
     const subscriptionRepo = newSubscriptionRepository(db);
     const subscriptionUc = newSubscriptionQueryUsecase(
@@ -78,7 +82,10 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       subscriptionUc,
       tracer,
     );
-    c.set("h", newAuthHandler(uc, userUc.getUserById, userUc.enrichUser));
+    c.set(
+      "h",
+      newAuthHandler(uc, userUc.getUserById, userUc.enrichUser, observer),
+    );
     return next();
   });
 
@@ -101,7 +108,17 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
       const refreshTokenValue = authHeader?.startsWith("Bearer ")
         ? authHeader.substring(7)
         : getCookie(c, "refresh_token");
+      recordAuthDiagnostic(c.get("authDiagnostics")?.observe, {
+        tokenSource: !refreshTokenValue
+          ? "none"
+          : authHeader?.startsWith("Bearer ")
+            ? "bearer"
+            : "cookie",
+      });
       if (!refreshTokenValue) {
+        recordAuthDiagnostic(c.get("authDiagnostics")?.observe, {
+          reason: "missing",
+        });
         throw new UnauthorizedError("refresh token not found");
       }
       const { token, refreshToken, user } =

@@ -35,7 +35,7 @@ export function AccountSection() {
       setIsDeleting(false);
       return;
     }
-    await authController.forceLogout();
+    await authController.forceLogout("account_deleted");
     await db.delete();
     clearAppSettings();
     window.location.href = "/";

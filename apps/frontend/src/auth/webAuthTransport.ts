@@ -1,4 +1,5 @@
 import type {
+  AuthDiagnosticObserver,
   AuthSession,
   AuthTransport,
   RefreshResult,
@@ -14,6 +15,8 @@ import { authResponseSchema } from "@packages/types/response";
 
 type TransportOptions = {
   apiUrl: string;
+  onDiagnostic?: AuthDiagnosticObserver;
+  diagnosticHeaders?: Record<string, string>;
 };
 
 type TokenHolder = {
@@ -48,13 +51,18 @@ export function createWebAuthTransport(
 
   const runRefreshSession = async (): Promise<RefreshResult> => {
     const refresh = () =>
-      requestRefreshSession((signal) =>
-        fetch(`${apiUrl}/auth/token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          signal,
-        }),
+      requestRefreshSession(
+        (signal) =>
+          fetch(`${apiUrl}/auth/token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...options.diagnosticHeaders,
+            },
+            credentials: "include",
+            signal,
+          }),
+        options.onDiagnostic,
       );
     // タブごとに異なる coordinator を補完し、更新後の Cookie で次を送る。
     // ロックは body の受信と直後の再試行が完了するまで保持する。

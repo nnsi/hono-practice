@@ -54,7 +54,12 @@ export const createLogger = (options: LoggerOptions = {}): Logger => {
         : level === "warn"
           ? console.warn
           : console.log;
-    fn(JSON.stringify(entry));
+    try {
+      fn(JSON.stringify(entry));
+    } catch {
+      // Logging is best effort: a sink failure must not fail authentication
+      // after a replacement credential has already committed.
+    }
   };
 
   return {

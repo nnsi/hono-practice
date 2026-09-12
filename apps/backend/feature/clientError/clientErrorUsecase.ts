@@ -2,6 +2,12 @@ import type { Logger } from "@backend/lib/logger";
 import { appendLocalLog } from "@backend/middleware/localLogWriter";
 import { clipBytes } from "@backend/utils/clipBytes";
 import type { AnalyticsEngineDataset } from "@cloudflare/workers-types";
+import {
+  type AuthDiagnosticReport,
+  authDiagnosticReportSchema,
+} from "@packages/types/authDiagnostics";
+
+import { normalizeAuthEnvironment } from "../../lib/authDiagnostics";
 
 // WAE blob は合計 5120 byte / 1 data point。各 blob のバイト上限を防御的に切る。
 // route の zod schema (length max) と二重防衛: schema は UTF-16 length、
@@ -12,7 +18,7 @@ const MAX_USERID_BYTES = 64;
 const MAX_SCREEN_BYTES = 200;
 const MAX_APP_VERSION_BYTES = 50;
 
-export type ClientErrorPayload = {
+export type StandardClientErrorPayload = {
   errorType:
     | "component_error"
     | "unhandled_error"
@@ -27,6 +33,19 @@ export type ClientErrorPayload = {
   appVersion?: string;
 };
 
+export type AuthDiagnosticPayload = {
+  errorType: "auth_diagnostic";
+  message: "Auth session diagnostic";
+  diagnostic: AuthDiagnosticReport;
+  userId: string;
+  platform: "ios" | "android" | "web";
+  appVersion?: string;
+};
+
+export type ClientErrorPayload =
+  | StandardClientErrorPayload
+  | AuthDiagnosticPayload;
+
 export type ClientErrorUsecase = {
   recordClientError(input: ClientErrorPayload): Promise<void>;
 };
@@ -39,9 +58,51 @@ export type ClientErrorUsecase = {
 export function newClientErrorUsecase(
   wae: AnalyticsEngineDataset | undefined,
   logger: Logger | undefined,
+  environment?: string,
 ): ClientErrorUsecase {
   return {
     async recordClientError(input) {
+      if (input.errorType === "auth_diagnostic") {
+        // Revalidate at the persistence boundary: callers must never be able to
+        // put credentials or arbitrary exception text into the diagnostic log.
+        const parsed = authDiagnosticReportSchema.safeParse(input.diagnostic);
+        if (!parsed.success) return;
+        const sanitized = {
+          errorType: "auth_diagnostic",
+          message: "Auth session diagnostic",
+          platform: input.platform,
+          appVersion: /^[\w.+-]{1,50}$/.test(input.appVersion ?? "")
+            ? input.appVersion
+            : "",
+          diagnostic: parsed.data,
+          env: normalizeAuthEnvironment(environment),
+        };
+        try {
+          if (wae) {
+            wae.writeDataPoint({
+              blobs: [
+                sanitized.errorType,
+                sanitized.message,
+                "", // stack: auth diagnostics never store free text
+                "", // userId: correlation uses request/flow IDs instead
+                "", // screen: do not retain arbitrary URLs
+                sanitized.platform,
+                sanitized.appVersion ?? "",
+                JSON.stringify(sanitized.diagnostic),
+                sanitized.env,
+              ],
+              doubles: [1],
+              indexes: [sanitized.errorType],
+            });
+          } else {
+            logger?.info("Auth session diagnostic", sanitized);
+            appendLocalLog({ type: "client_error", ...sanitized });
+          }
+        } catch {
+          // Diagnostics are best effort and must not cause another auth failure.
+        }
+        return;
+      }
       const sanitized = {
         ...input,
         message: clipBytes(input.message, MAX_MESSAGE_BYTES),

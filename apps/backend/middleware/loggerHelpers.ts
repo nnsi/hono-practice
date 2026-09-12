@@ -78,6 +78,7 @@ export function writeErrorToWAE(
             status: 500,
             duration: opts.duration,
             summary: EMPTY_SUMMARY,
+            authDiagnostic: c.get("authDiagnostics")?.snapshot(),
           }),
         ),
       );
@@ -91,6 +92,9 @@ export function writeErrorToWAE(
         error: opts.errorMsg,
         status: 500,
         duration: opts.duration,
+        ...(c.get("authDiagnostics")
+          ? { authDiagnostic: c.get("authDiagnostics")?.snapshot() }
+          : {}),
       });
     }
   } catch {
@@ -139,6 +143,7 @@ export function writeResponseToWAE(
             status,
             duration,
             summary,
+            authDiagnostic: c.get("authDiagnostics")?.snapshot(),
           }),
         ),
       );
@@ -153,6 +158,9 @@ export function writeResponseToWAE(
         duration,
         ...(errorMsg ? { error: errorMsg } : {}),
         ...summary,
+        ...(c.get("authDiagnostics")
+          ? { authDiagnostic: c.get("authDiagnostics")?.snapshot() }
+          : {}),
       });
     }
   } catch {

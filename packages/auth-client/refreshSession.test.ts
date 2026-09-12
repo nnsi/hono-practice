@@ -20,6 +20,72 @@ const session: AuthSession = {
 afterEach(() => vi.useRealTimers());
 
 describe("requestRefreshSession", () => {
+  it("records HTTP rejection and its server request ID without reading the token body", async () => {
+    const observe = vi.fn();
+    const request = vi.fn().mockResolvedValue(
+      new Response("secret-body", {
+        status: 401,
+        headers: { "X-Request-ID": "639ec543-5194-4119-8388-f635ca6b5c82" },
+      }),
+    );
+    expect(await requestRefreshSession(request, observe)).toEqual({
+      kind: "expired",
+    });
+    expect(observe).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        event: "refresh_result",
+        reason: "http_401",
+        status: 401,
+        attempt: 1,
+        requestId: "639ec543-5194-4119-8388-f635ca6b5c82",
+      }),
+    );
+    expect(JSON.stringify(observe.mock.calls)).not.toContain("secret-body");
+  });
+
+  it("distinguishes network, invalid response and timeout failures without exposing exceptions", async () => {
+    const observe = vi.fn();
+    await requestRefreshSession(
+      vi
+        .fn()
+        .mockRejectedValueOnce(new Error("secret-error"))
+        .mockResolvedValueOnce(Response.json({ token: "secret-token" })),
+      observe,
+    );
+    expect(
+      observe.mock.calls
+        .filter(([entry]) => entry.event === "refresh_result")
+        .map(([entry]) => entry.reason),
+    ).toEqual(["network", "invalid_response"]);
+    expect(JSON.stringify(observe.mock.calls)).not.toContain("secret");
+    observe.mockClear();
+    vi.useFakeTimers();
+    const pending = requestRefreshSession(
+      (signal) =>
+        new Promise((_resolve, reject) =>
+          signal.addEventListener("abort", () => reject(new Error("aborted"))),
+        ),
+      observe,
+    );
+    await vi.advanceTimersByTimeAsync(30_000);
+    await pending;
+    expect(
+      observe.mock.calls
+        .filter(([entry]) => entry.event === "refresh_result")
+        .map(([entry]) => entry.reason),
+    ).toEqual(["timeout", "timeout"]);
+  });
+
+  it("observer failures do not cause a successful rotation to be retried", async () => {
+    const request = vi.fn().mockResolvedValue(Response.json(session));
+    expect(
+      await requestRefreshSession(request, () => {
+        throw new Error("logger failure");
+      }),
+    ).toEqual({ kind: "ok", session });
+    expect(request).toHaveBeenCalledOnce();
+  });
+
   it.each([401, 403])("%i は再試行せず期限切れにする", async (status) => {
     const request = vi.fn().mockResolvedValue(new Response(null, { status }));
     expect(await requestRefreshSession(request)).toEqual({ kind: "expired" });

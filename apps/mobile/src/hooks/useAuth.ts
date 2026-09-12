@@ -5,6 +5,7 @@ import type { Consents } from "@packages/types/request";
 import { AppState } from "react-native";
 
 import { authController } from "../auth/authController";
+import { startMobileAuthDiagnosticFlush } from "../auth/mobileAuthDiagnostics";
 import { refreshPlanFromBackend } from "../auth/planReconciliation";
 import { provisionVoiceApiKey } from "../lib/provisionVoiceApiKey";
 
@@ -34,6 +35,7 @@ export async function refreshForegroundEntitlement(
 export function useAuth(): AuthState {
   const state = useAuthController(authController);
 
+  useEffect(startMobileAuthDiagnosticFlush, []);
   useAuthBootstrap(authController);
 
   // フォアグラウンド復帰時に plan / voice key を同期

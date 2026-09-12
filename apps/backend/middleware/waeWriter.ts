@@ -1,5 +1,7 @@
 import type { AnalyticsEngineDataset } from "@cloudflare/workers-types";
+import type { AuthServerDiagnostic } from "@packages/types/authDiagnostics";
 
+import { serializeAuthDiagnostic } from "../lib/authDiagnostics";
 import type { TracerSummary } from "../lib/tracer";
 
 /** スタックトレースの最初のフレーム（"at ..."行）を取得 */
@@ -20,6 +22,7 @@ type WAEEntry = {
   status: number;
   duration: number;
   summary: TracerSummary;
+  authDiagnostic?: AuthServerDiagnostic;
 };
 
 /** WAEに書き込むデータポイントを生成 */
@@ -34,6 +37,9 @@ export const writeToWAE = (wae: AnalyticsEngineDataset, entry: WAEEntry) => {
       entry.feature ?? "",
       entry.error ?? "",
       entry.stackFrame ?? "",
+      ...(entry.authDiagnostic
+        ? [serializeAuthDiagnostic(entry.authDiagnostic)]
+        : []),
     ],
     doubles: [
       entry.status,

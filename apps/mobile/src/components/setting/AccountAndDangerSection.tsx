@@ -43,7 +43,7 @@ export function AccountAndDangerSection({
       setShowDeleteConfirm(false);
       // backend で user 削除済みのため通常 logout は server 401 で失敗するのが
       // 想定。forceLogout で local state を強制リセットしてログイン画面に戻す
-      await authController.forceLogout();
+      await authController.forceLogout("account_deleted");
     } catch {
       setDeleteError(t("deleteAccountError"));
       setIsDeleting(false);

@@ -1,5 +1,9 @@
 import { AuthError } from "@backend/error";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import {
+  type AuthDiagnosticObserver,
+  recordAuthDiagnostic,
+} from "@backend/lib/authDiagnostics";
 import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Tracer } from "@backend/lib/tracer";
 import { createRefreshToken } from "@packages/domain/auth/refreshTokenSchema";
@@ -100,44 +104,70 @@ export function rotateRefreshToken(
   jwtSecret: string,
   jwtAudience: string,
   tracer: Tracer,
+  observer?: AuthDiagnosticObserver,
 ) {
   return async (combinedToken: string): Promise<AuthOutput> => {
     // 新 token の保存まで成功した場合だけ旧 token を消費する。
     // DB の一時障害では初回 rotation / grace のどちらも再試行可能に保つ。
-    return txRunner.run([refreshTokenRepo, userRepo], async (tx) => {
-      const storedToken = await tracer.span("db.revokeAndGetRefreshToken", () =>
-        tx.revokeAndGetRefreshToken(combinedToken),
-      );
-      if (!storedToken) throw new AuthError("invalid refresh token");
-      const user = await tracer.span("db.getUserById", () =>
-        tx.getUserById(storedToken.userId),
-      );
-      if (!user) throw new AuthError("invalid refresh token");
-
-      const accessToken = await generateAccessToken(
-        jwtSecret,
-        jwtAudience,
-        storedToken.userId,
-      );
-      const { selector, plainRefreshToken, expiresAt } = generateRefreshToken();
-      const refreshTokenEntity = createRefreshToken({
-        userId: storedToken.userId,
-        selector,
-        token: await hashWithSHA256(plainRefreshToken),
-        expiresAt,
-      });
-
-      await tracer.span("db.createRefreshToken", () =>
-        tx.createRefreshToken(refreshTokenEntity),
-      );
-
-      return {
-        accessToken,
-        refreshToken: `${selector}.${plainRefreshToken}`,
-        userId: storedToken.userId,
-        user,
-      };
+    recordAuthDiagnostic(observer, {
+      stage: "rotation",
+      rotationCommitted: false,
     });
+    try {
+      const result = await txRunner.run(
+        [refreshTokenRepo, userRepo],
+        async (tx) => {
+          const storedToken = await tracer.span(
+            "db.revokeAndGetRefreshToken",
+            () => tx.revokeAndGetRefreshToken(combinedToken),
+          );
+          if (!storedToken) throw new AuthError("invalid refresh token");
+          recordAuthDiagnostic(observer, { stage: "user_lookup" });
+          const user = await tracer.span("db.getUserById", () =>
+            tx.getUserById(storedToken.userId),
+          );
+          if (!user) {
+            recordAuthDiagnostic(observer, { reason: "user_not_found" });
+            throw new AuthError("invalid refresh token");
+          }
+
+          recordAuthDiagnostic(observer, { stage: "token_issue" });
+          const accessToken = await generateAccessToken(
+            jwtSecret,
+            jwtAudience,
+            storedToken.userId,
+          );
+          const { selector, plainRefreshToken, expiresAt } =
+            generateRefreshToken();
+          const refreshTokenEntity = createRefreshToken({
+            userId: storedToken.userId,
+            selector,
+            token: await hashWithSHA256(plainRefreshToken),
+            expiresAt,
+          });
+
+          recordAuthDiagnostic(observer, { stage: "token_persist" });
+          await tracer.span("db.createRefreshToken", () =>
+            tx.createRefreshToken(refreshTokenEntity),
+          );
+
+          return {
+            accessToken,
+            refreshToken: `${selector}.${plainRefreshToken}`,
+            userId: storedToken.userId,
+            user,
+          };
+        },
+      );
+      // Only a resolved transaction confirms that the replacement token committed.
+      recordAuthDiagnostic(observer, { rotationCommitted: true });
+      return result;
+    } catch (error) {
+      if (!(error instanceof AuthError)) {
+        recordAuthDiagnostic(observer, { reason: "rotation_failed" });
+      }
+      throw error;
+    }
   };
 }
 

@@ -8,6 +8,9 @@
  * widget silently crashes at runtime with no compile-time error.
  *
  * This script:
+ *   0. Checks each native schema version is in the explicitly declared
+ *      compatible range [MINIMUM_WIDGET_SCHEMA_VERSION, SCHEMA_VERSION],
+ *      and that compatibility has been reviewed for the current DB version.
  *   1. Extracts SQL string literals from Swift / Kotlin widget source files.
  *   2. Parses table names and column names referenced in those SQL literals.
  *   3. Verifies each referenced table/column exists in the migrationSql*.ts
@@ -59,39 +62,66 @@ const MIGRATION_FILES = [
 const SCHEMA_VERSION_SOURCES = [
   {
     path: "apps/mobile/src/db/migrations.ts",
-    pattern: /export\s+const\s+SCHEMA_VERSION\s*=\s*(\d+)/,
+    pattern: /^export\s+const\s+SCHEMA_VERSION\s*=\s*(\d+)\s*;\s*$/m,
+    minimumPattern: /^export\s+const\s+MINIMUM_WIDGET_SCHEMA_VERSION\s*=\s*(\d+)\s*;\s*$/m,
+    reviewedPattern: /^export\s+const\s+WIDGET_SCHEMA_COMPATIBILITY_REVIEWED_VERSION\s*=\s*(\d+)\s*;\s*$/m,
     platform: "React Native",
   },
   {
     path: "apps/mobile/targets/widget/WidgetDbHelper.swift",
-    pattern: /static\s+let\s+supportedSchemaVersion\s*=\s*(\d+)/,
+    pattern: /^\s*static\s+let\s+supportedSchemaVersion\s*=\s*(\d+)\s*$/m,
     platform: "iOS Widget",
   },
   {
     path: "apps/mobile/modules/timer-widget/android/src/main\/java\/com\/actiko\/widget\/WidgetDbHelper.kt",
-    pattern: /const\s+val\s+SUPPORTED_SCHEMA_VERSION\s*=\s*(\d+)/,
+    pattern: /^\s*const\s+val\s+SUPPORTED_SCHEMA_VERSION\s*=\s*(\d+)\s*$/m,
     platform: "Android Widget",
   },
 ];
 
 function readSchemaVersions() {
-  return SCHEMA_VERSION_SOURCES.map(({ path, pattern, platform }) => {
+  return SCHEMA_VERSION_SOURCES.map(({ path, pattern, minimumPattern, reviewedPattern, platform }) => {
     const content = readFileSync(join(ROOT, path), "utf8");
     const match = pattern.exec(content);
     if (!match) {
       throw new Error(`${platform} schema version constant not found in ${path}`);
     }
-    return { platform, path, version: Number(match[1]) };
+    const minimumMatch = minimumPattern?.exec(content);
+    if (minimumPattern && !minimumMatch) {
+      throw new Error(`MINIMUM_WIDGET_SCHEMA_VERSION constant not found in ${path}`);
+    }
+    const reviewedMatch = reviewedPattern?.exec(content);
+    if (reviewedPattern && !reviewedMatch) {
+      throw new Error(`WIDGET_SCHEMA_COMPATIBILITY_REVIEWED_VERSION constant not found in ${path}`);
+    }
+    return {
+      platform,
+      path,
+      version: Number(match[1]),
+      minimumVersion: minimumMatch ? Number(minimumMatch[1]) : undefined,
+      reviewedVersion: reviewedMatch ? Number(reviewedMatch[1]) : undefined,
+    };
   });
 }
 
 function validateSchemaVersions(versions) {
-  const expected = versions[0]?.version;
-  return versions
-    .filter(({ version }) => version !== expected)
+  const current = versions[0]?.version;
+  const minimum = versions[0]?.minimumVersion;
+  const reviewed = versions[0]?.reviewedVersion;
+  if (
+    !Number.isSafeInteger(current) || current < 1 ||
+    !Number.isSafeInteger(minimum) || minimum < 1 || minimum > current
+  ) {
+    return [`  Invalid widget schema compatibility range: minimum=${minimum}, current=${current}`];
+  }
+  if (!Number.isSafeInteger(reviewed) || reviewed < 1 || reviewed !== current) {
+    return [`  Widget schema compatibility review required: reviewed=${reviewed}, current=${current}`];
+  }
+  return versions.slice(1)
+    .filter(({ version }) => !Number.isSafeInteger(version) || version < minimum || version > current)
     .map(
       ({ platform, path, version }) =>
-        `  ${platform} (${path}) declares ${version}; expected ${expected}`,
+        `  ${platform} (${path}) declares ${version}; supported range is ${minimum}..${current}`,
     );
 }
 
@@ -496,7 +526,7 @@ function runSelfTest(schema) {
   }
 
   const versionErrors = validateSchemaVersions([
-    { platform: "React Native", path: "fake/migrations.ts", version: 12 },
+    { platform: "React Native", path: "fake/migrations.ts", version: 13, minimumVersion: 12, reviewedVersion: 13 },
     { platform: "iOS Widget", path: "fake/Widget.swift", version: 11 },
     { platform: "Android Widget", path: "fake/Widget.kt", version: 12 },
   ]);
@@ -541,7 +571,7 @@ try {
 }
 const schemaVersionErrors = validateSchemaVersions(schemaVersions);
 if (schemaVersionErrors.length > 0) {
-  console.error("Widget schema version mismatch detected:\n");
+  console.error("Widget schema compatibility mismatch detected:\n");
   for (const error of schemaVersionErrors) console.error(error);
   process.exit(1);
 }
@@ -584,5 +614,5 @@ if (allErrors.length > 0) {
 }
 
 console.log(
-  `check-widget-schema: OK — schema v${schemaVersions[0].version} and all widget SQL references are aligned`,
+  `check-widget-schema: OK — schema v${schemaVersions[0].version}, compatible widget versions ${schemaVersions[0].minimumVersion}..${schemaVersions[0].version}, and all widget SQL references are aligned`,
 );

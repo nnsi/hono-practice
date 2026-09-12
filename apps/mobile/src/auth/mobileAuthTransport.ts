@@ -4,13 +4,16 @@ import type {
   RefreshResult,
 } from "@packages/auth-client";
 import {
+  emitAuthDiagnostic,
   newAuthOperationCoordinator,
   requestRefreshSession,
 } from "@packages/auth-client";
 import { i18next } from "@packages/i18n";
 import { trackServerTimeFromResponse } from "@packages/sync-engine";
+import type { AuthDiagnosticObserver } from "@packages/types/authDiagnostics";
 import type { Consents } from "@packages/types/request";
 import { authResponseSchema } from "@packages/types/response";
+import { Platform } from "react-native";
 
 import { fetchWithTimeout } from "./fetchWithTimeout";
 import {
@@ -27,6 +30,8 @@ export {
 
 type TransportOptions = {
   apiUrl: string;
+  onDiagnostic?: AuthDiagnosticObserver;
+  diagnosticHeaders?: Record<string, string>;
 };
 
 type TokenHolder = {
@@ -44,32 +49,103 @@ export function createMobileAuthTransport(
   tokenHolder: TokenHolder,
 ): AuthTransport {
   const apiUrl = options.apiUrl.replace(/\/+$/, "");
+  const onDiagnostic = options.onDiagnostic;
+  const storageSource =
+    Platform.OS === "web" ? "local_storage" : "secure_store";
   const coordinator = newAuthOperationCoordinator<RefreshResult>(() =>
     runRefreshSession(),
   );
   // 認証操作の直列化は coordinator に任せ、保存できなかった最新 token だけ保持する。
   let pendingRefreshToken: string | null | undefined;
 
-  const readRefreshToken = async (): Promise<string | null> =>
-    pendingRefreshToken !== undefined
-      ? pendingRefreshToken
-      : getStoredRefreshToken();
+  const readRefreshToken = async (): Promise<string | null> => {
+    if (pendingRefreshToken !== undefined) {
+      emitAuthDiagnostic(onDiagnostic, {
+        event: "storage_read",
+        reason: pendingRefreshToken ? "ok" : "missing_refresh_token",
+        source: "storage",
+        tokenSource: "memory",
+      });
+      return pendingRefreshToken;
+    }
+    try {
+      const token = await getStoredRefreshToken();
+      emitAuthDiagnostic(onDiagnostic, {
+        event: "storage_read",
+        reason: token ? "ok" : "missing_refresh_token",
+        source: "storage",
+        tokenSource: storageSource,
+      });
+      return token;
+    } catch (error) {
+      emitAuthDiagnostic(onDiagnostic, {
+        event: "storage_read",
+        reason: "storage_read_failed",
+        source: "storage",
+        tokenSource: storageSource,
+      });
+      throw error;
+    }
+  };
 
   const persistRefreshToken = async (token: string): Promise<void> => {
     pendingRefreshToken = token;
+    let attempt: 1 | 2 = 1;
     try {
       await setStoredRefreshToken(token);
     } catch {
+      emitAuthDiagnostic(onDiagnostic, {
+        event: "storage_write",
+        reason: "storage_write_retry",
+        source: "storage",
+        tokenSource: storageSource,
+        attempt,
+      });
       // サーバーで再 rotation せず、受信済みの同じ token の保存だけを再試行する。
-      await setStoredRefreshToken(token);
+      attempt = 2;
+      try {
+        await setStoredRefreshToken(token);
+      } catch (error) {
+        emitAuthDiagnostic(onDiagnostic, {
+          event: "storage_write",
+          reason: "storage_write_failed",
+          source: "storage",
+          tokenSource: storageSource,
+          attempt,
+        });
+        throw error;
+      }
     }
     pendingRefreshToken = undefined;
+    emitAuthDiagnostic(onDiagnostic, {
+      event: "storage_write",
+      reason: "ok",
+      source: "storage",
+      tokenSource: storageSource,
+      attempt,
+    });
   };
 
   const clearRefreshToken = async (): Promise<void> => {
     pendingRefreshToken = null;
-    await clearStoredRefreshToken();
+    try {
+      await clearStoredRefreshToken();
+    } catch (error) {
+      emitAuthDiagnostic(onDiagnostic, {
+        event: "storage_clear",
+        reason: "storage_clear_failed",
+        source: "storage",
+        tokenSource: storageSource,
+      });
+      throw error;
+    }
     pendingRefreshToken = undefined;
+    emitAuthDiagnostic(onDiagnostic, {
+      event: "storage_clear",
+      reason: "ok",
+      source: "storage",
+      tokenSource: storageSource,
+    });
   };
 
   const persistSession = async (res: Response): Promise<AuthSession> => {
@@ -107,20 +183,37 @@ export function createMobileAuthTransport(
   const runRefreshSession = async (): Promise<RefreshResult> => {
     try {
       const rt = await readRefreshToken();
-      if (!rt) return { kind: "expired" };
-      const result = await requestRefreshSession((signal) =>
-        fetch(`${apiUrl}/auth/token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${rt}`,
-          },
-          signal,
-        }),
+      if (!rt) {
+        emitAuthDiagnostic(onDiagnostic, {
+          event: "refresh_result",
+          reason: "missing_refresh_token",
+          source: "refresh",
+          tokenSource: "none",
+        });
+        return { kind: "expired" };
+      }
+      const result = await requestRefreshSession(
+        (signal) =>
+          fetch(`${apiUrl}/auth/token`, {
+            method: "POST",
+            headers: {
+              ...options.diagnosticHeaders,
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${rt}`,
+            },
+            signal,
+          }),
+        onDiagnostic,
       );
       if (result.kind === "ok") {
-        if (!result.session.refreshToken)
+        if (!result.session.refreshToken) {
+          emitAuthDiagnostic(onDiagnostic, {
+            event: "refresh_result",
+            reason: "missing_rotated_token",
+            source: "refresh",
+          });
           return { kind: "transient", reason: "missing refresh token" };
+        }
         await persistRefreshToken(result.session.refreshToken);
       } else if (result.kind === "expired") {
         await clearRefreshToken();

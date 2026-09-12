@@ -7,6 +7,10 @@ import {
 } from "@packages/types/response";
 
 import { AppError } from "../../error";
+import {
+  type AuthDiagnosticObserver,
+  recordAuthDiagnostic,
+} from "../../lib/authDiagnostics";
 import type { UserWithProviders } from "../user/userUsecase";
 import type { AuthOutput, AuthUsecase, OAuthConsents } from "./authUsecase";
 
@@ -86,11 +90,25 @@ function rotateRefreshToken(
   uc: AuthUsecase,
   getUserById: GetUserById,
   enrichUser: EnrichUser,
+  observer?: AuthDiagnosticObserver,
 ) {
   return async (combinedToken: string): Promise<AuthSession> => {
     const result = await uc.rotateRefreshToken(combinedToken);
-    const user = await resolveUser(result, getUserById, enrichUser);
-    return buildSession(result, user);
+    recordAuthDiagnostic(observer, { stage: "enrich_user" });
+    let user: UserWithProviders;
+    try {
+      user = await resolveUser(result, getUserById, enrichUser);
+    } catch (error) {
+      recordAuthDiagnostic(observer, { reason: "enrichment_failed" });
+      throw error;
+    }
+    recordAuthDiagnostic(observer, { stage: "response" });
+    try {
+      return buildSession(result, user);
+    } catch (error) {
+      recordAuthDiagnostic(observer, { reason: "response_invalid" });
+      throw error;
+    }
   };
 }
 
@@ -130,10 +148,16 @@ export function newAuthHandler(
   uc: AuthUsecase,
   getUserById: GetUserById,
   enrichUser: EnrichUser,
+  observer?: AuthDiagnosticObserver,
 ): AuthHandler {
   return {
     login: login(uc, getUserById, enrichUser),
-    rotateRefreshToken: rotateRefreshToken(uc, getUserById, enrichUser),
+    rotateRefreshToken: rotateRefreshToken(
+      uc,
+      getUserById,
+      enrichUser,
+      observer,
+    ),
     logout: async (userId, refreshToken) => {
       await uc.logout(userId, refreshToken);
       return { message: "success" };
