@@ -21,7 +21,6 @@
 
 ## 課金を伴う操作
 
-- EAS Build / Submit、有料 API、クラウド deploy、従量課金 SaaS などは、直前に操作内容と課金の可能性を示して明示承認を得る。実装・検証・配布の依頼だけを課金承認とは扱わない。課金不明も確認対象。
 - EAS Build 前は `eas account:usage <account-name> --json` で current cycle を確認し、結果を承認依頼に含める。`builds.plan.percentUsed >= 100` は追加課金状態、取得失敗・不明は追加課金リスクありと扱う。100% 未満でも集計遅延による課金リスクを説明する。
 - credit 超過・従量課金移行の警告を検出したら停止し、承認なしに続行・再投入しない。
 

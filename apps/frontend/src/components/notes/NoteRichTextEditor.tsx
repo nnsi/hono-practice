@@ -9,6 +9,8 @@ import {
 } from "@packages/frontend-shared/utils/noteRichText";
 import { useTranslation } from "@packages/i18n";
 
+import editorScriptUrl from "./noteEditorRuntime.js?url&no-inline";
+
 type NoteRichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
@@ -40,6 +42,7 @@ export function NoteRichTextEditor({
     () =>
       createNoteRichTextEditorDocument({
         placeholder,
+        scriptUrl: editorScriptUrl,
         labels: {
           bold: boldLabel,
           italic: italicLabel,
