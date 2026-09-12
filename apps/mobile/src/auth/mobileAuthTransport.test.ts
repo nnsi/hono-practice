@@ -6,6 +6,9 @@ vi.mock("@packages/i18n", () => ({
 vi.mock("@packages/sync-engine", () => ({
   trackServerTimeFromResponse: vi.fn(),
 }));
+vi.mock("expo-crypto", () => ({
+  randomUUID: () => globalThis.crypto.randomUUID(),
+}));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
@@ -23,18 +26,18 @@ import {
   emptyResponse,
   jsonResponse,
   makeTransport,
+  mockRefreshTokenStorage,
   validSessionBody,
 } from "./_mobileAuthTransportTestHelpers";
 
 const mockGetItem = SecureStore.getItemAsync as ReturnType<typeof vi.fn>;
 const mockSetItem = SecureStore.setItemAsync as ReturnType<typeof vi.fn>;
 const mockDeleteItem = SecureStore.deleteItemAsync as ReturnType<typeof vi.fn>;
+let store: ReturnType<typeof mockRefreshTokenStorage>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetItem.mockResolvedValue(null);
-  mockSetItem.mockResolvedValue(undefined);
-  mockDeleteItem.mockResolvedValue(undefined);
+  store = mockRefreshTokenStorage();
 });
 
 afterEach(() => {
@@ -54,7 +57,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("200 -> { kind: 'ok' } + 新 refreshToken を SecureStore に保存", async () => {
-    mockGetItem.mockResolvedValue("old-refresh");
+    store.data.set(REFRESH_TOKEN_KEY, "old-refresh");
     vi.stubGlobal(
       "fetch",
       vi
@@ -76,7 +79,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("401 -> { kind: 'expired' } + SecureStore をクリア", async () => {
-    mockGetItem.mockResolvedValue("expired-refresh");
+    store.data.set(REFRESH_TOKEN_KEY, "expired-refresh");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(401)));
 
     const result = await makeTransport().refreshSession();
@@ -86,7 +89,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("403 -> { kind: 'expired' } + SecureStore をクリア", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(403)));
 
     const result = await makeTransport().refreshSession();
@@ -96,7 +99,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("500 -> { kind: 'transient' } (refresh token は保持する)", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
 
     const result = await makeTransport().refreshSession();
@@ -106,7 +109,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("429 -> { kind: 'transient' } + refresh token を保持する", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     const fetchMock = vi.fn().mockResolvedValue(emptyResponse(429));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -118,7 +121,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("network error -> { kind: 'transient' }", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network")));
 
     const result = await makeTransport().refreshSession();
@@ -127,7 +130,7 @@ describe("mobileAuthTransport.refreshSession", () => {
   });
 
   it("Bearer ヘッダで refresh token を送る", async () => {
-    mockGetItem.mockResolvedValue("rt-value");
+    store.data.set(REFRESH_TOKEN_KEY, "rt-value");
     const fetchMock = vi
       .fn()
       .mockResolvedValue(

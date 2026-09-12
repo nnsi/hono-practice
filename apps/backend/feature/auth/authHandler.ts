@@ -21,11 +21,17 @@ type OAuthCredential = { credential: string; consents?: OAuthConsents };
 
 // AuthResponse.refreshToken は schema 上 optional (Web は cookie で受け取る) だが、
 // backend では rotation で常に新規 token を発行するため必須として扱う
-type AuthSession = AuthResponse & { refreshToken: string };
+type AuthSession = AuthResponse & {
+  refreshToken: string;
+  refreshTokenExpiresAt?: Date;
+};
 
 export type AuthHandler = {
   login(params: LoginRequest): Promise<AuthSession>;
-  rotateRefreshToken(combinedToken: string): Promise<AuthSession>;
+  rotateRefreshToken(
+    combinedToken: string,
+    operationId?: string,
+  ): Promise<AuthSession>;
   logout(userId: UserId, refreshToken: string): Promise<{ message: string }>;
   googleLogin(
     params: OAuthCredential,
@@ -44,7 +50,11 @@ export type AuthHandler = {
 };
 
 function buildSession(
-  result: { accessToken: string; refreshToken: string },
+  result: {
+    accessToken: string;
+    refreshToken: string;
+    refreshTokenExpiresAt?: Date;
+  },
   user: UserWithProviders,
 ): AuthSession {
   const parsed = authResponseSchema.safeParse({
@@ -55,7 +65,11 @@ function buildSession(
   if (!parsed.success) {
     throw new AppError("failed to parse auth response", 500);
   }
-  return { ...parsed.data, refreshToken: result.refreshToken };
+  return {
+    ...parsed.data,
+    refreshToken: result.refreshToken,
+    refreshTokenExpiresAt: result.refreshTokenExpiresAt,
+  };
 }
 
 // usecase が user を返している場合は enrichUser で 3 並列クエリのみ、
@@ -92,22 +106,25 @@ function rotateRefreshToken(
   enrichUser: EnrichUser,
   observer?: AuthDiagnosticObserver,
 ) {
-  return async (combinedToken: string): Promise<AuthSession> => {
-    const result = await uc.rotateRefreshToken(combinedToken);
+  return async (
+    combinedToken: string,
+    operationId?: string,
+  ): Promise<AuthSession> => {
+    const result = await uc.rotateRefreshToken(combinedToken, operationId);
     recordAuthDiagnostic(observer, { stage: "enrich_user" });
     let user: UserWithProviders;
     try {
       user = await resolveUser(result, getUserById, enrichUser);
-    } catch (error) {
+    } catch {
       recordAuthDiagnostic(observer, { reason: "enrichment_failed" });
-      throw error;
+      throw new AppError("refresh temporarily unavailable", 503);
     }
     recordAuthDiagnostic(observer, { stage: "response" });
     try {
       return buildSession(result, user);
-    } catch (error) {
+    } catch {
       recordAuthDiagnostic(observer, { reason: "response_invalid" });
-      throw error;
+      throw new AppError("refresh temporarily unavailable", 503);
     }
   };
 }

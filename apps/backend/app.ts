@@ -2,6 +2,7 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
 import { zValidator } from "@hono/zod-validator";
+import { REFRESH_OPERATION_HEADER } from "@packages/types/authRefresh";
 import { BatchRequestSchema } from "@packages/types/request";
 
 import { createApiV1Route } from "./api/v1";
@@ -89,6 +90,7 @@ app.use("*", async (c, next) => {
       "Content-Type",
       "X-Auth-Diagnostic-Id",
       "X-Client-Platform",
+      REFRESH_OPERATION_HEADER,
     ],
     exposeHeaders: ["X-Request-ID"],
   });

@@ -6,6 +6,9 @@ vi.mock("@packages/i18n", () => ({
 vi.mock("@packages/sync-engine", () => ({
   trackServerTimeFromResponse: vi.fn(),
 }));
+vi.mock("expo-crypto", () => ({
+  randomUUID: () => globalThis.crypto.randomUUID(),
+}));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
@@ -24,18 +27,17 @@ import {
   emptyResponse,
   jsonResponse,
   makeTransport,
+  mockRefreshTokenStorage,
   validSessionBody,
 } from "./_mobileAuthTransportTestHelpers";
 
-const mockGetItem = SecureStore.getItemAsync as ReturnType<typeof vi.fn>;
 const mockSetItem = SecureStore.setItemAsync as ReturnType<typeof vi.fn>;
 const mockDeleteItem = SecureStore.deleteItemAsync as ReturnType<typeof vi.fn>;
+let store: ReturnType<typeof mockRefreshTokenStorage>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetItem.mockResolvedValue(null);
-  mockSetItem.mockResolvedValue(undefined);
-  mockDeleteItem.mockResolvedValue(undefined);
+  store = mockRefreshTokenStorage();
 });
 
 afterEach(() => {
@@ -44,7 +46,7 @@ afterEach(() => {
 
 describe("mobileAuthTransport.logout", () => {
   it("200 -> { ok: true } + SecureStore をクリア + Bearer / X-Refresh-Token を送信", async () => {
-    mockGetItem.mockResolvedValue("rt-logout");
+    store.data.set(REFRESH_TOKEN_KEY, "rt-logout");
     const fetchMock = vi.fn().mockResolvedValue(emptyResponse(200));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -64,7 +66,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("500 -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(emptyResponse(500)));
 
     const result = await makeTransport().logout();
@@ -75,7 +77,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("network error -> { ok: false } のとき SecureStore は保持される (再試行のため)", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network")));
 
     const result = await makeTransport().logout();
@@ -85,14 +87,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("進行中の通常 refresh を待ってから logout し、遅延応答で credential を復活させない", async () => {
-    let storedRefreshToken: string | null = "rt-old";
-    mockGetItem.mockImplementation(async () => storedRefreshToken);
-    mockSetItem.mockImplementation(async (_key: string, value: string) => {
-      storedRefreshToken = value;
-    });
-    mockDeleteItem.mockImplementation(async () => {
-      storedRefreshToken = null;
-    });
+    store = mockRefreshTokenStorage("rt-old");
 
     let resolveRefresh!: (response: Response) => void;
     const refreshResponse = new Promise<Response>((resolve) => {
@@ -133,19 +128,12 @@ describe("mobileAuthTransport.logout", () => {
     const [, logoutResult] = await Promise.all([apiRefresh, controllerLogout]);
 
     expect(logoutResult).toEqual({ ok: true });
-    expect(storedRefreshToken).toBeNull();
+    expect(store.token).toBeNull();
     expect(tokenHolder.getToken()).toBeNull();
   });
 
   it("進行中 login の永続化後に logout し、遅延 login credential を残さない", async () => {
-    let storedRefreshToken: string | null = "rt-old";
-    mockGetItem.mockImplementation(async () => storedRefreshToken);
-    mockSetItem.mockImplementation(async (_key: string, value: string) => {
-      storedRefreshToken = value;
-    });
-    mockDeleteItem.mockImplementation(async () => {
-      storedRefreshToken = null;
-    });
+    store = mockRefreshTokenStorage("rt-old");
     let resolveLogin!: (response: Response) => void;
     const loginResponse = new Promise<Response>((resolve) => {
       resolveLogin = resolve;
@@ -181,7 +169,7 @@ describe("mobileAuthTransport.logout", () => {
     );
     await Promise.all([login, logout]);
 
-    expect(storedRefreshToken).toBeNull();
+    expect(store.token).toBeNull();
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       `${apiUrl}/auth/login`,
       `${apiUrl}/auth/logout`,
@@ -191,11 +179,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("logout 成功を待つ新規 refresh は token endpoint を呼ばず expired になる", async () => {
-    let storedRefreshToken: string | null = "rt";
-    mockGetItem.mockImplementation(async () => storedRefreshToken);
-    mockDeleteItem.mockImplementation(async () => {
-      storedRefreshToken = null;
-    });
+    store = mockRefreshTokenStorage("rt");
     let resolveLogout!: (response: Response) => void;
     const logoutResponse = new Promise<Response>((resolve) => {
       resolveLogout = resolve;
@@ -219,7 +203,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("logout 失敗を待つ新規 refresh は保持した token で回復を再開する", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     let resolveLogout!: (response: Response) => void;
     const logoutResponse = new Promise<Response>((resolve) => {
       resolveLogout = resolve;
@@ -245,10 +229,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("401 -> refreshSession で refresh token を rotate → 新 X-Refresh-Token で retry して成功", async () => {
-    mockGetItem
-      .mockResolvedValueOnce("rt-old") // postLogout #1
-      .mockResolvedValueOnce("rt-old") // refreshSession (getStoredRefreshToken)
-      .mockResolvedValueOnce("rt-new"); // postLogout #2 (retry)
+    store.data.set(REFRESH_TOKEN_KEY, "rt-old");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout (initial)
@@ -284,7 +265,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("401 -> refresh も expired -> backend に session 無いので { ok: true } 扱い (state stuck 回避)", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout
@@ -301,7 +282,7 @@ describe("mobileAuthTransport.logout", () => {
   });
 
   it("401 -> refresh の再送も transient (5xx) -> logout は再送せず { ok: false }", async () => {
-    mockGetItem.mockResolvedValue("rt");
+    store.data.set(REFRESH_TOKEN_KEY, "rt");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(emptyResponse(401)) // /auth/logout

@@ -18,6 +18,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -187,7 +188,7 @@ describe("webAuthTransport", () => {
       expect(tokenHolder.getToken()).toBeNull();
     });
 
-    it("clearPersistedSession は no-op (Web は httpOnly cookie のため JS から削除不能)", async () => {
+    it("clearPersistedSession は access token を変更しない", async () => {
       const tokenHolder = createTokenHolder();
       tokenHolder.setToken("kept-jwt");
       const transport = makeTransport({ tokenHolder });

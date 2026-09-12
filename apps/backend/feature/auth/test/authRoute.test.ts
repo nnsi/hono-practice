@@ -886,7 +886,7 @@ describe("AuthRoute Integration Tests", () => {
         expect(thirdRes.status).toBe(401);
       });
 
-      it("異常系：rotation 済みトークンによる logout は拒否される", async () => {
+      it("正常系：rotation 済みの親による logout は派生 token も失効させる", async () => {
         const client = createTestClient(false);
 
         // まず1回 rotation して旧トークンに rotatedAt を立てる
@@ -896,7 +896,10 @@ describe("AuthRoute Integration Tests", () => {
         );
         expect(rotateRes.status).toBe(200);
 
-        // 旧 token で logout を呼んでも引けないので 401
+        const rotatedBody = (await rotateRes.json()) as {
+          refreshToken: string;
+        };
+        // 応答を失ったクライアントが親しか持っていなくても、子を含めて失効する
         const authedClient = createTestClient(true);
         const logoutRes = await authedClient.logout.$post(
           {},
@@ -907,10 +910,15 @@ describe("AuthRoute Integration Tests", () => {
             },
           },
         );
-        expect(logoutRes.status).toBe(401);
+        expect(logoutRes.status).toBe(200);
         expect(await logoutRes.json()).toEqual({
-          message: "invalid refresh token",
+          message: "success",
         });
+        expect(
+          await refreshTokenRepo.getRefreshTokenByToken(
+            rotatedBody.refreshToken,
+          ),
+        ).toBeNull();
       });
 
       it("異常系：grace 窓を過ぎたリフレッシュトークンの再利用は拒否される", async () => {

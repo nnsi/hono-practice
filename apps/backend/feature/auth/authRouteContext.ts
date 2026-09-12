@@ -27,10 +27,11 @@ function refreshCookieOptions(env: AppContext["Bindings"]) {
 export function setRefreshCookie<E extends AppContext>(
   c: Context<E>,
   refreshToken: string,
+  expiresAt?: Date,
 ) {
   setCookie(c, REFRESH_COOKIE_NAME, refreshToken, {
     ...refreshCookieOptions(c.env),
-    expires: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
+    expires: expiresAt ?? new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
   });
 }
 

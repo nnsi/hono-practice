@@ -39,6 +39,10 @@ const createMockRefreshToken = (
     options.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   revokedAt: options.revokedAt ?? null,
   rotatedAt: options.rotatedAt ?? null,
+  familyId: options.familyId ?? null,
+  rotationOperationHash: options.rotationOperationHash ?? null,
+  rotationChildId: options.rotationChildId ?? null,
+  rotationRecoveryExpiresAt: options.rotationRecoveryExpiresAt ?? null,
   createdAt: options.createdAt ?? new Date(),
   updatedAt: options.updatedAt ?? new Date(),
   deletedAt: options.deletedAt ?? null,
@@ -314,49 +318,55 @@ describe("AuthUsecase", () => {
     const storedToken = createMockRefreshToken(userId, "hashedToken");
 
     it("正常系：ログアウト成功", async () => {
-      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
-        storedToken,
-      );
+      when(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).thenResolve(storedToken);
       when(refreshTokenRepo.revokeRefreshToken(storedToken)).thenResolve();
 
       await expect(usecase.logout(userId, refreshToken)).resolves.not.toThrow();
 
-      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).once();
       verify(refreshTokenRepo.revokeRefreshToken(storedToken)).once();
     });
 
     it("異常系：存在しないリフレッシュトークン", async () => {
-      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
-        null,
-      );
+      when(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).thenResolve(null);
 
       await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
         "invalid refresh token",
       );
 
-      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).once();
       verify(refreshTokenRepo.revokeRefreshToken(anything())).never();
     });
 
     it("異常系：他のユーザーのリフレッシュトークン", async () => {
       const otherUserId = createUserId();
       const otherUserToken = createMockRefreshToken(otherUserId, "hashedToken");
-      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
-        otherUserToken,
-      );
+      when(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).thenResolve(otherUserToken);
 
       await expect(usecase.logout(userId, refreshToken)).rejects.toThrow(
         "unauthorized - token does not belong to user",
       );
 
-      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).once();
       verify(refreshTokenRepo.revokeRefreshToken(anything())).never();
     });
 
     it("異常系：データベースエラー", async () => {
-      when(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).thenResolve(
-        storedToken,
-      );
+      when(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).thenResolve(storedToken);
       when(refreshTokenRepo.revokeRefreshToken(storedToken)).thenReject(
         new Error("Database error"),
       );
@@ -365,7 +375,9 @@ describe("AuthUsecase", () => {
         "Database error",
       );
 
-      verify(refreshTokenRepo.getRefreshTokenByToken(refreshToken)).once();
+      verify(
+        refreshTokenRepo.getRefreshTokenByToken(refreshToken, true),
+      ).once();
       verify(refreshTokenRepo.revokeRefreshToken(storedToken)).once();
     });
   });

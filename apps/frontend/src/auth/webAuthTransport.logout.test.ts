@@ -18,6 +18,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
 });
 
 afterEach(() => {

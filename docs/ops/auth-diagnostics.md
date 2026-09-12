@@ -1,7 +1,7 @@
 # 再ログインの診断
 
-Web / iOS / Android の認証判断を変えず、更新失敗からログイン状態の消去までを記録する。
-新しいネイティブ依存・DB migration はない。モバイルは対応する runtime へ OTA 配信できる。
+Web / iOS / Android の更新失敗からログイン状態の消去までを記録する。
+診断自体にネイティブ依存はない。中断した更新の復旧方式と DB 変更は [更新復旧の計画](../plan/20260912-auth-refresh-recovery.md) を参照。
 
 ## 記録する情報
 
@@ -12,6 +12,7 @@ Web / iOS / Android の認証判断を変えず、更新失敗からログイン
 - appVersion / runtimeVersion / OTA updateId はイベント発生時の値を保存する。
 
 token 本文・selector・hash・JWT payload・password・ユーザー ID・任意の例外メッセージは認証診断に含めない。
+`X-Refresh-Operation` は中断した更新の復旧を認可する秘密値。公開の診断 flowId と区別し、ヘッダー値もその hash もログへ追加しない。
 クライアント側の報告は信頼済みの認証証跡ではなく、サーバー側の requestId と照合するための補助情報。
 
 ## 送信と保持

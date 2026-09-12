@@ -3,13 +3,13 @@ import {
   type AuthDiagnosticObserver,
   recordAuthDiagnostic,
 } from "@backend/lib/authDiagnostics";
-import { hashWithSHA256 } from "@backend/lib/hash";
 import type { Logger } from "@backend/lib/logger";
 import { refreshTokens } from "@infra/drizzle/schema";
 import type { RefreshToken } from "@packages/domain/auth/refreshTokenSchema";
 import { and, eq, isNull } from "drizzle-orm";
 
-import { parseCombinedToken, parseRefreshTokenOrThrow } from "./refreshTokenIO";
+import { parseRefreshTokenOrThrow } from "./refreshTokenIO";
+import { findRefreshTokenForUpdate } from "./refreshTokenLock";
 
 // rotation の grace 窓。レスポンス取りこぼし・タブ間 race などで同じ refresh token が
 // 再提示された場合に「1 旧 token → 1 救済」のみ許す。consumeGraceIfFresh で
@@ -30,28 +30,21 @@ export function newRevokeAndGetRefreshToken(
         | "deleted"
         | "hash_mismatch"
         | "expired"
+        | "operation_mismatch"
+        | "user_not_found"
         | "race_lost",
     ) => {
       recordAuthDiagnostic(observer, { stage: "rotation", reason });
       return null;
     };
-    const parsed = parseCombinedToken(combinedToken);
-    if (!parsed) return reject("malformed");
-    const [selector, plainToken] = parsed;
-
-    // 検証は SELECT のみで行い、ハッシュ不一致時に正規トークンを壊さないようにする
-    const [row] = await db
-      .select()
-      .from(refreshTokens)
-      .where(eq(refreshTokens.selector, selector))
-      .limit(1);
-    if (!row) return reject("not_found");
+    const found = await findRefreshTokenForUpdate(db, combinedToken);
+    if (!found.row) return reject(found.reason);
+    const row = found.row;
     if (row.revokedAt) return reject("revoked");
     if (row.deletedAt) return reject("deleted");
-    if ((await hashWithSHA256(plainToken)) !== row.token)
-      return reject("hash_mismatch");
     const now = new Date();
     if (row.expiresAt <= now) return reject("expired");
+    if (row.rotationOperationHash) return reject("operation_mismatch");
 
     if (row.rotatedAt) return consumeGraceIfFresh(db, row, logger, observer);
 
@@ -82,6 +75,7 @@ export function newRevokeAndGetRefreshToken(
       .limit(1);
     if (!reread || reread.revokedAt || reread.deletedAt)
       return reject("race_lost");
+    if (reread.rotationOperationHash) return reject("operation_mismatch");
     if (!reread.rotatedAt) return reject("race_lost");
     return consumeGraceIfFresh(db, reread, logger, observer);
   };

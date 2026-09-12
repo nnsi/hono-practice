@@ -114,6 +114,14 @@ export const refreshTokens = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
     rotatedAt: timestamp("rotated_at", { withTimezone: true }),
+    // Nullable for an additive migration and older server versions. A null
+    // family is a root whose family identity is its own id.
+    familyId: uuid("family_id"),
+    rotationOperationHash: text("rotation_operation_hash"),
+    rotationChildId: uuid("rotation_child_id"),
+    rotationRecoveryExpiresAt: timestamp("rotation_recovery_expires_at", {
+      withTimezone: true,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -126,6 +134,10 @@ export const refreshTokens = pgTable(
   (t) => [
     index("refresh_token_user_id_idx").on(t.userId),
     index("refresh_token_selector_idx").on(t.selector),
+    index("refresh_token_family_id_idx").on(t.familyId),
+    uniqueIndex("refresh_token_rotation_operation_hash_idx").on(
+      t.rotationOperationHash,
+    ),
   ],
 );
 
