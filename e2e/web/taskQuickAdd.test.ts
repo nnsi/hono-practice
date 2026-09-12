@@ -18,7 +18,7 @@ describe("タスクの画面内追加", () => {
     const add = form.getByRole("button", { name: "追加", exact: true });
     await input.waitFor();
     expect(await add.isEnabled()).toBe(false);
-    const title = `画面内追加-${route}-${Date.now()}`;
+    const title = `追加-${Date.now().toString(36)}`;
     await input.fill(title);
     await add.click();
     await page.getByText(title, { exact: true }).waitFor();
