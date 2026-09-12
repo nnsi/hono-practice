@@ -10,6 +10,7 @@
   "daily.nextDay": "Next day",
   "log.unknownActivity": "Unknown",
   "log.editTitle": "Edit Activity Log",
+  "log.dateLabel": "Completion date",
   "log.kindLabel": "Kind",
   "log.quantityLabel": "Quantity",
   "log.memoLabel": "Memo",

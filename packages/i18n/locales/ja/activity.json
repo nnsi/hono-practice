@@ -10,6 +10,7 @@
   "daily.nextDay": "次の日",
   "log.unknownActivity": "不明",
   "log.editTitle": "アクティビティログを編集",
+  "log.dateLabel": "完了日",
   "log.kindLabel": "種類",
   "log.quantityLabel": "数量",
   "log.memoLabel": "メモ",

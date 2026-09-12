@@ -143,6 +143,7 @@ export const mobileTestIds = {
   },
   dailyEditLog: {
     dialog: "daily.editLog.dialog",
+    dateInput: "daily.editLog.dateInput",
     quantityInput: "daily.editLog.quantityInput",
     memoInput: "daily.editLog.memoInput",
     saveButton: "daily.editLog.save",

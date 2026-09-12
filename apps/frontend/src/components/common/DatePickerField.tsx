@@ -7,6 +7,7 @@ import { Calendar, X } from "lucide-react";
 import { CalendarPopover } from "./CalendarPopover";
 
 type DatePickerFieldProps = {
+  label?: string;
   value: string; // YYYY-MM-DD or ""
   onChange: (date: string) => void;
   placeholder?: string;
@@ -15,6 +16,7 @@ type DatePickerFieldProps = {
 };
 
 export function DatePickerField({
+  label,
   value,
   onChange,
   placeholder = "未設定",
@@ -50,6 +52,7 @@ export function DatePickerField({
       <button
         ref={triggerRef}
         type="button"
+        aria-label={label ? `${label}: ${displayText}` : undefined}
         disabled={disabled}
         onClick={handleToggle}
         className={`w-full px-3 py-2 border rounded-lg text-sm text-left flex items-center gap-2
