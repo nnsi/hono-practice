@@ -82,7 +82,28 @@ const noteEditorSchema = {
 const markdownToHtmlProcessor = unified()
   .use(remarkParse)
   .use(remarkGfm)
-  .use(remarkRehype)
+  .use(remarkRehype, {
+    handlers: {
+      // Mobile notes contain ordinary newlines. Render these like hard breaks
+      // in prose; code blocks and inline code use their own Markdown handlers.
+      text(_state, node: { value: string }) {
+        return node.value.split(/\r\n|\r|\n/).flatMap((value, index) => {
+          const text = { type: "text" as const, value };
+          return index === 0
+            ? [text]
+            : [
+                {
+                  type: "element" as const,
+                  tagName: "br",
+                  properties: {},
+                  children: [],
+                },
+                text,
+              ];
+        });
+      },
+    },
+  })
   .use(rehypeSanitize, noteEditorSchema)
   .use(rehypeStringify);
 

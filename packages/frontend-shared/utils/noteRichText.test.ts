@@ -11,6 +11,37 @@ import {
 } from "./noteRichText";
 
 describe("noteRichText", () => {
+  test("アプリの単一改行を Web 表示と保存後の再表示でも保持する", () => {
+    for (const newline of ["\n", "\r\n"]) {
+      const html = markdownToNoteEditorHtml(`1行目${newline}2行目`);
+      expect(html).toBe("<p>1行目<br>2行目</p>");
+      expect(
+        markdownToNoteEditorHtml(noteEditorHtmlToMarkdown(html)),
+      ).toContain("1行目<br>");
+      expect(markdownToNotePasteHtml(`1行目${newline}2行目`)).toBe(
+        "1行目<br>2行目",
+      );
+    }
+  });
+
+  test("段落・引用・リストの継続行を保ちコード内に br を挿入しない", () => {
+    expect(markdownToNoteEditorHtml("one\n\ntwo")).toBe(
+      "<p>one</p>\n<p>two</p>",
+    );
+    expect(markdownToNoteEditorHtml("> one\n> two")).toContain("one<br>two");
+    expect(markdownToNoteEditorHtml("- one\n  two\n- three")).toContain(
+      "<li>one<br>two</li>",
+    );
+    expect(markdownToNoteEditorHtml("**one\ntwo**")).toContain(
+      "<strong>one<br>two</strong>",
+    );
+    expect(markdownToNoteEditorHtml("```\none\ntwo\n```")).toBe(
+      "<pre><code>one\ntwo\n</code></pre>",
+    );
+    expect(markdownToNoteEditorHtml("`one\ntwo`")).toBe(
+      "<p><code>one two</code></p>",
+    );
+  });
   test("markdownをeditor htmlへ変換できる", () => {
     const html = markdownToNoteEditorHtml(
       "# Title\n\n**bold** and *italic* and `code`\n\n- one\n- two\n\n| A | B |\n| --- | --- |\n| one | two |",
