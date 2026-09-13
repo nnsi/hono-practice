@@ -5,6 +5,10 @@ import {
   parseNoteMarkdownBlocks,
   parseNoteMarkdownInline,
 } from "./noteMarkdownBlocks";
+import {
+  markdownToNoteEditorHtml,
+  noteEditorHtmlToMarkdown,
+} from "./noteRichText";
 
 describe("parseNoteMarkdownInline", () => {
   it("プレーンテキストは単一spanになる", () => {
@@ -87,5 +91,55 @@ describe("deriveNoteTitleFromContent", () => {
   it("60文字に切り詰める", () => {
     const long = "あ".repeat(100);
     expect(deriveNoteTitleFromContent(long)).toHaveLength(60);
+  });
+});
+
+describe("Web / Mobile Markdown interoperability", () => {
+  function text(markdown: string) {
+    return parseNoteMarkdownBlocks(markdown)
+      .map((block) => block.spans.map((span) => span.text).join(""))
+      .join("\n\n");
+  }
+
+  it.each([
+    "first\nsecond",
+    "first\\\nsecond",
+    "first  \nsecond",
+    "first\r\nsecond",
+  ])("ordinary and standard hard breaks render equally: %j", (markdown) =>
+    expect(text(markdown)).toBe("first\nsecond"));
+
+  it("decodes escaped punctuation without stripping literal backslashes or code", () => {
+    expect(
+      text("literal \\\\ and \\*stars\\*\n`C:\\temp\\`\n\n```\na\\\nb\n```"),
+    ).toBe("literal \\ and *stars*\nC:\\temp\\\n\na\\\nb");
+  });
+
+  it("handles nested emphasis, multiline list items and blockquotes", () => {
+    expect(text("- **first**\\\n  second\n\n> quoted\\\n> line")).toBe(
+      "first\nsecond\n\nquoted\nline",
+    );
+    expect(parseNoteMarkdownInline("***nested***")).toEqual([
+      { text: "nested", bold: true, italic: true },
+    ]);
+  });
+
+  it("keeps rendered content stable across repeated Web saves and Mobile edits", () => {
+    let markdown =
+      "first\nsecond\n\nliteral \\\\ and \\*stars\\*\n\n```\na\\\nb\n```";
+    const original = text(markdown);
+    for (let index = 0; index < 3; index++) {
+      markdown = noteEditorHtmlToMarkdown(markdownToNoteEditorHtml(markdown));
+      expect(text(markdown)).toBe(original);
+    }
+    markdown += "\n\nMobile edit\nnext line";
+    expect(
+      text(noteEditorHtmlToMarkdown(markdownToNoteEditorHtml(markdown))),
+    ).toBe(`${original}\n\nMobile edit\nnext line`);
+  });
+
+  it("derives titles from parsed text, without a hard-break escape", () => {
+    expect(deriveNoteTitleFromContent("first\\\nsecond")).toBe("first");
+    expect(deriveNoteTitleFromContent("\\*literal\\*")).toBe("*literal*");
   });
 });
