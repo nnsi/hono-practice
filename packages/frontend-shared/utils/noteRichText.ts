@@ -3,10 +3,11 @@ import rehypeRemark from "rehype-remark";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import remarkStringify from "remark-stringify";
 import { unified } from "unified";
+
+import { noteMarkdownProcessor } from "./noteMarkdown";
 
 export const NOTE_RICH_TEXT_EDITOR_SOURCE = "note-rich-text-editor";
 const EMPTY_EDITOR_HTML = "<p><br></p>";
@@ -79,9 +80,7 @@ const noteEditorSchema = {
   ],
 };
 
-const markdownToHtmlProcessor = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
+const markdownToHtmlProcessor = noteMarkdownProcessor()
   .use(remarkRehype, {
     handlers: {
       // Mobile notes contain ordinary newlines. Render these like hard breaks
