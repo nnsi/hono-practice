@@ -76,7 +76,7 @@ describe("createNavigationSync", () => {
       expect(deps.callOrder).toEqual([]);
     });
 
-    it("throttles for 5 seconds after a successful pull (boundary)", async () => {
+    it("throttles for 5 seconds after a completed sync (boundary)", async () => {
       const deps = createDeps();
       const { trigger } = createNavigationSync(deps);
       trigger();
@@ -125,7 +125,7 @@ describe("createNavigationSync", () => {
       expect(deps.syncAll).toHaveBeenCalledTimes(1);
     });
 
-    it("does not arm the throttle when the pull gave up, so the next trigger retries", async () => {
+    it("after the pull gave up, keeps the 5s floor and then retries", async () => {
       const mutex = createSyncMutex();
       const deps = createDeps(mutex);
       const held = holdMutex(mutex);
@@ -138,7 +138,29 @@ describe("createNavigationSync", () => {
       await held.done;
       trigger();
       await vi.advanceTimersByTimeAsync(0);
+      expect(deps.pullSync).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(5000);
+      trigger();
+      await vi.advanceTimersByTimeAsync(0);
       expect(deps.pullSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the 5s floor after a failed pull (no retry storm)", async () => {
+      const deps = createDeps();
+      deps.pullSync.mockRejectedValue(new Error("pull failed"));
+      const { trigger } = createNavigationSync(deps);
+      for (let i = 0; i < 6; i++) {
+        trigger();
+        await vi.advanceTimersByTimeAsync(5);
+      }
+      expect(deps.pullSync).toHaveBeenCalledTimes(1);
+      expect(deps.onError).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(5000);
+      trigger();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(deps.pullSync).toHaveBeenCalledTimes(2);
     });
 
     it("calls syncAll even when pullSync errors, and reports via onError", async () => {
@@ -226,6 +248,35 @@ describe("createNavigationSync", () => {
       expect(deps.syncAll).toHaveBeenCalledTimes(1);
       expect(deps.callOrder).toEqual([]);
       expect(deps.onError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cancel", () => {
+    it("drops a pull waiting for the mutex and skips the push", async () => {
+      const mutex = createSyncMutex();
+      const deps = createDeps(mutex);
+      const held = holdMutex(mutex);
+      const sync = createNavigationSync(deps);
+      const running = sync.run();
+      await vi.advanceTimersByTimeAsync(300);
+
+      sync.cancel();
+      held.release();
+      await held.done;
+      await vi.advanceTimersByTimeAsync(200);
+      expect(await running).toEqual({ pulled: false });
+      expect(deps.pullSync).not.toHaveBeenCalled();
+      expect(deps.syncAll).not.toHaveBeenCalled();
+    });
+
+    it("makes later trigger/run no-ops", async () => {
+      const deps = createDeps();
+      const sync = createNavigationSync(deps);
+      sync.cancel();
+      sync.trigger();
+      expect(await sync.run()).toEqual({ pulled: false });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(deps.callOrder).toEqual([]);
     });
   });
 });

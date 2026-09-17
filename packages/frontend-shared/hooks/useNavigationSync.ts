@@ -21,8 +21,8 @@ type UseNavigationSyncDeps = {
  * - `getNavigationSync(userId)`: 同じ userId なら同一インスタンスを返す。
  *   復帰時の `trigger()` や明示更新の `run()` から使い、間引きと合流状態を共有する。
  *
- * userId が変わると旧インスタンスは破棄される。旧ユーザーの pull が進行中でも、
- * createInitialSync の sync generation 検査で書き込みは捨てられる。
+ * userId が変わる・未ログインになると旧インスタンスは cancel され破棄される。
+ * mutex 待機中の pull が後から古い userId で走るのを防ぐため。
  */
 export function createUseNavigationSync(deps: UseNavigationSyncDeps) {
   const {
@@ -32,8 +32,14 @@ export function createUseNavigationSync(deps: UseNavigationSyncDeps) {
 
   let cached: { userId: string; sync: NavigationSync } | null = null;
 
+  const discardNavigationSync = () => {
+    cached?.sync.cancel();
+    cached = null;
+  };
+
   const getNavigationSync = (userId: string): NavigationSync => {
     if (cached?.userId !== userId) {
+      discardNavigationSync();
       cached = {
         userId,
         sync: createNavigationSync({
@@ -52,7 +58,10 @@ export function createUseNavigationSync(deps: UseNavigationSyncDeps) {
     const pathname = usePathname();
 
     useEffect(() => {
-      if (!syncReady || !userId) return;
+      if (!syncReady || !userId) {
+        discardNavigationSync();
+        return;
+      }
       getNavigationSync(userId).trigger();
     }, [pathname, syncReady, userId]);
   }

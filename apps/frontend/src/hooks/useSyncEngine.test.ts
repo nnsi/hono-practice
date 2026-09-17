@@ -7,7 +7,11 @@ const mocks = vi.hoisted(() => {
   return {
     trigger,
     onlineListeners,
-    getNavigationSync: vi.fn(() => ({ trigger, run: vi.fn() })),
+    getNavigationSync: vi.fn(() => ({
+      trigger,
+      run: vi.fn(),
+      cancel: vi.fn(),
+    })),
     startAutoSync: vi.fn(() => vi.fn()),
   };
 });
@@ -81,5 +85,17 @@ describe("useSyncEngine (web)", () => {
     expect(mocks.onlineListeners.size).toBe(0);
     setVisibility("visible");
     expect(mocks.trigger).not.toHaveBeenCalled();
+  });
+
+  it("re-registers for the new user when userId changes", () => {
+    const hook = renderHook(
+      ({ uid }: { uid: string | null }) => useSyncEngine(true, uid),
+      { initialProps: { uid: "u1" as string | null } },
+    );
+    hook.rerender({ uid: "u2" });
+    expect(mocks.onlineListeners.size).toBe(1);
+    setVisibility("visible");
+    expect(mocks.getNavigationSync).toHaveBeenLastCalledWith("u2");
+    expect(mocks.trigger).toHaveBeenCalledTimes(1);
   });
 });

@@ -40,11 +40,15 @@ describe("createUseNavigationSync", () => {
       expect(getNavigationSync("u1")).toBe(getNavigationSync("u1"));
     });
 
-    it("keeps a single slot: switching users recreates the instance", () => {
-      const { getNavigationSync } = setup();
-      const first = getNavigationSync("u1");
-      expect(getNavigationSync("u2")).not.toBe(first);
-      expect(getNavigationSync("u1")).not.toBe(first);
+    it("keeps a single slot: switching users cancels and recreates the instance", async () => {
+      const s = setup();
+      const first = s.getNavigationSync("u1");
+      expect(s.getNavigationSync("u2")).not.toBe(first);
+      expect(s.getNavigationSync("u1")).not.toBe(first);
+
+      // 旧インスタンスは cancel 済みで何もしない
+      await first.run();
+      expect(s.pullSync).not.toHaveBeenCalled();
     });
 
     it("run() pulls with the bound userId then pushes", async () => {
@@ -88,6 +92,30 @@ describe("createUseNavigationSync", () => {
       s.getNavigationSync("u1").trigger();
       await vi.advanceTimersByTimeAsync(0);
       expect(s.pullSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("cancels a pull waiting for the mutex when the user logs out", async () => {
+      const s = setup("/daily");
+      let release!: () => void;
+      const held = s.mutex.run(
+        () =>
+          new Promise<void>((r) => {
+            release = r;
+          }),
+      );
+      const hook = renderHook(
+        ({ uid }: { uid: string | null }) => s.useNavigationSync(true, uid),
+        { initialProps: { uid: "u1" as string | null } },
+      );
+      await vi.advanceTimersByTimeAsync(300);
+      expect(s.pullSync).not.toHaveBeenCalled();
+
+      hook.rerender({ uid: null });
+      release();
+      await held;
+      await vi.advanceTimersByTimeAsync(500);
+      expect(s.pullSync).not.toHaveBeenCalled();
+      expect(s.syncAll).not.toHaveBeenCalled();
     });
 
     it("does nothing until syncReady and userId are set, then triggers", async () => {

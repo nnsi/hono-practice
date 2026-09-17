@@ -20,7 +20,11 @@ function setup(auth: Partial<AuthContextType>) {
         resolveRun = () => r({ pulled: true });
       }),
   );
-  const getNavigationSync = vi.fn(() => ({ run, trigger: vi.fn() }));
+  const getNavigationSync = vi.fn(() => ({
+    run,
+    trigger: vi.fn(),
+    cancel: vi.fn(),
+  }));
   const wrapper = ({ children }: { children: ReactNode }) => (
     <AuthContext.Provider
       value={
