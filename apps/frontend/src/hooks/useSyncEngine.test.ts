@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
       run: vi.fn(),
       cancel: vi.fn(),
     })),
+    discardNavigationSync: vi.fn(),
     startAutoSync: vi.fn(() => vi.fn()),
   };
 });
@@ -30,6 +31,7 @@ vi.mock("../sync/webPlatformAdapters", () => ({
 }));
 vi.mock("./useNavigationSync", () => ({
   getNavigationSync: mocks.getNavigationSync,
+  discardNavigationSync: mocks.discardNavigationSync,
   useNavigationSync: vi.fn(),
 }));
 
@@ -80,9 +82,11 @@ describe("useSyncEngine (web)", () => {
 
     hook.rerender({ loggedIn: true, uid: "u1" });
     expect(mocks.onlineListeners.size).toBe(1);
+    mocks.discardNavigationSync.mockClear();
 
     hook.rerender({ loggedIn: false, uid: "u1" });
     expect(mocks.onlineListeners.size).toBe(0);
+    expect(mocks.discardNavigationSync).toHaveBeenCalledTimes(1);
     setVisibility("visible");
     expect(mocks.trigger).not.toHaveBeenCalled();
   });

@@ -8,8 +8,8 @@ import { rnNetworkAdapter } from "../sync/rnPlatformAdapters";
 import { syncEngine } from "../sync/syncEngine";
 import { reportError } from "../utils/errorReporter";
 
-export const { useNavigationSync, getNavigationSync } = createUseNavigationSync(
-  {
+export const { useNavigationSync, getNavigationSync, discardNavigationSync } =
+  createUseNavigationSync({
     react: { useEffect },
     usePathname,
     syncAll: () => syncEngine.syncAll(),
@@ -23,5 +23,4 @@ export const { useNavigationSync, getNavigationSync } = createUseNavigationSync(
         stack: error instanceof Error ? error.stack : undefined,
       });
     },
-  },
-);
+  });

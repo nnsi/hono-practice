@@ -4,12 +4,18 @@ import { createUseSyncEngine } from "@packages/frontend-shared/hooks/useSyncEngi
 
 import { syncEngine } from "../sync/syncEngine";
 import { webNetworkAdapter } from "../sync/webPlatformAdapters";
-import { getNavigationSync } from "./useNavigationSync";
+import { discardNavigationSync, getNavigationSync } from "./useNavigationSync";
 
 const useSyncEngineShared = createUseSyncEngine({ useEffect, useRef });
 
 export function useSyncEngine(isLoggedIn: boolean, userId: string | null) {
   useSyncEngineShared(syncEngine, isLoggedIn);
+
+  // Why: ログアウト・アカウント切替で待機中の pull を打ち切る（useNavigationSync と
+  // 二重でも害はなく、Mobile と同じ責務配置にしておく）。
+  useEffect(() => {
+    if (!isLoggedIn || !userId) discardNavigationSync();
+  }, [isLoggedIn, userId]);
 
   // Why: タブ復帰・PWA のフォアグラウンド復帰・オンライン復帰で他端末の変更も
   // 取り込むため pull → push の完全同期を走らせる。リロード時は

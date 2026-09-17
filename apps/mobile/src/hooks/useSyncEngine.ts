@@ -5,7 +5,7 @@ import { AppState, type AppStateStatus } from "react-native";
 
 import { rnNetworkAdapter } from "../sync/rnPlatformAdapters";
 import { syncEngine } from "../sync/syncEngine";
-import { getNavigationSync } from "./useNavigationSync";
+import { discardNavigationSync, getNavigationSync } from "./useNavigationSync";
 
 const useSyncEngineShared = createUseSyncEngine({ useEffect, useRef });
 
@@ -31,6 +31,12 @@ export function handleAppStateChange(
 
 export function useSyncEngine(isLoggedIn: boolean, userId: string | null) {
   useSyncEngineShared(syncEngine, isLoggedIn);
+
+  // Why: ログアウト・アカウント切替で待機中の pull を打ち切る。useNavigationSync は
+  // tabs 配下にしか無く、tabs 外の画面でのログアウトを観測できないため root で行う。
+  useEffect(() => {
+    if (!isLoggedIn || !userId) discardNavigationSync();
+  }, [isLoggedIn, userId]);
 
   useEffect(() => {
     if (!isLoggedIn) return;

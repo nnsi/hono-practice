@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
       run: vi.fn(),
       cancel: vi.fn(),
     })),
+    discardNavigationSync: vi.fn(),
     syncAll: vi.fn().mockResolvedValue(undefined),
     startAutoSync: vi.fn(() => vi.fn()),
   };
@@ -37,6 +38,7 @@ vi.mock("../sync/rnPlatformAdapters", () => ({
 }));
 vi.mock("./useNavigationSync", () => ({
   getNavigationSync: mocks.getNavigationSync,
+  discardNavigationSync: mocks.discardNavigationSync,
   useNavigationSync: vi.fn(),
 }));
 
@@ -89,7 +91,19 @@ describe("useSyncEngine (mobile wiring)", () => {
     mocks.trigger.mockClear();
     mocks.getNavigationSync.mockClear();
     mocks.onlineListeners.clear();
+    mocks.discardNavigationSync.mockClear();
     addEventListener.mockClear();
+  });
+
+  it("discards the shared sync on logout even when the tabs layout is not mounted", () => {
+    const hook = renderHook(
+      ({ loggedIn, uid }: { loggedIn: boolean; uid: string | null }) =>
+        useSyncEngine(loggedIn, uid),
+      { initialProps: { loggedIn: true, uid: "u1" as string | null } },
+    );
+    expect(mocks.discardNavigationSync).not.toHaveBeenCalled();
+    hook.rerender({ loggedIn: false, uid: null });
+    expect(mocks.discardNavigationSync).toHaveBeenCalledTimes(1);
   });
 
   it("subscribes to AppState and runs the full sync on active", () => {

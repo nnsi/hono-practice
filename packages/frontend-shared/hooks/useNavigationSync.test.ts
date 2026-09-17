@@ -51,6 +51,15 @@ describe("createUseNavigationSync", () => {
       expect(s.pullSync).not.toHaveBeenCalled();
     });
 
+    it("discardNavigationSync cancels the current instance", async () => {
+      const s = setup();
+      const sync = s.getNavigationSync("u1");
+      s.discardNavigationSync();
+      expect(await sync.run()).toEqual({ pulled: false });
+      expect(s.pullSync).not.toHaveBeenCalled();
+      expect(s.getNavigationSync("u1")).not.toBe(sync);
+    });
+
     it("run() pulls with the bound userId then pushes", async () => {
       const { getNavigationSync, pullSync, syncAll } = setup();
       await getNavigationSync("u1").run();

@@ -20,9 +20,13 @@ type UseNavigationSyncDeps = {
  * - `useNavigationSync`: pathname 変化ごとに `trigger()`（間引きあり）
  * - `getNavigationSync(userId)`: 同じ userId なら同一インスタンスを返す。
  *   復帰時の `trigger()` や明示更新の `run()` から使い、間引きと合流状態を共有する。
+ * - `discardNavigationSync()`: 現在のインスタンスを cancel して破棄する。
  *
  * userId が変わる・未ログインになると旧インスタンスは cancel され破棄される。
- * mutex 待機中の pull が後から古い userId で走るのを防ぐため。
+ * mutex 待機中の pull が後から古い userId で走るのを防ぐため。破棄は
+ * `useNavigationSync` だけでなく、ルートの認証ライフサイクル（各アプリの
+ * useSyncEngine）からも呼ぶ。Mobile では `useNavigationSync` が tabs 配下に
+ * しか mount されず、tabs 外の画面でログアウトすると観測できないため。
  */
 export function createUseNavigationSync(deps: UseNavigationSyncDeps) {
   const {
@@ -66,5 +70,5 @@ export function createUseNavigationSync(deps: UseNavigationSyncDeps) {
     }, [pathname, syncReady, userId]);
   }
 
-  return { useNavigationSync, getNavigationSync };
+  return { useNavigationSync, getNavigationSync, discardNavigationSync };
 }
