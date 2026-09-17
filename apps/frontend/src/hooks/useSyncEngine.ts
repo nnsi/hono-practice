@@ -2,25 +2,30 @@ import { useEffect, useRef } from "react";
 
 import { createUseSyncEngine } from "@packages/frontend-shared/hooks/useSyncEngine";
 
-import { getNavigationSync } from "../sync/navigationSync";
 import { syncEngine } from "../sync/syncEngine";
+import { webNetworkAdapter } from "../sync/webPlatformAdapters";
+import { getNavigationSync } from "./useNavigationSync";
 
 const useSyncEngineShared = createUseSyncEngine({ useEffect, useRef });
 
 export function useSyncEngine(isLoggedIn: boolean, userId: string | null) {
   useSyncEngineShared(syncEngine, isLoggedIn);
 
-  // Why: タブ復帰・PWA のフォアグラウンド復帰で他端末の変更も取り込むため
-  // pull → push の完全同期を走らせる。リロードは useNavigationSync の初回
-  // pathname 評価で同期されるのでここでは扱わない。
+  // Why: タブ復帰・PWA のフォアグラウンド復帰・オンライン復帰で他端末の変更も
+  // 取り込むため pull → push の完全同期を走らせる。リロード時は
+  // useNavigationSync の初回 pathname 評価が同じ trigger() を呼ぶ。
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
+    const sync = getNavigationSync(userId);
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
-      getNavigationSync(userId).trigger();
+      sync.trigger();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
-    return () =>
+    const removeOnline = webNetworkAdapter.onOnline(() => sync.trigger());
+    return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      removeOnline();
+    };
   }, [isLoggedIn, userId]);
 }

@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
+import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { mobileTestIds } from "../../testing/testIds";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { ActikoDialogs } from "./ActikoDialogs";

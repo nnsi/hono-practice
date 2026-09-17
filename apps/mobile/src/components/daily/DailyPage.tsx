@@ -13,9 +13,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
-import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { reportError } from "../../utils/errorReporter";
 import { DateNavHeader } from "../actiko/DateNavHeader";

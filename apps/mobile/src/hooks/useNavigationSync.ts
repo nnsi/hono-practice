@@ -1,1 +1,27 @@
-export { useNavigationSync } from "../sync/navigationSync";
+import { useEffect } from "react";
+
+import { createUseNavigationSync } from "@packages/frontend-shared";
+import { usePathname } from "expo-router";
+
+import { performInitialSync } from "../sync/initialSync";
+import { rnNetworkAdapter } from "../sync/rnPlatformAdapters";
+import { syncEngine } from "../sync/syncEngine";
+import { reportError } from "../utils/errorReporter";
+
+export const { useNavigationSync, getNavigationSync } = createUseNavigationSync(
+  {
+    react: { useEffect },
+    usePathname,
+    syncAll: () => syncEngine.syncAll(),
+    pullSync: (uid) => performInitialSync(uid),
+    isOnline: () => rnNetworkAdapter.isOnline(),
+    mutex: syncEngine.mutex,
+    onError: (error, phase) => {
+      reportError({
+        errorType: "unhandled_error",
+        message: `Navigation sync ${phase} failed: ${error instanceof Error ? error.message : String(error)}`,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+    },
+  },
+);
