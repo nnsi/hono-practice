@@ -63,7 +63,7 @@ export default function RootLayout() {
   const { isUpdating, hasPendingUpdate, triggerReload, dismissPendingUpdate } =
     useOtaUpdate();
 
-  useSyncEngine(auth.syncReady && storageCacheReady);
+  useSyncEngine(auth.syncReady && storageCacheReady, auth.userId);
   const tutorial = useTutorial();
 
   useEffect(() => {

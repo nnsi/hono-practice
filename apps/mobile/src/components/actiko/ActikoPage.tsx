@@ -1,5 +1,3 @@
-import { useCallback, useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
 import { ArrowUpDown, Plus } from "lucide-react-native";
 import {
@@ -13,8 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
-import { syncEngine } from "../../sync/syncEngine";
 import { mobileTestIds } from "../../testing/testIds";
 import { CalendarPopover } from "../common/CalendarPopover";
 import { ActikoDialogs } from "./ActikoDialogs";
@@ -57,16 +55,7 @@ export function ActikoPage() {
 
   const reduceMotion = useReduceMotion();
 
-  // Pull-to-refresh support
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   const gridActions = [
     {

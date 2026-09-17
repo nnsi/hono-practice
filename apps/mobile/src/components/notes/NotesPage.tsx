@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { NOTE_SECTION_ORDER } from "@packages/frontend-shared/utils";
 import { useTranslation } from "@packages/i18n";
@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { syncEngine } from "../../sync/syncEngine";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { NoteCard } from "./NoteCard";
 import { NoteDeleteConfirmDialog } from "./NoteDeleteConfirmDialog";
@@ -22,7 +22,6 @@ import { NotesSearchBar } from "./NotesSearchBar";
 import { useNotesPage } from "./useNotesPage";
 
 export function NotesPage() {
-  const [refreshing, setRefreshing] = useState(false);
   const {
     notesList,
     isReady,
@@ -46,14 +45,7 @@ export function NotesPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   // Why: groupedNotes はフィルタ後の集合なので、削除確認中にフィルタが変わると
   // 対象 note が消えてタイトルが空になる。フィルタ前の notesList から探すのが正しい。
