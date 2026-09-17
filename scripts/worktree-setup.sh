@@ -64,7 +64,7 @@ echo "  Seed:       $SEED"
 echo ""
 
 # --- preflight: Docker running? ---
-if ! docker compose -f "$REPO_ROOT/docker-compose.yml" ps --status running 2>/dev/null | grep -q db; then
+if ! docker compose -f "$REPO_ROOT/docker-compose.yml" ps --status running --services 2>/dev/null | grep -qx db; then
   echo "ERROR: Postgres container is not running."
   echo "  Run: docker compose up -d"
   exit 1

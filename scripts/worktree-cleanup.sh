@@ -36,7 +36,7 @@ echo ""
 
 # --- 1. Drop database ---
 echo "[1/4] Dropping database '$DB_NAME'..."
-if docker compose -f "$REPO_ROOT/docker-compose.yml" ps --status running 2>/dev/null | grep -q db; then
+if docker compose -f "$REPO_ROOT/docker-compose.yml" ps --status running --services 2>/dev/null | grep -qx db; then
   # Terminate active connections first
   docker compose -f "$REPO_ROOT/docker-compose.yml" exec -T db \
     psql -U postgres -c "
@@ -59,13 +59,18 @@ if [ -d "$WT_DIR" ]; then
   PIDS=()
   if command -v wmic &>/dev/null; then
     # Windows: kill node.exe processes whose commandline contains the worktree name
-    mapfile -t PIDS < <(
+    # bash 3.2 (macOS) has no mapfile; read line by line instead
+    while IFS= read -r pid; do
+      [ -n "$pid" ] && PIDS+=("$pid")
+    done < <(
       wmic process where "name='node.exe' and commandline like '%$NAME%'" get processid 2>/dev/null \
         | grep -oP '\d+' || true
     )
   elif command -v lsof &>/dev/null; then
     # Unix: use lsof to find processes with open files in worktree
-    mapfile -t PIDS < <(
+    while IFS= read -r pid; do
+      [ -n "$pid" ] && PIDS+=("$pid")
+    done < <(
       lsof +D "$WT_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u || true
     )
   fi
