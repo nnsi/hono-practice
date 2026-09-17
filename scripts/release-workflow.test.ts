@@ -3,10 +3,7 @@ import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
-const publishJob = workflow.match(
-  / {2}publish:[\s\S]*?(?=\n {2}mobile-release:)/,
-)?.[0];
-const mobileJob = workflow.match(/ {2}mobile-release:[\s\S]*/)?.[0];
+const publishJob = workflow.match(/ {2}publish:[\s\S]*/)?.[0];
 const githubExpression = (value: string) => `$${`{{ ${value} }}`}`;
 
 const step = (name: string) =>
@@ -58,13 +55,11 @@ describe("release workflow guards", () => {
     expect(publishJob).not.toContain("Build Tail Worker artifact");
   });
 
-  it("keeps only release-specific Mobile safety checks", () => {
-    expect(workflow).toContain("mobile_release_sha:");
-    expect(mobileJob).toContain('GITHUB_REF" != "refs/heads/release');
-    expect(workflow).toContain("mobile_native_base_sha");
-    expect(mobileJob).toContain("scripts/mobile-ota-safety.js");
-    expect(mobileJob).not.toContain("Run repository CI gate");
-    expect(mobileJob).not.toContain("Generate iOS and Android release bundles");
+  it("has no manual mobile release path (mobile builds and OTA run locally)", () => {
+    expect(workflow).not.toContain("workflow_dispatch");
+    expect(workflow).not.toContain("mobile-release:");
+    expect(workflow).not.toContain("eas build");
+    expect(workflow).not.toContain("eas update");
   });
 
   it("preflights and binds the rate-limit KV namespace for both environments", () => {
@@ -83,34 +78,10 @@ describe("release workflow guards", () => {
     ).toHaveLength(2);
   });
 
-  it("runs the lockfile-pinned EAS CLI without a global install", () => {
-    expect(workflow).toContain("pnpm exec eas build");
-    expect(workflow).toContain("pnpm exec eas update");
-    expect(workflow).not.toContain("npm install -g eas-cli");
-  });
-
   it("preflights names without shell tracing or printing secret values", () => {
     expect(workflow).toContain("check-required-env.js");
     expect(workflow).not.toMatch(/set\s+-x/);
     expect(workflow).not.toMatch(/echo[^\n]*\$\{\{\s*secrets\./);
-  });
-
-  it("passes workflow-dispatch strings through environment variables", () => {
-    expect(workflow).toContain(
-      `MOBILE_MESSAGE: ${githubExpression("github.event.inputs.mobile_message")}`,
-    );
-    expect(workflow).toContain(
-      `MOBILE_PLATFORM: ${githubExpression("github.event.inputs.mobile_platform")}`,
-    );
-    expect(workflow).toContain('MESSAGE="$MOBILE_MESSAGE"');
-    expect(workflow).toContain('--platform "$MOBILE_PLATFORM"');
-    expect(workflow).not.toContain('MESSAGE="${{ github.event.inputs');
-    expect(workflow).not.toContain(
-      `--platform ${githubExpression("github.event.inputs.mobile_platform")}`,
-    );
-    expect(workflow).not.toContain(
-      `if [ "${githubExpression("github.event.inputs.mobile_platform")}"`,
-    );
   });
 
   it("configures the admin frontend origin as a backend secret", () => {
