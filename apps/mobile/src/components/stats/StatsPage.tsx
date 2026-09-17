@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react-native";
@@ -12,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { syncEngine } from "../../sync/syncEngine";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { ActivityStatCard } from "./ActivityStatCard";
 import { useStatsPage } from "./useStatsPage";
@@ -30,16 +28,8 @@ export function StatsPage() {
   } = useStatsPage();
 
   const insets = useSafeAreaInsets();
-  const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   return (
     <View

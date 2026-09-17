@@ -50,6 +50,7 @@ WAE ログ上 "database is locked" が発生しているのは全て sync 絡み
 
 ## 備考
 
+- 2026-09-18 追記: `createNavigationSync` は `trigger()`（自動トリガー: 画面遷移・フォアグラウンド復帰・タブ表示。5 秒間引き、mutex 使用中は pull をスキップ）と `run()`（pull-to-refresh などの明示操作。間引きなし、mutex 使用中は最大 10 秒解放を待ってから pull）を分けた。明示操作までスキップすると「ローダーが回ったのに新しいデータが来ない」ため、スキップ方式の例外として待機を許容する。待機はキューではなく単一呼び出しの遅延で、上限到達時は pull を諦めて push のみ行う
 - UI 操作と sync の並行による "database is locked" が将来発生した場合は、案 B（DB write mutex）への移行を検討する
 - 各リポジトリの手動 `BEGIN`/`COMMIT`（9 箇所）を `withTransactionAsync` に統一する構造改善は別途検討の余地がある。ただし `initialSync.ts` のコメントにある通り、ネストトランザクションの問題があるため、mutex との併用を前提に設計する必要がある
 - オンライン復帰時の `startAutoSync.onOnline` と `registerOnlineRetry` の同時発火は、mutex によりどちらか一方がスキップされるため、実質的に対処済みとなった
