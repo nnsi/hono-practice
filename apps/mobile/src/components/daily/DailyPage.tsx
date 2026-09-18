@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { taskRepository } from "../../repositories/taskRepository";
 import { syncEngine } from "../../sync/syncEngine";
 import { mobileTestIds } from "../../testing/testIds";
@@ -63,7 +64,6 @@ export function DailyPage() {
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // 仮想タスクは isVirtual 付きのまま渡し、実体化は編集ダイアログの保存時に行う
   const editingFullTask = editingTaskId
@@ -88,14 +88,7 @@ export function DailyPage() {
     [materializeIfVirtual],
   );
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   return (
     <View

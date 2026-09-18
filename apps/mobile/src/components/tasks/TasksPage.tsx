@@ -1,11 +1,9 @@
-import { useState } from "react";
-
 import { isVirtualScheduledTask } from "@packages/frontend-shared/hooks/materializeScheduledTask";
 import { useTranslation } from "@packages/i18n";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { syncEngine } from "../../sync/syncEngine";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { TaskCreateDialog } from "./TaskCreateDialog";
@@ -18,7 +16,6 @@ import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
   const { t } = useTranslation("task");
-  const [refreshing, setRefreshing] = useState(false);
   const {
     activeTab,
     setActiveTab,
@@ -51,14 +48,7 @@ export function TasksPage() {
     ? [...tasks, ...archivedTasks].find((t) => t.id === deleteConfirmId)
     : undefined;
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   return (
     <View

@@ -50,7 +50,7 @@ function RootComponent() {
     routerState.location.pathname === "/contact" ||
     routerState.location.pathname === "/api-reference";
 
-  useSyncEngine(syncReady);
+  useSyncEngine(syncReady, userId);
   useNavigationSync(syncReady, userId);
 
   if (isLegalPage) {

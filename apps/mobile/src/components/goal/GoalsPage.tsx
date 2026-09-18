@@ -1,5 +1,3 @@
-import { useCallback, useState } from "react";
-
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import { Plus } from "lucide-react-native";
@@ -14,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIconBlobMap } from "../../hooks/useIconBlobMap";
-import { syncEngine } from "../../sync/syncEngine";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { RecordDialog } from "../actiko/RecordDialog";
 import { CreateGoalDialog } from "./CreateGoalDialog";
@@ -51,15 +49,7 @@ export function GoalsPage() {
 
   const insets = useSafeAreaInsets();
 
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await syncEngine.syncAll();
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   if (!dataReady) {
     return (
