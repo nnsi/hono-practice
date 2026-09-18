@@ -6,6 +6,8 @@ import { createUserId } from "@packages/domain/user/userSchema";
 import type { HonoContext } from "../context";
 import { UnauthorizedError } from "../error";
 import { newUserRepository } from "../feature/user";
+import { authUserCache } from "../lib/authUserCache";
+import { noopTracer } from "../lib/tracer";
 
 export function verifyToken(jwt: string, secret: string) {
   return verify(jwt, secret, "HS256");
@@ -53,15 +55,23 @@ export async function authMiddleware(c: HonoContext, next: Next) {
     }
 
     const parsedUserId = createUserId(userId);
-    const userRepo = newUserRepository(c.env.DB);
-    const user = await userRepo.getUserById(parsedUserId);
-    if (!user) {
-      throw new UnauthorizedError("unauthorized");
-    }
+    // 存在・未削除の確認は isolate 内 cache で短時間省略する (lib/authUserCache.ts)。
+    // cache hit 時は user オブジェクトを持たないため c.set("user") しない。
+    const tracer = c.get("tracer") ?? noopTracer;
+    const resolved = await authUserCache.resolve(parsedUserId, () =>
+      tracer.span("db.getUserById", () =>
+        newUserRepository(c.env.DB).getUserById(parsedUserId),
+      ),
+    );
 
     c.set("jwtPayload", payload);
     c.set("userId", parsedUserId);
-    c.set("user", user);
+    if (!resolved.cached) {
+      if (!resolved.user) {
+        throw new UnauthorizedError("unauthorized");
+      }
+      c.set("user", resolved.user);
+    }
   } catch (_e) {
     throw new UnauthorizedError("unauthorized");
   }

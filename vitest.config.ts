@@ -45,6 +45,7 @@ const databaseInclude = [
   `**/apps/backend/**/*Repository.integration.test.ts`,
   `**/apps/backend/**/adminSessionRepository.test.ts`,
   `**/apps/backend/**/apiKeyAuth.test.ts`,
+  `**/apps/backend/**/authMiddleware.test.ts`,
   `**/apps/backend/**/scopeIntegration.test.ts`,
 ];
 

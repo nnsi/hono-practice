@@ -1,3 +1,4 @@
+import { authUserCache } from "@backend/lib/authUserCache";
 import type { Tracer } from "@backend/lib/tracer";
 import type { UserId } from "@packages/domain/user/userSchema";
 
@@ -20,6 +21,8 @@ export function newDeleteUserUsecase(
 ) {
   return async (userId: UserId): Promise<void> => {
     await tracer.span("db.deleteUser", () => repo.deleteUser(userId));
+    // authMiddleware の存在確認 cache を落とし、この isolate では即時に 401 にする
+    authUserCache.invalidate(userId);
     await tracer.span("db.revokeRefreshTokenAllByUserId", () =>
       deps.refreshTokenRepo.revokeRefreshTokenAllByUserId(userId),
     );

@@ -6,6 +6,13 @@ on:
       - master
       - release
 
+# GitHub-hosted runner (米国) から Neon ap-southeast-1 への往復が Node 22 の
+# アドレス自動選択の試行タイムアウト既定値 (250ms) を超えると、全アドレスの
+# 接続試行が破棄されて ETIMEDOUT になる (run 35353345614 の preflight で確認)。
+# DB へ直接つなぐ step だけ試行タイムアウトを延ばす。
+env:
+  DB_NODE_OPTIONS: --network-family-autoselection-attempt-timeout=3000
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -101,17 +108,33 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID_PROD }}
 
       # --- DB migrations ---
+      - name: Preflight DB connectivity (stg)
+        if: github.ref_name == 'master'
+        run: node scripts/check-db-connectivity.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+          NODE_OPTIONS: ${{ env.DB_NODE_OPTIONS }}
+
       - name: Migrate Neon DB (stg)
         if: github.ref_name == 'master'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STG }}
+          NODE_OPTIONS: ${{ env.DB_NODE_OPTIONS }}
+
+      - name: Preflight DB connectivity (prod)
+        if: github.ref_name == 'release'
+        run: node scripts/check-db-connectivity.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          NODE_OPTIONS: ${{ env.DB_NODE_OPTIONS }}
 
       - name: Migrate Neon DB (prod)
         if: github.ref_name == 'release'
         run: pnpm run db-migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          NODE_OPTIONS: ${{ env.DB_NODE_OPTIONS }}
 
       # --- backend secrets & deploy ---
       - name: Configure Hyperdrive, R2, and KV for staging
