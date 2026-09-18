@@ -13,6 +13,7 @@ import type { TaskRepository } from "@backend/feature/task/taskRepository";
 import type { UserConsentRepository } from "@backend/feature/user/userConsentRepository";
 import type { UserRepository } from "@backend/feature/user/userRepository";
 import type { TransactionRunner } from "@backend/infra/rdb/db";
+import { authUserCache } from "@backend/lib/authUserCache";
 import { createUserId } from "@packages/domain/user/userSchema";
 
 import type { AdminUserDeletionLogRepository } from "./adminUserDeletionLogRepository";
@@ -179,6 +180,9 @@ export function newAdminUserDeletionUsecase(
           return result;
         },
       );
+
+      // authMiddleware の存在確認 cache を落とす
+      authUserCache.invalidate(uid);
 
       return { deletedUserId: userId, deletionCounts: counts };
     },

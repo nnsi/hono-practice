@@ -5,6 +5,8 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { afterAll, afterEach, beforeAll } from "vitest";
 
+import { authUserCache } from "./lib/authUserCache";
+
 let pglite: PGlite;
 
 export let testDB: ReturnType<typeof drizzle<typeof schema>>;
@@ -25,6 +27,8 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+  // user テーブルを truncate して再 seed するため、存在確認 cache も毎回捨てる
+  authUserCache.clear();
   await testDB.execute(sql`TRUNCATE TABLE
     activity_log,
     activity_kind,
