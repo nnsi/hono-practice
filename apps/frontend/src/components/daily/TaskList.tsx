@@ -9,11 +9,13 @@ export function TaskList({
   tasks,
   isLoading,
   onToggle,
+  onEdit,
   activitiesMap,
 }: {
   tasks: DailyTask[];
   isLoading: boolean;
   onToggle: (task: DailyTask) => void | Promise<void>;
+  onEdit: (task: DailyTask) => void;
   activitiesMap?: Map<string, DexieActivity>;
 }) {
   const { t } = useTranslation("activity");
@@ -54,35 +56,42 @@ export function TaskList({
                 <Circle size={24} className="text-gray-300" />
               )}
             </button>
-            {activity && (
-              <div className="shrink-0">{getActivityIcon(activity)}</div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className={`text-base font-medium truncate ${
-                    task.doneDate
-                      ? "line-through text-gray-400"
-                      : "text-gray-800"
-                  }`}
-                >
-                  {task.title}
-                </span>
-                {task.scheduleId != null && (
-                  <Repeat
-                    size={14}
-                    className="text-blue-500 shrink-0"
-                    aria-label={tTask("card.repeat")}
-                    role="img"
-                  />
-                )}
-              </div>
-              {task.memo && (
-                <div className="text-xs text-gray-400 mt-0.5 truncate">
-                  {task.memo}
-                </div>
+            {/* 行タップで編集ダイアログを開く（完了トグルとは別ボタンにして入れ子を避ける） */}
+            <button
+              type="button"
+              onClick={() => onEdit(task)}
+              className="flex-1 min-w-0 flex items-center gap-3 text-left press-effect rounded-lg"
+            >
+              {activity && (
+                <span className="shrink-0">{getActivityIcon(activity)}</span>
               )}
-            </div>
+              <span className="flex-1 min-w-0 block">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className={`text-base font-medium truncate ${
+                      task.doneDate
+                        ? "line-through text-gray-400"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  {task.scheduleId != null && (
+                    <Repeat
+                      size={14}
+                      className="text-blue-500 shrink-0"
+                      aria-label={tTask("card.repeat")}
+                      role="img"
+                    />
+                  )}
+                </span>
+                {task.memo && (
+                  <span className="block text-xs text-gray-400 mt-0.5 truncate">
+                    {task.memo}
+                  </span>
+                )}
+              </span>
+            </button>
           </div>
         );
       })}
