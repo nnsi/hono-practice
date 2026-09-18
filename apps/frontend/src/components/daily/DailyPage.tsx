@@ -1,13 +1,17 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import type { DailyTask } from "@packages/frontend-shared/hooks/types";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
+import { taskRepository } from "../../db/taskRepository";
+import { syncEngine } from "../../sync/syncEngine";
+import { reportError } from "../../utils/errorReporter";
 import { CalendarPopover } from "../common/CalendarPopover";
-import { TaskCreateDialog } from "../tasks/TaskCreateDialog";
 import { TaskQuickAdd } from "../tasks/TaskQuickAdd";
 import { CreateLogDialog } from "./CreateLogDialog";
+import { DailyTaskDialogs } from "./DailyTaskDialogs";
 import { EditLogDialog } from "./EditLogDialog";
 import { LogCard } from "./LogCard";
 import { TaskList } from "./TaskList";
@@ -35,11 +39,41 @@ export function DailyPage() {
     calendarOpen,
     setCalendarOpen,
     handleToggleTask,
+    materializeIfVirtual,
+    findEditableTask,
   } = useDailyPage();
 
   const activeActivities = useMemo(
     () => activities.filter((a) => !a.deletedAt),
     [activities],
+  );
+
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [deletingTask, setDeletingTask] = useState<DailyTask | null>(null);
+
+  // 仮想タスクは isVirtual 付きのまま渡し、実体化は編集ダイアログの保存時に行う
+  const editingFullTask = editingTaskId
+    ? findEditableTask(editingTaskId)
+    : null;
+
+  const handleDeleteTask = useCallback(
+    async (task: DailyTask) => {
+      try {
+        // 仮想タスクは行が無いので、先に実 Task 行を作ってから soft delete する（「今日はやらない」）
+        await materializeIfVirtual(task);
+        await taskRepository.softDeleteTask(task.id);
+        void syncEngine.syncTasks().catch(() => {});
+      } catch (error) {
+        reportError({
+          errorType: "db_query_error",
+          message: `Daily task delete failed: ${error instanceof Error ? error.message : String(error)}`,
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      } finally {
+        setDeletingTask(null);
+      }
+    },
+    [materializeIfVirtual],
   );
 
   return (
@@ -146,6 +180,7 @@ export function DailyPage() {
             tasks={tasks}
             isLoading={false}
             onToggle={handleToggleTask}
+            onEdit={(task) => setEditingTaskId(task.id)}
             activitiesMap={activitiesMap}
           />
         </section>
@@ -169,14 +204,22 @@ export function DailyPage() {
         />
       )}
 
-      {/* タスク作成ダイアログ */}
-      {taskCreateDialogOpen && (
-        <TaskCreateDialog
-          defaultDate={date}
-          onClose={() => setTaskCreateDialogOpen(false)}
-          onSuccess={() => setTaskCreateDialogOpen(false)}
-        />
-      )}
+      {/* タスク系ダイアログ（作成 / 編集 / 削除確認） */}
+      <DailyTaskDialogs
+        date={date}
+        createOpen={taskCreateDialogOpen}
+        onCloseCreate={() => setTaskCreateDialogOpen(false)}
+        editingTask={editingFullTask}
+        onCloseEdit={() => setEditingTaskId(null)}
+        onDeleteFromEdit={(id) => {
+          setEditingTaskId(null);
+          const task = tasks.find((t) => t.id === id);
+          if (task) setDeletingTask(task);
+        }}
+        deletingTask={deletingTask}
+        onConfirmDelete={handleDeleteTask}
+        onCancelDelete={() => setDeletingTask(null)}
+      />
     </div>
   );
 }
