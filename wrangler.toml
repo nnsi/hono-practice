@@ -3,6 +3,11 @@ main = "apps/backend/server.cf.ts"
 compatibility_date = "2025-01-12"
 compatibility_flags = ["nodejs_compat"]
 
+# Hyperdrive の origin (Neon ap-southeast-1) 近くで Worker を実行し、
+# 直列 DB クエリ 1 回あたりの往復 (~150ms) を縮める
+[placement]
+mode = "smart"
+
 # DOマイグレーション: v1で作成したKeyValueDOをv2で削除
 [[migrations]]
 tag = "v1"
