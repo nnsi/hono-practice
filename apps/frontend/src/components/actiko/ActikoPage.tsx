@@ -12,7 +12,6 @@ import { CalendarPopover } from "../common/CalendarPopover";
 import { ActivityCard } from "./ActivityCard";
 import { CreateActivityDialog } from "./CreateActivityDialog";
 import { EditActivityDialog } from "./EditActivityDialog";
-import { RecordDialog } from "./RecordDialog";
 import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import { useActikoPage } from "./useActikoPage";
 
@@ -26,10 +25,6 @@ export function ActikoPage() {
     isToday,
     activities,
     iconBlobMap,
-    selectedActivity,
-    setSelectedActivity,
-    dialogOpen,
-    setDialogOpen,
     createActivityOpen,
     setCreateActivityOpen,
     editActivity,
@@ -37,10 +32,15 @@ export function ActikoPage() {
     calendarOpen,
     setCalendarOpen,
     hasLogsForActivity,
-    handleActivityClick,
     handleActivityChanged,
     reorderOpen,
     setReorderOpen,
+    expandedActivityId,
+    handleCardTap,
+    collapseCard,
+    handleInlineSaved,
+    undoActivityId,
+    handleUndo,
   } = useActikoPage();
 
   return (
@@ -88,8 +88,14 @@ export function ActikoPage() {
               activity={activity}
               isDone={hasLogsForActivity(activity.id)}
               iconBlob={iconBlobMap.get(activity.id)}
-              onClick={() => handleActivityClick(activity)}
+              date={date}
+              expanded={expandedActivityId === activity.id}
+              undoAvailable={undoActivityId === activity.id}
+              onClick={() => handleCardTap(activity)}
               onEdit={() => setEditActivity(activity)}
+              onCollapse={collapseCard}
+              onSaved={() => handleInlineSaved(activity)}
+              onUndo={() => handleUndo(activity.id)}
             />
           ))}
           {/* 新規追加カード */}
@@ -124,18 +130,6 @@ export function ActikoPage() {
           )}
         </div>
       </main>
-
-      {/* 記録ダイアログ */}
-      {dialogOpen && selectedActivity && (
-        <RecordDialog
-          activity={selectedActivity}
-          date={date}
-          onClose={() => {
-            setDialogOpen(false);
-            setSelectedActivity(null);
-          }}
-        />
-      )}
 
       {/* アクティビティ作成ダイアログ */}
       {createActivityOpen && (

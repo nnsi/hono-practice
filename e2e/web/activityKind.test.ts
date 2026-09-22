@@ -1,6 +1,10 @@
 import type { Page } from "playwright";
 import { describe, it } from "vitest";
 
+import {
+  expandActikoCard,
+  waitForActikoCardCollapsed,
+} from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 
@@ -32,26 +36,21 @@ describe("activity kinds", () => {
     await page.click('button:has-text("作成")');
     await page.waitForSelector('text="種類付活動"', { timeout: 15000 });
 
-    // 記録ダイアログを開いて種類が選べる
-    await page.click('text="種類付活動"');
-    await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
-    const modal = page.locator(".modal-backdrop");
-    await modal.locator('button:has-text("朝")').waitFor({ state: "visible" });
-    await modal.locator('button:has-text("夜")').waitFor({ state: "visible" });
+    // カードを展開して種類が選べる
+    const card = await expandActikoCard(page, "種類付活動");
+    await card.locator('button:has-text("朝")').waitFor({ state: "visible" });
+    await card.locator('button:has-text("夜")').waitFor({ state: "visible" });
 
     // 朝を選んで数量を入力
-    await modal.locator('button:has-text("朝")').click();
-    await modal.locator('input[type="number"]').fill("5");
+    await card.locator('button:has-text("朝")').click();
+    await card.locator('input[type="number"]').fill("5");
     // メモを入れる
-    await modal
+    await card
       .locator('textarea[placeholder="メモを入力..."]')
       .fill("気持ちよかった");
-    await modal.locator('button:has-text("記録する")').click();
+    await card.locator('button:has-text("記録する")').click();
 
-    await page.waitForSelector(".modal-backdrop", {
-      state: "detached",
-      timeout: 15000,
-    });
+    await waitForActikoCardCollapsed(page, "種類付活動");
 
     // Daily に遷移してメモ・種類付きで記録されたことを確認
     await page.click('a[href="/daily"]');

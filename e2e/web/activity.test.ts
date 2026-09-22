@@ -1,5 +1,11 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import {
+  actikoCard,
+  expandActikoCard,
+  expandedActikoCard,
+  waitForActikoCardCollapsed,
+} from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 
@@ -18,28 +24,51 @@ describe("activity", () => {
     await page.waitForSelector('text="E2Eテスト活動"', { timeout: 15000 });
   });
 
-  it("アクティビティ記録ダイアログで記録できる", async () => {
+  it("カードをその場で展開して記録できる", async () => {
     const page = getPage();
     await login(page, "e2e@example.com", "password123");
 
-    // シード済み「E2Eランニング」カードを押下
-    await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
-    await page.click('text="E2Eランニング"');
+    // シード済み「E2Eランニング」カードを押下するとモーダルではなくカードが展開する
+    const card = await expandActikoCard(page, "E2Eランニング");
+    expect(await page.locator(".modal-backdrop").count()).toBe(0);
 
-    // ModalOverlay が開く
-    await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
+    // 展開したカード内の数量入力フィールドに記録
+    await card.locator('input[type="number"]').fill("10");
+    await card.locator('button:has-text("記録する")').click();
 
-    // モーダル内の数量入力フィールドに記録
-    const modal = page.locator(".modal-backdrop");
-    const quantityInput = modal.locator('input[type="number"]');
-    await quantityInput.fill("10");
-    await page.click('button:has-text("記録する")');
+    // 保存後にカードが折りたたまれ、記録済み表示になる
+    await waitForActikoCardCollapsed(page, "E2Eランニング");
+    await actikoCard(page, "E2Eランニング")
+      .locator("button.activity-done")
+      .waitFor({ state: "visible", timeout: 15000 });
+  });
 
-    // ダイアログが閉じることを確認
-    await page.waitForSelector(".modal-backdrop", {
-      state: "detached",
-      timeout: 15000,
-    });
+  it("チェックモードはカードのタップだけで記録され、取り消せる", async () => {
+    const page = getPage();
+    await login(page, "e2e@example.com", "password123");
+
+    // Kind なしのチェック活動を作成
+    await page.click('button:has-text("追加")');
+    await page.fill('input[placeholder="アクティビティ名"]', "E2E即時チェック");
+    await page.click('.modal-backdrop button:has-text("チェック")');
+    await page.click('button:has-text("作成")');
+    const card = actikoCard(page, "E2E即時チェック");
+    await card.waitFor({ state: "visible", timeout: 15000 });
+
+    // 1 タップで記録され、モーダルも展開も出ない
+    await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await card.locator("button").first().click();
+    await card
+      .locator("button.activity-done")
+      .waitFor({ state: "visible", timeout: 15000 });
+    expect(await page.locator(".modal-backdrop").count()).toBe(0);
+    expect(await expandedActikoCard(page, "E2E即時チェック").count()).toBe(0);
+
+    // 猶予中の「取り消す」で未記録に戻る
+    await card.locator('button:has-text("取り消す")').click();
+    await card
+      .locator("button.activity-done")
+      .waitFor({ state: "detached", timeout: 15000 });
   });
 
   it("アクティビティを編集できる", async () => {

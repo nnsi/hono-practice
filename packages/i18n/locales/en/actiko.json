@@ -39,5 +39,7 @@
   "removeImage": "Remove image",
   "activitiesEmpty": "No activities",
   "tapToAdd": "Tap to add one",
-  "testImageTitle": "Generate test image"
+  "testImageTitle": "Generate test image",
+  "collapse": "Close",
+  "undo": "Undo"
 }

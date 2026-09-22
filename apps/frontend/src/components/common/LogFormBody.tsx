@@ -1,18 +1,14 @@
 import { useState } from "react";
 
-import { emitDebtFeedback } from "@packages/frontend-shared";
 import { resolveRecordingMode } from "@packages/frontend-shared/recording-modes/resolveRecordingMode";
 import type { SaveLogParams } from "@packages/frontend-shared/recording-modes/types";
-import { getServerNowISOString } from "@packages/sync-engine";
 import { useLiveQuery } from "dexie-react-hooks";
 
-import { activityLogRepository } from "../../db/activityLogRepository";
 import type { DexieActivity } from "../../db/schema";
 import { db } from "../../db/schema";
 import { useActivityKinds } from "../../hooks/useActivityKinds";
-import { syncEngine } from "../../sync/syncEngine";
 import { getRecordingModeComponent } from "../recording-modes/registry";
-import { computeDebtFeedbackForAllGoals } from "./computeDebtFeedback";
+import { saveActivityLog } from "./saveActivityLog";
 
 export function LogFormBody({
   activity,
@@ -41,58 +37,11 @@ export function LogFormBody({
 
   const handleSave = async (params: SaveLogParams) => {
     setIsSubmitting(true);
-
-    // Compute debt feedback BEFORE creating the log
-    const feedbackResults = await computeDebtFeedbackForAllGoals(
-      activity.id,
-      params.quantity ?? 0,
-      date,
-    );
-
-    // バイナリモードの場合、同一キー（date+activityId+activityKindId）の既存ログがあればquantityを加算
-    if (activity.recordingMode === "binary") {
-      const existingLog = await db.activityLogs
-        .where("[date+activityId]")
-        .equals([date, activity.id])
-        .filter(
-          (l) =>
-            l.activityKindId === params.activityKindId && l.deletedAt === null,
-        )
-        .first();
-
-      if (existingLog) {
-        await db.activityLogs.update(existingLog.id, {
-          quantity: (existingLog.quantity ?? 0) + (params.quantity ?? 1),
-          updatedAt: getServerNowISOString(),
-          _syncStatus: "pending" as const,
-        });
-      } else {
-        await activityLogRepository.createActivityLog({
-          activityId: activity.id,
-          activityKindId: params.activityKindId,
-          quantity: params.quantity,
-          memo: params.memo,
-          date,
-          time: null,
-          taskId: null,
-        });
-      }
-    } else {
-      await activityLogRepository.createActivityLog({
-        activityId: activity.id,
-        activityKindId: params.activityKindId,
-        quantity: params.quantity,
-        memo: params.memo,
-        date,
-        time: null,
-        taskId: null,
-      });
+    try {
+      await saveActivityLog(activity, date, params);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    emitDebtFeedback(feedbackResults);
-
-    syncEngine.syncActivityLogs();
-    setIsSubmitting(false);
     onDone();
   };
 

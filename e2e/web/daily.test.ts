@@ -1,31 +1,21 @@
 import type { Page } from "playwright";
 import { describe, expect, it } from "vitest";
 
+import {
+  expandActikoCard,
+  waitForActikoCardCollapsed,
+} from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 import { BASE_URL } from "../helpers/config";
 
 async function recordRunningOnActiko(page: Page, quantity: string) {
   await page.goto(`${BASE_URL}/actiko`);
-  const runningCard = page
-    .locator("button")
-    .filter({ hasText: "E2Eランニング" })
-    .first();
-  await runningCard.waitFor({ state: "visible", timeout: 15000 });
-  // 初回サーバー sync の Dexie 書き込みで liveQuery が連発し、click が
-  // "element was detached" で失敗する。force でアクション可能性チェックを
-  // 飛ばし、retry なしで一発で実行する。
-  await runningCard.click({ force: true, timeout: 15000 });
-  await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
-
-  const modal = page.locator(".modal-backdrop");
-  await modal.locator('input[type="number"]').fill(quantity);
-  await modal.locator('button:has-text("記録する")').click();
-
-  await page.waitForSelector(".modal-backdrop", {
-    state: "detached",
-    timeout: 15000,
-  });
+  // ホームのカードはモーダルではなくその場で展開して記録する
+  const card = await expandActikoCard(page, "E2Eランニング");
+  await card.locator('input[type="number"]').fill(quantity);
+  await card.locator('button:has-text("記録する")').click();
+  await waitForActikoCardCollapsed(page, "E2Eランニング");
 }
 
 describe("daily", () => {

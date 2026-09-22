@@ -39,5 +39,7 @@
   "removeImage": "画像を削除",
   "activitiesEmpty": "アクティビティがありません",
   "tapToAdd": "タップして追加しましょう",
-  "testImageTitle": "テスト画像を生成"
+  "testImageTitle": "テスト画像を生成",
+  "collapse": "閉じる",
+  "undo": "取り消す"
 }
