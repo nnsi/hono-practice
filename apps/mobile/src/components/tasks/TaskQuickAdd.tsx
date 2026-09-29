@@ -2,16 +2,17 @@ import { useRef } from "react";
 
 import { useTranslation } from "@packages/i18n";
 import { VALIDATION } from "@packages/types/validation";
-import { Text, type TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { mobileTestIds } from "../../testing/testIds";
 import { FormButton } from "../common/FormButton";
 import { FormInput } from "../common/FormInput";
+import type { IMESafeTextInputRef } from "../common/imeTextInputTypes";
 import { useTaskQuickAdd } from "./useTaskQuickAdd";
 
 export function TaskQuickAdd({ defaultDate }: { defaultDate?: string }) {
   const { t } = useTranslation("task");
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<IMESafeTextInputRef>(null);
   const { title, setTitle, isSubmitting, hasError, canSubmit, submit } =
     useTaskQuickAdd(defaultDate);
   const handleSubmit = async () => {
