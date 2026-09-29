@@ -1,10 +1,11 @@
 import { useRef } from "react";
 
 import { useTranslation } from "@packages/i18n";
-import { Text, type TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { FormButton } from "../../common/FormButton";
 import { FormInput } from "../../common/FormInput";
+import type { IMESafeTextInputRef } from "../../common/imeTextInputTypes";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
 import type { useTimerMode } from "./useTimerMode";
@@ -15,7 +16,7 @@ export function TimerManualPanel({
   vm: ReturnType<typeof useTimerMode>;
 }) {
   const { t } = useTranslation("recording");
-  const quantityRef = useRef<TextInput & { select?: () => void }>(null);
+  const quantityRef = useRef<IMESafeTextInputRef>(null);
 
   return (
     <View className="gap-4">
