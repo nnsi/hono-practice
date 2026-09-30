@@ -1,5 +1,6 @@
 import { isVirtualScheduledTask } from "@packages/frontend-shared/hooks/materializeScheduledTask";
 
+import { TaskActivityProvider } from "./TaskActivityProvider";
 import { TaskSchedulesSection } from "./TaskSchedulesSection";
 import { TasksActiveSection } from "./TasksActiveSection";
 import { TasksArchivedSection } from "./TasksArchivedSection";
@@ -8,6 +9,14 @@ import { TasksTabs } from "./TasksTabs";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
+  return (
+    <TaskActivityProvider>
+      <TasksPageContent />
+    </TaskActivityProvider>
+  );
+}
+
+function TasksPageContent() {
   const {
     activeTab,
     setActiveTab,

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { mobileTestIds } from "../../testing/testIds";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { TaskActivityProvider } from "./TaskActivityProvider";
 import { TaskCreateDialog } from "./TaskCreateDialog";
 import { TaskEditDialog } from "./TaskEditDialog";
 import { TaskGroup } from "./TaskGroup";
@@ -15,6 +16,14 @@ import { TasksTabs } from "./TasksTabs";
 import { useTasksPage } from "./useTasksPage";
 
 export function TasksPage() {
+  return (
+    <TaskActivityProvider>
+      <TasksPageContent />
+    </TaskActivityProvider>
+  );
+}
+
+function TasksPageContent() {
   const { t } = useTranslation("task");
   const {
     activeTab,
