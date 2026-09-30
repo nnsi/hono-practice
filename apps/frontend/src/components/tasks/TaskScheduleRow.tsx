@@ -10,8 +10,8 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { useActivities } from "../../hooks/useActivities";
 import { renderActivityIcon } from "../goal/activityHelpers";
+import { useTaskActivityData } from "./TaskActivityProvider";
 import { useRecurrenceSummary } from "./useRecurrenceSummary";
 
 type Props = {
@@ -32,9 +32,9 @@ export function TaskScheduleRow({
 }: Props) {
   const { t } = useTranslation("task");
   const summarize = useRecurrenceSummary();
-  const { activities } = useActivities();
+  const { activityMap } = useTaskActivityData();
   const linkedActivity = schedule.activityId
-    ? activities.find((a) => a.id === schedule.activityId)
+    ? activityMap.get(schedule.activityId)
     : undefined;
   const range = formatScheduleDateRange(schedule);
   const paused = !schedule.isActive;

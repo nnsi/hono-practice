@@ -21,10 +21,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { preference, isDark, setTheme } = useTheme();
   const colors = useMemo(() => getThemeColors(isDark), [isDark]);
 
+  // A parent route update is not a theme change; avoid redrawing hidden tabs.
+  const value = useMemo(
+    () => ({ preference, isDark, colors, setTheme }),
+    [preference, isDark, colors, setTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ preference, isDark, colors, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 
