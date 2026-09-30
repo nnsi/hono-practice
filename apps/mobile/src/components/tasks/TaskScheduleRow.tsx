@@ -4,10 +4,9 @@ import { useTranslation } from "@packages/i18n";
 import { CalendarDays, Pause, Play, Repeat, Trash2 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
-import { useActivities } from "../../hooks/useActivities";
-import { useIconBlobMap } from "../../hooks/useIconBlobMap";
 import { mobileTestIds } from "../../testing/testIds";
 import { ActivityIcon } from "../common/ActivityIcon";
+import { useTaskActivityData } from "./TaskActivityProvider";
 import { useRecurrenceSummary } from "./useRecurrenceSummary";
 
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -27,10 +26,9 @@ export function TaskScheduleRow({
 }: Props) {
   const { t } = useTranslation("task");
   const summarize = useRecurrenceSummary();
-  const { activities } = useActivities();
-  const iconBlobMap = useIconBlobMap();
+  const { activityMap, iconBlobMap } = useTaskActivityData();
   const linkedActivity = schedule.activityId
-    ? activities.find((a) => a.id === schedule.activityId)
+    ? activityMap.get(schedule.activityId)
     : undefined;
   const range = formatScheduleDateRange(schedule);
   const paused = !schedule.isActive;

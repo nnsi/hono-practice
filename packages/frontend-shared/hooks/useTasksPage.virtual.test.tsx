@@ -13,6 +13,20 @@ describe("useTasksPage 仮想タスクの表示と実体化", () => {
 
   beforeEach(reset);
 
+  it("表示・再描画・画面への戻りだけでは定期タスクをDBに追加しない", () => {
+    for (let visit = 0; visit < 3; visit++) {
+      const { result, rerender, unmount } = renderHook(() => useTasksPage());
+      rerender();
+      expect(
+        result.current.tasks.filter((t) => t.id === virtualId),
+      ).toHaveLength(1);
+      expect(mocks.createTask).not.toHaveBeenCalled();
+      expect(mocks.updateTask).not.toHaveBeenCalled();
+      expect(mocks.getTasksByScheduledDate).not.toHaveBeenCalled();
+      unmount();
+    }
+  });
+
   it("今日該当するスケジュールを仮想タスクとして実 Task と一緒に dueToday に表示する", () => {
     const { result } = renderHook(() => useTasksPage());
 

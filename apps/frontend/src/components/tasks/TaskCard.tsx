@@ -1,9 +1,6 @@
-import { useMemo } from "react";
-
 import { getToday } from "@packages/frontend-shared/utils/dateUtils";
 import { useTranslation } from "@packages/i18n";
 import dayjs from "dayjs";
-import { useLiveQuery } from "dexie-react-hooks";
 import {
   CalendarDays,
   CheckCircle2,
@@ -12,9 +9,8 @@ import {
   Repeat,
 } from "lucide-react";
 
-import { type DexieActivityKind, db } from "../../db/schema";
-import { useActivities } from "../../hooks/useActivities";
 import { renderActivityIcon } from "../goal/activityHelpers";
+import { useTaskActivityData } from "./TaskActivityProvider";
 import { TaskCardActions } from "./TaskCardActions";
 import type { TaskItem } from "./types";
 
@@ -40,23 +36,17 @@ export function TaskCard({
   onMoveToToday?: () => void;
 }) {
   const { t } = useTranslation("task");
-  const { activities } = useActivities();
-  const activityMap = useMemo(
-    () => new Map(activities.map((a) => [a.id, a])),
-    [activities],
-  );
+  const { activityMap, kindMap } = useTaskActivityData();
   const linkedActivity = task.activityId
     ? activityMap.get(task.activityId)
     : undefined;
-
-  const rawKind = useLiveQuery<DexieActivityKind | undefined>(
-    () =>
-      task.activityKindId
-        ? db.activityKinds.get(task.activityKindId)
-        : undefined,
-    [task.activityKindId],
-  );
-  const linkedKind = rawKind && !rawKind.deletedAt ? rawKind : undefined;
+  const rawKind = task.activityKindId
+    ? kindMap.get(task.activityKindId)
+    : undefined;
+  const linkedKind =
+    rawKind && !rawKind.deletedAt && rawKind.activityId === task.activityId
+      ? rawKind
+      : undefined;
 
   const today = getToday();
   const showMoveToToday =

@@ -186,3 +186,26 @@ maestro test .maestro/flows/login.yaml   # smoke.yaml は clearState の都合�
 - ローカル: `.env` から読み込み（git管理外）
 - EAS Build: `eas env:create` でサーバー側に登録
 - アプリ内参照: `process.env.EXPO_PUBLIC_*`
+
+## iOS 日本語IMEの入力欄
+
+`IMESafeTextInput.ios.tsx` は `@expo/ui` の SwiftUI TextInput を使う。
+Expo 57.0.4のModules Coreと互換性を保つため、`@expo/ui`も57.0.4に固定する。
+更新時はnativeコンパイルも確認する（57.0.20は新しいCoreのContentOrigin APIが必要）。
+React Native Fabric の入力欄で変換中の下線が消える問題を避けるため、
+日本語入力可能な単一行・複数行・Notes検索欄をこの実装にまとめている。
+数値・パスワード欄とAndroid/Webは `NativeIMESafeTextInput` を使う。
+
+入力中は `defaultValue` を固定し、親の再描画で未確定文字を書き戻さない。
+外部からのクリアには公開refの `clear()`、別レコードへの切り替えには再マウントを使う。
+SwiftUIへの移行では `className` をNativeWindで解決し、コンテナと文字のスタイルを分けて渡す。
+
+`@expo/ui` を含むnative binaryが必要。runtimeVersionを `1.1.0-expo-ui-1` に分けており、
+旧runtimeへのOTA配信は不可。iOS/Androidの新しいビルドをインストールしてから同runtimeのOTAを使う。
+
+検証時は最新JSを含む検証用artifactで次を確認する。
+
+- `maestro test .maestro/native-input.yaml` を連続2回実行：クイック追加後のクリア、Notesの複数行入力・保存・再編集・検索クリア。
+- `.maestro/task.yaml`：ダイアログの入力・編集・削除。
+- iOS日本語ソフトウェアキーボードのキーをタップし、未確定の下線→候補選択→確定後の表示・保存を確認。`inputText`による文字列注入だけではIMEの検証にならない。
+- ライト／ダーク両方で文字、背景、カーソル、変換中表示を確認。

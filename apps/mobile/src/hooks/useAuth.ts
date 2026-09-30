@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useAuthBootstrap, useAuthController } from "@packages/auth-client";
 import type { Consents } from "@packages/types/request";
@@ -49,12 +49,17 @@ export function useAuth(): AuthState {
     return () => sub.remove();
   }, [state.isLoggedIn, state.userId]);
 
-  return {
-    ...state,
-    login: authController.login,
-    googleLogin: authController.googleLogin,
-    appleLogin: authController.appleLogin,
-    register: authController.register,
-    logout: authController.logout,
-  };
+  // RootLayout also observes route changes. Keep its AuthContext value stable
+  // so switching tabs does not invalidate every mounted screen's consumers.
+  return useMemo(
+    () => ({
+      ...state,
+      login: authController.login,
+      googleLogin: authController.googleLogin,
+      appleLogin: authController.appleLogin,
+      register: authController.register,
+      logout: authController.logout,
+    }),
+    [state],
+  );
 }

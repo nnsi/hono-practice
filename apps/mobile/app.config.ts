@@ -116,7 +116,8 @@ const config: MobileExpoConfig = {
     },
   },
   owner: easOwner,
-  runtimeVersion: APP_VERSION,
+  // Expo UI changes the native runtime; keep its OTA bundles off older binaries.
+  runtimeVersion: "1.1.0-expo-ui-1",
   ...(easProjectId && {
     updates: {
       url: `https://u.expo.dev/${easProjectId}`,
