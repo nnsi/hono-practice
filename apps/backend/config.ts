@@ -69,6 +69,8 @@ export const configSchema = z
     // Webhook認証
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),
+    // Project SDK public key for read-only renewal reconciliation (REST v1).
+    REVENUECAT_API_KEY: z.string().optional(),
     // Polar Checkout
     POLAR_ACCESS_TOKEN: z.string().optional(),
     POLAR_PRICE_ID: z.string().optional(),

@@ -26,11 +26,13 @@ async function sendRevenueCatWebhook(
     body: JSON.stringify({
       event: {
         type: eventType,
+        entitlement_ids: ["premium"],
         app_user_id: userId,
         id: `evt_entitlement_${occurredAt}_${webhookSequence}`,
         original_transaction_id: providerId,
         expiration_at_ms: occurredAt + 30 * 24 * 60 * 60 * 1000,
         event_timestamp_ms: occurredAt,
+        environment: "SANDBOX",
       },
     }),
   });
@@ -157,7 +159,12 @@ describe("entitlement", () => {
         Authorization: "Bearer wrong_key",
       },
       body: JSON.stringify({
-        event: { type: "INITIAL_PURCHASE", app_user_id: "x", id: "1" },
+        event: {
+          type: "INITIAL_PURCHASE",
+          entitlement_ids: ["premium"],
+          app_user_id: "x",
+          id: "1",
+        },
       }),
     });
     expect(res.status).toBe(401);

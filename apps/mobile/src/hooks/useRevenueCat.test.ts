@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — must be declared before any import
@@ -80,6 +80,7 @@ function makeDb() {
 // ---------------------------------------------------------------------------
 
 describe("executePurchase", () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
     makeDb();
@@ -95,6 +96,29 @@ describe("executePurchase", () => {
 
     expect(result).toEqual({ ok: true, userCancelled: false });
     expect(mocks.apiGetMe).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    "free",
+    "offline",
+  ])("keeps accepted payment pending when backend is %s", async (backend) => {
+    vi.useFakeTimers();
+    mocks.purchasePackage.mockResolvedValue({});
+    if (backend === "offline")
+      mocks.apiGetMe.mockRejectedValue(new Error("offline"));
+    else mocks.apiGetMe.mockResolvedValue({ plan: "free" });
+    const pending = executePurchase({ identifier: "pkg" } as never);
+    await vi.runAllTimersAsync();
+    expect(await pending).toEqual({
+      ok: false,
+      userCancelled: false,
+      pending: true,
+    });
+    expect(mocks.purchasePackage).toHaveBeenCalledOnce();
+    expect(mocks.runAsync).not.toHaveBeenCalledWith(
+      "UPDATE auth_state SET plan = ? WHERE id = 'current'",
+      ["premium"],
+    );
   });
 
   it("returns ok=false userCancelled=true when user cancels", async () => {
@@ -121,6 +145,7 @@ describe("executePurchase", () => {
 // ---------------------------------------------------------------------------
 
 describe("executeRestore", () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
     makeDb();
@@ -134,7 +159,7 @@ describe("executeRestore", () => {
 
     const result = await executeRestore();
 
-    expect(result).toBe(true);
+    expect(result).toEqual({ ok: true, pending: false });
     expect(mocks.apiGetMe).toHaveBeenCalledOnce();
     expect(mocks.runAsync).toHaveBeenCalledWith(
       "UPDATE auth_state SET plan = ? WHERE id = 'current'",
@@ -142,12 +167,23 @@ describe("executeRestore", () => {
     );
   });
 
+  it("reports pending when restored rights have not reached the backend", async () => {
+    vi.useFakeTimers();
+    mocks.restorePurchases.mockResolvedValue({
+      entitlements: { active: { premium: {} } },
+    });
+    mocks.apiGetMe.mockResolvedValue({ plan: "free" });
+    const pending = executeRestore();
+    await vi.runAllTimersAsync();
+    expect(await pending).toEqual({ ok: false, pending: true });
+  });
+
   it("returns false and does not call apiGetMe on restore failure", async () => {
     mocks.restorePurchases.mockRejectedValue(new Error("restore failed"));
 
     const result = await executeRestore();
 
-    expect(result).toBe(false);
+    expect(result).toEqual({ ok: false });
     expect(mocks.apiGetMe).not.toHaveBeenCalled();
   });
 });

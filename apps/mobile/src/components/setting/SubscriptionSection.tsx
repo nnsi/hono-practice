@@ -20,7 +20,8 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
   const { t } = useTranslation("settings");
   const router = useRouter();
   const plan = usePlan();
-  const { isRestoring, restorePurchases, error } = useRevenueCat();
+  const { isRestoring, restorePurchases, error, pendingMessage } =
+    useRevenueCat();
   const { data: subscription, isLoading } = useSubscription();
 
   const isPremium = plan === "premium";
@@ -114,6 +115,13 @@ export function SubscriptionSection({ shadow }: { shadow: ShadowStyle }) {
         </>
       )}
 
+      {pendingMessage && !isPremium && (
+        <View className="mx-4 mb-3">
+          <Text className="text-xs text-blue-700 dark:text-blue-400">
+            {pendingMessage}
+          </Text>
+        </View>
+      )}
       {error && (
         <View className="mx-4 mb-3">
           <Text className="text-xs text-red-500 dark:text-red-400">

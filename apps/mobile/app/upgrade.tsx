@@ -42,6 +42,8 @@ export default function UpgradeScreen() {
     isLoadingOfferings,
     isPurchasing,
     isRestoring,
+    purchasePending,
+    pendingMessage,
     error,
     purchasePackage,
     restorePurchases,
@@ -117,11 +119,15 @@ export default function UpgradeScreen() {
         {successMessage && (
           <StatusBar message={successMessage} variant="success" />
         )}
+        {pendingMessage && plan !== "premium" && (
+          <StatusBar message={pendingMessage} variant="info" />
+        )}
         {error && <StatusBar message={error} variant="error" />}
 
         <UpgradeActionButtons
           plan={plan}
           isPurchasing={isPurchasing}
+          purchasePending={purchasePending}
           isRestoring={isRestoring}
           isLoadingOfferings={isLoadingOfferings}
           hasPackage={!!currentPackage}

@@ -34,11 +34,13 @@ export function makeRevenueCatEvent(
   return {
     event: {
       type,
+      entitlement_ids: ["premium"],
       app_user_id: "rc-user-001",
       id: "evt-abc-123",
       original_transaction_id: "txn-xyz-999",
       expiration_at_ms: 1800000000000,
       event_timestamp_ms: 1700000000000,
+      environment: "SANDBOX",
       ...overrides,
     },
   };
@@ -59,6 +61,6 @@ export async function sendRevenueCatWebhook(
       },
       body: JSON.stringify(body),
     },
-    { REVENUECAT_WEBHOOK_AUTH_KEY: TEST_AUTH_KEY },
+    { REVENUECAT_WEBHOOK_AUTH_KEY: TEST_AUTH_KEY, NODE_ENV: "test" },
   );
 }

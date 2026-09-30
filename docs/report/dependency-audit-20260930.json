@@ -1,0 +1,2510 @@
+{
+  "date": "2026-09-30",
+  "commit": "2cabf90a",
+  "fullMetadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 9,
+      "moderate": 44,
+      "high": 87,
+      "critical": 1
+    },
+    "dependencies": 1715,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1715
+  },
+  "productionMetadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 1,
+      "moderate": 17,
+      "high": 37,
+      "critical": 0
+    },
+    "dependencies": 918,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 918
+  },
+  "advisoryEntries": 124,
+  "uniqueAdvisories": 102,
+  "entries": [
+    {
+      "auditId": "1102341",
+      "advisory": "GHSA-67mh-4wv8-2f99",
+      "package": "esbuild",
+      "severity": "moderate",
+      "title": "esbuild enables any website to send any requests to the development server and read the response",
+      "installedVersions": [
+        "0.18.20"
+      ],
+      "affected": "<=0.24.2",
+      "patched": ">=0.25.0",
+      "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+      "reportedPaths": [
+        ".>drizzle-kit>@esbuild-kit/esm-loader>@esbuild-kit/core-utils>esbuild"
+      ],
+      "scope": "開発ツール",
+      "assessment": "drizzle-kitのloader経由。serve APIの直接利用なし。開発サーバー経路の問題でWorkers本番APIには非該当。",
+      "action": "0.25.0以上を含むdrizzle-kit/loaderへ更新"
+    },
+    {
+      "auditId": "1110996",
+      "advisory": "GHSA-554w-wpv2-vw27",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "node-forge has ASN.1 Unbounded Recursion",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.3.2",
+      "patched": ">=1.3.2",
+      "url": "https://github.com/advisories/GHSA-554w-wpv2-vw27",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1110998",
+      "advisory": "GHSA-5gfm-wpxj-wjgq",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "node-forge has an Interpretation Conflict vulnerability via its ASN.1 Validator Desynchronization",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.3.2",
+      "patched": ">=1.3.2",
+      "url": "https://github.com/advisories/GHSA-5gfm-wpxj-wjgq",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1111068",
+      "advisory": "GHSA-65ch-62r8-g69g",
+      "package": "node-forge",
+      "severity": "moderate",
+      "title": "node-forge is vulnerable to ASN.1 OID Integer Truncation",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.3.2",
+      "patched": ">=1.3.2",
+      "url": "https://github.com/advisories/GHSA-65ch-62r8-g69g",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1112706",
+      "advisory": "GHSA-73rr-hh4g-fpgx",
+      "package": "diff",
+      "severity": "low",
+      "title": "jsdiff has a Denial of Service vulnerability in parsePatch and applyPatch",
+      "installedVersions": [
+        "7.0.0"
+      ],
+      "affected": ">=6.0.0 <8.0.3",
+      "patched": ">=8.0.3",
+      "url": "https://github.com/advisories/GHSA-73rr-hh4g-fpgx",
+      "reportedPaths": [
+        ".>eas-cli>diff"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIのpatch処理。未信頼patch入力時のDoS。",
+      "action": "8.0.3以上。major更新は親CLIから"
+    },
+    {
+      "auditId": "1113375",
+      "advisory": "GHSA-83g3-92jg-28cx",
+      "package": "tar",
+      "severity": "high",
+      "title": "Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<7.5.8",
+      "patched": ">=7.5.8",
+      "url": "https://github.com/advisories/GHSA-83g3-92jg-28cx",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1113461",
+      "advisory": "GHSA-3ppc-4f35-3m26",
+      "package": "minimatch",
+      "severity": "high",
+      "title": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern",
+      "installedVersions": [
+        "5.1.2"
+      ],
+      "affected": ">=5.0.0 <5.1.7",
+      "patched": ">=5.1.7",
+      "url": "https://github.com/advisories/GHSA-3ppc-4f35-3m26",
+      "reportedPaths": [
+        ".>eas-cli>minimatch"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIのファイルpattern処理。外部patternを受けるアプリAPIは検出なし。",
+      "action": "5.1.8以上"
+    },
+    {
+      "auditId": "1113540",
+      "advisory": "GHSA-7r86-cg39-jmmj",
+      "package": "minimatch",
+      "severity": "high",
+      "title": "minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments",
+      "installedVersions": [
+        "5.1.2"
+      ],
+      "affected": ">=5.0.0 <5.1.8",
+      "patched": ">=5.1.8",
+      "url": "https://github.com/advisories/GHSA-7r86-cg39-jmmj",
+      "reportedPaths": [
+        ".>eas-cli>minimatch"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIのファイルpattern処理。外部patternを受けるアプリAPIは検出なし。",
+      "action": "5.1.8以上"
+    },
+    {
+      "auditId": "1113548",
+      "advisory": "GHSA-23c5-xmqv-rm74",
+      "package": "minimatch",
+      "severity": "high",
+      "title": "minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions",
+      "installedVersions": [
+        "5.1.2"
+      ],
+      "affected": ">=5.0.0 <5.1.8",
+      "patched": ">=5.1.8",
+      "url": "https://github.com/advisories/GHSA-23c5-xmqv-rm74",
+      "reportedPaths": [
+        ".>eas-cli>minimatch"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIのファイルpattern処理。外部patternを受けるアプリAPIは検出なし。",
+      "action": "5.1.8以上"
+    },
+    {
+      "auditId": "1113715",
+      "advisory": "GHSA-2g4f-4pwh-qvx6",
+      "package": "ajv",
+      "severity": "moderate",
+      "title": "ajv has ReDoS when using `$data` option",
+      "installedVersions": [
+        "8.11.0"
+      ],
+      "affected": ">=7.0.0-alpha.0 <8.18.0",
+      "patched": ">=8.18.0",
+      "url": "https://github.com/advisories/GHSA-2g4f-4pwh-qvx6",
+      "reportedPaths": [
+        ".>eas-cli>ajv"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIのJSON schema検証。対象は$dataを使う未信頼入力。アプリAPIはZod。",
+      "action": "8.18.0以上"
+    },
+    {
+      "auditId": "1114200",
+      "advisory": "GHSA-qffp-2rhf-9h96",
+      "package": "tar",
+      "severity": "high",
+      "title": "tar has Hardlink Path Traversal via Drive-Relative Linkpath",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.9",
+      "patched": ">=7.5.10",
+      "url": "https://github.com/advisories/GHSA-qffp-2rhf-9h96",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1114302",
+      "advisory": "GHSA-9ppj-qmqm-q256",
+      "package": "tar",
+      "severity": "high",
+      "title": "node-tar Symlink Path Traversal via Drive-Relative Linkpath",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.10",
+      "patched": ">=7.5.11",
+      "url": "https://github.com/advisories/GHSA-9ppj-qmqm-q256",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1115545",
+      "advisory": "GHSA-2328-f5f3-gj25",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "Forge has a basicConstraints bypass in its certificate chain verification (RFC 5280 violation)",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<=1.3.3",
+      "patched": ">=1.4.0",
+      "url": "https://github.com/advisories/GHSA-2328-f5f3-gj25",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1115546",
+      "advisory": "GHSA-q67f-28xg-22rw",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "Forge has signature forgery in Ed25519 due to missing S > L check",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.4.0",
+      "patched": ">=1.4.0",
+      "url": "https://github.com/advisories/GHSA-q67f-28xg-22rw",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1115548",
+      "advisory": "GHSA-5m6q-g25r-mvwx",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "Forge has Denial of Service via Infinite Loop in BigInteger.modInverse() with Zero Input",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.4.0",
+      "patched": ">=1.4.0",
+      "url": "https://github.com/advisories/GHSA-5m6q-g25r-mvwx",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1115556",
+      "advisory": "GHSA-48c2-rrv3-qjmp",
+      "package": "yaml",
+      "severity": "moderate",
+      "title": "yaml is vulnerable to Stack Overflow via deeply nested YAML collections",
+      "installedVersions": [
+        "2.6.0"
+      ],
+      "affected": ">=2.0.0 <2.8.3",
+      "patched": ">=2.8.3",
+      "url": "https://github.com/advisories/GHSA-48c2-rrv3-qjmp",
+      "reportedPaths": [
+        ".>eas-cli>yaml"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS CLIの設定読込。深いYAMLによるDoS。",
+      "action": "2.8.3以上"
+    },
+    {
+      "auditId": "1115612",
+      "advisory": "GHSA-ppp5-5v6c-4jwp",
+      "package": "node-forge",
+      "severity": "high",
+      "title": "Forge has signature forgery in RSA-PKCS due to ASN.1 extra field  ",
+      "installedVersions": [
+        "1.3.1"
+      ],
+      "affected": "<1.4.0",
+      "patched": ">=1.4.0",
+      "url": "https://github.com/advisories/GHSA-ppp5-5v6c-4jwp",
+      "reportedPaths": [
+        ".>eas-cli>node-forge"
+      ],
+      "scope": "署名ツール",
+      "assessment": "EAS CLIの証明書・鍵処理。ユーザーの記録APIには非搭載だが、署名環境への影響は無視しない。",
+      "action": "1.4.0以上を含むEAS CLIへ更新"
+    },
+    {
+      "auditId": "1117097",
+      "advisory": "GHSA-wh4c-j3r5-mjhp",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: XML injection via unsafe CDATA serialization allows attacker-controlled markup insertion",
+      "installedVersions": [
+        "0.7.13"
+      ],
+      "affected": "<0.8.12",
+      "patched": ">=0.8.12",
+      "url": "https://github.com/advisories/GHSA-wh4c-j3r5-mjhp",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1117894",
+      "advisory": "GHSA-2v35-w6hq-6mfw",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Uncontrolled recursion in XML serialization leads to DoS",
+      "installedVersions": [
+        "0.7.13"
+      ],
+      "affected": "<0.8.13",
+      "patched": ">=0.8.13",
+      "url": "https://github.com/advisories/GHSA-2v35-w6hq-6mfw",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1117897",
+      "advisory": "GHSA-f6ww-3ggp-fr8h",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom has XML injection through unvalidated DocumentType serialization",
+      "installedVersions": [
+        "0.7.13"
+      ],
+      "affected": "<0.8.13",
+      "patched": ">=0.8.13",
+      "url": "https://github.com/advisories/GHSA-f6ww-3ggp-fr8h",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1117900",
+      "advisory": "GHSA-x6wf-f3px-wcqx",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom has XML node injection through unvalidated processing instruction serialization",
+      "installedVersions": [
+        "0.7.13"
+      ],
+      "affected": "<0.8.13",
+      "patched": ">=0.8.13",
+      "url": "https://github.com/advisories/GHSA-x6wf-f3px-wcqx",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1117903",
+      "advisory": "GHSA-j759-j44w-7fr8",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom has XML node injection through unvalidated comment serialization",
+      "installedVersions": [
+        "0.7.13"
+      ],
+      "affected": "<0.8.13",
+      "patched": ">=0.8.13",
+      "url": "https://github.com/advisories/GHSA-j759-j44w-7fr8",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1119441",
+      "advisory": "GHSA-w5hq-g745-h8pq",
+      "package": "uuid",
+      "severity": "moderate",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "installedVersions": [
+        "7.0.3",
+        "8.3.2",
+        "9.0.1"
+      ],
+      "affected": "<11.1.1",
+      "patched": ">=11.1.1",
+      "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>uuid",
+        ".>eas-cli>@expo/rudder-sdk-node>uuid",
+        ".>eas-cli>uuid",
+        "apps__mobile>@bacons/apple-targets>@bacons/xcode>uuid",
+        "apps__mobile>expo>@expo/config-plugins>xcode>uuid"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "古い版はExpo/Xcode/EAS配下。問題はbuffer付きv3/v5/v6。アプリ直接依存は14.0.1で、この指摘の対象外。",
+      "action": "親依存更新。11.1.1以上への一括major overrideはしない"
+    },
+    {
+      "auditId": "1120656",
+      "advisory": "GHSA-q7cg-457f-vx79",
+      "package": "joi",
+      "severity": "moderate",
+      "title": "joi has an uncaught RangeError on deeply nested input through recursive `link()` schemas",
+      "installedVersions": [
+        "17.11.0"
+      ],
+      "affected": "<17.13.4",
+      "patched": ">=17.13.4",
+      "url": "https://github.com/advisories/GHSA-q7cg-457f-vx79",
+      "reportedPaths": [
+        ".>eas-cli>joi"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS CLI/build-jobの設定検証。recursive link、messages、rename、isoDateの入力が条件。",
+      "action": "17.13.7以上"
+    },
+    {
+      "auditId": "1120782",
+      "advisory": "GHSA-vmf3-w455-68vh",
+      "package": "tar",
+      "severity": "moderate",
+      "title": "node-tar applies PAX size override to intermediary GNU long-name/long-link headers, causing tar parser interpretation differential (file smuggling)",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.15",
+      "patched": ">=7.5.16",
+      "url": "https://github.com/advisories/GHSA-vmf3-w455-68vh",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1121318",
+      "advisory": "GHSA-87mf-gv2c-c62c",
+      "package": "ts-deepmerge",
+      "severity": "moderate",
+      "title": "ts-deepmerge: Prototype Method Override leads to DoS",
+      "installedVersions": [
+        "6.2.0"
+      ],
+      "affected": "<8.0.0",
+      "patched": ">=8.0.0",
+      "url": "https://github.com/advisories/GHSA-87mf-gv2c-c62c",
+      "reportedPaths": [
+        ".>eas-cli>ts-deepmerge"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS CLIの設定merge。未信頼オブジェクトからのprototype method上書き。",
+      "action": "8.0.0以上を含む親CLIへ更新"
+    },
+    {
+      "auditId": "1123896",
+      "advisory": "GHSA-3jxr-9vmj-r5cp",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.2",
+      "patched": ">=2.1.2",
+      "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1123939",
+      "advisory": "GHSA-w8wr-v893-vjvp",
+      "package": "tar",
+      "severity": "moderate",
+      "title": "node-tar: Process crash via PAX numeric path type confusion",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.17",
+      "patched": ">=7.5.18",
+      "url": "https://github.com/advisories/GHSA-w8wr-v893-vjvp",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1123940",
+      "advisory": "GHSA-23hp-3jrh-7fpw",
+      "package": "tar",
+      "severity": "critical",
+      "title": "node-tar: Decompression/parse DoS via unlimited input",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.18",
+      "patched": ">=7.5.19",
+      "url": "https://github.com/advisories/GHSA-23hp-3jrh-7fpw",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1123941",
+      "advisory": "GHSA-8x88-c5mf-7j5w",
+      "package": "tar",
+      "severity": "high",
+      "title": "node-tar: Negative tar entry size causes infinite loop in archive replace",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.17",
+      "patched": ">=7.5.18",
+      "url": "https://github.com/advisories/GHSA-8x88-c5mf-7j5w",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1123942",
+      "advisory": "GHSA-gvwx-54wh-qm9j",
+      "package": "tar",
+      "severity": "moderate",
+      "title": "node-tar: Uncaught Exception DoS via NUL byte in PAX path/linkpath records",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.16",
+      "patched": ">=7.5.17",
+      "url": "https://github.com/advisories/GHSA-gvwx-54wh-qm9j",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1124064",
+      "advisory": "GHSA-v2hh-gcrm-f6hx",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to host confusion via literal backslash authority delimiter",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <=3.1.3",
+      "patched": ">=3.1.4",
+      "url": "https://github.com/advisories/GHSA-v2hh-gcrm-f6hx",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1130588",
+      "advisory": "GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+      "installedVersions": [
+        "1.1.16"
+      ],
+      "affected": "<1.1.17",
+      "patched": ">=1.1.17",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>mv>rimraf>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1130589",
+      "advisory": "GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.3",
+      "patched": ">=2.1.3",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1130591",
+      "advisory": "GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+      "installedVersions": [
+        "5.0.7"
+      ],
+      "affected": ">=4.0.0 <5.0.8",
+      "patched": ">=5.0.8",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>glob>minimatch>brace-expansion",
+        "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1130709",
+      "advisory": "GHSA-fxqj-rqcc-2cmp",
+      "package": "postcss",
+      "severity": "moderate",
+      "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+      "installedVersions": [
+        "8.5.16"
+      ],
+      "affected": "<=8.5.22",
+      "patched": ">=8.5.23",
+      "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp",
+      "reportedPaths": [
+        "apps__admin-frontend>postcss",
+        "apps__frontend>@tailwindcss/typography>tailwindcss>postcss"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "CSS build時のsourceMappingURL読込。利用者提供CSSを本番でcompileする経路は検出なし。",
+      "action": "8.5.23以上"
+    },
+    {
+      "auditId": "1130715",
+      "advisory": "GHSA-8xcm-r25x-g524",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to downstream response desynchronization via retry interceptor",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.0",
+      "patched": ">=7.29.0",
+      "url": "https://github.com/advisories/GHSA-8xcm-r25x-g524",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1130718",
+      "advisory": "GHSA-4cwx-7wf7-3272",
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to cross-user information disclosure and parse-time crash via degenerate private cache directives",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.0",
+      "patched": ">=7.29.0",
+      "url": "https://github.com/advisories/GHSA-4cwx-7wf7-3272",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1130720",
+      "advisory": "GHSA-7p8r-x3mc-p8w7",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to host confusion via backslash authority introducer",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <3.1.5",
+      "patched": ">=3.1.5",
+      "url": "https://github.com/advisories/GHSA-7p8r-x3mc-p8w7",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1130726",
+      "advisory": "GHSA-m8rv-5g2x-5cg5",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to CRLF Injection via blob-like body 'type' property",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.0",
+      "patched": ">=7.29.0",
+      "url": "https://github.com/advisories/GHSA-m8rv-5g2x-5cg5",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1130729",
+      "advisory": "GHSA-jr45-8vmc-qm54",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to cross-user information disclosure via whitespace around equals in Cache-Control directives",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.0",
+      "patched": ">=7.29.0",
+      "url": "https://github.com/advisories/GHSA-jr45-8vmc-qm54",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1130731",
+      "advisory": "GHSA-v3r7-h72x-cjcm",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to cookie attribute injection via unsanitized domain and unparsed setCookie fields",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.0",
+      "patched": ">=7.29.0",
+      "url": "https://github.com/advisories/GHSA-v3r7-h72x-cjcm",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1130733",
+      "advisory": "GHSA-8j4g-w8fx-2239",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: ReDoS in CORS middleware via Access-Control-Request-Headers",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": "<4.12.34",
+      "patched": ">=4.12.34",
+      "url": "https://github.com/advisories/GHSA-8j4g-w8fx-2239",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "apps/backend/app.tsのCORSは非空allowHeadersを指定し、対象のheader反射parse経路を回避。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1130734",
+      "advisory": "GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+      "installedVersions": [
+        "5.0.7"
+      ],
+      "affected": ">=4.0.0 <5.0.9",
+      "patched": ">=5.0.9",
+      "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>glob>minimatch>brace-expansion",
+        "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1130736",
+      "advisory": "GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.4",
+      "patched": ">=2.1.4",
+      "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1130737",
+      "advisory": "GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+      "installedVersions": [
+        "1.1.16"
+      ],
+      "affected": "<1.1.18",
+      "patched": ">=1.1.18",
+      "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>mv>rimraf>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1138114",
+      "advisory": "GHSA-5p4m-2wfm-xmqj",
+      "package": "js-yaml",
+      "severity": "high",
+      "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) — CVE-2026-59870 fix not backported",
+      "installedVersions": [
+        "3.15.0"
+      ],
+      "affected": ">=3.0.0 <3.15.1",
+      "patched": ">=3.15.1",
+      "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>js-yaml"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS help / Expo xcpretty経由。YAML merge/omapによるDoS。",
+      "action": "3.15.2 / 4.3.2以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1138115",
+      "advisory": "GHSA-5p4m-2wfm-xmqj",
+      "package": "js-yaml",
+      "severity": "high",
+      "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) — CVE-2026-59870 fix not backported",
+      "installedVersions": [
+        "4.3.0"
+      ],
+      "affected": ">=4.0.0 <4.3.1",
+      "patched": ">=4.3.1",
+      "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+      "reportedPaths": [
+        "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS help / Expo xcpretty経由。YAML merge/omapによるDoS。",
+      "action": "3.15.2 / 4.3.2以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1138771",
+      "advisory": "GHSA-f23p-vx2j-j53r",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: `memo()` retains SSR output across requests, leading to cross-user data disclosure",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": ">=3.8.0 <4.12.34",
+      "patched": ">=4.12.34",
+      "url": "https://github.com/advisories/GHSA-f23p-vx2j-j53r",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "hono/jsx memo SSRを使用していない。WebはReact SPA。該当API利用なし。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1138772",
+      "advisory": "GHSA-79qm-7rj5-m7r9",
+      "package": "hono",
+      "severity": "low",
+      "title": "Hono: Proxy Helper does not remove response headers listed in the `Connection` header",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": ">=4.7.0 <4.12.34",
+      "patched": ">=4.12.34",
+      "url": "https://github.com/advisories/GHSA-79qm-7rj5-m7r9",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "hono/proxy helperの利用なし。該当API利用なし。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1138773",
+      "advisory": "GHSA-54fx-42gc-7vw4",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: Algorithmic Complexity DoS in Language Middleware",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": ">=4.12.0 <4.12.34",
+      "patched": ">=4.12.34",
+      "url": "https://github.com/advisories/GHSA-54fx-42gc-7vw4",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "hono/language middlewareの利用なし。該当API利用なし。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1138811",
+      "advisory": "GHSA-28wg-ghj8-5hjv",
+      "package": "nanoid",
+      "severity": "high",
+      "title": "nanoid: non-secure generators can loop indefinitely with negative size",
+      "installedVersions": [
+        "3.3.15",
+        "3.3.8"
+      ],
+      "affected": "<3.3.16",
+      "patched": ">=3.3.16",
+      "url": "https://github.com/advisories/GHSA-28wg-ghj8-5hjv",
+      "reportedPaths": [
+        ".>eas-cli>nanoid",
+        "apps__admin-frontend>postcss>nanoid",
+        "apps__frontend>@tailwindcss/typography>tailwindcss>postcss>nanoid"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/PostCSS経由。負数・zero・巨大sizeでの生成処理が条件。",
+      "action": "3.3.18以上"
+    },
+    {
+      "auditId": "1139427",
+      "advisory": "GHSA-2v37-7h3g-55p8",
+      "package": "nanoid",
+      "severity": "high",
+      "title": "nanoid: custom generators can loop indefinitely when size is zero",
+      "installedVersions": [
+        "3.3.15",
+        "3.3.8"
+      ],
+      "affected": "<3.3.18",
+      "patched": ">=3.3.18",
+      "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8",
+      "reportedPaths": [
+        ".>eas-cli>nanoid",
+        "apps__admin-frontend>postcss>nanoid",
+        "apps__frontend>@tailwindcss/typography>tailwindcss>postcss>nanoid"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/PostCSS経由。負数・zero・巨大sizeでの生成処理が条件。",
+      "action": "3.3.18以上"
+    },
+    {
+      "auditId": "1139510",
+      "advisory": "GHSA-r28c-9q8g-f849",
+      "package": "postcss",
+      "severity": "high",
+      "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+      "installedVersions": [
+        "8.5.16"
+      ],
+      "affected": "<=8.5.17",
+      "patched": ">=8.5.18",
+      "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+      "reportedPaths": [
+        "apps__admin-frontend>postcss",
+        "apps__frontend>@tailwindcss/typography>tailwindcss>postcss"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "CSS build時のsourceMappingURL読込。利用者提供CSSを本番でcompileする経路は検出なし。",
+      "action": "8.5.23以上"
+    },
+    {
+      "auditId": "1139513",
+      "advisory": "GHSA-9mqv-5hh9-4cgg",
+      "package": "@hono/node-server",
+      "severity": "moderate",
+      "title": "Node.js Adapter for Hono: Unauthenticated memory-leak DoS via aborted WebSocket handshake",
+      "installedVersions": [
+        "2.0.6"
+      ],
+      "affected": ">=2.0.0 <=2.0.9",
+      "patched": ">=2.0.10",
+      "url": "https://github.com/advisories/GHSA-9mqv-5hh9-4cgg",
+      "reportedPaths": [
+        ".>@hono/node-server"
+      ],
+      "scope": "ローカル実行時",
+      "assessment": "NodeローカルAPIとテストサーバー。WebSocket upgrade利用は検出なし。Workers本番には非搭載。トンネルを使うローカル確認前に更新推奨。",
+      "action": "2.0.10以上"
+    },
+    {
+      "auditId": "1145647",
+      "advisory": "GHSA-r292-9mhp-454m",
+      "package": "tar",
+      "severity": "high",
+      "title": "node-tar: Uncontrolled recursion in mapHas/filesFilter allows uncatchable stack-overflow DoS via crafted long-path tar with member selection",
+      "installedVersions": [
+        "7.5.7"
+      ],
+      "affected": "<=7.5.20",
+      "patched": ">=7.5.21",
+      "url": "https://github.com/advisories/GHSA-r292-9mhp-454m",
+      "reportedPaths": [
+        ".>eas-cli>tar"
+      ],
+      "scope": "配布ツール 優先",
+      "assessment": "EAS CLIのarchive処理。criticalは解凍量無制限によるDoS。ユーザーがAPIへtarをuploadする経路は検出なし。CLIで取得するarchiveへの影響は残る。",
+      "action": "7.5.21以上で今回検出分をカバー。critical単体の修正版7.5.19では他の指摘が残る"
+    },
+    {
+      "auditId": "1147955",
+      "advisory": "GHSA-vcc3-ghjq-m6fr",
+      "package": "decode-uri-component",
+      "severity": "moderate",
+      "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
+      "installedVersions": [
+        "0.2.2"
+      ],
+      "affected": "<=0.4.2",
+      "patched": ">=0.5.0",
+      "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+      "reportedPaths": [
+        "apps__mobile>expo-router>query-string>decode-uri-component"
+      ],
+      "scope": "Mobile実行時 優先",
+      "assessment": "expo-router→query-string。routerのJS内にquery-string importあり。普段のfork parserはURLSearchParamsだがreact-navigation fallback等も存在し、全経路非到達とは断定しない。悪意あるpercent-encoded入力のDoSを優先して解消。",
+      "action": "0.5.0以上。0.x minor変更のためquery-stringとの互換性とdeep linkを確認"
+    },
+    {
+      "auditId": "1153171",
+      "advisory": "GHSA-c83g-rgw3-j3cx",
+      "package": "browserslist",
+      "severity": "high",
+      "title": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM",
+      "installedVersions": [
+        "4.28.4"
+      ],
+      "affected": "<=4.28.6",
+      "patched": ">=4.28.7",
+      "url": "https://github.com/advisories/GHSA-c83g-rgw3-j3cx",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist",
+        "apps__mobile>expo>@expo/cli>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Babelのcompile target決定。query cache / custom stats入力が条件。",
+      "action": "4.28.7以上"
+    },
+    {
+      "auditId": "1153172",
+      "advisory": "GHSA-73wf-gq98-2v4g",
+      "package": "browserslist",
+      "severity": "high",
+      "title": "Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json custom stats (normalizeStats)",
+      "installedVersions": [
+        "4.28.4"
+      ],
+      "affected": "<=4.28.6",
+      "patched": ">=4.28.7",
+      "url": "https://github.com/advisories/GHSA-73wf-gq98-2v4g",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist",
+        "apps__mobile>expo>@expo/cli>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Babelのcompile target決定。query cache / custom stats入力が条件。",
+      "action": "4.28.7以上"
+    },
+    {
+      "auditId": "1153189",
+      "advisory": "GHSA-xwg4-73v4-xw9w",
+      "package": "nanoid",
+      "severity": "high",
+      "title": "nanoid: Integer Overflow or Wraparound",
+      "installedVersions": [
+        "3.3.8"
+      ],
+      "affected": "<3.3.12",
+      "patched": ">=3.3.12",
+      "url": "https://github.com/advisories/GHSA-xwg4-73v4-xw9w",
+      "reportedPaths": [
+        ".>eas-cli>nanoid"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/PostCSS経由。負数・zero・巨大sizeでの生成処理が条件。",
+      "action": "3.3.18以上"
+    },
+    {
+      "auditId": "1158517",
+      "advisory": "GHSA-6gmq-8vp8-gcm6",
+      "package": "@xmldom/xmldom",
+      "severity": "moderate",
+      "title": "xmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-6gmq-8vp8-gcm6",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1158518",
+      "advisory": "GHSA-6gmq-8vp8-gcm6",
+      "package": "@xmldom/xmldom",
+      "severity": "moderate",
+      "title": "xmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-6gmq-8vp8-gcm6",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1158521",
+      "advisory": "GHSA-5jgf-p345-68v8",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to host confusion via skipped IDN canonicalization on scheme-relative references",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.1.3 <3.1.6",
+      "patched": ">=3.1.6",
+      "url": "https://github.com/advisories/GHSA-5jgf-p345-68v8",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1158524",
+      "advisory": "GHSA-f65p-4m7j-42xc",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to server-side request forgery via malformed IPv6 normalization",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <3.1.6",
+      "patched": ">=3.1.6",
+      "url": "https://github.com/advisories/GHSA-f65p-4m7j-42xc",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1158527",
+      "advisory": "GHSA-fph4-wmhf-6fwf",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to server-side request forgery via repeated hostname percent-decoding",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.1.2 <3.1.6",
+      "patched": ">=3.1.6",
+      "url": "https://github.com/advisories/GHSA-fph4-wmhf-6fwf",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1158530",
+      "advisory": "GHSA-jqff-g426-hqxp",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to host confusion via percent-encoded scheme normalization",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <3.1.6",
+      "patched": ">=3.1.6",
+      "url": "https://github.com/advisories/GHSA-jqff-g426-hqxp",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1193671",
+      "advisory": "GHSA-6mj3-qw4j-hgrw",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: HTML raw-text closing-tag case mismatch causes output amplification",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0-beta.1 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-6mj3-qw4j-hgrw",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193674",
+      "advisory": "GHSA-6w3j-5fw6-r9vr",
+      "package": "joi",
+      "severity": "low",
+      "title": "joi: Prototype pollution via a `__proto__` language key in custom messages",
+      "installedVersions": [
+        "17.11.0",
+        "17.13.4"
+      ],
+      "affected": ">=17.2.0 <17.13.6",
+      "patched": ">=17.13.6",
+      "url": "https://github.com/advisories/GHSA-6w3j-5fw6-r9vr",
+      "reportedPaths": [
+        ".>eas-cli>@expo/eas-build-job>joi",
+        ".>eas-cli>joi"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS CLI/build-jobの設定検証。recursive link、messages、rename、isoDateの入力が条件。",
+      "action": "17.13.7以上"
+    },
+    {
+      "auditId": "1193679",
+      "advisory": "GHSA-gg4h-3hg2-grpc",
+      "package": "joi",
+      "severity": "low",
+      "title": "joi: object().rename() with a template target can set the validated object's prototype",
+      "installedVersions": [
+        "17.11.0",
+        "17.13.4"
+      ],
+      "affected": ">=16.0.0 <17.13.5",
+      "patched": ">=17.13.5",
+      "url": "https://github.com/advisories/GHSA-gg4h-3hg2-grpc",
+      "reportedPaths": [
+        ".>eas-cli>@expo/eas-build-job>joi",
+        ".>eas-cli>joi"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS CLI/build-jobの設定検証。recursive link、messages、rename、isoDateの入力が条件。",
+      "action": "17.13.7以上"
+    },
+    {
+      "auditId": "1193683",
+      "advisory": "GHSA-82fw-gwwq-j7x9",
+      "package": "vitest",
+      "severity": "moderate",
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "installedVersions": [
+        "4.1.9"
+      ],
+      "affected": ">=2.1.0 <4.1.11",
+      "patched": ">=4.1.11",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+      "reportedPaths": [
+        ".>vitest"
+      ],
+      "scope": "テストツール",
+      "assessment": "redirect mock経由のファイル参照。テスト基盤を更新。本番bundleには含まない。",
+      "action": "4.1.11以上"
+    },
+    {
+      "auditId": "1193684",
+      "advisory": "GHSA-82fw-gwwq-j7x9",
+      "package": "@vitest/mocker",
+      "severity": "moderate",
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "installedVersions": [
+        "4.1.9"
+      ],
+      "affected": ">=2.1.0 <4.1.11",
+      "patched": ">=4.1.11",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+      "reportedPaths": [
+        ".>vitest>@vitest/mocker"
+      ],
+      "scope": "テストツール",
+      "assessment": "Vitestと同じadvisory。独立した本番脆弱性として二重評価しない。",
+      "action": "Vitestと同時に4.1.11以上"
+    },
+    {
+      "auditId": "1193686",
+      "advisory": "GHSA-w5vr-8v7q-w6rv",
+      "package": "baseline-browser-mapping",
+      "severity": "moderate",
+      "title": "baseline-browser-mapping process termination on invalid input causes denial of service",
+      "installedVersions": [
+        "2.10.40"
+      ],
+      "affected": ">=2.0.0 <2.11.0",
+      "patched": ">=2.11.0",
+      "url": "https://github.com/advisories/GHSA-w5vr-8v7q-w6rv",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist>baseline-browser-mapping",
+        "apps__mobile>expo>@expo/cli>@expo/require-utils>@babel/core>@babel/helper-compilation-targets>browserslist>baseline-browser-mapping"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Browserslistの入力処理。invalid inputでprocess終了。",
+      "action": "2.11.0以上"
+    },
+    {
+      "auditId": "1193687",
+      "advisory": "GHSA-g53g-w8rj-fmg7",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom PI grammar regex ReDoS: quadratic backtracking on unterminated processing instructions",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0-beta.9 <=0.9.10",
+      "patched": ">=0.9.11",
+      "url": "https://github.com/advisories/GHSA-g53g-w8rj-fmg7",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193689",
+      "advisory": "GHSA-w2rr-34g9-rvrj",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Element name injection via createElement() bypasses requireWellFormed",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.13",
+      "patched": ">=0.8.14",
+      "url": "https://github.com/advisories/GHSA-w2rr-34g9-rvrj",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193690",
+      "advisory": "GHSA-w2rr-34g9-rvrj",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Element name injection via createElement() bypasses requireWellFormed",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.10",
+      "patched": ">=0.9.11",
+      "url": "https://github.com/advisories/GHSA-w2rr-34g9-rvrj",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193692",
+      "advisory": "GHSA-4w3w-2rp5-g8jm",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Attribute name injection via setAttribute() bypasses requireWellFormed",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.13",
+      "patched": ">=0.8.14",
+      "url": "https://github.com/advisories/GHSA-4w3w-2rp5-g8jm",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193693",
+      "advisory": "GHSA-4w3w-2rp5-g8jm",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Attribute name injection via setAttribute() bypasses requireWellFormed",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.10",
+      "patched": ">=0.9.11",
+      "url": "https://github.com/advisories/GHSA-4w3w-2rp5-g8jm",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193695",
+      "advisory": "GHSA-c7q8-3ch8-vqpv",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Processing Instruction Target Injection Bypasses requireWellFormed",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-c7q8-3ch8-vqpv",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193696",
+      "advisory": "GHSA-c7q8-3ch8-vqpv",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Processing Instruction Target Injection Bypasses requireWellFormed",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-c7q8-3ch8-vqpv",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193699",
+      "advisory": "GHSA-27p8-2357-5qqv",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: DocType `name` Injection Bypasses requireWellFormed",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-27p8-2357-5qqv",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193700",
+      "advisory": "GHSA-27p8-2357-5qqv",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: DocType `name` Injection Bypasses requireWellFormed",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-27p8-2357-5qqv",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193701",
+      "advisory": "GHSA-3px3-54cx-rmw9",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Creation-time XML Name/QName validation is bypassable via an embedded line terminator, allowing injection on the default serialization path",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-3px3-54cx-rmw9",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193702",
+      "advisory": "GHSA-vr34-hp96-76pp",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: requireWellFormed DocType publicId/systemId validation is bypassable via an embedded line terminator",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.10 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-vr34-hp96-76pp",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193704",
+      "advisory": "GHSA-6h8r-xr42-gp59",
+      "package": "@xmldom/xmldom",
+      "severity": "moderate",
+      "title": "xmldom: Parser silently accepts a not-well-formed end tag whose name is followed by a line break and trailing content",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-6h8r-xr42-gp59",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193705",
+      "advisory": "GHSA-6h8r-xr42-gp59",
+      "package": "@xmldom/xmldom",
+      "severity": "moderate",
+      "title": "xmldom: Parser silently accepts a not-well-formed end tag whose name is followed by a line break and trailing content",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-6h8r-xr42-gp59",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193707",
+      "advisory": "GHSA-8344-3jmq-59r6",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-time attribute deduplication",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-8344-3jmq-59r6",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193708",
+      "advisory": "GHSA-8344-3jmq-59r6",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-time attribute deduplication",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-8344-3jmq-59r6",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193709",
+      "advisory": "GHSA-x4fp-j954-r2f4",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: End-tag Whitespace-Trim Regex ReDoS — quadratic backtracking in the 0.8.x end-tag parser",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-x4fp-j954-r2f4",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193711",
+      "advisory": "GHSA-965w-775f-mr7g",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-memory consumption",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-965w-775f-mr7g",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193712",
+      "advisory": "GHSA-965w-775f-mr7g",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-memory consumption",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-965w-775f-mr7g",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193714",
+      "advisory": "GHSA-93r5-fhx6-vmg9",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-time parsing via the malformed-input recovery path — `parseElementStartPart` re-scan and `normalize()` adjacent-text merge",
+      "installedVersions": [
+        "0.9.10"
+      ],
+      "affected": ">=0.9.0 <=0.9.11",
+      "patched": ">=0.9.12",
+      "url": "https://github.com/advisories/GHSA-93r5-fhx6-vmg9",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom",
+        "apps__mobile>expo>@expo/config-plugins>xcode>simple-plist>plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193715",
+      "advisory": "GHSA-93r5-fhx6-vmg9",
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "title": "xmldom: Quadratic-time parsing via the malformed-input recovery path — `parseElementStartPart` re-scan and `normalize()` adjacent-text merge",
+      "installedVersions": [
+        "0.7.13",
+        "0.8.13"
+      ],
+      "affected": ">=0.7.0 <=0.8.14",
+      "patched": ">=0.8.15",
+      "url": "https://github.com/advisories/GHSA-93r5-fhx6-vmg9",
+      "reportedPaths": [
+        ".>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/config-plugins>@expo/plist>@xmldom/xmldom",
+        ".>eas-cli>@expo/plist>@xmldom/xmldom"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS/Expo/plist/Xcode設定経由。XMLの注入・DoS。記録データのXML処理は検出なし。build入力は影響対象。既存overrideは0.8.13のため新規指摘を解消しない。",
+      "action": "0.8系は0.8.15以上、0.9系は0.9.12以上。0.7系は親依存から更新"
+    },
+    {
+      "auditId": "1193725",
+      "advisory": "GHSA-rgj7-g3m4-5g8c",
+      "package": "sharp",
+      "severity": "high",
+      "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+      "installedVersions": [
+        "0.35.3"
+      ],
+      "affected": "<0.35.4",
+      "patched": ">=0.35.4",
+      "url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+      "reportedPaths": [
+        ".>sharp"
+      ],
+      "scope": "開発ツール",
+      "assessment": "root devDependency。apps/packages/scripts/infraの直接importは検出なし。画像処理ツールで未信頼HEIFを読む場合はlibheif指摘が適用。",
+      "action": "0.35.4以上。バイナリ依存を含むので実行確認"
+    },
+    {
+      "auditId": "1193726",
+      "advisory": "GHSA-2883-xcg3-v3hh",
+      "package": "js-yaml",
+      "severity": "high",
+      "title": "js-yaml: maxTotalMergeKeys does not limit CPU use for empty merge sources",
+      "installedVersions": [
+        "3.15.0"
+      ],
+      "affected": ">=3.0.0 <3.15.2",
+      "patched": ">=3.15.2",
+      "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>js-yaml"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS help / Expo xcpretty経由。YAML merge/omapによるDoS。",
+      "action": "3.15.2 / 4.3.2以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1193727",
+      "advisory": "GHSA-2883-xcg3-v3hh",
+      "package": "js-yaml",
+      "severity": "high",
+      "title": "js-yaml: maxTotalMergeKeys does not limit CPU use for empty merge sources",
+      "installedVersions": [
+        "4.3.0"
+      ],
+      "affected": ">=4.0.0 <4.3.2",
+      "patched": ">=4.3.2",
+      "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh",
+      "reportedPaths": [
+        "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS help / Expo xcpretty経由。YAML merge/omapによるDoS。",
+      "action": "3.15.2 / 4.3.2以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1193729",
+      "advisory": "GHSA-gqvv-2mrq-wpjv",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: Incomplete fix for CVE-2026-39408: `toSSG()` still writes files outside the output directory",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": "<4.13.5",
+      "patched": ">=4.13.5",
+      "url": "https://github.com/advisories/GHSA-gqvv-2mrq-wpjv",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "toSSG / hono/ssgの利用なし。該当API利用なし。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1193730",
+      "advisory": "GHSA-g6gw-c38x-mqfc",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: Unbounded dot-notation nesting in `parseBody()` can cause memory exhaustion",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": "<4.13.5",
+      "patched": ">=4.13.5",
+      "url": "https://github.com/advisories/GHSA-g6gw-c38x-mqfc",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "req.parseBodyの利用なし。JSON/Zod経路で、dot option対象外。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1193731",
+      "advisory": "GHSA-crvj-82cr-hjcx",
+      "package": "hono",
+      "severity": "moderate",
+      "title": "Hono: Query parser reads parameters after the URL fragment, causing cache-key and proxy interpretation differentials",
+      "installedVersions": [
+        "4.12.27"
+      ],
+      "affected": "<4.13.5",
+      "patched": ">=4.13.5",
+      "url": "https://github.com/advisories/GHSA-crvj-82cr-hjcx",
+      "reportedPaths": [
+        "apps__admin-frontend>hono"
+      ],
+      "scope": "実行時 個別判定",
+      "assessment": "query利用はあるが、公式advisoryはCloudflare Workersを影響外と明記。Node開発経路は別なので依存更新対象。",
+      "action": "4.13.5以上。全workspaceとroot overrideを揃える"
+    },
+    {
+      "auditId": "1193945",
+      "advisory": "GHSA-7w5x-hrqm-74c2",
+      "package": "smol-toml",
+      "severity": "high",
+      "title": "smol-toml: Denial of Service via malformed TOML documents",
+      "installedVersions": [
+        "1.7.0"
+      ],
+      "affected": "<=1.7.0",
+      "patched": ">=1.7.1",
+      "url": "https://github.com/advisories/GHSA-7w5x-hrqm-74c2",
+      "reportedPaths": [
+        ".>knip>smol-toml"
+      ],
+      "scope": "開発ツール",
+      "assessment": "knipの設定解析。未信頼TOMLでDoS。",
+      "action": "1.7.1以上"
+    },
+    {
+      "auditId": "1239765",
+      "advisory": "GHSA-5p2g-fcmc-qvqq",
+      "package": "image-size",
+      "severity": "high",
+      "title": "image-size: JXL and HEIF parsers allow denial of service through infinite loops",
+      "installedVersions": [
+        "1.2.1"
+      ],
+      "affected": ">=1.2.0 <=2.0.2",
+      "patched": ">=2.0.3",
+      "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
+      "reportedPaths": [
+        "apps__mobile>expo>@expo/metro>metro>image-size"
+      ],
+      "scope": "Mobileビルドツール",
+      "assessment": "Expo Metroで画像サイズを解析。JXL/HEIF/ICNSによるloop。通常のアプリ内画像選択処理とは別経路。",
+      "action": "2.0.3以上を含むMetro/Expoへ。1→2 majorを無検証でoverrideしない"
+    },
+    {
+      "auditId": "1239766",
+      "advisory": "GHSA-w3rx-r6r6-pgpr",
+      "package": "image-size",
+      "severity": "high",
+      "title": "image-size: ICNS parser allows denial of service through an infinite loop",
+      "installedVersions": [
+        "1.2.1"
+      ],
+      "affected": ">=0.6.3 <=2.0.2",
+      "patched": ">=2.0.3",
+      "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
+      "reportedPaths": [
+        "apps__mobile>expo>@expo/metro>metro>image-size"
+      ],
+      "scope": "Mobileビルドツール",
+      "assessment": "Expo Metroで画像サイズを解析。JXL/HEIF/ICNSによるloop。通常のアプリ内画像選択処理とは別経路。",
+      "action": "2.0.3以上を含むMetro/Expoへ。1→2 majorを無検証でoverrideしない"
+    },
+    {
+      "auditId": "1239933",
+      "advisory": "GHSA-3wwx-pv8p-q78v",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via unhandled error in WebSocket permessage-deflate decompression",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.28.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-3wwx-pv8p-q78v",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1239943",
+      "advisory": "GHSA-qw65-cvwx-89v3",
+      "package": "fast-uri",
+      "severity": "high",
+      "title": "fast-uri vulnerable to authority injection via an unvalidated port in serialize",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <3.1.7",
+      "patched": ">=3.1.7",
+      "url": "https://github.com/advisories/GHSA-qw65-cvwx-89v3",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1240036",
+      "advisory": "GHSA-pmjh-fq2x-6v4x",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via orphaned RetryHandler response body",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.11.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-pmjh-fq2x-6v4x",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240038",
+      "advisory": "GHSA-r53p-7pc4-xj5r",
+      "package": "undici",
+      "severity": "low",
+      "title": "undici vulnerable to downstream response splitting via retry interceptor",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-r53p-7pc4-xj5r",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240041",
+      "advisory": "GHSA-rfgv-xxqx-mfg5",
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to Denial of Service via unrequested WebSocket subprotocol",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240044",
+      "advisory": "GHSA-3xpg-4rpp-hhhm",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via unbounded decompression of compressed responses",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.15.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-3xpg-4rpp-hhhm",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240046",
+      "advisory": "GHSA-2jfj-6hjv-fm6j",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to cross-user cookie disclosure via Set-Cookie caching in shared caches",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-2jfj-6hjv-fm6j",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240048",
+      "advisory": "GHSA-2gqq-gqf2-x968",
+      "package": "undici",
+      "severity": "low",
+      "title": "undici vulnerable to response truncation via oversized chunked responses in the dump interceptor",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.1.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-2gqq-gqf2-x968",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240050",
+      "advisory": "GHSA-w293-vg96-wgc3",
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to TLS certificate validation bypass via dropped connect options in BalancedPool",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.24.1 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-w293-vg96-wgc3",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240052",
+      "advisory": "GHSA-8436-99hf-9mmv",
+      "package": "undici",
+      "severity": "low",
+      "title": "undici vulnerable to caching and replay of unsafe HTTP method responses",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-8436-99hf-9mmv",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240055",
+      "advisory": "GHSA-rx4f-c7p8-82vq",
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via WebSocketStream unclean close",
+      "installedVersions": [
+        "7.28.0"
+      ],
+      "affected": ">=7.0.0 <7.29.1",
+      "patched": ">=7.29.1",
+      "url": "https://github.com/advisories/GHSA-rx4f-c7p8-82vq",
+      "reportedPaths": [
+        ".>jsdom>undici"
+      ],
+      "scope": "テストツール",
+      "assessment": "jsdomのHTTP/WebSocket処理。cache、cookie、retry、TLS、圧縮処理の指摘。本番Workersはこのjsdom依存を使わない。テストで外部ページを読む場合は影響が残る。",
+      "action": "7.29.1以上"
+    },
+    {
+      "auditId": "1240057",
+      "advisory": "GHSA-6h2x-m376-mqjq",
+      "package": "joi",
+      "severity": "high",
+      "title": "joi: Quadratic regular-expression backtracking in `Joi.string().isoDate()`",
+      "installedVersions": [
+        "17.11.0",
+        "17.13.4"
+      ],
+      "affected": ">=17.2.0 <17.13.7",
+      "patched": ">=17.13.7",
+      "url": "https://github.com/advisories/GHSA-6h2x-m376-mqjq",
+      "reportedPaths": [
+        ".>eas-cli>@expo/eas-build-job>joi",
+        ".>eas-cli>joi"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "EAS CLI/build-jobの設定検証。recursive link、messages、rename、isoDateの入力が条件。",
+      "action": "17.13.7以上"
+    },
+    {
+      "auditId": "1240091",
+      "advisory": "GHSA-hrr3-gc8f-f4qj",
+      "package": "fast-uri",
+      "severity": "moderate",
+      "title": "fast-uri vulnerable to inconsistent host case normalization via percent-encoded octets",
+      "installedVersions": [
+        "3.1.3"
+      ],
+      "affected": ">=3.0.0 <3.1.8",
+      "patched": ">=3.1.8",
+      "url": "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj",
+      "reportedPaths": [
+        "apps__frontend>workbox-build>ajv>fast-uri"
+      ],
+      "scope": "Webビルドツール",
+      "assessment": "workbox-build→ajvのschema処理。host正規化・SSRF条件の指摘で、アプリのfetch先検証には使用していない。",
+      "action": "3.1.8以上"
+    },
+    {
+      "auditId": "1240099",
+      "advisory": "GHSA-4p3w-j4w9-5jqw",
+      "package": "moment",
+      "severity": "moderate",
+      "title": "moment vulnerable to Path Traversal via crafted non-string locale name",
+      "installedVersions": [
+        "2.30.1"
+      ],
+      "affected": ">=2.29.2 <2.31.0",
+      "patched": ">=2.31.0",
+      "url": "https://github.com/advisories/GHSA-4p3w-j4w9-5jqw",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>moment"
+      ],
+      "scope": "開発ツール",
+      "assessment": "EAS logger→bunyan。非文字列localeでpath traversal。",
+      "action": "2.31.0以上"
+    },
+    {
+      "auditId": "1240100",
+      "advisory": "GHSA-q2hr-2g5m-vwhr",
+      "package": "brace-expansion",
+      "severity": "moderate",
+      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+      "installedVersions": [
+        "1.1.16"
+      ],
+      "affected": "<1.1.21",
+      "patched": ">=1.1.21",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>mv>rimraf>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240101",
+      "advisory": "GHSA-q2hr-2g5m-vwhr",
+      "package": "brace-expansion",
+      "severity": "moderate",
+      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.7",
+      "patched": ">=2.1.7",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240103",
+      "advisory": "GHSA-q2hr-2g5m-vwhr",
+      "package": "brace-expansion",
+      "severity": "moderate",
+      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+      "installedVersions": [
+        "5.0.7"
+      ],
+      "affected": ">=4.0.0 <5.0.12",
+      "patched": ">=5.0.12",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>glob>minimatch>brace-expansion",
+        "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240104",
+      "advisory": "GHSA-qhr7-859c-m2p7",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+      "installedVersions": [
+        "1.1.16"
+      ],
+      "affected": "<1.1.20",
+      "patched": ">=1.1.20",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>mv>rimraf>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240105",
+      "advisory": "GHSA-qhr7-859c-m2p7",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.6",
+      "patched": ">=2.1.6",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240107",
+      "advisory": "GHSA-qhr7-859c-m2p7",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+      "installedVersions": [
+        "5.0.7"
+      ],
+      "affected": ">=4.0.0 <5.0.11",
+      "patched": ">=5.0.11",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>glob>minimatch>brace-expansion",
+        "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240108",
+      "advisory": "GHSA-6j4f-fj2g-mc7p",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+      "installedVersions": [
+        "1.1.16"
+      ],
+      "affected": "<1.1.19",
+      "patched": ">=1.1.19",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "reportedPaths": [
+        ".>eas-cli>@expo/logger>bunyan>mv>rimraf>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240109",
+      "advisory": "GHSA-6j4f-fj2g-mc7p",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+      "installedVersions": [
+        "2.1.1"
+      ],
+      "affected": ">=2.0.0 <2.1.5",
+      "patched": ">=2.1.5",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "reportedPaths": [
+        ".>eas-cli>@expo/plugin-help>@oclif/core>ejs>jake>filelist>minimatch>brace-expansion",
+        "apps__mobile>@bacons/apple-targets>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    },
+    {
+      "auditId": "1240111",
+      "advisory": "GHSA-6j4f-fj2g-mc7p",
+      "package": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+      "installedVersions": [
+        "5.0.7"
+      ],
+      "affected": ">=4.0.0 <5.0.10",
+      "patched": ">=5.0.10",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "reportedPaths": [
+        ".>eas-cli>@expo/config>glob>minimatch>brace-expansion",
+        "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+      ],
+      "scope": "ビルドツール",
+      "assessment": "Expo/EAS/glob経由。glob入力に対する複数種のDoS。アプリの利用者入力をglob展開する経路は検出なし。",
+      "action": "1.1.21 / 2.1.7 / 5.0.12以上を各major内で選ぶ"
+    }
+  ],
+  "resolution": {
+    "date": "2026-09-30",
+    "fullMetadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "dependencies": 1693,
+      "devDependencies": 0,
+      "optionalDependencies": 0,
+      "totalDependencies": 1693
+    },
+    "productionMetadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "dependencies": 916,
+      "devDependencies": 0,
+      "optionalDependencies": 0,
+      "totalDependencies": 916
+    },
+    "strategy": "Direct tooling upgrades and scoped patched-version overrides; compatibility patches for query-string, Metro, and EAS CLI. Original findings retained as pre-update evidence.",
+    "verification": {
+      "testsPassed": 3007,
+      "testsSkipped": 2,
+      "pool": "forks",
+      "webEntitlementE2EPassed": 5,
+      "mobileExport": [
+        "ios",
+        "android"
+      ],
+      "patchCompatibilityTestsPassed": 3,
+      "nativeBuild": false,
+      "productionDatabaseAccess": false
+    }
+  }
+}
