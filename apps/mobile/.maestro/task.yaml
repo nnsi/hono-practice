@@ -5,7 +5,7 @@ env:
   PASSWORD: password123
 ---
 # Generate a per-run unique RUN_TAG so re-running this flow doesn't collide
-# with tasks left from previous runs (e.g. `notVisible: t-delete-XXX` would
+# with tasks left from previous runs (e.g. `notVisible: del-XXX` would
 # otherwise hit a leftover from an earlier run and fail).
 - runScript: scripts/gen-run-tag.js
 - runFlow: flows/login.yaml
@@ -34,23 +34,31 @@ env:
     timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-toggle-${output.RUN_TAG}
+- inputText: done-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-toggle-${output.RUN_TAG}
+    visible: done-${output.RUN_TAG}
     timeout: 10000
 
+# Prefixes plus the 14-character RUN_TAG must fit TASK_TITLE_MAX (20).
 # Toggle done
 - tapOn:
-    text: t-toggle-${output.RUN_TAG}
+    text: done-${output.RUN_TAG}
 # 完了済みセクションを展開（5/4 以降、完了タスクは折りたたまれた完了済みセクションに移動する）
-- extendedWaitUntil:
-    visible: "完了済みを表示.*"
-    timeout: 10000
-- tapOn: "完了済みを表示.*"
+# The completed-section preference persists between runs.
+- scrollUntilVisible:
+    element:
+      text: "完了済み.*"
+    direction: DOWN
+    centerElement: true
+- runFlow:
+    when:
+      visible: "完了済みを表示.*"
+    commands:
+      - tapOn: "完了済みを表示.*"
 - extendedWaitUntil:
     visible:
       id: "tasks\\.archive\\..*"
@@ -72,16 +80,21 @@ env:
     timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-edit-${output.RUN_TAG}
+- inputText: edit-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-edit-${output.RUN_TAG}
+    visible: edit-${output.RUN_TAG}
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "edit-${output.RUN_TAG}, .*"
+    direction: UP
+    centerElement: true
 - tapOn:
-    text: "t-edit-${output.RUN_TAG}, .*"
+    text: "edit-${output.RUN_TAG}, .*"
 - extendedWaitUntil:
     visible:
       id: tasks.edit.dialog
@@ -89,13 +102,13 @@ env:
 - tapOn:
     id: tasks.edit.titleInput
 - eraseText: 64
-- inputText: t-edit-after-${output.RUN_TAG}
+- inputText: after-${output.RUN_TAG}
 - tapOn:
     id: tasks.edit.dialog
 - tapOn:
     id: tasks.edit.update
 - extendedWaitUntil:
-    visible: t-edit-after-${output.RUN_TAG}
+    visible: after-${output.RUN_TAG}
     timeout: 10000
 
 # Delete
@@ -114,16 +127,21 @@ env:
     timeout: 10000
 - tapOn:
     id: tasks.create.titleInput
-- inputText: t-delete-${output.RUN_TAG}
+- inputText: del-${output.RUN_TAG}
 - tapOn:
     id: tasks.create.dialog
 - tapOn:
     id: tasks.create.submit
 - extendedWaitUntil:
-    visible: t-delete-${output.RUN_TAG}
+    visible: del-${output.RUN_TAG}
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "del-${output.RUN_TAG}, .*"
+    direction: UP
+    centerElement: true
 - tapOn:
-    text: "t-delete-${output.RUN_TAG}, .*"
+    text: "del-${output.RUN_TAG}, .*"
 - extendedWaitUntil:
     visible:
       id: tasks.edit.dialog
@@ -137,5 +155,5 @@ env:
 - tapOn:
     id: tasks.deleteConfirm.confirm
 - extendedWaitUntil:
-    notVisible: t-delete-${output.RUN_TAG}
+    notVisible: del-${output.RUN_TAG}
     timeout: 10000

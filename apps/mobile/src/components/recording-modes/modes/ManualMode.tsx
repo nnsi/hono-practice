@@ -2,11 +2,12 @@ import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
 import { useTranslation } from "@packages/i18n";
-import { Text, type TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { mobileTestIds } from "../../../testing/testIds";
 import { FormButton } from "../../common/FormButton";
 import { FormInput } from "../../common/FormInput";
+import type { IMESafeTextInputRef } from "../../common/imeTextInputTypes";
 import { KindSelector } from "../parts/KindSelector";
 import { MemoInput } from "../parts/MemoInput";
 import { useManualMode } from "./useManualMode";
@@ -14,7 +15,7 @@ import { useManualMode } from "./useManualMode";
 export function ManualMode(props: RecordingModeProps) {
   const { t } = useTranslation("recording");
   const vm = useManualMode(props);
-  const quantityRef = useRef<TextInput & { select?: () => void }>(null);
+  const quantityRef = useRef<IMESafeTextInputRef>(null);
 
   return (
     <View className="gap-4">

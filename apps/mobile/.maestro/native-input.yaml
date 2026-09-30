@@ -1,0 +1,73 @@
+appId: ${MAESTRO_APP_ID}
+env:
+  MAESTRO_APP_ID: com.actiko.app
+  LOGIN_ID: e2e@example.com
+  PASSWORD: password123
+---
+# Reusable regression flow for the SwiftUI-backed iOS text fields.
+# This checks editing/persistence, not the Japanese IME underline itself:
+# marked text must also be checked by tapping the Japanese software keyboard.
+- runScript: scripts/gen-run-tag.js
+- runFlow: flows/login.yaml
+- tapOn:
+    id: tabs.tasks
+- tapOn:
+    id: taskQuickAdd.titleInput
+- inputText: quick-${output.RUN_TAG}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: quick-${output.RUN_TAG}
+    timeout: 10000
+- tapOn:
+    id: taskQuickAdd.titleInput
+- inputText: next-${output.RUN_TAG}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: next-${output.RUN_TAG}
+    timeout: 10000
+- runFlow: flows/open-notes.yaml
+- tapOn:
+    id: notes.add
+- tapOn:
+    id: notes.titleInput
+- inputText: input-${output.RUN_TAG}
+- pressKey: Enter
+- tapOn:
+    id: notes.bodyInput
+- inputText: first line
+- pressKey: Enter
+- inputText: second line
+- tapOn:
+    id: notes.detail.back
+- extendedWaitUntil:
+    visible: "input-${output.RUN_TAG}.*"
+    timeout: 10000
+- tapOn: "input-${output.RUN_TAG}.*"
+- assertVisible:
+    id: notes.markdownView
+- assertVisible: ".*first line.*"
+- assertVisible: ".*second line.*"
+- tapOn:
+    id: notes.markdownView
+- tapOn:
+    id: notes.bodyInput
+- eraseText: 100
+- inputText: edited body
+- tapOn:
+    id: notes.detail.back
+- extendedWaitUntil:
+    visible: ".*edited body.*"
+    timeout: 10000
+- tapOn:
+    id: notes.searchToggle
+- inputText: input-${output.RUN_TAG}
+- assertVisible: "input-${output.RUN_TAG}.*"
+- tapOn:
+    id: notes.searchClear
+- inputText: no-match-${output.RUN_TAG}
+- assertNotVisible: "input-${output.RUN_TAG}.*"
+- tapOn:
+    id: notes.searchClear
+- assertVisible: "input-${output.RUN_TAG}.*"
+- tapOn:
+    id: notes.searchToggle

@@ -2,9 +2,10 @@ import { useRef } from "react";
 
 import type { RecordingModeProps } from "@packages/frontend-shared/recording-modes/types";
 import { useTranslation } from "@packages/i18n";
-import { Text, type TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { FormInput } from "../../common/FormInput";
+import type { IMESafeTextInputRef } from "../../common/imeTextInputTypes";
 
 const tabShadow = {
   shadowColor: "#000",
@@ -128,7 +129,7 @@ function CounterPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
 
 function ManualPanel({ vm }: { vm: ReturnType<typeof useCounterMode> }) {
   const { t } = useTranslation("recording");
-  const quantityRef = useRef<TextInput & { select?: () => void }>(null);
+  const quantityRef = useRef<IMESafeTextInputRef>(null);
 
   return (
     <View className="gap-4">
