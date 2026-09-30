@@ -14,7 +14,7 @@ major更新で既存呼び出しとの互換性がなくなる3箇所をpnpm pat
 - Metro 0.84.4: image-size 2に画像のパスではなくバッファを渡す。
 - EAS CLI 24.8.0: ts-deepmerge 8のnamed merge exportを利用する。
 
-これらのpatchを削除する際は親ライブラリの対応状況を確認し、`scripts/security-dependencies.test.ts` とMobile exportで検証する。既存のreact-native-css-interop patchは維持。
+これらのpatchを削除する際は親ライブラリの対応状況を確認し、`scripts/security-dependencies.test.ts`、`apps/mobile/src/security-dependencies.test.ts` とMobile exportで検証する。既存のreact-native-css-interop patchは維持。
 
 Mobileの直接依存の解決版を更新前後で比較し、変わったのはpure JSのHonoのみ。Expo/RN/RevenueCatを含むnative依存の版、native設定は変更していない。今回はローカルのJS bundle生成のみで、EAS native build/OTA配信/本番deployは行っていない。JSの修正を配布する際は通常のruntime互換確認が必要。
 
